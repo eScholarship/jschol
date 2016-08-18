@@ -1,0 +1,25 @@
+// ##### Global Variables ##### //
+
+// ***** General ***** //
+
+// [to go here]
+
+// ***** Colors ***** //
+
+$design-dark-blue-color: rgb(0, 85, 129);
+$design-light-gray-color: rgb(157, 159, 162);
+
+// ***** Breakpoints ***** //
+
+$screen-sm-min: 480px;
+$screen-md-min: 760px;
+$screen-lg-min: 870px;
+$screen-max: 1280px;
+
+// ***** Spacing ***** //
+
+$spacing-base: 5px;
+$spacing-sm: 10px;
+$spacing-md: 20px;
+$spacing-lg: 30px;
+$spacing-body: $spacing-sm;
