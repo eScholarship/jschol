@@ -1,7 +1,9 @@
 // ##### Page 2 ##### //
 
-var Component1 = require('../components/component1.jsx');
-var Component3 = require('../components/component3.jsx');
+import React from 'react'
+
+import Component1 from '../components/component1.jsx'
+import Component3 from '../components/component3.jsx'
 
 class Oranges extends React.Component {
   render() {

@@ -1,7 +1,9 @@
 // ##### Page 1 ##### //
 
-var Component1 = require('../components/component1.jsx');
-var Component2 = require('../components/component2.jsx');
+import React from 'react'
+
+import Component1 from '../components/component1.jsx'
+import Component2 from '../components/component2.jsx'
 
 class Apples extends React.Component {
   render() {

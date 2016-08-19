@@ -3,17 +3,15 @@
 
 // ***** The vars below (when uncommented) are pulling in the NPM packages into bundle.js via Browserify, but they're not loading in the app, for some reason. ***** //
 
-// var React = require('react');
-// var ReactDOM = require('react-dom');
-// var Router = require('react-router').Router
-// var Route = require('react-router').Route
-// var Link = require('react-router').Link
+import React from 'react'
+import ReactDOM from 'react-dom'
+import { Router, Route, IndexRoute, Link, browserHistory } from 'react-router'
 
-var Home = require('./pages/home.jsx');
-var Apples = require('./pages/apples.jsx');
-var Oranges = require('./pages/oranges.jsx');
-var Pears = require('./pages/pears.jsx');
-var UnitPage = require('./pages/unit.jsx');
+import Home from './pages/home.jsx'
+import Apples from './pages/apples.jsx'
+import Oranges from './pages/oranges.jsx'
+import Pears from './pages/pears.jsx'
+import UnitPage from './pages/unit.jsx';
 
 // var App = React.createClass({
 // render: function() {
@@ -42,16 +40,6 @@ class App extends React.Component {
     )
   }
 }
-
-const { // set React Router prefixes:
-  Router,
-  Route,
-  IndexRoute,
-  Redirect,
-  Link,
-  IndexLink,
-  browserHistory
-} = ReactRouter
 
 ReactDOM.render((
   <Router history={browserHistory}>

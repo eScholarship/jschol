@@ -1,5 +1,7 @@
 // ##### Component 1 ##### //
 
+import React from 'react'
+
 class Component1 extends React.Component {
   render() {
 		return (
