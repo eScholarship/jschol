@@ -1,11 +1,11 @@
 // ##### Gulp Toolkit for the eScholarship UI Library #####
 
+const _ = require('lodash');
 const gulp = require('gulp');
 const gutil = require('gulp-util');
 const sass = require('gulp-sass');
 const autoprefixer = require('gulp-autoprefixer');
 const sourcemaps = require('gulp-sourcemaps');
-const browserSync = require('browser-sync');
 const del = require('del');
 const runSequence = require('run-sequence');
 const scsslint = require('gulp-scss-lint');
@@ -15,7 +15,6 @@ const source = require('vinyl-source-stream');
 const browserify = require('browserify');
 const watchify = require('watchify');
 const streamify = require('gulp-streamify');
-const eslintify = require('eslintify');
 const babelify = require('babelify');
 const livereload = require('gulp-livereload')
 const exec = require('child_process').exec
@@ -26,29 +25,67 @@ const wait = require('gulp-wait')
 var sinatraProc // Main app in Sinatra (Ruby)
 var expressProc // Sub-app for isomophic javascript in Express (Node/Javascript)
 
-// Transformations to build bundle.js
-gulp.task('browserify', function() {
-  var watcher  = watchify(browserify({
+// Transformations to build lib-bundle.js
+gulp.task('bundle-libs', function() {
+  var b = watchify(browserify({
+    debug: false,
+    cache: {}, packageCache: {}, fullPaths: true
+  }))
+
+  function bundle() {
+    gutil.log("Bundling libs.")
+    // This bundle will encompass everything in package.json that's not a "dev" dependency
+    getNPMPackageIds().forEach(function (id) { b.require(id) });
+    return b.bundle()
+      .on('error', gutil.log.bind(gutil, 'Browserify Error'))
+      .pipe(source('app/js/lib-bundle.js'))
+      .pipe(gulp.dest('.'))
+      .on('end', function() { gutil.log('app/js/lib-bundle.js updated') });
+  }
+
+  bundle()
+  return b.on('update', bundle).on('log', gutil.log)
+});
+
+// Transformations to build app-bundle.js
+gulp.task('bundle-app', function() {
+  var b = watchify(browserify({
     entries: ['app/jsx/app.jsx'],
     debug: true,
     cache: {}, packageCache: {}, fullPaths: true
-  }));
-  watcher.on('update', function () {
-    watcher.bundle()
+  }))
+
+  function bundle() {
+    gutil.log("Bundling app.")
+    // This bundle is for the app, and excludes all package.json dependencies
+    getNPMPackageIds().forEach(function (id) { b.external(id) });
+    return b
+      .transform('babelify', {presets: ['es2015', 'react']})
+      .bundle()
       .on('error', gutil.log.bind(gutil, 'Browserify Error'))
-      .pipe(source('app/js/bundle.js'))
-      .pipe(gulp.dest('.'));
-    console.log('app/js/bundle.js updated');
-  }).transform('babelify', {presets: ['es2015', 'react']})
-    .bundle()
-    .pipe(source('app/js/bundle.js'))
-    .pipe(gulp.dest('.'))
-    .on('end', function() { livereload.reload() });
+      .pipe(source('app/js/app-bundle.js'))
+      .pipe(gulp.dest('.'))
+      .on('end', function() { gutil.log('app/js/app-bundle.js updated') });
+  }
+
+  bundle()
+  return b.on('update', bundle).on('log', gutil.log)
 });
+
+function getNPMPackageIds() {
+  // read package.json and get dependencies' package ids
+  var packageManifest = {};
+  try {
+    packageManifest = require('./package.json');
+  } catch (e) {
+    // does not have a package.json manifest
+  }
+  return _.keys(packageManifest.dependencies) || [];
+}
 
 // Run the dev process 'gulp':
 gulp.task('default', function (callback) {
-  runSequence(['browserify', 'watch', 'sinatra'],  // FIXME: add 'express' when we do iso
+  runSequence(['bundle-libs', 'bundle-app', 'watch', 'sinatra'],  // FIXME: add 'express' when we do iso
     callback
   )
 })
@@ -62,7 +99,7 @@ gulp.task('sass', function() {
     .pipe(postcss([assets({ loadPaths: ['fonts/', 'images/'] })]))
     .pipe(sourcemaps.write('sourcemaps'))
     .pipe(gulp.dest('app/css'))
-    .pipe(browserSync.reload({ stream: true }));
+    .on('end', function() { livereload.reload() });
 })
 
 // Watch sass, html, and js and reload browser if any changes:
@@ -70,9 +107,8 @@ gulp.task('watch', ['sass', 'scss-lint'], function() {
   livereload.listen();
   gulp.watch('app/scss/**/*.scss', ['sass']);
   gulp.watch('app/scss/**/*.scss', ['scss-lint']);
-  gulp.watch('app/**/*.html', browserSync.reload); 
-  gulp.watch('app/js/**/*.js', browserSync.reload); 
-  gulp.watch('app/js/bundle.js', browserSync.reload);
+  gulp.watch('app/**/*.html', livereload.reload); 
+  gulp.watch('app/js/**/*.js', livereload.reload); 
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
