@@ -1,8 +1,6 @@
 
 // ##### Top-level React App ##### //
 
-// ***** The vars below (when uncommented) are pulling in the NPM packages into bundle.js via Browserify, but they're not loading in the app, for some reason. ***** //
-
 import React from 'react'
 import ReactDOM from 'react-dom'
 import { Router, Route, IndexRoute, Link, browserHistory } from 'react-router'
@@ -12,9 +10,6 @@ import Apples from './pages/apples.jsx'
 import Oranges from './pages/oranges.jsx'
 import Pears from './pages/pears.jsx'
 import UnitPage from './pages/unit.jsx';
-
-// var App = React.createClass({
-// render: function() {
 
 class App extends React.Component {
   render() {
@@ -48,7 +43,7 @@ ReactDOM.render((
       <Route path="/apples" component={Apples} />
       <Route path="/oranges" component={Oranges} />
       <Route path="/pears" component={Pears} />
-      <Route path="/unit/:unitID" component={UnitPage} fribble="bar"/>
+      <Route path="/unit/:unitID" component={UnitPage} />
     </Route>
   </Router>
 ), document.getElementById('main'))
