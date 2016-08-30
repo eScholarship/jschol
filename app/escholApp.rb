@@ -147,6 +147,12 @@ get "/api/unit/:unitID" do |unitID|
 end
 
 ###################################################################################################
+# Unit landing page. After the slash is the unit_id.
+get "/item/:itemID" do |itemID|
+  genAppPage("Item page", request, { })
+end
+
+###################################################################################################
 # Item view page.
 get "/api/item/:shortArk" do |shortArk|
   # Andy, hack here.

@@ -10,6 +10,7 @@ import Apples from './pages/apples.jsx'
 import Oranges from './pages/oranges.jsx'
 import Pears from './pages/pears.jsx'
 import UnitPage from './pages/unit.jsx';
+import ItemPage from './pages/item.jsx';
 
 class App extends React.Component {
   render() {
@@ -23,7 +24,8 @@ class App extends React.Component {
         <Link to="/apples">Apples</Link>&nbsp;|&nbsp;
         <Link to="/oranges">Oranges</Link>&nbsp;|&nbsp;
         <Link to="/pears">Pears</Link>&nbsp;|&nbsp;
-        <Link to="/unit/root">Units</Link>
+        <Link to="/unit/root">Units</Link>&nbsp;|&nbsp;
+        <Link to="/item/1234">Item</Link>
         </div>
         <hr />
         {this.props.children}
@@ -44,6 +46,7 @@ ReactDOM.render((
       <Route path="/oranges" component={Oranges} />
       <Route path="/pears" component={Pears} />
       <Route path="/unit/:unitID" component={UnitPage} />
+      <Route path="/item/:itemID" component={ItemPage} />
     </Route>
   </Router>
 ), document.getElementById('main'))
