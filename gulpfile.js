@@ -26,6 +26,7 @@ var expressProc // Sub-app for isomophic javascript in Express (Node/Javascript)
 // Transformations to build lib-bundle.js
 gulp.task('bundle-libs', function() {
   var b = watchify(browserify({
+    entries: ['package.json'],
     debug: false,
     cache: {}, packageCache: {}, fullPaths: true
   }))
@@ -50,7 +51,7 @@ gulp.task('bundle-libs', function() {
 gulp.task('bundle-app', function() {
   var b = watchify(browserify({
     entries: ['app/jsx/app.jsx'],
-    debug: true,
+    debug: false,
     cache: {}, packageCache: {}, fullPaths: true
   }))
 
@@ -60,7 +61,7 @@ gulp.task('bundle-app', function() {
     // This bundle is for the app, and excludes all package.json dependencies
     getNPMPackageIds().forEach(function (id) { b.external(id) });
     return b
-      .transform('babelify', {presets: ['es2015', 'react']})
+      .transform('babelify', {presets: ['es2015', 'react', 'stage-2']})
       .bundle()
       .on('error', gutil.log.bind(gutil, 'Bundling error'))
       .pipe(source('app/js/app-bundle.js'))
@@ -105,13 +106,25 @@ gulp.task('sass', function() {
 })
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+gulp.task('restart-sinatra', function() {
+  console.log("Restarting Sinatra.")
+  if (sinatraProc) {
+    sinatraProc.on('exit', function(code) {
+      sinatraProc = spawn('ruby', ['app/escholApp.rb', '-p', '4001'], { stdio: 'inherit' })
+    })
+    sinatraProc.kill()
+  }
+});
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 // Watch sass, html, and js and reload browser if any changes:
 gulp.task('watch', function() {
   livereload.listen();
   gulp.watch('app/scss/**/*.scss', ['sass']);
   gulp.watch('app/scss/**/*.scss', ['scss-lint']);
-  gulp.watch('app/**/*.html', livereload.reload); 
-  gulp.watch('app/js/**/*.js', livereload.reload); 
+  gulp.watch('app/**/*.html', livereload.reload);
+  gulp.watch('app/js/**/*.js', livereload.reload);
+  gulp.watch('app/*.rb', ['restart-sinatra']);
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
