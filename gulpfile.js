@@ -105,12 +105,17 @@ gulp.task('sass', function() {
     .pipe(livereload())
 })
 
+function startSinatra()
+{
+  sinatraProc = spawn('ruby', ['app/escholApp.rb', '-p', '4001'], { stdio: 'inherit' })
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 gulp.task('restart-sinatra', function() {
   console.log("Restarting Sinatra.")
   if (sinatraProc) {
     sinatraProc.on('exit', function(code) {
-      sinatraProc = spawn('ruby', ['app/escholApp.rb', '-p', '4001'], { stdio: 'inherit' })
+      startSinatra()
     })
     sinatraProc.kill()
   }
@@ -130,7 +135,7 @@ gulp.task('watch', function() {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Fire up the api server in Sinatra (Ruby).
 gulp.task('sinatra', function() {
-  sinatraProc = spawn('ruby', ['app/escholApp.rb', '-p', '4001'], { stdio: 'inherit' })
+  startSinatra()
 })
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
