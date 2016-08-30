@@ -40,6 +40,7 @@ gulp.task('bundle-libs', function() {
       .on('error', gutil.log.bind(gutil, 'Bundling error'))
       .pipe(source('app/js/lib-bundle.js'))
       .pipe(gulp.dest('.'))
+      .pipe(livereload())
   }
 
   bundle()
@@ -66,6 +67,7 @@ gulp.task('bundle-app', function() {
       .on('error', gutil.log.bind(gutil, 'Bundling error'))
       .pipe(source('app/js/app-bundle.js'))
       .pipe(gulp.dest('.'))
+      .pipe(livereload())
   }
 
   bundle()
@@ -87,7 +89,7 @@ function getNPMPackageIds() {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Run the dev process 'gulp':
 gulp.task('default', function (callback) {
-  runSequence(['bundle-libs', 'bundle-app', 'watch', 'sinatra'],  // FIXME: add 'express' when we do iso
+  runSequence(['bundle-libs', 'bundle-app', 'watch', 'sinatra', 'express'],  // FIXME: add 'express' when we do iso
     callback
   )
 })
@@ -105,10 +107,17 @@ gulp.task('sass', function() {
     .pipe(livereload())
 })
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
 function startSinatra()
 {
-  sinatraProc = spawn('ruby', ['app/escholApp.rb', '-p', '4001'], { stdio: 'inherit' })
+  sinatraProc = spawn('ruby', ['app/server.rb', '-p', '4001'], { stdio: 'inherit' })
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Fire up the api server in Sinatra (Ruby).
+gulp.task('sinatra', function() {
+  startSinatra()
+})
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 gulp.task('restart-sinatra', function() {
@@ -122,26 +131,42 @@ gulp.task('restart-sinatra', function() {
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-// Watch sass, html, and js and reload browser if any changes:
-gulp.task('watch', function() {
-  livereload.listen();
-  gulp.watch('app/scss/**/*.scss', ['sass']);
-  gulp.watch('app/scss/**/*.scss', ['scss-lint']);
-  gulp.watch('app/**/*.html', livereload.reload);
-  gulp.watch('app/js/**/*.js', livereload.reload);
-  gulp.watch('app/*.rb', ['restart-sinatra']);
-});
+function startExpress()
+{
+  expressProc = spawn('node', ['app/isomorphic.js'], { stdio: 'inherit' })
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Fire up the api server in Sinatra (Ruby).
-gulp.task('sinatra', function() {
-  startSinatra()
+gulp.task('express', function() {
+  startExpress()
 })
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+gulp.task('restart-express', function() {
+  console.log("Restarting Express.")
+  if (expressProc) {
+    expressProc.on('exit', function(code) {
+      startExpress()
+    })
+    expressProc.kill()
+  }
+});
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Watch sass, html, and js and reload browser if any changes:
+gulp.task('watch', function() {
+  livereload.listen();
+  gulp.watch('app/scss/**/*.scss', ['sass', 'scss-lint']);
+  gulp.watch('app/**/*.html', livereload.reload);
+  gulp.watch('app/*.rb', ['restart-sinatra']);
+  gulp.watch('app/isomorphic.js', ['restart-express']);
+});
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Fire up the isomorphic sub-app in Node/Express (Javascript)
 gulp.task('express', function() {
-  expressProc = spawn('node', ['app/escholIso.js'], { stdio: 'inherit' })
+  expressProc = spawn('node', ['app/isomorphic.js'], { stdio: 'inherit' })
 })
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
