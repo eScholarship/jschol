@@ -68,6 +68,7 @@ gulp.task('bundle-app', function() {
       .pipe(source('app/js/app-bundle.js'))
       .pipe(gulp.dest('.'))
       .pipe(livereload())
+      .on('end', restartExpress)
   }
 
   bundle()
@@ -89,7 +90,7 @@ function getNPMPackageIds() {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Run the dev process 'gulp':
 gulp.task('default', function (callback) {
-  runSequence(['bundle-libs', 'bundle-app', 'watch', 'sinatra', 'express'],  // FIXME: add 'express' when we do iso
+  runSequence(['bundle-libs', 'bundle-app', 'watch', 'sinatra'],  // FIXME: add 'express' when we do iso
     callback
   )
 })
@@ -110,7 +111,11 @@ gulp.task('sass', function() {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 function startSinatra()
 {
-  sinatraProc = spawn('ruby', ['app/server.rb', '-p', '4001'], { stdio: 'inherit' })
+  // The '-o 0.0.0.0' below is required for Sinatra to bind to ipv4 localhost, instead of ipv6 localhost
+  sinatraProc = spawn('ruby', ['app/server.rb', '-p', '4001', '-o', '0.0.0.0'], { stdio: 'inherit' })
+  sinatraProc.on('exit', function(code) {
+    sinatraProc = null
+  })
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -135,16 +140,13 @@ gulp.task('restart-sinatra', function() {
 function startExpress()
 {
   expressProc = spawn('node', ['app/isomorphic.js'], { stdio: 'inherit' })
+  expressProc.on('exit', function(code) {
+    expressProc = null
+  })
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-// Fire up the api server in Sinatra (Ruby).
-gulp.task('express', function() {
-  startExpress()
-})
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-gulp.task('restart-express', function() {
+function restartExpress() {
   if (expressProc) {
     console.log("Restarting Express.")
     expressProc.on('exit', function(code) {
@@ -153,7 +155,14 @@ gulp.task('restart-express', function() {
     expressProc.kill()
     expressProc = null
   }
-});
+  else {
+    console.log("Starting Express.")
+    startExpress()
+  }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+gulp.task('restart-express', restartExpress)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Watch sass, html, and js and reload browser if any changes:
@@ -162,14 +171,8 @@ gulp.task('watch', function() {
   gulp.watch('app/scss/**/*.scss', ['sass', 'scss-lint']);
   gulp.watch('app/**/*.html', livereload.reload);
   gulp.watch('app/*.rb', ['restart-sinatra']);
-  gulp.watch(['app/isomorphic.js', 'app/js/*.js'], ['restart-express']);
+  gulp.watch(['app/isomorphic.js*'], ['restart-express']);
 });
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Fire up the isomorphic sub-app in Node/Express (Javascript)
-gulp.task('express', function() {
-  expressProc = spawn('node', ['app/isomorphic.js'], { stdio: 'inherit' })
-})
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Lint Sass

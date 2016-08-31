@@ -6,6 +6,18 @@ import $ from 'jquery'
 import Component1 from '../components/component1.jsx'
 import Component2 from '../components/component2.jsx'
 
+function flexibleGetJSON(props, url, callback)
+{
+  if (typeof(props.location.isoFetchJSON) == "function") {
+    console.log("Calling isoFetch")
+    props.location.isoFetchJSON(url)
+  }
+  else {
+    console.log("Doing jquery getJSON")
+    $.getJSON(url).done(callback)
+  }
+}
+
 class UnitPage extends React.Component 
 {
   constructor(props) {
@@ -22,8 +34,7 @@ class UnitPage extends React.Component
 
   refresh(props) {
     // TODO: display "wait" cursor while loading
-    $.getJSON("/api/unit/" + props.params.unitID)
-      .done((data) => this.setState({ unitState: data }))
+    flexibleGetJSON(props, "/api/unit/" + props.params.unitID, (data) => this.setState({ unitState: data }))
   }
 
   render() { 
@@ -66,5 +77,9 @@ class UnitPage extends React.Component
     )
   }
 }
+
+//UnitPage.contextTypes = {
+//    router: React.PropTypes.func.isRequired
+//};
 
 module.exports = UnitPage;
