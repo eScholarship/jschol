@@ -6,9 +6,6 @@ import { renderToString }        from 'react-dom/server'
 import { Router, RouterContext, match }  from 'react-router';
 import routes                    from './jsx/app.jsx';
 
-
-//const url = require('url')
-
 const app = express();
 
 class Fetcher
@@ -17,22 +14,11 @@ class Fetcher
     this.refURL = refURL
   }
 
-  isoFetchJSON = (partialURL)=>
-  {
+  isoFetchJSON = (partialURL)=> {
     console.log("isoFetchJSON:", url)
-    console.log("refURL:", this.refURL)
     var finalURL = url.resolve(this.refURL, partialURL).replace(":4002", ":4001")
     console.log("finalURL:", finalURL)
-  }
-}
 
-const http = (typeof window === 'undefined') ? require('http') : null
-
-function flexibleGetJSON(url, callback)
-{
-  if (typeof window === 'undefined') {
-    var fullURL = "http://localhost:4001" + url
-    console.log("Doing node http.get:", fullURL)
     http.get(fullURL, function(res) {
       var body = '';
       res.on('data', function(chunk) {
@@ -52,6 +38,16 @@ function flexibleGetJSON(url, callback)
       console.log("Got an error: ", e);
     }); 
   }
+}
+
+const http = (typeof window === 'undefined') ? require('http') : null
+
+function flexibleGetJSON(url, callback)
+{
+  if (typeof window === 'undefined') {
+    var fullURL = "http://localhost:4001" + url
+    console.log("Doing node http.get:", fullURL)
+  }
   else {
     console.log("Doing jquery getJSON")
     $.getJSON(url).done(callback)
@@ -67,8 +63,7 @@ app.use((req, res) => {
     }
     if (!renderProps) return res.status(404).end('Not found.');
     var rc = <RouterContext {...renderProps} />
-    var f = new Fetcher(req.protocol + '://' + req.get('host') + req.originalUrl)
-    rc.props.location.isoFetchJSON = f.isoFetchJSON
+    rc.props.location.urlsToFetch = []
     res.send(renderToString(rc))
   });
 });

@@ -8,9 +8,9 @@ import Component2 from '../components/component2.jsx'
 
 function flexibleGetJSON(props, url, callback)
 {
-  if (typeof(props.location.isoFetchJSON) == "function") {
-    console.log("Calling isoFetch")
-    props.location.isoFetchJSON(url)
+  if (typeof(props.location.urlsToFetch) == "object") {
+    console.log("Saving URL to fetch later")
+    props.location.urlsToFetch.push(url)
   }
   else {
     console.log("Doing jquery getJSON")
