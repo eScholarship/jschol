@@ -62,7 +62,7 @@ gulp.task('bundle-app', function() {
     // This bundle is for the app, and excludes all package.json dependencies
     getNPMPackageIds().forEach(function (id) { b.external(id) });
     return b
-      .transform('babelify', {presets: ['es2015', 'react', 'stage-2']})
+      .transform('babelify')  // note: presets are taken from .babelrc file
       .bundle()
       .on('error', gutil.log.bind(gutil, 'Bundling error'))
       .pipe(source('app/js/app-bundle.js'))
@@ -121,12 +121,13 @@ gulp.task('sinatra', function() {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 gulp.task('restart-sinatra', function() {
-  console.log("Restarting Sinatra.")
   if (sinatraProc) {
+    console.log("Restarting Sinatra.")
     sinatraProc.on('exit', function(code) {
       startSinatra()
     })
     sinatraProc.kill()
+    sinatraProc = null
   }
 });
 
@@ -144,12 +145,13 @@ gulp.task('express', function() {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 gulp.task('restart-express', function() {
-  console.log("Restarting Express.")
   if (expressProc) {
+    console.log("Restarting Express.")
     expressProc.on('exit', function(code) {
       startExpress()
     })
     expressProc.kill()
+    expressProc = null
   }
 });
 
@@ -160,7 +162,7 @@ gulp.task('watch', function() {
   gulp.watch('app/scss/**/*.scss', ['sass', 'scss-lint']);
   gulp.watch('app/**/*.html', livereload.reload);
   gulp.watch('app/*.rb', ['restart-sinatra']);
-  gulp.watch('app/isomorphic.js', ['restart-express']);
+  gulp.watch(['app/isomorphic.js', 'app/js/*.js'], ['restart-express']);
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

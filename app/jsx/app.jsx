@@ -38,15 +38,23 @@ class App extends React.Component {
   }
 }
 
-ReactDOM.render((
-  <Router history={browserHistory}>
-    <Route path="/demo.html" component={App}>
-      <IndexRoute component={Home}/>
-      <Route path="/apples" component={Apples} />
-      <Route path="/oranges" component={Oranges} />
-      <Route path="/pears" component={Pears} />
-      <Route path="/unit/:unitID" component={UnitPage} />
-      <Route path="/item/:itemID" component={ItemPage} />
-    </Route>
-  </Router>
-), document.getElementById('main'))
+const routes = (
+  <Route path="/demo.html" component={App}>
+    <IndexRoute component={Home}/>
+    <Route path="/apples" component={Apples} />
+    <Route path="/oranges" component={Oranges} />
+    <Route path="/pears" component={Pears} />
+    <Route path="/unit/:unitID" component={UnitPage} />
+    <Route path="/item/:itemID" component={ItemPage} />
+  </Route>
+)
+
+if (!(typeof document === "undefined")) {
+  ReactDOM.render((
+    <Router history={browserHistory}>
+      {routes}
+    </Router>
+  ), document.getElementById('main'))
+}
+
+module.exports = routes
