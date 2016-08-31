@@ -12,6 +12,10 @@ function flexibleGetJSON(props, url, callback)
     console.log("Saving URL to fetch later")
     props.location.urlsToFetch.push(url)
   }
+  else if (typeof(props.location.urlsFetched) == "object") {
+    console.log("Using pre-fetched result:", props.location.urlsFetched[url])
+    callback(props.location.urlsFetched[url])
+  }
   else {
     console.log("Doing jquery getJSON")
     $.getJSON(url).done(callback)
@@ -22,6 +26,7 @@ class UnitPage extends React.Component
 {
   constructor(props) {
     super(props)
+    this.mounted = false
     this.state = { unitState: null }
     this.refresh(props)
   }
@@ -32,12 +37,21 @@ class UnitPage extends React.Component
     this.refresh(props)
   }
 
-  refresh(props) {
-    // TODO: display "wait" cursor while loading
-    flexibleGetJSON(props, "/api/unit/" + props.params.unitID, (data) => this.setState({ unitState: data }))
+  componentDidMount() {
+    this.mounted = true
   }
 
-  render() { 
+  refresh(props) {
+    // TODO: display "wait" cursor while loading
+    flexibleGetJSON(props, "/api/unit/" + props.params.unitID, (data) => {
+      if (this.mounted)
+        this.setState({ unitState: data })
+      else
+        this.state = { unitState: data }
+    })
+  }
+
+  render() {
     let s = this.state.unitState
     if (!s) return <div>Loading...</div>;
     return(
