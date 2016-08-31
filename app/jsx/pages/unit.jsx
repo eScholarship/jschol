@@ -22,37 +22,46 @@ function flexibleGetJSON(props, url, callback)
   }
 }
 
+function initialPageData(page, url)
+{
+  if (typeof(props.location.urlsToFetch) == "object") {
+    console.log("Saving URL to fetch later")
+    props.location.urlsToFetch.push(url)
+    return { pageData: null }
+  }
+  else if (typeof(props.location.urlsFetched) == "object") {
+    console.log("Using pre-fetched result:", props.location.urlsFetched[url])
+    return { pageData: props.location.urlsFetched[url] }
+  }
+  else {
+    console.log("Doing jquery getJSON")
+    $.getJSON(url).done((data) => {
+      page.setState({ pageData: data })
+    })
+  }
+}
+
 class UnitPage extends React.Component 
 {
   constructor(props) {
     super(props)
-    this.mounted = false
-    this.state = { unitState: null }
-    this.refresh(props)
+    this.state = initialPageData(this, pageDataURL(props))
+  }
+
+  pageDataURL(props) {
+    return "/api/unit/" + props.params.unitID
   }
 
   // This gets called when props change by switching to a new unit page. 
   // It is *not* called on first-time construction.
   componentWillReceiveProps(props) {
-    this.refresh(props)
-  }
-
-  componentDidMount() {
-    this.mounted = true
-  }
-
-  refresh(props) {
-    // TODO: display "wait" cursor while loading
-    flexibleGetJSON(props, "/api/unit/" + props.params.unitID, (data) => {
-      if (this.mounted)
-        this.setState({ unitState: data })
-      else
-        this.state = { unitState: data }
+    $.getJSON(pageDataURL(props)).done((data) => {
+      this.setState({ pageData: data })
     })
   }
 
   render() {
-    let s = this.state.unitState
+    let s = this.state.pageData
     if (!s) return <div>Loading...</div>;
     return(
       <div>
