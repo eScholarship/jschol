@@ -134,6 +134,10 @@ gulp.task('restart-sinatra', function() {
     sinatraProc.kill()
     sinatraProc = null
   }
+  else {
+    console.log("Starting Sinatra.")
+    startSinatra()
+  }
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

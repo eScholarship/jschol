@@ -73,53 +73,34 @@ end
 #
 # How do we run React on the server? We keep a little Node Express server running on a differnet
 # port than the main app, and when we need to load a page we feed it the initial data, it runs
-# the appropriate React templates, and returns us the HTML. See 
+# the appropriate React templates, and returns us the HTML.
 #
-# In this way, the user gets a speedy initial load, can use some of the site features without
+# In this way, the user gets a speedy initial load and can use some of the site features without
 # javascript, and crawlers have an easy time seeing everything the users see.
 ###################################################################################################
 
 ###################################################################################################
-def isoFetch(request)
+# The outer framework of every page is essentially the same, substituting in the intial page
+# data and initial elements from React.
+get %r{^/(?!api/).*} do  # matches every URL except /api/*
 
   # We need to grab the hostname from the URL. There's probably a better way to do this.
   request.url =~ %r{^https?://([^/:]+)(:\d+)?(.*)$} or fail
   host = $1
   remainder = $3
 
-  # Post the initial data to our little Node Express app, which will run it through React.
+  # Pass the full path and query string to our little Node Express app, which will run it through 
+  # ReactRouter and React.
   response = Net::HTTP.new(host, 4002).start {|http| http.request(Net::HTTP::Get.new(remainder)) }
   response.code == "200" or halt(500, "ISO fetch failed")
 
-  # Return the resulting HTML
-  return response.body
-end
-
-###################################################################################################
-# The outer framework of every page is essentially the same, with tiny variations.
-def genAppPage(request)
-
-  # Read in the template file.
+  # Read in the template file, and substitute the results from React/ReactRouter
   template = File.new("app/demo.html").read
-
-  # Do isomorphic substitution
-  return template.sub("<div id=\"main\"></div>", isoFetch(request))
+  return template.sub("<div id=\"main\"></div>", response.body)
 end
 
 ###################################################################################################
-# Unit landing page. After the slash is the unit_id.
-get "/unit/:unitID" do |unitID|
-  unit = Unit[unitID]
-  
-  # Initial data for the page consists of the unit's id, name, type, etc. plus lists of the unit's
-  # children and parents drawn from the unit_hier database table. Remember that "direct" links are
-  # direct parents and children. "Indirect" (which we don't use here) are for grandparents/ancestors,
-  # and grand-children/descendants.
-  items = UnitItem.filter(:unit_id => unitID, :is_direct => true)
-  genAppPage(request)
-end
-
-###################################################################################################
+# Unit page data.
 get "/api/unit/:unitID" do |unitID|
   # Initial data for the page consists of the unit's id, name, type, etc. plus lists of the unit's
   # children and parents drawn from the unit_hier database table. Remember that "direct" links are
@@ -140,13 +121,7 @@ get "/api/unit/:unitID" do |unitID|
 end
 
 ###################################################################################################
-# Unit landing page. After the slash is the unit_id.
-get "/item/:itemID" do |itemID|
-  genAppPage("Item page", request, { })
-end
-
-###################################################################################################
-# Item view page.
+# Item view page data.
 get "/api/item/:shortArk" do |shortArk|
   # Andy, hack here.
   content_type :json

@@ -11,8 +11,10 @@ class AppPage extends React.Component
       props.location.urlsToFetch.push(this.pageDataURL(props))
     else if (props.location.urlsFetched)
       this.state = { pageData: props.location.urlsFetched[this.pageDataURL(props)] }
-    else if (window.jscholApp_initialPageData)
+    else if (window.jscholApp_initialPageData) {
       this.state = { pageData: window.jscholApp_initialPageData }
+      delete window.jscholApp_initialPageData
+    }
     else
       this.fetchState(props)
   }
