@@ -80,19 +80,16 @@ end
 ###################################################################################################
 
 ###################################################################################################
-def isoFetch(request, pageName, initialData)
-  puts "FIXME: Skipping isoFetch for now."
-  return ""
+def isoFetch(request)
 
   # We need to grab the hostname from the URL. There's probably a better way to do this.
-  request.url =~ %r{^https?://([^/:]+)} or fail
+  request.url =~ %r{^https?://([^/:]+)(:\d+)?(.*)$} or fail
   host = $1
+  remainder = $3
 
   # Post the initial data to our little Node Express app, which will run it through React.
-  req = Net::HTTP::Post.new("/#{pageName}", initheader = {'Content-Type' =>'application/json'})
-  req.body = initialData.to_json
-  response = Net::HTTP.new(host, 4002).start {|http| http.request(req) }
-  response.code == "200" or fail
+  response = Net::HTTP.new(host, 4002).start {|http| http.request(Net::HTTP::Get.new(remainder)) }
+  response.code == "200" or halt(500, "ISO fetch failed")
 
   # Return the resulting HTML
   return response.body
@@ -100,17 +97,13 @@ end
 
 ###################################################################################################
 # The outer framework of every page is essentially the same, with tiny variations.
-def genAppPage(title, request, initialData)
-  # A bit of obtuse parsing to figure out the name of the page being requested.
-  root = request.path_info.gsub(%r{[^/]+}, '..').sub(%r{^/../..}, '../').sub(%r{/..}, '')
-  pageName = request.path_info.sub(%r{^/}, '').sub(%r{/.*$}, '')
+def genAppPage(request)
 
   # Read in the template file.
   template = File.new("app/demo.html").read
 
   # Do isomorphic substitution
-  return template.sub("<div id=\"main\"></div>",  
-                      "<div id=\"main\">#{isoFetch(request, pageName, initialData)}</div>")
+  return template.sub("<div id=\"main\"></div>", isoFetch(request))
 end
 
 ###################################################################################################
@@ -123,7 +116,7 @@ get "/unit/:unitID" do |unitID|
   # direct parents and children. "Indirect" (which we don't use here) are for grandparents/ancestors,
   # and grand-children/descendants.
   items = UnitItem.filter(:unit_id => unitID, :is_direct => true)
-  genAppPage("Unit landing page", request, { })
+  genAppPage(request)
 end
 
 ###################################################################################################

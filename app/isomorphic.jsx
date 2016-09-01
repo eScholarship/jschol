@@ -43,7 +43,9 @@ app.use((req, res) => {
             rc.props.location.urlsFetched = {}
             rc.props.location.urlsFetched[partialURL] = response
             renderedHTML = renderToString(rc)
-            res.send(renderedHTML)
+            res.send(
+              "<script>window.jscholApp_initialPageData = " + body + ";</script>\n" +
+              "<div id=\"main\">" + renderedHTML + "</div>")
           }
           else
             throw "HTTP Error " + ajaxResp.statusCode + ": " + body

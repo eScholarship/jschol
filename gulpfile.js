@@ -27,7 +27,7 @@ var expressProc // Sub-app for isomophic javascript in Express (Node/Javascript)
 gulp.task('bundle-libs', function() {
   var b = watchify(browserify({
     entries: ['package.json'],
-    debug: false,
+    debug: true,  // generate source maps
     cache: {}, packageCache: {}, fullPaths: true
   }))
 
@@ -52,7 +52,7 @@ gulp.task('bundle-libs', function() {
 gulp.task('bundle-app', function() {
   var b = watchify(browserify({
     entries: ['app/jsx/app.jsx'],
-    debug: false,
+    debug: true,  // generate source maps
     cache: {}, packageCache: {}, fullPaths: true
   }))
 

@@ -1,40 +1,10 @@
 
 import React from 'react'
 import { Link } from 'react-router'
-import $ from 'jquery'
 
+import AppPage from './appPage.jsx'
 import Component1 from '../components/component1.jsx'
 import Component2 from '../components/component2.jsx'
-
-class AppPage extends React.Component
-{
-  constructor(props) {
-    super(props)
-    this.state = { pageData: null }
-    if (props.location.urlsToFetch)
-      props.location.urlsToFetch.push(this.pageDataURL(props))
-    else if (props.location.urlsFetched)
-      this.state = { pageData: props.location.urlsFetched[this.pageDataURL(props)] }
-    else
-      refresh(props)
-  }
-
-  refresh(props) {
-    $.getJSON(pageDataURL(props)).done((data) => {
-      this.setState({ pageData: data })
-    })
-  }
-
-  // This gets called when props change by switching to a new unit page. 
-  // It is *not* called on first-time construction.
-  componentWillReceiveProps(props) {
-    refresh(props)
-  }
-
-  pageDataURL(props) {
-    throw "Derived class must override pageDataURL method"
-  }
-}
 
 class UnitPage extends AppPage 
 {
@@ -83,4 +53,4 @@ class UnitPage extends AppPage
   }
 }
 
-module.exports = UnitPage;
+module.exports = UnitPage
