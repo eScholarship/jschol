@@ -10,6 +10,8 @@ import routes                    from './jsx/app.jsx';
 const app = express();
 
 app.use((req, res) => {
+  var refURL = req.protocol + '://' + req.get('host') + req.originalUrl
+  console.log("ISO fetch:", refURL)
   match({ routes: routes, location: req.url }, (err, redirectLocation, renderProps) => {
     if (err) { 
       console.error(err);
@@ -20,15 +22,13 @@ app.use((req, res) => {
     var urls = []
     rc.props.location.urlsToFetch = urls
     var renderedHTML = renderToString(rc)
-    console.log("Resulting urls to fetch:", rc.props.location.urlsToFetch)
     if (urls.length == 0)
       res.send(renderedHTML)
     else if (urls.length == 1)
     {
       var partialURL = urls[0]
-      var refURL = req.protocol + '://' + req.get('host') + req.originalUrl
       var finalURL = url.resolve(refURL, partialURL).replace(":4002", ":4001")
-      console.log("finalURL:", finalURL)
+      console.log("...integrating data from:", finalURL)
 
       http.get(finalURL, function(ajaxResp) {
         var body = '';
@@ -38,7 +38,7 @@ app.use((req, res) => {
         ajaxResp.on('end', function() {
           if (ajaxResp.statusCode == 200) {
             var response = JSON.parse(body)
-            console.log("Got a response:", response)
+            //console.log("Got a response:", response)
             delete rc.props.location.urlsToFetch
             rc.props.location.urlsFetched = {}
             rc.props.location.urlsFetched[partialURL] = response

@@ -6,58 +6,40 @@ import $ from 'jquery'
 import Component1 from '../components/component1.jsx'
 import Component2 from '../components/component2.jsx'
 
-function flexibleGetJSON(props, url, callback)
-{
-  if (typeof(props.location.urlsToFetch) == "object") {
-    console.log("Saving URL to fetch later")
-    props.location.urlsToFetch.push(url)
-  }
-  else if (typeof(props.location.urlsFetched) == "object") {
-    console.log("Using pre-fetched result:", props.location.urlsFetched[url])
-    callback(props.location.urlsFetched[url])
-  }
-  else {
-    console.log("Doing jquery getJSON")
-    $.getJSON(url).done(callback)
-  }
-}
-
-function initialPageData(page, url)
-{
-  if (typeof(props.location.urlsToFetch) == "object") {
-    console.log("Saving URL to fetch later")
-    props.location.urlsToFetch.push(url)
-    return { pageData: null }
-  }
-  else if (typeof(props.location.urlsFetched) == "object") {
-    console.log("Using pre-fetched result:", props.location.urlsFetched[url])
-    return { pageData: props.location.urlsFetched[url] }
-  }
-  else {
-    console.log("Doing jquery getJSON")
-    $.getJSON(url).done((data) => {
-      page.setState({ pageData: data })
-    })
-  }
-}
-
-class UnitPage extends React.Component 
+class AppPage extends React.Component
 {
   constructor(props) {
     super(props)
-    this.state = initialPageData(this, pageDataURL(props))
+    this.state = { pageData: null }
+    if (props.location.urlsToFetch)
+      props.location.urlsToFetch.push(this.pageDataURL(props))
+    else if (props.location.urlsFetched)
+      this.state = { pageData: props.location.urlsFetched[this.pageDataURL(props)] }
+    else
+      refresh(props)
   }
 
-  pageDataURL(props) {
-    return "/api/unit/" + props.params.unitID
+  refresh(props) {
+    $.getJSON(pageDataURL(props)).done((data) => {
+      this.setState({ pageData: data })
+    })
   }
 
   // This gets called when props change by switching to a new unit page. 
   // It is *not* called on first-time construction.
   componentWillReceiveProps(props) {
-    $.getJSON(pageDataURL(props)).done((data) => {
-      this.setState({ pageData: data })
-    })
+    refresh(props)
+  }
+
+  pageDataURL(props) {
+    throw "Derived class must override pageDataURL method"
+  }
+}
+
+class UnitPage extends AppPage 
+{
+  pageDataURL(props) {
+    return "/api/unit/" + props.params.unitID
   }
 
   render() {
@@ -100,9 +82,5 @@ class UnitPage extends React.Component
     )
   }
 }
-
-//UnitPage.contextTypes = {
-//    router: React.PropTypes.func.isRequired
-//};
 
 module.exports = UnitPage;
