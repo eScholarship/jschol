@@ -84,6 +84,8 @@ end
 # data and initial elements from React.
 get %r{^/(?!api/).*} do  # matches every URL except /api/*
 
+  puts "Page fetch: #{request.url}"
+  
   # We need to grab the hostname from the URL. There's probably a better way to do this.
   request.url =~ %r{^https?://([^/:]+)(:\d+)?(.*)$} or fail
   host = $1

@@ -25,7 +25,7 @@ class AppPage extends React.Component
     })
   }
 
-  // This gets called when props change by switching to a new unit page. 
+  // This gets called when props change by switching to a new page.
   // It is *not* called on first-time construction.
   componentWillReceiveProps(props) {
     this.fetchState(props)
