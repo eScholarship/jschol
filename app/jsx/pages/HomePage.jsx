@@ -9,7 +9,7 @@ class Home extends React.Component {
     <div>
       <HeaderComp />
       <GlobalNavComp />
-      <h2 style={{"margin-top": "10em", "margin-bottom": "10em"}}>Home page content here</h2>
+      <h2 style={{ marginTop: "5em", marginBottom: "5em" }}>Home page content here</h2>
       <FooterComp />
     </div>
 }

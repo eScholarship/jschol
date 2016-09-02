@@ -12,16 +12,16 @@ class UnitPage extends PageBase
     return "/api/unit/" + props.params.unitID
   }
 
-  render = ()=> {
+  render() { return(
     <div>
       <HeaderComp />
       <GlobalNavComp />
-      { this.state.pageData ? renderGuts(this.state.pageData) : <div>Loading...</div> }
+      { this.state.pageData ? this.renderData(this.state.pageData) : <div>Loading...</div> }
       <FooterComp />
     </div>
-  }
+  )}
 
-  renderGuts = (data)=> {
+  renderData(data) { return(
     <div>
       <h2>Unit {data.id}</h2>
       <div>
@@ -55,7 +55,7 @@ class UnitPage extends PageBase
           </div>
       }
     </div>
-  }
+  )}
 }
 
 module.exports = UnitPage

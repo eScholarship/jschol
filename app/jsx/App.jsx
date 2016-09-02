@@ -8,12 +8,21 @@ import { Router, Route, IndexRoute, Link, browserHistory } from 'react-router'
 import HomePage from './pages/HomePage.jsx'
 import UnitPage from './pages/UnitPage.jsx';
 import ItemPage from './pages/ItemPage.jsx';
+import SearchPage from './pages/SearchPage.jsx';
+
+class App extends React.Component {
+  render = ()=>
+    <div>
+      {this.props.children}
+    </div>
+}
 
 const routes = (
-  <Route path="/app.html" component={HomePage}>
+  <Route path="/" component={App}>
     <IndexRoute component={HomePage} />
     <Route path="/unit/:unitID" component={UnitPage} />
     <Route path="/item/:itemID" component={ItemPage} />
+    <Route path="/search" component={SearchPage} />
   </Route>
 )
 
