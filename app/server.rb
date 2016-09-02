@@ -6,17 +6,14 @@ require 'bundler/setup'
 
 ###################################################################################################
 # External gems we need
-require 'cgi'
 require 'digest'
 require 'json'
 require 'net/http'
 require 'pp'
 require 'sequel'
 require 'sinatra'
-require 'sinatra/reloader' if development?
-require 'sinatra/cookies'
-require 'unindent'
 require 'yaml'
+
 
 # Sinatra configuration
 configure do
@@ -24,7 +21,12 @@ configure do
   set :server, 'thin'
   # We like to use the 'app' folder for all our static resources
   set :public_folder, Proc.new { root }
+
+  set :show_exceptions, false
 end
+
+# For general app development, set DO_ISO to false. For real deployment, set to true
+DO_ISO = false
 
 # Flush stdout after each write, which makes debugging easier.
 STDOUT.sync = true
@@ -85,20 +87,25 @@ end
 get %r{^/(?!api/).*} do  # matches every URL except /api/*
 
   puts "Page fetch: #{request.url}"
-  
-  # We need to grab the hostname from the URL. There's probably a better way to do this.
-  request.url =~ %r{^https?://([^/:]+)(:\d+)?(.*)$} or fail
-  host = $1
-  remainder = $3
 
-  # Pass the full path and query string to our little Node Express app, which will run it through 
-  # ReactRouter and React.
-  response = Net::HTTP.new(host, 4002).start {|http| http.request(Net::HTTP::Get.new(remainder)) }
-  response.code == "200" or halt(500, "ISO fetch failed")
+  if DO_ISO
+    # We need to grab the hostname from the URL. There's probably a better way to do this.
+    request.url =~ %r{^https?://([^/:]+)(:\d+)?(.*)$} or fail
+    host = $1
+    remainder = $3
 
-  # Read in the template file, and substitute the results from React/ReactRouter
-  template = File.new("app/demo.html").read
-  return template.sub("<div id=\"main\"></div>", response.body)
+    # Pass the full path and query string to our little Node Express app, which will run it through 
+    # ReactRouter and React.
+    response = Net::HTTP.new(host, 4002).start {|http| http.request(Net::HTTP::Get.new(remainder)) }
+    response.code == "200" or halt(500, "ISO fetch failed")
+
+    # Read in the template file, and substitute the results from React/ReactRouter
+    template = File.new("app/app.html").read
+    return template.sub("<div id=\"main\"></div>", response.body)
+  else
+    # Development mode - skip iso
+    return File.new("app/app.html").read
+  end
 end
 
 ###################################################################################################
@@ -134,4 +141,12 @@ get "/api/item/:shortArk" do |shortArk|
     :rights => item.rights,
     :pub_date => item.pub_date
   }.to_json
+end
+
+###################################################################################################
+# Search page data
+get "/api/search/" do
+  # Amy, hack here
+  content_type :json
+  return {}.to_json
 end
