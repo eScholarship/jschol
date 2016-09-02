@@ -5,7 +5,7 @@ import http                      from 'http'
 import React                     from 'react';
 import { renderToString }        from 'react-dom/server'
 import { Router, RouterContext, match }  from 'react-router';
-import routes                    from './jsx/app.jsx';
+import routes                    from './jsx/App.jsx';
 
 const app = express();
 
@@ -23,7 +23,7 @@ app.use((req, res) => {
     rc.props.location.urlsToFetch = urls
     var renderedHTML = renderToString(rc)
     if (urls.length == 0)
-      res.send(renderedHTML)
+      res.send("<div id=\"main\">" + renderedHTML + "</div>")
     else if (urls.length == 1)
     {
       var partialURL = urls[0]

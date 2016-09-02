@@ -51,7 +51,7 @@ gulp.task('bundle-libs', function() {
 // Transformations to build app-bundle.js
 gulp.task('bundle-app', function() {
   var b = watchify(browserify({
-    entries: ['app/jsx/app.jsx'],
+    entries: ['app/jsx/App.jsx'],
     debug: true,  // generate source maps
     cache: {}, packageCache: {}, fullPaths: true
   }))
@@ -90,7 +90,7 @@ function getNPMPackageIds() {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Run the dev process 'gulp':
 gulp.task('default', function (callback) {
-  runSequence(['bundle-libs', 'bundle-app', 'watch', 'sinatra'],  // FIXME: add 'express' when we do iso
+  runSequence(['bundle-libs', 'bundle-app', 'sass', 'watch', 'sinatra'],  // FIXME: add 'express' when we do iso
     callback
   )
 })

@@ -1,0 +1,97 @@
+// ##### Footer Component ##### //
+
+.c-footer {
+	display: flex;
+	flex-flow: column nowrap;
+	align-items: center;
+	padding: $spacing-md;
+	background-color: $color-light-black;
+
+	@include bp(screen3) {
+    flex-flow: row nowrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: $spacing-md $spacing-md 5px;
+  }
+
+}
+
+.c-footer__logologin {
+	display: flex;
+	align-self: stretch;
+	margin: 0 0 $spacing-md;
+
+	@include bp(screen3) {
+    flex-flow: column nowrap;
+    align-self: flex-start;
+    margin: 0 $spacing-md 0 0;
+  }
+
+}
+
+.c-footer__logo {
+	flex: 1 0 auto;
+	color: $color-white;
+
+	@include bp(screen3) {
+    margin: 0 0 $spacing-md;
+  }
+
+	img {
+		width: 150px;
+	}
+
+}
+
+.c-footer__login {
+	color: $color-white;
+	font-size: 1.1em;
+	font-weight: bold;
+}
+
+.c-footer__nav {
+	flex: 0 0 auto;
+	margin: 0 0 10px;
+	columns: 2;
+
+	@include bp(screen3) {
+    margin: 0;
+  }
+
+	a {
+		display: block;
+		margin: 0 0 15px;
+		color: $color-white;
+		text-decoration: none;
+	}
+
+}
+
+.c-footer__social-icons {
+	margin: 0 10px 10px 0;
+
+	a {
+		display: inline-block;
+		margin: 0 10px 10px;
+	}
+
+	img {
+		width: 40px;
+	}
+
+}
+
+.c-footer__copyright {
+	color: $color-light-gray;
+	text-align: center;
+
+	@include bp(screen3) {
+    text-align: left;
+  }
+
+	a {
+		color: $color-white;
+		text-decoration: none;
+	}
+
+}

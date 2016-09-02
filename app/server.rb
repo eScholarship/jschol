@@ -85,7 +85,7 @@ end
 get %r{^/(?!api/).*} do  # matches every URL except /api/*
 
   puts "Page fetch: #{request.url}"
-  
+
   # We need to grab the hostname from the URL. There's probably a better way to do this.
   request.url =~ %r{^https?://([^/:]+)(:\d+)?(.*)$} or fail
   host = $1
@@ -97,7 +97,7 @@ get %r{^/(?!api/).*} do  # matches every URL except /api/*
   response.code == "200" or halt(500, "ISO fetch failed")
 
   # Read in the template file, and substitute the results from React/ReactRouter
-  template = File.new("app/demo.html").read
+  template = File.new("app/app.html").read
   return template.sub("<div id=\"main\"></div>", response.body)
 end
 

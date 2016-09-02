@@ -4,11 +4,9 @@
   display: flex;
   flex-flow: row nowrap;
   justify-content: space-between;
-  margin-top: -10px;
-  margin-bottom: 10px;
-  padding-top: 10px;
-  padding-bottom: 10px;
-  background-color: lighten($design-light-gray-color, 20%);
+  margin: (-$spacing-body) (-$spacing-body) $spacing-body;
+  padding: $spacing-body;
+  background-color: $color-light-gray;
   overflow: hidden;
 
   h1,
@@ -21,7 +19,7 @@
 
   h1 {
   	margin: 0 1em 0 0;
-    color: $design-dark-blue-color;
+    color: $color-dark-blue;
 
   	a {
   		color: inherit;

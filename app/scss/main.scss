@@ -8,15 +8,18 @@
 
 // ***** Vendor Libraries ***** //
 
-// [to go here]
+@import '../bower_components/normalize-scss/_normalize.scss';
 
 // ***** Objects ***** //
 
-// [to go here]
+@import 'columnbox';
+@import 'search';
 
 // ***** Components ***** //
 
-// [to go here]
+@import 'footer';
+@import 'globalnav';
+@import 'header';
 
 // ***** Themes ***** //
 
@@ -24,11 +27,13 @@
 
 // ***** Global Styles ***** //
 
-@import 'ui-library';
 @import 'fonts';
+@import 'resets';
+@import 'ui-library';
 
 body {
 	margin: 0 auto;
 	padding: 10px;
 	font-family: 'KievitWeb';
+	overflow-x: hidden;
 }

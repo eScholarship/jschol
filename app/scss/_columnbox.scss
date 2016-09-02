@@ -1,0 +1,35 @@
+// ##### Box Object ##### //
+
+%o-columnbox {
+	background: $color-white;
+	box-shadow: 0 50px 15px -15px lighten($color-dark-gray, 30%) inset, 5px 5px 15px lighten($color-dark-gray, 30%);
+}
+
+.o-columnbox-main {
+	@extend %o-columnbox;
+	padding: 0 20px 10px;
+	// box-shadow: 0 50px 15px -15px lighten($color-dark-gray, 30%) inset;
+}
+
+.o-columnbox-sidebar {
+	@extend %o-columnbox;
+	padding: 0 10px 10px;
+}
+
+%o-columnbox__heading {
+	padding: 5px 10px;
+	background: $color-teal;
+	color: $color-white;
+	font-size: 1.3em;
+	font-weight: normal;
+}
+
+.o-columnbox-main__heading {
+	@extend %o-columnbox__heading;
+	margin: 0 -20px 20px;
+}
+
+.o-columnbox-sidebar__heading {
+	@extend %o-columnbox__heading;
+	margin: 0 -10px 20px;
+}
