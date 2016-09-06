@@ -39,7 +39,7 @@
     "gulp-util": "^3.0.7",
     "gulp-w3cjs": "^1.2.0",
     "gulp-wait": "0.0.2",
-    "history": "^3.0.0",
+    "history": "^2.1.2",
     "jshint": "^2.9.2",
     "lodash": "^4.15.0",
     "path": "^0.12.7",
