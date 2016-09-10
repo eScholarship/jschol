@@ -34,6 +34,7 @@ STDOUT.sync = true
 ###################################################################################################
 # Use the Sequel gem to get object-relational mapping, connection pooling, thread safety, etc.
 DB = Sequel.connect(YAML.load_file("config/database.yaml"))
+require_relative 'searchApi'
 
 ###################################################################################################
 # Model classes for easy interaction with the database.
@@ -147,6 +148,7 @@ end
 # Search page data
 get "/api/search/" do
   # Amy, hack here
+  pp params
   content_type :json
-  return {}.to_json
+  return search(params).to_json
 end
