@@ -126,6 +126,6 @@ def search(params)
   ['peer_reviewed', 'content_types', 'rights', 'units', 'disciplines'].each do |field_type|
     if params.key?(field_type) then facets[field_type] = facet_secondary_query(params.clone, field_type) end
   end
-  
-  return searchResults
+
+  return {'searchResults' => searchResults, 'facets' => facets}
 end
