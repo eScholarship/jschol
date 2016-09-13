@@ -2,17 +2,18 @@
 import React from 'react'
 import $ from 'jquery'
 import { Link } from 'react-router'
-import { Form } from 'react-router-form'
+import Form from 'react-router-form'
 
 import PageBase from './PageBase.jsx'
 import { HeaderComp, GlobalNavComp, FooterComp } from '../components/AllComponents.jsx'
 
 class FacetItem extends React.Component {
   render() {
+    var label = this.props.data.displayName ? this.props.data.displayName : this.props.data.value
     return (
       <div className="facetItem">
-      <label>{this.props.value}</label>
-      <input id={this.props.value} value={this.props.value} type="checkbox"/>
+      <label>{label}</label>
+      <input id={this.props.value} value={this.props.value} type="checkbox"/> ({this.props.data.count})
       </div>
     )
   }
@@ -20,14 +21,16 @@ class FacetItem extends React.Component {
 
 class FacetFieldset extends React.Component {
   render() {
-    var facetItemNodes = this.props.data.map(function(facet) {
-      return (
-        <FacetItem key={facet.value} value={facet.value} count={facet.count} />
-      )
-    });
+    var facetItemNodes = this.props.data.map(function(facetType) {
+      return function(facet) {
+        return (
+          <FacetItem key={facet.value} data={facet} facetType={facetType} />
+        )
+      }
+    }(this.props.key));
 
     return (
-      <fieldset className={this.props.label}>
+      <fieldset className={this.props.key}>
         <legend>{this.props.label}</legend>
         <div className="facetItems">
           {facetItemNodes}
@@ -39,17 +42,16 @@ class FacetFieldset extends React.Component {
 
 class FacetForm extends React.Component {
   render() {
-    var facetForm = []
-    $.each(this.props.data, function(facetForm) {
-      return function(fieldType, value) {
-        facetForm.push(<FacetFieldset key={fieldType} data={value.buckets} label={fieldType} />);
-      }
-    }(facetForm));
+    var facetForm = this.props.data.map(function(fieldset) {
+      return (
+        <FacetFieldset key={fieldset.fieldName} label={fieldset.display} data={fieldset.facets} />
+      )
+    });
 
     return (
-      <div>
+			<Form to='/search' method="GET">
         {facetForm}
-      </div>
+      </Form>
     )
   }
 }

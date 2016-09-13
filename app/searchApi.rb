@@ -52,11 +52,13 @@ def aws_encode(params)
     'q' => params['q'] ? params['q'] : 'test',
     'size' => params['size'] ? params['size'] : 10,
     
-    'facet.peer_reviewed' => "{sort: 'count', size: 2}",
-    'facet.content_types' => "{sort: 'count', size: 100}",
-    'facet.rights' => "{sort: 'count', size: 100}",
-    'facet.units' => "{sort: 'count', size: 100}",
+    'facet.type_of_work' => "{buckets: ['article', 'book', 'theses', 'multimedia']}",
+    'facet.peer_reviewed' => "{buckets: [1]}",
+    'facet.supp_file_types' => "{buckets: ['video', 'audio', 'images', 'zip', 'other files']}",
+    'facet.campuses' => "{buckets: ['ucb', 'ucd', 'uci', 'ucla', 'ucm', 'ucr', 'ucsd', 'ucsf', 'ucsb', 'ucsc', 'ucop', 'lbl', 'anr']}",
+    'facet.journals' => "{sort: 'count', size: 100}",
     'facet.disciplines' => "{sort: 'count', size: 100}",
+    'facet.rights' => "{sort: 'count', size: 100}"
   }
   
   if fq != "" then aws_params['fq'] = fq end
@@ -70,6 +72,13 @@ def facet_secondary_query(params, field_type)
   url.query = aws_encode(params)
   response = JSON.parse(Net::HTTP.get(url))
   return response['facets'][field_type]
+end
+
+def journal_facet_display(journals)
+  for journalFacet in journals
+    journal = Unit[journalFacet['value']]
+    journalFacet['displayName'] = journal.name
+  end
 end
 
 def search(params)
@@ -122,10 +131,21 @@ def search(params)
     end
   end
   
-  facets = response['facets']
+  facetHash = response['facets']
   ['peer_reviewed', 'content_types', 'rights', 'units', 'disciplines'].each do |field_type|
-    if params.key?(field_type) then facets[field_type] = facet_secondary_query(params.clone, field_type) end
+    if params.key?(field_type) then facetHash[field_type] = facet_secondary_query(params.clone, field_type) end
   end
 
+  # put facets into an array to maintain a specific order, apply facet-specific augmentation like including display values (see journal)
+  facets = [
+    {'display' => 'Type of Work', 'fieldName' => 'type_of_work', 'facets' => facetHash['type_of_work']['buckets']},
+    {'display' => 'Peer Review', 'fieldName' => 'peer_reviewed', 'facets' => facetHash['peer_reviewed']['buckets']},
+    {'display' => 'Included Media', 'fieldName' => 'supp_file_types', 'facets' => facetHash['supp_file_types']['buckets']},
+    {'display' => 'Campus', 'fieldName' => 'campuses', 'facets' => facetHash['campuses']['buckets']},
+    {'display' => 'Journal', 'fieldName' => 'journals', 'facets' => journal_facet_display(facetHash['journals']['buckets'])},
+    {'display' => 'Discipline', 'fieldName' => 'disciplines', 'facets' => facetHash['disciplines']['buckets']},
+    {'display' => 'Reuse License', 'fieldName' => 'rights', 'facets' => facetHash['rights']['buckets']}
+  ]
+  
   return {'searchResults' => searchResults, 'facets' => facets}
 end
