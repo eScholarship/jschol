@@ -13,6 +13,7 @@ require 'pp'
 require 'sequel'
 require 'sinatra'
 require 'yaml'
+require 'cgi'
 
 
 # Sinatra configuration
@@ -148,7 +149,6 @@ end
 # Search page data
 get "/api/search/" do
   # Amy, hack here
-  pp params
   content_type :json
-  return search(params).to_json
+  return search(CGI::parse(request.query_string)).to_json
 end
