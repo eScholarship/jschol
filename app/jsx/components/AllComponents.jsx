@@ -1,5 +1,5 @@
 import HeaderComp from "./HeaderComp.jsx"
-import GlobalNavComp from "./GlobalNavComp.jsx"
+import NavComp from "./NavComp.jsx"
 import FooterComp from "./FooterComp.jsx"
 
-export { HeaderComp, GlobalNavComp, FooterComp }
+export { HeaderComp, NavComp, FooterComp }
