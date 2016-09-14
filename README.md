@@ -51,14 +51,16 @@ Steps to get the app running
 
 2. Start proxy connection to database through bastion: `ssh -C -N -L3306:rds-pub-eschol-dev.cmcguhglinoa.us-west-2.rds.amazonaws.com:3306 -p 18822 cdl-aws-bastion.cdlib.org`
 
-3. Configure database connection parameters: `cp config/database.yaml.TEMPLATE config/database.yaml`, then fill in the values in `database.yaml`:
+3. Start proxy connection to index through bastion: `ssh -C -N -L8888:search-eschol5-test-u5sqhz5emqzdh4bfij7uxsazny.us-west-2.cloudsearch.amazonaws.com:80 -p 18822 cdl-aws-bastion.cdlib.org`
+
+4. Configure database connection parameters: `cp config/database.yaml.TEMPLATE config/database.yaml`, then fill in the values in `database.yaml`:
   * host: 127.0.0.1
   * port: 3306
   * database: eschol_test
   * username: SECRET
   * password: SECRET
 
-4. Run `./gulp`. Be on the lookout for errors.
+5. Run `./gulp`. Be on the lookout for errors.
 
-5. Browse to `http://localhost:4001/unit/root`, or `http://localhost:4001/item/08s7w2fd`, or `http://localhost:4001/search`
+6. Browse to `http://localhost:4001/unit/root`, or `http://localhost:4001/item/08s7w2fd`, or `http://localhost:4001/search`
 

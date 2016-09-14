@@ -23,7 +23,7 @@ class UnitPage extends PageBase
     <div>
       {/* ToDo: find parent campus */}
       <HeaderComp level="unit"
-                  campus="" }
+                  campus=""
                   unit_id={data.id} />
       <NavComp level="unit"
                campus="" />

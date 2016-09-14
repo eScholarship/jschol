@@ -8,12 +8,20 @@ import PageBase from './PageBase.jsx'
 import { HeaderComp, NavComp, FooterComp } from '../components/AllComponents.jsx'
 
 class FacetItem extends React.Component {
+  // TODO: a bit of a hack - was unsure how to manually submit the Form component,
+  // calling $(#facetForm).submit does things the normal way (full page request)
+  // because it's submitting the DOM <form> element, not the react Form component instance
+  // this submits the Form component instance by manually clicking on the submit button
+  handleChange() {
+    $('#facet-form-submit').click();
+  }
+
   render() {
     var label = this.props.data.displayName ? this.props.data.displayName : this.props.data.value
     return (
       <div className="facetItem">
-      <label>{label}</label>
-      <input id={this.props.value} value={this.props.value} type="checkbox"/> ({this.props.data.count})
+        <label htmlFor={this.props.value}>{label}</label>
+        <input name={this.props.facetType} value={this.props.data.value} type="checkbox" onChange={this.handleChange} /> ({this.props.data.count})
       </div>
     )
   }
@@ -21,17 +29,17 @@ class FacetItem extends React.Component {
 
 class FacetFieldset extends React.Component {
   render() {
-    var facetItemNodes = this.props.data.map(function(facetType) {
+    var facetItemNodes = this.props.data.facets.map(function(facetType) {
       return function(facet) {
         return (
           <FacetItem key={facet.value} data={facet} facetType={facetType} />
         )
       }
-    }(this.props.key));
+    }(this.props.data.fieldName));
 
     return (
-      <fieldset className={this.props.key}>
-        <legend>{this.props.label}</legend>
+      <fieldset className={this.props.data.fieldName}>
+        <legend>{this.props.data.display}</legend>
         <div className="facetItems">
           {facetItemNodes}
         </div>
@@ -40,17 +48,32 @@ class FacetFieldset extends React.Component {
   }
 }
 
+class CurrentSearchTerms extends React.Component {
+  render() {
+    var searchString = 'Your search: "' + this.props.query.q + '"'
+    return (
+      <div className="currentSearchTerms">
+        <h3>{searchString}</h3>
+        <input type="hidden" name="q" value={this.props.query.q} />
+        <p>Results: {this.props.count} works</p>
+      </div>
+    )
+  }
+}
+
 class FacetForm extends React.Component {
   render() {
     var facetForm = this.props.data.map(function(fieldset) {
       return (
-        <FacetFieldset key={fieldset.fieldName} label={fieldset.display} data={fieldset.facets} />
+        <FacetFieldset key={fieldset.fieldName} data={fieldset} />
       )
     });
 
     return (
-			<Form to='/search' method="GET">
+			<Form id="facetForm" to='/search' method="GET">
+        <CurrentSearchTerms query={this.props.query} count={this.props.count} />
         {facetForm}
+				<button type="submit" id="facet-form-submit">Search</button>
       </Form>
     )
   }
@@ -58,11 +81,9 @@ class FacetForm extends React.Component {
 
 class SearchResultsSidebar extends React.Component {
   render() {
-    var divStyle;
     return (
       <div className="searchResultsSidebar" style={{width: "25%", float: "left"}}>
-        {this.props.query}
-        <FacetForm data={this.props.facets} />
+        <FacetForm data={this.props.facets} query={this.props.query} count={this.props.count} />
       </div>
     )
   }
@@ -124,8 +145,8 @@ class SearchPage extends PageBase
     return(
       <div>
         <HeaderComp />
-        <NavComp />
-        <SearchResultsSidebar facets={data.facets} query={this.props.location.search} />
+        <GlobalNavComp />
+        <SearchResultsSidebar facets={data.facets} query={this.props.location.query} count={data.count} />
         <SearchResultsSet results={data.searchResults} />
       </div>
   )}

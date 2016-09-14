@@ -43,25 +43,41 @@ end
 AWS_URL = URI('http://localhost:8888/2013-01-01/search')
 
 def aws_encode(params)
-  fq = ""
-  ['peer_reviewed', 'content_types', 'rights', 'units', 'disciplines'].each do |field_type|
-    if params[field_type] then fq = fq + "#{field_type}: '#{params[field_type]}'" end
+  fq = []
+  ['type_of_work', 'peer_reviewed', 'supp_file_types', 'campuses', 'journals', 'disciplines', 'rights'].each do |field_type|
+    if params[field_type].length > 0
+      filters = params[field_type].map { |filter| "#{field_type}: '#{filter}'" }
+      filters = filters.join(" ")
+      if params[field_type].length > 1 then filters = "(or #{filters})" end
+      fq.push(filters)
+    end
   end
 
+  if fq.length > 1
+    fq = fq.join(" ")
+    fq = "(and #{fq})"
+  elsif fq.length == 1
+    fq = fq.join(" ")
+  end
+
+  # per message from Lisa 9/13/2016 regarding campus facets:
+  #   - lbnl should be lbl (unsure if it should be LBL in the display too?)
+  #   - ANR (Agriculture and Natural Resources) should be added to this list
+
   aws_params = {
-    'q' => params['q'] ? params['q'] : 'test',
+    'q' => params['q'] ? params['q'].join(" ") : 'test',
     'size' => params['size'] ? params['size'] : 10,
     
     'facet.type_of_work' => "{buckets: ['article', 'book', 'theses', 'multimedia']}",
     'facet.peer_reviewed' => "{buckets: [1]}",
     'facet.supp_file_types' => "{buckets: ['video', 'audio', 'images', 'zip', 'other files']}",
-    'facet.campuses' => "{buckets: ['ucb', 'ucd', 'uci', 'ucla', 'ucm', 'ucr', 'ucsd', 'ucsf', 'ucsb', 'ucsc', 'ucop', 'lbl', 'anr']}",
+    'facet.campuses' => "{buckets: ['ucb', 'ucd', 'uci', 'ucla', 'ucm', 'ucr', 'ucsd', 'ucsf', 'ucsb', 'ucsc', 'ucop', 'lbnl']}",
     'facet.journals' => "{sort: 'count', size: 100}",
     'facet.disciplines' => "{sort: 'count', size: 100}",
     'facet.rights' => "{sort: 'count', size: 100}"
   }
   
-  if fq != "" then aws_params['fq'] = fq end
+  if fq.length > 0 then aws_params['fq'] = fq end
   
   aws_params = URI::encode_www_form(aws_params)
 end
@@ -74,15 +90,14 @@ def facet_secondary_query(params, field_type)
   return response['facets'][field_type]
 end
 
-def journal_facet_display(journals)
-  for journalFacet in journals
-    journal = Unit[journalFacet['value']]
-    journalFacet['displayName'] = journal.name
+def get_unit_display_name(unitFacets)
+  for unitFacet in unitFacets
+    unit = Unit[unitFacet['value']]
+    unitFacet['displayName'] = unit.name
   end
 end
 
 def search(params)
-  pp params
   url = AWS_URL.clone
   url.query = aws_encode(params)
   response = JSON.parse(Net::HTTP.get(url))
@@ -106,7 +121,7 @@ def search(params)
         itemHash[:abstract] = itemAttrs['abstract']
       
         itemAuthors = ItemAuthors.where(item_id: indexItem['id']).order(:ordering).all
-        itemHash[:authors] = itemAuthors.map { |author| author.attrs }
+        itemHash[:authors] = itemAuthors.map { |author| JSON.parse(author.attrs) }
       
         #if journal, section will be non-nil, follow section link to issue (get volume), follow to unit table
         #item link to the unit should be the same as section link to the unit      
@@ -132,7 +147,7 @@ def search(params)
   end
   
   facetHash = response['facets']
-  ['peer_reviewed', 'content_types', 'rights', 'units', 'disciplines'].each do |field_type|
+  ['type_of_work', 'peer_reviewed', 'supp_file_types', 'campuses', 'journals', 'disciplines', 'rights'].each do |field_type|
     if params.key?(field_type) then facetHash[field_type] = facet_secondary_query(params.clone, field_type) end
   end
 
@@ -141,11 +156,11 @@ def search(params)
     {'display' => 'Type of Work', 'fieldName' => 'type_of_work', 'facets' => facetHash['type_of_work']['buckets']},
     {'display' => 'Peer Review', 'fieldName' => 'peer_reviewed', 'facets' => facetHash['peer_reviewed']['buckets']},
     {'display' => 'Included Media', 'fieldName' => 'supp_file_types', 'facets' => facetHash['supp_file_types']['buckets']},
-    {'display' => 'Campus', 'fieldName' => 'campuses', 'facets' => facetHash['campuses']['buckets']},
-    {'display' => 'Journal', 'fieldName' => 'journals', 'facets' => journal_facet_display(facetHash['journals']['buckets'])},
+    {'display' => 'Campus', 'fieldName' => 'campuses', 'facets' => get_unit_display_name(facetHash['campuses']['buckets'])},
+    {'display' => 'Journal', 'fieldName' => 'journals', 'facets' => get_unit_display_name(facetHash['journals']['buckets'])},
     {'display' => 'Discipline', 'fieldName' => 'disciplines', 'facets' => facetHash['disciplines']['buckets']},
     {'display' => 'Reuse License', 'fieldName' => 'rights', 'facets' => facetHash['rights']['buckets']}
   ]
   
-  return {'searchResults' => searchResults, 'facets' => facets}
+  return {'searchResults' => searchResults, 'facets' => facets, 'count' => response['hits']['found']}
 end
