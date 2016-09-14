@@ -13,6 +13,7 @@ require 'pp'
 require 'sequel'
 require 'sinatra'
 require 'yaml'
+require 'cgi'
 
 
 # Sinatra configuration
@@ -34,6 +35,7 @@ STDOUT.sync = true
 ###################################################################################################
 # Use the Sequel gem to get object-relational mapping, connection pooling, thread safety, etc.
 DB = Sequel.connect(YAML.load_file("config/database.yaml"))
+require_relative 'searchApi'
 
 ###################################################################################################
 # Model classes for easy interaction with the database.
@@ -148,5 +150,5 @@ end
 get "/api/search/" do
   # Amy, hack here
   content_type :json
-  return {}.to_json
+  return search(CGI::parse(request.query_string)).to_json
 end
