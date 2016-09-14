@@ -145,7 +145,7 @@ class SearchPage extends PageBase
     return(
       <div>
         <HeaderComp />
-        <GlobalNavComp />
+        <NavComp />
         <SearchResultsSidebar facets={data.facets} query={this.props.location.query} count={data.count} />
         <SearchResultsSet results={data.searchResults} />
       </div>
