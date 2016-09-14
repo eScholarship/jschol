@@ -3,6 +3,7 @@
 # Use bundler to keep dependencies local
 require 'rubygems'
 require 'bundler/setup'
+require_relative 'breadcrumb'
 
 ###################################################################################################
 # External gems we need
@@ -119,6 +120,7 @@ get "/api/unit/:unitID" do |unitID|
   content_type :json
   unit = Unit[unitID]
   items = UnitItem.filter(:unit_id => unitID, :is_direct => true)
+  b = BreadcrumbGenerator.new(unitID, 'unit')
   return {
     :id => unitID,
     :name => unit.name,
@@ -126,7 +128,8 @@ get "/api/unit/:unitID" do |unitID|
     :parents => UnitHier.filter(:unit_id => unitID, :is_direct => true).map { |hier| hier.ancestor_unit },
     :children => UnitHier.filter(:ancestor_unit => unitID, :is_direct => true).map { |hier| hier.unit_id },
     :nItems => items.count,
-    :items => items.limit(10).map { |pair| pair.item_id }
+    :items => items.limit(10).map { |pair| pair.item_id },
+    :breadcrumb => b.generate 
   }.to_json
 end
 
@@ -136,11 +139,13 @@ get "/api/item/:shortArk" do |shortArk|
   # Andy, hack here.
   content_type :json
   item = Item["qt"+shortArk]
+  b = BreadcrumbGenerator.new(shortArk, 'item')
   return { 
     :id => shortArk,
     :title => item.title,
     :rights => item.rights,
-    :pub_date => item.pub_date
+    :pub_date => item.pub_date,
+    :breadcrumb => b.generate 
   }.to_json
 end
 

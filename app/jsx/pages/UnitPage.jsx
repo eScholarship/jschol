@@ -3,7 +3,7 @@ import React from 'react'
 import { Link } from 'react-router'
 
 import PageBase from './PageBase.jsx'
-import { HeaderComp, GlobalNavComp, FooterComp } from '../components/AllComponents.jsx'
+import { HeaderComp, NavComp, FooterComp } from '../components/AllComponents.jsx'
 
 class UnitPage extends PageBase
 {
@@ -14,8 +14,6 @@ class UnitPage extends PageBase
 
   render() { return(
     <div>
-      <HeaderComp />
-      <GlobalNavComp />
       { this.state.pageData ? this.renderData(this.state.pageData) : <div>Loading...</div> }
       <FooterComp />
     </div>
@@ -23,6 +21,13 @@ class UnitPage extends PageBase
 
   renderData(data) { return(
     <div>
+      {/* ToDo: find parent campus */}
+      <HeaderComp level="unit"
+                  campus="" }
+                  unit_id={data.id} />
+      <NavComp level="unit"
+               campus="" />
+      <p dangerouslySetInnerHTML={{__html: data.breadcrumb}}></p>
       <h2>Unit {data.id}</h2>
       <div>
         Info:
