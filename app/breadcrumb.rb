@@ -3,7 +3,6 @@ class BreadcrumbGenerator
 
   def initialize(thisPageName, type)
     @thisPageName = thisPageName
-    pp(@thisPageName)
     @type = type
   end
 
