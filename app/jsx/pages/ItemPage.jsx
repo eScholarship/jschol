@@ -24,10 +24,10 @@ class ItemPage extends PageBase
          <p dangerouslySetInnerHTML={{__html: data.breadcrumb}}></p>
         <h2 style={{ marginTop: "5em", marginBottom: "5em" }}>Item page content here</h2>
       </div>
-    )} else {return(
+    )} else { return(
       <div>
-        {this.state.headerComp}
-        {this.state.navComp}
+        {this.renderHeader()}
+        {this.renderNav()}
         <h2 style={{ marginTop: "5em", marginBottom: "5em" }}>Error, item not found.</h2>
       </div>
     )}

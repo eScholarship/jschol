@@ -142,14 +142,21 @@ class SearchPage extends PageBase
   )}
 
   renderData(data) {
-    return(
+    if (data) { return(
       <div>
         <HeaderComp />
         <NavComp />
         <SearchResultsSidebar facets={data.facets} query={this.props.location.query} count={data.count} />
         <SearchResultsSet results={data.searchResults} />
       </div>
-  )}
+    )} else { return(
+      <div>
+        {this.renderHeader()}
+        {this.renderNav()}
+        <h2 style={{ marginTop: "5em", marginBottom: "5em" }}>Error retreiving search results.</h2>
+      </div>
+    )}
+  }
 }
 
 module.exports = SearchPage;

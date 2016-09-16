@@ -9,8 +9,6 @@ class PageBase extends React.Component
     super(props)
     this.state = {
       pageData: null,
-      headerComp: this.renderHeader(),
-      navComp: this.renderNav()
     }
 
     // Phase 1: Initial server-side load. We just save the URL, and iso will later fetch it and re-run React
