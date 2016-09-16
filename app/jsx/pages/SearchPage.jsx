@@ -153,7 +153,7 @@ class SearchPage extends PageBase
       <div>
         {this.renderHeader()}
         {this.renderNav()}
-        <h2 style={{ marginTop: "5em", marginBottom: "5em" }}>Error retreiving search results.</h2>
+        <h2 style={{ marginTop: "5em", marginBottom: "5em" }}>Error retrieving search results.</h2>
       </div>
     )}
   }
