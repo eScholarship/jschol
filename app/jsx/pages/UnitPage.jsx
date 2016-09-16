@@ -19,7 +19,8 @@ class UnitPage extends PageBase
     </div>
   )}
 
-  renderData(data) { return(
+  renderData(data) {
+    if (data) { return(
     <div>
       {/* ToDo: find parent campus */}
       <HeaderComp level="unit"
@@ -60,7 +61,14 @@ class UnitPage extends PageBase
           </div>
       }
     </div>
-  )}
+    )} else {return(
+      <div>
+        {this.state.headerComp}
+        {this.state.navComp}
+        <h2 style={{ marginTop: "5em", marginBottom: "5em" }}>Error, unit not found.</h2>
+      </div>
+    )}
+  }
 }
 
 module.exports = UnitPage

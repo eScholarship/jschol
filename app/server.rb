@@ -141,13 +141,14 @@ get "/api/item/:shortArk" do |shortArk|
   content_type :json
   item = Item["qt"+shortArk]
   b = BreadcrumbGenerator.new(shortArk, 'item')
-  return { 
-    :id => shortArk,
-    :title => item.title,
-    :rights => item.rights,
-    :pub_date => item.pub_date,
-    :breadcrumb => b.generate 
-  }.to_json
+  h = {:id => shortArk}
+  if !item.nil?
+    h[:title] = item.title 
+    h[:rights] = item.rights
+    h[:pub_date] = item.pub_date
+    h[:breadcrumb] = b.generate 
+  end
+  return h.to_json
 end
 
 ###################################################################################################
