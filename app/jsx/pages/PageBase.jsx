@@ -31,6 +31,8 @@ class PageBase extends React.Component
   fetchState(props) {
     $.getJSON(this.pageDataURL(props)).done((data) => {
       this.setState({ pageData: data })
+    }).fail((jqxhr, textStatus, err)=> {
+      this.setState({ error: textStatus + ", " + err })
     })
   }
 
@@ -46,16 +48,39 @@ class PageBase extends React.Component
     throw "Derived class must override pageDataURL method"
   }
 
-  render() { return(
+  render() {
+    if (this.state.error) { 
+      return (
+        <div>
+          {this.renderError()}
+          <FooterComp />
+        </div>
+      )
+    } else {
+      return (
+      <div>
+        { this.state.pageData ? this.renderData(this.state.pageData) : this.renderLoading() }
+        <FooterComp />
+      </div>
+      )
+    }
+  }
+
+  renderLoading() { return(
     <div>
-      { this.state.pageData ? this.renderData(this.state.pageData) : this.renderData() }
-      <FooterComp />
+      <HeaderComp/>
+      <NavComp/>
+      <h2 style={{ marginTop: "5em", marginBottom: "5em" }}>Loading...</h2>
     </div>
   )}
 
-  renderHeader() { return(<HeaderComp/>) }
-
-  renderNav() { return(<NavComp/>) }
+  renderError() { return (
+    <div>
+      <HeaderComp/>
+      <NavComp/>
+      <h2 style={{ marginTop: "5em", marginBottom: "5em" }}>{this.state.error}</h2>
+    </div>
+  )}
 
 }
 

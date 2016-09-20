@@ -120,35 +120,41 @@ get "/api/unit/:unitID" do |unitID|
   # and grand-children/descendants.
   content_type :json
   unit = Unit[unitID]
-  items = UnitItem.filter(:unit_id => unitID, :is_direct => true)
-  b = BreadcrumbGenerator.new(unitID, 'unit')
-  return {
-    :id => unitID,
-    :name => unit.name,
-    :type => unit.type,
-    :parents => UnitHier.filter(:unit_id => unitID, :is_direct => true).map { |hier| hier.ancestor_unit },
-    :children => UnitHier.filter(:ancestor_unit => unitID, :is_direct => true).map { |hier| hier.unit_id },
-    :nItems => items.count,
-    :items => items.limit(10).map { |pair| pair.item_id },
-    :breadcrumb => b.generate 
-  }.to_json
+  if !unit.nil?
+    items = UnitItem.filter(:unit_id => unitID, :is_direct => true)
+    b = BreadcrumbGenerator.new(unitID, 'unit')
+    return {
+      :id => unitID,
+      :name => unit.name,
+      :type => unit.type,
+      :parents => UnitHier.filter(:unit_id => unitID, :is_direct => true).map { |hier| hier.ancestor_unit },
+      :children => UnitHier.filter(:ancestor_unit => unitID, :is_direct => true).map { |hier| hier.unit_id },
+      :nItems => items.count,
+      :items => items.limit(10).map { |pair| pair.item_id },
+      :breadcrumb => b.generate 
+    }.to_json
+  else
+    halt 404, "Unit not found"
+  end
 end
 
 ###################################################################################################
 # Item view page data.
 get "/api/item/:shortArk" do |shortArk|
-  # Andy, hack here.
   content_type :json
   item = Item["qt"+shortArk]
-  b = BreadcrumbGenerator.new(shortArk, 'item')
-  h = {:id => shortArk}
   if !item.nil?
-    h[:title] = item.title 
-    h[:rights] = item.rights
-    h[:pub_date] = item.pub_date
-    h[:breadcrumb] = b.generate 
+    b = BreadcrumbGenerator.new(shortArk, 'item')
+    return {
+      :id => shortArk,
+      :title => item.title,
+      :rights => item.rights,
+      :pub_date => item.pub_date,
+      :breadcrumb => b.generate
+    }.to_json
+  else 
+    halt 404, "Item not found"
   end
-  return h.to_json
 end
 
 ###################################################################################################

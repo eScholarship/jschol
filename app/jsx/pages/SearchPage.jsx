@@ -5,7 +5,7 @@ import { Link } from 'react-router'
 import Form from 'react-router-form'
 
 import PageBase from './PageBase.jsx'
-import { HeaderComp, NavComp, FooterComp } from '../components/AllComponents.jsx'
+import { HeaderComp, NavComp } from '../components/AllComponents.jsx'
 
 class FacetItem extends React.Component {
   // TODO: a bit of a hack - was unsure how to manually submit the Form component,
@@ -134,29 +134,15 @@ class SearchPage extends PageBase
     return "/api/search/" + props.location.search  // plus whatever props.params.YourUrlParam, etc.
   }
 
-  render() { return(
+  renderData(data) { return(
     <div>
-      { this.state.pageData ? this.renderData(this.state.pageData) : <div>Loading...</div> }
-      <FooterComp />
+      <HeaderComp />
+      <NavComp />
+      <SearchResultsSidebar facets={data.facets} query={this.props.location.query} count={data.count} />
+      <SearchResultsSet results={data.searchResults} />
     </div>
   )}
 
-  renderData(data) {
-    if (data) { return(
-      <div>
-        <HeaderComp />
-        <NavComp />
-        <SearchResultsSidebar facets={data.facets} query={this.props.location.query} count={data.count} />
-        <SearchResultsSet results={data.searchResults} />
-      </div>
-    )} else { return(
-      <div>
-        {this.renderHeader()}
-        {this.renderNav()}
-        <h2 style={{ marginTop: "5em", marginBottom: "5em" }}>Error retrieving search results.</h2>
-      </div>
-    )}
-  }
 }
 
 module.exports = SearchPage;
