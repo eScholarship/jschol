@@ -1,4 +1,4 @@
-// ##### Gulp Toolkit for the eScholarship app #####
+// ##### Gulp Toolkit for the jschol app #####
 
 const _ = require('lodash');
 const del = require('del');
@@ -17,7 +17,7 @@ const babelify = require('babelify');
 const livereload = require('gulp-livereload')
 const spawn = require('child_process').spawn
  
-// Processes we will start up
+// Process control for Sinatra and Express
 var startingUp = true
 var libsBuilt = false
 var appBuilt = false
@@ -118,6 +118,7 @@ gulp.task('sass', function() {
 })
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+// Support functions for starting and restarting Sinatra (server for the main Ruby app)
 function startSinatra(afterFunc)
 {
   // The '-o 0.0.0.0' below is required for Sinatra to bind to ipv4 localhost, instead of ipv6 localhost
@@ -145,7 +146,6 @@ function restartSinatra(afterFunc)
   }
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
 gulp.task('restart-sinatra', function() {
   restartSinatra(function() {
     livereload.reload()
@@ -153,6 +153,7 @@ gulp.task('restart-sinatra', function() {
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+// Support functions for starting and restarting Express, which runs the isomorphic-js sub-app.
 function startExpress(afterFunc)
 {
   expressProc = spawn('node', ['app/isomorphic.js'], { stdio: 'inherit' })
@@ -163,7 +164,6 @@ function startExpress(afterFunc)
     spawn('ruby', ['tools/waitForServer.rb', 'http://localhost:4002/check', '20']).on('exit', afterFunc)
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
 function restartExpress(afterFunc) {
   if (expressProc) {
     console.log("Restarting Express.")
@@ -179,7 +179,6 @@ function restartExpress(afterFunc) {
   }
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
 gulp.task('restart-express', function() {
   restartExpress(function() {
     console.log("express started - doing livereload")
@@ -188,6 +187,7 @@ gulp.task('restart-express', function() {
 })
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+// Fire up Express, and then Sinatra, and when all done, do a LiveReload.
 function startExpressAndSinatra()
 {
   startingUp = false
@@ -203,7 +203,7 @@ function startExpressAndSinatra()
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-// Watch sass, html, and js and reload browser if any changes:
+// Watch sass, html, and js and reload browser if any changes
 gulp.task('watch', function() {
   gulp.watch('app/scss/**/*.scss', ['sass', 'scss-lint']);
   gulp.watch('app/**/*.html', livereload.reload);
@@ -221,5 +221,5 @@ gulp.task('scss-lint', function() {
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-// Run the dev process 'gulp':
+// Build everything in order, then start the servers and watch for incremental changes.
 gulp.task('default',  ['bundle-libs', 'bundle-app', 'sass', 'watch'])
