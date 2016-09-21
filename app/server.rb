@@ -85,6 +85,12 @@ end
 ###################################################################################################
 
 ###################################################################################################
+# Simple up-ness check
+get "/check" do
+  return "ok"
+end
+
+###################################################################################################
 # The outer framework of every page is essentially the same, substituting in the intial page
 # data and initial elements from React.
 get %r{^/(?!api/).*} do  # matches every URL except /api/*
