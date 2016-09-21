@@ -30,7 +30,7 @@ MAX_BATCH_SIZE = 4500*1024
 
 # Max amount of full text we'll send with any single doc. AWS limit is 1 meg, so let's
 # go a little short of that so we've got room for plenty of metadata.
-MAX_TEXT_SIZE  = 950*1024
+MAX_TEXT_SIZE  = 900*1024
 
 # The main database we're inserting data into
 DB = Sequel.connect(YAML.load_file("config/database.yaml"))
@@ -563,19 +563,17 @@ def processBatch(batch)
   req.body = batch[:idxData]
 
   # Try for 10 minutes max. CloudSearch seems to go awol fairly often.
-  tries = 20
-  while true
-    puts "Posting to CloudSearch API."
+  puts "Posting to CloudSearch API."
+  startTime = Time.now
+  begin
     response = Net::HTTP.new(host, 80).start {|http| http.request(req) }
-    puts "response: #{response}"
-    break if response.code == "200"
-    # This seems to be fairly frequent with us.
-    if (res.is_a?(Net::HTTPGatewayTimeOut) || res.is_a?(Net::ReadTimeout)) && (tries -= 1) > 0
-      puts "Will retry in 30 sec (#{tries} retries remaining), response was: #{response}: #{response.body}"
-      sleep 30
-    else
-      fail "Post to CloudSearch failed: #{response}: #{response.body}"
+    response.code == "200" or raise Exception.new("#{response}: #{response.body}")
+  rescue Exception => res
+    if res.to_s =~ /GatewayTimeOut|ReadTimeout|RequestTimeOut/ && (Time.now - startTime < 10*60)
+      puts "Will retry in 30 sec, response was: #{res}"
+      sleep 30; puts "Retrying."; retry
     end
+    raise
   end
 
   # Now that we've successfully added the documents to AWS CloudSearch, insert records into
