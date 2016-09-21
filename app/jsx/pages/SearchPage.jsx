@@ -5,7 +5,7 @@ import { Link } from 'react-router'
 import Form from 'react-router-form'
 
 import PageBase from './PageBase.jsx'
-import { HeaderComp, GlobalNavComp, FooterComp } from '../components/AllComponents.jsx'
+import { HeaderComp, NavComp, FooterComp } from '../components/AllComponents.jsx'
 
 class FacetItem extends React.Component {
   // TODO: a bit of a hack - was unsure how to manually submit the Form component,
@@ -136,8 +136,6 @@ class SearchPage extends PageBase
 
   render() { return(
     <div>
-      <HeaderComp />
-      <GlobalNavComp />
       { this.state.pageData ? this.renderData(this.state.pageData) : <div>Loading...</div> }
       <FooterComp />
     </div>
@@ -146,6 +144,8 @@ class SearchPage extends PageBase
   renderData(data) {
     return(
       <div>
+        <HeaderComp />
+        <NavComp />
         <SearchResultsSidebar facets={data.facets} query={this.props.location.query} count={data.count} />
         <SearchResultsSet results={data.searchResults} />
       </div>
