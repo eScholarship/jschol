@@ -129,6 +129,7 @@ get "/api/unit/:unitID" do |unitID|
   if !unit.nil?
     items = UnitItem.filter(:unit_id => unitID, :is_direct => true)
     b = BreadcrumbGenerator.new(unitID, 'unit')
+    campusID, campusName = b.getCampusInfo
     return {
       :id => unitID,
       :name => unit.name,
@@ -137,7 +138,9 @@ get "/api/unit/:unitID" do |unitID|
       :children => UnitHier.filter(:ancestor_unit => unitID, :is_direct => true).map { |hier| hier.unit_id },
       :nItems => items.count,
       :items => items.limit(10).map { |pair| pair.item_id },
-      :breadcrumb => b.generate 
+      :campusID => campusID,
+      :campusName => campusName,
+      :breadcrumb => b.generateCrumb 
     }.to_json
   else
     halt 404, "Unit not found"
@@ -151,12 +154,15 @@ get "/api/item/:shortArk" do |shortArk|
   item = Item["qt"+shortArk]
   if !item.nil?
     b = BreadcrumbGenerator.new(shortArk, 'item')
+    campusID, campusName = b.getCampusInfo
     return {
       :id => shortArk,
       :title => item.title,
       :rights => item.rights,
       :pub_date => item.pub_date,
-      :breadcrumb => b.generate
+      :campusID => campusID,
+      :campusName => campusName,
+      :breadcrumb => b.generateCrumb
     }.to_json
   else 
     halt 404, "Item not found"

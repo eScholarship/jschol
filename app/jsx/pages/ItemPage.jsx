@@ -39,12 +39,12 @@ class ItemPage extends PageBase
     let p = data 
     return(
       <div>
-         {/* ToDo: find parent campus and unit */}
-        <HeaderComp level="item"
-                    campus=""
-                    unit_id="" />
-        <NavComp level="item"
-                 unit_id = "" />
+        <HeaderComp level="unit"
+                    campusID={data.campusID}
+                    campusName={data.campusName}
+                    unit_id={data.id} />
+        <NavComp level="unit"
+                 campusID={data.campusID} />
         <p dangerouslySetInnerHTML={{__html: data.breadcrumb}}></p>
         <div style={rowStyle}>
           <div style={leftStyle}>

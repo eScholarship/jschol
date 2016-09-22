@@ -4,23 +4,36 @@ class BreadcrumbGenerator
   def initialize(thisPageName, type)
     @thisPageName = thisPageName
     @type = type
+    @unitID = (type == "unit") ? thisPageName : getItemsUnit(thisPageName) 
+  end
+
+  # Returns an array containing campus ID, name, or empty array if root
+  def getCampusInfo
+    unitID = @unitID
+    if unitID == 'root' 
+      return [] 
+    else
+      until isCampus?(unitID) 
+        unitID = UnitHier.filter(:unit_id => unitID, :is_direct => true).order(:ordering).map(:ancestor_unit)[0]
+      end        
+    end
+    unit = Unit[unitID]
+    return [unitID, unit.name]
   end
 
   # 1) Generate an array of nodes containing name/url pairs
   # If it's unit level, find parent using unit_hier table, otherwise,
   # for item level page look for the parent unit using the unit_item table
   # 2) Feed nodes into breadcrumb class
-  def generate
+  def generateCrumb
     nodes = []
 
-    if @type == "unit"
-      unitID = @thisPageName
-    else # type = item 
+    if @type == "item"
       # ToDo: Journal/Non-journal displays differently
       nodes << ["Volume/Issue placeholder"]
-      itemID = 'qt' + @thisPageName
-      unitID = UnitItem.filter(:item_id => itemID, :is_direct => true).map(:unit_id)[0]
     end
+
+    unitID = @unitID
 
     until unitID == "root"
       unit = Unit[unitID]
@@ -34,6 +47,17 @@ class BreadcrumbGenerator
     nodes.reverse_each {|n| breadcrumbs.add n[0], n[1]}
     breadcrumbs.render(format: "Inline")
   end
+
+  def getItemsUnit(pageName)
+    itemID = 'qt' + pageName
+    return UnitItem.filter(:item_id => itemID, :is_direct => true).order(:ordering_of_units).map(:unit_id)[0]
+  end
+
+  def isCampus?(unitID)
+    return Unit.filter(:id => unitID).map(:type)[0] == "campus"
+  end
+
+  private :getItemsUnit, :isCampus?
 
 end
 

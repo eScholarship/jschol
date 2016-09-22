@@ -25,7 +25,7 @@ class HeaderComp extends React.Component {
             <button className="c-header__deposit-button">Deposit/Publish</button>
           </div>
         </div>
-        { this.props.level && this.renderLocalHeader(this.props.level) }
+        { this.props.level && this.renderLocalHeader() }
       </div>
     )
   }
@@ -36,18 +36,18 @@ class HeaderComp extends React.Component {
         <h2>Unit Banner Placeholder</h2>
         <div className="o-input__droplist">
           <select name="" id="">
-            <option value="">UC Berkeley</option>
-            <option value="">UC Davis</option>
-            <option value="">UC Irvine</option>
-            <option value="">UCLA</option>
-            <option value="">UC Merced</option>
-            <option value="">UC Riverside</option>
-            <option value="">UC San Diego</option>
-            <option value="">UC San Francisco</option>
-            <option value="">UC Santa Barbara</option>
-            <option value="">UC Santa Cruz</option>
-            <option value="">UC Office of the President</option>
-            <option value="">UC Press</option>
+            <option value="ucb" selected={"ucb" == this.props.campusID}>UC Berkeley</option>
+            <option value="ucd" selected={"ucd" == this.props.campusID}>UC Davis</option>
+            <option value="uci" selected={"uci" == this.props.campusID}>UC Irvine</option>
+            <option value="ucla" selected={"ucla" == this.props.campusID}>UCLA</option>
+            <option value="ucm" selected={"ucm" == this.props.campusID}>UC Merced</option>
+            <option value="ucr" selected={"ucr" == this.props.campusID}>UC Riverside</option>
+            <option value="ucsd" selected={"ucsd" == this.props.campusID}>UC San Diego</option>
+            <option value="ucsf" selected={"ucsf" == this.props.campusID}>UC San Francisco</option>
+            <option value="ucsb" selected={"ucsb" == this.props.campusID}>UC Santa Barbara</option>
+            <option value="ucsc" selected={"ucsc" == this.props.campusID}>UC Santa Cruz</option>
+            <option value="ucop" selected={"ucop" == this.props.campusID}>UC Office of the President</option>
+            <option value="ucpress" selected={"ucpress" == this.props.campusID}>UC Press</option>
           </select>   Publications in eScholarship:   16,780<br/>
         </div>
       </div>

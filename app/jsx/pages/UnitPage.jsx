@@ -14,12 +14,12 @@ class UnitPage extends PageBase
 
   renderData(data) { return(
     <div>
-      {/* ToDo: find parent campus */}
       <HeaderComp level="unit"
-                  campus=""
+                  campusID={data.campusID}
+                  campusName={data.campusName}
                   unit_id={data.id} />
       <NavComp level="unit"
-               campus="" />
+               campusID={data.campusID} />
       <p dangerouslySetInnerHTML={{__html: data.breadcrumb}}></p>
       <h2>Unit {data.id}</h2>
       <div>
