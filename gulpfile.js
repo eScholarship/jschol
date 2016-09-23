@@ -53,11 +53,14 @@ gulp.task('bundle-libs', function() {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Transformations to build app-bundle.js
 gulp.task('bundle-app', function() {
+  // NOTE: transforms must go on this first part, not in the bundle() function. Otherwise they
+  // get applied multiple times in a row, and the build takes longer and longer.
   var b = watchify(browserify({
     entries: ['app/jsx/App.jsx'],
     debug: true,  // generate source maps
-    cache: {}, packageCache: {}, fullPaths: true
+    cache: {}, packageCache: {}
   }))
+  .transform('babelify')  // note: presets are taken from .babelrc file
 
   function bundle() {
     gutil.log("Bundling app.")
@@ -66,7 +69,6 @@ gulp.task('bundle-app', function() {
     // This bundle is for the app, and excludes all package.json dependencies
     getNPMPackageIds().forEach(function (id) { b.external(id) });
     return b
-      .transform('babelify')  // note: presets are taken from .babelrc file
       .bundle()
       .on('error', gutil.log.bind(gutil, 'Bundling error'))
       .pipe(source('app/js/app-bundle.js'))
@@ -87,7 +89,7 @@ function checkAllBundlesReady() {
     startExpressAndSinatra()
   }
   else {
-    console.log("not starting up, so doing livereload")
+    // Not starting up, so do a livereload
     livereload.reload()
   }
 }
