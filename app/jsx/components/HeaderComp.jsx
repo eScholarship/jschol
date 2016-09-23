@@ -8,6 +8,7 @@ class HeaderComp extends React.Component {
     super(props)
     this.state = {searchActive: false}
   }
+
   render() {
     return (
       <div>
@@ -25,30 +26,31 @@ class HeaderComp extends React.Component {
             <button className="c-header__deposit-button">Deposit/Publish</button>
           </div>
         </div>
-        { this.props.level && this.renderLocalHeader() }
+        { this.props.level && this.props.unit_id != 'root' && this.renderLocalHeader() }
       </div>
     )
   }
 
   renderLocalHeader() {
+    // onChange={this.handleCampusChange}
     return (
       <div>
         <h2>Unit Banner Placeholder</h2>
         <div className="o-input__droplist">
-          <select name="" id="">
-            <option value="lbnl" selected={"lbnl" == this.props.campusID}>Lawrence Berkeley National Laboratory</option>
-            <option value="ucb" selected={"ucb" == this.props.campusID}>UC Berkeley</option>
-            <option value="ucd" selected={"ucd" == this.props.campusID}>UC Davis</option>
-            <option value="uci" selected={"uci" == this.props.campusID}>UC Irvine</option>
-            <option value="ucla" selected={"ucla" == this.props.campusID}>UCLA</option>
-            <option value="ucm" selected={"ucm" == this.props.campusID}>UC Merced</option>
-            <option value="ucr" selected={"ucr" == this.props.campusID}>UC Riverside</option>
-            <option value="ucsd" selected={"ucsd" == this.props.campusID}>UC San Diego</option>
-            <option value="ucsf" selected={"ucsf" == this.props.campusID}>UC San Francisco</option>
-            <option value="ucsb" selected={"ucsb" == this.props.campusID}>UC Santa Barbara</option>
-            <option value="ucsc" selected={"ucsc" == this.props.campusID}>UC Santa Cruz</option>
-            <option value="ucop" selected={"ucop" == this.props.campusID}>UC Office of the President</option>
-            <option value="ucpress" selected={"ucpress" == this.props.campusID}>UC Press</option>
+          <select name="" id="" value={this.props.campusID}>
+            <option value="lbnl">Lawrence Berkeley National Laboratory</option>
+            <option value="ucb">UC Berkeley</option>
+            <option value="ucd">UC Davis</option>
+            <option value="uci">UC Irvine</option>
+            <option value="ucla">UCLA</option>
+            <option value="ucm">UC Merced</option>
+            <option value="ucr">UC Riverside</option>
+            <option value="ucsd">UC San Diego</option>
+            <option value="ucsf">UC San Francisco</option>
+            <option value="ucsb">UC Santa Barbara</option>
+            <option value="ucsc">UC Santa Cruz</option>
+            <option value="ucop">UC Office of the President</option>
+            <option value="ucpress">UC Press</option>
           </select>   Publications in eScholarship:   16,780<br/>
         </div>
       </div>

@@ -13,7 +13,6 @@ require 'net/http'
 require 'pp'
 require 'sequel'
 require 'sinatra'
-set :app_file, __FILE__
 require 'yaml'
 require 'cgi'
 
@@ -152,14 +151,16 @@ end
 # Item view page data.
 get "/api/item/:shortArk" do |shortArk|
   content_type :json
-  item = Item["qt"+shortArk]
+  id = "qt"+shortArk
+  item = Item[id]
   if !item.nil?
     begin
       body = {
         :id => shortArk,
         :title => item.title,
         :rights => item.rights,
-        :pub_date => item.pub_date
+        :pub_date => item.pub_date,
+        :attrs => JSON.parse(Item.filter(:id => id).map(:attrs)[0])
       }
       return body.merge(getHeaderElements(BreadcrumbGenerator.new(shortArk, 'item'))).to_json
     rescue Exception => e

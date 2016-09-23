@@ -45,7 +45,7 @@ class UnitPage extends PageBase
       </div>
       { data.items.length==0 ? null :
           <div>
-             Items 1-{Math.min(10, data.nItems)} of {data.nItems}:
+            Items 1-{Math.min(10, data.nItems)} of {data.nItems}:
             <ul>
               { data.items.map((item_id) => 
                 <li key={item_id}><Link to={"/item/"+item_id.replace(/^qt/, "")}>{item_id}</Link></li>) }

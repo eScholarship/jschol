@@ -52,6 +52,7 @@ class BreadcrumbGenerator
     itemID = 'qt' + pageName
     unitID = UnitItem.filter(:item_id => itemID, :is_direct => true).order(:ordering_of_units).map(:unit_id)[0]
     if !unitID
+      pp("No parent Unit for this item ")
       raise "No Unit for this item " + itemID
     else 
       return unitID
