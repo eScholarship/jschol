@@ -7,7 +7,7 @@ class BreadcrumbGenerator
     @unitID = (type == "unit") ? thisPageName : getItemsUnit(thisPageName) 
   end
 
-  # Returns an array containing campus ID, name, or empty array if root
+  # Returns an array containing topmost item under root ID and name, or empty array if root
   def getCampusInfo
     unitID = @unitID
     if unitID == 'root' 
@@ -50,11 +50,19 @@ class BreadcrumbGenerator
 
   def getItemsUnit(pageName)
     itemID = 'qt' + pageName
-    return UnitItem.filter(:item_id => itemID, :is_direct => true).order(:ordering_of_units).map(:unit_id)[0]
+    unitID = UnitItem.filter(:item_id => itemID, :is_direct => true).order(:ordering_of_units).map(:unit_id)[0]
+    if !unitID
+      raise "No Unit for this item " + itemID
+    else 
+      return unitID
+    end
   end
 
+  # Is this topmost item under root?  Technically can be campus OR oru (i.e. 'lbnl')
   def isCampus?(unitID)
-    return Unit.filter(:id => unitID).map(:type)[0] == "campus"
+    parents = UnitHier.filter(:unit_id => unitID, :is_direct => true).map { |hier| hier.ancestor_unit }
+    r = parents ? parents[0] == 'root' : false
+    return r
   end
 
   private :getItemsUnit, :isCampus?

@@ -36,6 +36,7 @@ class HeaderComp extends React.Component {
         <h2>Unit Banner Placeholder</h2>
         <div className="o-input__droplist">
           <select name="" id="">
+            <option value="lbnl" selected={"lbnl" == this.props.campusID}>Lawrence Berkeley National Laboratory</option>
             <option value="ucb" selected={"ucb" == this.props.campusID}>UC Berkeley</option>
             <option value="ucd" selected={"ucd" == this.props.campusID}>UC Davis</option>
             <option value="uci" selected={"uci" == this.props.campusID}>UC Irvine</option>
