@@ -23,18 +23,21 @@ require 'sequel'
 require 'time'
 require 'yaml'
 
-# Max size (in bytes, I think) if a batch to send to AWS CloudSearch.
+# Max size (in bytes, I think) of a batch to send to AWS CloudSearch.
 # According to the docs the absolute limit is 5 megs, so let's back off a 
 # little bit from that and say 4.5 megs.
 MAX_BATCH_SIZE = 4500*1024
 
 # Max amount of full text we'll send with any single doc. AWS limit is 1 meg, so let's
 # go a little short of that so we've got room for plenty of metadata.
-MAX_TEXT_SIZE  = 900*1024
+MAX_TEXT_SIZE  = 950*1024
 
 # The main database we're inserting data into
 DB = Sequel.connect(YAML.load_file("config/database.yaml"))
-#DB.logger = Logger.new($stdout)  # enable this to print out every SQL statement executed (for debugging)
+
+# Log SQL statements, to aid debugging
+File.exists?('convert.sql_log') and File.delete('convert.sql_log')
+DB.loggers << Logger.new('convert.sql_log')
 
 # The old eschol queue database, from which we can get a list of indexable ARKs
 QUEUE_DB = Sequel.connect(YAML.load_file("config/queueDb.yaml"))
@@ -46,7 +49,19 @@ $batchQueue = SizedQueue.new(1)  # no use getting very far ahead of CloudSearch
 
 # Mode to force checking of the index digests (useful when indexing algorithm or unit structure changes)
 $rescanMode = ARGV.delete('--rescan')
+
+# Mode to process a single item and just print it out (no inserting or batching)
 $testMode = ARGV.delete('--test')
+
+# Mode to override up-to-date test
+$forceMode = ARGV.delete('--force')
+$forceMode and $rescanMode = true
+
+# Mode to skip CloudSearch indexing and just do db updates
+$noCloudSearchMode = ARGV.delete('--noCloudSearch')
+
+# For testing only, skip items <= X, where X is like "qt26s1s6d3"
+$skipTo = nil
 
 # Caches for speed
 $allUnits = nil
@@ -62,6 +77,12 @@ def puts(*args)
     STDOUT.flush
   }
 end
+
+# Item counts for status updates
+$nSkipped = 0
+$nUnchanged = 0
+$nProcessed = 0
+$nTotal = 0
 
 ###################################################################################################
 # Model classes for easy object-relational mapping in the database
@@ -201,7 +222,7 @@ def prefilterBatch(batch)
 
   # Run the XTF textIndexer in "prefilterOnly" mode. That way the stylesheets can do all the
   # dirty work of normalizing the various data formats, and we can use the uniform results.
-  puts "Running prefilter batch of #{batch.size} items."
+  #puts "Running prefilter batch of #{batch.size} items."
   cmd = ["/apps/eschol/erep/xtf/bin/textIndexer", 
          "-prefilterOnly",
          "-force",
@@ -214,6 +235,15 @@ def prefilterBatch(batch)
     shortArk, buf = nil, []
     outer = []
     stdoutAndErr.each { |line|
+
+      # Filter out warning messages that get interspersed
+      if line =~ /(.*)Warning: Unrecognized meta-data/
+        line = $1
+      elsif line =~ /(.*)WARNING: LBNL subject does not map/
+        line = $1
+      end
+
+      # Look for start and end of record
       if line =~ %r{>>> BEGIN prefiltered.*/(qt\w{8})/}
         shortArk = $1
       elsif line =~ %r{>>> END prefiltered}
@@ -221,8 +251,6 @@ def prefilterBatch(batch)
         timestamps.include?(shortArk) or raise("Can't find timestamp for item #{shortArk.inspect} - did we not request it?")
         $indexQueue << [shortArk, timestamps[shortArk], buf.join]
         shortArk, buf = nil, []
-      elsif line =~ /Warning: Unrecognized meta-data|WARNING: LBNL subject does not map/
-        # skip
       elsif shortArk
         buf << line
       else
@@ -301,6 +329,13 @@ class MetaAccess
     return els[0] ? els[0].content : nil
   end
 
+  # Get attribute of a single metadata field
+  def singleAttr(elName, attrName, default=nil)
+    els = @root.xpath("meta/#{elName}[@meta='yes']")
+    els.length <= 1 or puts("Warning: multiple #{elName.inspect} elements found.")
+    return els[0] ? (els[0][attrName] || default) : default
+  end
+
   # Get an array of the content from a metadata field which we expect zero or more of.
   def multiple(name, limit=nil)
     all = @root.xpath("meta/#{name}[@meta='yes']").map { |el| el.text }
@@ -326,6 +361,7 @@ def traceUnits(units)
   journals    = Set.new
 
   done = Set.new
+  units = units.clone   # to avoid trashing the original list
   while !units.empty?
     unitID = units.shift
     if !done.include?(unitID)
@@ -378,22 +414,64 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
   # Parse the metadata
   data = MetaAccess.new(prefilteredData)
   if data.root.nil?
-    puts "Huh? root is nil. prefilteredData=#{prefilteredData}"
+    puts "Huh? root is nil. prefilteredData=#{prefilteredData.size > 5000 ? prefilteredData[0,5000]+"..." : prefilteredData}"
     exit 1
   end
 
   # Grab the stuff we're jamming into the JSON 'attrs' field
   attrs = {}
-  data.multiple("contentExists")[0] == "yes" and attrs[:contentExists] = true
-  data.single("pdfExists"    ) == "yes" and attrs[:pdfExists] = true
-  data.single("peerReview"   ) == "yes" and attrs[:peerReviewed] = true
+  data.multiple("contentExists")[0] == "yes" or attrs[:suppress_content] = true  # yes, inverting the sense
+  data.single("peerReview"   ) == "yes" and attrs[:is_peer_reviewed] = true
+  data.single("undergrad "   ) == "yes" and attrs[:is_undergrad] = true
   data.single("language"     )          and attrs[:language] = data.single("language")
   data.any("facet-discipline")          and attrs[:disciplines] = data.multiple("facet-discipline")
-  data.single("withdrawn")              and attrs[:withdrawn] = data.single("withdrawn")
-  data.single("embargoed")              and attrs[:embargoed] = data.single("embargoed")
+  data.single("withdrawn")              and attrs[:withdrawn_date] = data.single("withdrawn")
+  data.single("embargoed")              and attrs[:embargo_date] = data.single("embargoed")
+  data.single("publisher")              and attrs[:publisher] = data.single("publisher")
+  data.single("originalCitation")       and attrs[:orig_citation] = data.single("originalCitation")
+  data.single("customCitation")         and attrs[:custom_citation] = data.single("customCitation")
+  data.single("localID")                and attrs[:local_id] = { type: data.singleAttr("localID", :type, "other"),
+                                                                 id:   data.single("localID") }
+  data.single("publishedWebLocation")   and attrs[:pub_web_loc] = data.single("publishedWebLocation")
+  data.single("buyLink")                and attrs[:buy_link] = data.single("buyLink")
 
   # Filter out "n/a" abstracts
   data.single("description") && data.single("description").size > 3 and attrs[:abstract] = data.single("description")
+
+  # Supplemental files
+  data.multiple("supplemental-file").each { |supp|
+    pair = supp.split("::")
+    if pair.length != 2
+      puts "Warning: can't parse supp file data #{supp.inspect}"
+      next
+    end
+    (attrs[:supp_files] ||= []) << { title: pair[0], file: pair[1] }
+  }
+
+  # For eschol journals, populate the issue and section models.
+  issue = section = nil
+  if data.single("pubType") == "journal" && data.single("volume") && data.single("issue")
+    issue = Issue.new
+    issue[:unit_id] = data.multiple("entityOnly")[0]
+    issue[:volume]  = data.single("volume")
+    issue[:issue]   = data.single("issue")
+    issue[:pub_date] = parseDate(itemID, data.single("date")) || "1901-01-01"
+
+    section = Section.new
+    section[:name]  = data.single("sectionHeader") ? data.single("sectionHeader") : "default"
+  end
+
+  # Data for external journals
+  if !issue
+    data.single("journal") and (attrs[:ext_journal] ||= {})[:name]   = data.single("journal")
+    data.single("volume")  and (attrs[:ext_journal] ||= {})[:volume] = data.single("volume")
+    data.single("issue")   and (attrs[:ext_journal] ||= {})[:issue]  = data.single("issue")
+    data.single("issn")    and (attrs[:ext_journal] ||= {})[:issn]   = data.single("issn")
+    if data.single("coverage") =~ /^([\w.]+) - ([\w.]+)$/
+      (attrs[:ext_journal] ||= {})[:fpage] = $1
+      (attrs[:ext_journal] ||= {})[:lpage] = $2
+    end
+  end
 
   # Populate the Item model instance
   dbItem = Item.new
@@ -418,27 +496,15 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
     }
   }
 
-  # For eschol journals, populate the issue and section models.
-  issue = section = nil
-  if data.single("pubType") == "journal" && data.single("volume") && data.single("issue")
-    issue = Issue.new
-    issue[:unit_id] = data.multiple("entityOnly")[0]
-    issue[:volume]  = data.single("volume")
-    issue[:issue]   = data.single("issue")
-    issue[:pub_date] = parseDate(itemID, data.single("date")) || "1901-01-01"
-
-    section = Section.new
-    section[:name]  = data.single("sectionHeader") ? data.single("sectionHeader") : "default"
-    section[:ordering] = data.single("document-order") ? data.single("document-order") : 1
-  end
-
   # Process all the text nodes
   text = ""
   traverseText(data.root, text)
 
   # Make a list of all the units this item belongs to
   units = data.multiple("entityOnly").select { |unitID| 
-    unitID == 'postprints' ? false : !$allUnits.include?(unitID) ? puts("Warning: item #{itemID} associated with unknown unit #{unitID}") : true
+    unitID =~ /^(postprints|demo-journal|test-journal|unknown|withdrawn|uciem_westjem_aip)$/ ? false : 
+      !$allUnits.include?(unitID) ? (puts("Warning: unknown unit #{unitID.inspect}") && false) : 
+      true
   }
 
   # It's actually ok for there to be no units, e.g. for old withdrawn items
@@ -462,7 +528,6 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
       pub_year:      dbItem[:pub_date].year,
       rights:        dbItem[:rights],
       sort_author:   (data.multiple("creator")[0] || "").gsub(/[^\w ]/, '').downcase,
-      text:          text.size > MAX_TEXT_SIZE ? text[0,MAX_TEXT_SIZE] : text
     }
   }
 
@@ -472,8 +537,24 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
   departments.empty? or idxItem[:fields][:departments] = departments
   journals.empty?    or idxItem[:fields][:journals] = journals
 
+  # Limit text based on size of other fields (so, 1000 authors will mean less text).
+  # We have to stay under the overall limit for a CloudSearch record. This problem is
+  # a little tricky, since conversion to JSON introduces additional characters, and
+  # it's hard to predict how many. So we just use a binary search.
+  idxItem[:fields][:text] = text
+  if JSON.generate(idxItem).size > MAX_TEXT_SIZE
+    idxItem[:fields][:text] = nil
+    baseSize = JSON.generate(idxItem).size
+    toCut = (0..text.size).bsearch { |cut| 
+      JSON.generate({text: text[0, text.size - cut]}).size + baseSize < MAX_TEXT_SIZE 
+    }
+    (toCut==0 || toCut.nil?) and raise("Internal error: have to cut something, but toCut=#{toCut.inspect}")
+    puts "Note: Keeping only #{text.size - toCut} of #{text.size} text chars."
+    idxItem[:fields][:text] = text[0, text.size - toCut]
+  end
+
   # Make sure withdrawn items get deleted from the index
-  if !attrs[:contentExists]
+  if attrs[:suppress_content]
     idxItem = {
       type:          "delete",
       id:            itemID
@@ -494,19 +575,26 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
 
   # If nothing has changed, skip the work of updating this record.
   existingItem = Item[itemID]
-  if existingItem && existingItem[:index_digest] == digest
-    puts "#{itemID}: unchanged."
+  if existingItem && existingItem[:index_digest] == digest && !$testMode && !$forceMode
+    puts "Unchanged item."
+    $nUnchanged += 1
     return
   end
-  puts "#{itemID}: #{existingItem ? 'changed' : 'new'}."
+  puts "#{existingItem ? 'Changed' : 'New'} item.#{attrs[:suppress_content] ? " (suppressed content)" : ""}"
 
   # Add time-varying things into the database item now that we've generated a stable digest.
   dbItem[:last_indexed] = timestamp
   dbItem[:index_digest] = digest
 
+  # Make doubly sure the logic above didn't generate a record that's too big.
+  if idxData.size >= 1024*1024
+    puts "idxData=\n#{idxData}\n\nInternal error: generated record that's too big."
+    exit 1
+  end
+
   # If this item won't fit in the current batch, send the current batch off and clear it.
   if batch[:idxDataSize] + idxData.size > MAX_BATCH_SIZE
-    puts "Prepared batch: nItems=#{batch[:items].length} size=#{batch[:idxDataSize]} "
+    #puts "Prepared batch: nItems=#{batch[:items].length} size=#{batch[:idxDataSize]} "
     batch[:items].empty? or $batchQueue << batch.clone
     emptyBatch(batch)
   end
@@ -516,6 +604,7 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
   batch[:idxData] << idxData
   batch[:idxDataSize] += idxData.size
   batch[:items] << { dbItem: dbItem, dbAuthors: dbAuthors, dbIssue: issue, dbSection: section, units: units }
+  #puts "current batch size: #{batch[:idxDataSize]}"
 
   # Single-item debug
   if $testMode
@@ -535,11 +624,13 @@ def indexAllItems
   batch = emptyBatch({})
   loop do
     # Grab an item from the input queue
+    Thread.current[:name] = "index thread"  # label all stdout from this thread
     itemID, timestamp, prefilteredData = $indexQueue.pop
     itemID or break
 
     # Extract data and index it (in batches)
     begin
+      Thread.current[:name] = "index thread: #{itemID}"  # label all stdout from this thread
       indexItem(itemID, timestamp, prefilteredData, batch)
     rescue Exception => e
       puts "Error indexing item #{itemID}"
@@ -548,7 +639,7 @@ def indexAllItems
   end
 
   # Finish off the last batch.
-  batch.items.empty? or $batchQueue << batch
+  batch[:items].empty? or $batchQueue << batch
   $batchQueue << nil   # marker for end-of-queue
 end
 
@@ -557,28 +648,28 @@ def processBatch(batch)
   puts "Processing batch: nItems=#{batch[:items].size}, size=#{batch[:idxDataSize]}."
 
   # Finish the data buffer, and send to AWS
-  batch[:idxData] << "]"
-  host = "doc-eschol5-test-u5sqhz5emqzdh4bfij7uxsazny.us-west-2.cloudsearch.amazonaws.com"
-  req = Net::HTTP::Post.new("/2013-01-01/documents/batch", initheader = {'Content-Type' =>'application/json'})
-  req.body = batch[:idxData]
+  if !$noCloudSearchMode
+    batch[:idxData] << "]"
+    host = "doc-eschol5-test-u5sqhz5emqzdh4bfij7uxsazny.us-west-2.cloudsearch.amazonaws.com"
+    req = Net::HTTP::Post.new("/2013-01-01/documents/batch", initheader = {'Content-Type' =>'application/json'})
+    req.body = batch[:idxData]
 
-  # Try for 10 minutes max. CloudSearch seems to go awol fairly often.
-  puts "Posting to CloudSearch API."
-  startTime = Time.now
-  begin
-    response = Net::HTTP.new(host, 80).start {|http| http.request(req) }
-    response.code == "200" or raise Exception.new("#{response}: #{response.body}")
-  rescue Exception => res
-    if res.to_s =~ /GatewayTimeOut|ReadTimeout|RequestTimeOut/ && (Time.now - startTime < 10*60)
-      puts "Will retry in 30 sec, response was: #{res}"
-      sleep 30; puts "Retrying."; retry
+    # Try for 10 minutes max. CloudSearch seems to go awol fairly often.
+    startTime = Time.now
+    begin
+      response = Net::HTTP.new(host, 80).start {|http| http.request(req) }
+      response.code == "200" or raise Exception.new("#{response}: #{response.body}")
+    rescue Exception => res
+      if res.to_s =~ /GatewayTimeOut|ReadTimeout|RequestTimeOut/ && (Time.now - startTime < 10*60)
+        puts "Will retry in 30 sec, response was: #{res}"
+        sleep 30; puts "Retrying."; retry
+      end
+      raise
     end
-    raise
   end
 
   # Now that we've successfully added the documents to AWS CloudSearch, insert records into
   # our database. For efficience, do all the records in a single transaction.
-  puts "Committing database records."
   DB.transaction do
 
     # Do each item in the batch
@@ -605,8 +696,8 @@ def processBatch(batch)
           else
             sec.issue_id = iss.id
             sec.save
-            data[:dbItem][:section] = sec.id
           end
+          data[:dbItem][:section] = sec.id
         end
       end
 
@@ -646,6 +737,10 @@ def processBatch(batch)
       }
     }
   end
+
+  # Update status
+  $nProcessed += batch[:items].size
+  puts "#{$nProcessed} processed + #{$nUnchanged} unchanged + #{$nSkipped} skipped = #{$nProcessed + $nUnchanged + $nSkipped} of #{$nTotal} total"
 end
 
 ###################################################################################################
@@ -698,8 +793,16 @@ def convertAllItems(arks)
   indexThread = Thread.new { indexAllItems }
   batchThread = Thread.new { processAllBatches }
 
+  # Count how many total there are, for status updates
+  $nTotal = QUEUE_DB.fetch("SELECT count(*) as total FROM indexStates WHERE indexName='erep'").first[:total]
+
   # Convert all the items that are indexable
-  QUEUE_DB.fetch("SELECT itemId, time FROM indexStates WHERE indexName='erep' ORDER BY itemId").each do |row|
+  query = QUEUE_DB[:indexStates].where(indexName: 'erep').select(:itemId, :time).order(:itemId)
+  if $skipTo
+    puts "Skipping all up to #{$skipTo}..."
+    query = query.where{ itemId > "ark:13030/#{$skipTo}" }
+  end
+  query.each do |row|
     shortArk = row[:itemId].sub(%r{^ark:/?13030/}, '')
     next if arks != 'ALL' && !arks.include?(shortArk)
     erepTime = Time.at(row[:time].to_i).to_time
@@ -708,6 +811,7 @@ def convertAllItems(arks)
       $prefilterQueue << [shortArk, erepTime]
     else
       #puts "#{shortArk} is up to date, skipping."
+      $nSkipped += 1
     end
   end
 

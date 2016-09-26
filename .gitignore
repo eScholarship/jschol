@@ -16,3 +16,5 @@ test.db
 node_modules
 .DS_Store
 *.css.map
+*.log
+*.sql_log
