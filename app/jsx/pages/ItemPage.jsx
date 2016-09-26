@@ -3,7 +3,7 @@ import React from 'react'
 import { Link } from 'react-router'
 
 import PageBase from './PageBase.jsx'
-import { HeaderComp, NavComp } from '../components/AllComponents.jsx'
+import { HeaderComp, NavComp, BreadcrumbComp } from '../components/AllComponents.jsx'
 
 class ItemPage extends PageBase
 {
@@ -45,7 +45,7 @@ class ItemPage extends PageBase
                     unit_id={data.id} />
         <NavComp level="unit"
                  campusID={data.campusID} />
-        <p dangerouslySetInnerHTML={{__html: data.breadcrumb}}></p>
+        <BreadcrumbComp array={data.breadcrumb} />
         <div style={rowStyle}>
           <div style={leftStyle}>
             <ItemTabbed

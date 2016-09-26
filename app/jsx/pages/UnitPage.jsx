@@ -3,7 +3,7 @@ import React from 'react'
 import { Link } from 'react-router'
 
 import PageBase from './PageBase.jsx'
-import { HeaderComp, NavComp } from '../components/AllComponents.jsx'
+import { HeaderComp, NavComp, BreadcrumbComp } from '../components/AllComponents.jsx'
 
 class UnitPage extends PageBase
 {
@@ -20,7 +20,7 @@ class UnitPage extends PageBase
                   unit_id={data.id} />
       <NavComp level="unit"
                campusID={data.campusID} />
-      <p dangerouslySetInnerHTML={{__html: data.breadcrumb}}></p>
+      <BreadcrumbComp array={data.breadcrumb} />
       <h2>Unit {data.id}</h2>
       <div>
         Info:
