@@ -8,6 +8,7 @@ class HeaderComp extends React.Component {
     super(props)
     this.state = {searchActive: false}
   }
+
   render() {
     return (
       <div>
@@ -25,29 +26,31 @@ class HeaderComp extends React.Component {
             <button className="c-header__deposit-button">Deposit/Publish</button>
           </div>
         </div>
-        { this.props.level && this.renderLocalHeader(this.props.level) }
+        { this.props.level && this.props.unit_id != 'root' && this.renderLocalHeader() }
       </div>
     )
   }
 
   renderLocalHeader() {
+    // onChange={this.handleCampusChange}
     return (
       <div>
         <h2>Unit Banner Placeholder</h2>
         <div className="o-input__droplist">
-          <select name="" id="">
-            <option value="">UC Berkeley</option>
-            <option value="">UC Davis</option>
-            <option value="">UC Irvine</option>
-            <option value="">UCLA</option>
-            <option value="">UC Merced</option>
-            <option value="">UC Riverside</option>
-            <option value="">UC San Diego</option>
-            <option value="">UC San Francisco</option>
-            <option value="">UC Santa Barbara</option>
-            <option value="">UC Santa Cruz</option>
-            <option value="">UC Office of the President</option>
-            <option value="">UC Press</option>
+          <select name="" id="" value={this.props.campusID}>
+            <option value="lbnl">Lawrence Berkeley National Laboratory</option>
+            <option value="ucb">UC Berkeley</option>
+            <option value="ucd">UC Davis</option>
+            <option value="uci">UC Irvine</option>
+            <option value="ucla">UCLA</option>
+            <option value="ucm">UC Merced</option>
+            <option value="ucr">UC Riverside</option>
+            <option value="ucsd">UC San Diego</option>
+            <option value="ucsf">UC San Francisco</option>
+            <option value="ucsb">UC Santa Barbara</option>
+            <option value="ucsc">UC Santa Cruz</option>
+            <option value="ucop">UC Office of the President</option>
+            <option value="ucpress">UC Press</option>
           </select>   Publications in eScholarship:   16,780<br/>
         </div>
       </div>
