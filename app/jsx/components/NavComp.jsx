@@ -1,6 +1,8 @@
 // ##### Global and Local Navigation Component ##### //
 
 import React from 'react'
+require('details-polyfill')
+import Breakpoints from '../../js/breakpoints.json'
 
 class NavComp extends React.Component {
   constructor(props){

@@ -52,9 +52,10 @@
   },
   "dependencies": {
     "jquery": "^3.1.0",
-    "lavu-details-polyfill": "^0.1.0",
+    "details-polyfill": "^1.0.2",
     "react": "^15.3.0",
     "react-dom": "^15.3.0",
+    "react-responsive": "^1.1.4",
     "react-router": "^2.6.1",
     "react-router-form": "^2.0.0-rc.0"
   }

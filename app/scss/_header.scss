@@ -48,7 +48,7 @@
 	align-self: flex-start;
 	padding: 15px;
 	border: none;
-	background: url('/images/icon_magnify.svg') no-repeat center right / 25px;
+	background: url('../images/icon_magnify.svg') no-repeat center right / 25px;
 
 	@include bp(screen3) {
 		display: none;
