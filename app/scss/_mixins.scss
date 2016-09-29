@@ -1,27 +1,27 @@
 // ##### Global Mixins ##### //
 
-// Abstract Bootstrap's responsive breakpoints for use in custom Sass.
+// Create short media query blocks:
 
 @mixin bp($point) {
 
   @if $point == screen1 {
-    @media (min-width: $screen-sm-min) { @content; }
+    @media (min-width: $screen1) { @content; }
 
   } @else if $point == screen2 {
-    @media (min-width: $screen-md-min) { @content; }
+    @media (min-width: $screen2) { @content; }
 
   } @else if $point == screen3 {
-    @media (min-width: $screen-lg-min) { @content; }
+    @media (min-width: $screen3) { @content; }
 
   } @else if $point == screen4 {
-    @media (min-width: $screen-max) { @content; }
+    @media (min-width: $screen4) { @content; }
   }
 
 }
 
 /*
 
-Selector pattern using above mixin:
+Selector pattern using above media query mixin:
 
 .selector {
   property: $value;
