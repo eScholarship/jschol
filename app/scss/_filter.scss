@@ -1,0 +1,54 @@
+// ##### Filter Component ##### //
+
+.c-filter {
+  margin: 0 0 $spacing-md;
+  padding: $spacing-sm;
+  background: $color-white;
+  box-shadow: $box-shadow;
+}
+
+.c-filter__heading {
+	margin: 0 0 $spacing-sm;
+	font-size: 1.2em;
+	font-weight: normal;
+}
+
+.c-filter__active-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin: $spacing-base 0 0;
+
+	button {
+		display: inline-flex;
+		align-items: center;
+		height: $element-height;
+		padding: 0 22px 0 5px;
+		border: none;
+		background: $color-white url('../images/icon_times.svg') no-repeat right -3px center / 18px;
+		color: $color-teal;
+	}
+}
+
+.c-filter__active {
+	display: flex;
+	flex-flow: column nowrap;
+	align-items: flex-start;
+
+	button {
+		display: inline-flex;
+		align-items: center;
+		height: $spacing-lg;
+		margin: $spacing-base 0 0;
+		padding: 0 5px 0 22px;
+		border: none;
+		background: $color-white url('../images/icon_times-circle.svg') no-repeat left -1px center / 15px;
+	}
+
+}
+
+.c-filter__tips {
+	@extend %o-textlink__secondary;
+	display: flex;
+	justify-content: flex-end;
+}

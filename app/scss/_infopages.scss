@@ -1,0 +1,44 @@
+// ##### Informational Pages Component ##### //
+
+.c-infopages {
+
+	@include bp(screen2) {
+		display: flex;
+	}
+
+}
+
+.c-infopages__item {
+	padding: $spacing-md;
+
+	@include bp(screen2) {
+		flex: 0 1 33%; // 3 columns
+		border: 1px solid $color-dark-gray;
+
+		&:not(:first-child) {
+			border-left: none;
+		}
+
+	}
+
+	&:not(:first-child) {
+		border-top: 1px solid $color-dark-gray;
+	}
+
+}
+
+.c-infopages__heading {
+	margin: 0;
+	font-size: 1.2em;
+	font-weight: normal;
+
+	a {
+		@extend %o-textlink__secondary;
+	}
+
+}
+
+.c-infopages__heading-title {
+	display: block;
+	font-weight: bold;
+}
