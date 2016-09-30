@@ -42,6 +42,37 @@ end
 
 AWS_URL = URI('http://localhost:8888/2013-01-01/search')
 
+def get_query_display(params)
+  filters = {}
+
+  if params['type_of_work']
+    filters['type_of_work'] = {'display' => 'Type of Work', 'fieldName' => 'type_of_work', 'filters' => params['type_of_work']}
+  end
+  if params['peer_reviewed']
+    filters['peer_reviewed'] = {'display' => 'Peer Review', 'fieldName' => 'peer_reviewed', 'filters' => params['peer_reviewed']}
+  end
+  if params['supp_file_types']
+    filters['supp_file_types'] = {'display' => 'Included Media', 'fieldName' => 'supp_file_types', 'filters' => params['supp_file_types']}
+  end
+  if params['campuses']
+    filters['campuses'] = {'display' => 'Campus', 'fieldName' => 'campuses', 'filters' => get_unit_display_name(params['campuses'].map{ |v| {'value' => v} })}
+  end
+  if params['journals']
+    filters['journals'] = {'display' => 'Journal', 'fieldName' => 'journals', 'filters' => get_unit_display_name(params['journals'].map{ |v| {'value' => v} })}
+  end
+  if params['disciplines']
+    filters['disciplines'] = {'display' => 'Discipline', 'fieldName' => 'disciplines', 'filters' => params['disciplines']}
+  end
+  if params['rights']
+    filters['rights'] = {'display' => 'Reuse License', 'fieldName' => 'rights', 'filters' => params['rights']}
+  end
+
+  display_params = {
+    'q' => params['q'] ? params['q'].join(" ") : 'test',
+    'filters' => filters
+  }
+end
+
 def aws_encode(params)
   fq = []
   ['type_of_work', 'peer_reviewed', 'supp_file_types', 'campuses', 'journals', 'disciplines', 'rights'].each do |field_type|
@@ -162,5 +193,5 @@ def search(params)
     {'display' => 'Reuse License', 'fieldName' => 'rights', 'facets' => facetHash['rights']['buckets']}
   ]
   
-  return {'searchResults' => searchResults, 'facets' => facets, 'count' => response['hits']['found']}
+  return {'count' => response['hits']['found'], 'query' => get_query_display(params.clone), 'searchResults' => searchResults, 'facets' => facets}
 end
