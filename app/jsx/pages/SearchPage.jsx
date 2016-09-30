@@ -12,6 +12,14 @@ class FacetItem extends React.Component {
   // calling $(#facetForm).submit does things the normal way (full page request)
   // because it's submitting the DOM <form> element, not the react Form component instance
   // this submits the Form component instance by manually clicking on the submit button
+
+  // TODO: related to above - in general, query state is currently still managed by the DOM,
+  // Currently, results and facets are all that is managed by 'state' and 'props'
+  // I began moving towards a query JSON obj that gets returned by the API (data.query in SearchPage component)
+  // but this object needs to get integrated into the state for this page,
+  // and the appropriate handlers need to be written for changes to the query state in the DOM
+  // those handlers will have to manually use react-router to push history
+
   handleChange() {
     $('#facet-form-submit').click();
   }
@@ -50,12 +58,31 @@ class FacetFieldset extends React.Component {
 
 class CurrentSearchTerms extends React.Component {
   render() {
-    var searchString = 'Your search: "' + this.props.query.q + '"'
+    var searchString = 'Your search: "' + this.props.query.q + '"';
+    var filterTypes = ['type_of_work', 'peer_reviewed', 'supp_file_types', 'campuses', 'journals', 'disciplines', 'rights']
+    var activeFilters = []
+    for (let filterType of filterTypes) {
+      if (this.props.query['filters'][filterType]['filters'].length > 0) {
+        var displayNames = this.props.query['filters'][filterType]['filters'].map(function(filter) {
+          return filter['displayName'];
+        });
+        activeFilters.push({'filterType': filterType, 'filters': displayNames.join(" ")});
+      }
+    }
+
     return (
       <div className="currentSearchTerms">
         <h3>{searchString}</h3>
         <input type="hidden" name="q" value={this.props.query.q} />
-        <p>Results: {this.props.count} works</p>
+        <p>Results: {Math.ceil(this.props.count/10)} pages, {this.props.count} works</p>
+        <p>Active filters:</p>
+        <ul>
+          { activeFilters.map(function(filter) {
+            return (
+              <li>{filter.filterType} ({filter.filters})</li>
+            )
+          }) }
+        </ul>
       </div>
     )
   }
@@ -146,7 +173,7 @@ class SearchPage extends PageBase
       <div>
         <HeaderComp />
         <NavComp />
-        <SearchResultsSidebar facets={data.facets} query={this.props.location.query} count={data.count} />
+        <SearchResultsSidebar facets={data.facets} query={data.query} count={data.count} />
         <SearchResultsSet results={data.searchResults} />
       </div>
   )}
