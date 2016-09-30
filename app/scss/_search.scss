@@ -1,26 +1,26 @@
-// ##### Search Object ##### //
+// ##### Search Component ##### //
 
-.o-search {
+.c-search {
 	// empty
 }
 
-.o-search__form {
+.c-search__form {
 	display: flex;
 	height: $input-height;
 	margin: 0 0 $spacing-sm;
 }
 
-.o-search__label {
+.c-search__label {
 	@extend %hide;
 }
 
-.o-search__field {
+.c-search__field {
 	flex: 1 0 auto;
 	width: 300px;
 	padding: 0 0 0 40px;
 	border: 1px solid $color-light-gray;
 	border-radius: 3px;
-	background: url('/images/icon_magnify.svg') no-repeat left 8px center / 16px;
+	background: url('../images/icon_magnify.svg') no-repeat left 8px center / 16px;
 	font-size: 0.8em;
 
 	@include bp(screen3) {
@@ -30,7 +30,7 @@
 
 }
 
-.o-search__submit-button {
+.c-search__submit-button {
 	@extend %hide;
 
 	@include bp(screen3) {
@@ -45,11 +45,11 @@
 
 }
 
-.o-search__search-close-button {
+.c-search__search-close-button {
 	margin: 0 0 0 $spacing-body;
 	padding: 0 13px;
 	border: none;
-	background: url('/images/icon_close.svg') no-repeat center / 20px;
+	background: url('../images/icon_close.svg') no-repeat center / 20px;
 
 	@include bp(screen3) {
 		display: none;
@@ -57,7 +57,7 @@
 
 }
 
-.o-search__refine {
+.c-search__refine {
 
 	label:first-of-type {
 		margin: 0 20px 0 0;

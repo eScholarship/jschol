@@ -126,34 +126,49 @@ get "/api/unit/:unitID" do |unitID|
   # and grand-children/descendants.
   content_type :json
   unit = Unit[unitID]
-  items = UnitItem.filter(:unit_id => unitID, :is_direct => true)
-  b = BreadcrumbGenerator.new(unitID, 'unit')
-  return {
-    :id => unitID,
-    :name => unit.name,
-    :type => unit.type,
-    :parents => UnitHier.filter(:unit_id => unitID, :is_direct => true).map { |hier| hier.ancestor_unit },
-    :children => UnitHier.filter(:ancestor_unit => unitID, :is_direct => true).map { |hier| hier.unit_id },
-    :nItems => items.count,
-    :items => items.limit(10).map { |pair| pair.item_id },
-    :breadcrumb => b.generate 
-  }.to_json
+  if !unit.nil?
+    begin
+      items = UnitItem.filter(:unit_id => unitID, :is_direct => true)
+      body = {
+        :id => unitID,
+        :name => unit.name,
+        :type => unit.type,
+        :parents => UnitHier.filter(:unit_id => unitID, :is_direct => true).map { |hier| hier.ancestor_unit },
+        :children => UnitHier.filter(:ancestor_unit => unitID, :is_direct => true).map { |hier| hier.unit_id },
+        :nItems => items.count,
+        :items => items.limit(10).map { |pair| pair.item_id }
+      }
+      return body.merge(getHeaderElements(BreadcrumbGenerator.new(unitID, 'unit'))).to_json
+    rescue Exception => e
+      halt 404, e.message
+    end
+  else
+    halt 404, "Unit not found"
+  end
 end
 
 ###################################################################################################
 # Item view page data.
 get "/api/item/:shortArk" do |shortArk|
-  # Andy, hack here.
   content_type :json
-  item = Item["qt"+shortArk]
-  b = BreadcrumbGenerator.new(shortArk, 'item')
-  return { 
-    :id => shortArk,
-    :title => item.title,
-    :rights => item.rights,
-    :pub_date => item.pub_date,
-    :breadcrumb => b.generate 
-  }.to_json
+  id = "qt"+shortArk
+  item = Item[id]
+  if !item.nil?
+    begin
+      body = {
+        :id => shortArk,
+        :title => item.title,
+        :rights => item.rights,
+        :pub_date => item.pub_date,
+        :attrs => JSON.parse(Item.filter(:id => id).map(:attrs)[0])
+      }
+      return body.merge(getHeaderElements(BreadcrumbGenerator.new(shortArk, 'item'))).to_json
+    rescue Exception => e
+      halt 404, e.message
+    end
+  else 
+    halt 404, "Item not found"
+  end
 end
 
 ###################################################################################################
@@ -162,4 +177,17 @@ get "/api/search/" do
   # Amy, hack here
   content_type :json
   return search(CGI::parse(request.query_string)).to_json
+end
+
+
+
+##################################################################################################
+# Helper method for generating breadcrumb and header content
+def getHeaderElements(breadcrumb)
+  campusID, campusName = breadcrumb.getCampusInfo
+  return {
+    :campusID => campusID,
+    :campusName => campusName,
+    :breadcrumb => breadcrumb.generateCrumb 
+  }
 end

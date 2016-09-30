@@ -1,12 +1,15 @@
 
 import React from 'react'
 import $ from 'jquery'
+import { HeaderComp, NavComp, FooterComp } from '../components/AllComponents.jsx'
 
 class PageBase extends React.Component
 {
   constructor(props) {
     super(props)
-    this.state = { pageData: null }
+    this.state = {
+      pageData: null,
+    }
 
     // Phase 1: Initial server-side load. We just save the URL, and iso will later fetch it and re-run React
     if (props.location.urlsToFetch)
@@ -28,6 +31,8 @@ class PageBase extends React.Component
   fetchState(props) {
     $.getJSON(this.pageDataURL(props)).done((data) => {
       this.setState({ pageData: data })
+    }).fail((jqxhr, textStatus, err)=> {
+      this.setState({ error: textStatus + ", " + err })
     })
   }
 
@@ -42,6 +47,41 @@ class PageBase extends React.Component
   pageDataURL(props) {
     throw "Derived class must override pageDataURL method"
   }
+
+  render() {
+    if (this.state.error) { 
+      return (
+        <div>
+          {this.renderError()}
+          <FooterComp />
+        </div>
+      )
+    } else {
+      return (
+      <div>
+        { this.state.pageData ? this.renderData(this.state.pageData) : this.renderLoading() }
+        <FooterComp />
+      </div>
+      )
+    }
+  }
+
+  renderLoading() { return(
+    <div>
+      <HeaderComp/>
+      <NavComp/>
+      <h2 style={{ marginTop: "5em", marginBottom: "5em" }}>Loading...</h2>
+    </div>
+  )}
+
+  renderError() { return (
+    <div>
+      <HeaderComp/>
+      <NavComp/>
+      <h2 style={{ marginTop: "5em", marginBottom: "5em" }}>{this.state.error}</h2>
+    </div>
+  )}
+
 }
 
 module.exports = PageBase

@@ -1,0 +1,27 @@
+build: 2119847
+This is the latest eschol-ui build integrated into jschol
+
+Repo location: https://github.com/cdlib/eschol-ui
+
+Files copied over: app/scss, app/fonts, app/images, app/jsx/components, app/jsx/objects, app/jsx/pages
+Also note any changes to: app/js and package.json
+
+* * * * * * * * * * * * * * * * * * * * * * * * * *
+Note, IMPORTANT:
+  This is not a full merge per se. So far this is just a manual copying over of files.
+
+  Purpose: Bring in new JSX files and build on top of them
+
+  ***** DO NOT OVERWRITE FILES in jschol when copying ****
+
+  JSX written in eschol-ui does not bring in state or properties
+  Any behavior, state, or properties we have begun building on top of these components
+  need to be preserved.
+
+
+* * * * * * * * * * * * * * * * * * * * * * * * * *
+
+Note: 
+  As of this writing (Sept, 2016) jschol's NavComp.jsx includes eschol-ui's GlobalNavComp.jsx,
+  and the intention is to also include any additional nav being used in that UI space
+  (i.e. 'LocalNav' for unit and item pages), when it is built by Joel.
