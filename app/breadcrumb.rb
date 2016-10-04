@@ -14,7 +14,7 @@ class BreadcrumbGenerator
       return [] 
     else
       until isCampus?(unitID) 
-        unitID = UnitHier.filter(:unit_id => unitID, :is_direct => true).order(:ordering).map(:ancestor_unit)[0]
+        unitID = getParent(unitID)
       end        
     end
     unit = Unit[unitID]
@@ -37,10 +37,14 @@ class BreadcrumbGenerator
       unit = Unit[unitID]
       nodes.unshift({"name" => unit.name, "url" => "/unit/#{unitID}"})
       # ToDo: Handle mutiple campuses
-      unitID = UnitHier.filter(:unit_id => unitID, :is_direct => true).order(:ordering).map(:ancestor_unit)[0]
+      unitID = getParent(unitID)
     end
     nodes.unshift({"name" => "eScholarship", "url" => "/"})
     return nodes
+  end
+
+  def getParent(unitID)
+    return UnitHier.filter(:unit_id => unitID, :is_direct => true).order(:ordering).map(:ancestor_unit)[0]
   end
 
   def getItemsUnit(pageName)
@@ -61,6 +65,6 @@ class BreadcrumbGenerator
     return r
   end
 
-  private :getItemsUnit, :isCampus?
+  private :getParent, :getItemsUnit, :isCampus?
 
 end

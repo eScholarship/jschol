@@ -180,7 +180,6 @@ get "/api/search/" do
 end
 
 
-
 ##################################################################################################
 # Helper method for generating breadcrumb and header content
 def getHeaderElements(breadcrumb)
@@ -188,6 +187,20 @@ def getHeaderElements(breadcrumb)
   return {
     :campusID => campusID,
     :campusName => campusName,
+    :campuses => ACTIVE_CAMPUSES,
     :breadcrumb => breadcrumb.generateCrumb 
   }
 end
+
+# Helper method - get all active campuses/ORUs (id and name), sorted alphabetically by name
+def getActiveCampuses
+  campuses = Unit.join(:unit_hier, :unit_id => :id).filter(:ancestor_unit => 'root', :is_direct => 1, :is_active => true).to_hash(:id, :name)
+  return campuses.sort_by { |id, name| name }
+end
+
+##################################################################################################
+# Static Variables 
+
+# Array of all campuses sorted by name (i.e. [["ucb", "UC Berkeley"], ... )
+ACTIVE_CAMPUSES = getActiveCampuses
+
