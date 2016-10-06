@@ -62,6 +62,12 @@ class UnitItem < Sequel::Model
   unrestrict_primary_key
 end
 
+class Issue < Sequel::Model
+end
+
+class Section < Sequel::Model
+end
+
 ###################################################################################################
 # ISOMORPHIC JAVASCRIPT
 # =====================
