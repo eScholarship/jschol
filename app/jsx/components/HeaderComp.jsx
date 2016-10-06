@@ -1,6 +1,7 @@
 // ##### Header Component ##### //
 
 import React from 'react'
+import { browserHistory } from 'react-router'
 import SearchComp from '../components/SearchComp.jsx'
 
 class HeaderComp extends React.Component {
@@ -9,12 +10,18 @@ class HeaderComp extends React.Component {
     this.state = {searchActive: false}
   }
 
+
+  changeCampus(event) {
+    let path = "/unit/" + event.target.value
+    browserHistory.push(path)
+  }
+
   render() {
     return (
       <div>
         <div className="c-header">
           <div className="c-header__logosearch">
-            <a href="">
+            <a href="/">
               <img src="/images/logo_escholarship.svg" alt="escholarship"/>
             </a>	
             <div className={this.state.searchActive ? "c-header__search--active" : "c-header__search"}>
@@ -32,25 +39,15 @@ class HeaderComp extends React.Component {
   }
 
   renderLocalHeader() {
-    // onChange={this.handleCampusChange}
+    var campusSelector = this.props.campuses.map(function(c, i) {
+      return <option key={i} value={c[0]}>{c[1]}</option>
+    })
     return (
       <div>
         <h2>Unit Banner Placeholder</h2>
         <div className="o-input__droplist">
-          <select name="" id="" value={this.props.campusID}>
-            <option value="lbnl">Lawrence Berkeley National Laboratory</option>
-            <option value="ucb">UC Berkeley</option>
-            <option value="ucd">UC Davis</option>
-            <option value="uci">UC Irvine</option>
-            <option value="ucla">UCLA</option>
-            <option value="ucm">UC Merced</option>
-            <option value="ucr">UC Riverside</option>
-            <option value="ucsd">UC San Diego</option>
-            <option value="ucsf">UC San Francisco</option>
-            <option value="ucsb">UC Santa Barbara</option>
-            <option value="ucsc">UC Santa Cruz</option>
-            <option value="ucop">UC Office of the President</option>
-            <option value="ucpress">UC Press</option>
+          <select name="" id="" onChange={this.changeCampus} value={this.props.campusID}>
+            {campusSelector}
           </select>   Publications in eScholarship:   16,780<br/>
         </div>
       </div>

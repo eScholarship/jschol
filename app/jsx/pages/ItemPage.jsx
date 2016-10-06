@@ -39,11 +39,12 @@ class ItemPage extends PageBase
     let p = data 
     return(
       <div>
-        <HeaderComp level="unit"
+        <HeaderComp level="item"
                     campusID={data.campusID}
                     campusName={data.campusName}
+                    campuses={data.campuses}
                     unit_id={data.id} />
-        <NavComp level="unit"
+        <NavComp level="item"
                  campusID={data.campusID} />
         <BreadcrumbComp array={data.breadcrumb} />
         <div style={rowStyle}>

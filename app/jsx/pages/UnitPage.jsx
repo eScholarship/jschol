@@ -17,9 +17,11 @@ class UnitPage extends PageBase
       <HeaderComp level="unit"
                   campusID={data.campusID}
                   campusName={data.campusName}
+                  campuses={data.campuses}
                   unit_id={data.id} />
       <NavComp level="unit"
-               campusID={data.campusID} />
+               campusID={data.campusID}
+               campuses={data.campuses} />
       <BreadcrumbComp array={data.breadcrumb} />
       <h2>Unit {data.id}</h2>
       <div>
