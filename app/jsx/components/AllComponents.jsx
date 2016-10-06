@@ -9,9 +9,10 @@ import HeaderComp from "./HeaderComp.jsx"
 import InfoPagesComp from "./InfoPagesComp.jsx"
 import NavComp from "./NavComp.jsx"
 import PaginationComp from "./PaginationComp.jsx"
+import PdfViewerComp from "./PdfViewerComp.jsx"
 import ScholWorksComp from "./ScholWorksComp.jsx"
 import SearchComp from "./SearchComp.jsx"
 import SidebarNavComp from "./SidebarNavComp.jsx"
 import SortComp from "./SortComp.jsx"
 
-export { BreadcrumbComp, FooterComp, CheckboxComp, ColumnsComp, ExportComp, FacetBoxComp, FilterComp, HeaderComp, InfoPagesComp , NavComp, PaginationComp, ScholWorksComp, SearchComp, SidebarNavComp, SortComp }
+export { BreadcrumbComp, FooterComp, CheckboxComp, ColumnsComp, ExportComp, FacetBoxComp, FilterComp, HeaderComp, InfoPagesComp , NavComp, PdfViewerComp, PaginationComp, ScholWorksComp, SearchComp, SidebarNavComp, SortComp }
