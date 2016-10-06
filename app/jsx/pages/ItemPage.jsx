@@ -156,7 +156,10 @@ class ContentMain extends React.Component {
       <div className="content">
         {p.title} <br/>
         {p.pub_date} <br/>
-        <PdfViewerComp url="/temporary/test.pdf"/>
+        {/* Fetch PDF from a special place which supports returning CORS headers. E.g. transform item ID "9k10r3sc" into:
+            http://pub-eschol-stg.escholarship.org/raw_data/13030/pairtree_root/qt/9k/10/r3/sc/qt9k10r3sc/content/qt9k10r3sc.pdf */}
+        <PdfViewerComp url={"http://pub-eschol-stg.escholarship.org/raw_data/13030/pairtree_root/qt/" +
+                            p.id.match(/(..?)/g).join("/") + "/qt" + p.id + "/content/qt" + p.id + ".pdf" }/>
       </div>
     )
   }
