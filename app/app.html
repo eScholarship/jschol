@@ -1,14 +1,26 @@
 <!DOCTYPE html>
 <html lang="en" class="no-js">
 <head>
-	<meta charset="UTF-8">
-	<title>eScholarship</title>
-	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <meta charset="UTF-8">
+  <title>eScholarship</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
   <link rel="stylesheet" href="/css/main.css">
+  <link rel="resource" type="application/l10n" href="/locale/locale.properties">
 </head>
 <body>
-  <div id="main"></div>
+  <!-- Our React app gets dynamically placed under the following div -->
+  <div id="main"/>
+
+  <!-- Main application and library scripts -->
   <script src="/js/lib-bundle.js"></script>
   <script src="/js/app-bundle.js"></script>
-</body>
+
+  <!-- PDF.JS library and viewer -->
+  <script src="/js/pdfjs/compatibility.js"></script>
+  <script src="/js/pdfjs/l10n.js"></script>
+  <script src="/js/pdfjs/pdf.js"></script>
+  <script>
+    PDFJS.workerSrc = "/js/pdf.worker.js"
+  </script>
+  <script src="/js/pdfjs/viewer.js"></script></body>
 </html>

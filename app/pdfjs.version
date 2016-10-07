@@ -1,0 +1,51 @@
+Current PDF.JS viewer is based on v1.6.210.
+
+How to upgrade viewer:
+
+1. Get pdf.js code, compile, and test:
+
+  git clone https://github.com/mozilla/pdf.js.git
+  cd pdf.js
+  PDFJS=`pwd`   # saves path in environment variable for later
+  git tag    # look for the version you want (usually the latest)
+  git checkout TAG_YOU_WANT
+  npm install
+  gulp generic
+  gulp server
+  (browse to http://localhost:8888/web/viewer.html and verify that viewer works)
+
+2. Copy and customize files
+
+  cd path/to/your/jschol
+  cd app/js/pdfjs
+  rm pdf*.js compatibility.js l10n.js
+  cp $PDFJS/build/generic/build/pdf*.js .
+  cp $PDFJS/build/generic/web/{compatibility,l10n}.js .
+
+  mv viewer.js viewer.old.js
+  cp viewer.stock.js viewer.js
+  cp $PDFJS/build/generic/web/viewer.js viewer.new.js
+  (now do a 3-way diff between viewer.old.js, viewer.js, and viewer.new.js, merging
+   changes into viewer.js)
+  mv viewer.new.js viewer.stock.js
+  rm viewer.old.js
+
+  cd ../../scss/vendor/pdfjs
+  mv _viewer.scss _viewer.old.scss
+  cp _viewer.stock.scss _viewer.scss
+  cp $PDFJS/build/generic/web/viewer.css _viewer.new.scss
+  (edit _viewer.new.css and perform global changes:
+    1. "images/" -> "/images/pdfjs/"
+    2. "^(html\[[^\]]+] )" with "\1&"
+  )
+  (now do a 3-way diff between _viewer.old.scss, _viewer.scss, and _viewer.new.scss, merging
+   changes into _viewer.scss)
+  mv _viewer.new.scss _viewer.stock.scss
+  rm _viewer.old.scss
+
+  cd ../../../images/pdfjs
+  rm *
+  cp $PDFJS/build/generic/web/images/* .
+  git add .
+
+3. Test!

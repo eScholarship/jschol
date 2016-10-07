@@ -3,7 +3,7 @@ import React from 'react'
 import { Link } from 'react-router'
 
 import PageBase from './PageBase.jsx'
-import { HeaderComp, NavComp, BreadcrumbComp } from '../components/AllComponents.jsx'
+import { HeaderComp, NavComp, BreadcrumbComp, PdfViewerComp } from '../components/AllComponents.jsx'
 
 class ItemPage extends PageBase
 {
@@ -28,7 +28,7 @@ class ItemPage extends PageBase
     };
     let leftStyle = {
       display: 'table-cell',
-      width: '650px',
+      width: '850px',
       padding: "0px 10px"
     };
     let rightStyle = {
@@ -155,7 +155,11 @@ class ContentMain extends React.Component {
     return(
       <div className="content">
         {p.title} <br/>
-        {p.pub_date}
+        {p.pub_date} <br/>
+        {/* Fetch PDF from a special place which supports returning CORS headers. E.g. transform item ID "9k10r3sc" into:
+            http://pub-eschol-stg.escholarship.org/raw_data/13030/pairtree_root/qt/9k/10/r3/sc/qt9k10r3sc/content/qt9k10r3sc.pdf */}
+        <PdfViewerComp url={"http://pub-eschol-stg.escholarship.org/raw_data/13030/pairtree_root/qt/" +
+                            p.id.match(/(..?)/g).join("/") + "/qt" + p.id + "/content/qt" + p.id + ".pdf" }/>
       </div>
     )
   }
