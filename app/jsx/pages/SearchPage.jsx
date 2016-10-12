@@ -134,26 +134,50 @@ class FacetForm extends React.Component {
 
 class ResultItem extends React.Component {
   render() {
+    var tagList = []
+    if (this.props.result.genre === 'article') {
+      tagList.push({display: 'Article', tagStyle: 'article'});
+    }
+    if (this.props.result.peerReviewed) {
+      tagList.push({display: 'Peer Reviewed', tagStyle: 'peer'});
+    }
+    
     return (
-      <div className="resultItem">
-        <ol>
-          <li>Genre: {this.props.result.genre}</li>
-          <li>Peer Reviewed: {this.props.result.peerReviewed}</li>
-          <li>CC License: {this.props.result.rights}</li>
-          <li>Thumbnail: ???</li>
-          <li>Title: <a href={this.props.result.id}>{this.props.result.title}</a></li>
-          <li>Authors: ???</li>
-          <li>Journal Info: ???</li>
-          <li>Year: {this.props.result.pub_date}</li>
-          <li>Abstract: {this.props.result.abstract}</li>
-          <li>Supplemental items: ???</li>
-        </ol>
-      </div>
+			<section className="c-scholworks__item">
+				<div className="c-scholworks__main-column">
+          <ul className="c-scholworks__tag-list">
+            { tagList.map(function(tag) { 
+              return (
+                <li className={ "c-scholworks__tag-" + tag.tagStyle }>{tag.display}</li>
+              ) 
+            }) }
+          </ul>
+          <header>
+            <a href="{this.props.result.id}">{this.props.result.title}</a>
+          </header>
+          <p>
+            Authors: ???<br/>
+            <a className="c-scholworks__institution-link" href="">Journal Info: ???</a> ({this.props.result.pub_date})
+          </p>
+          <p>
+            {this.props.result.abstract}
+          </p>
+
+          <ol>
+            <li>Genre: {this.props.result.genre}</li>
+            <li>Peer Reviewed: {this.props.result.peerReviewed}</li>
+            <li>CC License: {this.props.result.rights}</li>
+            <li>Thumbnail: ???</li>
+            <li>Journal Info: ???</li>
+            <li>Supplemental items: ???</li>
+          </ol>
+        </div>
+      </section>
     )
   }
 }
 
-class SearchResultsSet extends React.Component {
+class ScholarlyWorks extends React.Component {
   render() {
     var resultNodes = this.props.results.map(function(result) {
       return (
@@ -162,8 +186,7 @@ class SearchResultsSet extends React.Component {
     });
 
     return (
-      <div className="searchResultsSet" style={{width: "75%", float: "left"}}>
-        <h2>Research</h2>
+      <div className="c-scholworks">
         {resultNodes}
       </div>
     )
@@ -187,7 +210,19 @@ class SearchPage extends PageBase {
             <FacetForm data={facetFormData} query={data.query} />
           </aside>
           <main>
-            <SearchResultsSet results={data.searchResults} />
+				  	<div className="l-search__sort-pagination">
+				  	</div>
+				  	<section className="o-columnbox-main">
+							<header>
+								<h2 className="o-columnbox-main__heading">Informational Pages (12 results)</h2>
+							</header>
+            </section>
+						<section className="o-columnbox-main">
+							<header>
+								<h2 className="o-columnbox-main__heading">Scholarly Works (12,023 results)</h2>
+							</header>
+              <ScholarlyWorks results={data.searchResults} />
+            </section>
           </main>
         </div>
       </div>
