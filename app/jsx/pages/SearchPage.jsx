@@ -71,7 +71,7 @@ class CurrentSearchTerms extends React.Component {
     var filters;
     
     if (!($.isEmptyObject(this.props.query['filters']))) {
-      var filterTypes = ['type_of_work', 'peer_reviewed', 'supp_file_types', 'campuses', 'journals', 'disciplines', 'rights'];
+      var filterTypes = ['type_of_work', 'peer_reviewed', 'supp_file_types', 'campuses', 'departments', 'journals', 'disciplines', 'rights'];
       var activeFilters = [];
       for (let filterType of filterTypes) {
         if (this.props.query['filters'][filterType] && this.props.query['filters'][filterType]['filters'].length > 0) {
@@ -148,7 +148,7 @@ class ResultItem extends React.Component {
           <ul className="c-scholworks__tag-list">
             { tagList.map(function(tag) { 
               return (
-                <li className={ "c-scholworks__tag-" + tag.tagStyle }>{tag.display}</li>
+                <li key={tag.tagStyle} className={ "c-scholworks__tag-" + tag.tagStyle }>{tag.display}</li>
               ) 
             }) }
           </ul>
