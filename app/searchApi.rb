@@ -44,29 +44,29 @@ AWS_URL = URI('http://localhost:8888/2013-01-01/search')
 
 def get_query_display(params)
   filters = {}
-
-  if params['type_of_work']
-    filters['type_of_work'] = {'display' => 'Type of Work', 'fieldName' => 'type_of_work', 'filters' => params['type_of_work']}
+  
+  if params.key?('type_of_work')
+    filters['type_of_work'] = {'display' => 'Type of Work', 'fieldName' => 'type_of_work', 'filters' => capitalize_display_name(params['type_of_work'].map { |v| {'value' => v} })}
   end
-  if params['peer_reviewed']
-    filters['peer_reviewed'] = {'display' => 'Peer Review', 'fieldName' => 'peer_reviewed', 'filters' => params['peer_reviewed']}
+  if params.key?('peer_reviewed')
+    filters['peer_reviewed'] = {'display' => 'Peer Review', 'fieldName' => 'peer_reviewed', 'filters' => params['peer_reviewed'].map{ |v| {'value' => v} }}
   end
-  if params['supp_file_types']
-    filters['supp_file_types'] = {'display' => 'Included Media', 'fieldName' => 'supp_file_types', 'filters' => params['supp_file_types']}
+  if params.key?('supp_file_types')
+    filters['supp_file_types'] = {'display' => 'Included Media', 'fieldName' => 'supp_file_types', 'filters' => capitalize_display_name(params['supp_file_types'].map{ |v| {'value' => v} })}
   end
-  if params['campuses']
+  if params.key?('campuses')
     filters['campuses'] = {'display' => 'Campus', 'fieldName' => 'campuses', 'filters' => get_unit_display_name(params['campuses'].map{ |v| {'value' => v} })}
   end
-  if params['journals']
+  if params.key?('journals')
     filters['journals'] = {'display' => 'Journal', 'fieldName' => 'journals', 'filters' => get_unit_display_name(params['journals'].map{ |v| {'value' => v} })}
   end
-  if params['disciplines']
-    filters['disciplines'] = {'display' => 'Discipline', 'fieldName' => 'disciplines', 'filters' => params['disciplines']}
+  if params.key?('disciplines')
+    filters['disciplines'] = {'display' => 'Discipline', 'fieldName' => 'disciplines', 'filters' => params['disciplines'].map{ |v| {'value' => v} }}
   end
-  if params['rights']
-    filters['rights'] = {'display' => 'Reuse License', 'fieldName' => 'rights', 'filters' => params['rights']}
+  if params.key?('rights')
+    filters['rights'] = {'display' => 'Reuse License', 'fieldName' => 'rights', 'filters' => params['rights'].map{ |v| {'value' => v} }}
   end
-
+  
   display_params = {
     'q' => params['q'] ? params['q'].join(" ") : 'test',
     'filters' => filters
@@ -128,6 +128,12 @@ def get_unit_display_name(unitFacets)
   end
 end
 
+def capitalize_display_name(facetList)
+  for facet in facetList
+    facet['displayName'] = facet['value'].capitalize
+  end
+end
+
 def search(params)
   url = AWS_URL.clone
   url.query = aws_encode(params)
@@ -184,9 +190,10 @@ def search(params)
 
   # put facets into an array to maintain a specific order, apply facet-specific augmentation like including display values (see journal)
   facets = [
-    {'display' => 'Type of Work', 'fieldName' => 'type_of_work', 'facets' => facetHash['type_of_work']['buckets']},
-    {'display' => 'Peer Review', 'fieldName' => 'peer_reviewed', 'facets' => facetHash['peer_reviewed']['buckets']},
-    {'display' => 'Included Media', 'fieldName' => 'supp_file_types', 'facets' => facetHash['supp_file_types']['buckets']},
+    {'display' => 'Type of Work', 'fieldName' => 'type_of_work', 'facets' => capitalize_display_name(facetHash['type_of_work']['buckets'])},
+    {'display' => 'Peer Review', 'fieldName' => 'peer_reviewed', 
+      'facets' => [{'value' => "1", 'count' => facetHash['peer_reviewed']['buckets'][0]['count'], 'displayName' => 'Peer-reviewed only'}] },
+    {'display' => 'Included Media', 'fieldName' => 'supp_file_types', 'facets' => capitalize_display_name(facetHash['supp_file_types']['buckets'])},
     {'display' => 'Campus', 'fieldName' => 'campuses', 'facets' => get_unit_display_name(facetHash['campuses']['buckets'])},
     {'display' => 'Journal', 'fieldName' => 'journals', 'facets' => get_unit_display_name(facetHash['journals']['buckets'])},
     {'display' => 'Discipline', 'fieldName' => 'disciplines', 'facets' => facetHash['disciplines']['buckets']},
