@@ -46,6 +46,17 @@ require_relative 'searchApi'
 #
 # https://docs.google.com/drawings/d/1gCi8l7qteyy06nR5Ol2vCknh9Juo-0j91VGGyeWbXqI/edit
 
+class Issue < Sequel::Model
+end
+
+class Item < Sequel::Model
+  unrestrict_primary_key
+end
+
+class ItemAuthor < Sequel::Model
+  unrestrict_primary_key
+end
+
 class Unit < Sequel::Model
   unrestrict_primary_key
 end
@@ -54,15 +65,8 @@ class UnitHier < Sequel::Model(:unit_hier)
   unrestrict_primary_key
 end
 
-class Item < Sequel::Model
-  unrestrict_primary_key
-end
-
 class UnitItem < Sequel::Model
   unrestrict_primary_key
-end
-
-class Issue < Sequel::Model
 end
 
 class Section < Sequel::Model
@@ -166,6 +170,7 @@ get "/api/item/:shortArk" do |shortArk|
         :title => item.title,
         :rights => item.rights,
         :pub_date => item.pub_date,
+        :authors => ItemAuthor.filter(:item_id => id).order(:ordering).map(:attrs).collect{ |h| JSON.parse(h)["name"]},
         :attrs => JSON.parse(Item.filter(:id => id).map(:attrs)[0])
       }
       return body.merge(getHeaderElements(BreadcrumbGenerator.new(shortArk, 'item'))).to_json
@@ -187,7 +192,9 @@ end
 
 
 ##################################################################################################
-# Helper method for generating breadcrumb and header content
+# Helper methods
+
+# Generate breadcrumb and header content
 def getHeaderElements(breadcrumb)
   campusID, campusName = breadcrumb.getCampusInfo
   return {
@@ -198,7 +205,7 @@ def getHeaderElements(breadcrumb)
   }
 end
 
-# Helper method - get all active campuses/ORUs (id and name), sorted alphabetically by name
+# Get all active campuses/ORUs (id and name), sorted alphabetically by name
 def getActiveCampuses
   campuses = Unit.join(:unit_hier, :unit_id => :id).filter(:ancestor_unit => 'root', :is_direct => 1, :is_active => true).to_hash(:id, :name)
   return campuses.sort_by { |id, name| name }

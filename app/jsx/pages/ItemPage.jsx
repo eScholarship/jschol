@@ -151,11 +151,29 @@ class ContentSwitch extends React.Component {
 /* Put these somewhere else and import in to make this all a bit cleaner */
 class ContentMain extends React.Component {
   render() { 
-    let p = this.props
+    let p = this.props,
+        pub_web_loc = p.attrs["pub_web_loc"],
+        abstr = p.attrs["abstract"],
+        // Temporary styles till we get Joel's work
+        rowStyle = {display: 'table'},
+        leftStyle = {display: 'table-cell', width: '750px'},
+        rightStyle = {display: 'table-cell', width: '100px', border: '1px solid black'},
+        titleStyle = {fontSize: '1.2em'}
     return(
       <div className="content">
-        {p.title} <br/>
-        {p.pub_date} <br/>
+        <div style={rowStyle}>
+          <div style={leftStyle}>
+            <font style={titleStyle}>{p.title}</font> <br/>
+            {p.pub_date} | {p.authors} <br/>
+            {pub_web_loc && <div>Published Web Location<br/><a href={pub_web_loc}>{pub_web_loc}</a></div>}
+          </div>
+          <div style={rightStyle}>
+            {p.rights}
+          </div>
+        </div>
+        {abstr && <div>Abstract<br/>{abstr}</div>}
+        <hr/>
+        Main text<br/>
         {/* Fetch PDF from a special place which supports returning CORS headers. E.g. transform item ID "9k10r3sc" into:
             http://pub-eschol-stg.escholarship.org/raw_data/13030/pairtree_root/qt/9k/10/r3/sc/qt9k10r3sc/content/qt9k10r3sc.pdf */}
         <PdfViewerComp url={"http://pub-eschol-stg.escholarship.org/raw_data/13030/pairtree_root/qt/" +
@@ -239,7 +257,15 @@ class ItemLinkColumn extends React.Component {
         </div>
         <div className="card card-block">
           <h4 className="card-title">Jump to:</h4>
-          <a href="#" className="card-link">Link</a>
+          <a href="#" onClick={this.handleClick.bind(this, 1)} className="card-link">Abstract</a><br/>
+          <a href="#" onClick={this.handleClick.bind(this, 1)} className="card-link">Main Text</a><br/>
+          <a href="#" className="card-link">References</a><br/>
+          <a href="#" className="card-link">Author response</a><br/>
+          <a href="#" onClick={this.handleClick.bind(this, 2)} className="card-link">Supplemental Material</a><br/>
+          <a href="#" onClick={this.handleClick.bind(this, 3)} className="card-link">Metrics</a><br/>
+          <a href="#" onClick={this.handleClick.bind(this, 4)} className="card-link">Article & author info</a><br/>
+          <a href="#" onClick={this.handleClick.bind(this, 5)} className="card-link">Comments</a>
+
         </div>
         <div className="card card-block">
           <h4 className="card-title">Related Items</h4>
