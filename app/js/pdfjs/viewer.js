@@ -9259,7 +9259,8 @@ function webViewerPageChanging(e) {
 var zoomDisabled = false, zoomDisabledTimeout;
 function handleMouseWheel(evt) {
   var pdfViewer = PDFViewerApplication.pdfViewer;
-  if (pdfViewer.isInPresentationMode) {
+  // MH CDL: Extra check to interoperate when viewer not displayed
+  if (!pdfViewer || pdfViewer.isInPresentationMode) {
     return;
   }
 
@@ -9312,7 +9313,8 @@ function handleMouseWheel(evt) {
 window.addEventListener('wheel', handleMouseWheel);
 
 window.addEventListener('click', function click(evt) {
-  if (!PDFViewerApplication.secondaryToolbar.isOpen) {
+  // MH CDL: Extra check to interoperate when viewer not displayed
+  if (!PDFViewerApplication || !PDFViewerApplication.secondaryToolbar || !PDFViewerApplication.secondaryToolbar.isOpen) {
     return;
   }
   var appConfig = PDFViewerApplication.appConfig;
