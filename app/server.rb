@@ -171,6 +171,7 @@ get "/api/item/:shortArk" do |shortArk|
         :rights => item.rights,
         :pub_date => item.pub_date,
         :authors => ItemAuthor.filter(:item_id => id).order(:ordering).map(:attrs).collect{ |h| JSON.parse(h)["name"]},
+        :content_type => item.content_type,
         :attrs => JSON.parse(Item.filter(:id => id).map(:attrs)[0])
       }
       return body.merge(getHeaderElements(BreadcrumbGenerator.new(shortArk, 'item'))).to_json

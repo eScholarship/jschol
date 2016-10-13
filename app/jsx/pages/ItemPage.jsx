@@ -3,7 +3,7 @@ import React from 'react'
 import { Link } from 'react-router'
 
 import PageBase from './PageBase.jsx'
-import { HeaderComp, NavComp, BreadcrumbComp, PdfViewerComp } from '../components/AllComponents.jsx'
+import { HeaderComp, NavComp, BreadcrumbComp, ItemMainComp, ItemSupplComp, ItemMetricsComp, ItemAuthArtComp, ItemCommentsComp } from '../components/AllComponents.jsx'
 
 class ItemPage extends PageBase
 {
@@ -83,15 +83,14 @@ class ItemTabbed extends React.Component {
     }
   }
 
-  render() {
-    return(
+  render() { return(
     <div>
       <Tabs
         currentTab={this.props.currentTab}
         tabList={this.state.tabList}
         changeTab={this.props.changeTab}
       />
-      <ContentSwitch {...this.props}/>
+      <TabSwitch {...this.props}/>
     </div>
   )}
 }
@@ -101,8 +100,7 @@ class Tabs extends React.Component {
     this.props.changeTab(tab.id)
   }
   
-  render() { return(
-    <ul className="nav nav-tabs">
+  render() { return( <ul className="nav nav-tabs">
     {this.props.tabList.map(function(tab) {
       return (
         <Tab
@@ -124,8 +122,7 @@ class Tab extends React.Component {
     this.props.handleClick()
   }
   
-  render() { 
-    return(
+  render() { return(
     <li className="nav-item">
       <a className={this.props.isCurrent ? 'current' : null} 
          onClick={this.handleClick.bind(this)}
@@ -135,96 +132,16 @@ class Tab extends React.Component {
   )}
 }
 
-class ContentSwitch extends React.Component {
-  render() {
-    return(
+class TabSwitch extends React.Component {
+  render() { return(
     <div>
-      {this.props.currentTab === 1 ? <ContentMain {...this.props}/> : null }
-      {this.props.currentTab === 2 ? <ContentSuppl {...this.props}/> : null}
-      {this.props.currentTab === 3 ? <ContentMetrics {...this.props}/> : null}
-      {this.props.currentTab === 4 ? <ContentAuthArt {...this.props}/> : null}
-      {this.props.currentTab === 5 ? <ContentComments {...this.props}/> : null}
+      {this.props.currentTab === 1 ? <ItemMainComp {...this.props}/> : null }
+      {this.props.currentTab === 2 ? <ItemSupplComp {...this.props}/> : null}
+      {this.props.currentTab === 3 ? <ItemMetricsComp {...this.props}/> : null}
+      {this.props.currentTab === 4 ? <ItemAuthArtComp {...this.props}/> : null}
+      {this.props.currentTab === 5 ? <ItemCommentsComp {...this.props}/> : null}
     </div>
   )}
-}
-
-/* Put these somewhere else and import in to make this all a bit cleaner */
-class ContentMain extends React.Component {
-  render() { 
-    let p = this.props,
-        pub_web_loc = p.attrs["pub_web_loc"],
-        abstr = p.attrs["abstract"],
-        // Temporary styles till we get Joel's work
-        rowStyle = {display: 'table'},
-        leftStyle = {display: 'table-cell', width: '750px'},
-        rightStyle = {display: 'table-cell', width: '100px', border: '1px solid black'},
-        titleStyle = {fontSize: '1.2em'}
-    return(
-      <div className="content">
-        <div style={rowStyle}>
-          <div style={leftStyle}>
-            <font style={titleStyle}>{p.title}</font> <br/>
-            {p.pub_date} | {p.authors} <br/>
-            {pub_web_loc && <div>Published Web Location<br/><a href={pub_web_loc}>{pub_web_loc}</a></div>}
-          </div>
-          <div style={rightStyle}>
-            {p.rights}
-          </div>
-        </div>
-        {abstr && <div>Abstract<br/>{abstr}</div>}
-        <hr/>
-        Main text<br/>
-        {/* Fetch PDF from a special place which supports returning CORS headers. E.g. transform item ID "9k10r3sc" into:
-            http://pub-eschol-stg.escholarship.org/raw_data/13030/pairtree_root/qt/9k/10/r3/sc/qt9k10r3sc/content/qt9k10r3sc.pdf */}
-        <PdfViewerComp url={"http://pub-eschol-stg.escholarship.org/raw_data/13030/pairtree_root/qt/" +
-                            p.id.match(/(..?)/g).join("/") + "/qt" + p.id + "/content/qt" + p.id + ".pdf" }/>
-      </div>
-    )
-  }
-}
-
-class ContentSuppl extends React.Component {
-  render() { 
-    let p = this.props
-    return(
-      <div className="content">
-        Data &amp; Media content here
-      </div>
-    )
-  }
-}
-
-class ContentMetrics extends React.Component {
-  render() { 
-    let p = this.props
-    return(
-      <div className="content">
-        Metrics content here
-      </div>
-    )
-  }
-}
-
-class ContentAuthArt extends React.Component {
-  render() { 
-    let p = this.props
-    return(
-      <div className="content">
-        Author &amp; Article content here
-      </div>
-    )
-  }
-}
-
-class ContentComments extends React.Component {
-  render() { 
-    let p = this.props
-    return(
-      <div className="content">
-        Comments content here
-      </div>
-    )
-  }
 }
 
 class ItemLinkColumn extends React.Component {
