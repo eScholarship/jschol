@@ -42,6 +42,8 @@ end
 
 AWS_URL = URI('http://localhost:8888/2013-01-01/search')
 
+FACETS = ['type_of_work', 'peer_reviewed', 'supp_file_types', 'pub_year', 'campuses', 'departments', 'journals', 'disciplines', 'rights']
+
 def get_query_display(params)
   filters = {}
   
@@ -53,6 +55,9 @@ def get_query_display(params)
   end
   if params.key?('supp_file_types')
     filters['supp_file_types'] = {'display' => 'Included Media', 'fieldName' => 'supp_file_types', 'filters' => capitalize_display_name(params['supp_file_types'].map{ |v| {'value' => v} })}
+  end
+  if params.key?('pub_year')
+    filters['pub_year'] = {'display' => 'Publication Year', 'fieldName' => 'pub_year', 'filters' => params['pub_year'].map{ |v| {'value' => v} }}
   end
   if params.key?('campuses')
     filters['campuses'] = {'display' => 'Campus', 'fieldName' => 'campuses', 'filters' => get_unit_display_name(params['campuses'].map{ |v| {'value' => v} })}
@@ -78,9 +83,13 @@ end
 
 def aws_encode(params)
   fq = []
-  ['type_of_work', 'peer_reviewed', 'supp_file_types', 'campuses', 'departments', 'journals', 'disciplines', 'rights'].each do |field_type|
+  FACETS.each do |field_type|
     if params[field_type].length > 0
-      filters = params[field_type].map { |filter| "#{field_type}: '#{filter}'" }
+      if field_type != 'pub_year'
+        filters = params[field_type].map { |filter| "#{field_type}: '#{filter}'" }
+      else
+        filters = params[field_type].map { |filter| "#{field_type}: #{filter}" }
+      end
       filters = filters.join(" ")
       if params[field_type].length > 1 then filters = "(or #{filters})" end
       fq.push(filters)
@@ -197,8 +206,10 @@ def search(params)
   end
   
   facetHash = response['facets']
-  ['type_of_work', 'peer_reviewed', 'supp_file_types', 'campuses', 'departments', 'journals', 'disciplines', 'rights'].each do |field_type|
-    if params.key?(field_type) then facetHash[field_type] = facet_secondary_query(params.clone, field_type) end
+  FACETS.each do |field_type|
+    if field_type != 'pub_year' && params.key?(field_type) 
+      facetHash[field_type] = facet_secondary_query(params.clone, field_type)
+    end
   end
 
   # put facets into an array to maintain a specific order, apply facet-specific augmentation like including display values (see journal)
@@ -207,6 +218,7 @@ def search(params)
     {'display' => 'Peer Review', 'fieldName' => 'peer_reviewed', 
       'facets' => [{'value' => "1", 'count' => facetHash['peer_reviewed']['buckets'][0]['count'], 'displayName' => 'Peer-reviewed only'}] },
     {'display' => 'Included Media', 'fieldName' => 'supp_file_types', 'facets' => capitalize_display_name(facetHash['supp_file_types']['buckets'])},
+    {'display' => 'Publication Year', 'fieldName' => 'pub_year'},
     {'display' => 'Campus', 'fieldName' => 'campuses', 'facets' => get_unit_display_name(facetHash['campuses']['buckets'])},
     {'display' => 'Departments', 'fieldName' => 'departments', 'facets' => facetHash['departments']['buckets']},
     {'display' => 'Journal', 'fieldName' => 'journals', 'facets' => get_unit_display_name(facetHash['journals']['buckets'])},

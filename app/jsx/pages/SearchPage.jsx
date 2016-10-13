@@ -24,6 +24,19 @@ class FacetItem extends React.Component {
   }
 }
 
+class PubYear extends React.Component {
+  render() {
+    var startVal = this.props.data.filters ? this.props.data.filters[0].value : '';
+    var endVal = this.props.data.filters ? this.props.data.filters[0].value : '';
+    return (
+      <div>
+        <input id="pub_year_start" name="pub_year_start" value={startVal} type="text" readOnly/>
+        <input id="pub_year_end" name="pub_year_end" value={endVal} type="text" readOnly/>
+      </div>
+    ) 
+  }
+}
+
 class FacetFieldset extends React.Component {  
   render() {
     var commonFacetItemData = {
@@ -31,28 +44,35 @@ class FacetFieldset extends React.Component {
       filters: this.props.query ? this.props.query.filters : undefined
     }
     
-    var facetItemNodes = this.props.data.facets.map(function(commonFacetItemData) {
-      return function(facet) {
-        var checked = false;
-        if (commonFacetItemData.filters) {
-          for (let filter of commonFacetItemData.filters) {
-            if (facet.value === filter.value) {
-              checked = true;
+    if (this.props.data.facets) {
+      var facetItemNodes = this.props.data.facets.map(function(commonFacetItemData) {
+        return function(facet) {
+          var checked = false;
+          if (commonFacetItemData.filters) {
+            for (let filter of commonFacetItemData.filters) {
+              if (facet.value === filter.value) {
+                checked = true;
+              }
             }
+          } 
+        
+          var facetItemData = {
+            facetType: commonFacetItemData.facetType,
+            facet: facet,
+            checked: checked
           }
-        } 
         
-        var facetItemData = {
-          facetType: commonFacetItemData.facetType,
-          facet: facet,
-          checked: checked
+          return (
+            <FacetItem key={facet.value} data={facetItemData} query={commonFacetItemData.filters} />
+          )
         }
-        
-        return (
-          <FacetItem key={facet.value} data={facetItemData} query={commonFacetItemData.filters} />
-        )
-      }
-    }(commonFacetItemData));
+      }(commonFacetItemData));
+    } else {
+      //pub_year
+      var facetItemNodes = (
+        <PubYear data={commonFacetItemData} query={commonFacetItemData.filters} />
+      )
+    }
     
     return (
       <details className="c-facetbox" id={this.props.data.fieldName}>
@@ -112,7 +132,7 @@ class CurrentSearchTerms extends React.Component {
 }
 
 class FacetForm extends React.Component {  
-  render() {    
+  render() {
     var facetForm = this.props.data.facets.map(function(query, handler) {
       return function(fieldset) {
         var fieldName = fieldset.fieldName;
