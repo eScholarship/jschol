@@ -7,6 +7,11 @@ import FacetBoxComp from "./FacetBoxComp.jsx"
 import FilterComp from "./FilterComp.jsx"
 import HeaderComp from "./HeaderComp.jsx"
 import InfoPagesComp from "./InfoPagesComp.jsx"
+import ItemMainComp from "./ItemMainComp.jsx"
+import ItemSupplComp from "./ItemSupplComp.jsx"
+import ItemMetricsComp from "./ItemMetricsComp.jsx"
+import ItemAuthArtComp from "./ItemAuthArtComp.jsx"
+import ItemCommentsComp from "./ItemCommentsComp.jsx"
 import NavComp from "./NavComp.jsx"
 import PaginationComp from "./PaginationComp.jsx"
 import PdfViewerComp from "./PdfViewerComp.jsx"
@@ -15,4 +20,4 @@ import SearchComp from "./SearchComp.jsx"
 import SidebarNavComp from "./SidebarNavComp.jsx"
 import SortComp from "./SortComp.jsx"
 
-export { BreadcrumbComp, FooterComp, CheckboxComp, ColumnsComp, ExportComp, FacetBoxComp, FilterComp, HeaderComp, InfoPagesComp , NavComp, PdfViewerComp, PaginationComp, ScholWorksComp, SearchComp, SidebarNavComp, SortComp }
+export { BreadcrumbComp, FooterComp, CheckboxComp, ColumnsComp, ExportComp, FacetBoxComp, FilterComp, HeaderComp, InfoPagesComp, ItemMainComp, ItemSupplComp, ItemMetricsComp, ItemAuthArtComp, ItemCommentsComp, NavComp, PdfViewerComp, PaginationComp, ScholWorksComp, SearchComp, SidebarNavComp, SortComp }
