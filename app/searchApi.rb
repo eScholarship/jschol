@@ -12,10 +12,14 @@ require 'pp'
 
 class Unit < Sequel::Model
   unrestrict_primary_key
+  one_to_many :unit_hier,     :class=>:UnitHier, :key=>:unit_id
+  one_to_many :ancestor_hier, :class=>:UnitHier, :key=>:ancestor_unit
 end
 
 class UnitHier < Sequel::Model(:unit_hier)
   unrestrict_primary_key
+  many_to_one :unit,          :class=>:Unit
+  many_to_one :ancestor,      :class=>:Unit, :key=>:ancestor_unit
 end
 
 class Item < Sequel::Model
@@ -57,7 +61,7 @@ def get_query_display(params)
     filters['supp_file_types'] = {'display' => 'Included Media', 'fieldName' => 'supp_file_types', 'filters' => capitalize_display_name(params['supp_file_types'].map{ |v| {'value' => v} })}
   end
   if params.key?('pub_year')
-    filters['pub_year'] = {'display' => 'Publication Year', 'fieldName' => 'pub_year', 'filters' => params['pub_year'].map{ |v| {'value' => v} }}
+    filters['pub_year'] = {'display' => 'Publication Year', 'fieldName' => 'pub_year', 'input' => parse_range(params['pub_year'])}
   end
   if params.key?('campuses')
     filters['campuses'] = {'display' => 'Campus', 'fieldName' => 'campuses', 'filters' => get_unit_display_name(params['campuses'].map{ |v| {'value' => v} })}
@@ -150,10 +154,54 @@ def get_type_of_work_display_name(facetList)
   end
 end
 
+def get_unit_hierarchy(unitFacets)
+  for unitFacet in unitFacets
+    unit = Unit[unitFacet['value']]
+    unitFacet['displayName'] = unit.name
+
+    # get the direct ancestor to this oru unit if the ancestor is also an oru
+    ancestors = UnitHier.where(unit_id: unit.id).where(is_direct: true).where(ancestor: Unit.where(type: 'oru')).all
+
+    if ancestors.length == 1
+      # search the rest of the list to see if this ancestor is already in the facet list
+      ancestor_id = ancestors[0].ancestor_unit
+      ancestor_in_list = false
+      for u in unitFacets
+        if ancestor_id == u['value']
+          if u.key? 'descendents'
+            u['descendents'].push(unitFacet)
+          else
+            u['descendents'] = [unitFacet]
+          end
+          ancestor_in_list = true
+          unitFacet['ancestor_in_list'] = true
+        end
+      end
+
+      if !ancestor_in_list
+        ancestor = Unit[ancestors[0].ancestor_unit]
+        unitFacet['ancestor'] = {displayName: ancestor.name, value: ancestor.id}
+      end
+    elsif ancestors.length > 1
+      pp "DON'T KNOW WHAT TO DO HERE YIKES"
+    end
+  end
+
+  for unitFacet in unitFacets
+    if unitFacet['ancestor_in_list']
+      unitFacets.delete(unitFacet)
+    end
+  end
+end
+
 def capitalize_display_name(facetList)
   for facet in facetList
     facet['displayName'] = facet['value'].capitalize
   end
+end
+
+def parse_range(range)
+  pp range
 end
 
 def search(params)
@@ -218,13 +266,13 @@ def search(params)
     {'display' => 'Peer Review', 'fieldName' => 'peer_reviewed', 
       'facets' => [{'value' => "1", 'count' => facetHash['peer_reviewed']['buckets'][0]['count'], 'displayName' => 'Peer-reviewed only'}] },
     {'display' => 'Included Media', 'fieldName' => 'supp_file_types', 'facets' => capitalize_display_name(facetHash['supp_file_types']['buckets'])},
-    {'display' => 'Publication Year', 'fieldName' => 'pub_year'},
+    {'display' => 'Publication Year', 'fieldName' => 'pub_year', 'range' => ['From', 'To']},
     {'display' => 'Campus', 'fieldName' => 'campuses', 'facets' => get_unit_display_name(facetHash['campuses']['buckets'])},
-    {'display' => 'Departments', 'fieldName' => 'departments', 'facets' => facetHash['departments']['buckets']},
+    {'display' => 'Departments', 'fieldName' => 'departments', 'facets' => get_unit_hierarchy(facetHash['departments']['buckets'])},
     {'display' => 'Journal', 'fieldName' => 'journals', 'facets' => get_unit_display_name(facetHash['journals']['buckets'])},
     {'display' => 'Discipline', 'fieldName' => 'disciplines', 'facets' => facetHash['disciplines']['buckets']},
     {'display' => 'Reuse License', 'fieldName' => 'rights', 'facets' => facetHash['rights']['buckets']}
   ]
-  
+
   return {'count' => response['hits']['found'], 'query' => get_query_display(params.clone), 'searchResults' => searchResults, 'facets' => facets}
 end

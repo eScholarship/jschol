@@ -15,62 +15,83 @@ class FacetItem extends React.Component {
   render() {
     var facet = this.props.data.facet;
     var label = facet.displayName ? facet.displayName : facet.value;
+
+    if (facet.ancestor) {
+      label = facet.ancestor.displayName
+      if (facet.displayName) {
+        label = label + " / " + facet.displayName
+      }
+      else {
+        label = label + " / " + facet.value
+      }
+    }
+
+    var descendents;
+    if (facet.descendents) {
+      descendents = facet.descendents.map( d => {
+        var descendentItemData = {
+          facetType: this.props.data.facetType,
+          facet: d,
+          checked: this.props.query && this.props.query.filters ? this.checkFacet(d) : false
+        }
+        return (<FacetItem key={d.value} data={descendentItemData} />)
+      })
+    }
+
     return (
       <div className="facetItem">
         <input id={facet.value} name={this.props.data.facetType} value={facet.value} type="checkbox" onChange={this.handleChange} className="c-checkbox__input" checked={this.props.data.checked} />
         <label htmlFor={facet.value} className="c-checkbox__label">{label} ({facet.count})</label>
+        <div style={{paddingLeft: '30px'}}>{descendents}</div>
       </div>
     )
   }
 }
 
 class PubYear extends React.Component {
+  //form submission on blur and enter
+  handleChange(e) {
+    console.log(e);
+  }
+
   render() {
-    var startVal = this.props.data.filters ? this.props.data.filters[0].value : '';
-    var endVal = this.props.data.filters ? this.props.data.filters[0].value : '';
+    // var startVal = this.props.data.filters ? this.props.data.filters[0].value : '';
+    // var endVal = this.props.data.filters ? this.props.data.filters[0].value : '';
     return (
       <div>
-        <input id="pub_year_start" name="pub_year_start" value={startVal} type="text" readOnly/>
-        <input id="pub_year_end" name="pub_year_end" value={endVal} type="text" readOnly/>
+        <input id="year_s" name="year_s" value='' type="text" onChange={ this.handleChange }/>
+        <input id="year_e" name="year_e" value='' type="text" onChange={ this.handleChange }/>
       </div>
     ) 
   }
 }
 
-class FacetFieldset extends React.Component {  
-  render() {
-    var commonFacetItemData = {
-      facetType: this.props.data.fieldName,
-      filters: this.props.query ? this.props.query.filters : undefined
+class FacetFieldset extends React.Component {
+  checkFacet(facet) {
+    var checked = false;
+    for (let filter of this.props.query.filters) {
+      if (facet.value === filter.value) {
+        checked = true;
+      }
     }
-    
+    return checked;
+  }
+
+  render() {
+    var facetItemNodes;
     if (this.props.data.facets) {
-      var facetItemNodes = this.props.data.facets.map(function(commonFacetItemData) {
-        return function(facet) {
-          var checked = false;
-          if (commonFacetItemData.filters) {
-            for (let filter of commonFacetItemData.filters) {
-              if (facet.value === filter.value) {
-                checked = true;
-              }
-            }
-          } 
-        
-          var facetItemData = {
-            facetType: commonFacetItemData.facetType,
-            facet: facet,
-            checked: checked
-          }
-        
-          return (
-            <FacetItem key={facet.value} data={facetItemData} query={commonFacetItemData.filters} />
-          )
+      facetItemNodes = this.props.data.facets.map( facet => {
+        var facetItemData = {
+          facetType: this.props.data.fieldName,
+          facet: facet,
+          checked: this.props.query && this.props.query.filters ? this.checkFacet(facet) : false
         }
-      }(commonFacetItemData));
+        return ( <FacetItem key={facet.value} data={facetItemData} /> )
+      });
     } else {
       //pub_year
-      var facetItemNodes = (
-        <PubYear data={commonFacetItemData} query={commonFacetItemData.filters} />
+      facetItemNodes = (
+        <PubYear data={this.props.data} query={this.props.query} />
       )
     }
     
@@ -136,8 +157,9 @@ class FacetForm extends React.Component {
     var facetForm = this.props.data.facets.map(function(query, handler) {
       return function(fieldset) {
         var fieldName = fieldset.fieldName;
+        var filters = query.filters && query.filters[fieldName] ? query.filters[fieldName] : [];
         return (
-          <FacetFieldset key={fieldName} data={fieldset} query={query.filters[fieldName]} />
+          <FacetFieldset key={fieldName} data={fieldset} query={filters} />
         )
       }
     }(this.props.query, this.handleChange));
