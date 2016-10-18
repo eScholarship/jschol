@@ -7208,7 +7208,8 @@ var PDFViewer = (function pdfViewer() {
         return;
       }
 
-      if (this.isInPresentationMode || false) { // MH CDL: dest not defined
+      return; // MH CDL: we never want to scroll the main view
+      if (this.isInPresentationMode) {
         this._setCurrentPageNumber(pageNumber, /* resetCurrentPageView */ true);
           return;
         }

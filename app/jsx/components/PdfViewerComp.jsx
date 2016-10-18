@@ -1,15 +1,20 @@
 // ##### PDF.JS Viewer Component ##### //
 
 import React from 'react'
+import $ from 'jquery'
 
 class PdfViewerComp extends React.Component
 {
   initted: false
 
   render() {
-    return <div id="pdfjs_cdl_wrapper" 
-                ref={(c) => this.initViewer(c)} 
-                dangerouslySetInnerHTML={ this.viewerHTML() }/> 
+    return(
+      <div id="pdfjs_cdl_wrapper" ref={(c) => this.initViewer(c)}>
+        <noscript>
+          <embed src={this.props.url} type='application/pdf' />
+        </noscript>
+        <div id="pdfjs_viewer" className="jsonly" style={{visibility: "hidden"}} dangerouslySetInnerHTML={ this.viewerHTML() }/>
+      </div>)
   }
 
   shouldComponentUpdate() {
@@ -22,6 +27,7 @@ class PdfViewerComp extends React.Component
     this.initted = true
     DEFAULT_URL = this.props.url
     window.webViewerLoad()
+    $("#pdfjs_viewer").css("visibility", "visible") // we show it only after init, to avoid wonky display
   }
 
   viewerHTML() {

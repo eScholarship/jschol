@@ -116,7 +116,9 @@ get %r{^/(?!api/).*} do  # matches every URL except /api/*
 
     # Read in the template file, and substitute the results from React/ReactRouter
     template = File.new("app/app.html").read
-    return template.sub("<div id=\"main\"></div>", response.body)
+    lookFor = '<div id="main"/>'
+    template.include?(lookFor) or raise("can't find #{lookFor.inspect} in template")
+    return template.sub(lookFor, response.body)
   else
     # Development mode - skip iso
     return File.new("app/app.html").read
