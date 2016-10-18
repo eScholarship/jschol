@@ -9,11 +9,11 @@ class BreadcrumbGenerator
 
   # ---Public Method---
   # Given a unit ID, return an array containing topmost item under root (ID and name), 
-  # or empty array if root
+  # or empty array if root, or if empty parent due to withdrawn item
   def getCampusInfo
     unitID = @unitID
-    if unitID == 'root' 
-      return [] 
+    if ['root', nil].include? unitID
+      return [nil, nil] 
     else
       until isCampus?(unitID) 
         unitID = getParent(unitID)
@@ -27,6 +27,10 @@ class BreadcrumbGenerator
   # Generate breadcrumb object as an array of hashes containing name/url key-values 
   # by working our way up the unit tree
   def generateCrumb
+    if @unitID == nil   #Empty parent
+      return [] 
+    end
+
     nodes = []
 
     if @type == "item"  # Display volume/issue only for journal articles
@@ -56,11 +60,7 @@ class BreadcrumbGenerator
   def getItemsUnit(pageName)
     itemID = 'qt' + pageName
     unitID = UnitItem.filter(:item_id => itemID, :is_direct => true).order(:ordering_of_units).map(:unit_id)[0]
-    if !unitID
-      raise "No Unit for this item " + itemID
-    else 
-      return unitID
-    end
+    return unitID
   end
 
   # Check if this is topmost unit under root.  
