@@ -3,7 +3,7 @@ import React from 'react'
 import { Link } from 'react-router'
 
 import PageBase from './PageBase.jsx'
-import { HeaderComp, NavComp, FooterComp } from '../components/AllComponents.jsx'
+import { HeaderComp, NavComp, BreadcrumbComp } from '../components/AllComponents.jsx'
 
 class UnitPage extends PageBase
 {
@@ -12,22 +12,17 @@ class UnitPage extends PageBase
     return "/api/unit/" + props.params.unitID
   }
 
-  render() { return(
-    <div>
-      { this.state.pageData ? this.renderData(this.state.pageData) : <div>Loading...</div> }
-      <FooterComp />
-    </div>
-  )}
-
   renderData(data) { return(
     <div>
-      {/* ToDo: find parent campus */}
       <HeaderComp level="unit"
-                  campus=""
+                  campusID={data.campusID}
+                  campusName={data.campusName}
+                  campuses={data.campuses}
                   unit_id={data.id} />
       <NavComp level="unit"
-               campus="" />
-      <p dangerouslySetInnerHTML={{__html: data.breadcrumb}}></p>
+               campusID={data.campusID}
+               campuses={data.campuses} />
+      <BreadcrumbComp array={data.breadcrumb} />
       <h2>Unit {data.id}</h2>
       <div>
         Info:
@@ -61,6 +56,7 @@ class UnitPage extends PageBase
       }
     </div>
   )}
+
 }
 
 module.exports = UnitPage

@@ -2,28 +2,46 @@
 
 // ***** Global Settings ***** //
 
+
 @import 'variables';
 @import 'mixins';
+@import 'breakpoints';
 @import 'testing';
 
 // ***** Vendor Libraries ***** //
 
 @import '../bower_components/normalize-scss/_normalize.scss';
+@import 'vendor/pdfjs/eschol_pdf_viewer';
 
 // ***** Objects ***** //
 
+@import 'button';
 @import 'columnbox';
-@import 'search';
+@import 'input';
+@import 'textlink';
 
 // ***** Components ***** //
 
+@import 'breadcrumb';
+@import 'checkbox';
+@import 'columns';
+@import 'export';
+@import 'facetbox';
+@import 'filter';
 @import 'footer';
 @import 'globalnav';
 @import 'header';
+@import 'infopages';
+@import 'pagination';
+@import 'scholworks';
+@import 'search';
+@import 'sidebarnav';
+@import 'sort';
 
-// ***** Themes ***** //
+// ***** Layouts ***** //
 
-// [to go here]
+@import 'about';
+@import 'searchlayout';
 
 // ***** Global Styles ***** //
 
@@ -34,6 +52,11 @@
 body {
 	margin: 0 auto;
 	padding: 10px;
+	// background-color: lighten($color-light-gray, 15%);
 	font-family: 'KievitWeb';
 	overflow-x: hidden;
+}
+
+p {
+	margin: 1em 0 0;
 }

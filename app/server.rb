@@ -46,6 +46,17 @@ require_relative 'searchApi'
 #
 # https://docs.google.com/drawings/d/1gCi8l7qteyy06nR5Ol2vCknh9Juo-0j91VGGyeWbXqI/edit
 
+class Issue < Sequel::Model
+end
+
+class Item < Sequel::Model
+  unrestrict_primary_key
+end
+
+class ItemAuthor < Sequel::Model
+  unrestrict_primary_key
+end
+
 class Unit < Sequel::Model
   unrestrict_primary_key
 end
@@ -54,12 +65,11 @@ class UnitHier < Sequel::Model(:unit_hier)
   unrestrict_primary_key
 end
 
-class Item < Sequel::Model
+class UnitItem < Sequel::Model
   unrestrict_primary_key
 end
 
-class UnitItem < Sequel::Model
-  unrestrict_primary_key
+class Section < Sequel::Model
 end
 
 ###################################################################################################
@@ -110,7 +120,9 @@ get %r{^/(?!api/).*} do  # matches every URL except /api/*
 
     # Read in the template file, and substitute the results from React/ReactRouter
     template = File.new("app/app.html").read
-    return template.sub("<div id=\"main\"></div>", response.body)
+    lookFor = '<div id="main"/>'
+    template.include?(lookFor) or raise("can't find #{lookFor.inspect} in template")
+    return template.sub(lookFor, response.body)
   else
     # Development mode - skip iso
     return File.new("app/app.html").read
@@ -126,34 +138,51 @@ get "/api/unit/:unitID" do |unitID|
   # and grand-children/descendants.
   content_type :json
   unit = Unit[unitID]
-  items = UnitItem.filter(:unit_id => unitID, :is_direct => true)
-  b = BreadcrumbGenerator.new(unitID, 'unit')
-  return {
-    :id => unitID,
-    :name => unit.name,
-    :type => unit.type,
-    :parents => UnitHier.filter(:unit_id => unitID, :is_direct => true).map { |hier| hier.ancestor_unit },
-    :children => UnitHier.filter(:ancestor_unit => unitID, :is_direct => true).map { |hier| hier.unit_id },
-    :nItems => items.count,
-    :items => items.limit(10).map { |pair| pair.item_id },
-    :breadcrumb => b.generate 
-  }.to_json
+  if !unit.nil?
+    begin
+      items = UnitItem.filter(:unit_id => unitID, :is_direct => true)
+      body = {
+        :id => unitID,
+        :name => unit.name,
+        :type => unit.type,
+        :parents => UnitHier.filter(:unit_id => unitID, :is_direct => true).map { |hier| hier.ancestor_unit },
+        :children => UnitHier.filter(:ancestor_unit => unitID, :is_direct => true).map { |hier| hier.unit_id },
+        :nItems => items.count,
+        :items => items.limit(10).map { |pair| pair.item_id }
+      }
+      return body.merge(getHeaderElements(BreadcrumbGenerator.new(unitID, 'unit'))).to_json
+    rescue Exception => e
+      halt 404, e.message
+    end
+  else
+    halt 404, "Unit not found"
+  end
 end
 
 ###################################################################################################
 # Item view page data.
 get "/api/item/:shortArk" do |shortArk|
-  # Andy, hack here.
   content_type :json
-  item = Item["qt"+shortArk]
-  b = BreadcrumbGenerator.new(shortArk, 'item')
-  return { 
-    :id => shortArk,
-    :title => item.title,
-    :rights => item.rights,
-    :pub_date => item.pub_date,
-    :breadcrumb => b.generate 
-  }.to_json
+  id = "qt"+shortArk
+  item = Item[id]
+  if !item.nil?
+    begin
+      body = {
+        :id => shortArk,
+        :title => item.title,
+        :rights => item.rights,
+        :pub_date => item.pub_date,
+        :authors => ItemAuthor.filter(:item_id => id).order(:ordering).map(:attrs).collect{ |h| JSON.parse(h)["name"]},
+        :content_type => item.content_type,
+        :attrs => JSON.parse(Item.filter(:id => id).map(:attrs)[0])
+      }
+      return body.merge(getHeaderElements(BreadcrumbGenerator.new(shortArk, 'item'))).to_json
+    rescue Exception => e
+      halt 404, e.message
+    end
+  else 
+    halt 404, "Item not found"
+  end
 end
 
 ###################################################################################################
@@ -163,3 +192,32 @@ get "/api/search/" do
   content_type :json
   return search(CGI::parse(request.query_string)).to_json
 end
+
+
+##################################################################################################
+# Helper methods
+
+# Generate breadcrumb and header content
+def getHeaderElements(breadcrumb)
+  campusID, campusName = breadcrumb.getCampusInfo
+  return {
+    :campusID => campusID,
+    :campusName => campusName,
+    :campuses => ACTIVE_CAMPUSES,
+    :breadcrumb => breadcrumb.generateCrumb 
+  }
+end
+
+# Get all active campuses/ORUs (id and name), sorted alphabetically by name
+def getActiveCampuses
+  campuses = Unit.join(:unit_hier, :unit_id => :id).filter(:ancestor_unit => 'root', :is_direct => 1, :is_active => true).to_hash(:id, :name)
+  sorted = campuses.sort_by { |id, name| name }
+  return sorted.unshift(["", "eScholarship at..."])
+end
+
+##################################################################################################
+# Static Variables 
+
+# Array of all campuses sorted by name (i.e. [["ucb", "UC Berkeley"], ... )
+ACTIVE_CAMPUSES = getActiveCampuses
+

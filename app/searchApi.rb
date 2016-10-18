@@ -42,11 +42,54 @@ end
 
 AWS_URL = URI('http://localhost:8888/2013-01-01/search')
 
+FACETS = ['type_of_work', 'peer_reviewed', 'supp_file_types', 'pub_year', 'campuses', 'departments', 'journals', 'disciplines', 'rights']
+
+def get_query_display(params)
+  filters = {}
+  
+  if params.key?('type_of_work')
+    filters['type_of_work'] = {'display' => 'Type of Work', 'fieldName' => 'type_of_work', 'filters' => get_type_of_work_display_name(params['type_of_work'].map { |v| {'value' => v} })}
+  end
+  if params.key?('peer_reviewed')
+    filters['peer_reviewed'] = {'display' => 'Peer Review', 'fieldName' => 'peer_reviewed', 'filters' => params['peer_reviewed'].map{ |v| {'value' => v} }}
+  end
+  if params.key?('supp_file_types')
+    filters['supp_file_types'] = {'display' => 'Included Media', 'fieldName' => 'supp_file_types', 'filters' => capitalize_display_name(params['supp_file_types'].map{ |v| {'value' => v} })}
+  end
+  if params.key?('pub_year')
+    filters['pub_year'] = {'display' => 'Publication Year', 'fieldName' => 'pub_year', 'filters' => params['pub_year'].map{ |v| {'value' => v} }}
+  end
+  if params.key?('campuses')
+    filters['campuses'] = {'display' => 'Campus', 'fieldName' => 'campuses', 'filters' => get_unit_display_name(params['campuses'].map{ |v| {'value' => v} })}
+  end
+  if params.key?('deparments')
+    filters['departments'] = {'display' => 'Department', 'fieldName' => 'departments', 'filters' => params['departments'].map{ |v| {'value' => v} }}
+  end
+  if params.key?('journals')
+    filters['journals'] = {'display' => 'Journal', 'fieldName' => 'journals', 'filters' => get_unit_display_name(params['journals'].map{ |v| {'value' => v} })}
+  end
+  if params.key?('disciplines')
+    filters['disciplines'] = {'display' => 'Discipline', 'fieldName' => 'disciplines', 'filters' => params['disciplines'].map{ |v| {'value' => v} }}
+  end
+  if params.key?('rights')
+    filters['rights'] = {'display' => 'Reuse License', 'fieldName' => 'rights', 'filters' => params['rights'].map{ |v| {'value' => v} }}
+  end
+  
+  display_params = {
+    'q' => params['q'] ? params['q'].join(" ") : 'test',
+    'filters' => filters
+  }
+end
+
 def aws_encode(params)
   fq = []
-  ['type_of_work', 'peer_reviewed', 'supp_file_types', 'campuses', 'journals', 'disciplines', 'rights'].each do |field_type|
+  FACETS.each do |field_type|
     if params[field_type].length > 0
-      filters = params[field_type].map { |filter| "#{field_type}: '#{filter}'" }
+      if field_type != 'pub_year'
+        filters = params[field_type].map { |filter| "#{field_type}: '#{filter}'" }
+      else
+        filters = params[field_type].map { |filter| "#{field_type}: #{filter}" }
+      end
       filters = filters.join(" ")
       if params[field_type].length > 1 then filters = "(or #{filters})" end
       fq.push(filters)
@@ -68,10 +111,11 @@ def aws_encode(params)
     'q' => params['q'] ? params['q'].join(" ") : 'test',
     'size' => params['size'] ? params['size'] : 10,
     
-    'facet.type_of_work' => "{buckets: ['article', 'book', 'theses', 'multimedia']}",
+    'facet.type_of_work' => "{buckets: ['article', 'monograph', 'dissertation', 'multimedia']}",
     'facet.peer_reviewed' => "{buckets: [1]}",
     'facet.supp_file_types' => "{buckets: ['video', 'audio', 'images', 'zip', 'other files']}",
     'facet.campuses' => "{buckets: ['ucb', 'ucd', 'uci', 'ucla', 'ucm', 'ucr', 'ucsd', 'ucsf', 'ucsb', 'ucsc', 'ucop', 'lbnl']}",
+    'facet.departments' => "{sort: 'count', size: 100}",
     'facet.journals' => "{sort: 'count', size: 100}",
     'facet.disciplines' => "{sort: 'count', size: 100}",
     'facet.rights' => "{sort: 'count', size: 100}"
@@ -94,6 +138,21 @@ def get_unit_display_name(unitFacets)
   for unitFacet in unitFacets
     unit = Unit[unitFacet['value']]
     unitFacet['displayName'] = unit.name
+  end
+end
+
+def get_type_of_work_display_name(facetList)
+  for facet in facetList    
+    if facet['value'] == 'article' then facet['displayName'] = 'Article' end
+    if facet['value'] == 'monograph' then facet['displayName'] = 'Book' end
+    if facet['value'] == 'dissertation' then facet['displayName'] = 'Theses' end
+    if facet['value'] == 'multimedia' then facet['displayName'] = 'Multimedia' end
+  end
+end
+
+def capitalize_display_name(facetList)
+  for facet in facetList
+    facet['displayName'] = facet['value'].capitalize
   end
 end
 
@@ -147,20 +206,25 @@ def search(params)
   end
   
   facetHash = response['facets']
-  ['type_of_work', 'peer_reviewed', 'supp_file_types', 'campuses', 'journals', 'disciplines', 'rights'].each do |field_type|
-    if params.key?(field_type) then facetHash[field_type] = facet_secondary_query(params.clone, field_type) end
+  FACETS.each do |field_type|
+    if field_type != 'pub_year' && params.key?(field_type) 
+      facetHash[field_type] = facet_secondary_query(params.clone, field_type)
+    end
   end
 
   # put facets into an array to maintain a specific order, apply facet-specific augmentation like including display values (see journal)
   facets = [
-    {'display' => 'Type of Work', 'fieldName' => 'type_of_work', 'facets' => facetHash['type_of_work']['buckets']},
-    {'display' => 'Peer Review', 'fieldName' => 'peer_reviewed', 'facets' => facetHash['peer_reviewed']['buckets']},
-    {'display' => 'Included Media', 'fieldName' => 'supp_file_types', 'facets' => facetHash['supp_file_types']['buckets']},
+    {'display' => 'Type of Work', 'fieldName' => 'type_of_work', 'facets' => get_type_of_work_display_name(facetHash['type_of_work']['buckets'])},
+    {'display' => 'Peer Review', 'fieldName' => 'peer_reviewed', 
+      'facets' => [{'value' => "1", 'count' => facetHash['peer_reviewed']['buckets'][0]['count'], 'displayName' => 'Peer-reviewed only'}] },
+    {'display' => 'Included Media', 'fieldName' => 'supp_file_types', 'facets' => capitalize_display_name(facetHash['supp_file_types']['buckets'])},
+    {'display' => 'Publication Year', 'fieldName' => 'pub_year'},
     {'display' => 'Campus', 'fieldName' => 'campuses', 'facets' => get_unit_display_name(facetHash['campuses']['buckets'])},
+    {'display' => 'Departments', 'fieldName' => 'departments', 'facets' => facetHash['departments']['buckets']},
     {'display' => 'Journal', 'fieldName' => 'journals', 'facets' => get_unit_display_name(facetHash['journals']['buckets'])},
     {'display' => 'Discipline', 'fieldName' => 'disciplines', 'facets' => facetHash['disciplines']['buckets']},
     {'display' => 'Reuse License', 'fieldName' => 'rights', 'facets' => facetHash['rights']['buckets']}
   ]
   
-  return {'searchResults' => searchResults, 'facets' => facets, 'count' => response['hits']['found']}
+  return {'count' => response['hits']['found'], 'query' => get_query_display(params.clone), 'searchResults' => searchResults, 'facets' => facets}
 end
