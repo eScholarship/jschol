@@ -211,7 +211,8 @@ end
 # Get all active campuses/ORUs (id and name), sorted alphabetically by name
 def getActiveCampuses
   campuses = Unit.join(:unit_hier, :unit_id => :id).filter(:ancestor_unit => 'root', :is_direct => 1, :is_active => true).to_hash(:id, :name)
-  return campuses.sort_by { |id, name| name }
+  sorted = campuses.sort_by { |id, name| name }
+  return sorted.unshift(["", "eScholarship at..."])
 end
 
 ##################################################################################################
