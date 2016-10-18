@@ -48,6 +48,7 @@ AWS_URL = URI('http://localhost:8888/2013-01-01/search')
 
 FACETS = ['type_of_work', 'peer_reviewed', 'supp_file_types', 'pub_year', 'campuses', 'departments', 'journals', 'disciplines', 'rights']
 
+# TODO: figure out how get_query_display works for pub_year_start and pub_year_end
 def get_query_display(params)
   filters = {}
   
@@ -98,6 +99,24 @@ def aws_encode(params)
       if params[field_type].length > 1 then filters = "(or #{filters})" end
       fq.push(filters)
     end
+  end
+  
+  if (params['pub_year_start'].length > 0 || params['pub_year_end'].length > 0) && 
+    (params['pub_year_start'][0] != "" || params['pub_year_end'][0] != "")
+    
+    if params['pub_year_start'].length > 0 && params['pub_year_start'][0] != ""
+      date_range = "[#{params['pub_year_start'][0]},"
+    else
+      date_range = "{,"
+    end
+    
+    if params['pub_year_end'].length > 0 && params['pub_year_end'][0] != ""
+      date_range = "#{date_range}#{params['pub_year_end'][0]}]"
+    else
+      date_range = "#{date_range}}"
+    end
+    
+    fq.push("pub_year: #{date_range}")
   end
 
   if fq.length > 1
@@ -266,7 +285,7 @@ def search(params)
     {'display' => 'Peer Review', 'fieldName' => 'peer_reviewed', 
       'facets' => [{'value' => "1", 'count' => facetHash['peer_reviewed']['buckets'][0]['count'], 'displayName' => 'Peer-reviewed only'}] },
     {'display' => 'Included Media', 'fieldName' => 'supp_file_types', 'facets' => capitalize_display_name(facetHash['supp_file_types']['buckets'])},
-    {'display' => 'Publication Year', 'fieldName' => 'pub_year', 'range' => ['From', 'To']},
+    {'display' => 'Publication Year', 'fieldName' => 'pub_year', 'range' => {pub_year_start: params['pub_year_start'][0], pub_year_end: params['pub_year_end'][0]}},
     {'display' => 'Campus', 'fieldName' => 'campuses', 'facets' => get_unit_display_name(facetHash['campuses']['buckets'])},
     {'display' => 'Departments', 'fieldName' => 'departments', 'facets' => get_unit_hierarchy(facetHash['departments']['buckets'])},
     {'display' => 'Journal', 'fieldName' => 'journals', 'facets' => get_unit_display_name(facetHash['journals']['buckets'])},

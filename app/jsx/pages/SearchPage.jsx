@@ -49,18 +49,35 @@ class FacetItem extends React.Component {
 }
 
 class PubYear extends React.Component {
+  state = {
+    pub_year_start: this.props.data.range.pub_year_start,
+    pub_year_end: this.props.data.range.pub_year_end
+  }
+  handleChange = this.handleChange.bind(this);
+
   //form submission on blur and enter
-  handleChange(e) {
-    console.log(e);
+  submitForm() {
+    //TODO: validate years, error handling
+    //TODO: would be nicer if, when these fields were blank, they weren't sent as part of the form submission (and thus included in the URL)
+    $('#facet-form-submit').click();
+  }
+
+  handleChange(event) {
+    if (event.target.id == 'pub_year_start') {
+      this.setState({pub_year_start: event.target.value});
+    } else if (event.target.id = 'pub_year_end') {
+      this.setState({pub_year_end: event.target.value});
+    }
   }
 
   render() {
-    // var startVal = this.props.data.filters ? this.props.data.filters[0].value : '';
-    // var endVal = this.props.data.filters ? this.props.data.filters[0].value : '';
     return (
       <div>
-        <input id="year_s" name="year_s" value='' type="text" onChange={ this.handleChange }/>
-        <input id="year_e" name="year_e" value='' type="text" onChange={ this.handleChange }/>
+        <label htmlFor="pub_year_start">From: </label>
+        <input id="pub_year_start" name="pub_year_start" value={this.state.pub_year_start} type="text" onChange={ this.handleChange } onBlur={ this.submitForm }/>
+        <br/>
+        <label htmlFor="pub_year_end">To: </label>
+        <input id="pub_year_end" name="pub_year_end" value={this.state.pub_year_end} type="text" onChange={ this.handleChange } onBlur={ this.submitForm }/>
       </div>
     ) 
   }
