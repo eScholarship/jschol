@@ -1,12 +1,15 @@
 #!/usr/bin/env ruby
 
 # This script converts data from old eScholarship into the new eschol5 database.
-# It should generally be run on a newly cleaned-out database. This sequence of commands
-# should do the trick:
 #
-# bin/sequel config/database.yaml -m migrations/ -M 0 && \
-# bin/sequel config/database.yaml -m migrations/ && \
-# ./convert.rb /path/to/allStruct.xml
+# The "--units" conversion mode should generally be run on a newly cleaned-out 
+# database. This sequence of commands should do the trick:
+#
+#   bin/sequel config/database.yaml -m migrations/ -M 0 && \
+#   bin/sequel config/database.yaml -m migrations/ && \
+#   ./convert.rb /path/to/allStruct.xml
+#
+# The "--items" conversion mode is built to be fully incremental.
 
 # Use bundler to keep dependencies local
 require 'rubygems'
@@ -274,7 +277,8 @@ def prefilterBatch(batch)
         shortArk = $1
       elsif line =~ %r{>>> END prefiltered}
         # Found a full block of prefiltered data. This item is ready for indexing.
-        timestamps.include?(shortArk) or raise("Can't find timestamp for item #{shortArk.inspect} - did we not request it?")
+        timestamps.include?(shortArk) or 
+          raise("Can't find timestamp for item #{shortArk.inspect} - did we not request it?")
         $indexQueue << [shortArk, timestamps[shortArk], buf.join]
         shortArk, buf = nil, []
       elsif shortArk
@@ -440,7 +444,8 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
   # Parse the metadata
   data = MetaAccess.new(prefilteredData)
   if data.root.nil?
-    raise("Error parsing prefiltered data as XML. First part: #{(prefilteredData.size > 500 ? prefilteredData[0,500]+"..." : prefilteredData).inspect}")
+    raise("Error parsing prefiltered data as XML. First part: " +
+      (prefilteredData.size > 500 ? prefilteredData[0,500]+"..." : prefilteredData).inspect)
   end
 
   # Grab the stuff we're jamming into the JSON 'attrs' field
@@ -508,7 +513,8 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
   dbItem[:content_type] = data.single("format")
   dbItem[:genre]        = data.single("type")
   dbItem[:pub_date]     = parseDate(itemID, data.single("date")) || "1901-01-01"
-  dbItem[:eschol_date]  = parseDate(itemID, data.single("datestamp")) || "1901-01-01" #FIXME: Think about this carefully. What's eschol_date for?
+  #FIXME: Think about this carefully. What's eschol_date for?
+  dbItem[:eschol_date]  = parseDate(itemID, data.single("datestamp")) || "1901-01-01" 
   dbItem[:rights]       = data.single("rights") || "public"
   dbItem[:attrs]        = JSON.generate(attrs)
   dbItem[:ordering_in_sect] = data.single("document-order")
@@ -766,7 +772,8 @@ def processBatch(batch)
 
   # Update status
   $nProcessed += batch[:items].size
-  puts "#{$nProcessed} processed + #{$nUnchanged} unchanged + #{$nSkipped} skipped = #{$nProcessed + $nUnchanged + $nSkipped} of #{$nTotal} total"
+  puts "#{$nProcessed} processed + #{$nUnchanged} unchanged + #{$nSkipped} " +
+       "skipped = #{$nProcessed + $nUnchanged + $nSkipped} of #{$nTotal} total"
 end
 
 ###################################################################################################
