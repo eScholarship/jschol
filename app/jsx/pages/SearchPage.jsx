@@ -50,8 +50,8 @@ class FacetItem extends React.Component {
 
 class PubYear extends React.Component {
   state = {
-    pub_year_start: this.props.data.range.pub_year_start,
-    pub_year_end: this.props.data.range.pub_year_end
+    pub_year_start: this.props.data.range.pub_year_start ? this.props.data.range.pub_year_start : '',
+    pub_year_end: this.props.data.range.pub_year_end ? this.props.data.range.pub_year_end : ''
   }
   handleChange = this.handleChange.bind(this);
 
@@ -169,7 +169,7 @@ class CurrentSearchTerms extends React.Component {
   }
 }
 
-class FacetForm extends React.Component {  
+class FacetForm extends React.Component {
   render() {
     var facetForm = this.props.data.facets.map(function(query, handler) {
       return function(fieldset) {
@@ -187,6 +187,70 @@ class FacetForm extends React.Component {
         {facetForm}
 				<button type="submit" id="facet-form-submit">Search</button>
       </Form>
+    )
+  }
+}
+
+class SortComp extends React.Component {
+  state = {
+    rows: this.props.query.rows ? this.props.query.rows : "10",
+    sort: this.props.query.sort ? this.props.query.sort : "rel"
+  }
+  handleChange = this.handleChange.bind(this);
+
+  handleChange(event) {
+    if (event.target.name == "rows") {
+      this.setState({rows: event.target.value});
+    }
+    if (event.target.name == "sort") {
+      this.setState({sort: event.target.value});
+    }
+    $('#facet-form-submit').click();
+  }
+
+  render() {
+    return (
+      <div className="c-sort">
+        <div className="o-input__droplist">
+          <label htmlFor="c-sort1">Sort By</label>
+          <select name="sort" id="c-sort1" form="facetForm" value={ this.state.sort } onChange={ this.handleChange }>
+            <option value="rel">Relevance</option>
+            <option value="pop">Most Popular</option>
+            <option value="a-title">A-Z By Title</option>
+            <option value="z-title">Z-A By Title</option>
+            <option value="a-author">A-Z By Author</option>
+            <option value="z-author">Z-A By Author</option>
+            <option value="asc">Date Ascending</option>
+            <option value="dsc">Date Decending</option>
+          </select>
+        </div>
+        <div className="o-input__droplist c-sort__page-input">
+          <label htmlFor="c-sort2">Per Page</label>
+          <select name="rows" id="c-sort2" form="facetForm" value={ this.state.rows } onChange={ this.handleChange }>
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="30">30</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+        </div>
+      </div>
+    )
+  }
+}
+
+class PaginationComp extends React.Component {
+  render() {
+    return (
+      <div className="c-pagination" action="">
+        <a className="c-pagination__prevnext" href="">Previous</a>
+        <a className="c-pagination__item--active" href="">1</a>
+        <a className="c-pagination__item" href="">2</a>
+        <a className="c-pagination__item" href="">3</a>
+        <span className="c-pagination__ellipses">&hellip;</span>
+        <a className="c-pagination__item" href="">342</a>
+        <a className="c-pagination__prevnext" href="">Next</a>
+      </div>
     )
   }
 }
@@ -269,17 +333,19 @@ class SearchPage extends PageBase {
             <FacetForm data={facetFormData} query={data.query} />
           </aside>
           <main>
-				  	<div className="l-search__sort-pagination">
-				  	</div>
-				  	<section className="o-columnbox-main">
-							<header>
-								<h2 className="o-columnbox-main__heading">Informational Pages (12 results)</h2>
-							</header>
+            <section className="o-columnbox-main">
+              <header>
+                <h2 className="o-columnbox-main__heading">Informational Pages (12 results)</h2>
+              </header>
             </section>
-						<section className="o-columnbox-main">
-							<header>
-								<h2 className="o-columnbox-main__heading">Scholarly Works (12,023 results)</h2>
-							</header>
+            <section className="o-columnbox-main">
+              <header>
+                <h2 className="o-columnbox-main__heading">Scholarly Works (12,023 results)</h2>
+              </header>
+              <div className="l-search__sort-pagination">
+                <SortComp query={data.query} />
+                <PaginationComp />
+              </div>
               <ScholarlyWorks results={data.searchResults} />
             </section>
           </main>

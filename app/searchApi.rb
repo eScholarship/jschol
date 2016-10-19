@@ -48,6 +48,28 @@ AWS_URL = URI('http://localhost:8888/2013-01-01/search')
 
 FACETS = ['type_of_work', 'peer_reviewed', 'supp_file_types', 'pub_year', 'campuses', 'departments', 'journals', 'disciplines', 'rights']
 
+def encode_sort(sortorder)
+  if sortorder == 'rel'
+    return '_score desc'
+  elsif sortorder == 'pop'
+    return '_score desc'
+  elsif sortorder == 'a-title'
+    return 'title asc'
+  elsif sortorder == 'z-title'
+    return 'title desc'
+  elsif sortorder == 'a-author'
+    return 'sort_author asc'
+  elsif sortorder == 'z-author'
+    return 'sort_author desc'
+  elsif sortorder == 'asc'
+    return 'pub_date asc'
+  elsif sortorder == 'desc'
+    return 'pub_date desc'
+  else
+    return '_score desc'
+  end
+end
+
 # TODO: figure out how get_query_display works for pub_year_start and pub_year_end
 def get_query_display(params)
   filters = {}
@@ -82,6 +104,8 @@ def get_query_display(params)
   
   display_params = {
     'q' => params['q'] ? params['q'].join(" ") : 'test',
+    'rows' => params['rows'][0],
+    'sort' => params['sort'][0],
     'filters' => filters
   }
 end
@@ -132,7 +156,8 @@ def aws_encode(params)
 
   aws_params = {
     'q' => params['q'] ? params['q'].join(" ") : 'test',
-    'size' => params['size'] ? params['size'] : 10,
+    'size' => params['rows'] ? params['rows'] : 10,
+    'sort' => params['sort'] ? encode_sort(params['sort'][0]) : '_score desc',
     
     'facet.type_of_work' => "{buckets: ['article', 'monograph', 'dissertation', 'multimedia']}",
     'facet.peer_reviewed' => "{buckets: [1]}",
