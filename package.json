@@ -45,7 +45,6 @@
     "lodash": "^4.15.0",
     "path": "^0.12.7",
     "postcss-assets": "^4.1.0",
-    "react-router-form": "^2.0.0-rc.0",
     "run-sequence": "^1.2.2",
     "vinyl-source-stream": "^1.1.0",
     "watchify": "^3.7.0"

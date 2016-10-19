@@ -37,14 +37,28 @@ div>}
 }
 
 class Content extends React.Component {
-  render() { return (
+  render() {
+    let q = new Date(),
+        today = new Date(q.getFullYear(),q.getMonth(),q.getDate()),
+        withdrawn = new Date(this.props.attrs['withdrawn_date']) <= today ? true : false,
+        embargoed = new Date(this.props.attrs['embargo_date']) > today ? true : false
+    return (
     <div>
-      {this.props.content_type == "application/pdf" ? this.renderPdf(this.props) : null }
-      {this.props.content_type == "html" ? this.renderHtml(this.props) : null }
+      {/* ToDo: Eventually we will use suppress_content to check for withdrawn/embargoed */}
+      { withdrawn && this.renderNoContent("withdrawn", this.props.attrs['withdrawn_date']) }
+      { embargoed && this.renderNoContent("embargoed", this.props.attrs['embargo_date']) }
+      { !embargoed && !withdrawn && this.renderContent(this.props) }
     </div>
   )}
 
-  renderPdf(p) { return(
+  renderContent(p) { return (
+    <div>
+      { this.props.content_type == "application/pdf" ? this.renderPdf(this.props) : null }
+      { this.props.content_type == "html" ? this.renderHtml(this.props) : null }
+    </div>
+  )}
+
+  renderPdf(p) { return (
     <div>
       Main text<br/>
       {/* Fetch PDF from a special place which supports returning CORS headers. E.g. transform item I
@@ -61,6 +75,15 @@ sc/content/qt9k10r3sc.pdf */}
     <div>
       Main text<br/>
       Placeholder: ToDo
+    </div>
+  )}
+
+  renderNoContent(reason, date) { return (
+    <div>
+    {reason=="withdrawn" && 
+      <p>Withdrawn item:<br/>This item has been withdrawn.<br/><br/><br/></p>}
+    {reason=="embargoed" && 
+      <p>This item is embargoed until {date}.<br/><br/><br/></p>}
     </div>
   )}
 

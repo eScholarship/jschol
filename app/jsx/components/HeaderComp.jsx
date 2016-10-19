@@ -39,16 +39,30 @@ class HeaderComp extends React.Component {
   }
 
   renderLocalHeader() {
+    // Temporary styles till we get Joel's work
+    let rowStyle = { display: 'table', padding: "5px 0px" };
+    let leftStyle = { display: 'table-cell', width: '250px', padding: "0px 10px" };
+    let centerStyle = { display: 'table-cell', width: '600px', padding: "0px 10px", border: '1px solid black' };
+    let rightStyle = { display: 'table-cell', width: '200px', padding: "0px 10px" };
     var campusSelector = this.props.campuses.map(function(c, i) {
-      return <option key={i} value={c[0]}>{c[1]}</option>
-    })
+        return <option key={i} value={c[0]} disabled={c[0] == "" ? "true" : null}>{c[1]}</option>
+      }),
+    campusID = this.props.campusID ? this.props.campusID : ""
     return (
-      <div>
-        <h2>Unit Banner Placeholder</h2>
-        <div className="o-input__droplist">
-          <select name="" id="" onChange={this.changeCampus} value={this.props.campusID}>
-            {campusSelector}
-          </select>   Publications in eScholarship:   16,780<br/>
+      <div style={rowStyle}>
+        <div style={leftStyle}>
+          <div className="o-input__droplist">
+            <select name="" id="" onChange={this.changeCampus} value={campusID}>
+              {campusSelector}
+            </select>
+          </div>
+        </div>
+        <div style={centerStyle}>
+          <h2>Unit Banner Placeholder</h2>
+        </div>
+        <div style={rightStyle}>
+          <button>Submit</button>
+          <button>Manage submissions</button>
         </div>
       </div>
     )

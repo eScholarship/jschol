@@ -1,12 +1,15 @@
 #!/usr/bin/env ruby
 
 # This script converts data from old eScholarship into the new eschol5 database.
-# It should generally be run on a newly cleaned-out database. This sequence of commands
-# should do the trick:
 #
-# bin/sequel config/database.yaml -m migrations/ -M 0 && \
-# bin/sequel config/database.yaml -m migrations/ && \
-# ./convert.rb /path/to/allStruct.xml
+# The "--units" conversion mode should generally be run on a newly cleaned-out 
+# database. This sequence of commands should do the trick:
+#
+#   bin/sequel config/database.yaml -m migrations/ -M 0 && \
+#   bin/sequel config/database.yaml -m migrations/ && \
+#   ./convert.rb /path/to/allStruct.xml
+#
+# The "--items" conversion mode is built to be fully incremental.
 
 # Use bundler to keep dependencies local
 require 'rubygems'
@@ -62,6 +65,11 @@ $noCloudSearchMode = ARGV.delete('--noCloudSearch')
 
 # For testing only, skip items <= X, where X is like "qt26s1s6d3"
 $skipTo = nil
+pos = ARGV.index('--skipTo')
+if pos
+  ARGV.delete_at(pos)
+  $skipTo = ARGV.delete_at(pos)
+end
 
 # Caches for speed
 $allUnits = nil
@@ -212,13 +220,34 @@ def prefilterBatch(batch)
 
   # Build a file with the relative directory names of all the items to prefilter in this batch
   timestamps = {}
+  nAdded = 0
   open("prefilterDirs.txt", "w") { |io|
     batch.each { |itemID, timestamp|
       shortArk = itemID.sub(%r{^ark:/?13030/}, '')
-      io.puts "13030/pairtree_root/#{shortArk.scan(/\w\w/).join('/')}/#{shortArk}"
+      partialPath = "13030/pairtree_root/#{shortArk.scan(/\w\w/).join('/')}/#{shortArk}"
+      
+      metaPath = "/apps/eschol/erep/data/#{partialPath}/meta/#{shortArk}.meta.xml"
+      if !File.exists?(metaPath) || File.size(metaPath) < 50
+        puts "Warning: skipping #{shortArk} due to missing or truncated meta.xml"
+        $nSkipped += 1
+        next
+      end
+
+      statsPath = metaPath.sub("meta.xml", "stats.xml")
+      if File.exists?(statsPath) && File.size(statsPath ) < 10
+        puts "Warning: skipping #{shortArk} due to truncated stats.xml"
+        $nSkipped += 1
+        next
+      end
+
+      io.puts partialPath
       timestamps[shortArk] = timestamp
+      nAdded += 1
     }
   }
+
+  # If everything filtered out, go to next batch
+  nAdded==0 and return
 
   # Run the XTF textIndexer in "prefilterOnly" mode. That way the stylesheets can do all the
   # dirty work of normalizing the various data formats, and we can use the uniform results.
@@ -248,7 +277,8 @@ def prefilterBatch(batch)
         shortArk = $1
       elsif line =~ %r{>>> END prefiltered}
         # Found a full block of prefiltered data. This item is ready for indexing.
-        timestamps.include?(shortArk) or raise("Can't find timestamp for item #{shortArk.inspect} - did we not request it?")
+        timestamps.include?(shortArk) or 
+          raise("Can't find timestamp for item #{shortArk.inspect} - did we not request it?")
         $indexQueue << [shortArk, timestamps[shortArk], buf.join]
         shortArk, buf = nil, []
       elsif shortArk
@@ -414,8 +444,8 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
   # Parse the metadata
   data = MetaAccess.new(prefilteredData)
   if data.root.nil?
-    puts "Huh? root is nil. prefilteredData=#{prefilteredData.size > 5000 ? prefilteredData[0,5000]+"..." : prefilteredData}"
-    exit 1
+    raise("Error parsing prefiltered data as XML. First part: " +
+      (prefilteredData.size > 500 ? prefilteredData[0,500]+"..." : prefilteredData).inspect)
   end
 
   # Grab the stuff we're jamming into the JSON 'attrs' field
@@ -432,7 +462,7 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
   data.single("customCitation")         and attrs[:custom_citation] = data.single("customCitation")
   data.single("localID")                and attrs[:local_id] = { type: data.singleAttr("localID", :type, "other"),
                                                                  id:   data.single("localID") }
-  data.single("publishedWebLocation")   and attrs[:pub_web_loc] = data.single("publishedWebLocation")
+  data.multiple("publishedWebLocation") and attrs[:pub_web_loc] = data.multiple("publishedWebLocation")
   data.single("buyLink")                and attrs[:buy_link] = data.single("buyLink")
 
   # Filter out "n/a" abstracts
@@ -450,11 +480,12 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
 
   # For eschol journals, populate the issue and section models.
   issue = section = nil
-  if data.single("pubType") == "journal" && data.single("volume") && data.single("issue")
+  issueNum = data.single("issue[@tokenize='no']") # untokenized is actually from "number"
+  if data.single("pubType") == "journal" && data.single("volume") && issueNum
     issue = Issue.new
     issue[:unit_id] = data.multiple("entityOnly")[0]
     issue[:volume]  = data.single("volume")
-    issue[:issue]   = data.single("issue")
+    issue[:issue]   = issueNum
     issue[:pub_date] = parseDate(itemID, data.single("date")) || "1901-01-01"
 
     section = Section.new
@@ -465,7 +496,7 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
   if !issue
     data.single("journal") and (attrs[:ext_journal] ||= {})[:name]   = data.single("journal")
     data.single("volume")  and (attrs[:ext_journal] ||= {})[:volume] = data.single("volume")
-    data.single("issue")   and (attrs[:ext_journal] ||= {})[:issue]  = data.single("issue")
+    issueNum               and (attrs[:ext_journal] ||= {})[:issue]  = issueNum
     data.single("issn")    and (attrs[:ext_journal] ||= {})[:issn]   = data.single("issn")
     if data.single("coverage") =~ /^([\w.]+) - ([\w.]+)$/
       (attrs[:ext_journal] ||= {})[:fpage] = $1
@@ -482,7 +513,8 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
   dbItem[:content_type] = data.single("format")
   dbItem[:genre]        = data.single("type")
   dbItem[:pub_date]     = parseDate(itemID, data.single("date")) || "1901-01-01"
-  dbItem[:eschol_date]  = parseDate(itemID, data.single("datestamp")) || "1901-01-01" #FIXME: Think about this carefully. What's eschol_date for?
+  #FIXME: Think about this carefully. What's eschol_date for?
+  dbItem[:eschol_date]  = parseDate(itemID, data.single("datestamp")) || "1901-01-01" 
   dbItem[:rights]       = data.single("rights") || "public"
   dbItem[:attrs]        = JSON.generate(attrs)
   dbItem[:ordering_in_sect] = data.single("document-order")
@@ -542,11 +574,11 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
   # a little tricky, since conversion to JSON introduces additional characters, and
   # it's hard to predict how many. So we just use a binary search.
   idxItem[:fields][:text] = text
-  if JSON.generate(idxItem).size > MAX_TEXT_SIZE
+  if JSON.generate(idxItem).bytesize > MAX_TEXT_SIZE
     idxItem[:fields][:text] = nil
-    baseSize = JSON.generate(idxItem).size
+    baseSize = JSON.generate(idxItem).bytesize
     toCut = (0..text.size).bsearch { |cut| 
-      JSON.generate({text: text[0, text.size - cut]}).size + baseSize < MAX_TEXT_SIZE 
+      JSON.generate({text: text[0, text.size - cut]}).bytesize + baseSize < MAX_TEXT_SIZE 
     }
     (toCut==0 || toCut.nil?) and raise("Internal error: have to cut something, but toCut=#{toCut.inspect}")
     puts "Note: Keeping only #{text.size - toCut} of #{text.size} text chars."
@@ -587,13 +619,13 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
   dbItem[:index_digest] = digest
 
   # Make doubly sure the logic above didn't generate a record that's too big.
-  if idxData.size >= 1024*1024
+  if idxData.bytesize >= 1024*1024
     puts "idxData=\n#{idxData}\n\nInternal error: generated record that's too big."
     exit 1
   end
 
   # If this item won't fit in the current batch, send the current batch off and clear it.
-  if batch[:idxDataSize] + idxData.size > MAX_BATCH_SIZE
+  if batch[:idxDataSize] + idxData.bytesize > MAX_BATCH_SIZE
     #puts "Prepared batch: nItems=#{batch[:items].length} size=#{batch[:idxDataSize]} "
     batch[:items].empty? or $batchQueue << batch.clone
     emptyBatch(batch)
@@ -602,7 +634,7 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
   # Now add this item to the batch
   batch[:items].empty? or batch[:idxData] << ",\n"  # Separator between records
   batch[:idxData] << idxData
-  batch[:idxDataSize] += idxData.size
+  batch[:idxDataSize] += idxData.bytesize
   batch[:items] << { dbItem: dbItem, dbAuthors: dbAuthors, dbIssue: issue, dbSection: section, units: units }
   #puts "current batch size: #{batch[:idxDataSize]}"
 
@@ -740,7 +772,8 @@ def processBatch(batch)
 
   # Update status
   $nProcessed += batch[:items].size
-  puts "#{$nProcessed} processed + #{$nUnchanged} unchanged + #{$nSkipped} skipped = #{$nProcessed + $nUnchanged + $nSkipped} of #{$nTotal} total"
+  puts "#{$nProcessed} processed + #{$nUnchanged} unchanged + #{$nSkipped} " +
+       "skipped = #{$nProcessed + $nUnchanged + $nSkipped} of #{$nTotal} total"
 end
 
 ###################################################################################################
@@ -798,9 +831,11 @@ def convertAllItems(arks)
 
   # Convert all the items that are indexable
   query = QUEUE_DB[:indexStates].where(indexName: 'erep').select(:itemId, :time).order(:itemId)
+  $nTotal = query.count
   if $skipTo
     puts "Skipping all up to #{$skipTo}..."
     query = query.where{ itemId > "ark:13030/#{$skipTo}" }
+    $nSkipped = $nTotal - query.count
   end
   query.each do |row|
     shortArk = row[:itemId].sub(%r{^ark:/?13030/}, '')

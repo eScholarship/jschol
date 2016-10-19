@@ -120,7 +120,9 @@ get %r{^/(?!api/).*} do  # matches every URL except /api/*
 
     # Read in the template file, and substitute the results from React/ReactRouter
     template = File.new("app/app.html").read
-    return template.sub("<div id=\"main\"></div>", response.body)
+    lookFor = '<div id="main"/>'
+    template.include?(lookFor) or raise("can't find #{lookFor.inspect} in template")
+    return template.sub(lookFor, response.body)
   else
     # Development mode - skip iso
     return File.new("app/app.html").read
@@ -209,7 +211,8 @@ end
 # Get all active campuses/ORUs (id and name), sorted alphabetically by name
 def getActiveCampuses
   campuses = Unit.join(:unit_hier, :unit_id => :id).filter(:ancestor_unit => 'root', :is_direct => 1, :is_active => true).to_hash(:id, :name)
-  return campuses.sort_by { |id, name| name }
+  sorted = campuses.sort_by { |id, name| name }
+  return sorted.unshift(["", "eScholarship at..."])
 end
 
 ##################################################################################################
