@@ -149,7 +149,7 @@ class CurrentSearchTerms extends React.Component {
           var displayNames = this.props.query['filters'][filterType]['filters'].map(function(filter) {
             return filter['displayName'];
           });
-          activeFilters.push({'filterDisplay': this.props.query['filters'][filterType]['display'], 'filters': displayNames.join(" "), 'filterType': filterType});
+          activeFilters.push({'filterDisplay': this.props.query['filters'][filterType]['display'], 'filters': displayNames.join(", "), 'filterType': filterType});
         }
       }
 
@@ -310,6 +310,21 @@ class PaginationComp extends React.Component {
     var pages = Math.ceil(this.props.count / this.props.query.rows);
     var displayedPages = []
 
+    if (pages <= 7) {
+      for (var i=1; i<=pages; i++) {
+        displayedPages.push({num: i, className: i == page ? "c-pagination__item--active" : "c-pagination__item"});
+      }
+      return (
+      <div className="c-pagination">
+        <a className="c-pagination__prevnext" onClick={this.previous}>Previous</a>
+        { displayedPages.map(page => {
+          return (<a key={page.num} className={page.className} onClick={this.page}>{page.num}</a>)
+        }) }
+        <a className="c-pagination__prevnext" onClick={this.next}>Next</a>
+      </div>
+      )
+    }
+
     if (page <= 4) {
       for (var i=1; i<=5; i++) {
         displayedPages.push({num: i, className: i == page ? "c-pagination__item--active" : "c-pagination__item"});
@@ -445,7 +460,7 @@ class SearchPage extends PageBase {
             </section>
             <section className="o-columnbox-main">
               <header>
-                <h2 className="o-columnbox-main__heading">Scholarly Works (12,023 results)</h2>
+                <h2 className="o-columnbox-main__heading">Scholarly Works ({data.count} results)</h2>
               </header>
               <div className="l-search__sort-pagination">
                 <SortComp query={data.query} />
