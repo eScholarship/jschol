@@ -9,6 +9,7 @@ import { HeaderComp, NavComp } from '../components/AllComponents.jsx'
 
 class FacetItem extends React.Component {
   handleChange() {
+    $('[name=start]').val('0');
     $('#facet-form-submit').click();
   }
   
@@ -59,6 +60,7 @@ class PubYear extends React.Component {
   submitForm() {
     //TODO: validate years, error handling
     //TODO: would be nicer if, when these fields were blank, they weren't sent as part of the form submission (and thus included in the URL)
+    $('[name=start]').val('0');
     $('#facet-form-submit').click();
   }
 
@@ -125,10 +127,12 @@ class FacetFieldset extends React.Component {
 
 class CurrentSearchTerms extends React.Component {
   clearAll(event) {
+    $('[name=start]').val('0');
     var filters = $(':checked').prop('checked', false);
   }
 
   handleClick(event) {
+    $('[name=start]').val('0');
     var filterType = $(event.target).data('filterType');
     var filters = $('[name=' + filterType + ']:checked').prop('checked', false);
   }
@@ -225,6 +229,7 @@ class SortComp extends React.Component {
     if (event.target.name == "sort") {
       this.setState({sort: event.target.value});
     }
+    $('[name=start]').val('0');
     $('#facet-form-submit').click();
   }
 
@@ -376,7 +381,7 @@ class ResultItem extends React.Component {
             }) }
           </ul>
           <header>
-            <a href="{this.props.result.id}">{this.props.result.title}</a>
+            <a href={this.props.result.id}>{this.props.result.title}</a>
           </header>
           <p>
             Authors: ???<br/>

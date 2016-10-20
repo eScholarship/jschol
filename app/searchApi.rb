@@ -99,7 +99,7 @@ def get_query_display(params)
     filters['disciplines'] = {'display' => 'Discipline', 'fieldName' => 'disciplines', 'filters' => params['disciplines'].map{ |v| {'value' => v} }}
   end
   if params.key?('rights')
-    filters['rights'] = {'display' => 'Reuse License', 'fieldName' => 'rights', 'filters' => params['rights'].map{ |v| {'value' => v} }}
+    filters['rights'] = {'display' => 'Reuse License', 'fieldName' => 'rights', 'filters' => get_short_license_display_name(params['rights'].map{ |v| {'value' => v} })}
   end
   
   display_params = {
@@ -229,6 +229,9 @@ def get_unit_hierarchy(unitFacets)
         unitFacet['ancestor'] = {displayName: ancestor.name, value: ancestor.id}
       end
     elsif ancestors.length > 1
+      # as of 10/20/17 - not presently a case in the database
+      # query for all UnitHier rows where Unit is a department and Unit's direct Ancestor is a department
+      #   pp UnitHier.where(unit: Unit.where(type: 'oru')).where(is_direct: true).where(ancestor: Unit.where(type: 'oru')).all
       pp "DON'T KNOW WHAT TO DO HERE YIKES"
     end
   end
@@ -243,6 +246,42 @@ end
 def capitalize_display_name(facetList)
   for facet in facetList
     facet['displayName'] = facet['value'].capitalize
+  end
+end
+
+def get_license_display_name(facetList)
+  for facet in facetList
+    if facet['value'] == 'cc1'
+      facet['displayName'] = 'BY - Attribution required'
+    elsif facet['value'] == 'cc2'
+      facet['displayName'] = 'BY-SA - Attribution; Derivatives must use same license'
+    elsif facet['value'] == 'cc3'
+      facet['displayName'] = 'BY-ND - Attribution; No derivatives'
+    elsif facet['value'] == 'cc4'
+      facet['displayName'] = 'BY-NC - Attribution; NonCommercial use only'
+    elsif facet['value'] == 'cc5'
+      facet['displayName'] = 'BY-NC-SA - Attribution; NonCommercial use; Derivatives use same license'
+    elsif facet['value'] == 'cc6'
+      facet['displayName'] = 'BY-NC-ND - Attribution; NonCommercial use; No derivatives'
+    end
+  end
+end
+
+def get_short_license_display_name(facetList)
+  for facet in facetList
+    if facet['value'] == 'cc1'
+      facet['displayName'] = 'BY'
+    elsif facet['value'] == 'cc2'
+      facet['displayName'] = 'BY-SA'
+    elsif facet['value'] == 'cc3'
+      facet['displayName'] = 'BY-ND'
+    elsif facet['value'] == 'cc4'
+      facet['displayName'] = 'BY-NC'
+    elsif facet['value'] == 'cc5'
+      facet['displayName'] = 'BY-NC-SA'
+    elsif facet['value'] == 'cc6'
+      facet['displayName'] = 'BY-NC-ND'
+    end
   end
 end
 
@@ -317,7 +356,7 @@ def search(params)
     {'display' => 'Departments', 'fieldName' => 'departments', 'facets' => get_unit_hierarchy(facetHash['departments']['buckets'])},
     {'display' => 'Journal', 'fieldName' => 'journals', 'facets' => get_unit_display_name(facetHash['journals']['buckets'])},
     {'display' => 'Discipline', 'fieldName' => 'disciplines', 'facets' => facetHash['disciplines']['buckets']},
-    {'display' => 'Reuse License', 'fieldName' => 'rights', 'facets' => facetHash['rights']['buckets']}
+    {'display' => 'Reuse License', 'fieldName' => 'rights', 'facets' => get_license_display_name(facetHash['rights']['buckets'])}
   ]
 
   return {'count' => response['hits']['found'], 'query' => get_query_display(params.clone), 'searchResults' => searchResults, 'facets' => facets}
