@@ -170,6 +170,17 @@ class CurrentSearchTerms extends React.Component {
 }
 
 class FacetForm extends React.Component {
+  handleSubmit(event, formData) {
+    for(var key in formData) {
+      if (formData[key] == "" ||
+      (key === 'sort' && formData[key] === 'rel') ||
+      (key === 'rows' && formData[key] === '10') ||
+      (key === 'start' && formData[key] === '0')) {
+        delete formData[key];
+      }
+    }
+  }
+
   render() {
     var facetForm = this.props.data.facets.map(function(query, handler) {
       return function(fieldset) {
@@ -182,7 +193,7 @@ class FacetForm extends React.Component {
     }(this.props.query, this.handleChange));
 
     return (
-			<Form id="facetForm" to='/search' method="GET">
+			<Form id="facetForm" to='/search' method="GET" onSubmit={this.handleSubmit}>
         <CurrentSearchTerms query={this.props.query} count={this.props.data.count}/>
         {facetForm}
 				<button type="submit" id="facet-form-submit">Search</button>
@@ -240,9 +251,6 @@ class SortComp extends React.Component {
 }
 
 class PaginationComp extends React.Component {
-  state = {
-    start: this.props.query.start ? this.props.query.start : "0"
-  }
   next = this.next.bind(this);
   previous = this.previous.bind(this);
   first = this.first.bind(this);
@@ -250,46 +258,41 @@ class PaginationComp extends React.Component {
   page = this.page.bind(this);
 
   next(event) {
-    if (parseInt(this.state.start) + parseInt(this.props.query.rows) <= this.props.count) {
-      var newStart = parseInt(this.state.start) + parseInt(this.props.query.rows);
-      this.setState({start: newStart}, () => {
-        $('#facet-form-submit').click();
-      });
+    if (parseInt(this.props.query.start) + parseInt(this.props.query.rows) <= this.props.count) {
+      var newStart = parseInt(this.props.query.start) + parseInt(this.props.query.rows);
+      $('[form=facetForm][name=start]').val(newStart);
+      $('#facet-form-submit').click();
     }
   }
 
   previous(event) {
-    if (this.state.start >= this.props.query.rows) {
-      var newStart = this.state.start - this.props.query.rows;
-      this.setState({start: newStart}, () => {
-        $('#facet-form-submit').click();
-      });
+    if (this.props.query.start >= this.props.query.rows) {
+      var newStart = this.props.query.start - this.props.query.rows;
+      $('[form=facetForm][name=start]').val(newStart);
+      $('#facet-form-submit').click();
     }
   }
 
   first(event) {
-    this.setState({start: 0}, () => {
-      $('#facet-form-submit').click();
-    });
+    $('[form=facetForm][name=start]').val(0);
+    $('#facet-form-submit').click();
   }
 
   last(event) {
     var newStart = Math.floor(this.props.count / this.props.query.rows);
     newStart = newStart * this.props.query.rows;
-    this.setState({start: newStart}, () => {
-      $('#facet-form-submit').click();
-    });
+    $('[form=facetForm][name=start]').val(newStart);
+    $('#facet-form-submit').click();
   }
 
   page(event) {
     var newStart = (event.target.text - 1) * this.props.query.rows;
-    this.setState({start: newStart}, () => {
-      $('#facet-form-submit').click();
-    });
+    $('[form=facetForm][name=start]').val(newStart);
+    $('#facet-form-submit').click();
   }
 
   render() {
-    var page = Math.ceil(this.state.start / this.props.query.rows) + 1;
+    var page = Math.ceil(this.props.query.start / this.props.query.rows) + 1;
     var pages = Math.ceil(this.props.count / this.props.query.rows);
     var displayedPages = []
 
@@ -299,7 +302,6 @@ class PaginationComp extends React.Component {
       }
       return (
         <div className="c-pagination">
-          <input type="hidden" name="start" form="facetForm" value={this.state.start} />
           <a className="c-pagination__prevnext" onClick={this.previous}>Previous</a>
           { displayedPages.map(page => {
             return (<a key={page.num} className={page.className} onClick={this.page}>{page.num}</a>)
@@ -316,7 +318,6 @@ class PaginationComp extends React.Component {
       }
       return (
         <div className="c-pagination">
-          <input type="hidden" name="start" form="facetForm" value={this.state.start} />
           <a className="c-pagination__prevnext" onClick={this.previous}>Previous</a>
           <a className="c-pagination__item" onClick={this.first}>1</a>
           <span className="c-pagination__ellipses">&hellip;</span>
@@ -330,7 +331,6 @@ class PaginationComp extends React.Component {
     else {
       return (
         <div className="c-pagination">
-          <input type="hidden" name="start" form="facetForm" value={this.state.start} />
           <a className="c-pagination__prevnext" onClick={this.previous}>Previous</a>
           <a className="c-pagination__item" onClick={this.first}>1</a>
           <span className="c-pagination__ellipses">&hellip;</span>
@@ -435,9 +435,11 @@ class SearchPage extends PageBase {
               </header>
               <div className="l-search__sort-pagination">
                 <SortComp query={data.query} />
+                <input type="hidden" name="start" form="facetForm" value={data.query.start} />
                 <PaginationComp query={data.query} count={data.count}/>
               </div>
               <ScholarlyWorks results={data.searchResults} />
+              <PaginationComp query={data.query} count={data.count}/>
             </section>
           </main>
         </div>

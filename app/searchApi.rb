@@ -157,9 +157,9 @@ def aws_encode(params)
 
   aws_params = {
     'q' => params['q'] ? params['q'].join(" ") : 'test',
-    'size' => params['rows'] ? params['rows'] : 10,
-    'sort' => params['sort'] ? encode_sort(params['sort'][0]) : '_score desc',
-    'start' => params['start'] ? params['start'][0] : 0,
+    'size' => params['rows'].length > 0 ? params['rows'] : 10,
+    'sort' => params['sort'].length > 0 ? encode_sort(params['sort'][0]) : '_score desc',
+    'start' => params['start'].length > 0 ? params['start'][0] : 0,
     
     'facet.type_of_work' => "{buckets: ['article', 'monograph', 'dissertation', 'multimedia']}",
     'facet.peer_reviewed' => "{buckets: [1]}",
