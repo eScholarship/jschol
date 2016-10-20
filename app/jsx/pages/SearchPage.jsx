@@ -212,7 +212,7 @@ class SortComp extends React.Component {
     return (
       <div className="c-sort">
         <div className="o-input__droplist">
-          <label htmlFor="c-sort1">Sort By</label>
+          <label htmlFor="c-sort1">Sort By:</label>
           <select name="sort" id="c-sort1" form="facetForm" value={ this.state.sort } onChange={ this.handleChange }>
             <option value="rel">Relevance</option>
             <option value="pop">Most Popular</option>
@@ -225,7 +225,7 @@ class SortComp extends React.Component {
           </select>
         </div>
         <div className="o-input__droplist c-sort__page-input">
-          <label htmlFor="c-sort2">Per Page</label>
+          <label htmlFor="c-sort2">Show:</label>
           <select name="rows" id="c-sort2" form="facetForm" value={ this.state.rows } onChange={ this.handleChange }>
             <option value="10">10</option>
             <option value="20">20</option>
@@ -240,18 +240,109 @@ class SortComp extends React.Component {
 }
 
 class PaginationComp extends React.Component {
+  state = {
+    start: this.props.query.start ? this.props.query.start : "0"
+  }
+  next = this.next.bind(this);
+  previous = this.previous.bind(this);
+  first = this.first.bind(this);
+  last = this.last.bind(this);
+  page = this.page.bind(this);
+
+  next(event) {
+    if (parseInt(this.state.start) + parseInt(this.props.query.rows) <= this.props.count) {
+      var newStart = parseInt(this.state.start) + parseInt(this.props.query.rows);
+      this.setState({start: newStart}, () => {
+        $('#facet-form-submit').click();
+      });
+    }
+  }
+
+  previous(event) {
+    if (this.state.start >= this.props.query.rows) {
+      var newStart = this.state.start - this.props.query.rows;
+      this.setState({start: newStart}, () => {
+        $('#facet-form-submit').click();
+      });
+    }
+  }
+
+  first(event) {
+    this.setState({start: 0}, () => {
+      $('#facet-form-submit').click();
+    });
+  }
+
+  last(event) {
+    var newStart = Math.floor(this.props.count / this.props.query.rows);
+    newStart = newStart * this.props.query.rows;
+    this.setState({start: newStart}, () => {
+      $('#facet-form-submit').click();
+    });
+  }
+
+  page(event) {
+    var newStart = (event.target.text - 1) * this.props.query.rows;
+    this.setState({start: newStart}, () => {
+      $('#facet-form-submit').click();
+    });
+  }
+
   render() {
-    return (
-      <div className="c-pagination" action="">
-        <a className="c-pagination__prevnext" href="">Previous</a>
-        <a className="c-pagination__item--active" href="">1</a>
-        <a className="c-pagination__item" href="">2</a>
-        <a className="c-pagination__item" href="">3</a>
-        <span className="c-pagination__ellipses">&hellip;</span>
-        <a className="c-pagination__item" href="">342</a>
-        <a className="c-pagination__prevnext" href="">Next</a>
-      </div>
-    )
+    var page = Math.ceil(this.state.start / this.props.query.rows) + 1;
+    var pages = Math.ceil(this.props.count / this.props.query.rows);
+    var displayedPages = []
+
+    if (page <= 4) {
+      for (var i=1; i<=5; i++) {
+        displayedPages.push({num: i, className: i == page ? "c-pagination__item--active" : "c-pagination__item"});
+      }
+      return (
+        <div className="c-pagination">
+          <input type="hidden" name="start" form="facetForm" value={this.state.start} />
+          <a className="c-pagination__prevnext" onClick={this.previous}>Previous</a>
+          { displayedPages.map(page => {
+            return (<a key={page.num} className={page.className} onClick={this.page}>{page.num}</a>)
+          }) }
+          <span className="c-pagination__ellipses">&hellip;</span>
+          <a className="c-pagination__item" onClick={this.last}>{pages}</a>
+          <a className="c-pagination__prevnext" onClick={this.next}>Next</a>
+        </div>
+      )
+    }
+    else if (page > pages-4) {
+      for (var i=pages-4; i<=pages; i++) {
+        displayedPages.push({num: i, className: i == page ? "c-pagination__item--active" : "c-pagination__item"});
+      }
+      return (
+        <div className="c-pagination">
+          <input type="hidden" name="start" form="facetForm" value={this.state.start} />
+          <a className="c-pagination__prevnext" onClick={this.previous}>Previous</a>
+          <a className="c-pagination__item" onClick={this.first}>1</a>
+          <span className="c-pagination__ellipses">&hellip;</span>
+          { displayedPages.map(page => {
+            return (<a key={page.num} className={page.className} onClick={this.page}>{page.num}</a>)
+          }) }
+          <a className="c-pagination__prevnext" onClick={this.next}>Next</a>
+        </div>
+      )
+    }
+    else {
+      return (
+        <div className="c-pagination">
+          <input type="hidden" name="start" form="facetForm" value={this.state.start} />
+          <a className="c-pagination__prevnext" onClick={this.previous}>Previous</a>
+          <a className="c-pagination__item" onClick={this.first}>1</a>
+          <span className="c-pagination__ellipses">&hellip;</span>
+          <a className="c-pagination__item" onClick={this.prev}>{page - 1}</a>
+          <a className="c-pagination__item c-pagination__item--active">{page}</a>
+          <a className="c-pagination__item" onClick={this.next}>{page + 1}</a>
+          <span className="c-pagination__ellipses">&hellip;</span>
+          <a className="c-pagination__item" onClick={this.last}>{pages}</a>
+          <a className="c-pagination__prevnext" onClick={this.next}>Next</a>
+        </div>
+      )
+    }
   }
 }
 
@@ -344,7 +435,7 @@ class SearchPage extends PageBase {
               </header>
               <div className="l-search__sort-pagination">
                 <SortComp query={data.query} />
-                <PaginationComp />
+                <PaginationComp query={data.query} count={data.count}/>
               </div>
               <ScholarlyWorks results={data.searchResults} />
             </section>

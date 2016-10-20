@@ -104,8 +104,9 @@ def get_query_display(params)
   
   display_params = {
     'q' => params['q'] ? params['q'].join(" ") : 'test',
-    'rows' => params['rows'][0],
-    'sort' => params['sort'][0],
+    'rows' => params['rows'].length > 0 ? params['rows'][0] : '10',
+    'sort' => params['sort'].length > 0 ? params['sort'][0] : 'rel',
+    'start' => params['start'].length > 0 ? params['start'][0] : '0',
     'filters' => filters
   }
 end
@@ -158,6 +159,7 @@ def aws_encode(params)
     'q' => params['q'] ? params['q'].join(" ") : 'test',
     'size' => params['rows'] ? params['rows'] : 10,
     'sort' => params['sort'] ? encode_sort(params['sort'][0]) : '_score desc',
+    'start' => params['start'] ? params['start'][0] : 0,
     
     'facet.type_of_work' => "{buckets: ['article', 'monograph', 'dissertation', 'multimedia']}",
     'facet.peer_reviewed' => "{buckets: [1]}",
