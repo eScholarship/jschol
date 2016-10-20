@@ -25,7 +25,7 @@ class HeaderComp extends React.Component {
               <img src="/images/logo_escholarship.svg" alt="escholarship"/>
             </a>	
             <div className={this.state.searchActive ? "c-header__search--active" : "c-header__search"}>
-              <SearchComp onClose = {()=>this.setState({searchActive: false})} />
+              <SearchComp isJournal={this.props.isJournal} onClose = {()=>this.setState({searchActive: false})} />
             </div>
             <button className="c-header__search-open-button" aria-label="open search navigation" onClick = {()=> this.setState({searchActive: true})}></button>
           </div>
