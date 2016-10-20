@@ -124,6 +124,15 @@ class FacetFieldset extends React.Component {
 }
 
 class CurrentSearchTerms extends React.Component {
+  clearAll(event) {
+    var filters = $(':checked').prop('checked', false);
+  }
+
+  handleClick(event) {
+    var filterType = $(event.target).data('filterType');
+    var filters = $('[name=' + filterType + ']:checked').prop('checked', false);
+  }
+
   render() {
     var searchString = 'Your search: "' + this.props.query.q + '"';
     var filters;
@@ -136,20 +145,20 @@ class CurrentSearchTerms extends React.Component {
           var displayNames = this.props.query['filters'][filterType]['filters'].map(function(filter) {
             return filter['displayName'];
           });
-          activeFilters.push({'filterType': this.props.query['filters'][filterType]['display'], 'filters': displayNames.join(" ")});
+          activeFilters.push({'filterDisplay': this.props.query['filters'][filterType]['display'], 'filters': displayNames.join(" "), 'filterType': filterType});
         }
       }
 
       filters = (
         <div>
-    			<div className="c-filter__active-header">
-    				<span id="c-filter__active-title">Active filters:</span>
-    				<button>clear all</button>
+          <div className="c-filter__active-header">
+            <span id="c-filter__active-title">Active filters:</span>
+            <button onClick={this.clearAll}>clear all</button>
           </div>
-    			<div role="group" aria-labelledby="c-filter__active-title" className="c-filter__active">
-            { activeFilters.map(function(filter) {
+          <div role="group" aria-labelledby="c-filter__active-title" className="c-filter__active">
+            { activeFilters.map((filter) => {
               return (
-                <button key={filter.filterType}>{filter.filterType} ({filter.filters})</button>
+                <button key={filter.filterType} onClick={this.handleClick} data-filter-type={filter.filterType}>{filter.filterDisplay} ({filter.filters})</button>
               )
             }) }
           </div>
