@@ -40,6 +40,7 @@ class ItemPage extends PageBase
     return(
       <div>
         <HeaderComp level="item"
+                    isJournal = {data.isJournal}
                     campusID={data.campusID}
                     campusName={data.campusName}
                     campuses={data.campuses}

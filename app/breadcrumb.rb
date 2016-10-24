@@ -24,6 +24,11 @@ class BreadcrumbGenerator
   end
 
   # ---Public Method---
+  def isJournal?
+    return Unit.filter(:id => @unitID, :type => 'journal').map(:id)[0]
+  end
+
+  # ---Public Method---
   # Generate breadcrumb object as an array of hashes containing name/url key-values 
   # by working our way up the unit tree
   def generateCrumb
