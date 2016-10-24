@@ -1,5 +1,6 @@
 # Ruby gems required by this application
 source 'https://rubygems.org'
+gem 'aws-sdk'             # used to talk to AWS CloudSearch
 gem 'json'                # safely and quickly parsing and generating JSON data
 gem 'mysql2'              # connecting to the database
 gem 'nokogiri'            # parsing and generating XML
