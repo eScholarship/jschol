@@ -504,7 +504,7 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
 
   # Supplemental files
   supps = []
-  if rawMeta.at("/record/content") # FIXME FOO
+  if rawMeta.at("/record/content")
     # For UCIngest format, read supp data from the raw metadata file.
     rawMeta.xpath("/record/content/supplemental/file").each { |fileEl|
       suppAttrs = { file: fileEl[:path].sub(%r{.*content/supp/}, "") }
@@ -684,6 +684,8 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
   existingItem = Item[itemID]
   if existingItem && existingItem[:index_digest] == digest && !$testMode && !$forceMode
     puts "Unchanged item."
+    existingItem.last_indexed = timestamp
+    existingItem.save
     $nUnchanged += 1
     return
   end
