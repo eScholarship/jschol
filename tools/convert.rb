@@ -92,6 +92,17 @@ $nUnchanged = 0
 $nProcessed = 0
 $nTotal = 0
 
+$discTbl = {"1540" => "Life Sciences",
+            "3566" => "Medicine and Health Sciences",
+            "3864" => "Physical Sciences and Mathematics",
+            "3525" => "Engineering",
+            "1965" => "Social and Behavioral Sciences",
+            "1481" => "Arts and Humanities",
+            "1573" => "Law",
+            "3688" => "Business",
+            "2932" => "Architecture",
+            "3579" => "Education"}
+
 ###################################################################################################
 # Model classes for easy object-relational mapping in the database
 
@@ -225,7 +236,6 @@ def prefilterBatch(batch)
     batch.each { |itemID, timestamp|
       shortArk = itemID.sub(%r{^ark:/?13030/}, '')
       partialPath = "13030/pairtree_root/#{shortArk.scan(/\w\w/).join('/')}/#{shortArk}"
-      
       metaPath = "/apps/eschol/erep/data/#{partialPath}/meta/#{shortArk}.meta.xml"
       if !File.exists?(metaPath) || File.size(metaPath) < 50
         puts "Warning: skipping #{shortArk} due to missing or truncated meta.xml"
@@ -448,13 +458,18 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
       (prefilteredData.size > 500 ? prefilteredData[0,500]+"..." : prefilteredData).inspect)
   end
 
+  # Also grab the original metadata file
+  metaPath = "/apps/eschol/erep/data/13030/pairtree_root/#{itemID.scan(/\w\w/).join('/')}/#{itemID}/meta/#{itemID}.meta.xml"
+  rawMeta = Nokogiri::XML(File.new(metaPath), &:noblanks)
+  rawMeta.remove_namespaces!
+  rawMeta = rawMeta.root
+
   # Grab the stuff we're jamming into the JSON 'attrs' field
   attrs = {}
   data.multiple("contentExists")[0] == "yes" or attrs[:suppress_content] = true  # yes, inverting the sense
   data.single("peerReview"   ) == "yes" and attrs[:is_peer_reviewed] = true
   data.single("undergrad "   ) == "yes" and attrs[:is_undergrad] = true
   data.single("language"     )          and attrs[:language] = data.single("language")
-  data.any("facet-discipline")          and attrs[:disciplines] = data.multiple("facet-discipline")
   data.single("withdrawn")              and attrs[:withdrawn_date] = data.single("withdrawn")
   data.single("embargoed")              and attrs[:embargo_date] = data.single("embargoed")
   data.single("publisher")              and attrs[:publisher] = data.single("publisher")
@@ -467,6 +482,16 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
 
   # Filter out "n/a" abstracts
   data.single("description") && data.single("description").size > 3 and attrs[:abstract] = data.single("description")
+
+  # Disciplines are a little extra work; we want to transform numeric IDs to plain old labels
+  if data.any("facet-discipline")
+    attrs[:disciplines] = []
+    data.multiple("facet-discipline").each { |discStr|
+      discID = discStr[/^\d+/] # only the numeric part
+      label = $discTbl[discID]
+      label ? (attrs[:disciplines] << label) : puts("Warning: unknown discipline ID #{discID.inspect}")
+    }
+  end
 
   # Supplemental files
   data.multiple("supplemental-file").each { |supp|
@@ -508,16 +533,29 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
   dbItem = Item.new
   dbItem[:id]           = itemID
   dbItem[:source]       = data.single("source")
-  dbItem[:status]       = data.single("pubStatus") || "unknown"
+  dbItem[:status]       = attrs[:withdrawn_date] ? "withdrawn" : 
+                          attrs[:embargo_date] ? "embargoed" : 
+                          (rawMeta.attr("state") || "published")
   dbItem[:title]        = data.single("title")
   dbItem[:content_type] = data.single("format")
   dbItem[:genre]        = data.single("type")
   dbItem[:pub_date]     = parseDate(itemID, data.single("date")) || "1901-01-01"
   #FIXME: Think about this carefully. What's eschol_date for?
   dbItem[:eschol_date]  = parseDate(itemID, data.single("datestamp")) || "1901-01-01" 
-  dbItem[:rights]       = data.single("rights") || "public"
   dbItem[:attrs]        = JSON.generate(attrs)
   dbItem[:ordering_in_sect] = data.single("document-order")
+
+  # Do some translation on rights codes
+  dbItem[:rights] = case data.single("rights")
+    when "cc1"; "CC BY"
+    when "cc2"; "CC BY-SA"
+    when "cc3"; "CC BY-ND"
+    when "cc4"; "CC BY-NC"
+    when "cc5"; "CC BY-NC-SA"
+    when "cc6"; "CC BY-NC-ND"
+    when nil, "public"; "public"
+    else puts "Unknown rights value #{data.single("rights").inspect}"
+  end
 
   # Populate ItemAuthor model instances
   dbAuthors = data.multiple("creator").each_with_index.map { |name, idx|
@@ -554,7 +592,7 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
       abstract:      attrs[:abstract] || "",
       type_of_work:  data.single("type"),
       content_types: data.multiple("format"),
-      disciplines:   attrs[:disciplines] ? attrs[:disciplines].map { |ds| ds[/^\d+/] } : [""], # only the numeric parts
+      disciplines:   attrs[:disciplines] ? attrs[:disciplines] : [""], # only the numeric parts
       peer_reviewed: attrs[:peerReviewed] ? 1 : 0,
       pub_date:      dbItem[:pub_date].to_date.iso8601 + "T00:00:00Z",
       pub_year:      dbItem[:pub_date].year,
