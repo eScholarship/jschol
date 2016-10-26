@@ -7,6 +7,7 @@ class ItemMainComp extends React.Component {
   render() { 
     let p = this.props,
         pub_web_loc = p.attrs["pub_web_loc"],
+        some_pub_web_loc = pub_web_loc.length > 0,
         abstr = p.attrs["abstract"],
         // Temporary styles till we get Joel's work
         rowStyle = {display: 'table'},
@@ -18,15 +19,15 @@ class ItemMainComp extends React.Component {
         <div style={rowStyle}>
           <div style={leftStyle}>
             <font style={titleStyle}>{p.title}</font> <br/>
-            {p.pub_date} | {p.authors} <br/>
-            {pub_web_loc && <div>Published Web Location<br/><a href={pub_web_loc}>{pub_web_loc}</a></
+            {p.pub_date} <ItemMainAuthorsComp authors={p.authors} changeTab={this.props.changeTab}/>
+            {some_pub_web_loc && <div><br/>Published Web Location<br/><a href={pub_web_loc}>{pub_web_loc}</a></
 div>}
           </div>
           <div style={rightStyle}>
             {p.rights}
           </div>
         </div>
-        {abstr && <div>Abstract<br/>{abstr}</div>}
+        {abstr && <div><br/>Abstract<br/>{abstr}</div>}
         <hr/>
         <Content
           {...p}
@@ -34,6 +35,38 @@ div>}
       </div>
     )
   }
+}
+
+class ItemMainAuthorsComp extends React.Component {
+  handleClick(tab_id) {
+    this.props.changeTab(tab_id)
+  }
+
+  render() {
+    console.log(this.props)
+    let p = this.props,
+        a = p.authors,
+        expand = false 
+    if (p.authors && p.authors.length > 6) {
+      a = a.slice(0, 5)
+      expand = true 
+    }
+    let authorList = a.map(t => <span>{t}</span>)
+      .reduce((accu, elem) => {
+        return accu === null ? [elem] : [...accu, '; ', elem]
+      }, null)
+    return (
+      <span>
+        { p.authors && <span>&#124; {authorList} {this.renderExpand(expand)}</span> }
+      </span>
+    )
+  }
+
+  renderExpand(expand) { return(
+    <span>
+      {expand && <a href="#" onClick={this.handleClick.bind(this, 4)}>et al.</a>}
+    </span>
+  )}
 }
 
 class Content extends React.Component {
