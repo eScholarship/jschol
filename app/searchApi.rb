@@ -1,3 +1,4 @@
+require 'aws-sdk'
 require 'sequel'
 require 'json'
 require 'pp'
@@ -40,7 +41,8 @@ end
 class Issue < Sequel::Model
 end
 
-AWS_URL = URI('http://localhost:8888/2013-01-01/search')
+$csClient = Aws::CloudSearchDomain::Client.new(
+  endpoint: YAML.load_file("config/cloudSearch.yaml")["searchEndpoint"])
 
 FACETS = ['type_of_work', 'peer_reviewed', 'supp_file_types', 'pub_year', 'campuses', 'departments', 'journals', 'disciplines', 'rights']
 
@@ -108,22 +110,24 @@ def aws_encode(params)
   #   - ANR (Agriculture and Natural Resources) should be added to this list
 
   aws_params = {
-    'q' => params['q'] ? params['q'].join(" ") : 'test',
-    'size' => params['size'] ? params['size'] : 10,
+    query: params['q'] ? params['q'].join(" ") : 'test',
+    size: params['size'].length > 0 ? params['size'][0] : 10,
     
-    'facet.type_of_work' => "{buckets: ['article', 'monograph', 'dissertation', 'multimedia']}",
-    'facet.peer_reviewed' => "{buckets: [1]}",
-    'facet.supp_file_types' => "{buckets: ['video', 'audio', 'images', 'zip', 'other files']}",
-    'facet.campuses' => "{buckets: ['ucb', 'ucd', 'uci', 'ucla', 'ucm', 'ucr', 'ucsd', 'ucsf', 'ucsb', 'ucsc', 'ucop', 'lbnl']}",
-    'facet.departments' => "{sort: 'count', size: 100}",
-    'facet.journals' => "{sort: 'count', size: 100}",
-    'facet.disciplines' => "{sort: 'count', size: 100}",
-    'facet.rights' => "{sort: 'count', size: 100}"
+    facet: JSON.generate({
+      'type_of_work' => {buckets: ['article', 'monograph', 'dissertation', 'multimedia']},
+      'peer_reviewed' => {buckets: [1]},
+      'supp_file_types' => {buckets: ['video', 'audio', 'images', 'zip', 'other files']},
+      'campuses' => {buckets: ['ucb', 'ucd', 'uci', 'ucla', 'ucm', 'ucr', 'ucsd', 'ucsf', 'ucsb', 'ucsc', 'ucop', 'lbnl']},
+      'departments' => {sort: 'count', size: 100},
+      'journals' => {sort: 'count', size: 100},
+      'disciplines' => {sort: 'count', size: 100},
+      'rights' => {sort: 'count', size: 100}
+    })
   }
   
-  if fq.length > 0 then aws_params['fq'] = fq end
+  if fq.length > 0 then aws_params[:fq] = fq end
   
-  aws_params = URI::encode_www_form(aws_params)
+  return aws_params
 end
 
 def facet_secondary_query(params, field_type)
@@ -156,11 +160,22 @@ def capitalize_display_name(facetList)
   end
 end
 
+def normalizeResponse(response)
+  if response.instance_of? Array
+    response.map { |v| normalizeResponse(v) }
+  elsif response.respond_to?(:map)
+    response.to_h.map { |k,v| [k.to_s, normalizeResponse(v)] }.to_h
+  elsif response.nil? || response.is_a?(String) || response.is_a?(Integer)
+    response
+  else
+    raise "Unexpected response type: #{response.inspect}"
+  end
+end
+
 def search(params)
-  url = AWS_URL.clone
-  url.query = aws_encode(params)
-  response = JSON.parse(Net::HTTP.get(url))
-  
+  aws_params = aws_encode(params)
+  response = normalizeResponse($csClient.search(return: '_no_fields', **aws_params))
+
   searchResults = []
   if response['hits'] && response['hits']['hit']
     for indexItem in response['hits']['hit']
