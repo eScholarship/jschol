@@ -15,6 +15,7 @@ class UnitPage extends PageBase
   renderData(data) { return(
     <div>
       <HeaderComp level="unit"
+                  isJournal = {data.isJournal}
                   campusID={data.campusID}
                   campusName={data.campusName}
                   campuses={data.campuses}
