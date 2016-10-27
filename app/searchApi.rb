@@ -125,16 +125,15 @@ def aws_encode(params)
     })
   }
   
-  if fq.length > 0 then aws_params[:fq] = fq end
+  if fq.length > 0 then aws_params[:filter_query] = fq end
   
   return aws_params
 end
 
 def facet_secondary_query(params, field_type)
   params.delete(field_type)
-  url = AWS_URL.clone
-  url.query = aws_encode(params)
-  response = JSON.parse(Net::HTTP.get(url))
+  aws_params = aws_encode(params)
+  response = normalizeResponse($csClient.search(return: '_no_fields', **aws_params))
   return response['facets'][field_type]
 end
 
