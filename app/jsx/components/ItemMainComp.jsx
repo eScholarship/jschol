@@ -6,8 +6,11 @@ import { PdfViewerComp } from '../components/AllComponents.jsx'
 class ItemMainComp extends React.Component {
   render() { 
     let p = this.props,
-        pub_web_loc = p.attrs["pub_web_loc"],
-        some_pub_web_loc = pub_web_loc.length > 0,
+        pub_web_loc = p.attrs["pub_web_loc"].map(function(node, i) {
+          return (
+            <span key={i}><a href={node}>{node}</a><br/></span>
+          )
+        }),
         abstr = p.attrs["abstract"],
         // Temporary styles till we get Joel's work
         rowStyle = {display: 'table'},
@@ -20,8 +23,7 @@ class ItemMainComp extends React.Component {
           <div style={leftStyle}>
             <font style={titleStyle}>{p.title}</font> <br/>
             {p.pub_date} <ItemMainAuthorsComp authors={p.authors} changeTab={this.props.changeTab}/>
-            {some_pub_web_loc && <div><br/>Published Web Location<br/><a href={pub_web_loc}>{pub_web_loc}</a></
-div>}
+            {pub_web_loc.length > 0 && <div>{pub_web_loc}</div>}
           </div>
           <div style={rightStyle}>
             {p.rights}
@@ -51,7 +53,7 @@ class ItemMainAuthorsComp extends React.Component {
       a = a.slice(0, 5)
       expand = true 
     }
-    let authorList = a.map(t => <span>{t}</span>)
+    let authorList = a.map((node,i) => <span key={i}>{node}</span>)
       .reduce((accu, elem) => {
         return accu === null ? [elem] : [...accu, '; ', elem]
       }, null)
