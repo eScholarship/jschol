@@ -99,7 +99,15 @@ def get_query_display(params)
     filters['disciplines'] = {'display' => 'Discipline', 'fieldName' => 'disciplines', 'filters' => params['disciplines'].map{ |v| {'value' => v} }}
   end
   if params.key?('rights')
-    filters['rights'] = {'display' => 'Reuse License', 'fieldName' => 'rights', 'filters' => get_short_license_display_name(params['rights'].map{ |v| {'value' => v} })}
+    filters['rights'] = {'display' => 'Reuse License', 'fieldName' => 'rights', 'filters' => params['rights'].map{ |v| if v == 'public' then {'value' => v, 'displayName' => 'Public'} else {'value' => v} end }}
+  end
+
+  if params.key?('pub_year_start') and params.key?('pub_year_end')
+    filters['pub_year'] = {'display' => 'Publication Year', 'fieldName' => 'pub_year', 'filters' => [{'value' => "#{params['pub_year_start'][0]}-#{params['pub_year_end'][0]}"}]}
+  elsif params.key?('pub_year_start')
+    filters['pub_year'] = {'display' => 'Publication Year', 'fieldName' => 'pub_year', 'filters' => [{'value' => params['pub_year_start'][0] }]}
+  elsif params.key?('pub_year_end')
+    filters['pub_year'] = {'display' => 'Publication Year', 'fieldName' => 'pub_year', 'filters' => [{'value' => params['pub_year_end'][0] }]}
   end
   
   display_params = {
@@ -224,7 +232,11 @@ def get_unit_hierarchy(unitFacets)
         end
       end
 
+      # all ancestors should always be in list, per convert.rb#L398
+      # which traces all the way up to the root,
+      # recording all departments for each item along the way
       if !ancestor_in_list
+        pp "DON'T KNOW WHAT TO DO HERE YIKES"
         ancestor = Unit[ancestors[0].ancestor_unit]
         unitFacet['ancestor'] = {displayName: ancestor.name, value: ancestor.id}
       end
@@ -251,36 +263,20 @@ end
 
 def get_license_display_name(facetList)
   for facet in facetList
-    if facet['value'] == 'cc1'
+    if facet['value'] == 'public'
+      facet['displayName'] = 'Public'
+    elsif facet['value'] == 'CC BY'
       facet['displayName'] = 'BY - Attribution required'
-    elsif facet['value'] == 'cc2'
+    elsif facet['value'] == 'CC BY-SA'
       facet['displayName'] = 'BY-SA - Attribution; Derivatives must use same license'
-    elsif facet['value'] == 'cc3'
+    elsif facet['value'] == 'CC BY-ND'
       facet['displayName'] = 'BY-ND - Attribution; No derivatives'
-    elsif facet['value'] == 'cc4'
+    elsif facet['value'] == 'CC BY-NC'
       facet['displayName'] = 'BY-NC - Attribution; NonCommercial use only'
-    elsif facet['value'] == 'cc5'
+    elsif facet['value'] == 'CC BY-NC-SA'
       facet['displayName'] = 'BY-NC-SA - Attribution; NonCommercial use; Derivatives use same license'
-    elsif facet['value'] == 'cc6'
+    elsif facet['value'] == 'CC BY-NC-ND'
       facet['displayName'] = 'BY-NC-ND - Attribution; NonCommercial use; No derivatives'
-    end
-  end
-end
-
-def get_short_license_display_name(facetList)
-  for facet in facetList
-    if facet['value'] == 'cc1'
-      facet['displayName'] = 'BY'
-    elsif facet['value'] == 'cc2'
-      facet['displayName'] = 'BY-SA'
-    elsif facet['value'] == 'cc3'
-      facet['displayName'] = 'BY-ND'
-    elsif facet['value'] == 'cc4'
-      facet['displayName'] = 'BY-NC'
-    elsif facet['value'] == 'cc5'
-      facet['displayName'] = 'BY-NC-SA'
-    elsif facet['value'] == 'cc6'
-      facet['displayName'] = 'BY-NC-ND'
     end
   end
 end
@@ -361,3 +357,19 @@ def search(params)
 
   return {'count' => response['hits']['found'], 'query' => get_query_display(params.clone), 'searchResults' => searchResults, 'facets' => facets}
 end
+
+# def campus_extent(params)
+#   url = AWS_URL.clone
+#   aws_params = {
+#     'q' => "matchall",
+#     'q.parser' => 'structured',
+#     'fq' => "(field=campuses 'ucb')"
+#   }
+#   url.query = URI::encode_www_form(aws_params)
+#   pp url.query
+#
+#   response = JSON.parse(Net::HTTP.get(url))
+#   pp response
+#   pp response['hits']['found']
+# end
+  

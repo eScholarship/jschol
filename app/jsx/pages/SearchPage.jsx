@@ -8,41 +8,68 @@ import PageBase from './PageBase.jsx'
 import { HeaderComp, NavComp } from '../components/AllComponents.jsx'
 
 class FacetItem extends React.Component {
-  handleChange() {
-    $('[name=start]').val('0');
-    $('#facet-form-submit').click();
+  state = {
+    checked: this.props.data.checked ? this.props.data.checked : false
   }
+  handleChange = this.handleChange.bind(this);
   
-  render() {
-    var facet = this.props.data.facet;
-    var label = facet.displayName ? facet.displayName : facet.value;
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.data.checked !== this.state.checked && 'ancestor_in_list' in this.props.data.facet) {
+      this.setState({checked: nextProps.data.checked});
+    }
+    if ('ancestor_in_list' in this.props.data.facet && nextProps.data.checked) {
+      this.disabled == true;
+    } else {
+      this.disabled == false;
+    }
+  }
 
-    if (facet.ancestor) {
-      label = facet.ancestor.displayName
-      if (facet.displayName) {
-        label = label + " / " + facet.displayName
-      }
-      else {
-        label = label + " / " + facet.value
+  handleChange(event) {
+    this.setState({checked: event.target.checked});
+    var filter;
+    var filter_cleanup = [];
+    // Rights label includes icon and descriptive text, but value is just the code: 'CC-BY'
+    if (this.props.data.facetType == 'rights' && this.props.data.facet.value != 'public') {
+      filter = [{displayName: this.props.data.facet.value, value: this.props.data.facet.value}];
+    }
+    // Selected departments automatically include 'All' child departments (if there are any)
+    else if (this.props.data.facetType == 'departments' && 'descendents' in this.props.data.facet) {
+      filter = [{displayName: this.label + " (All)", value: this.props.data.facet.value}];
+
+      for (var d in this.props.data.facet.descendents) {
+        filter_cleanup.push({displayName: d.displayName, value: d.value});
       }
     }
+    else {
+      filter = [{displayName: this.label, value: this.props.data.facet.value}];
+    }
+    this.props.handler(event, filter, filter_cleanup);
+  }
 
+  render() {
+    var facet = this.props.data.facet;
+    this.label = facet.displayName ? facet.displayName : facet.value;
+    this.disabled = false;
     var descendents;
     if (facet.descendents) {
       descendents = facet.descendents.map( d => {
         var descendentItemData = {
           facetType: this.props.data.facetType,
           facet: d,
-          checked: this.props.query && this.props.query.filters ? this.checkFacet(d) : false
+          checked: this.state.checked,
+          disabled: this.state.checked
         }
-        return (<FacetItem key={d.value} data={descendentItemData} />)
+        return (<FacetItem key={d.value} data={descendentItemData} handler={this.props.handler}/>)
       })
     }
 
     return (
       <div className="facetItem">
-        <input id={facet.value} name={this.props.data.facetType} value={facet.value} type="checkbox" onChange={this.handleChange} className="c-checkbox__input" checked={this.props.data.checked} />
-        <label htmlFor={facet.value} className="c-checkbox__label">{label} ({facet.count})</label>
+        <input id={facet.value} className="c-checkbox__input" type="checkbox"
+          name={this.props.data.facetType} value={facet.value}
+          onChange={this.handleChange}
+          checked={this.state.checked} disabled={this.props.data.disabled}/>
+        <label htmlFor={facet.value} className="c-checkbox__label">{this.label} ({facet.count})</label>
         <div style={{paddingLeft: '30px'}}>{descendents}</div>
       </div>
     )
@@ -55,13 +82,17 @@ class PubYear extends React.Component {
     pub_year_end: this.props.data.range.pub_year_end ? this.props.data.range.pub_year_end : ''
   }
   handleChange = this.handleChange.bind(this);
+  onBlur = this.onBlur.bind(this);
 
-  //form submission on blur and enter
-  submitForm() {
-    //TODO: validate years, error handling
-    //TODO: would be nicer if, when these fields were blank, they weren't sent as part of the form submission (and thus included in the URL)
-    $('[name=start]').val('0');
-    $('#facet-form-submit').click();
+  onBlur(event) {
+    var displayYears;
+    if (this.state.pub_year_start || this.state.pub_year_end) {
+      displayYears = this.state.pub_year_start + "-" + this.state.pub_year_end;
+    }
+    else {
+      displayYears = "";
+    }
+    this.props.handler(event, {value: displayYears});
   }
 
   handleChange(event) {
@@ -76,16 +107,77 @@ class PubYear extends React.Component {
     return (
       <div>
         <label htmlFor="pub_year_start">From: </label>
-        <input id="pub_year_start" name="pub_year_start" value={this.state.pub_year_start} type="text" onChange={ this.handleChange } onBlur={ this.submitForm }/>
+        <input id="pub_year_start" name="pub_year_start" type="text"
+          value={this.state.pub_year_start}
+          onChange={ this.handleChange } onBlur={ this.onBlur }/>
         <br/>
         <label htmlFor="pub_year_end">To: </label>
-        <input id="pub_year_end" name="pub_year_end" value={this.state.pub_year_end} type="text" onChange={ this.handleChange } onBlur={ this.submitForm }/>
+        <input id="pub_year_end" name="pub_year_end" type="text"
+          value={this.state.pub_year_end}
+          onChange={ this.handleChange } onBlur={ this.onBlur }/>
       </div>
     ) 
   }
 }
 
 class FacetFieldset extends React.Component {
+  handleChange = this.handleChange.bind(this);
+  pubDateChange = this.pubDateChange.bind(this);
+
+  handleChange(event, filter, filter_cleanup) {
+    var newQuery;
+    if (event.target.checked) {
+      //add filters
+      if (!$.isEmptyObject(this.props.query)) {
+        //there's already filters of this type, so add filters
+        newQuery = $.extend({}, this.props.query);
+        //remove filters specified in filter_cleanup array
+        //(as in children of deparments when the parent department has been selected)
+        if (filter_cleanup.length > 0) {
+          for (var f in filter_cleanup) {
+            var i = newQuery.filters.findIndex(j => { return j.value == f.value });
+            newQuery.filters.splice(i, 1);
+          }
+        }
+        newQuery.filters = newQuery.filters.concat(filter);
+      } else {
+        //there's no filters of this type, so create a filter
+        newQuery = {
+          display: this.props.data.display,
+          fieldName: this.props.data.fieldName,
+          filters: filter
+        }
+      }
+    } else {
+      //remove filters
+      if (this.props.query.filters.length > 1) {
+        newQuery = $.extend({}, this.props.query);
+        for (var f in filter) {
+          var i = newQuery.filters.findIndex(j => { return j.value == f.value });
+          newQuery.filters.splice(i, 1);
+        }
+      }
+    }
+    this.props.handler(event, newQuery, event.target.name);
+  }
+
+  pubDateChange(event, filter) {
+    var newQuery;
+    if (filter.value !== "") {
+      if (!$.isEmptyObject(this.props.query)) {
+        newQuery = $.extend({}, this.props.query);
+        newQuery.filters = [filter]
+      } else {
+        newQuery = {
+          display: this.props.data.display,
+          fieldName: this.props.data.fieldName,
+          filters: [filter]
+        }
+      }
+    }
+    this.props.handler(event, newQuery, 'pub_year');
+  }
+
   checkFacet(facet) {
     var checked = false;
     for (let filter of this.props.query.filters) {
@@ -103,14 +195,15 @@ class FacetFieldset extends React.Component {
         var facetItemData = {
           facetType: this.props.data.fieldName,
           facet: facet,
-          checked: this.props.query && this.props.query.filters ? this.checkFacet(facet) : false
+          checked: this.props.query && this.props.query.filters ? this.checkFacet(facet) : false,
+          disabled: false
         }
-        return ( <FacetItem key={facet.value} data={facetItemData} /> )
+        return ( <FacetItem key={facet.value} data={facetItemData} handler={this.handleChange} /> )
       });
     } else {
       //pub_year
       facetItemNodes = (
-        <PubYear data={this.props.data} query={this.props.query} />
+        <PubYear data={this.props.data} query={this.props.query} handler={this.pubDateChange} />
       )
     }
     
@@ -135,6 +228,11 @@ class CurrentSearchTerms extends React.Component {
     $('[name=start]').val('0');
     var filterType = $(event.target).data('filterType');
     var filters = $('[name=' + filterType + ']:checked').prop('checked', false);
+
+    if (filterType == "pub_year") {
+      $('#pub_year_start').val('');
+      $('#pub_year_end').val('');
+    }
   }
 
   render() {
@@ -142,12 +240,16 @@ class CurrentSearchTerms extends React.Component {
     var filters;
     
     if (!($.isEmptyObject(this.props.query['filters']))) {
-      var filterTypes = ['type_of_work', 'peer_reviewed', 'supp_file_types', 'campuses', 'departments', 'journals', 'disciplines', 'rights'];
+      var filterTypes = ['type_of_work', 'peer_reviewed', 'supp_file_types', 'pub_year', 'campuses', 'departments', 'journals', 'disciplines', 'rights'];
       var activeFilters = [];
       for (let filterType of filterTypes) {
         if (this.props.query['filters'][filterType] && this.props.query['filters'][filterType]['filters'].length > 0) {
           var displayNames = this.props.query['filters'][filterType]['filters'].map(function(filter) {
-            return filter['displayName'];
+            if ('displayName' in filter) {
+              return filter['displayName'];
+            } else {
+              return filter['value'];
+            }
           });
           activeFilters.push({'filterDisplay': this.props.query['filters'][filterType]['display'], 'filters': displayNames.join(", "), 'filterType': filterType});
         }
@@ -183,6 +285,33 @@ class CurrentSearchTerms extends React.Component {
 }
 
 class FacetForm extends React.Component {
+  state = {
+    query: this.props.query
+  }
+  changeFacet = this.changeFacet.bind(this);
+  removeFilters = this.removeFilters.bind(this);
+
+  changeFacet(event, fieldsetQuery, fieldType) {
+    //make a copy of query state, so as not to mutate this.state
+    var newQuery = $.extend({}, this.state.query);
+
+    if (fieldsetQuery) {
+      newQuery.filters[fieldType] = fieldsetQuery;
+    } else {
+      delete newQuery.filters[fieldType];
+    }
+
+    this.setState({query: newQuery});
+
+    $('[name=start]').val('0');
+    $('#facet-form-submit').click();
+  }
+
+  removeFilters(event) {
+    console.log('Remove Filters');
+    console.log(event.target);
+  }
+
   handleSubmit(event, formData) {
     for(var key in formData) {
       if (formData[key] == "" ||
@@ -192,22 +321,23 @@ class FacetForm extends React.Component {
         delete formData[key];
       }
     }
+    // Handy for debugging
+    // console.log(formData);
+    // return false;
   }
 
   render() {
-    var facetForm = this.props.data.facets.map(function(query, handler) {
-      return function(fieldset) {
-        var fieldName = fieldset.fieldName;
-        var filters = query.filters && query.filters[fieldName] ? query.filters[fieldName] : [];
-        return (
-          <FacetFieldset key={fieldName} data={fieldset} query={filters} />
-        )
-      }
-    }(this.props.query, this.handleChange));
+    var facetForm = this.props.data.facets.map(fieldset => {
+      var fieldName = fieldset.fieldName;
+      var filters = this.state.query.filters && this.state.query.filters[fieldName] ? this.state.query.filters[fieldName] : {};
+      return (
+        <FacetFieldset key={fieldName} data={fieldset} query={filters} handler={this.changeFacet} />
+      )
+    });
 
     return (
 			<Form id="facetForm" to='/search' method="GET" onSubmit={this.handleSubmit}>
-        <CurrentSearchTerms query={this.props.query} count={this.props.data.count}/>
+        <CurrentSearchTerms query={this.state.query} count={this.props.data.count} handler={this.removeFilters}/>
         {facetForm}
 				<button type="submit" id="facet-form-submit">Search</button>
       </Form>
