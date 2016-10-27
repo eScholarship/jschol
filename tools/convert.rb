@@ -16,9 +16,12 @@ require 'rubygems'
 require 'bundler/setup'
 
 # Remainder are the requirements for this program
+require 'aws-sdk'
 require 'date'
 require 'json'
 require 'logger'
+require 'mimemagic'
+require 'mimemagic/overlay' # for Office 2007+ formats
 require 'nokogiri'
 require 'open3'
 require 'pp'
@@ -34,6 +37,8 @@ MAX_BATCH_SIZE = 4500*1024
 # Max amount of full text we'll send with any single doc. AWS limit is 1 meg, so let's
 # go a little short of that so we've got room for plenty of metadata.
 MAX_TEXT_SIZE  = 950*1024
+
+DATA_DIR = "/apps/eschol/erep/data"
 
 # The main database we're inserting data into
 DB = Sequel.connect(YAML.load_file("config/database.yaml"))
@@ -70,6 +75,10 @@ if pos
   ARGV.delete_at(pos)
   $skipTo = ARGV.delete_at(pos)
 end
+
+# CloudSearch API client
+$csClient = Aws::CloudSearchDomain::Client.new(
+  endpoint: YAML.load_file("config/cloudSearch.yaml")["docEndpoint"])
 
 # Caches for speed
 $allUnits = nil
@@ -236,7 +245,7 @@ def prefilterBatch(batch)
     batch.each { |itemID, timestamp|
       shortArk = itemID.sub(%r{^ark:/?13030/}, '')
       partialPath = "13030/pairtree_root/#{shortArk.scan(/\w\w/).join('/')}/#{shortArk}"
-      metaPath = "/apps/eschol/erep/data/#{partialPath}/meta/#{shortArk}.meta.xml"
+      metaPath = "#{DATA_DIR}/#{partialPath}/meta/#{shortArk}.meta.xml"
       if !File.exists?(metaPath) || File.size(metaPath) < 50
         puts "Warning: skipping #{shortArk} due to missing or truncated meta.xml"
         $nSkipped += 1
@@ -459,7 +468,7 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
   end
 
   # Also grab the original metadata file
-  metaPath = "/apps/eschol/erep/data/13030/pairtree_root/#{itemID.scan(/\w\w/).join('/')}/#{itemID}/meta/#{itemID}.meta.xml"
+  metaPath = "#{DATA_DIR}/13030/pairtree_root/#{itemID.scan(/\w\w/).join('/')}/#{itemID}/meta/#{itemID}.meta.xml"
   rawMeta = Nokogiri::XML(File.new(metaPath), &:noblanks)
   rawMeta.remove_namespaces!
   rawMeta = rawMeta.root
@@ -494,14 +503,42 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
   end
 
   # Supplemental files
-  data.multiple("supplemental-file").each { |supp|
-    pair = supp.split("::")
-    if pair.length != 2
-      puts "Warning: can't parse supp file data #{supp.inspect}"
-      next
-    end
-    (attrs[:supp_files] ||= []) << { title: pair[0], file: pair[1] }
-  }
+  supps = []
+  if rawMeta.at("/record/content")
+    # For UCIngest format, read supp data from the raw metadata file.
+    rawMeta.xpath("/record/content/supplemental/file").each { |fileEl|
+      suppAttrs = { file: fileEl[:path].sub(%r{.*content/supp/}, "") }
+      fileEl.children.each { |subEl|
+        suppAttrs[subEl.name] = subEl.text
+      }
+      supps << suppAttrs
+    }
+  else
+    # For non-UCIngest format, read supp data from the index
+    data.multiple("supplemental-file").each { |supp|
+      pair = supp.split("::")
+      if pair.length != 2
+        puts "Warning: can't parse supp file data #{supp.inspect}"
+        next
+      end
+      supps << { file: pair[1], title: pair[0] }
+    }
+  end
+  if !supps.empty?
+    supps.each { |supp|
+      suppPath = "#{DATA_DIR}/13030/pairtree_root/#{itemID.scan(/\w\w/).join('/')}/#{itemID}/content/supp/#{supp[:file]}"
+      if !File.exist?(suppPath)
+        puts "Warning: can't find supp file #{supp[:file]}"
+      else
+        # Mime types aren't always reliable coming from Subi. Let's try harder.
+        mimeType = MimeMagic.by_magic(File.open(suppPath))
+        if mimeType && mimeType.type
+          supp[:mimeType] = mimeType
+        end
+        (attrs[:supp_files] ||= []) << supp
+      end
+    }
+  end
 
   # For eschol journals, populate the issue and section models.
   issue = section = nil
@@ -647,6 +684,8 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
   existingItem = Item[itemID]
   if existingItem && existingItem[:index_digest] == digest && !$testMode && !$forceMode
     puts "Unchanged item."
+    existingItem.last_indexed = timestamp
+    existingItem.save
     $nUnchanged += 1
     return
   end
@@ -720,22 +759,7 @@ def processBatch(batch)
   # Finish the data buffer, and send to AWS
   if !$noCloudSearchMode
     batch[:idxData] << "]"
-    host = "doc-eschol5-test-u5sqhz5emqzdh4bfij7uxsazny.us-west-2.cloudsearch.amazonaws.com"
-    req = Net::HTTP::Post.new("/2013-01-01/documents/batch", initheader = {'Content-Type' =>'application/json'})
-    req.body = batch[:idxData]
-
-    # Try for 10 minutes max. CloudSearch seems to go awol fairly often.
-    startTime = Time.now
-    begin
-      response = Net::HTTP.new(host, 80).start {|http| http.request(req) }
-      response.code == "200" or raise Exception.new("#{response}: #{response.body}")
-    rescue Exception => res
-      if res.to_s =~ /GatewayTimeOut|ReadTimeout|RequestTimeOut/ && (Time.now - startTime < 10*60)
-        puts "Will retry in 30 sec, response was: #{res}"
-        sleep 30; puts "Retrying."; retry
-      end
-      raise
-    end
+    $csClient.upload_documents(documents: batch[:idxData], content_type: "application/json")
   end
 
   # Now that we've successfully added the documents to AWS CloudSearch, insert records into
@@ -872,10 +896,10 @@ def convertAllItems(arks)
   $nTotal = query.count
   if $skipTo
     puts "Skipping all up to #{$skipTo}..."
-    query = query.where{ itemId > "ark:13030/#{$skipTo}" }
+    query = query.where{ itemId >= "ark:13030/#{$skipTo}" }
     $nSkipped = $nTotal - query.count
   end
-  query.each do |row|
+  query.all.each do |row|   # all so we don't keep db locked
     shortArk = row[:itemId].sub(%r{^ark:/?13030/}, '')
     next if arks != 'ALL' && !arks.include?(shortArk)
     erepTime = Time.at(row[:time].to_i).to_time

@@ -44,14 +44,14 @@ Description of files
 * `setup.sh`: Sequence of commands to run bundler and node to download and install all the Ruby and Javascript modules the app needs.
 * `tools/`: Conversion and database maintenance tools.
 
-Steps to get the app running
-----------------------------
+Steps to get the app running on your local machine
+--------------------------------------------------
 
 1. Install gems and packages: `./setup.sh` (Note: for neatness they get installed to the local directory, not system-wide)
 
-2. Start proxy connection to database through bastion: `ssh -C -N -L3306:rds-pub-eschol-dev.cmcguhglinoa.us-west-2.rds.amazonaws.com:3306 -p 18822 cdl-aws-bastion.cdlib.org`
+2. Start proxy connection to database through bastion: `ssh -C -N -L3306:rds-BLAH.amazonaws.com:3306 -p 18822 cdl-aws-bastion.cdlib.org`
 
-3. Start proxy connection to index through bastion: `ssh -C -N -L8888:search-eschol5-test-u5sqhz5emqzdh4bfij7uxsazny.us-west-2.cloudsearch.amazonaws.com:80 -p 18822 cdl-aws-bastion.cdlib.org`
+3. Start proxy connection to index through bastion: `ssh -C -N -L8888:search-BLAH.amazonaws.com:80 -p 18822 cdl-aws-bastion.cdlib.org`
 
 4. Configure database connection parameters: `cp config/database.yaml.TEMPLATE config/database.yaml`, then fill in the values in `database.yaml`:
   * host: 127.0.0.1
@@ -60,7 +60,12 @@ Steps to get the app running
   * username: SECRET
   * password: SECRET
 
-5. Run `./gulp`. Be on the lookout for errors.
+5. Configure CloudSearch connection parameters: `cp config/cloudSearch.yaml.TEMPLATE config/cloudSearch.yaml`, then fill in the values in `cloudSearch.yaml`:
+  * domain: the-domain (e.g. cs-pub-jschol-dev)
+  * searchEndpoint: https://search-domain-BLAH.amazonaws.com
+  * docEndpoint: https://doc-domain-BLAH.amazonaws.com
 
-6. Browse to `http://localhost:4001/unit/root`, or `http://localhost:4001/item/08s7w2fd`, or `http://localhost:4001/search`
+6. Run `./gulp`. Be on the lookout for errors.
+
+7. Browse to `http://localhost:4001/unit/root`, or `http://localhost:4001/item/08s7w2fd`, or `http://localhost:4001/search`
 

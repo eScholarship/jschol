@@ -16,6 +16,10 @@
     background-image: inline('../images/icon_checkbox-checked.svg');
   }
 
+  &:disabled + .c-checkbox__label {
+    opacity: .6;
+  }
+
 }
 
 .c-checkbox__label {
