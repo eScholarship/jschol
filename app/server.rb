@@ -201,6 +201,7 @@ end
 def getHeaderElements(breadcrumb)
   campusID, campusName = breadcrumb.getCampusInfo
   return {
+    :isJournal => breadcrumb.isJournal?,
     :campusID => campusID,
     :campusName => campusName,
     :campuses => ACTIVE_CAMPUSES,
