@@ -7,9 +7,7 @@ class ItemMainComp extends React.Component {
   render() { 
     let p = this.props,
         pub_web_loc = p.attrs["pub_web_loc"].map(function(node, i) {
-          return (
-            <span key={i}><a href={node}>{node}</a><br/></span>
-          )
+          return ( <span key={i}><a href={node}>{node}</a><br/></span> )
         }),
         abstr = p.attrs["abstract"],
         // Temporary styles till we get Joel's work
@@ -45,7 +43,6 @@ class ItemMainAuthorsComp extends React.Component {
   }
 
   render() {
-    console.log(this.props)
     let p = this.props,
         a = p.authors,
         expand = false 

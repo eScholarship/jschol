@@ -205,7 +205,8 @@ def getHeaderElements(breadcrumb)
     :campusID => campusID,
     :campusName => campusName,
     :campuses => ACTIVE_CAMPUSES,
-    :breadcrumb => breadcrumb.generateCrumb 
+    :breadcrumb => breadcrumb.generateCrumb,
+    :appearsIn => breadcrumb.appearsIn 
   }
 end
 

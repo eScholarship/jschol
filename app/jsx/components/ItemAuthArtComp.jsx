@@ -5,15 +5,14 @@ import React from 'react'
 class ItemAuthArtComp extends React.Component {
   render() {
     let p = this.props,
-        authorList = p.authors.map(function(node, i) {
-          return (
-            <p key={i}>{node}</p>
-          )
-        }),
+        authorList = p.authors.map(function(node, i) {return ( <p key={i}>{node}</p> )}),
         issn = p.attrs['ext_journal'] && p.attrs['ext_journal']['issn'],
         peer_reviewed = p.attrs['is_peer_reviewed'] ? "True" : "False",
         permalink = "http://www.escholarship.org/item/" + p.id,
-        ezid = "http://ezid.cdlib.org/id/ark:/13030/qt" + p.id
+        ezid = "http://ezid.cdlib.org/id/ark:/13030/qt" + p.id,
+        appearsIn = p.appearsIn.map(function(node, i) {
+          return ( <span key={i}><a href={node.url}>{node.name}</a><br/></span> )
+        })
     return(
       <div className="content">
         {p.authors.length > 0 && <div><h3>Author(s)</h3>{authorList}</div>}
@@ -39,7 +38,7 @@ class ItemAuthArtComp extends React.Component {
         </p>
 
         <p>Appears in<br/>
-          **** ToDo: Placeholder for Appears in **** 
+          {appearsIn}
         </p>
 
         <p><br/><br/><br/></p>
