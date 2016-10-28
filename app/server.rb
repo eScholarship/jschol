@@ -169,6 +169,7 @@ get "/api/item/:shortArk" do |shortArk|
     begin
       body = {
         :id => shortArk,
+        :status => item.status,
         :title => item.title,
         :rights => item.rights,
         :pub_date => item.pub_date,

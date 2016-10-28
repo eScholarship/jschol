@@ -5,13 +5,13 @@ class BreadcrumbGenerator
   def initialize(thisPageName, type)
     @thisPageName = thisPageName
     @type = type
-    @itemsParents = (type == "item") ? getItemsParents(thisPageName) : nil
+    @itemsParents = (type == "item") ? getItemsParents(thisPageName) : nil 
     @unitID = (type == "unit") ? thisPageName : getItemsUnit() 
   end
 
   # ---Public Method---
   def isJournal?
-    return Unit.filter(:id => @unitID, :type => 'journal').map(:id)[0]
+    return @unitID? Unit.filter(:id => @unitID, :type => 'journal').map(:id)[0] : nil
   end
 
   # ---Public Method---
@@ -83,7 +83,7 @@ class BreadcrumbGenerator
   # Simply grabs highest order unit.id (leftmost in array) from @itemsParents
   # Only intended to be called when type=item 
   def getItemsUnit()
-    return @itemsParents.first['id']
+    return (@itemsParents.size > 0) ? @itemsParents.first['id'] : nil
   end
 
   # Check if this is topmost unit under root.  

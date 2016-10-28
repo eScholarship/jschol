@@ -57,9 +57,7 @@ class HeaderComp extends React.Component {
             </select>
           </div>
         </div>
-        <div style={centerStyle}>
-          <h2>Unit Banner Placeholder</h2>
-        </div>
+        { this.props.unit_id && <div style={centerStyle}><h2>Unit Banner Placeholder</h2></div> }
         <div style={rightStyle}>
           <button>Submit</button>
           <button>Manage submissions</button>

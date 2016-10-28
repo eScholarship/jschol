@@ -70,24 +70,19 @@ class ItemMainAuthorsComp extends React.Component {
 
 class Content extends React.Component {
   render() {
-    let q = new Date(),
-        today = new Date(q.getFullYear(),q.getMonth(),q.getDate()),
-        withdrawn = new Date(this.props.attrs['withdrawn_date']) <= today ? true : false,
-        embargoed = new Date(this.props.attrs['embargo_date']) > today ? true : false
+    let p = this.props
     return (
     <div>
-      {/* ToDo: Eventually we will use suppress_content to check for withdrawn/embargoed */}
-      { withdrawn && this.renderNoContent("withdrawn", this.props.attrs['withdrawn_date']) }
-      { embargoed && this.renderNoContent("embargoed", this.props.attrs['embargo_date']) }
-      { !embargoed && !withdrawn && this.renderContent(this.props) }
+      { p.status == "published" && this.renderContent(p) }
+      { p.status == "withdrawn" && this.renderNoContent("withdrawn", p.attrs['withdrawn_date']) }
+      { p.status == "embargoed" && this.renderNoContent("embargoed", p.attrs['embargo_date']) }
     </div>
   )}
 
   renderContent(p) { return (
     <div>
-      { this.props.content_type == "application/pdf" ? this.renderPdf(this.props) : null }
-      { this.props.content_type == "html" ? this.renderHtml(this.props) : null }
-    </div>
+      { p.content_type == "application/pdf" ? this.renderPdf(p) : null }
+      { p.content_type == "html" ? this.renderHtml(p) : null } </div>
   )}
 
   renderPdf(p) { return (
@@ -98,15 +93,16 @@ D "9k10r3sc" into:
           http://pub-eschol-stg.escholarship.org/raw_data/13030/pairtree_root/qt/9k/10/r3/sc/qt9k10r3
 sc/content/qt9k10r3sc.pdf */}
       <PdfViewerComp url={"http://pub-eschol-stg.escholarship.org/raw_data/13030/pairtree_root/qt/" +
-                     p.id.match(/(..?)/g).join("/") + "/qt" + p.id + "/content/qt" + p.id + ".pdf" }/
->
+                     p.id.match(/(..?)/g).join("/") + "/qt" + p.id + "/content/qt" + p.id + ".pdf" }/>
     </div>
   )}
 
-  renderHtml(p) { return(
+  renderHtml(p) { return (
     <div>
       Main text<br/>
-      Placeholder: ToDo
+      <iframe src={"http://pub-eschol-stg.escholarship.org/raw_data/13030/pairtree_root/qt/" +
+              p.id.match(/(..?)/g).join("/") + "/qt" + p.id + "/content/qt" + p.id + ".html"}
+              height="700" width="750" frameBorder="0"/>
     </div>
   )}
 

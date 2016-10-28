@@ -21,7 +21,7 @@ class ItemPage extends PageBase
     this.setState({currentTab: tab_id})
   }
 
-  renderData(data) { 
+  renderData(data) {
     // Temporary styles till we get Joel's work
     let rowStyle = {
       display: 'table'
@@ -40,14 +40,14 @@ class ItemPage extends PageBase
     return(
       <div>
         <HeaderComp level="item"
-                    isJournal = {data.isJournal}
-                    campusID={data.campusID}
-                    campusName={data.campusName}
-                    campuses={data.campuses}
-                    unit_id={data.id} />
+                    isJournal = {p.isJournal}
+                    campusID={p.campusID}
+                    campusName={p.campusName}
+                    campuses={p.campuses}
+                    unit_id={p.appearsIn.length > 0  && p.appearsIn[0]["id"]} />
         <NavComp level="item"
-                 campusID={data.campusID} />
-        <BreadcrumbComp array={data.breadcrumb} />
+                 campusID={p.campusID} />
+        <BreadcrumbComp array={p.breadcrumb} />
         <div style={rowStyle}>
           <div style={leftStyle}>
             <ItemTabbed
