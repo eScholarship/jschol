@@ -21,7 +21,7 @@ class ItemPage extends PageBase
     this.setState({currentTab: tab_id})
   }
 
-  renderData(data) { 
+  renderData(data) {
     // Temporary styles till we get Joel's work
     let rowStyle = {
       display: 'table'
@@ -40,14 +40,14 @@ class ItemPage extends PageBase
     return(
       <div>
         <HeaderComp level="item"
-                    isJournal = {data.isJournal}
-                    campusID={data.campusID}
-                    campusName={data.campusName}
-                    campuses={data.campuses}
-                    unit_id={data.id} />
+                    isJournal = {p.isJournal}
+                    campusID={p.campusID}
+                    campusName={p.campusName}
+                    campuses={p.campuses}
+                    unit_id={p.appearsIn.length > 0  && p.appearsIn[0]["id"]} />
         <NavComp level="item"
-                 campusID={data.campusID} />
-        <BreadcrumbComp array={data.breadcrumb} />
+                 campusID={p.campusID} />
+        <BreadcrumbComp array={p.breadcrumb} />
         <div style={rowStyle}>
           <div style={leftStyle}>
             <ItemTabbed
@@ -77,7 +77,7 @@ class ItemTabbed extends React.Component {
     this.state = {
       tabList: [ 
         { 'id': 1, 'name': 'Main content', 'url': '#main' },
-        { 'id': 2, 'name': 'Data & media', 'url': '#suppl' },
+        { 'id': 2, 'name': 'Supplemental Material', 'url': '#suppl' },
         { 'id': 3, 'name': 'Metrics', 'url': '#metrics' },
         { 'id': 4, 'name': 'Author & article info', 'url': '#authorarticle' },
         { 'id': 5, 'name': 'Comments', 'url': '#comments' } ]
@@ -175,11 +175,11 @@ class ItemLinkColumn extends React.Component {
         </div>
         <div className="card card-block">
           <h4 className="card-title">Jump to:</h4>
-          <a href="#" onClick={this.handleClick.bind(this, 1)} className="card-link">Abstract</a><br/>
+          {p.attrs["abstract"] && <span><a href="#" onClick={this.handleClick.bind(this, 1)} className="card-link">Abstract</a><br/></span>}
           <a href="#" onClick={this.handleClick.bind(this, 1)} className="card-link">Main Text</a><br/>
           <a href="#" className="card-link">References</a><br/>
           <a href="#" className="card-link">Author response</a><br/>
-          <a href="#" onClick={this.handleClick.bind(this, 2)} className="card-link">Supplemental Material</a><br/>
+          {p.attrs["supp_files"] && <span><a href="#" onClick={this.handleClick.bind(this, 2)} className="card-link">Supplemental Material</a><br/></span>}
           <a href="#" onClick={this.handleClick.bind(this, 3)} className="card-link">Metrics</a><br/>
           <a href="#" onClick={this.handleClick.bind(this, 4)} className="card-link">Article & author info</a><br/>
           <a href="#" onClick={this.handleClick.bind(this, 5)} className="card-link">Comments</a>
