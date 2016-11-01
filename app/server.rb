@@ -3,10 +3,10 @@
 # Use bundler to keep dependencies local
 require 'rubygems'
 require 'bundler/setup'
-require_relative 'breadcrumb'
 
 ###################################################################################################
 # External gems we need
+require 'cgi'
 require 'digest'
 require 'json'
 require 'net/http'
@@ -14,8 +14,20 @@ require 'pp'
 require 'sequel'
 require 'sinatra'
 require 'yaml'
-require 'cgi'
+require 'socksify'
+require 'socket'
 
+# Utility modules
+require_relative 'socksMysql'
+
+# Use the Sequel gem to get object-relational mapping, connection pooling, thread safety, etc.
+dbConfig = YAML.load_file("config/database.yaml")
+dbConfig.key?('socks_port') and SocksMysql.setup(dbConfig)
+DB = Sequel.connect(dbConfig)
+
+# Internal modules
+require_relative 'breadcrumb'
+require_relative 'searchApi'
 
 # Sinatra configuration
 configure do
@@ -32,11 +44,6 @@ DO_ISO = false
 
 # Flush stdout after each write, which makes debugging easier.
 STDOUT.sync = true
-
-###################################################################################################
-# Use the Sequel gem to get object-relational mapping, connection pooling, thread safety, etc.
-DB = Sequel.connect(YAML.load_file("config/database.yaml"))
-require_relative 'searchApi'
 
 ###################################################################################################
 # Model classes for easy interaction with the database.
