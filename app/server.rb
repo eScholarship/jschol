@@ -22,7 +22,7 @@ require_relative 'socksMysql'
 
 # Use the Sequel gem to get object-relational mapping, connection pooling, thread safety, etc.
 dbConfig = YAML.load_file("config/database.yaml")
-dbConfig.key?('socks_port') and SocksMysql.setup(dbConfig)
+dbConfig.key?('socks_port') and SocksMysql.reconfigure(dbConfig)
 DB = Sequel.connect(dbConfig)
 
 # Internal modules

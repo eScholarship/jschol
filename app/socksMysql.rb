@@ -12,63 +12,64 @@ require 'socket'
 class SocksMysql
 
   #################################################################################################
-  def self.setup(dbConfig)
+  def self.reconfigure(dbConfig)
+
+    # Strange this is a global in Ruby. But still we want it.
     Thread.abort_on_exception = true
-    
+
+    # Configure socksify with the right port. Now all TCP connections will go through it.
     TCPSocket::socks_server = "127.0.0.1"
     TCPSocket::socks_port = dbConfig['socks_port']
-    
-    host = dbConfig['host']
-    dbConfig.delete 'host'
-    port = dbConfig['port']
-    dbConfig.delete 'port'
 
-    dbConfig['socket'] = ".mysqlProxySock"
-
+    # Fire up a thread to create and service the Unix socket we'll use to proxy MySQL traffic
     ready = Queue.new
-    Thread.new { service(host, port, ready) }
+    Thread.new { SocksMysql.new.service(dbConfig['host'], dbConfig['port'], ready) }
     ready.pop  # wait for thread to become ready
+
+    # Reconfigure MySQL to connect through our socket
+    dbConfig.delete 'host'
+    dbConfig.delete 'port'
+    dbConfig['socket'] = ".mysqlProxySock"
   end
 
   #################################################################################################
-  def self.service(host, port, ready)
+  def service(host, port, ready)
     File.exist?(".mysqlProxySock") and File.delete(".mysqlProxySock")
     Socket.unix_server_socket(".mysqlProxySock") { |server|
       ready << true
       Socket.accept_loop(server) { |localSock, client_addrinfo|
-        remoteSock = TCPSocket.open(host, port)
-        begin
-          bidiTransfer(localSock, remoteSock)
-        rescue Exception => e
-          puts "Proxy communication exception: #{e.inspect}.\n\t#{e.backtrace.join("\n\t")}"
-        ensure
-          localSock.close
-          remoteSock.close
-        end
+        # Serve each in a new thread, since Sequel might start multiple connections
+        Thread.new(TCPSocket.open(host, port)) { |remoteSock| bidiTransfer(localSock, remoteSock) }
       }
     }
+  rescue Exception => e
+    puts "Proxy communication exception: #{e.inspect}.\n\t#{e.backtrace.join("\n\t")}"
   ensure
     File.exist?(".mysqlProxySock") and File.delete(".mysqlProxySock")
   end
 
   #################################################################################################
-  def self.bidiTransfer(localSock, remoteSock)
-    done = false
-    while !done
+  def bidiTransfer(localSock, remoteSock)
+    while true
       rds, wrs, ers = IO.select([localSock, remoteSock], [])
       ers.each { |e| raise "Exception pending on: #{e}" }
       rds.each { |r|
         if r == localSock
           data = localSock.recv(8192)
-          done ||= data.empty?
+          data.empty? and return
           remoteSock.write(data)
         elsif r == remoteSock
           data = remoteSock.recv(8192)
-          done ||= data.empty?
+          data.empty? and return
           localSock.write(data)
         end
       }
     end
+  rescue Exception => e
+    puts "Proxy communication exception: #{e.inspect}.\n\t#{e.backtrace.join("\n\t")}"
+  ensure
+    localSock.close
+    remoteSock.close
   end
 
 end
