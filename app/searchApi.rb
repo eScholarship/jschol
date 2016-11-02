@@ -91,8 +91,8 @@ def get_query_display(params)
   if params.key?('campuses')
     filters['campuses'] = {'display' => 'Campus', 'fieldName' => 'campuses', 'filters' => get_unit_display_name(params['campuses'].map{ |v| {'value' => v} })}
   end
-  if params.key?('deparments')
-    filters['departments'] = {'display' => 'Department', 'fieldName' => 'departments', 'filters' => params['departments'].map{ |v| {'value' => v} }}
+  if params.key?('departments')
+    filters['departments'] = {'display' => 'Department', 'fieldName' => 'departments', 'filters' => get_unit_display_name(params['departments'].map{ |v| {'value' => v} })}
   end
   if params.key?('journals')
     filters['journals'] = {'display' => 'Journal', 'fieldName' => 'journals', 'filters' => get_unit_display_name(params['journals'].map{ |v| {'value' => v} })}
