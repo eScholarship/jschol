@@ -17,10 +17,6 @@ class SocksMysql
     # Strange this is a global in Ruby. But still we want it.
     Thread.abort_on_exception = true
 
-    # Configure socksify with the right port. Now all TCP connections will go through it.
-    TCPSocket::socks_server = "127.0.0.1"
-    TCPSocket::socks_port = dbConfig['socks_port']
-
     # Fire up a thread to create and service the Unix socket we'll use to proxy MySQL traffic
     ready = Queue.new
     Thread.new { SocksMysql.new.service(dbConfig['host'], dbConfig['port'], ready) }

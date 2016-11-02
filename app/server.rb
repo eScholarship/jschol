@@ -17,15 +17,19 @@ require 'yaml'
 require 'socksify'
 require 'socket'
 
-# Utility modules
-require_relative 'socksMysql'
-
 # Use the Sequel gem to get object-relational mapping, connection pooling, thread safety, etc.
+# If specified, use SOCKS proxy for all connections (including database).
 dbConfig = YAML.load_file("config/database.yaml")
-dbConfig.key?('socks_port') and SocksMysql.reconfigure(dbConfig)
+if File.exist? "config/socks.yaml"
+  # Configure socksify for all TCP connections. Jump through hoops for MySQL to use it too.
+  TCPSocket::socks_server = "127.0.0.1"
+  TCPSocket::socks_port = YAML.load_file("config/socks.yaml")['port']
+  require_relative 'socksMysql'
+  SocksMysql.reconfigure(dbConfig)
+end
 DB = Sequel.connect(dbConfig)
 
-# Internal modules
+# Internal modules to implement specific pages and functionality
 require_relative 'breadcrumb'
 require_relative 'searchApi'
 
@@ -179,7 +183,8 @@ get "/api/item/:shortArk" do |shortArk|
         :title => item.title,
         :rights => item.rights,
         :pub_date => item.pub_date,
-        :authors => ItemAuthor.filter(:item_id => id).order(:ordering).map(:attrs).collect{ |h| JSON.parse(h)["name"]},
+        :authors => ItemAuthor.filter(:item_id => id).order(:ordering).
+                               map(:attrs).collect{ |h| JSON.parse(h)["name"]},
         :content_type => item.content_type,
         :attrs => JSON.parse(Item.filter(:id => id).map(:attrs)[0])
       }
@@ -218,7 +223,9 @@ end
 
 # Get all active campuses/ORUs (id and name), sorted alphabetically by name
 def getActiveCampuses
-  campuses = Unit.join(:unit_hier, :unit_id => :id).filter(:ancestor_unit => 'root', :is_direct => 1, :is_active => true).to_hash(:id, :name)
+  campuses = Unit.join(:unit_hier, :unit_id => :id).
+                  filter(:ancestor_unit => 'root', :is_direct => 1, :is_active => true).
+                  to_hash(:id, :name)
   sorted = campuses.sort_by { |id, name| name }
   return sorted.unshift(["", "eScholarship at..."])
 end
