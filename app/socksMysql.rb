@@ -52,17 +52,10 @@ class SocksMysql
   def bidiTransfer(localSock, remoteSock)
     while true
       rds, wrs, ers = IO.select([localSock, remoteSock], [])
-      ers.each { |e| raise "Exception pending on: #{e}" }
       rds.each { |r|
-        if r == localSock
-          data = localSock.recv(8192)
-          data.empty? and return
-          remoteSock.write(data)
-        elsif r == remoteSock
-          data = remoteSock.recv(8192)
-          data.empty? and return
-          localSock.write(data)
-        end
+        data = r.recv(8192)
+        data.empty? and return
+        (r == remoteSock ? localSock : remoteSock).write(data)
       }
     end
   rescue Exception => e
