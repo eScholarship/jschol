@@ -169,6 +169,7 @@ get "/api/item/:shortArk" do |shortArk|
     begin
       body = {
         :id => shortArk,
+        :status => item.status,
         :title => item.title,
         :rights => item.rights,
         :pub_date => item.pub_date,
@@ -205,7 +206,8 @@ def getHeaderElements(breadcrumb)
     :campusID => campusID,
     :campusName => campusName,
     :campuses => ACTIVE_CAMPUSES,
-    :breadcrumb => breadcrumb.generateCrumb 
+    :breadcrumb => breadcrumb.generateCrumb,
+    :appearsIn => breadcrumb.appearsIn 
   }
 end
 

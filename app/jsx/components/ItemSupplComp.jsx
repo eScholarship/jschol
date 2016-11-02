@@ -7,7 +7,7 @@ class ItemSupplComp extends React.Component {
     let p = this.props
     return(
       <div className="content">
-        Data &amp; Media content here
+        Supplemental Files content here
       </div>
     )
   }
