@@ -13,10 +13,6 @@ class SocksMysql
 
   #################################################################################################
   def self.reconfigure(dbConfig)
-
-    # Strange this is a global in Ruby. But still we want it.
-    Thread.abort_on_exception = true
-
     # Fire up a thread to create and service the Unix socket we'll use to proxy MySQL traffic
     ready = Queue.new
     Thread.new { SocksMysql.new.service(dbConfig['host'], dbConfig['port'], ready) }

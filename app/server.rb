@@ -9,10 +9,12 @@ require 'bundler/setup'
 require 'cgi'
 require 'digest'
 require 'json'
+require 'mimemagic'
 require 'net/http'
 require 'pp'
 require 'sequel'
 require 'sinatra'
+require 'sinatra/streaming'
 require 'yaml'
 require 'socksify'
 require 'socket'
@@ -32,6 +34,7 @@ DB = Sequel.connect(dbConfig)
 # Internal modules to implement specific pages and functionality
 require_relative 'breadcrumb'
 require_relative 'searchApi'
+require_relative 'queueWithTimeout'
 
 # Sinatra configuration
 configure do
@@ -46,8 +49,14 @@ end
 # For general app development, set DO_ISO to false. For real deployment, set to true
 DO_ISO = false
 
-# Flush stdout after each write, which makes debugging easier.
-STDOUT.sync = true
+# Make puts thread-safe, and flush after every puts.
+$stdoutMutex = Mutex.new
+def puts(*args)
+  $stdoutMutex.synchronize { 
+    super(*args)
+    STDOUT.flush
+  }
+end
 
 ###################################################################################################
 # Model classes for easy interaction with the database.
@@ -112,9 +121,86 @@ get "/check" do
 end
 
 ###################################################################################################
+# Sanitize incoming filenames before applying them to the filesystem. In particular, prevent
+# attacks using "../" as part of the path.
+def sanitizeFilePath(path)
+  path = path.gsub(/[^-a-zA-Z0-9_.\/]/, '_').split("/").map { |part|
+    part.sub(/^\.+/, '_').sub(/\.+$/, '_')
+  }.join('/')
+end
+
+###################################################################################################
+class Fetcher
+  def start(uri)
+    # We have to fetch the file in a different thread, because it needs to keep the HTTP request
+    # open in that thread while we return the status code to Sinatra. Then the remaining data can
+    # be streamed from the thread to Sinatra.
+    puts "Content fetch: #{uri}."
+    @queue = QueueWithTimeout.new
+    Thread.new do
+      begin
+        # Now jump through Net::HTTP's hijinks to actually fetch the file.
+        Net::HTTP.start(uri.host, uri.port, :use_ssl => (uri.scheme == 'https')) do |http|
+          http.request(Net::HTTP::Get.new uri.request_uri) do |response|
+            @queue << [response.code, response.message]
+            if response.code == "200"
+              response.read_body { |chunk| @queue << chunk }
+            else
+              puts "Error: Response to #{uri} was HTTP #{response.code}: #{response.message.inspect}"
+            end
+          end
+        end
+      ensure
+        @queue << nil  # mark end-of-data
+      end
+    end
+
+    # Wait for the status code to come back from the fetch thread.
+    code, msg = @queue.pop_with_timeout(60)
+    return code.to_i, msg
+  end
+
+  # Now we're ready to set the content type and return the contents in streaming fashion.
+  def copyTo(out)
+    while true
+      data = @queue.pop_with_timeout(10)
+      data.nil? and break
+      out.write(data)
+    end
+  end
+end
+
+###################################################################################################
+get "/content/:fullItemID/*" do |fullItemID, path|
+  # Prep work
+  fullItemID =~ /^qt[a-z0-9]{8}$/ or halt(404)  # protect against attacks
+  item = Item[fullItemID]
+  item.status == 'published' or halt(403)  # prevent access to embargoed and withdrawn files
+  path = sanitizeFilePath(path)  # protect against attacks
+
+  # Fetch the file from Merritt
+  fetcher = Fetcher.new
+  code, msg = fetcher.start(URI("http://mrtexpress.cdlib.org/dl/ark:/13030/#{fullItemID}/content/#{path}"))
+
+  # Temporary fallback: if we can't find on Merritt, try the raw_data hack on pub-eschol-stg.
+  # This is needed for ETDs, since we don't yet record their proper original Merritt location.
+  if code != 200
+    fetcher = Fetcher.new
+    code2, msg2 = fetcher.start(URI("http://pub-eschol-stg.escholarship.org/raw_data/13030/pairtree_root/" +
+                                    "#{fullItemID.scan(/../).join('/')}/#{fullItemID}/content/#{path}"))
+    code2 == 200 or halt(code, msg)
+  end
+
+  # Guess the content type by path for now, and stream the results (don't buffer the whole thing,
+  # as some files are huge and would blow out our RAM).
+  content_type MimeMagic.by_path(path)
+  return stream { |out| fetcher.copyTo(out) }
+end
+
+###################################################################################################
 # The outer framework of every page is essentially the same, substituting in the intial page
 # data and initial elements from React.
-get %r{^/(?!api/).*} do  # matches every URL except /api/*
+get %r{^/(?!api/)(?!content/).*} do  # matches every URL except /api/* and /content/*
 
   puts "Page fetch: #{request.url}"
 
