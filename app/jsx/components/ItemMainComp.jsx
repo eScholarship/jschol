@@ -88,20 +88,15 @@ class Content extends React.Component {
   renderPdf(p) { return (
     <div>
       Main text<br/>
-      {/* Fetch PDF from a special place which supports returning CORS headers. E.g. transform item I
-D "9k10r3sc" into:
-          http://pub-eschol-stg.escholarship.org/raw_data/13030/pairtree_root/qt/9k/10/r3/sc/qt9k10r3
-sc/content/qt9k10r3sc.pdf */}
-      <PdfViewerComp url={"http://pub-eschol-stg.escholarship.org/raw_data/13030/pairtree_root/qt/" +
-                     p.id.match(/(..?)/g).join("/") + "/qt" + p.id + "/content/qt" + p.id + ".pdf" }/>
+      {/*Fetch content through server app, which will check credentials and proxy to proper back-end*/}
+      <PdfViewerComp url={"/content/qt" + p.id + "/qt" + p.id + ".pdf"}/>
     </div>
   )}
 
   renderHtml(p) { return (
     <div>
       Main text<br/>
-      <iframe src={"http://pub-eschol-stg.escholarship.org/raw_data/13030/pairtree_root/qt/" +
-              p.id.match(/(..?)/g).join("/") + "/qt" + p.id + "/content/qt" + p.id + ".html"}
+      <iframe src={"/content/qt" + p.id + "/qt" + p.id + ".html"}
               height="700" width="750" frameBorder="0"/>
     </div>
   )}

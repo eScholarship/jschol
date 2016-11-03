@@ -554,7 +554,7 @@ class ResultItem extends React.Component {
             }) }
           </ul>
           <header>
-            <a href={this.props.result.id}>{this.props.result.title}</a>
+            <Link href={"/item/"+this.props.result.id.replace(/^qt/, "")}>{this.props.result.title}</Link>
           </header>
           <p>
             Authors: ???<br/>
