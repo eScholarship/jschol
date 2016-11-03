@@ -388,7 +388,7 @@ class SortComp extends React.Component {
       this.setState({sort: event.target.value});
     }
     $('[name=start]').val('0');
-    // $('#facet-form-submit').click();
+    $('#facet-form-submit').click();
   }
 
   render() {
@@ -433,34 +433,34 @@ class PaginationComp extends React.Component {
     if (parseInt(this.props.query.start) + parseInt(this.props.query.rows) <= this.props.count) {
       var newStart = parseInt(this.props.query.start) + parseInt(this.props.query.rows);
       $('[form=facetForm][name=start]').val(newStart);
-      // $('#facet-form-submit').click();
+      $('#facet-form-submit').click();
     }
   }
 
   previous(event) {
-    if (this.props.query.start >= this.props.query.rows) {
-      var newStart = this.props.query.start - this.props.query.rows;
+    if (parseInt(this.props.query.start) >= parseInt(this.props.query.rows)) {
+      var newStart = parseInt(this.props.query.start) - parseInt(this.props.query.rows);
       $('[form=facetForm][name=start]').val(newStart);
-      // $('#facet-form-submit').click();
+      $('#facet-form-submit').click();
     }
   }
 
   first(event) {
     $('[form=facetForm][name=start]').val(0);
-    // $('#facet-form-submit').click();
+    $('#facet-form-submit').click();
   }
 
   last(event) {
     var newStart = Math.floor(this.props.count / this.props.query.rows);
     newStart = newStart * this.props.query.rows;
     $('[form=facetForm][name=start]').val(newStart);
-    // $('#facet-form-submit').click();
+    $('#facet-form-submit').click();
   }
 
   page(event) {
     var newStart = (event.target.text - 1) * this.props.query.rows;
     $('[form=facetForm][name=start]').val(newStart);
-    // $('#facet-form-submit').click();
+    $('#facet-form-submit').click();
   }
 
   render() {

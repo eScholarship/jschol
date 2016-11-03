@@ -167,7 +167,7 @@ def aws_encode(params)
 
   aws_params = {
     query: params['q'] ? params['q'].join(" ") : 'test',
-    size: params['rows'].length > 0 ? params['rows'] : 10,
+    size: params['rows'].length > 0 ? params['rows'][0] : 10,
     sort: params['sort'].length > 0 ? encode_sort(params['sort'][0]) : '_score desc',
     start: params['start'].length > 0 ? params['start'][0] : 0,
     
