@@ -111,6 +111,15 @@ class PubYear extends React.Component {
   handleChange = this.handleChange.bind(this);
   onBlur = this.onBlur.bind(this);
 
+  componentWillReceiveProps(nextProps) {
+    if ($.isEmptyObject(nextProps.query) && (this.state.pub_year_start !== '' || this.state.pub_year_end !== '')) {
+      this.setState({
+        pub_year_start: '',
+        pub_year_end: ''
+      }, this.submitForm);
+    }
+  }
+
   onBlur(event) {
     var displayYears;
     if (this.state.pub_year_start || this.state.pub_year_end) {
@@ -120,10 +129,13 @@ class PubYear extends React.Component {
       displayYears = "";
     }
 
+    this.submitForm();
+    this.props.handler(event, {value: displayYears});
+  }
+
+  submitForm() {
     $('[name=start]').val('0');
     $('#facet-form-submit').click();
-
-    this.props.handler(event, {value: displayYears});
   }
 
   handleChange(event) {
