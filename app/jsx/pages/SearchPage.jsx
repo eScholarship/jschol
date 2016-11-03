@@ -9,7 +9,7 @@ import { HeaderComp, NavComp } from '../components/AllComponents.jsx'
 
 class FacetItem extends React.Component {
   state = {
-    checked: this.checkFacet(this.props.data.facet),
+    checked: this.checkFacet(this.props),
     disabled: this.props.data.ancestorChecked ? true : false
   }
   handleChange = this.handleChange.bind(this);
@@ -25,6 +25,10 @@ class FacetItem extends React.Component {
         }
       }
     }
+
+    if (this.checkFacet(nextProps) !== this.state.checked) {
+      this.setState({checked: this.checkFacet(nextProps)});
+    }
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -34,14 +38,14 @@ class FacetItem extends React.Component {
     }
   }
 
-  checkFacet(facet) {
-    if (this.props.query) {
-      for (let filter of this.props.query) {
-        if (facet.value == filter.value) {
+  checkFacet(props) {
+    if (props.query) {
+      for (let filter of props.query) {
+        if (props.data.facet.value == filter.value) {
           return true;
         }
       }
-      if (this.props.data.ancestorChecked) {
+      if (props.data.ancestorChecked) {
         return true;
       }
     }
@@ -115,6 +119,10 @@ class PubYear extends React.Component {
     else {
       displayYears = "";
     }
+
+    $('[name=start]').val('0');
+    $('#facet-form-submit').click();
+
     this.props.handler(event, {value: displayYears});
   }
 
