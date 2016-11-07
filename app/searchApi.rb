@@ -91,8 +91,8 @@ def get_query_display(params)
   if params.key?('campuses')
     filters['campuses'] = {'display' => 'Campus', 'fieldName' => 'campuses', 'filters' => get_unit_display_name(params['campuses'].map{ |v| {'value' => v} })}
   end
-  if params.key?('deparments')
-    filters['departments'] = {'display' => 'Department', 'fieldName' => 'departments', 'filters' => params['departments'].map{ |v| {'value' => v} }}
+  if params.key?('departments')
+    filters['departments'] = {'display' => 'Department', 'fieldName' => 'departments', 'filters' => get_unit_display_name(params['departments'].map{ |v| {'value' => v} })}
   end
   if params.key?('journals')
     filters['journals'] = {'display' => 'Journal', 'fieldName' => 'journals', 'filters' => get_unit_display_name(params['journals'].map{ |v| {'value' => v} })}
@@ -167,7 +167,7 @@ def aws_encode(params)
 
   aws_params = {
     query: params['q'] ? params['q'].join(" ") : 'test',
-    size: params['rows'].length > 0 ? params['rows'] : 10,
+    size: params['rows'].length > 0 ? params['rows'][0] : 10,
     sort: params['sort'].length > 0 ? encode_sort(params['sort'][0]) : '_score desc',
     start: params['start'].length > 0 ? params['start'][0] : 0,
     

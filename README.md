@@ -49,12 +49,12 @@ Steps to get the app running on your local machine
 
 1. Install gems and packages: `./setup.sh` (Note: for neatness they get installed to the local directory, not system-wide)
 
-2. Start proxy connection to database through bastion: `ssh -C -N -L3306:rds-BLAH.amazonaws.com:3306 -p 18822 cdl-aws-bastion.cdlib.org`
+2. Start SOCKS proxy connection through bastion: `ssh -C -N -D 1080 -p 18822 cdl-aws-bastion.cdlib.org`
 
-3. Start proxy connection to index through bastion: `ssh -C -N -L8888:search-BLAH.amazonaws.com:80 -p 18822 cdl-aws-bastion.cdlib.org`
+3. Configure SOCKS port: `cp config/socks.yaml.TEMPLATE config/socks.yaml`
 
 4. Configure database connection parameters: `cp config/database.yaml.TEMPLATE config/database.yaml`, then fill in the values in `database.yaml`:
-  * host: 127.0.0.1
+  * host: rds-BLAH.amazonaws.com
   * port: 3306
   * database: eschol_test
   * username: SECRET
