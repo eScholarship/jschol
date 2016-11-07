@@ -194,6 +194,31 @@ get "/api/search/" do
   return search(CGI::parse(request.query_string)).to_json
 end
 
+###################################################################################################
+# Social Media Links 
+get "/api/mediaLink/:shortArk/:service" do |shortArk, service| # service e.g. facebook, google, etc.
+  content_type :json
+  sharedLink = "http://www.escholarship.com/item/" + shortArk
+  item = Item["qt"+shortArk]
+  title = item.title
+  case service
+    when "facebook"
+      url = "http://www.facebook.com/sharer.php?u=" + sharedLink
+    when "twitter"
+      url = "http://twitter.com/home?status=" + title + "[" + sharedLink + "]"
+    when "email"
+      title_sm = title.length > 50 ? title[0..49] + "..." : title
+      url = "mailto:?subject=" + title_sm + "&body=" +
+        # ToDo: Put in proper citation
+        (item.attrs["orig_citation"] ? item.attrs["orig_citation"] + "\n\n" : "") +
+        sharedLink 
+    when "mendeley"
+      url = "http://www.mendeley.com/import?url=" + sharedLink + "&title=" + title
+    when "citeulike"
+      url = "http://www.citeulike.org/posturl?url=" + sharedLink + "&title=" + title
+  end
+  return { url: url }.to_json
+end
 
 ##################################################################################################
 # Helper methods

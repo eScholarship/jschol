@@ -1,9 +1,19 @@
 // ##### Item View Tab: Main Component ##### //
 
 import React from 'react'
+import { Link } from 'react-router'
+import $ from 'jquery'
 import { PdfViewerComp } from '../components/AllComponents.jsx'
 
 class ItemMainComp extends React.Component {
+  getLink(id, service) {
+    $.getJSON("/api/mediaLink/"+id+"/"+service).done((data) => {
+      window.location = data.url
+    }).fail((jqxhr, textStatus, err)=> {
+      console.log("Failed! textStatus=", textStatus, ", err=", err)
+    })
+  }
+
   render() { 
     let p = this.props,
         pub_web_loc = p.attrs["pub_web_loc"].map(function(node, i) {
@@ -11,6 +21,7 @@ class ItemMainComp extends React.Component {
         }),
         abstr = p.attrs["abstract"],
         // Temporary styles till we get Joel's work
+        floatRightStyle = {float: 'right'},
         rowStyle = {display: 'table'},
         leftStyle = {display: 'table-cell', width: '750px'},
         rightStyle = {display: 'table-cell', width: '100px', border: '1px solid black'},
@@ -19,6 +30,13 @@ class ItemMainComp extends React.Component {
       <div className="content">
         <div style={rowStyle}>
           <div style={leftStyle}>
+            <span style={floatRightStyle}>
+              <a href="#" onClick={() => {this.getLink(p.id, "facebook")}}>Facebook</a>&nbsp;&nbsp;
+              <a href="#" onClick={() => {this.getLink(p.id, "twitter")}}>Twitter</a>&nbsp;&nbsp;
+              <a href="#" onClick={() => {this.getLink(p.id, "email")}}>Email</a>&nbsp;&nbsp;
+              <a href="#" onClick={() => {this.getLink(p.id, "mendeley")}}>Mendeley</a>&nbsp;&nbsp;
+              <a href="#" onClick={() => {this.getLink(p.id, "citeulike")}}>CiteULike</a>
+            </span><br/>
             <font style={titleStyle}>{p.title}</font> <br/>
             {p.pub_date} <ItemMainAuthorsComp authors={p.authors} changeTab={this.props.changeTab}/>
             {pub_web_loc.length > 0 && <div>{pub_web_loc}</div>}
