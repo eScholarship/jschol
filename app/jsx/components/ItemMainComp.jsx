@@ -1,7 +1,6 @@
 // ##### Item View Tab: Main Component ##### //
 
 import React from 'react'
-import { Link } from 'react-router'
 import $ from 'jquery'
 import { PdfViewerComp } from '../components/AllComponents.jsx'
 
