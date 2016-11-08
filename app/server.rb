@@ -348,7 +348,7 @@ end
 # Properly target links in HTML blob
 def getItemHtml(id)
   dir = "http://" + request.env["HTTP_HOST"] + "/content/qt" + id + "/"
-  htmlStr = open(dir + "/qt" + id + ".html").read
+  htmlStr = open(dir + "qt" + id + ".html").read
   htmlStr.gsub(/(href|src)="((?!#)[^"]+)"/) { |m|
     attrib, url = $1, $2
     url = $2.start_with?("http", "ftp") ? $2 : dir + $2
