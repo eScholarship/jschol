@@ -272,9 +272,9 @@ get "/api/item/:shortArk" do |shortArk|
         :rights => item.rights,
         :pub_date => item.pub_date,
         :authors => ItemAuthor.filter(:item_id => id).order(:ordering).
-                               map(:attrs).collect{ |h| JSON.parse(h)["name"]},
+                       map(:attrs).collect{ |h| JSON.parse(h)},
         :content_type => item.content_type,
-        :content_html => getItemHtml(shortArk),
+        :content_html => getItemHtml(item.content_type, shortArk),
         :attrs => JSON.parse(Item.filter(:id => id).map(:attrs)[0])
       }
       return body.merge(getHeaderElements(BreadcrumbGenerator.new(shortArk, 'item'))).to_json
@@ -346,7 +346,8 @@ def getActiveCampuses
 end
 
 # Properly target links in HTML blob
-def getItemHtml(id)
+def getItemHtml(content_type, id)
+  return false if content_type != "text/html"
   dir = "http://" + request.env["HTTP_HOST"] + "/content/qt" + id + "/"
   htmlStr = open(dir + "qt" + id + ".html").read
   htmlStr.gsub(/(href|src)="((?!#)[^"]+)"/) { |m|

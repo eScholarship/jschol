@@ -54,6 +54,7 @@ class ItemMainComp extends React.Component {
   }
 }
 
+// List of authors on Main content tab. Truncate and link to authors tab when too long.
 class ItemMainAuthorsComp extends React.Component {
   handleClick(tab_id) {
     this.props.changeTab(tab_id)
@@ -67,7 +68,7 @@ class ItemMainAuthorsComp extends React.Component {
       a = a.slice(0, 5)
       expand = true 
     }
-    let authorList = a.map((node,i) => <span key={i}>{node}</span>)
+    let authorList = a.map((node,i) => <span key={i}>{node.name}</span>)
       .reduce((accu, elem) => {
         return accu === null ? [elem] : [...accu, '; ', elem]
       }, null)
