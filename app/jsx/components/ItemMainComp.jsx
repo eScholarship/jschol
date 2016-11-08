@@ -100,7 +100,7 @@ class Content extends React.Component {
   renderContent(p) { return (
     <div>
       { p.content_type == "application/pdf" ? this.renderPdf(p) : null }
-      { p.content_type == "html" ? this.renderHtml(p) : null } </div>
+      { p.content_type == "text/html" ? this.renderHtml(p) : null } </div>
   )}
 
   renderPdf(p) { return (
@@ -114,8 +114,8 @@ class Content extends React.Component {
   renderHtml(p) { return (
     <div>
       Main text<br/>
-      <iframe src={"/content/qt" + p.id + "/qt" + p.id + ".html"}
-              height="700" width="750" frameBorder="0"/>
+      <div dangerouslySetInnerHTML={{__html: p.content_html}}/>
+      <br/><br/>
     </div>
   )}
 

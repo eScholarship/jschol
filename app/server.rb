@@ -11,6 +11,7 @@ require 'digest'
 require 'json'
 require 'mimemagic'
 require 'net/http'
+require 'open-uri'
 require 'pp'
 require 'sequel'
 require 'sinatra'
@@ -273,6 +274,7 @@ get "/api/item/:shortArk" do |shortArk|
         :authors => ItemAuthor.filter(:item_id => id).order(:ordering).
                                map(:attrs).collect{ |h| JSON.parse(h)["name"]},
         :content_type => item.content_type,
+        :content_html => getItemHtml(shortArk),
         :attrs => JSON.parse(Item.filter(:id => id).map(:attrs)[0])
       }
       return body.merge(getHeaderElements(BreadcrumbGenerator.new(shortArk, 'item'))).to_json
@@ -341,6 +343,17 @@ def getActiveCampuses
                   to_hash(:id, :name)
   sorted = campuses.sort_by { |id, name| name }
   return sorted.unshift(["", "eScholarship at..."])
+end
+
+# Properly target links in HTML blob
+def getItemHtml(id)
+  dir = "http://" + request.env["HTTP_HOST"] + "/content/qt" + id + "/"
+  htmlStr = open(dir + "/qt" + id + ".html").read
+  htmlStr.gsub(/(href|src)="((?!#)[^"]+)"/) { |m|
+    attrib, url = $1, $2
+    url = $2.start_with?("http", "ftp") ? $2 : dir + $2
+    "#{attrib}=\"#{url}\"" + ((attrib == "src") ? "" : " target=\"new\"")
+  }
 end
 
 ##################################################################################################
