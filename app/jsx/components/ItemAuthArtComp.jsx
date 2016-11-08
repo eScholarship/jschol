@@ -3,9 +3,12 @@
 import React from 'react'
 
 class ItemAuthArtComp extends React.Component {
+
   render() {
     let p = this.props,
-        authorList = p.authors.map(function(node, i) {return ( <p key={i}>{node}</p> )}),
+        authorList = p.authors.map(function(a, i) {return (
+          <p key={i}>{a.name} {a.institution ? <span><br/>{a.institution}</span> : ""}</p>
+        )}),
         issn = p.attrs['ext_journal'] && p.attrs['ext_journal']['issn'],
         peer_reviewed = p.attrs['is_peer_reviewed'] ? "True" : "False",
         permalink = "http://www.escholarship.org/item/" + p.id,

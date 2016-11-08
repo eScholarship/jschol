@@ -11,6 +11,7 @@ require 'digest'
 require 'json'
 require 'mimemagic'
 require 'net/http'
+require 'open-uri'
 require 'pp'
 require 'sequel'
 require 'sinatra'
@@ -271,8 +272,9 @@ get "/api/item/:shortArk" do |shortArk|
         :rights => item.rights,
         :pub_date => item.pub_date,
         :authors => ItemAuthor.filter(:item_id => id).order(:ordering).
-                               map(:attrs).collect{ |h| JSON.parse(h)["name"]},
+                       map(:attrs).collect{ |h| JSON.parse(h)},
         :content_type => item.content_type,
+        :content_html => getItemHtml(item.content_type, shortArk),
         :attrs => JSON.parse(Item.filter(:id => id).map(:attrs)[0])
       }
       return body.merge(getHeaderElements(BreadcrumbGenerator.new(shortArk, 'item'))).to_json
@@ -292,6 +294,31 @@ get "/api/search/" do
   return search(CGI::parse(request.query_string)).to_json
 end
 
+###################################################################################################
+# Social Media Links 
+get "/api/mediaLink/:shortArk/:service" do |shortArk, service| # service e.g. facebook, google, etc.
+  content_type :json
+  sharedLink = "http://www.escholarship.com/item/" + shortArk
+  item = Item["qt"+shortArk]
+  title = item.title
+  case service
+    when "facebook"
+      url = "http://www.facebook.com/sharer.php?u=" + sharedLink
+    when "twitter"
+      url = "http://twitter.com/home?status=" + title + "[" + sharedLink + "]"
+    when "email"
+      title_sm = title.length > 50 ? title[0..49] + "..." : title
+      url = "mailto:?subject=" + title_sm + "&body=" +
+        # ToDo: Put in proper citation
+        (item.attrs["orig_citation"] ? item.attrs["orig_citation"] + "\n\n" : "") +
+        sharedLink 
+    when "mendeley"
+      url = "http://www.mendeley.com/import?url=" + sharedLink + "&title=" + title
+    when "citeulike"
+      url = "http://www.citeulike.org/posturl?url=" + sharedLink + "&title=" + title
+  end
+  return { url: url }.to_json
+end
 
 ##################################################################################################
 # Helper methods
@@ -316,6 +343,18 @@ def getActiveCampuses
                   to_hash(:id, :name)
   sorted = campuses.sort_by { |id, name| name }
   return sorted.unshift(["", "eScholarship at..."])
+end
+
+# Properly target links in HTML blob
+def getItemHtml(content_type, id)
+  return false if content_type != "text/html"
+  dir = "http://" + request.env["HTTP_HOST"] + "/content/qt" + id + "/"
+  htmlStr = open(dir + "qt" + id + ".html").read
+  htmlStr.gsub(/(href|src)="((?!#)[^"]+)"/) { |m|
+    attrib, url = $1, $2
+    url = $2.start_with?("http", "ftp") ? $2 : dir + $2
+    "#{attrib}=\"#{url}\"" + ((attrib == "src") ? "" : " target=\"new\"")
+  }
 end
 
 ##################################################################################################

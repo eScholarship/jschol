@@ -5,7 +5,7 @@ class BreadcrumbGenerator
   def initialize(thisPageName, type)
     @thisPageName = thisPageName
     @type = type
-    @itemsParents = (type == "item") ? getItemsParents(thisPageName) : nil 
+    @itemsParents = (type == "item") ? getItemsParents(thisPageName) : nil
     @unitID = (type == "unit") ? thisPageName : getItemsUnit() 
   end
 
