@@ -1,12 +1,11 @@
 # This grabs higher level units related to an item or unit. Primarily used in the header.
+class Hierarchy_UnitItem 
 
-class BreadcrumbGenerator
-
-  def initialize(thisPageName, type)
+  def initialize(view, thisPageName)
+    @view = view
     @thisPageName = thisPageName
-    @type = type
-    @itemsParents = (type == "item") ? getItemsParents(thisPageName) : nil
-    @unitID = (type == "unit") ? thisPageName : getItemsUnit() 
+    @itemsParents = (view == "item") ? getItemsParents(thisPageName) : nil
+    @unitID = (view == "unit") ? thisPageName : getItemsUnit() 
   end
 
   # ---Public Method---
@@ -40,7 +39,7 @@ class BreadcrumbGenerator
 
     nodes = []
 
-    if @type == "item"  # Display volume/issue only for journal articles
+    if @view == "item"  # Display volume/issue only for journal articles
       volume,issue = getVolumeIssue(@thisPageName) 
       if volume && issue
         nodes.unshift({"name" => "Volume " + volume + ", Issue " + issue, "url" => "/item/#{@thisPageName}"})
@@ -60,7 +59,7 @@ class BreadcrumbGenerator
 
   # ---Public Method---
   # Array of hashes containing name/url key-values (already initialized by getItemsParents method)
-  # Only intended to be called when type=item
+  # Only intended to be called when view=item
   def appearsIn 
     return @itemsParents
   end
@@ -81,7 +80,7 @@ class BreadcrumbGenerator
 
   # Get parent unit ID, given an item ID
   # Simply grabs highest order unit.id (leftmost in array) from @itemsParents
-  # Only intended to be called when type=item 
+  # Only intended to be called when view=item 
   def getItemsUnit()
     return (@itemsParents.size > 0) ? @itemsParents.first['id'] : nil
   end
@@ -95,7 +94,7 @@ class BreadcrumbGenerator
   end
 
   # Get volume and issue given an item ID. If item is not a journal, returns empty array 
-  # Only intended to be called when type=item
+  # Only intended to be called when view=item
   def getVolumeIssue(itemPageName)
     itemID = 'qt' + itemPageName
     issue_id = Item.join(:sections, :id => :section).filter(:items__id => itemID).map(:issue_id)[0]
@@ -103,5 +102,27 @@ class BreadcrumbGenerator
   end
 
   private :getItemsParents, :getUnitsParent, :getItemsUnit, :isCampus?, :getVolumeIssue
+
+end
+
+########################################################################################
+
+# This class generates a simpler breadcrumb for the browse and static pages. 
+class Hierarchy_Manual
+
+  def initialize(nameUrls)
+    @nameUrls = nameUrls   # An array of name/url hashes ordered bottom up
+  end
+
+  # ---Public Method---
+  # Generate breadcrumb object. Iterate through array of hashes containing name/url key-values 
+  def generateCrumb
+    nodes = []
+    @nameUrls.each { |x|
+      nodes.unshift(x)
+    }
+    nodes.unshift({"name" => "eScholarship", "url" => "/"})
+    return nodes
+  end
 
 end
