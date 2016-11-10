@@ -33,7 +33,7 @@ end
 DB = Sequel.connect(dbConfig)
 
 # Internal modules to implement specific pages and functionality
-require_relative 'breadcrumb'
+require_relative 'hierarchy'
 require_relative 'searchApi'
 require_relative 'queueWithTimeout'
 
