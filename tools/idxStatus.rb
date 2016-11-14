@@ -11,6 +11,8 @@ require 'aws-sdk'
 require 'pp'
 require 'yaml'
 
+# Run from the right directory (the parent of the tools dir)
+Dir.chdir(File.dirname(File.expand_path(File.dirname(__FILE__))))
 
 ###################################################################################################
 # The main action begins here
