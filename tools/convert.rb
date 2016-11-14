@@ -2,7 +2,7 @@
 
 # This script converts data from old eScholarship into the new eschol5 database.
 #
-# The "--units" conversion mode should generally be run on a newly cleaned-out 
+# The "--units" conversion mode should generally be run on a newly cleaned-out
 # database. This sequence of commands should do the trick:
 #
 #   bin/sequel config/database.yaml -m migrations/ -M 0 && \
@@ -30,7 +30,7 @@ require 'time'
 require 'yaml'
 
 # Max size (in bytes, I think) of a batch to send to AWS CloudSearch.
-# According to the docs the absolute limit is 5 megs, so let's back off a 
+# According to the docs the absolute limit is 5 megs, so let's back off a
 # little bit from that and say 4.5 megs.
 MAX_BATCH_SIZE = 4500*1024
 
@@ -88,7 +88,7 @@ $unitAncestors = nil
 # let's auto-flush the output.
 $stdoutMutex = Mutex.new
 def puts(*args)
-  $stdoutMutex.synchronize { 
+  $stdoutMutex.synchronize {
     Thread.current[:name] and STDOUT.write("[#{Thread.current[:name]}] ")
     super(*args)
     STDOUT.flush
@@ -271,7 +271,7 @@ def prefilterBatch(batch)
   # Run the XTF textIndexer in "prefilterOnly" mode. That way the stylesheets can do all the
   # dirty work of normalizing the various data formats, and we can use the uniform results.
   #puts "Running prefilter batch of #{batch.size} items."
-  cmd = ["/apps/eschol/erep/xtf/bin/textIndexer", 
+  cmd = ["/apps/eschol/erep/xtf/bin/textIndexer",
          "-prefilterOnly",
          "-force",
          "-dirlist", "#{Dir.pwd}/prefilterDirs.txt",
@@ -296,7 +296,7 @@ def prefilterBatch(batch)
         shortArk = $1
       elsif line =~ %r{>>> END prefiltered}
         # Found a full block of prefiltered data. This item is ready for indexing.
-        timestamps.include?(shortArk) or 
+        timestamps.include?(shortArk) or
           raise("Can't find timestamp for item #{shortArk.inspect} - did we not request it?")
         $indexQueue << [shortArk, timestamps[shortArk], buf.join]
         shortArk, buf = nil, []
@@ -399,7 +399,7 @@ class MetaAccess
   # The root of the tree
   def root
     return @root
-  end    
+  end
 end
 
 ###################################################################################################
@@ -448,6 +448,53 @@ def parseDate(itemID, str)
     puts "Warning: invalid date in item #{itemID}: #{str.inspect}"
     return nil
   end
+end
+
+###################################################################################################
+# Take a UCI author and make it into a string for ease of display.
+def formatAuthName(auth)
+  str = ""
+  if auth.at("lname") && auth.at("fname")
+    str = auth.at("lname").text.strip + ", " + auth.at("fname").text.strip
+    auth.at("mname") and str += " " + auth.at("mname").text.strip
+    auth.at("suffix") and str += ", " + auth.at("suffix").text.strip
+  elsif auth.at("fname")
+    str = auth.at("fname").text
+  elsif auth.at("lname")
+    str = auth.at("lname").text
+  else
+    puts "Warning: can't figure out author #{auth}"
+    str = auth.text
+  end
+  return str
+end
+
+###################################################################################################
+# Try to get fine-grained author info from UCIngest metadata; if not avail, fall back to index data.
+def getAuthors(indexMeta, rawMeta)
+  # If not UC-Ingest formatted, fall back on index info
+  if !rawMeta.at("/record/authors")
+    return indexMeta.multiple("creator").map { |name| {name: name} }
+  end
+
+  # For UC-Ingest, we can provide more detailed author info
+  rawMeta.xpath("/record/authors/*").map { |el|
+    if el.name == "organization"
+      { name: el.text, organization: el.text }
+    elsif el.name == "author"
+      data = { name: formatAuthName(el) }
+      el.children.each { |sub|
+        if sub.name == "identifier"
+          data[(sub.attr('type') + "_id").to_sym] = sub.text
+        else
+          data[sub.name.to_sym] = sub.text
+        end
+      }
+      data
+    else
+      raise("Unknown element #{el.name.inspect} within UCIngest authors")
+    end
+  }
 end
 
 ###################################################################################################
@@ -566,19 +613,23 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
     end
   end
 
+  # Detect HTML-formatted items
+  mimeEl = rawMeta.at("/record/content/file/mimeType")
+  isHTML = (mimeEl && mimeEl.text == "text/html")
+
   # Populate the Item model instance
   dbItem = Item.new
   dbItem[:id]           = itemID
   dbItem[:source]       = data.single("source")
-  dbItem[:status]       = attrs[:withdrawn_date] ? "withdrawn" : 
-                          attrs[:embargo_date] ? "embargoed" : 
+  dbItem[:status]       = attrs[:withdrawn_date] ? "withdrawn" :
+                          attrs[:embargo_date] ? "embargoed" :
                           (rawMeta.attr("state") || "published")
   dbItem[:title]        = data.single("title")
-  dbItem[:content_type] = data.single("format")
+  dbItem[:content_type] = isHTML ? "text/html" : "application/pdf"
   dbItem[:genre]        = data.single("type")
   dbItem[:pub_date]     = parseDate(itemID, data.single("date")) || "1901-01-01"
   #FIXME: Think about this carefully. What's eschol_date for?
-  dbItem[:eschol_date]  = parseDate(itemID, data.single("datestamp")) || "1901-01-01" 
+  dbItem[:eschol_date]  = parseDate(itemID, data.single("datestamp")) || "1901-01-01"
   dbItem[:attrs]        = JSON.generate(attrs)
   dbItem[:ordering_in_sect] = data.single("document-order")
 
@@ -595,10 +646,11 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
   end
 
   # Populate ItemAuthor model instances
-  dbAuthors = data.multiple("creator").each_with_index.map { |name, idx|
+  authors = getAuthors(data, rawMeta)
+  dbAuthors = authors.each_with_index.map { |data, idx|
     ItemAuthor.new { |auth|
       auth[:item_id] = itemID
-      auth[:attrs] = JSON.generate({name: name})
+      auth[:attrs] = JSON.generate(data)
       auth[:ordering] = idx
     }
   }
@@ -608,9 +660,9 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
   traverseText(data.root, text)
 
   # Make a list of all the units this item belongs to
-  units = data.multiple("entityOnly").select { |unitID| 
-    unitID =~ /^(postprints|demo-journal|test-journal|unknown|withdrawn|uciem_westjem_aip)$/ ? false : 
-      !$allUnits.include?(unitID) ? (puts("Warning: unknown unit #{unitID.inspect}") && false) : 
+  units = data.multiple("entityOnly").select { |unitID|
+    unitID =~ /^(postprints|demo-journal|test-journal|unknown|withdrawn|uciem_westjem_aip)$/ ? false :
+      !$allUnits.include?(unitID) ? (puts("Warning: unknown unit #{unitID.inspect}") && false) :
       true
   }
 
@@ -625,7 +677,7 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
     id:            itemID,
     fields: {
       title:         dbItem[:title] || "",
-      authors:       data.multiple("creator", 1000),  # CloudSearch has max of 1000 entries per field
+      authors:       (authors.length > 1000 ? authors[0,1000] : authors).map { |auth| auth[:name] },
       abstract:      attrs[:abstract] || "",
       type_of_work:  data.single("type"),
       content_types: data.multiple("format"),
@@ -652,8 +704,8 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
   if JSON.generate(idxItem).bytesize > MAX_TEXT_SIZE
     idxItem[:fields][:text] = nil
     baseSize = JSON.generate(idxItem).bytesize
-    toCut = (0..text.size).bsearch { |cut| 
-      JSON.generate({text: text[0, text.size - cut]}).bytesize + baseSize < MAX_TEXT_SIZE 
+    toCut = (0..text.size).bsearch { |cut|
+      JSON.generate({text: text[0, text.size - cut]}).bytesize + baseSize < MAX_TEXT_SIZE
     }
     (toCut==0 || toCut.nil?) and raise("Internal error: have to cut something, but toCut=#{toCut.inspect}")
     puts "Note: Keeping only #{text.size - toCut} of #{text.size} text chars."
@@ -670,7 +722,7 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
 
   # Calculate a digest of the index data and database records
   idxData = JSON.generate(idxItem)
-  dbCombined = { 
+  dbCombined = {
     dbItem: dbItem.to_hash,
     dbAuthors: dbAuthors.map { |authRecord| authRecord.to_hash },
     dbIssue: issue ? issue.to_hash : nil,
@@ -759,7 +811,18 @@ def processBatch(batch)
   # Finish the data buffer, and send to AWS
   if !$noCloudSearchMode
     batch[:idxData] << "]"
-    $csClient.upload_documents(documents: batch[:idxData], content_type: "application/json")
+    # Try for 10 minutes max. CloudSearch seems to go awol fairly often.
+    startTime = Time.now
+    begin
+      $csClient.upload_documents(documents: batch[:idxData], content_type: "application/json")
+    rescue Exception => res
+      if res.inspect =~ /Http50[479]Error/ && (Time.now - startTime < 10*60)
+        puts "Will retry in 30 sec, response was: #{res}"
+        sleep 30; puts "Retrying."; retry
+      end
+      puts "Unable to retry: #{res.inspect}"
+      raise
+    end
   end
 
   # Now that we've successfully added the documents to AWS CloudSearch, insert records into
