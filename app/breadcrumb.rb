@@ -1,10 +1,17 @@
+# This grabs higher level units related to an item or unit. Primarily used in the header.
 
 class BreadcrumbGenerator
 
   def initialize(thisPageName, type)
     @thisPageName = thisPageName
     @type = type
-    @unitID = (type == "unit") ? thisPageName : getItemsUnit(thisPageName) 
+    @itemsParents = (type == "item") ? getItemsParents(thisPageName) : nil
+    @unitID = (type == "unit") ? thisPageName : getItemsUnit() 
+  end
+
+  # ---Public Method---
+  def isJournal?
+    return @unitID? Unit.filter(:id => @unitID, :type => 'journal').map(:id)[0] : nil
   end
 
   # ---Public Method---
@@ -16,7 +23,7 @@ class BreadcrumbGenerator
       return [nil, nil] 
     else
       until isCampus?(unitID) 
-        unitID = getParent(unitID)
+        unitID = getUnitsParent(unitID)
       end        
     end
     unit = Unit[unitID]
@@ -45,22 +52,38 @@ class BreadcrumbGenerator
       unit = Unit[unitID]
       nodes.unshift({"name" => unit.name, "url" => "/unit/#{unitID}"})
       # ToDo: Handle mutiple campuses
-      unitID = getParent(unitID)
+      unitID = getUnitsParent(unitID)
     end
     nodes.unshift({"name" => "eScholarship", "url" => "/"})
     return nodes
   end
 
+  # ---Public Method---
+  # Array of hashes containing name/url key-values (already initialized by getItemsParents method)
+  # Only intended to be called when type=item
+  def appearsIn 
+    return @itemsParents
+  end
+
+  # Generate array of hashes containing key-values for name, unitID, and url
+  def getItemsParents(itemPageName)
+    itemID = 'qt' + itemPageName
+    nodes = []
+    unitIDs = UnitItem.filter(:item_id => itemID, :is_direct => true).order(:ordering_of_units).map{ |u| u.unit_id }
+    unitIDs.each { |unitID| nodes << {"id" => unitID, "name" => Unit[unitID].name, "url" => "/unit/#{unitID}"} }
+    return nodes
+  end
+
   # Get parent unit ID, given a unit ID
-  def getParent(unitID)
+  def getUnitsParent(unitID)
     return UnitHier.filter(:unit_id => unitID, :is_direct => true).order(:ordering).map(:ancestor_unit)[0]
   end
 
   # Get parent unit ID, given an item ID
-  def getItemsUnit(pageName)
-    itemID = 'qt' + pageName
-    unitID = UnitItem.filter(:item_id => itemID, :is_direct => true).order(:ordering_of_units).map(:unit_id)[0]
-    return unitID
+  # Simply grabs highest order unit.id (leftmost in array) from @itemsParents
+  # Only intended to be called when type=item 
+  def getItemsUnit()
+    return (@itemsParents.size > 0) ? @itemsParents.first['id'] : nil
   end
 
   # Check if this is topmost unit under root.  
@@ -72,12 +95,13 @@ class BreadcrumbGenerator
   end
 
   # Get volume and issue given an item ID. If item is not a journal, returns empty array 
-  def getVolumeIssue(pageName)
-    itemID = 'qt' + pageName
+  # Only intended to be called when type=item
+  def getVolumeIssue(itemPageName)
+    itemID = 'qt' + itemPageName
     issue_id = Item.join(:sections, :id => :section).filter(:items__id => itemID).map(:issue_id)[0]
     return Section.join(:issues, :id => issue_id).map([:volume, :issue])[0]
   end
 
-  private :getParent, :getItemsUnit, :isCampus?, :getVolumeIssue
+  private :getItemsParents, :getUnitsParent, :getItemsUnit, :isCampus?, :getVolumeIssue
 
 end

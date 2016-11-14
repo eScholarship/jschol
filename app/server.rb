@@ -3,19 +3,39 @@
 # Use bundler to keep dependencies local
 require 'rubygems'
 require 'bundler/setup'
-require_relative 'breadcrumb'
 
 ###################################################################################################
 # External gems we need
+require 'cgi'
 require 'digest'
 require 'json'
+require 'mimemagic'
 require 'net/http'
+require 'open-uri'
 require 'pp'
 require 'sequel'
 require 'sinatra'
+require 'sinatra/streaming'
 require 'yaml'
-require 'cgi'
+require 'socksify'
+require 'socket'
 
+# Use the Sequel gem to get object-relational mapping, connection pooling, thread safety, etc.
+# If specified, use SOCKS proxy for all connections (including database).
+dbConfig = YAML.load_file("config/database.yaml")
+if File.exist? "config/socks.yaml"
+  # Configure socksify for all TCP connections. Jump through hoops for MySQL to use it too.
+  TCPSocket::socks_server = "127.0.0.1"
+  TCPSocket::socks_port = YAML.load_file("config/socks.yaml")['port']
+  require_relative 'socksMysql'
+  SocksMysql.reconfigure(dbConfig)
+end
+DB = Sequel.connect(dbConfig)
+
+# Internal modules to implement specific pages and functionality
+require_relative 'breadcrumb'
+require_relative 'searchApi'
+require_relative 'queueWithTimeout'
 
 # Sinatra configuration
 configure do
@@ -30,13 +50,14 @@ end
 # For general app development, set DO_ISO to false. For real deployment, set to true
 DO_ISO = false
 
-# Flush stdout after each write, which makes debugging easier.
-STDOUT.sync = true
-
-###################################################################################################
-# Use the Sequel gem to get object-relational mapping, connection pooling, thread safety, etc.
-DB = Sequel.connect(YAML.load_file("config/database.yaml"))
-require_relative 'searchApi'
+# Make puts thread-safe, and flush after every puts.
+$stdoutMutex = Mutex.new
+def puts(*args)
+  $stdoutMutex.synchronize { 
+    super(*args)
+    STDOUT.flush
+  }
+end
 
 ###################################################################################################
 # Model classes for easy interaction with the database.
@@ -101,9 +122,86 @@ get "/check" do
 end
 
 ###################################################################################################
+# Sanitize incoming filenames before applying them to the filesystem. In particular, prevent
+# attacks using "../" as part of the path.
+def sanitizeFilePath(path)
+  path = path.gsub(/[^-a-zA-Z0-9_.\/]/, '_').split("/").map { |part|
+    part.sub(/^\.+/, '_').sub(/\.+$/, '_')
+  }.join('/')
+end
+
+###################################################################################################
+class Fetcher
+  def start(uri)
+    # We have to fetch the file in a different thread, because it needs to keep the HTTP request
+    # open in that thread while we return the status code to Sinatra. Then the remaining data can
+    # be streamed from the thread to Sinatra.
+    puts "Content fetch: #{uri}."
+    @queue = QueueWithTimeout.new
+    Thread.new do
+      begin
+        # Now jump through Net::HTTP's hijinks to actually fetch the file.
+        Net::HTTP.start(uri.host, uri.port, :use_ssl => (uri.scheme == 'https')) do |http|
+          http.request(Net::HTTP::Get.new uri.request_uri) do |response|
+            @queue << [response.code, response.message]
+            if response.code == "200"
+              response.read_body { |chunk| @queue << chunk }
+            else
+              puts "Error: Response to #{uri} was HTTP #{response.code}: #{response.message.inspect}"
+            end
+          end
+        end
+      ensure
+        @queue << nil  # mark end-of-data
+      end
+    end
+
+    # Wait for the status code to come back from the fetch thread.
+    code, msg = @queue.pop_with_timeout(60)
+    return code.to_i, msg
+  end
+
+  # Now we're ready to set the content type and return the contents in streaming fashion.
+  def copyTo(out)
+    while true
+      data = @queue.pop_with_timeout(10)
+      data.nil? and break
+      out.write(data)
+    end
+  end
+end
+
+###################################################################################################
+get "/content/:fullItemID/*" do |fullItemID, path|
+  # Prep work
+  fullItemID =~ /^qt[a-z0-9]{8}$/ or halt(404)  # protect against attacks
+  item = Item[fullItemID]
+  item.status == 'published' or halt(403)  # prevent access to embargoed and withdrawn files
+  path = sanitizeFilePath(path)  # protect against attacks
+
+  # Fetch the file from Merritt
+  fetcher = Fetcher.new
+  code, msg = fetcher.start(URI("http://mrtexpress.cdlib.org/dl/ark:/13030/#{fullItemID}/content/#{path}"))
+
+  # Temporary fallback: if we can't find on Merritt, try the raw_data hack on pub-eschol-stg.
+  # This is needed for ETDs, since we don't yet record their proper original Merritt location.
+  if code != 200
+    fetcher = Fetcher.new
+    code2, msg2 = fetcher.start(URI("http://pub-eschol-stg.escholarship.org/raw_data/13030/pairtree_root/" +
+                                    "#{fullItemID.scan(/../).join('/')}/#{fullItemID}/content/#{path}"))
+    code2 == 200 or halt(code, msg)
+  end
+
+  # Guess the content type by path for now, and stream the results (don't buffer the whole thing,
+  # as some files are huge and would blow out our RAM).
+  content_type MimeMagic.by_path(path)
+  return stream { |out| fetcher.copyTo(out) }
+end
+
+###################################################################################################
 # The outer framework of every page is essentially the same, substituting in the intial page
 # data and initial elements from React.
-get %r{^/(?!api/).*} do  # matches every URL except /api/*
+get %r{^/(?!api/)(?!content/).*} do  # matches every URL except /api/* and /content/*
 
   puts "Page fetch: #{request.url}"
 
@@ -169,11 +267,14 @@ get "/api/item/:shortArk" do |shortArk|
     begin
       body = {
         :id => shortArk,
+        :status => item.status,
         :title => item.title,
         :rights => item.rights,
         :pub_date => item.pub_date,
-        :authors => ItemAuthor.filter(:item_id => id).order(:ordering).map(:attrs).collect{ |h| JSON.parse(h)["name"]},
+        :authors => ItemAuthor.filter(:item_id => id).order(:ordering).
+                       map(:attrs).collect{ |h| JSON.parse(h)},
         :content_type => item.content_type,
+        :content_html => getItemHtml(item.content_type, shortArk),
         :attrs => JSON.parse(Item.filter(:id => id).map(:attrs)[0])
       }
       return body.merge(getHeaderElements(BreadcrumbGenerator.new(shortArk, 'item'))).to_json
@@ -193,6 +294,31 @@ get "/api/search/" do
   return search(CGI::parse(request.query_string)).to_json
 end
 
+###################################################################################################
+# Social Media Links 
+get "/api/mediaLink/:shortArk/:service" do |shortArk, service| # service e.g. facebook, google, etc.
+  content_type :json
+  sharedLink = "http://www.escholarship.com/item/" + shortArk
+  item = Item["qt"+shortArk]
+  title = item.title
+  case service
+    when "facebook"
+      url = "http://www.facebook.com/sharer.php?u=" + sharedLink
+    when "twitter"
+      url = "http://twitter.com/home?status=" + title + "[" + sharedLink + "]"
+    when "email"
+      title_sm = title.length > 50 ? title[0..49] + "..." : title
+      url = "mailto:?subject=" + title_sm + "&body=" +
+        # ToDo: Put in proper citation
+        (item.attrs["orig_citation"] ? item.attrs["orig_citation"] + "\n\n" : "") +
+        sharedLink 
+    when "mendeley"
+      url = "http://www.mendeley.com/import?url=" + sharedLink + "&title=" + title
+    when "citeulike"
+      url = "http://www.citeulike.org/posturl?url=" + sharedLink + "&title=" + title
+  end
+  return { url: url }.to_json
+end
 
 ##################################################################################################
 # Helper methods
@@ -201,18 +327,34 @@ end
 def getHeaderElements(breadcrumb)
   campusID, campusName = breadcrumb.getCampusInfo
   return {
+    :isJournal => breadcrumb.isJournal?,
     :campusID => campusID,
     :campusName => campusName,
     :campuses => ACTIVE_CAMPUSES,
-    :breadcrumb => breadcrumb.generateCrumb 
+    :breadcrumb => breadcrumb.generateCrumb,
+    :appearsIn => breadcrumb.appearsIn 
   }
 end
 
 # Get all active campuses/ORUs (id and name), sorted alphabetically by name
 def getActiveCampuses
-  campuses = Unit.join(:unit_hier, :unit_id => :id).filter(:ancestor_unit => 'root', :is_direct => 1, :is_active => true).to_hash(:id, :name)
+  campuses = Unit.join(:unit_hier, :unit_id => :id).
+                  filter(:ancestor_unit => 'root', :is_direct => 1, :is_active => true).
+                  to_hash(:id, :name)
   sorted = campuses.sort_by { |id, name| name }
   return sorted.unshift(["", "eScholarship at..."])
+end
+
+# Properly target links in HTML blob
+def getItemHtml(content_type, id)
+  return false if content_type != "text/html"
+  dir = "http://" + request.env["HTTP_HOST"] + "/content/qt" + id + "/"
+  htmlStr = open(dir + "qt" + id + ".html").read
+  htmlStr.gsub(/(href|src)="((?!#)[^"]+)"/) { |m|
+    attrib, url = $1, $2
+    url = $2.start_with?("http", "ftp") ? $2 : dir + $2
+    "#{attrib}=\"#{url}\"" + ((attrib == "src") ? "" : " target=\"new\"")
+  }
 end
 
 ##################################################################################################

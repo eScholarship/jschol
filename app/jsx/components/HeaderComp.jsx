@@ -25,7 +25,7 @@ class HeaderComp extends React.Component {
               <img src="/images/logo_escholarship.svg" alt="escholarship"/>
             </a>	
             <div className={this.state.searchActive ? "c-header__search--active" : "c-header__search"}>
-              <SearchComp onClose = {()=>this.setState({searchActive: false})} />
+              <SearchComp isJournal={this.props.isJournal} onClose = {()=>this.setState({searchActive: false})} />
             </div>
             <button className="c-header__search-open-button" aria-label="open search navigation" onClick = {()=> this.setState({searchActive: true})}></button>
           </div>
@@ -47,7 +47,7 @@ class HeaderComp extends React.Component {
     var campusSelector = this.props.campuses.map(function(c, i) {
         return <option key={i} value={c[0]} disabled={c[0] == "" ? "true" : null}>{c[1]}</option>
       }),
-    campusID = this.props.campusID ? this.props.campusID : ""
+        campusID = this.props.campusID ? this.props.campusID : ""
     return (
       <div style={rowStyle}>
         <div style={leftStyle}>
@@ -57,9 +57,7 @@ class HeaderComp extends React.Component {
             </select>
           </div>
         </div>
-        <div style={centerStyle}>
-          <h2>Unit Banner Placeholder</h2>
-        </div>
+        { this.props.unit_id && <div style={centerStyle}><h2>Unit Banner Placeholder</h2></div> }
         <div style={rightStyle}>
           <button>Submit</button>
           <button>Manage submissions</button>
