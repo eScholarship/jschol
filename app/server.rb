@@ -35,7 +35,7 @@ DB = Sequel.connect(dbConfig)
 #DB.loggers << Logger.new('server.sql_log')  # Enable to debug SQL queries
 
 # Internal modules to implement specific pages and functionality
-require_relative 'breadcrumb'
+require_relative 'hierarchy'
 require_relative 'searchApi'
 require_relative 'queueWithTimeout'
 
@@ -230,6 +230,26 @@ get %r{^/(?!api/)(?!content/).*} do  # matches every URL except /api/* and /cont
 end
 
 ###################################################################################################
+# Browse page data.
+# get "/api/browse/:type(/.*)?" do
+get '/api/browse/:type' do |type|
+  # type can be campuslist, depts, or journals. depts and journals also accept queries
+  content_type :json
+  body = {
+    :type => type
+  }
+  case type 
+    when "campuslist"
+      nameUrls = [{"name" => "Campuses", "url" => "/browse/campuslist"},]
+      return body.merge(getHeaderElements(nameUrls)).to_json
+    when "depts"
+      #ToDo
+    when "journals"
+      #ToDo
+  end
+end
+
+###################################################################################################
 # Unit page data.
 get "/api/unit/:unitID" do |unitID|
   # Initial data for the page consists of the unit's id, name, type, etc. plus lists of the unit's
@@ -250,7 +270,7 @@ get "/api/unit/:unitID" do |unitID|
         :nItems => items.count,
         :items => items.limit(10).map { |pair| pair.item_id }
       }
-      return body.merge(getHeaderElements(BreadcrumbGenerator.new(unitID, 'unit'))).to_json
+      return body.merge(getUnitItemHeaderElements('unit', unitID)).to_json
     rescue Exception => e
       halt 404, e.message
     end
@@ -279,7 +299,7 @@ get "/api/item/:shortArk" do |shortArk|
         :content_html => getItemHtml(item.content_type, shortArk),
         :attrs => JSON.parse(Item.filter(:id => id).map(:attrs)[0])
       }
-      return body.merge(getHeaderElements(BreadcrumbGenerator.new(shortArk, 'item'))).to_json
+      return body.merge(getUnitItemHeaderElements('item', shortArk)).to_json
     rescue Exception => e
       halt 404, e.message
     end
@@ -325,8 +345,18 @@ end
 ##################################################################################################
 # Helper methods
 
-# Generate breadcrumb and header content
-def getHeaderElements(breadcrumb)
+# Generate breadcrumb and header content for Browse or Static page
+def getHeaderElements(nameUrls)
+  breadcrumb = Hierarchy_Manual.new(nameUrls)
+  return {
+    :campuses => ACTIVE_CAMPUSES,
+    :breadcrumb => breadcrumb.generateCrumb
+  }
+end
+
+# Generate breadcrumb and header content for Unit or Item page
+def getUnitItemHeaderElements(view, id)
+  breadcrumb = Hierarchy_UnitItem.new(view, id)
   campusID, campusName = breadcrumb.getCampusInfo
   return {
     :isJournal => breadcrumb.isJournal?,
