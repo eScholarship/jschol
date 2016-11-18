@@ -45,6 +45,23 @@ end
 class Issue < Sequel::Model
 end
 
+# Database caches for speed. We check every 30 seconds for changes. These tables change infrequently.
+$unitsHash = nil
+$oruAncestors = nil
+Thread.new {
+  prevTime = nil
+  while true
+    utime = DB.fetch("SHOW TABLE STATUS WHERE Name in ('units', 'unit_hier')").all.map { |row| row[:Update_time] }.max
+    if utime != prevTime
+      $unitsHash = Unit.to_hash(:id)
+      $oruAncestors = UnitHier.where(is_direct: true).where(ancestor: Unit.where(type: 'oru')).to_hash(:unit_id, :ancestor_unit)
+      prevTime = utime
+    end
+    sleep 30
+  end
+}
+
+# API to connect to AWS CloudSearch
 $csClient = Aws::CloudSearchDomain::Client.new(
   endpoint: YAML.load_file("config/cloudSearch.yaml")["searchEndpoint"])
 
@@ -197,7 +214,7 @@ end
 
 def get_unit_display_name(unitFacets)
   for unitFacet in unitFacets
-    unit = Unit[unitFacet['value']]
+    unit = $unitsHash[unitFacet['value']]
     unitFacet['displayName'] = unit.name
   end
 end
@@ -213,15 +230,13 @@ end
 
 def get_unit_hierarchy(unitFacets)
   for unitFacet in unitFacets
-    unit = Unit[unitFacet['value']]
+    unit = $unitsHash[unitFacet['value']]
     unitFacet['displayName'] = unit.name
 
     # get the direct ancestor to this oru unit if the ancestor is also an oru
-    ancestors = UnitHier.where(unit_id: unit.id).where(is_direct: true).where(ancestor: Unit.where(type: 'oru')).all
-
-    if ancestors.length == 1
+    ancestor_id = $oruAncestors[unit.id]
+    if ancestor_id
       # search the rest of the list to see if this ancestor is already in the facet list
-      ancestor_id = ancestors[0].ancestor_unit
       ancestor_in_list = false
       for u in unitFacets
         if ancestor_id == u['value']
@@ -240,14 +255,9 @@ def get_unit_hierarchy(unitFacets)
       # recording all departments for each item along the way
       if !ancestor_in_list
         pp "DON'T KNOW WHAT TO DO HERE YIKES"
-        ancestor = Unit[ancestors[0].ancestor_unit]
+        ancestor = $unitsHash[ancestors[0].ancestor_unit]
         unitFacet['ancestor'] = {displayName: ancestor.name, value: ancestor.id}
       end
-    elsif ancestors.length > 1
-      # as of 10/20/17 - not presently a case in the database
-      # query for all UnitHier rows where Unit is a department and Unit's direct Ancestor is a department
-      #   pp UnitHier.where(unit: Unit.where(type: 'oru')).where(is_direct: true).where(ancestor: Unit.where(type: 'oru')).all
-      pp "DON'T KNOW WHAT TO DO HERE YIKES"
     end
   end
 
@@ -329,13 +339,13 @@ def search(params)
         #item link to the unit should be the same as section link to the unit      
         if item.section
           itemIssue = Issue[Section[item.section].issue_id]
-          itemUnit = Unit[itemIssue.unit_id]
+          itemUnit = $unitsHash[itemIssue.unit_id]
           itemHash[:journalInfo] = {displayName: "#{itemUnit.name}, #{itemIssue.volume}, #{itemIssue.issue}", issueId: itemIssue.id}
         #otherwise, use the item link to the unit table for all other content types
         else
           unitItem = UnitItem[:item_id => indexItem['id']]
           if unitItem
-            unit = Unit[:id => unitItem.unit_id]
+            unit = $unitsHash[unitItem.unit_id]
             itemHash[:unitInfo] = {displayName: unit.name, unitId: unit.id}
           end
         end
