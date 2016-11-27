@@ -9,6 +9,7 @@ require 'bundler/setup'
 require 'cgi'
 require 'digest'
 require 'json'
+require 'logger'
 require 'mimemagic'
 require 'net/http'
 require 'open-uri'
@@ -31,6 +32,7 @@ if File.exist? "config/socks.yaml"
   SocksMysql.reconfigure(dbConfig)
 end
 DB = Sequel.connect(dbConfig)
+#DB.loggers << Logger.new('server.sql_log')  # Enable to debug SQL queries
 
 # Internal modules to implement specific pages and functionality
 require_relative 'hierarchy'
