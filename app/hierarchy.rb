@@ -126,3 +126,27 @@ class Hierarchy_Manual
   end
 
 end
+
+# Get number of ORUs per campus as one hash. ORUs must contain items in unit_items table to be counted
+# {"ucb"=>117, "ucd"=>42 ...}
+def getOrusPerCampus
+  allOrusWithContent = Unit.join(UnitItem, :unit_id => :id).filter(type: 'oru').distinct.select(:id).map(:id)
+  activeCampusIds = $activeCampuses.map{|id, c| id }
+  array = UnitHier.join(:units, :id=>:unit_id).
+    where(:unit_id=>allOrusWithContent, :ancestor_unit=>activeCampusIds).group_and_count(:ancestor_unit).
+    map{|y| y.values}
+  return Hash[array.map(&:values).map(&:flatten)]
+end
+
+# Get number of publications per campus as one hash.
+# {"ucb"=>11000, "ucd"=>982 ...}
+def getPubsPerCampus
+  return  {"acampus"=>100}  # Placeholder.  ToDo
+end
+
+# Get number of journals per campus as one hash.
+# {"ucb"=>53, "ucd"=>20 ...}
+def getJournalsPerCampus
+  return  {"acampus"=>100}  # Placeholder.  ToDo
+end
+
