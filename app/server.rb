@@ -232,7 +232,7 @@ end
 ##################################################################################################
 # Database caches for speed. We check every 30 seconds for changes. These tables change infrequently.
 
-$unitsHash, $hierByUnit, $hierByAncestor, $activeCampuses, $oruAncestors = nil, nil, nil, nil, nil
+$unitsHash, $hierByUnit, $hierByAncestor, $activeCampuses, = nil, nil, nil, nil, nil
 Thread.new {
   prevTime = nil
   while true
