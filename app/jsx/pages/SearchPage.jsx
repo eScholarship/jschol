@@ -36,12 +36,6 @@ import { HeaderComp, NavComp } from '../components/AllComponents.jsx'
 //   query: [{displayName: 'UCLA School of Law (All)', value: 'uclalaw'}]
 // }
 class FacetItem extends React.Component {
-  //initialize state based on props
-  state = {
-    checked: this.checkFacet(this.props),
-    disabled: this.props.data.ancestorChecked ? true : false
-  }
-  handleChange = this.handleChange.bind(this);
   
   //if the facet item is in the query list, or the facet item's ancestor is checked, 
   //return true - this facet item should be checked
@@ -59,35 +53,15 @@ class FacetItem extends React.Component {
     return false;
   }
   
-  componentWillReceiveProps(nextProps) {
-    // if the item is a 'child' facet, then check to see if the ancestor's checkbox status has changed
-    // if so, then the child's checkbox status should change to reflect the ancestor's checkbox state.
-    if ('ancestor_in_list' in this.props.data.facet) {
-      if (nextProps.data.ancestorChecked !== this.props.data.ancestorChecked) {
-        if (nextProps.data.ancestorChecked) {
-          this.setState({checked: true, disabled: true});
-        } else {
-          this.setState({checked: false, disabled: false});
-        }
-      }
-    }
-
-    // properties inherited from the parent will not overwrite the current state unless explicitly set
-    if (this.checkFacet(nextProps) !== this.state.checked) {
-      this.setState({checked: this.checkFacet(nextProps)});
-    }
-  }
-
   // this is what actually submits the form when a checkbox has been checked
   componentDidUpdate(prevProps, prevState) {
-    if(this.state.checked !== prevState.checked && !this.state.disabled && !prevState.disabled) {
+    if(this.checkFacet(this.props) !== this.checkFacet(prevProps) && !this.props.data.ancestorChecked && !prevProps.data.ancestorChecked) {
       $('[name=start]').val('0');
       $('#facet-form-submit').click();
     }
   }
 
-  handleChange(event) {
-    this.setState({checked: event.target.checked});
+  handleChange = event => {  // compact syntax that takes care of binding the event handler
     var filter;
     var filter_cleanup = [];
     // Rights label includes an icon and descriptive text, but value is just the code: 'CC-BY'
@@ -125,7 +99,7 @@ class FacetItem extends React.Component {
         var descendentItemData = {
           facetType: this.props.data.facetType,
           facet: d,
-          ancestorChecked: this.state.checked
+          ancestorChecked: this.checkFacet(this.props)
         }
         return (<FacetItem key={d.value} data={descendentItemData} query={this.props.query} handler={this.props.handler}/>)
       })
@@ -136,7 +110,7 @@ class FacetItem extends React.Component {
         <input id={facet.value} className="c-checkbox__input" type="checkbox"
           name={this.props.data.facetType} value={facet.value}
           onChange={this.handleChange}
-          checked={this.state.checked} disabled={this.state.disabled}/>
+          checked={this.checkFacet(this.props)} disabled={this.props.data.ancestorChecked ? true : false}/>
         <label htmlFor={facet.value} className="c-checkbox__label">{this.label} ({facet.count})</label>
         <div style={{paddingLeft: '30px'}}>{descendents}</div>
       </div>
@@ -257,13 +231,14 @@ class FacetFieldset extends React.Component {
     if (event.target.checked) {
       if (!$.isEmptyObject(this.props.query)) {
         //there's already filters of this type, so add filters
-        newQuery = $.extend({}, this.props.query);
+        newQuery = $.extend(true, {}, this.props.query); // true=deep copy
         //remove filters specified in filter_cleanup array
         //(this is any child facets that were selected at the time when the parent facet is selected)
         if (filter_cleanup.length > 0) {
           for (var f in filter_cleanup) {
             var i = newQuery.filters.findIndex(j => { return j.value == filter_cleanup[f].value });
-            newQuery.filters.splice(i, 1);
+            if (i >= 0) // only remove if found
+              newQuery.filters.splice(i, 1);
           }
         }
         //concatenate the new filter to the current list of filters
@@ -279,7 +254,7 @@ class FacetFieldset extends React.Component {
     } else {
       //!event.target.checked means we're in the business of removing filters
       if (this.props.query.filters.length > 1) {
-        newQuery = $.extend({}, this.props.query);
+        newQuery = $.extend(true, {}, this.props.query); // true=deep copy
         for (var f in filter) {
           var i = newQuery.filters.findIndex(j => { return j.value == filter[f].value });
           newQuery.filters.splice(i, 1);
@@ -294,7 +269,7 @@ class FacetFieldset extends React.Component {
     var newQuery;
     if (filter.value !== "") {
       if (!$.isEmptyObject(this.props.query)) {
-        newQuery = $.extend({}, this.props.query);
+        newQuery = $.extend(true, {}, this.props.query); // true=deep copy
         newQuery.filters = [filter]
       } else {
         newQuery = {
@@ -428,7 +403,7 @@ class FacetForm extends React.Component {
   
   // Called by FacetFieldset's handleChange function
   changeFacet(event, fieldsetQuery, fieldType) {
-    var newQuery = $.extend({}, this.state.query);
+    var newQuery = $.extend(true, {}, this.state.query); // true=deep copy
 
     if (fieldsetQuery) {
       newQuery.filters[fieldType] = fieldsetQuery;
@@ -441,7 +416,7 @@ class FacetForm extends React.Component {
 
   // Set as the onClick handler for CurrentSearchTerms' active filter buttons
   removeFilters(event) {
-    var newQuery = $.extend({}, this.state.query);
+    var newQuery = $.extend(true, {}, this.state.query); // true=deep copy
     var fieldType = $(event.target).data('filter-type');
     delete newQuery.filters[fieldType];
     this.setState({query: newQuery});
