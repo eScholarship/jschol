@@ -25,7 +25,7 @@ class NavComp extends React.Component {
   renderGlobalNav() {
     // ToDo: Bring in campuses
     // var campusSelector = this.props.campuses.map(function(c, i) {
-    //   return <a href={"/unit/" + c[0]}>{c[1]}</a>
+    //   return <a key={i} href={"/unit/" + c['id']}>{c['name']}</a>
     // })
     return (
       <nav className="c-globalnav">

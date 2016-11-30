@@ -45,7 +45,7 @@ class HeaderComp extends React.Component {
     let centerStyle = { display: 'table-cell', width: '600px', padding: "0px 10px", border: '1px solid black' };
     let rightStyle = { display: 'table-cell', width: '200px', padding: "0px 10px" };
     var campusSelector = this.props.campuses.map(function(c, i) {
-        return <option key={i} value={c[0]} disabled={c[0] == "" ? "true" : null}>{c[1]}</option>
+        return <option key={i} value={c['id']} disabled={c['id'] == "" ? "true" : null}>{c['name']}</option>
       }),
         campusID = this.props.campusID ? this.props.campusID : ""
     return (

@@ -229,6 +229,31 @@ get %r{^/(?!api/)(?!content/).*} do  # matches every URL except /api/* and /cont
   end
 end
 
+##################################################################################################
+# Database caches for speed. We check every 30 seconds for changes. These tables change infrequently.
+
+$unitsHash, $hierByUnit, $hierByAncestor, $activeCampuses, $oruAncestors = nil, nil, nil, nil, nil
+Thread.new {
+  prevTime = nil
+  while true
+    utime = DB.fetch("SHOW TABLE STATUS WHERE Name in ('units', 'unit_hier')").all.map { |row| row[:Update_time] }.max
+    if utime != prevTime
+      $unitsHash = Unit.to_hash(:id)
+      $hierByUnit = UnitHier.filter(is_direct: true).to_hash_groups(:unit_id)
+      $hierByAncestor = UnitHier.filter(is_direct: true).to_hash_groups(:ancestor_unit)
+      $activeCampuses = getActiveCampuses
+      #####################################################################
+      # STATISTICS
+      # These are dependent on instantation of $activeCampuses
+      $statsCampusPubs = getPubsPerCampus
+      $statsCampusOrus = getOrusPerCampus
+      $statsCampusJournals = getJournalsPerCampus
+      prevTime = utime
+    end
+    sleep 30
+  end
+}
+
 ###################################################################################################
 # Browse page data.
 # get "/api/browse/:type(/.*)?" do
@@ -240,11 +265,32 @@ get '/api/browse/:type' do |type|
   }
   case type 
     when "campuslist"
-      nameUrls = [{"name" => "Campuses", "url" => "/browse/campuslist"},]
-      return body.merge(getHeaderElements(nameUrls)).to_json
+      # Build array of hashes containing campus and stats
+      campusesStats = []
+      $activeCampuses.each do |k, v|
+        pub_count =     ($statsCampusPubs.keys.include? k)  ? $statsCampusPubs[k]     : 0
+        unit_count =    ($statsCampusOrus.keys.include? k)  ? $statsCampusOrus[k]     : 0
+        journal_count = ($statsCampusJournals.keys.include? k) ? $statsCampusJournals[k] : 0
+        campusesStats.push({"id"=>k, "name"=>v.values[:name], 
+          "publications"=>pub_count, "units"=>unit_count, "journals"=>journal_count})
+      end
+      body.merge!({
+        :campusesStats => campusesStats,
+      })
+      breadcrumb = [{"name" => "Campuses", "url" => "/browse/campuslist"},]
+      return body.merge(getHeaderElements(breadcrumb)).to_json
     when "depts"
       #ToDo
     when "journals"
+      jlist = []
+      $unitsHash.each do |id, unit|
+        jlist << unit.values if unit.type == "journal"
+      end
+      body.merge!({
+        :journals => jlist.sort_by!{ |h| h[:name].downcase }
+      })
+      breadcrumb = [{"name" => "Journals", "url" => "/browse/journals"},]
+      return body.merge(getHeaderElements(breadcrumb)).to_json
       #ToDo
   end
 end
@@ -258,6 +304,8 @@ get "/api/unit/:unitID" do |unitID|
   # and grand-children/descendants.
   content_type :json
   unit = Unit[unitID]
+  children = $hierByAncestor[unitID]
+  parents = $hierByUnit[unitID]
   if !unit.nil?
     begin
       items = UnitItem.filter(:unit_id => unitID, :is_direct => true)
@@ -265,8 +313,8 @@ get "/api/unit/:unitID" do |unitID|
         :id => unitID,
         :name => unit.name,
         :type => unit.type,
-        :parents => UnitHier.filter(:unit_id => unitID, :is_direct => true).map { |hier| hier.ancestor_unit },
-        :children => UnitHier.filter(:ancestor_unit => unitID, :is_direct => true).map { |hier| hier.unit_id },
+        :parents => parents ? parents.map { |u| u.ancestor_unit } : [],
+        :children => children ? children.map { |u| u.unit_id } : [],
         :nItems => items.count,
         :items => items.limit(10).map { |pair| pair.item_id }
       }
@@ -346,11 +394,10 @@ end
 # Helper methods
 
 # Generate breadcrumb and header content for Browse or Static page
-def getHeaderElements(nameUrls)
-  breadcrumb = Hierarchy_Manual.new(nameUrls)
+def getHeaderElements(breadcrumb)
   return {
-    :campuses => ACTIVE_CAMPUSES,
-    :breadcrumb => breadcrumb.generateCrumb
+    :campuses => getCampusesAsMenu,
+    :breadcrumb => Hierarchy_Manual.new(breadcrumb).generateCrumb
   }
 end
 
@@ -362,19 +409,24 @@ def getUnitItemHeaderElements(view, id)
     :isJournal => breadcrumb.isJournal?,
     :campusID => campusID,
     :campusName => campusName,
-    :campuses => ACTIVE_CAMPUSES,
+    :campuses => getCampusesAsMenu,
     :breadcrumb => breadcrumb.generateCrumb,
     :appearsIn => breadcrumb.appearsIn 
   }
 end
 
-# Get all active campuses/ORUs (id and name), sorted alphabetically by name
+# Get hash of all active root level campuses/ORUs, sorted by ordering in unit_hier table
 def getActiveCampuses
-  campuses = Unit.join(:unit_hier, :unit_id => :id).
-                  filter(:ancestor_unit => 'root', :is_direct => 1, :is_active => true).
-                  to_hash(:id, :name)
-  sorted = campuses.sort_by { |id, name| name }
-  return sorted.unshift(["", "eScholarship at..."])
+  return Unit.join(:unit_hier, :unit_id => :id).
+           filter(:ancestor_unit => 'root', :is_direct => 1, :is_active => true).
+           order_by(:ordering).to_hash(:id)
+end
+
+# Array of all active root level campuses/ORUs. Include empty label "eScholarship at..." 
+def getCampusesAsMenu
+  campuses = []
+  $activeCampuses.each do |id, c| campuses << c.values end
+  return campuses.unshift({:id => "", :name=>"eScholarship at..."})
 end
 
 # Properly target links in HTML blob
@@ -388,10 +440,4 @@ def getItemHtml(content_type, id)
     "#{attrib}=\"#{url}\"" + ((attrib == "src") ? "" : " target=\"new\"")
   }
 end
-
-##################################################################################################
-# Static Variables 
-
-# Array of all campuses sorted by name (i.e. [["ucb", "UC Berkeley"], ... )
-ACTIVE_CAMPUSES = getActiveCampuses
 
