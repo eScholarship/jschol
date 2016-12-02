@@ -3,17 +3,17 @@ Sequel.migration do
   up do
     # Combining 'widgets' and 'sidebars' into a single 'widgets' table with a 'region' column
     drop_table :sidebars
-    add_column :widgets, :region, :type=>String, :null=>false
+    add_column :widgets, :region, String, :null=>false
 
     # Refactoring 'pages'
     drop_table :static_queries
     alter_table :pages do
-      drop_column :parent_page
+      drop_foreign_key :parent_page
       drop_column :date
       drop_column :html
-      add_column :ordering, :type=>Integer, :null=>false
-      add_column :nav_element, :type=>String, :null=>false
-      add_column :attrs, :type=>'JSON'
+      add_column :ordering, Integer, :null=>false
+      add_column :nav_element, String, :null=>false
+      add_column :attrs, 'JSON'
       add_index [:unit_id, :nav_element, :ordering], :unique=>true
     end
   end
