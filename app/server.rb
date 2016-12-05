@@ -442,3 +442,16 @@ def getItemHtml(content_type, id)
   }
 end
 
+###################################################################################################
+# Item view page data.
+get "/api/static/:unitID/:pageName" do |unitID, pageName|
+  content_type :json
+  unit = $unitsHash[unitID]
+  unit or halt(404, "Unit not found")
+
+  # Build array of hashes containing campus and stats
+  body = {}
+  breadcrumb = [{"name" => "About", "url" => "/static/root/about"},]
+  return body.merge(getHeaderElements(breadcrumb)).to_json
+end
+
