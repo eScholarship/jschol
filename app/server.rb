@@ -21,6 +21,16 @@ require 'yaml'
 require 'socksify'
 require 'socket'
 
+# Make puts thread-safe, and flush after every puts.
+$stdoutMutex = Mutex.new
+def puts(*args)
+  $stdoutMutex.synchronize { 
+    #STDOUT.print Thread.current
+    super(*args)
+    STDOUT.flush
+  }
+end
+
 # Use the Sequel gem to get object-relational mapping, connection pooling, thread safety, etc.
 # If specified, use SOCKS proxy for all connections (including database).
 dbConfig = YAML.load_file("config/database.yaml")
@@ -51,15 +61,6 @@ end
 
 # For general app development, set DO_ISO to false. For real deployment, set to true
 DO_ISO = false
-
-# Make puts thread-safe, and flush after every puts.
-$stdoutMutex = Mutex.new
-def puts(*args)
-  $stdoutMutex.synchronize { 
-    super(*args)
-    STDOUT.flush
-  }
-end
 
 ###################################################################################################
 # Model classes for easy interaction with the database.
