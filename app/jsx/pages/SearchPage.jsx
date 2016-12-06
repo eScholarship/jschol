@@ -620,7 +620,7 @@ class PaginationComp extends React.Component {
 
 class ResultItem extends React.Component {
   componentDidMount() {
-    $('.abstract').dotdotdot({watch: "window"});
+    $('.c-scholworks__title, .c-scholworks__abstract, .c-scholworks__authors').dotdotdot({watch: "window"});
   }
   render() {
     var tagList = [];
@@ -658,10 +658,33 @@ class ResultItem extends React.Component {
       }
     });
 
-    var supp_files = '';
-    if ('supp_files' in this.props.result && this.props.result.supp_files !== null) {
-      supp_files = this.props.result.supp_files.toString();
-    }
+    var supp_files = this.props.result.supp_files.map(function(supp_file) {
+      if (supp_file.count >= 1) {
+        var display;
+        if (supp_file.type === 'video' || supp_file.type === 'image') {
+          display = supp_file.count > 1 ? supp_file.type + 's' : supp_file.type;
+        } else if (supp_file.type === 'audio') {
+          display = supp_file.count > 1 ? 'audio files' : 'audio file';
+        } else if (supp_file.type === 'pdf') {
+          display = supp_file.count > 1 ? 'additional PDFs' : 'additional PDF';
+        }
+        return (<li key={supp_file.type} className={"c-scholworks__media-" + supp_file.type}>Contains {supp_file.count} {display}</li>);   
+      }
+    });
+    // if ('supp_files' in this.props.result && this.props.result.supp_files !== null) {
+    //   if ('video' in this.props.result.supp_files && this.props.result.supp_files.video !== 0) {
+    //     supp_files.append(<li className="c-scholworks__media-video">Contains {this.props.result.supp_files.video} videos</li>);
+    //   }
+    //   if ('image' in this.props.result.supp_files && this.props.result.supp_files.image !== 0) {
+    //     supp_files.append(<li className="c-scholworks__media-image">Contains {this.props.result.supp_files.image} images</li>);
+    //   }
+    //   if ('pdf' in this.props.result.supp_files && this.props.result.supp_files.pdf !== 0) {
+    //     supp_files.append(<li className="c-scholworks__media-pdf">Contains {this.props.result.supp_files.pdf} additional PDFs</li>);
+    //   }
+    //   if ('audio' in this.props.result.supp_files && this.props.result.supp_files.audio !== 0) {
+    //     supp_files.append(<li className="c-scholworks__media-audio">Contains {this.props.result.supp_files.audio} audio files</li>);
+    //   }
+    // }
 
     return (
 			<section className="c-scholworks__item">
@@ -673,20 +696,22 @@ class ResultItem extends React.Component {
               ) 
             }) }
           </ul>
-          <header>
+          <header className="c-scholworks__title" style={{height: '2em'}}>
             <Link to={"/item/"+this.props.result.id.replace(/^qt/, "")}>{this.props.result.title}</Link>
           </header>
-          <p>
+          <div className="c-scholworks__authors" style={{height: '1em'}}>
             {authorList}
-            <br/>
-            <Link className="c-scholworks__institution-link" to={"/unit/" + unitId}>{publishingInfo}</Link> ({this.props.result.pub_year})
-          </p>
-          <div className="abstract" style={{height: '20px'}}>
+          </div>
+          <Link className="c-scholworks__institution-link" to={"/unit/" + unitId}>{publishingInfo}</Link> ({this.props.result.pub_year})
+          <div className="c-scholworks__abstract" style={{height: '2em'}}>
             <p>{this.props.result.abstract}</p>
+          </div>
+          <div className="c-scholworks__media">
+            <ul className="c-scholworks__media-list">{ supp_files }</ul>
+            <img className="c-scholworks__cc" src="images/icon_cc-by.svg" alt="cc"/>
           </div>
           <p>
             CC License: {this.props.result.rights}<br/>
-            Supp Files: {supp_files}
           </p>
         </div>
       </section>

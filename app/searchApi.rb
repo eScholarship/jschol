@@ -333,19 +333,14 @@ def search(params)
         itemHash[:peerReviewed] = itemAttrs['is_peer_reviewed']
         itemHash[:abstract] = itemAttrs['abstract']
 
-        if itemAttrs['supp_files']
-          for supp_file in itemAttrs['supp_files']
-            file_type = supp_file['mimeType']
-            pp file_type
+        itemHash[:supp_files] = [{:type => 'video'}, {:type => 'image'}, {:type => 'pdf'}, {:type => 'audio'}]
+        for supp_file_hash in itemHash[:supp_files]
+          if itemAttrs['supp_files']
+            supp_file_hash[:count] = itemAttrs['supp_files'].count { |supp_file| supp_file['mimeType'].start_with?(supp_file_hash[:type])}
+          else
+            supp_file_hash[:count] = 0
           end
         end
-        # for supp_file in itemAttrs['supp_files']
-        #   if supp_file.mimeType == 'audio/mpeg'
-        #     itemHash[:supp_files][:audio] += 1
-        #   end
-        # end
-
-        # itemHash[:supp_files] = itemAttrs['supp_files']
       
         itemAuthors = ItemAuthors.where(item_id: indexItem['id']).order(:ordering).all
         itemHash[:authors] = itemAuthors.map { |author| JSON.parse(author.attrs) }
