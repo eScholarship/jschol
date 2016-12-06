@@ -51,8 +51,9 @@
     "watchify": "^3.7.0"
   },
   "dependencies": {
-    "jquery": "^3.1.0",
     "details-polyfill": "^1.0.2",
+    "jquery": "^3.1.0",
+    "jquery.dotdotdot": "amywieliczka/jQuery.dotdotdot",
     "react": "^15.3.0",
     "react-dom": "^15.3.0",
     "react-responsive": "^1.1.4",

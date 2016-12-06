@@ -325,22 +325,37 @@ def search(params)
           :genre => item.genre,
           :rights => item.rights,
           :content_type => item.content_type,
-          :pub_date => item.pub_date
+          :pub_date => item.pub_date,
+          :pub_year => item.pub_date.year
         }
       
         itemAttrs = JSON.parse(item.attrs)
         itemHash[:peerReviewed] = itemAttrs['is_peer_reviewed']
         itemHash[:abstract] = itemAttrs['abstract']
+
+        if itemAttrs['supp_files']
+          for supp_file in itemAttrs['supp_files']
+            file_type = supp_file['mimeType']
+            pp file_type
+          end
+        end
+        # for supp_file in itemAttrs['supp_files']
+        #   if supp_file.mimeType == 'audio/mpeg'
+        #     itemHash[:supp_files][:audio] += 1
+        #   end
+        # end
+
+        # itemHash[:supp_files] = itemAttrs['supp_files']
       
         itemAuthors = ItemAuthors.where(item_id: indexItem['id']).order(:ordering).all
         itemHash[:authors] = itemAuthors.map { |author| JSON.parse(author.attrs) }
       
         #if journal, section will be non-nil, follow section link to issue (get volume), follow to unit table
-        #item link to the unit should be the same as section link to the unit      
+        #item link to the unit should be the same as section link to the unit
         if item.section
           itemIssue = Issue[Section[item.section].issue_id]
           itemUnit = $unitsHash[itemIssue.unit_id]
-          itemHash[:journalInfo] = {displayName: "#{itemUnit.name}, #{itemIssue.volume}, #{itemIssue.issue}", issueId: itemIssue.id}
+          itemHash[:journalInfo] = {displayName: "#{itemUnit.name}, Volume #{itemIssue.volume}, Issue #{itemIssue.issue}", issueId: itemIssue.id, unitId: itemUnit.id}
         #otherwise, use the item link to the unit table for all other content types
         else
           unitItem = UnitItem[:item_id => indexItem['id']]

@@ -1,6 +1,7 @@
 
 import React from 'react'
 import $ from 'jquery'
+import dotdotdot from 'jquery.dotdotdot'
 import { Link } from 'react-router'
 import Form from 'react-router-form'
 
@@ -643,15 +644,50 @@ class PaginationComp extends React.Component {
 }
 
 class ResultItem extends React.Component {
+  componentDidMount() {
+    $('.abstract').dotdotdot({watch: "window"});
+  }
   render() {
-    var tagList = []
+    var tagList = [];
     if (this.props.result.genre === 'article') {
       tagList.push({display: 'Article', tagStyle: 'article'});
     }
-    if (this.props.result.peerReviewed) {
+    if (this.props.result.genre === 'monograph') {
+      tagList.push({display: 'Book', tagStyle: 'book'});
+    }
+    if (this.props.result.genre === 'dissertation') {
+      tagList.push({display: 'Thesis', tagStyle: 'thesis'});
+    }
+    if (this.props.result.genre === 'multimedia') {
+      tagList.push({display: 'Multimedia', tagStyle: 'multimedia'});
+    }
+    if (this.props.result.peerReviewed === true) {
       tagList.push({display: 'Peer Reviewed', tagStyle: 'peer'});
     }
     
+    var publishingInfo;
+    var unitId;
+    if ('journalInfo' in this.props.result) {
+      publishingInfo = this.props.result.journalInfo.displayName;
+      unitId = this.props.result.journalInfo.unitId;
+    } else if ('unitInfo' in this.props.result) {
+      publishingInfo = this.props.result.unitInfo.displayName;
+      unitId = this.props.result.unitInfo.unitId;
+    }
+
+    var authorList = this.props.result.authors.map(function(author, i, a) {
+      if (i === a.length-1) {
+        return (<span key={author.name}><Link to={"/search/?q="+author.name}>{author.name}</Link></span>);
+      } else {
+        return (<span key={author.name}><Link to={"/search/?q="+author.name}>{author.name}</Link>; </span>);
+      }
+    });
+
+    var supp_files = '';
+    if ('supp_files' in this.props.result && this.props.result.supp_files !== null) {
+      supp_files = this.props.result.supp_files.toString();
+    }
+
     return (
 			<section className="c-scholworks__item">
 				<div className="c-scholworks__main-column">
@@ -666,21 +702,17 @@ class ResultItem extends React.Component {
             <Link to={"/item/"+this.props.result.id.replace(/^qt/, "")}>{this.props.result.title}</Link>
           </header>
           <p>
-            Authors: ???<br/>
-            <a className="c-scholworks__institution-link" href="">Journal Info: ???</a> ({this.props.result.pub_date})
+            {authorList}
+            <br/>
+            <Link className="c-scholworks__institution-link" to={"/unit/" + unitId}>{publishingInfo}</Link> ({this.props.result.pub_year})
           </p>
+          <div className="abstract" style={{height: '20px'}}>
+            <p>{this.props.result.abstract}</p>
+          </div>
           <p>
-            {this.props.result.abstract}
+            CC License: {this.props.result.rights}<br/>
+            Supp Files: {supp_files}
           </p>
-
-          <ol>
-            <li>Genre: {this.props.result.genre}</li>
-            <li>Peer Reviewed: {this.props.result.peerReviewed}</li>
-            <li>CC License: {this.props.result.rights}</li>
-            <li>Thumbnail: ???</li>
-            <li>Journal Info: ???</li>
-            <li>Supplemental items: ???</li>
-          </ol>
         </div>
       </section>
     )
