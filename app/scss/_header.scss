@@ -68,3 +68,12 @@
 	background-color: $color-orange;
 	color: $color-white;
 }
+
+// MH: Added styling for editPage button
+.c-header__editPage {
+	@extend .c-header__deposit;
+	clear: all;
+}
+.c-header__editPage-button {
+	@extend .c-header__deposit-button;
+}

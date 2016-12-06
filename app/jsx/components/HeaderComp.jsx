@@ -32,6 +32,9 @@ class HeaderComp extends React.Component {
           <div className="c-header__deposit">
             <button className="c-header__deposit-button">Deposit/Publish</button>
           </div>
+          <div className="c-header__editPage">
+            <button className="c-header__editPage-button">Edit Page</button>
+          </div>
         </div>
         { this.props.level && this.props.unit_id != 'root' && this.renderLocalHeader() }
       </div>

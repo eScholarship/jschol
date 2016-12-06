@@ -1,13 +1,13 @@
 // ##### Footer Component ##### //
 
 .c-footer {
-	display: flex;
-	flex-flow: column nowrap;
-	align-items: center;
-	padding: $spacing-md;
-	background-color: $color-light-black;
+  display: flex;
+  flex-flow: column nowrap;
+  align-items: center;
+  padding: $spacing-md;
+  background-color: $color-light-black;
 
-	@include bp(screen3) {
+  @include bp(screen3) {
     flex-flow: row nowrap;
     align-items: flex-start;
     justify-content: space-between;
@@ -17,11 +17,11 @@
 }
 
 .c-footer__logologin {
-	display: flex;
-	align-self: stretch;
-	margin: 0 0 $spacing-md;
+  display: flex;
+  align-self: stretch;
+  margin: 0 0 $spacing-md;
 
-	@include bp(screen3) {
+  @include bp(screen3) {
     flex-flow: column nowrap;
     align-self: flex-start;
     margin: 0 $spacing-md 0 0;
@@ -30,68 +30,75 @@
 }
 
 .c-footer__logo {
-	flex: 1 0 auto;
-	color: $color-white;
+  flex: 1 0 auto;
+  color: $color-white;
 
-	@include bp(screen3) {
+  @include bp(screen3) {
     margin: 0 0 $spacing-md;
   }
 
-	img {
-		width: 150px;
-	}
+  img {
+    width: 150px;
+  }
 
 }
 
 .c-footer__login {
-	color: $color-white;
-	font-size: 1.1em;
-	font-weight: bold;
+  color: $color-white;
+  font-size: 1.1em;
+  font-weight: bold;
+
+  // MH: Added styling for Account Login. Joel has probably improved this since we last merged his code.
+  a {
+    color: $color-white;
+    cursor: pointer;
+    text-decoration: none;
+  }
 }
 
 .c-footer__nav {
-	flex: 0 0 auto;
-	margin: 0 0 10px;
-	columns: 2;
+  flex: 0 0 auto;
+  margin: 0 0 10px;
+  columns: 2;
 
-	@include bp(screen3) {
+  @include bp(screen3) {
     margin: 0;
   }
 
-	a {
-		display: block;
-		margin: 0 0 15px;
-		color: $color-white;
-		text-decoration: none;
-	}
+  a {
+    display: block;
+    margin: 0 0 15px;
+    color: $color-white;
+    text-decoration: none;
+  }
 
 }
 
 .c-footer__social-icons {
-	margin: 0 10px 10px 0;
+  margin: 0 10px 10px 0;
 
-	a {
-		display: inline-block;
-		margin: 0 10px 10px;
-	}
+  a {
+    display: inline-block;
+    margin: 0 10px 10px;
+  }
 
-	img {
-		width: 40px;
-	}
+  img {
+    width: 40px;
+  }
 
 }
 
 .c-footer__copyright {
-	color: $color-light-gray;
-	text-align: center;
+  color: $color-light-gray;
+  text-align: center;
 
-	@include bp(screen3) {
+  @include bp(screen3) {
     text-align: left;
   }
 
-	a {
-		color: $color-white;
-		text-decoration: none;
-	}
+  a {
+    color: $color-white;
+    text-decoration: none;
+  }
 
 }
