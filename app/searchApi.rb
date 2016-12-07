@@ -3,64 +3,6 @@ require 'sequel'
 require 'json'
 require 'pp'
 
-###################################################################################################
-# Model classes for easy interaction with the database.
-#
-# For more info on the database schema, see contents of migrations/ directory, and for a more
-# graphical version, see:
-#
-# https://docs.google.com/drawings/d/1gCi8l7qteyy06nR5Ol2vCknh9Juo-0j91VGGyeWbXqI/edit
-
-class Unit < Sequel::Model
-  unrestrict_primary_key
-  one_to_many :unit_hier,     :class=>:UnitHier, :key=>:unit_id
-  one_to_many :ancestor_hier, :class=>:UnitHier, :key=>:ancestor_unit
-end
-
-class UnitHier < Sequel::Model(:unit_hier)
-  unrestrict_primary_key
-  many_to_one :unit,          :class=>:Unit
-  many_to_one :ancestor,      :class=>:Unit, :key=>:ancestor_unit
-end
-
-class Item < Sequel::Model
-  unrestrict_primary_key
-end
-
-class UnitItem < Sequel::Model
-  unrestrict_primary_key
-end
-
-class Item < Sequel::Model
-  unrestrict_primary_key
-end
-
-class ItemAuthors < Sequel::Model(:item_authors)
-  unrestrict_primary_key
-end
-
-class Section < Sequel::Model
-end
-
-class Issue < Sequel::Model
-end
-
-# Database caches for speed. We check every 30 seconds for changes. These tables change infrequently.
-$unitsHash = nil
-$oruAncestors = nil
-Thread.new {
-  prevTime = nil
-  while true
-    utime = DB.fetch("SHOW TABLE STATUS WHERE Name in ('units', 'unit_hier')").all.map { |row| row[:Update_time] }.max
-    if utime != prevTime
-      $unitsHash = Unit.to_hash(:id)
-      $oruAncestors = UnitHier.where(is_direct: true).where(ancestor: Unit.where(type: 'oru')).to_hash(:unit_id, :ancestor_unit)
-      prevTime = utime
-    end
-    sleep 30
-  end
-}
-
 # API to connect to AWS CloudSearch
 $csClient = Aws::CloudSearchDomain::Client.new(
   endpoint: YAML.load_file("config/cloudSearch.yaml")["searchEndpoint"])
