@@ -3,44 +3,6 @@ require 'sequel'
 require 'json'
 require 'pp'
 
-###################################################################################################
-# Model classes for easy interaction with the database.
-#
-# For more info on the database schema, see contents of migrations/ directory, and for a more
-# graphical version, see:
-#
-# https://docs.google.com/drawings/d/1gCi8l7qteyy06nR5Ol2vCknh9Juo-0j91VGGyeWbXqI/edit
-
-class Unit < Sequel::Model
-  unrestrict_primary_key
-  one_to_many :unit_hier,     :class=>:UnitHier, :key=>:unit_id
-  one_to_many :ancestor_hier, :class=>:UnitHier, :key=>:ancestor_unit
-end
-
-class UnitHier < Sequel::Model(:unit_hier)
-  unrestrict_primary_key
-  many_to_one :unit,          :class=>:Unit
-  many_to_one :ancestor,      :class=>:Unit, :key=>:ancestor_unit
-end
-
-class UnitItem < Sequel::Model
-  unrestrict_primary_key
-end
-
-class Item < Sequel::Model
-  unrestrict_primary_key
-end
-
-class ItemAuthors < Sequel::Model(:item_authors)
-  unrestrict_primary_key
-end
-
-class Section < Sequel::Model
-end
-
-class Issue < Sequel::Model
-end
-
 # API to connect to AWS CloudSearch
 $csClient = Aws::CloudSearchDomain::Client.new(
   endpoint: YAML.load_file("config/cloudSearch.yaml")["searchEndpoint"])
