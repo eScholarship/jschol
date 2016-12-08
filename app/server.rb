@@ -457,14 +457,14 @@ get "/api/static/:unitID/:pageName" do |unitID, pageName|
   unit or halt(404, "Unit not found")
 
   page = Page.where(unit_id: unitID, name: pageName).first
-  puts "page=#{page.inspect}"
   page or halt(404, "Page not found")
 
   body = { 
     page: {
       title: page.title,
       html: JSON.parse(page.attrs)['html']
-    }
+    },
+    sidebarNavLinks: [{"name" => "About eScholarship", "url" => request.path.sub("/api/", "/")},]
   }
   puts "body=#{body.inspect}"
   breadcrumb = [{"name" => "About eScholarship", "url" => request.path.sub("/api/", "/")},]

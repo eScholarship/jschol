@@ -13,7 +13,8 @@ class StaticPage extends PageBase
   }
 
   // PageBase calls this when the API data has been returned to us
-  renderData(data) { return(
+  renderData(data) { 
+    return(
     <div>
       <HeaderComp />
       <NavComp />
@@ -32,7 +33,7 @@ class StaticPage extends PageBase
             <header>
               <h1 className="o-columnbox-main__heading">{data.page.title}</h1>
             </header>
-            {data.page.attrs.html}
+            <div dangerouslySetInnerHTML={{__html: data.page.html}}/>
             {/*
             <p>eScholarship provides a suite of open access, scholarly publishing services and research tools that enable departments, research units, publishing programs, and individual scholars associated with the University of California to have direct control over the creation and dissemination of the full range of their scholarship.</p>
             <p>With eScholarship, you can publish the following original scholarly works on a dynamic research platform available to scholars worldwide:</p>
@@ -50,6 +51,24 @@ class StaticPage extends PageBase
             <p>Questions? <a className="o-textlink__primary" href="">Contact us</a>.</p>*/}
           </section>
         </main>
+        <aside>
+          <section className="o-columnbox-sidebar o-sidebarnav">
+            <header>
+              <h1 className="o-columnbox-sidebar__heading">Featured Articles</h1>
+            </header>
+            <nav className="c-sidebarnav">
+              Foo bar
+            </nav>
+          </section>
+          <section className="o-columnbox-sidebar o-sidebarnav">
+            <header>
+              <h1 className="o-columnbox-sidebar__heading">New Journal Issues</h1>
+            </header>
+            <nav className="c-sidebarnav">
+              Foo bar
+            </nav>
+          </section>
+        </aside>
       </div>
     </div>
   )}
