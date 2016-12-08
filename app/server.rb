@@ -101,6 +101,9 @@ end
 class Section < Sequel::Model
 end
 
+class Page < Sequel::Model
+end
+
 ##################################################################################################
 # Database caches for speed. We check every 30 seconds for changes. These tables change infrequently.
 
@@ -445,15 +448,26 @@ def getItemHtml(content_type, id)
 end
 
 ###################################################################################################
-# Item view page data.
+# Static page data.
 get "/api/static/:unitID/:pageName" do |unitID, pageName|
   content_type :json
+
+  # Grab unit and page data from the database
   unit = $unitsHash[unitID]
   unit or halt(404, "Unit not found")
 
-  # Build array of hashes containing campus and stats
-  body = {}
-  breadcrumb = [{"name" => "About", "url" => "/static/root/about"},]
+  page = Page.where(unit_id: unitID, name: pageName).first
+  puts "page=#{page.inspect}"
+  page or halt(404, "Page not found")
+
+  body = { 
+    page: {
+      title: page.title,
+      html: JSON.parse(page.attrs)['html']
+    }
+  }
+  puts "body=#{body.inspect}"
+  breadcrumb = [{"name" => "About eScholarship", "url" => request.path.sub("/api/", "/")},]
   return body.merge(getHeaderElements(breadcrumb)).to_json
 end
 
