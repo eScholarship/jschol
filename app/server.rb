@@ -45,6 +45,7 @@ DB = Sequel.connect(dbConfig)
 #DB.loggers << Logger.new('server.sql_log')  # Enable to debug SQL queries
 
 # Internal modules to implement specific pages and functionality
+require_relative 'dbCache'
 require_relative 'hierarchy'
 require_relative 'searchApi'
 require_relative 'queueWithTimeout'
@@ -70,31 +71,67 @@ DO_ISO = false
 #
 # https://docs.google.com/drawings/d/1gCi8l7qteyy06nR5Ol2vCknh9Juo-0j91VGGyeWbXqI/edit
 
-class Issue < Sequel::Model
-end
-
-class Item < Sequel::Model
-  unrestrict_primary_key
-end
-
-class ItemAuthor < Sequel::Model
-  unrestrict_primary_key
-end
-
 class Unit < Sequel::Model
   unrestrict_primary_key
+  one_to_many :unit_hier,     :class=>:UnitHier, :key=>:unit_id
+  one_to_many :ancestor_hier, :class=>:UnitHier, :key=>:ancestor_unit
 end
 
 class UnitHier < Sequel::Model(:unit_hier)
   unrestrict_primary_key
+  many_to_one :unit,          :class=>:Unit
+  many_to_one :ancestor,      :class=>:Unit, :key=>:ancestor_unit
 end
 
 class UnitItem < Sequel::Model
   unrestrict_primary_key
 end
 
+class Item < Sequel::Model
+  unrestrict_primary_key
+end
+
+class ItemAuthors < Sequel::Model(:item_authors)
+  unrestrict_primary_key
+end
+
+class Issue < Sequel::Model
+end
+
 class Section < Sequel::Model
 end
+
+class Page < Sequel::Model
+end
+
+##################################################################################################
+# Database caches for speed. We check every 30 seconds for changes. These tables change infrequently.
+
+$unitsHash, $hierByUnit, $hierByAncestor, $activeCampuses, $oruAncestors, $statsCampusPubs,
+  $statsCampusOrus, $statsCampusJournals = nil, nil, nil, nil, nil, nil, nil, nil
+Thread.new {
+  prevTime = nil
+  while true
+    utime = DB.fetch("SHOW TABLE STATUS WHERE Name in ('units', 'unit_hier')").all.map { |row| row[:Update_time] }.max
+    if utime != prevTime
+      $unitsHash = getUnitsHash 
+      $hierByUnit = getHierByUnit
+      $hierByAncestor = getHierByAncestor 
+      $activeCampuses = getActiveCampuses
+      $oruAncestors = getOruAncestors 
+
+      #####################################################################
+      # STATISTICS
+      # These are dependent on instantation of $activeCampuses
+      $statsCampusPubs = getPubsPerCampus
+      $statsCampusOrus = getOrusPerCampus
+      $statsCampusJournals = getJournalsPerCampus
+      prevTime = utime
+    end
+    sleep 30
+  end
+}
+
 
 ###################################################################################################
 # ISOMORPHIC JAVASCRIPT
@@ -230,31 +267,6 @@ get %r{^/(?!api/)(?!content/).*} do  # matches every URL except /api/* and /cont
   end
 end
 
-##################################################################################################
-# Database caches for speed. We check every 30 seconds for changes. These tables change infrequently.
-
-$unitsHash, $hierByUnit, $hierByAncestor, $activeCampuses, = nil, nil, nil, nil, nil
-Thread.new {
-  prevTime = nil
-  while true
-    utime = DB.fetch("SHOW TABLE STATUS WHERE Name in ('units', 'unit_hier')").all.map { |row| row[:Update_time] }.max
-    if utime != prevTime
-      $unitsHash = Unit.to_hash(:id)
-      $hierByUnit = UnitHier.filter(is_direct: true).to_hash_groups(:unit_id)
-      $hierByAncestor = UnitHier.filter(is_direct: true).to_hash_groups(:ancestor_unit)
-      $activeCampuses = getActiveCampuses
-      #####################################################################
-      # STATISTICS
-      # These are dependent on instantation of $activeCampuses
-      $statsCampusPubs = getPubsPerCampus
-      $statsCampusOrus = getOrusPerCampus
-      $statsCampusJournals = getJournalsPerCampus
-      prevTime = utime
-    end
-    sleep 30
-  end
-}
-
 ###################################################################################################
 # Browse page data.
 # get "/api/browse/:type(/.*)?" do
@@ -342,7 +354,7 @@ get "/api/item/:shortArk" do |shortArk|
         :title => item.title,
         :rights => item.rights,
         :pub_date => item.pub_date,
-        :authors => ItemAuthor.filter(:item_id => id).order(:ordering).
+        :authors => ItemAuthors.filter(:item_id => id).order(:ordering).
                        map(:attrs).collect{ |h| JSON.parse(h)},
         :content_type => item.content_type,
         :content_html => getItemHtml(item.content_type, shortArk),
@@ -404,23 +416,16 @@ end
 
 # Generate breadcrumb and header content for Unit or Item page
 def getUnitItemHeaderElements(view, id)
-  breadcrumb = Hierarchy_UnitItem.new(view, id)
-  campusID, campusName = breadcrumb.getCampusInfo
+  hierarchy = Hierarchy_UnitItem.new(view, id)
+  campusID, campusName = hierarchy.getCampusInfo
   return {
-    :isJournal => breadcrumb.isJournal?,
+    :isJournal => hierarchy.isJournal?,
     :campusID => campusID,
     :campusName => campusName,
     :campuses => getCampusesAsMenu,
-    :breadcrumb => breadcrumb.generateCrumb,
-    :appearsIn => breadcrumb.appearsIn 
+    :breadcrumb => hierarchy.generateCrumb,
+    :appearsIn => hierarchy.appearsIn 
   }
-end
-
-# Get hash of all active root level campuses/ORUs, sorted by ordering in unit_hier table
-def getActiveCampuses
-  return Unit.join(:unit_hier, :unit_id => :id).
-           filter(:ancestor_unit => 'root', :is_direct => 1, :is_active => true).
-           order_by(:ordering).to_hash(:id)
 end
 
 # Array of all active root level campuses/ORUs. Include empty label "eScholarship at..." 
@@ -443,15 +448,26 @@ def getItemHtml(content_type, id)
 end
 
 ###################################################################################################
-# Item view page data.
+# Static page data.
 get "/api/static/:unitID/:pageName" do |unitID, pageName|
   content_type :json
+
+  # Grab unit and page data from the database
   unit = $unitsHash[unitID]
   unit or halt(404, "Unit not found")
 
-  # Build array of hashes containing campus and stats
-  body = {}
-  breadcrumb = [{"name" => "About", "url" => "/static/root/about"},]
+  page = Page.where(unit_id: unitID, name: pageName).first
+  puts "page=#{page.inspect}"
+  page or halt(404, "Page not found")
+
+  body = { 
+    page: {
+      title: page.title,
+      html: JSON.parse(page.attrs)['html']
+    }
+  }
+  puts "body=#{body.inspect}"
+  breadcrumb = [{"name" => "About eScholarship", "url" => request.path.sub("/api/", "/")},]
   return body.merge(getHeaderElements(breadcrumb)).to_json
 end
 

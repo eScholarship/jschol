@@ -1,4 +1,3 @@
-
 import React from 'react'
 import { Link } from 'react-router'
 
@@ -39,8 +38,10 @@ class Content extends React.Component {
   )}
 
   renderCampuses(p) {
-    let campusList = p.campuses.map(function(c, i) {
-        return c['id'] != "" && <p key={i}><a href={"/unit/" + c['id']}>{c['name']}</a></p>
+    let campusList = p.campusesStats.map(function(c, i) {
+        return c['id'] != "" &&
+        <p key={i}><a href={"/unit/" + c['id']}>{c['name']}</a><br/>
+          &nbsp;&nbsp;&nbsp;&nbsp;<StatNum item={c} /></p>
       })
     return (
     <div>
@@ -75,6 +76,30 @@ felis tellus mollis orci, sed start a journal nunc eget odio.
       <br/><br/>
     </div>
   )}
+}
+
+// StatNum displays stats (# publications, # depts, # journals) for a given campus
+class StatNum extends React.Component {
+
+  // Returns an array: [any present?, more than one?]
+  statNum(x) {
+    
+    return [ x  ? x.toLocaleString() : null, 
+            x>1 ? 's' : '']
+  }
+
+  render() {
+    let s1 = this.statNum(this.props.item["publications"]),
+        s2 = this.statNum(this.props.item["units"]),
+        s3 = this.statNum(this.props.item["journals"])
+    return (
+      <span>
+        {s1[0] && <span>{s1[0]} Publication{s1[1]}</span>}
+        {s2[0] && <span>, {s2[0]} Unit{s2[1]}</span>}
+        {s3[0] && <span>, {s3[0]} Journal{s3[1]}</span>}
+      </span>
+    )
+  }
 }
 
 module.exports = BrowsePage
