@@ -104,8 +104,8 @@ end
 ##################################################################################################
 # Database caches for speed. We check every 30 seconds for changes. These tables change infrequently.
 
-$unitsHash, $hierByUnit, $hierByAncestor, $activeCampuses, $oruAncestors, $statsCampusPubs,
-  $statsCampusOrus, $statsCampusJournals = nil, nil, nil, nil, nil, nil, nil, nil
+$unitsHash, $hierByUnit, $hierByAncestor, $activeCampuses, $oruAncestors, $campusJournals,
+  $statsCampusPubs, $statsCampusOrus, $statsCampusJournals = nil, nil, nil, nil, nil, nil, nil, nil, nil
 Thread.new {
   prevTime = nil
   while true
@@ -116,13 +116,14 @@ Thread.new {
       $hierByAncestor = getHierByAncestor 
       $activeCampuses = getActiveCampuses
       $oruAncestors = getOruAncestors 
+      $campusJournals = getJournalsPerCampus
 
       #####################################################################
       # STATISTICS
       # These are dependent on instantation of $activeCampuses
-      $statsCampusPubs = getPubsPerCampus
-      $statsCampusOrus = getOrusPerCampus
-      $statsCampusJournals = getJournalsPerCampus
+      $statsCampusPubs = getPubStatsPerCampus
+      $statsCampusOrus = getOruStatsPerCampus
+      $statsCampusJournals = getJournalStatsPerCampus
       prevTime = utime
     end
     sleep 30
@@ -288,20 +289,15 @@ get '/api/browse/:type' do |type|
         :campusesStats => campusesStats,
       })
       breadcrumb = [{"name" => "Campuses", "url" => "/browse/campuslist"},]
-      return body.merge(getHeaderElements(breadcrumb)).to_json
+      return body.merge(getHeaderElements(breadcrumb, nil)).to_json
     when "depts"
       #ToDo
     when "journals"
-      jlist = []
-      $unitsHash.each do |id, unit|
-        jlist << unit.values if unit.type == "journal"
-      end
       body.merge!({
-        :journals => jlist.sort_by!{ |h| h[:name].downcase }
+        :journals => $campusJournals.sort_by{ |h| h[:name].downcase }
       })
       breadcrumb = [{"name" => "Journals", "url" => "/browse/journals"},]
-      return body.merge(getHeaderElements(breadcrumb)).to_json
-      #ToDo
+      return body.merge(getHeaderElements(breadcrumb, "All Campuses")).to_json
   end
 end
 
@@ -404,9 +400,10 @@ end
 # Helper methods
 
 # Generate breadcrumb and header content for Browse or Static page
-def getHeaderElements(breadcrumb)
+def getHeaderElements(breadcrumb, topItem)
+  campuses = topItem ? getCampusesAsMenu(topItem) : getCampusesAsMenu
   return {
-    :campuses => getCampusesAsMenu,
+    :campuses => campuses,
     :breadcrumb => Hierarchy_Manual.new(breadcrumb).generateCrumb
   }
 end
@@ -426,10 +423,10 @@ def getUnitItemHeaderElements(view, id)
 end
 
 # Array of all active root level campuses/ORUs. Include empty label "eScholarship at..." 
-def getCampusesAsMenu
+def getCampusesAsMenu(topItem="eScholarship at...")
   campuses = []
   $activeCampuses.each do |id, c| campuses << c.values end
-  return campuses.unshift({:id => "", :name=>"eScholarship at..."})
+  return campuses.unshift({:id => "", :name=>topItem})
 end
 
 # Properly target links in HTML blob
