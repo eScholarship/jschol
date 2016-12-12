@@ -4,8 +4,9 @@ import React from 'react'
 import Breakpoints from '../../js/breakpoints.json'
 
 class Nav2Comp extends React.Component {
+  state = { isOpen: true } // must init to something in case of server-side rendering
   componentWillMount() {
-    if (matchMedia) {
+    if (typeof matchMedia != "undefined") {
       this.mq = matchMedia("(min-width:"+Breakpoints.screen3+")")
       this.mq.addListener(this.widthChange)
       this.widthChange()
