@@ -359,7 +359,7 @@ class CurrentSearchTerms extends React.Component {
         <input type="hidden" name="q" value={this.props.query.q} />
         <div>Results: {Math.ceil(this.props.count/10)} pages, {this.props.count} works</div>
         {filters}
-				<a href="" className="c-filter__tips">search tips</a>
+        <a href="" className="c-filter__tips">search tips</a>
       </div>
     )
   }
@@ -448,10 +448,10 @@ class FacetForm extends React.Component {
     });
 
     return (
-			<Form id="facetForm" to='/search' method="GET" onSubmit={this.handleSubmit}>
+      <Form id="facetForm" to='/search' method="GET" onSubmit={this.handleSubmit}>
         <CurrentSearchTerms query={this.state.query} count={this.props.data.count} handler={this.removeFilters}/>
         {facetForm}
-				<button type="submit" id="facet-form-submit">Search</button>
+        <button type="submit" id="facet-form-submit">Search</button>
       </Form>
     )
   }
@@ -628,8 +628,8 @@ class ResultItem extends React.Component {
     }
     
     return (
-			<section className="c-scholworks__item">
-				<div className="c-scholworks__main-column">
+      <section className="c-scholworks__item">
+        <div className="c-scholworks__main-column">
           <ul className="c-scholworks__tag-list">
             { tagList.map(function(tag) { 
               return (

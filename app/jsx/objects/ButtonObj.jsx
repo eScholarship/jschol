@@ -4,20 +4,20 @@ import React from 'react'
 
 class InputObj extends React.Component {
   render() {
-		return (
-			<div>
-			
-				<button className="o-button__1">Clear All</button>
+    return (
+      <div>
+      
+        <button className="o-button__1">Clear All</button>
 
-				<button className="o-button__2">Cancel</button>
+        <button className="o-button__2">Cancel</button>
 
-				<button className="o-button__3">Select</button>
+        <button className="o-button__3">Select</button>
 
-				<a href="" className="o-button__4">Export</a>
+        <a href="" className="o-button__4">Export</a>
 
-			</div>
-		)
-	}
+      </div>
+    )
+  }
 }
 
 module.exports = InputObj;

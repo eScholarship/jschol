@@ -3,128 +3,128 @@
 $scholworks-tag-height: $element-height;
 
 .c-scholworks {
-	margin: 0 0 $spacing-md;
+  margin: 0 0 $spacing-md;
 }
 
 .c-scholworks__item {
-	display: flex;
-	flex-flow: column nowrap;
-	align-items: flex-end;
-	padding: $spacing-lg;
-	border-bottom: 1px solid $color-dark-gray;
+  display: flex;
+  flex-flow: column nowrap;
+  align-items: flex-end;
+  padding: $spacing-lg;
+  border-bottom: 1px solid $color-dark-gray;
 
-	@include bp(screen1) {
-		flex-flow: row nowrap;
-		align-items: flex-start;
-	}
+  @include bp(screen1) {
+    flex-flow: row nowrap;
+    align-items: flex-start;
+  }
 
-	header {
+  header {
 
-		a {
-			@extend %o-textlink__secondary;
-			font-size: 1.2em;
-			font-weight: bold;
-		}
+    a {
+      @extend %o-textlink__secondary;
+      font-size: 1.2em;
+      font-weight: bold;
+    }
 
-	}
+  }
 
 }
 
 .c-scholworks__tag-list {
-	margin: 0;
-	padding: 0;
+  margin: 0;
+  padding: 0;
 }
 
 %c-scholworks__tag {
-	display: inline-block;
-	margin: 0 $spacing-sm $spacing-md 0;
-	padding: 0 0 0 25px;
-	background: no-repeat left top / 16px;
-	list-style: none;
+  display: inline-block;
+  margin: 0 $spacing-sm $spacing-md 0;
+  padding: 0 0 0 25px;
+  background: no-repeat left top / 16px;
+  list-style: none;
 }
 
 .c-scholworks__tag-article {
-	@extend %c-scholworks__tag;
-	background-image: inline('../images/icon_pdf-black.svg');
+  @extend %c-scholworks__tag;
+  background-image: inline('../images/icon_pdf-black.svg');
 }
 
 .c-scholworks__tag-peer {
-	@extend %c-scholworks__tag;
-	padding: 0 $spacing-sm;
+  @extend %c-scholworks__tag;
+  padding: 0 $spacing-sm;
 }
 
 .c-scholworks__main-column {
-	// empty
+  // empty
 }
 
 .c-scholworks__institution-link {
-	@extend %o-textlink__secondary;
+  @extend %o-textlink__secondary;
 }
 
 .c-scholworks__article-preview {
-	flex: 0 0 auto;
+  flex: 0 0 auto;
 
-	@include bp(screen1) {
-		margin: ($scholworks-tag-height + $spacing-md) 0 0 $spacing-md;
-	}
+  @include bp(screen1) {
+    margin: ($scholworks-tag-height + $spacing-md) 0 0 $spacing-md;
+  }
 
 }
 
 .c-scholworks__media {
-	display: flex;
-	flex-flow: column nowrap;
-	align-items: flex-end;
+  display: flex;
+  flex-flow: column nowrap;
+  align-items: flex-end;
 
-	@include bp(screen2) {
-		flex-flow: row nowrap;
-		align-items: flex-start;
-		justify-content: space-between;
-	}
+  @include bp(screen2) {
+    flex-flow: row nowrap;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
 
 }
 
 .c-scholworks__media-list {
-	display: flex;
-	flex-flow: row wrap;
-	margin-right: $spacing-sm;
-	padding: 0;
-	list-style: none;
+  display: flex;
+  flex-flow: row wrap;
+  margin-right: $spacing-sm;
+  padding: 0;
+  list-style: none;
 }
 
 %c-scholworks__media-item {
-	flex: 1 0 40%;
-	margin: $spacing-sm $spacing-sm 0 0;
-	padding: 0 0 0 25px;
-	background: no-repeat left top / 16px;
-	color: $color-teal;
+  flex: 1 0 40%;
+  margin: $spacing-sm $spacing-sm 0 0;
+  padding: 0 0 0 25px;
+  background: no-repeat left top / 16px;
+  color: $color-teal;
 }
 
 .c-scholworks__media-audio {
-	@extend %c-scholworks__media-item;
-	background-image: inline('../images/icon_volume-up.svg');
+  @extend %c-scholworks__media-item;
+  background-image: inline('../images/icon_volume-up.svg');
 }
 
 .c-scholworks__media-image {
-	@extend %c-scholworks__media-item;
-	background-image: inline('../images/icon_picture.svg');
+  @extend %c-scholworks__media-item;
+  background-image: inline('../images/icon_picture.svg');
 }
 
 .c-scholworks__media-pdf {
-	@extend %c-scholworks__media-item;
-	background-image: inline('../images/icon_pdf-teal.svg');
+  @extend %c-scholworks__media-item;
+  background-image: inline('../images/icon_pdf-teal.svg');
 }
 
 .c-scholworks__media-video {
-	@extend %c-scholworks__media-item;
-	background-image: inline('../images/icon_play-circle-o.svg');
+  @extend %c-scholworks__media-item;
+  background-image: inline('../images/icon_play-circle-o.svg');
 }
 
 .c-scholworks__cc {
-	flex: 0 0 auto;
-	margin: 0 0 $spacing-sm;
+  flex: 0 0 auto;
+  margin: 0 0 $spacing-sm;
 
-	@include bp(screen2) {
-		margin: ($spacing-sm * 2) 0 0;
-	}
+  @include bp(screen2) {
+    margin: ($spacing-sm * 2) 0 0;
+  }
 
 }

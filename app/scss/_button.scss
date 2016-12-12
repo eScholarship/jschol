@@ -12,29 +12,29 @@
 
 // no border, background:
 .o-button__1 {
-	@extend %o-button;
-	color: $color-teal;
+  @extend %o-button;
+  color: $color-teal;
 }
 
 // thin border, no background:
 .o-button__2 {
-	@extend %o-button;
-	border: 1px solid $color-dark-gray;
+  @extend %o-button;
+  border: 1px solid $color-dark-gray;
 }
 
 // orange border & background, white text:
 .o-button__3 {
-	@extend %o-button;
-	border: 1px solid $color-orange;
-	background: $color-orange;
-	color: $color-white;
+  @extend %o-button;
+  border: 1px solid $color-orange;
+  background: $color-orange;
+  color: $color-white;
 }
 
 // no border & background, bold teal text and left icon:
 .o-button__4 {
-	@extend %o-button;
-	padding-left: 30px;
-	background: url('../images/icon_share-square.svg') no-repeat left 8px center / 16px; // use background-image for component with alternative icons
-	color: $color-teal;
-	font-weight: bold;
+  @extend %o-button;
+  padding-left: 30px;
+  background: url('../images/icon_share-square.svg') no-repeat left 8px center / 16px; // use background-image for component with alternative icons
+  color: $color-teal;
+  font-weight: bold;
 }

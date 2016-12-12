@@ -1,35 +1,35 @@
 // ##### Column Box Objects ##### //
 
 %o-columnbox {
-	background: $color-white;
-	box-shadow: 0 50px 15px -15px lighten($color-dark-gray, 30%) inset, $box-shadow;
+  background: $color-white;
+  box-shadow: 0 50px 15px -15px lighten($color-dark-gray, 30%) inset, $box-shadow;
 }
 
 .o-columnbox-main {
-	@extend %o-columnbox;
-	padding: 0 $spacing-lg $spacing-md;
+  @extend %o-columnbox;
+  padding: 0 $spacing-lg $spacing-md;
 }
 
 .o-columnbox-sidebar {
-	@extend %o-columnbox;
-	padding: 0 $spacing-md $spacing-md;
+  @extend %o-columnbox;
+  padding: 0 $spacing-md $spacing-md;
 }
 
 %o-columnbox__heading {
-	padding: 7px $spacing-md;
-	background: $color-teal;
-	color: $color-white;
-	font-family: 'KievitWebLight';
-	font-size: 1.2em;
-	font-weight: normal;
+  padding: 7px $spacing-md;
+  background: $color-teal;
+  color: $color-white;
+  font-family: 'KievitWebLight';
+  font-size: 1.2em;
+  font-weight: normal;
 }
 
 .o-columnbox-main__heading {
-	@extend %o-columnbox__heading;
-	margin: 0 (-$spacing-lg) $spacing-md;
+  @extend %o-columnbox__heading;
+  margin: 0 (-$spacing-lg) $spacing-md;
 }
 
 .o-columnbox-sidebar__heading {
-	@extend %o-columnbox__heading;
-	margin: 0 (-$spacing-md) $spacing-md;
+  @extend %o-columnbox__heading;
+  margin: 0 (-$spacing-md) $spacing-md;
 }

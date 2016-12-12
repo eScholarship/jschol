@@ -1,18 +1,18 @@
 // ##### Checkbox Component ##### //
 
 .c-checkbox {
-	// empty
+  // empty
 }
 
 %c-checkbox__icon {
-	background: no-repeat left top / 17px;
+  background: no-repeat left top / 17px;
 }
 
 .c-checkbox__input {
-	@extend %hide;
+  @extend %hide;
 
   &:checked + .c-checkbox__label {
-		@extend %c-checkbox__icon;
+    @extend %c-checkbox__icon;
     background-image: inline('../images/icon_checkbox-checked.svg');
   }
 
@@ -23,12 +23,12 @@
 }
 
 .c-checkbox__label {
-	@extend %c-checkbox__icon;
-	display: inline-block;
-	min-width: 30%;
-	margin: 0 $spacing-md $spacing-sm 0;
-	padding: 0 0 0 30px;
-	background-image: inline('../images/icon_checkbox-unchecked.svg');
-	cursor: pointer;
-	user-select: none;
+  @extend %c-checkbox__icon;
+  display: inline-block;
+  min-width: 30%;
+  margin: 0 $spacing-md $spacing-sm 0;
+  padding: 0 0 0 30px;
+  background-image: inline('../images/icon_checkbox-unchecked.svg');
+  cursor: pointer;
+  user-select: none;
 }

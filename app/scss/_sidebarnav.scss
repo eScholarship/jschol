@@ -4,27 +4,27 @@
 
 .c-sidebarnav {
 
-	ul {
-		padding: 0;
+  ul {
+    padding: 0;
 
-		li {
-			margin: 15px 0;
-			padding: 0;
-			list-style: none;
+    li {
+      margin: 15px 0;
+      padding: 0;
+      list-style: none;
 
-			a {
-				color: $color-black;
-				font-size: 1.1em;
-				text-decoration: none;
+      a {
+        color: $color-black;
+        font-size: 1.1em;
+        text-decoration: none;
 
-				&:hover {
-					text-decoration: underline;
-				}
+        &:hover {
+          text-decoration: underline;
+        }
 
-			}
+      }
 
-		}
+    }
 
-	}
+  }
 
 }

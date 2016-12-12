@@ -1,29 +1,29 @@
 // ##### Text Link Objects ##### //
 
 %o-textlink__primary {
-	color: $color-orange;
-	text-decoration: none;
+  color: $color-orange;
+  text-decoration: none;
 
-	&:hover {
-		text-decoration: underline;
-	}
+  &:hover {
+    text-decoration: underline;
+  }
 
 }
 
 .o-textlink__primary {
-	@extend %o-textlink__primary;
+  @extend %o-textlink__primary;
 }
 
 %o-textlink__secondary {
-	color: $color-teal;
-	text-decoration: none;
+  color: $color-teal;
+  text-decoration: none;
 
-	&:hover {
-		text-decoration: underline;
-	}
+  &:hover {
+    text-decoration: underline;
+  }
 
 }
 
 .o-textlink__secondary {
-	@extend %o-textlink__secondary;
+  @extend %o-textlink__secondary;
 }
