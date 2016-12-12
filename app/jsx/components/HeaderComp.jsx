@@ -4,7 +4,11 @@ import React from 'react'
 import { browserHistory } from 'react-router'
 import SearchComp from '../components/SearchComp.jsx'
 
-class HeaderComp extends React.Component {
+// Hack to use Joel's new HeaderComp1 until Andy merges his code
+import HeaderComp1 from '../components/Header1Comp.jsx'
+class HeaderComp extends HeaderComp1 { }
+
+class HeaderCompUnmerged extends React.Component {
   constructor(props){
     super(props)
     this.state = {searchActive: false}

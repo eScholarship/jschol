@@ -3,8 +3,8 @@ import React from 'react'
 import { Link } from 'react-router'
 
 import PageBase from './PageBase.jsx'
-import Header1Comp from '../components/Header1Comp.jsx'
-import Nav1Comp from '../components/Nav1Comp.jsx'
+import HeaderComp from '../components/HeaderComp.jsx'
+import NavComp from '../components/NavComp.jsx'
 import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
 import SidebarNavComp from '../components/SidebarNavComp.jsx'
 
@@ -19,8 +19,8 @@ class StaticPage extends PageBase
   renderData(data) { 
     return(
     <div className="l-about">
-      <Header1Comp />
-      <Nav1Comp />
+      <HeaderComp />
+      <NavComp />
       <BreadcrumbComp array={data.breadcrumb} />
       <div className="c-columns">
         <aside>
