@@ -242,7 +242,8 @@ end
 ###################################################################################################
 # The outer framework of every page is essentially the same, substituting in the intial page
 # data and initial elements from React.
-get %r{^/(?!api/)(?!content/).*} do  # matches every URL except /api/* and /content/*
+# The regex below matches every URL except /api/*, /content/*, and things ending with a file ext.
+get %r{^/(?!(api/.*|content/.*|.*\.\w{1,4}$))} do
 
   puts "Page fetch: #{request.url}"
 
