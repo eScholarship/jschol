@@ -1,4 +1,8 @@
-build: 2119847
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> From Joel's build, changeset ID: 4760e1d, dated 12-08-2016 <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
 This is the latest eschol-ui build integrated into jschol
 
 Repo location: https://github.com/cdlib/eschol-ui
@@ -8,13 +12,13 @@ Also note any changes to: app/js and package.json
 
 * * * * * * * * * * * * * * * * * * * * * * * * * *
 Note, IMPORTANT:
-  This is not a full merge per se. So far this is just a manual copying over of files.
+  This is a full merge, using a 3-way merge program and lots of manual intervention.
 
-  Purpose: Bring in new JSX files and build on top of them
+  Purpose: Bring in new JSX/SCSS files and build on top of them
 
-  ***** DO NOT OVERWRITE FILES in jschol when copying ****
+  ***** DO NOT JUST OVERWRITE FILES in jschol when copying ****
 
-  JSX written in eschol-ui does not bring in state or properties
+  JSX written in eschol-ui does not bring in state or properties.
   Any behavior, state, or properties we have begun building on top of these components
   need to be preserved.
 
@@ -22,6 +26,6 @@ Note, IMPORTANT:
 * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 Note: 
-  As of this writing (Sept, 2016) jschol's NavComp.jsx includes eschol-ui's GlobalNavComp.jsx,
-  and the intention is to also include any additional nav being used in that UI space
-  (i.e. 'LocalNav' for unit and item pages), when it is built by Joel.
+  As of this writing (Dec. 12, 2016) jschol's HeaderComp and NavComp are stubbed to use
+  Joel's new Header1Comp and Nav1Comp, until we have a chance to put in switching
+  logic to contextually use Header1 vs Header2.

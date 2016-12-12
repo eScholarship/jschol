@@ -53,3 +53,15 @@ Selector pattern using above media query mixin:
   position: static;
   left: auto;
 }
+
+// Navigation item styles
+
+%nav-item {
+  display: block;
+  padding: 10px;
+  border: 1px solid $color-dark-gray;
+  background: $color-white;
+  color: $color-dark-gray;
+  font-size: 1.1em;
+  text-decoration: none;
+}

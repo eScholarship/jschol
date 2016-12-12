@@ -1,15 +1,15 @@
 // ##### Export/RSS Component ##### //
 
 .c-export {
-	display: flex;
-	justify-content: flex-end;
-	margin: 0 0 $spacing-sm;
+  display: flex;
+  justify-content: flex-end;
+  margin: 0 0 $spacing-sm;
 }
 
 .c-export__export-button {
-	// base object 'o-button__4' already uses icon_share-square.svg as background, so no background property necessary
+  // base object 'o-button__4' already uses icon_share-square.svg as background, so no background property necessary
 }
 
 .c-export__rss-button {
-	background-image: url('../images/icon_rss-square.svg');
+  background-image: url('../images/icon_rss-square.svg');
 }

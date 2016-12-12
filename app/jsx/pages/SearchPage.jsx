@@ -1,11 +1,13 @@
 
 import React from 'react'
 import $ from 'jquery'
+import _ from 'lodash'   // mainly for _.isEmtpy() which also works server-side (unlike $.isEmptyObject)
 import { Link } from 'react-router'
 import Form from 'react-router-form'
 
 import PageBase from './PageBase.jsx'
-import { HeaderComp, NavComp } from '../components/AllComponents.jsx'
+import HeaderComp from '../components/HeaderComp.jsx'
+import NavComp from '../components/NavComp.jsx'
 
 // FacetItem  
 // props = {
@@ -127,7 +129,7 @@ class PubYear extends React.Component {
   onBlur = this.onBlur.bind(this);
 
   componentWillReceiveProps(nextProps) {
-    if ($.isEmptyObject(nextProps.query) && (this.state.pub_year_start !== '' || this.state.pub_year_end !== '')) {
+    if (_.isEmpty(nextProps.query) && (this.state.pub_year_start !== '' || this.state.pub_year_end !== '')) {
       this.setState({
         pub_year_start: '',
         pub_year_end: ''
@@ -229,7 +231,7 @@ class FacetFieldset extends React.Component {
     var newQuery;
     //event.target.checked means we're in the business of adding filters
     if (event.target.checked) {
-      if (!$.isEmptyObject(this.props.query)) {
+      if (!_.isEmpty(this.props.query)) {
         //there's already filters of this type, so add filters
         newQuery = $.extend(true, {}, this.props.query); // true=deep copy
         //remove filters specified in filter_cleanup array
@@ -268,7 +270,7 @@ class FacetFieldset extends React.Component {
   pubDateChange(event, filter) {
     var newQuery;
     if (filter.value !== "") {
-      if (!$.isEmptyObject(this.props.query)) {
+      if (!_.isEmpty(this.props.query)) {
         newQuery = $.extend(true, {}, this.props.query); // true=deep copy
         newQuery.filters = [filter]
       } else {
@@ -320,7 +322,7 @@ class CurrentSearchTerms extends React.Component {
     var searchString = 'Your search: "' + this.props.query.q + '"';
     var filters;
     
-    if (!($.isEmptyObject(this.props.query['filters']))) {
+    if (!(_.isEmpty(this.props.query['filters']))) {
       var filterTypes = ['type_of_work', 'peer_reviewed', 'supp_file_types', 'pub_year', 'campuses', 'departments', 'journals', 'disciplines', 'rights'];
       var activeFilters = [];
       for (let filterType of filterTypes) {
@@ -359,7 +361,7 @@ class CurrentSearchTerms extends React.Component {
         <input type="hidden" name="q" value={this.props.query.q} />
         <div>Results: {Math.ceil(this.props.count/10)} pages, {this.props.count} works</div>
         {filters}
-				<a href="" className="c-filter__tips">search tips</a>
+        <a href="" className="c-filter__tips">search tips</a>
       </div>
     )
   }
@@ -448,10 +450,10 @@ class FacetForm extends React.Component {
     });
 
     return (
-			<Form id="facetForm" to='/search' method="GET" onSubmit={this.handleSubmit}>
+      <Form id="facetForm" to='/search' method="GET" onSubmit={this.handleSubmit}>
         <CurrentSearchTerms query={this.state.query} count={this.props.data.count} handler={this.removeFilters}/>
         {facetForm}
-				<button type="submit" id="facet-form-submit">Search</button>
+        <button type="submit" id="facet-form-submit">Search</button>
       </Form>
     )
   }
@@ -628,8 +630,8 @@ class ResultItem extends React.Component {
     }
     
     return (
-			<section className="c-scholworks__item">
-				<div className="c-scholworks__main-column">
+      <section className="c-scholworks__item">
+        <div className="c-scholworks__main-column">
           <ul className="c-scholworks__tag-list">
             { tagList.map(function(tag) { 
               return (

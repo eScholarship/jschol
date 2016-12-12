@@ -1,35 +1,74 @@
 // ##### Column Box Objects ##### //
 
-%o-columnbox {
-	background: $color-white;
-	box-shadow: 0 50px 15px -15px lighten($color-dark-gray, 30%) inset, $box-shadow;
+.o-columnbox1 { // larger box for main content areas
+  margin: 0 0 $spacing-md;
+  padding: $spacing-lg;
+  background: $color-white;
+  box-shadow: $box-shadow;
+
+  header {
+    margin-top: (-$spacing-lg);
+  }
+
 }
 
-.o-columnbox-main {
-	@extend %o-columnbox;
-	padding: 0 $spacing-lg $spacing-md;
+.o-columnbox2 { // smaller box for sidebar, etc.
+  margin: 0 0 $spacing-md;
+  padding: $spacing-md;
+  background: $color-white;
+  box-shadow: $box-shadow;
+
+  header {
+    margin-top: (-$spacing-md);
+  }
+
 }
 
-.o-columnbox-sidebar {
-	@extend %o-columnbox;
-	padding: 0 $spacing-md $spacing-md;
+.o-columnbox3 { // .o-columnbox1 without background color and shadow
+  padding-right: $spacing-lg;
+  padding-left: $spacing-lg;
+}
+
+.o-columnbox4 { // .o-columnbox2 without background color and shadow
+  padding-right: $spacing-md;
+  padding-left: $spacing-md;
 }
 
 %o-columnbox__heading {
-	padding: 7px $spacing-md;
-	background: $color-teal;
-	color: $color-white;
-	font-family: 'KievitWebLight';
-	font-size: 1.2em;
-	font-weight: normal;
+  padding: 7px $spacing-md;
+  background: $color-light-gray;
+  font-family: 'KievitWebLight';
+  font-size: 1.15em;
 }
 
-.o-columnbox-main__heading {
-	@extend %o-columnbox__heading;
-	margin: 0 (-$spacing-lg) $spacing-md;
+.o-columnbox1__heading {
+  @extend %o-columnbox__heading;
+  margin: 0 (-$spacing-lg) $spacing-md;
 }
 
-.o-columnbox-sidebar__heading {
-	@extend %o-columnbox__heading;
-	margin: 0 (-$spacing-md) $spacing-md;
+.o-columnbox2__heading {
+  @extend %o-columnbox__heading;
+  margin: 0 (-$spacing-md) $spacing-md;
+}
+
+// Add this as a wrapper <div> around columnbox content to divide into 2 columns:
+
+.o-columnbox__divided {
+
+  @include bp(screen1) {
+    columns: 2;
+    column-gap: $spacing-lg;
+    column-rule: 1px solid $color-light-gray;
+  }
+
+  img {
+    max-width: 100%;
+    margin: 0 0 1em;
+
+    @include bp(screen1) {
+      width: auto;
+    }
+
+  }
+
 }

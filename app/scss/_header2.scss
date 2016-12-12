@@ -1,0 +1,57 @@
+// ##### Header2 Component ##### //
+
+.c-header2 {
+  display: flex;
+  justify-content: space-between;
+  margin: (-$spacing-sm) (-$spacing-sm) 0;
+  padding: $spacing-sm $spacing-sm 0;
+  background: $color-white;
+}
+
+.c-header2__logo {
+  height: $input-height;
+
+  @include bp(screen3) {
+    height: auto; // set to default img height
+  }
+
+}
+
+%c-header2__search {
+  position: absolute;
+  right: $spacing-sm;
+  left: $spacing-sm;
+  transform: translateX(110%);
+  transition: transform 0.5s;
+  background: $color-white;
+  z-index: 2;
+
+  @include bp(screen3) {
+    position: relative;
+    margin: 0 $spacing-sm 0 0;
+    transform: translateX(0%);
+  }
+
+}
+
+.c-header2__search {
+  @extend %c-header2__search;
+}
+
+.c-header2__search--active {
+  @extend %c-header2__search;
+  transform: translateX(0%);
+}
+
+.c-header2__search-open-button {
+  align-self: flex-start;
+  height: $input-height;
+  padding: 0 13px;
+  border: none;
+  background: inline('../images/icon_magnify.svg') no-repeat center right / 25px;
+
+  @include bp(screen3) {
+    display: none;
+  }
+
+}

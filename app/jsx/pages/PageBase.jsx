@@ -1,7 +1,9 @@
 
 import React from 'react'
 import $ from 'jquery'
-import { HeaderComp, NavComp, FooterComp } from '../components/AllComponents.jsx'
+import HeaderComp from '../components/HeaderComp.jsx'
+import NavComp from '../components/NavComp.jsx'
+import FooterComp from '../components/FooterComp.jsx'
 
 class PageBase extends React.Component
 {
