@@ -463,8 +463,7 @@ get "/api/static/:unitID/:pageName" do |unitID, pageName|
     },
     sidebarNavLinks: [{"name" => "About eScholarship", "url" => request.path.sub("/api/", "/")},]
   }
-  puts "body=#{body.inspect}"
   breadcrumb = [{"name" => "About eScholarship", "url" => request.path.sub("/api/", "/")},]
-  return body.merge(getHeaderElements(breadcrumb)).to_json
+  return body.merge(getHeaderElements(breadcrumb, nil)).to_json
 end
 

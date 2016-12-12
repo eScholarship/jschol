@@ -3,7 +3,10 @@ import React from 'react'
 import { Link } from 'react-router'
 
 import PageBase from './PageBase.jsx'
-import { HeaderComp, NavComp, BreadcrumbComp, SidebarNavComp } from '../components/AllComponents.jsx'
+import Header1Comp from '../components/Header1Comp.jsx'
+import Nav1Comp from '../components/Nav1Comp.jsx'
+import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
+import SidebarNavComp from '../components/SidebarNavComp.jsx'
 
 class StaticPage extends PageBase
 {
@@ -15,23 +18,23 @@ class StaticPage extends PageBase
   // PageBase calls this when the API data has been returned to us
   renderData(data) { 
     return(
-    <div>
-      <HeaderComp />
-      <NavComp />
+    <div className="l-about">
+      <Header1Comp />
+      <Nav1Comp />
       <BreadcrumbComp array={data.breadcrumb} />
       <div className="c-columns">
         <aside>
-          <section className="o-columnbox-sidebar o-sidebarnav">
+          <section className="o-columnbox2 c-sidebarnav">
             <header>
-              <h1 className="o-columnbox-sidebar__heading">{data.page.title}</h1>
+              <h1 className="o-columnbox2__heading">{data.page.title}</h1>
             </header>
             <SidebarNavComp links={data.sidebarNavLinks}/>
           </section>
         </aside>
         <main>
-          <section className="o-columnbox-main">
+          <section className="o-columnbox1">
             <header>
-              <h1 className="o-columnbox-main__heading">{data.page.title}</h1>
+              <h1 className="o-columnbox1__heading">{data.page.title}</h1>
             </header>
             <div dangerouslySetInnerHTML={{__html: data.page.html}}/>
             {/*
@@ -52,17 +55,17 @@ class StaticPage extends PageBase
           </section>
         </main>
         <aside>
-          <section className="o-columnbox-sidebar o-sidebarnav">
+          <section className="o-columnbox2 c-sidebarnav">
             <header>
-              <h1 className="o-columnbox-sidebar__heading">Featured Articles</h1>
+              <h1 className="o-columnbox2__heading">Featured Articles</h1>
             </header>
             <nav className="c-sidebarnav">
               Foo bar
             </nav>
           </section>
-          <section className="o-columnbox-sidebar o-sidebarnav">
+          <section className="o-columnbox2 c-sidebarnav">
             <header>
-              <h1 className="o-columnbox-sidebar__heading">New Journal Issues</h1>
+              <h1 className="o-columnbox2__heading">New Journal Issues</h1>
             </header>
             <nav className="c-sidebarnav">
               Foo bar

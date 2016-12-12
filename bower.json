@@ -10,6 +10,7 @@
   "moduleType": [],
   "private": true,
   "devDependencies": {
-    "normalize-scss": "^3.0.3"
+    "normalize-scss": "^3.0.3",
+    "flickity": "^2.0.5"
   }
 }

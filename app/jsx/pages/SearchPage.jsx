@@ -5,7 +5,8 @@ import { Link } from 'react-router'
 import Form from 'react-router-form'
 
 import PageBase from './PageBase.jsx'
-import { HeaderComp, NavComp } from '../components/AllComponents.jsx'
+import HeaderComp from '../components/HeaderComp.jsx'
+import NavComp from '../components/NavComp.jsx'
 
 // FacetItem  
 // props = {

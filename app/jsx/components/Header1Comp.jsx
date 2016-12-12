@@ -15,7 +15,7 @@ class HeaderComp1 extends React.Component {
         <div className="c-header1__logosearch">
           <a href="">
             <picture>
-              <source srcSet="images/logo_escholarship.svg" media={"(min-width: "+Breakpoints.screen2+")"}/>
+              <source srcSet="/images/logo_escholarship.svg" media={"(min-width: "+Breakpoints.screen2+")"}/>
               <img src="images/logo_temp-eschol-mobile.png" alt="escholarship"/>
             </picture>
           </a>  
