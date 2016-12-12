@@ -11,6 +11,7 @@
 // ***** Vendor Libraries ***** //
 
 @import '../bower_components/normalize-scss/_normalize.scss';
+@import '../bower_components/flickity/dist/flickity.css';
 @import 'vendor/pdfjs/eschol_pdf_viewer';
 
 // ***** Objects ***** //
@@ -23,24 +24,34 @@
 // ***** Components ***** //
 
 @import 'breadcrumb';
+@import 'carousel';
+@import 'campus';
 @import 'checkbox';
 @import 'columns';
 @import 'export';
 @import 'facetbox';
 @import 'filter';
+@import 'frontmatter';
 @import 'footer';
-@import 'globalnav';
-@import 'header';
+@import 'header1';
+@import 'header2';
 @import 'infopages';
+@import 'journalinfo';
+@import 'nav1';
+@import 'nav2';
+@import 'nav3';
 @import 'pagination';
 @import 'scholworks';
-@import 'search';
+@import 'search1';
+@import 'search2';
 @import 'sidebarnav';
 @import 'sort';
+@import 'subheader';
 
 // ***** Layouts ***** //
 
 @import 'about';
+@import 'journal';
 @import 'searchlayout';
 
 // ***** Global Styles ***** //
@@ -52,11 +63,16 @@
 body {
   margin: 0 auto;
   padding: 10px;
-  // background-color: lighten($color-light-gray, 15%);
   font-family: 'KievitWeb';
   overflow-x: hidden;
+
+  @include bp(screen2) {
+    background: lighten($color-light-gray, 15%);
+  }
+
 }
 
 p {
-  margin: 1em 0 0;
+  margin: 0 0 1em;
+  line-height: 1.2em;
 }

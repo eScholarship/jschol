@@ -1,62 +1,33 @@
 // ##### Footer Component ##### //
 
+// Would prefer to use CSS Grid Layout for screen2 but spec not yet ratified, so using absolute positioning on .c-footer__nav
+
 .c-footer {
   display: flex;
   flex-flow: column nowrap;
   align-items: center;
+  margin: 0 (-$spacing-sm) $spacing-md;
   padding: $spacing-md;
   background-color: $color-light-black;
 
-  @include bp(screen3) {
-    flex-flow: row nowrap;
+  @include bp(screen2) {
+    position: relative;
     align-items: flex-start;
-    justify-content: space-between;
-    padding: $spacing-md $spacing-md 5px;
   }
-
-}
-
-.c-footer__logologin {
-  display: flex;
-  align-self: stretch;
-  margin: 0 0 $spacing-md;
-
-  @include bp(screen3) {
-    flex-flow: column nowrap;
-    align-self: flex-start;
-    margin: 0 $spacing-md 0 0;
-  }
-
-}
-
-.c-footer__logo {
-  flex: 1 0 auto;
-  color: $color-white;
-
-  @include bp(screen3) {
-    margin: 0 0 $spacing-md;
-  }
-
-  img {
-    width: 150px;
-  }
-
-}
-
-.c-footer__login {
-  color: $color-white;
-  font-size: 1.1em;
-  font-weight: bold;
 
 }
 
 .c-footer__nav {
-  flex: 0 0 auto;
-  margin: 0 0 10px;
+  margin: 0 0 $spacing-sm;
   columns: 2;
+  column-gap: $spacing-lg;
 
-  @include bp(screen3) {
-    margin: 0;
+  @include bp(screen2) {
+    position: absolute;
+    top: 0;
+    right: 10%;
+    left: 50%;
+    margin: $spacing-md 0 0;
   }
 
   a {
@@ -64,31 +35,51 @@
     margin: 0 0 15px;
     color: $color-white;
     text-decoration: none;
+
+    &:nth-child(9),
+    &:nth-child(10) {
+      font-weight: bold;
+    }
+
   }
 
 }
 
-.c-footer__social-icons {
-  margin: 0 10px 10px 0;
+.c-footer__logo {
+  margin: 0 0 $spacing-md;
+  color: $color-white;
+
+  img {
+    width: 200px;
+  }
+
+}
+
+.c-footer__icons {
+  margin: 0 0 $spacing-md;
 
   a {
     display: inline-block;
-    margin: 0 10px 10px;
-  }
+    padding: 6px 6px 0;
+    border: 1px solid $color-white;
+    border-radius: 50%;
 
-  img {
-    width: 40px;
+    &:not(:first-child) {
+      margin: 0 0 0 $spacing-lg;
+    }
+
+    img {
+      width: 30px;
+    }
+
   }
 
 }
 
 .c-footer__copyright {
   color: $color-light-gray;
-  text-align: center;
-
-  @include bp(screen3) {
-    text-align: left;
-  }
+  font-size: 0.9em;
+  line-height: 1.3;
 
   a {
     color: $color-white;

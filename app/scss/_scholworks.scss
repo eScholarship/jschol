@@ -18,16 +18,6 @@ $scholworks-tag-height: $element-height;
     align-items: flex-start;
   }
 
-  header {
-
-    a {
-      @extend %o-textlink__secondary;
-      font-size: 1.2em;
-      font-weight: bold;
-    }
-
-  }
-
 }
 
 .c-scholworks__tag-list {
@@ -48,17 +38,57 @@ $scholworks-tag-height: $element-height;
   background-image: inline('../images/icon_pdf-black.svg');
 }
 
+.c-scholworks__tag-book {
+  @extend %c-scholworks__tag;
+  // book icon
+}
+
+.c-scholworks__tag-thesis {
+  @extend %c-scholworks__tag;
+  // thesis icon
+}
+
+.c-scholworks__tag-multimedia {
+  @extend %c-scholworks__tag;
+  // multimedia icon
+}
+
 .c-scholworks__tag-peer {
   @extend %c-scholworks__tag;
   padding: 0 $spacing-sm;
 }
 
-.c-scholworks__main-column {
-  // empty
+.c-scholworks__heading {
+  height: 2.2em; // truncate beyond 2 lines per jquery.dotdotdot
+  font-size: 1.2em;
+  font-weight: bold;
+
+  a {
+    @extend %o-textlink__secondary;
+  }
+
 }
 
-.c-scholworks__institution-link {
-  @extend %o-textlink__secondary;
+.c-scholworks__author {
+  height: 1.1em; // truncate beyond 1 line per jquery.dotdotdot
+
+  a {
+    @extend %o-textlink__secondary;
+  }
+
+}
+
+.c-scholworks__publication {
+  margin: 0 0 $spacing-md;
+
+  a {
+    @extend %o-textlink__secondary;
+  }
+
+}
+
+.c-scholworks__abstract {
+  height: 2.4em; // truncate beyond 2 lines per jquery.dotdotdot
 }
 
 .c-scholworks__article-preview {
@@ -119,7 +149,7 @@ $scholworks-tag-height: $element-height;
   background-image: inline('../images/icon_play-circle-o.svg');
 }
 
-.c-scholworks__cc {
+.c-scholworks__rights {
   flex: 0 0 auto;
   margin: 0 0 $spacing-sm;
 

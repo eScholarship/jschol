@@ -1,0 +1,90 @@
+// ##### Search2 Component ##### //
+
+.c-search2 {
+  display: flex;
+  align-items: flex-start;
+}
+
+.c-search2__inputs {
+  display: flex;
+  flex: 1 0 auto;
+  flex-flow: column nowrap;
+  width: 23.5em;
+  margin: 0 $spacing-body 0 0;
+  border: 1px solid $color-light-gray;
+}
+
+.c-search2__form {
+  display: flex;
+  background-color: $color-white;
+  z-index: 1;
+}
+
+.c-search2__label {
+  @extend %hide;
+}
+
+.c-search2__field {
+  flex: 1 0 auto;
+  height: $input-height;
+  padding: 0 0 0 30px;
+  border: none;
+  background: inline('../images/icon_magnify.svg') no-repeat left 8px center / 16px;
+
+  @include bp(screen3) {
+    padding: 0 0 0 $spacing-sm;
+    background: none;
+  }
+
+}
+
+.c-search2__submit-button {
+  @extend %hide;
+
+  @include bp(screen3) {
+    // first 2 properties make up %show, because Sass @extends are not allowed within media queries:
+    position: static;
+    left: auto;
+    height: $input-height;
+    padding: 0 13px;
+    border: none;
+    background: inline('../images/icon_magnify.svg') no-repeat center / 25px;
+  }
+
+}
+
+.c-search2__search-close-button {
+  height: $input-height;
+  padding: 0 13px;
+  border: none;
+  background: inline('../images/icon_close.svg') no-repeat center right / 20px;
+
+  @include bp(screen3) {
+    display: none;
+  }
+
+}
+
+%c-search2__refine {
+  display: flex;
+  align-items: center;
+  height: $input-height;
+  padding: 0 8px;
+  transition: margin 0.5s 0.1s;
+  background: lighten($color-light-gray, 10%);
+
+  label {
+    margin: 0 20px 0 5px;
+  }
+
+}
+
+.c-search2__refine {
+  @extend %c-search2__refine;
+  margin: (-$input-height) 0 0;
+}
+
+.c-search2__refine--active {
+  @extend %c-search2__refine;
+  margin: 0;
+}

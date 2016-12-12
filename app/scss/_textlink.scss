@@ -27,3 +27,17 @@
 .o-textlink__secondary {
   @extend %o-textlink__secondary;
 }
+
+%o-textlink__colorless {
+  color: inherit;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+}
+
+.o-textlink__colorless {
+  @extend %o-textlink__colorless;
+}
