@@ -12,6 +12,9 @@ class TextlinkObj extends React.Component {
         <div>
           <a href="" className="o-textlink__secondary">Secondary Link</a>
         </div>
+        <div>
+          <a href="" className="o-textlink__colorless">Colorless Link</a>
+        </div>
       </div>
     )
   }

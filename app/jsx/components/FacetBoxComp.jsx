@@ -2,11 +2,6 @@
 
 import React from 'react'
 
-// When running in the browser (and only then), include polyfill(s)
-if (!(typeof document === "undefined")) {
-  require('details-polyfill')
-}
-
 class FacetBoxComp extends React.Component {
   render() {
     return (
