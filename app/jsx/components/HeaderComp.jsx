@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { browserHistory } from 'react-router'
-import SearchComp from '../components/SearchComp.jsx'
+//import SearchComp from '../components/SearchComp.jsx'
 
 // Hack to use Joel's new HeaderComp1 until Andy merges his code
 import HeaderComp1 from '../components/Header1Comp.jsx'
