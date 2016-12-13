@@ -7,10 +7,11 @@ import { Router, Route, IndexRoute, Link, browserHistory } from 'react-router'
 
 import HomePage from './pages/HomePage.jsx'
 import BrowsePage from './pages/BrowsePage.jsx'
-import UnitPage from './pages/UnitPage.jsx';
-import ItemPage from './pages/ItemPage.jsx';
-import SearchPage from './pages/SearchPage.jsx';
-import StaticPage from './pages/StaticPage.jsx';
+import UnitPage from './pages/UnitPage.jsx'
+import ItemPage from './pages/ItemPage.jsx'
+import SearchPage from './pages/SearchPage.jsx'
+import StaticPage from './pages/StaticPage.jsx'
+import NotFoundPage from './pages/NotFoundPage.jsx'
 
 class App extends React.Component {
   render = ()=>
@@ -27,6 +28,7 @@ const routes = (
     <Route path="/item/:itemID" component={ItemPage} />
     <Route path="/search" component={SearchPage} />
     <Route path="/static/:unitID/:pageName" component={StaticPage} />
+    <Route path="*" component={NotFoundPage}/>
   </Route>
 )
 

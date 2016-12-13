@@ -31,6 +31,9 @@ def puts(*args)
   }
 end
 
+# Make it clear where the new session starts in the log file.
+puts "\n\n=====================================================================================\n"
+
 # Use the Sequel gem to get object-relational mapping, connection pooling, thread safety, etc.
 # If specified, use SOCKS proxy for all connections (including database).
 dbConfig = YAML.load_file("config/database.yaml")
