@@ -12,6 +12,9 @@ import ItemPage from './pages/ItemPage.jsx'
 import SearchPage from './pages/SearchPage.jsx'
 import StaticPage from './pages/StaticPage.jsx'
 import NotFoundPage from './pages/NotFoundPage.jsx'
+import LoginPage from './pages/LoginPage.jsx'
+import LoginSuccessPage from './pages/LoginSuccessPage.jsx'
+import LogoutPage from './pages/LogoutPage.jsx'
 
 class App extends React.Component {
   render = ()=>
@@ -28,6 +31,9 @@ const routes = (
     <Route path="/item/:itemID" component={ItemPage} />
     <Route path="/search" component={SearchPage} />
     <Route path="/static/:unitID/:pageName" component={StaticPage} />
+    <Route path="/login" component={LoginPage} />
+    <Route path="/loginSuccess" component={LoginSuccessPage} />
+    <Route path="/logout" component={LogoutPage} />
     <Route path="*" component={NotFoundPage}/>
   </Route>
 )

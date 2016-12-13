@@ -19,7 +19,7 @@ class StaticPage extends PageBase
   renderData(data) { 
     return(
     <div className="l-about">
-      <HeaderComp />
+      <HeaderComp loggedIn={this.state.loggedIn} />
       <NavComp />
       <BreadcrumbComp array={data.breadcrumb} />
       <div className="c-columns">

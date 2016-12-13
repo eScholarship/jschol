@@ -17,7 +17,8 @@ class FooterComp extends React.Component {
           <a href="">Privacy Policy</a>
           <a href="">Terms & Conditions</a>
           <a href="">Help</a>
-          <Link to="/login">Admin Login</Link>
+          { this.props.loggedIn ? <Link to="/logout">Admin Logout</Link>
+                                : <Link to="/login">Admin Login</Link> }
         </nav>
         <div className="c-footer__logo">
           <a href="">
