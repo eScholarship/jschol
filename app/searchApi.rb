@@ -3,22 +3,6 @@ require 'sequel'
 require 'json'
 require 'pp'
 
-# Database caches for speed. We check every 30 seconds for changes. These tables change infrequently.
-$unitsHash = nil
-$oruAncestors = nil
-Thread.new {
-  prevTime = nil
-  while true
-    utime = DB.fetch("SHOW TABLE STATUS WHERE Name in ('units', 'unit_hier')").all.map { |row| row[:Update_time] }.max
-    if utime != prevTime
-      $unitsHash = Unit.to_hash(:id)
-      $oruAncestors = UnitHier.where(is_direct: true).where(ancestor: Unit.where(type: 'oru')).to_hash(:unit_id, :ancestor_unit)
-      prevTime = utime
-    end
-    sleep 30
-  end
-}
-
 # API to connect to AWS CloudSearch
 $csClient = Aws::CloudSearchDomain::Client.new(
   endpoint: YAML.load_file("config/cloudSearch.yaml")["searchEndpoint"])

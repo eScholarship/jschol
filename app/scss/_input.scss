@@ -5,24 +5,24 @@ $input-height: $element-height;
 .o-input__droplist {
 
   label {
-		margin: 0 10px 0 0;
-		color: $color-dark-gray;
-		font-size: 0.8em;
-		font-weight: bold;
-  	text-transform: uppercase;
+    margin: 0 10px 0 0;
+    color: $color-dark-gray;
+    font-size: 0.8em;
+    font-weight: bold;
+    text-transform: uppercase;
   }
 
   select {
     height: $input-height;
-  	padding: 0 30px 0 10px;
-  	border: 1px solid $color-dark-gray;
-  	border-radius: 0;
-  	background: inline('../images/icon_arrow-down.svg') right 12px center / 12px no-repeat;
-  	appearance: none;
+    padding: 0 30px 0 10px;
+    border: 1px solid $color-dark-gray;
+    border-radius: 0;
+    background: inline('../images/icon_arrow-down.svg') right 12px center / 12px no-repeat;
+    appearance: none;
 
-	  &::-ms-expand { // remove default down arrow for IE 10 and higher
-	  	display: none;
-	  }
+    &::-ms-expand { // remove default down arrow for IE 10 and higher
+      display: none;
+    }
 
   }
 

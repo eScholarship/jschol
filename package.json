@@ -21,7 +21,7 @@
     "del": "^2.2.1",
     "express": "^4.13.4",
     "gulp": "^3.9.1",
-    "gulp-autoprefixer": "^3.1.0",
+    "gulp-autoprefixer": "^3.1.1",
     "gulp-clean-css": "^2.0.12",
     "gulp-concat": "^2.6.0",
     "gulp-eslint": "^3.0.1",
@@ -43,7 +43,7 @@
     "gulp-wait": "0.0.2",
     "history": "^2.1.2",
     "jshint": "^2.9.2",
-    "lodash": "^4.15.0",
+    "lodash": "^4.16.4",
     "path": "^0.12.7",
     "postcss-assets": "^4.1.0",
     "run-sequence": "^1.2.2",
@@ -52,12 +52,14 @@
   },
   "dependencies": {
     "details-polyfill": "^1.0.2",
+    "flickity": "^2.0.5",
+    "flickity-imagesloaded": "^2.0.0",
     "jquery": "^3.1.0",
     "jquery.dotdotdot": "amywieliczka/jQuery.dotdotdot",
-    "react": "^15.3.0",
-    "react-dom": "^15.3.0",
+    "react": "^15.3.1",
+    "react-dom": "^15.3.1",
     "react-responsive": "^1.1.4",
-    "react-router": "^2.6.1",
+    "react-router": "^2.7.0",
     "react-router-form": "^2.0.0-rc.0"
   }
 }

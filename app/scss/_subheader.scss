@@ -1,0 +1,109 @@
+// ##### Subheader Component ##### //
+
+// ***** Layout ***** //
+
+// Would rather try CSS Grid Layout here, but spec not yet ratified, so here's some Flexbox hacking:
+
+.c-subheader {
+  display: flex;
+  position: relative; // to absolute positioned campus, nav2, and nav3 components
+  margin: 0 0 $spacing-md;
+  background: $color-white;
+
+  @include bp(screen2) {
+    flex-wrap: wrap;
+    margin: 0 (-$spacing-sm) $spacing-md;
+    padding: 0 $spacing-sm $spacing-sm;
+  }
+
+}
+
+.c-subheader__campus {
+
+  @include bp(screen3) {
+    order: 1;
+  }
+
+}
+
+.c-subheader__nav {
+
+  @include bp(screen3) {
+    flex: 1 1 100%;
+    order: 4;
+  }
+
+}
+
+.c-subheader__buttons {
+  display: flex;
+  align-items: center;
+
+  @include bp(screen3) {
+    flex-direction: column;
+    order: 3;
+  }
+
+}
+
+.c-subheader__banner {
+  display: none;
+
+  @include bp(screen3) {
+    display: block;
+    flex: 1 0 auto;
+    order: 2;
+  }
+
+}
+
+// ***** Nested Grid Elements ***** //
+
+.c-subheader__banner-image {
+  display: block;
+  margin: 0 auto;
+}
+
+.c-subheader__button-deposit {
+  padding: 8px 16px;
+  background-color: $color-orange;
+  color: $color-white;
+  text-decoration: none;
+}
+
+.c-subheader__button-submit {
+  @extend %o-textlink__primary;
+  margin: 0 $spacing-sm;
+  padding: 0 $spacing-sm 0 0;
+  border-right: 1px solid $color-dark-gray;
+
+  @include bp(screen3) {
+    margin: 0 0 $spacing-sm;
+    padding: 8px 16px;
+    background-color: $color-orange;
+    color: $color-white;
+
+    &:hover {
+      text-decoration: none;
+    }
+
+  }
+
+}
+
+.c-subheader__button-manage {
+  @extend %o-textlink__primary;
+  white-space: nowrap;
+}
+
+.c-subheader__button-fragment {
+  position: absolute;
+  left: -9999px;
+
+  @include bp(screen3) {
+    display: block;
+    position: static;
+    left: auto;
+  }
+
+}

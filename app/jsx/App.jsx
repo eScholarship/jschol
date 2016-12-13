@@ -10,6 +10,7 @@ import BrowsePage from './pages/BrowsePage.jsx'
 import UnitPage from './pages/UnitPage.jsx';
 import ItemPage from './pages/ItemPage.jsx';
 import SearchPage from './pages/SearchPage.jsx';
+import StaticPage from './pages/StaticPage.jsx';
 
 class App extends React.Component {
   render = ()=>
@@ -25,6 +26,7 @@ const routes = (
     <Route path="/unit/:unitID" component={UnitPage} />
     <Route path="/item/:itemID" component={ItemPage} />
     <Route path="/search" component={SearchPage} />
+    <Route path="/static/:unitID/:pageName" component={StaticPage} />
   </Route>
 )
 

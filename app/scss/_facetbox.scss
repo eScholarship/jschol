@@ -1,43 +1,43 @@
 // ##### Facet Box Component ##### //
 
 .c-facetbox {
-	margin: 0 0 $spacing-sm;
-	padding: $spacing-sm;
+  margin: 0 0 $spacing-sm;
+  padding: $spacing-sm;
 }
 
 .c-facetbox__summary {
-	position: relative;
-	margin: 0 (-$spacing-sm);
-	padding: $spacing-base $spacing-sm;
-	background: $color-light-gray;
-	font-size: 1.2em;
-	box-shadow: $box-shadow;
-	user-select: none;
+  position: relative;
+  margin: 0 (-$spacing-sm);
+  padding: $spacing-base $spacing-sm;
+  background: $color-light-gray;
+  font-size: 1.2em;
+  box-shadow: $box-shadow;
+  user-select: none;
 
-	&::after {
-		position: absolute;
-		top: 0;
-		right: $spacing-sm;
-		bottom: 0;
-		padding: 7px;
-		background: url('../images/icon_arrow-down-black.svg') no-repeat center / 12px;
-		content: '';
-	}
+  &::after {
+    position: absolute;
+    top: 0;
+    right: $spacing-sm;
+    bottom: 0;
+    padding: 7px;
+    background: url('../images/icon_arrow-down-black.svg') no-repeat center / 12px;
+    content: '';
+  }
 
 }
 
 .c-facetbox[open] {
-	border-bottom: 1px solid $color-light-gray;
+  border-bottom: 1px solid $color-light-gray;
 
-	.c-facetbox__summary {
-		margin: 0 (-$spacing-sm) $spacing-sm;
-		background: none;
-		box-shadow: none;
+  .c-facetbox__summary {
+    margin: 0 (-$spacing-sm) $spacing-sm;
+    background: none;
+    box-shadow: none;
 
-		&::after {
-			transform: rotate(180deg);
-		}
+    &::after {
+      transform: rotate(180deg);
+    }
 
-	}
+  }
 
 }

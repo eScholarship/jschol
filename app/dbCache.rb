@@ -26,7 +26,7 @@ end
 
 # Get number of publications per campus as one hash.
 # {"ucb"=>11000, "ucd"=>982 ...}
-def getPubsPerCampus
+def getPubStatsPerCampus
   activeCampusIds = $activeCampuses.map{|id, c| id }
   array = UnitItem.join(:items, :id=>:item_id).
     where(:unit_id=>activeCampusIds).exclude(:status=>'withdrawn').group_and_count(:unit_id).
@@ -36,7 +36,7 @@ end
 
 # Get number of ORUs per campus as one hash. ORUs must contain items in unit_items table to be counted
 # {"ucb"=>117, "ucd"=>42 ...}
-def getOrusPerCampus
+def getOruStatsPerCampus
   orusWithContent = Unit.join(UnitItem, :unit_id=>:id).filter(type: 'oru').distinct.select(:id).map(:id)
   activeCampusIds = $activeCampuses.map{|id, c| id }
   array = UnitHier.join(:units, :id=>:unit_id).
@@ -47,7 +47,7 @@ end
 
 # Get number of journals per campus as one hash.
 # {"ucb"=>53, "ucd"=>20 ...}
-def getJournalsPerCampus
+def getJournalStatsPerCampus
   activeJournals = Unit.filter(type: 'journal', is_active: 1).map(:id)
   activeCampusIds = $activeCampuses.map{|id, c| id }
   array = UnitHier.join(:units, :id=>:unit_id).
@@ -56,3 +56,27 @@ def getJournalsPerCampus
   return Hash[array.map(&:values).map(&:flatten)]
 end
 
+# Get list of journals, their parent campus(es), and active/non-active.
+# i.e. {:id=>"ao4elt4",
+#       :name=> "Adaptive Optics ...",
+#       :ancestor_unit=>["ucla", "ucsc"],
+#       :is_active=>true},
+def getJournalsPerCampus
+  allJournals = Unit.filter(type: 'journal').map(:id)
+  activeCampusIds = $activeCampuses.map{|id, c| id }
+  array = UnitHier.join(:units, :id=>:unit_id).
+    where(:unit_id=>allJournals, :ancestor_unit=>activeCampusIds).select(:id, :name, :ancestor_unit, :is_active).
+    map { |h| h.values }
+  # Combine journals that have mult. campuses into single hash to allow for easy filtering on Journal Browse page
+  array_new = []
+  checkedJournal = '' 
+  array.each do |h|
+    next if h[:id] == checkedJournal 
+    campuses = []
+    array.select { |x| x[:id] == h[:id] }.each{|y| campuses << y[:ancestor_unit] }
+    h[:ancestor_unit] = campuses
+    array_new << h
+    checkedJournal = h[:id] 
+  end
+  return array_new
+end

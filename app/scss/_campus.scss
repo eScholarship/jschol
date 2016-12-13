@@ -1,0 +1,104 @@
+// ##### Campus Heading and Selector Component ##### //
+
+$campus-selector-button-width: 30px;
+
+.c-campusselector {
+  display: inline-flex;
+  align-items: center;
+
+  @include bp(screen3) {
+    position: relative;
+    align-items: flex-end;
+    min-height: $element-height;
+  }
+
+}
+
+.c-campusselector__heading {
+  margin: 0 $spacing-sm 0 0;
+  font-size: 1em;
+  text-align: right;
+
+  @include bp(screen3) {
+    width: 7.5em; // component width
+    font-size: 1.5em;
+  }
+
+  a {
+    @extend %o-textlink__colorless;
+  }
+
+}
+
+.c-campusselector__selector {
+
+  summary {
+    position: relative;
+    width: $campus-selector-button-width;
+    height: $element-height;
+    border: 1px solid $color-dark-gray;
+    border-right: none;
+
+    @include bp(screen3) {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      height: auto;
+      border: 1px solid $color-dark-gray;
+    }
+
+    &::after {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      background: url('../images/icon_arrow-down.svg') no-repeat center / 13px;
+      content: '';
+    }
+
+  }
+
+  &[open] {
+
+    summary::after {
+      transform: rotate(180deg);
+    }
+
+  }
+
+}
+
+.c-campusselector__selector-items {
+  position: absolute; // to .c-subheader
+  right: 0;
+  left: 0;
+  margin: $spacing-sm 0 0;
+  background-color: $color-white;
+  z-index: 2;
+
+  @include bp(screen3) {
+    margin-right: (-$campus-selector-button-width) - 1px;
+  }
+
+  div {
+    padding: $spacing-sm;
+    background-color: $color-light-gray;
+    font-size: 1.1em;
+  }
+
+  a {
+    display: block;
+    padding: $spacing-sm;
+    border: 1px solid $color-dark-gray;
+    color: $color-dark-gray;
+    font-size: 1.1em;
+    text-decoration: none;
+
+    &:not(:first-of-type) {
+      border-top: none;
+    }
+
+  }
+
+}

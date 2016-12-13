@@ -1,0 +1,77 @@
+// ##### Header1 Component ##### //
+
+.c-header1 {
+
+  @include bp(screen2) {
+    display: flex;
+    justify-content: space-between;
+    margin: (-$spacing-sm) (-$spacing-sm) 0;
+    padding: $spacing-sm $spacing-sm 0;
+    background: $color-white;
+  }
+
+}
+
+.c-header1__logo {
+  // size to go here
+}
+
+.c-header1__logosearch {
+  display: flex;
+  flex: 1 0 auto;
+  justify-content: space-between;
+  margin: 0 0 $spacing-sm;
+}
+
+%c-header1__search {
+  position: absolute;
+  right: $spacing-sm;
+  left: $spacing-sm;
+  transform: translateX(110%);
+  transition: transform 0.5s;
+  background: $color-white;
+  z-index: 2;
+
+  @include bp(screen2) {
+    display: flex;
+    position: relative;
+    flex: 1 0 auto;
+    justify-content: center;
+    transform: translateX(0%);
+  }
+
+}
+
+.c-header1__search {
+  @extend %c-header1__search;
+}
+
+.c-header1__search--active {
+  @extend %c-header1__search;
+  transform: translateX(0%);
+}
+
+.c-header1__search-open-button {
+  align-self: flex-start;
+  padding: 15px;
+  border: none;
+  background: inline('../images/icon_magnify.svg') no-repeat center right / 25px;
+
+  @include bp(screen2) {
+    display: none;
+  }
+
+}
+
+.c-header1__deposit {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.c-header1__deposit-button {
+  height: $input-height;
+  padding: 0 20px;
+  border: none;
+  background-color: $color-orange;
+  color: $color-white;
+}

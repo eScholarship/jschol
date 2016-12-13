@@ -3,14 +3,73 @@
 // Exclusion rule for scss-lint:
 // scss-lint:disable all
 
-// Highlight an element with a border:
+// ***** Highlight Elements ***** //
 
 $bred: 1px solid #f00;
 $bblue: 1px solid #00f;
 $bgreen: 1px solid #0c0;
 
-// Highlight Bootstrap columns:
+// ***** Subhead Layout Test***** //
 
-// [class^="col-"] {
-// 	border: $bblue;
-// }
+.test-subhead {
+  display: flex;
+  flex-flow: row wrap;
+}
+
+.test-subhead__campus {
+
+  @include bp(screen3) {
+    order: 1;
+  }
+
+}
+
+.test-subhead__menu {
+  
+  @include bp(screen3) {
+    order: 4;
+    flex: 1 1 100%;
+  }
+
+}
+
+.test-subhead__deposit {
+  
+  @include bp(screen3) {
+    order: 3;
+  }
+
+}
+
+.test-subhead__banner {
+  display: none;
+
+  @include bp(screen3) {
+    display: block;
+    order: 2;
+    flex: 1 0 auto;
+  }
+
+}
+
+// Borders:
+
+.test-subhead {
+  border: 2px solid gray;
+}
+
+.test-subhead__campus {
+  border: 2px solid red;
+}
+
+.test-subhead__menu {
+  border: 2px solid blue;
+}
+
+.test-subhead__deposit {
+  border: 2px solid green;
+}
+
+.test-subhead__banner {
+  border: 2px solid orange;
+}
