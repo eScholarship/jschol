@@ -1,6 +1,7 @@
 
 import React from 'react'
 import $ from 'jquery'
+import _ from 'lodash'
 import HeaderComp from '../components/HeaderComp.jsx'
 import NavComp from '../components/NavComp.jsx'
 import FooterComp from '../components/FooterComp.jsx'
@@ -13,8 +14,7 @@ class PageBase extends React.Component
     super(props)
     this.state = {
       pageData: null,
-      loggedIn: (sessionStorage && sessionStorage.getItem('loggedIn')) ? 
-                JSON.parse(sessionStorage.getItem('loggedIn')) : null
+      loggedIn: this.getLoginData()
     }
 
     let dataURL = this.pageDataURL(props)
@@ -35,6 +35,21 @@ class PageBase extends React.Component
       else
         this.fetchState(props)
     }
+  }
+
+  // Resuscitate page-level admin login state, kept in browser's sessionStorage object.
+  getLoginData() {
+    let data = sessionStorage && JSON.parse(sessionStorage.getItem('loggedIn'))
+    if (data)
+      data.onEditingPageChange = flag => this.onEditingPageChange(flag)
+    return data
+  }
+
+  // Called when user clicks Edit Page, or Done Editing
+  onEditingPageChange(flag) {
+    let newState = _.clone(this.state)
+    newState.loggedIn.editingPage = flag
+    this.setState(newState)
   }
 
   // Browser-side AJAX fetch of page data. Sets state when the data is returned to us.

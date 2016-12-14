@@ -15,7 +15,7 @@ class LogoutPage extends PageBase
     super(props)
     if (sessionStorage)
       sessionStorage.removeItem("loggedIn")
-    this.state.loggedIn = null // cancel exiting login
+    this.state.loggedIn = null // cancel existing login
   }
 
   pageDataURL(props) { return null /* no API data */ }
@@ -31,7 +31,7 @@ class LogoutPage extends PageBase
               <h1 className="o-columnbox1__heading">Logout</h1>
             </header>
             <div>
-              You have logged out.
+              Logged out.
             </div>
           </section>
         </main>

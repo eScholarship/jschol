@@ -7,4 +7,17 @@
   clear: both;
   margin: -0.6em -0.6em 0.6em -0.6em;
   padding: 0.5em;
+  height: 1.5em;
+}
+
+.c-loginbar__loggedInMsg {
+  float: left;
+}
+
+.c-loginbar__editPg {
+  float: right;
+}
+
+.c-loginbar__editPgButton {
+  color: $color-black;
 }
