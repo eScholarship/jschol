@@ -3,9 +3,9 @@
 .c-adminbar {
   background: $color-dark-gray;
   color: $color-white;
-  margin: -0.6em -0.6em 0.6em -0.6em;
+  margin: -10px -10px -10px -10px; /* reverses the padding in <body> */
   padding: 0.5em;
-  height: 1.5em;
+  height: 2em;
 }
 
 .c-adminbar__loggedInMsg {

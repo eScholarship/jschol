@@ -36,7 +36,7 @@ class LoginPage extends PageBase
             </header>
             <Form to='/loginSuccess' method="POST" onSubmit={(e,data) => this.onSubmit(e, data)}>
               <label htmlFor="login-username" style={{display: "inline-block", width: "6em"}}>User name:&#160;</label>
-              <input type="text" id="login-username"/>
+              <input type="text" id="login-username" ref={el=> el && el.focus()}/> {/* Set initial focus */}
               <br/>
               <label htmlFor="login-password" style={{display: "inline-block", width: "6em"}}>Password:&#160;</label>
               <input type="password" id="login-password"/>

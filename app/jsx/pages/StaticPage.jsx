@@ -65,13 +65,17 @@ class StaticPage extends PageBase
 
 class Editable extends React.Component
 {
-  render() { return(
-    <div style={{position: "relative"}}>
-      { this.props.children }
-      { this.props.admin.editingPage && 
-        <button style={{position: "absolute", right: "1em", bottom: "1em"}}>Edit</button> }
-    </div>
-  )}
+  render() { 
+    let p = this.props; 
+    if (!p.admin || !p.admin.editingPage)
+      return p.children
+    return (
+      <div style={{position: "relative"}}>
+        { p.children }
+        <button style={{position: "absolute", right: "1em", bottom: "1em"}}>Edit</button>
+      </div>
+    )
+  }
 }
 
 class StaticContent extends React.Component

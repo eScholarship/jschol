@@ -3,7 +3,8 @@
 
 import React from 'react'
 import ReactDOM from 'react-dom'
-import { Router, Route, IndexRoute, Link, browserHistory } from 'react-router'
+import { Router, Route, IndexRoute, Link, browserHistory, applyRouterMiddleware } from 'react-router'
+import { useScroll } from 'react-router-scroll';
 
 import HomePage from './pages/HomePage.jsx'
 import BrowsePage from './pages/BrowsePage.jsx'
@@ -41,7 +42,8 @@ const routes = (
 // When running in the browser, render with React (vs. server-side where iso runs it for us)
 if (!(typeof document === "undefined")) {
   ReactDOM.render((
-    <Router history={browserHistory}>
+    // useScroll() below is a fix so that transitioning to a new page always scrolls to the top.
+    <Router history={browserHistory} render={applyRouterMiddleware(useScroll())}>
       {routes}
     </Router>
   ), document.getElementById('main'))

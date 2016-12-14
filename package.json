@@ -60,6 +60,7 @@
     "react-dom": "^15.3.1",
     "react-responsive": "^1.1.4",
     "react-router": "^2.7.0",
-    "react-router-form": "^2.0.0-rc.0"
+    "react-router-form": "^2.0.0-rc.0",
+    "react-router-scroll": "^0.4.1"
   }
 }
