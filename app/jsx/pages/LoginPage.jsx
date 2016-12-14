@@ -15,7 +15,7 @@ class LoginPage extends PageBase
 
   render() { return(
     <div>
-      <HeaderComp loggedIn={this.state.loggedIn}/>
+      <HeaderComp admin={this.state.admin}/>
       <NavComp/>
       <div className="c-columns">
         <aside>
@@ -46,7 +46,7 @@ class LoginPage extends PageBase
           </section>
         </main>
       </div>
-      <FooterComp loggedIn={this.state.loggedIn}/>
+      <FooterComp admin={this.state.admin}/>
     </div>
   )}
 
@@ -54,7 +54,7 @@ class LoginPage extends PageBase
   // through page reloads.
   onSubmit(e, data) {
     // In the future, we'll replace this with actual secure stuff.
-    sessionStorage.setItem('loggedIn', JSON.stringify({ 
+    sessionStorage.setItem('admin', JSON.stringify({ 
       username: data['login-username'],
       token: "xyz123" 
     }))

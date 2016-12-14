@@ -15,11 +15,16 @@ class StaticPage extends PageBase
     return "/api/static/" + props.params.unitID + "/" + props.params.pageName
   }
 
+  // OK to display the Edit Page button if user is logged in
+  hasEditableComponents() {
+    return true
+  }
+
   // PageBase calls this when the API data has been returned to us
   renderData(data) { 
     return(
     <div className="l-about">
-      <HeaderComp loggedIn={this.state.loggedIn} />
+      <HeaderComp admin={this.state.admin} />
       <NavComp />
       <BreadcrumbComp array={data.breadcrumb} />
       <div className="c-columns">

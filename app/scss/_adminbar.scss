@@ -1,23 +1,21 @@
-// ##### LoginBar Component ##### //
+// ##### adminbar Component ##### //
 
-.c-loginbar {
-  display: block;
+.c-adminbar {
   background: $color-dark-gray;
   color: $color-white;
-  clear: both;
   margin: -0.6em -0.6em 0.6em -0.6em;
   padding: 0.5em;
   height: 1.5em;
 }
 
-.c-loginbar__loggedInMsg {
+.c-adminbar__loggedInMsg {
   float: left;
 }
 
-.c-loginbar__editPg {
+.c-adminbar__editPg {
   float: right;
 }
 
-.c-loginbar__editPgButton {
+.c-adminbar__editPgButton {
   color: $color-black;
 }

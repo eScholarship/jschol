@@ -19,7 +19,7 @@ class LoginSuccessPage extends PageBase
 
   render() { return(
     <div>
-      <HeaderComp loggedIn={this.state.loggedIn}/>
+      <HeaderComp admin={this.state.admin}/>
       <NavComp/>
       <div className="c-columns">
         <main>
@@ -28,12 +28,12 @@ class LoginSuccessPage extends PageBase
               <h1 className="o-columnbox1__heading">Login Success</h1>
             </header>
             <p>
-            You are logged in as '{this.state.loggedIn.username}'.
+            You are logged in as '{this.state.admin.username}'.
             </p>
           </section>
         </main>
       </div>
-      <FooterComp loggedIn={this.state.loggedIn}/>
+      <FooterComp admin={this.state.admin}/>
     </div>
   )}
 }

@@ -14,15 +14,15 @@ class LogoutPage extends PageBase
   constructor(props) {
     super(props)
     if (sessionStorage)
-      sessionStorage.removeItem("loggedIn")
-    this.state.loggedIn = null // cancel existing login
+      sessionStorage.removeItem("admin")
+    this.state.admin = null // cancel existing login
   }
 
   pageDataURL(props) { return null /* no API data */ }
 
   render() { return(
     <div>
-      <HeaderComp loggedIn={this.state.loggedIn}/>
+      <HeaderComp admin={this.state.admin}/>
       <NavComp/>
       <div className="c-columns">
         <main>
@@ -36,7 +36,7 @@ class LogoutPage extends PageBase
           </section>
         </main>
       </div>
-      <FooterComp loggedIn={this.state.loggedIn}/>
+      <FooterComp admin={this.state.admin}/>
     </div>
   )}
 }

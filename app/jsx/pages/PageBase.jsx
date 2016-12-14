@@ -14,7 +14,7 @@ class PageBase extends React.Component
     super(props)
     this.state = {
       pageData: null,
-      loggedIn: this.getLoginData()
+      admin: this.getAdminData()
     }
 
     let dataURL = this.pageDataURL(props)
@@ -25,10 +25,10 @@ class PageBase extends React.Component
           props.location.urlsToFetch.push(dataURL)
       // Phase 2: Second server-side load, where our data has been fetched and stored in props.location
       else if (props.location.urlsFetched)
-        this.state = { pageData: props.location.urlsFetched[this.pageDataURL(props)] }
+        this.state.pageData = props.location.urlsFetched[this.pageDataURL(props)]
       // Phase 3: Initial browser load. Server should have placed our data in window.
       else if (window.jscholApp_initialPageData) {
-        this.state = { pageData: window.jscholApp_initialPageData }
+        this.state.pageData = window.jscholApp_initialPageData
         delete window.jscholApp_initialPageData
       }
       // Phase 4: Browser-side page switch. We have to fetch new data ourselves.
@@ -38,18 +38,25 @@ class PageBase extends React.Component
   }
 
   // Resuscitate page-level admin login state, kept in browser's sessionStorage object.
-  getLoginData() {
-    let data = sessionStorage && JSON.parse(sessionStorage.getItem('loggedIn'))
-    if (data)
+  getAdminData() {
+    let data = sessionStorage && JSON.parse(sessionStorage.getItem('admin'))
+    if (data) {
+      data.pageHasEditableComponents = this.hasEditableComponents()
       data.onEditingPageChange = flag => this.onEditingPageChange(flag)
+    }
     return data
   }
 
   // Called when user clicks Edit Page, or Done Editing
   onEditingPageChange(flag) {
     let newState = _.clone(this.state)
-    newState.loggedIn.editingPage = flag
+    newState.admin.editingPage = flag
     this.setState(newState)
+  }
+
+  // Pages with any editable components should override this.
+  hasEditableComponents() {
+    return false
   }
 
   // Browser-side AJAX fetch of page data. Sets state when the data is returned to us.
@@ -82,14 +89,14 @@ class PageBase extends React.Component
         { this.state.error ? this.renderError() 
           : this.state.pageData ? this.renderData(this.state.pageData) 
           : this.renderLoading() }
-        <FooterComp loggedIn={this.state.loggedIn}/>
+        <FooterComp admin={this.state.admin}/>
       </div>
     )
   }
 
   renderLoading() { return(
     <div>
-      <HeaderComp loggedIn={this.state.loggedIn}/>
+      <HeaderComp admin={this.state.admin}/>
       <NavComp/>
       <h2 style={{ marginTop: "5em", marginBottom: "5em" }}>Loading...</h2>
     </div>
@@ -97,7 +104,7 @@ class PageBase extends React.Component
 
   renderError() { return (
     <div>
-      <HeaderComp loggedIn={this.state.loggedIn}/>
+      <HeaderComp admin={this.state.admin}/>
       <NavComp/>
       <h2 style={{ marginTop: "5em", marginBottom: "5em" }}>{this.state.error}</h2>
     </div>
