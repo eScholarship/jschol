@@ -36,7 +36,7 @@ class StaticPage extends PageBase
           </section>
         </aside>
         <main>
-          <Editable admin={this.state.admin}>
+          <Editable admin={this.state.admin} text={data.page.html}>
             <StaticContent {...data.page}/>
           </Editable>
         </main>
@@ -65,16 +65,36 @@ class StaticPage extends PageBase
 
 class Editable extends React.Component
 {
+  state = { editingComp: false }
+
   render() { 
     let p = this.props; 
     if (!p.admin || !p.admin.editingPage)
       return p.children
-    return (
-      <div style={{position: "relative"}}>
-        { p.children }
-        <button style={{position: "absolute", right: "1em", bottom: "1em"}}>Edit</button>
-      </div>
-    )
+    else if (this.state.editingComp) {
+      return(
+        <div className="c-staticpage__modal">
+          <div className="c-staticpage__modal-content">
+            <textarea>
+              {p.text}
+            </textarea>
+            <button onClick={e=>this.setState({editingComp:false})}>Save</button>
+            <button onClick={e=>this.setState({editingComp:false})}>Cancel</button>
+          </div>
+        </div>
+      )
+    }
+    else {
+      return (
+        <div style={{position: "relative"}}>
+          { p.children }
+          <button onClick={e=>this.setState({ editingComp: true })} 
+                  style={{position: "absolute", right: "1em", bottom: "1em"}}>
+            Edit
+          </button>
+        </div>
+      )
+    }
   }
 }
 
