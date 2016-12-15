@@ -14,6 +14,7 @@ require 'mimemagic'
 require 'net/http'
 require 'open-uri'
 require 'pp'
+require 'sanitize'
 require 'sequel'
 require 'sinatra'
 require 'sinatra/streaming'
@@ -472,9 +473,21 @@ get "/api/static/:unitID/:pageName" do |unitID, pageName|
 end
 
 ###################################################################################################
+# The first line of defense against unwanted or unsafe HTML is the WYSIWIG editor's built-in
+# filtering. However, since this is an API we cannot rely on that. This is the second line of
+# defense.
+def sanitizeHTML(htmlFragment)
+  return Sanitize.fragment(params[:newText], 
+    elements: %w{b em i strong u} +                      # all 'restricted' tags
+              %w{a br li ol p small strike sub sup ul},  # subset of ''basic' tags
+    attributes: { a: ['href'] },
+    protocols:  { a: {'href' => ['ftp', 'http', 'https', 'mailto', :relative]} }
+  )
+end
+
+###################################################################################################
 # *Put* to change the main text on a static page
 put "/api/static/:unitID/:pageName/mainText" do |unitID, pageName|
-  content_type :json
 
   # Grab unit and page data from the database
   unit = $unitsHash[unitID]
@@ -483,6 +496,21 @@ put "/api/static/:unitID/:pageName/mainText" do |unitID, pageName|
   page = Page.where(unit_id: unitID, name: pageName).first
   page or halt(404, "Page not found")
 
-  body = { }
-  return body.to_json
+  # In future the token will be looked up in a sessions table of logged in users. For now
+  # it's just a placeholder.
+  params[:token] == 'xyz123' or halt(401) # TODO: make this actually secure
+
+  # TODO: check that logged in user has permission to edit this unit and page
+  puts "TODO: permission check"
+
+  # Parse the HTML text, and sanitize to be sure only allowed tags are used.
+  safeText = sanitizeHTML(params[:newText])
+
+  # Update the database
+  page.attrs = JSON.parse(page.attrs).merge({ "html" => safeText }).to_json
+  page.save
+
+  # And let the caller know it went fine.
+  content_type :json
+  return { status: "ok" }.to_json
 end

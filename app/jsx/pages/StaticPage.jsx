@@ -1,6 +1,7 @@
 
 import React from 'react'
 import { Link } from 'react-router'
+import $ from 'jquery'
 
 import PageBase from './PageBase.jsx'
 import HeaderComp from '../components/HeaderComp.jsx'
@@ -62,15 +63,26 @@ class StaticPage extends PageBase
     </div>
   )}
 
-  onSaveContent(newText, funcAfter) {
-    console.log("Would save text:", newText)
-    setTimeout(funcAfter, 1000)
+  onSaveContent(newText, funcAfter) 
+  {
+    $.ajax({ url: `/api/static/${this.props.params.unitID}/${this.props.params.pageName}/mainText`,
+             type: 'PUT',
+             data: { token: this.state.admin.token,
+                     newText: newText }})
+    .done(()=>{
+      this.fetchState(this.props)  // re-fetch state now that DB has been updated
+      funcAfter(true)
+    })
+    .fail(()=>{
+      console.log("Save content failed.")
+      funcAfter(false)
+    })
   }
 }
 
 class Editable extends React.Component
 {
-  state = { editingComp: false, savingComp: false }
+  state = { editingComp: false, savingMsg: null }
 
   render() { 
     let p = this.props; 
@@ -87,12 +99,12 @@ class Editable extends React.Component
         </div>
       )
     }
-    else if (this.state.savingComp) {
+    else if (this.state.savingMsg) {
       return (
         <div style={{position: "relative"}}>
           { p.children }
           <div className="c-staticpage_saving">
-            <div className="c-staticpage_savingText">Saving</div>
+            <div className="c-staticpage_savingText">{this.state.savingMsg}</div>
           </div>
         </div>
       )
@@ -111,8 +123,15 @@ class Editable extends React.Component
   }
 
   save() {
-    this.setState({ editingComp: false, savingComp: true })
-    this.props.onSave(this.textArea.value, ()=>this.setState({ savingComp: false }))
+    this.setState({ editingComp: false, savingMsg: "Updating..." })
+    this.props.onSave(this.textArea.value, (ok)=>{
+      if (ok)
+        this.setState({ savingMsg: null })
+      else {
+        this.setState({ savingMsg: "Failed." })
+        setTimeout(()=>this.setState({savingMsg: null}), 750)
+      }
+    })
   }
 }
 
