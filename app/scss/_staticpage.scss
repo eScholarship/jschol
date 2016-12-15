@@ -1,0 +1,48 @@
+// ##### adminbar Component ##### //
+
+.c-staticpage__modal {
+  position: fixed; /* Stay in place */
+  z-index: 99; /* Sit on top */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  overflow: auto; /* Enable scroll if needed */
+  background-color: rgb(0,0,0); /* Fallback color */
+  background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+
+/* Modal Content/Box */
+.c-staticpage__modal-content {
+  background-color: #fefefe;
+  margin: 15% auto; /* 15% from the top and centered */
+  padding: 20px;
+  border: 1px solid #888;
+  width: 50%; /* Could be more or less, depending on screen size */
+}
+
+.c-staticpage__modal textarea {
+  width: 100%;
+  height: 20em;
+}
+
+.c-staticpage_saving {
+  position: absolute; /* Stay in place */
+  z-index: 1; /* Sit on top of content */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  background-color: rgb(96,96,96); /* Fallback color */
+  background-color: rgba(96,96,96,0.8); /* Black w/ opacity */
+}
+
+.c-staticpage_savingText {
+  color: $color-white;
+  margin: 0;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 200%;
+}

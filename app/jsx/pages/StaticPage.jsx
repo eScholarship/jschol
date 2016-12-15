@@ -65,17 +65,12 @@ class StaticPage extends PageBase
 
   onSaveContent(newText, funcAfter) 
   {
-    $.ajax({ url: `/api/static/${this.props.params.unitID}/${this.props.params.pageName}/mainText`,
+    return $.ajax({ url: `/api/static/${this.props.params.unitID}/${this.props.params.pageName}/mainText`,
              type: 'PUT',
              data: { token: this.state.admin.token,
                      newText: newText }})
     .done(()=>{
       this.fetchState(this.props)  // re-fetch state now that DB has been updated
-      funcAfter(true)
-    })
-    .fail(()=>{
-      console.log("Save content failed.")
-      funcAfter(false)
     })
   }
 }
@@ -124,13 +119,12 @@ class Editable extends React.Component
 
   save() {
     this.setState({ editingComp: false, savingMsg: "Updating..." })
-    this.props.onSave(this.textArea.value, (ok)=>{
-      if (ok)
-        this.setState({ savingMsg: null })
-      else {
-        this.setState({ savingMsg: "Failed." })
-        setTimeout(()=>this.setState({savingMsg: null}), 750)
-      }
+    this.props.onSave(this.textArea.value)
+    .done(()=>this.setState({ savingMsg: null }))
+    .fail(()=>{
+      // Put up a "Failed" message and leave it there a little while so user can see it.
+      this.setState({ savingMsg: "Failed." })
+      setTimeout(()=>this.setState({savingMsg: null}), 1000)
     })
   }
 }
