@@ -36,7 +36,7 @@ class StaticPage extends PageBase
           </section>
         </aside>
         <main>
-          <Editable admin={this.state.admin} text={data.page.html}>
+          <Editable admin={this.state.admin} text={data.page.html} onSave={(t,f)=>this.onSaveContent(t,f)}>
             <StaticContent {...data.page}/>
           </Editable>
         </main>
@@ -61,11 +61,16 @@ class StaticPage extends PageBase
       </div>
     </div>
   )}
+
+  onSaveContent(newText, funcAfter) {
+    console.log("Would save text:", newText)
+    setTimeout(funcAfter, 1000)
+  }
 }
 
 class Editable extends React.Component
 {
-  state = { editingComp: false }
+  state = { editingComp: false, savingComp: false }
 
   render() { 
     let p = this.props; 
@@ -75,11 +80,19 @@ class Editable extends React.Component
       return(
         <div className="c-staticpage__modal">
           <div className="c-staticpage__modal-content">
-            <textarea>
-              {p.text}
-            </textarea>
-            <button onClick={e=>this.setState({editingComp:false})}>Save</button>
+            <textarea ref={d=>{this.textArea=d}} defaultValue={p.text}/>
+            <button onClick={e=>this.save()}>Save</button>
             <button onClick={e=>this.setState({editingComp:false})}>Cancel</button>
+          </div>
+        </div>
+      )
+    }
+    else if (this.state.savingComp) {
+      return (
+        <div style={{position: "relative"}}>
+          { p.children }
+          <div className="c-staticpage_saving">
+            <div className="c-staticpage_savingText">Saving</div>
           </div>
         </div>
       )
@@ -95,6 +108,11 @@ class Editable extends React.Component
         </div>
       )
     }
+  }
+
+  save() {
+    this.setState({ editingComp: false, savingComp: true })
+    this.props.onSave(this.textArea.value, ()=>this.setState({ savingComp: false }))
   }
 }
 

@@ -471,3 +471,18 @@ get "/api/static/:unitID/:pageName" do |unitID, pageName|
   return body.merge(getHeaderElements(breadcrumb, nil)).to_json
 end
 
+###################################################################################################
+# *Put* to change the main text on a static page
+put "/api/static/:unitID/:pageName/mainText" do |unitID, pageName|
+  content_type :json
+
+  # Grab unit and page data from the database
+  unit = $unitsHash[unitID]
+  unit or halt(404, "Unit not found")
+
+  page = Page.where(unit_id: unitID, name: pageName).first
+  page or halt(404, "Page not found")
+
+  body = { }
+  return body.to_json
+end
