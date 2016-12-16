@@ -108,6 +108,9 @@ end
 class Page < Sequel::Model
 end
 
+class Widget < Sequel::Model
+end
+
 ##################################################################################################
 # Database caches for speed. We check every 30 seconds for changes. These tables change infrequently.
 
@@ -466,6 +469,13 @@ get "/api/static/:unitID/:pageName" do |unitID, pageName|
       title: page.title,
       html: JSON.parse(page.attrs)['html']
     },
+    sidebarWidgets: Widget.where(unit_id: unitID, region: 'sidebar').order(:ordering).map { |w|
+      attrs = JSON.parse(w.attrs)
+      { id: w.id,
+        kind: w.kind,
+        title: attrs['title'],
+        html: attrs['html'] }
+    },
     sidebarNavLinks: [{"name" => "About eScholarship", "url" => request.path.sub("/api/", "/")},]
   }
   breadcrumb = [{"name" => "About eScholarship", "url" => request.path.sub("/api/", "/")},]
@@ -489,19 +499,14 @@ end
 # *Put* to change the main text on a static page
 put "/api/static/:unitID/:pageName/mainText" do |unitID, pageName|
 
-  # Grab unit and page data from the database
-  unit = $unitsHash[unitID]
-  unit or halt(404, "Unit not found")
-
-  page = Page.where(unit_id: unitID, name: pageName).first
-  page or halt(404, "Page not found")
-
   # In future the token will be looked up in a sessions table of logged in users. For now
   # it's just a placeholder.
   params[:token] == 'xyz123' or halt(401) # TODO: make this actually secure
-
   # TODO: check that logged in user has permission to edit this unit and page
   puts "TODO: permission check"
+
+  # Grab page data from the database
+  page = Page.where(unit_id: unitID, name: pageName).first or halt(404, "Page not found")
 
   # Parse the HTML text, and sanitize to be sure only allowed tags are used.
   safeText = sanitizeHTML(params[:newText])
@@ -509,6 +514,31 @@ put "/api/static/:unitID/:pageName/mainText" do |unitID, pageName|
   # Update the database
   page.attrs = JSON.parse(page.attrs).merge({ "html" => safeText }).to_json
   page.save
+
+  # And let the caller know it went fine.
+  content_type :json
+  return { status: "ok" }.to_json
+end
+
+###################################################################################################
+# *Put* to change widget text
+put "/api/widget/:unitID/:widgetID/text" do |unitID, widgetID|
+
+  # In future the token will be looked up in a sessions table of logged in users. For now
+  # it's just a placeholder.
+  params[:token] == 'xyz123' or halt(401) # TODO: make this actually secure
+  # TODO: check that logged in user has permission to edit this unit and page
+  puts "TODO: permission check"
+
+  # Grab widget data from the database
+  widget = Widget.where(unit_id: unitID, id: widgetID).first or halt(404, "Widget not found")
+
+  # Parse the HTML text, and sanitize to be sure only allowed tags are used.
+  safeText = sanitizeHTML(params[:newText])
+
+  # Update the database
+  widget.attrs = JSON.parse(widget.attrs).merge({ "html" => safeText }).to_json
+  widget.save
 
   # And let the caller know it went fine.
   content_type :json

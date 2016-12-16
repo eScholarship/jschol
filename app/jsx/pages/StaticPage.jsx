@@ -2,6 +2,7 @@
 import React from 'react'
 import { Link } from 'react-router'
 import $ from 'jquery'
+import _ from 'lodash'
 
 import PageBase from './PageBase.jsx'
 import HeaderComp from '../components/HeaderComp.jsx'
@@ -37,40 +38,44 @@ class StaticPage extends PageBase
           </section>
         </aside>
         <main>
-          <Editable admin={this.state.admin} text={data.page.html} onSave={(t,f)=>this.onSaveContent(t,f)}>
+          <Editable admin={this.state.admin} onSave={(t)=>this.onSaveContent(t)} {...data.page} >
             <StaticContent {...data.page}/>
           </Editable>
         </main>
         <aside>
-          <section className="o-columnbox2 c-sidebarnav">
-            <header>
-              <h1 className="o-columnbox2__heading">Featured Articles</h1>
-            </header>
-            <nav className="c-sidebarnav">
-              Lorem ipsum
-            </nav>
-          </section>
-          <section className="o-columnbox2 c-sidebarnav">
-            <header>
-              <h1 className="o-columnbox2__heading">New Journal Issues</h1>
-            </header>
-            <nav className="c-sidebarnav">
-              Lorem ipsum
-            </nav>
-          </section>
+          { data.sidebarWidgets.map(widgetData => 
+            <Editable key={widgetData.id} 
+                      admin={this.state.admin} 
+                      onSave={(t)=>this.onSaveWidgetText(widgetData.id, t)} 
+                      canDelete
+                      {...widgetData}>
+              <SidebarWidget {...widgetData}/>
+            </Editable>
+          ) }
+          { this.state.admin && this.state.admin.editingPage &&
+            <button onClick={()=>alert("Someday, this will add a widget.")}>
+              Add widget
+            </button> }
         </aside>
       </div>
     </div>
   )}
 
-  onSaveContent(newText, funcAfter) 
-  {
-    return $.ajax({ url: `/api/static/${this.props.params.unitID}/${this.props.params.pageName}/mainText`,
-             type: 'PUT',
-             data: { token: this.state.admin.token,
-                     newText: newText }})
+  onSaveContent(newText) {
+    return $
+    .ajax({ url: `/api/static/${this.props.params.unitID}/${this.props.params.pageName}/mainText`,
+          type: 'PUT', data: { token: this.state.admin.token, newText: newText }})
     .done(()=>{
-      this.fetchState(this.props)  // re-fetch state now that DB has been updated
+      this.fetchState(this.props)  // re-fetch page state after DB is updated
+    })
+  }
+
+  onSaveWidgetText(widgetID, newText) {
+    return $
+    .ajax({ url: `/api/widget/${this.props.params.unitID}/${widgetID}/text`,
+          type: 'PUT', data: { token: this.state.admin.token, newText: newText }})
+    .done(()=>{
+      this.fetchState(this.props)  // re-fetch page state after DB is updated
     })
   }
 }
@@ -87,7 +92,7 @@ class Editable extends React.Component
       return(
         <div className="c-staticpage__modal">
           <div className="c-staticpage__modal-content">
-            <textarea ref={d=>{this.textArea=d}} defaultValue={p.text}/>
+            <textarea ref={d=>{this.textArea=d}} defaultValue={p.html}/>
             <button onClick={e=>this.save()}>Save</button>
             <button onClick={e=>this.setState({editingComp:false})}>Cancel</button>
           </div>
@@ -108,10 +113,18 @@ class Editable extends React.Component
       return (
         <div style={{position: "relative"}}>
           { p.children }
-          <button onClick={e=>this.setState({ editingComp: true })} 
-                  style={{position: "absolute", right: "1em", bottom: "1em"}}>
-            Edit
-          </button>
+          <div className="c-staticpage__editButtons">
+            <button className="c-staticpage__editButton"
+                    onClick={e=>this.setState({ editingComp: true })}>
+              Edit
+            </button>
+            { p.canDelete && 
+              <button className="c-staticpage__deleteButton"
+                      onClick={() => alert("Someday, this will delete the widget.")}>
+                Delete
+              </button>
+            }
+          </div>
         </div>
       )
     }
@@ -126,6 +139,18 @@ class Editable extends React.Component
       this.setState({ savingMsg: "Failed." })
       setTimeout(()=>this.setState({savingMsg: null}), 1000)
     })
+  }
+}
+
+class SidebarWidget extends React.Component
+{
+  render() { return(
+    <section className="o-columnbox2 c-sidebarnav">
+      <header>
+        <h1 className="o-columnbox2__heading">{this.props.title}</h1>
+      </header>
+      <nav className="c-sidebarnav" dangerouslySetInnerHTML={{__html: this.props.html}}/>
+    </section>)
   }
 }
 

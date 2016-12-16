@@ -46,3 +46,13 @@
   transform: translate(-50%, -50%);
   font-size: 200%;
 }
+
+.c-staticpage__editButtons {
+   position: absolute;
+   right: 1em;
+   bottom: 1em;
+}
+
+.c-staticpage__deleteButton {
+  margin-left: 0.5em;
+}
