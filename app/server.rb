@@ -312,7 +312,7 @@ get '/api/browse/depts/:campusID' do |campusID|
   body = {
     :type => "depts",
     :campusID => campusID,
-    :depts => {"id": campusID, "name": unit.name, "children": d.compact}
+    :depts => d.compact
   }
   breadcrumb = [
     {"name" => unit.name, "url" => "/unit/" + campusID},

@@ -103,9 +103,9 @@ consectetur adipiscing elit. Aenean euismod bibendum laoreet. Proin gravida dolo
 felis tellus mollis orci, sed start a journal nunc eget odio.
       </p>
       Expand All<br/>
-      <br/><br/>
       <ul>
-        <TreeNode key={this.state.depts.id} depts={this.state.depts} onCategorySelect={this.onSelect}/>
+        { this.props.depts.map((node) =>
+            <TreeNode key={node.id} depts={node} onCategorySelect={this.onSelect}/>) }
       </ul>
     </div>
   )}
