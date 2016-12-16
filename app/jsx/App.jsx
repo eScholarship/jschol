@@ -17,11 +17,19 @@ import LoginPage from './pages/LoginPage.jsx'
 import LoginSuccessPage from './pages/LoginSuccessPage.jsx'
 import LogoutPage from './pages/LogoutPage.jsx'
 
-class App extends React.Component {
-  render = ()=>
+class App extends React.Component 
+{
+  // The logout and login pages need to be able to return the user whence they
+  // came. To do that, we need to keep a record when page transitions occur.
+  componentWillReceiveProps(nextProps) {
+    nextProps.location.prevPathname = this.props.location.pathname
+  }
+
+  render() { return(
     <div>
       {this.props.children}
     </div>
+  )}
 }
 
 const routes = (

@@ -35,12 +35,16 @@ class StaticPage extends PageBase
               <h1 className="o-columnbox2__heading">{data.page.title}</h1>
             </header>
             <SidebarNavComp links={data.sidebarNavLinks}/>
+            { this.state.admin && this.state.admin.editingPage &&
+              <button>Add page</button> }
           </section>
         </aside>
         <main>
           <Editable admin={this.state.admin} onSave={(t)=>this.onSaveContent(t)} {...data.page} >
             <StaticContent {...data.page}/>
           </Editable>
+          { this.state.admin && this.state.admin.editingPage &&
+            <button>Delete this page</button> }
         </main>
         <aside>
           { data.sidebarWidgets.map(widgetData => 
@@ -53,9 +57,7 @@ class StaticPage extends PageBase
             </Editable>
           ) }
           { this.state.admin && this.state.admin.editingPage &&
-            <button onClick={()=>alert("Someday, this will add a widget.")}>
-              Add widget
-            </button> }
+            <button>Add widget</button> }
         </aside>
       </div>
     </div>
@@ -119,11 +121,7 @@ class Editable extends React.Component
               Edit
             </button>
             { p.canDelete && 
-              <button className="c-staticpage__deleteButton"
-                      onClick={() => alert("Someday, this will delete the widget.")}>
-                Delete
-              </button>
-            }
+              <button className="c-staticpage__deleteButton">Delete</button> }
           </div>
         </div>
       )

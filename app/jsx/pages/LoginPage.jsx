@@ -13,7 +13,8 @@ class LoginPage extends PageBase
 {
   pageDataURL(props) { return null /* no API data */ }
 
-  render() { return(
+  render() { 
+    return(
     <div>
       <HeaderComp admin={this.state.admin}/>
       <NavComp/>
@@ -34,7 +35,7 @@ class LoginPage extends PageBase
             <header>
               <h1 className="o-columnbox1__heading">Log In</h1>
             </header>
-            <Form to='/loginSuccess' method="POST" onSubmit={(e,data) => this.onSubmit(e, data)}>
+            <Form to={this.props.location.prevPathname || '/loginSuccess'} method="POST" onSubmit={(e,data) => this.onSubmit(e, data)}>
               <label htmlFor="login-username" style={{display: "inline-block", width: "6em"}}>User name:&#160;</label>
               <input type="text" id="login-username" ref={el=> el && el.focus()}/> {/* Set initial focus */}
               <br/>

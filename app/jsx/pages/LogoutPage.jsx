@@ -31,7 +31,9 @@ class LogoutPage extends PageBase
               <h1 className="o-columnbox1__heading">Logout</h1>
             </header>
             <div>
-              Logged out.
+              <p>Logged out.</p>
+              { this.props.location.prevPathname &&
+                <p>You may <Link to={this.props.location.prevPathname}>return</Link> to where you were.</p> }
             </div>
           </section>
         </main>
