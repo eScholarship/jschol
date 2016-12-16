@@ -266,10 +266,8 @@ get %r{^/(?!api/)(?!content/).*} do  # matches every URL except /api/* and /cont
 end
 
 ###################################################################################################
-# Browse page data.
-# get "/api/browse/:type(/.*)?" do
+# Browse page data (All campuses or All journals)
 get '/api/browse/:type' do |type|
-  # type can be campuslist, depts, or journals. depts and journals also accept queries
   content_type :json
   body = {
     :type => type
@@ -290,8 +288,6 @@ get '/api/browse/:type' do |type|
       })
       breadcrumb = [{"name" => "Campuses", "url" => "/browse/campuslist"},]
       return body.merge(getHeaderElements(breadcrumb, nil)).to_json
-    when "depts"
-      #ToDo
     when "journals"
       body.merge!({
         :journals => $campusJournals.sort_by{ |h| h[:name].downcase }
@@ -302,6 +298,37 @@ get '/api/browse/:type' do |type|
 end
 
 ###################################################################################################
+# Browse page - Campus depts data.
+get '/api/browse/depts/:campusID' do |campusID|
+  content_type :json
+  d = $hierByAncestor[campusID].map do |a|
+    getChildDepts($unitsHash[a.unit_id])
+  end
+  unit = $unitsHash[campusID]
+  body = {
+    :type => "depts",
+    :campusID => campusID,
+    :depts => {"id": campusID, "name": unit.name, "children": d.compact}
+  }
+  breadcrumb = [
+    {"name" => unit.name, "url" => "/unit/" + campusID},
+    {"name" => "Departments", "url" => "/browse/depts/" + campusID}]
+  return body.merge(getHeaderElements(breadcrumb, nil)).to_json
+end
+
+def getChildDepts(unit)
+  if unit.type != 'oru'
+    return nil
+  else
+    node = {"id" => unit.id, "name" => unit.name}
+    child = $hierByAncestor[unit.id].map { |c| getChildDepts($unitsHash[c.unit_id]) }.compact
+    if child[0] then node["children"] = child end
+    return node
+  end
+end
+
+
+###################################################################################################
 # Unit page data.
 get "/api/unit/:unitID" do |unitID|
   # Initial data for the page consists of the unit's id, name, type, etc. plus lists of the unit's
@@ -309,7 +336,7 @@ get "/api/unit/:unitID" do |unitID|
   # direct parents and children. "Indirect" (which we don't use here) are for grandparents/ancestors,
   # and grand-children/descendants.
   content_type :json
-  unit = Unit[unitID]
+  unit = $unitsHash[unitID]
   children = $hierByAncestor[unitID]
   parents = $hierByUnit[unitID]
   if !unit.nil?
