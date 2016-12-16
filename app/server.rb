@@ -101,6 +101,9 @@ end
 class Section < Sequel::Model
 end
 
+class Page < Sequel::Model
+end
+
 ##################################################################################################
 # Database caches for speed. We check every 30 seconds for changes. These tables change infrequently.
 
@@ -239,7 +242,8 @@ end
 ###################################################################################################
 # The outer framework of every page is essentially the same, substituting in the intial page
 # data and initial elements from React.
-get %r{^/(?!api/)(?!content/).*} do  # matches every URL except /api/* and /content/*
+# The regex below matches every URL except /api/*, /content/*, and things ending with a file ext.
+get %r{^/(?!(api/.*|content/.*|.*\.\w{1,4}$))} do
 
   puts "Page fetch: #{request.url}"
 
@@ -466,5 +470,28 @@ def getItemHtml(content_type, id)
     url = $2.start_with?("http", "ftp") ? $2 : dir + $2
     "#{attrib}=\"#{url}\"" + ((attrib == "src") ? "" : " target=\"new\"")
   }
+end
+
+###################################################################################################
+# Static page data.
+get "/api/static/:unitID/:pageName" do |unitID, pageName|
+  content_type :json
+
+  # Grab unit and page data from the database
+  unit = $unitsHash[unitID]
+  unit or halt(404, "Unit not found")
+
+  page = Page.where(unit_id: unitID, name: pageName).first
+  page or halt(404, "Page not found")
+
+  body = { 
+    page: {
+      title: page.title,
+      html: JSON.parse(page.attrs)['html']
+    },
+    sidebarNavLinks: [{"name" => "About eScholarship", "url" => request.path.sub("/api/", "/")},]
+  }
+  breadcrumb = [{"name" => "About eScholarship", "url" => request.path.sub("/api/", "/")},]
+  return body.merge(getHeaderElements(breadcrumb, nil)).to_json
 end
 

@@ -15,7 +15,7 @@ abbr {
 
 // scss-lint:disable ImportantRule
 input[type='search'] {
-	border-radius: 0 !important;
+  border-radius: 0 !important;
   appearance: none !important;
 }
 
@@ -23,10 +23,10 @@ summary {
   min-height: auto !important; // reset details polyfill
   cursor: pointer;
 
-	// Remove details arrow icon from webkit browsers:
-	&::-webkit-details-marker {
-	  display: none;
-	}
+  // Remove details arrow icon from webkit browsers:
+  &::-webkit-details-marker {
+    display: none;
+  }
 
   &::before {
     display: none !important; // reset details polyfill

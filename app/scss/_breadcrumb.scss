@@ -1,32 +1,32 @@
 // ##### Breadcrumb Component ##### //
 
 .c-breadcrumb {
-	margin: 0 0 $spacing-md;
+  margin: 0 0 $spacing-md;
 
   a {
-		color: $color-black;
-		font-size: 1.1em;
-		text-decoration: none;
+    color: $color-black;
+    font-size: 1.1em;
+    text-decoration: none;
 
-		&:hover {
-			text-decoration: underline;
-		}
+    &:hover {
+      text-decoration: underline;
+    }
 
-  	&:not(:last-child) {
+    &:not(:last-child) {
 
-			// scss-lint:disable NestingDepth
-  		&::after {
-				display: inline-block;
-				margin: 0 0.5em;
-				content: '>';
-			}
+      // scss-lint:disable NestingDepth
+      &::after {
+        display: inline-block;
+        margin: 0 0.5em;
+        content: '>';
+      }
 
-  	}
+    }
 
   }
 
 }
 
 .c-breadcrumb-link--active {
-	font-weight: bold;
+  font-weight: bold;
 }

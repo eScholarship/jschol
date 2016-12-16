@@ -2,7 +2,9 @@
 
 import React from 'react'
 
-import { HeaderComp, NavComp, FooterComp } from '../components/AllComponents.jsx'
+import HeaderComp from '../components/HeaderComp.jsx'
+import NavComp from '../components/NavComp.jsx'
+import FooterComp from '../components/FooterComp.jsx'
 
 class Home extends React.Component {
   render = ()=>

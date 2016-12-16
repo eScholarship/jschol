@@ -2,69 +2,69 @@
 
 .c-header {
 
-	@include bp(screen3) {
-		display: flex;
-		justify-content: space-between;
-	}
+  @include bp(screen3) {
+    display: flex;
+    justify-content: space-between;
+  }
 
 }
 
 .c-header__logosearch {
-	display: flex;
-	flex: 1 0 auto;
-	justify-content: space-between;
-	margin: 0 0 $spacing-sm;
+  display: flex;
+  flex: 1 0 auto;
+  justify-content: space-between;
+  margin: 0 0 $spacing-sm;
 }
 
 %c-header__search {
-	position: absolute;
-	right: $spacing-sm;
-	left: $spacing-sm;
-	transform: translateX(110%);
-	transition: transform 0.5s;
-	background: $color-white;
-	z-index: 2;
+  position: absolute;
+  right: $spacing-sm;
+  left: $spacing-sm;
+  transform: translateX(110%);
+  transition: transform 0.5s;
+  background: $color-white;
+  z-index: 2;
 
-	@include bp(screen3) {
-		display: flex;
-		position: relative;
-		flex: 1 0 auto;
-		justify-content: center;
-		transform: translateX(0%);
-	}
+  @include bp(screen3) {
+    display: flex;
+    position: relative;
+    flex: 1 0 auto;
+    justify-content: center;
+    transform: translateX(0%);
+  }
 
 }
 
 .c-header__search {
-	@extend %c-header__search;
+  @extend %c-header__search;
 }
 
 .c-header__search--active {
-	@extend %c-header__search;
-	transform: translateX(0%);
+  @extend %c-header__search;
+  transform: translateX(0%);
 }
 
 .c-header__search-open-button {
-	align-self: flex-start;
-	padding: 15px;
-	border: none;
-	background: url('../images/icon_magnify.svg') no-repeat center right / 25px;
+  align-self: flex-start;
+  padding: 15px;
+  border: none;
+  background: url('../images/icon_magnify.svg') no-repeat center right / 25px;
 
-	@include bp(screen3) {
-		display: none;
-	}
+  @include bp(screen3) {
+    display: none;
+  }
 
 }
 
 .c-header__deposit {
-	display: flex;
-	justify-content: flex-end;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .c-header__deposit-button {
-	height: $input-height;
-	padding: 0 20px;
-	border: none;
-	background-color: $color-orange;
-	color: $color-white;
+  height: $input-height;
+  padding: 0 20px;
+  border: none;
+  background-color: $color-orange;
+  color: $color-white;
 }

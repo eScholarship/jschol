@@ -3,7 +3,9 @@ import React from 'react'
 import { Link } from 'react-router'
 
 import PageBase from './PageBase.jsx'
-import { HeaderComp, NavComp, BreadcrumbComp } from '../components/AllComponents.jsx'
+import HeaderComp from '../components/HeaderComp.jsx'
+import NavComp from '../components/NavComp.jsx'
+import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
 
 class UnitPage extends PageBase
 {

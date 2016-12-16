@@ -2,7 +2,7 @@
 
 import React from 'react'
 import $ from 'jquery'
-import { PdfViewerComp } from '../components/AllComponents.jsx'
+import PdfViewerComp from '../components/PdfViewerComp.jsx'
 
 class ItemMainComp extends React.Component {
   getLink(id, service) {

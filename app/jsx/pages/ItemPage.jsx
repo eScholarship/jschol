@@ -3,7 +3,14 @@ import React from 'react'
 import { Link } from 'react-router'
 
 import PageBase from './PageBase.jsx'
-import { HeaderComp, NavComp, BreadcrumbComp, ItemMainComp, ItemSupplComp, ItemMetricsComp, ItemAuthArtComp, ItemCommentsComp } from '../components/AllComponents.jsx'
+import HeaderComp from '../components/HeaderComp.jsx'
+import NavComp from '../components/NavComp.jsx'
+import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
+import ItemMainComp from '../components/ItemMainComp.jsx'
+import ItemSupplComp from '../components/ItemSupplComp.jsx'
+import ItemMetricsComp from '../components/ItemMetricsComp.jsx'
+import ItemAuthArtComp from '../components/ItemAuthArtComp.jsx'
+import ItemCommentsComp from '../components/ItemCommentsComp.jsx'
 
 class ItemPage extends PageBase
 {

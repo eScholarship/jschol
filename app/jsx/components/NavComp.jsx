@@ -8,7 +8,11 @@ if (!(typeof document === "undefined")) {
   require('details-polyfill')
 }
 
-class NavComp extends React.Component {
+// Hack to use Joel's new Nav1Comp until Andy merges his code
+import Nav1Comp from '../components/Nav1Comp.jsx'
+class NavComp extends Nav1Comp { }
+
+class NavCompUnmerged extends React.Component {
   constructor(props){
     super(props)
   }
