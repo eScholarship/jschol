@@ -23,6 +23,7 @@ const routes = (
   <Route path="/" component={App}>
     <IndexRoute component={HomePage} />
     <Route path="/browse/:type" component={BrowsePage} />
+    <Route path="/browse/depts/:campusID" component={BrowsePage} />
     <Route path="/unit/:unitID" component={UnitPage} />
     <Route path="/item/:itemID" component={ItemPage} />
     <Route path="/search" component={SearchPage} />
