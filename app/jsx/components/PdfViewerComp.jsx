@@ -25,7 +25,7 @@ class PdfViewerComp extends React.Component
     if (this.initted)
       return
     this.initted = true
-    DEFAULT_URL = this.props.url
+    window.DEFAULT_URL = this.props.url
     window.webViewerLoad()
     $("#pdfjs_viewer").css("visibility", "visible") // we show it only after init, to avoid wonky display
   }
