@@ -1,6 +1,6 @@
 {
-  "name": "eschol5-app",
-  "version": "1.0.0",
+  "name": "jschol-app",
+  "version": "0.1.0",
   "description": "The fifth generation of the eScholarship front-end user interface.",
   "main": "index.html",
   "scripts": {
@@ -45,13 +45,12 @@
     "gulp-wait": "0.0.2",
     "history": "^2.1.2",
     "jshint": "^2.9.2",
-    "lodash": "^4.16.4",
     "path": "^0.12.7",
     "postcss-assets": "^4.1.0",
     "run-sequence": "^1.2.2",
     "vinyl-source-stream": "^1.1.0",
     "watchify": "^3.7.0",
-    "webpack": "^1.14.0"
+    "webpack": "^2.2.0-rc.1"
   },
   "dependencies": {
     "details-polyfill": "^1.0.2",
@@ -60,6 +59,7 @@
     "jquery": "^3.1.0",
     "jquery.dotdotdot": "amywieliczka/jQuery.dotdotdot",
     "json-loader": "^0.5.4",
+    "lodash": "^4.16.4",
     "react": "^15.3.1",
     "react-dom": "^15.3.1",
     "react-responsive": "^1.1.4",
