@@ -9,7 +9,7 @@ import HomePage from './pages/HomePage.jsx'
 import BrowsePage from './pages/BrowsePage.jsx'
 import UnitPage from './pages/UnitPage.jsx';
 import ItemPage from './pages/ItemPage.jsx';
-import SearchPage from './pages/SearchPage.jsx';
+import { SearchPage } from './pages/SearchPage.jsx';
 import StaticPage from './pages/StaticPage.jsx';
 
 class App extends React.Component {
@@ -23,6 +23,7 @@ const routes = (
   <Route path="/" component={App}>
     <IndexRoute component={HomePage} />
     <Route path="/browse/:type" component={BrowsePage} />
+    <Route path="/browse/depts/:campusID" component={BrowsePage} />
     <Route path="/unit/:unitID" component={UnitPage} />
     <Route path="/item/:itemID" component={ItemPage} />
     <Route path="/search" component={SearchPage} />
