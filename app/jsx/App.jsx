@@ -9,7 +9,7 @@ import HomePage from './pages/HomePage.jsx'
 import BrowsePage from './pages/BrowsePage.jsx'
 import UnitPage from './pages/UnitPage.jsx';
 import ItemPage from './pages/ItemPage.jsx';
-import SearchPage from './pages/SearchPage.jsx';
+import { SearchPage } from './pages/SearchPage.jsx';
 import StaticPage from './pages/StaticPage.jsx';
 
 class App extends React.Component {

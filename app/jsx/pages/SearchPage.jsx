@@ -777,4 +777,4 @@ class SearchPage extends PageBase {
   )}
 }
 
-module.exports = SearchPage;
+export { FacetItem, PubYear, FacetFieldset, CurrentSearchTerms, FacetForm, SortComp, PaginationComp, ResultItem, ScholarlyWorks, SearchPage }
