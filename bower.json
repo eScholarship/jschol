@@ -12,6 +12,7 @@
   "devDependencies": {
     "normalize-scss": "^3.0.3",
     "flickity": "^2.0.5",
-    "babel-polyfill": "^0.0.1"
+    "babel-polyfill": "^0.0.1",
+    "pdfjs-embed": "eScholarship/pdfjs-embed"
   }
 }

@@ -13,7 +13,7 @@
 
 #pdfjs_cdl_wrapper {
 
-  @import 'viewer';
+  @import '../bower_components/pdfjs-embed/scss/_viewer.scss';
 
   /* Overrides, to keep number of changes in the vendor file very small */
   #mainContainer {
