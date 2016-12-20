@@ -1,6 +1,7 @@
 
 import React from 'react'
 import $ from 'jquery'
+import dotdotdot from 'jquery.dotdotdot'
 import _ from 'lodash'   // mainly for _.isEmtpy() which also works server-side (unlike $.isEmptyObject)
 import { Link } from 'react-router'
 import Form from 'react-router-form'
@@ -620,15 +621,73 @@ class PaginationComp extends React.Component {
 }
 
 class ResultItem extends React.Component {
+  componentDidMount() {
+    $('.c-scholworks__title, .c-scholworks__abstract, .c-scholworks__authors').dotdotdot({watch: "window"});
+  }
   render() {
-    var tagList = []
+    var tagList = [];
     if (this.props.result.genre === 'article') {
       tagList.push({display: 'Article', tagStyle: 'article'});
     }
-    if (this.props.result.peerReviewed) {
+    if (this.props.result.genre === 'monograph') {
+      tagList.push({display: 'Book', tagStyle: 'book'});
+    }
+    if (this.props.result.genre === 'dissertation') {
+      tagList.push({display: 'Thesis', tagStyle: 'thesis'});
+    }
+    if (this.props.result.genre === 'multimedia') {
+      tagList.push({display: 'Multimedia', tagStyle: 'multimedia'});
+    }
+    if (this.props.result.peerReviewed === true) {
       tagList.push({display: 'Peer Reviewed', tagStyle: 'peer'});
     }
     
+    var publishingInfo;
+    var unitId;
+    if ('journalInfo' in this.props.result) {
+      publishingInfo = this.props.result.journalInfo.displayName;
+      unitId = this.props.result.journalInfo.unitId;
+    } else if ('unitInfo' in this.props.result) {
+      publishingInfo = this.props.result.unitInfo.displayName;
+      unitId = this.props.result.unitInfo.unitId;
+    }
+
+    var authorList = this.props.result.authors.map(function(author, i, a) {
+      if (i === a.length-1) {
+        return (<span key={author.name}><Link to={"/search/?q="+author.name}>{author.name}</Link></span>);
+      } else {
+        return (<span key={author.name}><Link to={"/search/?q="+author.name}>{author.name}</Link>; </span>);
+      }
+    });
+
+    var supp_files = this.props.result.supp_files.map(function(supp_file) {
+      if (supp_file.count >= 1) {
+        var display;
+        if (supp_file.type === 'video' || supp_file.type === 'image') {
+          display = supp_file.count > 1 ? supp_file.type + 's' : supp_file.type;
+        } else if (supp_file.type === 'audio') {
+          display = supp_file.count > 1 ? 'audio files' : 'audio file';
+        } else if (supp_file.type === 'pdf') {
+          display = supp_file.count > 1 ? 'additional PDFs' : 'additional PDF';
+        }
+        return (<li key={supp_file.type} className={"c-scholworks__media-" + supp_file.type}>Contains {supp_file.count} {display}</li>);   
+      }
+    });
+    // if ('supp_files' in this.props.result && this.props.result.supp_files !== null) {
+    //   if ('video' in this.props.result.supp_files && this.props.result.supp_files.video !== 0) {
+    //     supp_files.append(<li className="c-scholworks__media-video">Contains {this.props.result.supp_files.video} videos</li>);
+    //   }
+    //   if ('image' in this.props.result.supp_files && this.props.result.supp_files.image !== 0) {
+    //     supp_files.append(<li className="c-scholworks__media-image">Contains {this.props.result.supp_files.image} images</li>);
+    //   }
+    //   if ('pdf' in this.props.result.supp_files && this.props.result.supp_files.pdf !== 0) {
+    //     supp_files.append(<li className="c-scholworks__media-pdf">Contains {this.props.result.supp_files.pdf} additional PDFs</li>);
+    //   }
+    //   if ('audio' in this.props.result.supp_files && this.props.result.supp_files.audio !== 0) {
+    //     supp_files.append(<li className="c-scholworks__media-audio">Contains {this.props.result.supp_files.audio} audio files</li>);
+    //   }
+    // }
+
     return (
       <section className="c-scholworks__item">
         <div className="c-scholworks__main-column">
@@ -639,25 +698,23 @@ class ResultItem extends React.Component {
               ) 
             }) }
           </ul>
-          <header>
+          <header className="c-scholworks__title" style={{height: '2em'}}>
             <Link to={"/item/"+this.props.result.id.replace(/^qt/, "")}>{this.props.result.title}</Link>
           </header>
+          <div className="c-scholworks__authors" style={{height: '1em'}}>
+            {authorList}
+          </div>
+          <Link className="c-scholworks__institution-link" to={"/unit/" + unitId}>{publishingInfo}</Link> ({this.props.result.pub_year})
+          <div className="c-scholworks__abstract" style={{height: '2em'}}>
+            <p>{this.props.result.abstract}</p>
+          </div>
+          <div className="c-scholworks__media">
+            <ul className="c-scholworks__media-list">{ supp_files }</ul>
+            <img className="c-scholworks__cc" src="images/icon_cc-by.svg" alt="cc"/>
+          </div>
           <p>
-            Authors: ???<br/>
-            <a className="c-scholworks__institution-link" href="">Journal Info: ???</a> ({this.props.result.pub_date})
+            CC License: {this.props.result.rights}<br/>
           </p>
-          <p>
-            {this.props.result.abstract}
-          </p>
-
-          <ol>
-            <li>Genre: {this.props.result.genre}</li>
-            <li>Peer Reviewed: {this.props.result.peerReviewed}</li>
-            <li>CC License: {this.props.result.rights}</li>
-            <li>Thumbnail: ???</li>
-            <li>Journal Info: ???</li>
-            <li>Supplemental items: ???</li>
-          </ol>
         </div>
       </section>
     )
@@ -697,14 +754,14 @@ class SearchPage extends PageBase {
             <FacetForm data={facetFormData} query={data.query} />
           </aside>
           <main>
-            <section className="o-columnbox-main">
+            <section className="o-columnbox1">
               <header>
-                <h2 className="o-columnbox-main__heading">Informational Pages (12 results)</h2>
+                <h2 className="o-columnbox1__heading">Informational Pages (12 results)</h2>
               </header>
             </section>
-            <section className="o-columnbox-main">
+            <section className="o-columnbox1">
               <header>
-                <h2 className="o-columnbox-main__heading">Scholarly Works ({data.count} results)</h2>
+                <h2 className="o-columnbox1__heading">Scholarly Works ({data.count} results)</h2>
               </header>
               <div className="l-search__sort-pagination">
                 <SortComp query={data.query} />
@@ -720,4 +777,4 @@ class SearchPage extends PageBase {
   )}
 }
 
-module.exports = SearchPage;
+export { FacetItem, PubYear, FacetFieldset, CurrentSearchTerms, FacetForm, SortComp, PaginationComp, ResultItem, ScholarlyWorks, SearchPage }
