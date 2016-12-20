@@ -21,6 +21,7 @@ module.exports = {
   output: {
     filename: '[name]-bundle.js',
     path: './app/js',
+    publicPath: "/js/"
   },
   plugins: [
     new webpack.optimize.CommonsChunkPlugin("lib")

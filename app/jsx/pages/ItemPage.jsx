@@ -1,7 +1,6 @@
 
 import React from 'react'
 import { Link } from 'react-router'
-import PDFJS from 'pdfjs-embed'
 
 import PageBase from './PageBase.jsx'
 import HeaderComp from '../components/HeaderComp.jsx'

@@ -25,9 +25,17 @@ class PdfViewerComp extends React.Component
     if (this.initted)
       return
     this.initted = true
-    window.DEFAULT_URL = this.props.url
-    window.webViewerLoad()
-    $("#pdfjs_viewer").css("visibility", "visible") // we show it only after init, to avoid wonky display
+    var url = this.props.url;
+
+    // The following hijinks are a signal to webpack to split the pdf.js code into a separate
+    // bundle, which will be loaded only when needed.
+    require.ensure(['pdfjs-embed'], function(require) {
+      require('pdfjs-embed');
+      window.DEFAULT_URL = url;
+      window.webViewerLoad();
+       // we show it only after init, to avoid wonky display
+      $("#pdfjs_viewer").css("visibility", "visible");
+    }, 'pdfjs');
   }
 
   viewerHTML() {
