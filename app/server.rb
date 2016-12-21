@@ -218,7 +218,7 @@ class Fetcher
         out.write(data)
       end
     rescue Exception => e
-      halt 404, e.message
+      puts "Warning: problem while streaming content: #{e.message}"
     end
   end
 end
