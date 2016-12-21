@@ -24,7 +24,7 @@ module.exports = {
     publicPath: "/js/"
   },
   plugins: [
-    new webpack.optimize.CommonsChunkPlugin("lib"),
+    new webpack.optimize.CommonsChunkPlugin("lib")
   ],
   module: {
     loaders: [{

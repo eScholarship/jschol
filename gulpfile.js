@@ -10,88 +10,50 @@ const sourcemaps = require('gulp-sourcemaps');
 const scsslint = require('gulp-scss-lint');
 const postcss = require('gulp-postcss');
 const assets = require('postcss-assets');
-const source = require('vinyl-source-stream');
-const browserify = require('browserify');
-const watchify = require('watchify');
-const babelify = require('babelify');
 const livereload = require('gulp-livereload')
 const spawn = require('child_process').spawn
- 
+const webpack = require('webpack');
+const ProgressPlugin = require('webpack/lib/ProgressPlugin');
+
 // Process control for Sinatra and Express
-var startingUp = true
-var libsBuilt = false
-var appBuilt = false
 var sinatraProc // Main app in Sinatra (Ruby)
 var expressProc // Sub-app for isomophic javascript in Express (Node/Javascript)
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Transformations to build lib-bundle.js
-gulp.task('bundle-libs', function() {
-  var b = watchify(browserify({
-    entries: ['package.json'],
-    debug: true,  // generate source maps
-    cache: {}, packageCache: {}, fullPaths: true
-  }))
+// Build javscript bundles with Webpack
+gulp.task('watch:src', (cb) => {
+  const config = Object.create(require('./webpack.config.js'));
+  config.watch = true;
+  config.cache = true;
+  config.bail = false;
+  config.plugins.push(new ProgressPlugin( (percent, message) => 
+    process.stdout.write(" [" + Math.round(percent*100) + "%] " + message + "                                \r")
+  ))
 
-  function bundle() {
-    gutil.log("Bundling libs.")
-    libsBuilt = false
-    del("app/js/lib-bundle.js")
-    // This bundle will encompass everything in package.json that's not a "dev" dependency
-    getNPMPackageIds().forEach(function (id) { b.require(id) });
-    return b.bundle()
-      .on('error', gutil.log.bind(gutil, 'Bundling error'))
-      .pipe(source('app/js/lib-bundle.js'))
-      .pipe(gulp.dest('.'))
-      .on('end', function() { libsBuilt = true; checkAllBundlesReady() })
-  }
-
-  bundle()
-  return b.on('update', bundle).on('log', gutil.log)
-});
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Transformations to build app-bundle.js
-gulp.task('bundle-app', function() {
-  // NOTE: transforms must go on this first part, not in the bundle() function. Otherwise they
-  // get applied multiple times in a row, and the build takes longer and longer.
-  var b = watchify(browserify({
-    entries: ['app/jsx/App.jsx'],
-    debug: true,  // generate source maps
-    cache: {}, packageCache: {}
-  }))
-  .transform('babelify')  // note: presets are taken from .babelrc file
-
-  function bundle() {
-    gutil.log("Bundling app.")
-    appBuilt = false
-    del("app/js/app-bundle.js")
-    // This bundle is for the app, and excludes all package.json dependencies
-    getNPMPackageIds().forEach(function (id) { b.external(id) });
-    return b
-      .bundle()
-      .on('error', gutil.log.bind(gutil, 'Bundling error'))
-      .pipe(source('app/js/app-bundle.js'))
-      .pipe(gulp.dest('.'))
-      .on('end', function() { appBuilt = true; checkAllBundlesReady() })
-  }
-
-  bundle()
-  return b.on('update', bundle).on('log', gutil.log)
-});
-
-function checkAllBundlesReady() {
-  if (!appBuilt || !libsBuilt)
-    return
-
-  if (startingUp) {
-    console.log("All bundles ready. Starting servers.")
-    startExpressAndSinatra()
-  }
-  else {
-    // Not starting up, so do a livereload
+  webpack(config, function(error, stats) {
+    if (error) {
+      gutil.log('[webpack]', error);
+    }
+    showSummary(stats);
     livereload.reload()
-  }
+  });
+});
+
+function showSummary(stats) {
+    gutil.log('[webpack]', stats.toString({
+        colors: gutil.colors.supportsColor,
+        hash: false,
+        timings: false,
+        chunks: false,
+        chunkModules: false,
+        modules: false,
+        children: true,
+        version: true,
+        cached: false,
+        cachedAssets: false,
+        reasons: false,
+        source: false,
+        errorDetails: false
+    }));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -128,81 +90,56 @@ function startSinatra(afterFunc)
   sinatraProc.on('exit', function(code) {
     sinatraProc = null
   })
-  if (afterFunc)
-    spawn('ruby', ['tools/waitForServer.rb', 'http://localhost:4001/check', '20']).on('exit', afterFunc)
 }
 
-function restartSinatra(afterFunc)
+function restartSinatra()
 {
   if (sinatraProc) {
     console.log("Restarting Sinatra.")
     sinatraProc.on('exit', function(code) {
-      startSinatra(afterFunc)
+      startSinatra()
     })
     sinatraProc.kill()
     sinatraProc = null
   }
   else {
     console.log("Starting Sinatra.")
-    startSinatra(afterFunc)
+    startSinatra()
   }
 }
 
-gulp.task('restart-sinatra', function() {
-  restartSinatra(function() {
-    livereload.reload()
-  })
-});
+gulp.task('restart-sinatra', restartSinatra)
+
+gulp.task('start-sinatra', restartSinatra)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Support functions for starting and restarting Express, which runs the isomorphic-js sub-app.
-function startExpress(afterFunc)
+function startExpress()
 {
   expressProc = spawn('node', ['app/isomorphic.js'], { stdio: 'inherit' })
   expressProc.on('exit', function(code) {
     expressProc = null
   })
-  if (afterFunc)
-    spawn('ruby', ['tools/waitForServer.rb', 'http://localhost:4002/check', '20']).on('exit', afterFunc)
 }
 
-function restartExpress(afterFunc) {
+function restartExpress() {
   if (expressProc) {
     console.log("Restarting Express.")
     expressProc.on('exit', function(code) {
-      startExpress(afterFunc)
+      startExpress()
     })
     expressProc.kill()
     expressProc = null
   }
   else {
     console.log("Starting Express.")
-    startExpress(afterFunc)
+    startExpress()
   }
 }
 
-gulp.task('restart-express', function() {
-  restartExpress(function() {
-    console.log("express started - doing livereload")
-    livereload.reload()
-  })
-})
+gulp.task('restart-express', restartExpress)
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Fire up Express, and then Sinatra, and when all done, do a LiveReload.
-function startExpressAndSinatra()
-{
-  startingUp = false
-  livereload.listen();
-  console.log("Starting Express.")
-  startExpress(function() {
-    console.log("Starting Sinatra.")
-    startSinatra(function() {
-      console.log("Express and sinatra started: Ready to serve.")
-      livereload.reload()
-    })
-  })
-}
+gulp.task('start-express', restartExpress)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Watch sass, html, and js and reload browser if any changes
@@ -223,5 +160,10 @@ gulp.task('scss-lint', function() {
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+gulp.task('livereload', function() {
+  livereload.listen();
+});
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 // Build everything in order, then start the servers and watch for incremental changes.
-gulp.task('default',  ['bundle-libs', 'bundle-app', 'sass', 'watch'])
+gulp.task('default',  ['watch:src', 'start-sinatra', 'start-express', 'livereload', 'sass'])
