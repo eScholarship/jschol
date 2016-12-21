@@ -21,7 +21,7 @@ var expressProc // Sub-app for isomophic javascript in Express (Node/Javascript)
 
 // Build javscript bundles with Webpack
 gulp.task('watch:src', (cb) => {
-  const config = Object.create(require('./webpack.config.js'));
+  const config = Object.create(require('./webpack.conf'));
   config.watch = true;
   config.cache = true;
   config.bail = false;
@@ -155,7 +155,7 @@ gulp.task('watch', function() {
 gulp.task('scss-lint', function() {
   return gulp.src(['app/scss/**/*.scss', '!app/scss/vendor/**/*.scss'])
     .pipe(scsslint({
-      'config': 'scss-lint-config.yml' // Settings for linters. See: https://github.com/brigade/scss-lint/tree/master/lib/scss_lint/linter
+      'config': 'config/scss-lint-config.yml' // Settings for linters. See: https://github.com/brigade/scss-lint/tree/master/lib/scss_lint/linter
     }));
 });
 
