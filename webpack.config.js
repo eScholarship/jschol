@@ -24,7 +24,7 @@ module.exports = {
     publicPath: "/js/"
   },
   plugins: [
-    new webpack.optimize.CommonsChunkPlugin("lib")
+    new webpack.optimize.CommonsChunkPlugin("lib"),
   ],
   module: {
     loaders: [{
@@ -36,5 +36,9 @@ module.exports = {
       test: /\.json$/,
       loader: 'json-loader'
     }]
-  }
+  },
+  performance : {
+    hints : false
+  },
+  devtool: "cheap-module-source-map" // dev only
 }

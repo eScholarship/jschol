@@ -1,6 +1,7 @@
 app/bower_components
 app/css
 app/js/*bundle.js
+app/js/*.map
 bin/
 .bundle/
 bower_components/

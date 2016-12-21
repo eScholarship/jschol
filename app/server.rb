@@ -211,10 +211,14 @@ class Fetcher
 
   # Now we're ready to set the content type and return the contents in streaming fashion.
   def copyTo(out)
-    while true
-      data = @queue.pop_with_timeout(10)
-      data.nil? and break
-      out.write(data)
+    begin
+      while true
+        data = @queue.pop_with_timeout(10)
+        data.nil? and break
+        out.write(data)
+      end
+    rescue Exception => e
+      halt 404, e.message
     end
   end
 end
