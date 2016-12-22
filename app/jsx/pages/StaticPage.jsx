@@ -91,15 +91,26 @@ class Editable extends React.Component
     if (!p.admin || !p.admin.editingPage)
       return p.children
     else if (this.state.editingComp) {
-      return(
-        <div className="c-staticpage__modal">
-          <div className="c-staticpage__modal-content">
-            <textarea ref={d=>{this.textArea=d}} defaultValue={p.html}/>
-            <button onClick={e=>this.save()}>Save</button>
-            <button onClick={e=>this.setState({editingComp:false})}>Cancel</button>
+      if (this.state.Trumbowyg) {
+        let Trumbowyg = this.state.Trumbowyg
+        return(
+          <div className="c-staticpage__modal">
+            <div className="c-staticpage__modal-content">
+              <Trumbowyg id='react-trumbowyg' data={p.html}/>
+              {/*<textarea ref={d=>{this.textArea=d}} defaultValue={p.html}/>*/}
+              <button onClick={e=>this.save()}>Save</button>
+              <button onClick={e=>this.setState({editingComp:false})}>Cancel</button>
+            </div>
           </div>
-        </div>
-      )
+        )
+      }
+      else {
+        // Trumbowyg not loaded yet. Load it, and update when it's ready.
+        require.ensure(['react-trumbowyg'], (require) =>
+          this.setState({ Trumbowyg: require('react-trumbowyg').default }),
+          "cms")
+        return <div/>
+      }
     }
     else if (this.state.savingMsg) {
       return (

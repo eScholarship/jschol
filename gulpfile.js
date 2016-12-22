@@ -21,7 +21,7 @@ var expressProc // Sub-app for isomophic javascript in Express (Node/Javascript)
 
 // Build javscript bundles with Webpack
 gulp.task('watch:src', (cb) => {
-  const config = Object.create(require('./webpack.conf'));
+  const config = Object.create(require('./webpack.conf.js'));
   config.watch = true;
   config.cache = true;
   config.bail = false;

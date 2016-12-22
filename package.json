@@ -55,7 +55,6 @@
     "progress": "^1.1.8",
     "react-addons-test-utils": "^15.3.0",
     "run-sequence": "^1.2.2",
-    "vinyl-source-stream": "^1.1.0",
     "webpack": "^2.2.0-rc.1"
   },
   "dependencies": {
@@ -65,11 +64,13 @@
     "jquery": "^3.1.0",
     "jquery.dotdotdot": "amywieliczka/jQuery.dotdotdot",
     "lodash": "^4.16.4",
+    "pdfjs-embed": "escholarship/pdfjs-embed",
     "react": "^15.4.1",
     "react-dom": "^15.4.1",
     "react-responsive": "^1.1.4",
     "react-router": "^2.7.0",
     "react-router-form": "^2.0.0-rc.0",
-    "react-router-scroll": "^0.4.1"
+    "react-router-scroll": "^0.4.1",
+    "react-trumbowyg": "^1.1.0"
   }
 }
