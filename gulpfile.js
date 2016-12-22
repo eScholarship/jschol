@@ -69,7 +69,8 @@ function getNPMPackageIds() {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-// Process Sass to CSS, add sourcemaps, autoprefix CSS selectors, optionally Base64 font and image files into CSS, and reload browser:
+// Process Sass to CSS, add sourcemaps, autoprefix CSS selectors, optionally Base64 font and 
+// image files into CSS, and reload browser:
 gulp.task('sass', function() {
   gulp.src('app/scss/**/*.scss')
     .pipe(sourcemaps.init())
@@ -166,4 +167,4 @@ gulp.task('livereload', function() {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Build everything in order, then start the servers and watch for incremental changes.
-gulp.task('default',  ['watch:src', 'start-sinatra', 'start-express', 'livereload', 'sass'])
+gulp.task('default',  ['watch:src', 'watch', 'start-sinatra', 'start-express', 'livereload', 'sass', 'scss-lint'])

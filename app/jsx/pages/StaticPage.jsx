@@ -87,7 +87,7 @@ class Editable extends React.Component
   state = { editingComp: false, savingMsg: null }
 
   render() { 
-    let p = this.props; 
+    let p = this.props;
     if (!p.admin || !p.admin.editingPage)
       return p.children
     else if (this.state.editingComp) {
@@ -96,8 +96,16 @@ class Editable extends React.Component
         return(
           <div className="c-staticpage__modal">
             <div className="c-staticpage__modal-content">
-              <Trumbowyg id='react-trumbowyg' data={p.html}/>
-              {/*<textarea ref={d=>{this.textArea=d}} defaultValue={p.html}/>*/}
+              <Trumbowyg id='react-trumbowyg' 
+                         buttons={[['strong', 'em', 'underline', 'strikethrough'],
+                                   ['superscript', 'subscript'],
+                                   ['link'],
+                                   ['insertImage'],
+                                   'btnGrp-lists',
+                                   ['horizontalRule'],
+                                   ['removeformat']
+                                  ]}
+                         data={p.html} />
               <button onClick={e=>this.save()}>Save</button>
               <button onClick={e=>this.setState({editingComp:false})}>Cancel</button>
             </div>
@@ -106,18 +114,27 @@ class Editable extends React.Component
       }
       else {
         // Trumbowyg not loaded yet. Load it, and update when it's ready.
-        require.ensure(['react-trumbowyg'], (require) =>
-          this.setState({ Trumbowyg: require('react-trumbowyg').default }),
-          "cms")
-        return <div/>
+        setTimeout(()=>
+          require.ensure(['react-trumbowyg'], (require) =>
+            this.setState({ Trumbowyg: require('react-trumbowyg').default }),
+            "cms"),
+          1000)
+        return (
+          <div style={{position: "relative"}}>
+            { p.children }
+            <div className="c-staticpage__working">
+              <div className="c-staticpage__working-text">Working...</div>
+            </div>
+          </div>
+        )
       }
     }
     else if (this.state.savingMsg) {
       return (
         <div style={{position: "relative"}}>
           { p.children }
-          <div className="c-staticpage_saving">
-            <div className="c-staticpage_savingText">{this.state.savingMsg}</div>
+          <div className="c-staticpage__working">
+            <div className="c-staticpage__working-text">{this.state.savingMsg}</div>
           </div>
         </div>
       )
@@ -126,13 +143,13 @@ class Editable extends React.Component
       return (
         <div style={{position: "relative"}}>
           { p.children }
-          <div className="c-staticpage__editButtons">
-            <button className="c-staticpage__editButton"
+          <div className="c-staticpage__edit-buttons">
+            <button className="c-staticpage__edit-button"
                     onClick={e=>this.setState({ editingComp: true })}>
               Edit
             </button>
             { p.canDelete && 
-              <button className="c-staticpage__deleteButton">Delete</button> }
+              <button className="c-staticpage__delete-button">Delete</button> }
           </div>
         </div>
       )
