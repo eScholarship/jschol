@@ -10,9 +10,7 @@ function getNPMPackageIds() {
   } catch (e) {
     // does not have a package.json manifest
   }
-  // Filter out modules that get bundled separately through require.ensure
-  return _.filter(_.keys(packageManifest.dependencies) || [], 
-                  dep => dep != 'pdfjs-embed' && dep != 'react-trumbowyg')
+  return _.keys(packageManifest.dependencies) || []
 }
 
 module.exports = {

@@ -57,6 +57,7 @@
     "run-sequence": "^1.2.2",
     "webpack": "^2.2.0-rc.1"
   },
+  "dependencies-note": "These modules get bundled into lib-bundle.js",
   "dependencies": {
     "details-polyfill": "^1.0.2",
     "flickity": "^2.0.5",
@@ -64,13 +65,16 @@
     "jquery": "^3.1.0",
     "jquery.dotdotdot": "amywieliczka/jQuery.dotdotdot",
     "lodash": "^4.16.4",
-    "pdfjs-embed": "escholarship/pdfjs-embed",
     "react": "^15.4.1",
     "react-dom": "^15.4.1",
     "react-responsive": "^1.1.4",
     "react-router": "^2.7.0",
     "react-router-form": "^2.0.0-rc.0",
-    "react-router-scroll": "^0.4.1",
+    "react-router-scroll": "^0.4.1"
+  },
+  "optionalDependencies-note": "These modules are separately bundled and loaded on-demand via require.ensure",
+  "optionalDependencies": {
+    "pdfjs-embed": "escholarship/pdfjs-embed",
     "react-trumbowyg": "^1.1.0"
   }
 }
