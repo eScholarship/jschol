@@ -48,10 +48,15 @@ class PageBase extends React.Component
   }
 
   // Called when user clicks Edit Page, or Done Editing
-  onEditingPageChange(flag) {
-    let newState = _.clone(this.state)
-    newState.admin.editingPage = flag
-    this.setState(newState)
+  onEditingPageChange(flag) 
+  {
+    // Load CMS-specific modules asynchronously
+    require.ensure(['react-trumbowyg'], (require) => {
+      let newState = _.clone(this.state)
+      newState.admin.cmsModules = { Trumbowyg: require('react-trumbowyg').default }
+      newState.admin.editingPage = flag
+      this.setState(newState)
+    }, "cms")
   }
 
   // Pages with any editable components should override this.

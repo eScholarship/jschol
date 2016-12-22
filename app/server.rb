@@ -520,7 +520,7 @@ end
 def sanitizeHTML(htmlFragment)
   return Sanitize.fragment(params[:newText], 
     elements: %w{b em i strong u} +                      # all 'restricted' tags
-              %w{a br li ol p small strike sub sup ul},  # subset of ''basic' tags
+              %w{a br li ol p small strike sub sup ul hr},  # subset of ''basic' tags
     attributes: { a: ['href'] },
     protocols:  { a: {'href' => ['ftp', 'http', 'https', 'mailto', :relative]} }
   )

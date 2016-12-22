@@ -91,43 +91,26 @@ class Editable extends React.Component
     if (!p.admin || !p.admin.editingPage)
       return p.children
     else if (this.state.editingComp) {
-      if (this.state.Trumbowyg) {
-        let Trumbowyg = this.state.Trumbowyg
-        return(
-          <div className="c-staticpage__modal">
-            <div className="c-staticpage__modal-content">
-              <Trumbowyg id='react-trumbowyg' 
-                         buttons={[['strong', 'em', 'underline', 'strikethrough'],
-                                   ['superscript', 'subscript'],
-                                   ['link'],
-                                   ['insertImage'],
-                                   'btnGrp-lists',
-                                   ['horizontalRule'],
-                                   ['removeformat']
-                                  ]}
-                         data={p.html} />
-              <button onClick={e=>this.save()}>Save</button>
-              <button onClick={e=>this.setState({editingComp:false})}>Cancel</button>
-            </div>
+      let Trumbowyg = p.admin.cmsModules.Trumbowyg
+      return(
+        <div className="c-staticpage__modal">
+          <div className="c-staticpage__modal-content">
+            <Trumbowyg id='react-trumbowyg' 
+                       buttons={[['strong', 'em', 'underline', 'strikethrough'],
+                                 ['superscript', 'subscript'],
+                                 ['link'],
+                                 ['insertImage'],
+                                 'btnGrp-lists',
+                                 ['horizontalRule'],
+                                 ['removeformat']
+                                ]}
+                       data={p.html}
+                       onChange={ e => this.setState({ newText: e.target.innerHTML })} />
+            <button onClick={e=>this.save()}>Save</button>
+            <button onClick={e=>this.setState({editingComp:false})}>Cancel</button>
           </div>
-        )
-      }
-      else {
-        // Trumbowyg not loaded yet. Load it, and update when it's ready.
-        setTimeout(()=>
-          require.ensure(['react-trumbowyg'], (require) =>
-            this.setState({ Trumbowyg: require('react-trumbowyg').default }),
-            "cms"),
-          1000)
-        return (
-          <div style={{position: "relative"}}>
-            { p.children }
-            <div className="c-staticpage__working">
-              <div className="c-staticpage__working-text">Working...</div>
-            </div>
-          </div>
-        )
-      }
+        </div>
+      )
     }
     else if (this.state.savingMsg) {
       return (
@@ -156,15 +139,26 @@ class Editable extends React.Component
     }
   }
 
-  save() {
-    this.setState({ editingComp: false, savingMsg: "Updating..." })
-    this.props.onSave(this.textArea.value)
-    .done(()=>this.setState({ savingMsg: null }))
-    .fail(()=>{
-      // Put up a "Failed" message and leave it there a little while so user can see it.
-      this.setState({ savingMsg: "Failed." })
-      setTimeout(()=>this.setState({savingMsg: null}), 1000)
-    })
+  save() 
+  {
+    if (this.state.newText) {
+      this.setState({ editingComp: false, savingMsg: "Updating..." })
+      let startTime = new Date
+      this.props.onSave(this.state.newText)
+      .done(()=> {
+        // In case save takes less than half a sec, leave the message on there
+        // for long enough to see it.
+        setTimeout(()=>this.setState({ savingMsg: null, newText: null }),
+                   Math.max(250, new Date - startTime))
+      })
+      .fail(()=>{
+        // Put up a "Failed" message and leave it there a little while so user can see it.
+        this.setState({ savingMsg: "Failed." })
+        setTimeout(()=>this.setState({savingMsg: null, newText: null}), 1000)
+      })
+    }
+    else
+      this.setState({ editingComp: false })
   }
 }
 
