@@ -9,11 +9,11 @@ class PdfViewerComp extends React.Component
 
   render() {
     return(
-      <div id="pdfjs_cdl_wrapper" ref={(c) => this.initViewer(c)}>
+      <div id="pdfjs-cdl-wrapper" ref={(c) => this.initViewer(c)}>
         <noscript>
           <embed src={this.props.url} type='application/pdf' />
         </noscript>
-        <div id="pdfjs_viewer" className="jsonly" style={{visibility: "hidden"}} dangerouslySetInnerHTML={ this.viewerHTML() }/>
+        <div id="pdfjs-viewer" className="jsonly" style={{visibility: "hidden"}} dangerouslySetInnerHTML={ this.viewerHTML() }/>
       </div>)
   }
 
@@ -34,7 +34,7 @@ class PdfViewerComp extends React.Component
       window.DEFAULT_URL = url;
       window.webViewerLoad();
        // we show it only after init, to avoid wonky display
-      $("#pdfjs_viewer").css("visibility", "visible");
+      $("#pdfjs-viewer").css("visibility", "visible");
     }, 'pdfjs');
   }
 

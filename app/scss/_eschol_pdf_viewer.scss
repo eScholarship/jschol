@@ -1,17 +1,19 @@
 // ##### Styles for pdf.js viewer ##### //
 
-#pdfjs_cdl_wrapper {
-  background-color: #404040;
-  background-image: url(/images/pdfjs/texture.png);
-  font-size: 10px;
-  font: message-box;
-  outline: none;
-
+// scss-lint:disable IdSelector
+#pdfjs-cdl-wrapper {
   width: 80%;
   float: left;
+  outline: none;
+  background-color: $color-light-black;
+  background-image: url('/images/pdfjs/texture.png');
+  font: message-box;
+  font-size: 10px;
 }
 
-#pdfjs_cdl_wrapper {
+// scss-lint:disable MergeableSelector
+#pdfjs-cdl-wrapper {
+  // scss-lint:disable SelectorFormat
 
   @import '../bower_components/pdfjs-embed/scss/_viewer.scss';
 
@@ -19,14 +21,15 @@
   #mainContainer {
     position: relative; /* was "relative" */
   }
+
   #viewerContainer {
-    overflow: hidden;   /* was: auto */
-    width: 100%;        /* didn't previously specify width */
     position: relative; /* was: absolute */
     top: auto;          /* was: 32px */
     right: auto;        /* was: 0 */
     bottom: auto;       /* was: 0 */
     left: auto;         /* was: 0 */
+    width: 100%;        /* didn't previously specify width */
+    overflow: hidden;   /* was: auto */
   }
 
   /* Turn off a bunch of button features we don't need in our UI */

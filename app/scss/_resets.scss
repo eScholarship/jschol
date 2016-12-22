@@ -24,6 +24,7 @@ summary {
   cursor: pointer;
 
   // Remove details arrow icon from webkit browsers:
+  // scss-lint:disable PseudoElement
   &::-webkit-details-marker {
     display: none;
   }
