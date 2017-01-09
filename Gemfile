@@ -6,6 +6,7 @@ gem 'mimemagic'           # for guessing mime types during conversion
 gem 'mysql2'              # connecting to the database
 gem 'nokogiri'            # parsing and generating XML
 gem 'sanitize'            # parse and sanitize user-supplied HTML fragments
+gem 'scss_lint'           # needed for scss-lint gulpfile task
 gem 'sequel'              # object-relational mapper (including migrations)
 gem 'sinatra'             # lightweight web framework
 gem 'sinatra-contrib'     # standard extensions for Sinatra
