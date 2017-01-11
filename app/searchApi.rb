@@ -252,14 +252,25 @@ def parse_range(range)
   pp range
 end
 
+# Fetch data for all the items on the page all at once, to save SQL server round-trips
+def readItemData(ids)
+  return {
+    items: Item.where(:id => ids).to_hash(:id),
+    units: UnitItem.where(:item_id => ids, :is_direct => 1).order(:ordering_of_units).to_hash_groups(:item_id),
+    authors: ItemAuthors.where(item_id: ids).order(:ordering).to_hash_groups(:item_id)
+  }
+end
+
 def search(params)
   aws_params = aws_encode(params)
   response = normalizeResponse($csClient.search(return: '_no_fields', **aws_params))
 
   searchResults = []
   if response['hits'] && response['hits']['hit']
-    for indexItem in response['hits']['hit']
-      item = Item[indexItem['id']]
+    itemIds = response['hits']['hit'].map { |item| item['id'] }
+    itemData = readItemData(itemIds)
+    for itemID in itemIds
+      item = itemData[:items][itemID]
       if item
         itemHash = {
           :id => item.id,
@@ -284,7 +295,7 @@ def search(params)
           end
         end
       
-        itemAuthors = ItemAuthors.where(item_id: indexItem['id']).order(:ordering).all
+        itemAuthors = itemData[:authors][itemID]
         itemHash[:authors] = itemAuthors.map { |author| JSON.parse(author.attrs) }
       
         #if journal, section will be non-nil, follow section link to issue (get volume), follow to unit table
@@ -295,8 +306,8 @@ def search(params)
           itemHash[:journalInfo] = {displayName: "#{itemUnit.name}, Volume #{itemIssue.volume}, Issue #{itemIssue.issue}", issueId: itemIssue.id, unitId: itemUnit.id}
         #otherwise, use the item link to the unit table for all other content types
         else
-          unitItem = UnitItem[:item_id => indexItem['id']]
-          if unitItem
+          if itemData[:units][itemID]
+            unitItem = itemData[:units][itemID][0]  # take first unit only, for now
             unit = $unitsHash[unitItem.unit_id]
             itemHash[:unitInfo] = {displayName: unit.name, unitId: unit.id}
           end
