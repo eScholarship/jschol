@@ -56,16 +56,14 @@
 }
 
 .c-footer__icons {
-  margin: 0 0 $spacing-md;
+  margin-bottom: $spacing-md;
 
   a {
-    display: inline-block;
-    padding: 6px 6px 0;
-    border: 1px solid $color-white;
-    border-radius: 50%;
+    @extend %circular-border;
+    border-color: $color-white;
 
     &:not(:first-child) {
-      margin: 0 0 0 $spacing-lg;
+      margin-left: $spacing-lg;
     }
 
     img {

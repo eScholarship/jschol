@@ -24,11 +24,13 @@
 
 // ***** Components ***** //
 
+@import 'adminbar';
 @import 'breadcrumb';
 @import 'carousel';
 @import 'campus';
 @import 'checkbox';
 @import 'columns';
+@import 'download';
 @import 'export';
 @import 'facetbox';
 @import 'filter';
@@ -38,7 +40,7 @@
 @import 'header2';
 @import 'infopages';
 @import 'journalinfo';
-@import 'adminbar';
+@import 'jump';
 @import 'nav1';
 @import 'nav2';
 @import 'nav3';
@@ -50,10 +52,12 @@
 @import 'sort';
 @import 'staticpage';
 @import 'subheader';
+@import 'tabs';
 
 // ***** Layouts ***** //
 
 @import 'about';
+@import 'item';
 @import 'journal';
 @import 'searchlayout';
 

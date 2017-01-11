@@ -13,11 +13,9 @@ class InputObj extends React.Component {
 
         <button className="o-button__3">Select</button>
 
-        <a href="" className="o-button__3">Submit</a>
+        <button className="o-button__4">Manage Submissions</button>
 
-        <a href="" className="o-button__4">Manage Submissions</a>
-
-        <a href="" className="o-button__5">Export</a>
+        <button className="o-button__5">Export</button>
 
       </div>
     )

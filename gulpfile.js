@@ -72,11 +72,16 @@ function getNPMPackageIds() {
 // Process Sass to CSS, add sourcemaps, autoprefix CSS selectors, optionally Base64 font and 
 // image files into CSS, and reload browser:
 gulp.task('sass', function() {
-  gulp.src('app/scss/**/*.scss')
+  return gulp.src('app/scss/**/*.scss')
     .pipe(sourcemaps.init())
     .pipe(sass.sync().on('error', sass.logError))
-    .pipe(autoprefixer('last 2 versions'))
-    .pipe(postcss([assets({ loadPaths: ['fonts/', 'images/'] })]))
+    .pipe(autoprefixer({
+      browsers: ['last 2 versions'],
+      grid: false // don't prefix anything from grid spec since not all properties correlate with old IE grid spec
+    }))
+    .pipe(postcss([assets({
+      loadPaths: ['fonts/', 'images/']
+    })]))
     .pipe(sourcemaps.write('sourcemaps'))
     .pipe(gulp.dest('app/css'))
     .pipe(livereload())
