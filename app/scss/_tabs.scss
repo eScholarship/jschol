@@ -1,0 +1,70 @@
+// ##### Tabs Component ##### //
+
+$tab-height: $element-height;
+
+.c-tabs {
+  // empty
+}
+
+%c-tabs__buttons {
+  height: $tab-height;
+  margin-right: $spacing-base;
+  margin-bottom: $spacing-base;
+  padding: 0 $spacing-sm;
+  border: none;
+  background-color: $color-light-gray;
+  font-size: 1.1em;
+  line-height: $tab-height;
+  user-select: none;
+}
+
+.c-tabs__button {
+  @extend %c-tabs__buttons;
+}
+
+.c-tabs__button--active {
+  @extend %c-tabs__buttons;
+  background-color: $color-white;
+}
+
+.c-tabs__main-list {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.c-tabs__sub-list {
+  position: relative;
+
+  summary {
+    @extend %c-tabs__buttons;
+    position: absolute;
+    width: 15px;
+    text-align: center;
+
+    @include bp(screen3) {
+      display: none;
+    }
+
+  }
+
+}
+
+.c-tabs__details-buttons {
+  margin-left: 30px + $spacing-sm;
+
+  @include bp(screen3) {
+    margin-left: 0;
+  }
+
+}
+
+.c-tabs__panel {
+  margin-top: (-$spacing-base);
+  padding: $spacing-sm;
+  background-color: $color-white;
+
+  @include bp(screen3) {
+    padding: $spacing-md;
+  }
+
+}

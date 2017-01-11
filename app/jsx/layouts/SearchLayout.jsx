@@ -61,6 +61,7 @@ class SearchLayout extends React.Component {
                 <h2 className="o-columnbox1__heading">Scholarly Works (12,023 results)</h2>
               </header>
               <ScholWorksComp />
+              <ScholWorksComp />
             </section>
           </main>
         </div>

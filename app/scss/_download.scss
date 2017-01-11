@@ -1,0 +1,122 @@
+// ##### Download Component ##### //
+
+.c-download {
+
+  // scss-lint:disable DeclarationOrder
+
+  summary {
+    position: relative;
+    height: $element-height;
+    padding-left: $spacing-sm;
+    background-color: $color-teal;
+    color: $color-white;
+    line-height: $element-height;
+    user-select: none;
+
+    &::after {
+      position: absolute;
+      top: 0;
+      right: $spacing-sm;
+      bottom: 0;
+      padding: 7px;
+      background: url('../images/icon_arrow-down-white.svg') no-repeat center / 13px;
+      content: '';
+
+    }
+
+  }
+
+  @include bp(screen3) {
+
+    summary {
+      display: inline-block;
+      padding-right: 45px;
+
+      &::after {
+        right: 0;
+        padding-left: 25px;
+        border-left: 1px solid $color-white;
+      }
+
+    }
+
+  }
+
+  &[open] {
+
+    summary::after {
+      transform: rotate(180deg);
+
+      @include bp(screen3) {
+        border-right: 1px solid $color-white;
+        border-left: none;
+      }
+
+    }
+
+  }
+
+}
+
+%c-download__item {
+  @extend %nav-item;
+  padding-left: 40px;
+  background: no-repeat left $spacing-sm center / 16px;
+  color: $color-white;
+}
+
+.c-download__menu {
+  margin: $spacing-sm 0 0;
+
+  @include bp(screen3) {
+    position: absolute;
+    z-index: 1;
+  }
+
+}
+
+%c-download__heading {
+  @extend %c-download__item;
+  border-top: none;
+  border-bottom: none;
+  background-color: $color-dark-gray;
+
+  &:first-child {
+    border-top: 1px solid $color-dark-gray;
+  }
+
+}
+
+.c-download__heading1 {
+  @extend %c-download__heading;
+  background-image: inline('../images/icon_files-o-white.svg');
+}
+
+.c-download__heading2 {
+  @extend %c-download__heading;
+  background-image: inline('../images/icon_quote-right-white.svg');
+}
+
+.c-download__heading3 {
+  @extend %c-download__heading;
+  background-image: inline('../images/icon_play-circle-white.svg');
+}
+
+
+.c-download__list {
+  @extend %no-bullet-ul;
+
+  li {
+
+    a {
+      @extend %c-download__item;
+      background-color: $color-teal;
+    }
+
+    &:not(:first-of-type) a {
+      border-top: none;
+    }
+
+  }
+
+}

@@ -8,17 +8,15 @@ class Subheader1Comp extends React.Component {
   render() {
     return (
       <div className="c-subheader">
-        <div className="c-subheader__campus">
+        <div className="c-subheader__row1">
           <CampusSelectorComp />
+          <img className="c-subheader__banner" src="http://placehold.it/400x100?text=Campus Logo Here" alt=""/>
+          <div className="c-subheader__buttons">
+            <button className="o-button__3">Deposit</button>
+          </div>
         </div>
-        <div className="c-subheader__nav">
+        <div className="c-subheader__row2">
           <Nav2Comp />
-        </div>
-        <div className="c-subheader__buttons">
-          <a href="" className="c-subheader__button-deposit">Deposit</a>
-        </div>
-        <div className="c-subheader__banner">
-          <img className="c-subheader__banner-image" src="http://placehold.it/400x100?text=Campus Logo Here" alt=""/>
         </div>
       </div>
     )

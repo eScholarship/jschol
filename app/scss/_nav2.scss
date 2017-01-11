@@ -3,6 +3,7 @@
 .c-nav2 {
 
   @include bp(screen3) {
+    flex: 1 0 auto; // to subheader flexbox
     margin: 0 0 $spacing-md;
     border-top: 2px solid $color-light-gray;
     border-bottom: 1px solid $color-light-gray;
