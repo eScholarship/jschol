@@ -270,13 +270,23 @@ get %r{^/(?!(api/.*|content/.*|.*\.\w{1,4}$))} do
 end
 
 ###################################################################################################
+# Home page data (All campuses or All journals)
+get '/api/home' do
+  content_type :json
+  header = {
+    :campuses => getCampusesAsMenu
+  }
+  return header.to_json
+end
+
+###################################################################################################
 # Browse page data (All campuses or All journals)
-get '/api/browse/:type' do |type|
+get '/api/browse/:browse_type' do |browse_type|
   content_type :json
   body = {
-    :type => type
+    :browse_type => browse_type
   }
-  case type 
+  case browse_type 
     when "campuslist"
       # Build array of hashes containing campus and stats
       campusesStats = []
@@ -290,13 +300,13 @@ get '/api/browse/:type' do |type|
       body.merge!({
         :campusesStats => campusesStats,
       })
-      breadcrumb = [{"name" => "Campuses", "url" => "/browse/campuslist"},]
+      breadcrumb = [{"name" => "Campuses", "url" => "/browse/"+browse_type},]
       return body.merge(getHeaderElements(breadcrumb, nil)).to_json
     when "journals"
       body.merge!({
         :journals => $campusJournals.sort_by{ |h| h[:name].downcase }
       })
-      breadcrumb = [{"name" => "Journals", "url" => "/browse/journals"},]
+      breadcrumb = [{"name" => "Journals", "url" => "/browse/"+browse_type},]
       return body.merge(getHeaderElements(breadcrumb, "All Campuses")).to_json
   end
 end
@@ -310,13 +320,14 @@ get '/api/browse/depts/:campusID' do |campusID|
   end
   unit = $unitsHash[campusID]
   body = {
-    :type => "depts",
+    :browse_type => "depts",
     :campusID => campusID,
+    :campusName => unit.name,
     :depts => d.compact
   }
   breadcrumb = [
-    {"name" => unit.name, "url" => "/unit/" + campusID},
-    {"name" => "Departments", "url" => "/browse/depts/" + campusID}]
+    {"name" => "Departments", "url" => "/browse/depts/"+campusID},
+    {"name" => unit.name, "url" => "/unit/"+campusID}]
   return body.merge(getHeaderElements(breadcrumb, nil)).to_json
 end
 
@@ -398,7 +409,10 @@ end
 get "/api/search/" do
   # Amy, hack here
   content_type :json
-  return search(CGI::parse(request.query_string)).to_json
+  header = {
+    :campuses => getCampusesAsMenu
+  }
+  return header.merge(search(CGI::parse(request.query_string))).to_json
 end
 
 ###################################################################################################
@@ -443,14 +457,18 @@ end
 def getUnitItemHeaderElements(view, id)
   hierarchy = Hierarchy_UnitItem.new(view, id)
   campusID, campusName = hierarchy.getCampusInfo
-  return {
-    :isJournal => hierarchy.isJournal?,
+  body2 = {
     :campusID => campusID,
     :campusName => campusName,
     :campuses => getCampusesAsMenu,
     :breadcrumb => hierarchy.generateCrumb,
     :appearsIn => hierarchy.appearsIn 
   }
+  if view=="item"
+    type = (hierarchy.isJournal?) ? "journal" : "series"
+    body2.merge!({ :type => type })
+  end
+  return body2
 end
 
 # Array of all active root level campuses/ORUs. Include empty label "eScholarship at..." 

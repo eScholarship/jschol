@@ -1,20 +1,27 @@
 // ##### Navigation - Home Component ##### //
 
 import React from 'react'
+import { Link } from 'react-router'
 import Breakpoints from '../../js/breakpoints.json'
 
 class Nav1Comp extends React.Component {
   state = { isOpen: true } // must init to something in case of server-side rendering
+
   componentWillMount() {
     if (typeof matchMedia != "undefined") {
       this.mq = matchMedia("(min-width:"+Breakpoints.screen2+")")
       this.mq.addListener(this.widthChange)
       this.widthChange()
     }
+    this.campusSelector = this.props.campuses.map(function(c, i) {
+        return c['id'] != "" && <Link key={i} to={"/unit/" + c['id']}>{c['name']}</Link>
+      })
   }
+
   widthChange = ()=> {
     this.setState({isOpen: this.mq.matches})
   }
+
   render() {
     return (
       <nav className="c-nav1">
@@ -27,22 +34,13 @@ class Nav1Comp extends React.Component {
                 Campus Sites
               </summary>
               <div className="c-nav1__sub-items">
-                <a href="">UC Berkeley</a>
-                <a href="">UC Davis</a>
-                <a href="">UC Irvine</a>
-                <a href="">UCLA</a>
-                <a href="">UC Merced</a>
-                <a href="">UC Riverside</a>
-                <a href="">UC San Diego</a>
-                <a href="">UC San Francisco</a>
-                <a href="">UC Santa Barbara</a>
-                <a href="">UC Santa Cruz</a>
-                <a href="">UC Office of the President</a>
-                <a href="">UC Press</a>
+                {this.campusSelector}
               </div>
             </details>
-            <a className="c-nav1__item--active" href="">UC Open Access Policies</a>
-            <a href="">eScholarship Publishing</a>
+            {/* ToDo: Link */}
+            <Link className="c-nav1__item" to="">UC Open Access Policies</Link>
+            {/* ToDo: Link */}
+            <Link to="">eScholarship Publishing</Link>
           </div>
         </details>
       </nav>

@@ -2,18 +2,26 @@
 
 import React from 'react'
 
-import HeaderComp from '../components/HeaderComp.jsx'
-import NavComp from '../components/NavComp.jsx'
+import PageBase from './PageBase.jsx'
+import Header1Comp from '../components/Header1Comp.jsx'
+import Nav1Comp from '../components/Nav1Comp.jsx'
 import FooterComp from '../components/FooterComp.jsx'
 
-class Home extends React.Component {
-  render = ()=>
+class HomePage extends PageBase
+{
+  // PageBase will fetch the following URL for us, and place the results in this.state.pageData
+  pageDataURL(props) {
+    return "/api/home"
+  }
+
+  renderData(data) { 
+    return(
     <div>
-      <HeaderComp />
-      <NavComp />
+      <Header1Comp />
+      <Nav1Comp campuses={data.campuses} />
       <h2 style={{ marginTop: "5em", marginBottom: "5em" }}>Home page content here</h2>
-      <FooterComp />
     </div>
+  )}
 }
 
-module.exports = Home;
+module.exports = HomePage;

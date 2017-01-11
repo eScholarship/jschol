@@ -1,31 +1,47 @@
+// ##### Browse Page ##### // 
+
 import React from 'react'
 import { Link } from 'react-router'
 
 import PageBase from './PageBase.jsx'
-import HeaderComp from '../components/HeaderComp.jsx'
-import NavComp from '../components/NavComp.jsx'
+import Header1Comp from '../components/Header1Comp.jsx'
+import Header2Comp from '../components/Header2Comp.jsx'
+import Subheader1Comp from '../components/Subheader1Comp.jsx'
+import Nav1Comp from '../components/Nav1Comp.jsx'
 import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
 
 class BrowsePage extends PageBase
 {
   // PageBase will fetch the following URL for us, and place the results in this.state.pageData
   pageDataURL(props) {
-    if (props.params.type) {
-      return "/api/browse/" + props.params.type
+    if (props.params.browse_type) {
+      return "/api/browse/" + props.params.browse_type
     } else {
       return "/api/browse/depts/" + props.params.campusID
     }
   }
 
   renderData(data) {
-    let p = data
     return (
     <div>
-      <HeaderComp />
-      <NavComp />
-      <BreadcrumbComp array={p.breadcrumb} />
+      {/* Campus-specific browse page */}
+      { data.browse_type == "depts" &&
+          <div>
+            <Header2Comp id={data.id} type="campus" />
+            <Subheader1Comp browse_type="depts"
+                            campuses={data.campuses}
+                            unitID={data.campusID}
+                            unitName={data.campusName}
+                            campusID={data.campusID}
+                            campusName={data.campusName} />  </div> }
+      {/* Global browse page */}
+      { data.browse_type != "depts" &&
+          <div>
+            <Header1Comp/>
+            <Nav1Comp campuses={data.campuses} />  </div> }
+      <BreadcrumbComp array={data.breadcrumb} />
       <Content
-        {...p}
+        {...data}
       />
     </div>
   )}
@@ -37,10 +53,10 @@ class Content extends React.Component {
     let p = this.props
     return (
     <div>
-      { p.type == "campuslist" && this.renderCampuses(p) }
-      { p.type == "depts" && <DeptTree depts={this.props.depts} /> }
-      { p.type == "journals" && <BrowseJournals journals={this.props.journals}
-        isActive="" campuses={this.props.campuses} campusID=""/> }
+      { p.browse_type == "campuslist" && this.renderCampuses(p) }
+      { p.browse_type == "depts" && <DeptTree depts={p.depts} /> }
+      { p.browse_type == "journals" && <BrowseJournals journals={p.journals}
+        isActive="" campuses={p.campuses} campusID=""/> }
     </div>
   )}
 

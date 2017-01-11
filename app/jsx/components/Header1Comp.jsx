@@ -13,10 +13,10 @@ class HeaderComp1 extends React.Component {
     return (
       <div className="c-header1">
         <div className="c-header1__logosearch">
-          <a href="">
+          <a href="/">
             <picture>
               <source srcSet="/images/logo_escholarship.svg" media={"(min-width: "+Breakpoints.screen2+")"}/>
-              <img src="images/logo_temp-eschol-mobile.png" alt="escholarship"/>
+              <img src="/images/logo_temp-eschol-mobile.png" alt="eScholarship"/>
             </picture>
           </a>  
           <div className={this.state.searchActive ? "c-header1__search--active" : "c-header1__search"}>

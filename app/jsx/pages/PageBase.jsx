@@ -1,8 +1,8 @@
 
 import React from 'react'
 import $ from 'jquery'
-import HeaderComp from '../components/HeaderComp.jsx'
-import NavComp from '../components/NavComp.jsx'
+import Header1Comp from '../components/Header1Comp.jsx'
+import Nav1Comp from '../components/Nav1Comp.jsx'
 import FooterComp from '../components/FooterComp.jsx'
 
 class PageBase extends React.Component
@@ -68,18 +68,17 @@ class PageBase extends React.Component
     }
   }
 
+
   renderLoading() { return(
     <div>
-      <HeaderComp/>
-      <NavComp/>
+      <Header1Comp/>
       <h2 style={{ marginTop: "5em", marginBottom: "5em" }}>Loading...</h2>
     </div>
   )}
 
   renderError() { return (
     <div>
-      <HeaderComp/>
-      <NavComp/>
+      <Header1Comp/>
       <h2 style={{ marginTop: "5em", marginBottom: "5em" }}>{this.state.error}</h2>
     </div>
   )}

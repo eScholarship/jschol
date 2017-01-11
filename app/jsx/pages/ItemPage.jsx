@@ -1,10 +1,11 @@
+// ##### Item Page ##### //
 
 import React from 'react'
 import { Link } from 'react-router'
 
 import PageBase from './PageBase.jsx'
-import HeaderComp from '../components/HeaderComp.jsx'
-import NavComp from '../components/NavComp.jsx'
+import Header2Comp from '../components/Header2Comp.jsx'
+import Subheader2Comp from '../components/Subheader2Comp.jsx'
 import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
 import ItemMainComp from '../components/ItemMainComp.jsx'
 import ItemSupplComp from '../components/ItemSupplComp.jsx'
@@ -43,22 +44,19 @@ class ItemPage extends PageBase
       width: '200px',
       padding: "0 0 40px 0"
     };
-    let p = data 
     return(
       <div>
-        <HeaderComp level="item"
-                    isJournal = {p.isJournal}
-                    campusID={p.campusID}
-                    campusName={p.campusName}
-                    campuses={p.campuses}
-                    unit_id={p.appearsIn.length > 0  && p.appearsIn[0]["id"]} />
-        <NavComp level="item"
-                 campusID={p.campusID} />
-        <BreadcrumbComp array={p.breadcrumb} />
+        <Header2Comp id={data.id} type={data.type} />
+        <Subheader2Comp unitID={data.appearsIn.length > 0  && data.appearsIn[0]["id"]} 
+                        unitName={data.appearsIn.length > 0  && data.appearsIn[0]["name"]} 
+                        campusID={data.campusID}
+                        campusName={data.campusName}
+                        campuses={data.campuses}/>
+        <BreadcrumbComp array={data.breadcrumb} />
         <div style={rowStyle}>
           <div style={leftStyle}>
             <ItemTabbed
-              {...p}
+              {...data}
               currentTab={this.state.currentTab}  // overwrite props.currentTab
               changeTab={this.changeTab.bind(this)}
             />
@@ -66,7 +64,7 @@ class ItemPage extends PageBase
           <div style={rightStyle}>
             <ItemLinkColumn 
               changeTab={this.changeTab.bind(this)}
-              {...p}
+              {...data}
             />
           </div>
         </div>

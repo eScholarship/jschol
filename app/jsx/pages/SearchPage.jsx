@@ -7,8 +7,8 @@ import { Link } from 'react-router'
 import Form from 'react-router-form'
 
 import PageBase from './PageBase.jsx'
-import HeaderComp from '../components/HeaderComp.jsx'
-import NavComp from '../components/NavComp.jsx'
+import Header1Comp from '../components/Header1Comp.jsx'
+import Nav1Comp from '../components/Nav1Comp.jsx'
 
 // FacetItem  
 // props = {
@@ -747,8 +747,8 @@ class SearchPage extends PageBase {
     var facetFormData = {facets: data.facets, count: data.count};
     return(
       <div className="l_search">
-        <HeaderComp />
-        <NavComp />
+        <Header1Comp />
+        <Nav1Comp campuses={data.campuses} />
         <div className="c-columns">
           <aside>
             <FacetForm data={facetFormData} query={data.query} />
