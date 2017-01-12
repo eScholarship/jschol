@@ -27,7 +27,7 @@ class BrowsePage extends PageBase
       {/* Campus-specific browse page */}
       { data.browse_type == "depts" &&
           <div>
-            <Header2Comp id={data.campusID} type="campus" />
+            <Header2Comp type="campus" unitID={data.campusID} />
             <Subheader1Comp browse_type="depts"
                             campuses={data.campuses}
                             unitID={data.campusID}

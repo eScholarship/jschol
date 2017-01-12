@@ -18,7 +18,7 @@ class UnitPage extends PageBase
 
   renderData(data) { return(
     <div>
-      <Header2Comp id={data.id} type={data.type} parents={data.parents} /> 
+      <Header2Comp type={data.type} unitID={data.id} /> 
       { data.type == "journal" &&
           <Subheader2Comp unitID={data.id}
                           unitName={data.name}

@@ -44,11 +44,13 @@ class ItemPage extends PageBase
       width: '200px',
       padding: "0 0 40px 0"
     };
+    let unitID = data.appearsIn.length > 0  && data.appearsIn[0]["id"]
+    let unitName = data.appearsIn.length > 0  && data.appearsIn[0]["name"]
     return(
       <div>
-        <Header2Comp id={data.id} type={data.type} />
-        <Subheader2Comp unitID={data.appearsIn.length > 0  && data.appearsIn[0]["id"]} 
-                        unitName={data.appearsIn.length > 0  && data.appearsIn[0]["name"]} 
+        <Header2Comp type={data.type} unitID={unitID} />
+        <Subheader2Comp unitID={unitID} 
+                        unitName={unitName}
                         campusID={data.campusID}
                         campusName={data.campusName}
                         campuses={data.campuses}/>

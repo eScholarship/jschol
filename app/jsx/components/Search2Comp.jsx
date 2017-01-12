@@ -2,19 +2,12 @@
 
 import React from 'react'
 import Form from 'react-router-form'
+import $ from 'jquery'
 
 class SearchControls extends React.Component {
   constructor(props) {
     super(props)
-    // The ID of the unit or item to be searched on
-    this.state = {search_id: this.props.id}
-    this.parentId = this.parentId.bind(this)
-    this.onPropsSetOrChange = this.onPropsSetOrChange.bind(this)
-  }
-
-  // Used for series and special where we need to grab the parent Unit ID. Not used with other units or items. 
-  parentId() {
-    return this.props.parents ? this.props.parents[0] : null 
+    this.onPropsSetOrChange = this.onPropsSetOrChange.bind(this, this.props)
   }
 
   handleRadioSelect(){
@@ -30,11 +23,9 @@ class SearchControls extends React.Component {
   }
 
   onPropsSetOrChange(props) {
-    if (props.type.includes("series") || props.type.includes("special")) {
-      this.setState({search_id: this.parentId()})
-    }
-    ['oru', 'series', 'monograph_series', 'seminar_series', 'special'].includes(props.type) &&
-       this.setState({customRadioName: "departments",
+    // console.log(this.props.type)
+    (["oru", "series", "monograph_series", "seminar_series", "special"].includes(props.type)) &&
+      this.setState({customRadioName: "departments",
                       customRadioLabel: "This department"})
     props.type == 'campus' && 
        this.setState({customRadioName: "campuses",
@@ -47,9 +38,9 @@ class SearchControls extends React.Component {
   render() {
     return (
     <div className={this.props.refineActive ? "c-search2__refine--active" : "c-search2__refine"}>
-      <input type="radio" id="c-search2__refine-eschol" name={this.state.customRadioName} onClick = {this.handleRadioSelect.bind(this)} defaultChecked={true}/>
+      <input type="radio" id="c-search2__refine-eschol" name={this.state.customRadioName} value="" onClick = {this.handleRadioSelect.bind(this)} defaultChecked={true}/>
       <label htmlFor="c-search2__refine-eschol">All of eScholarship</label>
-      <input type="radio" id="c-search2__refine-campus" name={this.state.customRadioName} value={this.state.search_id} onClick={this.handleRadioSelect.bind(this)}/>
+      <input type="radio" id="c-search2__refine-campus" name={this.state.customRadioName} value={this.props.unitID} onClick={this.handleRadioSelect.bind(this)}/>
       <label htmlFor="c-search_2_refine-campus">{this.state.customRadioLabel}</label>
     </div>
   )}
@@ -65,6 +56,10 @@ class SearchComp2 extends React.Component {
     this.setState({refineActive: false})
   }
 
+  removeGlobal() {
+    $("#c-search2__refine-eschol").remove
+  }
+
   render() {
     return (
       <Form to='/search' method="GET" className="c-search2" onSubmit = {()=> this.setState({refineActive: false})}>
@@ -75,11 +70,10 @@ class SearchComp2 extends React.Component {
           </div>
           <SearchControls refineActive={this.state.refineActive}
                           handleRadioSelect={this.handleRadioSelect.bind(this)}
-                          id={this.props.id}
                           type={this.props.type}
-                          parents={this.props.parents} />
+                          unitID={this.props.unitID} />
         </div>
-        <button type="submit" className="c-search2__submit-button" aria-label="search"></button>
+        <button type="submit" className="c-search2__submit-button" aria-label="search" onClick={()=>this.removeGlobal()}></button>
         <button className="c-search2__search-close-button" aria-label="close search field" onClick = {()=>this.props.onClose()}></button>
       </Form>
     )
