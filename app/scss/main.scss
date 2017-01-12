@@ -12,7 +12,8 @@
 
 @import '../bower_components/normalize-scss/_normalize.scss';
 @import '../bower_components/flickity/dist/flickity.css';
-@import 'vendor/pdfjs/eschol_pdf_viewer';
+@import '../bower_components/trumbowyg/dist/ui/trumbowyg.css';
+@import 'eschol_pdf_viewer';
 
 // ***** Objects ***** //
 
@@ -23,11 +24,13 @@
 
 // ***** Components ***** //
 
+@import 'adminbar';
 @import 'breadcrumb';
 @import 'carousel';
 @import 'campus';
 @import 'checkbox';
 @import 'columns';
+@import 'download';
 @import 'export';
 @import 'facetbox';
 @import 'filter';
@@ -37,6 +40,7 @@
 @import 'header2';
 @import 'infopages';
 @import 'journalinfo';
+@import 'jump';
 @import 'nav1';
 @import 'nav2';
 @import 'nav3';
@@ -46,11 +50,14 @@
 @import 'search2';
 @import 'sidebarnav';
 @import 'sort';
+@import 'staticpage';
 @import 'subheader';
+@import 'tabs';
 
 // ***** Layouts ***** //
 
 @import 'about';
+@import 'item';
 @import 'journal';
 @import 'searchlayout';
 

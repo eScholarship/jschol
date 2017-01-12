@@ -1,12 +1,7 @@
 // ##### Navigation - Journal Component ##### //
 
 .c-nav3 {
-
-  @include bp(screen3) {
-    padding: $spacing-sm 0 0;
-    border-top: 2px solid $color-light-gray;
-  }
-
+  flex: 1 0 auto; // to subheader flexbox
 }
 
 .c-nav3__main {

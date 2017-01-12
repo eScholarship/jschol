@@ -1,0 +1,40 @@
+// ##### Jump Component ##### //
+
+$jump-list-spacing: 6px;
+
+.c-jump {
+
+  a {
+    @extend %o-textlink__secondary;
+  }
+
+}
+
+.c-jump__tree {
+  @extend %no-bullet-ul;
+  margin-top: $jump-list-spacing;
+
+  li {
+    margin-left: $spacing-sm;
+    padding: $jump-list-spacing 0 $jump-list-spacing 20px;
+    background-image: inline('../images/icon_tree-node.svg');
+    background-repeat: no-repeat;
+    background-position: left center;
+    background-size: 24px;
+
+    &:last-child {
+      background-image: inline('../images/icon_tree-end.svg');
+    }
+
+  }
+
+}
+
+.c-jump__siblings {
+  @extend %no-bullet-ul;
+
+  li {
+    padding: $jump-list-spacing 0;
+  }
+
+}

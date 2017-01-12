@@ -1,0 +1,21 @@
+// ##### adminbar Component ##### //
+
+.c-adminbar {
+  height: 2em;
+  margin: -10px; /* reverses the padding in <body> */
+  padding: 0.5em;
+  background: $color-dark-gray;
+  color: $color-white;
+}
+
+.c-adminbar__logged-in-msg {
+  float: left;
+}
+
+.c-adminbar__edit-pg {
+  float: right;
+}
+
+.c-adminbar__edit-pg-button {
+  color: $color-black;
+}

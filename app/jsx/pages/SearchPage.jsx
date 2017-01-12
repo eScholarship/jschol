@@ -555,7 +555,7 @@ class PaginationComp extends React.Component {
     var pages = Math.ceil(this.props.count / this.props.query.rows);
     var displayedPages = []
 
-    if (pages <= 7) {
+    if (pages <= 2) {
       for (var i=1; i<=pages; i++) {
         displayedPages.push({num: i, className: i == page ? "c-pagination__item--active" : "c-pagination__item"});
       }
@@ -570,8 +570,8 @@ class PaginationComp extends React.Component {
       )
     }
 
-    if (page <= 4) {
-      for (var i=1; i<=5; i++) {
+    if (page <= 2) {
+      for (var i=1; i<=3; i++) {
         displayedPages.push({num: i, className: i == page ? "c-pagination__item--active" : "c-pagination__item"});
       }
       return (
@@ -586,7 +586,7 @@ class PaginationComp extends React.Component {
         </div>
       )
     }
-    else if (page > pages-4) {
+    else if (page > pages-2) {
       for (var i=pages-4; i<=pages; i++) {
         displayedPages.push({num: i, className: i == page ? "c-pagination__item--active" : "c-pagination__item"});
       }
@@ -622,7 +622,7 @@ class PaginationComp extends React.Component {
 
 class ResultItem extends React.Component {
   componentDidMount() {
-    $('.c-scholworks__title, .c-scholworks__abstract, .c-scholworks__authors').dotdotdot({watch: "window"});
+    $('.c-scholworks__heading, .c-scholworks__abstract, .c-scholworks__author').dotdotdot({watch: "window"});
   }
   render() {
     var tagList = [];
@@ -661,14 +661,14 @@ class ResultItem extends React.Component {
     });
 
     var supp_files = this.props.result.supp_files.map(function(supp_file) {
-      if (supp_file.count >= 1) {
+      if (true || supp_file.count >= 1) {
         var display;
         if (supp_file.type === 'video' || supp_file.type === 'image') {
-          display = supp_file.count > 1 ? supp_file.type + 's' : supp_file.type;
-        } else if (supp_file.type === 'audio') {
-          display = supp_file.count > 1 ? 'audio files' : 'audio file';
+          display = supp_file.count != 1 ? supp_file.type + 's' : supp_file.type;
+        } else if (true || supp_file.type === 'audio') {
+          display = supp_file.count != 1 ? 'audio files' : 'audio file';
         } else if (supp_file.type === 'pdf') {
-          display = supp_file.count > 1 ? 'additional PDFs' : 'additional PDF';
+          display = supp_file.count != 1 ? 'additional PDFs' : 'additional PDF';
         }
         return (<li key={supp_file.type} className={"c-scholworks__media-" + supp_file.type}>Contains {supp_file.count} {display}</li>);   
       }
@@ -689,7 +689,7 @@ class ResultItem extends React.Component {
     // }
 
     return (
-      <section className="c-scholworks__item">
+      <section className="c-scholworks">
         <div className="c-scholworks__main-column">
           <ul className="c-scholworks__tag-list">
             { tagList.map(function(tag) { 
@@ -698,23 +698,24 @@ class ResultItem extends React.Component {
               ) 
             }) }
           </ul>
-          <header className="c-scholworks__title" style={{height: '2em'}}>
-            <Link to={"/item/"+this.props.result.id.replace(/^qt/, "")}>{this.props.result.title}</Link>
-          </header>
-          <div className="c-scholworks__authors" style={{height: '1em'}}>
+          <heading>
+            <h2 className="c-scholworks__heading">
+              <Link to={"/item/"+this.props.result.id.replace(/^qt/, "")}>{this.props.result.title}</Link>
+            </h2>
+          </heading>
+          <div className="c-scholworks__author">
             {authorList}
           </div>
-          <Link className="c-scholworks__institution-link" to={"/unit/" + unitId}>{publishingInfo}</Link> ({this.props.result.pub_year})
-          <div className="c-scholworks__abstract" style={{height: '2em'}}>
+          <div className="c-scholworks__publication">
+            <Link to={"/unit/" + unitId}>{publishingInfo}</Link> ({this.props.result.pub_year})
+          </div>
+          <div className="c-scholworks__abstract">
             <p>{this.props.result.abstract}</p>
           </div>
           <div className="c-scholworks__media">
             <ul className="c-scholworks__media-list">{ supp_files }</ul>
             <img className="c-scholworks__cc" src="images/icon_cc-by.svg" alt="cc"/>
           </div>
-          <p>
-            CC License: {this.props.result.rights}<br/>
-          </p>
         </div>
       </section>
     )
@@ -723,17 +724,12 @@ class ResultItem extends React.Component {
 
 class ScholarlyWorks extends React.Component {
   render() {
-    var resultNodes = this.props.results.map(function(result) {
-      return (
-        <ResultItem key={result.id} result={result} />
-      );
-    });
-
-    return (
-      <div className="c-scholworks">
-        {resultNodes}
-      </div>
-    )
+    return(
+      <div>
+        { this.props.results.map(result =>
+          <ResultItem key={result.id} result={result} />)
+        }
+      </div>)
   }
 }
 
@@ -754,22 +750,21 @@ class SearchPage extends PageBase {
             <FacetForm data={facetFormData} query={data.query} />
           </aside>
           <main>
-            <section className="o-columnbox-main">
+            <div className="l-search__sort-pagination">
+              <SortComp query={data.query} />
+              <input type="hidden" name="start" form="facetForm" value={data.query.start} />
+              <PaginationComp query={data.query} count={data.count}/>
+            </div>
+            <section className="o-columnbox1">
               <header>
-                <h2 className="o-columnbox-main__heading">Informational Pages (12 results)</h2>
+                <h2 className="o-columnbox1__heading">Informational Pages (12 results)</h2>
               </header>
             </section>
-            <section className="o-columnbox-main">
+            <section className="o-columnbox1">
               <header>
-                <h2 className="o-columnbox-main__heading">Scholarly Works ({data.count} results)</h2>
+                <h2 className="o-columnbox1__heading">Scholarly Works ({data.count} results)</h2>
               </header>
-              <div className="l-search__sort-pagination">
-                <SortComp query={data.query} />
-                <input type="hidden" name="start" form="facetForm" value={data.query.start} />
-                <PaginationComp query={data.query} count={data.count}/>
-              </div>
               <ScholarlyWorks results={data.searchResults} />
-              <PaginationComp query={data.query} count={data.count}/>
             </section>
           </main>
         </div>

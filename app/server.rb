@@ -14,6 +14,7 @@ require 'mimemagic'
 require 'net/http'
 require 'open-uri'
 require 'pp'
+require 'sanitize'
 require 'sequel'
 require 'sinatra'
 require 'sinatra/streaming'
@@ -30,6 +31,9 @@ def puts(*args)
     STDOUT.flush
   }
 end
+
+# Make it clear where the new session starts in the log file.
+puts "\n\n=====================================================================================\n"
 
 # Use the Sequel gem to get object-relational mapping, connection pooling, thread safety, etc.
 # If specified, use SOCKS proxy for all connections (including database).
@@ -102,6 +106,9 @@ class Section < Sequel::Model
 end
 
 class Page < Sequel::Model
+end
+
+class Widget < Sequel::Model
 end
 
 ##################################################################################################
@@ -204,10 +211,14 @@ class Fetcher
 
   # Now we're ready to set the content type and return the contents in streaming fashion.
   def copyTo(out)
-    while true
-      data = @queue.pop_with_timeout(10)
-      data.nil? and break
-      out.write(data)
+    begin
+      while true
+        data = @queue.pop_with_timeout(10)
+        data.nil? and break
+        out.write(data)
+      end
+    rescue Exception => e
+      puts "Warning: problem while streaming content: #{e.message}"
     end
   end
 end
@@ -507,9 +518,78 @@ get "/api/static/:unitID/:pageName" do |unitID, pageName|
       title: page.title,
       html: JSON.parse(page.attrs)['html']
     },
+    sidebarWidgets: Widget.where(unit_id: unitID, region: 'sidebar').order(:ordering).map { |w|
+      attrs = JSON.parse(w.attrs)
+      { id: w.id,
+        kind: w.kind,
+        title: attrs['title'],
+        html: attrs['html'] }
+    },
     sidebarNavLinks: [{"name" => "About eScholarship", "url" => request.path.sub("/api/", "/")},]
   }
   breadcrumb = [{"name" => "About eScholarship", "url" => request.path.sub("/api/", "/")},]
   return body.merge(getHeaderElements(breadcrumb, nil)).to_json
 end
 
+###################################################################################################
+# The first line of defense against unwanted or unsafe HTML is the WYSIWIG editor's built-in
+# filtering. However, since this is an API we cannot rely on that. This is the second line of
+# defense.
+def sanitizeHTML(htmlFragment)
+  return Sanitize.fragment(params[:newText], 
+    elements: %w{b em i strong u} +                      # all 'restricted' tags
+              %w{a br li ol p small strike sub sup ul hr},  # subset of ''basic' tags
+    attributes: { a: ['href'] },
+    protocols:  { a: {'href' => ['ftp', 'http', 'https', 'mailto', :relative]} }
+  )
+end
+
+###################################################################################################
+# *Put* to change the main text on a static page
+put "/api/static/:unitID/:pageName/mainText" do |unitID, pageName|
+
+  # In future the token will be looked up in a sessions table of logged in users. For now
+  # it's just a placeholder.
+  params[:token] == 'xyz123' or halt(401) # TODO: make this actually secure
+  # TODO: check that logged in user has permission to edit this unit and page
+  puts "TODO: permission check"
+
+  # Grab page data from the database
+  page = Page.where(unit_id: unitID, name: pageName).first or halt(404, "Page not found")
+
+  # Parse the HTML text, and sanitize to be sure only allowed tags are used.
+  safeText = sanitizeHTML(params[:newText])
+
+  # Update the database
+  page.attrs = JSON.parse(page.attrs).merge({ "html" => safeText }).to_json
+  page.save
+
+  # And let the caller know it went fine.
+  content_type :json
+  return { status: "ok" }.to_json
+end
+
+###################################################################################################
+# *Put* to change widget text
+put "/api/widget/:unitID/:widgetID/text" do |unitID, widgetID|
+
+  # In future the token will be looked up in a sessions table of logged in users. For now
+  # it's just a placeholder.
+  params[:token] == 'xyz123' or halt(401) # TODO: make this actually secure
+  # TODO: check that logged in user has permission to edit this unit and page
+  puts "TODO: permission check"
+
+  # Grab widget data from the database
+  widget = Widget.where(unit_id: unitID, id: widgetID).first or halt(404, "Widget not found")
+
+  # Parse the HTML text, and sanitize to be sure only allowed tags are used.
+  safeText = sanitizeHTML(params[:newText])
+
+  # Update the database
+  widget.attrs = JSON.parse(widget.attrs).merge({ "html" => safeText }).to_json
+  widget.save
+
+  # And let the caller know it went fine.
+  content_type :json
+  return { status: "ok" }.to_json
+end

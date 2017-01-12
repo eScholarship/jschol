@@ -1,22 +1,24 @@
 // ##### Footer Component ##### //
 
 import React from 'react'
+import { Link } from 'react-router'
 
 class FooterComp extends React.Component {
   render() {
     return (
       <div className="c-footer">
         <nav className="c-footer__nav">
-          <a href="">Home</a>
-          <a href="">About eScholarship</a>
-          <a href="">Campuses</a>
+          <Link to="/">Home</Link>
+          <Link to="/static/root/aboutEschol">About eScholarship</Link>
+          <Link to="/browse/campuslist">Campuses</Link>
           <a href="">OA Policies</a>
           <a href="">Journals</a>
           <a href="">Deposit</a>
           <a href="">Privacy Policy</a>
           <a href="">Terms & Conditions</a>
           <a href="">Help</a>
-          <a href="">Admin Login</a>
+          { this.props.admin ? <Link to="/logout">Admin Logout</Link>
+                                : <Link to="/login">Admin Login</Link> }
         </nav>
         <div className="c-footer__logo">
           <a href="">

@@ -9,11 +9,11 @@ class PdfViewerComp extends React.Component
 
   render() {
     return(
-      <div id="pdfjs_cdl_wrapper" ref={(c) => this.initViewer(c)}>
+      <div id="pdfjs-cdl-wrapper" ref={(c) => this.initViewer(c)}>
         <noscript>
           <embed src={this.props.url} type='application/pdf' />
         </noscript>
-        <div id="pdfjs_viewer" className="jsonly" style={{visibility: "hidden"}} dangerouslySetInnerHTML={ this.viewerHTML() }/>
+        <div id="pdfjs-viewer" className="jsonly" style={{visibility: "hidden"}} dangerouslySetInnerHTML={ this.viewerHTML() }/>
       </div>)
   }
 
@@ -25,9 +25,17 @@ class PdfViewerComp extends React.Component
     if (this.initted)
       return
     this.initted = true
-    DEFAULT_URL = this.props.url
-    window.webViewerLoad()
-    $("#pdfjs_viewer").css("visibility", "visible") // we show it only after init, to avoid wonky display
+    var url = this.props.url;
+
+    // The following hijinks are a signal to webpack to split the pdf.js code into a separate
+    // bundle, which will be loaded only when needed.
+    require.ensure(['pdfjs-embed'], function(require) {
+      require('pdfjs-embed');
+      window.DEFAULT_URL = url;
+      window.webViewerLoad();
+       // we show it only after init, to avoid wonky display
+      $("#pdfjs-viewer").css("visibility", "visible");
+    }, 'pdfjs');
   }
 
   viewerHTML() {

@@ -3,6 +3,7 @@
 import React from 'react'
 import Search1Comp from '../components/Search1Comp.jsx'
 import Breakpoints from '../../js/breakpoints.json'
+import AdminBarComp from '../components/AdminBarComp.jsx'
 
 class HeaderComp1 extends React.Component {
   constructor(props){
@@ -11,6 +12,8 @@ class HeaderComp1 extends React.Component {
   }
   render() {
     return (
+    <div>
+      { this.props.admin ? <AdminBarComp admin={this.props.admin}/> : null }
       <div className="c-header1">
         <div className="c-header1__logosearch">
           <a href="/">
@@ -28,6 +31,7 @@ class HeaderComp1 extends React.Component {
           <button className="c-header1__deposit-button">Get Started</button>
         </div>
       </div>
+    </div>
     )
   }
 }

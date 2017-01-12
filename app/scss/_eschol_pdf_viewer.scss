@@ -1,0 +1,46 @@
+// ##### Styles for pdf.js viewer ##### //
+
+// scss-lint:disable IdSelector
+#pdfjs-cdl-wrapper {
+  width: 80%;
+  float: left;
+  outline: none;
+  background-color: $color-light-black;
+  background-image: url('/images/pdfjs/texture.png');
+  font: message-box;
+  font-size: 10px;
+}
+
+// scss-lint:disable MergeableSelector
+#pdfjs-cdl-wrapper {
+  // scss-lint:disable SelectorFormat
+
+  @import '../bower_components/pdfjs-embed/scss/_viewer.scss';
+
+  /* Overrides, to keep number of changes in the vendor file very small */
+  #mainContainer {
+    position: relative; /* was "relative" */
+  }
+
+  #viewerContainer {
+    position: relative; /* was: absolute */
+    top: auto;          /* was: 32px */
+    right: auto;        /* was: 0 */
+    bottom: auto;       /* was: 0 */
+    left: auto;         /* was: 0 */
+    width: 100%;        /* didn't previously specify width */
+    overflow: hidden;   /* was: auto */
+  }
+
+  /* Turn off a bunch of button features we don't need in our UI */
+  #sidebarToggle,
+  #presentationMode,
+  #openFile,
+  #print,
+  #download,
+  #viewBookmark,
+  #secondaryToolbarToggle,
+  #toolbarViewerMiddle {
+    visibility: hidden;
+  }
+}
