@@ -3,28 +3,13 @@
 import React from 'react'
 import Form from 'react-router-form'
 
-class CustomLabel extends React.Component {
-  render() { return (
-    <label htmlFor="c-search_2_refine-campus">{this.props.name}</label>
-  )}
-}
-
 class SearchControls extends React.Component {
-  state = {
+  constructor(props) {
+    super(props)
     // The ID of the unit or item to be searched on
-    search_id: this.props.id
-  }
-
-  parentId = this.parentId.bind(this)
-
-  handleRadioSelect(){
-    this.props.handleRadioSelect()
-  }
-
-  componentWillMount() {
-    if (this.props.type.includes("series") || this.props.type.includes("special")) {
-      this.setState({search_id: this.parentId()})
-    }
+    this.state = {search_id: this.props.id}
+    this.parentId = this.parentId.bind(this)
+    this.onPropsSetOrChange = this.onPropsSetOrChange.bind(this)
   }
 
   // Used for series and special where we need to grab the parent Unit ID. Not used with other units or items. 
@@ -32,16 +17,40 @@ class SearchControls extends React.Component {
     return this.props.parents ? this.props.parents[0] : null 
   }
 
+  handleRadioSelect(){
+    this.props.handleRadioSelect()
+  }
+
+  componentWillMount() {
+    this.onPropsSetOrChange(this.props)
+  }
+
+  componentWillReceiveProps(props) {
+    this.onPropsSetOrChange(props)
+  }
+
+  onPropsSetOrChange(props) {
+    if (props.type.includes("series") || props.type.includes("special")) {
+      this.setState({search_id: this.parentId()})
+    }
+    ['oru', 'series', 'monograph_series', 'seminar_series', 'special'].includes(props.type) &&
+       this.setState({customRadioName: "departments",
+                      customRadioLabel: "This department"})
+    props.type == 'campus' && 
+       this.setState({customRadioName: "campuses",
+                      customRadioLabel: "This campus"})
+    props.type == 'journal' &&
+       this.setState({customRadioName: "journals",
+                      customRadioLabel: "This Journal"})
+  }
+
   render() {
     return (
     <div className={this.props.refineActive ? "c-search2__refine--active" : "c-search2__refine"}>
-      <input type="radio" name="search-refine" id="c-search2__refine-eschol" onClick = {this.handleRadioSelect.bind(this)} defaultChecked={true}/>
+      <input type="radio" id="c-search2__refine-eschol" name={this.state.customRadioName} onClick = {this.handleRadioSelect.bind(this)} defaultChecked={true}/>
       <label htmlFor="c-search2__refine-eschol">All of eScholarship</label>
-      <input type="radio" name="search-refine" value={this.state.search_id} id="c-search2__refine-campus" onClick={this.handleRadioSelect.bind(this)}/>
-      {['oru', 'series', 'monograph_series', 'seminar_series', 'special'].includes(this.props.type)
-        && <CustomLabel name="This department" />}
-      {this.props.type == 'campus' && <CustomLabel name="This campus" />}
-      {this.props.type == 'journal' && <CustomLabel name="This journal" />}
+      <input type="radio" id="c-search2__refine-campus" name={this.state.customRadioName} value={this.state.search_id} onClick={this.handleRadioSelect.bind(this)}/>
+      <label htmlFor="c-search_2_refine-campus">{this.state.customRadioLabel}</label>
     </div>
   )}
 }

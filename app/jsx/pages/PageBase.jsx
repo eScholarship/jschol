@@ -103,7 +103,6 @@ class PageBase extends React.Component
   renderLoading() { return(
     <div>
       <Header1Comp admin={this.state.admin}/>
-      <NavComp/>
       <h2 style={{ marginTop: "5em", marginBottom: "5em" }}>Loading...</h2>
     </div>
   )}
@@ -111,7 +110,6 @@ class PageBase extends React.Component
   renderError() { return (
     <div>
       <Header1Comp admin={this.state.admin}/>
-      <NavComp/>
       <h2 style={{ marginTop: "5em", marginBottom: "5em" }}>{this.state.error}</h2>
     </div>
   )}

@@ -1,6 +1,7 @@
 // ##### Subheader 2 Component ##### //
 
 import React from 'react'
+import { Link } from 'react-router'
 import CampusSelectorComp from '../components/CampusSelectorComp.jsx'
 import Nav3Comp from '../components/Nav3Comp.jsx'
 
@@ -23,13 +24,13 @@ class Subheader2Comp extends React.Component {
           <Nav3Comp />
           <div className="c-subheader__social">
             <a href="">
-              <img src="images/logo_facebook-black.svg" alt="Facebook"/>
+              <img src="/images/logo_facebook-black.svg" alt="Facebook"/>
             </a>
             <a href="">
-              <img src="images/logo_twitter-black.svg" alt="Twitter"/>
+              <img src="/images/logo_twitter-black.svg" alt="Twitter"/>
             </a>
             <a href="">
-              <img src="images/icon_rss-black.svg" alt="RSS"/>
+              <img src="/images/icon_rss-black.svg" alt="RSS"/>
             </a>
           </div>
           <div className="c-subheader__language">
