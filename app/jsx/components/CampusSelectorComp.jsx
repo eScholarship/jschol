@@ -6,17 +6,16 @@ import { Link } from 'react-router'
 class CampusSelectorComp extends React.Component {
   componentWillMount() {
     this.setState({isOpen: false})
-    this.closeSearchRefine = this.closeSearchRefine.bind(this)
-    this.campusSelector = this.campusSelector.bind(this, this.props.campuses)
+    this.campusSelector = this.campusSelector.bind(this)
   }
 
-  closeSearchRefine(){
+  closeSearchRefine() {
     this.setState({isOpen: false})
   }
 
   campusSelector(campuses) {
-    campuses.map(function(c, i) {
-      return c['id'] != "" && <Link key={i} to={"/unit/"+ c['id']} 
+    return campuses.map(function(c, i) {
+      return c['id'] != "" && <Link key={i} to={"/unit/"+ c['id']}
                                     onClick={()=>this.closeSearchRefine}>{c['name']}</Link>
     })
   }

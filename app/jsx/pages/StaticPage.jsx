@@ -5,8 +5,8 @@ import $ from 'jquery'
 import _ from 'lodash'
 
 import PageBase from './PageBase.jsx'
-import HeaderComp from '../components/HeaderComp.jsx'
-import NavComp from '../components/NavComp.jsx'
+import Header1Comp from '../components/Header1Comp.jsx'
+import Nav1Comp from '../components/Nav1Comp.jsx'
 import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
 import SidebarNavComp from '../components/SidebarNavComp.jsx'
 
@@ -25,8 +25,8 @@ class StaticPage extends PageBase
   // PageBase calls this when the API data has been returned to us
   renderData(data) { return(
     <div className="l-about">
-      <HeaderComp admin={this.state.admin} />
-      <NavComp />
+      <Header1Comp admin={this.state.admin} />
+      <Nav1Comp campuses={data.campuses} />
       <BreadcrumbComp array={data.breadcrumb} />
       <div className="c-columns">
         <aside>

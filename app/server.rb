@@ -514,6 +514,7 @@ get "/api/static/:unitID/:pageName" do |unitID, pageName|
   page or halt(404, "Page not found")
 
   body = { 
+    campuses: getCampusesAsMenu,
     page: {
       title: page.title,
       html: JSON.parse(page.attrs)['html']

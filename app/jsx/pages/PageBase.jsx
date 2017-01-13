@@ -3,7 +3,6 @@ import React from 'react'
 import $ from 'jquery'
 import _ from 'lodash'
 import Header1Comp from '../components/Header1Comp.jsx'
-import Nav1Comp from '../components/Nav1Comp.jsx'
 import FooterComp from '../components/FooterComp.jsx'
 
 let sessionStorage = (typeof window != "undefined") ? window.sessionStorage : null
