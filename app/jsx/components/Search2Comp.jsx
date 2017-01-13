@@ -3,13 +3,25 @@
 import React from 'react'
 import Form from 'react-router-form'
 
+class CustomRadioInput extends React.Component {
+  render() {
+    return (
+      <input type="radio" id="c-search2__refine-campus" name={this.props.name} value={this.props.value} onClick={this.props.handleRadioSelect}/>
+  )}
+}
+
 class SearchControls extends React.Component {
   constructor(props) {
     super(props)
+    this.handleRadioSelect = this.props.handleRadioSelect.bind(this)
   }
 
   handleRadioSelect(){
     this.props.handleRadioSelect()
+  }
+
+  labelCustomRadio(name) {
+    return <label htmlFor="c-search_2_refine-campus">{name}</label>
   }
 
   render() {
@@ -20,20 +32,22 @@ class SearchControls extends React.Component {
        customRadioName = "departments"
        customRadioLabel = "This department"
     }
-    if (p.type == 'campus') {
-       customRadioName = "campuses"
-       customRadioLabel = "This campus"
-    }
     if (p.type == 'journal') {
        customRadioName = "journals"
        customRadioLabel = "This Journal"
+    }
+    if (p.type == 'campus') {
+       customRadioName = "campuses"
+       customRadioLabel = "This campus"
     }
     return (
     <div className={this.props.refineActive ? "c-search2__refine--active" : "c-search2__refine"}>
       <input type="radio" id="c-search2__refine-eschol" name={customRadioName} value="" onClick = {this.handleRadioSelect.bind(this)} defaultChecked={true}/>
       <label htmlFor="c-search2__refine-eschol">All of eScholarship</label>
-      <input type="radio" id="c-search2__refine-campus" name={customRadioName} value={this.props.unitID} onClick={this.handleRadioSelect.bind(this)}/>
-      <label htmlFor="c-search_2_refine-campus">{customRadioLabel}</label>
+      {p.unitID ? <CustomRadioInput name={customRadioName}
+                                   value={p.unitID}
+                                   handleRadioSelect={this.handleRadioSelect} /> : null }
+      {p.unitID ? this.labelCustomRadio(customRadioLabel) : null}
     </div>
   )}
 }
