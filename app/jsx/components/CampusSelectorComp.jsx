@@ -4,19 +4,16 @@ import React from 'react'
 import { Link } from 'react-router'
 
 class CampusSelectorComp extends React.Component {
-  componentWillMount() {
-    this.setState({isOpen: false})
-    this.campusSelector = this.campusSelector.bind(this)
-  }
+  state = { isOpen: false }
 
-  closeSearchRefine() {
+  closeSelector() {
     this.setState({isOpen: false})
   }
 
   campusSelector(campuses) {
-    return campuses.map(function(c, i) {
+    return campuses.map((c, i) => {
       return c['id'] != "" && <Link key={i} to={"/unit/"+ c['id']}
-                                    onClick={()=>this.closeSearchRefine}>{c['name']}</Link>
+                                    onClick={()=>this.closeSelector()}>{c['name']}</Link>
     })
   }
 
@@ -27,7 +24,10 @@ class CampusSelectorComp extends React.Component {
         <h2 className="c-campusselector__heading">
           <Link to={"/unit/" + p.campusID}>{p.campusName ? p.campusName : "eScholarship"}</Link>
         </h2>
-        <details open={this.state.isOpen ? true : false} className="c-campusselector__selector">
+        <details open={this.state.isOpen}
+                 ref={domElement => this.details=domElement}
+                 onClick={()=>setTimeout(()=>this.setState({isOpen: this.details.open}), 0)}
+                 className="c-campusselector__selector">
           <summary></summary>
           <div className="c-campusselector__selector-items">
             <div>eScholarship at &hellip;</div>
