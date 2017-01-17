@@ -1,10 +1,12 @@
+// ##### Unit Page ##### //
 
 import React from 'react'
 import { Link } from 'react-router'
 
 import PageBase from './PageBase.jsx'
-import HeaderComp from '../components/HeaderComp.jsx'
-import NavComp from '../components/NavComp.jsx'
+import Header2Comp from '../components/Header2Comp.jsx'
+import Subheader1Comp from '../components/Subheader1Comp.jsx'
+import Subheader2Comp from '../components/Subheader2Comp.jsx'
 import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
 
 class UnitPage extends PageBase
@@ -16,15 +18,20 @@ class UnitPage extends PageBase
 
   renderData(data) { return(
     <div>
-      <HeaderComp level="unit"
-                  isJournal = {data.isJournal}
-                  campusID={data.campusID}
-                  campusName={data.campusName}
-                  campuses={data.campuses}
-                  unit_id={data.id} />
-      <NavComp level="unit"
-               campusID={data.campusID}
-               campuses={data.campuses} />
+      <Header2Comp type={data.type} unitID={data.id} /> 
+      { data.type == "journal" &&
+          <Subheader2Comp unitID={data.id}
+                          unitName={data.name}
+                          campusID={data.campusID}
+                          campusName={data.campusName}
+                          campuses={data.campuses} /> }
+      { data.type != "journal" &&
+          <Subheader1Comp type={data.type}
+                          unitID={data.id}
+                          unitName={data.name}
+                          campusID={data.campusID}
+                          campusName={data.campusName}
+                          campuses={data.campuses} /> }
       <BreadcrumbComp array={data.breadcrumb} />
       <h2>Unit {data.id}</h2>
       <div>

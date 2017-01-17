@@ -2,8 +2,8 @@ import React from 'react'
 import { Link } from 'react-router'
 
 import PageBase from './PageBase.jsx'
-import HeaderComp from '../components/HeaderComp.jsx'
-import NavComp from '../components/NavComp.jsx'
+import Header1Comp from '../components/Header1Comp.jsx'
+import Nav1Comp from '../components/Nav1Comp.jsx'
 import FooterComp from '../components/FooterComp.jsx'
 import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
 
@@ -22,8 +22,8 @@ class LogoutPage extends PageBase
 
   render() { return(
     <div>
-      <HeaderComp admin={this.state.admin}/>
-      <NavComp/>
+      <Header1Comp admin={this.state.admin}/>
+      <Nav1Comp/>
       <div className="c-columns">
         <main>
           <section className="o-columnbox1">

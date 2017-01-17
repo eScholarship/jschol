@@ -2,9 +2,9 @@ import React from 'react'
 import { Link } from 'react-router'
 
 import PageBase from './PageBase.jsx'
-import HeaderComp from '../components/HeaderComp.jsx'
+import Header1Comp from '../components/Header1Comp.jsx'
+import Nav1Comp from '../components/Nav1Comp.jsx'
 import FooterComp from '../components/FooterComp.jsx'
-import NavComp from '../components/NavComp.jsx'
 
 class NotFoundPage extends PageBase
 {
@@ -13,11 +13,10 @@ class NotFoundPage extends PageBase
     return "/api/browse/" + props.params.type
   }
 
-  render() {
-    return (
+  render() { return (
     <div>
-      <HeaderComp />
-      <NavComp />
+      <Header1Comp />
+      <Nav1Comp />
       <br/>
       <h2>Error: Page not found.</h2>
       <br/>
