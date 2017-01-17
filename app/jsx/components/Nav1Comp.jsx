@@ -18,20 +18,18 @@ class Nav1Comp extends React.Component {
       this.mq.addListener(this.widthChange)
       this.widthChange()
     }
-    if (this.props.campuses) {
-      this.campusSelector = this.props.campuses.map(function(c, i) {
-          return c['id'] != "" && <Link key={i} to={"/unit/" + c['id']}>{c['name']}</Link>
-        })
-    }
   }
 
   campusListGenerator(props) {
     if (props.campuses) { return (
-      <div className="c-nav1__sub-items">
-        {this.campusSelector}
-      </div>
-      )}
-    // No props? Just return static version
+        <div className="c-nav1__sub-items">
+          {this.props.campuses.map((c, i) => {
+            return c['id'] != "" && <Link key={i} to={"/unit/" + c['id']}>{c['name']}</Link>
+          })}
+        </div>
+    )}
+    // Temporary
+    // ToDo: Need to work on global state UI for campus list. Sticking this in here in the meantime.
     return (
       <div className="c-nav1__sub-items">
         <Link to="/unit/ucb">UC Berkeley</Link>

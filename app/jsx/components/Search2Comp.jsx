@@ -11,15 +11,6 @@ class CustomRadioInput extends React.Component {
 }
 
 class SearchControls extends React.Component {
-  constructor(props) {
-    super(props)
-    this.handleRadioSelect = this.props.handleRadioSelect.bind(this)
-  }
-
-  handleRadioSelect(){
-    this.props.handleRadioSelect()
-  }
-
   labelCustomRadio(name) {
     return <label htmlFor="c-search_2_refine-campus">{name}</label>
   }
@@ -42,11 +33,11 @@ class SearchControls extends React.Component {
     }
     return (
     <div className={this.props.refineActive ? "c-search2__refine--active" : "c-search2__refine"}>
-      <input type="radio" id="c-search2__refine-eschol" name={customRadioName} value="" onClick = {this.handleRadioSelect.bind(this)} defaultChecked={true}/>
+      <input type="radio" id="c-search2__refine-eschol" name={customRadioName} value="" onClick={()=>this.props.handleRadioSelect()} defaultChecked={true}/>
       <label htmlFor="c-search2__refine-eschol">All of eScholarship</label>
       {p.unitID ? <CustomRadioInput name={customRadioName}
                                    value={p.unitID}
-                                   handleRadioSelect={this.handleRadioSelect} /> : null }
+                                   handleRadioSelect={()=>this.props.handleRadioSelect()} /> : null }
       {p.unitID ? this.labelCustomRadio(customRadioLabel) : null}
     </div>
   )}
@@ -71,7 +62,7 @@ class SearchComp2 extends React.Component {
             <input type="search" id="global-search" name="q" className="c-search2__field" placeholder="Search eScholarship" onFocus={()=> this.setState({refineActive: true})} onBlur={()=> this.setState({refineActive: false})} />
           </div>
           <SearchControls refineActive={this.state.refineActive}
-                          handleRadioSelect={this.handleRadioSelect.bind(this)}
+                          handleRadioSelect={()=>this.handleRadioSelect()}
                           type={this.props.type}
                           unitID={this.props.unitID} />
         </div>
