@@ -1,15 +1,136 @@
-// ##### Tab 1 Component ##### //
+// ##### Item Page - "Tab 1" Main Content Component ##### //
 
 import React from 'react'
+import $ from 'jquery'
+import PdfViewerComp from '../components/PdfViewerComp.jsx'
 
 class Tab1Comp extends React.Component {
+  getLink(id, service) {
+    $.getJSON("/api/mediaLink/"+id+"/"+service).done((data) => {
+      window.location = data.url
+    }).fail((jqxhr, textStatus, err)=> {
+      console.log("Failed! textStatus=", textStatus, ", err=", err)
+    })
+  }
+
   render() {
+    let p = this.props,
+        pub_web_loc = p.attrs["pub_web_loc"].map(function(node, i) {
+          return ( <span key={i}><a href={node}>{node}</a><br/></span> )
+        }),
+        abstr = p.attrs["abstract"],
+        // Temporary styles till we get Joel's work
+        floatRightStyle = {float: 'right'},
+        rowStyle = {display: 'table'},
+        leftStyle = {display: 'table-cell', width: '750px'},
+        rightStyle = {display: 'table-cell', width: '100px', border: '1px solid black'},
+        titleStyle = {fontSize: '1.2em'}
     return (
-      <div className="c-tab1">
-        <h1 tabindex="-1">Tab 1 content to go here</h1>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Iusto nobis maxime officiis aliquid delectus libero neque ullam voluptatibus distinctio quod, illo ab, repudiandae voluptate incidunt dolor consequatur debitis fugiat nostrum.
+     <div className="content">
+        <div style={rowStyle}>
+          <div style={leftStyle}>
+            <span style={floatRightStyle}>
+              <a href="#" onClick={() => {this.getLink(p.id, "facebook")}}>Facebook</a>&nbsp;&nbsp;
+              <a href="#" onClick={() => {this.getLink(p.id, "twitter")}}>Twitter</a>&nbsp;&nbsp;
+              <a href="#" onClick={() => {this.getLink(p.id, "email")}}>Email</a>&nbsp;&nbsp;
+              <a href="#" onClick={() => {this.getLink(p.id, "mendeley")}}>Mendeley</a>&nbsp;&nbsp;
+              <a href="#" onClick={() => {this.getLink(p.id, "citeulike")}}>CiteULike</a>
+            </span><br/>
+            <font style={titleStyle}>{p.title}</font> <br/>
+            {p.pub_date} <ItemMainAuthorsComp authors={p.authors} changeTab={this.props.changeTab}/>
+            {pub_web_loc.length > 0 && <div>{pub_web_loc}</div>}
+          </div>
+          <div style={rightStyle}>
+            {p.rights}
+          </div>
+        </div>
+        {abstr && <div><br/>Abstract<br/>{abstr}</div>}
+        <hr/>
+        <Content
+          {...p}
+        />
       </div>
+
     )
   }
+}
+
+// List of authors on Main content tab. Truncate and link to authors tab when too long.
+class ItemMainAuthorsComp extends React.Component {
+  handleClick(tab_id) {
+    this.props.changeTab(tab_id)
+  }
+
+  render() {
+    let p = this.props,
+        a = p.authors,
+        expand = false 
+    if (p.authors && p.authors.length > 6) {
+      a = a.slice(0, 5)
+      expand = true 
+    }
+    let authorList = a.map((node,i) => <span key={i}>{node.name}</span>)
+      .reduce((accu, elem) => {
+        return accu === null ? [elem] : [...accu, '; ', elem]
+      }, null)
+    return (
+      <span>
+        { p.authors && <span>&#124; {authorList} {this.renderExpand(expand)}</span> }
+      </span>
+    )
+  }
+
+  renderExpand(expand) { return(
+    <span>
+      {expand && <a href="#" onClick={()=>this.handleClick(4)}>et al.</a>}
+    </span>
+  )}
+}
+
+class Content extends React.Component {
+  render() {
+      switch(this.props.status) {
+        case "published":
+          return this.renderContent(this.props)
+          break;
+        case "withdrawn":
+          return this.renderNoContent("withdrawn", this.props.attrs['withdrawn_date'])
+          break;
+        case "embargoed":
+          return this.renderNoContent("embargoed", this.props.attrs['embargo_date'])
+          break;
+      }
+  } 
+
+  renderContent(p) { return (
+      p.content_type == "application/pdf" ? this.renderPdf(p) : 
+        p.content_type == "text/html" ? this.renderHtml(p) : null
+  )}
+
+  renderPdf(p) { return (
+    <div>
+      Main text<br/>
+      {/*Fetch content through server app, which will check credentials and proxy to proper back-end*/}
+      <PdfViewerComp url={"/content/qt" + p.id + "/qt" + p.id + ".pdf"}/>
+    </div>
+  )}
+
+  renderHtml(p) { return (
+    <div>
+      Main text<br/>
+      <div dangerouslySetInnerHTML={{__html: p.content_html}}/>
+      <br/><br/>
+    </div>
+  )}
+
+  renderNoContent(reason, date) { return (
+    <div>
+    {reason=="withdrawn" && 
+      <p>Withdrawn item:<br/>This item has been withdrawn.<br/><br/><br/></p>}
+    {reason=="embargoed" && 
+      <p>This item is embargoed until {date}.<br/><br/><br/></p>}
+    </div>
+  )}
 }
 
 module.exports = Tab1Comp;

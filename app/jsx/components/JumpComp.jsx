@@ -1,23 +1,29 @@
 // ##### Jump Component ##### //
 
 import React from 'react'
+import { Link } from 'react-router'
 
 class JumpComp extends React.Component {
+  handleClick(e, tab_id) {  
+    e.preventDefault()
+    this.props.changeTab(tab_id)
+  }
+
   render() {
     return (
       <div className="c-jump">
         <a id="c-jump__label" href="">Article</a>
         <ul className="c-jump__tree" aria-labelledby="c-jump__label">
-          <li><a href="">Abstract</a></li>
-          <li><a href="">Main Content</a></li>
-          <li><a href="">References</a></li>
-          <li><a href="">Author Response</a></li>
+          <li><Link to="#">Abstract</Link></li>
+          <li><Link to="#">Main Content</Link></li>
+          <li><Link to="#">References</Link></li>
+          <li><Link to="#">Author Response</Link></li>
         </ul>
         <ul className="c-jump__siblings">
-          <li><a href="">Supplemental Material</a></li>
-          <li><a href="">Metrics</a></li>
-          <li><a href="">Author & Article Info</a></li>
-          <li><a href="">Comments</a></li>
+          <li><Link to="#" onClick={()=>this.handleClick(2)}>Supplemental Material</Link></li>
+          <li><Link to="#">Metrics</Link></li>
+          <li><Link to="#">Author & Article Info</Link></li>
+          <li><Link to="#">Comments</Link></li>
         </ul>
       </div>
     )

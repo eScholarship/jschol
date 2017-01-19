@@ -11,8 +11,9 @@ import Tab5Comp from '../components/Tab5Comp.jsx'
 class TabsComp extends React.Component {
   constructor(props){
     super(props)
-    this.state = {currentTab: 1}
+    this.state = {currentTab: props.currentTab}
   }
+
   componentWillMount() {
     if (matchMedia) {
       this.mq = matchMedia("(min-width:"+Breakpoints.screen3+")")
@@ -20,9 +21,11 @@ class TabsComp extends React.Component {
       this.widthChange()
     }
   }
+
   widthChange = ()=> {
     this.setState({isOpen: this.mq.matches})
   }
+
   render() {
     return (
       <div className="c-tabs">
@@ -39,11 +42,11 @@ class TabsComp extends React.Component {
           </details>
         </div>
         <div className="c-tabs__panel">
-          {this.state.currentTab === 1 ? <Tab1Comp /> : null}
-          {this.state.currentTab === 2 ? <Tab2Comp /> : null}
-          {this.state.currentTab === 3 ? <Tab3Comp /> : null}
-          {this.state.currentTab === 4 ? <Tab4Comp /> : null}
-          {this.state.currentTab === 5 ? <Tab5Comp /> : null}
+          {this.state.currentTab === 1 ? <Tab1Comp {...this.props} /> : null}
+          {this.state.currentTab === 2 ? <Tab2Comp {...this.props} /> : null}
+          {this.state.currentTab === 3 ? <Tab3Comp {...this.props} /> : null}
+          {this.state.currentTab === 4 ? <Tab4Comp {...this.props} /> : null}
+          {this.state.currentTab === 5 ? <Tab5Comp {...this.props} /> : null}
         </div>
       </div>
     )
