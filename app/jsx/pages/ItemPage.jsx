@@ -12,6 +12,10 @@ import FooterComp from '../components/FooterComp.jsx'
 class ItemPage extends PageBase {
   state = { currentTab: 1 }
 
+  componentWillMount() {
+    this.changeTab = this.changeTab.bind(this)
+  }
+
   // PageBase will fetch the following URL for us, and place the results in this.state.pageData
   pageDataURL(props) {
     return "/api/item/" + props.params.itemID
@@ -36,14 +40,14 @@ class ItemPage extends PageBase {
         <div className="c-columns">
           <main>
             <TabsComp currentTab={this.state.currentTab}
-                      changeTab={()=>this.changeTab()}
+                      changeTab={this.changeTab}
                       {...data} />
           </main>
           <aside>
             <section className="o-columnbox2">
               <header>
                 <h2 className="o-columnbox2__heading">Jump To</h2>
-                <JumpComp changeTab={()=>this.changeTab()} />
+                <JumpComp changeTab={this.changeTab} />
               </header>
             </section>
             <section className="o-columnbox2">

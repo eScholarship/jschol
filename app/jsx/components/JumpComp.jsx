@@ -20,7 +20,7 @@ class JumpComp extends React.Component {
           <li><Link to="#">Author Response</Link></li>
         </ul>
         <ul className="c-jump__siblings">
-          <li><Link to="#" onClick={()=>this.handleClick(2)}>Supplemental Material</Link></li>
+          <li><Link to="#" onClick={(e)=>this.handleClick(e, 2)}>Supplemental Material</Link></li>
           <li><Link to="#">Metrics</Link></li>
           <li><Link to="#">Author & Article Info</Link></li>
           <li><Link to="#">Comments</Link></li>

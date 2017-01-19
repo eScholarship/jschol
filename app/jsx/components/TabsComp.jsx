@@ -9,10 +9,7 @@ import Tab4Comp from '../components/Tab4Comp.jsx'
 import Tab5Comp from '../components/Tab5Comp.jsx'
 
 class TabsComp extends React.Component {
-  constructor(props){
-    super(props)
-    this.state = {currentTab: props.currentTab}
-  }
+  state = {currentTab: this.props.currentTab}
 
   componentWillMount() {
     if (matchMedia) {
@@ -20,6 +17,10 @@ class TabsComp extends React.Component {
       this.mq.addListener(this.widthChange)
       this.widthChange()
     }
+  }
+
+  componentWillReceiveProps(nextProps) {
+    this.setState({currentTab: nextProps.currentTab})
   }
 
   widthChange = ()=> {
