@@ -25,7 +25,7 @@ class Hierarchy_UnitItem
         unitID = getUnitsParent(unitID)
       end        
     end
-    unit = Unit[unitID]
+    unit = $unitsHash[unitID]
     return [unitID, unit.name]
   end
 
@@ -48,7 +48,7 @@ class Hierarchy_UnitItem
 
     unitID = @unitID
     until unitID == "root"
-      unit = Unit[unitID]
+      unit = $unitsHash[unitID]
       nodes.unshift({"name" => unit.name, "url" => "/unit/#{unitID}"})
       # ToDo: Handle mutiple campuses
       unitID = getUnitsParent(unitID)
@@ -75,6 +75,7 @@ class Hierarchy_UnitItem
 
   # Get parent unit ID, given a unit ID
   def getUnitsParent(unitID)
+    # ToDo: Use $hierByUnit here
     return UnitHier.filter(:unit_id => unitID, :is_direct => true).order(:ordering).map(:ancestor_unit)[0]
   end
 
@@ -88,6 +89,7 @@ class Hierarchy_UnitItem
   # Check if this is topmost unit under root.  
   # Technically topmost unit can be a campus -or- an ORU (i.e. 'lbnl')
   def isCampus?(unitID)
+    # ToDo: Use $hierByUnit here
     parents = UnitHier.filter(:unit_id => unitID, :is_direct => true).map { |hier| hier.ancestor_unit }
     r = parents ? parents[0] == 'root' : false
     return r
