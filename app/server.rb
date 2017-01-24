@@ -53,6 +53,7 @@ require_relative 'dbCache'
 require_relative 'hierarchy'
 require_relative 'searchApi'
 require_relative 'queueWithTimeout'
+require_relative 'widgets'
 
 # Sinatra configuration
 configure do
@@ -373,10 +374,14 @@ get "/api/unit/:unitID" do |unitID|
         :name => unit.name,
         :type => unit.type,
         :parents => parents ? parents.map { |u| u.ancestor_unit } : [],
-        :children => children ? children.map { |u| u.unit_id } : [],
+        :children => children ? children.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : [],
         :nItems => items.count,
-        :items => items.limit(10).map { |pair| pair.item_id }
+        :items => items.limit(10).map { |pair| pair.item_id },
+        :attrs => unit.attrs
       }
+      if body[:type] == 'oru'
+        body.merge!(getORULandingPageData(unitID))
+      end
       return body.merge(getUnitItemHeaderElements('unit', unitID)).to_json
     rescue Exception => e
       halt 404, e.message
@@ -481,6 +486,44 @@ def getUnitItemHeaderElements(view, id)
   end
   return body2
 end
+
+# Get ORU-specific data for Department Landing Page
+def getORULandingPageData(id)
+  children = $hierByAncestor[id]
+
+  return {
+    :extent => departmentExtent(id),
+    :series => children ? children.select { |u| u.unit.type == 'series' }.map { |u| seriesPreview(u) } : [],
+    :related_orus => children ? children.select { |u| u.unit.type != 'series' }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : []
+  }
+end
+
+def seriesPreview(u)
+  items = UnitItem.filter(:unit_id => u.unit_id, :is_direct => true)
+  preview = items.limit(3).map { |pair| Item[pair.item_id] }
+
+  for item in preview
+    itemHash = {
+      item_id: item.id,
+      title: item.title
+    }
+    itemAttrs = JSON.parse(item.attrs)
+    itemHash[:abstract] = itemAttrs['abstract']
+  end
+
+  {
+    :unit_id => u.unit_id,
+    :name => u.unit.name,
+    :count => items.count,
+    :items => preview.map { |item| {item_id: item.id, title: item.title} },
+  }
+end
+
+# this was a stub for the item view in a series preview on a department landing page, 
+# but I have a feeling this code can be generalized and will probably look much like 
+# the data we get in search results for the item preview
+# def itemPreview(i)
+  
 
 # Array of all active root level campuses/ORUs. Include empty label "eScholarship at..." 
 def getCampusesAsMenu(topItem="eScholarship at...")
