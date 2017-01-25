@@ -382,6 +382,10 @@ get "/api/unit/:unitID" do |unitID|
       if body[:type] == 'oru'
         body.merge!(getORULandingPageData(unitID))
       end
+      if body[:type] == 'series'
+        body.merge!(getSeriesLandingPageData(unitID))
+        # body.merge!(search(params))
+      end
       return body.merge(getUnitItemHeaderElements('unit', unitID)).to_json
     rescue Exception => e
       halt 404, e.message
@@ -502,6 +506,7 @@ def seriesPreview(u)
   items = UnitItem.filter(:unit_id => u.unit_id, :is_direct => true)
   preview = items.limit(3).map { |pair| Item[pair.item_id] }
 
+  items = []
   for item in preview
     itemHash = {
       item_id: item.id,
@@ -509,13 +514,30 @@ def seriesPreview(u)
     }
     itemAttrs = JSON.parse(item.attrs)
     itemHash[:abstract] = itemAttrs['abstract']
+
+    authors = ItemAuthors.where(item_id: item.id).map(:attrs).map { |author| JSON.parse(author)["name"] }
+    itemHash[:authors] = authors
+    items << itemHash
   end
 
   {
     :unit_id => u.unit_id,
     :name => u.unit.name,
     :count => items.count,
-    :items => preview.map { |item| {item_id: item.id, title: item.title} },
+    :items => items,
+  }
+end
+
+def getSeriesLandingPageData(id)
+  parent = $hierByUnit[id]
+  if parent.length > 1
+    pp parent
+  else
+    children = parent ? $hierByAncestor[parent[0].ancestor_unit] : []
+  end
+
+  return {
+    :series => children ? children.select { |u| u.unit.type == 'series' }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : []
   }
 end
 

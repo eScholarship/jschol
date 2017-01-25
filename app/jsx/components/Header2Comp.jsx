@@ -1,4 +1,8 @@
 // ##### Header2 Component ##### //
+// Header2 Component contains the eScholarship logo and the search box
+// Used on all pages except homepage and main search page
+// Props = {type: "campus|journal|oru|series|monograph_series|seminar_series|special", unitID: "<unitID>"}
+// Props used to provide specificity to search box behavior
 
 import React from 'react'
 import { Link } from 'react-router'

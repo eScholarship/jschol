@@ -6,14 +6,27 @@ import Subheader1Comp from '../components/Subheader1Comp.jsx'
 import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
 import CarouselComp from '../components/MarqueeComp.jsx'
 
+class ItemPreviewSmall extends React.Component {
+  render() {
+    return (
+      <div>
+        <Link to={"/item/"+this.props.item_id.replace(/^qt/, "")}>{this.props.title}</Link><br/>
+        { this.props.authors.map((author) =>
+          <span key={author}>{author}</span>) }
+        <p>{this.props.abstract}</p>
+      </div>
+    )
+  }
+}
+
 class SeriesComp extends React.Component {
   render() {
     return (
       <div>
-      <h4>{this.props.data.name}</h4>
+      <h4><Link to={"/unit/"+this.props.data.unit_id}>{this.props.data.name}</Link></h4>
       <ul>
       { this.props.data.items.map((item) =>
-        <li key={item.item_id}><Link to={"/item/"+item.item_id.replace(/^qt/, "")}>{item.title}</Link></li>) }
+        <li key={item.item_id}><ItemPreviewSmall item_id={item.item_id} title={item.title} authors={item.authors} abstract={item.abstract}/></li>) }
       </ul>
       <p>{this.props.data.count-3} more works - show all</p>
       </div>
@@ -32,19 +45,6 @@ class DepartmentLayout extends React.Component {
     }
     return (
       <div>
-        <Header2Comp level="unit"
-                    isJournal = {data.isJournal}
-                    campusID={data.campusID}
-                    campusName={data.campusName}
-                    campuses={data.campuses}
-                    unit_id={data.id}/>
-        <Subheader1Comp type={data.type}
-                        unitID={data.id}
-                        unitName={data.name}
-                        campusID={data.campusID}
-                        campusName={data.campusName}
-                        campuses={data.campuses} /> 
-        <BreadcrumbComp array={data.breadcrumb}/>
         <CarouselComp />
         <div className="c-columns">
           <main>
