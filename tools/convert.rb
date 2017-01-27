@@ -598,14 +598,19 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
   issue = section = nil
   issueNum = data.single("issue[@tokenize='no']") # untokenized is actually from "number"
   if data.single("pubType") == "journal" && data.single("volume") && issueNum
-    issue = Issue.new
-    issue[:unit_id] = data.multiple("entityOnly")[0]
-    issue[:volume]  = data.single("volume")
-    issue[:issue]   = issueNum
-    issue[:pub_date] = parseDate(itemID, data.single("date")) || "1901-01-01"
+    issueUnit = data.multiple("entityOnly")[0]
+    if $allUnits.include?(issueUnit)
+      issue = Issue.new
+      issue[:unit_id] = issueUnit
+      issue[:volume]  = data.single("volume")
+      issue[:issue]   = issueNum
+      issue[:pub_date] = parseDate(itemID, data.single("date")) || "1901-01-01"
 
-    section = Section.new
-    section[:name]  = data.single("sectionHeader") ? data.single("sectionHeader") : "default"
+      section = Section.new
+      section[:name]  = data.single("sectionHeader") ? data.single("sectionHeader") : "default"
+    else
+      "Warning: issue associated with unknown unit #{issueUnit.inspect}"
+    end
   end
 
   # Data for external journals
