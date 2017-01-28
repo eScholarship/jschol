@@ -54,6 +54,7 @@ require_relative 'hierarchy'
 require_relative 'searchApi'
 require_relative 'queueWithTimeout'
 require_relative 'widgets'
+require_relative 'unitPages'
 
 # Sinatra configuration
 configure do
@@ -362,37 +363,7 @@ get "/api/unit/:unitID" do |unitID|
   # children and parents drawn from the unit_hier database table. Remember that "direct" links are
   # direct parents and children. "Indirect" (which we don't use here) are for grandparents/ancestors,
   # and grand-children/descendants.
-  content_type :json
-  unit = $unitsHash[unitID]
-  children = $hierByAncestor[unitID]
-  parents = $hierByUnit[unitID]
-  if !unit.nil?
-    begin
-      items = UnitItem.filter(:unit_id => unitID, :is_direct => true)
-      body = {
-        :id => unitID,
-        :name => unit.name,
-        :type => unit.type,
-        :parents => parents ? parents.map { |u| u.ancestor_unit } : [],
-        :children => children ? children.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : [],
-        :nItems => items.count,
-        :items => items.limit(10).map { |pair| pair.item_id },
-        :attrs => unit.attrs
-      }
-      if body[:type] == 'oru'
-        body.merge!(getORULandingPageData(unitID))
-      end
-      if body[:type] == 'series'
-        body.merge!(getSeriesLandingPageData(unitID))
-        # body.merge!(search(params))
-      end
-      return body.merge(getUnitItemHeaderElements('unit', unitID)).to_json
-    rescue Exception => e
-      halt 404, e.message
-    end
-  else
-    halt 404, "Unit not found"
-  end
+  getUnitPageData(unitID)
 end
 
 ###################################################################################################
@@ -490,62 +461,6 @@ def getUnitItemHeaderElements(view, id)
   end
   return body2
 end
-
-# Get ORU-specific data for Department Landing Page
-def getORULandingPageData(id)
-  children = $hierByAncestor[id]
-
-  return {
-    :extent => departmentExtent(id),
-    :series => children ? children.select { |u| u.unit.type == 'series' }.map { |u| seriesPreview(u) } : [],
-    :related_orus => children ? children.select { |u| u.unit.type != 'series' }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : []
-  }
-end
-
-def seriesPreview(u)
-  items = UnitItem.filter(:unit_id => u.unit_id, :is_direct => true)
-  preview = items.limit(3).map { |pair| Item[pair.item_id] }
-
-  items = []
-  for item in preview
-    itemHash = {
-      item_id: item.id,
-      title: item.title
-    }
-    itemAttrs = JSON.parse(item.attrs)
-    itemHash[:abstract] = itemAttrs['abstract']
-
-    authors = ItemAuthors.where(item_id: item.id).map(:attrs).map { |author| JSON.parse(author)["name"] }
-    itemHash[:authors] = authors
-    items << itemHash
-  end
-
-  {
-    :unit_id => u.unit_id,
-    :name => u.unit.name,
-    :count => items.count,
-    :items => items,
-  }
-end
-
-def getSeriesLandingPageData(id)
-  parent = $hierByUnit[id]
-  if parent.length > 1
-    pp parent
-  else
-    children = parent ? $hierByAncestor[parent[0].ancestor_unit] : []
-  end
-
-  return {
-    :series => children ? children.select { |u| u.unit.type == 'series' }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : []
-  }
-end
-
-# this was a stub for the item view in a series preview on a department landing page, 
-# but I have a feeling this code can be generalized and will probably look much like 
-# the data we get in search results for the item preview
-# def itemPreview(i)
-  
 
 # Array of all active root level campuses/ORUs. Include empty label "eScholarship at..." 
 def getCampusesAsMenu(topItem="eScholarship at...")

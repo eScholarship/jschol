@@ -5,11 +5,12 @@ import { Link } from 'react-router'
 
 import PageBase from './PageBase.jsx'
 import Header2Comp from '../components/Header2Comp.jsx'
-import Subheader1Comp from '../components/Subheader1Comp.jsx'
-import Subheader2Comp from '../components/Subheader2Comp.jsx'
+import SubheaderComp from '../components/SubheaderComp.jsx'
+import NavBarComp from '../components/NavBarComp.jsx'
 import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
 import DepartmentLayout from '../layouts/DepartmentLayout.jsx'
 import SeriesLayout from '../layouts/SeriesLayout.jsx'
+import JournalLayout from '../layouts/JournalLayout.jsx'
 
 class UnitPage extends PageBase
 {
@@ -20,44 +21,23 @@ class UnitPage extends PageBase
 
   renderData(data) { 
     var contentLayout;
-    if (data.type === 'oru') {
+    if (data.unitData.type === 'oru') {
       contentLayout = (<DepartmentLayout data={data}/>);
-    } else if (data.type === 'series') {
+    } else if (data.unitData.type === 'series') {
       contentLayout = (<SeriesLayout data={data}/>);
+    } else if (data.unitData.type === 'journal') {
+      contentLayout = (<JournalLayout data={data}/>);
     } else {
       contentLayout = (
         <div>
-        <h2>Unit {data.id}</h2>
+        <h2>Unit {data.unitData.id}</h2>
         <div>
           Info:
           <ul>
-            <li>Name: {data.name}</li>
-            <li>Type: {data.type}</li>
+            <li>Name: {data.unitData.name}</li>
+            <li>Type: {data.unitData.type}</li>
           </ul>
         </div>
-        <div>
-          Parents:
-          <ul>
-            { data.parents.map((parent_id) => 
-              <li key={parent_id}><Link to={"/unit/"+parent_id}>{parent_id}</Link></li>) }
-          </ul>
-        </div>
-        <div>
-          Children:
-          <ul>
-            { data.children.map((child) => 
-              <li key={child.unit_id}><Link to={"/unit/"+child.unit_id}>{child.name}</Link></li>) }
-          </ul>
-        </div>
-        { data.items.length==0 ? null :
-          <div>
-            Items 1-{Math.min(10, data.nItems)} of {data.nItems}:
-            <ul>
-              { data.items.map((item_id) =>
-                <li key={item_id}><Link to={"/item/"+item_id.replace(/^qt/, "")}>{item_id}</Link></li>) }
-            </ul>
-          </div>
-        }
         </div>
       );
     }
@@ -65,13 +45,15 @@ class UnitPage extends PageBase
     return (
       <div>
         <Header2Comp type={data.type} unitID={data.id} />
-        <Subheader1Comp
+        <SubheaderComp
           type={data.type}
           unitID={data.id}
           unitName={data.name}
           campusID={data.campusID}
           campusName={data.campusName}
           campuses={data.campuses}/>
+        <NavBarComp 
+          navBar={data.unitDisplay.nav_bar} unitId={data.unitData.id}/>
         <BreadcrumbComp array={data.breadcrumb} />
         {contentLayout}
       </div>

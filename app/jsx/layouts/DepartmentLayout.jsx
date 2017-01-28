@@ -1,9 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router'
 
-import Header2Comp from '../components/Header2Comp.jsx'
-import Subheader1Comp from '../components/Subheader1Comp.jsx'
-import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
 import CarouselComp from '../components/MarqueeComp.jsx'
 
 class ItemPreviewSmall extends React.Component {
@@ -49,13 +46,13 @@ class DepartmentLayout extends React.Component {
         <div className="c-columns">
           <main>
             <section className="o-columnbox1">
-              <p>There are {data.extent.count} publications in this collection, published between {data.extent.pub_year.start} and {data.extent.pub_year.end}.</p>
+              <p>There are {data.unitData.extent.count} publications in this collection, published between {data.unitData.extent.pub_year.start} and {data.unitData.extent.pub_year.end}.</p>
               <h3>Works by {data.name}</h3>
               {seriesList}
               <hr/>
               <h3>Related Research Centers & Groups</h3>
               <ul>
-                { data.related_orus.map((child) =>
+                { data.content.related_orus.map((child) =>
                   <li key={child.unit_id}><Link to={"/unit/"+child.unit_id}>{child.name}</Link></li>) }
               </ul>
             </section>

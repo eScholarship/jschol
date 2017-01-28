@@ -16,7 +16,7 @@ class HeaderComp2 extends React.Component {
   }
   render() {
     return (
-      <div className="c-header2">
+      <header className="c-header2">
         <Link to="/">
           <picture>
             <source srcSet="/images/logo_temp-eschol-small.png" media={"(min-width: "+Breakpoints.screen3+")"}/>
@@ -29,7 +29,7 @@ class HeaderComp2 extends React.Component {
                        onClose={ ()=>this.setState({searchActive: false}) } />
         </div>
         <button className="c-header2__search-open-button" aria-label="open search field" onClick = {()=> this.setState({searchActive: true})}></button>
-      </div>
+      </header>
     )
   }
 }

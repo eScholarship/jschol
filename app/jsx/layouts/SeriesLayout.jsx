@@ -1,9 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router'
 
-import Header2Comp from '../components/Header2Comp.jsx'
-import Subheader1Comp from '../components/Subheader1Comp.jsx'
-import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
 import CarouselComp from '../components/MarqueeComp.jsx'
 import { ScholarlyWorks, SortComp, PaginationComp } from '../pages/SearchPage.jsx'
 
