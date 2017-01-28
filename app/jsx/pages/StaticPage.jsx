@@ -25,7 +25,7 @@ class StaticPage extends PageBase
   // PageBase calls this when the API data has been returned to us
   renderData(data) { return(
     <div className="l-about">
-      <Header1Comp admin={this.state.admin} />
+      <Header1Comp/>
       <Nav1Comp campuses={data.campuses} />
       <BreadcrumbComp array={data.breadcrumb} />
       <div className="c-columns">

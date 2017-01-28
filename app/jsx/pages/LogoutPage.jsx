@@ -11,18 +11,11 @@ let sessionStorage = (typeof window != "undefined") ? window.sessionStorage : nu
 
 class LogoutPage extends PageBase
 {
-  constructor(props) {
-    super(props)
-    if (sessionStorage)
-      sessionStorage.removeItem("admin")
-    this.state.admin = null // cancel existing login
-  }
-
   pageDataURL(props) { return null /* no API data */ }
 
   render() { return(
     <div>
-      <Header1Comp admin={this.state.admin}/>
+      <Header1Comp/>
       <Nav1Comp/>
       <div className="c-columns">
         <main>
@@ -38,7 +31,7 @@ class LogoutPage extends PageBase
           </section>
         </main>
       </div>
-      <FooterComp admin={this.state.admin}/>
+      <FooterComp/>
     </div>
   )}
 }

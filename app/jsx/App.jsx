@@ -5,6 +5,7 @@ import React from 'react'
 import ReactDOM from 'react-dom'
 import { Router, Route, IndexRoute, Link, browserHistory, applyRouterMiddleware } from 'react-router'
 import { useScroll } from 'react-router-scroll';
+import { Broadcast } from 'react-broadcast'
 
 import HomePage from './pages/HomePage.jsx'
 import BrowsePage from './pages/BrowsePage.jsx'
@@ -17,19 +18,44 @@ import LoginPage from './pages/LoginPage.jsx'
 import LoginSuccessPage from './pages/LoginSuccessPage.jsx'
 import LogoutPage from './pages/LogoutPage.jsx'
 
+let sessionStorage = (typeof window != "undefined") ? window.sessionStorage : null
+
+const SESSION_LOGIN_KEY = "escholAdminLogin"
+
 class App extends React.Component 
 {
+  state = { adminLogin: null } // filled in by componentWillMount
+
+  render() { return(
+    <Broadcast channel="adminLogin" value={this.state.adminLogin}>
+      {this.props.children}
+    </Broadcast>
+  )}
+
+  componentWillMount() {
+    const data = sessionStorage && JSON.parse(sessionStorage.getItem(SESSION_LOGIN_KEY))
+    data ? this.onLogin(data.username, data.token) : this.onLogout()
+  }
+
+  onLogin = (username, token) => {
+    sessionStorage.setItem(SESSION_LOGIN_KEY, JSON.stringify({ username: username, token: token }))
+    this.setState({ 
+      adminLogin: { 
+        loggedIn: true, username: username, token: token, onLogout: this.onLogout
+      } 
+    })
+  }
+
+  onLogout = () => {
+    sessionStorage.setItem(SESSION_LOGIN_KEY, JSON.stringify(null))
+    this.setState({ adminLogin: { loggedIn: false, onLogin: this.onLogin } })
+  }
+
   // The logout and login pages need to be able to return the user whence they
   // came. To do that, we need to keep a record when page transitions occur.
   componentWillReceiveProps(nextProps) {
     nextProps.location.prevPathname = this.props.location.pathname
   }
-
-  render() { return(
-    <div>
-      {this.props.children}
-    </div>
-  )}
 }
 
 const routes = (

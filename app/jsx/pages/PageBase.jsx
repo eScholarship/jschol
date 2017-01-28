@@ -9,31 +9,33 @@ let sessionStorage = (typeof window != "undefined") ? window.sessionStorage : nu
 
 class PageBase extends React.Component
 {
-  constructor(props) {
-    super(props)
-    this.state = {
-      pageData: null,
-      admin: this.getAdminData()
+  // We initialize state here instead of in the constructor because, for some cases, it'll
+  // result in starting an asynchronous fetch, and there would be a danger that fetch comes
+  // back before the component is ready to receive state.
+  componentWillMount() {
+    let state = {
+      pageData: null
     }
 
-    let dataURL = this.pageDataURL(props)
+    let dataURL = this.pageDataURL(this.props)
     if (dataURL) 
     {
       // Phase 1: Initial server-side load. We just save the URL, and iso will later fetch it and re-run React
-      if (props.location.urlsToFetch)
-          props.location.urlsToFetch.push(dataURL)
+      if (this.props.location.urlsToFetch)
+          this.props.location.urlsToFetch.push(dataURL)
       // Phase 2: Second server-side load, where our data has been fetched and stored in props.location
-      else if (props.location.urlsFetched)
-        this.state.pageData = props.location.urlsFetched[this.pageDataURL(props)]
+      else if (this.props.location.urlsFetched)
+        state.pageData = this.props.location.urlsFetched[this.pageDataURL(this.props)]
       // Phase 3: Initial browser load. Server should have placed our data in window.
       else if (window.jscholApp_initialPageData) {
-        this.state.pageData = window.jscholApp_initialPageData
+        state.pageData = window.jscholApp_initialPageData
         delete window.jscholApp_initialPageData
       }
       // Phase 4: Browser-side page switch. We have to fetch new data ourselves.
       else
-        this.fetchState(props)
+        this.fetchState(this.props)
     }
+    this.setState(state)
   }
 
   // Resuscitate page-level admin login state, kept in browser's sessionStorage object.
@@ -93,7 +95,7 @@ class PageBase extends React.Component
         { this.state.error ? this.renderError() 
           : this.state.pageData ? this.renderData(this.state.pageData) 
           : this.renderLoading() }
-        <FooterComp admin={this.state.admin}/>
+        <FooterComp/>
       </div>
     )
   }
@@ -101,14 +103,14 @@ class PageBase extends React.Component
 
   renderLoading() { return(
     <div>
-      <Header1Comp admin={this.state.admin}/>
+      <Header1Comp/>
       <h2 style={{ marginTop: "5em", marginBottom: "5em" }}>Loading...</h2>
     </div>
   )}
 
   renderError() { return (
     <div>
-      <Header1Comp admin={this.state.admin}/>
+      <Header1Comp/>
       <h2 style={{ marginTop: "5em", marginBottom: "5em" }}>{this.state.error}</h2>
     </div>
   )}

@@ -2,6 +2,7 @@
 
 import React from 'react'
 import { Link } from 'react-router'
+import { Subscriber } from 'react-broadcast'
 
 class FooterComp extends React.Component {
   render() {
@@ -17,8 +18,11 @@ class FooterComp extends React.Component {
           <a href="">Privacy Policy</a>
           <a href="">Terms & Conditions</a>
           <a href="">Help</a>
-          { this.props.admin ? <Link to="/logout">Admin Logout</Link>
-                                : <Link to="/login">Admin Login</Link> }
+          <Subscriber channel="adminLogin">
+            { adminLogin => adminLogin.loggedIn ?
+                  <Link to="/logout" onClick={()=>setTimeout(()=>adminLogin.onLogout(), 0)}>Admin Logout</Link>
+                : <Link to="/login">Admin Login</Link> }
+          </Subscriber>
         </nav>
         <div className="c-footer__logo">
           <a href="">
