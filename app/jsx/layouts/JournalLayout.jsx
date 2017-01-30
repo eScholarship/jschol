@@ -1,7 +1,7 @@
 import React from 'react'
 import { Link } from 'react-router'
 
-import CarouselComp from '../components/MarqueeComp.jsx'
+import MarqueeComp from '../components/MarqueeComp.jsx'
 
 class IssueComp extends React.Component {
   render() {
@@ -22,7 +22,7 @@ class JournalLayout extends React.Component {
     }
     return (
       <div>
-        <CarouselComp />
+        <MarqueeComp />
         <div className="c-columns">
           <main>
             <section className="o-columnbox1">
