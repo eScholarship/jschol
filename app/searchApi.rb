@@ -157,7 +157,7 @@ end
 def get_unit_display_name(unitFacets)
   for unitFacet in unitFacets
     unit = $unitsHash[unitFacet['value']]
-    unitFacet['displayName'] = unit.name
+    unitFacet['displayName'] = unit ? unit.name : "null"
   end
 end
 
