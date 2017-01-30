@@ -157,7 +157,7 @@ end
 def get_unit_display_name(unitFacets)
   for unitFacet in unitFacets
     unit = $unitsHash[unitFacet['value']]
-    unitFacet['displayName'] = unit.name
+    unitFacet['displayName'] = unit ? unit.name : "null"
   end
 end
 
@@ -343,6 +343,32 @@ def search(params)
   ]
 
   return {'count' => response['hits']['found'], 'query' => get_query_display(params.clone), 'searchResults' => searchResults, 'facets' => facets}
+end
+
+def extent(id, type)
+  aws_params = 
+  {
+    query_parser: "structured",
+    facet: JSON.generate({
+      'pub_year' => {sort: 'count', size: 100},
+      }),
+    size: 0
+  }
+  if (type == 'oru') then
+    aws_params[:query] = "(term field=departments '#{id}')"
+  elsif (type == 'journal') then 
+    aws_params[:query] = "(term field=journals '#{id}')"
+  elsif (type == 'campus') then
+    aws_params[:query] = "(term field=campuses '#{id}')"
+  elsif (type == 'series' || type == 'monograph_series' || type == 'seminar_series') then 
+    aws_params[:query] = "(term field=series '#{id}')"
+  else 
+    throw "Not a valid unit type"
+  end
+  
+  response = normalizeResponse($csClient.search(return: '_no_fields', **aws_params))
+  pub_years = response['facets']['pub_year']['buckets'].sort_by { |bucket| Integer(bucket['value']) }
+  return {:count => response['hits']['found'], :pub_year => {:start => pub_years[0]['value'], :end => pub_years[-1]['value']}}
 end
 
 # def campus_extent(params)

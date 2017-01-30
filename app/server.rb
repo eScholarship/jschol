@@ -53,6 +53,7 @@ require_relative 'dbCache'
 require_relative 'hierarchy'
 require_relative 'searchApi'
 require_relative 'queueWithTimeout'
+require_relative 'unitPages'
 
 # Sinatra configuration
 configure do
@@ -361,29 +362,7 @@ get "/api/unit/:unitID" do |unitID|
   # children and parents drawn from the unit_hier database table. Remember that "direct" links are
   # direct parents and children. "Indirect" (which we don't use here) are for grandparents/ancestors,
   # and grand-children/descendants.
-  content_type :json
-  unit = $unitsHash[unitID]
-  children = $hierByAncestor[unitID]
-  parents = $hierByUnit[unitID]
-  if !unit.nil?
-    begin
-      items = UnitItem.filter(:unit_id => unitID, :is_direct => true)
-      body = {
-        :id => unitID,
-        :name => unit.name,
-        :type => unit.type,
-        :parents => parents ? parents.map { |u| u.ancestor_unit } : [],
-        :children => children ? children.map { |u| u.unit_id } : [],
-        :nItems => items.count,
-        :items => items.limit(10).map { |pair| pair.item_id }
-      }
-      return body.merge(getUnitItemHeaderElements('unit', unitID)).to_json
-    rescue Exception => e
-      halt 404, e.message
-    end
-  else
-    halt 404, "Unit not found"
-  end
+  getUnitPageData(unitID)
 end
 
 ###################################################################################################

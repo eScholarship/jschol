@@ -53,7 +53,7 @@
     "path": "^0.12.7",
     "postcss-assets": "^4.1.0",
     "progress": "^1.1.8",
-    "react-addons-test-utils": "^15.3.0",
+    "react-addons-test-utils": "^15.4.1",
     "run-sequence": "^1.2.2",
     "webpack": "^2.2.0-rc.1"
   },

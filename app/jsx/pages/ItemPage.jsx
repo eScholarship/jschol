@@ -5,7 +5,7 @@ import { Link } from 'react-router'
 
 import PageBase from './PageBase.jsx'
 import Header2Comp from '../components/Header2Comp.jsx'
-import Subheader2Comp from '../components/Subheader2Comp.jsx'
+import SubheaderComp from '../components/SubheaderComp.jsx'
 import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
 import ItemMainComp from '../components/ItemMainComp.jsx'
 import ItemSupplComp from '../components/ItemSupplComp.jsx'
@@ -49,7 +49,7 @@ class ItemPage extends PageBase
     return(
       <div>
         <Header2Comp type={data.type} unitID={unitID} />
-        <Subheader2Comp unitID={unitID} 
+        <SubheaderComp unitID={unitID} 
                         unitName={unitName}
                         campusID={data.campusID}
                         campusName={data.campusName}
