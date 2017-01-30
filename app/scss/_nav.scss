@@ -1,0 +1,193 @@
+// ##### Navigation Component ##### //
+
+.c-nav {
+  flex: 1 0 auto; // to .c-subheader flexbox
+}
+
+.c-nav__main {
+
+  &[open] {
+
+    .c-nav__main-button::after {
+      transform: rotate(180deg);
+    }
+
+  }
+
+}
+
+.c-nav__main-button {
+  display: inline-block;
+  position: relative;
+  height: $element-height;
+  padding: 0 35px 0 10px;
+  border: 1px solid $color-dark-gray;
+  color: $color-dark-gray;
+  line-height: $element-height;
+  user-select: none;
+
+  @include bp(screen3) {
+    display: none;
+  }
+
+  &::after {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    margin-left: 10px;
+    padding: 7px;
+    background: url('../images/icon_arrow-down.svg') no-repeat center / 13px;
+    content: '';
+  }
+
+}
+
+// ***** Main Navigation Items ***** //
+
+%c-nav__item {
+  @extend %nav-item;
+
+  &:not(:first-of-type) {
+    border-top: none;
+  }
+
+}
+
+%c-nav__main-items {
+  position: absolute; // to <body>
+  right: $spacing-sm;
+  left: $spacing-sm;
+  margin-top: $spacing-sm;
+  transition: transform 0.5s;
+  z-index: 1;
+
+  @include bp(screen3) {
+    display: flex;
+    position: static;
+    justify-content: space-around;
+  }
+
+  > a {
+    @extend %c-nav__item;
+
+    @include bp(screen3) {
+      padding: 6px 0 3px;
+      border: none;
+      background: none;
+    }
+
+    &.c-nav__item--active {
+      color: $color-orange;
+
+      @include bp(screen3) {
+        border-bottom: 3px solid $color-orange;
+        font-weight: bold;
+      }
+
+    }
+
+  }
+
+}
+
+.c-nav__main-items {
+  @extend %c-nav__main-items;
+}
+
+// toggle this on presence of 'open' attr on c-nav__sub to show/hide c-nav__sub-items
+.c-nav__main-items--submenu-active {
+  @extend %c-nav__main-items;
+  transform: translateX(-103%);
+
+  @include bp(screen3) {
+    transform: translateX(0);
+  }
+
+}
+
+// ***** Sub Navigation Items ***** //
+
+.c-nav__sub {
+
+  @include bp(screen3) {
+    position: relative;
+
+    &[open] {
+
+      .c-nav__sub-button::after {
+        transform: rotate(180deg);
+      }
+
+    }
+
+  }
+
+}
+
+.c-nav__sub-button {
+  @extend %c-nav__item;
+  position: relative;
+  border-top: none;
+  user-select: none;
+
+  @include bp(screen3) {
+    padding: 6px 25px 3px 0;
+    border: none;
+    background: none;
+  }
+
+  &::after {
+    margin-left: 10px;
+    content: '\00bb'; // double-right arrow
+
+    @include bp(screen3) {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      padding: 7px;
+      background: url('../images/icon_arrow-down.svg') no-repeat center / 13px;
+      content: '';
+    }
+
+  }
+
+}
+
+.c-nav__sub-items {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  transform: translateX(103%); // moves sub-items to right side of main-items
+
+  @include bp(screen3) {
+    top: auto;
+    left: (-$spacing-sm);
+    width: 200px;
+    max-height: 340px;
+    transform: translateX(0);
+    overflow: auto;
+  }
+
+  a {
+    @extend %c-nav__item;
+  }
+
+}
+
+.c-nav__sub-items-button {
+  @extend %c-nav__item;
+  width: 100%;
+  border-bottom: none;
+  text-align: left;
+
+  @include bp(screen3) {
+    display: none;
+  }
+
+  &::before {
+    margin: 0 10px 0 0;
+    content: '\00ab'; // double-left arrow
+  }
+
+}

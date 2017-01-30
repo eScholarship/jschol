@@ -31,7 +31,7 @@ class ItemPage extends PageBase {
     return (
       <div className="l-item">
         <Header2Comp type={data.type} unitID={unitID} />
-        <Subheader2Comp unitID={unitID} 
+        <SubheaderComp unitID={unitID} 
                         unitName={unitName}
                         campusID={data.campusID}
                         campusName={data.campusName}

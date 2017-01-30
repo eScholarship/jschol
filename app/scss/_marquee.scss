@@ -1,0 +1,113 @@
+// ##### Marquee Component ##### //
+
+.c-marquee {
+
+  @include bp(screen2) {
+    display: flex;
+    margin-bottom: $spacing-md;
+  }
+
+}
+
+.c-marquee__sidebar {
+  flex: 0 0 $column-width;
+
+  @include bp(screen2) {
+    margin-left: $spacing-md;
+  }
+
+  p {
+    font-size: 1.1em;
+  }
+
+}
+
+.c-marquee__carousel {
+  flex: 1;
+  min-height: 250px;
+  margin-bottom: $spacing-md;
+
+  @include bp(screen2) {
+    margin: 0;
+  }
+
+}
+
+.c-marquee__carousel-cell {
+  width: 100%;
+  min-height: 100%;
+  background-color: $color-light-gray;
+
+  h2 {
+    margin: $spacing-md 70px 0;
+    color: $color-white;
+    font-size: 1.6em;
+    font-weight: normal;
+
+    @include bp(screen1) {
+      width: 350px;
+    }
+
+  }
+
+  p {
+    margin: $spacing-md 70px;
+    color: $color-white;
+    font-size: 1.1em;
+
+    @include bp(screen1) {
+      width: 350px;
+    }
+
+  }
+
+  a {
+    display: inline-block;
+    margin: 0 70px $spacing-md;
+    font-size: 1.1em;
+  }
+
+}
+
+// ***** Flickity Customizations ***** //
+
+.flickity-page-dots {
+  bottom: 10px;
+
+  .dot {
+    background: $color-white;
+  }
+
+}
+
+.flickity-prev-next-button {
+  width: 60px;
+  height: 60px;
+  background: transparent;
+
+  @include bp(screen1) {
+    width: 80px;
+    height: 80px;
+  }
+
+  &:hover {
+    background: transparent;
+  }
+
+  &.previous {
+    left: 0;
+  }
+
+  &.next {
+    right: 0;
+  }
+
+  .arrow {
+    fill: $color-white;
+  }
+
+  .no-svg {
+    color: $color-white;
+  }
+
+}

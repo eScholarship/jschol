@@ -1,27 +1,22 @@
 // ##### Subheader Component ##### //
 
 .c-subheader {
-  position: relative; // to absolute positioned campus, nav2, and nav3 components
-  margin: 0 0 $spacing-md;
-  background: $color-white;
-
-  @include bp(screen2) {
-    margin: 0 (-$spacing-sm) $spacing-md;
-    padding: 0 $spacing-sm $spacing-sm;
-  }
-
-}
-
-.c-subheader__row1 {
   display: flex;
+  position: relative; // to absolute positioned nav component
   align-items: center;
   justify-content: space-between;
-  margin: 0 0 $spacing-sm;
-  padding: 0 0 $spacing-sm;
+  // margin-bottom: $spacing-sm;
+  padding-bottom: $spacing-sm;
   border-bottom: 2px solid $color-light-gray;
 
+  @include bp(screen2) {
+    margin: 0 (-$spacing-sm);
+    padding: 0 $spacing-sm $spacing-sm;
+    background-color: $color-white;
+  }
+
   @include bp(screen3) {
-    padding: 0;
+    padding: 0 $spacing-sm;
   }
 
 }
@@ -66,62 +61,6 @@
     display: block;
     position: static;
     left: auto;
-  }
-
-}
-
-.c-subheader__row2 {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.c-subheader__social {
-  margin-right: $spacing-sm;
-
-  a {
-    @extend %circular-border;
-    border-color: $color-black;
-
-    &:not(:first-child) {
-      margin-left: $spacing-sm;
-    }
-
-    img {
-      width: 20px;
-    }
-
-  }
-
-}
-
-.c-subheader__language {
-
-  a {
-
-    &:not(:first-child) {
-      margin-left: $spacing-sm;
-      padding-left: $spacing-sm;
-      border-left: 1px solid $color-dark-gray;
-    }
-
-  }
-
-}
-
-.c-subheader__language-small-label {
-
-  @include bp(screen1) {
-    display: none;
-  }
-
-}
-
-.c-subheader__language-large-label {
-  display: none;
-
-  @include bp(screen1) {
-    display: inline-block;
   }
 
 }

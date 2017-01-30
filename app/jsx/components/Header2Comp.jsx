@@ -1,4 +1,8 @@
 // ##### Header2 Component ##### //
+// Header2 Component contains the eScholarship logo and the search box
+// Used on all pages except homepage and main search page
+// Props = {type: "campus|journal|oru|series|monograph_series|seminar_series|special", unitID: "<unitID>"}
+// Props used to provide specificity to search box behavior
 
 import React from 'react'
 import { Link } from 'react-router'
@@ -12,7 +16,7 @@ class HeaderComp2 extends React.Component {
   }
   render() {
     return (
-      <div className="c-header2">
+      <header className="c-header2">
         <Link to="/">
           <picture>
             <source srcSet="/images/logo_temp-eschol-small.png" media={"(min-width: "+Breakpoints.screen3+")"}/>
@@ -25,7 +29,7 @@ class HeaderComp2 extends React.Component {
                        onClose={ ()=>this.setState({searchActive: false}) } />
         </div>
         <button className="c-header2__search-open-button" aria-label="open search field" onClick = {()=> this.setState({searchActive: true})}></button>
-      </div>
+      </header>
     )
   }
 }

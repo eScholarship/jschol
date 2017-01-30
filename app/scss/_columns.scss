@@ -12,7 +12,7 @@
   }
 
   aside {
-    flex: 0 0 28%; // column widths
+    flex: 0 0 $column-width; // column widths
 
     &:first-child { // left sidebar
 
