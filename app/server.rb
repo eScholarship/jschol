@@ -53,7 +53,6 @@ require_relative 'dbCache'
 require_relative 'hierarchy'
 require_relative 'searchApi'
 require_relative 'queueWithTimeout'
-require_relative 'widgets'
 require_relative 'unitPages'
 
 # Sinatra configuration
