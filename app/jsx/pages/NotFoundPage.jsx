@@ -9,8 +9,8 @@ import FooterComp from '../components/FooterComp.jsx'
 class NotFoundPage extends PageBase
 {
   // PageBase will fetch the following URL for us, and place the results in this.state.pageData
-  pageDataURL(props) {
-    return "/api/browse/" + props.params.type
+  pageDataURL() {
+    return "/api/browse/" + this.props.params.type
   }
 
   render() { return (

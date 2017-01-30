@@ -12,8 +12,8 @@ import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
 class UnitPage extends PageBase
 {
   // PageBase will fetch the following URL for us, and place the results in this.state.pageData
-  pageDataURL(props) {
-    return "/api/unit/" + props.params.unitID
+  pageDataURL() {
+    return "/api/unit/" + this.props.params.unitID
   }
 
   renderData(data) { return(

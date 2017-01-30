@@ -10,7 +10,7 @@ import FooterComp from '../components/FooterComp.jsx'
 
 class LoginPage extends PageBase
 {
-  pageDataURL(props) { return null /* no API data */ }
+  pageDataURL() { return null /* no API data */ }
 
   render() { 
     return(

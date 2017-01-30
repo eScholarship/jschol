@@ -13,12 +13,12 @@ import SidebarNavComp from '../components/SidebarNavComp.jsx'
 class StaticPage extends PageBase
 {
   // PageBase will fetch the following URL for us, and place the results in this.state.pageData
-  pageDataURL(props) {
-    return "/api/static/" + props.params.unitID + "/" + props.params.pageName
+  pageDataURL() {
+    return "/api/static/" + this.props.params.unitID + "/" + this.props.params.pageName
   }
 
   // OK to display the Edit Page button if user is logged in
-  hasEditableComponents() {
+  isPageEditable() {
     return true
   }
 

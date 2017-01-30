@@ -10,7 +10,7 @@ import FooterComp from '../components/FooterComp.jsx'
 class HomePage extends PageBase
 {
   // PageBase will fetch the following URL for us, and place the results in this.state.pageData
-  pageDataURL(props) {
+  pageDataURL() {
     return "/api/home"
   }
 

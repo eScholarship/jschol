@@ -11,7 +11,7 @@ let sessionStorage = (typeof window != "undefined") ? window.sessionStorage : nu
 
 class LogoutPage extends PageBase
 {
-  pageDataURL(props) { return null /* no API data */ }
+  pageDataURL() { return null /* no API data */ }
 
   render() { return(
     <div>

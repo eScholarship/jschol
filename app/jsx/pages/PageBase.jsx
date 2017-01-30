@@ -2,23 +2,28 @@
 import React from 'react'
 import $ from 'jquery'
 import _ from 'lodash'
+import { Broadcast } from 'react-broadcast'
+
 import Header1Comp from '../components/Header1Comp.jsx'
 import FooterComp from '../components/FooterComp.jsx'
 
-let sessionStorage = (typeof window != "undefined") ? window.sessionStorage : null
-
 class PageBase extends React.Component
 {
+  getEmptyState() {
+    return {
+      pageData: null,
+      isEditingPage: false,
+      cmsModules: null
+    }
+  }
+
   // We initialize state here instead of in the constructor because, for some cases, it'll
   // result in starting an asynchronous fetch, and there would be a danger that fetch comes
   // back before the component is ready to receive state.
   componentWillMount() {
-    let state = {
-      pageData: null
-    }
-
+    let state = this.getEmptyState()
     let dataURL = this.pageDataURL(this.props)
-    if (dataURL) 
+    if (dataURL)
     {
       // Phase 1: Initial server-side load. We just save the URL, and iso will later fetch it and re-run React
       if (this.props.location.urlsToFetch)
@@ -31,42 +36,35 @@ class PageBase extends React.Component
         state.pageData = window.jscholApp_initialPageData
         delete window.jscholApp_initialPageData
       }
-      // Phase 4: Browser-side page switch. We have to fetch new data ourselves.
+      // Phase 4: Browser-side page switch. We have to fetch new data ourselves. Start with basic
+      // state, and the pageData will get filled when the ajax returns.
       else
-        this.fetchState(this.props)
+        this.fetchPageData(this.props)
     }
     this.setState(state)
   }
 
-  // Resuscitate page-level admin login state, kept in browser's sessionStorage object.
-  getAdminData() {
-    let data = sessionStorage && JSON.parse(sessionStorage.getItem('admin'))
-    if (data) {
-      data.pageHasEditableComponents = this.hasEditableComponents()
-      data.onEditingPageChange = flag => this.onEditingPageChange(flag)
-    }
-    return data
-  }
-
   // Called when user clicks Edit Page, or Done Editing
-  onEditingPageChange(flag) 
+  onEditingPageChange = flag =>
   {
-    // Load CMS-specific modules asynchronously
-    require.ensure(['react-trumbowyg'], (require) => {
-      let newState = _.clone(this.state)
-      newState.admin.cmsModules = { Trumbowyg: require('react-trumbowyg').default }
-      newState.admin.editingPage = flag
-      this.setState(newState)
-    }, "cms")
+    if (flag && !this.state.cmsModules) {
+      // Load CMS-specific modules asynchronously
+      require.ensure(['react-trumbowyg'], (require) => {
+        this.setState({ isEditingPage: true,
+                        cmsModules: { Trumbowyg: require('react-trumbowyg').default } })
+      }, "cms") // load from webpack "cms" bundle
+    }
+    else
+      this.setState({ isEditingPage: flag })
   }
 
   // Pages with any editable components should override this.
-  hasEditableComponents() {
+  isPageEditable() {
     return false
   }
 
   // Browser-side AJAX fetch of page data. Sets state when the data is returned to us.
-  fetchState(props) {
+  fetchPageData(props) {
     let dataURL = this.pageDataURL(props)
     if (dataURL) {
       $.getJSON(this.pageDataURL(props)).done((data) => {
@@ -78,28 +76,43 @@ class PageBase extends React.Component
   }
 
   // This gets called when props change by switching to a new page.
-  // It is *not* called on first-time construction. We use it to fetch page data.
-  componentWillReceiveProps(props) {
-    this.fetchState(props)
+  // It is *not* called on first-time construction. We use it to fetch new page data
+  // for the page being switched to.
+  componentWillReceiveProps(nextProps) {
+    if (!_.isEqual(this.props, nextProps)) {
+      this.setState(this.getEmptyState())
+      setTimeout(()=>this.fetchPageData(), 0) // fetch right after setting the new props
+    }
   }
 
   // Method to be supplied by derived classes, so they can make a URL that will grab
   // the proper API data from the server.
-  pageDataURL(props) {
+  pageDataURL() {
     throw "Derived class must override pageDataURL method"
+  }
+
+  // Method to be supplied by derived classes, so they can make a URL that will grab
+  // the proper API data from the server.
+  renderData() {
+    throw "Derived class must override renderData method"
   }
 
   render() {
     return (
-      <div>
-        { this.state.error ? this.renderError() 
-          : this.state.pageData ? this.renderData(this.state.pageData) 
-          : this.renderLoading() }
-        <FooterComp/>
-      </div>
+      <Broadcast channel="isPageEditable" value={this.isPageEditable()}>
+        <Broadcast channel="isEditingPage" value={this.state.isEditingPage}>
+          <Broadcast channel="onEditingPageChange" value={this.onEditingPageChange}>
+            <div>
+              { this.state.error ? this.renderError()
+                : this.state.pageData ? this.renderData(this.state.pageData)
+                : this.renderLoading() }
+              <FooterComp/>
+            </div>
+          </Broadcast>
+        </Broadcast>
+      </Broadcast>
     )
   }
-
 
   renderLoading() { return(
     <div>
