@@ -4,16 +4,18 @@ import React from 'react'
 import $ from 'jquery'
 import Flickity from 'flickity-imagesloaded'
 
-class CarouselComp extends React.Component {
+class MarqueeComp extends React.Component {
   componentDidMount () {
-    var carousel = $('.c-marquee__carousel')[0];
-    var options = {
-      cellAlign: 'left',
-      contain: true,
-      initialIndex: 0,
-      imagesLoaded: true
+    if (this.props.carousel) {
+      var carousel = $('.c-marquee__carousel')[0];
+      var options = {
+        cellAlign: 'left',
+        contain: true,
+        initialIndex: 0,
+        imagesLoaded: true
+      }
+      this.flkty = new Flickity(carousel, options);
     }
-    this.flkty = new Flickity(carousel, options);
   }
   componentWillUnmount() {
     if (this.flkty) {
@@ -21,8 +23,9 @@ class CarouselComp extends React.Component {
     }
   }
   render() {
-    return (
-      <div className="c-marquee">
+    var carousel;
+    if (this.props.carousel) {
+      carousel = (
         <div className="c-marquee__carousel">
           <div className="c-marquee__carousel-cell">
             <h2>Carousel Cell Title 1</h2>
@@ -40,12 +43,17 @@ class CarouselComp extends React.Component {
             <a href="" className="o-textlink__primary">More&hellip;</a>
           </div>
         </div>
+      )
+    }
+    return (
+      <div className="c-marquee">
+        {carousel}
         <div className="c-marquee__sidebar">
           <section className="o-columnbox4">
             <header>
               <h2 className="o-columnbox2__heading">About</h2>
             </header>
-            <p>Quo dolores unde alias, distinctio rem reprehenderit adipisci officiis eum facilis sunt, vero obcaecati qui porro, sed mollitia consequuntur, aperiam quaerat. <a className="o-textlink__secondary" href="">More</a>
+            <p>{this.props.about} <a className="o-textlink__secondary" href="">More</a>
             </p>
           </section>
         </div>
@@ -54,4 +62,4 @@ class CarouselComp extends React.Component {
   }
 }
 
-module.exports = CarouselComp;
+module.exports = MarqueeComp;

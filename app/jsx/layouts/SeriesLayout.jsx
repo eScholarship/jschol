@@ -1,7 +1,7 @@
 import React from 'react'
 import { Link } from 'react-router'
 
-import CarouselComp from '../components/MarqueeComp.jsx'
+import MarqueeComp from '../components/MarqueeComp.jsx'
 import { ScholarlyWorks, SortComp, PaginationComp } from '../pages/SearchPage.jsx'
 
             // <div className="l-search__sort-pagination">
