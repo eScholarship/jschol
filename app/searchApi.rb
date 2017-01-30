@@ -360,6 +360,8 @@ def extent(id, type)
     aws_params[:query] = "(term field=journals '#{id}')"
   elsif (type == 'campus') then
     aws_params[:query] = "(term field=campuses '#{id}')"
+  elsif (type == 'series' || type == 'monograph_series' || type == 'seminar_series') then 
+    aws_params[:query] = "(term field=series '#{id}')"
   else 
     throw "Not a valid unit type"
   end
