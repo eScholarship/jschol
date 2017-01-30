@@ -69,9 +69,11 @@ Note:
 
 Amy manually merged the following components: 
 
-(merged)    /components/Header2Comp.jsx
 (removed)   /components/Subheader1Comp.jsx
+(removed)   /components/CarouselComp.jsx
+(merged)    /components/Header2Comp.jsx
 (merged)    /scss/_subheader.scss
+(added)     /components/MarqueeComp.jsx
 (added)     /components/LanguageComp.jsx
 (added)     /components/NavComp.jsx
 (added)     /components/NavBarComp.jsx
