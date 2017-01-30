@@ -62,11 +62,13 @@ class DepartmentLayout extends React.Component {
           <main>
             <section className="o-columnbox1">
               <p>There are {data.unitData.extent.count} publications in this collection, published between {data.unitData.extent.pub_year.start} and {data.unitData.extent.pub_year.end}.</p>
-              <h3>Journals by {data.unitData.name}</h3>
-              <ul>
-                { data.content.journals.map((child) =>
-                  <li key={child.unit_id}><Link to={"/unit/"+child.unit_id}>{child.name}</Link></li>) }
-              </ul>
+              {data.content.journals.length > 0 && 
+                <div><h3>Journals by {data.unitData.name}</h3>
+                <ul>
+                  { data.content.journals.map((child) =>
+                    <li key={child.unit_id}><Link to={"/unit/"+child.unit_id}>{child.name}</Link></li>) }
+                </ul></div>
+              }
               <h3>Works by {data.unitData.name}</h3>
               {seriesList}
               <hr/>
