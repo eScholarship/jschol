@@ -3,7 +3,7 @@
 import React from 'react'
 import PageBase from './PageBase.jsx'
 import Header2Comp from '../components/Header2Comp.jsx'
-import Subheader2Comp from '../components/Subheader2Comp.jsx'
+import SubheaderComp from '../components/SubheaderComp.jsx'
 import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
 import TabsComp from '../components/TabsComp.jsx'
 import JumpComp from '../components/JumpComp.jsx'
@@ -11,10 +11,7 @@ import FooterComp from '../components/FooterComp.jsx'
 
 class ItemPage extends PageBase {
   state = { currentTab: 1 }
-
-  componentWillMount() {
-    this.changeTab = this.changeTab.bind(this)
-  }
+  changeTab = this.changeTab.bind(this)
 
   // PageBase will fetch the following URL for us, and place the results in this.state.pageData
   pageDataURL(props) {
@@ -31,11 +28,14 @@ class ItemPage extends PageBase {
     return (
       <div className="l-item">
         <Header2Comp type={data.type} unitID={unitID} />
-        <SubheaderComp unitID={unitID} 
+        <SubheaderComp type={data.type}
+                        unitID={unitID} 
                         unitName={unitName}
                         campusID={data.campusID}
                         campusName={data.campusName}
                         campuses={data.campuses}/>
+        {/* <NavBarComp 
+          navBar={data.unitDisplay.nav_bar} unitId={data.unitData.id}/> */ }
         <BreadcrumbComp array={data.breadcrumb} />
         <div className="c-columns">
           <main>

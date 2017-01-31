@@ -21,6 +21,7 @@ class TabsComp extends React.Component {
 
   componentWillReceiveProps(nextProps) {
     this.setState({currentTab: nextProps.currentTab})
+    window.scrollTo(0, 0)
   }
 
   widthChange = ()=> {
