@@ -99,17 +99,16 @@ class PageBase extends React.Component
 
   render() {
     return (
-      <Broadcast channel="isPageEditable" value={this.isPageEditable()}>
-        <Broadcast channel="isEditingPage" value={this.state.isEditingPage}>
-          <Broadcast channel="onEditingPageChange" value={this.onEditingPageChange}>
-            <div>
-              { this.state.error ? this.renderError()
-                : this.state.pageData ? this.renderData(this.state.pageData)
-                : this.renderLoading() }
-              <FooterComp/>
-            </div>
-          </Broadcast>
-        </Broadcast>
+      <Broadcast channel="cms" value={ { isPageEditable: this.isPageEditable(),
+                                         isEditingPage: this.state.isEditingPage,
+                                         onEditingPageChange: this.onEditingPageChange,
+                                         modules: this.state.cmsModules } }>
+        <div>
+          { this.state.error ? this.renderError()
+            : this.state.pageData ? this.renderData(this.state.pageData)
+            : this.renderLoading() }
+          <FooterComp/>
+        </div>
       </Broadcast>
     )
   }
