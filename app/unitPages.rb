@@ -77,8 +77,7 @@ def getUnitPageData(unitID)
         body[:content] = getORULandingPageData(unitID)
       end
       if unit.type == 'series'
-        # body[:content] = getSeriesLandingPageData(unitID)
-        # body.merge!(search(params))
+        body[:content] = getSeriesLandingPageData(unitID)
       end
       return body.merge(getUnitItemHeaderElements('unit', unitID)).to_json
     rescue Exception => e
@@ -146,8 +145,27 @@ def getSeriesLandingPageData(id)
     children = parent ? $hierByAncestor[parent[0].ancestor_unit] : []
   end
 
+  aws_params = 
+  {
+    query_parser: "structured",
+    size: 10,
+    sort: "pub_date desc",
+    start: 0,
+    query: "(term field=series '#{id}')"
+  }
+  response = normalizeResponse($csClient.search(return: '_no_fields', **aws_params))
+
+  if response['hits'] && response['hits']['hit']
+    itemIds = response['hits']['hit'].map { |item| item['id'] }
+    searchResults = itemResultData(itemIds)
+  end
+
+  aws_params[:rows] = 10
   return {
-    :series => children ? children.select { |u| u.unit.type == 'series' }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : []
+    :series => children ? children.select { |u| u.unit.type == 'series' }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : [],
+    :response => searchResults,
+    :count => response['hits']['found'],
+    :query => aws_params,
   }
 end
 
