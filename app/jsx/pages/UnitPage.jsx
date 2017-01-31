@@ -1,4 +1,14 @@
 // ##### Unit Page ##### //
+// this.props = {
+//   unitData: {id: , name: , type: , extent: {count: , pub_year: {start: , end: }, about: }}
+//   unitHeader: {logo: , nav_bar: , facebook: , twitter: }
+//   content: { page content },
+//   campusID: ,
+//   campusName: ,
+//   campuses: [], 
+//   breadcrumb: [],
+//   appearsIn: ,
+// }
 
 import React from 'react'
 import { Link } from 'react-router'
@@ -43,16 +53,17 @@ class UnitPage extends PageBase
     }
     return (
       <div>
-        <Header2Comp type={data.type} unitID={data.id} />
+        <Header2Comp type={data.unitData.type} unitID={data.unitData.id} />
         <SubheaderComp
-          type={data.type}
-          unitID={data.id}
-          unitName={data.name}
+          type={data.unitData.type}
+          unitID={data.unitData.id}
+          unitName={data.unitData.name}
+          logo={data.unitHeader.logo}
           campusID={data.campusID}
           campusName={data.campusName}
           campuses={data.campuses}/>
         <NavBarComp 
-          navBar={data.unitDisplay.nav_bar} unitId={data.unitData.id}/>
+          navBar={data.unitHeader.nav_bar} unitData={data.unitData} socialProps={data.unitHeader.social} />
         <BreadcrumbComp array={data.breadcrumb} />
         {contentLayout}
       </div>

@@ -1,22 +1,44 @@
 # def populateDB()
-#   unit = $unitsHash['uclalaw']
-#   currentAttrs = JSON.parse(unit.attrs)
+#   # unit = $unitsHash['uclalaw']
+#   # currentAttrs = JSON.parse(unit.attrs)
+#   #
+#   # newAttrs = {
+#   #   about: "Here is some sample about text about the UCLA School of Law department. Lalalalala!",
+#   #   logo: "/images/temp_unit/uclalaw_institute_logo.jpg",
+#   #   nav_bar: [
+#   #      {name: 'Unit Home', slug: ''},
+#   #      {name: 'About', slug: 'about'},
+#   #      {name: 'Policies', slug: 'policies'},
+#   #      {name: 'Submission Guidelines', slug: 'submission'},
+#   #      {name: 'Contact', slug: 'contact'}
+#   #    ],
+#   #    facebook: "https://www.facebook.com/pages/UCLA-School-of-Law/112519212094115",
+#   #    twitter: "UCLA_Law",
+#   #    directSubmit: "enabled"
+#   # }
+#   #
+#   # attrs = JSON.generate(newAttrs)
+#   # unit.update(:attrs => attrs)
 #
-#   newAttrs = {
-#     about: "Here is some sample about text about the UCLA School of Law department. Lalalalala!",
-#     logo: "/images/temp_unit/uclalaw_institute_logo.jpg",
-#     nav_bar: [
-#        {name: 'Unit Home', slug: ''},
-#        {name: 'About', slug: 'about'},
-#        {name: 'Policies', slug: 'policies'},
-#        {name: 'Submission Guidelines', slug: 'submission'},
-#        {name: 'Contact', slug: 'contact'}
-#      ],
-#      directSubmit: "enabled"
-#   }
-#
-#   attrs = JSON.generate(newAttrs)
-#   unit.update(:attrs => attrs)
+#   carouselWidget = new Widget({
+#     unit_id: 'uclalaw',
+#     kind: 'carousel',
+#     region: 'top_panel',
+#     order: '0',
+#     attrs: [
+#       { image: ,
+#         header: ,
+#         text: ,
+#         link: ,
+#         altTag: ,
+#         textColor: ,
+#         gradientColor: ,
+#         headerColor: ,
+#         linkColor: ,
+#         textAlignment:
+#       }
+#     ]
+#   })
 #
 # end
 
@@ -35,12 +57,17 @@ def getUnitPageData(unitID)
           :id => unitID,
           :name => unit.name,
           :type => unit.type,
-          :extent => extent(unitID, unit.type)
+          :extent => extent(unitID, unit.type),
+          :about => attrs['about']
         },
-        unitDisplay: {
+        unitHeader: {
           :logo => attrs['logo'],
           :nav_bar => attrs['nav_bar'],
-          :about => attrs['about']
+          :social => {
+            :facebook => attrs['facebook'],
+            :twitter => attrs['twitter'],
+            :rss => attrs['rss']
+          }
         }
       }
       
@@ -50,7 +77,7 @@ def getUnitPageData(unitID)
         body[:content] = getORULandingPageData(unitID)
       end
       if unit.type == 'series'
-        body[:content] = getSeriesLandingPageData(unitID)
+        # body[:content] = getSeriesLandingPageData(unitID)
         # body.merge!(search(params))
       end
       return body.merge(getUnitItemHeaderElements('unit', unitID)).to_json
@@ -79,12 +106,14 @@ def getORULandingPageData(id)
 
   return {
     :series => children ? children.select { |u| u.unit.type == 'series' }.map { |u| seriesPreview(u) } : [],
-    :related_orus => children ? children.select { |u| u.unit.type != 'series' }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : []
+    :journals => children ? children.select { |u| u.unit.type == 'journal' }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : [],
+    :related_orus => children ? children.select { |u| u.unit.type != 'series' && u.unit.type != 'journal' }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : []
   }
 end
 
 def seriesPreview(u)
   items = UnitItem.filter(:unit_id => u.unit_id, :is_direct => true)
+  count = items.count
   preview = items.limit(3).map { |pair| Item[pair.item_id] }
 
   items = []
@@ -104,7 +133,7 @@ def seriesPreview(u)
   {
     :unit_id => u.unit_id,
     :name => u.unit.name,
-    :count => items.count,
+    :count => count,
     :items => items,
   }
 end
