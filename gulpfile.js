@@ -109,7 +109,6 @@ function restartSinatra()
     sinatraProc = null
   }
   else {
-    console.log("Starting Sinatra.")
     startSinatra()
   }
 }
@@ -138,7 +137,6 @@ function restartExpress() {
     expressProc = null
   }
   else {
-    console.log("Starting Express.")
     startExpress()
   }
 }
@@ -170,6 +168,11 @@ gulp.task('livereload', function() {
   livereload.listen();
 });
 
+gulp.task('maybe-socks', function() {
+  var socksProc = spawn('ruby', ['tools/maybeSocks.rb'], { stdio: 'inherit' })
+});
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Build everything in order, then start the servers and watch for incremental changes.
-gulp.task('default',  ['watch:src', 'watch', 'start-sinatra', 'start-express', 'livereload', 'sass', 'scss-lint'])
+gulp.task('default',  ['watch:src', 'watch', 'start-sinatra', 'start-express', 
+                       'maybe-socks', 'livereload', 'sass', 'scss-lint'])
