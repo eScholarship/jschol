@@ -735,8 +735,8 @@ class ScholarlyWorks extends React.Component {
 
 class SearchPage extends PageBase {
   // PageBase will fetch the following URL for us, and place the results in this.state.pageData
-  pageDataURL(props) {
-    return "/api/search/" + props.location.search  // plus whatever props.params.YourUrlParam, etc.
+  pageDataURL() {
+    return "/api/search/" + this.props.location.search  // plus whatever props.params.YourUrlParam, etc.
   }
 
   renderData(data) {

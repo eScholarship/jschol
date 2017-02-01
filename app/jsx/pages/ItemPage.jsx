@@ -17,12 +17,12 @@ class ItemPage extends PageBase
 {
   constructor(props) {
     super(props)
-    this.state.currentTab = Number(props.currentTab)
+    this.state = { currentTab: Number(props.currentTab ? props.currentTab : 0) }
   }
 
   // PageBase will fetch the following URL for us, and place the results in this.state.pageData
-  pageDataURL(props) {
-    return "/api/item/" + props.params.itemID
+  pageDataURL() {
+    return "/api/item/" + this.props.params.itemID
   }
 
   changeTab(tab_id) {

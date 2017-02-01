@@ -2,19 +2,18 @@
 
 import React from 'react'
 import { Link } from 'react-router'
+import { Subscriber } from 'react-broadcast'
+
 import Search1Comp from '../components/Search1Comp.jsx'
 import Breakpoints from '../../js/breakpoints.json'
 import AdminBarComp from '../components/AdminBarComp.jsx'
 
 class HeaderComp1 extends React.Component {
-  constructor(props){
-    super(props)
-    this.state = {searchActive: false}
-  }
+  state = {searchActive: false}
   render() {
     return (
     <div>
-      { this.props.admin ? <AdminBarComp admin={this.props.admin}/> : null }
+      <AdminBarComp/>
       <div className="c-header1">
         <div className="c-header1__logosearch">
           <Link to="/">
@@ -26,7 +25,8 @@ class HeaderComp1 extends React.Component {
           <div className={this.state.searchActive ? "c-header1__search--active" : "c-header1__search"}>
             <Search1Comp onClose = {()=>this.setState({searchActive: false})} />
           </div>
-          <button className="c-header1__search-open-button" aria-label="open search field" onClick = {()=> this.setState({searchActive: true})}></button>
+          <button className="c-header1__search-open-button" aria-label="open search field" 
+                  onClick = {()=> this.setState({searchActive: true})}></button>
         </div>
         <div className="c-header1__deposit">
           <button className="c-header1__deposit-button">Get Started</button>
