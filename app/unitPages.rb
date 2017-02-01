@@ -1,25 +1,27 @@
-# def populateDB()
-#   # unit = $unitsHash['uclalaw']
-#   # currentAttrs = JSON.parse(unit.attrs)
-#   #
-#   # newAttrs = {
-#   #   about: "Here is some sample about text about the UCLA School of Law department. Lalalalala!",
-#   #   logo: "/images/temp_unit/uclalaw_institute_logo.jpg",
-#   #   nav_bar: [
-#   #      {name: 'Unit Home', slug: ''},
-#   #      {name: 'About', slug: 'about'},
-#   #      {name: 'Policies', slug: 'policies'},
-#   #      {name: 'Submission Guidelines', slug: 'submission'},
-#   #      {name: 'Contact', slug: 'contact'}
-#   #    ],
-#   #    facebook: "https://www.facebook.com/pages/UCLA-School-of-Law/112519212094115",
-#   #    twitter: "UCLA_Law",
-#   #    directSubmit: "enabled"
-#   # }
-#   #
-#   # attrs = JSON.generate(newAttrs)
-#   # unit.update(:attrs => attrs)
+# def modifyUnit()
+#   unit = $unitsHash['uclalaw_apalj']
+#   currentAttrs = JSON.parse(unit.attrs)
 #
+#   newAttrs = {
+#     about: "Here's some sample text about the UCLA School of Law's Asian Pacific American Law Journal. Lalalalala!",
+#     nav_bar: [
+#        {name: 'Journal Home', slug: ''},
+#        {name: 'Issues', subNav: true},
+#        {name: 'About', slug: 'about'},
+#        {name: 'Policies', slug: 'policies'},
+#        {name: 'Submission Guidelines', slug: 'submission'},
+#        {name: 'Contact', slug: 'contact'}
+#      ],
+#      twitter: "apalj",
+#      directSubmit: "enabled",
+#      magazine: true
+#   }
+#
+#   attrs = JSON.generate(newAttrs)
+#   unit.update(:attrs => attrs)
+# end
+
+# def addWidget()
 #   carouselWidget = new Widget({
 #     unit_id: 'uclalaw',
 #     kind: 'carousel',
@@ -39,12 +41,12 @@
 #       }
 #     ]
 #   })
-#
 # end
 
+# def addPage()
 
 def getUnitPageData(unitID)
-  # populateDB();
+  # modifyUnit();
   
   content_type :json
   unit = $unitsHash[unitID]
@@ -78,6 +80,9 @@ def getUnitPageData(unitID)
       end
       if unit.type == 'series'
         body[:content] = getSeriesLandingPageData(unitID)
+      end
+      if unit.type == 'journal'
+        body[:content] = getJournalLandingPageData(unitID)
       end
       return body.merge(getUnitItemHeaderElements('unit', unitID)).to_json
     rescue Exception => e
@@ -170,7 +175,48 @@ def getSeriesLandingPageData(id)
 end
 
 def getJournalLandingPageData(id)
-  
+  unit = $unitsHash[id]
+  attrs = JSON.parse(unit.attrs)
+  return {
+    display: attrs['magainze'] ? 'magazine' : 'simple',
+    issue: getIssue(id)
+  }
+end
+
+def getIssue(id)
+  issue = Issue.where(:unit_id => id).order(Sequel.desc(:pub_date)).first.values
+  issue[:sections] = Section.where(:issue_id => issue[:id]).order(:ordering).all
+
+  issue[:sections].map! do |section|
+    section = section.values
+    items = Item.where(:section=>section[:id]).order(:ordering_in_sect).select_map([:id, :title, :attrs])
+    itemIds = items.map { |article| article[0] }
+    authors = ItemAuthors.where(item_id: itemIds).order(:ordering).to_hash_groups(:item_id)
+    section[:articles] = []
+
+    items.each do |article|
+      itemAuthors = authors[article[0]]
+      attrs = JSON.parse(article[2])
+      itemHash = {
+        :id => article[0],
+        :title => article[1],
+        :authors => itemAuthors.map { |author| JSON.parse(author.attrs) },
+        :abstract => attrs[:abstract],
+        :supp_files => [{:type => 'video'}, {:type => 'image'}, {:type => 'pdf'}, {:type => 'audio'}]
+      }
+
+      for supp_file_hash in itemHash[:supp_files]
+        if attrs['supp_files']
+          supp_file_hash[:count] = attrs['supp_files'].count { |supp_file| supp_file['mimeType'].start_with?(supp_file_hash[:type])}
+        else
+          supp_file_hash[:count] = 0
+        end
+      end
+      section[:articles] << itemHash
+    end
+    next section
+  end
+  return issue
 end
 
 # this was a stub for the item view in a series preview on a department landing page, 
