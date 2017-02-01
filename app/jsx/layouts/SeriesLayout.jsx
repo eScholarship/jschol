@@ -4,19 +4,6 @@ import { Link } from 'react-router'
 import MarqueeComp from '../components/MarqueeComp.jsx'
 import { ScholarlyWorks, SortComp, PaginationComp } from '../pages/SearchPage.jsx'
 
-            // <div className="l-search__sort-pagination">
-            //   <SortComp query={data.query} />
-            //   <input type="hidden" name="start" form="facetForm" value={data.query.start} />
-            //   <PaginationComp query={data.query} count={data.count}/>
-            // </div>
-            // <section className="o-columnbox1">
-            //   <header>
-            //     <h2 className="o-columnbox1__heading">Scholarly Works ({data.count} results)</h2>
-            //   </header>
-            //   <ScholarlyWorks results={data.searchResults} />
-            // </section>
-
-
 class SeriesLayout extends React.Component {
   render() {
     var data = this.props.data;
@@ -24,12 +11,19 @@ class SeriesLayout extends React.Component {
       <div className="c-columns">
         <main>
           <section className="o-columnbox1">
+            <h4>Other series in this department: </h4>
             <ul>
-              { data.series.map((s) => 
+              { data.content.series.map((s) => 
                 <li key={s.unit_id}><Link to={"/unit/"+s.unit_id}>{s.name}</Link></li>)}
             </ul>
             <p>Some about text for the series.</p>
-                  
+            <div className="l-search__sort-pagination">
+              <SortComp query={data.content.query} />
+              <input type="hidden" name="start" form="facetForm" value={data.content.query.start} />
+              <PaginationComp query={data.content.query} count={data.content.count}/>
+            </div>
+            <ScholarlyWorks results={data.content.response} />
+
           </section>
         </main>
         <aside>
