@@ -13,11 +13,11 @@ import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
 class BrowsePage extends PageBase
 {
   // PageBase will fetch the following URL for us, and place the results in this.state.pageData
-  pageDataURL(props) {
-    if (props.params.browse_type) {
-      return "/api/browse/" + props.params.browse_type
+  pageDataURL() {
+    if (this.props.params.browse_type) {
+      return "/api/browse/" + this.props.params.browse_type
     } else {
-      return "/api/browse/depts/" + props.params.campusID
+      return "/api/browse/depts/" + this.props.params.campusID
     }
   }
 

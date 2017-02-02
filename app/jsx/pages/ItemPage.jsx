@@ -14,8 +14,8 @@ class ItemPage extends PageBase {
   changeTab = this.changeTab.bind(this)
 
   // PageBase will fetch the following URL for us, and place the results in this.state.pageData
-  pageDataURL(props) {
-    return "/api/item/" + props.params.itemID
+  pageDataURL() {
+    return "/api/item/" + this.props.params.itemID
   }
 
   changeTab(tab_id) {

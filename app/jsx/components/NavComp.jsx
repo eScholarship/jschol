@@ -28,21 +28,21 @@ class NavComp extends React.Component {
   }
   render() {
     var navList = this.props.data.map((navItem) => {
-      if ('subNav' in navItem) {
-        return (
-          <NavSubComp name={navItem.name}
-            open={this.state.submenuActive == 1}
-            onSubmenuChanged={(flag)=> this.setState({submenuActive:flag ? 1 : null})}>
-            {navItem.subNav.map((subItem) => {
-              (<Link to={subItem.url} role="listitem">{subItem.name}</Link>)
-            })}
-          </NavSubComp>
-        )
-      } else {
+      // if ('subNav' in navItem) {
+      //   return (
+      //     <NavSubComp name={navItem.name}
+      //       open={this.state.submenuActive == 1}
+      //       onSubmenuChanged={(flag)=> this.setState({submenuActive:flag ? 1 : null})}>
+      //       {navItem.subNav.map((subItem) => {
+      //         (<Link to={subItem.url} role="listitem">{subItem.name}</Link>)
+      //       })}
+      //     </NavSubComp>
+      //   )
+      // } else {
         return (
           <Link to={"/unit/" + this.props.unitId + "/" + navItem.slug }>{navItem.name}</Link>
         )
-      }
+      // }
     })
     return (
       <nav className="c-nav">

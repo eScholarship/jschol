@@ -408,6 +408,7 @@ def traceUnits(units)
   campuses    = Set.new
   departments = Set.new
   journals    = Set.new
+  series      = Set.new
 
   done = Set.new
   units = units.clone   # to avoid trashing the original list
@@ -425,12 +426,14 @@ def traceUnits(units)
         campuses << unitID
       elsif unit.type == "oru"
         departments << unitID
+      elsif unit.type =~ /series$/
+        series << unitID
       end
       units += $unitAncestors[unitID]
     end
   end
 
-  return [campuses.to_a, departments.to_a, journals.to_a]
+  return [campuses.to_a, departments.to_a, journals.to_a, series.to_a]
 end
 
 ###################################################################################################
@@ -526,7 +529,6 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
   data.single("peerReview"   ) == "yes" and attrs[:is_peer_reviewed] = true
   data.single("undergrad "   ) == "yes" and attrs[:is_undergrad] = true
   data.single("language"     )          and attrs[:language] = data.single("language")
-  data.single("withdrawn")              and attrs[:withdrawn_date] = data.single("withdrawn")
   data.single("embargoed")              and attrs[:embargo_date] = data.single("embargoed")
   data.single("publisher")              and attrs[:publisher] = data.single("publisher")
   data.single("originalCitation")       and attrs[:orig_citation] = data.single("originalCitation")
@@ -535,6 +537,11 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
                                                                  id:   data.single("localID") }
   data.multiple("publishedWebLocation") and attrs[:pub_web_loc] = data.multiple("publishedWebLocation")
   data.single("buyLink")                and attrs[:buy_link] = data.single("buyLink")
+  if data.single("withdrawn")
+    attrs[:withdrawn_date] = data.single("withdrawn")
+    msg = rawMeta.at("/record/history/stateChange[@state='withdrawn']/comment")
+    msg and attrs[:withdrawn_message] = msg.text
+  end
 
   # Filter out "n/a" abstracts
   data.single("description") && data.single("description").size > 3 and attrs[:abstract] = data.single("description")
@@ -591,14 +598,19 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
   issue = section = nil
   issueNum = data.single("issue[@tokenize='no']") # untokenized is actually from "number"
   if data.single("pubType") == "journal" && data.single("volume") && issueNum
-    issue = Issue.new
-    issue[:unit_id] = data.multiple("entityOnly")[0]
-    issue[:volume]  = data.single("volume")
-    issue[:issue]   = issueNum
-    issue[:pub_date] = parseDate(itemID, data.single("date")) || "1901-01-01"
+    issueUnit = data.multiple("entityOnly")[0]
+    if $allUnits.include?(issueUnit)
+      issue = Issue.new
+      issue[:unit_id] = issueUnit
+      issue[:volume]  = data.single("volume")
+      issue[:issue]   = issueNum
+      issue[:pub_date] = parseDate(itemID, data.single("date")) || "1901-01-01"
 
-    section = Section.new
-    section[:name]  = data.single("sectionHeader") ? data.single("sectionHeader") : "default"
+      section = Section.new
+      section[:name]  = data.single("sectionHeader") ? data.single("sectionHeader") : "default"
+    else
+      "Warning: issue associated with unknown unit #{issueUnit.inspect}"
+    end
   end
 
   # Data for external journals
@@ -691,10 +703,11 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
   }
 
   # Determine campus(es), department(s), and journal(s) by tracing the unit connnections.
-  campuses, departments, journals = traceUnits(units)
+  campuses, departments, journals, series = traceUnits(units)
   campuses.empty?    or idxItem[:fields][:campuses] = campuses
   departments.empty? or idxItem[:fields][:departments] = departments
   journals.empty?    or idxItem[:fields][:journals] = journals
+  series.empty?      or idxItem[:fields][:series] = series
 
   # Limit text based on size of other fields (so, 1000 authors will mean less text).
   # We have to stay under the overall limit for a CloudSearch record. This problem is

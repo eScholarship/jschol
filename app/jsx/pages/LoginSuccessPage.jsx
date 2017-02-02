@@ -1,25 +1,20 @@
 import React from 'react'
 import { Link } from 'react-router'
 import Form from 'react-router-form'
+import { Subscriber } from 'react-broadcast'
 
 import PageBase from './PageBase.jsx'
 import Header1Comp from '../components/Header1Comp.jsx'
 import Nav1Comp from '../components/Nav1Comp.jsx'
 import FooterComp from '../components/FooterComp.jsx'
 
-let sessionStorage = (typeof window != "undefined") ? window.sessionStorage : null
-
 class LoginSuccessPage extends PageBase
 {
-  pageDataURL(props) { return null /* no API data */ }
-
-  handlePageEntry(nextState, replaceState) {
-    console.log("nextState=", nextState)
-  }
+  pageDataURL() { return null /* no API data */ }
 
   render() { return(
     <div>
-      <Header1Comp admin={this.state.admin}/>
+      <Header1Comp/>
       <Nav1Comp />
       <div className="c-columns">
         <main>
@@ -27,13 +22,13 @@ class LoginSuccessPage extends PageBase
             <header>
               <h1 className="o-columnbox1__heading">Login Success</h1>
             </header>
-            <p>
-            You are logged in as '{this.state.admin.username}'.
-            </p>
+            <Subscriber channel="adminLogin">
+              { adminLogin => <p>You are logged in as '{adminLogin.username}'.</p> }
+            </Subscriber>
           </section>
         </main>
       </div>
-      <FooterComp admin={this.state.admin}/>
+      <FooterComp/>
     </div>
   )}
 }
