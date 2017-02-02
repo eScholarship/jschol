@@ -2,7 +2,7 @@
 
 import React from 'react'
 
-class Tab4Comp extends React.Component {
+class TabContent4Comp extends React.Component {
   render() {
     let p = this.props,
         authorList = p.authors.map(function(a, i) {return (
@@ -49,4 +49,4 @@ class Tab4Comp extends React.Component {
   }
 }
 
-module.exports = Tab4Comp;
+module.exports = TabContent4Comp;

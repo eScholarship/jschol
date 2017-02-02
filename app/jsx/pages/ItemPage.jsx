@@ -11,18 +11,15 @@ import FooterComp from '../components/FooterComp.jsx'
 
 class ItemPage extends PageBase {
   state = { currentTab: 1 }
-  changeTab = this.changeTab.bind(this)
 
   // PageBase will fetch the following URL for us, and place the results in this.state.pageData
   pageDataURL() {
     return "/api/item/" + this.props.params.itemID
   }
 
-  changeTab(tab_id) {
-    this.setState({currentTab: tab_id})
-  }
+  changeTab = tab_id => { this.setState({currentTab: tab_id}) }
 
-  renderData(data) {
+  renderData = data => {
     let unitID = data.appearsIn.length > 0  && data.appearsIn[0]["id"]
     let unitName = data.appearsIn.length > 0  && data.appearsIn[0]["name"]
     return (

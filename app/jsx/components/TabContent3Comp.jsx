@@ -1,8 +1,8 @@
-// ##### Tab 3 Component ##### //
+// ##### Tab Content 3 Component ##### //
 
 import React from 'react'
 
-class Tab3Comp extends React.Component {
+class TabContent3Comp extends React.Component {
   render() {
     return (
       <div className="c-tab3">
@@ -12,4 +12,4 @@ class Tab3Comp extends React.Component {
   }
 }
 
-module.exports = Tab3Comp;
+module.exports = TabContent3Comp;
