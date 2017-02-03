@@ -19,12 +19,15 @@
 
 @import 'button';
 @import 'columnbox';
+@import 'dividecontent';
+@import 'imagecontent';
 @import 'input';
 @import 'textlink';
 
 // ***** Components ***** //
 
 @import 'adminbar';
+@import 'authorlist';
 @import 'breadcrumb';
 @import 'campus';
 @import 'checkbox';
@@ -38,24 +41,30 @@
 @import 'header1';
 @import 'header2';
 @import 'infopages';
+@import 'itemactions';
 @import 'journalinfo';
 @import 'jump';
+@import 'language';
 @import 'marquee';
 @import 'nav';
-@import 'navbar';
-@import 'language';
-@import 'socialicons';
+@import 'nav1';
 @import 'nav2';
-@import 'nav3';
+@import 'navbar';
 @import 'pagination';
+@import 'publishedlocation';
 @import 'scholworks';
 @import 'search1';
 @import 'search2';
 @import 'sidebarnav';
+@import 'socialicons';
 @import 'sort';
 @import 'staticpage';
 @import 'subheader';
+@import 'tabcontent';
+@import 'table';
 @import 'tabs';
+@import 'togglecontent';
+@import 'well';
 
 // ***** Layouts ***** //
 
@@ -85,4 +94,8 @@ body {
 p {
   margin: 0 0 1em;
   line-height: 1.2em;
+}
+
+*:focus {
+  outline: $color-orange solid 1px;
 }

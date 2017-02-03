@@ -11,7 +11,7 @@ class PublishedLocationComp extends React.Component {
           <span>No data is associated with this publication.</span>
         </div>
         <a href="" className="c-publishedlocation__license">
-          <img src="images/icon_cc-by-nc.svg" alt=""/>
+          <img src="/images/icon_cc-by-nc.svg" alt=""/>
         </a>
       </div>
     )

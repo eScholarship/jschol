@@ -50,25 +50,3 @@
   @extend %o-columnbox__heading;
   margin: 0 (-$spacing-md) $spacing-md;
 }
-
-// Add this as a wrapper <div> around columnbox content to divide into 2 columns:
-
-.o-columnbox__divided {
-
-  @include bp(screen1) {
-    columns: 2;
-    column-gap: $spacing-lg;
-    column-rule: 1px solid $color-light-gray;
-  }
-
-  img {
-    max-width: 100%;
-    margin: 0 0 1em;
-
-    @include bp(screen1) {
-      width: auto;
-    }
-
-  }
-
-}

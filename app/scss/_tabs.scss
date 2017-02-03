@@ -7,14 +7,11 @@ $tab-height: $element-height;
 }
 
 %c-tabs__buttons {
-  height: $tab-height;
-  margin-right: $spacing-base;
-  margin-bottom: $spacing-base;
-  padding: 0 $spacing-sm;
+  min-height: $tab-height;
+  padding: 5px $spacing-sm;
   border: none;
   background-color: $color-light-gray;
   font-size: 1.1em;
-  line-height: $tab-height;
   user-select: none;
 }
 
@@ -27,44 +24,109 @@ $tab-height: $element-height;
   background-color: $color-white;
 }
 
-.c-tabs__main-list {
-  display: flex;
-  flex-wrap: wrap;
-}
+%c-tabs__tabs {
+  display: grid;
+  grid-template-columns: repeat(2, auto);
+  grid-gap: $spacing-sm;
 
-.c-tabs__sub-list {
-  position: relative;
+  @include bp(screen1) {
+    grid-template-columns: repeat(3, auto);
+  }
 
-  summary {
-    @extend %c-tabs__buttons;
-    position: absolute;
-    width: 15px;
-    text-align: center;
+  @include bp(screen3) {
+    grid-template-columns: repeat(5, auto);
+  }
 
-    @include bp(screen3) {
-      display: none;
+  button {
+    margin-right: $spacing-sm;
+    margin-bottom: $spacing-sm;
+  }
+
+  @supports (display: grid) {
+
+    button {
+      margin: 0;
     }
 
   }
 
 }
 
-.c-tabs__details-buttons {
-  margin-left: 30px + $spacing-sm;
+.c-tabs__tabs {
+  @extend %c-tabs__tabs;
 
-  @include bp(screen3) {
-    margin-left: 0;
+  @supports (display: grid) {
+
+    button {
+
+      &:nth-child(n+3) {
+        display: none;
+      }
+
+      @include bp(screen1) {
+
+        &:nth-child(n+3) {
+          display: block;
+        }
+
+        &:nth-child(n+4) {
+          display: none;
+        }
+
+      }
+
+      @include bp(screen3) {
+
+        &:nth-child(n+4) {
+          display: block;
+        }
+
+      }
+
+    }
+
   }
 
 }
 
-.c-tabs__panel {
-  margin-top: (-$spacing-base);
-  padding: $spacing-sm;
-  background-color: $color-white;
+.c-tabs__tabs--show-all {
+  @extend %c-tabs__tabs;
+}
+
+.c-tabs__button-more {
+  @extend %c-tabs__buttons;
+  display: none;
+  width: 40px;
+  justify-self: end;
+  grid-column: 2 / 3;
+  grid-row: 1 / 2;
+
+  @supports (display: grid) {
+    display: block;
+  }
+
+  @include bp(screen1) {
+    grid-column: 3 / 4;
+  }
 
   @include bp(screen3) {
-    padding: $spacing-md;
+    display: none;
+  }
+
+}
+
+.c-tabs__content {
+  margin-top: (-$spacing-sm);
+  margin-bottom: $spacing-sm;
+  padding: $spacing-sm 0;
+  background-color: $color-white;
+
+  @supports (display: grid) {
+    margin-top: 0;
+  }
+
+  @include bp(screen2) {
+    padding: $spacing-md $spacing-sm $spacing-sm;
   }
 
 }
