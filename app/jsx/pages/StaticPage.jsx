@@ -107,90 +107,92 @@ const TRUMBO_BUTTONS = [
 class Editable extends React.Component
 {
   static propTypes = {
-    onSave: React.PropTypes.func.isRequired,
     children: React.PropTypes.element.isRequired,
     html: React.PropTypes.string.isRequired,
     onSave: React.PropTypes.func.isRequired,
     canDelete: React.PropTypes.bool // optional
   }
 
-  state = { editingComp: false, savingMsg: null }
+  state = { isEditingComp: false, workingMsg: null }
 
-  render() { return(
+  render = () =>
     <Subscriber channel="cms">
-      { cms =>
+      { cms => {
 
         // Step 1: If not editing page, pass through to the children, unmodified.
-        !cms.isEditingPage ? this.props.children
+        if (!cms.isEditingPage)
+          return this.props.children
 
         // Step 2: Page is being edited, but component not yet being edited (nor saved)
-        : (!this.state.editingComp && !this.state.savingMsg) ? this.renderWithButtons(cms)
+        else if (!this.state.isEditingComp && !this.state.workingMsg)
+          return this.renderWithButtons(cms)
 
         // Step 3: Edit button has been clicked - display the wysiwyg editor
-        : this.state.editingComp ? this.renderEditor(cms)
+        else if (this.state.isEditingComp)
+          return this.renderEditor(cms)
 
         // Step 4: Save has been clicked. Display the saving message while we work.
-        : this.renderSavingMsg()
-      }
+        else
+          return this.renderWorkingMsg()
+      } }
     </Subscriber>
-  )}
 
   renderWithButtons = cms =>
     <div style={{position: "relative"}}>
       { this.props.children }
-      <div className="c-staticpage__edit-buttons">
-        <button className="c-staticpage__edit-button"
-                onClick={e=>this.setState({ editingComp: true })}>
+      <div className="c-editable__edit-buttons">
+        <button className="c-editable__edit-button"
+                onClick={e=>this.setState({ isEditingComp: true })}>
           Edit
         </button>
         { this.props.canDelete && 
-          <button className="c-staticpage__delete-button">Delete</button> }
+          <button className="c-editable__delete-button">Delete</button> }
       </div>
     </div>
 
   renderEditor = cms =>
     <div>
       { this.renderWithButtons(cms) }
-      <div className="c-staticpage__modal">
-        <div className="c-staticpage__modal-content">
+      <div className="c-editable__modal">
+        <div className="c-editable__modal-content">
           <cms.modules.Trumbowyg id='react-trumbowyg' 
                      buttons={TRUMBO_BUTTONS}
                      data={this.props.html}
                      onChange={ e => this.setState({ newText: e.target.innerHTML })} />
           <button onClick={e=>this.onSave()}>Save</button>
-          <button onClick={e=>this.setState({editingComp:false})}>Cancel</button>
+          <button onClick={e=>this.setState({isEditingComp:false})}>Cancel</button>
         </div>
       </div>
     </div>
 
-  renderSavingMsg = () =>
+  renderWorkingMsg = () =>
     <div style={{position: "relative"}}>
       { this.props.children }
-      <div className="c-staticpage__working">
-        <div className="c-staticpage__working-text">{this.state.savingMsg}</div>
+      <div className="c-editable__working">
+        <div className="c-editable__working-text">{this.state.workingMsg}</div>
       </div>
     </div>
 
   onSave() 
   {
     if (this.state.newText) {
-      this.setState({ editingComp: false, savingMsg: "Updating..." })
+      this.setState({ isEditingComp: false, workingMsg: "Updating..." })
       let startTime = new Date
       this.props.onSave(this.state.newText)
       .done(()=> {
         // In case save takes less than half a sec, leave the message on there
         // for long enough to see it.
-        setTimeout(()=>this.setState({ savingMsg: null, newText: null }),
+        setTimeout(()=>this.setState({ workingMsg: null, newText: null }),
                    Math.max(500, new Date - startTime))
       })
       .fail(()=>{
         // Put up a "Failed" message and leave it there a little while so user can see it.
-        this.setState({ savingMsg: "Failed." })
-        setTimeout(()=>this.setState({savingMsg: null, newText: null}), 1000)
+        this.setState({ workingMsg: "Failed." })
+        setTimeout(()=>this.setState({workingMsg: null, newText: null}), 1000)
       })
     }
     else
-      this.setState({ editingComp: false })
+      this.setState({ isEditingComp: false })
   }
 }
 
