@@ -1,0 +1,31 @@
+// ##### Author List Component ##### //
+
+.c-authorlist {
+  margin-bottom: $spacing-md;
+
+  @include bp(screen1) {
+    display: flex;
+  }
+
+}
+
+.c-authorlist__year {
+  align-self: flex-start;
+  margin-right: $spacing-sm;
+  padding-right: $spacing-sm;
+  border-right: 1px solid $color-black;
+}
+
+.c-authorlist__list {
+  @extend %no-bullet-ul;
+
+  li {
+    display: inline;
+
+    &::after {
+      content: ' ';
+    }
+
+  }
+
+}

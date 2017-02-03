@@ -1,0 +1,25 @@
+// ##### Item Actions Component ##### //
+
+.c-itemactions {
+
+  @include bp(screen3) {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: $spacing-sm;
+  }
+
+}
+
+.c-itemactions__items1 {
+  flex: 1;
+
+  .o-button__6 {
+    margin-right: $spacing-sm;
+    margin-bottom: $spacing-sm;
+  }
+
+}
+
+.c-itemactions__items2 {
+  // not used
+}
