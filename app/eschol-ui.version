@@ -54,13 +54,6 @@ Procedure for merging
 
 * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-Note: 
-  As of this writing (Dec. 12, 2016) jschol's HeaderComp and NavComp are stubbed to use
-  Joel's new Header1Comp and Nav1Comp, until we have a chance to put in switching
-  logic to contextually use Header1 vs Header2.
-
-* * * * * * * * * * * * * * * * * * * * * * * * * *
-
 1/27/17
 
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -85,4 +78,15 @@ Amy manually merged the following components:
 (added)     /scss/_navbar.scss
 (added)     /scss/_socialicons.scss
 
+
+2/2/17
+
+Andy manually merged all files since last manual merge, except for these unnecessary items:
+    app/jsx/app.jsx
+    app/jsx/display/* 
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> by comparing Joel's branch f41b68ba5458584da599684721a3826b531f6e21, 2017-01-26 <<<
+>>>         with Joel's branch 02f3a3e52ea77210f1b81b65c59573e925049c14, 2017-02-02 <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    
 
