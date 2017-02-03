@@ -60,7 +60,13 @@ app.use((req, res) =>
         });
         ajaxResp.on('end', function() {
           if (ajaxResp.statusCode == 200) {
-            var response = JSON.parse(body)
+            var response = {}
+            try {
+              response = JSON.parse(body)
+            }
+            catch (e) {
+              console.log("Exception parsing JSON:", e)
+            }
             //console.log("Got a response:", response)
             delete rc.props.location.urlsToFetch
             rc.props.location.urlsFetched = {}

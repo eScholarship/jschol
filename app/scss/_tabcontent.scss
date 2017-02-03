@@ -1,0 +1,14 @@
+// ##### Tab Content Components ##### //
+
+.c-tabcontent {
+  // not used
+}
+
+.c-tabcontent__heading {
+  margin-top: 0;
+  margin-bottom: $spacing-md;
+  color: $color-teal;
+  font-size: 1.4em;
+  font-weight: normal;
+  line-height: 1.2em;
+}

@@ -5,7 +5,6 @@
   position: relative; // to absolute positioned nav component
   align-items: center;
   justify-content: space-between;
-  // margin-bottom: $spacing-sm;
   padding-bottom: $spacing-sm;
   border-bottom: 2px solid $color-light-gray;
 
@@ -16,7 +15,7 @@
   }
 
   @include bp(screen3) {
-    padding: 0 $spacing-sm;
+    padding: 0 $spacing-sm $spacing-sm;
   }
 
 }
@@ -26,6 +25,7 @@
 
   @include bp(screen3) {
     display: block;
+    margin-right: $spacing-md;
   }
 
 }

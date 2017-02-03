@@ -51,7 +51,6 @@ class UnitPage extends PageBase
         </div>
       );
     }
-
     return (
       <div>
         <Header2Comp type={data.unitData.type} unitID={data.unitData.id} />

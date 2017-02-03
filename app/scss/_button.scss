@@ -32,11 +32,23 @@
   color: $color-orange;
 }
 
+// ***** Buttons with Icons ***** //
+
+// Each version below uses a default icon. To use alternative icons, use background-image property with path to alternative image
+
 // no border or background, bold teal text and left icon:
 .o-button__5 {
   @extend %o-button;
   padding-left: 30px;
-  background: url('../images/icon_share-square.svg') no-repeat left 8px center / 16px; // use background-image for component with custom icon
+  background: url('../images/icon_share-square.svg') no-repeat left 8px center / 16px;
   color: $color-teal;
   font-weight: bold;
+}
+
+// no border, teal background, bold white text and left icon:
+.o-button__6 {
+  @extend %o-button;
+  padding-left: 30px;
+  background: $color-teal url('../images/icon_print-white.svg') no-repeat left 8px center / 16px;
+  color: $color-white;
 }
