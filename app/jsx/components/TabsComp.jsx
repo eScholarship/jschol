@@ -27,11 +27,11 @@ class TabsComp extends React.Component {
           <button className={this.state.currentTab === 5 ? "c-tabs__button--active" : "c-tabs__button"} onClick = {()=> this.setState({currentTab: 5})}>Comments (2)</button>
         </div>
         <div className="c-tabs__content">
-          {this.state.currentTab === 1 ? <TabContent1Comp /> : null}
-          {this.state.currentTab === 2 ? <TabContent2Comp /> : null}
-          {this.state.currentTab === 3 ? <TabContent3Comp /> : null}
-          {this.state.currentTab === 4 ? <TabContent4Comp /> : null}
-          {this.state.currentTab === 5 ? <TabContent5Comp /> : null}
+          {this.state.currentTab === 1 ? <TabContent1Comp {...this.props} /> : null}
+          {this.state.currentTab === 2 ? <TabContent2Comp {...this.props} /> : null}
+          {this.state.currentTab === 3 ? <TabContent3Comp {...this.props} /> : null}
+          {this.state.currentTab === 4 ? <TabContent4Comp {...this.props} /> : null}
+          {this.state.currentTab === 5 ? <TabContent5Comp {...this.props} /> : null}
         </div>
       </div>
     )
