@@ -403,7 +403,8 @@ get "/api/search/" do
   header = {
     :campuses => getCampusesAsMenu
   }
-  return header.merge(search(CGI::parse(request.query_string))).to_json
+  facetList = ['type_of_work', 'peer_reviewed', 'supp_file_types', 'campuses', 'departments', 'journals', 'disciplines', 'rights']
+  return header.merge(search(CGI::parse(request.query_string), facetList)).to_json
 end
 
 ###################################################################################################
