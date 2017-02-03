@@ -51,6 +51,7 @@ DB = Sequel.connect(dbConfig)
 # Internal modules to implement specific pages and functionality
 require_relative 'dbCache'
 require_relative 'hierarchy'
+require_relative 'listItemViews'
 require_relative 'searchApi'
 require_relative 'queueWithTimeout'
 require_relative 'unitPages'
@@ -402,7 +403,8 @@ get "/api/search/" do
   header = {
     :campuses => getCampusesAsMenu
   }
-  return header.merge(search(CGI::parse(request.query_string))).to_json
+  facetList = ['type_of_work', 'peer_reviewed', 'supp_file_types', 'campuses', 'departments', 'journals', 'disciplines', 'rights']
+  return header.merge(search(CGI::parse(request.query_string), facetList)).to_json
 end
 
 ###################################################################################################
