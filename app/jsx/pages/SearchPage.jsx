@@ -1,7 +1,6 @@
 
 import React from 'react'
 import $ from 'jquery'
-import dotdotdot from 'jquery.dotdotdot'
 import _ from 'lodash'   // mainly for _.isEmtpy() which also works server-side (unlike $.isEmptyObject)
 import { Link } from 'react-router'
 import Form from 'react-router-form'
@@ -9,6 +8,12 @@ import Form from 'react-router-form'
 import PageBase from './PageBase.jsx'
 import Header1Comp from '../components/Header1Comp.jsx'
 import Nav1Comp from '../components/Nav1Comp.jsx'
+
+// Load dotdotdot in browser but not server
+if (!(typeof document === "undefined")) {
+  const dotdotdot = require('jquery.dotdotdot')
+}
+
 
 // FacetItem  
 // props = {

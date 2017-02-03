@@ -2,7 +2,11 @@
 
 import React from 'react'
 import $ from 'jquery'
-import Flickity from 'flickity-imagesloaded'
+
+// Only load flickity when in the browser (not server-side)
+if (!(typeof document === "undefined")) {
+  require('flickity-imagesloaded')
+}
 
 class MarqueeComp extends React.Component {
   componentDidMount () {

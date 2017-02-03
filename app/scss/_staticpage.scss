@@ -1,6 +1,6 @@
 // ##### adminbar Component ##### //
 
-.c-staticpage__modal {
+.c-editable__modal {
   position: fixed; /* Stay in place */
   top: 0;
   left: 0;
@@ -12,7 +12,7 @@
 }
 
 /* Modal Content/Box */
-.c-staticpage__modal-content {
+.c-editable__modal-content {
   width: 50%; /* Could be more or less, depending on screen size */
   margin: 15% auto; /* 15% from the top and centered */
   padding: 20px;
@@ -20,7 +20,7 @@
   background-color: $color-white;
 }
 
-.c-staticpage__working {
+.c-editable__working {
   position: absolute; /* Stay in place */
   top: 0;
   left: 0;
@@ -30,7 +30,7 @@
   z-index: 1; /* Sit on top of content */
 }
 
-.c-staticpage__working-text {
+.c-editable__working-text {
   position: absolute;
   top: 50%;
   left: 50%;
@@ -40,12 +40,12 @@
   font-size: 200%;
 }
 
-.c-staticpage__edit-buttons {
+.c-editable__edit-buttons {
    position: absolute;
    right: 1em;
    bottom: 1em;
 }
 
-.c-staticpage__delete-button {
+.c-editable__delete-button {
   margin-left: 0.5em;
 }

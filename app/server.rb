@@ -67,7 +67,7 @@ configure do
 end
 
 # For general app development, set DO_ISO to false. For real deployment, set to true
-DO_ISO = false
+DO_ISO = File.exist?("config/do_iso")
 
 ###################################################################################################
 # Model classes for easy interaction with the database.
@@ -273,7 +273,7 @@ get %r{^/(?!(api/.*|content/.*|.*\.\w{1,4}$))} do
 
     # Read in the template file, and substitute the results from React/ReactRouter
     template = File.new("app/app.html").read
-    lookFor = '<div id="main"/>'
+    lookFor = '<div id="main"></div>'
     template.include?(lookFor) or raise("can't find #{lookFor.inspect} in template")
     return template.sub(lookFor, response.body)
   else
