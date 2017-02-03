@@ -51,6 +51,7 @@ DB = Sequel.connect(dbConfig)
 # Internal modules to implement specific pages and functionality
 require_relative 'dbCache'
 require_relative 'hierarchy'
+require_relative 'listItemViews'
 require_relative 'searchApi'
 require_relative 'queueWithTimeout'
 require_relative 'unitPages'
