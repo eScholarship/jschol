@@ -14,10 +14,10 @@ import { Link } from 'react-router'
 class NavComp extends React.Component {
   constructor(props){
     super(props)
-    this.state = {submenuActive: null}
+    this.state = {submenuActive: null, isOpen: true /* default to true for server-side */}
   }
   componentWillMount() {
-    if (matchMedia) {
+    if (!(typeof matchMedia === "undefined")) {
       this.mq = matchMedia("(min-width:"+Breakpoints.screen3+")")
       this.mq.addListener(this.widthChange)
       this.widthChange()
@@ -40,13 +40,13 @@ class NavComp extends React.Component {
       //   )
       // } else {
         return (
-          <Link to={"/unit/" + this.props.unitId + "/" + navItem.slug }>{navItem.name}</Link>
+          <Link key={navItem.slug} to={"/unit/" + this.props.unitId + "/" + navItem.slug }>{navItem.name}</Link>
         )
       // }
     })
     return (
       <nav className="c-nav">
-        <details open={this.state.isOpen ? "open" : ""} className="c-nav__main">
+        <details open={this.state.isOpen} className="c-nav__main">
           <summary className="c-nav__main-button">Menu
           </summary>
           <div className={this.state.submenuActive ? "c-nav__main-items--submenu-active" : "c-nav__main-items"} role="list">
