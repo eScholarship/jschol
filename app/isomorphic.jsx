@@ -29,6 +29,7 @@ app.use((req, res) =>
     if (routes)
       decache('./jsx/App.jsx');
     routes = require('./jsx/App.jsx');
+    console.log("ISO: Bundle loaded.")
   }
 
   // Now route the request
