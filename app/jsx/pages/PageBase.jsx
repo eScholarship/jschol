@@ -80,7 +80,7 @@ class PageBase extends React.Component
   // for the page being switched to.
   componentWillReceiveProps(nextProps) {
     if (!_.isEqual(this.props, nextProps)) {
-      this.setState(this.getEmptyState())
+      //this.setState(this.getEmptyState())   bad: this causes loss of context when clicking search facets
       setTimeout(()=>this.fetchPageData(), 0) // fetch right after setting the new props
     }
   }
