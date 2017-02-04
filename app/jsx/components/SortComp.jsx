@@ -3,33 +3,50 @@
 import React from 'react'
 
 class SortComp extends React.Component {
+  state = {
+    rows: this.props.query.rows ? this.props.query.rows : "10",
+    sort: this.props.query.sort ? this.props.query.sort : "rel"
+  }
+  handleChange = this.handleChange.bind(this);
+
+  handleChange(event) {
+    if (event.target.name == "rows") {
+      this.setState({rows: event.target.value});
+    }
+    if (event.target.name == "sort") {
+      this.setState({sort: event.target.value});
+    }
+    $('[name=start]').val('0');
+    $('#facet-form-submit').click();
+  }
+  
   render() {
     return (
-      <form className="c-sort">
+      <div className="c-sort">
         <div className="o-input__droplist">
-          <label htmlFor="c-sort1">Sort By</label>
-          <select name="" id="c-sort1">
-            <option value="">Relevance</option>
-            <option value="">Most Popular</option>
-            <option value="">A-Z By Title</option>
-            <option value="">Z-A By Title</option>
-            <option value="">A-Z By Author</option>
-            <option value="">Z-A By Author</option>
-            <option value="">Date Ascending</option>
-            <option value="">Date Decending</option>
+          <label htmlFor="c-sort1">Sort By:</label>
+          <select name="sort" id="c-sort1" form="facetForm" value={ this.state.sort } onChange={ this.handleChange }>
+            <option value="rel">Relevance</option>
+            <option value="pop">Most Popular</option>
+            <option value="a-title">A-Z By Title</option>
+            <option value="z-title">Z-A By Title</option>
+            <option value="a-author">A-Z By Author</option>
+            <option value="z-author">Z-A By Author</option>
+            <option value="asc">Date Ascending</option>
+            <option value="dsc">Date Decending</option>
           </select>
         </div>
         <div className="o-input__droplist c-sort__page-input">
-          <label htmlFor="c-sort2">Per Page</label>
-          <select name="" id="c-sort2">
-            <option value="">10</option>
-            <option value="">20</option>
-            <option value="">30</option>
-            <option value="">50</option>
-            <option value="">100</option>
+          <label htmlFor="c-sort2">Show:</label>
+          <select name="rows" id="c-sort2" form="facetForm" value={ this.state.rows } onChange={ this.handleChange }>
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="30">30</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
           </select>
         </div>
-      </form>
+      </div>
     )
   }
 }
