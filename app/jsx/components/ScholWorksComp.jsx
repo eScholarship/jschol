@@ -3,41 +3,102 @@
 import React from 'react'
 import $ from 'jquery'
 import dotdotdot from 'jquery.dotdotdot'
+import { Link } from 'react-router'
 
 class ScholWorksComp extends React.Component {
   componentDidMount() {
     $('.c-scholworks__heading, .c-scholworks__author, .c-scholworks__abstract').dotdotdot({watch:"window"});
   }
   render() {
+    var tagList = [];
+    if (this.props.result.genre === 'article') {
+      tagList.push({display: 'Article', tagStyle: 'article'});
+    }
+    if (this.props.result.genre === 'monograph') {
+      tagList.push({display: 'Book', tagStyle: 'book'});
+    }
+    if (this.props.result.genre === 'dissertation') {
+      tagList.push({display: 'Thesis', tagStyle: 'thesis'});
+    }
+    if (this.props.result.genre === 'multimedia') {
+      tagList.push({display: 'Multimedia', tagStyle: 'multimedia'});
+    }
+    if (this.props.result.peerReviewed === true) {
+      tagList.push({display: 'Peer Reviewed', tagStyle: 'peer'});
+    }
+    
+    var publishingInfo;
+    var unitId;
+    if ('journalInfo' in this.props.result) {
+      publishingInfo = this.props.result.journalInfo.displayName;
+      unitId = this.props.result.journalInfo.unitId;
+    } else if ('unitInfo' in this.props.result) {
+      publishingInfo = this.props.result.unitInfo.displayName;
+      unitId = this.props.result.unitInfo.unitId;
+    }
+
+    var authorList = this.props.result.authors.map(function(author, i, a) {
+      if (i === a.length-1) {
+        return (<span key={author.name}><Link to={"/search/?q="+author.name}>{author.name}</Link></span>);
+      } else {
+        return (<span key={author.name}><Link to={"/search/?q="+author.name}>{author.name}</Link>; </span>);
+      }
+    });
+
+    var supp_files = this.props.result.supp_files.map(function(supp_file) {
+      if (true || supp_file.count >= 1) {
+        var display;
+        if (supp_file.type === 'video' || supp_file.type === 'image') {
+          display = supp_file.count != 1 ? supp_file.type + 's' : supp_file.type;
+        } else if (true || supp_file.type === 'audio') {
+          display = supp_file.count != 1 ? 'audio files' : 'audio file';
+        } else if (supp_file.type === 'pdf') {
+          display = supp_file.count != 1 ? 'additional PDFs' : 'additional PDF';
+        }
+        return (<li key={supp_file.type} className={"c-scholworks__media-" + supp_file.type}>Contains {supp_file.count} {display}</li>);   
+      }
+    });
+    // if ('supp_files' in this.props.result && this.props.result.supp_files !== null) {
+    //   if ('video' in this.props.result.supp_files && this.props.result.supp_files.video !== 0) {
+    //     supp_files.append(<li className="c-scholworks__media-video">Contains {this.props.result.supp_files.video} videos</li>);
+    //   }
+    //   if ('image' in this.props.result.supp_files && this.props.result.supp_files.image !== 0) {
+    //     supp_files.append(<li className="c-scholworks__media-image">Contains {this.props.result.supp_files.image} images</li>);
+    //   }
+    //   if ('pdf' in this.props.result.supp_files && this.props.result.supp_files.pdf !== 0) {
+    //     supp_files.append(<li className="c-scholworks__media-pdf">Contains {this.props.result.supp_files.pdf} additional PDFs</li>);
+    //   }
+    //   if ('audio' in this.props.result.supp_files && this.props.result.supp_files.audio !== 0) {
+    //     supp_files.append(<li className="c-scholworks__media-audio">Contains {this.props.result.supp_files.audio} audio files</li>);
+    //   }
+    // }
+    
     return (
       <section className="c-scholworks">
         <div className="c-scholworks__main-column">
           <ul className="c-scholworks__tag-list">
-            <li className="c-scholworks__tag-article">Article</li>
-            <li className="c-scholworks__tag-peer">Peer Reviewed</li>
+            { tagList.map(function(tag) { 
+              return (
+                <li key={tag.tagStyle} className={ "c-scholworks__tag-" + tag.tagStyle }>{tag.display}</li>
+              ) 
+            }) }
           </ul>
           <heading>
             <h2 className="c-scholworks__heading">
-              <a href="">From the New Heights: The City and Migrating Latinas in Real Woman Have Curves and Maria Full of Grace</a>
-            </h2 >
+              <Link to={"/item/"+this.props.result.id.replace(/^qt/, "")}>{this.props.result.title}</Link>
+            </h2>
           </heading>
           <div className="c-scholworks__author">
-            <a href="">Dahle, Kevin W</a>; <a href="">Pelfrey, Patricia A</a>; <a href="">Walker, Iain S</a>; <a href="">Kling, Rob</a>; <a href="">Huh, Tina</a>
+            {authorList}
           </div>
           <div className="c-scholworks__publication">
-            <a href="">Mester Journal, Volume 42, Issue 1</a> (2012)
+            <Link to={"/unit/" + unitId}>{publishingInfo}</Link> ({this.props.result.pub_year})
           </div>
           <div className="c-scholworks__abstract">
-            <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. A, dolor obcaecati magni quas quos ab dignissimos neque beatae, provident unde architecto ut corrupti! Ratione aperiam, recusandae quidem nisi inventore asperiores nam sed eaque totam, quam minima reprehenderit, quisquam cupiditate reiciendis. Vero earum magni asperiores quisquam impedit voluptates eveniet aspernatur assumenda.
-            </p>
+            <p>{this.props.result.abstract}</p>
           </div>
           <div className="c-scholworks__media">
-            <ul className="c-scholworks__media-list">
-              <li className="c-scholworks__media-video">Contains 5 videos</li>
-              <li className="c-scholworks__media-image">Contains 2 images</li>
-              <li className="c-scholworks__media-pdf">Contains 2 additional PDFs</li>
-              <li className="c-scholworks__media-audio">Contains 5 audio files</li>
-            </ul>
+            <ul className="c-scholworks__media-list">{ supp_files }</ul>
             <img className="c-scholworks__rights" src="images/icon_cc-by.svg" alt="cc"/>
           </div>
         </div>
