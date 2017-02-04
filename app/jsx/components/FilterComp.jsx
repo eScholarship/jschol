@@ -1,6 +1,7 @@
 // ##### Filter Component ##### //
 
 import React from 'react'
+import _ from 'lodash'
 
 class FilterComp extends React.Component {
   clearAll(event) {
