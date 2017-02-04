@@ -86,7 +86,7 @@ class ScholWorksComp extends React.Component {
           <heading>
             <h2 className="c-scholworks__heading">
               <Link to={"/item/"+this.props.result.id.replace(/^qt/, "")}>{this.props.result.title}</Link>
-            </h2 >
+            </h2>
           </heading>
           <div className="c-scholworks__author">
             {authorList}
