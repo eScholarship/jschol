@@ -119,7 +119,7 @@ end
 $unitsHash, $hierByUnit, $hierByAncestor, $activeCampuses, $oruAncestors, $campusJournals,
   $statsCampusPubs, $statsCampusOrus, $statsCampusJournals = nil, nil, nil, nil, nil, nil, nil, nil, nil
 Thread.new {
-  prevTime = nil
+  prevTime = "none"  # don't use nil, since original database table has nil utime
   while true
     utime = DB.fetch("SHOW TABLE STATUS WHERE Name in ('units', 'unit_hier')").all.map { |row| row[:Update_time] }.max
     if utime != prevTime
