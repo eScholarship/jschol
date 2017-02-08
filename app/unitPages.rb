@@ -115,30 +115,17 @@ def getORULandingPageData(id)
   }
 end
 
+# Preview of Series for a Unit Landing Page
 def seriesPreview(u)
   items = UnitItem.filter(:unit_id => u.unit_id, :is_direct => true)
   count = items.count
-  preview = items.limit(3).map { |pair| Item[pair.item_id] }
-
-  items = []
-  for item in preview
-    itemHash = {
-      item_id: item.id,
-      title: item.title
-    }
-    itemAttrs = JSON.parse(item.attrs)
-    itemHash[:abstract] = itemAttrs['abstract']
-
-    authors = ItemAuthors.where(item_id: item.id).map(:attrs).map { |author| JSON.parse(author)["name"] }
-    itemHash[:authors] = authors
-    items << itemHash
-  end
+  preview = items.limit(3).map(:item_id)
 
   {
     :unit_id => u.unit_id,
     :name => u.unit.name,
     :count => count,
-    :items => items,
+    :items => itemResultData(preview)
   }
 end
 
@@ -197,11 +184,12 @@ def getIssue(id)
     items.each do |article|
       itemAuthors = authors[article[0]]
       attrs = JSON.parse(article[2])
+
       itemHash = {
         :id => article[0],
         :title => article[1],
         :authors => itemAuthors.map { |author| JSON.parse(author.attrs) },
-        :abstract => attrs[:abstract],
+        :abstract => attrs['abstract'],
         :supp_files => [{:type => 'video'}, {:type => 'image'}, {:type => 'pdf'}, {:type => 'audio'}]
       }
 

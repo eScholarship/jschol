@@ -10,10 +10,10 @@ class ItemPreviewSmall extends React.Component {
   render() {
     return (
       <div>
-        <Link to={"/item/"+this.props.item_id.replace(/^qt/, "")}>{this.props.title}</Link>
+        <Link to={"/item/"+this.props.id.replace(/^qt/, "")}>{this.props.title}</Link>
         <div>
           { this.props.authors.map((author) =>
-            <span key={author}>{author}</span>) }
+            <span key={author.name}>{author.name}</span>) }
         </div>
         {this.props.abstract && <p className="c-scholworks__abstract">{this.props.abstract}</p>}
         {!this.props.abstract && <div style={{marginBottom: '20px'}}/>}
@@ -29,7 +29,7 @@ class SeriesComp extends React.Component {
       <h4><Link to={"/unit/"+this.props.data.unit_id}>{this.props.data.name}</Link></h4>
       <div style={{paddingLeft: '20px'}}>
         { this.props.data.items.map((item) =>
-          <ItemPreviewSmall key={item.item_id} item_id={item.item_id} title={item.title} authors={item.authors} abstract={item.abstract}/>) }
+          <ItemPreviewSmall key={item.id} id={item.id} title={item.title} authors={item.authors} abstract={item.abstract}/>) }
         <p>{this.props.data.count-3} more works - <Link to={"/unit/"+this.props.data.unit_id}>show all</Link></p>
       </div>
       </div>
