@@ -103,10 +103,10 @@ class ScholWorksComp extends React.Component {
           </div>
           <div className="c-scholworks__media">
             <ul className="c-scholworks__media-list">{ supp_files }</ul>
-            <img className="c-scholworks__rights" src="images/icon_cc-by.svg" alt="cc"/>
+            <img className="c-scholworks__rights" src="/images/icon_cc-by.svg" alt="cc"/>
           </div>
         </div>
-        <img className="c-scholworks__article-preview" src="images/temp_article.png" alt="article"/>
+        <img className="c-scholworks__article-preview" src="/images/temp_article.png" alt="article"/>
       </section>
     )
   }

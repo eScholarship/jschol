@@ -7,9 +7,8 @@ def readItemData(ids)
   }
 end
 
-def itemResultData(itemIds, fields=[])
+def itemResultData(itemIds, itemData, fields=[])
   searchResults = []
-  itemData = readItemData(itemIds)
 
   for itemID in itemIds
     # data needed in every list of items: ['id', 'title', 'authors', 'abstract', 'content_type', 'supp_files']
@@ -49,13 +48,13 @@ def itemResultData(itemIds, fields=[])
         if item.section
           itemIssue = Issue[Section[item.section].issue_id]
           itemUnit = $unitsHash[itemIssue.unit_id]
-          itemHash[:journalInfo] = {displayName: "#{itemUnit.name}, Volume #{itemIssue.volume}, Issue #{itemIssue.issue}", issueId: itemIssue.id, unitId: itemUnit.id}
+          itemListItem[:journalInfo] = {displayName: "#{itemUnit.name}, Volume #{itemIssue.volume}, Issue #{itemIssue.issue}", issueId: itemIssue.id, unitId: itemUnit.id}
         #otherwise, use the item link to the unit table for all other content types
         else
           if itemData[:units][itemID]
             unitItem = itemData[:units][itemID][0]  # take first unit only, for now
             unit = $unitsHash[unitItem.unit_id]
-            itemHash[:unitInfo] = {displayName: unit.name, unitId: unit.id}
+            itemListItem[:unitInfo] = {displayName: unit.name, unitId: unit.id}
           end
         end
       end

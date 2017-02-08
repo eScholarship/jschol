@@ -2,7 +2,9 @@ import React from 'react'
 import { Link } from 'react-router'
 
 import MarqueeComp from '../components/MarqueeComp.jsx'
-import { ScholarlyWorks, SortComp, PaginationComp } from '../pages/SearchPage.jsx'
+import ScholWorksComp from '../components/ScholWorksComp.jsx'
+import SortComp from '../components/SortComp.jsx'
+import PaginationComp from '../components/PaginationComp.jsx'
 
 class SeriesLayout extends React.Component {
   render() {
@@ -22,8 +24,11 @@ class SeriesLayout extends React.Component {
               <input type="hidden" name="start" form="facetForm" value={data.content.query.start} />
               <PaginationComp query={data.content.query} count={data.content.count}/>
             </div>
-            <ScholarlyWorks results={data.content.response} />
-
+            <div>
+              { data.content.searchResults.map(result =>
+                <ScholWorksComp key={result.id} result={result} />)
+              }
+            </div>
           </section>
         </main>
         <aside>
