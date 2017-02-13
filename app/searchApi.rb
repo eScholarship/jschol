@@ -195,7 +195,7 @@ def get_query_display(params)
   end
 
   #Add pub_year to filter list
-  if params['pub_year_start'] or params['pub_year_end']
+  if params.dig('pub_year_start', 0) || params.dig('pub_year_end', 0)
     filters['pub_year'] = {
       'display' => FACETS['pub_year']['displayName'],
       'fieldName' => 'pub_year',
@@ -239,9 +239,9 @@ def aws_encode(params, facetTypes)
   end
 
   # add pub_year to filter query
-  if params['pub_year_start'] || params['pub_year_end']
-    date_range = params['pub_year_start'][0] ? "[#{params['pub_year_start'][0]}," : "{,"
-    date_range = params['pub_year_end'][0] ? "#{date_range}#{params['pub_year_end'][0]}]" : "#{date_range}}"
+  if params.dig('pub_year_start', 0) || params.dig('pub_year_end', 0)
+    date_range = params.dig('pub_year_start', 0) ? "[#{params['pub_year_start'][0]}," : "{,"
+    date_range = params.dig('pub_year_end', 0) ? "#{date_range}#{params['pub_year_end'][0]}]" : "#{date_range}}"
     filterQuery.push("pub_year: #{date_range}")
   end
 
