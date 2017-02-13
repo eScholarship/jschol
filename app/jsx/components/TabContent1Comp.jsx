@@ -14,7 +14,7 @@ class TabContent1Comp extends React.Component {
         <ItemActionsComp />
         <h1 className="c-tabcontent__heading">{p.title}</h1>
         <AuthorListComp pubdate={p.pub_date} authors={p.authors} changeTab={this.props.changeTab} />
-        <PublishedLocationComp loc={p.attrs["pub_web_loc"]} />
+        <PublishedLocationComp loc={p.attrs["pub_web_loc"]} rights={p.rights} />
         {p.attrs["abstract"] &&
           <details className="c-togglecontent" open>
             <summary><h2>Abstract</h2></summary>
