@@ -33,14 +33,12 @@ def itemResultData(itemIds, itemData, fields=[])
       end
 
       #conditional data included as needed as specified by 'fields' parameter
-      itemListItem = itemListItem.tap do |my_hash|
-        my_hash[:thumbnail] = attrs['thumbnail'] if fields.include? 'thumbnail'
-        my_hash[:pub_date] = item.pub_date if fields.include? 'pub_date'
-        my_hash[:pub_year] = item.pub_date.year if fields.include? 'pub_year'
-        my_hash[:genre] = item.genre if fields.include? 'type_of_work'
-        my_hash[:rights] = item.rights if fields.include? 'rights'
-        my_hash[:peerReviewed] = attrs['is_peer_reviewed'] if fields.include? 'peer_reviewed'
-      end
+      itemListItem[:thumbnail] = attrs['thumbnail'] if fields.include? 'thumbnail'
+      itemListItem[:pub_date] = item.pub_date if fields.include? 'pub_date'
+      itemListItem[:pub_year] = item.pub_date.year if fields.include? 'pub_year'
+      itemListItem[:genre] = item.genre if fields.include? 'type_of_work'
+      itemListItem[:rights] = item.rights if fields.include? 'rights'
+      itemListItem[:peerReviewed] = attrs['is_peer_reviewed'] if fields.include? 'peer_reviewed'
 
       if fields.include? 'publication_information'
         #if journal, section will be non-nil, follow section link to issue (get volume), follow to unit table
