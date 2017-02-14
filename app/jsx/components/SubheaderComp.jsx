@@ -13,8 +13,6 @@
 import React from 'react'
 import { Link } from 'react-router'
 import CampusSelectorComp from '../components/CampusSelectorComp.jsx'
-import Nav2Comp from '../components/Nav2Comp.jsx'
-import Nav3Comp from '../components/Nav3Comp.jsx'
 
 class SubheaderComp extends React.Component {
   render() {
