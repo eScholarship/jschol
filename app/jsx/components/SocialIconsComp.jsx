@@ -13,7 +13,7 @@ class SocialIconsComp extends React.Component {
           </a>
         }
         {this.props.twitter && 
-          <a href={this.props.twitter}>
+          <a href={"http://www.twitter.com/" + this.props.twitter}>
             <img src="/images/logo_twitter-black.svg" alt="Twitter"/>
           </a>
         }

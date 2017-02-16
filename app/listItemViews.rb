@@ -20,8 +20,8 @@ def itemResultData(itemIds, itemData, fields=[])
         :title => item.title,
         :abstract => attrs['abstract'],
         :content_type => item.content_type,
-        :authors => itemData[:authors][itemID].map { |author| JSON.parse(author.attrs) }
       }
+      itemListItem[:authors] = itemData[:authors][itemID].map { |author| JSON.parse(author.attrs) } if itemData.dig(:authors, itemID)
 
       itemListItem[:supp_files] = [{:type => 'video'}, {:type => 'image'}, {:type => 'pdf'}, {:type => 'audio'}]
       for supp_file_hash in itemListItem[:supp_files]

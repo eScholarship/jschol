@@ -6,19 +6,19 @@ import SortComp from '../components/SortComp.jsx'
 import PaginationComp from '../components/PaginationComp.jsx'
 import ShareComp from '../components/ShareComp.jsx'
 
-class SeriesLayout extends React.Component {
+// TODO: this is basically a copy of the Series Landing page layout without the header content
+// probably should just be the same component, curious how search within a series differs from
+// the landing page does the header content go away? 
+// ie: what happens on pagination on the landing page? on search within pages? 
+// TODO: UX - we need counts!
+
+class UnitSearchLayout extends React.Component {
   render() {
     var data = this.props.data;
     return (
       <div className="c-columns">
         <main>
           <section className="o-columnbox1">
-            <h4>Other series in this department: </h4>
-            <ul>
-              { data.series.map((s) => 
-                <li key={s.unit_id}><Link to={"/unit/"+s.unit_id}>{s.name}</Link></li>)}
-            </ul>
-            <p>Some about text for the series. Lorem ipsum dolor sit amet, consectetur adipisicing elit. Quos quo error expedita nobis modi a non, accusantium, ut at assumenda. Obcaecati sequi ducimus sint tenetur laboriosam alias corporis temporibus error? Nemo doloremque, possimus neque ea suscipit consectetur, ducimus ad veritatis laborum quia sunt modi accusamus pariatur sed. Blanditiis est, distinctio ad aut, quo doloremque voluptatibus consequatur ipsa placeat dolorum necessitatibus?</p>
             <div className="l-search__sort-pagination">
               <SortComp query={data.query} />
               <input type="hidden" name="start" form="facetForm" value={data.query.start} />
@@ -63,4 +63,4 @@ class SeriesLayout extends React.Component {
   }
 }
 
-module.exports = SeriesLayout
+module.exports = UnitSearchLayout
