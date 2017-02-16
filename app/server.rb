@@ -396,6 +396,9 @@ get "/api/item/:shortArk" do |shortArk|
   content_type :json
   id = "qt"+shortArk
   item = Item[id]
+  unitIDs = UnitItem.where(:item_id => id, :is_direct => true).order(:ordering_of_units).select_map(:unit_id)
+  unit = Unit[unitIDs[0]]
+
   if !item.nil?
     begin
       body = {
@@ -408,9 +411,22 @@ get "/api/item/:shortArk" do |shortArk|
                        map(:attrs).collect{ |h| JSON.parse(h)},
         :content_type => item.content_type,
         :content_html => getItemHtml(item.content_type, shortArk),
-        :attrs => JSON.parse(Item.filter(:id => id).map(:attrs)[0])
+        :attrs => JSON.parse(Item.filter(:id => id).map(:attrs)[0]),
+        :appearsIn => unitIDs.map { |unitID| {"id" => unitID, "name" => Unit[unitID].name} },
+
+        :header => getUnitHeader(unit),
+        :unit => unit.values.reject { |k,v| k==:attrs }
       }
-      return body.merge(getUnitItemHeaderElements('item', shortArk)).to_json
+
+      # TODO: at some point we'll want to modify the breadcrumb code to include CMS pages and issues
+      # in a better way - I don't think this belongs here in the item-level code.
+      if unit.type == 'journal'
+        issue_id = Item.join(:sections, :id => :section).filter(:items__id => id).map(:issue_id)[0]
+        volume, issue = Section.join(:issues, :id => issue_id).map([:volume, :issue])[0]
+        body[:header][:breadcrumb] << {name: "Volume #{volume}, Issue #{issue}", id: "#{unitIDs[0]}/issues/#{issue}"}
+      end
+
+      return body.to_json
     rescue Exception => e
       halt 404, e.message
     end
@@ -467,24 +483,6 @@ def getHeaderElements(breadcrumb, topItem)
     :campuses => campuses,
     :breadcrumb => Hierarchy_Manual.new(breadcrumb).generateCrumb
   }
-end
-
-# Generate breadcrumb and header content for Unit or Item page
-def getUnitItemHeaderElements(view, id)
-  hierarchy = Hierarchy_UnitItem.new(view, id)
-  campusID, campusName = hierarchy.getCampusInfo
-  body2 = {
-    :campusID => campusID,
-    :campusName => campusName,
-    :campuses => getCampusesAsMenu,
-    :breadcrumb => hierarchy.generateCrumb,
-    :appearsIn => hierarchy.appearsIn 
-  }
-  if view=="item"
-    type = (hierarchy.isJournal?) ? "journal" : "series"
-    body2.merge!({ :type => type })
-  end
-  return body2
 end
 
 # Array of all active root level campuses/ORUs. Include empty label "eScholarship at..." 

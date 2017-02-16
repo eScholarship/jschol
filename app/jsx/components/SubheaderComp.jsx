@@ -1,9 +1,7 @@
 // ##### Subheader Component ##### //
 // # Note that for campus pages, campusID and unitID will be the same. For units, they can differ //
 // props = {
-//   type:
-//   unitID:
-//   unitName:
+//   unit:
 //   logo: 
 //   campusID:
 //   campusName:
