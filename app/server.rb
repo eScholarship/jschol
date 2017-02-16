@@ -358,12 +358,36 @@ end
 
 ###################################################################################################
 # Unit page data.
-get "/api/unit/:unitID" do |unitID|
-  # Initial data for the page consists of the unit's id, name, type, etc. plus lists of the unit's
-  # children and parents drawn from the unit_hier database table. Remember that "direct" links are
-  # direct parents and children. "Indirect" (which we don't use here) are for grandparents/ancestors,
-  # and grand-children/descendants.
-  getUnitPageData(unitID)
+get "/api/unit/:unitID/?:pageName/?" do
+  content_type :json
+  unit = $unitsHash.dig(params[:unitID])
+
+  if unit
+    begin
+      attrs = JSON.parse(unit[:attrs])
+      if params[:pageName]
+        pageData = {
+          unit: unit.values.reject{|k,v| k==:attrs},
+          header: getUnitHeader(unit, attrs), 
+          sidebar: [],
+        }
+
+        pageData[:content] = unitSearch(CGI::parse(request.query_string), unit) if params[:pageName] == 'search'
+        pageData[:content] = getUnitPageContent(unit, attrs, params[:pageName]) if params[:pageName] == 'home'
+        pageData[:marquee] = getUnitMarquee(unit, attrs) if params[:pageName] == 'home'
+      else
+        #public API data
+        pageData = {
+          unit: unit.values.reject{|k,v| k==:attrs}
+        }
+      end
+      return pageData.to_json
+    rescue Exception => e
+      halt 404, e.message
+    end
+  else
+    halt 404, "Unit not found"
+  end
 end
 
 ###################################################################################################
@@ -466,7 +490,7 @@ end
 # Array of all active root level campuses/ORUs. Include empty label "eScholarship at..." 
 def getCampusesAsMenu(topItem="eScholarship at...")
   campuses = []
-  $activeCampuses.each do |id, c| campuses << c.values end
+  $activeCampuses.each do |id, c| campuses << {id: c.id, name: c.name} end
   return campuses.unshift({:id => "", :name=>topItem})
 end
 

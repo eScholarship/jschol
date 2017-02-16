@@ -15,17 +15,17 @@ class SeriesLayout extends React.Component {
           <section className="o-columnbox1">
             <h4>Other series in this department: </h4>
             <ul>
-              { data.content.series.map((s) => 
+              { data.series.map((s) => 
                 <li key={s.unit_id}><Link to={"/unit/"+s.unit_id}>{s.name}</Link></li>)}
             </ul>
             <p>Some about text for the series. Lorem ipsum dolor sit amet, consectetur adipisicing elit. Quos quo error expedita nobis modi a non, accusantium, ut at assumenda. Obcaecati sequi ducimus sint tenetur laboriosam alias corporis temporibus error? Nemo doloremque, possimus neque ea suscipit consectetur, ducimus ad veritatis laborum quia sunt modi accusamus pariatur sed. Blanditiis est, distinctio ad aut, quo doloremque voluptatibus consequatur ipsa placeat dolorum necessitatibus?</p>
             <div className="l-search__sort-pagination">
-              <SortComp query={data.content.query} />
-              <input type="hidden" name="start" form="facetForm" value={data.content.query.start} />
-              <PaginationComp query={data.content.query} count={data.content.count}/>
+              <SortComp query={data.query} />
+              <input type="hidden" name="start" form="facetForm" value={data.query.start} />
+              <PaginationComp query={data.query} count={data.count}/>
             </div>
             <div>
-              { data.content.searchResults.map(result =>
+              { data.searchResults.map(result =>
                 <ScholWorksComp key={result.id} result={result} />)
               }
             </div>

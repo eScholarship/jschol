@@ -1,13 +1,10 @@
 // ##### Unit Page ##### //
 // this.props = {
-//   unitData: {id: , name: , type: , extent: {count: , pub_year: {start: , end: }, about: }}
-//   unitHeader: {logo: , nav_bar: , facebook: , twitter: }
+//   unit: {id: , name: , type: , is_active }}
+//   header: {breadcrumb: [], campusID: , campusName: , campuses: [], logo: , nav_bar: [], social: }
 //   content: { page content },
-//   campusID: ,
-//   campusName: ,
-//   campuses: [], 
-//   breadcrumb: [],
-//   appearsIn: ,
+//   marquee: {about: , carousel: , extent: }
+//   sidebar: []
 // }
 
 import React from 'react'
@@ -26,27 +23,38 @@ class UnitPage extends PageBase
 {
   // PageBase will fetch the following URL for us, and place the results in this.state.pageData
   pageDataURL() {
-    return "/api/unit/" + this.props.params.unitID
+    // console.log(this.props)
+    // console.log(this.state)
+    // if (this.props.params.pageName) {
+    //   if (this.props.params.pageName === 'search') {
+    //     return "/api/search/"
+    //   } else {
+    //     return "/api/unit/" + this.props.params.unitID + "/" + this.props.params.pageName
+    //   }
+    // } else {
+    return "/api/unit/" + this.props.params.unitID + "/home"
+    // }
+    // return "/api/search/" + this.props.location.search  // plus whatever props.params.YourUrlParam, etc.
   }
 
   renderData(data) { 
     var contentLayout;
-    data['carousel'] = true;
-    if (data.unitData.type === 'oru') {
-      contentLayout = (<DepartmentLayout data={data}/>);
-    } else if (data.unitData.type === 'series') {
-      contentLayout = (<SeriesLayout data={data}/>);
-    } else if (data.unitData.type === 'journal') {
-      contentLayout = (<JournalLayout data={data}/>);
+    data.marquee.carousel = true;
+    if (data.unit.type === 'oru') {
+      contentLayout = (<DepartmentLayout unit={data.unit} data={data.content} marquee={data.marquee}/>);
+    } else if (data.unit.type === 'series') {
+      contentLayout = (<SeriesLayout unit={data.unit} data={data.content} marquee={data.marquee}/>);
+    } else if (data.unit.type === 'journal') {
+      contentLayout = (<JournalLayout unit={data.unit} data={data.content} marquee={data.marquee}/>);
     } else {
       contentLayout = (
         <div>
-        <h2>Unit {data.unitData.id}</h2>
+        <h2>Unit {data.unit.id}</h2>
         <div>
           Info:
           <ul>
-            <li>Name: {data.unitData.name}</li>
-            <li>Type: {data.unitData.type}</li>
+            <li>Name: {data.unit.name}</li>
+            <li>Type: {data.unit.type}</li>
           </ul>
         </div>
         </div>
@@ -54,18 +62,14 @@ class UnitPage extends PageBase
     }
     return (
       <div>
-        <Header2Comp type={data.unitData.type} unitID={data.unitData.id} />
-        <SubheaderComp
-          type={data.unitData.type}
-          unitID={data.unitData.id}
-          unitName={data.unitData.name}
-          logo={data.unitHeader.logo}
-          campusID={data.campusID}
-          campusName={data.campusName}
-          campuses={data.campuses}/>
+        <Header2Comp type={data.unit.type} unitID={data.unit.id} />
+        <SubheaderComp unit={data.unit} logo={data.header.logo} 
+          campusID={data.header.campusID}
+          campusName={data.header.campusName}
+          campuses={data.header.campuses}/>
         <NavBarComp 
-          navBar={data.unitHeader.nav_bar} unitData={data.unitData} socialProps={data.unitHeader.social} />
-        <BreadcrumbComp array={data.breadcrumb} />
+          navBar={data.header.nav_bar} unit={data.unit} socialProps={data.header.social} />
+        <BreadcrumbComp array={data.header.breadcrumb} />
         {contentLayout}
       </div>
     )
