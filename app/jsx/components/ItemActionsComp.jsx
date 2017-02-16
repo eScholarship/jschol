@@ -6,15 +6,23 @@ import ShareComp from '../components/ShareComp.jsx'
 
 class ItemActionsComp extends React.Component {
   render() {
-    return (
-      <div className="c-itemactions">
+    let download_block = null
+    if (["withdrawn", "embargoed"].includes(this.props.status) ||
+         !this.props.content_type) {
+      download_block = <div>This item is not available for download from eScholarship</div>
+    } else {
+      download_block = 
         <div className="c-itemactions__items1">
           <DownloadComp />
           <button className="o-button__6">Buy in Print</button>
           <button className="o-button__6">Buy e-Book</button>
         </div>
+    }
+    return (
+      <div className="c-itemactions">
+        {download_block}
         <div className="c-itemactions__items2">
-          <ShareComp />
+          <ShareComp id={this.props.id}/>
         </div>
       </div>
     )

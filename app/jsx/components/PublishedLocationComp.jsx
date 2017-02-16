@@ -4,18 +4,23 @@ import React from 'react'
 
 class PublishedLocationComp extends React.Component {
   render() {
+    let pub_loc_block = null
+    if (this.props.pub_web_loc.length > 0) {
+      pub_loc_block = 
+        <div className="c-publishedlocation__location">
+          <div className="o-textlink__secondary">Published Web Location</div>
+          <div>
+            {this.props.pub_web_loc.map(function(url, i) {
+              return ( <span key={i}><a href={url}>{url}</a></span> )
+            })}
+          </div>
+        </div>
+    } else {
+      pub_loc_block = <div className="c-publishedlocation__location">&nbsp;</div>
+    }
     return (
       <div className="c-publishedlocation">
-        <div className="c-publishedlocation__location">
-          <a className="o-textlink__secondary" href="">Published Web Location</a>
-          {(this.props.loc.length > 0)
-             ? <div>
-                 {this.props.loc.map(function(url, i) {
-                   return ( <span key={i}><a href={url}>{url}</a></span> )
-                 })}
-               </div>
-             : <span>No data is associated with this publication.</span> }
-        </div>
+        {pub_loc_block}
         {this.props.rights && this.getRights(this.props.rights)}
       </div>
     )

@@ -11,47 +11,52 @@ class TabContent1Comp extends React.Component {
     let p = this.props
     return (
       <div className="c-tabcontent">
-        <ItemActionsComp />
+        <ItemActionsComp status={p.status} content_type={p.content_type} id={p.id} />
         <h1 className="c-tabcontent__heading">{p.title}</h1>
-        <AuthorListComp pubdate={p.pub_date} authors={p.authors} changeTab={this.props.changeTab} />
-        <PublishedLocationComp loc={p.attrs["pub_web_loc"]} rights={p.rights} />
-        {p.attrs["abstract"] &&
-          <details className="c-togglecontent" open>
-            <summary><h2>Abstract</h2></summary>
-            <p>{p.attrs["abstract"]}</p>
-            {/* ToDo: Determine how this content is coming in */}
-            <p className="c-well">***OPEN ACCESS POLICY*** Libero dolores rerum nesciunt deserunt incidunt, aspernatur similique fugit beatae quis impedit corrupti, voluptate, unde facilis. Voluptatibus labore sunt maxime, accusantium animi mollitia ducimus.</p>
-          </details>
-        }
-        <Content {...p} />
+        <AuthorListComp pubdate={p.pub_date} authors={p.authors} changeTab={p.changeTab} />
+        <PublishedLocationComp pub_web_loc={p.attrs.pub_web_loc} rights={p.rights} />
+        {this.props.attrs.abstract && (this.props.status != "withdrawn") &&
+          <Abstract status={p.status} abstract={p.attrs.abstract} /> }
+        <MainText {...p} />
       </div>
     )
   }
 }
 
-class Content extends React.Component {
+class Abstract extends React.Component {
   render() {
-    switch(this.props.status) {
+    return (
+      <details className="c-togglecontent" open>
+        <summary><h2>Abstract</h2></summary>
+        <p>{this.props.abstract}</p>
+        {/* ToDo: Add Link */}
+        <p className="c-well">Many UC-authored scholarly publications are freely available on this site because of the UC Academic Senate&apos;s Open Access Policy. *** LINK *** Let us know how this access is important for you.</p>
+      </details>
+    )
+  }
+}
+
+class MainText extends React.Component {
+  render() {
+    let p = this.props
+    if (!p.content_type) return (<NoContent pub_web_loc={p.attrs.pub_web_loc} />)
+    switch(p.status) {
       case "published":
-        return this.renderContent(this.props)
-        break;
+        return (p.content_type == "application/pdf" ? this.renderPdf(p) :
+              p.content_type == "text/html" ? this.renderHtml(p) : null)
+        break
       case "withdrawn":
-        return this.renderNoContent("withdrawn", this.props.attrs['withdrawn_date'])
-        break;
+        return (<Withdrawn message={p.attrs.withdrawn_message} />)
+        break
       case "embargoed":
-        return this.renderNoContent("embargoed", this.props.attrs['embargo_date'])
-        break;
+        return (<Embargoed date={p.attrs.embargo_date} pub_web_loc={p.attrs.pub_web_loc}/>)
+        break
     }
   }
 
-  renderContent = p => { return (
-      p.content_type == "application/pdf" ? this.renderPdf(p) :
-        p.content_type == "text/html" ? this.renderHtml(p) : null
-  )}
-
   renderPdf = p => { return (
       <details className="c-togglecontent" open>
-        <summary><h2>Main Content</h2></summary>
+        <summary><h2>Main Text</h2></summary>
         {/*Fetch content through server app, which will check credentials and proxy to proper back-end*/}
         <PdfViewerComp url={"/content/qt" + p.id + "/qt" + p.id + ".pdf"}/>
       </details>
@@ -59,21 +64,55 @@ class Content extends React.Component {
 
   renderHtml = p => { return (
       <details className="c-togglecontent" open>
-        <summary><h2>Main Content</h2></summary>
+        <summary><h2>Main Text</h2></summary>
         <div dangerouslySetInnerHTML={{__html: p.content_html}}/>
         <br/><br/>
       </details>
   )}
 
-  renderNoContent = (reason, date) => { return (
-      <details className="c-togglecontent" open>
-        <summary><h2>Main Content</h2></summary>
-        {reason=="withdrawn" &&
-          <p>Withdrawn item:<br/>This item has been withdrawn.<br/><br/><br/></p>}
-        {reason=="embargoed" &&
-          <p>This item is embargoed until {date}.<br/><br/><br/></p>}
-      </details>
-  )}
+}
+
+class Withdrawn extends React.Component {
+  render() {
+    return (
+      <div>{this.props.message || "This item has been withdrawn."}</div>
+    )
+  }
+}
+
+class Embargoed extends React.Component {
+  render() {
+    return (
+      <div>
+        <p>This item is under embargo until {this.props.date}</p>
+        {(this.props.pub_web_loc.length > 0) &&
+          <div>
+          <p>You may have access to the publisher&apos;s version here:</p>
+          <p><a href={this.props.pub_web_loc[0]}>{this.props.pub_web_loc[0]}</a></p>
+          </div> }
+        {/*Phase 2: Notify me by mail when this item become available. */}
+      </div>
+    )
+  }
+}
+
+class NoContent extends React.Component {
+  render() {
+    return (
+      <div>
+      {(this.props.pub_web_loc.length > 0) &&
+        <div>
+          <p><a href={this.props.pub_web_loc[0]}>View on external site</a></p>
+          <p>Item not freely available? Link broken?</p>
+          <p>****  Link: Report a problem accessing this item.</p>
+        </div>
+      }
+      <p>&nbsp;</p>
+      <p>&nbsp;</p>
+      <p>&nbsp;</p>
+      </div>
+    )
+  }
 }
 
 module.exports = TabContent1Comp;

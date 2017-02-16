@@ -41,12 +41,14 @@ class ItemPage extends PageBase {
                       {...data} />
           </main>
           <aside>
-            <section className="o-columnbox2">
-              <header>
-                <h2 className="o-columnbox2__heading">Jump To</h2>
-                <JumpComp changeTab={this.changeTab} />
-              </header>
-            </section>
+            {(data.status == "published" && data.content_type) &&
+              <section className="o-columnbox2">
+                <header>
+                  <h2 className="o-columnbox2__heading">Jump To</h2>
+                  <JumpComp changeTab={this.changeTab} />
+                </header>
+              </section>
+            }
             <section className="o-columnbox2">
               <header>
                 <h2 className="o-columnbox2__heading">Related Items</h2>
