@@ -90,3 +90,15 @@ Andy manually merged all files since last manual merge, except for these unneces
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     
 
+2/13/17
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's 3717c67e1efb91238092736331252278bebf9c6d, 2017-02-10 <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+Amy added the following:
+  (added)     /scss/_share.scss
+  (merged)    /scss/_variables.scss (added $round-corner)
+  (merged)    /scss/main.scss (added @import 'share')
+  (merged)    /jsx/components/ShareComp.jsx
+  (added)     /images/icon_envelope-o-white.svg

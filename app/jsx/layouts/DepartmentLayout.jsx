@@ -2,6 +2,7 @@ import React from 'react'
 import { Link } from 'react-router'
 
 import MarqueeComp from '../components/MarqueeComp.jsx'
+import ShareComp from '../components/ShareComp.jsx'
 
 class ItemPreviewSmall extends React.Component {
   componentDidMount() {
@@ -10,10 +11,10 @@ class ItemPreviewSmall extends React.Component {
   render() {
     return (
       <div>
-        <Link to={"/item/"+this.props.item_id.replace(/^qt/, "")}>{this.props.title}</Link>
+        <Link to={"/item/"+this.props.id.replace(/^qt/, "")}>{this.props.title}</Link>
         <div>
           { this.props.authors.map((author) =>
-            <span key={author}>{author}</span>) }
+            <span key={author.name}>{author.name}</span>) }
         </div>
         {this.props.abstract && <p className="c-scholworks__abstract">{this.props.abstract}</p>}
         {!this.props.abstract && <div style={{marginBottom: '20px'}}/>}
@@ -29,7 +30,7 @@ class SeriesComp extends React.Component {
       <h4><Link to={"/unit/"+this.props.data.unit_id}>{this.props.data.name}</Link></h4>
       <div style={{paddingLeft: '20px'}}>
         { this.props.data.items.map((item) =>
-          <ItemPreviewSmall key={item.item_id} item_id={item.item_id} title={item.title} authors={item.authors} abstract={item.abstract}/>) }
+          <ItemPreviewSmall key={item.id} id={item.id} title={item.title} authors={item.authors} abstract={item.abstract}/>) }
         <p>{this.props.data.count-3} more works - <Link to={"/unit/"+this.props.data.unit_id}>show all</Link></p>
       </div>
       </div>
@@ -42,8 +43,8 @@ class DepartmentLayout extends React.Component {
     var data = this.props.data;
 
     var marquee;
-    if (data.carouselWidget) {
-      marquee = <MarqueeComp carousel={data.carouselWidget} about={data.unitData.about}/>
+    if (data.carousel) {
+      marquee = <MarqueeComp carousel={data.carousel} about={data.unitData.about}/>
     } else {
       marquee = <MarqueeComp about={data.unitData.about} />
     }
@@ -81,6 +82,23 @@ class DepartmentLayout extends React.Component {
           </main>
           <aside>
             <section className="o-columnbox2">
+              <ShareComp />
+            </section>
+            <section className="o-columnbox2">
+              <header>
+                <h2 className="o-columnbox2__heading">Featured Articles</h2>
+                </header>
+                <p><a className="o-textlink__secondary" href="">Entre la ficción y el periodismo: Cambio social y la crónica mexicana contemporánea</a> <br/> Nadeau, Evelyn</p> 
+                <p><a className="o-textlink__secondary" href="">Journalism in Catalonia During Francoism</a> <br/> Reguant, Monserrat</p>
+                <p><a className="o-textlink__secondary" href="">En torno a un cuento olvidado de Clarín: "El oso mayor"</a> <br/> Gil, Angeles Ezama</p>
+                <p><a className="o-textlink__secondary" href="">Interview with Guillermo Cabrera Infante</a> <br/> Graham-Jones, Jean; Deosthale, Duleep</p>
+                <p><a className="o-textlink__secondary" href="">Lazlo Moussong. Castillos en la letra. Xalapa, México: Universidad Veracruzana, 1986.</a> <br/> Radchik, Laura</p>
+            </section>
+            <section className="o-columnbox2">
+              <header>
+                <h2 className="o-columnbox2__heading">Follow us on Twitter</h2>
+              </header>
+              [content to go here]
             </section>
           </aside>
         </div>

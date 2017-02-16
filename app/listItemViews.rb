@@ -7,54 +7,57 @@ def readItemData(ids)
   }
 end
 
-def itemResultData(itemIds) 
+def itemResultData(itemIds, itemData, fields=[])
   searchResults = []
-  itemData = readItemData(itemIds)
+
   for itemID in itemIds
+    # data needed in every list of items: ['id', 'title', 'authors', 'abstract', 'content_type', 'supp_files']
     item = itemData[:items][itemID]
     if item
-      itemHash = {
+      attrs = JSON.parse(item.attrs)
+      itemListItem = {
         :id => item.id,
         :title => item.title,
-        :genre => item.genre,
-        :rights => item.rights,
+        :abstract => attrs['abstract'],
         :content_type => item.content_type,
-        :pub_date => item.pub_date,
-        :pub_year => item.pub_date.year
+        :authors => itemData[:authors][itemID].map { |author| JSON.parse(author.attrs) }
       }
 
-      itemAttrs = JSON.parse(item.attrs)
-      itemHash[:peerReviewed] = itemAttrs['is_peer_reviewed']
-      itemHash[:abstract] = itemAttrs['abstract']
-
-      itemHash[:supp_files] = [{:type => 'video'}, {:type => 'image'}, {:type => 'pdf'}, {:type => 'audio'}]
-      for supp_file_hash in itemHash[:supp_files]
-        if itemAttrs['supp_files']
-          supp_file_hash[:count] = itemAttrs['supp_files'].count { |supp_file| supp_file['mimeType'].start_with?(supp_file_hash[:type])}
+      itemListItem[:supp_files] = [{:type => 'video'}, {:type => 'image'}, {:type => 'pdf'}, {:type => 'audio'}]
+      for supp_file_hash in itemListItem[:supp_files]
+        if attrs['supp_files']
+          supp_file_hash[:count] = attrs['supp_files'].count { |supp_file| supp_file['mimeType'].start_with?(supp_file_hash[:type])}
         else
           supp_file_hash[:count] = 0
         end
       end
 
-      itemAuthors = itemData[:authors][itemID]
-      itemHash[:authors] = itemAuthors.map { |author| JSON.parse(author.attrs) }
+      #conditional data included as needed as specified by 'fields' parameter
+      itemListItem[:thumbnail] = attrs['thumbnail'] if fields.include? 'thumbnail'
+      itemListItem[:pub_date] = item.pub_date if fields.include? 'pub_date'
+      itemListItem[:pub_year] = item.pub_date.year if fields.include? 'pub_year'
+      itemListItem[:genre] = item.genre if fields.include? 'type_of_work'
+      itemListItem[:rights] = item.rights if fields.include? 'rights'
+      itemListItem[:peerReviewed] = attrs['is_peer_reviewed'] if fields.include? 'peer_reviewed'
 
-      #if journal, section will be non-nil, follow section link to issue (get volume), follow to unit table
-      #item link to the unit should be the same as section link to the unit
-      if item.section
-        itemIssue = Issue[Section[item.section].issue_id]
-        itemUnit = $unitsHash[itemIssue.unit_id]
-        itemHash[:journalInfo] = {displayName: "#{itemUnit.name}, Volume #{itemIssue.volume}, Issue #{itemIssue.issue}", issueId: itemIssue.id, unitId: itemUnit.id}
-      #otherwise, use the item link to the unit table for all other content types
-      else
-        if itemData[:units][itemID]
-          unitItem = itemData[:units][itemID][0]  # take first unit only, for now
-          unit = $unitsHash[unitItem.unit_id]
-          itemHash[:unitInfo] = {displayName: unit.name, unitId: unit.id}
+      if fields.include? 'publication_information'
+        #if journal, section will be non-nil, follow section link to issue (get volume), follow to unit table
+        #item link to the unit should be the same as section link to the unit
+        if item.section
+          itemIssue = Issue[Section[item.section].issue_id]
+          itemUnit = $unitsHash[itemIssue.unit_id]
+          itemListItem[:journalInfo] = {displayName: "#{itemUnit.name}, Volume #{itemIssue.volume}, Issue #{itemIssue.issue}", issueId: itemIssue.id, unitId: itemUnit.id}
+        #otherwise, use the item link to the unit table for all other content types
+        else
+          if itemData[:units][itemID]
+            unitItem = itemData[:units][itemID][0]  # take first unit only, for now
+            unit = $unitsHash[unitItem.unit_id]
+            itemListItem[:unitInfo] = {displayName: unit.name, unitId: unit.id}
+          end
         end
       end
 
-      searchResults << itemHash
+      searchResults << itemListItem
     else
       puts 'NilClass: '
       puts indexItem['id']

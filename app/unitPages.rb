@@ -115,33 +115,22 @@ def getORULandingPageData(id)
   }
 end
 
+# Preview of Series for a Unit Landing Page
 def seriesPreview(u)
   items = UnitItem.filter(:unit_id => u.unit_id, :is_direct => true)
   count = items.count
-  preview = items.limit(3).map { |pair| Item[pair.item_id] }
-
-  items = []
-  for item in preview
-    itemHash = {
-      item_id: item.id,
-      title: item.title
-    }
-    itemAttrs = JSON.parse(item.attrs)
-    itemHash[:abstract] = itemAttrs['abstract']
-
-    authors = ItemAuthors.where(item_id: item.id).map(:attrs).map { |author| JSON.parse(author)["name"] }
-    itemHash[:authors] = authors
-    items << itemHash
-  end
+  preview = items.limit(3).map(:item_id)
+  itemData = readItemData(preview)
 
   {
     :unit_id => u.unit_id,
     :name => u.unit.name,
     :count => count,
-    :items => items,
+    :items => itemResultData(preview, itemData)
   }
 end
 
+# TODO: rework for journal and unit context too
 def getSeriesLandingPageData(id)
   parent = $hierByUnit[id]
   if parent.length > 1
@@ -150,28 +139,15 @@ def getSeriesLandingPageData(id)
     children = parent ? $hierByAncestor[parent[0].ancestor_unit] : []
   end
 
-  aws_params = 
-  {
-    query_parser: "structured",
-    size: 10,
-    sort: "pub_date desc",
-    start: 0,
-    query: "(term field=series '#{id}')"
+  params = {
+    "rows" => [10],
+    "sort" => ['desc'],
+    "start" => [0],
+    "series" => [id]
   }
-  response = normalizeResponse($csClient.search(return: '_no_fields', **aws_params))
-
-  if response['hits'] && response['hits']['hit']
-    itemIds = response['hits']['hit'].map { |item| item['id'] }
-    searchResults = itemResultData(itemIds)
-  end
-
-  aws_params[:rows] = 10
-  return {
-    :series => children ? children.select { |u| u.unit.type == 'series' }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : [],
-    :response => searchResults,
-    :count => response['hits']['found'],
-    :query => aws_params,
-  }
+  response = search(params, [])
+  response[:series] = children ? children.select { |u| u.unit.type == 'series' }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : []
+  return response
 end
 
 def getJournalLandingPageData(id)
@@ -189,31 +165,14 @@ def getIssue(id)
 
   issue[:sections].map! do |section|
     section = section.values
-    items = Item.where(:section=>section[:id]).order(:ordering_in_sect).select_map([:id, :title, :attrs])
-    itemIds = items.map { |article| article[0] }
+    items = Item.where(:section=>section[:id]).order(:ordering_in_sect).to_hash(:id)
+    itemIds = items.keys
     authors = ItemAuthors.where(item_id: itemIds).order(:ordering).to_hash_groups(:item_id)
-    section[:articles] = []
 
-    items.each do |article|
-      itemAuthors = authors[article[0]]
-      attrs = JSON.parse(article[2])
-      itemHash = {
-        :id => article[0],
-        :title => article[1],
-        :authors => itemAuthors.map { |author| JSON.parse(author.attrs) },
-        :abstract => attrs[:abstract],
-        :supp_files => [{:type => 'video'}, {:type => 'image'}, {:type => 'pdf'}, {:type => 'audio'}]
-      }
+    itemData = {items: items, authors: authors}
 
-      for supp_file_hash in itemHash[:supp_files]
-        if attrs['supp_files']
-          supp_file_hash[:count] = attrs['supp_files'].count { |supp_file| supp_file['mimeType'].start_with?(supp_file_hash[:type])}
-        else
-          supp_file_hash[:count] = 0
-        end
-      end
-      section[:articles] << itemHash
-    end
+    section[:articles] = itemResultData(itemIds, itemData)
+
     next section
   end
   return issue

@@ -31,6 +31,7 @@ class UnitPage extends PageBase
 
   renderData(data) { 
     var contentLayout;
+    data['carousel'] = true;
     if (data.unitData.type === 'oru') {
       contentLayout = (<DepartmentLayout data={data}/>);
     } else if (data.unitData.type === 'series') {

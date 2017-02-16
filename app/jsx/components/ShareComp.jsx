@@ -15,13 +15,16 @@ class ShareComp extends React.Component {
   render() {
     let p = this.props
     return (
-      <div className="c-share">
-        <a href="#" onClick={() => {this.getLink(p.id, "facebook")}}>Facebook</a>&nbsp;&nbsp;
-        <a href="#" onClick={() => {this.getLink(p.id, "twitter")}}>Twitter</a>&nbsp;&nbsp;
-        <a href="#" onClick={() => {this.getLink(p.id, "email")}}>Email</a>&nbsp;&nbsp;
-        <a href="#" onClick={() => {this.getLink(p.id, "mendeley")}}>Mendeley</a>&nbsp;&nbsp;
-        <a href="#" onClick={() => {this.getLink(p.id, "citeulike")}}>CiteULike</a>
-      </div>
+      <details className="c-share">
+        <summary>Share</summary>
+        <ul className="c-share__list">
+          <li><a href="#" className="c-share__facebook" onClick={() => {this.getLink(p.id, "facebook")}}>Facebook</a></li>
+          <li><a href="#" className="c-share__twitter" onClick={() => {this.getLink(p.id, "twitter")}}>Twitter</a></li>
+          <li><a href="#" className="c-share__email" onClick={() => {this.getLink(p.id, "email")}}>Email</a></li>
+          <li><a href="#" onClick={() => {this.getLink(p.id, "mendeley")}}>Mendeley</a></li>
+          <li><a href="#" onClick={() => {this.getLink(p.id, "citeulike")}}>CiteULike</a></li>
+        </ul>
+      </details>
     )
   }
 }
