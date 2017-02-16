@@ -13,4 +13,5 @@ gem 'sinatra-contrib'     # standard extensions for Sinatra
 gem 'sinatra-websocket'   # web socket support for Sinatra
 gem 'socksify'            # for proxying all TCP through SOCKS proxy
 gem 'sqlite3'             # for local testing without remote Mysql database
+gem 'test-unit'           # test/quick.rb
 gem 'unindent'            # remove indentation from lines of a string
