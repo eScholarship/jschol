@@ -18,47 +18,53 @@ import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
 import DepartmentLayout from '../layouts/DepartmentLayout.jsx'
 import SeriesLayout from '../layouts/SeriesLayout.jsx'
 import JournalLayout from '../layouts/JournalLayout.jsx'
+import UnitSearchLayout from '../layouts/UnitSearchLayout.jsx'
 
 class UnitPage extends PageBase
 {
   // PageBase will fetch the following URL for us, and place the results in this.state.pageData
+  // will likely at some point want to move these (search, home, pages) to different extensions of PageBase,
+  // as all kinds of CMS-y stuff will live here, though perhaps not, to capitalize on React's
+  // diff-ing of pages - all these different pages have quite a few of the same components:
+  // header, footer, nav, sidebar. I think when React diff's the page, if it's a new component
+
   pageDataURL() {
-    // console.log(this.props)
-    // console.log(this.state)
-    // if (this.props.params.pageName) {
-    //   if (this.props.params.pageName === 'search') {
-    //     return "/api/search/"
-    //   } else {
-    //     return "/api/unit/" + this.props.params.unitID + "/" + this.props.params.pageName
-    //   }
-    // } else {
+    if (this.props.params.pageName) {
+      if (this.props.params.pageName === 'search') {
+        return "/api/unit/" + this.props.params.unitID + "/search/" + this.props.location.search
+      } else {
+        return "/api/unit/" + this.props.params.unitID + "/" + this.props.params.pageName
+      }
+    }
     return "/api/unit/" + this.props.params.unitID + "/home"
-    // }
-    // return "/api/search/" + this.props.location.search  // plus whatever props.params.YourUrlParam, etc.
   }
 
   renderData(data) { 
     var contentLayout;
-    data.marquee.carousel = true;
-    if (data.unit.type === 'oru') {
-      contentLayout = (<DepartmentLayout unit={data.unit} data={data.content} marquee={data.marquee}/>);
-    } else if (data.unit.type === 'series') {
-      contentLayout = (<SeriesLayout unit={data.unit} data={data.content} marquee={data.marquee}/>);
-    } else if (data.unit.type === 'journal') {
-      contentLayout = (<JournalLayout unit={data.unit} data={data.content} marquee={data.marquee}/>);
+    if (this.props.params.pageName === 'search') {
+      contentLayout = (<UnitSearchLayout unit={data.unit} data={data.content}/>);
     } else {
-      contentLayout = (
-        <div>
-        <h2>Unit {data.unit.id}</h2>
-        <div>
-          Info:
-          <ul>
-            <li>Name: {data.unit.name}</li>
-            <li>Type: {data.unit.type}</li>
-          </ul>
-        </div>
-        </div>
-      );
+      data.marquee.carousel = true;
+      if (data.unit.type === 'oru') {
+        contentLayout = (<DepartmentLayout unit={data.unit} data={data.content} marquee={data.marquee}/>);
+      } else if (data.unit.type === 'series') {
+        contentLayout = (<SeriesLayout unit={data.unit} data={data.content} marquee={data.marquee}/>);
+      } else if (data.unit.type === 'journal') {
+        contentLayout = (<JournalLayout unit={data.unit} data={data.content} marquee={data.marquee}/>);
+      } else {
+        contentLayout = (
+          <div>
+          <h2>Unit {data.unit.id}</h2>
+          <div>
+            Info:
+            <ul>
+              <li>Name: {data.unit.name}</li>
+              <li>Type: {data.unit.type}</li>
+            </ul>
+          </div>
+          </div>
+        );
+      }
     }
     return (
       <div>

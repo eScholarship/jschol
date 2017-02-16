@@ -127,13 +127,13 @@ def unitSearch(params, unit)
     params["series"] = [unit.id]
   elsif unit.type == 'oru'
     resultsListFields = ['thumbnail', 'pub_year', 'publication_information', 'type_of_work']
-    params["department"] = [unit.id]
+    params["departments"] = [unit.id]
   elsif unit.type == 'journal'
     resultsListFields = ['thumbnail', 'pub_year', 'publication_information']
-    params["journal"] = [unit.id]
+    params["journals"] = [unit.id]
   elsif unit.type == 'campus'
     resultsListFields = ['thumbnail', 'pub_year', 'publication_information', 'type_of_work', 'rights', 'peer_reviewed']
-    params["campus"] = [unit.id]
+    params["campuses"] = [unit.id]
   else
     #throw 404
     pp unit.type

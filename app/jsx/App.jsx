@@ -70,6 +70,7 @@ const routes = (
     <Route path="/browse/:browse_type" component={BrowsePage} />
     <Route path="/browse/depts/:campusID" component={BrowsePage} />
     <Route path="/unit/:unitID" component={UnitPage} />
+    <Route path="/unit/:unitID/:pageName" component={UnitPage} />
     <Route path="/item/:itemID" component={ItemPage} />
     <Route path="/search" component={SearchPage} />
     <Route path="/static/:unitID/:pageName" component={StaticPage} />
