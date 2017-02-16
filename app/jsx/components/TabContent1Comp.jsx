@@ -44,13 +44,10 @@ class MainText extends React.Component {
       case "published":
         return (p.content_type == "application/pdf" ? this.renderPdf(p) :
               p.content_type == "text/html" ? this.renderHtml(p) : null)
-        break
       case "withdrawn":
         return (<Withdrawn message={p.attrs.withdrawn_message} />)
-        break
       case "embargoed":
         return (<Embargoed date={p.attrs.embargo_date} pub_web_loc={p.attrs.pub_web_loc}/>)
-        break
     }
   }
 

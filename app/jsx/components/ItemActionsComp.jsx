@@ -22,7 +22,7 @@ class ItemActionsComp extends React.Component {
       <div className="c-itemactions">
         {download_block}
         <div className="c-itemactions__items2">
-          <ShareComp id={this.props.id}/>
+          <ShareComp type="item" id={this.props.id}/>
         </div>
       </div>
     )

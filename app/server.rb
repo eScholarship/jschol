@@ -408,12 +408,11 @@ get "/api/search/" do
 end
 
 ###################################################################################################
-# Social Media Links 
-get "/api/mediaLink/:shortArk/:service" do |shortArk, service| # service e.g. facebook, google, etc.
+# Social Media Links  for type = (item|unit)
+get "/api/mediaLink/:type/:id/:service" do |type, id, service| # service e.g. facebook, google, etc.
   content_type :json
-  sharedLink = "http://www.escholarship.com/item/" + shortArk
-  item = Item["qt"+shortArk]
-  title = item.title
+  sharedLink = "http://www.escholarship.com/" + type + "/" + id 
+  title = (type == "item") ? Item["qt"+id].title : $unitsHash[id].name
   case service
     when "facebook"
       url = "http://www.facebook.com/sharer.php?u=" + sharedLink
