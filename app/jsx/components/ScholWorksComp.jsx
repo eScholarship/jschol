@@ -41,13 +41,15 @@ class ScholWorksComp extends React.Component {
       unitId = this.props.result.unitInfo.unitId;
     }
 
-    var authorList = this.props.result.authors.map(function(author, i, a) {
-      if (i === a.length-1) {
-        return (<span key={author.name}><Link to={"/search/?q="+author.name}>{author.name}</Link></span>);
-      } else {
-        return (<span key={author.name}><Link to={"/search/?q="+author.name}>{author.name}</Link>; </span>);
-      }
-    });
+    if (this.props.result.authors) {
+      var authorList = this.props.result.authors.map(function(author, i, a) {
+        if (i === a.length-1) {
+          return (<span key={author.name}><Link to={"/search/?q="+author.name}>{author.name}</Link></span>);
+        } else {
+          return (<span key={author.name}><Link to={"/search/?q="+author.name}>{author.name}</Link>; </span>);
+        }
+      });
+    }
 
     var supp_files = this.props.result.supp_files.map(function(supp_file) {
       if (supp_file.count >= 1) {

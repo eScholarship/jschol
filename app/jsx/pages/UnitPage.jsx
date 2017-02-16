@@ -39,6 +39,8 @@ class UnitPage extends PageBase
     return "/api/unit/" + this.props.params.unitID + "/home"
   }
 
+  // TODO: each of the content layouts currently include the sidebars, 
+  // but this should get stripped out and handled here in UnitPage
   renderData(data) { 
     var contentLayout;
     if (this.props.params.pageName === 'search') {

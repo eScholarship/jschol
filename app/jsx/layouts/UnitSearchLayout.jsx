@@ -6,6 +6,12 @@ import SortComp from '../components/SortComp.jsx'
 import PaginationComp from '../components/PaginationComp.jsx'
 import ShareComp from '../components/ShareComp.jsx'
 
+// TODO: this is basically a copy of the Series Landing page layout without the header content
+// probably should just be the same component, curious how search within a series differs from
+// the landing page does the header content go away? 
+// ie: what happens on pagination on the landing page? on search within pages? 
+// TODO: UX - we need counts!
+
 class UnitSearchLayout extends React.Component {
   render() {
     var data = this.props.data;
