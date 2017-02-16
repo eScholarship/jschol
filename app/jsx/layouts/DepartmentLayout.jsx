@@ -5,25 +5,6 @@ import MarqueeComp from '../components/MarqueeComp.jsx'
 import ShareComp from '../components/ShareComp.jsx'
 import ScholWorksComp from '../components/ScholWorksComp.jsx'
 
-// class ItemPreviewSmall extends React.Component {
-//   componentDidMount() {
-//     $('.c-scholworks__abstract, .c-scholworks__author').dotdotdot({watch: "window"});
-//   }
-//   render() {
-//     return (
-//       <div>
-//         <Link to={"/item/"+this.props.id.replace(/^qt/, "")}>{this.props.title}</Link>
-//         <div>
-//           { this.props.authors.map((author) =>
-//             <span key={author.name}>{author.name}</span>) }
-//         </div>
-//         {this.props.abstract && <p className="c-scholworks__abstract">{this.props.abstract}</p>}
-//         {!this.props.abstract && <div style={{marginBottom: '20px'}}/>}
-//       </div>
-//     )
-//   }
-// }
-
 class SeriesComp extends React.Component {
   render() {
     return (
