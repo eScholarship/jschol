@@ -204,20 +204,20 @@ def get_query_display(params)
   end
     
   display_params = {
-    'q' => params['q'] ? params['q'].join(" ") : 'test',
-    'rows' => params['rows'].length > 0 ? params['rows'][0] : '10',
-    'sort' => params['sort'].length > 0 ? params['sort'][0] : 'rel',
-    'start' => params['start'].length > 0 ? params['start'][0] : '0',
+    'q' => params['q'] ? params['q'].join(" ") : '',
+    'rows' => params.dig('rows', 0) ? params['rows'][0] : '10',
+    'sort' => params.dig('sort', 0) ? params['sort'][0] : 'rel',
+    'start' => params.dig('start', 0) ? params['start'][0] : '0',
     'filters' => filters
   }
 end
 
 def aws_encode(params, facetTypes)
   aws_params = {
-    query: params.has_key?('q') && params['q'].length > 0 ? params['q'].join(" ") : 'matchall',
-    size: params['rows'].length > 0 ? params['rows'][0] : 10,
-    sort: params['sort'].length > 0 ? SORT[params['sort'][0]] : '_score desc',
-    start: params['start'].length > 0 ? params['start'][0] : 0,
+    query: params.has_key?('q') ? params['q'].join(" ") : 'matchall',
+    size: params.dig('rows', 0) ? params['rows'][0] : 10,
+    sort: params.dig('sort', 0) ? SORT[params['sort'][0]] : '_score desc',
+    start: params.dig('start', 0) ? params['start'][0] : 0,
   }
 
   if aws_params[:query] == 'matchall' then aws_params[:query_parser] = "structured" end
@@ -280,7 +280,7 @@ def search(params, facetTypes=FACETS.keys)
   if response['hits'] && response['hits']['hit']
     itemIds = response['hits']['hit'].map { |item| item['id'] }
     itemData = readItemData(itemIds)
-    searchResults = itemResultData(itemIds, itemData, ['pub_year', 'publication_information', 'type_of_work', 'rights', 'peer_reviewed'])
+    searchResults = itemResultData(itemIds, itemData, ['thumbnail', 'pub_year', 'publication_information', 'type_of_work', 'rights', 'peer_reviewed'])
   end
   
   facetHash = response['facets']

@@ -3,25 +3,14 @@ import { Link } from 'react-router'
 
 import MarqueeComp from '../components/MarqueeComp.jsx'
 import JournalInfoComp from '../components/JournalInfoComp.jsx'
-
-class IssueListItemComp extends React.Component {
-  render() {
-    return (
-      <div>
-      <Link to={"/item/"+this.props.item.id.replace(/^qt/, "")}>{this.props.item.title}</Link>
-      <h6>{this.props.item.authors.map(author => <span>{author.name}</span>)}</h6>
-      <h6>{this.props.item.abstract}</h6>
-      </div>
-    )
-  }
-}
+import ScholWorksComp from '../components/ScholWorksComp.jsx'
 
 class SectionComp extends React.Component {
   render() {
     return (
       <div>
-      <h5>{this.props.section.name}</h5>
-      {this.props.section.articles.map(article => <IssueListItemComp item={article}/>)}
+      <h4>Section Heading: {this.props.section.name}</h4>
+      {this.props.section.articles.map(article => <ScholWorksComp key={article.id} result={article}/>)}
       </div>
     )
   }
@@ -32,7 +21,7 @@ class IssueComp extends React.Component {
     return (
       <div>
       <h4>Volume {this.props.issue.volume}, Issue {this.props.issue.issue}, {this.props.issue.pub_date}</h4>
-      {this.props.issue.sections.map(section => <SectionComp section={section}/>)}
+      {this.props.issue.sections.map(section => <SectionComp key={section.name} section={section}/>)}
       </div>
     )
   }
@@ -43,10 +32,10 @@ class JournalLayout extends React.Component {
     var data = this.props.data;
 
     var marquee;
-    if (data.carousel) {
-      marquee = (<MarqueeComp carousel={data.carousel} about={data.unitData.about}/>)
+    if (this.props.marquee.carousel) {
+      marquee = (<MarqueeComp carousel={this.props.marquee.carousel} about={this.props.marquee.about}/>)
     } else {
-      marquee = (<MarqueeComp about={data.unitData.about} />)
+      marquee = (<MarqueeComp about={this.props.marquee.about} />)
     }
 
     var seriesList = [];
@@ -62,7 +51,7 @@ class JournalLayout extends React.Component {
         <div className="c-columns">
           <main>
             <section className="o-columnbox1">
-              <IssueComp issue={this.props.data.content.issue}/>
+              <IssueComp issue={data.issue}/>
             </section>
           </main>
           <aside>

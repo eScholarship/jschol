@@ -25,15 +25,13 @@ class ItemPage extends PageBase {
     return (
       <div className="l-item">
         <Header2Comp type={data.type} unitID={unitID} />
-        <SubheaderComp type={data.type}
-                        unitID={unitID} 
-                        unitName={unitName}
-                        campusID={data.campusID}
-                        campusName={data.campusName}
-                        campuses={data.campuses}/>
+        <SubheaderComp unit={data.unit}
+                        campusID={data.header.campusID}
+                        campusName={data.header.campusName}
+                        campuses={data.header.campuses}/>
         {/* <NavBarComp 
           navBar={data.unitDisplay.nav_bar} unitId={data.unitData.id}/> */ }
-        <BreadcrumbComp array={data.breadcrumb} />
+        <BreadcrumbComp array={data.header.breadcrumb} />
         <div className="c-columns">
           <main>
             <TabsComp currentTab={this.state.currentTab}
