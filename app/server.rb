@@ -142,7 +142,7 @@ Thread.new {
       $statsCampusOrus = getOruStatsPerCampus
       $statsCampusJournals = getJournalStatsPerCampus
       prevTime = utime
-    end
+    # end
     sleep 30
   end
 }
@@ -370,16 +370,20 @@ get "/api/unit/:unitID/?:pageName/?" do
   if unit
     begin
       attrs = JSON.parse(unit[:attrs])
+      pp 'here'
       if params[:pageName]
         pageData = {
           unit: unit.values.reject{|k,v| k==:attrs},
           header: getUnitHeader(unit, attrs), 
           sidebar: [],
         }
+        pp 'afterpageData'
 
         pageData[:content] = unitSearch(CGI::parse(request.query_string), unit) if params[:pageName] == 'search'
         pageData[:content] = getUnitPageContent(unit, attrs, params[:pageName]) if params[:pageName] == 'home'
         pageData[:marquee] = getUnitMarquee(unit, attrs) if params[:pageName] == 'home'
+        
+        pp "after content"
       else
         #public API data
         pageData = {

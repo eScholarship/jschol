@@ -24,6 +24,15 @@ def getUnitHeader(unit, attrs=nil)
     },
     :breadcrumb => traverseHierarchyUp([{name: unit.name, id: unit.id}])
   }
+  
+  # if this unit doesn't have a nav_bar, get the next unit up the hierarchy's nav_bar
+  if !header[:nav_bar]
+    ancestor = $hierByUnit[unit.id][0].ancestor
+    until header[:nav_bar] || ancestor.id == 'root'
+      header[:nav_bar] = JSON.parse(ancestor[:attrs])['nav_bar']
+      ancestor = $hierByUnit[ancestor.id][0].ancestor
+    end
+  end
 
   return header
 end
@@ -78,7 +87,6 @@ def seriesPreview(u)
   }
 end
 
-# TODO: rework for journal and unit context too
 def getSeriesLandingPageData(unit)
   parent = $hierByUnit[unit.id]
   if parent.length > 1
@@ -153,10 +161,6 @@ def unitSearch(params, unit)
 end
 
 
-# def modifyUnit()
-#   unit = $unitsHash['uclalaw_apalj']
-#   currentAttrs = JSON.parse(unit.attrs)
-#
 #   newAttrs = {
 #     about: "Here's some sample text about the UCLA School of Law's Asian Pacific American Law Journal. Lalalalala!",
 #     nav_bar: [
@@ -171,10 +175,42 @@ end
 #      directSubmit: "enabled",
 #      magazine: true
 #   }
-#
-#   attrs = JSON.generate(newAttrs)
-#   unit.update(:attrs => attrs)
-# end
+
+
+def modifyUnit()
+  unit = $unitsHash['uclalaw']
+  currentAttrs = JSON.parse(unit.attrs)
+
+  currentAttrs['nav_bar'] = [
+    {
+      "name": "Unit Home",
+      "slug": ""
+    },
+    {
+      "name": "About",
+      "sub_nav": [
+        {"name": "About Us", "slug": "about-us"},
+        {"name": "Aims & Scope", "slug": "aims-scope"},
+        {"name": "Editorial Board", "slug": "editorial-board"}
+      ]
+    },
+    {
+      "name": "Policies",
+      "url": "http://lmgtfy.com/?q=policies"
+    },
+    {
+      "name": "Submission Guidelines",
+      "slug": "submission-guidelines"
+    },
+    {
+      "name": "Contact",
+      "slug": "contact"
+    }
+  ]
+
+  attrs = JSON.generate(currentAttrs)
+  unit.update(:attrs => attrs)
+end
 
 # def addWidget()
 #   carouselWidget = new Widget({
