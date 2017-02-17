@@ -12,7 +12,7 @@ class JumpComp extends React.Component {
   render() {
     return (
       <div className="c-jump">
-        <a id="c-jump__label" href="">Article</a>
+        <Link id="c-jump__label" to="#" onClick={(e)=>this.handleClick(e, 1)}>Article</Link>
         <ul className="c-jump__tree" aria-labelledby="c-jump__label">
           <li><Link to="#">Abstract</Link></li>
           <li><Link to="#">Main Content</Link></li>
@@ -21,9 +21,9 @@ class JumpComp extends React.Component {
         </ul>
         <ul className="c-jump__siblings">
           <li><Link to="#" onClick={(e)=>this.handleClick(e, 2)}>Supplemental Material</Link></li>
-          <li><Link to="#">Metrics</Link></li>
-          <li><Link to="#">Author & Article Info</Link></li>
-          <li><Link to="#">Comments</Link></li>
+          <li><Link to="#" onClick={(e)=>this.handleClick(e, 3)}>Metrics</Link></li>
+          <li><Link to="#" onClick={(e)=>this.handleClick(e, 4)}>Author & Article Info</Link></li>
+          <li><Link to="#" onClick={(e)=>this.handleClick(e, 5)}>Comments</Link></li>
         </ul>
       </div>
     )

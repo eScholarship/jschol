@@ -33,7 +33,7 @@ class SeriesLayout extends React.Component {
         </main>
         <aside>
           <section className="o-columnbox2">
-            <ShareComp />
+            <ShareComp type="unit" id={data.unitData.id} />
           </section>
           <section className="o-columnbox2">
             <header>
