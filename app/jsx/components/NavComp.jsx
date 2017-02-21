@@ -55,8 +55,8 @@ class NavComp extends React.Component {
       if ('sub_nav' in navItem) {
         return (
           <NavSubComp name={navItem.name}
-            open={this.state.submenuActive == 1}
-            onSubmenuChanged={(flag)=> this.setState({submenuActive:flag ? 1 : null})}
+            open={this.state.submenuActive == navItem.name}
+            onSubmenuChanged={(flag)=> this.setState({submenuActive:flag ? navItem.name : null})}
             key={navItem.name}>
             {navItem.sub_nav.map((subItem) => {
               return this.getNavItemJSX(subItem);
