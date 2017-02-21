@@ -72,6 +72,8 @@ app.use((req, res) =>
             rc.props.location.urlsFetched = {}
             rc.props.location.urlsFetched[partialURL] = response
             renderedHTML = renderToString(rc)
+            /* Note: must leave comments like <!-- react-text: 14 --> so that react will
+               properly match up the rendered HTML to client-generated HTML */
             res.send(
               "<script>window.jscholApp_initialPageData = " + body + ";</script>\n" +
               "<div id=\"main\">" + renderedHTML + "</div>")
