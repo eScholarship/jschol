@@ -25,7 +25,18 @@ def checkCall(cmd, debug=true)
   end
 end
 
+# When we're called from within a bundled ruby script, we inherit a bunch of bundler env vars
+# that don't apply to system-level stuff, especially 'eye'. So, get rid of them.
+for var in ['BUNDLER_ORIG_PATH', 'BUNDLER_VERSION', 'BUNDLE_BIN_PATH', 'BUNDLE_GEMFILE', 'GEM_HOME', 'GEM_PATH', 'RUBYLIB', 'RUBYOPT']
+  ENV[var] and ENV.delete(var)
+end
+
+# Stop all tasks managed by 'eye'
 checkCall("eye quit -s")
+
+# Pull and update
 checkCall("git pull upstream master")
 checkCall("./setup.sh")
+
+# Restart tasks
 checkCall("eye load /apps/eschol/.eye/conf.rb")
