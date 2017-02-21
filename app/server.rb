@@ -368,12 +368,35 @@ end
 
 ###################################################################################################
 # Unit page data.
-get "/api/unit/:unitID" do |unitID|
-  # Initial data for the page consists of the unit's id, name, type, etc. plus lists of the unit's
-  # children and parents drawn from the unit_hier database table. Remember that "direct" links are
-  # direct parents and children. "Indirect" (which we don't use here) are for grandparents/ancestors,
-  # and grand-children/descendants.
-  getUnitPageData(unitID)
+get "/api/unit/:unitID/?:pageName/?" do
+  content_type :json
+  unit = $unitsHash.dig(params[:unitID])
+
+  if unit
+    begin
+      attrs = JSON.parse(unit[:attrs])
+      if params[:pageName]
+        pageData = {
+          unit: unit.values.reject{|k,v| k==:attrs},
+          header: getUnitHeader(unit, attrs), 
+          sidebar: [],
+        }
+        pageData[:content] = unitSearch(CGI::parse(request.query_string), unit) if params[:pageName] == 'search'
+        pageData[:content] = getUnitPageContent(unit, attrs, params[:pageName]) if params[:pageName] == 'home'
+        pageData[:marquee] = getUnitMarquee(unit, attrs) if params[:pageName] == 'home'
+      else
+        #public API data
+        pageData = {
+          unit: unit.values.reject{|k,v| k==:attrs}
+        }
+      end
+      return pageData.to_json
+    rescue Exception => e
+      halt 404, e.message
+    end
+  else
+    halt 404, "Unit not found"
+  end
 end
 
 ###################################################################################################
@@ -382,6 +405,9 @@ get "/api/item/:shortArk" do |shortArk|
   content_type :json
   id = "qt"+shortArk
   item = Item[id]
+  unitIDs = UnitItem.where(:item_id => id, :is_direct => true).order(:ordering_of_units).select_map(:unit_id)
+  unit = Unit[unitIDs[0]]
+
   if !item.nil?
     begin
       body = {
@@ -394,9 +420,22 @@ get "/api/item/:shortArk" do |shortArk|
                        map(:attrs).collect{ |h| JSON.parse(h)},
         :content_type => item.content_type,
         :content_html => getItemHtml(item.content_type, shortArk),
-        :attrs => JSON.parse(Item.filter(:id => id).map(:attrs)[0])
+        :attrs => JSON.parse(Item.filter(:id => id).map(:attrs)[0]),
+        :appearsIn => unitIDs.map { |unitID| {"id" => unitID, "name" => Unit[unitID].name} },
+
+        :header => getUnitHeader(unit),
+        :unit => unit.values.reject { |k,v| k==:attrs }
       }
-      return body.merge(getUnitItemHeaderElements('item', shortArk)).to_json
+
+      # TODO: at some point we'll want to modify the breadcrumb code to include CMS pages and issues
+      # in a better way - I don't think this belongs here in the item-level code.
+      if unit.type == 'journal'
+        issue_id = Item.join(:sections, :id => :section).filter(:items__id => id).map(:issue_id)[0]
+        volume, issue = Section.join(:issues, :id => issue_id).map([:volume, :issue])[0]
+        body[:header][:breadcrumb] << {name: "Volume #{volume}, Issue #{issue}", id: "#{unitIDs[0]}/issues/#{issue}"}
+      end
+
+      return body.to_json
     rescue Exception => e
       halt 404, e.message
     end
@@ -418,12 +457,11 @@ get "/api/search/" do
 end
 
 ###################################################################################################
-# Social Media Links 
-get "/api/mediaLink/:shortArk/:service" do |shortArk, service| # service e.g. facebook, google, etc.
+# Social Media Links  for type = (item|unit)
+get "/api/mediaLink/:type/:id/:service" do |type, id, service| # service e.g. facebook, google, etc.
   content_type :json
-  sharedLink = "http://www.escholarship.com/item/" + shortArk
-  item = Item["qt"+shortArk]
-  title = item.title
+  sharedLink = "http://www.escholarship.com/" + type + "/" + id 
+  title = (type == "item") ? Item["qt"+id].title : $unitsHash[id].name
   case service
     when "facebook"
       url = "http://www.facebook.com/sharer.php?u=" + sharedLink
@@ -455,28 +493,10 @@ def getHeaderElements(breadcrumb, topItem)
   }
 end
 
-# Generate breadcrumb and header content for Unit or Item page
-def getUnitItemHeaderElements(view, id)
-  hierarchy = Hierarchy_UnitItem.new(view, id)
-  campusID, campusName = hierarchy.getCampusInfo
-  body2 = {
-    :campusID => campusID,
-    :campusName => campusName,
-    :campuses => getCampusesAsMenu,
-    :breadcrumb => hierarchy.generateCrumb,
-    :appearsIn => hierarchy.appearsIn 
-  }
-  if view=="item"
-    type = (hierarchy.isJournal?) ? "journal" : "series"
-    body2.merge!({ :type => type })
-  end
-  return body2
-end
-
 # Array of all active root level campuses/ORUs. Include empty label "eScholarship at..." 
 def getCampusesAsMenu(topItem="eScholarship at...")
   campuses = []
-  $activeCampuses.each do |id, c| campuses << c.values end
+  $activeCampuses.each do |id, c| campuses << {id: c.id, name: c.name} end
   return campuses.unshift({:id => "", :name=>topItem})
 end
 

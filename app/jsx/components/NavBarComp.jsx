@@ -1,5 +1,5 @@
 // ##### Nav Bar Component ##### //
-// this.props = {navBar: {}, unitData: {}, socialProps: {}}
+// this.props = {navBar: {}, unit: {}, socialProps: {}}
 
 import React from 'react'
 import LanguageComp from '../components/LanguageComp.jsx'
@@ -10,7 +10,7 @@ class NavBarComp extends React.Component {
   render() {
     return (
       <div className="c-navbar">
-        {this.props.navBar && <NavComp data={this.props.navBar} unitId={this.props.unitData.unitId} />}
+        {this.props.navBar && <NavComp data={this.props.navBar} unitId={this.props.unit.id} />}
         {this.props.socialProps && <SocialIconsComp 
             facebook={this.props.socialProps.facebook} 
             twitter={this.props.socialProps.twitter} 

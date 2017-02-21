@@ -4,8 +4,8 @@ import React from 'react'
 import $ from 'jquery'
 
 class ShareComp extends React.Component {
-  getLink = (id, service) => {
-    $.getJSON("/api/mediaLink/"+id+"/"+service).done((data) => {
+  getLink = (type, id, service) => {
+    $.getJSON("/api/mediaLink/"+type+"/"+id+"/"+service).done((data) => {
       window.location = data.url
     }).fail((jqxhr, textStatus, err)=> {
       console.log("Failed! textStatus=", textStatus, ", err=", err)
@@ -18,11 +18,9 @@ class ShareComp extends React.Component {
       <details className="c-share">
         <summary>Share</summary>
         <ul className="c-share__list">
-          <li><a href="#" className="c-share__facebook" onClick={() => {this.getLink(p.id, "facebook")}}>Facebook</a></li>
-          <li><a href="#" className="c-share__twitter" onClick={() => {this.getLink(p.id, "twitter")}}>Twitter</a></li>
-          <li><a href="#" className="c-share__email" onClick={() => {this.getLink(p.id, "email")}}>Email</a></li>
-          <li><a href="#" onClick={() => {this.getLink(p.id, "mendeley")}}>Mendeley</a></li>
-          <li><a href="#" onClick={() => {this.getLink(p.id, "citeulike")}}>CiteULike</a></li>
+          <li><a className="c-share__email" href="#" onClick={() => {this.getLink(p.type, p.id, "email")}}>Email</a></li>
+          <li><a className="c-share__facebook" href="#" onClick={() => {this.getLink(p.type, p.id, "facebook")}}>Facebook</a></li>
+          <li><a className="c-share__twitter" href="#" onClick={() => {this.getLink(p.type, p.id, "twitter")}}>Twitter</a></li>
         </ul>
       </details>
     )

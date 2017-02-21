@@ -25,15 +25,13 @@ class ItemPage extends PageBase {
     return (
       <div className="l-item">
         <Header2Comp type={data.type} unitID={unitID} />
-        <SubheaderComp type={data.type}
-                        unitID={unitID} 
-                        unitName={unitName}
-                        campusID={data.campusID}
-                        campusName={data.campusName}
-                        campuses={data.campuses}/>
+        <SubheaderComp unit={data.unit}
+                        campusID={data.header.campusID}
+                        campusName={data.header.campusName}
+                        campuses={data.header.campuses}/>
         {/* <NavBarComp 
           navBar={data.unitDisplay.nav_bar} unitId={data.unitData.id}/> */ }
-        <BreadcrumbComp array={data.breadcrumb} />
+        <BreadcrumbComp array={data.header.breadcrumb} />
         <div className="c-columns">
           <main>
             <TabsComp currentTab={this.state.currentTab}
@@ -41,12 +39,14 @@ class ItemPage extends PageBase {
                       {...data} />
           </main>
           <aside>
-            <section className="o-columnbox2">
-              <header>
-                <h2 className="o-columnbox2__heading">Jump To</h2>
-                <JumpComp changeTab={this.changeTab} />
-              </header>
-            </section>
+            {(data.status == "published" && data.content_type) &&
+              <section className="o-columnbox2">
+                <header>
+                  <h2 className="o-columnbox2__heading">Jump To</h2>
+                  <JumpComp changeTab={this.changeTab} />
+                </header>
+              </section>
+            }
             <section className="o-columnbox2">
               <header>
                 <h2 className="o-columnbox2__heading">Related Items</h2>
