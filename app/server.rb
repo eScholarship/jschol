@@ -66,6 +66,11 @@ configure do
   set :show_exceptions, false
 end
 
+# Compress responses larger than 512 bytes
+use Rack::Deflater, :if => lambda {
+  |*, body| body.map(&:bytesize).reduce(0, :+) > 512
+}
+
 # For general app development, set DO_ISO to false. For real deployment, set to true
 DO_ISO = File.exist?("config/do_iso")
 
