@@ -600,3 +600,11 @@ put "/api/widget/:unitID/:widgetID/text" do |unitID, widgetID|
   content_type :json
   return { status: "ok" }.to_json
 end
+
+###################################################################################################
+# Post from github notifying us of a push to the repo
+post "/jscholGithubHook/onCommit" do
+  puts "Got github hook: params=#{params.inspect}"
+  return "ok"
+end
+
