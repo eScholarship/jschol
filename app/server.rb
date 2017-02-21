@@ -609,7 +609,9 @@ end
 ###################################################################################################
 # Post from github notifying us of a push to the repo
 post "/jscholGithubHook/onCommit" do
-  puts "Got github hook: params=#{params.inspect}"
+  puts "Got github commit hook - doing pull and restart."
+  pid = spawn("/usr/bin/ruby tools/pullJschol.rb > /apps/eschol/tmp/pullJschol.log 2>&1")
+  Process.detach(pid)
   return "ok"
 end
 
