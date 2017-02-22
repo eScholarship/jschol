@@ -40,17 +40,6 @@ class SearchControls extends React.Component {
 class SearchComp2 extends React.Component {
   constructor(props){
     super(props)
-
-    if (["series", "monograph_series", "seminar_series", "special"].includes(props.type)) {
-      this.label = "Series"
-    } else if (props.type == "oru") {
-      this.label = "Department"
-    } else if (props.type == "journal") {
-      this.label = "Journal"
-    } else if (props.type == "campus") {
-      this.label = "Campus"
-    }
-
     this.state = {refineActive: false, search: '/search'}
   }
 
@@ -64,7 +53,17 @@ class SearchComp2 extends React.Component {
   }
 
   render() {
-    var type
+    var label;
+    if (["series", "monograph_series", "seminar_series", "special"].includes(props.type)) {
+      label = "Series"
+    } else if (props.type == "oru") {
+      label = "Department"
+    } else if (props.type == "journal") {
+      label = "Journal"
+    } else if (props.type == "campus") {
+      label = "Campus"
+    }
+
     return (
       <div className="c-search2">
         <div className="c-search2__inputs">
@@ -80,7 +79,7 @@ class SearchComp2 extends React.Component {
           </div>
           <SearchControls refineActive={this.state.refineActive}
                           handleRadioSelect={this.handleRadioSelect}
-                          label={this.label}
+                          label={label}
                           unitID={this.props.unitID} />
         </div>
         <button type="submit" className="c-search2__submit-button" aria-label="search"></button>
