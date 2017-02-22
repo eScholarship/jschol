@@ -32,11 +32,11 @@ for var in ['BUNDLER_ORIG_PATH', 'BUNDLER_VERSION', 'BUNDLE_BIN_PATH', 'BUNDLE_G
 end
 
 # Stop all tasks managed by 'eye'
-checkCall("eye quit -s")
+checkCall("eye stop jschol")
 
 # Pull and update
 checkCall("git pull upstream master")
 checkCall("./setup.sh")
 
 # Restart tasks
-checkCall("eye load /apps/eschol/.eye/conf.rb")
+checkCall("eye start jschol")
