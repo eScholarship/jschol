@@ -66,7 +66,7 @@ configure do
   set :show_exceptions, false
 end
 
-# Compress responses larger than 512 bytes
+# Compress responses
 use Rack::Deflater
 
 # For general app development, set DO_ISO to false. For real deployment, set to true
