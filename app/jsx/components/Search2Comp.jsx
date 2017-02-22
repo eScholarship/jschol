@@ -54,13 +54,13 @@ class SearchComp2 extends React.Component {
 
   render() {
     var label;
-    if (["series", "monograph_series", "seminar_series", "special"].includes(props.type)) {
+    if (["series", "monograph_series", "seminar_series", "special"].includes(this.props.type)) {
       label = "Series"
-    } else if (props.type == "oru") {
+    } else if (this.props.type == "oru") {
       label = "Department"
-    } else if (props.type == "journal") {
+    } else if (this.props.type == "journal") {
       label = "Journal"
-    } else if (props.type == "campus") {
+    } else if (this.props.type == "campus") {
       label = "Campus"
     }
 
