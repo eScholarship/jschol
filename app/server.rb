@@ -263,7 +263,8 @@ end
 ###################################################################################################
 # The outer framework of every page is essentially the same, substituting in the intial page
 # data and initial elements from React.
-# The regex below matches every URL except /api/*, /content/*, and things ending with a file ext.
+# The regex below matches every URL except /api/* (similarly content and locale), as well as
+# things ending with a file ext. Those all get served elsewhere.
 get %r{^/(?!(api/.*|content/.*|locale/.*|.*\.\w{1,4}$))} do
 
   puts "Page fetch: #{request.url}"
@@ -274,7 +275,7 @@ get %r{^/(?!(api/.*|content/.*|locale/.*|.*\.\w{1,4}$))} do
     host = $1
     remainder = $3
 
-    # Pass the full path and query string to our little Node Express app, which will run it through 
+    # Pass the full path and query string to our little Node Express app, which will run it through
     # ReactRouter and React.
     response = Net::HTTP.new(host, 4002).start {|http| http.request(Net::HTTP::Get.new(remainder)) }
     response.code == "200" or halt(500, "ISO fetch failed")
