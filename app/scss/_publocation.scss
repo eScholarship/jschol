@@ -1,0 +1,62 @@
+// ##### Published Location Component ##### //
+
+.c-publocation {
+  position: relative;
+
+  @include bp(screen1) {
+
+    @supports (display: grid) {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      grid-template-rows: repeat(2, auto);
+    }
+    
+  }
+
+}
+
+.c-publocation__heading {
+
+  @include headings() {
+    margin: 0 0 $spacing-sm;
+    font-size: 1em;
+  }
+
+}
+
+.c-publocation__link {
+  @extend %o-textlink__secondary;
+  display: block;
+  margin-bottom: $spacing-sm;
+  overflow-wrap: break-word; // all except IE
+  word-wrap: break-word; // IE
+  hyphens: auto;
+
+  @include bp(screen1) {
+    margin-right: 120px; // width of license image
+    padding-right: $spacing-md;
+
+    @supports (display: grid) {
+      margin-right: 0;
+    }
+
+  }
+
+}
+
+.c-publocation__license {
+
+  @include bp(screen1) {
+    position: absolute;
+    top: 0;
+    right: 0;
+
+    @supports (display: grid) {
+      position: static;
+      grid-column: 2 / 3;
+      grid-row: 1 / 3;
+    }
+
+  }
+
+}

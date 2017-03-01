@@ -1,6 +1,7 @@
 // ##### Item Actions Component ##### //
 
 .c-itemactions {
+  margin-bottom: $spacing-md;
 
   @include bp(screen3) {
     display: flex;
@@ -12,14 +13,23 @@
 
 .c-itemactions__items1 {
   flex: 1;
+}
 
-  .o-button__6 {
-    margin-right: $spacing-sm;
-    margin-bottom: $spacing-sm;
-  }
+%c-itemactions__buttons {
+  margin-right: $spacing-sm;
+  margin-bottom: $spacing-sm;
+}
 
+.c-itemactions__button1 {
+  @extend %c-itemactions__buttons;
+}
+
+.c-itemactions__button2 {
+  @extend %c-itemactions__buttons;
+  background-image: url('../images/icon_book-white.svg');
 }
 
 .c-itemactions__items2 {
   // not used
 }
+

@@ -4,7 +4,7 @@ import React from 'react'
 import ItemActionsComp from '../components/ItemActionsComp.jsx'
 import AuthorListComp from '../components/AuthorListComp.jsx'
 import PdfViewerComp from '../components/PdfViewerComp.jsx'
-import PublishedLocationComp from '../components/PublishedLocationComp.jsx'
+import PubLocationComp from '../components/PubLocationComp.jsx'
 
 class TabContent1Comp extends React.Component {
   render() {
@@ -14,7 +14,7 @@ class TabContent1Comp extends React.Component {
         <ItemActionsComp status={p.status} content_type={p.content_type} id={p.id} />
         <h1 className="c-tabcontent__heading">{p.title}</h1>
         <AuthorListComp pubdate={p.pub_date} authors={p.authors} changeTab={p.changeTab} />
-        <PublishedLocationComp pub_web_loc={p.attrs.pub_web_loc} rights={p.rights} />
+        <PubLocationComp pub_web_loc={p.attrs.pub_web_loc} rights={p.rights} />
         {this.props.attrs.abstract && (this.props.status != "withdrawn") &&
           <Abstract status={p.status} abstract={p.attrs.abstract} /> }
         <MainText {...p} />

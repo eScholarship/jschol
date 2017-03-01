@@ -1,0 +1,59 @@
+// ##### Testing ##### //
+
+// Exclusion rule for gulp-sass-lint:
+// sass-lint:disable-all
+
+// ***** Highlight Elements ***** //
+
+$bred: 1px solid #f00;
+$bblue: 1px solid #00f;
+$bgreen: 1px solid #0c0;
+
+*:focus {
+  // outline: $color-orange solid 1px;
+}
+
+// Grid
+
+.c-grid {
+  display: grid;
+  grid-template-columns: 25% auto 25%;
+  grid-template-rows: 1fr auto auto;
+  min-height: 90vh; // should be using 100% instead but not working
+
+  border: 2px solid $color-black;
+
+  header {
+    grid-column: 1 / span 3;
+  }
+
+  main {
+    grid-column: 2 / 3;
+    grid-row: 2 / 3;
+    border: $bgreen;
+  }
+
+  aside {
+
+    &:first-of-type { // left column
+      grid-column: 1 / 2;
+
+      border: $bred;
+    }
+
+    &:last-of-type { // right column
+      grid-column: 3 / 4;
+
+      border: $bblue;
+    }
+
+  }
+
+  footer {
+    grid-column: 1 / span 3;
+    align-self: end;
+
+    border: 1px solid $color-orange;
+  }
+
+}

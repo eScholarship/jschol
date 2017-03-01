@@ -3,7 +3,7 @@
 import React from 'react'
 import PageBase from './PageBase.jsx'
 import Header2Comp from '../components/Header2Comp.jsx'
-import SubheaderComp from '../components/SubheaderComp.jsx'
+import Subheader2Comp from '../components/Subheader2Comp.jsx'
 import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
 import TabsComp from '../components/TabsComp.jsx'
 import JumpComp from '../components/JumpComp.jsx'
@@ -25,7 +25,7 @@ class ItemPage extends PageBase {
     return (
       <div className="l-item">
         <Header2Comp type={data.type} unitID={unitID} />
-        <SubheaderComp unit={data.unit}
+        <Subheader2Comp unit={data.unit}
                         campusID={data.header.campusID}
                         campusName={data.header.campusName}
                         campuses={data.header.campuses}/>

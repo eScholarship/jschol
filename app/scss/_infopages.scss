@@ -1,44 +1,74 @@
 // ##### Informational Pages Component ##### //
 
 .c-infopages {
+  // no styles
+}
+
+.c-infopages__items {
 
   @include bp(screen2) {
     display: flex;
+    margin-bottom: $spacing-md;
   }
 
 }
 
 .c-infopages__item {
-  padding: $spacing-md;
+  margin-bottom: $spacing-md;
+
+  &:not(:first-child) {
+    padding-top: $spacing-md;
+    border-top: 1px solid $color-dark-gray;
+  }
 
   @include bp(screen2) {
     flex: 0 1 33%; // 3 columns
+    margin-bottom: 0;
+    padding: $spacing-sm;
     border: 1px solid $color-dark-gray;
 
     &:not(:first-child) {
-      border-left: none;
+      margin-left: $spacing-sm;
+      padding-top: $spacing-sm;
     }
 
   }
 
-  &:not(:first-child) {
-    border-top: 1px solid $color-dark-gray;
+  @include bp(screen3) {
+    padding: $spacing-md;
+
+    &:not(:first-child) {
+      margin-left: $spacing-md;
+      padding-top: $spacing-md;
+    }
+
+  }
+
+  @include headings() {
+    margin: 0 0 $spacing-sm;
+    font-size: 1.1em;
+    font-weight: normal;
+
+    a {
+      @extend %o-textlink__secondary;
+    }
+
   }
 
 }
 
-.c-infopages__heading {
-  margin: 0;
-  font-size: 1.2em;
-  font-weight: normal;
-
-  a {
-    @extend %o-textlink__secondary;
-  }
-
-}
-
-.c-infopages__heading-title {
+.c-infopages__title {
   display: block;
+  font-size: 1.1em;
   font-weight: bold;
+}
+
+.c-infopages__text {
+  max-height: 3.3em; // truncate beyond 3 lines via jQuery dotdotdot
+}
+
+.c-infopages__all {
+  @extend %o-textlink__secondary;
+  display: flex;
+  justify-content: flex-end;
 }

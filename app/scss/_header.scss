@@ -1,19 +1,20 @@
-// ##### Header Component ##### //
+// ##### Header 1 & 2 Component Styles ##### //
 
 .c-header {
-
-  @include bp(screen3) {
-    display: flex;
-    justify-content: space-between;
-  }
-
+  display: flex;
+  justify-content: space-between;
+  margin: (-$spacing-sm) (-$spacing-sm) 0;
+  padding: $spacing-sm;
+  background: $color-white;
 }
 
-.c-header__logosearch {
-  display: flex;
-  flex: 1 0 auto;
-  justify-content: space-between;
-  margin: 0 0 $spacing-sm;
+.c-header__logo {
+  height: $input-height;
+
+  @include bp(screen3) {
+    height: auto; // set to default img height
+  }
+
 }
 
 %c-header__search {
@@ -26,10 +27,8 @@
   z-index: 2;
 
   @include bp(screen3) {
-    display: flex;
     position: relative;
-    flex: 1 0 auto;
-    justify-content: center;
+    margin: 0 $spacing-sm 0 0;
     transform: translateX(0%);
   }
 
@@ -46,25 +45,13 @@
 
 .c-header__search-open-button {
   align-self: flex-start;
-  padding: 15px;
+  height: $input-height;
+  padding: 0 13px;
   border: none;
-  background: url('../images/icon_magnify.svg') no-repeat center right / 25px;
+  background: inline('../images/icon_magnify.svg') no-repeat center right / 25px;
 
   @include bp(screen3) {
     display: none;
   }
 
-}
-
-.c-header__deposit {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.c-header__deposit-button {
-  height: $input-height;
-  padding: 0 20px;
-  border: none;
-  background-color: $color-orange;
-  color: $color-white;
 }

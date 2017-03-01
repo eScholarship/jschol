@@ -1,0 +1,104 @@
+// ##### Campus Selector Component ##### //
+
+$campus-selector-button-width: 30px;
+
+.c-campusselector {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 2px;
+
+  @include bp(screen3) {
+    position: relative;
+    align-items: flex-end;
+    min-height: $element-height;
+    margin-right: $campus-selector-button-width + $spacing-md;
+  }
+
+}
+
+.c-campusselector__heading {
+  margin: 0 $spacing-sm 0 0;
+  font-size: 1em;
+  text-align: right;
+
+  @include bp(screen1) {
+    font-size: 1.3em;
+  }
+
+  @include bp(screen3) {
+    width: 7.5em; // component width
+    font-size: 1.5em;
+  }
+
+  a {
+    @extend %o-textlink__colorless;
+  }
+
+}
+
+.c-campusselector__selector {
+
+  summary {
+    position: relative;
+    width: $campus-selector-button-width;
+    min-height: $element-height;
+
+    @include bp(screen3) {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      height: auto;
+    }
+
+    &::after {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      border: 1px solid $color-dark-gray;
+      border-radius: $round-corner;
+      background: url('../images/icon_arrow-down.svg') no-repeat center / 13px;
+      content: '';
+    }
+
+  }
+
+  &[open] {
+
+    summary::after {
+      transform: rotate(180deg);
+    }
+
+  }
+
+}
+
+.c-campusselector__menu {
+  position: absolute; // to .c-subheader
+  right: 0;
+  left: 0;
+  margin-top: 5px;
+  background-color: $color-white;
+  z-index: 2;
+
+  @include bp(screen3) {
+    margin-right: (-$campus-selector-button-width);
+  }
+
+}
+
+.c-campusselector__sub-heading {
+  @extend %nav-item;
+  background-color: $color-light-gray;
+  color: $color-black;
+}
+
+.c-campusselector__items {
+
+  a {
+    @extend %nav-item;
+    border-top: none;
+  }
+
+}

@@ -1,0 +1,32 @@
+// ##### Media File Grid Component ##### //
+
+.c-mediafilegrid {
+
+  @include bp(screen2) {
+
+    @supports (display: grid) {
+      display: grid;
+      padding: $spacing-md;
+      grid-template-columns: repeat(2, auto);
+      grid-gap: $spacing-md;
+    }
+
+  }
+
+  .c-mediafile {
+
+    @include bp(screen2) {
+      width: 43%;
+      padding: $spacing-md;
+      float: left;
+
+      @supports (display: grid) {
+        width: auto;
+        padding: 0;
+      }
+
+    }
+
+  }
+
+}

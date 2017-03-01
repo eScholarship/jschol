@@ -1,33 +1,49 @@
 // ##### Footer Component ##### //
 
-// Would prefer to use CSS Grid Layout for screen2 but spec not yet ratified, so using absolute positioning on .c-footer__nav
-
 .c-footer {
   display: flex;
-  flex-flow: column nowrap;
+  flex-direction: column;
   align-items: center;
-  margin: 0 (-$spacing-sm) $spacing-md;
+  margin: 0 (-$spacing-sm);
   padding: $spacing-md;
   background-color: $color-light-black;
+
+  @supports (display: grid) {
+    display: grid;
+    justify-items: center;
+  }
 
   @include bp(screen2) {
     position: relative;
     align-items: flex-start;
+
+    @supports (display: grid) {
+      grid-template-columns: auto 1fr;
+      justify-items: stretch;
+    }
+
   }
 
 }
 
 .c-footer__nav {
-  margin: 0 0 $spacing-sm;
   columns: 2;
   column-gap: $spacing-lg;
 
   @include bp(screen2) {
     position: absolute;
     top: 0;
-    right: 10%;
-    left: 50%;
+    right: 0;
+    left: 55%;
     margin: $spacing-md 0 0;
+
+    @supports (display: grid) {
+      position: static;
+      margin: 0 0 0 35%;
+      grid-column: 2 / 3;
+      grid-row: 1 / 4;
+    }
+
   }
 
   a {
@@ -57,6 +73,10 @@
 
 .c-footer__icons {
   margin-bottom: $spacing-md;
+
+  @supports (display: grid) {
+    justify-self: center;
+  }
 
   a {
     @extend %circular-border;
