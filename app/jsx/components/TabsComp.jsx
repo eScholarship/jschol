@@ -1,11 +1,11 @@
 // ##### Tabs Component ##### //
 
 import React from 'react'
-import TabContent1Comp from '../components/TabContent1Comp.jsx'
-import TabContent2Comp from '../components/TabContent2Comp.jsx'
-import TabContent3Comp from '../components/TabContent3Comp.jsx'
-import TabContent4Comp from '../components/TabContent4Comp.jsx'
-import TabContent5Comp from '../components/TabContent5Comp.jsx'
+import TabMainComp from '../components/TabMainComp.jsx'
+import TabSupplementalComp from '../components/TabSupplementalComp.jsx'
+import TabMetricsComp from '../components/TabMetricsComp.jsx'
+import TabAuthorComp from '../components/TabAuthorComp.jsx'
+import TabCommentsComp from '../components/TabCommentsComp.jsx'
 
 class TabsComp extends React.Component {
   state = {currentTab: this.props.currentTab, moreTabs: false}
@@ -27,11 +27,11 @@ class TabsComp extends React.Component {
           <button className={this.state.currentTab === 5 ? "c-tabs__button--active" : "c-tabs__button"} onClick = {()=> this.setState({currentTab: 5})}>Comments (2)</button>
         </div>
         <div className="c-tabs__content">
-          {this.state.currentTab === 1 ? <TabContent1Comp {...this.props} /> : null}
-          {this.state.currentTab === 2 ? <TabContent2Comp {...this.props} /> : null}
-          {this.state.currentTab === 3 ? <TabContent3Comp {...this.props} /> : null}
-          {this.state.currentTab === 4 ? <TabContent4Comp {...this.props} /> : null}
-          {this.state.currentTab === 5 ? <TabContent5Comp {...this.props} /> : null}
+          {this.state.currentTab === 1 ? <TabMainComp {...this.props} /> : null}
+          {this.state.currentTab === 2 ? <TabSupplementalComp {...this.props} /> : null}
+          {this.state.currentTab === 3 ? <TabMetricsComp {...this.props} /> : null}
+          {this.state.currentTab === 4 ? <TabAuthorComp {...this.props} /> : null}
+          {this.state.currentTab === 5 ? <TabCommentsComp {...this.props} /> : null}
           <p><br/></p>
         </div>
       </div>
