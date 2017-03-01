@@ -406,7 +406,7 @@ get "/api/item/:shortArk" do |shortArk|
   id = "qt"+shortArk
   item = Item[id]
   unitIDs = UnitItem.where(:item_id => id, :is_direct => true).order(:ordering_of_units).select_map(:unit_id)
-  unit = Unit[unitIDs[0]]
+  unit = unitIDs ? Unit[unitIDs[0]] : nil
 
   if !item.nil?
     begin
@@ -421,15 +421,15 @@ get "/api/item/:shortArk" do |shortArk|
         :content_type => item.content_type,
         :content_html => getItemHtml(item.content_type, shortArk),
         :attrs => JSON.parse(Item.filter(:id => id).map(:attrs)[0]),
-        :appearsIn => unitIDs.map { |unitID| {"id" => unitID, "name" => Unit[unitID].name} },
-
-        :header => getUnitHeader(unit),
-        :unit => unit.values.reject { |k,v| k==:attrs }
+        :appearsIn => unitIDs ? unitIDs.map { |unitID| {"id" => unitID, "name" => Unit[unitID].name} }
+                              : nil,
+        :header => unit ? getUnitHeader(unit) : nil,
+        :unit => unit ? unit.values.reject { |k,v| k==:attrs } : nil
       }
 
       # TODO: at some point we'll want to modify the breadcrumb code to include CMS pages and issues
       # in a better way - I don't think this belongs here in the item-level code.
-      if unit.type == 'journal'
+      if unit && unit.type == 'journal'
         issue_id = Item.join(:sections, :id => :section).filter(:items__id => id).map(:issue_id)[0]
         volume, issue = Section.join(:issues, :id => issue_id).map([:volume, :issue])[0]
         body[:header][:breadcrumb] << {name: "Volume #{volume}, Issue #{issue}", id: "#{unitIDs[0]}/issues/#{issue}"}
