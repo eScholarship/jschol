@@ -67,7 +67,8 @@ configure do
 end
 
 # Compress responses
-use Rack::Deflater
+## NO: This fails when streaming files. Not sure why yet.
+#use Rack::Deflater
 
 # For general app development, set DO_ISO to false. For real deployment, set to true
 DO_ISO = File.exist?("config/do_iso")
@@ -243,7 +244,7 @@ get "/content/:fullItemID/*" do |fullItemID, path|
 
   # Fetch the file from Merritt
   fetcher = Fetcher.new
-  code, msg = fetcher.start(URI("http://mrtexpress.cdlib.org/dl/ark:/13030/#{fullItemID}/content/#{path}"))
+  code, msg = fetcher.start(URI("https://mrtexpress.cdlib.org/dl/ark:/13030/#{fullItemID}/content/#{path}"))
 
   # Temporary fallback: if we can't find on Merritt, try the raw_data hack on pub-eschol-stg.
   # This is needed for ETDs, since we don't yet record their proper original Merritt location.
