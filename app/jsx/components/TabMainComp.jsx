@@ -1,4 +1,4 @@
-// ##### Item Page - "Tab 1" Main Content Component ##### //
+// ##### Tab Main Content Component ##### //
 
 import React from 'react'
 import ItemActionsComp from '../components/ItemActionsComp.jsx'
@@ -6,7 +6,7 @@ import AuthorListComp from '../components/AuthorListComp.jsx'
 import PdfViewerComp from '../components/PdfViewerComp.jsx'
 import PubLocationComp from '../components/PubLocationComp.jsx'
 
-class TabContent1Comp extends React.Component {
+class TabMainComp extends React.Component {
   render() {
     let p = this.props
     return (
@@ -112,4 +112,4 @@ class NoContent extends React.Component {
   }
 }
 
-module.exports = TabContent1Comp;
+module.exports = TabMainComp;
