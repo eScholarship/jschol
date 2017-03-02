@@ -1,8 +1,9 @@
 // ##### Content Well Component ##### //
 
 .c-well {
+  margin-bottom: $spacing-md;
   padding: $spacing-sm;
-  background-color: lighten($color-teal, 60%);
+  background-color: $color-light-teal;
 
   @include bp(screen2) {
     padding: $spacing-md;

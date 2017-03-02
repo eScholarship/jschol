@@ -28,15 +28,19 @@ $scholworks-tag-height: $element-height;
 }
 
 %c-scholworks__tag {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
   margin: 0 $spacing-sm $spacing-md 0;
-  padding: 0 0 0 25px;
-  background: no-repeat left top / 16px;
+  padding: 0 10px 0 25px;
+  border-radius: $round-corner;
+  background-color: $color-light-gray;
+  font-size: 0.9em;
 }
 
 .c-scholworks__tag-article {
   @extend %c-scholworks__tag;
-  background-image: inline('../images/icon_pdf-black.svg');
+  background: $color-light-gray inline('../images/icon_pdf-black.svg') no-repeat left 5px center / 14px;
 }
 
 .c-scholworks__tag-book {
@@ -60,13 +64,13 @@ $scholworks-tag-height: $element-height;
 }
 
 .c-scholworks__heading {
-  height: 3.2em; // truncate beyond 3 lines per jquery.dotdotdot
+  max-height: 3.2em; // truncate beyond 3 lines per jquery.dotdotdot
   margin: 0 0 $spacing-md;
   font-size: 1.2em;
   font-weight: bold;
 
   @include bp(screen1) {
-    height: 2.2em; // truncate beyond 3 lines per jquery.dotdotdot
+    max-height: 2.2em; // truncate beyond 3 lines per jquery.dotdotdot
   }
 
   a {
@@ -76,10 +80,10 @@ $scholworks-tag-height: $element-height;
 }
 
 .c-scholworks__author {
-  height: 2.2em; // truncate beyond 2 lines per jquery.dotdotdot
+  max-height: 2.2em; // truncate beyond 2 lines per jquery.dotdotdot
 
   @include bp(screen1) {
-    height: 1.1em; // truncate beyond 1 line per jquery.dotdotdot
+    max-height: 1.1em; // truncate beyond 1 line per jquery.dotdotdot
   }
 
   a {
@@ -98,11 +102,11 @@ $scholworks-tag-height: $element-height;
 }
 
 .c-scholworks__abstract {
-  height: 3.8em; // truncate beyond 3 lines per jquery.dotdotdot
+  max-height: 3.8em; // truncate beyond 3 lines per jquery.dotdotdot
   margin: 0 0 $spacing-md;
 
   @include bp(screen1) {
-    height: 2.4em; // truncate beyond 2 lines per jquery.dotdotdot
+    max-height: 2.4em; // truncate beyond 2 lines per jquery.dotdotdot
   }
 
 }
@@ -169,11 +173,13 @@ $scholworks-tag-height: $element-height;
   background-image: inline('../images/icon_play-circle-o.svg');
 }
 
-.c-scholworks__rights {
+.c-scholworks__license {
   flex: 0 0 auto;
+  margin-bottom: $spacing-sm;
 
   @include bp(screen2) {
-    margin: ($spacing-sm * 2) 0 0;
+    align-self: flex-end;
+    margin-bottom: 0;
   }
 
 }

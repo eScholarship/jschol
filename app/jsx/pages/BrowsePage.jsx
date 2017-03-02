@@ -6,7 +6,7 @@ import { Link } from 'react-router'
 import PageBase from './PageBase.jsx'
 import Header1Comp from '../components/Header1Comp.jsx'
 import Header2Comp from '../components/Header2Comp.jsx'
-import SubheaderComp from '../components/SubheaderComp.jsx'
+import Subheader2Comp from '../components/Subheader2Comp.jsx'
 import Nav1Comp from '../components/Nav1Comp.jsx'
 import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
 
@@ -28,7 +28,7 @@ class BrowsePage extends PageBase
       { data.browse_type == "depts" &&
           <div>
             <Header2Comp type="campus" unitID={data.campusID} />
-            <SubheaderComp campuses={data.campuses}
+            <Subheader2Comp campuses={data.campuses}
                             unitID={data.campusID}
                             unitName={data.campusName}
                             campusID={data.campusID}

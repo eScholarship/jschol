@@ -32,6 +32,7 @@ class TabsComp extends React.Component {
           {this.state.currentTab === 3 ? <TabContent3Comp {...this.props} /> : null}
           {this.state.currentTab === 4 ? <TabContent4Comp {...this.props} /> : null}
           {this.state.currentTab === 5 ? <TabContent5Comp {...this.props} /> : null}
+          <p><br/></p>
         </div>
       </div>
     )

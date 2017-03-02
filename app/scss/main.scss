@@ -6,7 +6,7 @@
 @import 'variables';
 @import 'mixins';
 @import 'breakpoints';
-@import 'testing';
+@import 'test';
 
 // ***** Vendor Libraries ***** //
 
@@ -26,45 +26,47 @@
 
 // ***** Components ***** //
 
-@import 'adminbar';
 @import 'authorlist';
 @import 'breadcrumb';
-@import 'campus';
+@import 'campusselector';
 @import 'checkbox';
 @import 'columns';
+@import 'datatable';
 @import 'download';
 @import 'export';
 @import 'facetbox';
 @import 'filter';
 @import 'frontmatter';
 @import 'footer';
-@import 'header1';
-@import 'header2';
+@import 'header';
 @import 'infopages';
 @import 'itemactions';
 @import 'journalinfo';
 @import 'jump';
 @import 'language';
 @import 'marquee';
+@import 'mediafile';
+@import 'mediafilegrid';
 @import 'nav';
 @import 'nav1';
 @import 'nav2';
 @import 'navbar';
 @import 'pagination';
-@import 'publishedlocation';
+@import 'pubdata';
+@import 'publocation';
 @import 'scholworks';
 @import 'search1';
 @import 'search2';
 @import 'share';
 @import 'sidebarnav';
-@import 'socialicons';
 @import 'sort';
-@import 'staticpage';
-@import 'subheader';
+@import 'socialicons';
+@import 'subheader1';
+@import 'subheader2';
 @import 'tabcontent';
-@import 'table';
 @import 'tabs';
 @import 'togglecontent';
+@import 'togglelist';
 @import 'well';
 
 // ***** Layouts ***** //
@@ -82,21 +84,13 @@
 
 body {
   margin: 0 auto;
-  padding: 10px;
+  padding: 10px 10px 0;
+  background-color: lighten($color-light-gray, 15%);
   font-family: 'KievitWeb';
   overflow-x: hidden;
-
-  @include bp(screen2) {
-    background: lighten($color-light-gray, 15%);
-  }
-
 }
 
 p {
   margin: 0 0 1em;
   line-height: 1.2em;
-}
-
-*:focus {
-  outline: $color-orange solid 1px;
 }

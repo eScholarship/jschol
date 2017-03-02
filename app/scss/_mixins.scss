@@ -85,6 +85,11 @@ Selector pattern using above media query mixin:
   color: $color-dark-gray;
   font-size: 1.1em;
   text-decoration: none;
+
+  &:hover:not(div) {
+    color: $color-orange;
+  }
+
 }
 
 // Headings generator
@@ -95,4 +100,16 @@ Selector pattern using above media query mixin:
       @content
     }
   }
+}
+
+// Clear floats
+
+%clearfix {
+
+  &::after {
+    display: table;
+    clear: both;
+    content: '';
+  }
+
 }
