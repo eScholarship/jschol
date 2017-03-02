@@ -2,8 +2,12 @@
 
 import React from 'react'
 import $ from 'jquery'
-import dotdotdot from 'jquery.dotdotdot'
 import { Link } from 'react-router'
+
+// Load dotdotdot in browser but not server
+if (!(typeof document === "undefined")) {
+  const dotdotdot = require('jquery.dotdotdot')
+}
 
 class AuthorListComp extends React.Component {
   componentDidMount() {
