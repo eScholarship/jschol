@@ -28,10 +28,12 @@ class CampusSelectorComp extends React.Component {
                  ref={domElement => this.details=domElement}
                  onClick={()=>setTimeout(()=>this.setState({isOpen: this.details.open}), 0)}
                  className="c-campusselector__selector">
-          <summary></summary>
-          <div className="c-campusselector__selector-items">
-            <div>eScholarship at &hellip;</div>
-            {this.campusSelector(this.props.campuses)}
+          <summary aria-label="select campus"></summary>
+            <div className="c-campusselector__menu">
+            <div className="c-campusselector__sub-heading" id="c-campusselector__sub-heading">eScholarship at &hellip;</div>
+            <div className="c-campusselector__items" aria-labelledby="c-campusselector__sub-heading" role="list">
+              {this.campusSelector(this.props.campuses)}
+            </div>
           </div>
         </details>
       </div>

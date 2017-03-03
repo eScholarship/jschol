@@ -20,6 +20,7 @@
   display: inline-block;
   position: relative;
   height: $element-height;
+  margin-bottom: 5px;
   padding: 0 35px 0 10px;
   border: 1px solid $color-dark-gray;
   color: $color-dark-gray;
@@ -126,7 +127,7 @@
 .c-nav__sub-button {
   @extend %c-nav__item;
   position: relative;
-  border-top: none;
+  border-bottom: none;
   user-select: none;
 
   @include bp(screen3) {
@@ -163,7 +164,7 @@
     top: auto;
     left: (-$spacing-sm);
     width: 200px;
-    max-height: 340px;
+    max-height: 360px;
     transform: translateX(0);
     overflow: auto;
   }

@@ -1,8 +1,8 @@
-// ##### Tab Content 5 Component ##### //
+// ##### Tab Comments Component ##### //
 
 import React from 'react'
 
-class TabContent5Comp extends React.Component {
+class TabCommentsComp extends React.Component {
   render() {
     return (
       <div className="c-tab5">
@@ -12,4 +12,4 @@ class TabContent5Comp extends React.Component {
   }
 }
 
-module.exports = TabContent5Comp;
+module.exports = TabCommentsComp;

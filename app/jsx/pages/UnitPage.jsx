@@ -1,13 +1,10 @@
 // ##### Unit Page ##### //
 // this.props = {
-//   unitData: {id: , name: , type: , extent: {count: , pub_year: {start: , end: }, about: }}
-//   unitHeader: {logo: , nav_bar: , facebook: , twitter: }
+//   unit: {id: , name: , type: , is_active }}
+//   header: {breadcrumb: [], campusID: , campusName: , campuses: [], logo: , nav_bar: [], social: }
 //   content: { page content },
-//   campusID: ,
-//   campusName: ,
-//   campuses: [], 
-//   breadcrumb: [],
-//   appearsIn: ,
+//   marquee: {about: , carousel: , extent: }
+//   sidebar: []
 // }
 
 import React from 'react'
@@ -15,56 +12,72 @@ import { Link } from 'react-router'
 
 import PageBase from './PageBase.jsx'
 import Header2Comp from '../components/Header2Comp.jsx'
-import SubheaderComp from '../components/SubheaderComp.jsx'
+import Subheader2Comp from '../components/Subheader2Comp.jsx'
 import NavBarComp from '../components/NavBarComp.jsx'
 import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
 import DepartmentLayout from '../layouts/DepartmentLayout.jsx'
 import SeriesLayout from '../layouts/SeriesLayout.jsx'
 import JournalLayout from '../layouts/JournalLayout.jsx'
+import UnitSearchLayout from '../layouts/UnitSearchLayout.jsx'
 
 class UnitPage extends PageBase
 {
   // PageBase will fetch the following URL for us, and place the results in this.state.pageData
+  // will likely at some point want to move these (search, home, pages) to different extensions of PageBase,
+  // as all kinds of CMS-y stuff will live here, though perhaps not, to capitalize on React's
+  // diff-ing of pages - all these different pages have quite a few of the same components:
+  // header, footer, nav, sidebar. I think when React diff's the page, if it's a new component
+
   pageDataURL() {
-    return "/api/unit/" + this.props.params.unitID
+    if (this.props.params.pageName) {
+      if (this.props.params.pageName === 'search') {
+        return "/api/unit/" + this.props.params.unitID + "/search/" + this.props.location.search
+      } else {
+        return "/api/unit/" + this.props.params.unitID + "/" + this.props.params.pageName
+      }
+    }
+    return "/api/unit/" + this.props.params.unitID + "/home"
   }
 
+  // TODO: each of the content layouts currently include the sidebars, 
+  // but this should get stripped out and handled here in UnitPage
   renderData(data) { 
     var contentLayout;
-    if (data.unitData.type === 'oru') {
-      contentLayout = (<DepartmentLayout data={data}/>);
-    } else if (data.unitData.type === 'series') {
-      contentLayout = (<SeriesLayout data={data}/>);
-    } else if (data.unitData.type === 'journal') {
-      contentLayout = (<JournalLayout data={data}/>);
+    if (this.props.params.pageName === 'search') {
+      contentLayout = (<UnitSearchLayout unit={data.unit} data={data.content}/>);
     } else {
-      contentLayout = (
-        <div>
-        <h2>Unit {data.unitData.id}</h2>
-        <div>
-          Info:
-          <ul>
-            <li>Name: {data.unitData.name}</li>
-            <li>Type: {data.unitData.type}</li>
-          </ul>
-        </div>
-        </div>
-      );
+      data.marquee.carousel = true;
+      if (data.unit.type === 'oru') {
+        contentLayout = (<DepartmentLayout unit={data.unit} data={data.content} marquee={data.marquee}/>);
+      } else if (data.unit.type === 'series') {
+        contentLayout = (<SeriesLayout unit={data.unit} data={data.content} marquee={data.marquee}/>);
+      } else if (data.unit.type === 'journal') {
+        contentLayout = (<JournalLayout unit={data.unit} data={data.content} marquee={data.marquee}/>);
+      } else {
+        contentLayout = (
+          <div>
+          <h2>Unit {data.unit.id}</h2>
+          <div>
+            Info:
+            <ul>
+              <li>Name: {data.unit.name}</li>
+              <li>Type: {data.unit.type}</li>
+            </ul>
+          </div>
+          </div>
+        );
+      }
     }
     return (
       <div>
-        <Header2Comp type={data.unitData.type} unitID={data.unitData.id} />
-        <SubheaderComp
-          type={data.unitData.type}
-          unitID={data.unitData.id}
-          unitName={data.unitData.name}
-          logo={data.unitHeader.logo}
-          campusID={data.campusID}
-          campusName={data.campusName}
-          campuses={data.campuses}/>
+        <Header2Comp type={data.unit.type} unitID={data.unit.id} />
+        <Subheader2Comp unit={data.unit} logo={data.header.logo} 
+          campusID={data.header.campusID}
+          campusName={data.header.campusName}
+          campuses={data.header.campuses}/>
         <NavBarComp 
-          navBar={data.unitHeader.nav_bar} unitData={data.unitData} socialProps={data.unitHeader.social} />
-        <BreadcrumbComp array={data.breadcrumb} />
+          navBar={data.header.nav_bar} unit={data.unit} socialProps={data.header.social} />
+        <BreadcrumbComp array={data.header.breadcrumb} />
         {contentLayout}
       </div>
     )

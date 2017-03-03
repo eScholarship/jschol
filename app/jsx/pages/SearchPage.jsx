@@ -6,8 +6,7 @@ import { Link } from 'react-router'
 import Form from 'react-router-form'
 
 import PageBase from './PageBase.jsx'
-import Header1Comp from '../components/Header1Comp.jsx'
-import NavComp from '../components/NavComp.jsx'
+import Subheader1Comp from '../components/Subheader1Comp.jsx'
 import ScholWorksComp from '../components/ScholWorksComp.jsx'
 import FilterComp from '../components/FilterComp.jsx'
 import ExportComp from '../components/ExportComp.jsx'
@@ -426,10 +425,7 @@ class SearchPage extends PageBase {
     var facetFormData = {facets: data.facets, count: data.count};
     return(
       <div className="l_search">
-        <Header1Comp />
-        <div className="c-navbar">
-          <NavComp data={[{name: 'Campus Sites', slug: ''}, {name: 'UC Open Access Policies', slug: ''}, {name: 'eScholarship Publishing', slug: ''}]} />
-        </div>
+        <Subheader1Comp navdata={[{name: 'Campus Sites', slug: ''}, {name: 'UC Open Access Policies', slug: ''}, {name: 'eScholarship Publishing', slug: ''}]} />
         <ExportComp />
         <div className="c-columns">
           <aside>

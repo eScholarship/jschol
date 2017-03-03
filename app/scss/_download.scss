@@ -1,56 +1,41 @@
 // ##### Download Component ##### //
 
 .c-download {
-  display: flex;
-  position: relative;
+  display: inline-flex;
+  margin-right: $spacing-sm;
   margin-bottom: $spacing-sm;
-
-  @include bp(screen2) {
-    display: inline-flex;
-    margin-right: $spacing-sm;
-    margin-bottom: 0;
-  }
-
 }
 
 .c-download__button {
-  padding-right: $spacing-sm;
-  padding-left: $spacing-sm;
+  padding: 0 $spacing-sm;
   border: none;
   border-right: 1px solid $color-white;
+  border-radius: $round-corner 0 0 $round-corner;
   background-color: $color-teal;
   color: $color-white;
 }
 
 .c-download__formats {
-  flex: 1 0 auto;
 
   summary {
-    height: $element-height;
+    position: relative;
+    min-height: $element-height;
+    padding-right: 25px;
     padding-left: $spacing-sm;
+    border-radius: 0 $round-corner $round-corner 0;
     background-color: $color-teal;
     color: $color-white;
     line-height: $element-height;
     user-select: none;
-
-    @include bp(screen2) {
-      padding-right: 25px;
-    }
 
     &::after {
       position: absolute;
       top: 0;
       right: $spacing-sm;
       bottom: 0;
-      padding-right: 7px;
-      padding-left: 7px;
+      padding: 0 7px;
       background: url('../images/icon_arrow-down-white.svg') no-repeat center / 13px;
       content: '';
-
-      @include bp(screen2) {
-        right: 0;
-        width: 20px;
-      }
 
     }
 
@@ -70,9 +55,9 @@
 
 .c-download__menu {
   position: absolute;
-  right: 0;
-  left: 0;
-  margin: $spacing-sm 0 0;
+  right: $spacing-sm;
+  left: $spacing-sm;
+  margin-top: 5px;
   background-color: lighten($color-black, 35%);
   z-index: 1;
 
@@ -82,8 +67,8 @@
   }
 
   @include bp(screen2) {
-    right: auto;
-    min-width: 230px;
+    left: $spacing-md;
+    width: 230px;
   }
 
 }

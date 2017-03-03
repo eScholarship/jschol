@@ -41,16 +41,18 @@ class ScholWorksComp extends React.Component {
       unitId = this.props.result.unitInfo.unitId;
     }
 
-    var authorList = this.props.result.authors.map(function(author, i, a) {
-      if (i === a.length-1) {
-        return (<span key={author.name}><Link to={"/search/?q="+author.name}>{author.name}</Link></span>);
-      } else {
-        return (<span key={author.name}><Link to={"/search/?q="+author.name}>{author.name}</Link>; </span>);
-      }
-    });
+    if (this.props.result.authors) {
+      var authorList = this.props.result.authors.map(function(author, i, a) {
+        if (i === a.length-1) {
+          return (<span key={author.name}><Link to={"/search/?q="+author.name}>{author.name}</Link></span>);
+        } else {
+          return (<span key={author.name}><Link to={"/search/?q="+author.name}>{author.name}</Link>; </span>);
+        }
+      });
+    }
 
     var supp_files = this.props.result.supp_files.map(function(supp_file) {
-      if (true || supp_file.count >= 1) {
+      if (supp_file.count >= 1) {
         var display;
         if (supp_file.type === 'video' || supp_file.type === 'image') {
           display = supp_file.count != 1 ? supp_file.type + 's' : supp_file.type;
@@ -92,21 +94,27 @@ class ScholWorksComp extends React.Component {
               <Link to={"/item/"+this.props.result.id.replace(/^qt/, "")}>{this.props.result.title}</Link>
             </h2>
           </heading>
-          <div className="c-scholworks__author">
-            {authorList}
-          </div>
-          <div className="c-scholworks__publication">
-            <Link to={"/unit/" + unitId}>{publishingInfo}</Link> ({this.props.result.pub_year})
-          </div>
-          <div className="c-scholworks__abstract">
-            <p>{this.props.result.abstract}</p>
-          </div>
+          {authorList && 
+            <div className="c-scholworks__author">
+              {authorList}
+            </div>
+          }
+          {this.props.result.pub_year && publishingInfo && 
+            <div className="c-scholworks__publication">
+              <Link to={"/unit/" + unitId}>{publishingInfo}</Link> ({this.props.result.pub_year})
+            </div>
+          }
+          {this.props.result.abstract && 
+            <div className="c-scholworks__abstract">
+              <p>{this.props.result.abstract}</p>
+            </div>
+          }
           <div className="c-scholworks__media">
             <ul className="c-scholworks__media-list">{ supp_files }</ul>
-            <img className="c-scholworks__rights" src="images/icon_cc-by.svg" alt="cc"/>
+            {this.props.result.rights && this.props.result.rights !== 'public' && <img className="c-scholworks__rights" src="/images/icon_cc-by.svg" alt="cc"/>}
           </div>
         </div>
-        <img className="c-scholworks__article-preview" src="images/temp_article.png" alt="article"/>
+        {this.props.result.thumbnail && <img className="c-scholworks__article-preview" src="/images/temp_article.png" alt="article"/>}
       </section>
     )
   }

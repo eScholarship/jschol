@@ -2,7 +2,7 @@
 import React from 'react'
 import $ from 'jquery'
 import _ from 'lodash'
-import { Broadcast } from 'react-broadcast'
+import { Broadcast, Subscriber } from 'react-broadcast'
 
 import Header1Comp from '../components/Header1Comp.jsx'
 import FooterComp from '../components/FooterComp.jsx'
@@ -99,17 +99,22 @@ class PageBase extends React.Component
 
   render() {
     return (
-      <Broadcast channel="cms" value={ { isPageEditable: this.isPageEditable(),
-                                         isEditingPage: this.state.isEditingPage,
-                                         onEditingPageChange: this.onEditingPageChange,
-                                         modules: this.state.cmsModules } }>
-        <div>
-          { this.state.error ? this.renderError()
-            : this.state.pageData ? this.renderData(this.state.pageData)
-            : this.renderLoading() }
-          <FooterComp/>
-        </div>
-      </Broadcast>
+      <Subscriber channel="adminLogin">
+        { adminLogin =>
+          <Broadcast channel="cms" value={ { isPageEditable: this.isPageEditable(),
+                                             isEditingPage: this.state.isEditingPage,
+                                             onEditingPageChange: this.onEditingPageChange,
+                                             modules: this.state.cmsModules,
+                                             adminLogin: adminLogin } }>
+            <div>
+              { this.state.error ? this.renderError()
+                : this.state.pageData ? this.renderData(this.state.pageData)
+                : this.renderLoading() }
+              <FooterComp/>
+            </div>
+          </Broadcast>
+        }
+      </Subscriber>
     )
   }
 

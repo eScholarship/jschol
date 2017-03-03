@@ -1,7 +1,166 @@
-# def modifyUnit()
-#   unit = $unitsHash['uclalaw_apalj']
-#   currentAttrs = JSON.parse(unit.attrs)
-#
+def traverseHierarchyUp(arr)
+  if ['root', nil].include? arr[0][:id]
+    return arr
+  end
+  unit = $unitsHash[$hierByUnit[arr[0][:id]][0].ancestor_unit]
+  traverseHierarchyUp(arr.unshift({name: unit.name, id: unit.id}))
+end
+
+# Generate breadcrumb and header content for Unit-branded pages
+def getUnitHeader(unit, attrs=nil)
+  if !attrs then attrs = JSON.parse(unit[:attrs]) end
+  campusID = UnitHier.where(unit_id: unit.id).where(ancestor_unit: $activeCampuses.keys).first.ancestor_unit
+  
+  header = {
+    :campusID => campusID,
+    :campusName => $unitsHash[campusID].name,
+    :campuses => $activeCampuses.values.map { |c| {id: c.id, name: c.name} }.unshift({id: "", name: "eScholarship at..."}),
+    :logo => attrs['logo'],
+    :nav_bar => attrs['nav_bar'],
+    :social => {
+      :facebook => attrs['facebook'],
+      :twitter => attrs['twitter'],
+      :rss => attrs['rss']
+    },
+    :breadcrumb => traverseHierarchyUp([{name: unit.name, id: unit.id}])
+  }
+  
+  # if this unit doesn't have a nav_bar, get the next unit up the hierarchy's nav_bar
+  if !header[:nav_bar]
+    ancestor = $hierByUnit[unit.id][0].ancestor
+    until header[:nav_bar] || ancestor.id == 'root'
+      header[:nav_bar] = JSON.parse(ancestor[:attrs])['nav_bar']
+      ancestor = $hierByUnit[ancestor.id][0].ancestor
+    end
+  end
+
+  return header
+end
+
+def getUnitPageContent(unit, attrs, pageName)
+  if pageName == "home"
+    if unit.type == 'oru'
+      return getORULandingPageData(unit.id)
+    end
+    if unit.type == 'series'
+      return getSeriesLandingPageData(unit)
+    end
+    if unit.type == 'journal'
+      return getJournalLandingPageData(unit.id)
+    end
+  elsif pageName == "search"
+    return getUnitSearchData(unit)
+  end
+end
+
+def getUnitMarquee(unit, attrs)
+  return {
+    :extent => extent(unit.id, unit.type),
+    :about => attrs['about'],
+    :carousel => attrs['carousel']
+  }
+end
+
+# Get ORU-specific data for Department Landing Page
+def getORULandingPageData(id)
+  children = $hierByAncestor[id]
+
+  return {
+    :series => children ? children.select { |u| u.unit.type == 'series' }.map { |u| seriesPreview(u) } : [],
+    :journals => children ? children.select { |u| u.unit.type == 'journal' }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : [],
+    :related_orus => children ? children.select { |u| u.unit.type != 'series' && u.unit.type != 'journal' }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : []
+  }
+end
+
+# Preview of Series for a Department Landing Page
+def seriesPreview(u)
+  items = UnitItem.filter(:unit_id => u.unit_id, :is_direct => true)
+  count = items.count
+  preview = items.limit(3).map(:item_id)
+  itemData = readItemData(preview)
+
+  {
+    :unit_id => u.unit_id,
+    :name => u.unit.name,
+    :count => count,
+    :items => itemResultData(preview, itemData)
+  }
+end
+
+def getSeriesLandingPageData(unit)
+  parent = $hierByUnit[unit.id]
+  if parent.length > 1
+    pp parent
+  else
+    children = parent ? $hierByAncestor[parent[0].ancestor_unit] : []
+  end
+
+  response = unitSearch({"sort" => ['desc']}, unit)
+  response[:series] = children ? children.select { |u| u.unit.type == 'series' }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : []
+  return response
+end
+
+def getJournalLandingPageData(id)
+  unit = $unitsHash[id]
+  attrs = JSON.parse(unit.attrs)
+  return {
+    display: attrs['magainze'] ? 'magazine' : 'simple',
+    issue: getIssue(id)
+  }
+end
+
+def getIssue(id)
+  issue = Issue.where(:unit_id => id).order(Sequel.desc(:pub_date)).first.values
+  issue[:sections] = Section.where(:issue_id => issue[:id]).order(:ordering).all
+
+  issue[:sections].map! do |section|
+    section = section.values
+    items = Item.where(:section=>section[:id]).order(:ordering_in_sect).to_hash(:id)
+    itemIds = items.keys
+    authors = ItemAuthors.where(item_id: itemIds).order(:ordering).to_hash_groups(:item_id)
+
+    itemData = {items: items, authors: authors}
+
+    section[:articles] = itemResultData(itemIds, itemData)
+
+    next section
+  end
+  return issue
+end
+
+
+
+def unitSearch(params, unit)
+  if unit.type == 'series'
+    resultsListFields = ['thumbnail', 'pub_year', 'publication_information', 'type_of_work', 'rights']
+    params["series"] = [unit.id]
+  elsif unit.type == 'oru'
+    resultsListFields = ['thumbnail', 'pub_year', 'publication_information', 'type_of_work']
+    params["departments"] = [unit.id]
+  elsif unit.type == 'journal'
+    resultsListFields = ['thumbnail', 'pub_year', 'publication_information']
+    params["journals"] = [unit.id]
+  elsif unit.type == 'campus'
+    resultsListFields = ['thumbnail', 'pub_year', 'publication_information', 'type_of_work', 'rights', 'peer_reviewed']
+    params["campuses"] = [unit.id]
+  else
+    #throw 404
+    pp unit.type
+  end
+
+  aws_params = aws_encode(params, [])
+  response = normalizeResponse($csClient.search(return: '_no_fields', **aws_params))
+
+  if response['hits'] && response['hits']['hit']
+    itemIds = response['hits']['hit'].map { |item| item['id'] }
+    itemData = readItemData(itemIds)
+    searchResults = itemResultData(itemIds, itemData, resultsListFields)
+  end
+
+  return {'count' => response['hits']['found'], 'query' => get_query_display(params.clone), 'searchResults' => searchResults}
+end
+
+
 #   newAttrs = {
 #     about: "Here's some sample text about the UCLA School of Law's Asian Pacific American Law Journal. Lalalalala!",
 #     nav_bar: [
@@ -16,10 +175,42 @@
 #      directSubmit: "enabled",
 #      magazine: true
 #   }
-#
-#   attrs = JSON.generate(newAttrs)
-#   unit.update(:attrs => attrs)
-# end
+
+
+def modifyUnit()
+  unit = $unitsHash['uclalaw']
+  currentAttrs = JSON.parse(unit.attrs)
+
+  currentAttrs['nav_bar'] = [
+    {
+      "name": "Unit Home",
+      "slug": ""
+    },
+    {
+      "name": "About",
+      "sub_nav": [
+        {"name": "About Us", "slug": "about-us"},
+        {"name": "Aims & Scope", "slug": "aims-scope"},
+        {"name": "Editorial Board", "slug": "editorial-board"}
+      ]
+    },
+    {
+      "name": "Policies",
+      "url": "http://lmgtfy.com/?q=policies"
+    },
+    {
+      "name": "Submission Guidelines",
+      "slug": "submission-guidelines"
+    },
+    {
+      "name": "Contact",
+      "slug": "contact"
+    }
+  ]
+
+  attrs = JSON.generate(currentAttrs)
+  unit.update(:attrs => attrs)
+end
 
 # def addWidget()
 #   carouselWidget = new Widget({
@@ -44,182 +235,3 @@
 # end
 
 # def addPage()
-
-def getUnitPageData(unitID)
-  # modifyUnit();
-  
-  content_type :json
-  unit = $unitsHash[unitID]
-  attrs = JSON.parse(unit.attrs)
-
-  if !unit.nil?
-    begin
-      unitPage = {
-        unitData: {
-          :id => unitID,
-          :name => unit.name,
-          :type => unit.type,
-          :extent => extent(unitID, unit.type),
-          :about => attrs['about']
-        },
-        unitHeader: {
-          :logo => attrs['logo'],
-          :nav_bar => attrs['nav_bar'],
-          :social => {
-            :facebook => attrs['facebook'],
-            :twitter => attrs['twitter'],
-            :rss => attrs['rss']
-          }
-        }
-      }
-      
-      body = unitPage
-      
-      if unit.type == 'oru'
-        body[:content] = getORULandingPageData(unitID)
-      end
-      if unit.type == 'series'
-        body[:content] = getSeriesLandingPageData(unitID)
-      end
-      if unit.type == 'journal'
-        body[:content] = getJournalLandingPageData(unitID)
-      end
-      return body.merge(getUnitItemHeaderElements('unit', unitID)).to_json
-    rescue Exception => e
-      halt 404, e.message
-    end
-  else
-    halt 404, "Unit not found"
-  end
-end
-
-# items = UnitItem.filter(:unit_id => unitID, :is_direct => true)
-# children = $hierByAncestor[unitID]
-# parents = $hierByUnit[unitID]
-# {
-#   :parents => parents ? parents.map { |u| u.ancestor_unit } : [],
-#   :children => children ? children.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : [],
-#   :nItems => items.count,
-#   :items => items.limit(10).map { |pair| pair.item_id },
-#   :attrs => unit.attrs
-# }
-
-# Get ORU-specific data for Department Landing Page
-def getORULandingPageData(id)
-  children = $hierByAncestor[id]
-
-  return {
-    :series => children ? children.select { |u| u.unit.type == 'series' }.map { |u| seriesPreview(u) } : [],
-    :journals => children ? children.select { |u| u.unit.type == 'journal' }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : [],
-    :related_orus => children ? children.select { |u| u.unit.type != 'series' && u.unit.type != 'journal' }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : []
-  }
-end
-
-def seriesPreview(u)
-  items = UnitItem.filter(:unit_id => u.unit_id, :is_direct => true)
-  count = items.count
-  preview = items.limit(3).map { |pair| Item[pair.item_id] }
-
-  items = []
-  for item in preview
-    itemHash = {
-      item_id: item.id,
-      title: item.title
-    }
-    itemAttrs = JSON.parse(item.attrs)
-    itemHash[:abstract] = itemAttrs['abstract']
-
-    authors = ItemAuthors.where(item_id: item.id).map(:attrs).map { |author| JSON.parse(author)["name"] }
-    itemHash[:authors] = authors
-    items << itemHash
-  end
-
-  {
-    :unit_id => u.unit_id,
-    :name => u.unit.name,
-    :count => count,
-    :items => items,
-  }
-end
-
-def getSeriesLandingPageData(id)
-  parent = $hierByUnit[id]
-  if parent.length > 1
-    pp parent
-  else
-    children = parent ? $hierByAncestor[parent[0].ancestor_unit] : []
-  end
-
-  aws_params = 
-  {
-    query_parser: "structured",
-    size: 10,
-    sort: "pub_date desc",
-    start: 0,
-    query: "(term field=series '#{id}')"
-  }
-  response = normalizeResponse($csClient.search(return: '_no_fields', **aws_params))
-
-  if response['hits'] && response['hits']['hit']
-    itemIds = response['hits']['hit'].map { |item| item['id'] }
-    searchResults = itemResultData(itemIds)
-  end
-
-  aws_params[:rows] = 10
-  return {
-    :series => children ? children.select { |u| u.unit.type == 'series' }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : [],
-    :response => searchResults,
-    :count => response['hits']['found'],
-    :query => aws_params,
-  }
-end
-
-def getJournalLandingPageData(id)
-  unit = $unitsHash[id]
-  attrs = JSON.parse(unit.attrs)
-  return {
-    display: attrs['magainze'] ? 'magazine' : 'simple',
-    issue: getIssue(id)
-  }
-end
-
-def getIssue(id)
-  issue = Issue.where(:unit_id => id).order(Sequel.desc(:pub_date)).first.values
-  issue[:sections] = Section.where(:issue_id => issue[:id]).order(:ordering).all
-
-  issue[:sections].map! do |section|
-    section = section.values
-    items = Item.where(:section=>section[:id]).order(:ordering_in_sect).select_map([:id, :title, :attrs])
-    itemIds = items.map { |article| article[0] }
-    authors = ItemAuthors.where(item_id: itemIds).order(:ordering).to_hash_groups(:item_id)
-    section[:articles] = []
-
-    items.each do |article|
-      itemAuthors = authors[article[0]]
-      attrs = JSON.parse(article[2])
-      itemHash = {
-        :id => article[0],
-        :title => article[1],
-        :authors => itemAuthors.map { |author| JSON.parse(author.attrs) },
-        :abstract => attrs[:abstract],
-        :supp_files => [{:type => 'video'}, {:type => 'image'}, {:type => 'pdf'}, {:type => 'audio'}]
-      }
-
-      for supp_file_hash in itemHash[:supp_files]
-        if attrs['supp_files']
-          supp_file_hash[:count] = attrs['supp_files'].count { |supp_file| supp_file['mimeType'].start_with?(supp_file_hash[:type])}
-        else
-          supp_file_hash[:count] = 0
-        end
-      end
-      section[:articles] << itemHash
-    end
-    next section
-  end
-  return issue
-end
-
-# this was a stub for the item view in a series preview on a department landing page, 
-# but I have a feeling this code can be generalized and will probably look much like 
-# the data we get in search results for the item preview
-# def itemPreview(i)

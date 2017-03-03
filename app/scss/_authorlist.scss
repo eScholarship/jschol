@@ -18,14 +18,36 @@
 
 .c-authorlist__list {
   @extend %no-bullet-ul;
+  max-height: 3.2em; // truncate beyond 3 lines per jquery.dotdotdot
 
   li {
-    display: inline;
+    display: inline-block;
 
-    &::after {
-      content: ' ';
+    &:nth-last-child(n+4) {
+
+      &::after {
+        content: '\00a0'; // no-break space
+      }
+
     }
 
+    &:nth-last-child(n+3) {
+
+      &::after {
+      content: ';\00a0'; // semicolon with no-break space
+      }
+
+    }
+
+  }
+
+}
+
+.c-authorlist__list-more-link {
+
+  &::before {
+    display: inline-block;
+    content: ';\00a0';
   }
 
 }

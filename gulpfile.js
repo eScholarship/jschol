@@ -159,7 +159,8 @@ gulp.task('watch', function() {
 gulp.task('scss-lint', function() {
   return gulp.src(['app/scss/**/*.scss', '!app/scss/vendor/**/*.scss'])
     .pipe(scsslint({
-      'config': 'config/scss-lint-config.yml' // Settings for linters. See: https://github.com/brigade/scss-lint/tree/master/lib/scss_lint/linter
+      'config': 'config/scss-lint-config.yml', // Settings for linters. See: https://github.com/brigade/scss-lint/tree/master/lib/scss_lint/linter
+      'bundleExec': true
     }));
 });
 
