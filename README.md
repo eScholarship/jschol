@@ -69,3 +69,28 @@ Steps to get the app running on your local machine
 
 7. Browse to `http://localhost:4001/unit/root`, or `http://localhost:4001/item/08s7w2fd`, or `http://localhost:4001/search`
 
+Steps to set up a new database and index
+----------------------------------------
+
+Configure:
+* `config/database.yaml`
+* `config/cloudSearch.yaml`
+* `config/queueDb.yaml`
+
+Test AWS connectivity:
+* `aws cloudsearch list-domain-names --region us-west-2`
+
+Create database tables:
+* `bin/sequel -m migrations/ config/database.yaml`
+* `bin/sequel config/database.yaml`, then enter `DB.tables`: should see list of tables
+
+Import units:
+* `tools/convert.rb --units`
+
+Import items:
+* `tools/updIndex.rb`
+* `tools/idxStatus.rb` ... repeat until "Processing" becomes "Active"
+* `mkdir /apps/eschol/erep/xtf/eschol5-index`
+* `(tools/convert.rb --items 2>&1 > convert.log &)`
+* tail -f convert.log
+
