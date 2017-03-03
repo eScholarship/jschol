@@ -168,9 +168,9 @@ class DrawerComp extends React.Component {
   }
   
   render() {
-    var data = this.props.data.header.nav_bar;
+    var data = 'header' in this.props.data && 'nav_bar' in this.props.data.header ? this.props.data.header.nav_bar : undefined;
     
-    var sidebarContent = (
+    var sidebarContent = data ? (
       <div>
         <div className="c-drawer__heading">
           Navigation Items
@@ -185,19 +185,20 @@ class DrawerComp extends React.Component {
           </div>
         </div>
       </div>
-    );
+    ) : (<div></div>);
     return (
       <Subscriber channel="cms">
         { cms =>  
-          <Sidebar 
-            sidebar={sidebarContent} 
-            open={cms.isEditingPage}
-            docked={cms.isEditingPage} 
-            onSetOpen={this.onSetSidebarOpen}
-            sidebarClassName="c-drawer">
+          ('header' in this.props.data && 'nav_bar' in this.props.data.header) ?
+            <Sidebar 
+              sidebar={sidebarContent} 
+              open={cms.isEditingPage}
+              docked={cms.isEditingPage} 
+              onSetOpen={this.onSetSidebarOpen}
+              sidebarClassName="c-drawer">
         
-            {this.props.children}
-          </Sidebar>
+              {this.props.children}
+            </Sidebar> : <div>{this.props.children}</div>
         }
       </Subscriber>
     )
