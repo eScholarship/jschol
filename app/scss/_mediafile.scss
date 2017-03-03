@@ -1,0 +1,140 @@
+// ##### Media File Component ##### //
+
+%c-mediafile {
+  @extend %clearfix;
+  display: flex;
+  flex-direction: column;
+
+  @include bp(screen1) {
+    display: block;
+    position: relative;
+
+    @supports (display: grid) {
+      display: grid;
+      grid-template-columns: 50% 50%;
+      grid-template-rows: auto 1fr auto;
+      grid-column-gap: $spacing-sm;
+    }
+
+  }
+
+}
+
+.c-mediafile {
+  @extend %c-mediafile;
+}
+
+.c-mediafile--selected {
+  @extend %c-mediafile;
+  background-color: $color-light-gray;
+}
+
+%c-mediafile__heading {
+  max-height: 2.1em; // truncate beyond 2 lines per jquery.dotdotdot
+  margin: 0 0 $spacing-sm;
+  color: $color-teal;
+  font-size: 1.2em;
+  font-weight: normal;
+
+  &::before {
+    margin-right: 8px;
+    padding: 8px;
+    background: no-repeat center / 16px;
+  }
+
+  @include bp(screen1) {
+    width: 48%;
+    float: right;
+
+    @supports (display: grid) {
+      width: auto;
+      grid-column: 2 / 3;
+      grid-row: 1 / 2;
+    }
+
+  }
+
+}
+
+.c-mediafile__heading {
+  @extend %c-mediafile__heading;
+}
+
+// ***** Media-specific Icons Within Heading ***** //
+
+// Example: c-mediafile__heading--picture
+
+@each $mediafile-type, $mediafile-icon in
+  (audio, icon_volume-up),
+  (picture, icon_picture) {
+
+  .c-mediafile__heading--#{$mediafile-type} {
+    @extend %c-mediafile__heading;
+
+    &::before {
+      background-image: inline('../images/#{$mediafile-icon}.svg');
+      content: '';
+    }
+
+  }
+
+}
+
+.c-mediafile__image {
+  display: block;
+  height: 140px;
+  object-fit: cover;
+
+  @include bp(screen1) {
+    width: 48%;
+    float: left;
+
+    @supports (display: grid) {
+      width: 100%;
+      grid-row: 1 / 4;
+    }
+
+  }
+
+}
+
+.c-mediafile__button {
+  align-self: flex-end;
+
+  @include bp(screen1) {
+    position: absolute;
+    bottom: 0;
+    left: 50.5%;
+
+    @supports (display: grid) {
+      position: static;
+      margin-left: (-$spacing-sm);
+      grid-column: 2 / 3;
+      justify-self: start;
+    }
+
+  }
+
+}
+
+.c-mediafile__description {
+  max-height: 3.2em; // truncate beyond 3 lines per jquery.dotdotdot
+
+  @include bp(screen1) {
+    width: 48%;
+    float: right;
+
+    @supports (display: grid) {
+      width: auto;
+      margin-bottom: 0;
+      grid-column: 2 / 3;
+      grid-row: 2 / 3;
+    }
+
+  }
+
+}
+
+// *[class^='c-mediafile__heading'] {
+//   border: $bred;
+// }

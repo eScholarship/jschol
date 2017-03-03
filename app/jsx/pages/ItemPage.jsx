@@ -3,7 +3,8 @@
 import React from 'react'
 import PageBase from './PageBase.jsx'
 import Header2Comp from '../components/Header2Comp.jsx'
-import SubheaderComp from '../components/SubheaderComp.jsx'
+import Subheader2Comp from '../components/Subheader2Comp.jsx'
+import NavBarComp from '../components/NavBarComp.jsx'
 import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
 import TabsComp from '../components/TabsComp.jsx'
 import JumpComp from '../components/JumpComp.jsx'
@@ -20,18 +21,17 @@ class ItemPage extends PageBase {
   changeTab = tab_id => { this.setState({currentTab: tab_id}) }
 
   renderData = data => {
-    let unitID = data.appearsIn.length > 0  && data.appearsIn[0]["id"]
-    let unitName = data.appearsIn.length > 0  && data.appearsIn[0]["name"]
     return (
       <div className="l-item">
-        <Header2Comp type={data.type} unitID={unitID} />
-        <SubheaderComp unit={data.unit}
-                        campusID={data.header.campusID}
-                        campusName={data.header.campusName}
-                        campuses={data.header.campuses}/>
-        {/* <NavBarComp 
-          navBar={data.unitDisplay.nav_bar} unitId={data.unitData.id}/> */ }
-        <BreadcrumbComp array={data.header.breadcrumb} />
+        <Header2Comp type={data.type} unitID={data.appearsIn.length > 0  && data.appearsIn[0]["id"]} />
+        {data.header && <Subheader2Comp unit={data.unit}
+                                        campusID={data.header.campusID}
+                                        campusName={data.header.campusName}
+                                        campuses={data.header.campuses}/>}
+        {data.header && <NavBarComp navBar={data.header.nav_bar} 
+                                    unit={data.unit} 
+                                    socialProps={data.header.social} />}
+        <BreadcrumbComp array={data.header ? data.header.breadcrumb : null} />
         <div className="c-columns">
           <main>
             <TabsComp currentTab={this.state.currentTab}

@@ -3,14 +3,8 @@
 .c-navbar {
   display: flex;
   align-items: center;
-  margin-bottom: $spacing-md;
-  padding-top: $spacing-sm;
-
-  @include bp(screen2) {
-    margin: 0 (-$spacing-sm) $spacing-md;
-    padding: $spacing-sm;
-    border-bottom: 1px solid $color-light-gray;
-    background-color: $color-white;
-  }
-
+  margin: 0 (-$spacing-sm) $spacing-md;
+  padding: $spacing-sm;
+  border-bottom: 1px solid $color-light-gray;
+  background-color: $color-white;
 }

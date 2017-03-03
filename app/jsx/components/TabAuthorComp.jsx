@@ -1,8 +1,8 @@
-// ##### Item Page - "Tab 4" Author and Article Info Component ##### //
+// ##### Tab Author & Article Component ##### //
 
 import React from 'react'
 
-class TabContent4Comp extends React.Component {
+class TabAuthorComp extends React.Component {
   render() {
     let p = this.props,
         authorList = p.authors.map(function(a, i) {return (
@@ -49,4 +49,4 @@ class TabContent4Comp extends React.Component {
   }
 }
 
-module.exports = TabContent4Comp;
+module.exports = TabAuthorComp;

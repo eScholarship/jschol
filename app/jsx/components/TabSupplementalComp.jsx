@@ -1,8 +1,8 @@
-// ##### Tab Content 2 Component - Supplemental Materials ##### //
+// ##### Tab Supplemental Material Component ##### //
 
 import React from 'react'
 
-class TabContent2Comp extends React.Component {
+class TabSupplementalComp extends React.Component {
   render() {
     let supp_files = this.props.attrs.supp_files,
       mimeTypes = [] 
@@ -78,4 +78,4 @@ class FileDisplayList extends React.Component {
   }
 }
 
-module.exports = TabContent2Comp;
+module.exports = TabSupplementalComp;

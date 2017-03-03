@@ -102,3 +102,24 @@ Amy added the following:
   (merged)    /scss/main.scss (added @import 'share')
   (merged)    /jsx/components/ShareComp.jsx
   (added)     /images/icon_envelope-o-white.svg
+
+
+2/28/17
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's 16c5162ab3a096093bf7f5c9f055ff77b3f7652a, 2017-02-17 <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+Andy added all scss and image changes since last.
+As well as:
+(merged)   jsx/components/AuthorListComp.jsx
+(merged)   jsx/components/CampusSelectorComp.jsx
+(merged)   jsx/components/Header1Comp.jsx
+(merged)   jsx/components/Header2Comp.jsx
+(merged)   jsx/components/PubLocationComp.jsx
+(merged)   jsx/components/ShareComp.jsx
+(merged)   jsx/components/Subheader2Comp.jsx
+(merged)   jsx/components/TabContent1Comp.jsx
+
+
+

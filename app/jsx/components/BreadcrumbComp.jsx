@@ -5,21 +5,28 @@ import { Link } from 'react-router'
 
 class BreadcrumbComp extends React.Component {
   render() {
-    var lastN = this.props.array.length - 1
+    // Items with no unit parent will not display a NavBarComp. Yet, the NavBarComp
+    // includes a bottom margin of 20px that gives some vertical breathing room to
+    // whatever is below it. So this is a tempoprary style fix until UX can address.
+    let missingNavStyle = this.props.array ? null : { margin: '20px 0px 20px' },
 
-    var nodes = this.props.array.map(function(node, i) {
-      if (node.id == 'root') {
-        return (
-          <Link className={(i==lastN) ? "c-breadcrumb-link--active": null} to="/" key={i}>{node.name}</Link>
-        )
-      }
-      return (
-        <Link className={(i==lastN) ? "c-breadcrumb-link--active": null} to={"/unit/" + node.id} key={i}>{node.name}</Link>
-      )
-    });
+        lastN = this.props.array ? this.props.array.length - 1 : 0,
+        nodes = this.props.array ? this.props.array.map(function(node, i) {
+          if (node.id == 'root') {
+            return (
+              <Link className={(i==lastN) ? "c-breadcrumb-link--active": null} to="/" key={i}>{node.name}</Link>
+            )
+          }
+          return (
+            <Link className={(i==lastN) ? "c-breadcrumb-link--active": null} to={"/unit/" + node.id} key={i}>{node.name}</Link>
+          )
+        })
+        : 
+          <Link to="/">eScholarship</Link>
+        ;
 
     return (
-      <nav className="c-breadcrumb">
+      <nav className="c-breadcrumb" style={missingNavStyle}>
         {nodes}
       </nav>
     )

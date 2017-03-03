@@ -13,24 +13,28 @@ abbr {
 
 // Remove rounded corners from WebKit search fields on iOS:
 
-// scss-lint:disable ImportantRule
 input[type='search'] {
   border-radius: 0 !important;
   appearance: none !important;
 }
 
 summary {
-  min-height: auto !important; // reset details polyfill
   cursor: pointer;
 
   // Remove details arrow icon from webkit browsers:
-  // scss-lint:disable PseudoElement
+  // sass-lint:disable no-vendor-prefixes
   &::-webkit-details-marker {
     display: none;
   }
 
+}
+
+// Remove details polyfill arrow icon (use ::after pseudo element in development instead of ::before)
+
+html.no-details summary {
+
   &::before {
-    display: none !important; // reset details polyfill
+    display: none !important;
   }
 
 }

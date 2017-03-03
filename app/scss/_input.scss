@@ -14,12 +14,13 @@ $input-height: $element-height;
 
   select {
     height: $input-height;
-    padding: 0 30px 0 10px;
+    padding: 0 30px 0 5px;
     border: 1px solid $color-dark-gray;
     border-radius: 0;
     background: inline('../images/icon_arrow-down.svg') right 12px center / 12px no-repeat;
     appearance: none;
 
+    // sass-lint:disable no-vendor-prefixes
     &::-ms-expand { // remove default down arrow for IE 10 and higher
       display: none;
     }
