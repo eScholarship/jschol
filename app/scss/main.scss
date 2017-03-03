@@ -33,6 +33,7 @@
 @import 'columns';
 @import 'datatable';
 @import 'download';
+@import 'drawer';
 @import 'export';
 @import 'facetbox';
 @import 'filter';
@@ -83,11 +84,14 @@
 @import 'ui-library';
 
 body {
+  font-family: 'KievitWeb';
+  overflow-x: hidden;  
+}
+
+.body {
   margin: 0 auto;
   padding: 10px 10px 0;
-  background-color: lighten($color-light-gray, 15%);
-  font-family: 'KievitWeb';
-  overflow-x: hidden;
+  background-color: lighten($color-light-gray, 15%);  
 }
 
 p {
