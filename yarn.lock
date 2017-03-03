@@ -5808,6 +5808,14 @@ react-router@^2.7.0:
     loose-envify "^1.2.0"
     warning "^3.0.0"
 
+react-sidebar@^2.3.0:
+  version "2.3.0"
+  resolved "https://registry.yarnpkg.com/react-sidebar/-/react-sidebar-2.3.0.tgz#8a86df1f7cb7a1bf98b6dd75c47c6689a1877cbe"
+
+react-sortable@^1.2.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/react-sortable/-/react-sortable-1.2.0.tgz#5acd7e1910df665408957035acb5f2354519d849"
+
 react-trumbowyg@^1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/react-trumbowyg/-/react-trumbowyg-1.1.0.tgz#c1e3b20a10d84175cad79dbbdb5e33e0f9744c45"
