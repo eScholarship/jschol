@@ -9,11 +9,13 @@
 }
 
 .c-adminbar__logged-in-msg {
-  float: left;
+  display: inline-block;
+  margin-left: 10px;
+  float: right;
 }
 
 .c-adminbar__edit-pg {
-  float: right;
+  float: left;
 }
 
 .c-adminbar__edit-pg-button {

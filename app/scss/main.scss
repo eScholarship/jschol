@@ -33,6 +33,7 @@
 @import 'checkbox';
 @import 'columns';
 @import 'download';
+@import 'drawer';
 @import 'export';
 @import 'facetbox';
 @import 'filter';
@@ -81,10 +82,13 @@
 @import 'ui-library';
 
 body {
+  font-family: 'KievitWeb';
+  overflow-x: hidden;  
+}
+
+.body {
   margin: 0 auto;
   padding: 10px;
-  font-family: 'KievitWeb';
-  overflow-x: hidden;
 
   @include bp(screen2) {
     background: lighten($color-light-gray, 15%);

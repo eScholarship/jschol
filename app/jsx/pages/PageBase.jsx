@@ -6,6 +6,7 @@ import { Broadcast, Subscriber } from 'react-broadcast'
 
 import Header1Comp from '../components/Header1Comp.jsx'
 import FooterComp from '../components/FooterComp.jsx'
+import DrawerComp from '../components/DrawerComp.jsx'
 
 class PageBase extends React.Component
 {
@@ -96,22 +97,41 @@ class PageBase extends React.Component
   renderData() {
     throw "Derived class must override renderData method"
   }
+  
+  renderContent(adminLogin) {
+    if (this.state.error) {
+      return (<div className="body">
+        {this.renderError()}<FooterComp/>
+      </div>);
+    } else if (adminLogin.loggedIn && this.state.pageData) {
+      return (
+        <DrawerComp data={this.state.pageData}>
+          <div className="body">
+            {this.renderData(this.state.pageData)}
+            <FooterComp/>
+          </div>
+        </DrawerComp>);
+    } else if (this.state.pageData) {
+      return (<div className="body">
+        {this.renderData(this.state.pageData)}<FooterComp/>
+      </div>);
+    } else {
+      return (<div className="body">
+        {this.renderLoading()}<FooterComp/>
+      </div>);
+    }
+  }
 
   render() {
     return (
       <Subscriber channel="adminLogin">
         { adminLogin =>
-          <Broadcast channel="cms" value={ { isPageEditable: this.isPageEditable(),
+          <Broadcast channel="cms" value={ { isPageEditable: true,
                                              isEditingPage: this.state.isEditingPage,
                                              onEditingPageChange: this.onEditingPageChange,
                                              modules: this.state.cmsModules,
                                              adminLogin: adminLogin } }>
-            <div>
-              { this.state.error ? this.renderError()
-                : this.state.pageData ? this.renderData(this.state.pageData)
-                : this.renderLoading() }
-              <FooterComp/>
-            </div>
+            {this.renderContent(adminLogin)}
           </Broadcast>
         }
       </Subscriber>
