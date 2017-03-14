@@ -3,7 +3,7 @@
 $tab-height: $element-height;
 
 .c-tabs {
-  // empty
+  // not used
 }
 
 %c-tabs__buttons {
@@ -116,9 +116,8 @@ $tab-height: $element-height;
 }
 
 .c-tabs__content {
-  margin-top: (-$spacing-sm);
-  margin-bottom: $spacing-sm;
-  padding: $spacing-sm 0;
+  margin: (-$spacing-sm) (-$spacing-sm) $spacing-sm;
+  padding: $spacing-md $spacing-sm;
   background-color: $color-white;
 
   @supports (display: grid) {
@@ -126,6 +125,8 @@ $tab-height: $element-height;
   }
 
   @include bp(screen2) {
+    margin-right: 0;
+    margin-left: 0;
     padding: $spacing-md $spacing-sm $spacing-sm;
   }
 

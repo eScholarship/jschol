@@ -41,7 +41,7 @@
 .o-button__5 {
   @extend %o-button;
   padding-left: 30px;
-  background: url('../images/icon_share-square.svg') no-repeat left 8px center / 16px;
+  background: inline('../images/icon_share-square.svg') no-repeat left 8px center / 16px;
   color: $color-teal;
   font-weight: bold;
 }
@@ -50,12 +50,14 @@
 .o-button__6 {
   @extend %o-button;
   padding-left: 30px;
-  background: $color-teal url('../images/icon_print-white.svg') no-repeat left 8px center / 16px;
+  background: $color-teal inline('../images/icon_print-white.svg') no-repeat left 8px center / 16px;
   color: $color-white;
 }
 
-// no border or background with teal text:
+// no min-height, padding, or background with teal text:
 .o-button__7 {
   @extend %o-button;
+  min-height: 0;
+  padding: 0;
   color: $color-teal;
 }

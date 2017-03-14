@@ -15,6 +15,11 @@
   flex: 1;
 }
 
+.c-itemactions__download {
+  margin-right: $spacing-sm;
+  margin-bottom: $spacing-sm;
+}
+
 %c-itemactions__buttons {
   margin-right: $spacing-sm;
   margin-bottom: $spacing-sm;
@@ -26,7 +31,7 @@
 
 .c-itemactions__button2 {
   @extend %c-itemactions__buttons;
-  background-image: url('../images/icon_book-white.svg');
+  background-image: inline('../images/icon_book-white.svg');
 }
 
 .c-itemactions__items2 {

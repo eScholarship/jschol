@@ -349,7 +349,7 @@ get '/api/browse/depts/:campusID' do |campusID|
     :depts => d.compact
   }
   breadcrumb = [
-    {"name" => "Departments", "url" => "/browse/depts/"+campusID},
+    {"name" => "Academic Units", "url" => "/browse/depts/"+campusID},
     {"name" => unit.name, "url" => "/unit/"+campusID}]
   return body.merge(getHeaderElements(breadcrumb, nil)).to_json
 end
@@ -460,7 +460,7 @@ end
 # Social Media Links  for type = (item|unit)
 get "/api/mediaLink/:type/:id/:service" do |type, id, service| # service e.g. facebook, google, etc.
   content_type :json
-  sharedLink = "http://www.escholarship.com/" + type + "/" + id 
+  sharedLink = "http://www.escholarship.org/" + type + "/" + id 
   title = (type == "item") ? Item["qt"+id].title : $unitsHash[id].name
   case service
     when "facebook"

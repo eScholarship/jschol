@@ -1,0 +1,18 @@
+// ##### Description List ##### //
+
+.c-descriptionlist {
+
+  dt {
+
+    a {
+      @extend %o-textlink__secondary;
+    }
+
+  }
+
+  dd {
+    margin-bottom: $spacing-sm;
+    margin-left: $spacing-md;
+  }
+
+}

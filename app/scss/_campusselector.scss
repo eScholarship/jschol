@@ -58,7 +58,7 @@ $campus-selector-button-width: 30px;
       left: 0;
       border: 1px solid $color-dark-gray;
       border-radius: $round-corner;
-      background: url('../images/icon_arrow-down.svg') no-repeat center / 13px;
+      background: inline('../images/icon_arrow-down.svg') no-repeat center / 13px;
       content: '';
     }
 

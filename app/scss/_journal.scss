@@ -1,5 +1,18 @@
-// ##### Journal Layout ##### //
+// ##### Journal Item ##### //
 
-.l-journal {
-  // not used
+.o-journal1 {
+  @extend %o-textlink__secondary;
+  display: block;
+  width: 120px;
+  margin-bottom: $spacing-md;
+
+  figure {
+    margin: 0;
+
+    img {
+      width: 100%;
+    }
+
+  }
+
 }

@@ -2,7 +2,6 @@
 
 // ***** Global Settings ***** //
 
-
 @import 'variables';
 @import 'mixins';
 @import 'breakpoints';
@@ -17,6 +16,7 @@
 
 // ***** Objects ***** //
 
+@import 'alert';
 @import 'button';
 @import 'columnbox';
 @import 'dividecontent';
@@ -32,6 +32,7 @@
 @import 'checkbox';
 @import 'columns';
 @import 'datatable';
+@import 'descriptionlist';
 @import 'download';
 @import 'drawer';
 @import 'export';
@@ -42,6 +43,7 @@
 @import 'header';
 @import 'infopages';
 @import 'itemactions';
+@import 'itemunavailable';
 @import 'journalinfo';
 @import 'jump';
 @import 'language';
@@ -55,11 +57,13 @@
 @import 'pagination';
 @import 'pubdata';
 @import 'publocation';
+@import 'refinemedia';
 @import 'scholworks';
 @import 'search1';
 @import 'search2';
 @import 'share';
 @import 'sidebarnav';
+@import 'skipnav';
 @import 'sort';
 @import 'socialicons';
 @import 'subheader1';
@@ -84,17 +88,14 @@
 @import 'ui-library';
 
 body {
-  font-family: 'KievitWeb';
-  overflow-x: hidden;  
-}
-
-.body {
   margin: 0 auto;
-  padding: 10px 10px 0;
-  background-color: lighten($color-light-gray, 15%);  
+  padding: $spacing-sm $spacing-sm 0;
+  background-color: lighten($color-light-gray, 15%);
+  font-family: 'KievitWeb';
+  overflow-x: hidden;
 }
 
 p {
-  margin: 0 0 1em;
+  margin: 0 0 $spacing-sm;
   line-height: 1.2em;
 }

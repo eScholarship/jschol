@@ -1,5 +1,17 @@
 // ##### Element Resets ##### //
 
+// Set box sizing to border-box on all elements:
+
+html {
+  box-sizing: border-box;
+}
+
+*,
+*:before,
+*:after {
+  box-sizing: inherit;
+}
+
 abbr {
   border: none; // for older browsers
   text-decoration: none; // for newer browsers

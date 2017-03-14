@@ -9,7 +9,7 @@
     min-height: $element-height;
     padding: 0 40px;
     border-radius: $round-corner;
-    background: $color-teal url('../images/icon_share-square-o-white.svg') no-repeat left $spacing-sm center / 16px;
+    background: $color-teal inline('../images/icon_share-square-o-white.svg') no-repeat left $spacing-sm center / 16px;
     color: $color-white;
     line-height: $element-height;
     user-select: none;
@@ -20,7 +20,7 @@
       right: $spacing-sm;
       bottom: 0;
       padding: 0 7px;
-      background: url('../images/icon_arrow-down-white.svg') no-repeat center / 13px;
+      background: inline('../images/icon_arrow-down-white.svg') no-repeat center / 13px;
       content: '';
     }
 
@@ -37,7 +37,6 @@
 }
 
 .c-share__list {
-  @extend %no-bullet-ul;
   position: absolute;
   right: 0;
   left: 0;
@@ -54,22 +53,6 @@
     width: 130px;
   }
 
-  li {
-
-    &:not(:first-child) a {
-      border-top: none;
-    }
-
-    @include bp(screen2) {
-
-      a {
-        border: none;
-      }
-
-    }
-
-  }
-
 }
 
 %c-share__link {
@@ -77,19 +60,28 @@
   padding-left: 40px;
   background: no-repeat left $spacing-sm center / 16px;
   color: $color-white;
+
+  &:not(:first-child) {
+    border-top: none;
+  }
+
+  @include bp(screen2) {
+    border: none;
+  }
+
 }
 
 .c-share__email {
   @extend %c-share__link;
-  background-image: url('../images/icon_envelope-o-white.svg');
+  background-image: inline('../images/icon_envelope-o-white.svg');
 }
 
 .c-share__facebook {
   @extend %c-share__link;
-  background-image: url('../images/logo_facebook-white.svg');
+  background-image: inline('../images/logo_facebook-white.svg');
 }
 
 .c-share__twitter {
   @extend %c-share__link;
-  background-image: url('../images/logo_twitter-white.svg');
+  background-image: inline('../images/logo_twitter-white.svg');
 }

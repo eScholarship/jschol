@@ -113,3 +113,12 @@ Selector pattern using above media query mixin:
   }
 
 }
+
+// Wrap long strings of unbroken text to prevent text overflow
+
+%overflow-wrap {
+  overflow-wrap: break-word; // all except IE
+  word-wrap: break-word; // Legacy IE browsers
+  word-break: break-all; // Modern Windows browsers
+  hyphens: auto;
+}

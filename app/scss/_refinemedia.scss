@@ -1,0 +1,22 @@
+// ##### Refine Media Component ##### //
+
+.c-refinemedia {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: $spacing-sm;
+
+  @include bp(screen1) {
+    margin: 0 $spacing-sm;
+  }
+
+}
+
+.c-refinemedia__droplist {
+  margin-bottom: $spacing-sm;
+}
+
+.c-refinemedia__download {
+  margin-bottom: $spacing-sm;
+}

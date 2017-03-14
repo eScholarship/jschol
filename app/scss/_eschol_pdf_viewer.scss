@@ -8,6 +8,21 @@
   background-image: url('/images/pdfjs/texture.png');
   font: message-box;
   font-size: 10px;
+
+  /* Turn off a bunch of button features we don't need in our UI */
+  .toolbar,
+  #download,
+  #openFile,
+  #presentationMode,
+  #print,
+  #secondaryToolbarToggle,
+  #sidebarToggle,
+  #toolbarViewerMiddle,
+  #viewBookmark {
+    visibility: hidden;
+    height: 0;
+  }
+
 }
 
 // scss-lint:disable MergeableSelector
@@ -31,15 +46,4 @@
     overflow: hidden;   /* was: auto */
   }
 
-  /* Turn off a bunch of button features we don't need in our UI */
-  #sidebarToggle,
-  #presentationMode,
-  #openFile,
-  #print,
-  #download,
-  #viewBookmark,
-  #secondaryToolbarToggle,
-  #toolbarViewerMiddle {
-    visibility: hidden;
-  }
 }

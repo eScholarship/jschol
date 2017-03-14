@@ -122,4 +122,31 @@ As well as:
 (merged)   jsx/components/TabContent1Comp.jsx
 
 
+3/14/2017
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's 9316615818bd176befb923a07ff667f86c6067e7, 2017-03-13 <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+Andy added all scss and image changes since last.
+As well as:
+(merged)  jsx/components/AuthorListComp.jsx
+(merged)  jsx/components/ItemActionsComp.jsx
+(merged)  jsx/components/JournalInfoComp.jsx
+(merged)  jsx/components/NavComp.jsx
+(merged)  jsx/components/NavSubComp.jsx
+(merged)  jsx/components/PdfViewerComp.jsx
+(merged)  jsx/components/ScholWorksComp.jsx
+(merged)  jsx/components/ShareComp.jsx
+(merged)  jsx/components/SortComp.jsx
+(merged)  jsx/components/Subheader2Comp.jsx
+(merged)  jsx/components/TabMainComp.jsx
+(merged)  jsx/components/ToggleListComp.jsx
+(merged)  jsx/components/ToggleListSubComp.jsx  
+(added)   jsx/components/DataTableComp.jsx
+(added)   jsx/components/MediaFileGridComp.jsx
+(added)   jsx/components/RefineMediaComp.jsx
+(added)   jsx/components/SkipNavComp.jsx
+(added)   jsx/components/ToggleContentComp.jsx
+
 

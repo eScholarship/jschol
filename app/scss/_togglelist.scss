@@ -1,7 +1,7 @@
 // ##### Toggle List Component ##### //
 
-$togglelist-list-spacing: 10px;
-$togglelist-indent: 22px;
+$togglelist-list-spacing: 0.625em; // 10px
+$togglelist-indent: 2em;
 
 .c-togglelist {
   // no styles
@@ -45,16 +45,11 @@ $togglelist-indent: 22px;
 
     &::after { // ::before can't be used; see resets.scss
       position: absolute;
-      top: 0;
-      bottom: 0;
+      top: -2.15em;
       left: (-$togglelist-indent);
-      padding: 8px;
-      background: url('../images/icon_plus-black.svg') no-repeat center / 16px;
+      padding: 0.938em; // 15px
+      background: inline('../images/icon_plus-black.svg') no-repeat center / 1em;
       content: '';
-    }
-
-    &:hover {
-      text-decoration: underline;
     }
 
   }
@@ -64,7 +59,7 @@ $togglelist-indent: 22px;
     > summary {
 
       &::after {
-        background-image: url('../images/icon_minus-black.svg');
+        background-image: inline('../images/icon_minus-black.svg');
       }
 
     }

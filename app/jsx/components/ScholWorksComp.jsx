@@ -111,7 +111,7 @@ class ScholWorksComp extends React.Component {
           }
           <div className="c-scholworks__media">
             <ul className="c-scholworks__media-list">{ supp_files }</ul>
-            {this.props.result.rights && this.props.result.rights !== 'public' && <img className="c-scholworks__rights" src="/images/icon_cc-by.svg" alt="cc"/>}
+            {this.props.result.rights && this.props.result.rights !== 'public' && <img className="c-scholworks__rights" src="/images/cc-by-small.svg" alt="creative commons attribution 4.0 international public license"/>}
           </div>
         </div>
         {this.props.result.thumbnail && <img className="c-scholworks__article-preview" src="/images/temp_article.png" alt="article"/>}

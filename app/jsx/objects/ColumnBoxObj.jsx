@@ -9,7 +9,7 @@ class ColumnBoxObj extends React.Component {
         <h2>Column 1 Box</h2>
         <section className="o-columnbox1">
           <header>
-            <h2 className="o-columnbox1__heading">About eScholarship</h2>
+            <h2>About eScholarship</h2>
           </header>
           <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Alias sed sapiente nulla debitis nobis asperiores hic est, fuga illo? Accusamus molestias pariatur nihil, libero possimus optio iusto nobis sapiente ad.
           </p>
@@ -17,7 +17,7 @@ class ColumnBoxObj extends React.Component {
         <h2>Column 2 Box</h2>
         <section className="o-columnbox2">
           <header>
-            <h2 className="o-columnbox2__heading">Placeholder Title</h2>
+            <h2>Placeholder Title</h2>
           </header>
           <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Alias sed sapiente nulla debitis nobis asperiores hic est, fuga illo? Accusamus molestias pariatur nihil, libero possimus optio iusto nobis sapiente ad.
           </p>
@@ -35,14 +35,14 @@ class ColumnBoxObj extends React.Component {
         <h2>Stacked Column 2 Boxes</h2>
         <section className="o-columnbox2">
           <header>
-            <h2 className="o-columnbox2__heading">Placeholder Title</h2>
+            <h2>Placeholder Title</h2>
           </header>
           <div>Eaque odit consequuntur voluptas quod quos voluptatum cupiditate! Veritatis fugit necessitatibus, deleniti, fuga sit earum consequuntur repellat, molestias facere illum illo laborum!
           </div>
         </section>
         <section className="o-columnbox2">
           <header>
-            <h2 className="o-columnbox2__heading">Placeholder Title</h2>
+            <h2>Placeholder Title</h2>
           </header>
           <div>Quaerat aspernatur, commodi magni nisi, nulla aliquam iste quia, dolore consequatur nihil similique neque maxime, iure eligendi dolores repellendus numquam officiis fugit!
           </div>
@@ -50,7 +50,7 @@ class ColumnBoxObj extends React.Component {
         <h2>Column 3 Box (Column 1 Box without Background and Shadow)</h2>
         <section className="o-columnbox3">
           <header>
-            <h2 className="o-columnbox1__heading">Placeholder Title</h2>
+            <h2>Placeholder Title</h2>
           </header>
           <div>Obcaecati ab alias culpa mollitia porro eos itaque ipsa necessitatibus earum libero recusandae, consequuntur quos molestias, dolorum cupiditate doloremque atque possimus esse.
           </div>
@@ -58,7 +58,7 @@ class ColumnBoxObj extends React.Component {
         <h2>Column 4 Box (Column 2 Box without Background and Shadow)</h2>
         <section className="o-columnbox4">
           <header>
-            <h2 className="o-columnbox2__heading">Placeholder Title</h2>
+            <h2>Placeholder Title</h2>
           </header>
           <div>Obcaecati ab alias culpa mollitia porro eos itaque ipsa necessitatibus earum libero recusandae, consequuntur quos molestias, dolorum cupiditate doloremque atque possimus esse.
           </div>

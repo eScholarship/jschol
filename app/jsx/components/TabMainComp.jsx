@@ -5,6 +5,7 @@ import ItemActionsComp from '../components/ItemActionsComp.jsx'
 import AuthorListComp from '../components/AuthorListComp.jsx'
 import PdfViewerComp from '../components/PdfViewerComp.jsx'
 import PubLocationComp from '../components/PubLocationComp.jsx'
+import PubDataComp from '../components/PubDataComp.jsx'
 
 class TabMainComp extends React.Component {
   render() {
@@ -15,6 +16,8 @@ class TabMainComp extends React.Component {
         <h1 className="c-tabcontent__heading">{p.title}</h1>
         <AuthorListComp pubdate={p.pub_date} authors={p.authors} changeTab={p.changeTab} />
         <PubLocationComp pub_web_loc={p.attrs.pub_web_loc} rights={p.rights} />
+      {/* ToDo: Include this comp when content_type for no-content items is fixed.
+        <PubDataComp /> */}
         {this.props.attrs.abstract && (this.props.status != "withdrawn") &&
           <Abstract status={p.status} abstract={p.attrs.abstract} /> }
         <MainText {...p} />
@@ -27,7 +30,7 @@ class Abstract extends React.Component {
   render() {
     return (
       <details className="c-togglecontent" open>
-        <summary><h2>Abstract</h2></summary>
+        <summary>Abstract</summary>
         <p>{this.props.abstract}</p>
         {/* ToDo: Add Link */}
         <p className="c-well">Many UC-authored scholarly publications are freely available on this site because of the UC Academic Senate&apos;s Open Access Policy. *** LINK *** Let us know how this access is important for you.</p>
@@ -53,7 +56,7 @@ class MainText extends React.Component {
 
   renderPdf = p => { return (
       <details className="c-togglecontent" open>
-        <summary><h2>Main Text</h2></summary>
+        <summary>Main Text</summary>
         {/*Fetch content through server app, which will check credentials and proxy to proper back-end*/}
         <PdfViewerComp url={"/content/qt" + p.id + "/qt" + p.id + ".pdf"}/>
       </details>

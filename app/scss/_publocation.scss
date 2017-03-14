@@ -26,11 +26,9 @@
 
 .c-publocation__link {
   @extend %o-textlink__secondary;
+  @extend %overflow-wrap;
   display: block;
   margin-bottom: $spacing-sm;
-  overflow-wrap: break-word; // all except IE
-  word-wrap: break-word; // IE
-  hyphens: auto;
 
   @include bp(screen1) {
     margin-right: 120px; // width of license image
