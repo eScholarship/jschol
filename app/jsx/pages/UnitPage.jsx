@@ -19,6 +19,8 @@ import DepartmentLayout from '../layouts/DepartmentLayout.jsx'
 import SeriesLayout from '../layouts/SeriesLayout.jsx'
 import JournalLayout from '../layouts/JournalLayout.jsx'
 import UnitSearchLayout from '../layouts/UnitSearchLayout.jsx'
+import UnitStaticPageLayout from '../layouts/UnitStaticPageLayout.jsx'
+import UnitProfileLayout from '../layouts/UnitProfileLayout.jsx'
 
 class UnitPage extends PageBase
 {
@@ -45,6 +47,10 @@ class UnitPage extends PageBase
     var contentLayout;
     if (this.props.params.pageName === 'search') {
       contentLayout = (<UnitSearchLayout unit={data.unit} data={data.content}/>);
+    } else if (this.props.params.pageName === 'profile') {
+      contentLayout = (<UnitProfileLayout unit={data.unit} data={data.content}/>);
+    } else if (this.props.params.pageName) {
+      contentLayout = (<UnitStaticPageLayout unit={data.unit} data={data.content} fetchPageData={this.fetchPageData}/>);
     } else {
       data.marquee.carousel = true;
       if (data.unit.type === 'oru') {

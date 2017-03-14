@@ -59,27 +59,29 @@ class DrawerItem extends React.Component {
       )
       return (
         <div className="c-drawer__list-item">
-          <label>Label:</label>
-          <input id="navItemName" 
+          <label className="c-drawer__list-hidden-label">Navigation Item Label (to appear in the Nav Bar):</label>
+          <input id="navItemName" className="c-drawer__list-item-text-input nav-element"
             name='navItemName' value={this.props.navItem.name} onChange={e => console.log(e)}/>
           {buttons}<br/>
-          <label>
+          <label className="c-drawer__list-item-radio-input">
             <input id="navItemType" type="radio"
-              name='navItemType' value="Page" onChange={e => console.log(e)} checked={this.props.navItem.slug ? true : false}/>
+              name='navItemType' value="Page" onChange={e => console.log(e)} checked={this.state.type === 'page' ? true : false}/>
             Page
           </label>
-          <label>
+          <label className="c-drawer__list-item-radio-input">
             <input id="navItemType" type="radio"
-              name='navItemType' value="URL" onChange={e => console.log(e)} checked={this.props.navItem.url ? true: false}/>
+              name='navItemType' value="URL" onChange={e => console.log(e)} checked={this.state.type === 'url' ? true: false}/>
             URL
           </label>
-          <label>
+          <label className="c-drawer__list-item-radio-input">
             <input id="navItemType" type="radio"
-              name='navItemType' value="File" onChange={e => console.log(e)} checked={this.props.navItem.file ? true: false}/>
-            Upload File
+              name='navItemType' value="File" onChange={e => console.log(e)} checked={this.state.type === 'file' ? true: false}/>
+            File
           </label><br/>
-          <label htmlFor="navItemData">{this.props.navItem.slug ? "Slug: " : this.props.navItem.url ? "URL: " : ""}</label>
-          <input id="navItemData" onChange={e => console.log(e)}
+          <label className="c-drawer__list-label" htmlFor="navItemData">
+            {this.props.navItem.slug ? "Slug: " : this.props.navItem.url ? "URL: " : ""}
+          </label>
+          <input className="c-drawer__list-item-text-input" id="navItemData" onChange={e => console.log(e)}
             name='navItemData' value={this.props.navItem.slug ? this.props.navItem.slug : this.props.navItem.url ? this.props.navItem.url : ''}/>
         </div>
       )
@@ -90,6 +92,8 @@ class DrawerItem extends React.Component {
           <button><img src="/images/eye.svg"/></button>
         </div>
       )
+            // <SortableList data={this.props.navItem.sub_nav} unit={this.props.unit}/>
+
       if ('sub_nav' in this.props.navItem) {
         return (
           <div className="c-drawer__list-item-subnav">
@@ -97,14 +101,13 @@ class DrawerItem extends React.Component {
               {this.props.navItem.name}
               {buttons}
             </div>
-            <SortableList data={this.props.navItem.sub_nav} unit={this.props.unit}/>
           </div>
         )
       } else {
         return (
           <div className="c-drawer__list-item">
             {this.getNavItemJSX(this.props.navItem)}
-            {buttons}
+            {this.props.navItem.name !== 'Unit Home' && buttons}
           </div>
         )
       }      
@@ -125,10 +128,19 @@ class ListItem extends React.Component {
 const SortableListItem = sortable(ListItem);
 
 class SortableList extends React.Component {
-  state = {draggingIndex: null, data: this.props.data}
+  state = {draggingIndex: null, data: this.props.data, lastPos: null}
   
   updateState = (obj) => {
-    this.setState(obj);
+    if (obj.draggingIndex === null) {
+      console.log('dropped: ')
+      console.log(JSON.stringify(this.state.data));
+      console.log(obj);
+    } else {
+      this.setState({draggingIndex: obj.draggingIndex, lastPos: obj.data});
+      console.log('moving:')
+      console.log(JSON.stringify(this.state.data));
+    }
+    // this.setState(obj);
   }
   
   render() {
@@ -153,14 +165,18 @@ class SortableList extends React.Component {
 }
 
 class DrawerComp extends React.Component {
-  // state = {sidebarOpen: true};
-  //
+  state = {
+    navList: 'header' in this.props.data && 'nav_bar' in this.props.data.header ? this.props.data.header.nav_bar : undefined
+  };
+
   onSetSideBarOpen(open) {
     this.setState({sidebarOpen: open});
   }
   
   addNavItem = () => {
-    console.log('do stuff!');
+    var navList = this.state.navList;
+    navList.push({name: ""});
+    this.setState({navList: navList});
   }
   
   addFolder = () => {
@@ -168,14 +184,19 @@ class DrawerComp extends React.Component {
   }
   
   render() {
-    var data = 'header' in this.props.data && 'nav_bar' in this.props.data.header ? this.props.data.header.nav_bar : undefined;
+    var data = this.state.navList
     
     var sidebarContent = data ? (
       <div>
+        <div className="c-drawer__list-item">
+          <Link key="profile" to={"/unit/" + this.props.data.unit.id + "/profile" }>
+            {this.props.data.unit.type} Profile
+          </Link>
+        </div>
         <div className="c-drawer__heading">
           Navigation Items
         </div>
-        <SortableList data={data} unit={this.props.data.unit}/>
+        <SortableList data={this.state.navList} unit={this.props.data.unit}/>
         <div className="c-drawer__add-buttons">
           <div className="c-drawer__add-item">
             <button onClick={e => this.addNavItem()}><img src="/images/white/plus.svg"/></button>

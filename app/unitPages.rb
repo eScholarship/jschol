@@ -63,6 +63,7 @@ end
 
 # Get ORU-specific data for Department Landing Page
 def getORULandingPageData(id)
+  # addPage()
   children = $hierByAncestor[id]
 
   return {
@@ -160,6 +161,29 @@ def unitSearch(params, unit)
   return {'count' => response['hits']['found'], 'query' => get_query_display(params.clone), 'searchResults' => searchResults}
 end
 
+def getUnitStaticPage(unit, attrs, pageName)
+  page = Page[:nav_element=>pageName, :unit_id=>unit.id].values
+  page[:attrs] = JSON.parse(page[:attrs])
+  return page
+end
+
+def getUnitProfile(unit, attrs)
+  profile = {
+    name: unit.name,
+    slug: unit.id,
+    logo: attrs['logo'],
+    facebook: attrs['facebook'],
+    twitter: attrs['twitter'],
+  }
+  if unit.type == 'journal'
+    profile[:doaj] = true
+    profile[:license] = 'cc-by'
+    profile[:eissn] = '0160-2764'
+    profile[:issue] = 'most recent'
+    profile[:layout] = 'simple'
+  end
+  return profile
+end
 
 #   newAttrs = {
 #     about: "Here's some sample text about the UCLA School of Law's Asian Pacific American Law Journal. Lalalalala!",
@@ -234,4 +258,14 @@ end
 #   })
 # end
 
-# def addPage()
+def addPage()
+  # page = Page[unit_id: 'uclalaw']
+  # page.update(nav_element: 'contact')
+  
+  # contactPage = Page.create({
+  #   unit_id: 'uclalaw',
+  #   nav_element: 'contact',
+  #   title: 'Contact Us'
+  #   # html: '<b>Content here!</b>'
+  # })
+end
