@@ -387,6 +387,8 @@ get "/api/unit/:unitID/?:pageName/?" do
           pageData[:content] = getUnitPageContent(unit, attrs, params[:pageName])
         elsif params[:pageName] == 'profile'
           pageData[:content] = getUnitProfile(unit, attrs)
+        elsif params[:pageName] == 'sidebar'
+          pageData[:content] = getUnitSidebar(unit, attrs)
         else
           pageData[:content] = getUnitStaticPage(unit, attrs, params[:pageName])
         end

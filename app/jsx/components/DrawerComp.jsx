@@ -46,6 +46,10 @@ class DrawerItem extends React.Component {
   cancel = () => {
     this.setState({editing: false});
   }
+  
+  deleteItem = () => {
+    console.log('deleteItem');
+  }
 
 // radio buttons replaced by <select>
           // <label className="c-drawer__list-item-radio-input">
@@ -67,22 +71,31 @@ class DrawerItem extends React.Component {
 
   render() {
     if (this.state.editing || this.props.navItem.name === '') {
-      var buttons = (
-        <div className="c-drawer__nav-buttons">
-          <button onClick={e => this.onSave()}><img src="/images/check-square.svg"/></button>
-          <button onClick={e => this.cancel()}><img src="/images/times.svg"/></button>
-        </div>
-      )
+      var buttons = ([
+        <button onClick={e => this.onSave()}>Save</button>,
+        <button onClick={e => this.cancel()}>Cancel</button>,
+        <button onClick={e => this.deleteItem()}>Delete</button>
+      ])
+      var config;
+      if (this.props.navItem.sub_nav) {
+        config = <SortableList data={this.props.navItem.sub_nav} unit={this.props.unit}/>
+      } else {
+        config = [
+          <label className="c-drawer__list-label" htmlFor="navItemData">
+            {this.props.navItem.slug ? "Slug: " : this.props.navItem.url ? "URL: " : this.props.navItem.file ? "File: " : ""}
+          </label>,
+          <input className="c-drawer__list-item-text-input" id="navItemData" onChange={e => console.log(e)}
+            name='navItemData' value={this.props.navItem.slug ? this.props.navItem.slug : this.props.navItem.url ? this.props.navItem.url : ''}/>
+        ]
+      }
       return (
         <div className="c-drawer__list-item">
           {this.props.navItem.name === '' ? 
-            <label className="c-drawer__list-label" style={{marginBottom: '9px', marginLeft: '-10px'}}>Page Name:</label> : 
+            <label className="c-drawer__list-label" style={{marginBottom: '9px'}}>Page Name:</label> : 
             <label className="c-drawer__list-hidden-label">Navigation Item Label (to appear in the Nav Bar):</label>
           }
           <input id="navItemName" className="c-drawer__list-item-text-input nav-element"
             name='navItemName' value={this.props.navItem.name} onChange={e => console.log(e)}/>
-
-          {buttons}
           
           <select value={this.state.type} style={{marginBottom: '10px'}} onChange={e => console.log(e)}>
             <option value="page">Page</option>
@@ -90,21 +103,16 @@ class DrawerItem extends React.Component {
             <option value="file">File</option>
             <option value="sub_nav">Folder</option>
           </select>
-          
-          <label className="c-drawer__list-label" htmlFor="navItemData">
-            {this.props.navItem.slug ? "Slug: " : this.props.navItem.url ? "URL: " : this.props.navItem.file ? "File: " : ""}
-          </label>
-          <input className="c-drawer__list-item-text-input" id="navItemData" onChange={e => console.log(e)}
-            name='navItemData' value={this.props.navItem.slug ? this.props.navItem.slug : this.props.navItem.url ? this.props.navItem.url : ''}/>
+          {config}
+          {buttons}
         </div>
       )
     } else {
       var buttons = (
         <div className="c-drawer__nav-buttons">
-          <button onClick={e => this.editItem()}><img src="/images/icon_pencil-black.svg"/></button>
+          <button onClick={e => this.editItem()}><img src="/images/icon_gear-black.svg"/></button>
         </div>
       )
-            // <SortableList data={this.props.navItem.sub_nav} unit={this.props.unit}/>
 
       if ('sub_nav' in this.props.navItem) {
         return (
@@ -178,7 +186,7 @@ class SortableList extends React.Component {
 
 class DrawerComp extends React.Component {
   state = {
-    navList: 'header' in this.props.data && 'nav_bar' in this.props.data.header ? this.props.data.header.nav_bar : undefined
+    navList: 'header' in this.props.data && 'nav_bar' in this.props.data.header ? this.props.data.header.nav_bar : undefined,
   };
 
   onSetSideBarOpen(open) {
@@ -189,6 +197,10 @@ class DrawerComp extends React.Component {
     var navList = this.state.navList;
     navList.push({name: ""});
     this.setState({navList: navList});
+  }
+  
+  addSidebarItem = () => {
+    console.log("add an item below the last sidebar widget item in drawer. item is a drop down to select widget type; then navigate to /sidebar page")
   }
   
   addFolder = () => {
@@ -208,10 +220,15 @@ class DrawerComp extends React.Component {
     //       </div>
     //     </div>
     //
+    var buttons = (
+      <div className="c-drawer__nav-buttons">
+        <button onClick={e => console.log('reveal drop down to select widget type?')}><img src="/images/icon_gear-black.svg"/></button>
+      </div>
+    )
     
     var sidebarContent = data ? (
       <div>
-        <div className="c-drawer__list-item">
+        <div className="c-drawer__list-item" style={{backgroundImage: 'none', paddingLeft: '20px'}}>
           <Link key="profile" to={"/unit/" + this.props.data.unit.id + "/profile" }>
             {
               (this.props.data.unit.type === 'journal' && 'Journal Profile') || 
@@ -233,14 +250,26 @@ class DrawerComp extends React.Component {
         <div className="c-drawer__heading">
           Sidebar Widgets
           <div className="c-drawer__nav-buttons">
-            <button onClick={e => this.addNavItem()}><img src="/images/white/plus.svg"/></button>
+            <button onClick={e => this.addSidebarItem()}><img src="/images/white/plus.svg"/></button>
           </div>
         </div>
         <div className="c-drawer__list-item">
-          Featured Articles
+          <Link key="sidebar-featured-articles" to={"/unit/" + this.props.data.unit.id + "/sidebar#featured-articles" }>
+            Featured Articles
+          </Link>
+            {buttons}
         </div>
         <div className="c-drawer__list-item">
-          Twitter Feed
+          <Link key="sidebar-twitter-feed" to={"/unit/" + this.props.data.unit.id + "/sidebar#twitter-feed" }>
+            Twitter Feed
+          </Link>
+            {buttons}
+        </div>
+        <div className="c-drawer__list-item">
+          <Link key="sidebar-twitter-feed" to={"/unit/" + this.props.data.unit.id + "/sidebar#other-widgets" }>
+            Other Widgets?
+          </Link>
+            {buttons}
         </div>
       </div>
     ) : (<div></div>);

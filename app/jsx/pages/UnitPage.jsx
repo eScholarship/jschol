@@ -21,6 +21,7 @@ import JournalLayout from '../layouts/JournalLayout.jsx'
 import UnitSearchLayout from '../layouts/UnitSearchLayout.jsx'
 import UnitStaticPageLayout from '../layouts/UnitStaticPageLayout.jsx'
 import UnitProfileLayout from '../layouts/UnitProfileLayout.jsx'
+import UnitSidebarConfigLayout from '../layouts/UnitSidebarConfigLayout.jsx'
 
 class UnitPage extends PageBase
 {
@@ -49,6 +50,8 @@ class UnitPage extends PageBase
       contentLayout = (<UnitSearchLayout unit={data.unit} data={data.content}/>);
     } else if (this.props.params.pageName === 'profile') {
       contentLayout = (<UnitProfileLayout unit={data.unit} data={data.content}/>);
+    } else if (this.props.params.pageName === 'sidebar') {
+      contentLayout = (<UnitSidebarConfigLayout unit={data.unit} data={data.content}/>);
     } else if (this.props.params.pageName) {
       contentLayout = (<UnitStaticPageLayout unit={data.unit} data={data.content} fetchPageData={this.fetchPageData}/>);
     } else {

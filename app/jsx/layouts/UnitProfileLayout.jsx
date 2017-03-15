@@ -53,7 +53,7 @@ class UnitProfileLayout extends React.Component {
       ]
     } else if (this.props.unit.type == 'journal') {
       mainContentConfig = [
-        <h3>Main Content Configuration</h3>,
+        <h3 id="main-content-config">Main Content Configuration</h3>,
         <div className="c-columns">
           <main>
             <section className="o-columnbox1">
@@ -121,8 +121,8 @@ class UnitProfileLayout extends React.Component {
               </section>
             </main>
           </div>
-          <h3>Marquee Configuration</h3>
-          <MarqueeComp marquee={{carousel: true, about: data.about}}/>
+          <h3 id="marquee">Marquee Configuration</h3>
+          <MarqueeComp marquee={{carousel: true, about: data.about}} unit={this.props.unit}/>
           <div className="c-columns">
             <main>
               <section className="o-columnbox1">

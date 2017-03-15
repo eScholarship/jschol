@@ -34,7 +34,7 @@ class DepartmentLayout extends React.Component {
 
     return (
       <div>
-        <MarqueeComp marquee={this.props.marquee}/>
+        <MarqueeComp marquee={this.props.marquee} unit={this.props.unit}/>
         <div className="c-columns">
           <main>
             <section className="o-columnbox1">

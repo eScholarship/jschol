@@ -3,6 +3,7 @@
 import React from 'react'
 import $ from 'jquery'
 import { Subscriber } from 'react-broadcast'
+import { Link } from 'react-router'
 
 
 // Only load flickity when in the browser (not server-side)
@@ -23,18 +24,7 @@ class MarqueeComp extends React.Component {
       this.flkty = new Flickity(carousel, options);
     }
   }
-  
-  componentWillReceiveProps(newProps) {
-    if (newProps.editing) {
-      var newClassNames = $($('.c-marquee__carousel')[0]).attr('class') + " editable-outline";
-      $($('.c-marquee__carousel')[0]).attr('class', newClassNames);
-    } else {
-      var oldClassNames = $($('.c-marquee__carousel')[0]).attr('class')
-      oldClassNames = oldClassNames.replace('editable-outline', '');
-      $($('.c-marquee__carousel')[0]).attr('class', oldClassNames);      
-    }
-  }
-  
+    
   componentWillUnmount() {
     if (this.flkty) {
       this.flkty.destroy();
@@ -61,19 +51,29 @@ class MarqueeComp extends React.Component {
         </div>
       ]
     }
+    var carouselOverlay = (
+      <div className="c-marquee__overlay">
+        <Link to={"/unit/" + this.props.unit.id + "/profile/#marquee" }>
+          <img src="/images/icon_gear-black.svg"/>
+        </Link>
+      </div>
+    )
     return (
       <Subscriber channel="cms">
         { cms => 
           <div className="c-marquee">
-            <div className="c-marquee__carousel" style={cms.isEditingPage ? {border: '1px solid red'} : {}}>
-              {carouselCells}
+            <div className="c-marquee__carousel-overlay-container">
+              {cms.isEditingPage && carouselOverlay}
+              <div className="c-marquee__carousel">
+                {carouselCells}
+              </div>
             </div>
             <div className="c-marquee__sidebar">
-              <section className="o-columnbox4">
+              <section className={cms.isEditingPage ? "o-columnbox4 editable-outline" : "o-columnbox4"}>
                 <header>
                   <h2 className="o-columnbox2__heading">About</h2>
                 </header>
-                <p className={cms.isEditingPage && "editable-outline"}>{this.props.marquee.about} <a className="o-textlink__secondary" href="">More</a>
+                <p>{this.props.marquee.about} <a className="o-textlink__secondary" href="">More</a>
                 </p>
               </section>
             </div>
