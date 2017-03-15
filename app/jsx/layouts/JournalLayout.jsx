@@ -31,13 +31,6 @@ class JournalLayout extends React.Component {
   render() {
     var data = this.props.data;
 
-    var marquee;
-    if (this.props.marquee.carousel) {
-      marquee = (<MarqueeComp carousel={this.props.marquee.carousel} about={this.props.marquee.about}/>)
-    } else {
-      marquee = (<MarqueeComp about={this.props.marquee.about} />)
-    }
-
     var seriesList = [];
     for (var s in data.series) {
       if (data.series[s].items.length > 0) {
@@ -47,7 +40,7 @@ class JournalLayout extends React.Component {
 
     return (
       <div>
-        {marquee}
+        <MarqueeComp marquee={this.props.marquee}/>
         <div className="c-columns">
           <main>
             <section className="o-columnbox1">

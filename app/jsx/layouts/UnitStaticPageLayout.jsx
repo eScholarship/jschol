@@ -42,6 +42,12 @@ class UnitStaticPageLayout extends React.Component {
               <p><a className="o-textlink__secondary" href="">Interview with Guillermo Cabrera Infante</a> <br/> Graham-Jones, Jean; Deosthale, Duleep</p>
               <p><a className="o-textlink__secondary" href="">Lazlo Moussong. Castillos en la letra. Xalapa, México: Universidad Veracruzana, 1986.</a> <br/> Radchik, Laura</p>
           </section>
+          <section className="o-columnbox2">
+            <header>
+              <h2 className="o-columnbox2__heading">Follow us on Twitter</h2>
+            </header>
+            [content to go here]
+          </section>
         </aside>
       </div>
     )

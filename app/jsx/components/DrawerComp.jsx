@@ -47,39 +47,52 @@ class DrawerItem extends React.Component {
     this.setState({editing: false});
   }
 
+// radio buttons replaced by <select>
+          // <label className="c-drawer__list-item-radio-input">
+          //   <input id="navItemType" type="radio"
+          //     name='navItemType' value="Page" onChange={e => console.log(e)} checked={this.state.type === 'page' ? true : false}/>
+          //   Page
+          // </label>
+          // <label className="c-drawer__list-item-radio-input">
+          //   <input id="navItemType" type="radio"
+          //     name='navItemType' value="URL" onChange={e => console.log(e)} checked={this.state.type === 'url' ? true: false}/>
+          //   URL
+          // </label>
+          // <label className="c-drawer__list-item-radio-input">
+          //   <input id="navItemType" type="radio"
+          //     name='navItemType' value="File" onChange={e => console.log(e)} checked={this.state.type === 'file' ? true: false}/>
+          //   File
+          // </label><br/>
+
+
   render() {
-    if (this.state.editing) {
+    if (this.state.editing || this.props.navItem.name === '') {
       var buttons = (
         <div className="c-drawer__nav-buttons">
           <button onClick={e => this.onSave()}><img src="/images/check-square.svg"/></button>
-          <button><img src="/images/eye.svg"/></button><br/>
           <button onClick={e => this.cancel()}><img src="/images/times.svg"/></button>
-          <button><img src="/images/trash-o.svg"/></button>
         </div>
       )
       return (
         <div className="c-drawer__list-item">
-          <label className="c-drawer__list-hidden-label">Navigation Item Label (to appear in the Nav Bar):</label>
+          {this.props.navItem.name === '' ? 
+            <label className="c-drawer__list-label" style={{marginBottom: '9px', marginLeft: '-10px'}}>Page Name:</label> : 
+            <label className="c-drawer__list-hidden-label">Navigation Item Label (to appear in the Nav Bar):</label>
+          }
           <input id="navItemName" className="c-drawer__list-item-text-input nav-element"
             name='navItemName' value={this.props.navItem.name} onChange={e => console.log(e)}/>
-          {buttons}<br/>
-          <label className="c-drawer__list-item-radio-input">
-            <input id="navItemType" type="radio"
-              name='navItemType' value="Page" onChange={e => console.log(e)} checked={this.state.type === 'page' ? true : false}/>
-            Page
-          </label>
-          <label className="c-drawer__list-item-radio-input">
-            <input id="navItemType" type="radio"
-              name='navItemType' value="URL" onChange={e => console.log(e)} checked={this.state.type === 'url' ? true: false}/>
-            URL
-          </label>
-          <label className="c-drawer__list-item-radio-input">
-            <input id="navItemType" type="radio"
-              name='navItemType' value="File" onChange={e => console.log(e)} checked={this.state.type === 'file' ? true: false}/>
-            File
-          </label><br/>
+
+          {buttons}
+          
+          <select value={this.state.type} style={{marginBottom: '10px'}} onChange={e => console.log(e)}>
+            <option value="page">Page</option>
+            <option value="url">URL</option>
+            <option value="file">File</option>
+            <option value="sub_nav">Folder</option>
+          </select>
+          
           <label className="c-drawer__list-label" htmlFor="navItemData">
-            {this.props.navItem.slug ? "Slug: " : this.props.navItem.url ? "URL: " : ""}
+            {this.props.navItem.slug ? "Slug: " : this.props.navItem.url ? "URL: " : this.props.navItem.file ? "File: " : ""}
           </label>
           <input className="c-drawer__list-item-text-input" id="navItemData" onChange={e => console.log(e)}
             name='navItemData' value={this.props.navItem.slug ? this.props.navItem.slug : this.props.navItem.url ? this.props.navItem.url : ''}/>
@@ -89,7 +102,6 @@ class DrawerItem extends React.Component {
       var buttons = (
         <div className="c-drawer__nav-buttons">
           <button onClick={e => this.editItem()}><img src="/images/icon_pencil-black.svg"/></button>
-          <button><img src="/images/eye.svg"/></button>
         </div>
       )
             // <SortableList data={this.props.navItem.sub_nav} unit={this.props.unit}/>
@@ -107,7 +119,7 @@ class DrawerItem extends React.Component {
         return (
           <div className="c-drawer__list-item">
             {this.getNavItemJSX(this.props.navItem)}
-            {this.props.navItem.name !== 'Unit Home' && buttons}
+            {buttons}
           </div>
         )
       }      
@@ -186,24 +198,49 @@ class DrawerComp extends React.Component {
   render() {
     var data = this.state.navList
     
+    //BIG buttons at the bottom of the drawer for adding an item
+        // <div className="c-drawer__add-buttons">
+    //       <div className="c-drawer__add-item">
+    //         <button onClick={e => this.addNavItem()}><img src="/images/white/plus.svg"/></button>
+    //       </div>
+    //       <div className="c-drawer__add-folder">
+    //         <button onClick={e => this.addFolder()}><img src="/images/white/folder.svg"/></button>
+    //       </div>
+    //     </div>
+    //
+    
     var sidebarContent = data ? (
       <div>
         <div className="c-drawer__list-item">
           <Link key="profile" to={"/unit/" + this.props.data.unit.id + "/profile" }>
-            {this.props.data.unit.type} Profile
+            {
+              (this.props.data.unit.type === 'journal' && 'Journal Profile') || 
+              (this.props.data.unit.type === 'series' && 'Series Profile') ||
+              (this.props.data.unit.type === 'campus' && 'Campus Profile') ||
+              (this.props.data.unit.type && 'Unit Profile')
+            }
           </Link>
         </div>
+        
         <div className="c-drawer__heading">
           Navigation Items
-        </div>
-        <SortableList data={this.state.navList} unit={this.props.data.unit}/>
-        <div className="c-drawer__add-buttons">
-          <div className="c-drawer__add-item">
+          <div className="c-drawer__nav-buttons">
             <button onClick={e => this.addNavItem()}><img src="/images/white/plus.svg"/></button>
           </div>
-          <div className="c-drawer__add-folder">
-            <button onClick={e => this.addFolder()}><img src="/images/white/folder.svg"/></button>
+        </div>
+        <SortableList data={this.state.navList} unit={this.props.data.unit}/>
+        
+        <div className="c-drawer__heading">
+          Sidebar Widgets
+          <div className="c-drawer__nav-buttons">
+            <button onClick={e => this.addNavItem()}><img src="/images/white/plus.svg"/></button>
           </div>
+        </div>
+        <div className="c-drawer__list-item">
+          Featured Articles
+        </div>
+        <div className="c-drawer__list-item">
+          Twitter Feed
         </div>
       </div>
     ) : (<div></div>);

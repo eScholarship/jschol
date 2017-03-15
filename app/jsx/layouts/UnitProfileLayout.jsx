@@ -2,7 +2,7 @@ import React from 'react'
 import { Link } from 'react-router'
 import { Subscriber } from 'react-broadcast'
 
-import EditableMainContentComp from '../components/EditableMainContentComp.jsx'
+import MarqueeComp from '../components/MarqueeComp.jsx'
 
 class UnitProfileLayout extends React.Component {
   // onSaveContent(newText, adminLogin) {
@@ -35,12 +35,56 @@ class UnitProfileLayout extends React.Component {
     var buttonPlacement = {
       marginTop: '-15px'
     }
+    
+    var mainContentConfig;
+    var journalConfigOpts;
+    if (this.props.unit.type == 'oru') {
+      mainContentConfig = [
+        <h3>Main Content Configuration</h3>,
+        <div className="c-columns">
+          <main>
+            <section className="o-columnbox1">
+              <div style={{width: '550px'}}>
+                Here you can suppress a given series, and reorder series. 
+              </div>
+            </section>
+          </main>
+        </div>
+      ]
+    } else if (this.props.unit.type == 'journal') {
+      mainContentConfig = [
+        <h3>Main Content Configuration</h3>,
+        <div className="c-columns">
+          <main>
+            <section className="o-columnbox1">
+              <div style={{width: '550px'}}>
+                <label style={labelStyle}>Magazine layout? <input type="checkbox"/></label>
+                <p>Leave this unchecked for simple layout</p>
+                <label style={labelStyle}>Display Issue Rule: </label>
+                <label style={labelStyle}><input type="radio"/> Most recent issue</label>
+                <label style={labelStyle}><input type="radio"/> Second most recent issue</label>
+              </div>
+            </section>
+          </main>
+        </div>
+      ];
+      journalConfigOpts = [
+        <label style={labelStyle}>DOAJ Seal: </label>,
+        <input style={style} type="text" value={data.doaj}/>,
+        <label style={labelStyle}>License: </label>,
+        <input style={style} type="text" value={data.license}/>,
+        <label style={labelStyle}>E-ISSN: </label>,
+        <input style={style} type="text" value={data.eissn}/>
+      ];
+    }
     return (
-      <div className="c-columns">
-        <main>
-          <section className="o-columnbox1">
-            <Subscriber channel="cms">
-              { cms =>
+      <Subscriber channel="cms">
+        { cms =>
+          <div>
+          <h3>Unit Configuration</h3>
+          <div className="c-columns">
+            <main>
+              <section className="o-columnbox1">
                 <div style={{width: '550px'}}>
                   <label style={labelStyle}>Name: </label>
                   <input style={style} type="text" value={data.name}/>
@@ -53,32 +97,60 @@ class UnitProfileLayout extends React.Component {
                     <button>Choose File</button> 
                     <button>Remove File</button>
                   </div>
-                  
-                  <label style={labelStyle}>Facebook Page: </label>
-                  <input style={style} type="text" value={data.facebook}/>
-                
-                  <label style={labelStyle}>Twitter Username: </label>
-                  <input style={style} type="text" value={data.twitter}/>
-                
+          
+                  {journalConfigOpts}
+
                   <button>Save Changes</button> <button>Cancel</button>
                 </div>
-              }
-            </Subscriber>
-          </section>
-        </main>
-        <aside>
-          <section className="o-columnbox2">
-            <header>
-              <h2 className="o-columnbox2__heading">Featured Articles</h2>
-              </header>
-              <p><a className="o-textlink__secondary" href="">Entre la ficción y el periodismo: Cambio social y la crónica mexicana contemporánea</a> <br/> Nadeau, Evelyn</p> 
-              <p><a className="o-textlink__secondary" href="">Journalism in Catalonia During Francoism</a> <br/> Reguant, Monserrat</p>
-              <p><a className="o-textlink__secondary" href="">En torno a un cuento olvidado de Clarín: "El oso mayor"</a> <br/> Gil, Angeles Ezama</p>
-              <p><a className="o-textlink__secondary" href="">Interview with Guillermo Cabrera Infante</a> <br/> Graham-Jones, Jean; Deosthale, Duleep</p>
-              <p><a className="o-textlink__secondary" href="">Lazlo Moussong. Castillos en la letra. Xalapa, México: Universidad Veracruzana, 1986.</a> <br/> Radchik, Laura</p>
-          </section>
-        </aside>
-      </div>
+              </section>
+            </main>
+          </div>
+          <h3>Social Configuration</h3>
+          <div className="c-columns">
+            <main>
+              <section className="o-columnbox1">
+                <div style={{width: '550px'}}>
+                  <label style={labelStyle}>Facebook Page: </label>
+                  <input style={style} type="text" value={data.facebook}/>
+
+                  <label style={labelStyle}>Twitter Username: </label>
+                  <input style={style} type="text" value={data.twitter}/>
+
+                  <button>Save Changes</button> <button>Cancel</button>
+                </div>
+              </section>
+            </main>
+          </div>
+          <h3>Marquee Configuration</h3>
+          <MarqueeComp marquee={{carousel: true, about: data.about}}/>
+          <div className="c-columns">
+            <main>
+              <section className="o-columnbox1">
+                <div style={{width: '550px'}}>
+                  <h4>Carousel Configuration</h4>
+                  <label style={labelStyle}>Show Carousel? <input type="checkbox" checked/></label>
+                  <label style={labelStyle}>Header:</label>
+                  <input style={style} type="text" value="Carousel Cell Title 1"/>
+                
+                  <label style={labelStyle}>Text:</label>
+                  <textarea style={style} value="Magnam praesentium sint, ducimus aspernatur architecto, deserunt ipsa veniam quia nihil, doloribus, laudantium a ad error tenetur fuga consequuntur laboriosam omnis ipsam."/>
+                
+                  <label style={labelStyle}>Image: <span style={{color: '#555'}}>img1.jpg</span></label>
+                  <div style={{marginBottom: '20px', color: '#555', width: '100%'}}>
+                    <button>Choose File</button> 
+                    <button>Remove File</button>
+                  </div>
+                  
+                  <label style={labelStyle}>About Text</label>
+                  <textarea style={style} value={data.about}/>
+                </div>
+              </section>
+            </main>
+          </div>
+          {mainContentConfig}
+          </div>
+        }
+      </Subscriber>
     )
   }
 }

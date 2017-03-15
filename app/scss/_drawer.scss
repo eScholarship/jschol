@@ -15,7 +15,7 @@
   border-bottom: 1px solid $color-black;
 
   a {
-    color: $color-black;
+    color: $color-dark-blue;
     text-decoration: none;
   }
 }
@@ -141,7 +141,12 @@
   }
 }
 
-
+.editable-outline {
+  border: 1px solid red;
+  &:hover {
+    border: 1px solid blue;
+  };
+}
 
 
 

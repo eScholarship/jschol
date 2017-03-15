@@ -174,6 +174,8 @@ def getUnitProfile(unit, attrs)
     logo: attrs['logo'],
     facebook: attrs['facebook'],
     twitter: attrs['twitter'],
+    carousel: attrs['carousel'],
+    about: attrs['about']
   }
   if unit.type == 'journal'
     profile[:doaj] = true
@@ -182,7 +184,24 @@ def getUnitProfile(unit, attrs)
     profile[:issue] = 'most recent'
     profile[:layout] = 'simple'
   end
+  if unit.type == 'oru'
+    profile[:seriesSelector] = true
+  end
   return profile
+end
+
+def getUnitSidebar(unit, attrs)
+  sidebar = [
+    {
+      name: "Featured Articles",
+      displayName: "Featured Articles",
+      config: "Article picker"
+    },
+    {
+      name: "Twitter Feed",
+      config: "Twitter username"
+    }
+  ]
 end
 
 #   newAttrs = {
