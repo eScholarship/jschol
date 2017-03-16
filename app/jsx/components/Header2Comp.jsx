@@ -11,6 +11,11 @@ import Breakpoints from '../../js/breakpoints.json'
 import AdminBarComp from '../components/AdminBarComp.jsx'
 
 class HeaderComp2 extends React.Component {
+  static propTypes = {
+    type: React.PropTypes.string.isRequired,
+    unitID: React.PropTypes.string.isRequired
+  }
+
   constructor(props){
     super(props)
     this.state = {searchActive: false}

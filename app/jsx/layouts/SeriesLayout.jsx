@@ -7,6 +7,25 @@ import PaginationComp from '../components/PaginationComp.jsx'
 import ShareComp from '../components/ShareComp.jsx'
 
 class SeriesLayout extends React.Component {
+  static propTypes = {
+    unit: React.PropTypes.shape({
+      id: React.PropTypes.string.isRequired,
+      name: React.PropTypes.string,
+      type: React.PropTypes.string,
+      extent: React.PropTypes.object
+    }).isRequired,
+    data: React.PropTypes.shape({
+      count: React.PropTypes.number,
+      query: React.PropTypes.object,
+      searchResults: React.PropTypes.array,
+      series: React.PropTypes.array
+    }),
+    marquee: React.PropTypes.shape({
+      carousel: React.PropTypes.object,
+      about: React.PropTypes.string
+    })
+  }
+  
   render() {
     var data = this.props.data;
     return (
@@ -33,7 +52,7 @@ class SeriesLayout extends React.Component {
         </main>
         <aside>
           <section className="o-columnbox2">
-            <ShareComp type="unit" id={data.unitData.id} />
+            <ShareComp type="unit" id={this.props.unit.id} />
           </section>
           <section className="o-columnbox2">
             <header>
