@@ -29,8 +29,13 @@ class UnitPage extends PageBase
   // will likely at some point want to move these (search, home, pages) to different extensions of PageBase,
   // as all kinds of CMS-y stuff will live here, though perhaps not, to capitalize on React's
   // diff-ing of pages - all these different pages have quite a few of the same components:
-  // header, footer, nav, sidebar. I think when React diff's the page, if it's a new component
-
+  // header, footer, nav, sidebar. 
+  
+  // [********** AW - 3/15/17 **********]
+  // TODO [UNIT-CONTENT-AJAX-ISSUE]: need to separate these into different PageBase extensions
+  // React tries to render different content components 
+  // (ie - switch between DeparmentLayout and Series Layout or UnitSearchLayout)
+  // before the AJAX call for the different content has returned and then there are lots of issues!
   pageDataURL() {
     if (this.props.params.pageName) {
       if (this.props.params.pageName === 'search') {
@@ -41,9 +46,40 @@ class UnitPage extends PageBase
     }
     return "/api/unit/" + this.props.params.unitID + "/home"
   }
+  
+  // [********** AW - 3/15/17 **********]
+  //TODO: propTypes are checked before the response from PageBase.fetchPageData()
+  //is returned, resulting in several errors in the console
+  static propTypes = {
+    unit: React.PropTypes.shape({
+      id: React.PropTypes.string.isRequired,
+      name: React.PropTypes.string.isRequired,
+      type: React.PropTypes.string.isRequired,
+      extent: React.PropTypes.object
+    }).isRequired,
+    header: React.PropTypes.shape({
+      breadcrumb: React.PropTypes.array.isRequired,
+      campusId: React.PropTypes.string.isRequired,
+      campusName: React.PropTypes.string.isRequired,
+      campuses: React.PropTypes.array.isRequired,
+      logo: React.PropTypes.string,
+      nav_bar: React.PropTypes.array,
+      social: React.PropTypes.object
+    }).isRequired,
+    content: React.PropTypes.object.isRequired,
+    //TODO: sidebar is required, but isn't required here because it's not yet implemented
+    sidebar: React.PropTypes.object,
+    //Marquee, on the other hand, is genuinely optional
+    marquee: React.PropTypes.shape({
+      carousel: React.PropTypes.object,
+      about: React.PropTypes.string
+    })
+  }
 
+  // [********** AMY NOTES 3/15/17 **********]
   // TODO: each of the content layouts currently include the sidebars, 
   // but this should get stripped out and handled here in UnitPage
+  // TODO [UNIT-CONTENT-AJAX-ISSUE]: handle the AJAX issue described above pageDataURL method definition
   renderData(data) { 
     var contentLayout;
     if (this.props.params.pageName === 'search') {

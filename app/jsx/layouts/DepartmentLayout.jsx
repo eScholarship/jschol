@@ -7,6 +7,23 @@ import ShareComp from '../components/ShareComp.jsx'
 import ScholWorksComp from '../components/ScholWorksComp.jsx'
 
 class SeriesComp extends React.Component {
+  static propTypes = {
+    data: React.PropTypes.shape({
+      count: React.PropTypes.number.isRequired,
+      items: React.PropTypes.arrayOf(React.PropTypes.shape({
+        id: React.PropTypes.string.isRequired,
+        title: React.PropTypes.string.isRequired,
+        
+        abstract: React.PropTypes.string,
+        authors: React.PropTypes.array,
+        content_type: React.PropTypes.string,
+        supp_files: React.PropTypes.array
+      })).isRequired,
+      name: React.PropTypes.string.isRequired,
+      unit_id: React.PropTypes.string.isRequired
+    })
+  }
+  
   render() {
     return (
       <div style={{marginBottom: '30px'}}>
@@ -22,6 +39,30 @@ class SeriesComp extends React.Component {
 }
 
 class DepartmentLayout extends React.Component {
+  static propTypes = {
+    unit: React.PropTypes.shape({
+      id: React.PropTypes.string.isRequired,
+      name: React.PropTypes.string.isRequired,
+      type: React.PropTypes.string.isRequired,
+      extent: React.PropTypes.object
+    }).isRequired,
+    data: React.PropTypes.shape({
+      journals: React.PropTypes.arrayOf(React.PropTypes.shape({
+        name: React.PropTypes.string,
+        unit_id: React.PropTypes.string
+      })),
+      related_orus: React.PropTypes.arrayOf(React.PropTypes.shape({
+        name: React.PropTypes.string,
+        unit_id: React.PropTypes.string
+      })),
+      series: React.PropTypes.array.isRequired  //See SeriesComp directly above for Array element structure
+    }).isRequired,
+    marquee: React.PropTypes.shape({
+      carousel: React.PropTypes.any,
+      about: React.PropTypes.about
+    })
+  }
+  
   render() {
     var data = this.props.data;
 
@@ -38,7 +79,7 @@ class DepartmentLayout extends React.Component {
         <div className="c-columns">
           <main>
             <section className="o-columnbox1">
-              <p>There are {this.props.marquee.extent.count} publications in this collection, published between {this.props.marquee.extent.pub_year.start} and {this.props.marquee.extent.pub_year.end}.</p>
+              <p>There are {this.props.unit.extent.count} publications in this collection, published between {this.props.unit.extent.pub_year.start} and {this.props.unit.extent.pub_year.end}.</p>
               <Subscriber channel="cms">
                 { cms =>  
                   <div className={cms.isEditingPage && "editable-outline"}>
