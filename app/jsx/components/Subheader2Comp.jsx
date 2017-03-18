@@ -1,18 +1,24 @@
 // ##### Subheader 2 Component ##### //
 // # Note that for campus pages, campusID and unitID will be the same. For units, they can differ //
-// props = {
-//   unit:
-//   logo: 
-//   campusID:
-//   campusName:
-//   campuses:
-// }
 
 import React from 'react'
 import { Link } from 'react-router'
 import CampusSelectorComp from '../components/CampusSelectorComp.jsx'
 
 class Subheader2Comp extends React.Component {
+  static propTypes = {
+    campusID: React.PropTypes.string.isRequired,
+    campusName: React.PropTypes.string.isRequired,
+    campuses: React.PropTypes.array.isRequired,
+    logo: React.PropTypes.string,
+    unit: React.PropTypes.shape({
+      id: React.PropTypes.string.isRequired,
+      name: React.PropTypes.string.isRequired,
+      type: React.PropTypes.string.isRequired,
+      extent: React.PropTypes.object
+    }).isRequired,
+  }
+
   render() {
     let p = this.props
 

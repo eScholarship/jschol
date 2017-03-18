@@ -6,6 +6,14 @@ import JournalInfoComp from '../components/JournalInfoComp.jsx'
 import ScholWorksComp from '../components/ScholWorksComp.jsx'
 
 class SectionComp extends React.Component {
+  static PropTypes = {
+    section: React.PropTypes.shape({
+      articles: React.PropTypes.array,
+      id: React.PropTypes.number,
+      issue_id: React.PropTypes.number,
+      name: React.PropTypes.string
+    }).isRequired
+  }
   render() {
     return (
       <div>
@@ -17,6 +25,18 @@ class SectionComp extends React.Component {
 }
 
 class IssueComp extends React.Component {
+  static PropTypes = {
+    issue: React.PropTypes.shape({
+      cover_page: React.PropTypes.string,
+      id: React.PropTypes.number,
+      issue: React.PropTypes.string,
+      pub_date: React.PropTypes.string,
+      sections: React.PropTypes.array,    //See SectionComp prop types directly above 
+      unit_id: React.PropTypes.string,
+      volume: React.PropTypes.string
+    }).isRequired
+  }
+  
   render() {
     return (
       <div>
@@ -28,6 +48,23 @@ class IssueComp extends React.Component {
 }
 
 class JournalLayout extends React.Component {
+  static propTypes = {
+    unit: React.PropTypes.shape({
+      id: React.PropTypes.string.isRequired,
+      name: React.PropTypes.string.isRequired,
+      type: React.PropTypes.string.isRequired,
+      extent: React.PropTypes.object
+    }).isRequired,
+    data: React.PropTypes.shape({
+      display: React.PropTypes.string,
+      issue: React.PropTypes.object          // See IssueComp prop types directly above
+    }).isRequired,
+    marquee: React.PropTypes.shape({
+      carousel: React.PropTypes.any,
+      about: React.PropTypes.about
+    })
+  }
+  
   render() {
     var data = this.props.data;
 

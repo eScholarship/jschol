@@ -7,6 +7,28 @@ import NavComp from '../components/NavComp.jsx'
 import SocialIconsComp from '../components/SocialIconsComp.jsx'
 
 class NavBarComp extends React.Component {
+  static propTypes = {
+    navBar: React.PropTypes.arrayOf(React.PropTypes.shape({
+      name: React.PropTypes.string.isRequired,
+
+      slug: React.PropTypes.string,
+      url: React.PropTypes.string,
+      file: React.PropTypes.file,
+      sub_nav: React.PropTypes.array      // Array Of the same things included in navBar
+    })),
+    socialProps: React.PropTypes.shape({
+      facebook: React.PropTypes.string,
+      twitter: React.PropTypes.string,
+      rss: React.PropTypes.string
+    }),
+    unit: React.PropTypes.shape({
+      id: React.PropTypes.string.isRequired,
+      name: React.PropTypes.string.isRequired,
+      type: React.PropTypes.string.isRequired,
+      extent: React.PropTypes.object
+    }).isRequired,
+  }
+
   render() {
     return (
       <div className="c-navbar">

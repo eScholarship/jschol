@@ -55,7 +55,6 @@ end
 
 def getUnitMarquee(unit, attrs)
   return {
-    :extent => extent(unit.id, unit.type),
     :about => attrs['about'],
     :carousel => attrs['carousel']
   }

@@ -377,7 +377,7 @@ get "/api/unit/:unitID/?:pageName/?" do
       attrs = JSON.parse(unit[:attrs])
       if params[:pageName]
         pageData = {
-          unit: unit.values.reject{|k,v| k==:attrs},
+          unit: unit.values.reject{|k,v| k==:attrs}.merge(:extent => extent(unit.id, unit.type)),
           header: getUnitHeader(unit, attrs), 
           sidebar: [],
         }
