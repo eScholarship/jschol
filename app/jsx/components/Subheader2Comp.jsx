@@ -20,11 +20,11 @@ class Subheader2Comp extends React.Component {
     if (p.logo) {
       logo = p.logo
     } else {
-      logo = "http://placehold.it/400x100?text="+p.unit.id
+      logo = "http://placehold.it/400x100?text="+p.unitID
     }
 
     var btns;
-    if (p.unit.type === 'journal') {
+    if (p.type === 'journal') {
       btns = [
         <button className="o-button__3" key="submit">Submit</button>,
         <button className="o-button__3" key="manage">Manage 
@@ -39,7 +39,7 @@ class Subheader2Comp extends React.Component {
         <CampusSelectorComp campusID={p.campusID}
                             campusName={p.campusName}
                             campuses={p.campuses} />
-        <Link to={"/unit/"+p.unit.id}><img className="c-subheader2__banner" src={logo} alt={p.unit.name} /></Link>
+        <Link to={"/unit/"+p.unitID}><img className="c-subheader2__banner" src={logo} alt={p.unitName} /></Link>
         <div className="c-subheader2__buttons">
           {btns}
         </div>

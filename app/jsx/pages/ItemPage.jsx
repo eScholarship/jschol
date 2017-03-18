@@ -23,11 +23,11 @@ class ItemPage extends PageBase {
   renderData = data => {
     return (
       <div className="l-item">
-        <Header2Comp type={data.type} unitID={data.appearsIn.length > 0  && data.appearsIn[0]["id"]} />
+        <Header2Comp type={data.unit.type} unitID={data.appearsIn.length > 0  && data.appearsIn[0]["id"]} />
         {data.header && <Subheader2Comp unit={data.unit}
                                         campusID={data.header.campusID}
                                         campusName={data.header.campusName}
-                                        campuses={data.header.campuses}/>}
+                                        campuses={data.header.campuses} />}
         {data.header && <NavBarComp navBar={data.header.nav_bar} 
                                     unit={data.unit} 
                                     socialProps={data.header.social} />}

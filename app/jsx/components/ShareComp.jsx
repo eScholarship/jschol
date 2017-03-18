@@ -17,11 +17,11 @@ class ShareComp extends React.Component {
     return (
       <details className="c-share">
         <summary>Share</summary>
-        <ul className="c-share__list">
-          <li><a className="c-share__email" href="#" onClick={() => {this.getLink(p.type, p.id, "email")}}>Email</a></li>
-          <li><a className="c-share__facebook" href="#" onClick={() => {this.getLink(p.type, p.id, "facebook")}}>Facebook</a></li>
-          <li><a className="c-share__twitter" href="#" onClick={() => {this.getLink(p.type, p.id, "twitter")}}>Twitter</a></li>
-        </ul>
+        <div className="c-share__list">
+          <a className="c-share__email" href="#" onClick={() => {this.getLink(p.type, p.id, "email")}}>Email</a>
+          <a className="c-share__facebook" href="#" onClick={() => {this.getLink(p.type, p.id, "facebook")}}>Facebook</a>
+          <a className="c-share__twitter" href="#" onClick={() => {this.getLink(p.type, p.id, "twitter")}}>Twitter</a>
+        </div>
       </details>
     )
   }

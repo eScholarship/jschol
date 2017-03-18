@@ -9,6 +9,10 @@ import Header2Comp from '../components/Header2Comp.jsx'
 import Subheader2Comp from '../components/Subheader2Comp.jsx'
 import Nav1Comp from '../components/Nav1Comp.jsx'
 import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
+import Breakpoints from '../../js/breakpoints.json'
+import WellComp from '../components/WellComp.jsx'
+import DescriptionListComp from '../components/DescriptionListComp.jsx'
+import ToggleListComp from '../components/ToggleListComp.jsx'
 
 class BrowsePage extends PageBase
 {
@@ -23,146 +27,75 @@ class BrowsePage extends PageBase
 
   renderData(data) {
     return (
-    <div>
+      <div className="l-search">
+        <a href="#maincontent" className="c-skipnav">Skip to main content</a>
+
       {/* Campus-specific browse page */}
       { data.browse_type == "depts" &&
-          <div>
-            <Header2Comp type="campus" unitID={data.campusID} />
-            <Subheader2Comp campuses={data.campuses}
-                            unitID={data.campusID}
-                            unitName={data.campusName}
-                            campusID={data.campusID}
-                            campusName={data.campusName} />  </div> }
+        <div>
+          <Header2Comp type="campus" unitID={data.campusID} />
+          <Subheader2Comp type="campus"
+                          campuses={data.campuses}
+                          unitID={data.campusID}
+                          unitName={data.campusName}
+                          campusID={data.campusID}
+                          campusName={data.campusName} />  </div> }
       {/* Global browse page */}
       { data.browse_type != "depts" &&
-          <div>
-            <Header1Comp/>
-            <Nav1Comp campuses={data.campuses} />  </div> }
+        <div>
+          <Header1Comp />
+          <Nav1Comp campuses={data.campuses} /> </div> }
       <BreadcrumbComp array={data.breadcrumb} />
       <Content
         {...data}
-      />
-    </div>
-  )}
-
+      /> 
+      </div> )
+  }
 }
 
 class Content extends React.Component {
   render() {
     let p = this.props
     return (
-    <div>
-      { p.browse_type == "campuslist" && this.renderCampuses(p) }
-      { p.browse_type == "depts" && <DeptTree depts={p.depts} /> }
-      { p.browse_type == "journals" && <BrowseJournals journals={p.journals}
-        isActive="" campuses={p.campuses} campusID=""/> }
-    </div>
+      <div className="c-columns">
+        <main id="maincontent">
+        { p.browse_type == "campuslist" && this.renderCampuses(p) }
+        { p.browse_type == "depts" && this.renderDepts(p.depts) }
+        { p.browse_type == "journals" && <BrowseJournals journals={p.journals}
+          isActive="" campuses={p.campuses} campusID=""/> }
+        </main>
+        <aside>
+          <section className="o-columnbox2">
+            <header>
+              <h2>Featured Journals</h2>
+              [content to go here]
+            </header>
+          </section>
+        </aside>
+      </div>
   )}
 
   renderCampuses(p) {
-    let campusList = p.campusesStats.map(function(c, i) {
-        return c['id'] != "" &&
-          <p key={i}><a href={"/unit/" + c['id']}>{c['name']}</a><br/>
-            &nbsp;&nbsp;&nbsp;&nbsp;<StatNum item={c} /></p>
-      })
     return (
-    <div>
-      <h2>Campuses</h2>
-      <p>
-Lorem ipsum dolor sit amet
-
-consectetur adipiscing elit. Aenean euismod bibendum laoreet. Proin gravida dolor sit amet lacus accumsan et viverra justo commodo. Proin sodales pulvinar tempor. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Nam fermentum, nulla luctus pharetra vulputate,
-
-felis tellus mollis orci, sed start a journal nunc eget odio.
-      </p>
-      {campusList}
-      <br/><br/>
-    </div>
+    <section className="o-columnbox1">
+      <header>
+        <h2>Campuses</h2>
+      </header>
+      <WellComp />
+      <DescriptionListComp campusesStats={p.campusesStats} />
+    </section>
   )}
 
-}
-
-// Tree traversal help via http://codepen.io/anon/pen/Ftkln
-// 'depts' property (JSON)
-// [ ...,
-//  {"id"=>"international",
-//   "name"=>"UCLA International Institute",
-//   "children"=>
-//    [{"id"=>"asia",
-//      "name"=>"UCLA Asia Institute",
-//      "children"=>[{"id"=>"ccs", "name"=>"UCLA Center for Chinese Studies"}]}, .. ], } .. ]
-class DeptTree extends React.Component {
-  constructor(props) {
-    super(props)
-    this.state = { depts: this.props.depts }
-    // this.onSelect = this.onSelect.bind(this)
-  }
-  onSelect(node) {
-    if (this.state.selected && this.state.selected.isMounted()) {
-      this.state.selected.setState({selected: false})
-    }
-    this.setState({selected: node})
-    node.setState({selected: true})
-    if (this.props.onCategorySelect) {
-      this.props.onCategorySelect(node)
-    }
-  }
-  render() { return (
-    <div>
-      <h2>Departments</h2>
-      <p>
-Lorem ipsum dolor sit amet
-
-consectetur adipiscing elit. Aenean euismod bibendum laoreet. Proin gravida dolor sit amet lacus accumsan et viverra justo commodo. Proin sodales pulvinar tempor. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Nam fermentum, nulla luctus pharetra vulputate,
-
-felis tellus mollis orci, sed start a journal nunc eget odio.
-      </p>
-      Expand All<br/>
-      <ul>
-        { this.props.depts.map((node) =>
-            <TreeNode key={node.id} depts={node} onCategorySelect={this.onSelect}/>) }
-      </ul>
-    </div>
-  )}
-}
-
-class TreeNode extends React.Component {
-  constructor(props) {
-    super(props)
-    this.state = { children: this.props.depts.children }
-    this.onCategorySelect = this.onCategorySelect.bind(this)
-    this.onChildDisplayToggle = this.onChildDisplayToggle.bind(this)
-  }
-  onCategorySelect(ev) {
-    if (this.props.onCategorySelect) {
-      this.props.onCategorySelect(this)
-    }
-    ev.preventDefault()
-    ev.stopPropagation()
-  }
-  onChildDisplayToggle(ev) {
-    if (this.props.depts.children) {
-      if (this.state.children && this.state.children.length) {
-        this.setState({children: null})
-      } else {
-        this.setState({children: this.props.depts.children})
-      }
-    }
-    ev.preventDefault()
-    ev.stopPropagation()
-  }
-  render() {
-    if (!this.state.children) this.state.children = []
+  renderDepts(depts) {
     return (
-      <li ref="node" onClick={this.onChildDisplayToggle}>
-        <Link onClick={this.onCategorySelect} to={"/unit/" + this.props.depts.id}>
-          {this.props.depts.name}</Link>
-          <ul>{this.state.children.map((child) =>
-            <TreeNode key={child.id} depts={child} onCategorySelect={this.props.onCategorySelect}/>)}
-          </ul>
-      </li>
-    )
-  }
+    <section className="o-columnbox1">
+      <header>
+        <h2>Academic Units</h2>
+      </header>
+      <WellComp />
+      <ToggleListComp depts={depts} />
+    </section>
+  )}
 }
 
 class BrowseJournals extends React.Component {
@@ -231,29 +164,6 @@ felis tellus mollis orci, sed start a journal nunc eget odio.
       <br/><br/>
     </div>
   )}
-}
-
-// StatNum displays stats (# publications, # depts, # journals) for a given campus
-class StatNum extends React.Component {
-
-  // Returns an array: [any present?, more than one?]
-  statNumify(x) {
-    return [ x  ? x.toLocaleString() : null, 
-            x>1 ? 's' : '']
-  }
-
-  render() {
-    let s1 = this.statNumify(this.props.item["publications"]),
-        s2 = this.statNumify(this.props.item["units"]),
-        s3 = this.statNumify(this.props.item["journals"])
-    return (
-      <span>
-        {s1[0] && <span>{s1[0]} Publication{s1[1]}</span>}
-        {s2[0] && <span>, {s2[0]} Unit{s2[1]}</span>}
-        {s3[0] && <span>, {s3[0]} Journal{s3[1]}</span>}
-      </span>
-    )
-  }
 }
 
 module.exports = BrowsePage

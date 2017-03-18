@@ -25,7 +25,7 @@
     height: $element-height;
     padding: 0 22px 0 5px;
     border: none;
-    background: $color-white url('../images/icon_times.svg') no-repeat right -3px center / 18px;
+    background: $color-white inline('../images/icon_times.svg') no-repeat right -3px center / 18px;
     color: $color-teal;
   }
 }
@@ -42,7 +42,7 @@
     margin: $spacing-base 0 0;
     padding: 0 5px 0 22px;
     border: none;
-    background: $color-white url('../images/icon_times-circle.svg') no-repeat left -1px center / 15px;
+    background: $color-white inline('../images/icon_times-circle.svg') no-repeat left -1px center / 15px;
   }
 
 }

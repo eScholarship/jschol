@@ -17,6 +17,10 @@ class InputObj extends React.Component {
 
         <button className="o-button__5">Export</button>
 
+        <button className="o-button__6">Buy in Print</button>
+
+        <button className="o-button__7">Download</button>
+
       </div>
     )
   }

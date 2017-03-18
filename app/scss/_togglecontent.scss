@@ -10,20 +10,17 @@ $togglecontent-left-spacing: 25px;
     border-top: 1px solid $color-light-gray;
   }
 
-  @include headings() {
-    display: inline;
-    margin: 0;
-    font-size: 1.2em;
-  }
-
   @include bp(screen2) {
     padding-left: $togglecontent-left-spacing;
   }
 
   summary {
+    display: inline-block;
     position: relative;
     margin-bottom: $spacing-sm;
     padding-left: $togglecontent-left-spacing;
+    font-size: 1.2em;
+    font-weight: bold;
     user-select: none;
 
     &::after { // ::before can't be used; see resets.scss
@@ -32,7 +29,7 @@ $togglecontent-left-spacing: 25px;
       bottom: 0;
       left: 0;
       padding: 8px;
-      background: url('../images/icon_plus-black.svg') no-repeat center / 16px;
+      background: inline('../images/icon_plus-black.svg') no-repeat center / 16px;
       content: '';
     }
 
@@ -47,7 +44,7 @@ $togglecontent-left-spacing: 25px;
     summary {
 
       &::after {
-        background-image: url('../images/icon_minus-black.svg');
+        background-image: inline('../images/icon_minus-black.svg');
       }
 
     }

@@ -1,12 +1,17 @@
-// ##### Download Component ##### //
+// ##### Download Object ##### //
 
-.c-download {
+// ***** Toggle and Button ***** //
+
+.o-download {
   display: inline-flex;
-  margin-right: $spacing-sm;
-  margin-bottom: $spacing-sm;
+
+  @include bp(screen2) {
+    position: relative;
+  }
+
 }
 
-.c-download__button {
+.o-download__button {
   padding: 0 $spacing-sm;
   border: none;
   border-right: 1px solid $color-white;
@@ -15,7 +20,7 @@
   color: $color-white;
 }
 
-.c-download__formats {
+.o-download__formats {
 
   summary {
     position: relative;
@@ -34,7 +39,7 @@
       right: $spacing-sm;
       bottom: 0;
       padding: 0 7px;
-      background: url('../images/icon_arrow-down-white.svg') no-repeat center / 13px;
+      background: inline('../images/icon_arrow-down-white.svg') no-repeat center / 13px;
       content: '';
 
     }
@@ -51,9 +56,10 @@
 
 }
 
-// ***** Menu and Components ***** //
+// ***** Menu and Menu Items ***** //
 
-.c-download__menu {
+%o-download__menu {
+  @extend %no-bullet-ul;
   position: absolute;
   right: $spacing-sm;
   left: $spacing-sm;
@@ -67,17 +73,55 @@
   }
 
   @include bp(screen2) {
-    left: $spacing-md;
-    width: 230px;
+    right: 0;
+    left: 0;
   }
 
 }
 
-%c-download__item {
+// ***** Single Menu Items ***** //
+
+.o-download__single-menu {
+  @extend %o-download__menu;
+
+  li {
+
+    &:not(:first-child) {
+
+      a {
+        border-top: none;
+      }
+
+    }
+
+    a {
+      @extend %nav-item;
+      background: none;
+      color: $color-white;
+    }
+
+  }
+
+}
+
+// ***** Nested Menu Items ***** //
+
+.o-download__nested-menu {
+  @extend %o-download__menu;
+
+  @include bp(screen2) {
+    padding-bottom: $spacing-sm;
+  }
+
+}
+
+%o-download__nested-item {
   @extend %nav-item;
+  margin-left: -40px;
   padding-left: 40px;
-  background: no-repeat left $spacing-sm center / 16px;
+  background: none;
   color: $color-white;
+  font-size: 1em;
 
   @include bp(screen2) {
     padding-top: 3px;
@@ -87,62 +131,47 @@
 
 }
 
-%c-download__heading {
-  @extend %c-download__item;
-  border-top: none;
-  border-bottom: none;
+%o-download__nested-list {
+  padding-top: $spacing-sm;
+  padding-left: 40px;
+  background: no-repeat left 10px top 10px / 16px;
+  color: $color-white;
 
-  &:first-child {
-    border-top: 1px solid $color-dark-gray;
+  ul {
+    @extend %no-bullet-ul;
+    margin-top: $spacing-sm;
 
-    @include bp(screen2) {
-      margin-top: $spacing-sm;
-      border: none;
+    li {
+
+      a {
+        @extend %o-download__nested-item;
+
+        @include bp(screen2) {
+          text-decoration: underline;
+        }
+
+      }
+
+      &:not(:first-of-type) a {
+        border-top: none;
+      }
+
     }
 
   }
 
 }
+
+// ***** Nested Menu Item Icons ***** //
 
 @each $download-heading-number, $download-img-label in
   (1, files-o-white),
   (2, quote-right-white),
   (3, play-circle-white) {
 
-  .c-download__heading#{$download-heading-number} {
-    @extend %c-download__heading;
+  .o-download__nested-list#{$download-heading-number} {
+    @extend %o-download__nested-list;
     background-image: inline('../images/icon_#{$download-img-label}.svg');
-  }
-
-}
-
-.c-download__list {
-  @extend %no-bullet-ul;
-
-  li {
-
-    a {
-      @extend %c-download__item;
-      font-size: 1em;
-
-      @include bp(screen2) {
-        text-decoration: underline;
-      }
-
-    }
-
-    &:not(:first-of-type) a {
-      border-top: none;
-    }
-
-    &:last-child {
-
-      @include bp(screen2) {
-        margin-bottom: $spacing-sm;
-      }
-
-    }
-
   }
 
 }

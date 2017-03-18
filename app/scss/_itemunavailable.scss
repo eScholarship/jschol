@@ -1,0 +1,30 @@
+// ##### Item Unavailable Objects ##### //
+
+%o-itemunavailable {
+  margin: $spacing-sm 0 $spacing-md;
+  padding-left: 30px;
+  background: no-repeat top left / 20px;
+
+  .o-textlink__secondary {
+    @extend %overflow-wrap;
+    display: block;
+    margin-bottom: $spacing-md;
+  }
+
+}
+
+.o-itemunavailable__embargoed {
+  @extend %o-itemunavailable;
+  background-image: inline('../images/icon_clock-o-black.svg');
+}
+
+.o-itemunavailable__withdrawn {
+  @extend %o-itemunavailable;
+  background-image: inline('../images/icon_times-circle-o-black.svg');
+}
+
+.o-itemunavailable__lede {
+  margin: 0 0 $spacing-md;
+  font-size: 1.2em;
+  font-weight: normal;
+}

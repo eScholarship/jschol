@@ -1,6 +1,7 @@
 // ##### Toggle List Sub Component ##### //
 
 import React from 'react'
+import { Link } from 'react-router'
 
 class ToggleListSubComp extends React.Component {
   constructor(props){
@@ -13,9 +14,19 @@ class ToggleListSubComp extends React.Component {
         <summary onClick={event => {
           this.setState({open: !this.details.open, date: new Date()})
           event.preventDefault()
-        }}>{this.props.title}</summary>
+        }} aria-label="list of sub items"></summary>
         <ul>
-          {this.props.children}
+        { this.props.children.map((node) =>
+            node.children ?
+              <li key={node.id}>
+                <Link to={"/unit/" + node.id}>
+                  {node.name}</Link>
+                <ToggleListSubComp override={this.props.override}>{node.children}</ToggleListSubComp></li>
+             :
+              <li key={node.id}>
+                <Link to={"/unit/" + node.id}>
+                  {node.name}</Link></li> )
+        }
         </ul>
       </details>
     )

@@ -2,15 +2,7 @@
 
 $input-height: $element-height;
 
-.o-input__droplist {
-
-  label {
-    margin: 0 10px 0 0;
-    color: $color-dark-gray;
-    font-size: 0.8em;
-    font-weight: bold;
-    text-transform: uppercase;
-  }
+%o-input__droplist {
 
   select {
     height: $input-height;
@@ -25,6 +17,29 @@ $input-height: $element-height;
       display: none;
     }
 
+  }
+
+}
+
+.o-input__droplist1 {
+  @extend %o-input__droplist;
+
+  label {
+    margin-right: 10px;
+    color: $color-dark-gray;
+    font-size: 0.8em;
+    font-weight: bold;
+    text-transform: uppercase;
+  }
+
+}
+
+.o-input__droplist2 {
+  @extend %o-input__droplist;
+
+  label {
+    display: block;
+    margin-bottom: 5px;
   }
 
 }
