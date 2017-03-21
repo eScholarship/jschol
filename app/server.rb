@@ -25,7 +25,7 @@ require 'socket'
 # Make puts thread-safe, and flush after every puts.
 $stdoutMutex = Mutex.new
 def puts(*args)
-  $stdoutMutex.synchronize { 
+  $stdoutMutex.synchronize {
     #STDOUT.print Thread.current
     super(*args)
     STDOUT.flush
@@ -43,7 +43,7 @@ if File.exist? "config/socks.yaml"
   TCPSocket::socks_server = "127.0.0.1"
   TCPSocket::socks_port = YAML.load_file("config/socks.yaml")['port']
   require_relative 'socksMysql'
-  SocksMysql.reconfigure(dbConfig)
+  SocksMysql.new(dbConfig)
 end
 DB = Sequel.connect(dbConfig)
 #DB.loggers << Logger.new('server.sql_log')  # Enable to debug SQL queries
@@ -55,6 +55,7 @@ require_relative 'listItemViews'
 require_relative 'searchApi'
 require_relative 'queueWithTimeout'
 require_relative 'unitPages'
+require_relative 'loginApi'
 
 # Sinatra configuration
 configure do
