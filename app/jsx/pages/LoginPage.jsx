@@ -18,10 +18,27 @@ class LoginPage extends PageBase
   renderData(data) {
     if (!(typeof document === "undefined")) {
       // Only redirect on browser, not on server
-      window.location = "https://submit.escholarship.org/secure/jscholLogin?returnTo=" +
-        encodeURIComponent(window.location.href.replace("/login", "/loginSuccess")) +
-        "&nonce=" + this.state.pageData.nonce
+      setTimeout(()=>{
+        window.location = "https://submit.escholarship.org/secure/jscholLogin?returnTo=" +
+          encodeURIComponent(window.location.href.replace("/login", "/loginSuccess")) +
+          "&nonce=" + this.state.pageData.nonce}, 100)
     }
+    return (
+      <div>
+        <Header1Comp/>
+        <Nav1Comp />
+        <div className="c-columns">
+          <main>
+            <section className="o-columnbox1">
+              <header>
+                <h1 className="o-columnbox1__heading">Login</h1>
+              </header>
+              <p>Redirecting to login page...</p>
+            </section>
+          </main>
+        </div>
+      </div>
+    )
   }
 }
 

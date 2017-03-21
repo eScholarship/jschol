@@ -42,6 +42,8 @@ class PageBase extends React.Component
       else
         this.fetchPageData(this.props)
     }
+    else
+      state.pageData = {}
     this.setState(state)
   }
 

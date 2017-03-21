@@ -44,7 +44,6 @@ class LoginSuccessPage extends PageBase
           </section>
         </main>
       </div>
-      <FooterComp/>
     </div>
   )}
 }
