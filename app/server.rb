@@ -37,16 +37,19 @@ puts "\n\n======================================================================
 
 # Use the Sequel gem to get object-relational mapping, connection pooling, thread safety, etc.
 # If specified, use SOCKS proxy for all connections (including database).
-dbConfig = YAML.load_file("config/database.yaml")
+escholDbConfig = YAML.load_file("config/database.yaml")
+ojsDbConfig = YAML.load_file("config/ojsDb.yaml")
 if File.exist? "config/socks.yaml"
   # Configure socksify for all TCP connections. Jump through hoops for MySQL to use it too.
   TCPSocket::socks_server = "127.0.0.1"
   TCPSocket::socks_port = YAML.load_file("config/socks.yaml")['port']
   require_relative 'socksMysql'
-  SocksMysql.new(dbConfig)
+  SocksMysql.new(escholDbConfig)
+  SocksMysql.new(ojsDbConfig)
 end
-DB = Sequel.connect(dbConfig)
+DB = Sequel.connect(escholDbConfig)
 #DB.loggers << Logger.new('server.sql_log')  # Enable to debug SQL queries
+OJS_DB = Sequel.connect(ojsDbConfig)
 
 # Internal modules to implement specific pages and functionality
 require_relative 'dbCache'
