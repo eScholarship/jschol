@@ -73,7 +73,7 @@ class PageBase extends React.Component
       $.getJSON(this.pageDataURL(props)).done((data) => {
         this.setState({ pageData: data })
       }).fail((jqxhr, textStatus, err)=> {
-        this.setState({ error: textStatus + ", " + err })
+        this.setState({ error: textStatus })
       })
     }
   }
@@ -150,7 +150,7 @@ class PageBase extends React.Component
   renderError() { return (
     <div>
       <Header1Comp/>
-      <h2 style={{ marginTop: "5em", marginBottom: "5em" }}>{this.state.error}</h2>
+      <h2 style={{ marginTop: "5em", marginBottom: "5em" }}>Unable to reach the server: {this.state.error}</h2>
     </div>
   )}
 

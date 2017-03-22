@@ -52,7 +52,7 @@ class TestQuick < Test::Unit::TestCase
 
   def test_login
     html = fetchAndStrip("http://localhost:4001/login")
-    assert_match /User name/, html
+    assert_match /Redirecting to login page/, html
   end
 
   def test_content
