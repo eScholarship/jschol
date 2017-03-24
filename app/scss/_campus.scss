@@ -11,6 +11,7 @@ $campus-selector-button-width: 30px;
     position: relative;
     align-items: flex-end;
     min-height: $element-height;
+    margin-right: $campus-selector-button-width + $spacing-md;
   }
 
 }

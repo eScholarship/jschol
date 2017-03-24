@@ -53,12 +53,13 @@
     "path": "^0.12.7",
     "postcss-assets": "^4.1.0",
     "progress": "^1.1.8",
-    "react-addons-test-utils": "^15.3.0",
+    "react-addons-test-utils": "^15.4.1",
     "run-sequence": "^1.2.2",
     "webpack": "^2.2.0-rc.1"
   },
   "dependencies-note": "These modules get bundled into lib-bundle.js",
   "dependencies": {
+    "array-includes": "^3.0.2",
     "details-polyfill": "^1.0.2",
     "flickity": "^2.0.5",
     "flickity-imagesloaded": "^2.0.0",
@@ -66,11 +67,14 @@
     "jquery.dotdotdot": "amywieliczka/jQuery.dotdotdot",
     "lodash": "^4.16.4",
     "react": "^15.4.1",
+    "react-broadcast": "^0.1.2",
     "react-dom": "^15.4.1",
     "react-responsive": "^1.1.4",
     "react-router": "^2.7.0",
     "react-router-form": "^2.0.0-rc.0",
-    "react-router-scroll": "^0.4.1"
+    "react-router-scroll": "^0.4.1",
+    "react-sidebar": "^2.3.0",
+    "react-sortable": "^1.2.0"
   },
   "optionalDependencies-note": "These modules are separately bundled and loaded on-demand via require.ensure",
   "optionalDependencies": {

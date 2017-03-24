@@ -1,13 +1,33 @@
-// ##### Download Component ##### //
+// ##### Download Object ##### //
 
-.c-download {
+// ***** Toggle and Button ***** //
 
-  // scss-lint:disable DeclarationOrder
+.o-download {
+  display: inline-flex;
+
+  @include bp(screen2) {
+    position: relative;
+  }
+
+}
+
+.o-download__button {
+  padding: 0 $spacing-sm;
+  border: none;
+  border-right: 1px solid $color-white;
+  border-radius: $round-corner 0 0 $round-corner;
+  background-color: $color-teal;
+  color: $color-white;
+}
+
+.o-download__formats {
 
   summary {
     position: relative;
-    height: $element-height;
+    min-height: $element-height;
+    padding-right: 25px;
     padding-left: $spacing-sm;
+    border-radius: 0 $round-corner $round-corner 0;
     background-color: $color-teal;
     color: $color-white;
     line-height: $element-height;
@@ -18,25 +38,9 @@
       top: 0;
       right: $spacing-sm;
       bottom: 0;
-      padding: 7px;
-      background: url('../images/icon_arrow-down-white.svg') no-repeat center / 13px;
+      padding: 0 7px;
+      background: inline('../images/icon_arrow-down-white.svg') no-repeat center / 13px;
       content: '';
-
-    }
-
-  }
-
-  @include bp(screen3) {
-
-    summary {
-      display: inline-block;
-      padding-right: 45px;
-
-      &::after {
-        right: 0;
-        padding-left: 25px;
-        border-left: 1px solid $color-white;
-      }
 
     }
 
@@ -46,10 +50,110 @@
 
     summary::after {
       transform: rotate(180deg);
+    }
 
-      @include bp(screen3) {
-        border-right: 1px solid $color-white;
-        border-left: none;
+  }
+
+}
+
+// ***** Menu and Menu Items ***** //
+
+%o-download__menu {
+  @extend %no-bullet-ul;
+  position: absolute;
+  right: $spacing-sm;
+  left: $spacing-sm;
+  margin-top: 5px;
+  background-color: lighten($color-black, 35%);
+  z-index: 1;
+
+  @supports (backdrop-filter: blur()) {
+    background-color: rgba($color-black, 0.6);
+    backdrop-filter: blur(5px);
+  }
+
+  @include bp(screen2) {
+    right: 0;
+    left: 0;
+  }
+
+}
+
+// ***** Single Menu Items ***** //
+
+.o-download__single-menu {
+  @extend %o-download__menu;
+
+  li {
+
+    &:not(:first-child) {
+
+      a {
+        border-top: none;
+      }
+
+    }
+
+    a {
+      @extend %nav-item;
+      background: none;
+      color: $color-white;
+    }
+
+  }
+
+}
+
+// ***** Nested Menu Items ***** //
+
+.o-download__nested-menu {
+  @extend %o-download__menu;
+
+  @include bp(screen2) {
+    padding-bottom: $spacing-sm;
+  }
+
+}
+
+%o-download__nested-item {
+  @extend %nav-item;
+  margin-left: -40px;
+  padding-left: 40px;
+  background: none;
+  color: $color-white;
+  font-size: 1em;
+
+  @include bp(screen2) {
+    padding-top: 3px;
+    padding-bottom: 3px;
+    border: none;
+  }
+
+}
+
+%o-download__nested-list {
+  padding-top: $spacing-sm;
+  padding-left: 40px;
+  background: no-repeat left 10px top 10px / 16px;
+  color: $color-white;
+
+  ul {
+    @extend %no-bullet-ul;
+    margin-top: $spacing-sm;
+
+    li {
+
+      a {
+        @extend %o-download__nested-item;
+
+        @include bp(screen2) {
+          text-decoration: underline;
+        }
+
+      }
+
+      &:not(:first-of-type) a {
+        border-top: none;
       }
 
     }
@@ -58,65 +162,16 @@
 
 }
 
-%c-download__item {
-  @extend %nav-item;
-  padding-left: 40px;
-  background: no-repeat left $spacing-sm center / 16px;
-  color: $color-white;
-}
+// ***** Nested Menu Item Icons ***** //
 
-.c-download__menu {
-  margin: $spacing-sm 0 0;
+@each $download-heading-number, $download-img-label in
+  (1, files-o-white),
+  (2, quote-right-white),
+  (3, play-circle-white) {
 
-  @include bp(screen3) {
-    position: absolute;
-    z-index: 1;
-  }
-
-}
-
-%c-download__heading {
-  @extend %c-download__item;
-  border-top: none;
-  border-bottom: none;
-  background-color: $color-dark-gray;
-
-  &:first-child {
-    border-top: 1px solid $color-dark-gray;
-  }
-
-}
-
-.c-download__heading1 {
-  @extend %c-download__heading;
-  background-image: inline('../images/icon_files-o-white.svg');
-}
-
-.c-download__heading2 {
-  @extend %c-download__heading;
-  background-image: inline('../images/icon_quote-right-white.svg');
-}
-
-.c-download__heading3 {
-  @extend %c-download__heading;
-  background-image: inline('../images/icon_play-circle-white.svg');
-}
-
-
-.c-download__list {
-  @extend %no-bullet-ul;
-
-  li {
-
-    a {
-      @extend %c-download__item;
-      background-color: $color-teal;
-    }
-
-    &:not(:first-of-type) a {
-      border-top: none;
-    }
-
+  .o-download__nested-list#{$download-heading-number} {
+    @extend %o-download__nested-list;
+    background-image: inline('../images/icon_#{$download-img-label}.svg');
   }
 
 }

@@ -1,4 +1,1 @@
-<svg width="50" height="100" xmlns="http://www.w3.org/2000/svg">
-  <polyline points="2,2 2,50 30,50"
-  style="fill:none;stroke:rgb(124,126,127);stroke-width:4" />
-</svg>
+<svg width="50" height="100" xmlns="http://www.w3.org/2000/svg"><path fill="none" stroke="#7c7e7f" stroke-width="4" d="M2 2v48h28"/></svg>

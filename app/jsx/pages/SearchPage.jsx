@@ -1,14 +1,24 @@
 
 import React from 'react'
 import $ from 'jquery'
-import dotdotdot from 'jquery.dotdotdot'
 import _ from 'lodash'   // mainly for _.isEmtpy() which also works server-side (unlike $.isEmptyObject)
 import { Link } from 'react-router'
 import Form from 'react-router-form'
 
 import PageBase from './PageBase.jsx'
-import Header1Comp from '../components/Header1Comp.jsx'
-import Nav1Comp from '../components/Nav1Comp.jsx'
+import Subheader1Comp from '../components/Subheader1Comp.jsx'
+import ScholWorksComp from '../components/ScholWorksComp.jsx'
+import FilterComp from '../components/FilterComp.jsx'
+import ExportComp from '../components/ExportComp.jsx'
+import SortComp from '../components/SortComp.jsx'
+import PaginationComp from '../components/PaginationComp.jsx'
+import InfoPagesComp from '../components/InfoPagesComp.jsx'
+
+// Load dotdotdot in browser but not server
+if (!(typeof document === "undefined")) {
+  const dotdotdot = require('jquery.dotdotdot')
+}
+
 
 // FacetItem  
 // props = {
@@ -313,65 +323,10 @@ class FacetFieldset extends React.Component {
   }
 }
 
-class CurrentSearchTerms extends React.Component {
-  clearAll(event) {
-    $('[name=start]').val('0');
-    var filters = $(':checked').prop('checked', false);
-  }
-
-  render() {
-    var searchString = 'Your search: "' + this.props.query.q + '"';
-    var filters;
-    
-    if (!(_.isEmpty(this.props.query['filters']))) {
-      var filterTypes = ['type_of_work', 'peer_reviewed', 'supp_file_types', 'pub_year', 'campuses', 'departments', 'journals', 'disciplines', 'rights'];
-      var activeFilters = [];
-      for (let filterType of filterTypes) {
-        if (this.props.query['filters'][filterType] && this.props.query['filters'][filterType]['filters'].length > 0) {
-          var displayNames = this.props.query['filters'][filterType]['filters'].map(function(filter) {
-            if ('displayName' in filter) {
-              return filter['displayName'];
-            } else {
-              return filter['value'];
-            }
-          });
-          activeFilters.push({'filterDisplay': this.props.query['filters'][filterType]['display'], 'filters': displayNames.join(", "), 'filterType': filterType});
-        }
-      }
-
-      filters = (
-        <div>
-          <div className="c-filter__active-header">
-            <span id="c-filter__active-title">Active filters:</span>
-            <button onClick={this.clearAll}>clear all</button>
-          </div>
-          <div role="group" aria-labelledby="c-filter__active-title" className="c-filter__active">
-            { activeFilters.map((filter) => {
-              return (
-                <button key={filter.filterType} onClick={this.props.handler} data-filter-type={filter.filterType}>{filter.filterDisplay} ({filter.filters})</button>
-              )
-            }) }
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <div className="c-filter">
-        <h2 className="c-filter__heading">{searchString}</h2>
-        <input type="hidden" name="q" value={this.props.query.q} />
-        <div>Results: {Math.ceil(this.props.count/10)} pages, {this.props.count} works</div>
-        {filters}
-        <a href="" className="c-filter__tips">search tips</a>
-      </div>
-    )
-  }
-}
-
-// FacetForm manages the state for FacetItems and CurrentSearchTerms 
+// FacetForm manages the state for FacetItems and FilterComp 
 // all interactions with faceting search parameters get propagated up to FacetForm
 // and then down to their respective components before issuing the search query
-// to update the ResultItem list
+// to update the scholarly works list
 // FacetForm props:
 // props = {
 //   data: {
@@ -417,7 +372,7 @@ class FacetForm extends React.Component {
     this.setState({query: newQuery});
   }
 
-  // Set as the onClick handler for CurrentSearchTerms' active filter buttons
+  // Set as the onClick handler for FilterComp's active filter buttons
   removeFilters(event) {
     var newQuery = $.extend(true, {}, this.state.query); // true=deep copy
     var fieldType = $(event.target).data('filter-type');
@@ -452,7 +407,7 @@ class FacetForm extends React.Component {
 
     return (
       <Form id="facetForm" to='/search' method="GET" onSubmit={this.handleSubmit}>
-        <CurrentSearchTerms query={this.state.query} count={this.props.data.count} handler={this.removeFilters}/>
+        <FilterComp query={this.state.query} count={this.props.data.count} handler={this.removeFilters}/>
         {facetForm}
         <button type="submit" id="facet-form-submit">Search</button>
       </Form>
@@ -460,291 +415,18 @@ class FacetForm extends React.Component {
   }
 }
 
-class SortComp extends React.Component {
-  state = {
-    rows: this.props.query.rows ? this.props.query.rows : "10",
-    sort: this.props.query.sort ? this.props.query.sort : "rel"
-  }
-  handleChange = this.handleChange.bind(this);
-
-  handleChange(event) {
-    if (event.target.name == "rows") {
-      this.setState({rows: event.target.value});
-    }
-    if (event.target.name == "sort") {
-      this.setState({sort: event.target.value});
-    }
-    $('[name=start]').val('0');
-    $('#facet-form-submit').click();
-  }
-
-  render() {
-    return (
-      <div className="c-sort">
-        <div className="o-input__droplist">
-          <label htmlFor="c-sort1">Sort By:</label>
-          <select name="sort" id="c-sort1" form="facetForm" value={ this.state.sort } onChange={ this.handleChange }>
-            <option value="rel">Relevance</option>
-            <option value="pop">Most Popular</option>
-            <option value="a-title">A-Z By Title</option>
-            <option value="z-title">Z-A By Title</option>
-            <option value="a-author">A-Z By Author</option>
-            <option value="z-author">Z-A By Author</option>
-            <option value="asc">Date Ascending</option>
-            <option value="dsc">Date Decending</option>
-          </select>
-        </div>
-        <div className="o-input__droplist c-sort__page-input">
-          <label htmlFor="c-sort2">Show:</label>
-          <select name="rows" id="c-sort2" form="facetForm" value={ this.state.rows } onChange={ this.handleChange }>
-            <option value="10">10</option>
-            <option value="20">20</option>
-            <option value="30">30</option>
-            <option value="50">50</option>
-            <option value="100">100</option>
-          </select>
-        </div>
-      </div>
-    )
-  }
-}
-
-class PaginationComp extends React.Component {
-  next = this.next.bind(this);
-  previous = this.previous.bind(this);
-  first = this.first.bind(this);
-  last = this.last.bind(this);
-  page = this.page.bind(this);
-
-  next(event) {
-    if (parseInt(this.props.query.start) + parseInt(this.props.query.rows) <= this.props.count) {
-      var newStart = parseInt(this.props.query.start) + parseInt(this.props.query.rows);
-      $('[form=facetForm][name=start]').val(newStart);
-      $('#facet-form-submit').click();
-    }
-  }
-
-  previous(event) {
-    if (parseInt(this.props.query.start) >= parseInt(this.props.query.rows)) {
-      var newStart = parseInt(this.props.query.start) - parseInt(this.props.query.rows);
-      $('[form=facetForm][name=start]').val(newStart);
-      $('#facet-form-submit').click();
-    }
-  }
-
-  first(event) {
-    $('[form=facetForm][name=start]').val(0);
-    $('#facet-form-submit').click();
-  }
-
-  last(event) {
-    var newStart = Math.floor(this.props.count / this.props.query.rows);
-    newStart = newStart * this.props.query.rows;
-    $('[form=facetForm][name=start]').val(newStart);
-    $('#facet-form-submit').click();
-  }
-
-  page(event) {
-    var newStart = (event.target.text - 1) * this.props.query.rows;
-    $('[form=facetForm][name=start]').val(newStart);
-    $('#facet-form-submit').click();
-  }
-
-  render() {
-    var page = Math.ceil(this.props.query.start / this.props.query.rows) + 1;
-    var pages = Math.ceil(this.props.count / this.props.query.rows);
-    var displayedPages = []
-
-    if (pages <= 2) {
-      for (var i=1; i<=pages; i++) {
-        displayedPages.push({num: i, className: i == page ? "c-pagination__item--active" : "c-pagination__item"});
-      }
-      return (
-      <div className="c-pagination">
-        <a className="c-pagination__prevnext" onClick={this.previous}>Previous</a>
-        { displayedPages.map(page => {
-          return (<a key={page.num} className={page.className} onClick={this.page}>{page.num}</a>)
-        }) }
-        <a className="c-pagination__prevnext" onClick={this.next}>Next</a>
-      </div>
-      )
-    }
-
-    if (page <= 2) {
-      for (var i=1; i<=3; i++) {
-        displayedPages.push({num: i, className: i == page ? "c-pagination__item--active" : "c-pagination__item"});
-      }
-      return (
-        <div className="c-pagination">
-          <a className="c-pagination__prevnext" onClick={this.previous}>Previous</a>
-          { displayedPages.map(page => {
-            return (<a key={page.num} className={page.className} onClick={this.page}>{page.num}</a>)
-          }) }
-          <span className="c-pagination__ellipses">&hellip;</span>
-          <a className="c-pagination__item" onClick={this.last}>{pages}</a>
-          <a className="c-pagination__prevnext" onClick={this.next}>Next</a>
-        </div>
-      )
-    }
-    else if (page > pages-2) {
-      for (var i=pages-4; i<=pages; i++) {
-        displayedPages.push({num: i, className: i == page ? "c-pagination__item--active" : "c-pagination__item"});
-      }
-      return (
-        <div className="c-pagination">
-          <a className="c-pagination__prevnext" onClick={this.previous}>Previous</a>
-          <a className="c-pagination__item" onClick={this.first}>1</a>
-          <span className="c-pagination__ellipses">&hellip;</span>
-          { displayedPages.map(page => {
-            return (<a key={page.num} className={page.className} onClick={this.page}>{page.num}</a>)
-          }) }
-          <a className="c-pagination__prevnext" onClick={this.next}>Next</a>
-        </div>
-      )
-    }
-    else {
-      return (
-        <div className="c-pagination">
-          <a className="c-pagination__prevnext" onClick={this.previous}>Previous</a>
-          <a className="c-pagination__item" onClick={this.first}>1</a>
-          <span className="c-pagination__ellipses">&hellip;</span>
-          <a className="c-pagination__item" onClick={this.prev}>{page - 1}</a>
-          <a className="c-pagination__item c-pagination__item--active">{page}</a>
-          <a className="c-pagination__item" onClick={this.next}>{page + 1}</a>
-          <span className="c-pagination__ellipses">&hellip;</span>
-          <a className="c-pagination__item" onClick={this.last}>{pages}</a>
-          <a className="c-pagination__prevnext" onClick={this.next}>Next</a>
-        </div>
-      )
-    }
-  }
-}
-
-class ResultItem extends React.Component {
-  componentDidMount() {
-    $('.c-scholworks__heading, .c-scholworks__abstract, .c-scholworks__author').dotdotdot({watch: "window"});
-  }
-  render() {
-    var tagList = [];
-    if (this.props.result.genre === 'article') {
-      tagList.push({display: 'Article', tagStyle: 'article'});
-    }
-    if (this.props.result.genre === 'monograph') {
-      tagList.push({display: 'Book', tagStyle: 'book'});
-    }
-    if (this.props.result.genre === 'dissertation') {
-      tagList.push({display: 'Thesis', tagStyle: 'thesis'});
-    }
-    if (this.props.result.genre === 'multimedia') {
-      tagList.push({display: 'Multimedia', tagStyle: 'multimedia'});
-    }
-    if (this.props.result.peerReviewed === true) {
-      tagList.push({display: 'Peer Reviewed', tagStyle: 'peer'});
-    }
-    
-    var publishingInfo;
-    var unitId;
-    if ('journalInfo' in this.props.result) {
-      publishingInfo = this.props.result.journalInfo.displayName;
-      unitId = this.props.result.journalInfo.unitId;
-    } else if ('unitInfo' in this.props.result) {
-      publishingInfo = this.props.result.unitInfo.displayName;
-      unitId = this.props.result.unitInfo.unitId;
-    }
-
-    var authorList = this.props.result.authors.map(function(author, i, a) {
-      if (i === a.length-1) {
-        return (<span key={author.name}><Link to={"/search/?q="+author.name}>{author.name}</Link></span>);
-      } else {
-        return (<span key={author.name}><Link to={"/search/?q="+author.name}>{author.name}</Link>; </span>);
-      }
-    });
-
-    var supp_files = this.props.result.supp_files.map(function(supp_file) {
-      if (true || supp_file.count >= 1) {
-        var display;
-        if (supp_file.type === 'video' || supp_file.type === 'image') {
-          display = supp_file.count != 1 ? supp_file.type + 's' : supp_file.type;
-        } else if (true || supp_file.type === 'audio') {
-          display = supp_file.count != 1 ? 'audio files' : 'audio file';
-        } else if (supp_file.type === 'pdf') {
-          display = supp_file.count != 1 ? 'additional PDFs' : 'additional PDF';
-        }
-        return (<li key={supp_file.type} className={"c-scholworks__media-" + supp_file.type}>Contains {supp_file.count} {display}</li>);   
-      }
-    });
-    // if ('supp_files' in this.props.result && this.props.result.supp_files !== null) {
-    //   if ('video' in this.props.result.supp_files && this.props.result.supp_files.video !== 0) {
-    //     supp_files.append(<li className="c-scholworks__media-video">Contains {this.props.result.supp_files.video} videos</li>);
-    //   }
-    //   if ('image' in this.props.result.supp_files && this.props.result.supp_files.image !== 0) {
-    //     supp_files.append(<li className="c-scholworks__media-image">Contains {this.props.result.supp_files.image} images</li>);
-    //   }
-    //   if ('pdf' in this.props.result.supp_files && this.props.result.supp_files.pdf !== 0) {
-    //     supp_files.append(<li className="c-scholworks__media-pdf">Contains {this.props.result.supp_files.pdf} additional PDFs</li>);
-    //   }
-    //   if ('audio' in this.props.result.supp_files && this.props.result.supp_files.audio !== 0) {
-    //     supp_files.append(<li className="c-scholworks__media-audio">Contains {this.props.result.supp_files.audio} audio files</li>);
-    //   }
-    // }
-
-    return (
-      <section className="c-scholworks">
-        <div className="c-scholworks__main-column">
-          <ul className="c-scholworks__tag-list">
-            { tagList.map(function(tag) { 
-              return (
-                <li key={tag.tagStyle} className={ "c-scholworks__tag-" + tag.tagStyle }>{tag.display}</li>
-              ) 
-            }) }
-          </ul>
-          <heading>
-            <h2 className="c-scholworks__heading">
-              <Link to={"/item/"+this.props.result.id.replace(/^qt/, "")}>{this.props.result.title}</Link>
-            </h2>
-          </heading>
-          <div className="c-scholworks__author">
-            {authorList}
-          </div>
-          <div className="c-scholworks__publication">
-            <Link to={"/unit/" + unitId}>{publishingInfo}</Link> ({this.props.result.pub_year})
-          </div>
-          <div className="c-scholworks__abstract">
-            <p>{this.props.result.abstract}</p>
-          </div>
-          <div className="c-scholworks__media">
-            <ul className="c-scholworks__media-list">{ supp_files }</ul>
-            <img className="c-scholworks__cc" src="images/icon_cc-by.svg" alt="cc"/>
-          </div>
-        </div>
-      </section>
-    )
-  }
-}
-
-class ScholarlyWorks extends React.Component {
-  render() {
-    return(
-      <div>
-        { this.props.results.map(result =>
-          <ResultItem key={result.id} result={result} />)
-        }
-      </div>)
-  }
-}
-
 class SearchPage extends PageBase {
   // PageBase will fetch the following URL for us, and place the results in this.state.pageData
-  pageDataURL(props) {
-    return "/api/search/" + props.location.search  // plus whatever props.params.YourUrlParam, etc.
+  pageDataURL() {
+    return "/api/search/" + this.props.location.search  // plus whatever props.params.YourUrlParam, etc.
   }
 
   renderData(data) {
     var facetFormData = {facets: data.facets, count: data.count};
     return(
       <div className="l_search">
-        <Header1Comp />
-        <Nav1Comp campuses={data.campuses} />
+        <Subheader1Comp navdata={[{name: 'Campus Sites', slug: ''}, {name: 'UC Open Access Policies', slug: ''}, {name: 'eScholarship Publishing', slug: ''}]} />
+        <ExportComp />
         <div className="c-columns">
           <aside>
             <FacetForm data={facetFormData} query={data.query} />
@@ -759,12 +441,17 @@ class SearchPage extends PageBase {
               <header>
                 <h2 className="o-columnbox1__heading">Informational Pages (12 results)</h2>
               </header>
+              <InfoPagesComp />
             </section>
             <section className="o-columnbox1">
               <header>
                 <h2 className="o-columnbox1__heading">Scholarly Works ({data.count} results)</h2>
               </header>
-              <ScholarlyWorks results={data.searchResults} />
+              <div>
+                { data.searchResults.map(result =>
+                  <ScholWorksComp key={result.id} result={result} />)
+                }
+              </div>
             </section>
           </main>
         </div>
@@ -772,4 +459,4 @@ class SearchPage extends PageBase {
   )}
 }
 
-export { FacetItem, PubYear, FacetFieldset, CurrentSearchTerms, FacetForm, SortComp, PaginationComp, ResultItem, ScholarlyWorks, SearchPage }
+export { FacetItem, PubYear, FacetFieldset, FacetForm, SearchPage }

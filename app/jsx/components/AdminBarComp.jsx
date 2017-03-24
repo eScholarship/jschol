@@ -1,25 +1,26 @@
 // ##### AdminBar Component ##### //
 
 import React from 'react'
+import { Subscriber } from 'react-broadcast'
 
-class AdminBarComp extends React.Component {
-  render() { 
-    let p = this.props
-    return(
+const AdminBarComp = (props) =>
+  <Subscriber channel="adminLogin">
+    { adminLogin => adminLogin.loggedIn &&
       <div className="c-adminbar">
         <div className="c-adminbar__logged-in-msg">
-          Logged in as '{p.admin.username}'
+          Logged in as '{adminLogin.username}'
         </div>
-        { p.admin.pageHasEditableComponents &&
-          <div className="c-adminbar__edit-pg">
-            <button className="c-adminbar__edit-pg-button" onClick={e=>p.admin.onEditingPageChange(!p.admin.editingPage)}>
-              {p.admin.editingPage ? "Done editing" : "Edit page"}
-            </button>
-          </div>
-        }
+        <Subscriber channel="cms">
+          { cms => cms.isPageEditable &&
+            <div className="c-adminbar__edit-pg">
+              <button className="c-adminbar__edit-pg-button" onClick={e => cms.onEditingPageChange(!cms.isEditingPage)}>
+                {cms.isEditingPage ? "Done editing" : "Edit page"}
+              </button>
+            </div>
+          }
+        </Subscriber>
       </div>
-    )
-  }
-}
+    }
+  </Subscriber>
 
 module.exports = AdminBarComp;

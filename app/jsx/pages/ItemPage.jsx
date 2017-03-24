@@ -1,200 +1,59 @@
 // ##### Item Page ##### //
 
 import React from 'react'
-import { Link } from 'react-router'
-
 import PageBase from './PageBase.jsx'
 import Header2Comp from '../components/Header2Comp.jsx'
 import Subheader2Comp from '../components/Subheader2Comp.jsx'
+import NavBarComp from '../components/NavBarComp.jsx'
 import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
-import ItemMainComp from '../components/ItemMainComp.jsx'
-import ItemSupplComp from '../components/ItemSupplComp.jsx'
-import ItemMetricsComp from '../components/ItemMetricsComp.jsx'
-import ItemAuthArtComp from '../components/ItemAuthArtComp.jsx'
-import ItemCommentsComp from '../components/ItemCommentsComp.jsx'
+import TabsComp from '../components/TabsComp.jsx'
+import JumpComp from '../components/JumpComp.jsx'
+import FooterComp from '../components/FooterComp.jsx'
 
-class ItemPage extends PageBase
-{
-  constructor(props) {
-    super(props)
-    this.state.currentTab = Number(props.currentTab)
-  }
+class ItemPage extends PageBase {
+  state = { currentTab: 1 }
 
   // PageBase will fetch the following URL for us, and place the results in this.state.pageData
-  pageDataURL(props) {
-    return "/api/item/" + props.params.itemID
+  pageDataURL() {
+    return "/api/item/" + this.props.params.itemID
   }
 
-  changeTab(tab_id) {
-    this.setState({currentTab: tab_id})
-  }
+  changeTab = tab_id => { this.setState({currentTab: tab_id}) }
 
-  renderData(data) {
-    // Temporary styles till we get Joel's work
-    let rowStyle = {
-      display: 'table'
-    };
-    let leftStyle = {
-      display: 'table-cell',
-      width: '850px',
-      padding: "0px 10px"
-    };
-    let rightStyle = {
-      display: 'table-cell',
-      width: '200px',
-      padding: "0 0 40px 0"
-    };
-    let unitID = data.appearsIn.length > 0  && data.appearsIn[0]["id"]
-    let unitName = data.appearsIn.length > 0  && data.appearsIn[0]["name"]
-    return(
-      <div>
-        <Header2Comp type={data.type} unitID={unitID} />
-        <Subheader2Comp unitID={unitID} 
-                        unitName={unitName}
-                        campusID={data.campusID}
-                        campusName={data.campusName}
-                        campuses={data.campuses}/>
-        <BreadcrumbComp array={data.breadcrumb} />
-        <div style={rowStyle}>
-          <div style={leftStyle}>
-            <ItemTabbed
-              {...data}
-              currentTab={this.state.currentTab}  // overwrite props.currentTab
-              changeTab={this.changeTab.bind(this)}
-            />
-          </div>
-          <div style={rightStyle}>
-            <ItemLinkColumn 
-              changeTab={this.changeTab.bind(this)}
-              {...data}
-            />
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-}
-ItemPage.defaultProps = { currentTab: 1 };
-
-{/* Tabbed Navigation courtesy Trey Piepmeier http://codepen.io/trey/post/tabbed-navigation-react*/}
-class ItemTabbed extends React.Component {
-  constructor(props) {
-    super(props)
-    this.state = {
-      tabList: [ 
-        { 'id': 1, 'name': 'Main content', 'url': '#main' },
-        { 'id': 2, 'name': 'Supplemental Material', 'url': '#suppl' },
-        { 'id': 3, 'name': 'Metrics', 'url': '#metrics' },
-        { 'id': 4, 'name': 'Author & article info', 'url': '#authorarticle' },
-        { 'id': 5, 'name': 'Comments', 'url': '#comments' } ]
-    }
-  }
-
-  render() { return(
-    <div>
-      <Tabs
-        currentTab={this.props.currentTab}
-        tabList={this.state.tabList}
-        changeTab={this.props.changeTab}
-      />
-      <TabSwitch {...this.props}/>
-    </div>
-  )}
-}
-
-class Tabs extends React.Component {
-  handleClick(tab){
-    this.props.changeTab(tab.id)
-  }
-  
-  render() { return( <ul className="nav nav-tabs">
-    {this.props.tabList.map(function(tab) {
-      return (
-        <Tab
-          handleClick={this.handleClick.bind(this, tab)}
-          key={tab.id}
-          url={tab.url}
-          name={tab.name}
-          isCurrent={(this.props.currentTab === tab.id)}
-         />
-      )
-    }.bind(this))}
-    </ul>
-  )}
-}
-
-class Tab extends React.Component {
-  handleClick(e){
-    e.preventDefault()
-    this.props.handleClick()
-  }
-  
-  render() { return(
-    <li className="nav-item">
-      <a className={this.props.isCurrent ? 'current' : null} 
-         onClick={this.handleClick.bind(this)}
-         href={this.props.url}>{this.props.name}
-      </a>
-    </li>
-  )}
-}
-
-class TabSwitch extends React.Component {
-  render() { return(
-    <div>
-      {this.props.currentTab === 1 ? <ItemMainComp {...this.props}/> : null }
-      {this.props.currentTab === 2 ? <ItemSupplComp {...this.props}/> : null}
-      {this.props.currentTab === 3 ? <ItemMetricsComp {...this.props}/> : null}
-      {this.props.currentTab === 4 ? <ItemAuthArtComp {...this.props}/> : null}
-      {this.props.currentTab === 5 ? <ItemCommentsComp {...this.props}/> : null}
-    </div>
-  )}
-}
-
-class ItemLinkColumn extends React.Component {
-  handleClick(tab_id) {  
-    this.props.changeTab(tab_id)
-  }
-
-  render() { 
-    let p = this.props
-    return(
-      <div>
-        <div className="card card-block">
-          <h4 className="card-title">Download</h4>
-          Article: PDF | ePub | HTML<br/>
-          Image<br/>
-          Media<br/>
-          <a href="#"
-             onClick={this.handleClick.bind(this, 2)}
-             className="card-link">
-            more...
-          </a>
-        </div> 
-        <div className="card card-block">
-          <h4 className="card-title">Buy</h4>
-          <a href="#" className="card-link">Link</a>
-        </div> 
-        <div className="card card-block">
-          <h4 className="card-title">Share</h4>
-          <a href="#" className="card-link">Link</a>
-        </div>
-        <div className="card card-block">
-          <h4 className="card-title">Jump to:</h4>
-          {p.attrs["abstract"] && <span><a href="#" onClick={this.handleClick.bind(this, 1)} className="card-link">Abstract</a><br/></span>}
-          <a href="#" onClick={this.handleClick.bind(this, 1)} className="card-link">Main Text</a><br/>
-          <a href="#" className="card-link">References</a><br/>
-          <a href="#" className="card-link">Author response</a><br/>
-          {p.attrs["supp_files"] && <span><a href="#" onClick={this.handleClick.bind(this, 2)} className="card-link">Supplemental Material</a><br/></span>}
-          <a href="#" onClick={this.handleClick.bind(this, 3)} className="card-link">Metrics</a><br/>
-          <a href="#" onClick={this.handleClick.bind(this, 4)} className="card-link">Article & author info</a><br/>
-          <a href="#" onClick={this.handleClick.bind(this, 5)} className="card-link">Comments</a>
-
-        </div>
-        <div className="card card-block">
-          <h4 className="card-title">Related Items</h4>
-          <a href="#" className="card-link">Link</a>
+  renderData = data => {
+    return (
+      <div className="l-item">
+        <Header2Comp type={data.unit.type} unitID={data.appearsIn.length > 0  && data.appearsIn[0]["id"]} />
+        {data.header && <Subheader2Comp unit={data.unit}
+                                        campusID={data.header.campusID}
+                                        campusName={data.header.campusName}
+                                        campuses={data.header.campuses} />}
+        {data.header && <NavBarComp navBar={data.header.nav_bar} 
+                                    unit={data.unit} 
+                                    socialProps={data.header.social} />}
+        <BreadcrumbComp array={data.header ? data.header.breadcrumb : null} />
+        <div className="c-columns">
+          <main>
+            <TabsComp currentTab={this.state.currentTab}
+                      changeTab={this.changeTab}
+                      {...data} />
+          </main>
+          <aside>
+            {(data.status == "published" && data.content_type) &&
+              <section className="o-columnbox2">
+                <header>
+                  <h2 className="o-columnbox2__heading">Jump To</h2>
+                  <JumpComp changeTab={this.changeTab} />
+                </header>
+              </section>
+            }
+            <section className="o-columnbox2">
+              <header>
+                <h2 className="o-columnbox2__heading">Related Items</h2>
+                </header>
+                [content to go here]
+            </section>
+          </aside>
         </div>
       </div>
     )

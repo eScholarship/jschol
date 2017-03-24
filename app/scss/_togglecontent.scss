@@ -1,0 +1,54 @@
+// ##### Toggle Content Component ##### //
+
+$togglecontent-left-spacing: 25px;
+
+.c-togglecontent {
+
+  + .c-togglecontent {
+    margin-top: $spacing-md;
+    padding-top: $spacing-md;
+    border-top: 1px solid $color-light-gray;
+  }
+
+  @include bp(screen2) {
+    padding-left: $togglecontent-left-spacing;
+  }
+
+  summary {
+    display: inline-block;
+    position: relative;
+    margin-bottom: $spacing-sm;
+    padding-left: $togglecontent-left-spacing;
+    font-size: 1.2em;
+    font-weight: bold;
+    user-select: none;
+
+    &::after { // ::before can't be used; see resets.scss
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      padding: 8px;
+      background: inline('../images/icon_plus-black.svg') no-repeat center / 16px;
+      content: '';
+    }
+
+    @include bp(screen2) {
+      margin-left: (-$togglecontent-left-spacing);
+    }
+
+  }
+
+  &[open] {
+
+    summary {
+
+      &::after {
+        background-image: inline('../images/icon_minus-black.svg');
+      }
+
+    }
+
+  }
+
+}

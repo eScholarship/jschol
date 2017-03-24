@@ -1,0 +1,295 @@
+// ##### Media File Object ##### //
+
+$mediafile-img-height: 120px;
+
+%o-mediafile {
+  @extend %clearfix;
+  position: relative;
+
+  @include bp(screen1) {
+    display: block;
+    padding: $spacing-sm;
+
+    @supports (display: grid) {
+      display: grid;
+      grid-template-columns: 50% 50%;
+      grid-template-rows: auto 1fr auto;
+      grid-column-gap: $spacing-sm;
+    }
+
+  }
+
+}
+
+// ***** Set layout for heading, link, button, and description elements when --audio, --file, --image, or --video classes are appended to .o-mediafile ***** //
+
+.o-mediafile--audio,
+.o-mediafile--audio--selected,
+.o-mediafile--image,
+.o-mediafile--image--selected,
+.o-mediafile--video,
+.o-mediafile--video--selected {
+  @extend %o-mediafile;
+
+  @include bp(screen1) {
+
+    .o-mediafile__heading {
+      width: 48%;
+      float: right;
+
+      @supports (display: grid) {
+        width: auto;
+        grid-column: 2 / 3;
+        grid-row: 1 / 2;
+      }
+
+    }
+
+    .o-mediafile__link {
+      width: 48%;
+      float: left;
+
+      @supports (display: grid) {
+        width: 100%;
+        grid-row: 1 / 4;
+      }
+
+    }
+
+    .o-mediafile__button {
+      position: absolute;
+      bottom: 0;
+      left: 51.7%;
+
+      @supports (display: grid) {
+        position: static;
+        grid-column: 2 / 3;
+        justify-self: start;
+      }
+
+    }
+
+    .o-mediafile__description {
+      width: 48%;
+      float: right;
+      clear: none;
+
+      @supports (display: grid) {
+        width: auto;
+        margin-bottom: 0;
+        grid-column: 2 / 3;
+        grid-row: 2 / 3;
+      }
+
+    }
+
+  }
+
+}
+
+.o-mediafile--audio,
+.o-mediafile--audio--selected {
+
+  .o-mediafile__link {
+    margin-bottom: $spacing-sm;
+
+    &::before {
+      background-image: inline('../images/icon_volume-up-white.svg');
+    }
+
+    &::after {
+      display: block;
+      height: $mediafile-img-height;
+      background-color: $color-dark-gray;
+      content: '';
+    }
+
+    img {
+      display: none; // if there's an image in the html
+    }
+
+    @include bp(screen1) {
+      margin-bottom: 0;
+    }
+
+  }
+
+}
+
+.o-mediafile--image,
+.o-mediafile--image--selected {
+
+  .o-mediafile__link {
+
+    &::before {
+      background-image: inline('../images/icon_eye-white.svg');
+    }
+
+  }
+
+}
+
+.o-mediafile--file,
+.o-mediafile--file--selected {
+  position: relative;
+
+  .o-mediafile__heading {
+    width: 67%; // allow for float with .o-mediafile__button at 320px minimum screen size
+    float: left;
+
+    @include bp(screen1) {
+      width: auto;
+    }
+
+    @include bp(screen2) {
+      width: 50%;
+    }
+
+  }
+
+  .o-mediafile__link {
+    display: none; // will also remove o-mediafile__image if present in the html
+  }
+
+  @include bp(screen1) {
+    padding: $spacing-sm;
+
+    .o-mediafile__button {
+      position: absolute;
+      bottom: 0;
+      left: $spacing-sm;
+
+      @supports (display: grid) {
+        bottom: $spacing-sm;
+      }
+
+    }
+
+    .o-mediafile__description {
+      margin-bottom: 25px;
+
+      @include bp(screen2) {
+        width: 50%;
+      }
+
+    }
+
+  }
+
+}
+
+.o-mediafile--video,
+.o-mediafile--video--selected {
+
+  .o-mediafile__link {
+
+    &::before {
+      background-image: inline('../images/icon_play-circle-white.svg');
+    }
+
+  }
+
+}
+
+.o-mediafile--audio--selected,
+.o-mediafile--file--selected,
+.o-mediafile--image--selected,
+.o-mediafile--video--selected {
+  padding: $spacing-sm;
+  background-color: $color-light-gray;
+}
+
+%o-mediafile__heading {
+  margin: 0 0 $spacing-sm;
+  padding-left: 25px;
+  background: no-repeat top left / 16px;
+  color: $color-teal;
+  font-size: 1.1em;
+  font-weight: normal;
+
+  @include bp(screen1) {
+    max-height: 2.3em; // truncate beyond 2 lines per jquery.dotdotdot
+  }
+
+}
+
+.o-mediafile__heading {
+  @extend %o-mediafile__heading;
+}
+
+// ***** Media-specific Icons Within Heading ***** //
+
+// Example: o-mediafile--image
+
+@each $mediafile-type, $mediafile-icon in
+  (audio, icon_volume-up),
+  (file, icon_archive-teal),
+  (image, icon_picture),
+  (video, icon_video-camera-teal) {
+
+  .o-mediafile--#{$mediafile-type},
+  .o-mediafile--#{$mediafile-type}--selected {
+
+    .o-mediafile__heading {
+      @extend %o-mediafile__heading;
+      background-image: inline('../images/#{$mediafile-icon}.svg');
+    }
+
+  }
+
+}
+
+.o-mediafile__link {
+  display: block;
+  position: relative;
+  clear: left;
+
+  &::before {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: no-repeat center / 60px;
+    content: '';
+    opacity: 0.7;
+  }
+
+}
+
+.o-mediafile__image {
+  display: block;
+  width: 100%;
+  height: $mediafile-img-height;
+  margin-bottom: $spacing-sm;
+  object-fit: cover;
+
+  @include bp(screen1) {
+    margin-bottom: 0;
+  }
+
+}
+
+.o-mediafile__button {
+  margin-bottom: $spacing-sm;
+  float: right;
+
+  @include bp(screen1) {
+
+    @supports (display: grid) {
+      margin-bottom: 0;
+    }
+
+  }
+
+}
+
+.o-mediafile__description {
+  clear: both;
+  font-size: 0.9em;
+
+  @include bp(screen1) {
+    max-height: 3.2em; // truncate beyond 3 lines per jquery.dotdotdot
+  }
+
+}

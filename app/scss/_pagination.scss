@@ -5,7 +5,8 @@ $pagination-button-height: $element-height;
 .c-pagination {
   display: flex;
   flex: 1 0 auto;
-  flex-flow: row wrap;
+  flex-wrap: wrap;
+  align-items: flex-end; // for c-pagination__ellipses
   justify-content: flex-end;
   margin: 0 0 $spacing-md;
 }
@@ -49,4 +50,5 @@ $pagination-button-height: $element-height;
 
 .c-pagination__ellipses {
   margin-right: 5px;
+  margin-bottom: 10px;
 }

@@ -1,0 +1,47 @@
+// ##### Table Component ##### //
+
+$table-border-size: 1px;
+
+.c-table {
+  border: $table-border-size solid $color-teal;
+
+  th,
+  td {
+    padding: $spacing-sm;
+  }
+
+  th {
+    text-align: left;
+  }
+
+  // ***** Table Borders ***** //
+
+  thead {
+
+    th {
+      background-color: $color-teal;
+      color: $color-white;
+      font-weight: normal;
+
+      &:not(:first-child) {
+        border-left: $table-border-size solid $color-white;
+      }
+
+    }
+
+  }
+
+  tbody {
+
+    tr {
+      border-bottom: $table-border-size solid $color-teal;
+
+      td {
+        border-left: $table-border-size solid $color-teal;
+      }
+
+    }
+
+  }
+
+}

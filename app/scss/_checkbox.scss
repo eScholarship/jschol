@@ -1,7 +1,7 @@
 // ##### Checkbox Component ##### //
 
 .c-checkbox {
-  // empty
+  // not used
 }
 
 %c-checkbox__icon {
@@ -14,10 +14,6 @@
   &:checked + .c-checkbox__label {
     @extend %c-checkbox__icon;
     background-image: inline('../images/icon_checkbox-checked.svg');
-  }
-
-  &:disabled + .c-checkbox__label {
-    opacity: .6;
   }
 
 }

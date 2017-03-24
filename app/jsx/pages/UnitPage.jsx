@@ -1,71 +1,123 @@
 // ##### Unit Page ##### //
+// this.props = {
+//   unit: {id: , name: , type: , is_active }}
+//   header: {breadcrumb: [], campusID: , campusName: , campuses: [], logo: , nav_bar: [], social: }
+//   content: { page content },
+//   marquee: {about: , carousel: , extent: }
+//   sidebar: []
+// }
 
 import React from 'react'
 import { Link } from 'react-router'
 
 import PageBase from './PageBase.jsx'
 import Header2Comp from '../components/Header2Comp.jsx'
-import Subheader1Comp from '../components/Subheader1Comp.jsx'
 import Subheader2Comp from '../components/Subheader2Comp.jsx'
+import NavBarComp from '../components/NavBarComp.jsx'
 import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
+import DepartmentLayout from '../layouts/DepartmentLayout.jsx'
+import SeriesLayout from '../layouts/SeriesLayout.jsx'
+import JournalLayout from '../layouts/JournalLayout.jsx'
+import UnitSearchLayout from '../layouts/UnitSearchLayout.jsx'
 
 class UnitPage extends PageBase
 {
   // PageBase will fetch the following URL for us, and place the results in this.state.pageData
-  pageDataURL(props) {
-    return "/api/unit/" + props.params.unitID
+  // will likely at some point want to move these (search, home, pages) to different extensions of PageBase,
+  // as all kinds of CMS-y stuff will live here, though perhaps not, to capitalize on React's
+  // diff-ing of pages - all these different pages have quite a few of the same components:
+  // header, footer, nav, sidebar. 
+  
+  // [********** AW - 3/15/17 **********]
+  // TODO [UNIT-CONTENT-AJAX-ISSUE]: need to separate these into different PageBase extensions
+  // React tries to render different content components 
+  // (ie - switch between DeparmentLayout and Series Layout or UnitSearchLayout)
+  // before the AJAX call for the different content has returned and then there are lots of issues!
+  pageDataURL() {
+    if (this.props.params.pageName) {
+      if (this.props.params.pageName === 'search') {
+        return "/api/unit/" + this.props.params.unitID + "/search/" + this.props.location.search
+      } else {
+        return "/api/unit/" + this.props.params.unitID + "/" + this.props.params.pageName
+      }
+    }
+    return "/api/unit/" + this.props.params.unitID + "/home"
+  }
+  
+  // [********** AW - 3/15/17 **********]
+  //TODO: propTypes are checked before the response from PageBase.fetchPageData()
+  //is returned, resulting in several errors in the console
+  static propTypes = {
+    unit: React.PropTypes.shape({
+      id: React.PropTypes.string.isRequired,
+      name: React.PropTypes.string.isRequired,
+      type: React.PropTypes.string.isRequired,
+      extent: React.PropTypes.object
+    }).isRequired,
+    header: React.PropTypes.shape({
+      breadcrumb: React.PropTypes.array.isRequired,
+      campusId: React.PropTypes.string.isRequired,
+      campusName: React.PropTypes.string.isRequired,
+      campuses: React.PropTypes.array.isRequired,
+      logo: React.PropTypes.string,
+      nav_bar: React.PropTypes.array,
+      social: React.PropTypes.object
+    }).isRequired,
+    content: React.PropTypes.object.isRequired,
+    //TODO: sidebar is required, but isn't required here because it's not yet implemented
+    sidebar: React.PropTypes.object,
+    //Marquee, on the other hand, is genuinely optional
+    marquee: React.PropTypes.shape({
+      carousel: React.PropTypes.object,
+      about: React.PropTypes.string
+    })
   }
 
-  renderData(data) { return(
-    <div>
-      <Header2Comp type={data.type} unitID={data.id} /> 
-      { data.type == "journal" &&
-          <Subheader2Comp unitID={data.id}
-                          unitName={data.name}
-                          campusID={data.campusID}
-                          campusName={data.campusName}
-                          campuses={data.campuses} /> }
-      { data.type != "journal" &&
-          <Subheader1Comp type={data.type}
-                          unitID={data.id}
-                          unitName={data.name}
-                          campusID={data.campusID}
-                          campusName={data.campusName}
-                          campuses={data.campuses} /> }
-      <BreadcrumbComp array={data.breadcrumb} />
-      <h2>Unit {data.id}</h2>
-      <div>
-        Info:
-        <ul>
-          <li>Name: {data.name}</li>
-          <li>Type: {data.type}</li>
-        </ul>
-      </div>
-      <div>
-        Parents:
-        <ul>
-          { data.parents.map((parent_id) => 
-            <li key={parent_id}><Link to={"/unit/"+parent_id}>{parent_id}</Link></li>) }
-        </ul>
-      </div>
-      <div>
-        Children:
-        <ul>
-          { data.children.map((child_id) => 
-            <li key={child_id}><Link to={"/unit/"+child_id}>{child_id}</Link></li>) }
-        </ul>
-      </div>
-      { data.items.length==0 ? null :
+  // [********** AMY NOTES 3/15/17 **********]
+  // TODO: each of the content layouts currently include the sidebars, 
+  // but this should get stripped out and handled here in UnitPage
+  // TODO [UNIT-CONTENT-AJAX-ISSUE]: handle the AJAX issue described above pageDataURL method definition
+  renderData(data) { 
+    var contentLayout;
+    if (this.props.params.pageName === 'search') {
+      contentLayout = (<UnitSearchLayout unit={data.unit} data={data.content}/>);
+    } else {
+      data.marquee.carousel = true;
+      if (data.unit.type === 'oru') {
+        contentLayout = (<DepartmentLayout unit={data.unit} data={data.content} marquee={data.marquee}/>);
+      } else if (data.unit.type === 'series') {
+        contentLayout = (<SeriesLayout unit={data.unit} data={data.content} marquee={data.marquee}/>);
+      } else if (data.unit.type === 'journal') {
+        contentLayout = (<JournalLayout unit={data.unit} data={data.content} marquee={data.marquee}/>);
+      } else {
+        contentLayout = (
           <div>
-            Items 1-{Math.min(10, data.nItems)} of {data.nItems}:
+          <h2>Unit {data.unit.id}</h2>
+          <div>
+            Info:
             <ul>
-              { data.items.map((item_id) => 
-                <li key={item_id}><Link to={"/item/"+item_id.replace(/^qt/, "")}>{item_id}</Link></li>) }
+              <li>Name: {data.unit.name}</li>
+              <li>Type: {data.unit.type}</li>
             </ul>
           </div>
+          </div>
+        );
       }
-    </div>
-  )}
+    }
+    return (
+      <div>
+        <Header2Comp type={data.unit.type} unitID={data.unit.id} />
+        <Subheader2Comp unit={data.unit} logo={data.header.logo} 
+          campusID={data.header.campusID}
+          campusName={data.header.campusName}
+          campuses={data.header.campuses}/>
+        <NavBarComp 
+          navBar={data.header.nav_bar} unit={data.unit} socialProps={data.header.social} />
+        <BreadcrumbComp array={data.header.breadcrumb} />
+        {contentLayout}
+      </div>
+    )
+  }
 
 }
 

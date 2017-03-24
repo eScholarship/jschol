@@ -160,6 +160,13 @@ array-flatten@1.1.1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/array-flatten/-/array-flatten-1.1.1.tgz#9a5f699051b1e7073328f2a008968b64ea2955d2"
 
+array-includes@^3.0.2:
+  version "3.0.2"
+  resolved "https://registry.yarnpkg.com/array-includes/-/array-includes-3.0.2.tgz#7c867b4d1235c2b5687c874f3344bff4e002beba"
+  dependencies:
+    define-properties "^1.1.2"
+    es-abstract "^1.5.0"
+
 array-index@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/array-index/-/array-index-1.0.0.tgz#ec56a749ee103e4e08c790b9c353df16055b97f9"
@@ -2254,7 +2261,7 @@ error-ex@^1.2.0:
   dependencies:
     is-arrayish "^0.2.1"
 
-es-abstract@^1.6.1:
+es-abstract@^1.5.0, es-abstract@^1.6.1:
   version "1.6.1"
   resolved "https://registry.yarnpkg.com/es-abstract/-/es-abstract-1.6.1.tgz#bb8a2064120abcf928a086ea3d9043114285ec99"
   dependencies:
@@ -5749,9 +5756,18 @@ rcloader@^0.2.2:
     lodash.merge "^4.6.0"
     rcfinder "^0.1.6"
 
-react-addons-test-utils@^15.3.0:
-  version "15.4.1"
-  resolved "https://registry.yarnpkg.com/react-addons-test-utils/-/react-addons-test-utils-15.4.1.tgz#1e4caab151bf27cce26df5f9cb714f4fd8359ae1"
+react-addons-test-utils@^15.4.1:
+  version "15.4.2"
+  resolved "https://registry.yarnpkg.com/react-addons-test-utils/-/react-addons-test-utils-15.4.2.tgz#93bcaa718fcae7360d42e8fb1c09756cc36302a2"
+  dependencies:
+    fbjs "^0.8.4"
+    object-assign "^4.1.0"
+
+react-broadcast@^0.1.2:
+  version "0.1.2"
+  resolved "https://registry.yarnpkg.com/react-broadcast/-/react-broadcast-0.1.2.tgz#950de63578a2af399a396067a617af7402182330"
+  dependencies:
+    invariant "^2.2.1"
 
 react-dom@^15.3.2, react-dom@^15.4.1:
   version "15.4.1"
@@ -5791,6 +5807,14 @@ react-router@^2.7.0:
     invariant "^2.2.1"
     loose-envify "^1.2.0"
     warning "^3.0.0"
+
+react-sidebar@^2.3.0:
+  version "2.3.0"
+  resolved "https://registry.yarnpkg.com/react-sidebar/-/react-sidebar-2.3.0.tgz#8a86df1f7cb7a1bf98b6dd75c47c6689a1877cbe"
+
+react-sortable@^1.2.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/react-sortable/-/react-sortable-1.2.0.tgz#5acd7e1910df665408957035acb5f2354519d849"
 
 react-trumbowyg@^1.1.0:
   version "1.1.0"

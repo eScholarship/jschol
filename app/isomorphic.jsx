@@ -13,7 +13,7 @@ var routes = null
 
 const app = express();
 
-app.use((req, res) => 
+app.use((req, res) =>
 {
   // Simple check for up-ness
   if (req.originalUrl == "/check") {
@@ -29,6 +29,7 @@ app.use((req, res) =>
     if (routes)
       decache('./jsx/App.jsx');
     routes = require('./jsx/App.jsx');
+    console.log("ISO: Bundle loaded.")
   }
 
   // Now route the request
@@ -57,24 +58,40 @@ app.use((req, res) =>
         ajaxResp.on('data', function(chunk) {
           body += chunk;
         });
-        ajaxResp.on('end', function() {
-          if (ajaxResp.statusCode == 200) {
-            var response = JSON.parse(body)
-            //console.log("Got a response:", response)
-            delete rc.props.location.urlsToFetch
-            rc.props.location.urlsFetched = {}
-            rc.props.location.urlsFetched[partialURL] = response
-            renderedHTML = renderToString(rc)
-            res.send(
-              "<script>window.jscholApp_initialPageData = " + body + ";</script>\n" +
-              "<div id=\"main\">" + renderedHTML + "</div>")
+        ajaxResp.on('end', function() 
+        {
+          try {
+            if (ajaxResp.statusCode == 200) {
+              var response = {}
+              try {
+                response = JSON.parse(body)
+              }
+              catch (e) {
+                console.log("Exception parsing JSON:", e)
+              }
+              //console.log("Got a response:", response)
+              delete rc.props.location.urlsToFetch
+              rc.props.location.urlsFetched = {}
+              rc.props.location.urlsFetched[partialURL] = response
+              renderedHTML = renderToString(rc)
+              /* Note: must leave comments like <!-- react-text: 14 --> so that react will
+                 properly match up the rendered HTML to client-generated HTML */
+              res.send(
+                "<script>window.jscholApp_initialPageData = " + body + ";</script>\n" +
+                "<div id=\"main\">" + renderedHTML + "</div>")
+            }
+            else
+              throw "HTTP Error " + ajaxResp.statusCode + ": " + body
           }
-          else
-            throw "HTTP Error " + ajaxResp.statusCode + ": " + body
+          catch (e) {
+            console.log("Exception generating React HTML:", e)
+            res.status(500).send("Exception generating React HTML")
+          }
         });
       }).on('error', function(e) {
-        throw "HTTP Error " + e
-      }); 
+        console.log("Got HTTP error " + e)
+        res.status(500).send("Got HTTP error " + e)
+      });
     }
     else
       throw "Internal error: currently support only one url in urlsToFetch"
