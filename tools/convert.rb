@@ -25,6 +25,7 @@ require 'mimemagic/overlay' # for Office 2007+ formats
 require 'nokogiri'
 require 'open3'
 require 'pp'
+require 'rack'
 require 'sequel'
 require 'time'
 require 'yaml'
@@ -139,6 +140,11 @@ class Issue < Sequel::Model
 end
 
 class Section < Sequel::Model
+end
+
+###################################################################################################
+def guessMimeType(filePath)
+  Rack::Mime.mime_type(File.extname(filePath))
 end
 
 ###################################################################################################
@@ -626,8 +632,9 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
   end
 
   # Detect HTML-formatted items
-  mimeEl = rawMeta.at("/record/content/file/mimeType")
-  isHTML = (mimeEl && mimeEl.text == "text/html")
+  contentFile = rawMeta.at("/record/content/file")
+  contentPath = contentFile && contentFile[:path]
+  mimeType    = false && contentFile && contentFile.at("mimeType") && contentFile.at("mimeType").text
 
   # Populate the Item model instance
   dbItem = Item.new
@@ -637,7 +644,7 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
                           attrs[:embargo_date] ? "embargoed" :
                           (rawMeta.attr("state") || "published")
   dbItem[:title]        = data.single("title")
-  dbItem[:content_type] = isHTML ? "text/html" : "application/pdf"
+  dbItem[:content_type] = mimeType ? mimeType : contentPath ? guessMimeType(contentPath) : nil
   dbItem[:genre]        = data.single("type")
   dbItem[:pub_date]     = parseDate(itemID, data.single("date")) || "1901-01-01"
   #FIXME: Think about this carefully. What's eschol_date for?
