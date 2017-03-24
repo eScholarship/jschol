@@ -1,9 +1,11 @@
 // ##### Breadcrumb Component ##### //
 
 .c-breadcrumb {
-  margin: 0 0 $spacing-md;
+  margin-bottom: $spacing-sm;
 
   a {
+    display: inline-block;
+    margin-bottom: $spacing-sm;
     color: $color-black;
     font-size: 1.1em;
     text-decoration: none;

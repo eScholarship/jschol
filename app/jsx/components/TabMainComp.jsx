@@ -13,7 +13,7 @@ class TabMainComp extends React.Component {
     return (
       <div className="c-tabcontent">
         <ItemActionsComp status={p.status} content_type={p.content_type} id={p.id} />
-        <h1 className="c-tabcontent__heading">{p.title}</h1>
+        <h1 className="c-tabcontent__heading" tabIndex="-1">{p.title}</h1>
         <AuthorListComp pubdate={p.pub_date} authors={p.authors} changeTab={p.changeTab} />
         <PubLocationComp pub_web_loc={p.attrs.pub_web_loc} rights={p.rights} />
       {/* ToDo: Include this comp when content_type for no-content items is fixed.

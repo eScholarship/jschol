@@ -39,8 +39,8 @@
 
     @supports (display: grid) {
       position: static;
-      margin: 0 0 0 35%;
-      grid-column: 2 / 3;
+      margin-left: 35%;
+      grid-column: 2;
       grid-row: 1 / 4;
     }
 
@@ -48,7 +48,7 @@
 
   a {
     display: block;
-    margin: 0 0 15px;
+    margin-bottom: 15px;
     color: $color-white;
     text-decoration: none;
 
@@ -62,7 +62,7 @@
 }
 
 .c-footer__logo {
-  margin: 0 0 $spacing-md;
+  margin: 0 0 $spacing-sm;
   color: $color-white;
 
   img {
@@ -72,22 +72,20 @@
 }
 
 .c-footer__icons {
-  margin-bottom: $spacing-md;
+  margin-bottom: $spacing-sm;
 
   @supports (display: grid) {
     justify-self: center;
   }
 
   a {
-    @extend %circular-border;
-    border-color: $color-white;
 
     &:not(:first-child) {
       margin-left: $spacing-lg;
     }
 
     img {
-      width: 30px;
+      height: $element-height;
     }
 
   }
@@ -96,7 +94,7 @@
 
 .c-footer__copyright {
   color: $color-light-gray;
-  font-size: 0.9em;
+  font-size: 0.8em;
   line-height: 1.3;
 
   a {

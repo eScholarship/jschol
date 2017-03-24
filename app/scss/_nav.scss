@@ -127,7 +127,7 @@
 .c-nav__sub-button {
   @extend %c-nav__item;
   position: relative;
-  border-bottom: none;
+  border-top: none;
   user-select: none;
 
   @include bp(screen3) {

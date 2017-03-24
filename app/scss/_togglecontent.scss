@@ -3,6 +3,7 @@
 $togglecontent-left-spacing: 25px;
 
 .c-togglecontent {
+  position: relative; // for c-pdfview
 
   + .c-togglecontent {
     margin-top: $spacing-md;

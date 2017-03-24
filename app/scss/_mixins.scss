@@ -42,15 +42,6 @@ Selector pattern using above media query mixin:
 
 */
 
-// Circular borders for social icons
-
-%circular-border {
-  display: inline-block;
-  padding: 6px 6px 0;
-  border: 1px solid;
-  border-radius: 50%;
-}
-
 // No bullet unordered lists
 
 %no-bullet-ul {

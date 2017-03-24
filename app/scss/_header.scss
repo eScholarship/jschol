@@ -8,11 +8,42 @@
   background: $color-white;
 }
 
-.c-header__logo {
-  height: $input-height;
+// Header 1 component logo:
+
+.c-header__logo1 {
+
+  img {
+    height: 50px;
+  }
+
+}
+
+// Header 2 component logo and tagline:
+
+.c-header__logo2 {
 
   @include bp(screen3) {
-    height: auto; // set to default img height
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+  }
+
+  img {
+    height: $element-height;
+  }
+
+}
+
+.c-header__logo2-tagline {
+  display: none;
+
+  @include bp(screen3) {
+    display: block;
+    margin-left: $spacing-sm;
+    padding: 0.2em 0 0.2em $spacing-sm;
+    border-left: 1px solid $color-dark-gray;
+    color: $color-light-black;
+    font-size: 0.8em;
   }
 
 }

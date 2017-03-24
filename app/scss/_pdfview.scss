@@ -1,0 +1,33 @@
+// ##### PDF View Component ##### //
+
+.c-pdfview {
+  
+  @include bp(screen1) {
+    position: absolute;
+    top: $spacing-sm;
+    right: 0;
+  }
+
+}
+
+.c-pdfview__button-download {
+  @extend %o-button__6;
+  margin-bottom: $spacing-sm;
+  background-image: inline('../images/icon_download-white.svg');
+
+  @include bp(screen2) {
+    display: none;
+  }
+
+}
+
+.c-pdfview__button-view {
+  @extend %o-button__6;
+  display: none;
+
+  @include bp(screen2) {
+    display: block;
+    background-image: inline('../images/icon_expand-white.svg');
+  }
+
+}

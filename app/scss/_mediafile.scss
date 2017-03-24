@@ -2,6 +2,8 @@
 
 $mediafile-img-height: 120px;
 
+// Note that space and border styles around these objects are contained within _mediafilegrid.scss
+
 %o-mediafile {
   @extend %clearfix;
   position: relative;
@@ -196,7 +198,7 @@ $mediafile-img-height: 120px;
 .o-mediafile--image--selected,
 .o-mediafile--video--selected {
   padding: $spacing-sm;
-  background-color: $color-light-gray;
+  background-color: lighten($color-light-gray, 15%);
 }
 
 %o-mediafile__heading {
@@ -204,11 +206,12 @@ $mediafile-img-height: 120px;
   padding-left: 25px;
   background: no-repeat top left / 16px;
   color: $color-teal;
-  font-size: 1.1em;
+  font-size: 1.3em;
   font-weight: normal;
 
   @include bp(screen1) {
     max-height: 2.3em; // truncate beyond 2 lines per jquery.dotdotdot
+    font-size: 1.1em;
   }
 
 }

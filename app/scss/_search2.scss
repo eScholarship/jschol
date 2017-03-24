@@ -7,9 +7,8 @@
 
 .c-search2__inputs {
   display: flex;
-  flex: 1 0 auto;
+  flex: 1 1 auto;
   flex-flow: column nowrap;
-  width: 23.5em;
   margin: 0 $spacing-body 0 0;
   border: 1px solid $color-light-gray;
   border-radius: $round-corner;
@@ -27,7 +26,7 @@
 
 .c-search2__field {
   flex: 1 0 auto;
-  height: $input-height;
+  min-height: $input-height;
   padding: 0 0 0 30px;
   border: none;
   background: inline('../images/icon_magnify.svg') no-repeat left 8px center / 16px;
@@ -46,7 +45,7 @@
     // first 2 properties make up %show, because Sass @extends are not allowed within media queries:
     position: static;
     left: auto;
-    height: $input-height;
+    min-height: $input-height;
     padding: 0 13px;
     border: none;
     background: inline('../images/icon_magnify.svg') no-repeat center / 25px;
@@ -55,7 +54,7 @@
 }
 
 .c-search2__search-close-button {
-  height: $input-height;
+  min-height: $input-height;
   padding: 0 13px;
   border: none;
   background: inline('../images/icon_close.svg') no-repeat center right / 20px;
@@ -69,23 +68,37 @@
 %c-search2__refine {
   display: flex;
   align-items: center;
-  height: $input-height;
   padding: 0 8px;
-  transition: margin 0.5s 0.1s;
+  transition: min-height 0.5s, margin-top 0.5s;
+  transition-delay: 0.2s;
   background: lighten($color-light-gray, 10%);
 
   label {
-    margin: 0 20px 0 5px;
+    margin-left: -15px;
+    padding: 8px 0 6px 20px;
+    font-size: 0.9em;
+
+    &:not(:last-of-type) {
+      margin-right: 15px;
+    }
+
   }
 
 }
 
 .c-search2__refine {
   @extend %c-search2__refine;
-  margin: (-$input-height) 0 0;
+  min-height: $input-height;
+  margin-top: (-$input-height);
 }
 
 .c-search2__refine--active {
   @extend %c-search2__refine;
-  margin: 0;
+  min-height: 3em;
+  margin-top: 0;
+
+  @include bp(screen3) {
+    min-height: $input-height;
+  }
+
 }

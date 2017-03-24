@@ -1,40 +1,31 @@
 // ##### Item Actions Component ##### //
 
 .c-itemactions {
+  position: relative; // for o-download and c-share
   margin-bottom: $spacing-md;
 
   @include bp(screen3) {
     display: flex;
-    justify-content: space-between;
+    flex-wrap: wrap;
     margin-bottom: $spacing-sm;
   }
 
 }
 
-.c-itemactions__items1 {
-  flex: 1;
+%c-itemactions__elements {
+  margin-right: $spacing-sm;
+  margin-bottom: $spacing-sm;
 }
 
 .c-itemactions__download {
-  margin-right: $spacing-sm;
-  margin-bottom: $spacing-sm;
-}
-
-%c-itemactions__buttons {
-  margin-right: $spacing-sm;
-  margin-bottom: $spacing-sm;
+  @extend %c-itemactions__elements;
 }
 
 .c-itemactions__button1 {
-  @extend %c-itemactions__buttons;
+  @extend %c-itemactions__elements;
 }
 
 .c-itemactions__button2 {
-  @extend %c-itemactions__buttons;
+  @extend %c-itemactions__elements;
   background-image: inline('../images/icon_book-white.svg');
 }
-
-.c-itemactions__items2 {
-  // not used
-}
-

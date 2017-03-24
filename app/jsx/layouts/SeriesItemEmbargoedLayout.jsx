@@ -35,7 +35,7 @@ class SeriesItemEmbargoedLayout extends React.Component {
               </div>
               <div className="c-tabs__content">
                 <div className="c-itemactions">
-                  <div className="o-alert1">
+                  <div className="o-alert1" role="alert">
                     This item is <strong>not available</strong> for download from eScholarship
                   </div>
                   <ShareComp />

@@ -76,13 +76,15 @@ $campus-selector-button-width: 30px;
 
 .c-campusselector__menu {
   position: absolute; // to .c-subheader
-  right: 0;
-  left: 0;
+  right: $spacing-sm;
+  left: $spacing-sm;
   margin-top: 5px;
   background-color: $color-white;
   z-index: 2;
 
   @include bp(screen3) {
+    right: 0;
+    left: 0;
     margin-right: (-$campus-selector-button-width);
   }
 
