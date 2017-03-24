@@ -1,7 +1,6 @@
 // ##### PDF.JS Viewer Component ##### //
 
 import React from 'react'
-import { Link } from 'react-router'
 import $ from 'jquery'
 
 class PdfViewerComp extends React.Component
@@ -14,8 +13,6 @@ class PdfViewerComp extends React.Component
         <noscript>
           <embed src={this.props.url} type='application/pdf' />
         </noscript>
-        {/* <Form id="viewLarger" to={direct_link} rel="external"> */}
-        <Link href={this.props.url}>View Larger</Link>
         <div id="pdfjs-viewer" className="jsonly" style={{visibility: "hidden"}} dangerouslySetInnerHTML={ this.viewerHTML() }/>
       </div>)
   }

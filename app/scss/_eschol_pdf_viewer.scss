@@ -2,40 +2,28 @@
 
 // scss-lint:disable IdSelector
 #pdfjs-cdl-wrapper {
+  @import '../bower_components/pdfjs-embed/scss/_viewer.scss';
+  display: none;
+
+  @include bp(screen1) {
+    display: block;
+  }
+
   width: 80%;
   outline: none;
-  background-color: $color-light-black;
-  background-image: url('/images/pdfjs/texture.png');
   font: message-box;
   font-size: 10px;
 
-  /* Turn off a bunch of button features we don't need in our UI */
-  .toolbar,
-  #download,
-  #openFile,
-  #presentationMode,
-  #print,
-  #secondaryToolbarToggle,
-  #sidebarToggle,
-  #toolbarViewerMiddle,
-  #viewBookmark {
-    visibility: hidden;
-    height: 0;
+  /* Overrides, to keep number of changes in the vendor file very small */
+  #sidebarContainer, .toolbar {
+    display: none;
   }
 
-}
-
-// scss-lint:disable MergeableSelector
-#pdfjs-cdl-wrapper {
-  // scss-lint:disable SelectorFormat
-
-  @import '../bower_components/pdfjs-embed/scss/_viewer.scss';
-
-  /* Overrides, to keep number of changes in the vendor file very small */
   #mainContainer {
     position: relative; /* was "relative" */
   }
 
+  /* Turn off a bunch of button features we don't need in our UI */
   #viewerContainer {
     position: relative; /* was: absolute */
     top: auto;          /* was: 32px */
@@ -46,4 +34,9 @@
     overflow: hidden;   /* was: auto */
   }
 
+  /* remove borders */
+  .pdfViewer .page {
+    margin: 0px;
+    border: 0px;
+  }
 }

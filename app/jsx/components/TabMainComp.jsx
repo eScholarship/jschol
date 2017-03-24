@@ -3,7 +3,7 @@
 import React from 'react'
 import ItemActionsComp from '../components/ItemActionsComp.jsx'
 import AuthorListComp from '../components/AuthorListComp.jsx'
-import PdfViewerComp from '../components/PdfViewerComp.jsx'
+import PdfViewComp from '../components/PdfViewComp.jsx'
 import PubLocationComp from '../components/PubLocationComp.jsx'
 import PubDataComp from '../components/PubDataComp.jsx'
 
@@ -16,8 +16,7 @@ class TabMainComp extends React.Component {
         <h1 className="c-tabcontent__heading" tabIndex="-1">{p.title}</h1>
         <AuthorListComp pubdate={p.pub_date} authors={p.authors} changeTab={p.changeTab} />
         <PubLocationComp pub_web_loc={p.attrs.pub_web_loc} rights={p.rights} />
-      {/* ToDo: Include this comp when content_type for no-content items is fixed.
-        <PubDataComp /> */}
+        <PubDataComp content_type={p.content_type} />
         {this.props.attrs.abstract && (this.props.status != "withdrawn") &&
           <Abstract status={p.status} abstract={p.attrs.abstract} /> }
         <MainText {...p} />
@@ -45,8 +44,10 @@ class MainText extends React.Component {
     if (!p.content_type) return (<NoContent pub_web_loc={p.attrs.pub_web_loc} />)
     switch(p.status) {
       case "published":
-        return (p.content_type == "application/pdf" ? this.renderPdf(p) :
-              p.content_type == "text/html" ? this.renderHtml(p) : null)
+        return (p.content_type == "application/pdf" ?
+                  <PdfViewComp url={"/content/qt" + p.id + "/qt" + p.id + ".pdf"}/>
+                  :
+                  p.content_type == "text/html" ? this.renderHtml(p) : null)
       case "withdrawn":
         return (<Withdrawn message={p.attrs.withdrawn_message} />)
       case "embargoed":
@@ -56,15 +57,15 @@ class MainText extends React.Component {
 
   renderPdf = p => { return (
       <details className="c-togglecontent" open>
-        <summary>Main Text</summary>
+        <summary>Main Content</summary>
         {/*Fetch content through server app, which will check credentials and proxy to proper back-end*/}
-        <PdfViewerComp url={"/content/qt" + p.id + "/qt" + p.id + ".pdf"}/>
+        <PdfViewComp url={"/content/qt" + p.id + "/qt" + p.id + ".pdf"}/>
       </details>
   )}
 
   renderHtml = p => { return (
       <details className="c-togglecontent" open>
-        <summary><h2>Main Text</h2></summary>
+        <summary>Main Content</summary>
         <div dangerouslySetInnerHTML={{__html: p.content_html}}/>
         <br/><br/>
       </details>

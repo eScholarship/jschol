@@ -22,7 +22,8 @@ class ItemPage extends PageBase {
 
   renderData = data => {
     return (
-      <div className="l-item">
+      <div>
+        <a href="#maincontent" className="c-skipnav">Skip to main content</a>
         <Header2Comp type={data.unit.type} unitID={data.appearsIn.length > 0  && data.appearsIn[0]["id"]} />
         {data.header && <Subheader2Comp unit={data.unit}
                                         campusID={data.header.campusID}
@@ -33,7 +34,7 @@ class ItemPage extends PageBase {
                                     socialProps={data.header.social} />}
         <BreadcrumbComp array={data.header ? data.header.breadcrumb : null} />
         <div className="c-columns">
-          <main>
+          <main id="maincontent">
             <TabsComp currentTab={this.state.currentTab}
                       changeTab={this.changeTab}
                       {...data} />
@@ -42,16 +43,16 @@ class ItemPage extends PageBase {
             {(data.status == "published" && data.content_type) &&
               <section className="o-columnbox2">
                 <header>
-                  <h2 className="o-columnbox2__heading">Jump To</h2>
+                  <h2>Jump To</h2>
                   <JumpComp changeTab={this.changeTab} />
                 </header>
               </section>
             }
             <section className="o-columnbox2">
               <header>
-                <h2 className="o-columnbox2__heading">Related Items</h2>
-                </header>
-                [content to go here]
+                <h2>Related Items</h2>
+              </header>
+              [content to go here]
             </section>
           </aside>
         </div>
