@@ -48,8 +48,9 @@ if File.exist? "config/socks.yaml"
   SocksMysql.new(ojsDbConfig)
 end
 DB = Sequel.connect(escholDbConfig)
-#DB.loggers << Logger.new('server.sql_log')  # Enable to debug SQL queries
+#DB.loggers << Logger.new('server.sql_log')  # Enable to debug SQL queries on main db
 OJS_DB = Sequel.connect(ojsDbConfig)
+#OJS_DB.loggers << Logger.new('ojs.sql_log')  # Enable to debug SQL queries on OJS db
 
 # Internal modules to implement specific pages and functionality
 require_relative 'dbCache'
