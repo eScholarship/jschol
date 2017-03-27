@@ -17,6 +17,7 @@ import NotFoundPage from './pages/NotFoundPage.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import LoginSuccessPage from './pages/LoginSuccessPage.jsx'
 import LogoutPage from './pages/LogoutPage.jsx'
+import LogoutSuccessPage from './pages/LogoutSuccessPage.jsx'
 
 // array-include polyfill for older browsers (and node.js)
 Array.prototype.includes = require('array-includes').shim()
@@ -77,6 +78,7 @@ const routes = (
     <Route path="/login" component={LoginPage} />
     <Route path="/loginSuccess" component={LoginSuccessPage} />
     <Route path="/logout" component={LogoutPage} />
+    <Route path="/logoutSuccess" component={LogoutSuccessPage} />
     <Route path="*" component={NotFoundPage}/>
   </Route>
 )

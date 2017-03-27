@@ -7,33 +7,34 @@ import Nav1Comp from '../components/Nav1Comp.jsx'
 import FooterComp from '../components/FooterComp.jsx'
 import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
 
-let sessionStorage = (typeof window != "undefined") ? window.sessionStorage : null
-
 class LogoutPage extends PageBase
 {
   pageDataURL() { return null /* no API data */ }
 
-  render() { return(
-    <div>
-      <Header1Comp/>
-      <Nav1Comp/>
-      <div className="c-columns">
-        <main>
-          <section className="o-columnbox1">
-            <header>
-              <h1 className="o-columnbox1__heading">Logout</h1>
-            </header>
-            <div>
-              <p>Logged out.</p>
-              { this.props.location.prevPathname &&
-                <p>You may <Link to={this.props.location.prevPathname}>return</Link> to where you were.</p> }
-            </div>
-          </section>
-        </main>
+  render() {
+    if (!(typeof document === "undefined")) {
+      // Only redirect on browser, not on server
+      setTimeout(()=>{
+        window.location = "https://submit.escholarship.org/Shibboleth.sso/Logout?return=" +
+          encodeURIComponent(window.location.href.replace("/logout", "/logoutSuccess"))}, 100)
+    }
+    return (
+      <div>
+        <Header1Comp/>
+        <Nav1Comp />
+        <div className="c-columns">
+          <main>
+            <section className="o-columnbox1">
+              <header>
+                <h1 className="o-columnbox1__heading">Logout</h1>
+              </header>
+              <p>Redirecting to logout page...</p>
+            </section>
+          </main>
+        </div>
       </div>
-      <FooterComp/>
-    </div>
-  )}
+    )
+  }
 }
 
 module.exports = LogoutPage
