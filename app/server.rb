@@ -52,6 +52,9 @@ DB = Sequel.connect(escholDbConfig)
 OJS_DB = Sequel.connect(ojsDbConfig)
 #OJS_DB.loggers << Logger.new('ojs.sql_log')  # Enable to debug SQL queries on OJS db
 
+# Need credentials for fetching content files from MrtExpress
+$mrtExpressConfig = YAML.load_file("config/mrtExpress.yaml")
+
 # Internal modules to implement specific pages and functionality
 require_relative 'dbCache'
 require_relative 'hierarchy'
@@ -206,7 +209,9 @@ class Fetcher
       begin
         # Now jump through Net::HTTP's hijinks to actually fetch the file.
         Net::HTTP.start(uri.host, uri.port, :use_ssl => (uri.scheme == 'https')) do |http|
-          http.request(Net::HTTP::Get.new uri.request_uri) do |response|
+          req = Net::HTTP::Get.new(uri.request_uri)
+          req.basic_auth $mrtExpressConfig['username'], $mrtExpressConfig['password']
+          http.request(req) do |response|
             @queue << [response.code, response.message]
             if response.code == "200"
               response.read_body { |chunk| @queue << chunk }
@@ -215,6 +220,8 @@ class Fetcher
             end
           end
         end
+      rescue Exception => e
+        puts "Fetch exception: #{e}"
       ensure
         @queue << nil  # mark end-of-data
       end
@@ -249,13 +256,14 @@ get "/content/:fullItemID/*" do |fullItemID, path|
 
   # Fetch the file from Merritt
   fetcher = Fetcher.new
-  code, msg = fetcher.start(URI("https://mrtexpress.cdlib.org/dl/ark:/13030/#{fullItemID}/content/#{path}"))
+  code, msg = fetcher.start(URI("https://#{$mrtExpressConfig['host']}/dl/ark:/13030/#{fullItemID}/content/#{path}"))
+  code == 401 and raise("Error: mrtExpress credentials not recognized - check config/mrtExpress.yaml")
 
   # Temporary fallback: if we can't find on Merritt, try the raw_data hack on pub-eschol-stg.
   # This is needed for ETDs, since we don't yet record their proper original Merritt location.
   if code != 200
     fetcher = Fetcher.new
-    code2, msg2 = fetcher.start(URI("http://pub-eschol-stg.escholarship.org/raw_data/13030/pairtree_root/" +
+    code2, msg2 = fetcher.start(URI("https://pub-eschol-stg.escholarship.org/raw_data/13030/pairtree_root/" +
                                     "#{fullItemID.scan(/../).join('/')}/#{fullItemID}/content/#{path}"))
     code2 == 200 or halt(code, msg)
   end
@@ -457,7 +465,8 @@ get "/api/search/" do
   header = {
     :campuses => getCampusesAsMenu
   }
-  facetList = ['type_of_work', 'peer_reviewed', 'supp_file_types', 'campuses', 'departments', 'journals', 'disciplines', 'rights']
+  facetList = ['type_of_work', 'peer_reviewed', 'supp_file_types',
+               'campuses', 'departments', 'journals', 'disciplines', 'rights']
   return header.merge(search(CGI::parse(request.query_string), facetList)).to_json
 end
 

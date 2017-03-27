@@ -1,0 +1,4 @@
+# MerrittExpress connection parameters
+host: mrtexpress.cdlib.org
+username: USERNAME
+password: PASSWORD
