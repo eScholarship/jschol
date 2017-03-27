@@ -143,11 +143,6 @@ class Section < Sequel::Model
 end
 
 ###################################################################################################
-def guessMimeType(filePath)
-  Rack::Mime.mime_type(File.extname(filePath))
-end
-
-###################################################################################################
 # Insert hierarchy links (skipping dupes) for all descendants of the given unit id.
 def linkUnit(id, childMap, done)
   childMap[id].each_with_index { |child, idx|
@@ -633,8 +628,9 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
 
   # Detect HTML-formatted items
   contentFile = rawMeta.at("/record/content/file")
+  contentFile && contentFile.at("native") and contentFile = contentFile.at("native")
   contentPath = contentFile && contentFile[:path]
-  mimeType    = false && contentFile && contentFile.at("mimeType") && contentFile.at("mimeType").text
+  mimeType    = contentFile && contentFile.at("mimeType") && contentFile.at("mimeType").text
 
   # Populate the Item model instance
   dbItem = Item.new
@@ -644,7 +640,12 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
                           attrs[:embargo_date] ? "embargoed" :
                           (rawMeta.attr("state") || "published")
   dbItem[:title]        = data.single("title")
-  dbItem[:content_type] = mimeType ? mimeType : contentPath ? guessMimeType(contentPath) : nil
+  dbItem[:content_type] = !(data.multiple("contentExists")[0] == "yes") ? nil :
+                          attrs[:withdrawn_date] ? nil :
+                          attrs[:embargo_date] ? nil :
+                          data.single("pdfExists") == "yes" ? "application/pdf" :
+                          mimeType && mimeType.strip.length > 0 ? mimeType :
+                          nil
   dbItem[:genre]        = data.single("type")
   dbItem[:pub_date]     = parseDate(itemID, data.single("date")) || "1901-01-01"
   #FIXME: Think about this carefully. What's eschol_date for?
