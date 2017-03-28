@@ -1,4 +1,5 @@
 // ##### Jump Component ##### //
+{/* This component only renders for published items with a content_type */}
 
 import React from 'react'
 import { Link } from 'react-router'

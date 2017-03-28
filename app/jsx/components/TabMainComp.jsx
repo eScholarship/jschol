@@ -19,7 +19,7 @@ class TabMainComp extends React.Component {
         <PubDataComp content_type={p.content_type} />
         {this.props.attrs.abstract && (this.props.status != "withdrawn") &&
           <Abstract status={p.status} abstract={p.attrs.abstract} /> }
-        <MainText {...p} />
+        <MainContent {...p} />
       </div>
     )
   }
@@ -38,16 +38,19 @@ class Abstract extends React.Component {
   }
 }
 
-class MainText extends React.Component {
+class MainContent extends React.Component {
   render() {
     let p = this.props
-    if (!p.content_type) return (<NoContent pub_web_loc={p.attrs.pub_web_loc} />)
     switch(p.status) {
       case "published":
-        return (p.content_type == "application/pdf" ?
-                  <PdfViewComp url={"/content/qt" + p.id + "/qt" + p.id + ".pdf"}/>
-                  :
-                  p.content_type == "text/html" ? this.renderHtml(p) : null)
+        if (!p.content_type) {
+          return (<NoContent pub_web_loc={p.attrs.pub_web_loc} />)
+        } else {
+          return (p.content_type == "application/pdf" ?
+                    <PdfViewComp url={"/content/qt" + p.id + "/qt" + p.id + ".pdf"}/>
+                    :
+                    p.content_type == "text/html" ? this.renderHtml(p) : null)
+        }
       case "withdrawn":
         return (<Withdrawn message={p.attrs.withdrawn_message} />)
       case "embargoed":
@@ -76,23 +79,34 @@ class MainText extends React.Component {
 class Withdrawn extends React.Component {
   render() {
     return (
-      <div>{this.props.message || "This item has been withdrawn."}</div>
+      <div className="o-itemunavailable__withdrawn">
+      {this.props.message ? 
+        <p className="o-itemunavailable__lede">{this.props.message}</p>
+        :
+        <p className="o-itemunavailable__lede">This item has been withdrawn and is <strong>no longer available</strong>.</p>
+      }
+      </div>
     )
   }
 }
 
 class Embargoed extends React.Component {
   render() {
+    let d = new Date(this.props.date),
+        locale = "en-us",
+        month = d.toLocaleString(locale, { month: "long" })
     return (
-      <div>
-        <p>This item is under embargo until {this.props.date}</p>
+      <details className="c-togglecontent" open>
+        <summary>Main Content</summary>
+        <div className="o-itemunavailable__embargoed">
+          <h2 className="o-itemunavailable__lede">This item is under embargo until
+            <strong> {month + " " + d.getDay() + " " + d.getFullYear()}</strong>.</h2>
         {(this.props.pub_web_loc.length > 0) &&
-          <div>
-          <p>You may have access to the publisher&apos;s version here:</p>
-          <p><a href={this.props.pub_web_loc[0]}>{this.props.pub_web_loc[0]}</a></p>
-          </div> }
-        {/*Phase 2: Notify me by mail when this item become available. */}
-      </div>
+          [<p key="0">You may have access to the publisher's version here:</p>,
+          <a key="1" href={this.props.pub_web_loc[0]} className="o-textlink__secondary">{this.props.pub_web_loc[0]}</a>,
+          <a key="2" href="" className="o-textlink__secondary">Notify me by email when this item becomes available</a>]}
+        </div>
+      </details>
     )
   }
 }
@@ -117,3 +131,5 @@ class NoContent extends React.Component {
 }
 
 module.exports = TabMainComp;
+
+

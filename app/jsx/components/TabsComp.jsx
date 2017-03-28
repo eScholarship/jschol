@@ -1,12 +1,13 @@
 // ##### Tabs Component ##### //
 
 import React from 'react'
+import $ from 'jquery'
+
 import TabMainComp from '../components/TabMainComp.jsx'
 import TabSupplementalComp from '../components/TabSupplementalComp.jsx'
 import TabMetricsComp from '../components/TabMetricsComp.jsx'
 import TabAuthorComp from '../components/TabAuthorComp.jsx'
 import TabCommentsComp from '../components/TabCommentsComp.jsx'
-import $ from 'jquery'
 
 class TabsComp extends React.Component {
   state = {currentTab: this.props.currentTab, moreTabs: false}
@@ -27,12 +28,25 @@ class TabsComp extends React.Component {
       <div className="c-tabs">
         <div className={this.state.moreTabs ? "c-tabs__tabs--show-all" : "c-tabs__tabs"}>
           <button className="c-tabs__button-more" onClick = {()=> this.setState({moreTabs: !this.state.moreTabs})} aria-label="Show all tabs">...</button>
-          <button className={this.state.currentTab === 1 ? "c-tabs__button--active" : "c-tabs__button"} onClick = {()=> this.tabFocus(1)}>Main Content</button>
-          <button className={this.state.currentTab === 2 ? "c-tabs__button--active" : "c-tabs__button"} onClick = {()=> this.tabFocus(2)}>Supplemental material</button>
-          <button className={this.state.currentTab === 3 ? "c-tabs__button--active" : "c-tabs__button"} onClick = {()=> this.tabFocus(3)}>Metrics</button>
-          <button className={this.state.currentTab === 4 ? "c-tabs__button--active" : "c-tabs__button"} onClick = {()=> this.tabFocus(4)}>Author & Article Info</button>
-          <button className={this.state.currentTab === 5 ? "c-tabs__button--active" : "c-tabs__button"} onClick = {()=> this.tabFocus(5)}>Comments (2)</button>
-
+          <button className={this.state.currentTab === 1 ? "c-tabs__button--active" : "c-tabs__button"}
+                  onClick = {()=> this.tabFocus(1)}>
+            Main Content</button>
+      { this.props.status != 'withdrawn' && this.props.status != 'embargoed' &&
+          [<button key="0" className={this.state.currentTab === 2 ? "c-tabs__button--active" : "c-tabs__button"}
+                  onClick = {()=> this.tabFocus(2)}>
+            Supplemental material</button>,
+          <button key="1" className={this.state.currentTab === 3 ? "c-tabs__button--active" : "c-tabs__button"}
+                  onClick = {()=> this.tabFocus(3)}>
+            Metrics</button>]
+      }
+      { this.props.status != 'withdrawn' &&
+          [<button key="0" className={this.state.currentTab === 4 ? "c-tabs__button--active" : "c-tabs__button"}
+                  onClick = {()=> this.tabFocus(4)}>
+            Author & Article Info</button>,
+          <button key="1" className={this.state.currentTab === 5 ? "c-tabs__button--active" : "c-tabs__button"}
+                  onClick = {()=> this.tabFocus(5)}>
+            Comments (2)</button>]
+      }
         </div>
         <div className="c-tabs__content">
           {this.state.currentTab === 1 ? <TabMainComp {...this.props} /> : null}

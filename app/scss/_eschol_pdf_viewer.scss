@@ -9,6 +9,7 @@
     display: block;
   }
 
+  background-color: $color-light-black;
   width: 80%;
   outline: none;
   font: message-box;
@@ -36,7 +37,7 @@
 
   /* remove borders */
   .pdfViewer .page {
-    margin: 0px;
-    border: 0px;
+    margin: 1px;
+    border: 1px;
   }
 }

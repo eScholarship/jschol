@@ -1,6 +1,7 @@
 // ##### Item Page ##### //
 
 import React from 'react'
+
 import PageBase from './PageBase.jsx'
 import Header2Comp from '../components/Header2Comp.jsx'
 import Subheader2Comp from '../components/Subheader2Comp.jsx'
@@ -24,7 +25,8 @@ class ItemPage extends PageBase {
     return (
       <div>
         <a href="#maincontent" className="c-skipnav">Skip to main content</a>
-        <Header2Comp type={data.unit.type} unitID={data.appearsIn.length > 0  && data.appearsIn[0]["id"]} />
+        <Header2Comp type={data.unit ? data.unit.type: null}
+                     unitID={data.appearsIn.length > 0 ? data.appearsIn[0]["id"] : null } />
         {data.header && <Subheader2Comp unit={data.unit}
                                         campusID={data.header.campusID}
                                         campusName={data.header.campusName}
