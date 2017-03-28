@@ -12,8 +12,8 @@ import AdminBarComp from '../components/AdminBarComp.jsx'
 
 class HeaderComp2 extends React.Component {
   static propTypes = {
-    type: React.PropTypes.string,
-    unitID: React.PropTypes.string
+    type: React.PropTypes.string,  // not required, at least on global search page
+    unitID: React.PropTypes.string // ditto
   }
 
   constructor(props){

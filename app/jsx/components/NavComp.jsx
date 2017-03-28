@@ -29,25 +29,25 @@ class NavComp extends React.Component {
   }
 
   getNavItemJSX(navItem) {
-    if ('url' in navItem) {
+    if (navItem.url) {
       return (
         <a href={navItem.url} key={navItem.name}>
           {navItem.name}
         </a>
       )
     }
-    if ('slug' in navItem) {
+    if (navItem.slug) {
       return (
         <Link key={navItem.slug} to={"/unit/" + this.props.unitId + "/" + navItem.slug }>{navItem.name}</Link>
       )
     }
     //TODO: if ('file' in navItem)...
-    if ('file' in navItem) {
+    if (navItem.file) {
       return (
-        <a>{navItem.name}</a>
+        <a key={navItem.name}>{navItem.name}</a>
       )
     }
-    return undefined
+    return <a key={navItem.name}>{navItem.name}</a>
   }
 
   render() {
