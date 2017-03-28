@@ -33,7 +33,7 @@ get "/api/loginValidate" do
   t && (Time.new - t) < 300 or raise("Took too long to log in")
 
   # Read the key and make it into a form suitable for the Cipher
-  cipherKeyData = open("#{ENV['HOME']}/.passwords/jscholKey.dat").read.strip
+  cipherKeyData = open("config/jscholKey.dat").read.strip
   cipherKey = Digest::SHA1.hexdigest(cipherKeyData)
 
   # Set up the decryptor and give it the key and init vector
