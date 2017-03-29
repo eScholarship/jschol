@@ -13,7 +13,7 @@ class MediaFileGridComp extends React.Component {
         {/* Media File Component #1 */}
         <div className="o-mediafile--audio">
           <h2 className="o-mediafile__heading">Outer Space Music</h2>
-          <a className="o-mediafile__link" href="images/sample_audio.mp3" aria-label="play audio file">
+          <a className="o-mediafile__link" href="/images/sample_audio.mp3" aria-label="play audio file">
             {/* image with o-media__image doesn't extist */}
           </a>
           <button className="o-mediafile__button o-button__7">Download</button>
@@ -33,8 +33,8 @@ class MediaFileGridComp extends React.Component {
         {/* Media File Component #3 */}
         <div className="o-mediafile--image--selected">
           <h2 className="o-mediafile__heading">New Horizons Full Trajectory - Side View</h2>
-          <a className="o-mediafile__link" href="images/temp_new-horizons-data.png">
-            <img className="o-mediafile__image" src="images/temp_new-horizons-data.png" alt="New horizons data" />
+          <a className="o-mediafile__link" href="/images/temp_new-horizons-data.png">
+            <img className="o-mediafile__image" src="/images/temp_new-horizons-data.png" alt="New horizons data" />
           </a>
           <button className="o-mediafile__button o-button__7">Download</button>
           <div className="o-mediafile__description">
@@ -44,8 +44,8 @@ class MediaFileGridComp extends React.Component {
         {/* Media File Component #4 */}
         <div className="o-mediafile--video">
           <h2 className="o-mediafile__heading">New Horizons Kuiper Belt Fly-through</h2>
-          <a className="o-mediafile__link" href="images/sample_video.mp4" aria-label="play video file">
-            <img className="o-mediafile__image" src="images/sample_video-poster.jpg" alt="New horizons data" />
+          <a className="o-mediafile__link" href="/images/sample_video.mp4" aria-label="play video file">
+            <img className="o-mediafile__image" src="/images/sample_video-poster.jpg" alt="New horizons data" />
           </a>
           <button className="o-mediafile__button o-button__7">Download</button>
           <div className="o-mediafile__description">

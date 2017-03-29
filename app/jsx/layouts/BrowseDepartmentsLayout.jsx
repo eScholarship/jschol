@@ -31,8 +31,10 @@ class BrowseDepartmentsLayout extends React.Component {
         <div className="c-subheader2">
           <CampusSelectorComp />
           <img className="c-subheader2__banner" src="images/temp_journal-banner.png" alt=""/>
-          <div className="c-subheader2__buttons">
+          <div className="c-subheader2__sidebar">
             <button className="o-button__3">Deposit</button>
+            <div className="c-subheader2__sidebar-text">University of California, Berkeley <br/>Publications in eScholarship</div>
+            <div className="c-subheader2__sidebar-number">16,464</div>
             <div>[text to go here]</div>
           </div>
         </div>

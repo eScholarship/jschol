@@ -4,12 +4,15 @@ import React from 'react'
 import Header2Comp from '../components/Header2Comp.jsx'
 import Subheader2Comp from '../components/Subheader2Comp.jsx'
 import NavBarComp from '../components/NavBarComp.jsx'
-import ShareComp from '../components/ShareComp.jsx'
+import ItemActionsComp from '../components/ItemActionsComp.jsx'
 import AuthorListComp from '../components/AuthorListComp.jsx'
+import PubLocationComp from '../components/PubLocationComp.jsx'
+import PubDataComp from '../components/PubDataComp.jsx'
+import PdfViewComp from '../components/PdfViewComp.jsx'
 import JumpComp from '../components/JumpComp.jsx'
 import FooterComp from '../components/FooterComp.jsx'
 
-class SeriesItemWithdrawnLayout extends React.Component {
+class JournalItemPdfLayout extends React.Component {
   render() {
     return (
       <div>
@@ -32,17 +35,19 @@ class SeriesItemWithdrawnLayout extends React.Component {
                 <button className="c-tabs__button--active">Main Content</button>
               </div>
               <div className="c-tabs__content">
-                <div className="c-itemactions">
-                  <div className="o-alert1" role="alert">
-                    This item is <strong>not available</strong> for download from eScholarship
-                  </div>
-                  <ShareComp />
-                </div>
+                <ItemActionsComp />
                 <h1 className="c-tabcontent__heading">From the New Heights: The City and Migrating Latinas in Real Women Have Curves and María Full of Grace</h1>
                 <AuthorListComp />
-                <div className="o-itemunavailable__withdrawn">
-                  <p className="o-itemunavailable__lede">This item has been withdrawn and is <strong>no longer available</strong>.</p>
-                </div>
+                <PubLocationComp />
+                <PubDataComp />
+                <details className="c-togglecontent" open>
+                  <summary>Abstract</summary>
+                  <p>Eum nihil quidem nisi sapiente vel obcaecati esse vero placeat! Dicta fugiat quam, nemo accusamus cum, non voluptas sit eveniet. Voluptates odio consectetur eum dicta vel at rerum accusamus inventore officiis, voluptate deleniti et reiciendis aliquam illo eaque laborum neque excepturi pariatur unde obcaecati molestiae dolores voluptas non earum minima.</p>
+                  <div className="c-well">
+                    Many UC-authored scholarly publications are freely available on this site because of the UC Academic Senate’s Open Access Policy. <a className="o-textlink__secondary" href="">Let us know how this access is important for you</a>.
+                  </div>
+                </details>
+                <PdfViewComp />
               </div>
             </div>
           </main>
@@ -69,4 +74,4 @@ class SeriesItemWithdrawnLayout extends React.Component {
   }
 }
 
-module.exports = SeriesItemWithdrawnLayout;
+module.exports = JournalItemPdfLayout;

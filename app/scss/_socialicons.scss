@@ -4,15 +4,13 @@
   margin-right: $spacing-sm;
 
   a {
-    @extend %circular-border;
-    border-color: $color-black;
 
     &:not(:first-child) {
       margin-left: $spacing-sm;
     }
 
     img {
-      width: 20px;
+      height: $element-height;
     }
 
   }

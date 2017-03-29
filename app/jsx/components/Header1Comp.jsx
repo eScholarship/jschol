@@ -15,10 +15,10 @@ class HeaderComp1 extends React.Component {
     <div>
       <AdminBarComp/>
       <div className="c-header">
-        <Link to="/">
+        <Link className="c-header__logo1" to="/">
           <picture>
             <source srcSet="/images/logo_escholarship.svg" media={"(min-width: "+Breakpoints.screen3+")"}/>
-            <img src="/images/logo_temp-eschol-mobile.png" alt="eScholarship"/>
+            <img src="/images/logo_eschol-mobile.svg" alt="eScholarship"/>
           </picture>
         </Link>  
         <div className={this.state.searchActive ? "c-header__search--active" : "c-header__search"}>

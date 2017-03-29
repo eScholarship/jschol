@@ -16,7 +16,8 @@ class TabAuthorComp extends React.Component {
           return ( <span key={i}><a href={node.url}>{node.name}</a><br/></span> )
         })
     return(
-      <div className="content">
+      <div className="c-tabcontent">
+        <h1 className="c-tabcontent__heading" tabIndex="-1">Author &amp; Article Info</h1>
         {p.authors.length > 0 && <div><h3>Author(s)</h3>{authorList}</div>}
 
         <h3>Citation</h3>

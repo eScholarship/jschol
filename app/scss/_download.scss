@@ -60,9 +60,9 @@
 
 %o-download__menu {
   @extend %no-bullet-ul;
-  position: absolute;
-  right: $spacing-sm;
-  left: $spacing-sm;
+  position: absolute; // to c-itemactions
+  right: 0;
+  left: 0;
   margin-top: 5px;
   background-color: lighten($color-black, 35%);
   z-index: 1;

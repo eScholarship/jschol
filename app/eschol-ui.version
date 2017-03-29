@@ -150,3 +150,31 @@ As well as:
 (added)   jsx/components/ToggleContentComp.jsx
 
 
+3/23/2017
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's 2025b9d, 2017-03-23 <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+Andy added all scss and image changes since last.
+As well as:
+
+	modified:   app/jsx/components/FooterComp.jsx
+	modified:   app/jsx/components/Header1Comp.jsx
+	modified:   app/jsx/components/Header2Comp.jsx
+	modified:   app/jsx/components/ItemActionsComp.jsx
+	modified:   app/jsx/components/MediaFileGridComp.jsx
+	modified:   app/jsx/components/RefineMediaComp.jsx
+	modified:   app/jsx/components/Search2Comp.jsx
+	modified:   app/jsx/components/SocialIconsComp.jsx
+	modified:   app/jsx/components/Subheader2Comp.jsx
+	modified:   app/jsx/components/TabAuthorComp.jsx
+	modified:   app/jsx/components/TabCommentsComp.jsx
+	modified:   app/jsx/components/TabMainComp.jsx
+	modified:   app/jsx/components/TabMetricsComp.jsx
+	modified:   app/jsx/components/TabSupplementalComp.jsx
+	modified:   app/jsx/components/TabsComp.jsx
+	modified:   app/jsx/components/ToggleContentComp.jsx
+
+
+

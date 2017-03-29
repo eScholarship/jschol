@@ -22,7 +22,7 @@ class SearchControls extends React.Component {
     if (p.unitID) {
       searchUnit = (
         <span>
-          <input type="radio" id="c-search2__refine-campus" name="searchType" value={p.unitID} onClick={this.props.handleRadioSelect} />
+          <input type="radio" id="c-search2__refine-campus" name="searchType" value={p.unitID} />
           <label htmlFor="c-search_2_refine-campus">This {p.label}</label>
         </span>
       );
@@ -30,7 +30,7 @@ class SearchControls extends React.Component {
 
     return (
     <div className={this.props.refineActive ? "c-search2__refine--active" : "c-search2__refine"}>
-      <input type="radio" id="c-search2__refine-eschol" name="searchType" value="eScholarship" onClick={this.props.handleRadioSelect} defaultChecked={true}/>
+      <input type="radio" id="c-search2__refine-eschol" name="searchType" value="eScholarship" defaultChecked={true}/>
       <label htmlFor="c-search2__refine-eschol">All of eScholarship</label>
       { searchUnit }
     </div>

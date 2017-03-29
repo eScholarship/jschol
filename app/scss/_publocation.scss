@@ -2,6 +2,7 @@
 
 .c-publocation {
   position: relative;
+  margin-bottom: $spacing-sm;
 
   @include bp(screen1) {
 
@@ -31,7 +32,8 @@
   margin-bottom: $spacing-sm;
 
   @include bp(screen1) {
-    margin-right: 120px; // width of license image
+    margin-right: 120px; // sets width of license image
+    margin-bottom: 0;
     padding-right: $spacing-md;
 
     @supports (display: grid) {

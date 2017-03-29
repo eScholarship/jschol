@@ -6,6 +6,9 @@ class RefineMediaComp extends React.Component {
   render() {
     return (
       <div className="c-refinemedia">
+      { (this.props.mimeTypes.length < 2) ?
+        null
+        :
         <div className="c-refinemedia__droplist o-input__droplist2">
           <label htmlFor="o-input__droplist-label2">Refine media type by:</label>
           <select name="" id="o-input__droplist-label2">
@@ -15,7 +18,7 @@ class RefineMediaComp extends React.Component {
             <option value="">Videos</option>
             <option value="">Others</option>
           </select>
-        </div>
+        </div> }
         <div className="c-refinemedia__download o-download">
           <button className="o-download__button">Download All Files</button>
           <details className="o-download__formats">

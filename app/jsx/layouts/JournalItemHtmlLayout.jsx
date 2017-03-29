@@ -8,7 +8,7 @@ import TabsComp from '../components/TabsComp.jsx'
 import JumpComp from '../components/JumpComp.jsx'
 import FooterComp from '../components/FooterComp.jsx'
 
-class JournalItemLayout extends React.Component {
+class JournalItemHtmlLayout extends React.Component {
   render() {
     return (
       <div className="l-item">
@@ -49,4 +49,4 @@ class JournalItemLayout extends React.Component {
   }
 }
 
-module.exports = JournalItemLayout;
+module.exports = JournalItemHtmlLayout;

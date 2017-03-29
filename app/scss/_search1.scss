@@ -6,7 +6,7 @@
 
 .c-search1__form {
   display: flex;
-  height: $input-height;
+  min-height: $input-height;
   margin: 0 0 $spacing-sm;
 }
 
@@ -16,7 +16,6 @@
 
 .c-search1__field {
   flex: 1 0 auto;
-  width: 17.4em;
   margin: 0 5px 0 0;
   padding: 0 0 0 30px;
   border: 1px solid $color-light-gray;
@@ -45,7 +44,7 @@
 }
 
 .c-search1__search-close-button {
-  height: $input-height;
+  min-height: $input-height;
   padding: 0 13px;
   border: none;
   background: inline('../images/icon_close.svg') no-repeat center / 20px;

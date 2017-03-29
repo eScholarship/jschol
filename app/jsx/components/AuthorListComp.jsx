@@ -11,7 +11,11 @@ if (!(typeof document === "undefined")) {
 
 class AuthorListComp extends React.Component {
   componentDidMount() {
-    $('.c-authorlist__list').dotdotdot({watch:'window', after:'.c-authorlist__list-more-link', ellipsis:' ', wrap:'children'});
+    $('.c-authorlist__list').dotdotdot({watch:'window', after:'.c-authorlist__list-more-link', ellipsis:' ', wrap:'children',
+      // Note: dotdotdot destroys event handlers we put on the et al. <Link>, so we have to install
+      // the event handler *after* it initializes.
+      callback: () => $('.c-authorlist__list').find("a").click((e)=>this.handleClick(e, 4))
+    })
     setTimeout(()=> $('.c-authorlist__list').trigger("update"), 0)
   }
 
@@ -30,9 +34,7 @@ class AuthorListComp extends React.Component {
         { p.authors && 
             <ul className="c-authorlist__list">      
               {authorlist}
-              <li>
-                <Link to="#" className="c-authorlist__list-more-link" onClick={(e)=>this.handleClick(e, 4)}>et al.</Link>
-              </li>
+              <Link to="#" className="c-authorlist__list-more-link" onClick={(e)=> { this.handleClick(e, 4) }}>et al.</Link>
             </ul>
         }
       </div>

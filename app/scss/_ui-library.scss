@@ -2,7 +2,6 @@
 
 .ui-library-header {
   display: flex;
-  flex-flow: row nowrap;
   justify-content: space-between;
   margin: (-$spacing-body) (-$spacing-body) $spacing-body;
   padding: $spacing-body;
@@ -13,8 +12,17 @@
   h2 {
     flex: 0 0 auto;
     margin: 0;
-    font-size: 2em;
+    font-size: 1em;
     font-weight: normal;
+
+    @include bp(screen1) {
+      font-size: 1.5em;
+    }
+
+    @include bp(screen2) {
+      font-size: 2em;
+    }
+
   }
 
   h1 {
