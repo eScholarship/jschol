@@ -39,7 +39,7 @@ class SidebarTextComp extends React.Component
       <header>
         <h1 className="o-columnbox2__heading">{this.props.title}</h1>
       </header>
-      <nav className="c-sidebarnav" dangerouslySetInnerHTML={{__html: this.props.html}}/>
+      <div className="c-sidebarnav" dangerouslySetInnerHTML={{__html: this.props.html}}/>
     </section>)
   }
 }

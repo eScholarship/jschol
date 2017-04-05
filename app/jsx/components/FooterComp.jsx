@@ -18,9 +18,9 @@ class FooterComp extends React.Component {
           <a href="">Privacy Policy</a>
           <a href="">Terms & Conditions</a>
           <a href="">Help</a>
-          <Subscriber channel="adminLogin">
-            { adminLogin => adminLogin.loggedIn ?
-                  <Link to="/logout" onClick={()=>setTimeout(()=>adminLogin.onLogout(), 0)}>Admin Logout</Link>
+          <Subscriber channel="cms">
+            { cms => cms.loggedIn ?
+                  <Link to="/logout" onClick={()=>setTimeout(()=>cms.onLogout(), 0)}>Admin Logout</Link>
                 : <Link to="/login">Admin Login</Link> }
           </Subscriber>
         </nav>

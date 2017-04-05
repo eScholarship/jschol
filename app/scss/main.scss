@@ -14,6 +14,10 @@
 @import '../bower_components/trumbowyg/dist/ui/trumbowyg.css';
 @import 'eschol_pdf_viewer';
 
+// ***** Added to jschol (not in eschol-ui) ***** //
+@import 'adminbar';
+@import 'editable';
+
 // ***** Objects ***** //
 
 @import 'alert';

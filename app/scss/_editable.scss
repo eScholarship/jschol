@@ -1,5 +1,7 @@
 // ##### adminbar Component ##### //
 
+$color-black-semitrans: rgba(124, 126, 127, 0.5);
+
 .c-editable__modal {
   position: fixed; /* Stay in place */
   top: 0;
@@ -26,7 +28,7 @@
   left: 0;
   width: 100%; /* Full width */
   height: 100%; /* Full height */
-  background-color: $color-light-black-semitrans; /* Grey w/ opacity */
+  background-color: $color-black-semitrans; /* Grey w/ opacity */
   z-index: 1; /* Sit on top of content */
 }
 

@@ -574,11 +574,10 @@ end
 # *Put* to change the main text on a static page
 put "/api/static/:unitID/:pageName/mainText" do |unitID, pageName|
 
-  # In future the token will be looked up in a sessions table of logged in users. For now
-  # it's just a placeholder.
-  params[:token] == 'xyz123' or halt(401) # TODO: make this actually secure
-  # TODO: check that logged in user has permission to edit this unit and page
-  puts "TODO: permission check"
+  # Check user permissions
+  perms = getUserPermissions(params[:username], params[:token], unitID)
+  puts "Got perms: #{perms.inspect}"
+  perms[:admin] or halt(401)
 
   # Grab page data from the database
   page = Page.where(unit_id: unitID, name: pageName).first or halt(404, "Page not found")
