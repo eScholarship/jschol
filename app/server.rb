@@ -394,8 +394,17 @@ get "/api/unit/:unitID/?:pageName/?" do
           header: getUnitHeader(unit, attrs), 
           sidebar: [],
         }
-        pageData[:content] = unitSearch(CGI::parse(request.query_string), unit) if params[:pageName] == 'search'
-        pageData[:content] = getUnitPageContent(unit, attrs, params[:pageName]) if params[:pageName] == 'home'
+        if params[:pageName] == 'search'
+          pageData[:content] = unitSearch(CGI::parse(request.query_string), unit)
+        elsif params[:pageName] == 'home'
+          pageData[:content] = getUnitPageContent(unit, attrs, params[:pageName])
+        elsif params[:pageName] == 'profile'
+          pageData[:content] = getUnitProfile(unit, attrs)
+        elsif params[:pageName] == 'sidebar'
+          pageData[:content] = getUnitSidebar(unit, attrs)
+        else
+          pageData[:content] = getUnitStaticPage(unit, attrs, params[:pageName])
+        end
         pageData[:marquee] = getUnitMarquee(unit, attrs) if params[:pageName] == 'home'
       else
         #public API data
@@ -568,6 +577,21 @@ def sanitizeHTML(htmlFragment)
     attributes: { a: ['href'] },
     protocols:  { a: {'href' => ['ftp', 'http', 'https', 'mailto', :relative]} }
   )
+end
+
+put "/api/unit/:unitID/:pageName" do |unitID, pageName|
+  params[:token] == 'xyz123' or halt(401)
+  puts "TODO: permission check"
+
+  page = Page.where(unit_id: unitID, nav_element: pageName).first or halt(404, "Page not found")
+
+  safeText = sanitizeHTML(params[:newText])
+
+  page.attrs = JSON.parse(page.attrs).merge({ "html" => safeText }).to_json
+  page.save
+
+  content_type :json
+  return {status: "ok"}.to_json
 end
 
 ###################################################################################################

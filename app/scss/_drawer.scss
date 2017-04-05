@@ -1,6 +1,6 @@
 .c-drawer {
-  background: #eee;
   width: 20%;
+  background-color: lighten($color-light-gray, 15%);
 }
 
 .c-drawer__heading {
@@ -10,23 +10,59 @@
   text-transform: uppercase;
 }
 
-.c-drawer__list-item {
-  padding: 15px 20px;
-  border-bottom: 1px solid black;
+.c-drawer__list-item, .c-drawer__list-item-subnav {
+  padding: 15px 20px 15px 45px;
+  border-bottom: 1px solid $color-black;
   
-  input {
-    margin: 5px;
+  background-image: url("../images/th-list.svg");
+  background-size: 15px 15px;
+  background-repeat: no-repeat;
+  background-position: 20px 15px;
+
+  a {
+    color: $color-dark-blue;
+    text-decoration: none;
   }
 }
 
 .c-drawer__list-item-subnav {
-  padding: 15px 20px 0 20px;
-  border-bottom: 1px solid black;
+  padding: 15px 20px 0 45px;
+}
+
+.c-drawer__list-hidden-label {
+  display: none;
+}
+
+.c-drawer__list-label {
+  display: block;
+  font-weight: 700;
+}
+
+.c-drawer__list-item-text-input {
+  width: calc(100% - 24px);
+  margin-bottom: 10px;
+  padding: 6px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  color: #555;
+  line-height: 1.4;
+  
+  &.nav-element {
+    margin-top: -8px;
+  }
+}
+
+.c-drawer__list-item-radio-input {
+  display: block;
+
+  input[type=radio] {
+    margin: 0 4px 0 0;
+  }
 }
 
 .c-drawer__list-item-subnav .c-drawer__list-item {
   margin-right: -20px;
-  border-top: 1px solid black;
+  border-top: 1px solid $color-black;
   border-bottom: 0;
   
   input {
@@ -108,7 +144,12 @@
   }
 }
 
-
+.editable-outline {
+  border: 1px solid red;
+  &:hover {
+    border: 1px solid blue;
+  };
+}
 
 
 

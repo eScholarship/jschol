@@ -1,5 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router'
+import { Subscriber } from 'react-broadcast'
 
 import MarqueeComp from '../components/MarqueeComp.jsx'
 import ShareComp from '../components/ShareComp.jsx'
@@ -65,13 +66,6 @@ class DepartmentLayout extends React.Component {
   render() {
     var data = this.props.data;
 
-    var marquee;
-    if (this.props.marquee.carousel) {
-      marquee = <MarqueeComp carousel={this.props.marquee.carousel} about={this.props.marquee.about}/>
-    } else {
-      marquee = <MarqueeComp about={this.props.marquee.about} />
-    }
-
     var seriesList = [];
     for (var s in data.series) {
       if (data.series[s].items.length > 0) {
@@ -81,20 +75,26 @@ class DepartmentLayout extends React.Component {
 
     return (
       <div>
-        {marquee}
+        <MarqueeComp marquee={this.props.marquee} unit={this.props.unit}/>
         <div className="c-columns">
           <main>
             <section className="o-columnbox1">
               <p>There are {this.props.unit.extent.count} publications in this collection, published between {this.props.unit.extent.pub_year.start} and {this.props.unit.extent.pub_year.end}.</p>
-              {data.journals.length > 0 && 
-                <div><h3>Journals by {this.props.unit.name}</h3>
-                <ul>
-                  { data.journals.map((child) =>
-                    <li key={child.unit_id}><Link to={"/unit/"+child.unit_id}>{child.name}</Link></li>) }
-                </ul></div>
-              }
-              <h3>Works by {this.props.unit.name}</h3>
-              {seriesList}
+              <Subscriber channel="cms">
+                { cms =>  
+                  <div className={cms.isEditingPage && "editable-outline"}>
+                  {data.journals.length > 0 && 
+                    <div><h3>Journals by {this.props.unit.name}</h3>
+                    <ul>
+                      { data.journals.map((child) =>
+                        <li key={child.unit_id}><Link to={"/unit/"+child.unit_id}>{child.name}</Link></li>) }
+                    </ul></div>
+                  }
+                  <h3>Works by {this.props.unit.name}</h3>
+                  {seriesList}
+                  </div>
+                }
+              </Subscriber>
               <hr/>
               <h3>Related Research Centers & Groups</h3>
               <ul>
