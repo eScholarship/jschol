@@ -46,7 +46,12 @@ class UnitPage extends PageBase
     }
     return "/api/unit/" + this.props.params.unitID + "/home"
   }
-  
+
+  // Unit ID for permissions checking
+  pagePermissionsUnit() {
+    return this.props.params.unitID;
+  }
+
   // [********** AW - 3/15/17 **********]
   //TODO: propTypes are checked before the response from PageBase.fetchPageData()
   //is returned, resulting in several errors in the console
