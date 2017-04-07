@@ -4,8 +4,10 @@
 
 .o-download {
   display: inline-flex;
+  border-radius: 0 $round-corner $round-corner 0;
+  box-shadow: $box-shadow2;
 
-  @include bp(screen2) {
+  @include bp(screen3) {
     position: relative;
   }
 
@@ -72,7 +74,7 @@
     backdrop-filter: blur(5px);
   }
 
-  @include bp(screen2) {
+  @include bp(screen3) {
     right: 0;
     left: 0;
   }
@@ -109,7 +111,7 @@
 .o-download__nested-menu {
   @extend %o-download__menu;
 
-  @include bp(screen2) {
+  @include bp(screen3) {
     padding-bottom: $spacing-sm;
   }
 
@@ -123,7 +125,7 @@
   color: $color-white;
   font-size: 1em;
 
-  @include bp(screen2) {
+  @include bp(screen3) {
     padding-top: 3px;
     padding-bottom: 3px;
     border: none;
@@ -146,7 +148,7 @@
       a {
         @extend %o-download__nested-item;
 
-        @include bp(screen2) {
+        @include bp(screen3) {
           text-decoration: underline;
         }
 

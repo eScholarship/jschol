@@ -52,10 +52,10 @@
   position: absolute;
   right: $spacing-sm;
   left: $spacing-sm;
-  transform: translateX(110%);
+  transform: translateX(calc(100% + #{$spacing-sm}));
   transition: transform 0.5s;
   background: $color-white;
-  z-index: 2;
+  z-index: 1; // allows .c-search2__refine to open over other page elements
 
   @include bp(screen3) {
     position: relative;
@@ -76,8 +76,8 @@
 
 .c-header__search-open-button {
   align-self: flex-start;
-  height: $input-height;
-  padding: 0 13px;
+  min-height: $input-height;
+  padding: 0 ($input-height / 2);
   border: none;
   background: inline('../images/icon_magnify.svg') no-repeat center right / 25px;
 

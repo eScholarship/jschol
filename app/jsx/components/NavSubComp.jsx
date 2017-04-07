@@ -12,10 +12,10 @@ class NavSubComp extends React.Component {
         }}>
           {this.props.name}
         </summary>
-        <div key="foobar" className="c-nav__sub-items" role="list">
+        <nav className="c-nav__sub-items">
           <button className="c-nav__sub-items-button" aria-label="return to menu" onClick = {()=> { this.props.onSubmenuChanged(false) }}>Main Menu</button>
           {this.props.children}
-        </div>
+        </nav>
       </details>
     )
   }

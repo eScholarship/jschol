@@ -1,6 +1,6 @@
 // ##### Columns Layout Component ##### //
 
-.c-columns {
+%c-columns {
 
   @include bp(screen2) {
     display: flex;
@@ -17,7 +17,7 @@
     &:first-child { // left sidebar
 
       @include bp(screen2) {
-        margin: 0 $spacing-md 0 0;
+        margin-right: $spacing-md;
       }
 
     }
@@ -25,11 +25,27 @@
     &:last-child { // right sidebar
 
       @include bp(screen2) {
-        margin: 0 0 0 $spacing-md;
+        margin-left: $spacing-md;
       }
 
     }
 
+  }
+
+}
+
+.c-columns {
+  @extend %c-columns;
+}
+
+// If the main colum is longer than the sidebar, then fix it in-place but not beyond the top of the viewport:
+
+.c-columns--sticky-sidebar {
+  @extend %c-columns;
+
+  aside {
+    position: sticky;
+    top: $spacing-md;
   }
 
 }

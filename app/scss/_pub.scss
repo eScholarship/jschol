@@ -1,0 +1,25 @@
+// ##### Publication Component ##### //
+
+.c-pub {
+  margin-bottom: $spacing-sm;
+}
+
+.c-pub__heading {
+  margin: 0.8em 0;
+  font-size: 1.3em;
+  font-weight: normal;
+
+  @include bp(screen1) {
+    margin: 0 0 0.8em;
+  }
+
+  a {
+    @extend %o-textlink__secondary;
+  }
+
+}
+
+.c-pub__subheading {
+  margin-bottom: 0.4em;
+  font-size: 1.2em;
+}

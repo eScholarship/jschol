@@ -44,9 +44,9 @@ class ScholWorksComp extends React.Component {
     if (this.props.result.authors) {
       var authorList = this.props.result.authors.map(function(author, i, a) {
         if (i === a.length-1) {
-          return (<span key={author.name}><Link to={"/search/?q="+author.name}>{author.name}</Link></span>);
+          return (<li key={author.name}><Link to={"/search/?q="+author.name}>{author.name}</Link></li>);
         } else {
-          return (<span key={author.name}><Link to={"/search/?q="+author.name}>{author.name}</Link>; </span>);
+          return (<li key={author.name}><Link to={"/search/?q="+author.name}>{author.name}</Link>; </li>);
         }
       });
     }
@@ -95,8 +95,10 @@ class ScholWorksComp extends React.Component {
             </h2>
           </heading>
           {authorList && 
-            <div className="c-scholworks__author">
-              {authorList}
+            <div className="c-authorlist">
+              <ul className="c-authorlist__list">
+                {authorList}
+              </ul>
             </div>
           }
           {this.props.result.pub_year && publishingInfo && 

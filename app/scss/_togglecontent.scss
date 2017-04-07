@@ -15,7 +15,7 @@ $togglecontent-left-spacing: 25px;
     padding-left: $togglecontent-left-spacing;
   }
 
-  summary {
+  > summary {
     display: inline-block;
     position: relative;
     margin-bottom: $spacing-sm;
@@ -42,7 +42,7 @@ $togglecontent-left-spacing: 25px;
 
   &[open] {
 
-    summary {
+    > summary {
 
       &::after {
         background-image: inline('../images/icon_minus-black.svg');

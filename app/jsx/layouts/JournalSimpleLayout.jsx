@@ -1,40 +1,61 @@
-// ##### About Layout ##### //
+// ##### Journal Simple Layout ##### //
 
 import React from 'react'
 import Header2Comp from '../components/Header2Comp.jsx'
 import Subheader2Comp from '../components/Subheader2Comp.jsx'
 import NavBarComp from '../components/NavBarComp.jsx'
-import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
-import MarqueeComp from '../components/MarqueeComp.jsx'
 import ItemActionsComp from '../components/ItemActionsComp.jsx'
-import PubPreviewComp from '../components/PubPreviewComp.jsx'
 import PubComp from '../components/PubComp.jsx'
+import PubPreviewComp from '../components/PubPreviewComp.jsx'
 import JournalInfoComp from '../components/JournalInfoComp.jsx'
 import FooterComp from '../components/FooterComp.jsx'
 
-class JournalSplashyLayout extends React.Component {
+class JournalSimpleLayout extends React.Component {
   render() {
     return (
-      <div className="l-about">
+      <div>
         <a href="#maincontent" className="c-skipnav">Skip to main content</a>
         <Header2Comp />
         <Subheader2Comp />
         <NavBarComp />
-        <BreadcrumbComp />
-        <MarqueeComp />
+        <nav className="c-breadcrumb">
+          <a href="">eScholarship</a>
+          <a href="">Campus Name</a>
+          <a href="">Journal Name</a>
+          <a className="c-breadcrumb-link--active" href="">Volume ##, Issue ##</a>
+        </nav>
         <div className="c-columns">
           <main id="maincontent">
+            <section className="o-columnbox3">
+              <header>
+                <h2>About</h2>
+              </header>
+              <div>Obcaecati ab alias culpa mollitia porro eos itaque ipsa necessitatibus earum libero recusandae, consequuntur quos molestias, dolorum cupiditate doloremque atque possimus esse.
+              </div>
+            </section>
             <section className="o-columnbox1">
               <ItemActionsComp />
-              <PubPreviewComp />
-              <h3>Table of Contents</h3>
-              <div className="o-dividecontent2x--ruled">
-                <PubComp />
-                <img className="o-imagecontent" src="http://placehold.it/300x150?text=Image" alt="" />
-                <PubComp />
-                <img className="o-imagecontent" src="http://placehold.it/300x150?text=Image" alt="" />
-                <PubComp />
+              <div className="c-pub">
+                <h2 className="c-pub__heading">
+                  <a href="">Volume 41, Issue 1, 2012</a>
+                </h2>
+                <div className="c-pub__subheading">Focus: Caribbean Studies and Literatures</div>
+                <p>
+                  Lorem ipsum dolor sit amet, consectetur adipisicing elit. Pariatur fuga laborum, qui debitis vitae quaerat quas ab officia, dolor dignissimos ipsum nam ratione unde animi? Officiis rerum unde eveniet natus. Laboriosam tenetur vel, rem culpa maiores non, tempora voluptatibus quasi quos provident exercitationem itaque dolorum quam sequi dolor odio hic accusamus, repellendus ut dignissimos. Labore modi consectetur ullam, iste accusamus!
+                </p>
               </div>
+              <h3>Front Matter</h3>
+              <PubPreviewComp />
+              <PubPreviewComp />
+              <PubPreviewComp />
+              <h3>Articles</h3>
+              <PubPreviewComp />
+              <PubPreviewComp />
+              <PubPreviewComp />
+              <h3>Book Reviews</h3>
+              <PubComp />
+              <PubComp />
+              <PubComp />
             </section>
           </main>
           <aside>
@@ -68,4 +89,4 @@ class JournalSplashyLayout extends React.Component {
   }
 }
 
-module.exports = JournalSplashyLayout;
+module.exports = JournalSimpleLayout;

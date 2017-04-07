@@ -2,8 +2,9 @@
 
 .o-alert1 {
   display: inline-block;
+  margin-right: $spacing-sm;
   margin-bottom: $spacing-sm;
-  padding: $spacing-sm;
+  padding: 0.5em;
   border: 1px solid $color-light-gray;
   font-size: 0.9em;
 }

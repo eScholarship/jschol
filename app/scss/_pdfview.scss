@@ -4,7 +4,7 @@
   
   @include bp(screen1) {
     position: absolute;
-    top: $spacing-sm;
+    top: $spacing-md;
     right: 0;
   }
 
@@ -12,10 +12,12 @@
 
 .c-pdfview__button-download {
   @extend %o-button__6;
-  margin-bottom: $spacing-sm;
+  // fixes chrome/safari min-height + padding within <details> bug:
+  padding-top: 0;
+  padding-bottom: 0;
   background-image: inline('../images/icon_download-white.svg');
 
-  @include bp(screen2) {
+  @include bp(screen1) {
     display: none;
   }
 
@@ -25,9 +27,22 @@
   @extend %o-button__6;
   display: none;
 
-  @include bp(screen2) {
-    display: block;
+  @include bp(screen1) {
+    display: inline-block;
+    // fixes chrome/safari min-height + padding within <details> bug:
+    padding-top: 0;
+    padding-bottom: 0;
     background-image: inline('../images/icon_expand-white.svg');
+  }
+
+}
+
+.c-pdfview__viewer {
+  display: none;
+
+  @include bp(screen1) {
+    display: block;
+    margin-top: $spacing-sm;
   }
 
 }

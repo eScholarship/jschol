@@ -22,7 +22,7 @@ class SearchControls extends React.Component {
     if (p.unitID) {
       searchUnit = (
         <span>
-          <input type="radio" id="c-search2__refine-campus" name="searchType" value={p.unitID} />
+          <input type="radio" id="c-search2__refine-campus" name="searchType" value={p.unitID} onFocus={this.makeActive} onBlur={this.makeInactive}/>
           <label htmlFor="c-search_2_refine-campus">This {p.label}</label>
         </span>
       );
@@ -30,7 +30,7 @@ class SearchControls extends React.Component {
 
     return (
     <div className={this.props.refineActive ? "c-search2__refine--active" : "c-search2__refine"}>
-      <input type="radio" id="c-search2__refine-eschol" name="searchType" value="eScholarship" defaultChecked={true}/>
+      <input type="radio" id="c-search2__refine-eschol" name="searchType" value="eScholarship" defaultChecked={true} onFocus={this.makeActive} onBlur={this.makeInactive}/>
       <label htmlFor="c-search2__refine-eschol">All of eScholarship</label>
       { searchUnit }
     </div>
@@ -38,13 +38,11 @@ class SearchControls extends React.Component {
 }
 
 class SearchComp2 extends React.Component {
-  constructor(props){
-    super(props)
-    this.state = {refineActive: false, search: '/search'}
-  }
+  state={refineActive: false}
+  makeActive = ()=> this.setState({refineActive: true})
+  makeInactive = ()=> this.setState({refineActive: false})
 
   handleRadioSelect = event => {
-    this.setState({refineActive: false});
     if (event.target.value == 'eScholarship') {
       this.setState({search: '/search'})
     } else {
@@ -70,16 +68,14 @@ class SearchComp2 extends React.Component {
           <div className="c-search2__form">
             <Form to={this.state.search} method="GET" onSubmit = {()=> this.setState({refineActive: false})}>
               <label className="c-search2__label" htmlFor="global-search">Search eScholarship</label>
-              <input type="search" id="global-search" name="q"
-                className="c-search2__field"
-                placeholder="Search eScholarship"
-                onFocus={()=> this.setState({refineActive: true})}
-                onBlur={()=> this.setState({refineActive: false})} />
+              <input type="search" name="q" id="global-search" className="c-search2__field" placeholder="Search" onFocus={this.makeActive} onBlur={this.makeInactive}/>
             </Form>
           </div>
           <SearchControls refineActive={this.state.refineActive}
                           handleRadioSelect={this.handleRadioSelect}
                           label={label}
+                          makeActive={this.makeActive}
+                          makeInactive={this.makeInactive}
                           unitID={this.props.unitID} />
         </div>
         <button type="submit" className="c-search2__submit-button" aria-label="search"></button>

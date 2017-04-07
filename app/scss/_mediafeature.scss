@@ -1,0 +1,103 @@
+// ##### Media Feature Objects ##### //
+
+%o-mediafeature {
+  margin-bottom: $spacing-md;
+  padding: $spacing-sm $spacing-sm $spacing-md;
+  border-bottom: 1px solid $color-light-gray;
+}
+
+%o-mediafeature__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: $spacing-md;
+  background-color: $color-light-gray;
+}
+
+.o-mediafeature--audio {
+  @extend %o-mediafeature;
+
+  .o-mediafeature__item {
+    @extend %o-mediafeature__item;
+    height: 50vw;
+  }
+
+}
+
+.o-mediafeature--file {
+  @extend %o-mediafeature;
+
+  .o-mediafeature__item {
+    @extend %o-mediafeature__item;
+    height: 50vw;
+    padding: 0 $spacing-sm;
+
+    strong {
+      margin-bottom: $spacing-md;
+      text-transform: uppercase;
+    }
+
+    button {
+      @extend %o-button__6;
+      background-image: inline('../images/icon_download-white.svg');
+    }
+
+  }
+
+}
+
+.o-mediafeature--picture {
+  @extend %o-mediafeature;
+
+  .o-mediafeature__item {
+    @extend %o-mediafeature__item;
+
+    img {
+      max-width: 100%;
+    }
+
+  }
+
+}
+
+.o-mediafeature--video {
+  @extend %o-mediafeature;
+
+  .o-mediafeature__item {
+    @extend %o-mediafeature__item;
+
+    video {
+      max-width: 100%;
+    }
+
+  }
+
+}
+
+.o-mediafeature__title-bar {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: $spacing-sm;
+
+  @include headings() {
+    flex: 1 1 auto;
+    margin: 0 $spacing-md 0 0;
+    color: $color-teal;
+    font-size: 1.3em;
+    font-weight: normal;
+  }
+
+  button {
+    @extend %o-button__7;
+
+    // if there's more than one button:
+    &:not(:last-child) {
+      margin-right: $spacing-sm;
+      padding-right: $spacing-sm;
+      border-right: 1px solid $color-dark-gray;
+    }
+
+  }
+
+}
