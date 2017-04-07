@@ -1,7 +1,7 @@
 // ##### Subheader 1 Component ##### //
 
 import React from 'react'
-import Header2Comp from '../components/Header2Comp.jsx'
+import Header1Comp from '../components/Header1Comp.jsx'
 import NavComp from '../components/NavComp.jsx'
 
 class Subheader1Comp extends React.Component {
@@ -9,7 +9,7 @@ class Subheader1Comp extends React.Component {
     return (
       <div className="c-subheader1">
         <div className="c-subheader1__header">
-          <Header2Comp />
+          <Header1Comp />
         </div>
         <div className="c-subheader1__nav">
           <NavComp data={this.props.navdata} />

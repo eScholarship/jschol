@@ -6,9 +6,7 @@ import _ from 'lodash'
 import { Subscriber } from 'react-broadcast'
 
 import PageBase from './PageBase.jsx'
-import Header1Comp from '../components/Header1Comp.jsx'
-import Nav1Comp from '../components/Nav1Comp.jsx'
-import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
+import Subheader1Comp from '../components/Subheader1Comp.jsx'
 import SidebarNavComp from '../components/SidebarNavComp.jsx'
 import EditableMainContentComp from '../components/EditableMainContentComp.jsx'
 import EditableSidebarTextComp from '../components/EditableSidebarTextComp.jsx'
@@ -40,9 +38,8 @@ export default class StaticPage extends PageBase
   // PageBase calls this when the API data has been returned to us
   renderData = data => { return(
     <div className="l-about">
-      <Header1Comp/>
-      <Nav1Comp campuses={data.campuses} />
-      <BreadcrumbComp array={data.breadcrumb} />
+      <a href="#maincontent" className="c-skipnav">Skip to main content</a>
+      <Subheader1Comp navdata={[{name: 'Campus Sites', slug: ''}, {name: 'UC Open Access Policies', slug: ''}, {name: 'eScholarship Publishing', slug: ''}]} />
       <Subscriber channel="cms">
         { cms =>
           <div className="c-columns">

@@ -2,7 +2,11 @@
 
 import React from 'react'
 import $ from 'jquery'
-import dotdotdot from 'jquery.dotdotdot'
+
+// Load dotdotdot in browser but not server
+if (!(typeof document === "undefined")) {
+  const dotdotdot = require('jquery.dotdotdot')
+}
 
 class InfoPagesComp extends React.Component {
   componentDidMount() {

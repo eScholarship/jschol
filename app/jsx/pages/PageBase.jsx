@@ -139,9 +139,11 @@ class PageBase extends React.Component
   
   renderContent() {
     if (this.state.error) {
-      return (<div className="body">
-        {this.renderError()}<FooterComp/>
-      </div>);
+      return (
+        <div className="body">
+          {this.renderError()}
+          <FooterComp/>
+        </div>);
     } else if (this.state.adminLogin && this.state.adminLogin.loggedIn && this.state.pageData) {
       return (
         <DrawerComp data={this.state.pageData}>
@@ -151,13 +153,17 @@ class PageBase extends React.Component
           </div>
         </DrawerComp>);
     } else if (this.state.pageData) {
-      return (<div className="body">
-        {this.renderData(this.state.pageData)}<FooterComp/>
-      </div>);
+      return (
+        <div className="body">
+          {this.renderData(this.state.pageData)}
+          <FooterComp/>
+        </div>);
     } else {
-      return (<div className="body">
-        {this.renderLoading()}<FooterComp/>
-      </div>);
+      return (
+        <div className="body">
+          {this.renderLoading()}
+          <FooterComp/>
+        </div>);
     }
   }
 
