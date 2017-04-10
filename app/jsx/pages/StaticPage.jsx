@@ -6,9 +6,7 @@ import _ from 'lodash'
 import { Subscriber } from 'react-broadcast'
 
 import PageBase from './PageBase.jsx'
-import Header1Comp from '../components/Header1Comp.jsx'
-import Nav1Comp from '../components/Nav1Comp.jsx'
-import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
+import Subheader1Comp from '../components/Subheader1Comp.jsx'
 import SidebarNavComp from '../components/SidebarNavComp.jsx'
 import EditableMainContentComp from '../components/EditableMainContentComp.jsx'
 import EditableSidebarTextComp from '../components/EditableSidebarTextComp.jsx'
@@ -27,6 +25,11 @@ export default class StaticPage extends PageBase
     return "/api/static/" + this.props.params.unitID + "/" + this.props.params.pageName
   }
 
+  // Unit ID for permissions checking
+  pagePermissionsUnit() {
+    return this.props.params.unitID;
+  }
+
   // OK to display the Edit Page button if user is logged in
   isPageEditable() {
     return true
@@ -35,9 +38,8 @@ export default class StaticPage extends PageBase
   // PageBase calls this when the API data has been returned to us
   renderData = data => { return(
     <div className="l-about">
-      <Header1Comp/>
-      <Nav1Comp campuses={data.campuses} />
-      <BreadcrumbComp array={data.breadcrumb} />
+      <a href="#maincontent" className="c-skipnav">Skip to main content</a>
+      <Subheader1Comp navdata={[{name: 'Campus Sites', slug: ''}, {name: 'UC Open Access Policies', slug: ''}, {name: 'eScholarship Publishing', slug: ''}]} />
       <Subscriber channel="cms">
         { cms =>
           <div className="c-columns">
@@ -52,7 +54,7 @@ export default class StaticPage extends PageBase
               </section>
             </aside>
             <main>
-              <EditableMainContentComp onSave={(newText)=>this.onSaveContent(newText, cms.adminLogin)}
+              <EditableMainContentComp onSave={(newText)=>this.onSaveContent(newText, cms)}
                 html={data.page.html} title={data.page.title}/>
               { cms.isEditingPage &&
                 <button>Delete this page</button> }
@@ -62,7 +64,7 @@ export default class StaticPage extends PageBase
                 <EditableSidebarTextComp
                   key={w.id}
                   title={w.title} html={w.html}
-                  onSave={(newText)=>this.onSaveWidgetText(w.id, newText, cms.adminLogin)}/>
+                  onSave={(newText)=>this.onSaveWidgetText(w.id, newText, cms)}/>
               ) }
               { cms.isEditingPage &&
                 <button>Add widget</button> }
@@ -73,19 +75,19 @@ export default class StaticPage extends PageBase
     </div>
   )}
 
-  onSaveContent(newText, adminLogin) {
+  onSaveContent(newText, cms) {
     return $
       .ajax({ url: `/api/static/${this.props.params.unitID}/${this.props.params.pageName}/mainText`,
-            type: 'PUT', data: { token: adminLogin.token, newText: newText }})
+            type: 'PUT', data: { username: cms.username, token: cms.token, newText: newText }})
       .done(()=>{
         this.fetchPageData()  // re-fetch page state after DB is updated
       })
   }
 
-  onSaveWidgetText(widgetID, newText, adminLogin) {
+  onSaveWidgetText(widgetID, newText, cms) {
     return $
     .ajax({ url: `/api/widget/${this.props.params.unitID}/${widgetID}/text`,
-          type: 'PUT', data: { token: adminLogin.token, newText: newText }})
+          type: 'PUT', data: { username: cms.username, token: cms.token, newText: newText }})
     .done(()=>{
       this.fetchPageData()  // re-fetch page state after DB is updated
     })

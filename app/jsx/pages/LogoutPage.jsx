@@ -9,7 +9,10 @@ import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
 
 class LogoutPage extends PageBase
 {
-  pageDataURL() { return null /* no API data */ }
+  pageDataURL() { 
+    const sessionData = this.getSessionData() || {}
+    return `/api/loginEnd?username=${sessionData.username}&token=${sessionData.token}`
+  }
 
   render() {
     if (!(typeof document === "undefined")) {

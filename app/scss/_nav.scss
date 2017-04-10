@@ -2,6 +2,7 @@
 
 .c-nav {
   flex: 1 0 auto; // to .c-subheader flexbox
+  z-index: 1; // prevents stacking under marquee carousel in some browsers
 }
 
 .c-nav__main {
@@ -59,7 +60,6 @@
   right: $spacing-sm;
   left: $spacing-sm;
   transition: transform 0.5s;
-  z-index: 1;
 
   @include bp(screen3) {
     display: flex;

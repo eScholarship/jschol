@@ -14,19 +14,18 @@ class HeaderComp1 extends React.Component {
     return (
     <div>
       <AdminBarComp/>
-      <div className="c-header">
+      <header className="c-header">
         <Link className="c-header__logo1" to="/">
           <picture>
             <source srcSet="/images/logo_escholarship.svg" media={"(min-width: "+Breakpoints.screen3+")"}/>
             <img src="/images/logo_eschol-mobile.svg" alt="eScholarship"/>
           </picture>
-        </Link>  
+        </Link>
         <div className={this.state.searchActive ? "c-header__search--active" : "c-header__search"}>
           <Search1Comp onClose = {()=>this.setState({searchActive: false})} />
         </div>
-        <button className="c-header__search-open-button" aria-label="open search field" 
-                onClick = {()=> this.setState({searchActive: true})}></button>
-      </div>
+        <button className="c-header__search-open-button" aria-label="open search field" onClick = {()=> this.setState({searchActive: true})}></button>
+      </header>
     </div>
     )
   }

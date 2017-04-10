@@ -16,7 +16,9 @@ class PdfViewComp extends React.Component {
           <button onClick={() => {this.view()}} className="c-pdfview__button-download">Download PDF to View</button>
           <button onClick={() => {this.view()}} className="c-pdfview__button-view">View Larger</button>
         </div>
-        <PdfViewerComp url={this.props.url}/> 
+        <div className="c-pdfview__viewer">
+          <PdfViewerComp url={this.props.url}/> 
+        </div>
       </details>
     )
   }

@@ -6,7 +6,9 @@ import Subheader2Comp from '../components/Subheader2Comp.jsx'
 import NavBarComp from '../components/NavBarComp.jsx'
 import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
 import MarqueeComp from '../components/MarqueeComp.jsx'
-import FrontmatterComp from '../components/FrontmatterComp.jsx'
+import ItemActionsComp from '../components/ItemActionsComp.jsx'
+import PubPreviewComp from '../components/PubPreviewComp.jsx'
+import PubComp from '../components/PubComp.jsx'
 import JournalInfoComp from '../components/JournalInfoComp.jsx'
 import FooterComp from '../components/FooterComp.jsx'
 
@@ -23,18 +25,15 @@ class JournalSplashyLayout extends React.Component {
         <div className="c-columns">
           <main id="maincontent">
             <section className="o-columnbox1">
-              <FrontmatterComp />
+              <ItemActionsComp />
+              <PubPreviewComp />
               <h3>Table of Contents</h3>
               <div className="o-dividecontent2x--ruled">
-                <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Eaque similique aperiam recusandae quisquam deserunt soluta laudantium nemo dignissimos eum autem qui tenetur veniam, ducimus nobis maxime id eveniet, laborum, amet.
-                </p>
-                <p>Quia, tempore quis vitae a dolore! Accusantium eveniet fuga architecto ratione, nemo facere labore, repellat illo porro, harum amet. Cum voluptates commodi at facere doloribus, eos, saepe libero obcaecati nesciunt.
-                </p>
-                <p>Consectetur et, excepturi minima hic vero numquam. Alias nulla sunt culpa accusantium distinctio enim maxime, quis ratione consectetur delectus omnis suscipit atque asperiores nemo in molestiae similique quos autem pariatur?
-                </p>
+                <PubComp />
                 <img className="o-imagecontent" src="http://placehold.it/300x150?text=Image" alt="" />
-                <p>Nisi excepturi error molestias, accusamus quas non minima nam quis. Et blanditiis minima, consequatur error quibusdam maxime autem repellat id soluta ab saepe quos qui at vel ducimus voluptatem dolorem.
-                </p>
+                <PubComp />
+                <img className="o-imagecontent" src="http://placehold.it/300x150?text=Image" alt="" />
+                <PubComp />
               </div>
             </section>
           </main>

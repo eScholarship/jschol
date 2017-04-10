@@ -34,7 +34,7 @@ class AuthorListComp extends React.Component {
         { p.authors && 
             <ul className="c-authorlist__list">      
               {authorlist}
-              <Link to="#" className="c-authorlist__list-more-link" onClick={(e)=> { this.handleClick(e, 4) }}>et al.</Link>
+              <Link to="#" className="c-authorlist__list-more-link">et al.</Link>
             </ul>
         }
       </div>

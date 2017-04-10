@@ -55,7 +55,7 @@
     "progress": "^1.1.8",
     "react-addons-test-utils": "^15.4.1",
     "run-sequence": "^1.2.2",
-    "webpack": "^2.2.0-rc.1"
+    "webpack": "^2.3.3"
   },
   "dependencies-note": "These modules get bundled into lib-bundle.js",
   "dependencies": {
@@ -78,7 +78,7 @@
   },
   "optionalDependencies-note": "These modules are separately bundled and loaded on-demand via require.ensure",
   "optionalDependencies": {
-    "pdfjs-embed": "escholarship/pdfjs-embed",
+    "pdfjs-embed": "escholarship/pdfjs-embed#c0547d5ff4",
     "react-trumbowyg": "^1.1.0"
   }
 }

@@ -28,13 +28,13 @@ class LoginSuccessPage extends PageBase
             <header>
               <h1 className="o-columnbox1__heading">Login Success</h1>
             </header>
-            <Subscriber channel="adminLogin">
-              { adminLogin => {
-                  let username = adminLogin.username
-                  if (!adminLogin.username) {
+            <Subscriber channel="cms">
+              { cms => {
+                  let username = cms.username
+                  if (!username) {
                     // On client, update global state (but avoid doing this on iso server)
                     if (!(typeof document === "undefined"))
-                      setTimeout(()=>adminLogin.onLogin(this.state.pageData['username'], this.state.pageData['key']), 0)
+                      setTimeout(()=>cms.onLogin(this.state.pageData['username'], this.state.pageData['key']), 0)
                     username = this.state.pageData['username']
                   }
                   return <p>You are logged in as '{username}'.</p>

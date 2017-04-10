@@ -8,6 +8,12 @@ import Header1Comp from '../components/Header1Comp.jsx'
 import FooterComp from '../components/FooterComp.jsx'
 import DrawerComp from '../components/DrawerComp.jsx'
 
+// Key used to store login credentials in browser's session storage
+const SESSION_LOGIN_KEY = "escholLogin"
+
+// Session storage is not available on server, only on browser
+let sessionStorage = (typeof window != "undefined") ? window.sessionStorage : null
+
 class PageBase extends React.Component
 {
   getEmptyState() {
@@ -44,8 +50,34 @@ class PageBase extends React.Component
     }
     else
       state.pageData = {}
+
+    // Retrieve login info from session storage
+    const sessionData = sessionStorage && JSON.parse(sessionStorage.getItem(SESSION_LOGIN_KEY))
+    if (sessionData)
+      _.merge(state, { adminLogin: { loggedIn: true, username: sessionData.username, token: sessionData.token } })
+
+    // That's the final state.
     this.setState(state)
   }
+
+  getSessionData() {
+    return sessionStorage && JSON.parse(sessionStorage.getItem(SESSION_LOGIN_KEY))
+  }
+
+  onLogin = (username, token) => {
+    if (!this.state.adminLogin || username != this.state.adminLogin.username || token != this.state.adminLogin.token)
+    {
+      if (sessionStorage)
+        sessionStorage.setItem(SESSION_LOGIN_KEY, JSON.stringify({ username: username, token: token }))
+      this.setState({ adminLogin: { loggedIn: true, username: username, token: token } })
+    }
+  };
+
+  onLogout = () => {
+    if (sessionStorage)
+      sessionStorage.setItem(SESSION_LOGIN_KEY, JSON.stringify(null))
+    this.setState({ adminLogin: { loggedIn: false } })
+  };
 
   // Called when user clicks Edit Page, or Done Editing
   onEditingPageChange = flag =>
@@ -59,7 +91,7 @@ class PageBase extends React.Component
     }
     else
       this.setState({ isEditingPage: flag })
-  }
+  };
 
   // Pages with any editable components should override this.
   isPageEditable() {
@@ -94,18 +126,25 @@ class PageBase extends React.Component
     throw "Derived class must override pageDataURL method"
   }
 
+  // Optional method: for editable pages, the unit ID to look up permissions for
+  pagePermissionsUnit() {
+    return null
+  }
+
   // Method to be supplied by derived classes, so they can make a URL that will grab
   // the proper API data from the server.
   renderData() {
     throw "Derived class must override renderData method"
   }
   
-  renderContent(adminLogin) {
+  renderContent() {
     if (this.state.error) {
-      return (<div className="body">
-        {this.renderError()}<FooterComp/>
-      </div>);
-    } else if (adminLogin.loggedIn && this.state.pageData) {
+      return (
+        <div className="body">
+          {this.renderError()}
+          <FooterComp/>
+        </div>);
+    } else if (this.state.adminLogin && this.state.adminLogin.loggedIn && this.state.pageData) {
       return (
         <DrawerComp data={this.state.pageData}>
           <div className="body">
@@ -114,29 +153,53 @@ class PageBase extends React.Component
           </div>
         </DrawerComp>);
     } else if (this.state.pageData) {
-      return (<div className="body">
-        {this.renderData(this.state.pageData)}<FooterComp/>
-      </div>);
+      return (
+        <div className="body">
+          {this.renderData(this.state.pageData)}
+          <FooterComp/>
+        </div>);
     } else {
-      return (<div className="body">
-        {this.renderLoading()}<FooterComp/>
-      </div>);
+      return (
+        <div className="body">
+          {this.renderLoading()}
+          <FooterComp/>
+        </div>);
+    }
+  }
+
+  fetchPermissions() {
+    const unit = this.pagePermissionsUnit()
+    if (unit
+        && this.state.adminLogin
+        && this.state.adminLogin.loggedIn
+        && !this.fetchingPerms
+        && !this.state.permissions) 
+    {
+      this.fetchingPerms = true
+      $.getJSON(`/api/permissions/${unit}?username=${this.state.adminLogin.username}&token=${this.state.adminLogin.token}`)
+      .done((data) => {
+        this.setState({ permissions: data })
+      })
+      .fail((jqxhr, textStatus, err)=> {
+        this.setState({ error: textStatus })
+      })
     }
   }
 
   render() {
+    this.fetchPermissions()
     return (
-      <Subscriber channel="adminLogin">
-        { adminLogin =>
-          <Broadcast channel="cms" value={ { isPageEditable: true,
-                                             isEditingPage: this.state.isEditingPage,
-                                             onEditingPageChange: this.onEditingPageChange,
-                                             modules: this.state.cmsModules,
-                                             adminLogin: adminLogin } }>
-            {this.renderContent(adminLogin)}
-          </Broadcast>
-        }
-      </Subscriber>
+      <Broadcast channel="cms" value={ { loggedIn: this.state.adminLogin && this.state.adminLogin.loggedIn,
+                                         username: this.state.adminLogin && this.state.adminLogin.username,
+                                         token: this.state.adminLogin && this.state.adminLogin.token,
+                                         onLogin: this.onLogin,
+                                         onLogout: this.onLogout,
+                                         isEditingPage: this.state.isEditingPage,
+                                         onEditingPageChange: this.onEditingPageChange,
+                                         modules: this.state.cmsModules,
+                                         permissions: this.state.permissions } }>
+        {this.renderContent()}
+      </Broadcast>
     )
   }
 

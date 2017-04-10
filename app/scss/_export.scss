@@ -3,13 +3,15 @@
 .c-export {
   display: flex;
   justify-content: flex-end;
-  margin: 0 0 $spacing-sm;
+  margin-bottom: $spacing-sm;
 }
 
 .c-export__export-button {
-  // not currently used (object 'o-button__5' already uses icon_share-square.svg as background default)
+  @extend %o-button__5;
+  background-image: inline('../images/icon_share-square.svg');
 }
 
 .c-export__rss-button {
+  @extend %o-button__5;
   background-image: inline('../images/icon_rss-square.svg');
 }
