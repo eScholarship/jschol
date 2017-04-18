@@ -20,10 +20,11 @@ class SearchControls extends React.Component {
         searchUnit = null;
 
     if (p.unitID) {
+      // Note below: "Department" is too long to fix in the slide-down box, so we have to abbreviate it.
       searchUnit = [
         <input key="r2" type="radio" id="c-search2__refine-campus" name="searchType" value={p.unitID}
                onClick={this.props.handleRadioSelect} onFocus={this.props.makeActive} onBlur={this.props.makeInactive}/>,
-        <label key="l2" htmlFor="c-search2__refine-campus">This {p.label}</label>
+        <label key="l2" htmlFor="c-search2__refine-campus">This {p.label=="Department" ? "Dept." : p.label}</label>
       ]
     }
 
