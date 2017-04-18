@@ -52,35 +52,6 @@ class UnitPage extends PageBase
     return this.props.params.unitID;
   }
 
-  // [********** AW - 3/15/17 **********]
-  //TODO: propTypes are checked before the response from PageBase.fetchPageData()
-  //is returned, resulting in several errors in the console
-  static propTypes = {
-    unit: React.PropTypes.shape({
-      id: React.PropTypes.string.isRequired,
-      name: React.PropTypes.string.isRequired,
-      type: React.PropTypes.string.isRequired,
-      extent: React.PropTypes.object
-    }).isRequired,
-    header: React.PropTypes.shape({
-      breadcrumb: React.PropTypes.array.isRequired,
-      campusId: React.PropTypes.string.isRequired,
-      campusName: React.PropTypes.string.isRequired,
-      campuses: React.PropTypes.array.isRequired,
-      logo: React.PropTypes.string,
-      nav_bar: React.PropTypes.array,
-      social: React.PropTypes.object
-    }).isRequired,
-    content: React.PropTypes.object.isRequired,
-    //TODO: sidebar is required, but isn't required here because it's not yet implemented
-    sidebar: React.PropTypes.object,
-    //Marquee, on the other hand, is genuinely optional
-    marquee: React.PropTypes.shape({
-      carousel: React.PropTypes.object,
-      about: React.PropTypes.string
-    })
-  }
-
   // [********** AMY NOTES 3/15/17 **********]
   // TODO: each of the content layouts currently include the sidebars, 
   // but this should get stripped out and handled here in UnitPage

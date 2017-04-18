@@ -3,6 +3,8 @@
 .c-share {
   display: inline-block;
   margin-left: auto; // right-justify within c-itemactions
+  border-radius: $round-corner;
+  box-shadow: $box-shadow2;
 
   summary {
     display: inline-block;
@@ -50,7 +52,8 @@
     backdrop-filter: blur(5px);
   }
 
-  @include bp(screen2) {
+  @include bp(screen3) {
+    left: auto;
     width: 130px;
   }
 
@@ -66,7 +69,7 @@
     border-top: none;
   }
 
-  @include bp(screen2) {
+  @include bp(screen3) {
     border: none;
   }
 

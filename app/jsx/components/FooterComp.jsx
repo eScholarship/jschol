@@ -7,7 +7,7 @@ import { Subscriber } from 'react-broadcast'
 class FooterComp extends React.Component {
   render() {
     return (
-      <div className="c-footer">
+      <footer className="c-footer">
         <nav className="c-footer__nav">
           <Link to="/">Home</Link>
           <Link to="/static/root/aboutEschol">About eScholarship</Link>
@@ -43,7 +43,7 @@ class FooterComp extends React.Component {
           Copyright &copy; 2017<br/>
           The Regents of the University of California.
         </div>
-      </div>
+      </footer>
     )
   }
 }

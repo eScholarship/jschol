@@ -35,11 +35,11 @@ class SidebarTextComp extends React.Component
   }
 
   render() { return(
-    <section className="o-columnbox2 c-sidebarnav">
+    <section className="o-columnbox2">
       <header>
         <h1 className="o-columnbox2__heading">{this.props.title}</h1>
       </header>
-      <div className="c-sidebarnav" dangerouslySetInnerHTML={{__html: this.props.html}}/>
+      <div dangerouslySetInnerHTML={{__html: this.props.html}}/>
     </section>)
   }
 }

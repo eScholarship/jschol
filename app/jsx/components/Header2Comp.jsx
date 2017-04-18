@@ -30,6 +30,9 @@ class HeaderComp2 extends React.Component {
               <source srcSet="/images/logo_eschol-small.svg" media={"(min-width: "+Breakpoints.screen3+")"}/>
               <img src="/images/logo_eschol-mobile.svg" alt="eScholarship"/>
             </picture>
+            <div className="c-header__logo2-tagline">
+              Open Access Publications from the University of California
+            </div>
           </Link>  
           <div className={this.state.searchActive ? "c-header__search--active" : "c-header__search"}>
             <Search2Comp type={this.props.type}

@@ -119,6 +119,7 @@ $tab-height: $element-height;
   margin: (-$spacing-sm) (-$spacing-sm) $spacing-sm;
   padding: $spacing-md $spacing-sm;
   background-color: $color-white;
+  box-shadow: $box-shadow1;
 
   @supports (display: grid) {
     margin-top: 0;

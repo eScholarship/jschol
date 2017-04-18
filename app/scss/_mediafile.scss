@@ -2,7 +2,7 @@
 
 $mediafile-img-height: 120px;
 
-// Note that space and border styles around these objects are contained within _mediafilegrid.scss
+// Space and border styles around these objects are contained within _mediafilegrid.scss
 
 %o-mediafile {
   @extend %clearfix;
@@ -23,10 +23,12 @@ $mediafile-img-height: 120px;
 
 }
 
-// ***** Set layout for heading, link, button, and description elements when --audio, --file, --image, or --video classes are appended to .o-mediafile ***** //
+// ***** Set layout for heading, link, button, and description elements when --audio, --data, --image, or --video classes are appended to .o-mediafile ***** //
 
 .o-mediafile--audio,
 .o-mediafile--audio--selected,
+.o-mediafile--data,
+.o-mediafile--data--selected,
 .o-mediafile--image,
 .o-mediafile--image--selected,
 .o-mediafile--video,
@@ -36,7 +38,7 @@ $mediafile-img-height: 120px;
   @include bp(screen1) {
 
     .o-mediafile__heading {
-      width: 48%;
+      width: calc(50% - #{$spacing-base});
       float: right;
 
       @supports (display: grid) {
@@ -48,7 +50,7 @@ $mediafile-img-height: 120px;
     }
 
     .o-mediafile__link {
-      width: 48%;
+      width: calc(50% - #{$spacing-base});
       float: left;
 
       @supports (display: grid) {
@@ -61,7 +63,7 @@ $mediafile-img-height: 120px;
     .o-mediafile__button {
       position: absolute;
       bottom: 0;
-      left: 51.7%;
+      left: calc(50% + #{$spacing-base});
 
       @supports (display: grid) {
         position: static;
@@ -72,7 +74,7 @@ $mediafile-img-height: 120px;
     }
 
     .o-mediafile__description {
-      width: 48%;
+      width: calc(50% - #{$spacing-base});
       float: right;
       clear: none;
 
@@ -90,14 +92,12 @@ $mediafile-img-height: 120px;
 }
 
 .o-mediafile--audio,
-.o-mediafile--audio--selected {
+.o-mediafile--audio--selected,
+.o-mediafile--data,
+.o-mediafile--data--selected {
 
   .o-mediafile__link {
     margin-bottom: $spacing-sm;
-
-    &::before {
-      background-image: inline('../images/icon_volume-up-white.svg');
-    }
 
     &::after {
       display: block;
@@ -118,6 +118,32 @@ $mediafile-img-height: 120px;
 
 }
 
+.o-mediafile--audio,
+.o-mediafile--audio--selected {
+
+  .o-mediafile__link {
+
+    &::before {
+      background-image: inline('../images/icon_volume-up-white.svg');
+    }
+
+  }
+
+}
+
+.o-mediafile--data,
+.o-mediafile--data--selected {
+
+  .o-mediafile__link {
+
+    &::before {
+      background-image: inline('../images/icon_archive-white.svg');
+    }
+
+  }
+
+}
+
 .o-mediafile--image,
 .o-mediafile--image--selected {
 
@@ -125,55 +151,6 @@ $mediafile-img-height: 120px;
 
     &::before {
       background-image: inline('../images/icon_eye-white.svg');
-    }
-
-  }
-
-}
-
-.o-mediafile--file,
-.o-mediafile--file--selected {
-  position: relative;
-
-  .o-mediafile__heading {
-    width: 67%; // allow for float with .o-mediafile__button at 320px minimum screen size
-    float: left;
-
-    @include bp(screen1) {
-      width: auto;
-    }
-
-    @include bp(screen2) {
-      width: 50%;
-    }
-
-  }
-
-  .o-mediafile__link {
-    display: none; // will also remove o-mediafile__image if present in the html
-  }
-
-  @include bp(screen1) {
-    padding: $spacing-sm;
-
-    .o-mediafile__button {
-      position: absolute;
-      bottom: 0;
-      left: $spacing-sm;
-
-      @supports (display: grid) {
-        bottom: $spacing-sm;
-      }
-
-    }
-
-    .o-mediafile__description {
-      margin-bottom: 25px;
-
-      @include bp(screen2) {
-        width: 50%;
-      }
-
     }
 
   }
@@ -194,7 +171,7 @@ $mediafile-img-height: 120px;
 }
 
 .o-mediafile--audio--selected,
-.o-mediafile--file--selected,
+.o-mediafile--data--selected,
 .o-mediafile--image--selected,
 .o-mediafile--video--selected {
   padding: $spacing-sm;
@@ -205,9 +182,13 @@ $mediafile-img-height: 120px;
   margin: 0 0 $spacing-sm;
   padding-left: 25px;
   background: no-repeat top left / 16px;
-  color: $color-teal;
   font-size: 1.3em;
   font-weight: normal;
+  box-sizing: border-box; // for Chrome & Safari (don't know why this in _resets.scss isn't getting applied here)
+
+  a {
+    @extend %o-textlink__secondary;
+  }
 
   @include bp(screen1) {
     max-height: 2.3em; // truncate beyond 2 lines per jquery.dotdotdot
@@ -216,17 +197,17 @@ $mediafile-img-height: 120px;
 
 }
 
-.o-mediafile__heading {
+// ***** Media-specific Icons Within Heading ***** //
+
+// Example: o-mediafile--audio
+
+.o-mediafile__heading { // if not media-specific, no icon
   @extend %o-mediafile__heading;
 }
 
-// ***** Media-specific Icons Within Heading ***** //
-
-// Example: o-mediafile--image
-
 @each $mediafile-type, $mediafile-icon in
   (audio, icon_volume-up),
-  (file, icon_archive-teal),
+  (data, icon_archive-teal),
   (image, icon_picture),
   (video, icon_video-camera-teal) {
 
@@ -274,6 +255,7 @@ $mediafile-img-height: 120px;
 }
 
 .o-mediafile__button {
+  @extend %o-button__7;
   margin-bottom: $spacing-sm;
   float: right;
 

@@ -1,8 +1,4 @@
 
->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
->>> Joel's 2d0e338b4f9346d6a033f6d759c13790865809b5, 2017-01-10 <<<
-<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
 This is the latest eschol-ui build integrated into jschol
 
 Repo location: https://github.com/cdlib/eschol-ui
@@ -39,7 +35,7 @@ Procedure for merging
 - In eschol-ui:
     git branch -D merge-tmp     # delete old merge-tmp branch, if any
     git pull upstream master    # or origin if you don't have upstream defined
-    git log -1                  # grab the changeset ID, and update this file at top
+    git log -1                  # grab the changeset ID, and update this file
     git checkout -b merge-tmp   # create new merge-tmp branch
 - Perform 3-way merge. Left=jschol  Middle=eschol-ui-old  Right=eschol-ui
     + Merge both directions to make all equal (or ignored)
@@ -177,4 +173,10 @@ As well as:
 	modified:   app/jsx/components/ToggleContentComp.jsx
 
 
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's 3d1095c3a05369c3c334b7d6294a18fcc4577515, 2017-04-07 <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+Martin added all scss and image changes since last. Also fixed a
+couple of bugs that had crept in.
 

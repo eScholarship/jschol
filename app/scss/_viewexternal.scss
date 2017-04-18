@@ -1,0 +1,22 @@
+// ##### View on External Site Component ##### //
+
+.c-viewexternal {
+  display: flex;
+  flex-direction: column;
+  max-width: 300px;
+  margin: $spacing-md auto;
+}
+
+.c-viewexternal__action {
+  @extend %o-button__6;
+  margin-bottom: $spacing-md;
+  background-image: inline('../images/icon_external-link-white.svg');
+}
+
+.c-viewexternal__text {
+  margin-bottom: $spacing-sm;
+}
+
+.c-viewexternal__report-link {
+  @extend %o-textlink__secondary;
+}

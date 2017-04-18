@@ -2,14 +2,24 @@
 
 .c-search2 {
   display: flex;
+  position: fixed; // prevents horizontal overflow and scrollbar on small screens
+  right: 0;
+  left: 0;
   align-items: flex-start;
+
+  @include bp(screen2) {
+    position: absolute;
+    right: 0;
+    left: auto;
+    width: 310px;
+  }
+
 }
 
 .c-search2__inputs {
   display: flex;
   flex: 1 1 auto;
   flex-flow: column nowrap;
-  margin: 0 $spacing-body 0 0;
   border: 1px solid $color-light-gray;
   border-radius: $round-corner;
 }
@@ -42,22 +52,21 @@
   @extend %hide;
 
   @include bp(screen3) {
-    // first 2 properties make up %show, because Sass @extends are not allowed within media queries:
     position: static;
     left: auto;
     min-height: $input-height;
-    padding: 0 13px;
+    padding: 0 ($input-height / 2);
     border: none;
-    background: inline('../images/icon_magnify.svg') no-repeat center / 25px;
+    background: inline('../images/icon_magnify.svg') no-repeat center right / 25px;
   }
 
 }
 
 .c-search2__search-close-button {
   min-height: $input-height;
-  padding: 0 13px;
+  padding: 0 ($input-height / 2);
   border: none;
-  background: inline('../images/icon_close.svg') no-repeat center right / 20px;
+  background: $color-white inline('../images/icon_close.svg') no-repeat center right / 20px;
 
   @include bp(screen3) {
     display: none;
@@ -70,16 +79,48 @@
   align-items: center;
   padding: 0 8px;
   transition: min-height 0.5s, margin-top 0.5s;
-  transition-delay: 0.2s;
+  transition-delay: 0.2s; // fixes open/close jitter upon onfocus/blur
   background: lighten($color-light-gray, 10%);
 
   label {
-    margin-left: -15px;
-    padding: 8px 0 6px 20px;
+    padding-top: 8px;
+    padding-bottom: 6px;
     font-size: 0.9em;
 
     &:not(:last-of-type) {
       margin-right: 15px;
+    }
+
+  }
+
+  // ***** Custom Checkbox Styles ***** //
+
+  [type='radio'] {
+    // hide default radio button:
+    @extend %hide;
+
+    // unchecked style:
+    + label:before {
+      display: inline-block;
+      width: 1em;
+      height: 1em;
+      margin-right: 0.5em;
+      transition: border 0.2s, background-color 0.2s;
+      border: 1px solid $color-black;
+      border-radius: 50%;
+      content: '';
+      vertical-align: middle;
+    }
+
+    // checked style:
+    &:checked + label:before {
+      background-color: $color-teal;
+    }
+
+    // focused style:
+    &:focus + label:before {
+      border: 2px solid $color-black;
+      background-color: desaturate(lighten($color-teal, 20%), 20%);
     }
 
   }

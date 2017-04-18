@@ -22,6 +22,7 @@
 %o-button__2 {
   @extend %o-button;
   border: 1px solid $color-dark-gray;
+  box-shadow: $box-shadow2;
 }
 
 .o-button__2 {
@@ -33,6 +34,7 @@
   @extend %o-button;
   background: $color-orange;
   color: $color-white;
+  box-shadow: $box-shadow2;
 }
 
 .o-button__3 {
@@ -74,6 +76,7 @@
   padding-left: 30px;
   background: $color-teal no-repeat left 8px center / 16px;
   color: $color-white;
+  box-shadow: $box-shadow2;
 }
 
 .o-button__6 {
