@@ -40,7 +40,6 @@ Description of files
 * `migrations`: Database schema in Ruby form. We can add new files here to morph the schema over time, and people can automatically upgrade their db.
 * `node_modules`: Gets populated by 'node' with server-side Javascript packages. Don't modify directly.
 * `package.json`: List of Javascript packages needed on the server. Includes mainly Gulp and React, and their dependencies.
-* `scss-lint-config.yml`: Configures which kinds of problems to look for in our SCSS files.
 * `setup.sh`: Sequence of commands to run bundler and node to download and install all the Ruby and Javascript modules the app needs.
 * `tools/`: Conversion and database maintenance tools.
 

@@ -35,6 +35,30 @@ end
 # Make it clear where the new session starts in the log file.
 puts "\n\n=====================================================================================\n"
 
+def waitForSocks(host, port)
+  first = true
+  begin
+    sock = TCPSocket.new(host, port)
+    sock.close
+  rescue Errno::ECONNREFUSED
+    first and puts("Waiting for SOCKS proxy to start.")
+    first = false
+    sleep 0.5
+    retry
+  end
+end
+
+def ensureConnect(dbConfig)
+  if TCPSocket::socks_port
+    SocksMysql.new(dbConfig)
+  end
+  db = Sequel.connect(dbConfig)
+  n = db.fetch("SHOW TABLE STATUS").all.length
+  n > 0 or raise("Failed to connect to db.")
+  puts "Connected.                     "  # extra spaces to overwrite other gulpfile stuff
+  return db
+end
+
 # Use the Sequel gem to get object-relational mapping, connection pooling, thread safety, etc.
 # If specified, use SOCKS proxy for all connections (including database).
 escholDbConfig = YAML.load_file("config/database.yaml")
@@ -42,16 +66,16 @@ ojsDbConfig = YAML.load_file("config/ojsDb.yaml")
 if File.exist? "config/socks.yaml"
   # Configure socksify for all TCP connections. Jump through hoops for MySQL to use it too.
   socksPort = YAML.load_file("config/socks.yaml")['port']
+  waitForSocks("127.0.0.1", socksPort)
   TCPSocket::socks_server = "127.0.0.1"
   TCPSocket::socks_port = socksPort
-  sleep 0.5 # wait for SOCKS to stabilize
   require_relative 'socksMysql'
-  SocksMysql.new(escholDbConfig)
-  SocksMysql.new(ojsDbConfig)
 end
-DB = Sequel.connect(escholDbConfig)
+puts "Connecting to eschol DB."
+DB = ensureConnect(escholDbConfig)
 #DB.loggers << Logger.new('server.sql_log')  # Enable to debug SQL queries on main db
-OJS_DB = Sequel.connect(ojsDbConfig)
+puts "Connecting to OJS DB."
+OJS_DB = ensureConnect(ojsDbConfig)
 #OJS_DB.loggers << Logger.new('ojs.sql_log')  # Enable to debug SQL queries on OJS db
 
 # Need credentials for fetching content files from MrtExpress
@@ -653,4 +677,3 @@ post "/jscholGithubHook/onCommit" do
   Process.detach(pid)
   return "ok"
 end
-
