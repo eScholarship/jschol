@@ -19,6 +19,10 @@ import DepartmentLayout from '../layouts/DepartmentLayout.jsx'
 import SeriesLayout from '../layouts/SeriesLayout.jsx'
 import JournalLayout from '../layouts/JournalLayout.jsx'
 import UnitSearchLayout from '../layouts/UnitSearchLayout.jsx'
+import UnitStaticPageLayout from '../layouts/UnitStaticPageLayout.jsx'
+import UnitProfileLayout from '../layouts/UnitProfileLayout.jsx'
+import UnitSidebarConfigLayout from '../layouts/UnitSidebarConfigLayout.jsx'
+import AdminBarComp from '../components/AdminBarComp.jsx'
 
 class UnitPage extends PageBase
 {
@@ -43,7 +47,12 @@ class UnitPage extends PageBase
     }
     return "/api/unit/" + this.props.params.unitID + "/home"
   }
-  
+
+  // Unit ID for permissions checking
+  pagePermissionsUnit() {
+    return this.props.params.unitID;
+  }
+
   // [********** AMY NOTES 3/15/17 **********]
   // TODO: each of the content layouts currently include the sidebars, 
   // but this should get stripped out and handled here in UnitPage
@@ -52,6 +61,12 @@ class UnitPage extends PageBase
     var contentLayout;
     if (this.props.params.pageName === 'search') {
       contentLayout = (<UnitSearchLayout unit={data.unit} data={data.content}/>);
+    } else if (this.props.params.pageName === 'profile') {
+      contentLayout = (<UnitProfileLayout unit={data.unit} data={data.content}/>);
+    } else if (this.props.params.pageName === 'sidebar') {
+      contentLayout = (<UnitSidebarConfigLayout unit={data.unit} data={data.content}/>);
+    } else if (this.props.params.pageName) {
+      contentLayout = (<UnitStaticPageLayout unit={data.unit} data={data.content} fetchPageData={this.fetchPageData}/>);
     } else {
       data.marquee.carousel = true;
       if (data.unit.type === 'oru') {
@@ -77,6 +92,7 @@ class UnitPage extends PageBase
     }
     return (
       <div>
+        <AdminBarComp/>
         <Header2Comp type={data.unit.type} unitID={data.unit.id} />
         <Subheader2Comp unit={data.unit} logo={data.header.logo} 
           campusID={data.header.campusID}

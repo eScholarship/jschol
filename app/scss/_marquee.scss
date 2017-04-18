@@ -22,6 +22,39 @@
 
 }
 
+.c-marquee__carousel-overlay-container {
+  flex: 1;
+  min-height: 250px;
+  margin-bottom: $spacing-md;
+  position: relative;
+  display: flex;
+
+  @include bp(screen2) {
+    margin: 0;
+  }
+  
+}
+
+.c-marquee__overlay {
+  position: absolute; 
+  top: 0; 
+  bottom: 0; 
+  left: 0; 
+  right: 0; 
+  border: 1px solid red;
+  height: 100%; 
+  width: 100%;
+  z-index: 10;
+  
+  img {
+    width: 30px;
+    height: 30px;
+    float: right;
+    padding: 15px;
+    background-color: rgba(255,255,255,.5);
+  }
+}
+
 .c-marquee__carousel {
   flex: 1;
   margin-bottom: $spacing-md;
