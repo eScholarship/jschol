@@ -10,6 +10,7 @@ import Subheader1Comp from '../components/Subheader1Comp.jsx'
 import SidebarNavComp from '../components/SidebarNavComp.jsx'
 import EditableMainContentComp from '../components/EditableMainContentComp.jsx'
 import EditableSidebarTextComp from '../components/EditableSidebarTextComp.jsx'
+import AdminBarComp from '../components/AdminBarComp.jsx'
 
 export default class StaticPage extends PageBase
 {
@@ -39,6 +40,7 @@ export default class StaticPage extends PageBase
   renderData = data => { return(
     <div className="l-about">
       <a href="#maincontent" className="c-skipnav">Skip to main content</a>
+      <AdminBarComp/>
       <Subheader1Comp navdata={[{name: 'Campus Sites', slug: ''}, {name: 'UC Open Access Policies', slug: ''}, {name: 'eScholarship Publishing', slug: ''}]} />
       <Subscriber channel="cms">
         { cms =>
