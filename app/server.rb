@@ -41,8 +41,10 @@ escholDbConfig = YAML.load_file("config/database.yaml")
 ojsDbConfig = YAML.load_file("config/ojsDb.yaml")
 if File.exist? "config/socks.yaml"
   # Configure socksify for all TCP connections. Jump through hoops for MySQL to use it too.
+  socksPort = YAML.load_file("config/socks.yaml")['port']
   TCPSocket::socks_server = "127.0.0.1"
-  TCPSocket::socks_port = YAML.load_file("config/socks.yaml")['port']
+  TCPSocket::socks_port = socksPort
+  sleep 0.5 # wait for SOCKS to stabilize
   require_relative 'socksMysql'
   SocksMysql.new(escholDbConfig)
   SocksMysql.new(ojsDbConfig)
