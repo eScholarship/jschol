@@ -55,7 +55,7 @@ def ensureConnect(dbConfig)
   db = Sequel.connect(dbConfig)
   n = db.fetch("SHOW TABLE STATUS").all.length
   n > 0 or raise("Failed to connect to db.")
-  puts "Connected."
+  puts "Connected.                     "  # extra spaces to overwrite other gulpfile stuff
   return db
 end
 

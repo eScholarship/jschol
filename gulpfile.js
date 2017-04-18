@@ -7,7 +7,6 @@ const gutil = require('gulp-util');
 const sass = require('gulp-sass');
 const autoprefixer = require('gulp-autoprefixer');
 const sourcemaps = require('gulp-sourcemaps');
-const scsslint = require('gulp-scss-lint');
 const postcss = require('gulp-postcss');
 const assets = require('postcss-assets');
 const livereload = require('gulp-livereload')
@@ -148,20 +147,10 @@ gulp.task('start-express', restartExpress)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Watch sass, html, and js and reload browser if any changes
 gulp.task('watch', function() {
-  gulp.watch('app/scss/**/*.scss', ['sass', 'scss-lint']);
+  gulp.watch('app/scss/**/*.scss', ['sass']);
   gulp.watch('app/**/*.html', livereload.reload);
   gulp.watch('app/*.rb', ['restart-sinatra']);
   gulp.watch(['app/isomorphic.js*'], ['restart-express']);
-});
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Lint Sass
-gulp.task('scss-lint', function() {
-  return gulp.src(['app/scss/**/*.scss', '!app/scss/vendor/**/*.scss'])
-    .pipe(scsslint({
-      'config': 'config/scss-lint-config.yml', // Settings for linters. See: https://github.com/brigade/scss-lint/tree/master/lib/scss_lint/linter
-      'bundleExec': true
-    }));
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -176,4 +165,4 @@ gulp.task('maybe-socks', function() {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Build everything in order, then start the servers and watch for incremental changes.
 gulp.task('default',  ['watch:src', 'watch', 'start-sinatra', 'start-express', 
-                       'maybe-socks', 'livereload', 'sass', 'scss-lint'])
+                       'maybe-socks', 'livereload', 'sass'])
