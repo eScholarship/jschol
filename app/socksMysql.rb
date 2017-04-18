@@ -19,6 +19,7 @@ class SocksMysql
     @sockName = ".mysqlProxySock.#{@host}.#{@port}.#{timestamp}"
 
     # Blow away obsolete sockets from prior runs
+    #puts "Checking for .mysqlProxySock.#{@host}.#{@port}.*"
     Dir.glob(".mysqlProxySock.#{@host}.#{@port}.*").each { |fn|
       puts "Deleting obsolete #{fn}."
       File.delete(fn)
