@@ -15,7 +15,8 @@ export default class EditableSidebarTextComp extends React.Component
   state = { newText: null }
 
   render() { let p = this.props; return(
-    <EditableComp canDelete title={p.title} html={p.html}
+    <EditableComp canDelete widgetName="Sidebar Text"
+                  title={p.title} html={p.html}
                   renderEditor={this.renderEditor}
                   onSave={() => this.props.onSave(this.state.newText)}>
       <SidebarTextComp title={p.title} html={p.html}/>

@@ -2,10 +2,12 @@
 
 import React from 'react'
 import { Subscriber } from 'react-broadcast'
+import ModalComp from '../components/ModalComp.jsx'
 
 export default class EditableComp extends React.Component
 {
   static propTypes = {
+    widgetName: React.PropTypes.string.isRequired,
     children: React.PropTypes.element.isRequired,
     html: React.PropTypes.string.isRequired,
     onSave: React.PropTypes.func.isRequired,
@@ -52,13 +54,10 @@ export default class EditableComp extends React.Component
   renderEditor = cms =>
     <div>
       { this.renderWithButtons(cms) }
-      <div className="c-editable__modal">
-        <div className="c-editable__modal-content">
-          { this.props.renderEditor() }
-          <button onClick={e=>this.onSave()}>Save</button>
-          <button onClick={e=>this.setState({isEditingComp:false})}>Cancel</button>
-        </div>
-      </div>
+      <ModalComp isOpen header={this.props.widgetName}
+                 content={this.props.renderEditor()}
+                 onCancel={e=>this.setState({isEditingComp:false})}
+                 okLabel="Save" onOK={e=>this.onSave()}/>
     </div>
 
   renderWorkingMsg = () =>

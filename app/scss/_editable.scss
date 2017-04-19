@@ -2,26 +2,6 @@
 
 $color-black-semitrans: rgba(124, 126, 127, 0.5);
 
-.c-editable__modal {
-  position: fixed; /* Stay in place */
-  top: 0;
-  left: 0;
-  width: 100%; /* Full width */
-  height: 100%; /* Full height */
-  background-color: $color-black-semitrans; /* Black w/ opacity */
-  overflow: auto; /* Enable scroll if needed */
-  z-index: 99; /* Sit on top */
-}
-
-/* Modal Content/Box */
-.c-editable__modal-content {
-  width: 50%; /* Could be more or less, depending on screen size */
-  margin: 15% auto; /* 15% from the top and centered */
-  padding: 20px;
-  border: 1px solid $color-light-gray;
-  background-color: $color-white;
-}
-
 .c-editable__working {
   position: absolute; /* Stay in place */
   top: 0;
