@@ -3,8 +3,7 @@ import { Link } from 'react-router'
 import { Subscriber } from 'react-broadcast'
 
 import ScholWorksComp from '../components/ScholWorksComp.jsx'
-import SortComp from '../components/SortComp.jsx'
-import PaginationComp from '../components/PaginationComp.jsx'
+import SortPaginationComp from '../components/SortPaginationComp.jsx'
 import ShareComp from '../components/ShareComp.jsx'
 
 class SeriesLayout extends React.Component {
@@ -43,11 +42,7 @@ class SeriesLayout extends React.Component {
                 <p className={cms.isEditingPage && "editable-outline"}>Some about text for the series. Lorem ipsum dolor sit amet, consectetur adipisicing elit. Quos quo error expedita nobis modi a non, accusantium, ut at assumenda. Obcaecati sequi ducimus sint tenetur laboriosam alias corporis temporibus error? Nemo doloremque, possimus neque ea suscipit consectetur, ducimus ad veritatis laborum quia sunt modi accusamus pariatur sed. Blanditiis est, distinctio ad aut, quo doloremque voluptatibus consequatur ipsa placeat dolorum necessitatibus?</p>  
               }
             </Subscriber>
-            <div className="l-search__sort-pagination">
-              <SortComp query={data.query} />
-              <input type="hidden" name="start" form="facetForm" value={data.query.start} />
-              <PaginationComp query={data.query} count={data.count}/>
-            </div>
+            <SortPaginationComp query={data.query} count={data.count}/>
             <div>
               { data.searchResults.map(result =>
                 <ScholWorksComp key={result.id} result={result} />)

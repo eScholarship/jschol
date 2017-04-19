@@ -10,8 +10,7 @@ import Subheader1Comp from '../components/Subheader1Comp.jsx'
 import ScholWorksComp from '../components/ScholWorksComp.jsx'
 import FilterComp from '../components/FilterComp.jsx'
 import ExportComp from '../components/ExportComp.jsx'
-import SortComp from '../components/SortComp.jsx'
-import PaginationComp from '../components/PaginationComp.jsx'
+import SortPaginationComp from '../components/SortPaginationComp.jsx'
 import InfoPagesComp from '../components/InfoPagesComp.jsx'
 
 // Load dotdotdot in browser but not server
@@ -432,11 +431,7 @@ class SearchPage extends PageBase {
             <FacetForm data={facetFormData} query={data.query} />
           </aside>
           <main id="maincontent">
-            <div className="l-search__sort-pagination">
-              <SortComp query={data.query} />
-              <input type="hidden" name="start" form="facetForm" value={data.query.start} />
-              <PaginationComp query={data.query} count={data.count}/>
-            </div>
+            <SortPaginationComp query={data.query} count={data.count}/>
             <section className="o-columnbox1">
               <header>
                 <h2 className="o-columnbox1__heading">Informational Pages (12 results)</h2>

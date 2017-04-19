@@ -2,8 +2,7 @@ import React from 'react'
 import { Link } from 'react-router'
 
 import ScholWorksComp from '../components/ScholWorksComp.jsx'
-import SortComp from '../components/SortComp.jsx'
-import PaginationComp from '../components/PaginationComp.jsx'
+import SortPaginationComp from '../components/SortPaginationComp.jsx'
 import ShareComp from '../components/ShareComp.jsx'
 
 // [********** AW - 3/15/17 **********]
@@ -50,11 +49,7 @@ class UnitSearchLayout extends React.Component {
       <div className="c-columns">
         <main id="maincontent">
           <section className="o-columnbox1">
-            <div className="l-search__sort-pagination">
-              <SortComp query={data.query} />
-              <input type="hidden" name="start" form="facetForm" value={data.query.start} />
-              <PaginationComp query={data.query} count={data.count}/>
-            </div>
+            <SortPaginationComp query={data.query} count={data.count}/>
             <div>
               { data.searchResults.map(result =>
                 <ScholWorksComp key={result.id} result={result} />)

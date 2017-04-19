@@ -27,7 +27,7 @@ class BrowsePage extends PageBase
 
   renderData(data) {
     return (
-      <div className="l-search">
+      <div>
         <a href="#maincontent" className="c-skipnav">Skip to main content</a>
 
       {/* Campus-specific browse page */}
@@ -39,16 +39,20 @@ class BrowsePage extends PageBase
                           unitID={data.campusID}
                           unitName={data.campusName}
                           campusID={data.campusID}
-                          campusName={data.campusName} />  </div> }
+                          campusName={data.campusName} />
+        </div>
+      }
       {/* Global browse page */}
       { data.browse_type != "depts" &&
         <div>
           <Header1Comp />
-          <Nav1Comp campuses={data.campuses} /> </div> }
+          <Nav1Comp campuses={data.campuses} />
+        </div>
+      }
       <BreadcrumbComp array={data.breadcrumb} />
       <Content
         {...data}
-      /> 
+      />
       </div> )
   }
 }
@@ -65,11 +69,11 @@ class Content extends React.Component {
           isActive="" campuses={p.campuses} campusID=""/> }
         </main>
         <aside>
-          <section className="o-columnbox2">
+          <section className="o-columnbox1">
             <header>
               <h2>Featured Journals</h2>
-              [content to go here]
             </header>
+            <p>[content to go here]</p>
           </section>
         </aside>
       </div>

@@ -6,10 +6,12 @@ import PaginationComp from '../components/PaginationComp.jsx'
 
 class SortPaginationComp extends React.Component {
   render() {
+    let p = this.props
     return (
       <div className="c-sortpagination">
-        <SortComp />
-        <PaginationComp />
+        <SortComp query={p.query} />
+        <input type="hidden" name="start" form="facetForm" value={p.query.start} />
+        <PaginationComp query={p.query} count={p.count}/>
       </div>
     )
   }

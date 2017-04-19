@@ -22,7 +22,7 @@ class Nav1Comp extends React.Component {
 
   campusListGenerator(props) {
     if (props.campuses) { return (
-        <div className="c-nav1__sub-items">
+        <div className="c-nav__sub-items">
           {this.props.campuses.map((c, i) => {
             return c['id'] != "" && <Link key={i} to={"/unit/" + c['id']}>{c['name']}</Link>
           })}
@@ -31,7 +31,7 @@ class Nav1Comp extends React.Component {
     // Temporary
     // ToDo: Need to work on global state UI for campus list. Sticking this in here in the meantime.
     return (
-      <div className="c-nav1__sub-items">
+      <div className="c-nav__sub-items">
         <Link to="/unit/ucb">UC Berkeley</Link>
         <Link to="/unit/ucd">UC Davis</Link>
         <Link to="/unit/uci">UC Irvine</Link>
@@ -54,19 +54,19 @@ class Nav1Comp extends React.Component {
 
   render() {
     return (
-      <nav className="c-nav1">
-        <details open={this.state.isOpen ? "open" : ""} className="c-nav1__main">
-          <summary className="c-nav1__main-button" role="button">Menu
+      <nav className="c-nav">
+        <details open={this.state.isOpen ? "open" : ""} className="c-nav__main">
+          <summary className="c-nav__main-button" role="button">Menu
           </summary>
-          <div className="c-nav1__main-items">
-            <details className="c-nav1__sub">
-              <summary className="c-nav1__sub-button">
+          <div className="c-nav__main-items">
+            <details className="c-nav__sub">
+              <summary className="c-nav__sub-button">
                 Campus Sites
               </summary>
               {this.campusListGenerator(this.props)}
             </details>
             {/* ToDo: Link */}
-            <Link className="c-nav1__item" to="">UC Open Access Policies</Link>
+            <Link className="c-nav__item" to="">UC Open Access Policies</Link>
             {/* ToDo: Link */}
             <Link to="">eScholarship Publishing</Link>
           </div>
