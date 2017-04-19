@@ -67,6 +67,7 @@
     "react": "^15.4.1",
     "react-broadcast": "^0.1.2",
     "react-dom": "^15.5.3",
+    "react-modal": "^1.7.6",
     "react-responsive": "^1.2.7",
     "react-router": "^2.8.1",
     "react-router-form": "^2.0.0-rc.0",

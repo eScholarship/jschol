@@ -431,7 +431,7 @@ class SearchPage extends PageBase {
           <aside>
             <FacetForm data={facetFormData} query={data.query} />
           </aside>
-          <main>
+          <main id="maincontent">
             <div className="l-search__sort-pagination">
               <SortComp query={data.query} />
               <input type="hidden" name="start" form="facetForm" value={data.query.start} />

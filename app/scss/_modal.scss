@@ -1,0 +1,102 @@
+// ##### Modal Component ##### //
+
+$modal-header-height: 2.5em;
+$modal-footer-height: 3.5em;
+
+.c-modal {
+  // no styles
+}
+
+.c-modal--open {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  margin: $spacing-md;
+  border: 1px solid $color-light-gray;
+  border-radius: $round-corner;
+  outline: none;
+  background-color: $color-white;
+  box-shadow: 5px 5px 15px $color-light-black;
+
+  @include bp(screen1) {
+    margin: 10%;
+  }
+
+  @include bp(screen3) {
+    margin: 15%;
+  }
+
+}
+
+.c-modal__overlay {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background-color: rgba($color-light-black, 0.8);
+
+  @supports (backdrop-filter: blur()) {
+    background-color: rgba($color-black, 0.6);
+    backdrop-filter: blur(5px);
+  }
+
+}
+
+.modal__header {
+  display: flex;
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  align-items: center;
+  height: $modal-header-height;
+  padding: 0 $spacing-md;
+  background-color: $color-light-gray;
+
+  @include headings() {
+    margin: 0;
+    font-size: 1.2em;
+    font-weight: normal;
+  }
+
+}
+
+.modal__content {
+  position: absolute;
+  top: $modal-header-height;
+  right: 0;
+  bottom: $modal-footer-height;
+  left: 0;
+  padding: $spacing-md;
+  overflow: auto;
+}
+
+.c-modal__footer {
+  display: flex;
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  align-items: center;
+  justify-content: flex-end;
+  height: $modal-footer-height;
+  padding: 0 $spacing-md;
+  border-top: 1px solid $color-light-gray;
+
+  button {
+    
+    &:not(:first-child) {
+      margin-left: $spacing-sm;
+    }
+
+  }
+
+}
+
+.c-modal__button-close {
+  @extend %o-button__2;
+  margin-right: auto;
+}

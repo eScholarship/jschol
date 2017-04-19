@@ -6,6 +6,7 @@
 @import 'mixins';
 @import 'breakpoints';
 @import 'test';
+@import 'debug';
 
 // ***** Vendor Libraries ***** //
 
@@ -36,6 +37,7 @@
 @import 'checkbox';
 @import 'columns';
 @import 'datatable';
+@import 'depositwizard';
 @import 'descriptionlist';
 @import 'download';
 @import 'drawer';
@@ -44,9 +46,11 @@
 @import 'filter';
 @import 'footer';
 @import 'header';
+@import 'heatmap';
 @import 'infopages';
 @import 'itemactions';
 @import 'itemunavailable';
+@import 'journal';
 @import 'journalinfo';
 @import 'jump';
 @import 'language';
@@ -55,9 +59,8 @@
 @import 'mediafile';
 @import 'mediafilegrid';
 @import 'medialist';
+@import 'modal';
 @import 'nav';
-@import 'nav1';
-@import 'nav2';
 @import 'navbar';
 @import 'pagination';
 @import 'pdfview';
@@ -73,22 +76,17 @@
 @import 'sidebarnav';
 @import 'skipnav';
 @import 'sort';
+@import 'sortpagination';
 @import 'socialicons';
 @import 'subheader1';
 @import 'subheader2';
 @import 'tabcontent';
 @import 'tabs';
+@import 'tabs2';
 @import 'togglecontent';
 @import 'togglelist';
 @import 'viewexternal';
 @import 'well';
-
-// ***** Layouts ***** //
-
-@import 'about';
-@import 'item';
-@import 'journal';
-@import 'searchlayout';
 
 // ***** Global Styles ***** //
 

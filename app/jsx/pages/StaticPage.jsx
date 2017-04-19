@@ -38,7 +38,7 @@ export default class StaticPage extends PageBase
 
   // PageBase calls this when the API data has been returned to us
   renderData = data => { return(
-    <div className="l-about">
+    <div>
       <a href="#maincontent" className="c-skipnav">Skip to main content</a>
       <AdminBarComp/>
       <Subheader1Comp navdata={[{name: 'Campus Sites', slug: ''}, {name: 'UC Open Access Policies', slug: ''}, {name: 'eScholarship Publishing', slug: ''}]} />
@@ -46,16 +46,16 @@ export default class StaticPage extends PageBase
         { cms =>
           <div className="c-columns">
             <aside>
-              <section className="o-columnbox2 c-sidebarnav">
+              <section className="o-columnbox1 c-sidebarnav">
                 <header>
-                  <h1 className="o-columnbox2__heading">{data.page.title}</h1>
+                  <h1>{data.page.title}</h1>
                 </header>
                 <SidebarNavComp links={data.sidebarNavLinks}/>
                 { this.state.admin && this.state.admin.editingPage &&
                   <button>Add page</button> }
               </section>
             </aside>
-            <main>
+            <main id="maincontent">
               <EditableMainContentComp onSave={(newText)=>this.onSaveContent(newText, cms)}
                 html={data.page.html} title={data.page.title}/>
               { cms.isEditingPage &&

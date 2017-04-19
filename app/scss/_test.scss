@@ -1,59 +1,30 @@
 // ##### Testing ##### //
 
-// Exclusion rule for gulp-sass-lint:
+// Turn off linting in this file for gulp-sass-lint:
 // sass-lint:disable-all
 
-// ***** Highlight Elements ***** //
+.c-test {
+  position: relative;
 
-$bred: 1px solid #f00;
-$bblue: 1px solid #00f;
-$bgreen: 1px solid #0c0;
-
-*:focus {
-  // outline: $color-orange solid 1px;
+  border: 5px solid black;
 }
 
-// Grid
+.c-test__details {
+  display: inline-block;
 
-.c-grid {
-  display: grid;
-  grid-template-columns: 25% auto 25%;
-  grid-template-rows: 1fr auto auto;
-  min-height: 90vh; // should be using 100% instead but not working
+  border: 5px solid green;
+}
 
-  border: 2px solid $color-black;
+.c-test__summary {
 
-  header {
-    grid-column: 1 / span 3;
-  }
+  border: 5px solid blue;
+}
 
-  main {
-    grid-column: 2 / 3;
-    grid-row: 2 / 3;
-    border: $bgreen;
-  }
+.c-test__content {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  left: 0;
 
-  aside {
-
-    &:first-of-type { // left column
-      grid-column: 1 / 2;
-
-      border: $bred;
-    }
-
-    &:last-of-type { // right column
-      grid-column: 3 / 4;
-
-      border: $bblue;
-    }
-
-  }
-
-  footer {
-    grid-column: 1 / span 3;
-    align-self: end;
-
-    border: 1px solid $color-orange;
-  }
-
+  border: 5px solid red;
 }

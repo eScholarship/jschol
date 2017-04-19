@@ -23,7 +23,7 @@ class UnitSidebarConfigLayout extends React.Component {
     return (
       <div>
       <div className="c-columns">
-        <main>
+        <main id="maincontent">
           <section className="o-columnbox1">
             <header id="featured-articles">
               <h2 style={{background: '#147a8d', color: 'white'}}>Configure the Featured Articles Widget</h2>
@@ -44,9 +44,9 @@ class UnitSidebarConfigLayout extends React.Component {
           </section>
         </main>
         <aside>
-          <section className="o-columnbox2">
+          <section className="o-columnbox1">
             <header>
-              <h2 className="o-columnbox2__heading">Featured Articles</h2>
+              <h2>Featured Articles</h2>
             </header>
             <p><a className="o-textlink__secondary" href="">Entre la ficción y el periodismo: Cambio social y la crónica mexicana contemporánea</a> <br/> Nadeau, Evelyn</p> 
             <p><a className="o-textlink__secondary" href="">Journalism in Catalonia During Francoism</a> <br/> Reguant, Monserrat</p>
@@ -70,9 +70,9 @@ class UnitSidebarConfigLayout extends React.Component {
           </section>
         </main>
         <aside>
-          <section className="o-columnbox2">
+          <section className="o-columnbox1">
             <header>
-              <h2 className="o-columnbox2__heading">Follow us on Twitter</h2>
+              <h2>Follow us on Twitter</h2>
             </header>
             [content to go here]<br/>
             [content to go here]<br/>
@@ -97,9 +97,9 @@ class UnitSidebarConfigLayout extends React.Component {
           </section>
         </main>
         <aside>
-          <section className="o-columnbox2">
+          <section className="o-columnbox1">
             <header>
-              <h2 className="o-columnbox2__heading">Other Widget</h2>
+              <h2>Other Widget</h2>
             </header>
             [content to go here]<br/>
             [content to go here]<br/>
