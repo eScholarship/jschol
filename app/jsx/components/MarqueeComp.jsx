@@ -68,15 +68,15 @@ class MarqueeComp extends React.Component {
                 {carouselCells}
               </div>
             </div>
-            <div className="c-marquee__sidebar">
-              <section className={cms.isEditingPage ? "o-columnbox4 editable-outline" : "o-columnbox4"}>
+            <aside className="c-marquee__sidebar">
+              <section className={cms.isEditingPage ? "o-columnbox4 editable-outline" : "o-columnbox1"}>
                 <header>
-                  <h2 className="o-columnbox2__heading">About</h2>
+                  <h2>About</h2>
                 </header>
                 <p>{this.props.marquee.about} <a className="o-textlink__secondary" href="">More</a>
                 </p>
               </section>
-            </div>
+            </aside>
           </div>
         }
       </Subscriber>

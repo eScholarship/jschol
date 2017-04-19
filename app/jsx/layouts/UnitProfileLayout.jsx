@@ -42,7 +42,7 @@ class UnitProfileLayout extends React.Component {
       mainContentConfig = [
         <h3>Main Content Configuration</h3>,
         <div className="c-columns">
-          <main>
+          <main id="maincontent">
             <section className="o-columnbox1">
               <div style={{width: '550px'}}>
                 Here you can suppress a given series, and reorder series. 

@@ -35,9 +35,9 @@ class SidebarTextComp extends React.Component
   }
 
   render() { return(
-    <section className="o-columnbox2">
+    <section className="o-columnbox1">
       <header>
-        <h1 className="o-columnbox2__heading">{this.props.title}</h1>
+        <h1>{this.props.title}</h1>
       </header>
       <div dangerouslySetInnerHTML={{__html: this.props.html}}/>
     </section>)

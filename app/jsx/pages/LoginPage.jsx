@@ -28,7 +28,7 @@ class LoginPage extends PageBase
         <Header1Comp/>
         <Nav1Comp />
         <div className="c-columns">
-          <main>
+          <main id="maincontent">
             <section className="o-columnbox1">
               <header>
                 <h1 className="o-columnbox1__heading">Login</h1>

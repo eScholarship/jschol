@@ -21,11 +21,11 @@ class Nav2Comp extends React.Component {
 
   render() {
     return (
-      <nav className="c-nav2">
-        <details open={this.state.isOpen ? "open" : ""} className="c-nav2__main">
-          <summary className="c-nav2__main-button" role="button">Menu
+      <nav className="c-nav">
+        <details open={this.state.isOpen ? "open" : ""} className="c-nav__main">
+          <summary className="c-nav__main-button" role="button">Menu
           </summary>
-          <div className="c-nav2__main-items">
+          <div className="c-nav__main-items">
             {/* ToDo: Link */}
             <Link to="">Open Access Policies</Link>
             {/* ToDo: Link */}

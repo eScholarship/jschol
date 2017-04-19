@@ -1,0 +1,96 @@
+// ##### Heat Map Component ##### //
+
+.c-heatmap {
+  
+  @include bp(screen3) {
+    background: inline('../images/sample_heatmap.png') no-repeat top right / contain;
+  }
+
+}
+
+.c-heatmap__intro {
+  display: flex;
+  position: relative;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 50vw;
+  margin-bottom: $spacing-sm;
+  background: inline('../images/sample_heatmap.png') no-repeat top right / contain;
+
+  @include bp(screen1) {
+    align-items: flex-start;
+    min-height: 30vw;
+    padding-left: 5vw;
+  }
+
+  @include bp(screen3) {
+    background: none;
+  }
+
+}
+
+.c-heatmap__heading {
+  margin: $spacing-sm 0 0;
+  font-family: 'KievitWebLight';
+  font-size: 1.4em;
+  font-weight: normal;
+  text-align: center;
+
+  strong {
+    color: $color-teal;
+    font-weight: inherit;
+  }
+
+  @include bp(screen1) {
+    width: 35vw;
+    font-size: 5vw;
+    text-align: left;
+  }
+
+}
+
+.c-heatmap__legend {
+  display: none;
+
+  @include bp(screen1) {
+    display: block;
+    position: absolute;
+    right: $spacing-sm;
+    bottom: $spacing-sm;
+    padding: 3px;
+    background-color: $color-white;
+    font-size: 0.9em;
+  }
+
+}
+
+.c-heatmap__button {
+  @extend %o-button__3;
+  margin: auto 0;
+
+  @include bp(screen1) {
+    width: 23vw;
+  }
+
+}
+
+.c-heatmap__text {
+  margin-bottom: $spacing-sm;
+  font-size: 1.2em;
+
+  @include bp(screen1) {
+    padding-right: 5vw;
+    padding-left: 5vw;
+  }
+
+  @include bp(screen3) {
+    width: 45vw;
+    padding-right: 0;
+  }
+
+}
+
+.c-heatmap__carousel {
+  // no styles
+}

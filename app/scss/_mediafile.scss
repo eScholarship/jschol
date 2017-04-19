@@ -43,8 +43,8 @@ $mediafile-img-height: 120px;
 
       @supports (display: grid) {
         width: auto;
-        grid-column: 2 / 3;
-        grid-row: 1 / 2;
+        grid-column: 2;
+        grid-row: 1;
       }
 
     }
@@ -67,7 +67,7 @@ $mediafile-img-height: 120px;
 
       @supports (display: grid) {
         position: static;
-        grid-column: 2 / 3;
+        grid-column: 2;
         justify-self: start;
       }
 
@@ -81,8 +81,8 @@ $mediafile-img-height: 120px;
       @supports (display: grid) {
         width: auto;
         margin-bottom: 0;
-        grid-column: 2 / 3;
-        grid-row: 2 / 3;
+        grid-column: 2;
+        grid-row: 2;
       }
 
     }
@@ -118,52 +118,23 @@ $mediafile-img-height: 120px;
 
 }
 
-.o-mediafile--audio,
-.o-mediafile--audio--selected {
+// Media-specific icons within links:
 
-  .o-mediafile__link {
+@each $mediafile-type, $mediafile-icon in
+  (audio, icon_volume-up-white),
+  (data, icon_archive-white),
+  (image, icon_eye-white),
+  (video, icon_play-circle-white) {
 
-    &::before {
-      background-image: inline('../images/icon_volume-up-white.svg');
-    }
+  .o-mediafile--#{$mediafile-type},
+  .o-mediafile--#{$mediafile-type}--selected {
 
-  }
+    .o-mediafile__link {
 
-}
+      &::before {
+        background-image: inline('../images/#{$mediafile-icon}.svg');
+      }
 
-.o-mediafile--data,
-.o-mediafile--data--selected {
-
-  .o-mediafile__link {
-
-    &::before {
-      background-image: inline('../images/icon_archive-white.svg');
-    }
-
-  }
-
-}
-
-.o-mediafile--image,
-.o-mediafile--image--selected {
-
-  .o-mediafile__link {
-
-    &::before {
-      background-image: inline('../images/icon_eye-white.svg');
-    }
-
-  }
-
-}
-
-.o-mediafile--video,
-.o-mediafile--video--selected {
-
-  .o-mediafile__link {
-
-    &::before {
-      background-image: inline('../images/icon_play-circle-white.svg');
     }
 
   }
@@ -197,9 +168,7 @@ $mediafile-img-height: 120px;
 
 }
 
-// ***** Media-specific Icons Within Heading ***** //
-
-// Example: o-mediafile--audio
+// Media-specific icons within headings:
 
 .o-mediafile__heading { // if not media-specific, no icon
   @extend %o-mediafile__heading;

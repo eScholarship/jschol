@@ -26,16 +26,17 @@ Procedure for merging
 - In jschol:
     git status                  # should be clean
     git pull upstream master    # make sure up to date (again, 'origin' if no 'upstream')
-- Git clone a copy of eschol-ui, and call it eschol-ui-old
-- In eschol-ui-old:
-    git branch -D merge-tmp     # delete old merge-tmp branch, if any
-    git checkout <changeset>"   # using the changeset ID above.
-    git checkout -b merge-tmp   # create new merge-tmp branch
-- Git clone another copy of eschol-ui, and call it just eschol-ui
+- Git clone a copy of eschol-ui, and call it just eschol-ui
 - In eschol-ui:
     git branch -D merge-tmp     # delete old merge-tmp branch, if any
     git pull upstream master    # or origin if you don't have upstream defined
     git log -1                  # grab the changeset ID, and update this file
+    git checkout -b merge-tmp   # create new merge-tmp branch
+- Git clone another copy of eschol-ui, and call it eschol-ui-old
+- In eschol-ui-old:
+    git branch -D merge-tmp     # delete old merge-tmp branch, if any
+    git fetch origin master
+    git checkout <changeset>"   # using the changeset ID above.
     git checkout -b merge-tmp   # create new merge-tmp branch
 - Perform 3-way merge. Left=jschol  Middle=eschol-ui-old  Right=eschol-ui
     + Merge both directions to make all equal (or ignored)
@@ -180,3 +181,11 @@ As well as:
 Martin added all scss and image changes since last. Also fixed a
 couple of bugs that had crept in.
 
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's 4b21aeeadd574b14847c74d4aa8b9a1bbb3a76a3, 2017-04-18 <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+Martin added all scss and image changes since last. Did some
+refactoring to match Joel's combining of Nav1/Nav2 -> Nav, but
+have to leave some of this to Andy who understands the headers
+better.

@@ -1,0 +1,56 @@
+// ##### Debugging ##### //
+
+// ***** Highlight Elements ***** //
+
+$bred: 1px solid #f00;
+$bblue: 1px solid #00f;
+$bgreen: 1px solid #0c0;
+
+*:focus {
+  // outline: $color-orange solid 1px;
+}
+
+// ***** Highlight No Longer Used Classnames ***** //
+
+@each $unused-classname in
+  c-columns__split,
+  c-download__list,
+  c-subheader__row1,
+  c-subheader__row2,
+  o-columnbox__divided,
+  o-columnbox__heading,
+  o-columnbox__3,
+  o-columnbox__4,
+  c-nav1,
+  c-nav2,
+  c-header1,
+  c-header2,
+  c-header1__search,
+  c-header2__search,
+  c-header2__logo,
+  l-about,
+  l-search,
+  l-search__sort-pagination,
+  // o-button__1,
+  // o-button__2,
+  // o-button__3,
+  // o-button__4,
+  // o-button__5,
+  // o-button__6,
+  // o-button__7
+  {
+
+  .#{$unused-classname} {
+
+    &::after {
+      margin: 0 2px;
+      padding: 0 2px;
+      background-color: #f00;
+      color: #fff;
+      font-size: 0.8em;
+      content: '("#{$unused-classname}" className here no longer used; OK to remove)';
+    }
+
+  }
+
+}

@@ -1,74 +1,62 @@
 // ##### Column Box Objects ##### //
 
-%o-columnbox__heading {
-  padding: 7px $spacing-md;
-  background: $color-light-gray;
-  font-family: 'KievitWebLight';
-  font-size: 1.15em;
+%o-columnbox {
+  margin-bottom: $spacing-md;
+  padding: $spacing-sm;
+
+  header {
+    margin: (-$spacing-sm) (-$spacing-sm) $spacing-sm;
+
+    @include headings() {
+      margin: 0;
+      padding: 0.4em $spacing-sm;
+      background: $color-light-gray;
+      font-family: 'KievitWebLight';
+      font-size: 1.2em;
+    }
+
+  }
+  
+  @include bp(screen1) {
+    padding: $spacing-lg;
+
+    header {
+      margin: (-$spacing-lg) (-$spacing-lg) $spacing-md;
+
+      @include headings() {
+        padding: 0.4em $spacing-md;
+      }
+
+    }
+
+  }
+
 }
 
-.o-columnbox1 { // larger box for main content areas
-  margin-bottom: $spacing-md;
-  padding: $spacing-lg;
+.o-columnbox1 {
+  @extend %o-columnbox;
   background: $color-white;
   box-shadow: $box-shadow1;
-
-  header {
-    margin-top: (-$spacing-lg);
-
-    @include headings() {
-      @extend %o-columnbox__heading;
-      margin: 0 (-$spacing-lg) $spacing-md;
-    }
-
-  }
-
 }
 
-.o-columnbox2 { // smaller box for sidebar, etc.
-  margin-bottom: $spacing-md;
-  padding: $spacing-md;
-  background: $color-white;
-  box-shadow: $box-shadow1;
-
-  header {
-    margin-top: (-$spacing-md);
-
-    @include headings() {
-      @extend %o-columnbox__heading;
-      margin: 0 (-$spacing-md) $spacing-md;
-    }
-
-  }
-
+.o-columnbox2 {
+  @extend %o-columnbox;
 }
 
-.o-columnbox3 { // .o-columnbox1 without background color and shadow
-  margin-bottom: $spacing-md;
-  padding-right: $spacing-lg;
-  padding-left: $spacing-lg;
+// ***** When Placed Within Sidebar ***** //
 
-  header {
+aside {
 
-    @include headings() {
-      @extend %o-columnbox__heading;
-      margin: 0 (-$spacing-lg) $spacing-md;
-    }
+  @include bp(screen1) {
 
-  }
+    .o-columnbox1,
+    .o-columnbox2 {
+      padding: $spacing-md;
 
-}
+      header {
+        margin: (-$spacing-md) (-$spacing-md) $spacing-md;
+      }
 
-.o-columnbox4 { // .o-columnbox2 without background color and shadow
-  margin-bottom: $spacing-md;
-  padding-right: $spacing-md;
-  padding-left: $spacing-md;
-
-  header {
-
-    @include headings() {
-      @extend %o-columnbox__heading;
-      margin: 0 (-$spacing-md) $spacing-md;
     }
 
   }
