@@ -34,7 +34,8 @@ class AuthorListComp extends React.Component {
         { p.authors && 
             <ul className="c-authorlist__list">      
               {authorlist}
-              <Link to="#" className="c-authorlist__list-more-link">et al.</Link>
+              {/* Note: the <a> more-link below cannot be a <Link>, else jquery dotdotdot can't recognize it */}
+              <li><a href="" className="c-authorlist__list-more-link">et al.</a></li>
             </ul>
         }
       </div>
