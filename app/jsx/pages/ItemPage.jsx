@@ -46,7 +46,7 @@ class ItemPage extends PageBase {
                 <header>
                   <h2>Jump To</h2>
                 </header>
-                <JumpComp changeTab={this.changeTab} />
+                <JumpComp changeTab={this.changeTab} attrs={data.attrs} />
               </section>
             }
             <section className="o-columnbox1">

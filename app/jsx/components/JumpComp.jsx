@@ -15,13 +15,16 @@ class JumpComp extends React.Component {
       <div className="c-jump">
         <Link id="c-jump__label" to="#" onClick={(e)=>this.handleClick(e, 1)}>Article</Link>
         <ul className="c-jump__tree" aria-labelledby="c-jump__label">
+       { this.props.attrs.abstract &&
           <li><Link to="#">Abstract</Link></li>
+       }
           <li><Link to="#">Main Content</Link></li>
           <li><Link to="#">References</Link></li>
-          <li><Link to="#">Author Response</Link></li>
         </ul>
         <ul className="c-jump__siblings">
+       { this.props.attrs.supp_files &&
           <li><Link to="#" onClick={(e)=>this.handleClick(e, 2)}>Supplemental Material</Link></li>
+       }
           <li><Link to="#" onClick={(e)=>this.handleClick(e, 3)}>Metrics</Link></li>
           <li><Link to="#" onClick={(e)=>this.handleClick(e, 4)}>Author & Article Info</Link></li>
         </ul>
