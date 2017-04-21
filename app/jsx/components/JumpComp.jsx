@@ -24,7 +24,6 @@ class JumpComp extends React.Component {
           <li><Link to="#" onClick={(e)=>this.handleClick(e, 2)}>Supplemental Material</Link></li>
           <li><Link to="#" onClick={(e)=>this.handleClick(e, 3)}>Metrics</Link></li>
           <li><Link to="#" onClick={(e)=>this.handleClick(e, 4)}>Author & Article Info</Link></li>
-          <li><Link to="#" onClick={(e)=>this.handleClick(e, 5)}>Comments</Link></li>
         </ul>
       </div>
     )
