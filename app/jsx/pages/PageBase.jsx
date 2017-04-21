@@ -4,6 +4,7 @@ import $ from 'jquery'
 import _ from 'lodash'
 import { Broadcast, Subscriber } from 'react-broadcast'
 
+import SkipNavComp from '../components/SkipNavComp.jsx'
 import Header1Comp from '../components/Header1Comp.jsx'
 import FooterComp from '../components/FooterComp.jsx'
 import DrawerComp from '../components/DrawerComp.jsx'
@@ -148,6 +149,7 @@ class PageBase extends React.Component
       return (
         <DrawerComp data={this.state.pageData}>
           <div className="body">
+            <SkipNavComp/>
             {this.renderData(this.state.pageData)}
             <FooterComp/>
           </div>
@@ -155,12 +157,14 @@ class PageBase extends React.Component
     } else if (this.state.pageData) {
       return (
         <div className="body">
+          <SkipNavComp/>
           {this.renderData(this.state.pageData)}
           <FooterComp/>
         </div>);
     } else {
       return (
         <div className="body">
+          <SkipNavComp/>
           {this.renderLoading()}
           <FooterComp/>
         </div>);

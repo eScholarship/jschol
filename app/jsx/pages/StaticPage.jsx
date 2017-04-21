@@ -39,7 +39,6 @@ export default class StaticPage extends PageBase
   // PageBase calls this when the API data has been returned to us
   renderData = data => { return(
     <div>
-      <a href="#maincontent" className="c-skipnav">Skip to main content</a>
       <AdminBarComp/>
       <Subheader1Comp navdata={[{name: 'Campus Sites', slug: ''}, {name: 'UC Open Access Policies', slug: ''}, {name: 'eScholarship Publishing', slug: ''}]} />
       <Subscriber channel="cms">

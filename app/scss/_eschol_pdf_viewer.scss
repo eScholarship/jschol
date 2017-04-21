@@ -2,7 +2,7 @@
 
 // scss-lint:disable IdSelector
 #pdfjs-cdl-wrapper {
-  @import '../bower_components/pdfjs-embed/scss/_viewer.scss';
+  @import '../../node_modules/pdfjs-embed/scss/_viewer.scss';
   display: none;
 
   @include bp(screen1) {

@@ -28,7 +28,6 @@ class BrowsePage extends PageBase
   renderData(data) {
     return (
       <div>
-        <a href="#maincontent" className="c-skipnav">Skip to main content</a>
 
       {/* Campus-specific browse page */}
       { data.browse_type == "depts" &&
