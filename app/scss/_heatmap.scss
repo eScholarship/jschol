@@ -1,39 +1,49 @@
 // ##### Heat Map Component ##### //
 
 .c-heatmap {
-  
-  @include bp(screen3) {
-    background: inline('../images/sample_heatmap.png') no-repeat top right / contain;
-  }
-
-}
-
-.c-heatmap__intro {
   display: flex;
   position: relative;
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
-  min-height: 50vw;
-  margin-bottom: $spacing-sm;
-  background: inline('../images/sample_heatmap.png') no-repeat top right / contain;
+  min-height: 80vw;
+  border-bottom: 1px solid $color-light-gray;
+  background: top center / cover no-repeat;
+  // background-image url property/value is an inline style within the component
+  box-shadow: $box-shadow1;
+
+  &::after {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background-image: linear-gradient($color-white, $color-light-teal, $color-white);
+    content: '';
+    z-index: -1;
+  }
 
   @include bp(screen1) {
+    min-height: 50vw;
+  }
+
+  @include bp(screen2) {
     align-items: flex-start;
-    min-height: 30vw;
-    padding-left: 5vw;
+    min-height: 35vw;
+    padding-left: 2vw;
+    background: top right / contain no-repeat;
   }
 
   @include bp(screen3) {
-    background: none;
+    padding-left: 5vw;
   }
 
 }
 
 .c-heatmap__heading {
-  margin: $spacing-sm 0 0;
+  margin: $spacing-md 0;
   font-family: 'KievitWebLight';
-  font-size: 1.4em;
+  font-size: 7vw;
   font-weight: normal;
   text-align: center;
 
@@ -43,6 +53,10 @@
   }
 
   @include bp(screen1) {
+    font-size: 6vw;
+  }
+
+  @include bp(screen2) {
     width: 35vw;
     font-size: 5vw;
     text-align: left;
@@ -50,24 +64,9 @@
 
 }
 
-.c-heatmap__legend {
-  display: none;
-
-  @include bp(screen1) {
-    display: block;
-    position: absolute;
-    right: $spacing-sm;
-    bottom: $spacing-sm;
-    padding: 3px;
-    background-color: $color-white;
-    font-size: 0.9em;
-  }
-
-}
-
 .c-heatmap__button {
-  @extend %o-button__3;
-  margin: auto 0;
+  @extend %o-button__8;
+  margin-bottom: $spacing-md;
 
   @include bp(screen1) {
     width: 23vw;
@@ -76,21 +75,24 @@
 }
 
 .c-heatmap__text {
-  margin-bottom: $spacing-sm;
+  padding: $spacing-sm;
+  background-color: rgba($color-white, 0.7);
   font-size: 1.2em;
 
+  @supports (backdrop-filter: blur()) {
+    background-color: rgba($color-white, 0.5);
+    backdrop-filter: blur(5px);
+  }
+
   @include bp(screen1) {
-    padding-right: 5vw;
-    padding-left: 5vw;
+    line-height: 1.2;
   }
 
-  @include bp(screen3) {
+  @include bp(screen2) {
     width: 45vw;
-    padding-right: 0;
+    margin-bottom: $spacing-md;
+    padding: 0;
+    background-color: transparent;
   }
 
-}
-
-.c-heatmap__carousel {
-  // no styles
 }

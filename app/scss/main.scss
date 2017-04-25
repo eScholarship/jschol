@@ -33,6 +33,7 @@
 
 @import 'authorlist';
 @import 'breadcrumb';
+@import 'campuscarousel';
 @import 'campusselector';
 @import 'checkbox';
 @import 'columns';
@@ -104,5 +105,5 @@ body {
 
 p {
   margin: 0 0 $spacing-sm;
-  line-height: 1.2em;
+  line-height: $line-height;
 }
