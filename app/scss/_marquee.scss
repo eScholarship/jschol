@@ -1,6 +1,7 @@
 // ##### Marquee Component ##### //
 
 .c-marquee {
+  @extend %marquee-flickity-customizations;
 
   @include bp(screen2) {
     display: flex;
@@ -112,34 +113,38 @@
 
 }
 
-.flickity-prev-next-button {
-  width: 60px;
-  height: 60px;
-  background: transparent;
+%marquee-flickity-customizations {
 
-  @include bp(screen1) {
-    width: 80px;
-    height: 80px;
-  }
-
-  &:hover {
+  .flickity-prev-next-button {
+    width: 60px;
+    height: 60px;
     background: transparent;
-  }
 
-  &.previous {
-    left: 0;
-  }
+    @include bp(screen1) {
+      width: 80px;
+      height: 80px;
+    }
 
-  &.next {
-    right: 0;
-  }
+    &:hover {
+      background: transparent;
+    }
 
-  .arrow {
-    fill: $color-white;
-  }
+    &.previous {
+      left: 0;
+    }
 
-  .no-svg {
-    color: $color-white;
+    &.next {
+      right: 0;
+    }
+
+    .arrow {
+      fill: $color-white;
+    }
+
+    .no-svg {
+      color: $color-white;
+    }
+
   }
 
 }
