@@ -55,7 +55,8 @@ const routes = (
 if (!(typeof document === "undefined")) {
   ReactDOM.render((
     // useScroll() below is a fix so that transitioning to a new page always scrolls to the top.
-    <Router history={browserHistory} render={applyRouterMiddleware(useScroll())}>
+    // <Router history={browserHistory} render={applyRouterMiddleware(useScroll())}>
+    <Router history={browserHistory}>
       {routes}
     </Router>
   ), document.getElementById('main'))

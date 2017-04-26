@@ -7,23 +7,17 @@ import PdfViewComp from '../components/PdfViewComp.jsx'
 import PubLocationComp from '../components/PubLocationComp.jsx'
 import PubDataComp from '../components/PubDataComp.jsx'
 
-class TabMainComp extends React.Component {
+class ScrollingAnchorComp extends React.Component {
+  // Used to trigger scrolling for anchors linked from JumpComp (i.e. 'article_abstract')
   render() {
-    let p = this.props
     return (
-      <div className="c-tabcontent">
-        <ItemActionsComp status={p.status} content_type={p.content_type} id={p.id} />
-        <h1 className="c-tabcontent__heading" tabIndex="-1">{p.title}</h1>
-        <AuthorListComp pubdate={p.pub_date} authors={p.authors} changeTab={p.changeTab} />
-        <PubLocationComp pub_web_loc={p.attrs.pub_web_loc} rights={p.rights} />
-        <PubDataComp content_type={p.content_type} />
-        {this.props.attrs.abstract && (this.props.status != "withdrawn") &&
-          [<a key="0" name="article_abstract"></a>,
-           <Abstract key="1" status={p.status} abstract={p.attrs.abstract} />] }
-        <MainContent {...p} />
-      </div>
-    )
-  }
+      <a name={this.props.name} ref={(domElement) => {
+        if (domElement &&
+              window.location.hash.toLowerCase().replace(/^#/, "") == this.props.name) {
+          setTimeout(() => domElement.scrollIntoView(), 0)
+        }}} />
+   )
+ }
 }
 
 class Abstract extends React.Component {
@@ -131,6 +125,24 @@ class NoContent extends React.Component {
   }
 }
 
+class TabMainComp extends React.Component {
+  render() {
+    let p = this.props
+    return (
+      <div className="c-tabcontent">
+        <ItemActionsComp status={p.status} content_type={p.content_type} id={p.id} />
+        <h1 className="c-tabcontent__heading" tabIndex="-1">{p.title}</h1>
+        <AuthorListComp pubdate={p.pub_date} authors={p.authors} changeTab={p.changeTab} />
+        <PubLocationComp pub_web_loc={p.attrs.pub_web_loc} rights={p.rights} />
+        <PubDataComp content_type={p.content_type} />
+        {this.props.attrs.abstract && (this.props.status != "withdrawn") &&
+          [<ScrollingAnchorComp key="0" name="article_abstract" />,
+           <Abstract key="1" status={p.status} abstract={p.attrs.abstract} />] }
+        <ScrollingAnchorComp name="article_main" />
+        <MainContent {...p} />
+      </div>
+    )
+  }
+}
+
 module.exports = TabMainComp;
-
-

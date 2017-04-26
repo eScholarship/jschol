@@ -26,17 +26,18 @@ class ItemPage extends PageBase {
     return "/api/item/" + this.props.params.itemID
   }
 
-  componentDidUpdate() {
+  componentWillReceiveProps() {
     var h = location.hash.toLowerCase().replace(/^#/, "")
-    h = (h.startsWith("article") ? "main" : h)
+    h = ((h.startsWith("article") || h=='') ? "main" : h)
     if ((h != this.state.currentTab) && anchors.includes(h)) {
       this.setState({currentTab: h}) 
     }
   }
 
   changeTab = tabName => {
-    this.setState({currentTab: tabName})
     window.location.hash=tabName
+    tabName = (tabName.startsWith("article") ? "main" : tabName)
+    this.setState({currentTab: tabName})
   }
 
   renderData = data => {
@@ -55,6 +56,7 @@ class ItemPage extends PageBase {
         <div className="c-columns--sticky-sidebar">
           <main id="maincontent">
             <TabsComp currentTab={this.state.currentTab}
+                      changeTab={this.changeTab}
                       {...data} />
           </main>
           <aside>

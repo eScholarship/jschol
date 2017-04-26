@@ -18,8 +18,8 @@ class JumpComp extends React.Component {
        { this.props.attrs.abstract &&
           <li><Link to="#" onClick={(e)=>this.handleClick(e, "article_abstract")}>Abstract</Link></li>
        }
-          <li><Link to="#">Main Content</Link></li>
-          <li><Link to="#">References</Link></li>
+          <li><Link to="#" onClick={(e)=>this.handleClick(e, "article_main")}>Main Content</Link></li>
+          {/* ToDo: Add Links here to headers when item content type is HTML */}
         </ul>
         <ul className="c-jump__siblings">
        { this.props.attrs.supp_files &&
