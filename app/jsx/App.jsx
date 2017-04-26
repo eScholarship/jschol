@@ -4,7 +4,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 import { Router, Route, IndexRoute, Link, browserHistory, applyRouterMiddleware } from 'react-router'
-import { useScroll } from 'react-router-scroll'
 import { Broadcast } from 'react-broadcast'
 
 import HomePage from './pages/HomePage.jsx'
@@ -24,7 +23,7 @@ Array.prototype.includes = require('array-includes').shim()
 
 class App extends React.Component 
 {
-  render() { return(this.props.children) }
+  render() { return this.props.children }
 
   // The logout and login pages need to be able to return the user whence they
   // came. To do that, we need to keep a record when page transitions occur.
@@ -54,8 +53,7 @@ const routes = (
 // When running in the browser, render with React (vs. server-side where iso runs it for us)
 if (!(typeof document === "undefined")) {
   ReactDOM.render((
-    // useScroll() below is a fix so that transitioning to a new page always scrolls to the top.
-    <Router history={browserHistory} render={applyRouterMiddleware(useScroll())}>
+    <Router history={browserHistory}>
       {routes}
     </Router>
   ), document.getElementById('main'))

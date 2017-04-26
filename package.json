@@ -71,7 +71,6 @@
     "react-responsive": "^1.2.7",
     "react-router": "^2.8.1",
     "react-router-form": "^2.0.0-rc.0",
-    "react-router-scroll": "^0.4.1",
     "react-sidebar": "^2.3.0",
     "react-sortable": "^1.2.0"
   },
