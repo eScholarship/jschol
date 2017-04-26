@@ -18,7 +18,8 @@ class TabMainComp extends React.Component {
         <PubLocationComp pub_web_loc={p.attrs.pub_web_loc} rights={p.rights} />
         <PubDataComp content_type={p.content_type} />
         {this.props.attrs.abstract && (this.props.status != "withdrawn") &&
-          <Abstract status={p.status} abstract={p.attrs.abstract} /> }
+          [<a key="0" name="article_abstract"></a>,
+           <Abstract key="1" status={p.status} abstract={p.attrs.abstract} />] }
         <MainContent {...p} />
       </div>
     )

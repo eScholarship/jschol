@@ -11,15 +11,33 @@ import TabsComp from '../components/TabsComp.jsx'
 import JumpComp from '../components/JumpComp.jsx'
 import FooterComp from '../components/FooterComp.jsx'
 
+const anchors = ['main', 'supplemental', 'metrics', 'author',
+             'article_abstract', 'article_main', 'article_references']
+
 class ItemPage extends PageBase {
-  state = { currentTab: 1 }
+  static propTypes = {
+    currentTab: React.PropTypes.oneOf(anchors)
+  }
+
+  state = { currentTab: "main" }
 
   // PageBase will fetch the following URL for us, and place the results in this.state.pageData
   pageDataURL() {
     return "/api/item/" + this.props.params.itemID
   }
 
-  changeTab = tab_id => { this.setState({currentTab: tab_id}) }
+  componentDidUpdate() {
+    var h = location.hash.toLowerCase().replace(/^#/, "")
+    h = (h.startsWith("article") ? "main" : h)
+    if ((h != this.state.currentTab) && anchors.includes(h)) {
+      this.setState({currentTab: h}) 
+    }
+  }
+
+  changeTab = tabName => {
+    this.setState({currentTab: tabName})
+    window.location.hash=tabName
+  }
 
   renderData = data => {
     return (
@@ -37,7 +55,6 @@ class ItemPage extends PageBase {
         <div className="c-columns--sticky-sidebar">
           <main id="maincontent">
             <TabsComp currentTab={this.state.currentTab}
-                      changeTab={this.changeTab}
                       {...data} />
           </main>
           <aside>
