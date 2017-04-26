@@ -6,7 +6,9 @@ class TabAuthorComp extends React.Component {
   render() {
     let p = this.props,
         authorList = p.authors.map(function(a, i) {return (
-          <p key={i}>{a.name} {a.institution ? <span><br/>{a.institution}</span> : ""}</p>
+          <p key={i}>{a.name} 
+            {a.institution ? <span><br/>{a.institution}</span> : ""}
+            {a.email ? <span><br/>{a.email}</span> : ""}</p>
         )}),
         issn = p.attrs['ext_journal'] && p.attrs['ext_journal']['issn'],
         peer_reviewed = p.attrs['is_peer_reviewed'] ? "True" : "False",

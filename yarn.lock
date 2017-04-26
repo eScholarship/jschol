@@ -5522,9 +5522,9 @@ pbkdf2@^3.0.3:
   dependencies:
     create-hmac "^1.1.2"
 
-pdfjs-embed@escholarship/pdfjs-embed#c0547d5ff4:
+pdfjs-embed@escholarship/pdfjs-embed#4f33a18d62:
   version "1.6.210"
-  resolved "https://codeload.github.com/escholarship/pdfjs-embed/tar.gz/c0547d5ff4"
+  resolved "https://codeload.github.com/escholarship/pdfjs-embed/tar.gz/4f33a18d62"
   dependencies:
     node-ensure "0.0.0"
 
@@ -5676,13 +5676,13 @@ promised-io@~0.3.4:
   version "0.3.5"
   resolved "https://registry.yarnpkg.com/promised-io/-/promised-io-0.3.5.tgz#4ad217bb3658bcaae9946b17a8668ecd851e1356"
 
-prop-types@^15.5.2, prop-types@^15.5.4, prop-types@~15.5.0:
+prop-types@^15.5.2, prop-types@~15.5.0:
   version "15.5.6"
   resolved "https://registry.yarnpkg.com/prop-types/-/prop-types-15.5.6.tgz#797a915b1714b645ebb7c5d6cc690346205bd2aa"
   dependencies:
     fbjs "^0.8.9"
 
-prop-types@^15.5.7:
+prop-types@^15.5.4, prop-types@^15.5.7:
   version "15.5.8"
   resolved "https://registry.yarnpkg.com/prop-types/-/prop-types-15.5.8.tgz#6b7b2e141083be38c8595aa51fc55775c7199394"
   dependencies:

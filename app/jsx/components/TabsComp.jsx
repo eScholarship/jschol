@@ -33,20 +33,19 @@ class TabsComp extends React.Component {
                   onClick = {()=> this.tabFocus(1)}>
             Main Content</button>
       { this.props.status != 'withdrawn' && this.props.status != 'embargoed' &&
-          [<button key="0" className={this.state.currentTab === 2 ? "c-tabs__button--active" : "c-tabs__button"}
+        [ this.props.attrs.supp_files &&
+          <button key="2" className={this.state.currentTab === 2 ? "c-tabs__button--active" : "c-tabs__button"}
                   onClick = {()=> this.tabFocus(2)}>
-            Supplemental material</button>,
-          <button key="1" className={this.state.currentTab === 3 ? "c-tabs__button--active" : "c-tabs__button"}
+            Supplemental material</button>
+         ,
+          <button key="3" className={this.state.currentTab === 3 ? "c-tabs__button--active" : "c-tabs__button"}
                   onClick = {()=> this.tabFocus(3)}>
             Metrics</button>]
       }
       { this.props.status != 'withdrawn' &&
-          [<button key="0" className={this.state.currentTab === 4 ? "c-tabs__button--active" : "c-tabs__button"}
+          <button className={this.state.currentTab === 4 ? "c-tabs__button--active" : "c-tabs__button"}
                   onClick = {()=> this.tabFocus(4)}>
-            Author & Article Info</button>,
-          <button key="1" className={this.state.currentTab === 5 ? "c-tabs__button--active" : "c-tabs__button"}
-                  onClick = {()=> this.tabFocus(5)}>
-            Comments (2)</button>]
+            Author & Article Info</button>
       }
         </div>
         <div className="c-tabs__content">
@@ -54,7 +53,6 @@ class TabsComp extends React.Component {
           {this.state.currentTab === 2 ? <TabSupplementalComp {...this.props} /> : null}
           {this.state.currentTab === 3 ? <TabMetricsComp {...this.props} /> : null}
           {this.state.currentTab === 4 ? <TabAuthorComp {...this.props} /> : null}
-          {this.state.currentTab === 5 ? <TabCommentsComp {...this.props} /> : null}
           <p><br/></p>
         </div>
       </div>

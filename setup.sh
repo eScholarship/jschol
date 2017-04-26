@@ -11,3 +11,6 @@ yarn install
 
 printf "\n== Installing bower packages (used in browser) ==\n"
 node_modules/.bin/bower install
+
+printf "\n== Uninstalling bower packages no longer used ==\n"
+node_modules/.bin/bower prune 

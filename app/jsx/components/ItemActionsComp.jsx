@@ -66,7 +66,7 @@ class Undownloadable extends React.Component {
   render() {
     return (
       <div className="c-itemactions">
-        This item is not available for download from eScholarship
+        <div className="o-alert1" role="alert">This item is not available for download from eScholarship</div>
         <ShareComp type="item" id={this.props.id} />
       </div>
     )
