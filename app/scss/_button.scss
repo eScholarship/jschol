@@ -29,7 +29,7 @@
   @extend %o-button__2;
 }
 
-// orange border & background, white text:
+// orange background, white text:
 %o-button__3 {
   @extend %o-button;
   background: $color-orange;
@@ -95,4 +95,16 @@
 
 .o-button__7 {
   @extend %o-button__7;
+}
+
+// teal background, white text:
+%o-button__8 {
+  @extend %o-button;
+  background: $color-teal;
+  color: $color-white;
+  box-shadow: $box-shadow2;
+}
+
+.o-button__8 {
+  @extend %o-button__8;
 }

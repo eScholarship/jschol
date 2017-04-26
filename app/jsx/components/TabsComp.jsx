@@ -28,6 +28,7 @@ class TabsComp extends React.Component {
     return (
       <div className="c-tabs">
         <div className={this.state.moreTabs ? "c-tabs__tabs--show-all" : "c-tabs__tabs"}>
+          {/* TODO: programmatically remove 'c-tabs__button-more' button below if there is only 1 tab */}
           <button className="c-tabs__button-more" onClick = {()=> this.setState({moreTabs: !this.state.moreTabs})} aria-label="Show all tabs">...</button>
           <button className={this.state.currentTab == "main" ? "c-tabs__button--active" : "c-tabs__button"}
                   onClick = {()=> this.tabFocus("main")}>
