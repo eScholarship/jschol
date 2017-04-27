@@ -6,6 +6,7 @@ import AuthorListComp from '../components/AuthorListComp.jsx'
 import PdfViewComp from '../components/PdfViewComp.jsx'
 import PubLocationComp from '../components/PubLocationComp.jsx'
 import PubDataComp from '../components/PubDataComp.jsx'
+import ViewExternalComp from '../components/ViewExternalComp.jsx'
 
 class ScrollingAnchorComp extends React.Component {
   // Used to trigger scrolling for anchors linked from JumpComp (i.e. 'article_abstract')
@@ -110,12 +111,12 @@ class NoContent extends React.Component {
   render() {
     return (
       <div>
-      {(this.props.pub_web_loc.length > 0) &&
-        <div>
-          <p><a href={this.props.pub_web_loc[0]}>View on external site</a></p>
-          <p>Item not freely available? Link broken?</p>
-          <p>****  Link: Report a problem accessing this item.</p>
-        </div>
+      {(this.props.pub_web_loc.length > 0) ?
+        <ViewExternalComp pub_web_loc={this.props.pub_web_loc[0]} />
+        :
+        [<h1 key="0">CONTENT IS NULL, NO PUBLISHED WEB LOC.</h1>,
+        <h1 key="1">TO BE FIXED ....</h1>,
+        <h1 key="2">*OR* HERE WILL BE DISPLAYED MAIN MULTIMEDIA CONTENT NOT YET INGESTED</h1>]
       }
       <p>&nbsp;</p>
       <p>&nbsp;</p>
@@ -130,14 +131,22 @@ class TabMainComp extends React.Component {
     let p = this.props
     return (
       <div className="c-tabcontent">
-        <ItemActionsComp status={p.status} content_type={p.content_type} id={p.id} />
+        <ItemActionsComp id={p.id}
+                         status={p.status}
+                         content_type={p.content_type}
+                         supp_files={p.attrs.supp_files}
+                         buy_link={p.attrs.buy_link} />
         <h1 className="c-tabcontent__heading" tabIndex="-1">{p.title}</h1>
-        <AuthorListComp pubdate={p.pub_date} authors={p.authors} changeTab={p.changeTab} />
-        <PubLocationComp pub_web_loc={p.attrs.pub_web_loc} rights={p.rights} />
+        <AuthorListComp pubdate={p.pub_date}
+                        authors={p.authors}
+                        changeTab={p.changeTab} />
+        <PubLocationComp pub_web_loc={p.attrs.pub_web_loc}
+                         rights={p.rights} />
         <PubDataComp content_type={p.content_type} />
         {this.props.attrs.abstract && (this.props.status != "withdrawn") &&
           [<ScrollingAnchorComp key="0" name="article_abstract" />,
-           <Abstract key="1" status={p.status} abstract={p.attrs.abstract} />] }
+           <Abstract key="1" status={p.status}
+                             abstract={p.attrs.abstract} />] }
         <ScrollingAnchorComp name="article_main" />
         <MainContent {...p} />
       </div>
