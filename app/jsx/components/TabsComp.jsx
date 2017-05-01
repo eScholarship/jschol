@@ -10,49 +10,50 @@ import TabAuthorComp from '../components/TabAuthorComp.jsx'
 import TabCommentsComp from '../components/TabCommentsComp.jsx'
 
 class TabsComp extends React.Component {
-  state = {currentTab: this.props.currentTab, moreTabs: false}
+  state = {moreTabs: false}
 
-  tabFocus(tabNumber) {
-    // For keyboard users, jump to heading within the tab.
-    setTimeout(()=>$(".c-tabcontent__heading").focus(), 0)
-    this.setState({currentTab: tabNumber})
+  tabFocus(tabName) {
+    this.props.changeTab(tabName)
   }
 
   componentWillReceiveProps(nextProps) {
-    this.setState({currentTab: nextProps.currentTab})
-    this.tabFocus(nextProps.currentTab)
+    if (this.props.currentTab != nextProps.currentTab) { 
+      // For keyboard users, jump to heading within the tab.
+      setTimeout(()=>$(".c-tabcontent__heading").focus(), 0)
+    }
   }
 
   render() {
     return (
       <div className="c-tabs">
         <div className={this.state.moreTabs ? "c-tabs__tabs--show-all" : "c-tabs__tabs"}>
-          {/* TODO: programmatically remove 'c-tabs__button-more' button below if there is only 1 tab */}
+      { this.props.status == 'published' &&
           <button className="c-tabs__button-more" onClick = {()=> this.setState({moreTabs: !this.state.moreTabs})} aria-label="Show all tabs">...</button>
-          <button className={this.state.currentTab === 1 ? "c-tabs__button--active" : "c-tabs__button"}
-                  onClick = {()=> this.tabFocus(1)}>
+      }
+          <button className={this.props.currentTab == "main" ? "c-tabs__button--active" : "c-tabs__button"}
+                  onClick = {()=> this.tabFocus("main")}>
             Main Content</button>
-      { this.props.status != 'withdrawn' && this.props.status != 'embargoed' &&
+      { this.props.status == 'published' &&
         [ this.props.attrs.supp_files &&
-          <button key="2" className={this.state.currentTab === 2 ? "c-tabs__button--active" : "c-tabs__button"}
-                  onClick = {()=> this.tabFocus(2)}>
+          <button key="2" className={this.props.currentTab == "supplemental" ? "c-tabs__button--active" : "c-tabs__button"}
+                  onClick = {()=> this.tabFocus("supplemental")}>
             Supplemental material</button>
          ,
-          <button key="3" className={this.state.currentTab === 3 ? "c-tabs__button--active" : "c-tabs__button"}
-                  onClick = {()=> this.tabFocus(3)}>
+          <button key="3" className={this.props.currentTab == "metrics" ? "c-tabs__button--active" : "c-tabs__button"}
+                  onClick = {()=> this.tabFocus("metrics")}>
             Metrics</button>]
       }
       { this.props.status != 'withdrawn' &&
-          <button className={this.state.currentTab === 4 ? "c-tabs__button--active" : "c-tabs__button"}
-                  onClick = {()=> this.tabFocus(4)}>
+          <button className={this.props.currentTab == "author" ? "c-tabs__button--active" : "c-tabs__button"}
+                  onClick = {()=> this.tabFocus("author")}>
             Author & Article Info</button>
       }
         </div>
         <div className="c-tabs__content">
-          {this.state.currentTab === 1 ? <TabMainComp {...this.props} /> : null}
-          {this.state.currentTab === 2 ? <TabSupplementalComp {...this.props} /> : null}
-          {this.state.currentTab === 3 ? <TabMetricsComp {...this.props} /> : null}
-          {this.state.currentTab === 4 ? <TabAuthorComp {...this.props} /> : null}
+          {this.props.currentTab == "main"         ? <TabMainComp {...this.props} /> : null}
+          {this.props.currentTab == "supplemental" ? <TabSupplementalComp {...this.props} /> : null}
+          {this.props.currentTab == "metrics"      ? <TabMetricsComp {...this.props} /> : null}
+          {this.props.currentTab == "author"       ? <TabAuthorComp {...this.props} /> : null}
           <p><br/></p>
         </div>
       </div>
