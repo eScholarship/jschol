@@ -510,7 +510,13 @@ end
 get "/api/mediaLink/:type/:id/:service" do |type, id, service| # service e.g. facebook, google, etc.
   content_type :json
   sharedLink = "http://www.escholarship.org/" + type + "/" + id 
-  title = (type == "item") ? Item["qt"+id].title : $unitsHash[id].name
+  item = ''
+  if (type == "item")
+    item = Item["qt"+id]
+    title = item.title
+  else
+    title = $unitsHash[id].name
+  end
   case service
     when "facebook"
       url = "http://www.facebook.com/sharer.php?u=" + sharedLink
@@ -518,10 +524,14 @@ get "/api/mediaLink/:type/:id/:service" do |type, id, service| # service e.g. fa
       url = "http://twitter.com/home?status=" + title + "[" + sharedLink + "]"
     when "email"
       title_sm = title.length > 50 ? title[0..49] + "..." : title
-      url = "mailto:?subject=" + title_sm + "&body=" +
+      body = ''
+      if (type == "item")
         # ToDo: Put in proper citation
-        (item.attrs["orig_citation"] ? item.attrs["orig_citation"] + "\n\n" : "") +
-        sharedLink 
+        body = (item.attrs["orig_citation"] ? item.attrs["orig_citation"] + "\n\n" : "")
+      else
+        body = "View items by " + title + " published on eScholarship.\n\n" 
+      end
+      url = "mailto:?subject=" + title_sm + "&body=%s" + sharedLink % [body]
     when "mendeley"
       url = "http://www.mendeley.com/import?url=" + sharedLink + "&title=" + title
     when "citeulike"

@@ -11,15 +11,43 @@ import TabsComp from '../components/TabsComp.jsx'
 import JumpComp from '../components/JumpComp.jsx'
 import FooterComp from '../components/FooterComp.jsx'
 
+const anchors = ['main', 'supplemental', 'metrics', 'author',
+             'article_abstract', 'article_main', 'article_references']
+
 class ItemPage extends PageBase {
-  state = { currentTab: 1 }
+  static propTypes = {
+    currentTab: React.PropTypes.oneOf(anchors)
+  }
 
   // PageBase will fetch the following URL for us, and place the results in this.state.pageData
   pageDataURL() {
     return "/api/item/" + this.props.params.itemID
   }
 
-  changeTab = tab_id => { this.setState({currentTab: tab_id}) }
+  tabNameFromHash() {
+    return !(typeof location === "undefined") ? location.hash.toLowerCase().replace(/^#/, "") : ""
+  }
+
+  // currentTab should be 'main' whenever hash starts with 'article_" (or is empty)
+  articleHashHandler = h => { return ((h.startsWith("article") || h=='') ? "main" : h) }
+
+  state = { currentTab: this.articleHashHandler(this.tabNameFromHash()) }
+
+  componentDidMount() {
+    // Check hash whenever back or forward button clicked
+    window.onpopstate = (event) => {
+      var h = this.articleHashHandler(this.tabNameFromHash())
+      if ((h != this.state.currentTab) && anchors.includes(h)) {
+        this.setState({currentTab: h})
+      }
+    }
+  }
+
+  changeTab = tabName => {
+    // Set hash based on what was clicked
+    window.location.hash=tabName
+    this.setState({currentTab: this.articleHashHandler(tabName) })
+  }
 
   renderData = data => {
     return (
