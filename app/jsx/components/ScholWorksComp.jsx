@@ -11,7 +11,11 @@ if (!(typeof document === "undefined")) {
 
 class ScholWorksComp extends React.Component {
   componentDidMount() {
-    $('.c-scholworks__heading, .c-scholworks__author, .c-scholworks__abstract').dotdotdot({watch:"window"});
+    $(this.headingElement).dotdotdot({watch:"window"})
+    if (this.authorListElement)
+      $(this.authorListElement).dotdotdot({watch:"window"})
+    if (this.abstractElement)
+      $(this.abstractElement).dotdotdot({watch:"window"})
   }
   render() {
     var tagList = [];
@@ -90,12 +94,12 @@ class ScholWorksComp extends React.Component {
             }) }
           </ul>
           <heading>
-            <h2 className="c-scholworks__heading">
+            <h2 className="c-scholworks__heading" ref={ el => this.headingElement = el }>
               <Link to={"/item/"+this.props.result.id.replace(/^qt/, "")}>{this.props.result.title}</Link>
             </h2>
           </heading>
           {authorList && 
-            <div className="c-authorlist">
+            <div className="c-authorlist" ref={ el => this.authorListElement = el }>
               <ul className="c-authorlist__list">
                 {authorList}
               </ul>
@@ -107,7 +111,7 @@ class ScholWorksComp extends React.Component {
             </div>
           }
           {this.props.result.abstract && 
-            <div className="c-scholworks__abstract">
+            <div className="c-scholworks__abstract" ref={ el => this.abstractElement = el }>
               <p>{this.props.result.abstract}</p>
             </div>
           }
