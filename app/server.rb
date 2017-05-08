@@ -342,54 +342,61 @@ get '/api/home' do
 end
 
 ###################################################################################################
-# Browse page data (All campuses or All journals)
-get '/api/browse/:browse_type' do |browse_type|
+# Browse all campuses
+get "/api/browse/campuses" do 
   content_type :json
-  body = {
-    :browse_type => browse_type
-  }
-  case browse_type 
-    when "campuslist"
-      # Build array of hashes containing campus and stats
-      campusesStats = []
-      $activeCampuses.each do |k, v|
-        pub_count =     ($statsCampusPubs.keys.include? k)  ? $statsCampusPubs[k]     : 0
-        unit_count =    ($statsCampusOrus.keys.include? k)  ? $statsCampusOrus[k]     : 0
-        journal_count = ($statsCampusJournals.keys.include? k) ? $statsCampusJournals[k] : 0
-        campusesStats.push({"id"=>k, "name"=>v.values[:name], 
-          "publications"=>pub_count, "units"=>unit_count, "journals"=>journal_count})
-      end
-      body.merge!({
-        :campusesStats => campusesStats,
-      })
-      breadcrumb = [{"name" => "Campuses", "url" => "/browse/"+browse_type},]
-      return body.merge(getHeaderElements(breadcrumb, nil)).to_json
-    when "journals"
-      body.merge!({
-        :journals => $campusJournals.sort_by{ |h| h[:name].downcase }
-      })
-      breadcrumb = [{"name" => "Journals", "url" => "/browse/"+browse_type},]
-      return body.merge(getHeaderElements(breadcrumb, "All Campuses")).to_json
+  # Build array of hashes containing campus and stats
+  campusesStats = []
+  $activeCampuses.each do |k, v|
+    pub_count =     ($statsCampusPubs.keys.include? k)  ? $statsCampusPubs[k]     : 0
+    unit_count =    ($statsCampusOrus.keys.include? k)  ? $statsCampusOrus[k]     : 0
+    journal_count = ($statsCampusJournals.keys.include? k) ? $statsCampusJournals[k] : 0
+    campusesStats.push({"id"=>k, "name"=>v.values[:name], 
+      "publications"=>pub_count, "units"=>unit_count, "journals"=>journal_count})
   end
+  body = {
+    :header => getGlobalHeader,
+    :browse_type => "campuses",
+    :campusesStats => campusesStats
+  }
+  breadcrumb = [{"name" => "Campuses", "url" => "/campuses"},]
+  return body.merge(getHeaderElements(breadcrumb, nil)).to_json
 end
 
 ###################################################################################################
-# Browse page - Campus depts data.
-get '/api/browse/depts/:campusID' do |campusID|
+# Browse all journals
+get "/api/browse/journals" do 
+  content_type :json
+  body = {
+    :header => getGlobalHeader,
+    :browse_type => "journals",
+    :journals => $campusJournals.sort_by{ |h| h[:name].downcase }
+  }
+  breadcrumb = [{"name" => "Journals", "url" => "/journals"},]
+  return body.merge(getHeaderElements(breadcrumb, "All Campuses")).to_json
+end
+
+###################################################################################################
+# Browse Campus depts data.
+get "/api/browse/depts/:campusID" do |campusID|
   content_type :json
   d = $hierByAncestor[campusID].map do |a|
     getChildDepts($unitsHash[a.unit_id])
   end
   unit = $unitsHash[campusID]
+  attrs = JSON.parse(unit[:attrs])
   body = {
     :browse_type => "depts",
+    :unit => unit ? unit.values.reject { |k,v| k==:attrs } : nil,
+    # ToDo: Campus nav does not need to deal with ancestors
+    # :header => unit ? getUnitHeader(unit, attrs) : getGlobalHeader,
     :campusID => campusID,
     :campusName => unit.name,
     :depts => d.compact
   }
   breadcrumb = [
-    {"name" => "Academic Units", "url" => "/browse/depts/"+campusID},
-    {"name" => unit.name, "url" => "/unit/"+campusID}]
+    {"name" => "Academic Units", "url" => "/" + campusID + "/departments"},
+    {"name" => unit.name, "id" => campusID}]
   return body.merge(getHeaderElements(breadcrumb, nil)).to_json
 end
 
@@ -543,6 +550,12 @@ end
 ##################################################################################################
 # Helper methods
 
+def getGlobalHeader
+  return {
+   :nav_bar => JSON.parse($unitsHash['root'][:attrs])['nav_bar']
+  }
+end
+
 # Generate breadcrumb and header content for Browse or Static page
 def getHeaderElements(breadcrumb, topItem)
   campuses = topItem ? getCampusesAsMenu(topItem) : getCampusesAsMenu
@@ -584,6 +597,7 @@ get "/api/static/:unitID/:pageName" do |unitID, pageName|
   page or halt(404, "Page not found")
 
   body = { 
+    header: unitID=='root' ? getGlobalHeader : getUnitHeader(unit),
     campuses: getCampusesAsMenu,
     page: {
       title: page.title,

@@ -35,8 +35,9 @@ class App extends React.Component
 const routes = (
   <Route path="/" component={App}>
     <IndexRoute component={HomePage} />
-    <Route path="/browse/:browse_type" component={BrowsePage} />
-    <Route path="/browse/depts/:campusID" component={BrowsePage} />
+    <Route path="/campuses" component={BrowsePage} />
+    <Route path="/journals" component={BrowsePage} />
+    <Route path="/:campusID/departments" component={BrowsePage} />
     <Route path="/unit/:unitID" component={UnitPage} />
     <Route path="/unit/:unitID/:pageName" component={UnitPage} />
     <Route path="/item/:itemID" component={ItemPage} />

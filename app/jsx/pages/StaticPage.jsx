@@ -40,7 +40,7 @@ export default class StaticPage extends PageBase
   renderData = data => { return(
     <div>
       <AdminBarComp/>
-      <Subheader1Comp navdata={[{name: 'Campus Sites', slug: ''}, {name: 'UC Open Access Policies', slug: ''}, {name: 'eScholarship Publishing', slug: ''}]} />
+      <Subheader1Comp navdata={data.header.nav_bar} />
       <Subscriber channel="cms">
         { cms =>
           <div className="c-columns">

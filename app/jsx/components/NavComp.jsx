@@ -1,9 +1,10 @@
 // ##### Navigation Component ##### //
 // this.props = {data: [
-//   {name: 'Journal Home', slug: ''},
-//   {name: 'Issues', sub_nav: []},
-//   {name: 'External Link', url: ''}
-//   {name: 'File Name', file: ''}
+//   {name: 'External Link', url: ''}           i.e. submit.escholarship.org
+//   {name: 'Internal Page', slug: ''},         i.e. About Us 
+//   {name: 'Unit Page', unitId: ''},           i.e. Campus Home
+//   {name: 'Subnavigation', sub_nav: []},      i.e. Issues 
+//   {name: 'File Name', file: ''}              i.e. PDF
 //   ...
 // ]}
 
@@ -39,6 +40,11 @@ class NavComp extends React.Component {
     if (navItem.slug) {
       return (
         <Link key={navItem.slug} to={"/unit/" + this.props.unitId + "/" + navItem.slug }>{navItem.name}</Link>
+      )
+    }
+    if (navItem.unitId) {
+      return (
+        <Link key={navItem.unitId} to={"/unit/" + navItem.unitId }>{navItem.name}</Link>
       )
     }
     //TODO: if ('file' in navItem)...
