@@ -10,9 +10,6 @@ if (!(typeof document === "undefined")) {
 }
 
 class ScholWorksComp extends React.Component {
-  componentDidMount() {
-    $('.c-scholworks__heading, .c-scholworks__author, .c-scholworks__abstract').dotdotdot({watch:"window"});
-  }
   render() {
     var tagList = [];
     if (this.props.result.genre === 'article') {
@@ -90,12 +87,12 @@ class ScholWorksComp extends React.Component {
             }) }
           </ul>
           <heading>
-            <h2 className="c-scholworks__heading">
+            <h2 className="c-scholworks__heading" ref={ el => $(el).dotdotdot({watch:"window"}) }>
               <Link to={"/item/"+this.props.result.id.replace(/^qt/, "")}>{this.props.result.title}</Link>
             </h2>
           </heading>
           {authorList && 
-            <div className="c-authorlist">
+            <div className="c-authorlist" ref={ el => $(el).dotdotdot({watch:"window"}) }>
               <ul className="c-authorlist__list">
                 {authorList}
               </ul>
@@ -107,7 +104,7 @@ class ScholWorksComp extends React.Component {
             </div>
           }
           {this.props.result.abstract && 
-            <div className="c-scholworks__abstract">
+            <div className="c-scholworks__abstract" ref={ el => $(el).dotdotdot({watch:"window"}) }>
               <p>{this.props.result.abstract}</p>
             </div>
           }
