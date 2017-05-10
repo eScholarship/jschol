@@ -88,6 +88,7 @@ require_relative 'listItemViews'
 require_relative 'searchApi'
 require_relative 'queueWithTimeout'
 require_relative 'unitPages'
+require_relative 'citation'
 require_relative 'loginApi'
 
 # Sinatra configuration
@@ -460,22 +461,27 @@ get "/api/item/:shortArk" do |shortArk|
   content_type :json
   id = "qt"+shortArk
   item = Item[id]
+  attrs = JSON.parse(Item.filter(:id => id).map(:attrs)[0])
   unitIDs = UnitItem.where(:item_id => id, :is_direct => true).order(:ordering_of_units).select_map(:unit_id)
   unit = unitIDs ? Unit[unitIDs[0]] : nil
 
   if !item.nil?
+    authors = ItemAuthors.filter(:item_id => id).order(:ordering).
+                 map(:attrs).collect{ |h| JSON.parse(h)}
+    citation = getCitation(shortArk, authors, attrs)
     begin
       body = {
         :id => shortArk,
-        :status => item.status,
-        :title => item.title,
-        :rights => item.rights,
+        :citation => citation,
+        :title => citation[:title],
+        # ToDo: Normalize author attributes across all components (i.e. 'family' vs. 'lname')
+        :authors => authors,
         :pub_date => item.pub_date,
-        :authors => ItemAuthors.filter(:item_id => id).order(:ordering).
-                       map(:attrs).collect{ |h| JSON.parse(h)},
+        :status => item.status,
+        :rights => item.rights,
         :content_type => item.content_type,
         :content_html => getItemHtml(item.content_type, shortArk),
-        :attrs => JSON.parse(Item.filter(:id => id).map(:attrs)[0]),
+        :attrs => attrs,
         :appearsIn => unitIDs ? unitIDs.map { |unitID| {"id" => unitID, "name" => Unit[unitID].name} }
                               : nil,
         :header => unit ? getUnitHeader(unit) : nil,
@@ -484,10 +490,13 @@ get "/api/item/:shortArk" do |shortArk|
 
       # TODO: at some point we'll want to modify the breadcrumb code to include CMS pages and issues
       # in a better way - I don't think this belongs here in the item-level code.
+      # Unit type dependency also affects citation
       if unit && unit.type == 'journal'
         issue_id = Item.join(:sections, :id => :section).filter(:items__id => id).map(:issue_id)[0]
         volume, issue = Section.join(:issues, :id => issue_id).map([:volume, :issue])[0]
         body[:header][:breadcrumb] << {name: "Volume #{volume}, Issue #{issue}", id: "#{unitIDs[0]}/issues/#{issue}"}
+        body[:citation][:volume] = volume
+        body[:citation][:issue] = issue
       end
 
       return body.to_json
@@ -538,7 +547,7 @@ get "/api/mediaLink/:type/:id/:service" do |type, id, service| # service e.g. fa
       else
         body = "View items by " + title + " published on eScholarship.\n\n" 
       end
-      url = "mailto:?subject=" + title_sm + "&body=%s" + sharedLink % [body]
+      url = ("mailto:?subject=" + title_sm + "&body=%s" + sharedLink) % [body]
     when "mendeley"
       url = "http://www.mendeley.com/import?url=" + sharedLink + "&title=" + title
     when "citeulike"
