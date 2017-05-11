@@ -7,9 +7,6 @@ class RefineComp extends React.Component {
   render() {
     return (
       <div className="c-itemactions">
-      { (this.props.mimeTypes.length < 2) ?
-        null
-        :
         <div className="o-input__droplist2">
           <label htmlFor="o-input__droplist-label2">Refine media type by:</label>
           <select name="" id="o-input__droplist-label2">
@@ -33,9 +30,8 @@ class RefineComp extends React.Component {
             </ul>
           </details>
         </div>
-      }
       </div>
-    }
+    ) 
   }
 }
 
@@ -49,10 +45,13 @@ class TabSupplementalComp extends React.Component {
     return (
       <div className="c-tabcontent">
         <h1 className="c-tabcontent__main-heading" tabIndex="-1">Supplemental Material</h1>
-        {supp_files ? 
-          [<RefineComp mimeTypes={mimeTypes} key="0" />,
-          <MediaFileGridComp supp_files={supp_files} key="1" />]
-          : <div>No supplemental material included with this item</div> }
+        {supp_files && (mimeTypes.length > 1) && 
+          <RefineComp mimeTypes={mimeTypes} />
+        }
+        {supp_files ?
+          <MediaFileGridComp supp_files={supp_files}  />
+          : <div>No supplemental material included with this item</div>
+        }
       </div>
     )
   }

@@ -1,15 +1,27 @@
 // ##### Tab Author & Article Component ##### //
-
+//
 import React from 'react'
 import { Link } from 'react-router'
+
+class CitationComp extends React.Component {
+  render() {
+    return (
+      <dl className="c-descriptionlist">
+        {/* ToDo: Bring in all citations styles */}
+        <dt><a href="">APA</a></dt>
+        <dd>Citation here</dd>
+      </dl>
+    )
+  }
+}
 
 class TabAuthorComp extends React.Component {
   render() {
     let p = this.props,
         authorList = p.authors.map(function(a, i) {return (
           [<dt key={i}>{a.name}</dt>,
-           <dd key={i+1}>{a.institution ? {a.institution} : ""}
-            {a.email ? {a.email} : ""}</dd>]
+           <dd key={i+1}>{a.institution ? a.institution : ""}
+            {a.email ? <span>&nbsp;&nbsp;&nbsp;{a.email}</span> : ""}</dd>]
         )}),
         issn = p.attrs['ext_journal'] && p.attrs['ext_journal']['issn'],
         peer_reviewed = p.attrs['is_peer_reviewed'] ? "True" : "False",
@@ -17,9 +29,17 @@ class TabAuthorComp extends React.Component {
         ezid = "http://ezid.cdlib.org/id/ark:/13030/qt" + p.id,
         appearsIn = p.appearsIn.map(function(node, i) {
           return ( <span key={i}><Link to={node.url}>{node.name}</Link><br/></span> )
-        })
+        }),
+        retrieved_suffix = ''
+    if (p.attrs['orig_citation']) {
+      let url = window.location.href.split('#')[0],
+          date = p.formatDate(),
+          r = "Retrieved " + date + ", from " 
+      retrieved_suffix = <span>{r}<Link to="url">{url}</Link></span>
+    }
     return(
       <div className="c-tabcontent">
+      {!p.attrs['orig_citation'] &&
         <div className="c-itemactions">
           <div className="o-download">
             <button className="o-download__button">Download Citation</button>
@@ -34,34 +54,36 @@ class TabAuthorComp extends React.Component {
             </details>
           </div>
         </div>
+      }
         <h1 className="c-tabcontent__main-heading" tabIndex="-1">Author & Article Info</h1>
       {p.authors.length > 0 &&
         <details className="c-togglecontent" open>
           <summary>Author(s)</summary>
+          <dl className="c-descriptionlist">
+            {authorList}
+          </dl>
         </details>
-        <dl className="c-descriptionlist">
-          {authorList}
-        </dl>
       }
         <details className="c-togglecontent" open>
           <summary>Citation</summary>
+        {p.attrs['orig_citation'] ?
           <dl className="c-descriptionlist">
-            {/* ToDo: Bring in all citations styles */}
-            <dt><a href="">APA</a></dt>
-            <dd>
-              {p.attrs['orig_citation']}
-            </dd>
+            <dt></dt><dd>{p.attrs['orig_citation']}&nbsp;&nbsp;{retrieved_suffix}</dd>
+          </dl>
+          :
+          <CitationComp />
+        }
         </details>
         <details className="c-togglecontent" open>
           <summary>Other information</summary>
           <dl className="c-descriptionlist">
           {issn && 
-            <dt><a href="">ISSN</a></dt>
-            <dd>{issn}</dd>
+            [<dt key="0"><a href="">ISSN</a></dt>,
+             <dd key="1">{issn}</dd>]
           }
           {p.campusID && 
-            <dt><Link to={"/unit/" + p.campusID}>Campus</Link></dt>
-            <dd>{p.campusID}</dd>
+            [<dt key="0"><Link to={"/unit/" + p.campusID}>Campus</Link></dt>,
+             <dd key="1">{p.campusID}</dd>]
           }
             <dt><a href="">Peer-Reviewed</a></dt>
             <dd>{peer_reviewed}</dd>

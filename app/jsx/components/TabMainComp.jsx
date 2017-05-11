@@ -50,7 +50,9 @@ class MainContent extends React.Component {
       case "withdrawn":
         return (<Withdrawn message={p.attrs.withdrawn_message} />)
       case "embargoed":
-        return (<Embargoed date={p.attrs.embargo_date} pub_web_loc={p.attrs.pub_web_loc}/>)
+        return (<Embargoed date={p.attrs.embargo_date}
+                           pub_web_loc={p.attrs.pub_web_loc}
+                           formatDate={p.formatDate}          />)
     }
   }
 
@@ -88,15 +90,13 @@ class Withdrawn extends React.Component {
 
 class Embargoed extends React.Component {
   render() {
-    let d = new Date(this.props.date),
-        locale = "en-us",
-        month = d.toLocaleString(locale, { month: "long" })
+    let eDate_formatted = this.props.formatDate(this.props.date)
     return (
       <details className="c-togglecontent" open>
         <summary>Main Content</summary>
         <div className="o-itemunavailable__embargoed">
           <h2 className="o-itemunavailable__lede">This item is under embargo until
-            <strong> {month + " " + d.getDay() + " " + d.getFullYear()}</strong>.</h2>
+            <strong> {eDate_formatted}</strong>.</h2>
         {(this.props.pub_web_loc.length > 0) &&
           [<p key="0">You may have access to the publisher's version here:</p>,
           <a key="1" href={this.props.pub_web_loc[0]} className="o-textlink__secondary">{this.props.pub_web_loc[0]}</a>,
