@@ -15,6 +15,9 @@ $bgreen: 1px solid #0c0;
 @each $unused-classname in
   c-columns__split,
   c-download__list,
+  c-itemactions__download,
+  c-itemactions__button1,
+  c-itemactions__button2,
   c-subheader__row1,
   c-subheader__row2,
   o-columnbox__divided,
@@ -28,7 +31,11 @@ $bgreen: 1px solid #0c0;
   c-header1__search,
   c-header2__search,
   c-header2__logo,
+  c-tabcontent__heading,
   l-about,
+  c-refinemedia,
+  c-refinemedia__droplist,
+  c-refinemedia__download,
   l-search,
   l-search__sort-pagination,
   // o-button__1,
@@ -48,7 +55,7 @@ $bgreen: 1px solid #0c0;
       background-color: #f00;
       color: #fff;
       font-size: 0.8em;
-      content: '("#{$unused-classname}" className here no longer used; OK to remove)';
+      content: '("#{$unused-classname}" className here changed or no longer used)';
     }
 
   }

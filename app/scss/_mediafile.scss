@@ -150,10 +150,10 @@ $mediafile-img-height: 120px;
 }
 
 %o-mediafile__heading {
-  margin: 0 0 $spacing-sm;
+  @extend %o-heading3;
+  margin-bottom: $spacing-sm;
   padding-left: 25px;
   background: no-repeat top left / 16px;
-  font-size: 1.3em;
   font-weight: normal;
   box-sizing: border-box; // for Chrome & Safari (don't know why this in _resets.scss isn't getting applied here)
 

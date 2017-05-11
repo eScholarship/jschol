@@ -10,7 +10,7 @@ class NavSubComp extends React.Component {
           this.props.onSubmenuChanged( !this.navsub.open)
           event.preventDefault()
         }}>
-          {this.props.name}
+          <span>{this.props.name}</span>
         </summary>
         <nav className="c-nav__sub-items">
           <button className="c-nav__sub-items-button" aria-label="return to menu" onClick = {()=> { this.props.onSubmenuChanged(false) }}>Main Menu</button>

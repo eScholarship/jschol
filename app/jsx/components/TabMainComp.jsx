@@ -136,7 +136,7 @@ class TabMainComp extends React.Component {
                          content_type={p.content_type}
                          supp_files={p.attrs.supp_files}
                          buy_link={p.attrs.buy_link} />
-        <h1 className="c-tabcontent__heading" tabIndex="-1">{p.title}</h1>
+        <h1 className="c-tabcontent__main-heading" tabIndex="-1">{p.title}</h1>
         <AuthorListComp pubdate={p.pub_date}
                         authors={p.authors}
                         changeTab={p.changeTab} />
