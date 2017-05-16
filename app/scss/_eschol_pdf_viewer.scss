@@ -3,7 +3,7 @@
 // scss-lint:disable IdSelector
 #pdfjs-cdl-wrapper {
   @import '../bower_components/pdfjs-embed/scss/_viewer.scss';
-  display: none;
+  /*display: none;*/
 
   @include bp(screen1) {
     display: block;
@@ -19,8 +19,12 @@
     display: none;
   }
 
+  #outerContainer {
+    margin-top: 30px; /* was: 10px */
+  }
+
   #mainContainer {
-    position: relative; /* was "relative" */
+    position: relative; /* was "absolute" */
   }
 
   /* Turn off a bunch of button features we don't need in our UI */
@@ -36,7 +40,8 @@
 
   /* remove borders */
   .pdfViewer .page {
-    margin: 1px;
-    border: 1px;
+    margin: 2px;
+    border: 2px;
+    width: auto;
   }
 }

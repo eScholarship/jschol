@@ -3,6 +3,16 @@
 import React from 'react'
 import $ from 'jquery'
 
+// Total hack to force rescale when window is resized
+if (!(typeof window === "undefined")) {
+  window.addEventListener('resize', function() {
+    // First, make it small so outer components actually can collapse down
+    $(".textLayer, .canvasWrapper, .page").css("width", "50px")
+    // Then pick up the new container size and rescale pdf.js
+    window.forcePdfViewerResize()
+  })
+}
+
 class PdfViewerComp extends React.Component
 {
   initted: false

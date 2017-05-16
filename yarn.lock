@@ -2114,10 +2114,6 @@ doctrine@^2.0.0:
     esutils "^2.0.2"
     isarray "^1.0.0"
 
-dom-helpers@^3.0.0:
-  version "3.2.1"
-  resolved "https://registry.yarnpkg.com/dom-helpers/-/dom-helpers-3.2.1.tgz#3203e07fed217bd1f424b019735582fc37b2825a"
-
 dom-serializer@0, dom-serializer@~0.1.0:
   version "0.1.0"
   resolved "https://registry.yarnpkg.com/dom-serializer/-/dom-serializer-0.1.0.tgz#073c697546ce0780ce23be4a28e293e40bc30c82"
@@ -5522,9 +5518,9 @@ pbkdf2@^3.0.3:
   dependencies:
     create-hmac "^1.1.2"
 
-pdfjs-embed@escholarship/pdfjs-embed#4f33a18d62:
+pdfjs-embed@escholarship/pdfjs-embed#ce3305b74075ee1c13f8731b7521cc02efe5dc8f:
   version "1.6.210"
-  resolved "https://codeload.github.com/escholarship/pdfjs-embed/tar.gz/4f33a18d62"
+  resolved "https://codeload.github.com/escholarship/pdfjs-embed/tar.gz/ce3305b74075ee1c13f8731b7521cc02efe5dc8f"
   dependencies:
     node-ensure "0.0.0"
 
@@ -5864,13 +5860,6 @@ react-router-form@^2.0.0-rc.0:
   resolved "https://registry.yarnpkg.com/react-router-form/-/react-router-form-2.0.0-rc.0.tgz#da1dae17bfdc31ee1f4b594e9952f3d1b34fc56b"
   dependencies:
     get-form-data "1.x"
-
-react-router-scroll@^0.4.1:
-  version "0.4.1"
-  resolved "https://registry.yarnpkg.com/react-router-scroll/-/react-router-scroll-0.4.1.tgz#8cafd348d34e54b1127ec0fb7f8323d0d4c489e0"
-  dependencies:
-    scroll-behavior "^0.9.1"
-    warning "^3.0.0"
 
 react-router@^2.8.1:
   version "2.8.1"
@@ -6236,13 +6225,6 @@ sass-graph@^2.1.1:
 sax@^1.2.1, sax@~1.2.1:
   version "1.2.2"
   resolved "https://registry.yarnpkg.com/sax/-/sax-1.2.2.tgz#fd8631a23bc7826bef5d871bdb87378c95647828"
-
-scroll-behavior@^0.9.1:
-  version "0.9.3"
-  resolved "https://registry.yarnpkg.com/scroll-behavior/-/scroll-behavior-0.9.3.tgz#e48bcc8af364f3f07176e8dbca3968bd5e71557b"
-  dependencies:
-    dom-helpers "^3.0.0"
-    invariant "^2.2.1"
 
 seek-bzip@^1.0.3:
   version "1.0.5"

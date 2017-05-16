@@ -9,6 +9,7 @@ config/
 dist
 Gemfile.lock
 gems/
+gomysql
 node_modules/
 prefilterDirs.txt
 public/css/
