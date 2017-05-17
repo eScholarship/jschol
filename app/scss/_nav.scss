@@ -20,12 +20,10 @@
 .c-nav__main-button {
   display: inline-block;
   position: relative;
-  height: $element-height;
   margin-bottom: 5px;
   padding: 0 35px 0 10px;
   border: 1px solid $color-dark-gray;
   color: $color-dark-gray;
-  line-height: $element-height;
   user-select: none;
 
   @include bp(screen3) {
@@ -40,6 +38,13 @@
     padding: 7px;
     background: inline('../images/icon_arrow-down.svg') no-repeat center / 13px;
     content: '';
+  }
+
+  // <summary> isn't responding to flexbox values in Safari, so need to use <span> child with those values:
+  span {
+    @extend %interactive-element-size;
+    display: inline-flex;
+    align-items: center;
   }
 
 }
@@ -71,7 +76,7 @@
     @extend %c-nav__item;
 
     @include bp(screen3) {
-      padding: 6px 0 3px;
+      padding: 0;
       border: none;
       background: none;
     }
@@ -125,28 +130,36 @@
 }
 
 .c-nav__sub-button {
-  @extend %c-nav__item;
   position: relative;
-  border-top: none;
   user-select: none;
 
-  @include bp(screen3) {
-    padding: 6px 25px 3px 0;
-    border: none;
-    background: none;
+  // <summary> isn't responding to flexbox values in Safari, so need to use <span> child with those values:
+  span {
+    @extend %c-nav__item;
+    border-top: none;
+
+    @include bp(screen3) {
+      padding-right: 1.5em;
+      padding-left: 0;
+      border: none;
+      background: none;
+    }
+
   }
 
   &::after {
-    margin-left: 10px;
-    content: '\00bb'; // double-right arrow
+    position: absolute;
+    top: 0;
+    right: $spacing-sm;
+    bottom: 0;
+    width: 1em;
+    background: inline('../images/icon_angle-double-right-gray.svg') no-repeat center / contain;
+    content: '';
 
     @include bp(screen3) {
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      padding: 7px;
-      background: inline('../images/icon_arrow-down.svg') no-repeat center / 13px;
-      content: '';
+      right: 0;
+      width: 0.8em;
+      background-image: inline('../images/icon_arrow-down.svg');
     }
 
   }
@@ -160,11 +173,14 @@
   left: 0;
   transform: translateX(103%); // moves sub-items to right side of main-items
 
+  // Drop-down menu:
+
   @include bp(screen3) {
     top: auto;
     left: (-$spacing-sm);
-    width: 200px;
-    max-height: 360px;
+    width: 12em;
+    max-height: 23em;
+    margin-top: $spacing-base;
     transform: translateX(0);
     overflow: auto;
   }
@@ -178,16 +194,14 @@
 .c-nav__sub-items-button {
   @extend %c-nav__item;
   width: 100%;
+  margin-right: $spacing-sm;
+  padding: 0 0 0 2em;
   border-bottom: none;
+  background: $color-white inline('../images/icon_angle-double-left-gray.svg') no-repeat left $spacing-sm center / 1em;
   text-align: left;
 
   @include bp(screen3) {
     display: none;
-  }
-
-  &::before {
-    margin: 0 10px 0 0;
-    content: '\00ab'; // double-left arrow
   }
 
 }

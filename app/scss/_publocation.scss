@@ -19,8 +19,8 @@
 .c-publocation__heading {
 
   @include headings() {
-    margin: 0 0 $spacing-sm;
-    font-size: 1em;
+    @extend %o-heading4;
+    margin-bottom: $spacing-sm;
   }
 
 }

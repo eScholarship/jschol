@@ -43,6 +43,13 @@ class ItemPage extends PageBase {
     }
   }
 
+  formatDate = d => {
+    let x = d ? new Date(d) : new Date(),
+        locale = "en-us",
+        month = x.toLocaleString(locale, { month: "long" })
+    return (month + " " + x.getDay() + ", " + x.getFullYear())
+  }
+
   changeTab = tabName => {
     // Set hash based on what was clicked
     window.location.hash=tabName
@@ -66,6 +73,7 @@ class ItemPage extends PageBase {
           <main id="maincontent">
             <TabsComp currentTab={this.state.currentTab}
                       changeTab={this.changeTab}
+                      formatDate={this.formatDate}
                       {...data} />
           </main>
           <aside>

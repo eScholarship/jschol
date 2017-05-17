@@ -202,3 +202,23 @@ better.
 
 Merged all recent changes (there weren't that many), mainly to
 pick up Modal Z-order fix.
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's 21169187b54204de90c9c74e938136422ebc6168, 2017-05-11 <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+Andy added all scss and image changes since last.
+As well as:
+
+	modified:   app/jsx/components/DataTableComp.jsx
+	modified:   app/jsx/components/ItemActionsComp.jsx
+	modified:   app/jsx/components/NavComp.jsx
+	modified:   app/jsx/components/NavSubComp.jsx
+	modified:   app/jsx/components/ShareComp.jsx
+	modified:   app/jsx/components/TabAuthorComp.jsx
+	modified:   app/jsx/components/TabCommentsComp.jsx
+	modified:   app/jsx/components/TabMainComp.jsx
+	modified:   app/jsx/components/TabMetricsComp.jsx
+	modified:   app/jsx/components/TabSupplementalComp.jsx
+	modified:   app/jsx/components/Tabs2Comp.jsx
+	modified:   app/jsx/components/TabsComp.jsx

@@ -6,6 +6,7 @@ class DataTableComp extends React.Component {
   render() {
     return (
       <table className="c-datatable">
+        <caption>Delicious Fruit</caption>
         <thead>
           <tr>
             <th scope="col">Quantity</th>

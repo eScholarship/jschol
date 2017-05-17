@@ -7,7 +7,7 @@ import PageBase from './PageBase.jsx'
 import Header1Comp from '../components/Header1Comp.jsx'
 import Header2Comp from '../components/Header2Comp.jsx'
 import Subheader2Comp from '../components/Subheader2Comp.jsx'
-import Nav1Comp from '../components/Nav1Comp.jsx'
+import NavComp from '../components/NavComp.jsx'
 import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
 import Breakpoints from '../../js/breakpoints.json'
 import WellComp from '../components/WellComp.jsx'
@@ -18,10 +18,11 @@ class BrowsePage extends PageBase
 {
   // PageBase will fetch the following URL for us, and place the results in this.state.pageData
   pageDataURL() {
-    if (this.props.params.browse_type) {
-      return "/api/browse/" + this.props.params.browse_type
-    } else {
+    if (this.props.params.campusID) {
       return "/api/browse/depts/" + this.props.params.campusID
+    } else {
+      // journals or campuses
+      return "/api/browse/" + this.props.route.path
     }
   }
 
@@ -29,23 +30,26 @@ class BrowsePage extends PageBase
     return (
       <div>
 
-      {/* Campus-specific browse page */}
-      { data.browse_type == "depts" &&
-        <div>
-          <Header2Comp type="campus" unitID={data.campusID} />
-          <Subheader2Comp type="campus"
-                          campuses={data.campuses}
-                          unitID={data.campusID}
-                          unitName={data.campusName}
-                          campusID={data.campusID}
-                          campusName={data.campusName} />
-        </div>
-      }
-      {/* Global browse page */}
-      { data.browse_type != "depts" &&
+      { data.browse_type != "depts" ? 
+        // Global browse page (browse_type != "depts")
         <div>
           <Header1Comp />
-          <Nav1Comp campuses={data.campuses} />
+          <div className="c-navbar">
+            <NavComp data={data.header.nav_bar} />
+          </div>
+        </div>
+        :
+        // Campus-specific browse page
+        <div>
+          <Header2Comp type="campus" unitID={data.campusID} />
+          <Subheader2Comp unit={data.unit}
+                          campusID={data.campusID}
+                          campusName={data.campusName}
+                          campuses={data.campuses} />
+          <div className="c-navbar">
+            {/* ToDo: Properly call header.nav_bar for unit type="campus" */}
+            <NavComp data={[{name: 'Open Access Policies', slug: ''}, {name: 'Journals', slug: '/' + data.campusID + '/journals'}, {name: 'Academic Units', slug: '/' + data.campusID + '/departments'}]} />
+          </div>
         </div>
       }
       <BreadcrumbComp array={data.breadcrumb} />
@@ -62,7 +66,7 @@ class Content extends React.Component {
     return (
       <div className="c-columns">
         <main id="maincontent">
-        { p.browse_type == "campuslist" && this.renderCampuses(p) }
+        { p.browse_type == "campuses" && this.renderCampuses(p) }
         { p.browse_type == "depts" && this.renderDepts(p.depts) }
         { p.browse_type == "journals" && <BrowseJournals journals={p.journals}
           isActive="" campuses={p.campuses} campusID=""/> }
@@ -142,30 +146,28 @@ class BrowseJournals extends React.Component {
         return <option key={i} value={c['id']}>{c['name']}</option>
       })
     return (
-    <div>
-      <h2>Journals</h2>
-      <p>
-Lorem ipsum dolor sit amet
-
-consectetur adipiscing elit. Aenean euismod bibendum laoreet. Proin gravida dolor sit amet lacus accumsan et viverra justo commodo. Proin sodales pulvinar tempor. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Nam fermentum, nulla luctus pharetra vulputate,
-
-felis tellus mollis orci, sed start a journal nunc eget odio.
-      </p>
-      <div className="o-input__droplist">
-        <select name="isActive" id="" onChange={this.changeActive} value={this.state.isActive}>
-          <option value="">All</option>
-          <option value="1">Actively publishing</option>
-          <option value="0">Archived</option>
-        </select>
-      </div>
-      <div className="o-input__droplist">
-        <select name="campusID" id="" onChange={this.changeCampus} value={this.state.campusID}>
-          {campusSelector}
-        </select>
+    <section className="o-columnbox1">
+      <header>
+        <h2>Journals</h2>
+      </header>
+      <WellComp />
+      <div className="c-sort">
+        <div className="o-input__droplist1">
+          <select name="isActive" id="" onChange={this.changeActive} value={this.state.isActive}>
+            <option value="">All</option>
+            <option value="1">Actively publishing</option>
+            <option value="0">Archived</option>
+          </select>
+        </div>
+        <div className="o-input__droplist1">
+          <select name="campusID" id="" onChange={this.changeCampus} value={this.state.campusID}>
+            {campusSelector}
+          </select>
+        </div>
       </div>
       {visibleJournals ? visibleJournals : <p>No journals found matching that criteria<br/><br/><br/></p>}
       <br/><br/>
-    </div>
+    </section>
   )}
 }
 

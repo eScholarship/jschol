@@ -1,5 +1,9 @@
 // ##### Item Actions Component ##### //
 
+// Within c-itemactions parent <div>, between 2 - 5 buttons or similar components can be used, as in example below.
+
+// Styles that extend .o-button button object styles (like for applying custom button icons) should be placed in _itemactions.scss, as with the c-itemactions__button-[name] examples below:
+
 import React from 'react'
 import ShareComp from '../components/ShareComp.jsx'
 
@@ -34,7 +38,7 @@ class Downloadable extends React.Component {
         label = this.contentLabel[p.content_type]
     return (
       <div className="c-itemactions">
-        <div className="c-itemactions__download o-download">
+        <div className="o-download">
           {/* ToDo: Once main multimedia content is ingested, this button should say 'Download Content' */}
           <button className="o-download__button">Download {label}</button>
           <details className="o-download__formats">
@@ -79,9 +83,9 @@ class Downloadable extends React.Component {
           </details>
         </div>
       {p.buy_link &&
-        <button onClick={() => {this.linkBuyPrint()}} className="c-itemactions__button1 o-button__6">Buy in Print</button>
+        <button onClick={() => {this.linkBuyPrint()}} className="c-itemactions__button-print">Buy in Print</button>
         // ToDo: Hook this up when we get eBook links
-        // <button className="c-itemactions__button2 o-button__6">Buy e-Book</button>
+        // <button className="c-itemactions__button-buy">Buy e-Book</button>
       }
         <ShareComp type="item" id={this.props.id} />
       </div>

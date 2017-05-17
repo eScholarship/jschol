@@ -1,0 +1,49 @@
+// ##### Heading Objects ##### //
+
+%o-heading {
+  margin-top: 0;
+  margin-bottom: $spacing-md;
+  line-height: $line-height;
+}
+
+%o-heading1 {
+  @extend %o-heading;
+  color: $color-teal;
+  font-size: 1.6em;
+  font-weight: normal;
+}
+
+.o-heading1 {
+  @extend %o-heading1;
+}
+
+%o-heading2 {
+  @extend %o-heading;
+  color: $color-teal;
+  font-size: 1.3em;
+  font-weight: normal;
+}
+
+.o-heading2 {
+  @extend %o-heading2;
+}
+
+%o-heading3 {
+  @extend %o-heading;
+  font-size: 1.2em;
+  font-weight: bold;
+}
+
+.o-heading3 {
+  @extend %o-heading3;
+}
+
+%o-heading4 {
+  @extend %o-heading;
+  font-size: 1em;
+  font-weight: bold;
+}
+
+.o-heading4 {
+  @extend %o-heading4;
+}

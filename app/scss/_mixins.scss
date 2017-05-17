@@ -1,4 +1,4 @@
-// ##### Global Mixins ##### //
+// ##### Global Mixins and Placeholders ##### //
 
 // Create short media query blocks:
 
@@ -42,6 +42,49 @@ Selector pattern using above media query mixin:
 
 */
 
+// Enlarge an interactive element's minimum width and height if there's a touch screen:
+
+%interactive-element-size { 
+  min-width: $pointer-size-fine;
+  min-height: $pointer-size-fine;
+
+  @media (any-pointer: coarse) {
+    min-width: $pointer-size-coarse;
+    min-height: $pointer-size-coarse;
+  }
+
+}
+
+/*
+
+Set an interactive element's styles if there's a touchscreen (coarse) or mouse-only screen (fine). Example:
+
+@include interactive-element-pointer(coarse) {
+  property: $value;
+}
+
+*/
+
+@mixin interactive-element-pointer($pointer-size) {
+
+  @if $pointer-size == coarse {
+    
+    @media (any-pointer: coarse) {
+      @content;
+    }
+
+  // The "fine" option is not currenty used in any components but here for possible future cases:
+
+  } @else if $pointer-size == fine {
+
+    @media (any-pointer: fine) {
+      @content;
+    }
+
+  }
+
+}
+
 // No bullet unordered lists
 
 %no-bullet-ul {
@@ -69,8 +112,11 @@ Selector pattern using above media query mixin:
 // Navigation item styles
 
 %nav-item {
-  display: block;
-  padding: 10px;
+  @extend %interactive-element-size;
+  display: flex;
+  align-items: center;
+  padding-right: 10px;
+  padding-left: 10px;
   border: 1px solid $color-dark-gray;
   background: $color-white;
   color: $color-dark-gray;

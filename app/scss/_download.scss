@@ -25,23 +25,19 @@
 .o-download__formats {
 
   summary {
+    @extend %interactive-element-size; // sets the height for .o-download
     position: relative;
-    min-height: $element-height;
-    padding-right: 25px;
-    padding-left: $spacing-sm;
     border-radius: 0 $round-corner $round-corner 0;
     background-color: $color-teal;
-    color: $color-white;
-    line-height: $element-height;
     user-select: none;
 
     &::after {
       position: absolute;
       top: 0;
-      right: $spacing-sm;
+      right: 0;
       bottom: 0;
-      padding: 0 7px;
-      background: inline('../images/icon_arrow-down-white.svg') no-repeat center / 13px;
+      left: 0;
+      background: inline('../images/icon_arrow-down-white.svg') no-repeat center / 0.8em;
       content: '';
 
     }
