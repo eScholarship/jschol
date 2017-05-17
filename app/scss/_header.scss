@@ -75,11 +75,9 @@
 }
 
 .c-header__search-open-button {
+  @extend %o-button__9;
   align-self: flex-start;
-  min-height: $input-height;
-  padding: 0 ($input-height / 2);
-  border: none;
-  background: inline('../images/icon_magnify.svg') no-repeat center right / 25px;
+  background-image: inline('../images/icon_magnify.svg');
 
   @include bp(screen3) {
     display: none;

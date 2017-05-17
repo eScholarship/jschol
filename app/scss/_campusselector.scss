@@ -1,6 +1,6 @@
 // ##### Campus Selector Component ##### //
 
-$campus-selector-button-width: 30px;
+$campus-selector-right-margin: 30px;
 
 .c-campusselector {
   display: inline-flex;
@@ -11,7 +11,7 @@ $campus-selector-button-width: 30px;
     position: relative;
     align-items: flex-end;
     min-height: $element-height;
-    margin-right: $campus-selector-button-width + $spacing-md;
+    margin-right: $campus-selector-right-margin + $spacing-md;
   }
 
 }
@@ -39,9 +39,8 @@ $campus-selector-button-width: 30px;
 .c-campusselector__selector {
 
   summary {
+    @extend %interactive-element-size;
     position: relative;
-    width: $campus-selector-button-width;
-    min-height: $element-height;
 
     @include bp(screen3) {
       position: absolute;
@@ -85,7 +84,7 @@ $campus-selector-button-width: 30px;
   @include bp(screen3) {
     right: 0;
     left: 0;
-    margin-right: (-$campus-selector-button-width);
+    margin-right: (-$campus-selector-right-margin);
   }
 
 }

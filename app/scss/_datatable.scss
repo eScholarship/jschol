@@ -3,7 +3,13 @@
 $table-border-size: 1px;
 
 .c-datatable {
+  margin-bottom: $spacing-md;
   border: $table-border-size solid $color-teal;
+
+  caption {
+    @extend %o-heading3;
+    text-align: left;
+  }
 
   th,
   td {
