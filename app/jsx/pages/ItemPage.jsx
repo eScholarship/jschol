@@ -11,6 +11,11 @@ import TabsComp from '../components/TabsComp.jsx'
 import JumpComp from '../components/JumpComp.jsx'
 import FooterComp from '../components/FooterComp.jsx'
 
+// Load dotdotdot in browser but not server
+if (!(typeof document === "undefined")) {
+  const dotdotdot = require('jquery.dotdotdot')
+}
+
 const anchors = ['main', 'supplemental', 'metrics', 'author',
              'article_abstract', 'article_main', 'article_references']
 

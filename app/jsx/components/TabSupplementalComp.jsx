@@ -5,20 +5,23 @@ import MediaFileGridComp from '../components/MediaFileGridComp.jsx'
 
 class RefineComp extends React.Component {
   render() {
+    let mimeSimpleLabel = { 'audio':'Audio', 'data':'Others', 'doc':'Documents', 'image':'Images', 'video':'Videos' }
     return (
       <div className="c-itemactions">
+      {(this.props.mimeTypes.length > 1) && 
         <div className="o-input__droplist2">
           <label htmlFor="o-input__droplist-label2">Refine media type by:</label>
-          <select name="" id="o-input__droplist-label2">
+          <select name="filterType" id="o-input__droplist-label2" onChange={this.props.changeType} value={this.props.filterType}>
             <option value="">All</option>
-            <option value="">Documents</option>
-            <option value="">Images</option>
-            <option value="">Videos</option>
-            <option value="">Others</option>
+          { this.props.mimeTypes.map((type) => {
+            return (<option key={type} value={type}>{mimeSimpleLabel[type]}</option>)
+          })}
           </select>
         </div>
+      }
         <div className="o-download">
           <button className="o-download__button">Download All Files</button>
+        {(this.props.mimeTypes.length > 1) && 
           <details className="o-download__formats">
             <summary aria-label="formats"></summary>
             <ul className="o-download__single-menu">
@@ -29,6 +32,7 @@ class RefineComp extends React.Component {
               <li><a href="">File</a></li>
             </ul>
           </details>
+        }
         </div>
       </div>
     ) 
@@ -36,20 +40,41 @@ class RefineComp extends React.Component {
 }
 
 class TabSupplementalComp extends React.Component {
+  state = {filterType: ""}
+
+  changeType = event => {
+    this.setState({filterType: event.target.value})
+  }
+
   render() {
-    let supp_files = this.props.attrs.supp_files,
-      mimeTypes = [] 
-    if (supp_files) {  
-      mimeTypes = [...new Set(supp_files.map(f => f.mimeType))];
+    let supp_files_orig = this.props.attrs.supp_files,
+        supp_files = [],
+        mimeTypes = [] 
+    if (supp_files_orig) {  
+      // mimeSimple = Normalized mimeType value to make filtering files easier
+      for (let f of supp_files_orig) {
+        var mimeSimple = ""
+        var s = f.mimeType.split('/')
+        if ((s[0] == "text") ||
+            (s[0] == "application" && ["pdf", "msword", "postscript", "wordperfect", "pdf"].includes(s[1]))) {
+          mimeSimple = "doc"
+        }
+        else if (["music", "audio"].includes(s[0])) { mimeSimple = "audio" }
+        else if (["image", "video"].includes(s[0])) { mimeSimple = s[0] }
+        else { mimeSimple = "data" }
+        f['mimeSimple'] = mimeSimple
+        supp_files.push(f) 
+      }
+      mimeTypes = [...new Set(supp_files.map(f => f.mimeSimple))];
     }
     return (
       <div className="c-tabcontent">
         <h1 className="c-tabcontent__main-heading" tabIndex="-1">Supplemental Material</h1>
-        {supp_files && (mimeTypes.length > 1) && 
-          <RefineComp mimeTypes={mimeTypes} />
+        {supp_files && (supp_files.length > 1) &&
+          <RefineComp mimeTypes={mimeTypes} filterType={this.state.filterType} changeType={this.changeType} />
         }
         {supp_files ?
-          <MediaFileGridComp supp_files={supp_files}  />
+          <MediaFileGridComp id={this.props.id} supp_files={supp_files} filterType={this.state.filterType} />
           : <div>No supplemental material included with this item</div>
         }
       </div>

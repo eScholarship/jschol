@@ -4,7 +4,7 @@ import React from 'react'
 
 import PageBase from './PageBase.jsx'
 import Header1Comp from '../components/Header1Comp.jsx'
-import Nav1Comp from '../components/Nav1Comp.jsx'
+import NavComp from '../components/NavComp.jsx'
 import FooterComp from '../components/FooterComp.jsx'
 
 class HomePage extends PageBase
@@ -18,7 +18,9 @@ class HomePage extends PageBase
     return(
     <div>
       <Header1Comp />
-      <Nav1Comp campuses={data.campuses} />
+      <div className="c-navbar">
+        <NavComp data={data.header.nav_bar} />
+      </div>
       <h2 style={{ marginTop: "5em", marginBottom: "5em" }}>Home page content here</h2>
     </div>
   )}
