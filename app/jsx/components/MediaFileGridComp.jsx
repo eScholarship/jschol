@@ -18,11 +18,12 @@ class CellComp extends React.Component {
         </h2>
         <a className="o-mediafile__link" href={this.url} aria-label={fileLabel}>
           {(mimeSimple == "image") &&
-            <img className="o-mediafile__image" src={this.url} />
+            <img className="o-mediafile__image" src={this.url} alt={p.file} />
           }
         </a>
         <button className="o-mediafile__button">Download</button>
-        <div className="o-mediafile__description" ref={ el => $(el).dotdotdot({watch:"window"}) }>{p.description}</div>
+        <div className="o-mediafile__description" ref={ el => $(el).dotdotdot({watch:"window"}) }>
+          {p.description}</div>
       </div>
     )
   }
@@ -32,13 +33,19 @@ class MediaFileGridComp extends React.Component {
   getVisibleFiles(files, filterType) {
     let foundOne = false
     let r = files.map((f, i) => {
+      let title = f.title,
+          description = f.description 
+      if (!f.title) {
+        title = description
+        description = '' 
+      }
       let p = (f['mimeSimple'].includes(filterType) || filterType =="") &&
             <CellComp key={i}
                       id={this.props.id}
                       mimeSimple={f.mimeSimple}
-                      title={f.title}
+                      title={title}
                       file={f.file}
-                      description={f.description} />
+                      description={description} />
       if (p) {foundOne = true}
       return p
     })

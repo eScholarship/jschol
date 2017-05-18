@@ -1,6 +1,7 @@
 // ##### Item Page ##### //
 
 import React from 'react'
+import $ from 'jquery'
 
 import PageBase from './PageBase.jsx'
 import Header2Comp from '../components/Header2Comp.jsx'
