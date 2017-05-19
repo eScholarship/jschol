@@ -2,13 +2,12 @@
 
 import React from 'react'
 import $ from 'jquery'
-import { Subscriber } from 'react-broadcast'
 import { Link } from 'react-router'
-
 
 // Only load flickity when in the browser (not server-side)
 if (!(typeof document === "undefined")) {
   var Flickity = require('flickity-imagesloaded')
+  const dotdotdot = require('jquery.dotdotdot')
 }
 
 class MarqueeComp extends React.Component {
@@ -24,7 +23,7 @@ class MarqueeComp extends React.Component {
       this.flkty = new Flickity(carousel, options);
     }
   }
-    
+
   componentWillUnmount() {
     if (this.flkty) {
       this.flkty.destroy();
@@ -51,35 +50,23 @@ class MarqueeComp extends React.Component {
         </div>
       ]
     }
-    var carouselOverlay = (
-      <div className="c-marquee__overlay">
-        <Link to={"/unit/" + this.props.unit.id + "/profile/#marquee" }>
-          <img src="/images/icon_gear-black.svg"/>
-        </Link>
-      </div>
-    )
     return (
-      <Subscriber channel="cms">
-        { cms => 
-          <div className="c-marquee">
-            <div className="c-marquee__carousel-overlay-container">
-              {cms.isEditingPage && carouselOverlay}
-              <div className="c-marquee__carousel">
-                {carouselCells}
-              </div>
+      <div className="c-marquee">
+        <div className="c-marquee__carousel">
+          {carouselCells}
+        </div>
+        <aside className="c-marquee__sidebar">
+          <section className="o-columnbox2">
+            <header>
+              <h2>About</h2>
+            </header>
+            {/* FIXME: ask Joel to specify the height so we don't have to manually config it below. */}
+            <div ref={ el => $(el).dotdotdot({watch:"window", height:150}) }>
+              <p>{this.props.marquee.about}</p>
             </div>
-            <aside className="c-marquee__sidebar">
-              <section className={cms.isEditingPage ? "o-columnbox4 editable-outline" : "o-columnbox1"}>
-                <header>
-                  <h2>About</h2>
-                </header>
-                <p>{this.props.marquee.about} <a className="o-textlink__secondary" href="">More</a>
-                </p>
-              </section>
-            </aside>
-          </div>
-        }
-      </Subscriber>
+          </section>
+        </aside>
+      </div>
     )
   }
 }
