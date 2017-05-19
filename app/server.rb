@@ -447,7 +447,6 @@ get "/api/unit/:unitID/?:pageName/?" do
         unit: unit.values.reject{|k,v| k==:attrs}
       }
     end
-    pp pageData
     return pageData.to_json
   rescue Exception => e
     halt 404, e.message
