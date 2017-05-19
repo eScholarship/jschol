@@ -20,8 +20,8 @@
 .c-nav__main-button {
   display: inline-block;
   position: relative;
-  margin-bottom: 5px;
-  padding: 0 35px 0 10px;
+  padding-right: 2em;
+  padding-left: 0.6em;
   border: 1px solid $color-dark-gray;
   color: $color-dark-gray;
   user-select: none;
@@ -34,7 +34,7 @@
     position: absolute;
     top: 0;
     bottom: 0;
-    margin-left: 10px;
+    margin-left: 6px;
     padding: 7px;
     background: inline('../images/icon_arrow-down.svg') no-repeat center / 13px;
     content: '';
@@ -54,7 +54,7 @@
 %c-nav__item {
   @extend %nav-item;
 
-  &:not(:first-of-type) {
+  &:not(:first-child) {
     border-top: none;
   }
 
@@ -64,6 +64,7 @@
   position: absolute; // to <body>
   right: $spacing-sm;
   left: $spacing-sm;
+  margin-top: $spacing-base;
   transition: transform 0.5s;
 
   @include bp(screen3) {
@@ -93,6 +94,18 @@
 
   }
 
+  > * {
+
+    &:not(:first-child) {
+
+      .c-nav__sub-button {
+        border-top: none;
+      }
+
+    }
+
+  }
+
 }
 
 .c-nav__main-items {
@@ -110,7 +123,7 @@
 
 }
 
-// ***** Sub Navigation Items ***** //
+// ***** Sub Navigation (exists in NavSubComp.jsx) ***** //
 
 .c-nav__sub {
 
@@ -130,19 +143,23 @@
 }
 
 .c-nav__sub-button {
+  @extend %c-nav__item;
   position: relative;
   user-select: none;
 
+  @include bp(screen3) {
+    border: none;
+  }
+
   // <summary> isn't responding to flexbox values in Safari, so need to use <span> child with those values:
   span {
-    @extend %c-nav__item;
-    border-top: none;
+    @extend %interactive-element-size;
+    display: inline-flex;
+    align-items: center;
 
     @include bp(screen3) {
-      padding-right: 1.5em;
+      padding-right: 0.9em;
       padding-left: 0;
-      border: none;
-      background: none;
     }
 
   }
@@ -171,7 +188,7 @@
   top: 0;
   right: 0;
   left: 0;
-  transform: translateX(103%); // moves sub-items to right side of main-items
+  transform: translateX(103%); // moves sub-items to right off-screen of main-items
 
   // Drop-down menu:
 
@@ -182,6 +199,7 @@
     max-height: 23em;
     margin-top: $spacing-base;
     transform: translateX(0);
+    border-top: 1px solid $color-dark-gray;
     overflow: auto;
   }
 
@@ -196,7 +214,6 @@
   width: 100%;
   margin-right: $spacing-sm;
   padding: 0 0 0 2em;
-  border-bottom: none;
   background: $color-white inline('../images/icon_angle-double-left-gray.svg') no-repeat left $spacing-sm center / 1em;
   text-align: left;
 

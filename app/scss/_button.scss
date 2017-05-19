@@ -2,7 +2,7 @@
 
 %o-button {
   @extend %interactive-element-size;
-  padding: 5px 10px;
+  padding: $spacing-base $spacing-sm;
   border: none;
   border-radius: $round-corner;
   background: none;

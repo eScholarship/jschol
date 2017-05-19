@@ -313,7 +313,7 @@ class FacetFieldset extends React.Component {
     
     return (
       <details className="c-facetbox" id={this.props.data.fieldName}>
-        <summary className="c-facetbox__summary">{this.props.data.display}</summary>
+        <summary className="c-facetbox__summary"><span>{this.props.data.display}</span></summary>
         <div className="facetItems c-checkbox">
           {facetItemNodes}
         </div>
