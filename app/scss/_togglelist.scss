@@ -1,14 +1,11 @@
 // ##### Toggle List Component ##### //
 
-$togglelist-list-spacing: 0.625em; // 10px
-$togglelist-indent: 2em;
-
 .c-togglelist {
   // no styles
 }
 
 .c-togglelist__buttons {
-  margin-bottom: $spacing-md;
+  margin-bottom: $spacing-sm;
 
   button {
 
@@ -22,13 +19,22 @@ $togglelist-indent: 2em;
 
 .c-togglelist__mainlist {
   @extend %no-bullet-ul;
-  margin-left: $togglelist-indent;
+  margin-left: $pointer-size-fine;
+
+  @include interactive-element-pointer(coarse) {
+    margin-left: $pointer-size-coarse;
+  }
 
   li {
-    margin-bottom: $togglelist-list-spacing;
+    position: relative;
 
     a {
       @extend %o-textlink__secondary;
+      @extend %interactive-element-size;
+      display: flex;
+      align-items: center;
+      padding-top: 0.3em;
+      padding-bottom: 0.3em;
     }
 
   }
@@ -38,18 +44,21 @@ $togglelist-indent: 2em;
 .c-togglelist__sublist {
 
   summary {
-    position: relative;
-    margin-bottom: $togglelist-list-spacing;
     color: $color-teal;
     user-select: none;
 
     &::after { // ::before can't be used; see resets.scss
+      @extend %interactive-element-size;
       position: absolute;
-      top: -2.15em;
-      left: (-$togglelist-indent);
-      padding: 0.938em; // 15px
-      background: inline('../images/icon_plus-black.svg') no-repeat center / 1em;
+      top: 0;
+      left: (-$pointer-size-fine);
+      background: inline('../images/icon_plus-black.svg') no-repeat center / 1.1em;
       content: '';
+
+      @include interactive-element-pointer(coarse) {
+        left: (-$pointer-size-coarse);
+      }
+
     }
 
   }
@@ -68,7 +77,12 @@ $togglelist-indent: 2em;
 
   ul {
     @extend %no-bullet-ul;
-    margin-left: $togglelist-indent;
+    margin-left: $pointer-size-fine;
+
+    @include interactive-element-pointer(coarse) {
+      margin-left: $pointer-size-coarse;
+    }
+
   }
 
 }

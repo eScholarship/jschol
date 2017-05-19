@@ -78,7 +78,7 @@ class TabMetricsComp extends React.Component {
             </table>
           </div>
           <div className="c-tabcontent__divide2x-child">
-            <img className="o-imagecontent" src="images/sample_data.png" alt="sample data"/>
+            <img className="o-imagecontent" src="/images/sample_data.png" alt="sample data"/>
           </div>
         </div>
       </div>

@@ -2,14 +2,10 @@
 
 .c-sort {
   display: flex;
-  margin: 0 0 $spacing-md;
-
-  @include bp(screen2) {
-    margin: 0 $spacing-md $spacing-md 0;
-  }
-
+  margin-right: $spacing-md;
+  margin-bottom: $spacing-md;
 }
 
 .c-sort__page-input {
-  margin: 0 0 0 $spacing-md;
+  margin-left: $spacing-md;
 }

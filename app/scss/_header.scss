@@ -11,9 +11,14 @@
 // Header 1 component logo:
 
 .c-header__logo1 {
+  margin-bottom: 1.25em;
+
+  @include bp(screen3) {
+    margin-bottom: 0;
+  }
 
   img {
-    height: 50px;
+    @extend %interactive-element-size;
   }
 
 }
@@ -29,7 +34,7 @@
   }
 
   img {
-    height: $element-height;
+    @extend %interactive-element-size;
   }
 
 }

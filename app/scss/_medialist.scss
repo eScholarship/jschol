@@ -5,7 +5,7 @@ $medialist-item-length: 13em;
 .c-medialist {
   @extend %no-bullet-ul;
   @extend %clearfix;
-  flex: 1 0 auto; // to .c-scholworks__media flexbox
+  margin-right: $spacing-md;
 
   @supports (display: grid) {
     display: grid;

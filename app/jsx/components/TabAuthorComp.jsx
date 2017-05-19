@@ -8,7 +8,7 @@ class CitationComp extends React.Component {
     return (
       <dl className="c-descriptionlist">
         {/* ToDo: Bring in all citations styles */}
-        <dt><a href="">APA</a></dt>
+        <dt><strong>APA</strong></dt>
         <dd>Citation here</dd>
       </dl>
     )
@@ -19,7 +19,8 @@ class TabAuthorComp extends React.Component {
   render() {
     let p = this.props,
         authorList = p.authors.map(function(a, i) {return (
-          [<dt key={i}>{a.name}</dt>,
+          // ToDo: Link to author 
+          [<dt key={i}><a href="">{a.name}</a></dt>,
            <dd key={i+1}>{a.institution ? a.institution : ""}
             {a.email ? <span>&nbsp;&nbsp;&nbsp;{a.email}</span> : ""}</dd>]
         )}),
@@ -78,24 +79,24 @@ class TabAuthorComp extends React.Component {
           <summary>Other information</summary>
           <dl className="c-descriptionlist">
           {issn && 
-            [<dt key="0"><a href="">ISSN</a></dt>,
+            [<dt key="0"><strong>ISSN</strong></dt>,
              <dd key="1">{issn}</dd>]
           }
           {p.campusID && 
-            [<dt key="0"><Link to={"/unit/" + p.campusID}>Campus</Link></dt>,
-             <dd key="1">{p.campusID}</dd>]
+            [<dt key="0"><strong>Campus</strong></dt>,
+             <dd key="1"><Link to={"/unit/" + p.campusID}>{p.campusID}</Link></dd>]
           }
-            <dt><a href="">Peer-Reviewed</a></dt>
+            <dt><strong>Peer-Reviewed</strong></dt>
             <dd>{peer_reviewed}</dd>
-            <dt><a href="">License</a></dt>
+            <dt><strong>License</strong></dt>
             <dd>**************** TBD **************</dd>
-            <dt><a href="">Permalink</a></dt>
+            <dt><strong>Permalink</strong></dt>
             <dd><Link to={permalink}>{permalink}</Link></dd>
-            <dt><a href="">EZID Label Name</a></dt>
+            <dt><strong>EZID Label Name</strong></dt>
             <dd><Link to={ezid}>{ezid}</Link></dd>
-            <dt><a href="">Dash Label Name</a></dt>
+            <dt><strong>Dash Label Name</strong></dt>
             <dd>**************** TBD **************</dd>
-            <dt><a href="">Appears in</a></dt>
+            <dt><strong>Appears in</strong></dt>
             <dd>{appearsIn}</dd>
           </dl>
         </details>

@@ -115,8 +115,7 @@ Set an interactive element's styles if there's a touchscreen (coarse) or mouse-o
   @extend %interactive-element-size;
   display: flex;
   align-items: center;
-  padding-right: 10px;
-  padding-left: 10px;
+  padding: $spacing-base;
   border: 1px solid $color-dark-gray;
   background: $color-white;
   color: $color-dark-gray;

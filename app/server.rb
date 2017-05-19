@@ -336,10 +336,10 @@ end
 # Home page data (All campuses or All journals)
 get '/api/home' do
   content_type :json
-  header = {
-    :campuses => getCampusesAsMenu
+  body = {
+    :header => getGlobalHeader
   }
-  return header.to_json
+  return body.to_json
 end
 
 ###################################################################################################
