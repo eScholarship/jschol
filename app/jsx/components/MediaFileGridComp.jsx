@@ -13,7 +13,10 @@ class CellComp extends React.Component {
         fileLabel = m[mimeSimple] ? m[mimeSimple] : p.file 
     return (
       <div className={"o-mediafile--" + mimeSimple}>
-        <h2 className="o-mediafile__heading" ref={ el => $(el).dotdotdot({watch:"window"}) }>
+        {/* Some items have no titles but use descriptions instead, and these get moved into title.
+            Let's make these look better (and load faster) by avoiding dotdotdot in this case only.
+        */}
+        <h2 className="o-mediafile__heading" ref={ el => { if (p.description && p.description.length > 0) $(el).dotdotdot({watch:"window"}) } }>
           <a href="">{p.title}</a>
         </h2>
         <a className="o-mediafile__link" href={this.url} aria-label={fileLabel}>
@@ -22,7 +25,7 @@ class CellComp extends React.Component {
           }
         </a>
         <button className="o-mediafile__button">Download</button>
-        <div className="o-mediafile__description" ref={ el => $(el).dotdotdot({watch:"window"}) }>
+        <div className="o-mediafile__description" ref={ el => { if (p.description && p.description.length > 0) $(el).dotdotdot({watch:"window"}) } }>
           {p.description}</div>
       </div>
     )
