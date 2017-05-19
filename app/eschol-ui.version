@@ -222,3 +222,14 @@ As well as:
 	modified:   app/jsx/components/TabSupplementalComp.jsx
 	modified:   app/jsx/components/Tabs2Comp.jsx
 	modified:   app/jsx/components/TabsComp.jsx
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's 2bc20f955110a17a93b403adfd164fa822bda92b, 2017-05-19 <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+Andy added all scss and image changes since last.
+As well as:
+
+	modified:   app/jsx/components/FacetBoxComp.jsx
+	modified:   app/jsx/pages/SearchPage.jsx
+

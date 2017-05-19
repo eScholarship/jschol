@@ -2,13 +2,13 @@
 
 .c-facetbox {
   margin-bottom: $spacing-sm;
-  padding: $spacing-sm;
+  padding: 0 $spacing-sm;
 }
 
 .c-facetbox__summary {
   position: relative;
   margin: 0 (-$spacing-sm);
-  padding: $spacing-base $spacing-sm;
+  padding: 0 $spacing-sm;
   background: $color-light-gray;
   font-size: 1.2em;
   box-shadow: $box-shadow1;
@@ -24,13 +24,20 @@
     content: '';
   }
 
+  // <summary> isn't responding to flexbox values in Safari, so need to use <span> child with those values:
+  span {
+    @extend %interactive-element-size;
+    display: inline-flex;
+    align-items: center;
+  }
+
 }
 
 .c-facetbox[open] {
+  padding-bottom: $spacing-base;
   border-bottom: 1px solid $color-light-gray;
 
   .c-facetbox__summary {
-    margin: 0 (-$spacing-sm) $spacing-sm;
     background: none;
     box-shadow: none;
 

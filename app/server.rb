@@ -336,10 +336,10 @@ end
 # Home page data (All campuses or All journals)
 get '/api/home' do
   content_type :json
-  header = {
-    :campuses => getCampusesAsMenu
+  body = {
+    :header => getGlobalHeader
   }
-  return header.to_json
+  return body.to_json
 end
 
 ###################################################################################################
@@ -447,7 +447,6 @@ get "/api/unit/:unitID/?:pageName/?" do
         unit: unit.values.reject{|k,v| k==:attrs}
       }
     end
-    pp pageData
     return pageData.to_json
   rescue Exception => e
     halt 404, e.message

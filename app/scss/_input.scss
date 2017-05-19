@@ -1,15 +1,15 @@
 // ##### Input Objects ##### //
 
-$input-height: $element-height;
-
 %o-input__droplist {
 
   select {
-    height: $input-height;
-    padding: 0 30px 0 5px;
+    @extend %interactive-element-size;
+    // text isn't centering in FF with 'min-height' within above placeholder, so need to use 'height' here:
+    height: $pointer-size-fine;
+    padding: 0 2em 0 $spacing-sm;
     border: 1px solid $color-dark-gray;
     border-radius: 0;
-    background: inline('../images/icon_arrow-down.svg') right 12px center / 12px no-repeat;
+    background: inline('../images/icon_arrow-down.svg') no-repeat right $spacing-sm center / 0.8em;
     appearance: none;
 
     // sass-lint:disable no-vendor-prefixes
@@ -25,7 +25,7 @@ $input-height: $element-height;
   @extend %o-input__droplist;
 
   label {
-    margin-right: 10px;
+    margin-right: $spacing-sm;
     color: $color-dark-gray;
     font-size: 0.8em;
     font-weight: bold;
@@ -39,7 +39,7 @@ $input-height: $element-height;
 
   label {
     display: block;
-    margin-bottom: 5px;
+    margin-bottom: $spacing-base;
   }
 
 }
