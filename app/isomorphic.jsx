@@ -74,10 +74,14 @@ app.use((req, res) =>
               rc.props.location.urlsFetched = {}
               rc.props.location.urlsFetched[partialURL] = response
               renderedHTML = renderToString(rc)
+              // Note: because this is being turned into code, we have to jump through hoops to properly
+              //       escape special characters.
+              let json = JSON.stringify(response)
+              json = json.replace(/[\u007F-\uFFFF]/g, chr => "\\u" + ("0000" + chr.charCodeAt(0).toString(16)).substr(-4))
               /* Note: must leave comments like <!-- react-text: 14 --> so that react will
                  properly match up the rendered HTML to client-generated HTML */
               res.send(
-                "<script>window.jscholApp_initialPageData = " + body + ";</script>\n" +
+                "<script>window.jscholApp_initialPageData = " + json + ";</script>\n" +
                 "<div id=\"main\">" + renderedHTML + "</div>")
             }
             else
