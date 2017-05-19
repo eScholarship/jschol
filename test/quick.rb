@@ -33,7 +33,7 @@ class TestQuick < Test::Unit::TestCase
   end
 
   def test_browse
-    html = fetchAndStrip("http://localhost:4001/browse/campuslist")
+    html = fetchAndStrip("http://localhost:4001/campuses")
     assert_match /UC Berkeley/, html
   end
 
