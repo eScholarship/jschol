@@ -52,13 +52,16 @@ class PageBase extends React.Component
     else
       state.pageData = {}
 
-    // Retrieve login info from session storage
-    const sessionData = sessionStorage && JSON.parse(sessionStorage.getItem(SESSION_LOGIN_KEY))
-    if (sessionData)
-      _.merge(state, { adminLogin: { loggedIn: true, username: sessionData.username, token: sessionData.token } })
-
     // That's the final state.
     this.setState(state)
+  }
+
+  componentDidMount() {
+    // Retrieve login info from session storage (but after initial init, so that ISO matches for first render)
+    if (this.getSessionData()) {
+      this.setState({ adminLogin:
+        { loggedIn: true, username: this.getSessionData().username, token: this.getSessionData().token } })
+    }
   }
 
   getSessionData() {

@@ -12,7 +12,6 @@ const AdminBarComp = (props) =>
             <div className="c-adminbar__logged-in-msg">
               Logged in as '{cms.username}'
             </div>
-            { console.log("cms.permissions=", cms.permissions) }
             { cms.permissions && cms.permissions.admin &&
               <div className="c-adminbar__edit-pg">
                 <button className="c-adminbar__edit-pg-button" onClick={e => cms.onEditingPageChange(!cms.isEditingPage)}>
