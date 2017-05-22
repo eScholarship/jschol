@@ -124,7 +124,7 @@ class BrowseJournals extends React.Component {
     let r = journals.map(function(j, i) {
       let p = (j['is_active'] == isActive || isActive == "") &&
         (j['ancestor_unit'].includes(campusID) || campusID =="") &&
-        <p key={i}><a href={"/unit/" + j["id"]}>{j["name"]}</a></p>
+        <li key={i}><a href={"/unit/" + j["id"]}>{j["name"]}</a></li>
       if (p) {foundOne = true}
       return p
     })
@@ -151,21 +151,19 @@ class BrowseJournals extends React.Component {
         <h2>Journals</h2>
       </header>
       <WellComp />
-      <div className="c-sort">
-        <div className="o-input__droplist1">
-          <select name="isActive" id="" onChange={this.changeActive} value={this.state.isActive}>
-            <option value="">All</option>
-            <option value="1">Actively publishing</option>
-            <option value="0">Archived</option>
-          </select>
-        </div>
-        <div className="o-input__droplist1">
-          <select name="campusID" id="" onChange={this.changeCampus} value={this.state.campusID}>
-            {campusSelector}
-          </select>
-        </div>
-      </div>
-      {visibleJournals ? visibleJournals : <p>No journals found matching that criteria<br/><br/><br/></p>}
+      <label htmlFor="o-input__droplist-label2a">Show:</label>
+      <select name="isActive" id="o-input__droplist-label2a" onChange={this.changeActive} value={this.state.isActive}>
+        <option value="">All</option>
+        <option value="1">Actively publishing</option>
+        <option value="0">Archived</option>
+      </select>
+      &nbsp;&nbsp;<label htmlFor="o-input__droplist-label2b">Campus:</label>
+      <select name="campusID" id="o-input__droplist-label2b" onChange={this.changeCampus} value={this.state.campusID}>
+        {campusSelector}
+      </select>
+    {visibleJournals ? <ul>{visibleJournals}</ul>
+     : [<p key="0"><br/></p>, <p key="1">No journals found matching that criteria<br/><br/><br/></p>]
+    }
       <br/><br/>
     </section>
   )}

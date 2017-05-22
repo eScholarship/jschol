@@ -219,7 +219,7 @@ end
 # Sanitize incoming filenames before applying them to the filesystem. In particular, prevent
 # attacks using "../" as part of the path.
 def sanitizeFilePath(path)
-  path = path.gsub(/[^-a-zA-Z0-9_.\/]/, '_').split("/").map { |part|
+  path = path.gsub(/[^-a-z A-Z0-9_.\/]/, '_').split("/").map { |part|
     part.sub(/^\.+/, '_').sub(/\.+$/, '_')
   }.join('/')
 end
@@ -283,7 +283,8 @@ get "/content/:fullItemID/*" do |fullItemID, path|
 
   # Fetch the file from Merritt
   fetcher = Fetcher.new
-  code, msg = fetcher.start(URI("https://#{$mrtExpressConfig['host']}/dl/ark:/13030/#{fullItemID}/content/#{path}"))
+  epath = URI::encode(path)
+  code, msg = fetcher.start(URI("https://#{$mrtExpressConfig['host']}/dl/ark:/13030/#{fullItemID}/content/#{epath}"))
   code == 401 and raise("Error: mrtExpress credentials not recognized - check config/mrtExpress.yaml")
 
   # Temporary fallback: if we can't find on Merritt, try the raw_data hack on pub-eschol-stg.
@@ -291,7 +292,7 @@ get "/content/:fullItemID/*" do |fullItemID, path|
   if code != 200
     fetcher = Fetcher.new
     code2, msg2 = fetcher.start(URI("https://pub-eschol-stg.escholarship.org/raw_data/13030/pairtree_root/" +
-                                    "#{fullItemID.scan(/../).join('/')}/#{fullItemID}/content/#{path}"))
+                                    "#{fullItemID.scan(/../).join('/')}/#{fullItemID}/content/#{epath}"))
     code2 == 200 or halt(code, msg)
   end
 
