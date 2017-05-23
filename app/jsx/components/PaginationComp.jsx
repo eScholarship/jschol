@@ -3,44 +3,49 @@
 import React from 'react'
 
 class PaginationComp extends React.Component {
-  next = this.next.bind(this);
-  previous = this.previous.bind(this);
-  first = this.first.bind(this);
-  last = this.last.bind(this);
-  page = this.page.bind(this);
-
-  next(event) {
+  next = event=>{
     if (parseInt(this.props.query.start) + parseInt(this.props.query.rows) <= this.props.count) {
       var newStart = parseInt(this.props.query.start) + parseInt(this.props.query.rows);
       $('[form=facetForm][name=start]').val(newStart);
       $('#facet-form-submit').click();
     }
+    event.preventDefault()
   }
 
-  previous(event) {
+  previous = event=>{
     if (parseInt(this.props.query.start) >= parseInt(this.props.query.rows)) {
       var newStart = parseInt(this.props.query.start) - parseInt(this.props.query.rows);
       $('[form=facetForm][name=start]').val(newStart);
       $('#facet-form-submit').click();
     }
+    event.preventDefault()
   }
 
-  first(event) {
-    $('[form=facetForm][name=start]').val(0);
-    $('#facet-form-submit').click();
+  first = event=>{
+    if (parseInt(this.props.query.start) > 0) {
+      $('[form=facetForm][name=start]').val(0);
+      $('#facet-form-submit').click();
+    }
+    event.preventDefault()
   }
 
-  last(event) {
+  last = event=>{
     var newStart = Math.floor(this.props.count / this.props.query.rows);
     newStart = newStart * this.props.query.rows;
-    $('[form=facetForm][name=start]').val(newStart);
-    $('#facet-form-submit').click();
+    if (newStart != this.props.query.start) {
+      $('[form=facetForm][name=start]').val(newStart);
+      $('#facet-form-submit').click();
+    }
+    event.preventDefault()
   }
 
-  page(event) {
+  page = event=>{
     var newStart = (event.target.text - 1) * this.props.query.rows;
-    $('[form=facetForm][name=start]').val(newStart);
-    $('#facet-form-submit').click();
+    if (newStart != this.props.query.start) {
+      $('[form=facetForm][name=start]').val(newStart);
+      $('#facet-form-submit').click();
+    }
+    event.preventDefault()
   }
   
   render() {
@@ -54,11 +59,11 @@ class PaginationComp extends React.Component {
       }
       return (
       <div className="c-pagination">
-        <a className="c-pagination__prevnext" onClick={this.previous}>Previous</a>
+        <a href="" className="c-pagination__prevnext" onClick={this.previous}>Previous</a>
         { displayedPages.map(page => {
-          return (<a key={page.num} className={page.className} onClick={this.page}>{page.num}</a>)
+          return (<a href="" key={page.num} className={page.className} onClick={this.page}>{page.num}</a>)
         }) }
-        <a className="c-pagination__prevnext" onClick={this.next}>Next</a>
+        <a href="" className="c-pagination__prevnext" onClick={this.next}>Next</a>
       </div>
       )
     }
@@ -69,44 +74,44 @@ class PaginationComp extends React.Component {
       }
       return (
         <div className="c-pagination">
-          <a className="c-pagination__prevnext" onClick={this.previous}>Previous</a>
+          <a href="" className="c-pagination__prevnext" onClick={this.previous}>Previous</a>
           { displayedPages.map(page => {
-            return (<a key={page.num} className={page.className} onClick={this.page}>{page.num}</a>)
+            return (<a href="" key={page.num} className={page.className} onClick={this.page}>{page.num}</a>)
           }) }
           <span className="c-pagination__ellipses">&hellip;</span>
-          <a className="c-pagination__item" onClick={this.last}>{pages}</a>
-          <a className="c-pagination__prevnext" onClick={this.next}>Next</a>
+          <a href="" className="c-pagination__item" onClick={this.last}>{pages}</a>
+          <a href="" className="c-pagination__prevnext" onClick={this.next}>Next</a>
         </div>
       )
     }
     else if (page > pages-2) {
-      for (var i=pages-4; i<=pages; i++) {
+      for (var i=pages-3; i<=pages; i++) {
         displayedPages.push({num: i, className: i == page ? "c-pagination__item--active" : "c-pagination__item"});
       }
       return (
         <div className="c-pagination">
-          <a className="c-pagination__prevnext" onClick={this.previous}>Previous</a>
-          <a className="c-pagination__item" onClick={this.first}>1</a>
+          <a href="" className="c-pagination__prevnext" onClick={this.previous}>Previous</a>
+          <a href="" className="c-pagination__item" onClick={this.first}>1</a>
           <span className="c-pagination__ellipses">&hellip;</span>
           { displayedPages.map(page => {
-            return (<a key={page.num} className={page.className} onClick={this.page}>{page.num}</a>)
+            return (<a href="" key={page.num} className={page.className} onClick={this.page}>{page.num}</a>)
           }) }
-          <a className="c-pagination__prevnext" onClick={this.next}>Next</a>
+          <a href="" className="c-pagination__prevnext" onClick={this.next}>Next</a>
         </div>
       )
     }
     else {
       return (
         <div className="c-pagination">
-          <a className="c-pagination__prevnext" onClick={this.previous}>Previous</a>
-          <a className="c-pagination__item" onClick={this.first}>1</a>
-          <span className="c-pagination__ellipses">&hellip;</span>
-          <a className="c-pagination__item" onClick={this.prev}>{page - 1}</a>
-          <a className="c-pagination__item c-pagination__item--active">{page}</a>
-          <a className="c-pagination__item" onClick={this.next}>{page + 1}</a>
-          <span className="c-pagination__ellipses">&hellip;</span>
-          <a className="c-pagination__item" onClick={this.last}>{pages}</a>
-          <a className="c-pagination__prevnext" onClick={this.next}>Next</a>
+          <a href="" className="c-pagination__prevnext" onClick={this.previous}>Previous</a>
+          <a href="" className="c-pagination__item" onClick={this.first}>1</a>
+          { (page > 3) ? <span className="c-pagination__ellipses">&hellip;</span> : null }
+          <a href="" className="c-pagination__item" onClick={this.previous}>{page - 1}</a>
+          <a href="" className="c-pagination__item c-pagination__item--active" onClick={this.page}>{page}</a>
+          <a href="" className="c-pagination__item" onClick={this.next}>{page + 1}</a>
+          { (page < pages-2) ? <span className="c-pagination__ellipses">&hellip;</span> : null }
+          <a href="" className="c-pagination__item" onClick={this.last}>{pages}</a>
+          <a href="" className="c-pagination__prevnext" onClick={this.next}>Next</a>
         </div>
       )
     }

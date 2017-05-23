@@ -431,7 +431,6 @@ class SearchPage extends PageBase {
             <FacetForm data={facetFormData} query={data.query} />
           </aside>
           <main id="maincontent">
-            <SortPaginationComp query={data.query} count={data.count}/>
             <section className="o-columnbox1">
               <header>
                 <h2 className="o-columnbox1__heading">Informational Pages (12 results)</h2>
@@ -442,6 +441,7 @@ class SearchPage extends PageBase {
               <header>
                 <h2 className="o-columnbox1__heading">Scholarly Works ({data.count} results)</h2>
               </header>
+              <SortPaginationComp query={data.query} count={data.count}/>
               <div>
                 { data.searchResults.map(result =>
                   <ScholWorksComp key={result.id} result={result} />)
