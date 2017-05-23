@@ -40,12 +40,8 @@ class ScholWorksComp extends React.Component {
 
     if (this.props.result.authors) {
       var authorList = this.props.result.authors.map(function(author, i, a) {
-        if (i === a.length-1) {
-          return (<li key={author.name}><Link to={"/search/?q="+author.name}>{author.name}</Link></li>);
-        } else {
-          return (<li key={author.name}><Link to={"/search/?q="+author.name}>{author.name}</Link>; </li>);
-        }
-      });
+        return (<li key={author.name}><Link to={"/search/?q="+author.name}>{author.name}</Link></li>)
+      })
     }
 
     var supp_files = this.props.result.supp_files.map(function(supp_file) {

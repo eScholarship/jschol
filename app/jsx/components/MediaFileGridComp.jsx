@@ -2,9 +2,15 @@
 
 import React from 'react'
 import $ from 'jquery'
+import { Link } from 'react-router'
 
 class CellComp extends React.Component {
   url = "/content/qt" + this.props.id + "/supp/" + this.props.file
+
+  download = () => {
+    event.preventDefault()
+    window.open(this.url)
+  }
 
   render() {
     let p = this.props,
@@ -16,15 +22,15 @@ class CellComp extends React.Component {
         {/* Some items have no titles but use descriptions instead, and these get moved into title.
             Let's make these look better (and load faster) by avoiding dotdotdot in this case only.
         */}
-        <h2 className="o-mediafile__heading" ref={ el => { if (p.description && p.description.length > 0) $(el).dotdotdot({watch:"window"}) } }>
-          <a href="">{p.title}</a>
+        <h2 className="o-mediafile__heading" ref={ el => { if ((p.useFilenameForTitle) || (p.description && p.description.length > 0)) $(el).dotdotdot({watch:"window"}) } }>
+          <Link to={this.url} target="_blank">{p.title}</Link>
         </h2>
-        <a className="o-mediafile__link" href={this.url} aria-label={fileLabel}>
+        <Link className="o-mediafile__link" to={this.url} aria-label={fileLabel} target="_blank">
           {(mimeSimple == "image") &&
             <img className="o-mediafile__image" src={this.url} alt={p.file} />
           }
-        </a>
-        <button className="o-mediafile__button">Download</button>
+        </Link>
+        <button onClick={() => {this.download()}} className="o-mediafile__button">Download</button>
         <div className="o-mediafile__description" ref={ el => { if (p.description && p.description.length > 0) $(el).dotdotdot({watch:"window"}) } }>
           {p.description}</div>
       </div>
@@ -37,10 +43,16 @@ class MediaFileGridComp extends React.Component {
     let foundOne = false
     let r = files.map((f, i) => {
       let title = f.title,
-          description = f.description 
+          description = f.description,
+          useFilenameForTitle = false 
       if (!f.title) {
         title = description
         description = '' 
+        // Use filename when BOTH title AND description empty (typically no spaces, so dotdotdot)
+        if (!f.description) {
+          useFilenameForTitle = true
+          title = f.file 
+        }
       }
       let p = (f['mimeSimple'].includes(filterType) || filterType =="") &&
             <CellComp key={i}
@@ -48,7 +60,8 @@ class MediaFileGridComp extends React.Component {
                       mimeSimple={f.mimeSimple}
                       title={title}
                       file={f.file}
-                      description={description} />
+                      description={description} 
+                      useFilenameForTitle={useFilenameForTitle} />
       if (p) {foundOne = true}
       return p
     })
