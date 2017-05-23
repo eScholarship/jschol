@@ -3,8 +3,13 @@
 import React from 'react'
 
 class PaginationComp extends React.Component {
+  clampedCount() {
+    // AWS CloudSearch will not let us paginate beyond 10,000 results - so limit the pagination to that.
+    return Math.min(this.props.count, 9999)
+  }
+
   next = event=>{
-    if (parseInt(this.props.query.start) + parseInt(this.props.query.rows) <= this.props.count) {
+    if (parseInt(this.props.query.start) + parseInt(this.props.query.rows) <= this.clampedCount()) {
       var newStart = parseInt(this.props.query.start) + parseInt(this.props.query.rows);
       $('[form=facetForm][name=start]').val(newStart);
       $('#facet-form-submit').click();
@@ -30,7 +35,7 @@ class PaginationComp extends React.Component {
   }
 
   last = event=>{
-    var newStart = Math.floor(this.props.count / this.props.query.rows);
+    var newStart = Math.floor(this.clampedCount() / this.props.query.rows);
     newStart = newStart * this.props.query.rows;
     if (newStart != this.props.query.start) {
       $('[form=facetForm][name=start]').val(newStart);
@@ -50,7 +55,7 @@ class PaginationComp extends React.Component {
   
   render() {
     var page = Math.ceil(this.props.query.start / this.props.query.rows) + 1;
-    var pages = Math.ceil(this.props.count / this.props.query.rows);
+    var pages = Math.ceil(this.clampedCount() / this.props.query.rows);
     var displayedPages = []
 
     if (pages <= 2) {
@@ -85,7 +90,7 @@ class PaginationComp extends React.Component {
       )
     }
     else if (page > pages-2) {
-      for (var i=pages-3; i<=pages; i++) {
+      for (var i=pages-2; i<=pages; i++) {
         displayedPages.push({num: i, className: i == page ? "c-pagination__item--active" : "c-pagination__item"});
       }
       return (

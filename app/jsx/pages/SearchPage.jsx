@@ -439,7 +439,8 @@ class SearchPage extends PageBase {
             </section>
             <section className="o-columnbox1">
               <header>
-                <h2 className="o-columnbox1__heading">Scholarly Works ({data.count} results)</h2>
+                <h2 className="o-columnbox1__heading">
+                  Scholarly Works ({data.count + " results" + (data.count > 10000 ? ", showing first 10000" : "")})</h2>
               </header>
               <SortPaginationComp query={data.query} count={data.count}/>
               <div>
