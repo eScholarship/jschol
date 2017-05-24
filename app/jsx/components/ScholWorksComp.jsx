@@ -9,6 +9,28 @@ if (!(typeof document === "undefined")) {
   const dotdotdot = require('jquery.dotdotdot')
 }
 
+class DotDiv extends React.Component {
+  componentDidMount() {
+    $(this.domEl).dotdotdot({watch:"window"})
+  }
+
+  render = () =>
+    <div className={this.props.className} ref={el => this.domEl = el}>
+      {this.props.children}
+    </div>
+}
+
+class DotH2 extends React.Component {
+  xcomponentDidMount() {
+    $(this.domEl).dotdotdot({watch:"window"})
+  }
+
+  render = () =>
+    <h2 className={this.props.className} ref={el => this.domEl = el}>
+      {this.props.children}
+    </h2>
+}
+
 class ScholWorksComp extends React.Component {
   render() {
     var tagList = [];
@@ -88,16 +110,16 @@ class ScholWorksComp extends React.Component {
             }) }
           </ul>
           <heading>
-            <h2 className="c-scholworks__heading" ref={ el => $(el).dotdotdot({watch:"window"}) }>
+            <DotH2 className="c-scholworks__heading">
               <Link to={"/item/"+this.props.result.id.replace(/^qt/, "")}>{this.props.result.title}</Link>
-            </h2>
+            </DotH2>
           </heading>
           {authorList && 
-            <div className="c-authorlist" ref={ el => $(el).dotdotdot({watch:"window"}) }>
+            <DotDiv className="c-authorlist">
               <ul className="c-authorlist__list">
                 {authorList}
               </ul>
-            </div>
+            </DotDiv>
           }
           {this.props.result.pub_year && publishingInfo && 
             <div className="c-scholworks__publication">
@@ -105,9 +127,9 @@ class ScholWorksComp extends React.Component {
             </div>
           }
           {this.props.result.abstract && 
-            <div className="c-scholworks__abstract" ref={ el => $(el).dotdotdot({watch:"window"}) }>
+            <DotDiv className="c-scholworks__abstract">
               <p>{this.props.result.abstract}</p>
-            </div>
+            </DotDiv>
           }
           <div className="c-scholworks__media">
             <ul className="c-scholworks__media-list">{ supp_files }</ul>
