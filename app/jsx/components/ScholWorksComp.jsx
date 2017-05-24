@@ -38,17 +38,18 @@ class ScholWorksComp extends React.Component {
       unitId = this.props.result.unitInfo.unitId;
     }
 
+    var authorList;
     if (this.props.result.authors) {
-      var authorList = this.props.result.authors.map(function(author, i, a) {
+      authorList = this.props.result.authors.map(function(author, i, a) {
         if (i === a.length-1) {
-          return (<li key={author.name}><Link to={"/search/?q="+author.name}>{author.name}</Link></li>);
+          return (<li key={author+i}><Link to={"/search/?q="+author.name}>{author.name}</Link></li>);
         } else {
-          return (<li key={author.name}><Link to={"/search/?q="+author.name}>{author.name}</Link>; </li>);
+          return (<li key={author+i}><Link to={"/search/?q="+author.name}>{author.name}</Link>; </li>);
         }
       });
     }
 
-    var supp_files = this.props.result.supp_files.map(function(supp_file) {
+    var supp_files = this.props.result.supp_files.map(function(supp_file, i, a) {
       if (supp_file.count >= 1) {
         var display;
         if (supp_file.type === 'video' || supp_file.type === 'image') {
@@ -58,7 +59,7 @@ class ScholWorksComp extends React.Component {
         } else if (supp_file.type === 'pdf') {
           display = supp_file.count != 1 ? 'additional PDFs' : 'additional PDF';
         }
-        return (<li key={supp_file.type} className={"c-scholworks__media-" + supp_file.type}>Contains {supp_file.count} {display}</li>);   
+        return (<li key={supp_file+i} className={"c-scholworks__media-" + supp_file.type}>Contains {supp_file.count} {display}</li>);   
       }
     });
     // if ('supp_files' in this.props.result && this.props.result.supp_files !== null) {
@@ -80,9 +81,9 @@ class ScholWorksComp extends React.Component {
       <section className="c-scholworks">
         <div className="c-scholworks__main-column">
           <ul className="c-scholworks__tag-list">
-            { tagList.map(function(tag) { 
+            { tagList.map(function(tag, i, a) { 
               return (
-                <li key={tag.tagStyle} className={ "c-scholworks__tag-" + tag.tagStyle }>{tag.display}</li>
+                <li key={tag+i} className={ "c-scholworks__tag-" + tag.tagStyle }>{tag.display}</li>
               ) 
             }) }
           </ul>

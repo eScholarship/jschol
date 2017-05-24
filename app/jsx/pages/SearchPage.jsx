@@ -131,12 +131,13 @@ class FacetItem extends React.Component {
 }
 
 class PubYear extends React.Component {
-  state = {
-    pub_year_start: this.props.data.range.pub_year_start ? this.props.data.range.pub_year_start : '',
-    pub_year_end: this.props.data.range.pub_year_end ? this.props.data.range.pub_year_end : ''
+  constructor(props) {
+    super(props)
+    this.state = { 
+      pub_year_start: props.data.range && props.data.range.pub_year_start ? props.data.range.pub_year_start : '',
+      pub_year_end: props.data.range && props.data.range.pub_year_end ? props.data.range.pub_year_end : ''
+    }
   }
-  handleChange = this.handleChange.bind(this);
-  onBlur = this.onBlur.bind(this);
 
   componentWillReceiveProps(nextProps) {
     if (_.isEmpty(nextProps.query) && (this.state.pub_year_start !== '' || this.state.pub_year_end !== '')) {
@@ -147,7 +148,15 @@ class PubYear extends React.Component {
     }
   }
 
-  onBlur(event) {
+  startYear() {
+    return this.props.data.range && this.props.data.range.pub_year_start ? this.props.data.range.pub_year_start : '';
+  }
+
+  endYear() {
+    return this.props.data.range && this.props.data.range.pub_year_end ? this.props.data.range.pub_year_end : '';
+  }
+
+  onBlur = event=>{
     var displayYears;
     if (this.state.pub_year_start || this.state.pub_year_end) {
       displayYears = this.state.pub_year_start + "-" + this.state.pub_year_end;
@@ -165,7 +174,7 @@ class PubYear extends React.Component {
     $('#facet-form-submit').click();
   }
 
-  handleChange(event) {
+  handleChange = event=>{
     if (event.target.id == 'pub_year_start') {
       this.setState({pub_year_start: event.target.value});
     } else if (event.target.id = 'pub_year_end') {
@@ -354,12 +363,9 @@ class FacetForm extends React.Component {
   state = {
     query: this.props.query
   }
-  changeFacet = this.changeFacet.bind(this);
-  removeFilters = this.removeFilters.bind(this);
-  handleSubmit = this.handleSubmit.bind(this);
-  
+
   // Called by FacetFieldset's handleChange function
-  changeFacet(event, fieldsetQuery, fieldType) {
+  changeFacet = (event, fieldsetQuery, fieldType)=>{
     var newQuery = $.extend(true, {}, this.state.query); // true=deep copy
 
     if (fieldsetQuery) {
@@ -372,7 +378,7 @@ class FacetForm extends React.Component {
   }
 
   // Set as the onClick handler for FilterComp's active filter buttons
-  removeFilters(event) {
+  removeFilters = event=>{
     var newQuery = $.extend(true, {}, this.state.query); // true=deep copy
     var fieldType = $(event.target).data('filter-type');
     delete newQuery.filters[fieldType];
@@ -380,7 +386,7 @@ class FacetForm extends React.Component {
   }
 
   // Set as the Form's onSubmit handler
-  handleSubmit(event, formData) {
+  handleSubmit = (event, formData)=>{
     for(var key in formData) {
       if (formData[key] == "" ||
       (key === 'sort' && formData[key] === 'rel') ||
@@ -408,7 +414,9 @@ class FacetForm extends React.Component {
       <Form id="facetForm" to='/search' method="GET" onSubmit={this.handleSubmit}>
         <FilterComp query={this.state.query} count={this.props.data.count} handler={this.removeFilters}/>
         {facetForm}
-        <button type="submit" id="facet-form-submit">Search</button>
+        {/* Submit button needs to be present so our logic can "press" it at certain times.
+            But hide it with display:none so user doesn't see it. */}
+        <button type="submit" id="facet-form-submit" style={{display: "none"}}>Search</button>
       </Form>
     )
   }
@@ -430,7 +438,8 @@ class SearchPage extends PageBase {
           <aside>
             <FacetForm data={facetFormData} query={data.query} />
           </aside>
-          <main id="maincontent">
+          <main id="maincontent" style={{position: "relative"}}>
+            { this.state.fetchingData ? <div className="c-search-extra__loading-overlay"/> : null }
             <section className="o-columnbox1">
               <header>
                 <h2 className="o-columnbox1__heading">Informational Pages (12 results)</h2>
