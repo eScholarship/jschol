@@ -20,18 +20,20 @@ class RefineComp extends React.Component {
         </div>
       }
         <div className="o-download">
-          <button className="o-download__button">Download All Files</button>
-        {(this.props.mimeTypes.length > 1) && 
-          <details className="o-download__formats">
-            <summary aria-label="formats"></summary>
-            <ul className="o-download__single-menu">
-              <li><a href="">Image</a></li>
-              <li><a href="">Audio</a></li>
-              <li><a href="">Video</a></li>
-              <li><a href="">Zip</a></li>
-              <li><a href="">File</a></li>
-            </ul>
-          </details>
+        {(this.props.mimeTypes.length > 1) ? 
+          [<button key="0" className="o-download__button">Download All Files</button>,
+           <details key="1" className="o-download__formats">
+             <summary aria-label="formats"></summary>
+             <ul className="o-download__single-menu">
+               <li><a href="">Image</a></li>
+               <li><a href="">Audio</a></li>
+               <li><a href="">Video</a></li>
+               <li><a href="">Zip</a></li>
+               <li><a href="">File</a></li>
+             </ul>
+           </details>]
+         :
+           <button className="o-button__8">Download All Files</button>
         }
         </div>
       </div>

@@ -1,36 +1,57 @@
 // ##### Campus Search Component ##### //
 
 .c-campussearch {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  min-height: 13vw;
   margin-bottom: $spacing-md;
-  padding: 0 15vw;
+  padding: $spacing-sm;
   background-color: $color-light-teal;
   box-shadow: $box-shadow1;
+
+  @include bp(screen1) {
+    padding: $spacing-md 15vw;
+  }
+
 }
 
 .c-campussearch__label {
-  margin-bottom: 1.3vw;
+  display: block;
+  margin-bottom: $spacing-sm;
   color: $color-orange;
-  font-size: 2.4vw;
+  font-size: 5vw;
+
+  @include bp(screen1) {
+    font-size: 4vw;
+  }
+
+  @include bp(screen2) {
+    font-size: 2.3vw;
+  }
+
 }
 
 .c-campussearch__search {
   display: flex;
 
   input[type='search'] {
+    @extend %interactive-element-size;
     flex: 1 1 auto;
-    padding: 1vw;
+    padding: 0 $spacing-sm;
     border: 1px solid $color-light-gray;
-    font-size: 1.8vw;
+    
+    @include bp(screen2) {
+      font-size: 1.2em;
+    }
+
   }
 
   button {
     @extend %o-button__9;
-    margin: 0 1vw;
+    margin-left: $spacing-base;
     background-image: inline('../images/icon_magnify-teal.svg');
+
+    @include bp(screen2) {
+      margin-left: $spacing-sm;
+    }
+
   }
 
 }

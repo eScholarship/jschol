@@ -233,3 +233,14 @@ As well as:
 	modified:   app/jsx/components/FacetBoxComp.jsx
 	modified:   app/jsx/pages/SearchPage.jsx
 
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's 7ff76404920e8d5f35fd01a16b1ad94ecf840638, 2017-05-25 <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+Andy added all scss changes since last.
+As well as:
+
+        new:        app/jsx/objects/TextListObj.jsx
+        modified:   app/jsx/objects/InputObj.jsx
+        modified:   app/jsx/pages/BrowsePage.jsx
+

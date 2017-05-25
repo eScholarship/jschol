@@ -3,7 +3,7 @@ def traverseHierarchyUp(arr)
     return arr
   end
   unit = $unitsHash[$hierByUnit[arr[0][:id]][0].ancestor_unit]
-  traverseHierarchyUp(arr.unshift({name: unit.name, id: unit.id}))
+  traverseHierarchyUp(arr.unshift({name: unit.name, id: unit.id, url: "/unit/" + unit.id}))
 end
 
 # Generate breadcrumb and header content for Unit-branded pages
@@ -22,7 +22,7 @@ def getUnitHeader(unit, attrs=nil)
       :twitter => attrs['twitter'],
       :rss => attrs['rss']
     },
-    :breadcrumb => traverseHierarchyUp([{name: unit.name, id: unit.id}])
+    :breadcrumb => traverseHierarchyUp([{name: unit.name, id: unit.id, url: "/unit/" + unit.id}])
   }
   
   # if this unit doesn't have a nav_bar, get the next unit up the hierarchy's nav_bar

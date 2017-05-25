@@ -1,5 +1,30 @@
 // ##### Input Objects ##### //
 
+// ***** Inline Input Objects ***** //
+
+.o-input__inline {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: $spacing-md;
+
+  // Any input object:
+  [class^='o-input__'] {
+    
+    &:not(:last-child) {
+      margin-right: $spacing-md;
+      margin-bottom: $spacing-sm;
+    }
+
+  }
+
+}
+
+.o-input__label--hidden {
+  @extend %hide;
+}
+
+// ***** Dropdown Lists ***** //
+
 %o-input__droplist {
 
   select {
