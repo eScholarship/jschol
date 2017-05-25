@@ -26,7 +26,7 @@ class Subheader2Comp extends React.Component {
     if (p.logo) {
       logo = p.logo
     } else {
-      logo = "http://placehold.it/400x100?text="+p.unitID
+      logo = "http://placehold.it/400x100?text="+p.unit.id
     }
 
     var btns;
@@ -45,7 +45,7 @@ class Subheader2Comp extends React.Component {
         <CampusSelectorComp campusID={p.campusID}
                             campusName={p.campusName}
                             campuses={p.campuses} />
-        <Link to={"/unit/"+p.unitID}><img className="c-subheader2__banner" src={logo} alt={p.unitName} /></Link>
+        <Link to={"/unit/"+p.unit.id}><img className="c-subheader2__banner" src={logo} alt={p.unit.name} /></Link>
         <div className="c-subheader2__sidebar">
           {btns}
         </div>

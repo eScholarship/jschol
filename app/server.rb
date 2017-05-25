@@ -219,7 +219,7 @@ end
 # Sanitize incoming filenames before applying them to the filesystem. In particular, prevent
 # attacks using "../" as part of the path.
 def sanitizeFilePath(path)
-  path = path.gsub(/[^-a-zA-Z0-9_.\/]/, '_').split("/").map { |part|
+  path = path.gsub(/[^-a-z A-Z0-9_.\/]/, '_').split("/").map { |part|
     part.sub(/^\.+/, '_').sub(/\.+$/, '_')
   }.join('/')
 end
@@ -283,7 +283,8 @@ get "/content/:fullItemID/*" do |fullItemID, path|
 
   # Fetch the file from Merritt
   fetcher = Fetcher.new
-  code, msg = fetcher.start(URI("https://#{$mrtExpressConfig['host']}/dl/ark:/13030/#{fullItemID}/content/#{path}"))
+  epath = URI::encode(path)
+  code, msg = fetcher.start(URI("https://#{$mrtExpressConfig['host']}/dl/ark:/13030/#{fullItemID}/content/#{epath}"))
   code == 401 and raise("Error: mrtExpress credentials not recognized - check config/mrtExpress.yaml")
 
   # Temporary fallback: if we can't find on Merritt, try the raw_data hack on pub-eschol-stg.
@@ -291,7 +292,7 @@ get "/content/:fullItemID/*" do |fullItemID, path|
   if code != 200
     fetcher = Fetcher.new
     code2, msg2 = fetcher.start(URI("https://pub-eschol-stg.escholarship.org/raw_data/13030/pairtree_root/" +
-                                    "#{fullItemID.scan(/../).join('/')}/#{fullItemID}/content/#{path}"))
+                                    "#{fullItemID.scan(/../).join('/')}/#{fullItemID}/content/#{epath}"))
     code2 == 200 or halt(code, msg)
   end
 
@@ -370,7 +371,7 @@ get "/api/browse/journals" do
   content_type :json
   body = {
     :header => getGlobalHeader,
-    :browse_type => "journals",
+    :browse_type => "all_journals",
     :journals => $campusJournals.sort_by{ |h| h[:name].downcase }
   }
   breadcrumb = [{"name" => "Journals", "url" => "/journals"},]
@@ -378,26 +379,33 @@ get "/api/browse/journals" do
 end
 
 ###################################################################################################
-# Browse Campus depts data.
-get "/api/browse/depts/:campusID" do |campusID|
+# Browse a campus's units or journals
+get "/api/browse/:browse_type/:campusID" do |browse_type, campusID|
   content_type :json
-  d = $hierByAncestor[campusID].map do |a|
-    getChildDepts($unitsHash[a.unit_id])
+  u, j, pageTitle = nil, nil, nil
+  if browse_type == 'units'
+    u = $hierByAncestor[campusID].map do |a| getChildDepts($unitsHash[a.unit_id]); end
+    pageTitle = "Academic Units"
+  else
+    j = [{"name": "foo"}, {"name": "bar"}]   # ToDo: Properly grab campuses journals
+    pageTitle = "Journals"
   end
   unit = $unitsHash[campusID]
   attrs = JSON.parse(unit[:attrs])
   body = {
-    :browse_type => "depts",
+    :browse_type => browse_type,
+    :pageTitle => pageTitle,
     :unit => unit ? unit.values.reject { |k,v| k==:attrs } : nil,
     # ToDo: Campus nav does not need to deal with ancestors
     # :header => unit ? getUnitHeader(unit, attrs) : getGlobalHeader,
     :campusID => campusID,
     :campusName => unit.name,
-    :depts => d.compact
+    :campusUnits => u ? u.compact : nil,
+    :campusJournals => j 
   }
   breadcrumb = [
-    {"name" => "Academic Units", "url" => "/" + campusID + "/departments"},
-    {"name" => unit.name, "id" => campusID}]
+    {"name" => pageTitle, "url" => "/" + campusID + "/" + browse_type},
+    {"name" => unit.name, "url" => "/unit/" + campusID}]
   return body.merge(getHeaderElements(breadcrumb, nil)).to_json
 end
 

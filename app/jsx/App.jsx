@@ -37,7 +37,8 @@ const routes = (
     <IndexRoute component={HomePage} />
     <Route path="/campuses" component={BrowsePage} />
     <Route path="/journals" component={BrowsePage} />
-    <Route path="/:campusID/departments" component={BrowsePage} />
+    <Route path="/:campusID/units" component={BrowsePage} />
+    <Route path="/:campusID/journals" component={BrowsePage} />
     <Route path="/unit/:unitID" component={UnitPage} />
     <Route path="/unit/:unitID/:pageName" component={UnitPage} />
     <Route path="/item/:itemID" component={ItemPage} />

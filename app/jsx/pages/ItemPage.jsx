@@ -57,9 +57,9 @@ class ItemPage extends PageBase {
   }
 
   changeTab = tabName => {
-    // Set hash based on what was clicked
-    window.location.hash=tabName
     this.setState({currentTab: this.articleHashHandler(tabName) })
+    // Set hash based on what was clicked.
+    window.location.hash=tabName
   }
 
   renderData = data => {

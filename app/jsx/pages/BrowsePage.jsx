@@ -19,9 +19,11 @@ class BrowsePage extends PageBase
   // PageBase will fetch the following URL for us, and place the results in this.state.pageData
   pageDataURL() {
     if (this.props.params.campusID) {
-      return "/api/browse/depts/" + this.props.params.campusID
-    } else {
-      // journals or campuses
+      return (this.props.route.path.includes('units')) ?          // URL = /:campusID/units
+        "/api/browse/units/" + this.props.params.campusID
+        :                                                         // URL = /:campusID/journals
+         "/api/browse/journals/" + this.props.params.campusID
+    } else {                                                      // URL = /journals or /campuses
       return "/api/browse/" + this.props.route.path
     }
   }
@@ -30,8 +32,8 @@ class BrowsePage extends PageBase
     return (
       <div>
 
-      { data.browse_type != "depts" ? 
-        // Global browse page (browse_type != "depts")
+      { ["campuses", "all_journals"].includes(data.browse_type) ? 
+        // Global browse page
         <div>
           <Header1Comp />
           <div className="c-navbar">
@@ -48,7 +50,7 @@ class BrowsePage extends PageBase
                           campuses={data.campuses} />
           <div className="c-navbar">
             {/* ToDo: Properly call header.nav_bar for unit type="campus" */}
-            <NavComp data={[{name: 'Open Access Policies', slug: ''}, {name: 'Journals', slug: '/' + data.campusID + '/journals'}, {name: 'Academic Units', slug: '/' + data.campusID + '/departments'}]} />
+            <NavComp data={[{name: 'Open Access Policies', slug: ''}, {name: 'Journals', slug: '/' + data.campusID + '/journals'}, {name: 'Academic Units', slug: '/' + data.campusID + '/units'}]} />
           </div>
         </div>
       }
@@ -66,10 +68,13 @@ class Content extends React.Component {
     return (
       <div className="c-columns">
         <main id="maincontent">
-        { p.browse_type == "campuses" && this.renderCampuses(p) }
-        { p.browse_type == "depts" && this.renderDepts(p.depts) }
-        { p.browse_type == "journals" && <BrowseJournals journals={p.journals}
+        {/* Global browse pages */}
+        { p.browse_type == "campuses" && <AllCampuses stats={p.campusesStats} /> }
+        { p.browse_type == "all_journals" && <AllJournals journals={p.journals}
           isActive="" campuses={p.campuses} campusID=""/> }
+        {/* Campus-specific browse pages */}
+        { p.browse_type == "units" && <CampusUnits units={p.campusUnits} pageTitle={p.pageTitle} /> }
+        { p.browse_type == "journals" && <CampusJournals journals={p.campusJournals} pageTitle={p.pageTitle} /> }
         </main>
         <aside>
           <section className="o-columnbox1">
@@ -82,30 +87,22 @@ class Content extends React.Component {
       </div>
   )}
 
-  renderCampuses(p) {
+}
+
+class AllCampuses extends React.Component {
+  render() {
     return (
     <section className="o-columnbox1">
       <header>
         <h2>Campuses</h2>
       </header>
       <WellComp />
-      <DescriptionListComp campusesStats={p.campusesStats} />
-    </section>
-  )}
-
-  renderDepts(depts) {
-    return (
-    <section className="o-columnbox1">
-      <header>
-        <h2>Academic Units</h2>
-      </header>
-      <WellComp />
-      <ToggleListComp depts={depts} />
+      <DescriptionListComp campusesStats={this.props.stats} />
     </section>
   )}
 }
 
-class BrowseJournals extends React.Component {
+class AllJournals extends React.Component {
   constructor(props) {
     super(props)
     this.state = {campusID: props.campusID,
@@ -124,7 +121,7 @@ class BrowseJournals extends React.Component {
     let r = journals.map(function(j, i) {
       let p = (j['is_active'] == isActive || isActive == "") &&
         (j['ancestor_unit'].includes(campusID) || campusID =="") &&
-        <p key={i}><a href={"/unit/" + j["id"]}>{j["name"]}</a></p>
+        <li key={i}><a href={"/unit/" + j["id"]}>{j["name"]}</a></li>
       if (p) {foundOne = true}
       return p
     })
@@ -151,24 +148,49 @@ class BrowseJournals extends React.Component {
         <h2>Journals</h2>
       </header>
       <WellComp />
-      <div className="c-sort">
-        <div className="o-input__droplist1">
-          <select name="isActive" id="" onChange={this.changeActive} value={this.state.isActive}>
-            <option value="">All</option>
-            <option value="1">Actively publishing</option>
-            <option value="0">Archived</option>
-          </select>
-        </div>
-        <div className="o-input__droplist1">
-          <select name="campusID" id="" onChange={this.changeCampus} value={this.state.campusID}>
-            {campusSelector}
-          </select>
-        </div>
-      </div>
-      {visibleJournals ? visibleJournals : <p>No journals found matching that criteria<br/><br/><br/></p>}
+      <label htmlFor="o-input__droplist-label2a">Show:</label>
+      <select name="isActive" id="o-input__droplist-label2a" onChange={this.changeActive} value={this.state.isActive}>
+        <option value="">All</option>
+        <option value="1">Actively publishing</option>
+        <option value="0">Archived</option>
+      </select>
+      &nbsp;&nbsp;<label htmlFor="o-input__droplist-label2b">Campus:</label>
+      <select name="campusID" id="o-input__droplist-label2b" onChange={this.changeCampus} value={this.state.campusID}>
+        {campusSelector}
+      </select>
+    {visibleJournals ? <ul>{visibleJournals}</ul>
+     : [<p key="0"><br/></p>, <p key="1">No journals found matching that criteria<br/><br/><br/></p>]
+    }
       <br/><br/>
     </section>
   )}
 }
 
+class CampusUnits extends React.Component {
+  render() {
+    return (
+    <section className="o-columnbox1">
+      <header>
+        <h2>{this.props.pageTitle}</h2>
+      </header>
+      <WellComp />
+      <ToggleListComp depts={this.props.units} />
+    </section>
+  )}
+}
+
+class CampusJournals extends React.Component {
+  render() {
+    return (
+    <section className="o-columnbox1">
+      <header>
+        <h2>{this.props.pageTitle}</h2>
+      </header>
+      <WellComp />
+      <ul>
+        {this.props.journals.map((j, i) => { return (<li key={i}>{j.name}</li>) })}
+      </ul>
+    </section>
+  )}
+}
 module.exports = BrowsePage
