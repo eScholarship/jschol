@@ -3,8 +3,11 @@
 .o-journal1 {
   @extend %o-textlink__secondary;
   display: block;
-  width: 120px;
-  margin-bottom: $spacing-md;
+  width: 7.5em;
+
+  &:not(:last-child) {
+    margin-bottom: $spacing-md;
+  }
 
   figure {
     margin: 0;

@@ -382,12 +382,12 @@ end
 # Browse a campus's units or journals
 get "/api/browse/:browse_type/:campusID" do |browse_type, campusID|
   content_type :json
-  u, j, pageTitle = nil, nil, nil
+  cu, cj, pageTitle = nil, nil, nil
   if browse_type == 'units'
-    u = $hierByAncestor[campusID].map do |a| getChildDepts($unitsHash[a.unit_id]); end
+    cu = $hierByAncestor[campusID].map do |a| getChildDepts($unitsHash[a.unit_id]); end
     pageTitle = "Academic Units"
-  else
-    j = [{"name": "foo"}, {"name": "bar"}]   # ToDo: Properly grab campuses journals
+  else   # journals
+    cj = $campusJournals.select{ |j| j[:ancestor_unit].include?(campusID) && j[:is_active] == true }
     pageTitle = "Journals"
   end
   unit = $unitsHash[campusID]
@@ -400,8 +400,8 @@ get "/api/browse/:browse_type/:campusID" do |browse_type, campusID|
     # :header => unit ? getUnitHeader(unit, attrs) : getGlobalHeader,
     :campusID => campusID,
     :campusName => unit.name,
-    :campusUnits => u ? u.compact : nil,
-    :campusJournals => j 
+    :campusUnits => cu ? cu.compact : nil,
+    :campusJournals => cj 
   }
   breadcrumb = [
     {"name" => pageTitle, "url" => "/" + campusID + "/" + browse_type},

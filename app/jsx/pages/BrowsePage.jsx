@@ -148,19 +148,26 @@ class AllJournals extends React.Component {
         <h2>Journals</h2>
       </header>
       <WellComp />
-      <label htmlFor="o-input__droplist-label2a">Show:</label>
-      <select name="isActive" id="o-input__droplist-label2a" onChange={this.changeActive} value={this.state.isActive}>
-        <option value="">All</option>
-        <option value="1">Actively publishing</option>
-        <option value="0">Archived</option>
-      </select>
-      &nbsp;&nbsp;<label htmlFor="o-input__droplist-label2b">Campus:</label>
-      <select name="campusID" id="o-input__droplist-label2b" onChange={this.changeCampus} value={this.state.campusID}>
-        {campusSelector}
-      </select>
-    {visibleJournals ? <ul>{visibleJournals}</ul>
-     : [<p key="0"><br/></p>, <p key="1">No journals found matching that criteria<br/><br/><br/></p>]
-    }
+      <div className="o-input__inline">
+        <div className="o-input__droplist1">
+          <label className="o-input__label--hidden" htmlFor="o-input__droplist-label1">Show</label>
+          <select name="isActive" id="o-input__droplist-label1" onChange={this.changeActive} value={this.state.isActive}>
+            <option value="">All</option>
+            <option value="1">Actively publishing</option>
+            <option value="0">Archived</option>
+          </select>
+        </div>
+        <div className="o-input__droplist1">
+          <label className="o-input__label--hidden" htmlFor="o-input__droplist-label2">Campus</label>
+          <select name="campusID" id="o-input__droplist-label2" onChange={this.changeCampus} value={this.state.campusID}>
+            {campusSelector}
+          </select>
+        </div>
+      </div>
+   {visibleJournals ?
+      <ul className="o-textlist2">{visibleJournals}</ul>
+    : [<p key="0"><br/></p>, <p key="1">No journals found matching that criteria<br/><br/><br/></p>]
+   }
       <br/><br/>
     </section>
   )}
@@ -186,9 +193,10 @@ class CampusJournals extends React.Component {
       <header>
         <h2>{this.props.pageTitle}</h2>
       </header>
-      <WellComp />
-      <ul>
-        {this.props.journals.map((j, i) => { return (<li key={i}>{j.name}</li>) })}
+      <ul className="o-textlist2">
+        {this.props.journals.map((j, i) => {
+          return (<li key={i}><a href={"/unit/" + j["id"]}>{j["name"]}</a></li>) })
+        }
       </ul>
     </section>
   )}
