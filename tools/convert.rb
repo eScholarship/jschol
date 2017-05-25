@@ -503,10 +503,12 @@ end
 
 ###################################################################################################
 def mimeTypeToSummaryType(mimeType)
-  mimeType =~ %r{^audio/} and return "audio"
-  mimeType =~ %r{^video/} and return "video"
-  mimeType =~ %r{^image/} and return "images"
-  mimeType == "application/zip" and return "zip"
+  if mimeType
+    mimeType.mediatype == "audio" and return "audio"
+    mimeType.mediatype == "video" and return "video"
+    mimeType.mediatype == "image" and return "images"
+    mimeType.subtype == "zip" and return "zip"
+  end
   return "other files"
 end
 
@@ -588,7 +590,7 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
       supps << { file: pair[1], title: pair[0] }
     }
   end
-  suppSummaryTypes = []
+  suppSummaryTypes = Set.new
   if !supps.empty?
     supps.each { |supp|
       suppPath = "#{DATA_DIR}/13030/pairtree_root/#{itemID.scan(/\w\w/).join('/')}/#{itemID}/content/supp/#{supp[:file]}"
@@ -598,7 +600,7 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
         # Mime types aren't always reliable coming from Subi. Let's try harder.
         mimeType = MimeMagic.by_magic(File.open(suppPath))
         if mimeType && mimeType.type
-          supp[:mimeType] = mimeType
+          supp['mimeType'] = mimeType
         end
         suppSummaryTypes << mimeTypeToSummaryType(mimeType)
         (attrs[:supp_files] ||= []) << supp
@@ -714,7 +716,6 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
       content_types: data.multiple("format"),
       disciplines:   attrs[:disciplines] ? attrs[:disciplines] : [""], # only the numeric parts
       peer_reviewed: attrs[:is_peer_reviewed] ? 1 : 0,
-      supp_file_types: 
       pub_date:      dbItem[:pub_date].to_date.iso8601 + "T00:00:00Z",
       pub_year:      dbItem[:pub_date].year,
       rights:        dbItem[:rights],
@@ -730,7 +731,7 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
   series.empty?      or idxItem[:fields][:series] = series
 
   # Summary of supplemental file types
-  suppSummaryTypes.empty? or idxItem[:fields][:supp_file_types] = suppSummaryTypes
+  suppSummaryTypes.empty? or idxItem[:fields][:supp_file_types] = suppSummaryTypes.to_a
 
   # Limit text based on size of other fields (so, 1000 authors will mean less text).
   # We have to stay under the overall limit for a CloudSearch record. This problem is
