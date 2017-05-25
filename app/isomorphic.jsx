@@ -76,8 +76,8 @@ app.use((req, res) =>
               renderedHTML = renderToString(rc)
               // Note: because this is being turned into code, we have to jump through hoops to properly
               //       escape special characters.
-              let json = JSON.stringify(response)
-              json = json.replace(/[\u007F-\uFFFF]/g, chr => "\\u" + ("0000" + chr.charCodeAt(0).toString(16)).substr(-4))
+              let json = body.replace(/[\u007F-\uFFFF]/g, chr => "\\u" + ("0000" + chr.charCodeAt(0).toString(16)).substr(-4))
+              json = json.replace(/\\/g, "\\\\") // for some reason need to double-escape backslashes, e.g. qt3f3256kv abstract
               /* Note: must leave comments like <!-- react-text: 14 --> so that react will
                  properly match up the rendered HTML to client-generated HTML */
               res.send(

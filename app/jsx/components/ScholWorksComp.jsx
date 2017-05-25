@@ -9,6 +9,28 @@ if (!(typeof document === "undefined")) {
   const dotdotdot = require('jquery.dotdotdot')
 }
 
+class DotDiv extends React.Component {
+  componentDidMount() {
+    $(this.domEl).dotdotdot({watch:"window"})
+  }
+
+  render = () =>
+    <div className={this.props.className} ref={el => this.domEl = el}>
+      {this.props.children}
+    </div>
+}
+
+class DotH2 extends React.Component {
+  xcomponentDidMount() {
+    $(this.domEl).dotdotdot({watch:"window"})
+  }
+
+  render = () =>
+    <h2 className={this.props.className} ref={el => this.domEl = el}>
+      {this.props.children}
+    </h2>
+}
+
 class ScholWorksComp extends React.Component {
   render() {
     var tagList = [];
@@ -38,13 +60,18 @@ class ScholWorksComp extends React.Component {
       unitId = this.props.result.unitInfo.unitId;
     }
 
+    var authorList;
     if (this.props.result.authors) {
-      var authorList = this.props.result.authors.map(function(author, i, a) {
-        return (<li key={author.name}><Link to={"/search/?q="+author.name}>{author.name}</Link></li>)
-      })
+      authorList = this.props.result.authors.map(function(author, i, a) {
+        if (i === a.length-1) {
+          return (<li key={author+i}><Link to={"/search/?q="+author.name}>{author.name}</Link></li>);
+        } else {
+          return (<li key={author+i}><Link to={"/search/?q="+author.name}>{author.name}</Link>; </li>);
+        }
+      });
     }
 
-    var supp_files = this.props.result.supp_files.map(function(supp_file) {
+    var supp_files = this.props.result.supp_files.map(function(supp_file, i, a) {
       if (supp_file.count >= 1) {
         var display;
         if (supp_file.type === 'video' || supp_file.type === 'image') {
@@ -54,7 +81,7 @@ class ScholWorksComp extends React.Component {
         } else if (supp_file.type === 'pdf') {
           display = supp_file.count != 1 ? 'additional PDFs' : 'additional PDF';
         }
-        return (<li key={supp_file.type} className={"c-scholworks__media-" + supp_file.type}>Contains {supp_file.count} {display}</li>);   
+        return (<li key={supp_file+i} className={"c-scholworks__media-" + supp_file.type}>Contains {supp_file.count} {display}</li>);   
       }
     });
     // if ('supp_files' in this.props.result && this.props.result.supp_files !== null) {
@@ -76,23 +103,23 @@ class ScholWorksComp extends React.Component {
       <section className="c-scholworks">
         <div className="c-scholworks__main-column">
           <ul className="c-scholworks__tag-list">
-            { tagList.map(function(tag) { 
+            { tagList.map(function(tag, i, a) { 
               return (
-                <li key={tag.tagStyle} className={ "c-scholworks__tag-" + tag.tagStyle }>{tag.display}</li>
+                <li key={tag+i} className={ "c-scholworks__tag-" + tag.tagStyle }>{tag.display}</li>
               ) 
             }) }
           </ul>
           <heading>
-            <h2 className="c-scholworks__heading" ref={ el => $(el).dotdotdot({watch:"window"}) }>
+            <DotH2 className="c-scholworks__heading">
               <Link to={"/item/"+this.props.result.id.replace(/^qt/, "")}>{this.props.result.title}</Link>
-            </h2>
+            </DotH2>
           </heading>
           {authorList && 
-            <div className="c-authorlist" ref={ el => $(el).dotdotdot({watch:"window"}) }>
+            <DotDiv className="c-authorlist">
               <ul className="c-authorlist__list">
                 {authorList}
               </ul>
-            </div>
+            </DotDiv>
           }
           {this.props.result.pub_year && publishingInfo && 
             <div className="c-scholworks__publication">
@@ -100,9 +127,9 @@ class ScholWorksComp extends React.Component {
             </div>
           }
           {this.props.result.abstract && 
-            <div className="c-scholworks__abstract" ref={ el => $(el).dotdotdot({watch:"window"}) }>
+            <DotDiv className="c-scholworks__abstract">
               <p>{this.props.result.abstract}</p>
-            </div>
+            </DotDiv>
           }
           <div className="c-scholworks__media">
             <ul className="c-scholworks__media-list">{ supp_files }</ul>
