@@ -853,7 +853,7 @@ def processBatch(batch)
     begin
       $csClient.upload_documents(documents: batch[:idxData], content_type: "application/json")
     rescue Exception => res
-      if res.inspect =~ /Http50[479]Error/ && (Time.now - startTime < 10*60)
+      if res.inspect =~ /Http(408|5\d\d)Error/ && (Time.now - startTime < 10*60)
         puts "Will retry in 30 sec, response was: #{res}"
         sleep 30; puts "Retrying."; retry
       end
