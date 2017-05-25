@@ -12,13 +12,8 @@ class BreadcrumbComp extends React.Component {
 
         lastN = this.props.array ? this.props.array.length - 1 : 0,
         nodes = this.props.array ? this.props.array.map(function(node, i) {
-          if (node.id == 'root') {
-            return (
-              <Link className={(i==lastN) ? "c-breadcrumb-link--active": null} to="/" key={i}>{node.name}</Link>
-            )
-          }
           return (
-            <Link className={(i==lastN) ? "c-breadcrumb-link--active": null} to={"/unit/" + node.id} key={i}>{node.name}</Link>
+            <Link className={(i==lastN) ? "c-breadcrumb-link--active": null} to={node.url} key={i}>{node.name}</Link>
           )
         })
         : 

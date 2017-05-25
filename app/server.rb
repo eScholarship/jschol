@@ -371,7 +371,7 @@ get "/api/browse/journals" do
   content_type :json
   body = {
     :header => getGlobalHeader,
-    :browse_type => "journals",
+    :browse_type => "all_journals",
     :journals => $campusJournals.sort_by{ |h| h[:name].downcase }
   }
   breadcrumb = [{"name" => "Journals", "url" => "/journals"},]
@@ -379,26 +379,33 @@ get "/api/browse/journals" do
 end
 
 ###################################################################################################
-# Browse Campus depts data.
-get "/api/browse/depts/:campusID" do |campusID|
+# Browse a campus's units or journals
+get "/api/browse/:browse_type/:campusID" do |browse_type, campusID|
   content_type :json
-  d = $hierByAncestor[campusID].map do |a|
-    getChildDepts($unitsHash[a.unit_id])
+  u, j, pageTitle = nil, nil, nil
+  if browse_type == 'units'
+    u = $hierByAncestor[campusID].map do |a| getChildDepts($unitsHash[a.unit_id]); end
+    pageTitle = "Academic Units"
+  else
+    j = [{"name": "foo"}, {"name": "bar"}]   # ToDo: Properly grab campuses journals
+    pageTitle = "Journals"
   end
   unit = $unitsHash[campusID]
   attrs = JSON.parse(unit[:attrs])
   body = {
-    :browse_type => "depts",
+    :browse_type => browse_type,
+    :pageTitle => pageTitle,
     :unit => unit ? unit.values.reject { |k,v| k==:attrs } : nil,
     # ToDo: Campus nav does not need to deal with ancestors
     # :header => unit ? getUnitHeader(unit, attrs) : getGlobalHeader,
     :campusID => campusID,
     :campusName => unit.name,
-    :depts => d.compact
+    :campusUnits => u ? u.compact : nil,
+    :campusJournals => j 
   }
   breadcrumb = [
-    {"name" => "Academic Units", "url" => "/" + campusID + "/departments"},
-    {"name" => unit.name, "id" => campusID}]
+    {"name" => pageTitle, "url" => "/" + campusID + "/" + browse_type},
+    {"name" => unit.name, "url" => "/unit/" + campusID}]
   return body.merge(getHeaderElements(breadcrumb, nil)).to_json
 end
 

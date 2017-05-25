@@ -39,7 +39,7 @@ class NavComp extends React.Component {
     }
     if (navItem.slug) {
       return (
-        <Link key={navItem.slug} to={"/unit/" + this.props.unitId + "/" + navItem.slug }>{navItem.name}</Link>
+        <Link key={navItem.slug} to={ navItem.slug }>{navItem.name}</Link>
       )
     }
     if (navItem.unitId) {
