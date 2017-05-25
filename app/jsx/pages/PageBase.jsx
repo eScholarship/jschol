@@ -194,20 +194,47 @@ class PageBase extends React.Component
     }
   }
 
+  isStageMachine() {
+    let lookFor = /-stg|-dev/
+    if (lookFor.test(this.props.location.host))
+      return true
+    else if (!((typeof window) === "undefined") && window.location && lookFor.test(window.location.origin))
+      return true
+    else
+      return false
+  }
+
+  stageWatermark() {
+    if (!this.isStageMachine())
+      return null
+
+    // You can't see them below, but there are actually a bunch of non-breaking space chars
+    // in the string.
+    let watermarkText = "NEW WEBSITE IN PROGRESS                "
+    for (let i = 0; i < 12; i++)
+      watermarkText += watermarkText
+    return <div className="watermarked-parent">
+             <div className="watermarked" data-watermark={watermarkText}/>
+           </div>
+  }
+
   render() {
     this.fetchPermissions()
     return (
-      <Broadcast channel="cms" value={ { loggedIn: this.state.adminLogin && this.state.adminLogin.loggedIn,
-                                         username: this.state.adminLogin && this.state.adminLogin.username,
-                                         token: this.state.adminLogin && this.state.adminLogin.token,
-                                         onLogin: this.onLogin,
-                                         onLogout: this.onLogout,
-                                         isEditingPage: this.state.isEditingPage,
-                                         onEditingPageChange: this.onEditingPageChange,
-                                         modules: this.state.cmsModules,
-                                         permissions: this.state.permissions } }>
-        {this.renderContent()}
-      </Broadcast>
+      <div>
+        { this.stageWatermark() }
+        <Broadcast channel="cms" value={ { loggedIn: this.state.adminLogin && this.state.adminLogin.loggedIn,
+                                           username: this.state.adminLogin && this.state.adminLogin.username,
+                                           token: this.state.adminLogin && this.state.adminLogin.token,
+                                           onLogin: this.onLogin,
+                                           onLogout: this.onLogout,
+                                           isEditingPage: this.state.isEditingPage,
+                                           onEditingPageChange: this.onEditingPageChange,
+                                           modules: this.state.cmsModules,
+                                           permissions: this.state.permissions } }>
+          {this.renderContent()}
+        </Broadcast>
+      </div>
     )
   }
 
