@@ -106,10 +106,11 @@ class PageBase extends React.Component
   fetchPageData(props) {
     let dataURL = this.pageDataURL(props)
     if (dataURL) {
+      this.setState({ fetchingData: true })
       $.getJSON(this.pageDataURL(props)).done((data) => {
-        this.setState({ pageData: data })
+        this.setState({ pageData: data, fetchingData: false })
       }).fail((jqxhr, textStatus, err)=> {
-        this.setState({ error: textStatus })
+        this.setState({ pageData: null, error: textStatus, fetchingData: false })
       })
     }
   }

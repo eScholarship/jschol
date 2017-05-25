@@ -27,6 +27,10 @@ end
 
 # Fire up a proxy, optionally overriding username
 puts "\nStarting SOCKS proxy."
-user = config['user']
-pid = spawn("ssh -C -N -D #{port} -p 18822 #{user ? "#{user}@" : ""}cdl-aws-bastion.cdlib.org")
+user = config['user'] ? "#{config['user']}@" : ""
+pid = spawn("ssh -N -D #{port} " +
+	          "-F /dev/null " +
+            "-o ProxyCommand='ssh -C -W %h:%p -p 18822 #{user}cdl-aws-bastion.cdlib.org' " +
+            "-o CheckHostIP=no " +
+            "#{user}pub-jschol-dev.escholarship.org")
 Process.detach(pid)

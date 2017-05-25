@@ -139,6 +139,7 @@ end
 # takes list of facets in [{value: , count: }] form where value is the value that escholarship UI/AWS uses.
 # returns a nested hierarchy list: [{value, count, displayName, (optionally) descendents: []}, ...]
 def get_unit_hierarchy(unitFacets)
+  idToUnitFacet = Hash[unitFacets.map { |unitFacet| [unitFacet['value'], unitFacet] }]
   for unitFacet in unitFacets
     unit = $unitsHash[unitFacet['value']]
     unitFacet['displayName'] = unit.name
@@ -146,40 +147,25 @@ def get_unit_hierarchy(unitFacets)
     # get the direct ancestor to this oru unit if the ancestor is also an oru
     ancestor_id = $oruAncestors[unit.id]
     if ancestor_id
-      # search the rest of the list to see if this ancestor is already in the facet list
-      ancestor_in_list = false
-      for u in unitFacets
-        if ancestor_id == u['value']
-          if u.key? 'descendents'
-            u['descendents'].push(unitFacet)
-          else
-            u['descendents'] = [unitFacet]
-          end
-          ancestor_in_list = true
-          unitFacet['ancestor_in_list'] = true
+      # check that this ancestor is already in the facet list
+      u = idToUnitFacet[ancestor_id]
+      if u
+        if u.key? 'descendents'
+          u['descendents'].push(unitFacet)
+        else
+          u['descendents'] = [unitFacet]
         end
+      else
+        # Ancestor not in list - this can happen when the number of departments exceeds
+        # the max facet query (typically 100). In this case, leave out the child unit.
+        puts "Note: some child depts omitted because ancestor not present (likely cut off by facet query)."
       end
-
-      # all ancestors should always be in list, per convert.rb#L398
-      # which traces all the way up to the root,
-      # recording all departments for each item along the way
-      if !ancestor_in_list
-        pp "DON'T KNOW WHAT TO DO HERE YIKES"
-        ancestor = $unitsHash[ancestors[0].ancestor_unit]
-        unitFacet['ancestor'] = {displayName: ancestor.name, value: ancestor.id}
-      end
+      unitFacet['ancestor_in_list'] = true
     end
   end
 
-  for unitFacet in unitFacets
-    if unitFacet['ancestor_in_list']
-      unitFacets.delete(unitFacet)
-    end
-  end
+  unitFacets.select! { |unitFacet| !unitFacet['ancestor_in_list'] }
 end
-
-
-
 
 def get_query_display(params)
   #Augment filters and filter values with display names
