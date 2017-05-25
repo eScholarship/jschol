@@ -32,9 +32,19 @@ class TestQuick < Test::Unit::TestCase
     assert_match /About eScholarship/, html
   end
 
-  def test_browse
+  def test_browse_campuses
     html = fetchAndStrip("http://localhost:4001/campuses")
     assert_match /UC Berkeley/, html
+  end
+
+  def test_browse_journals
+    html = fetchAndStrip("http://localhost:4001/journals")
+    assert_match /Berkeley Planning Journal/, html
+  end
+
+  def test_browse_campus_units
+    html = fetchAndStrip("http://localhost:4001/ucla/units")
+    assert_match /UCLA Civil and Environmental Engineering/, html
   end
 
   def test_item

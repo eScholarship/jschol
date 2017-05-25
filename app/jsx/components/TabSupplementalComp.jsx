@@ -59,8 +59,11 @@ class TabSupplementalComp extends React.Component {
             (s[0] == "application" && ["pdf", "msword", "postscript", "wordperfect", "pdf"].includes(s[1]))) {
           mimeSimple = "doc"
         }
+        else if ((s[0] == "image" && ["jpg", "png", "gif"].includes(s[1]))) {
+          mimeSimple = "image"
+        }
         else if (["music", "audio"].includes(s[0])) { mimeSimple = "audio" }
-        else if (["image", "video"].includes(s[0])) { mimeSimple = s[0] }
+        else if (["video"].includes(s[0])) { mimeSimple = s[0] }
         else { mimeSimple = "data" }
         f['mimeSimple'] = mimeSimple
         supp_files.push(f) 
