@@ -50,10 +50,10 @@ class TabsComp extends React.Component {
       }
         </div>
         <div className="c-tabs__content">
-          {this.props.currentTab == "main"         ? <TabMainComp {...this.props} /> : null}
-          {this.props.currentTab == "supplemental" ? <TabSupplementalComp {...this.props} /> : null}
-          {this.props.currentTab == "metrics"      ? <TabMetricsComp {...this.props} /> : null}
-          {this.props.currentTab == "author"       ? <TabAuthorComp {...this.props} /> : null}
+          {this.props.currentTab == "main"         && <TabMainComp {...this.props} />}
+          {this.props.currentTab == "supplemental" && <TabSupplementalComp {...this.props} />}
+          {this.props.currentTab == "metrics"      && <TabMetricsComp {...this.props} />}
+          {this.props.currentTab == "author"       && <TabAuthorComp {...this.props} />}
           <p><br/></p>
         </div>
       </div>

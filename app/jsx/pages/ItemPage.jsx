@@ -17,8 +17,8 @@ if (!(typeof document === "undefined")) {
   const dotdotdot = require('jquery.dotdotdot')
 }
 
-const anchors = ['main', 'supplemental', 'metrics', 'author',
-             'article_abstract', 'article_main', 'article_references']
+const tab_anchors = ['main', 'supplemental', 'metrics', 'author']
+const anchors = tab_anchors.concat(['article_abstract', 'article_main', 'article_references'])
 
 class ItemPage extends PageBase {
   static propTypes = {
@@ -63,6 +63,7 @@ class ItemPage extends PageBase {
   }
 
   renderData = data => {
+    let currentTab = tab_anchors.includes(this.state.currentTab) ? this.state.currentTab : "main" 
     return (
       <div>
         <Header2Comp type={data.unit ? data.unit.type: null}
@@ -77,7 +78,7 @@ class ItemPage extends PageBase {
         <BreadcrumbComp array={data.header ? data.header.breadcrumb : null} />
         <div className="c-columns--sticky-sidebar">
           <main id="maincontent">
-            <TabsComp currentTab={this.state.currentTab}
+            <TabsComp currentTab={currentTab}
                       changeTab={this.changeTab}
                       formatDate={this.formatDate}
                       {...data} />
