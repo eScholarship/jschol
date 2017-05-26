@@ -71,7 +71,7 @@ class UnitPage extends PageBase
       data.marquee.carousel = true;
       if (data.unit.type === 'oru') {
         contentLayout = (<DepartmentLayout unit={data.unit} data={data.content} marquee={data.marquee}/>);
-      } else if (data.unit.type === 'series') {
+      } else if (data.unit.type.includes('series')) {
         contentLayout = (<SeriesLayout unit={data.unit} data={data.content} marquee={data.marquee}/>);
       } else if (data.unit.type === 'journal') {
         contentLayout = (<JournalLayout unit={data.unit} data={data.content} marquee={data.marquee}/>);
