@@ -42,7 +42,7 @@ def getUnitPageContent(unit, attrs, pageName)
     if unit.type == 'oru'
       return getORULandingPageData(unit.id)
     end
-    if unit.type == 'series'
+    if unit.type.include? 'series'
       return getSeriesLandingPageData(unit)
     end
     if unit.type == 'journal'
@@ -131,7 +131,7 @@ end
 
 
 def unitSearch(params, unit)
-  if unit.type == 'series'
+  if unit.type.include? 'series'
     resultsListFields = ['thumbnail', 'pub_year', 'publication_information', 'type_of_work', 'rights']
     params["series"] = [unit.id]
   elsif unit.type == 'oru'

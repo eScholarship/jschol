@@ -334,7 +334,7 @@ get %r{^/(?!(api/.*|content/.*|locale/.*|.*\.\w{1,4}$))} do
 end
 
 ###################################################################################################
-# Home page data (All campuses or All journals)
+# Home page data
 get '/api/home' do
   content_type :json
   body = {
@@ -348,20 +348,21 @@ end
 get "/api/browse/campuses" do 
   content_type :json
   # Build array of hashes containing campus and stats
-  campusesStats = []
+  stats = []
   $activeCampuses.each do |k, v|
     pub_count =     ($statsCampusPubs.keys.include? k)  ? $statsCampusPubs[k]     : 0
     unit_count =    ($statsCampusOrus.keys.include? k)  ? $statsCampusOrus[k]     : 0
     journal_count = ($statsCampusJournals.keys.include? k) ? $statsCampusJournals[k] : 0
-    campusesStats.push({"id"=>k, "name"=>v.values[:name], 
+    stats.push({"id"=>k, "name"=>v.values[:name], "type"=>v.values[:type], 
       "publications"=>pub_count, "units"=>unit_count, "journals"=>journal_count})
   end
   body = {
     :header => getGlobalHeader,
     :browse_type => "campuses",
-    :campusesStats => campusesStats
+    :campusesStats => stats.select { |h| h['type']=="campus" },
+    :affiliatedStats => stats.select { |h| h['type']=="oru" }
   }
-  breadcrumb = [{"name" => "Campuses", "url" => "/campuses"},]
+  breadcrumb = [{"name" => "Campuses and Affiliated Units", "url" => "/campuses"},]
   return body.merge(getHeaderElements(breadcrumb, nil)).to_json
 end
 
@@ -369,10 +370,12 @@ end
 # Browse all journals
 get "/api/browse/journals" do 
   content_type :json
+  journals = $campusJournals.sort_by{ |h| h[:name].downcase }
   body = {
     :header => getGlobalHeader,
     :browse_type => "all_journals",
-    :journals => $campusJournals.sort_by{ |h| h[:name].downcase }
+    :journals => journals.select{ |h| h[:is_active]==true },
+    :archived => journals.select{ |h| h[:is_active]==false }
   }
   breadcrumb = [{"name" => "Journals", "url" => "/journals"},]
   return body.merge(getHeaderElements(breadcrumb, "All Campuses")).to_json
@@ -387,7 +390,7 @@ get "/api/browse/:browse_type/:campusID" do |browse_type, campusID|
     cu = $hierByAncestor[campusID].map do |a| getChildDepts($unitsHash[a.unit_id]); end
     pageTitle = "Academic Units"
   else   # journals
-    cj = $campusJournals.select{ |j| j[:ancestor_unit].include?(campusID) && j[:is_active] == true }
+    cj = $campusJournals.select{ |j| j[:ancestor_unit].include?(campusID) }
     pageTitle = "Journals"
   end
   unit = $unitsHash[campusID]
@@ -500,7 +503,8 @@ get "/api/item/:shortArk" do |shortArk|
       if unit && unit.type == 'journal'
         issue_id = Item.join(:sections, :id => :section).filter(:items__id => id).map(:issue_id)[0]
         volume, issue = Section.join(:issues, :id => issue_id).map([:volume, :issue])[0]
-        body[:header][:breadcrumb] << {name: "Volume #{volume}, Issue #{issue}", id: "#{unitIDs[0]}/issues/#{issue}"}
+        body[:header][:breadcrumb] << {name: "Volume #{volume}, Issue #{issue}",
+          url: "/unit/#{unitIDs[0]}/#{volume}/#{issue}"}
         body[:citation][:volume] = volume
         body[:citation][:issue] = issue
       end
