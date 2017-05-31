@@ -2,14 +2,13 @@
 
 # This script converts data from old eScholarship into the new eschol5 database.
 #
-# The "--units" conversion mode should generally be run on a newly cleaned-out
-# database. This sequence of commands should do the trick:
+# The "--units" mode converts the contents of allStruct.xml and the
+# various brand files into the unit/unitHier/etc tables. It is
+# built to be fully incremental.
 #
-#   bin/sequel config/database.yaml -m migrations/ -M 0 && \
-#   bin/sequel config/database.yaml -m migrations/ && \
-#   ./convert.rb /path/to/allStruct.xml
-#
-# The "--items" conversion mode is built to be fully incremental.
+# The "--items" mode converts combined an XTF index dump with the contents of
+# UCI metadata files into the items/sections/issues/etc. tables. It is also
+# built to be fully incremental.
 
 # Use bundler to keep dependencies local
 require 'rubygems'
@@ -116,6 +115,18 @@ $discTbl = {"1540" => "Life Sciences",
 ###################################################################################################
 # Model classes for easy object-relational mapping in the database
 
+class Sequel::Model
+  def self.update_or_replace(id, **data)
+    record = self[id]
+    if record
+      record.update(**data)
+    else
+      data[@primary_key] = id
+      Unit.create(**data)
+    end
+  end
+end
+
 class Unit < Sequel::Model
   unrestrict_primary_key
 end
@@ -190,32 +201,33 @@ def convertUnits(el, parentMap, childMap)
   #puts "name=#{el.name} id=#{id.inspect} name=#{el[:label].inspect}"
 
   # Handle the root of the unit hierarchy
-  if el.name == "allStruct"
-    Unit.create(
-      :id => "root",
-      :name => "eScholarship",
-      :type => "root",
-      :is_active => true,
-      :attrs => nil
-    )
+  data = nil
+  if id == "root"
+    data = {
+      name: "eScholarship",
+      type: "root",
+      is_active: true,
+      attrs: nil
+    }
   # Handle regular units
   elsif el.name == "div"
     attrs = {}
     el[:directSubmit] and attrs[:directSubmit] = el[:directSubmit]
     el[:hide]         and attrs[:hide]         = el[:hide]
-    Unit.create(
-      :id => id,
-      :name => el[:label],
-      :type => el[:type],
-      :is_active => el[:directSubmit] != "moribund",
-      :attrs => JSON.generate(attrs)
-    )
+    data = {
+      name: el[:label],
+      type: el[:type],
+      is_active: el[:directSubmit] != "moribund",
+      attrs: JSON.generate(attrs)
+    }
   # Multiple-parent units
   elsif el.name == "ref"
     # handled elsewhere
   end
+  data and Unit.update_or_replace(id, data)
 
   # Now recursively process the child units
+  UnitHier.where(unit_id: id).delete
   el.children.each { |child|
     if child.name != "allStruct"
       id or raise("id-less node with children")
@@ -966,6 +978,9 @@ def convertAllUnits
       convertUnits(Nokogiri::XML(io, &:noblanks).root, {}, {})
     }
   end
+
+  # Delete extraneous units from prior conversions
+  #TODO
 end
 
 ###################################################################################################
