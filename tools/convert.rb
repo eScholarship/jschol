@@ -80,6 +80,9 @@ end
 $csClient = Aws::CloudSearchDomain::Client.new(
   endpoint: YAML.load_file("config/cloudSearch.yaml")["docEndpoint"])
 
+# S3 API client
+$s3Client = Aws::S3::Client.new(region: YAML.load_file("config/s3.yaml")["region"])
+
 # Caches for speed
 $allUnits = nil
 $unitAncestors = nil
@@ -113,8 +116,7 @@ $discTbl = {"1540" => "Life Sciences",
             "3579" => "Education"}
 
 ###################################################################################################
-# Model classes for easy object-relational mapping in the database
-
+# Monkey-patch to add update_or_replace functionality, which is strangely absent in the Sequel gem.
 class Sequel::Model
   def self.update_or_replace(id, **data)
     record = self[id]
@@ -126,6 +128,9 @@ class Sequel::Model
     end
   end
 end
+
+###################################################################################################
+# Model classes for easy object-relational mapping in the database
 
 class Unit < Sequel::Model
   unrestrict_primary_key
@@ -195,36 +200,56 @@ def linkDescendants(id, child, childMap, done)
 end
 
 ###################################################################################################
+def convertLogo(unitID, logoEl)
+  logoImgEl = logoEl.at("div[@id='logoDiv']/img[@src]")
+  logoImgEl or return {}
+  imgPath = "/apps/eschol/erep/xtf/static/#{logoImgEl[:src]}"
+  File.exist?(imgPath) or raise("Can't find logo image #{imgPath}")
+  mimeType = MimeMagic.by_magic(File.open(imgPath))
+  mimeType && mimeType.mediatype == "image" or raise("Non-image logo file #{imgPath}")
+  pp mimeType.to_s
+  puts "imgPath: #{imgPath} mimeType=#{mimeType}"
+  s3Config = YAML.load_file("config/s3.yaml")#["region"]
+  pp $s3Client.list_objects({ bucket: s3Config["bucket"], prefix: s3Config["prefix"]+"/" })
+  exit 1
+end
+
+###################################################################################################
+def convertUnitBrand(unitId)
+  navBar = [ { name: "Unit Home", slug: "" } ]
+  dataOut =  { nav_bar: navBar }
+
+  bfPath = "/apps/eschol/erep/xtf/static/brand/#{unitId}/#{unitId}.xml"
+  if File.exist?(bfPath)
+    dataIn = Nokogiri::XML(File.new(bfPath), &:noblanks).root
+    logoEl = dataIn.at("display/mainFrame/logo")
+    logoEl and dataOut.merge!(convertLogo(unitId, logoEl))
+  end
+
+  return dataOut
+end
+
+###################################################################################################
 # Convert an allStruct element, and all its child elements, into the database.
-def convertUnits(el, parentMap, childMap)
+def convertUnits(el, parentMap, childMap, allIds)
   id = el[:id] || el[:ref] || "root"
+  allIds << id
   #puts "name=#{el.name} id=#{id.inspect} name=#{el[:label].inspect}"
 
-  # Handle the root of the unit hierarchy
-  data = nil
-  if id == "root"
-    data = {
-      name: "eScholarship",
-      type: "root",
-      is_active: true,
-      attrs: nil
-    }
-  # Handle regular units
-  elsif el.name == "div"
+  # Create or update the main database record
+  if el.name != "ref"
     attrs = {}
     el[:directSubmit] and attrs[:directSubmit] = el[:directSubmit]
     el[:hide]         and attrs[:hide]         = el[:hide]
-    data = {
-      name: el[:label],
-      type: el[:type],
-      is_active: el[:directSubmit] != "moribund",
-      attrs: JSON.generate(attrs)
-    }
-  # Multiple-parent units
-  elsif el.name == "ref"
+    attrs.merge!(convertUnitBrand(id))
+    Unit.update_or_replace(id,
+      name:      id=="root" ? "eScholarship" : el[:label],
+      type:      id=="root" ? "root"         : el[:type],
+      is_active: id=="root" ? true           : el[:directSubmit] != "moribund",
+      attrs:     JSON.generate(attrs)
+    )
     # handled elsewhere
   end
-  data and Unit.update_or_replace(id, data)
 
   # Now recursively process the child units
   UnitHier.where(unit_id: id).delete
@@ -238,13 +263,16 @@ def convertUnits(el, parentMap, childMap)
       childMap[id] ||= []
       childMap[id] << childID
     end
-    convertUnits(child, parentMap, childMap)
+    convertUnits(child, parentMap, childMap, allIds)
   }
 
   # After traversing the whole thing, it's safe to form all the hierarchy links
   if el.name == "allStruct"
     puts "Linking units."
     linkUnit("root", childMap, Set.new)
+
+    # Delete extraneous units from prior conversions
+    deleteExtraUnits(allIds)
   end
 end
 
@@ -965,22 +993,33 @@ def processAllBatches
 end
 
 ###################################################################################################
+# Delete extraneous units from prior conversions
+def deleteExtraUnits(allIds)
+  dbUnits = Set.new(Unit.map { |unit| unit.id })
+  (dbUnits - allIds).each { |id|
+    puts "Deleting extra unit: #{id}"
+    DB.transaction do
+      UnitHier.where(unit_id: id).delete
+      Unit[id].delete
+    end
+  }
+end
+
+###################################################################################################
 # Main driver for unit conversion.
 def convertAllUnits
   # Let the user know what we're doing
   puts "Converting units."
   startTime = Time.now
 
-  # Load allStruct and traverse it
+  # Load allStruct and traverse it. This will create Unit and Unit_hier records for all units,
+  # and delete any extraneous old ones.
   DB.transaction do
     allStructPath = "/apps/eschol/erep/xtf/style/textIndexer/mapping/allStruct.xml"
     open(allStructPath, "r") { |io|
-      convertUnits(Nokogiri::XML(io, &:noblanks).root, {}, {})
+      convertUnits(Nokogiri::XML(io, &:noblanks).root, {}, {}, Set.new)
     }
   end
-
-  # Delete extraneous units from prior conversions
-  #TODO
 end
 
 ###################################################################################################
@@ -990,8 +1029,7 @@ def convertAllItems(arks)
   puts "Converting #{arks=="ALL" ? "all" : "selected"} items."
 
   # Build a list of all valid units
-  $allUnits = {}
-  Unit.each { |unit| $allUnits[unit.id] = unit }
+  $allUnits = Unit.map { |unit| [unit.id, unit] }.to_h
 
   # Build a cache of unit ancestors
   $unitAncestors = Hash.new { |h,k| h[k] = [] }
