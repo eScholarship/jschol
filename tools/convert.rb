@@ -17,6 +17,7 @@ require 'bundler/setup'
 # Remainder are the requirements for this program
 require 'aws-sdk'
 require 'date'
+require 'digest'
 require 'json'
 require 'logger'
 require 'mimemagic'
@@ -26,6 +27,7 @@ require 'open3'
 require 'pp'
 require 'rack'
 require 'sequel'
+require 'ostruct'
 require 'time'
 require 'yaml'
 
@@ -81,7 +83,8 @@ $csClient = Aws::CloudSearchDomain::Client.new(
   endpoint: YAML.load_file("config/cloudSearch.yaml")["docEndpoint"])
 
 # S3 API client
-$s3Client = Aws::S3::Client.new(region: YAML.load_file("config/s3.yaml")["region"])
+$s3Config = OpenStruct.new(YAML.load_file("config/s3.yaml"))
+$s3Client = Aws::S3::Client.new(region: $s3Config.region)
 
 # Caches for speed
 $allUnits = nil
@@ -201,32 +204,58 @@ end
 
 ###################################################################################################
 def convertLogo(unitID, logoEl)
+  # Locate the image reference
   logoImgEl = logoEl.at("div[@id='logoDiv']/img[@src]")
   logoImgEl or return {}
   imgPath = "/apps/eschol/erep/xtf/static/#{logoImgEl[:src]}"
-  File.exist?(imgPath) or raise("Can't find logo image #{imgPath}")
+  if !File.file?(imgPath)
+    puts "Warning: Can't find unit #{unitID.inspect} logo image #{imgPath.inspect}"
+    return {}
+  end
+
+  # Make sure it's an image, and determine which kind of image
   mimeType = MimeMagic.by_magic(File.open(imgPath))
   mimeType && mimeType.mediatype == "image" or raise("Non-image logo file #{imgPath}")
-  pp mimeType.to_s
-  puts "imgPath: #{imgPath} mimeType=#{mimeType}"
-  s3Config = YAML.load_file("config/s3.yaml")#["region"]
-  pp $s3Client.list_objects({ bucket: s3Config["bucket"], prefix: s3Config["prefix"]+"/" })
-  exit 1
+
+  # Calculate the sha256 hash, and use it to form the s3 path
+  md5sum    = Digest::MD5.file(imgPath).hexdigest
+  sha256Sum = Digest::SHA256.file(imgPath).hexdigest
+  s3Path = "#{$s3Config.prefix}/binaries/#{sha256Sum[0,2]}/#{sha256Sum[2,2]}/#{sha256Sum}"
+
+  # If the S3 file is already correct, don't re-upload it.
+  bucket = Aws::S3::Bucket.new($s3Config.bucket, client: $s3Client)
+  obj = bucket.object(s3Path)
+  if !obj.exists? || obj.etag != "\"#{md5sum}\""
+    puts "Uploading #{imgPath} to S3."
+    obj.put(body: File.new(imgPath),
+            metadata: {
+              original_filename: File.basename(imgPath),
+              mime_type: mimeType.to_s
+            })
+    obj.etag == "\"#{md5sum}\"" or raise("S3 returned md5 #{resp.etag.inspect} but we expected #{md5sum.inspect}")
+  end
+
+  return { logo: { binary_data: "s3://#{$s3Config.bucket}/#{s3Path}", mime_type: mimeType.to_s } }
 end
 
 ###################################################################################################
-def convertUnitBrand(unitId)
-  navBar = [ { name: "Unit Home", slug: "" } ]
-  dataOut =  { nav_bar: navBar }
+def convertUnitBrand(unitID)
+  begin
+    navBar = [ { name: "Unit Home", slug: "" } ]
+    dataOut =  { nav_bar: navBar }
 
-  bfPath = "/apps/eschol/erep/xtf/static/brand/#{unitId}/#{unitId}.xml"
-  if File.exist?(bfPath)
-    dataIn = Nokogiri::XML(File.new(bfPath), &:noblanks).root
-    logoEl = dataIn.at("display/mainFrame/logo")
-    logoEl and dataOut.merge!(convertLogo(unitId, logoEl))
+    bfPath = "/apps/eschol/erep/xtf/static/brand/#{unitID}/#{unitID}.xml"
+    if File.exist?(bfPath)
+      dataIn = Nokogiri::XML(File.new(bfPath), &:noblanks).root
+      logoEl = dataIn.at("display/mainFrame/logo")
+      logoEl and dataOut.merge!(convertLogo(unitID, logoEl))
+    end
+
+    return dataOut
+  rescue
+    puts "Error converting brand data for #{unitID.inspect}:"
+    raise
   end
-
-  return dataOut
 end
 
 ###################################################################################################
