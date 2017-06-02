@@ -207,7 +207,7 @@ def convertLogo(unitID, logoEl)
   # Locate the image reference
   logoImgEl = logoEl.at("div[@id='logoDiv']/img[@src]")
   logoImgEl or return {}
-  imgPath = "/apps/eschol/erep/xtf/static/#{logoImgEl[:src]}"
+  imgPath = logoImgEl && "/apps/eschol/erep/xtf/static/#{logoImgEl[:src]}"
   if !File.file?(imgPath)
     puts "Warning: Can't find unit #{unitID.inspect} logo image #{imgPath.inspect}"
     return {}
@@ -235,7 +235,11 @@ def convertLogo(unitID, logoEl)
     obj.etag == "\"#{md5sum}\"" or raise("S3 returned md5 #{resp.etag.inspect} but we expected #{md5sum.inspect}")
   end
 
-  return { logo: { binary_data: "s3://#{$s3Config.bucket}/#{s3Path}", mime_type: mimeType.to_s } }
+  return { logo: { image_data: "s3://#{$s3Config.bucket}/#{s3Path}", 
+                   image_type: mimeType.subtype,
+                   is_banner: logoEl.attr('banner') == "single"
+                 }
+         }
 end
 
 ###################################################################################################
