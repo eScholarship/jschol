@@ -26,6 +26,7 @@ require 'nokogiri'
 require 'open3'
 require 'pp'
 require 'rack'
+require 'sanitize'
 require 'sequel'
 require 'ostruct'
 require 'time'
@@ -161,6 +162,12 @@ end
 class Section < Sequel::Model
 end
 
+class Widget < Sequel::Model
+end
+
+class Page < Sequel::Model
+end
+
 ###################################################################################################
 # Insert hierarchy links (skipping dupes) for all descendants of the given unit id.
 def linkUnit(id, childMap, done)
@@ -205,11 +212,12 @@ end
 ###################################################################################################
 def convertLogo(unitID, logoEl)
   # Locate the image reference
-  logoImgEl = logoEl.at("div[@id='logoDiv']/img[@src]")
+  logoImgEl = logoEl && logoEl.at("div[@id='logoDiv']/img[@src]")
   logoImgEl or return {}
   imgPath = logoImgEl && "/apps/eschol/erep/xtf/static/#{logoImgEl[:src]}"
+  imgPath =~ %r{LOGO_PATH|/$} and return {} # logo never configured
   if !File.file?(imgPath)
-    puts "Warning: Can't find unit #{unitID.inspect} logo image #{imgPath.inspect}"
+    puts "Warning: Can't find logo image: #{imgPath.inspect}"
     return {}
   end
 
@@ -235,7 +243,7 @@ def convertLogo(unitID, logoEl)
     obj.etag == "\"#{md5sum}\"" or raise("S3 returned md5 #{resp.etag.inspect} but we expected #{md5sum.inspect}")
   end
 
-  return { logo: { image_data: "s3://#{$s3Config.bucket}/#{s3Path}", 
+  return { logo: { image_data: "s3://#{$s3Config.bucket}/#{s3Path}",
                    image_type: mimeType.subtype,
                    is_banner: logoEl.attr('banner') == "single"
                  }
@@ -243,16 +251,138 @@ def convertLogo(unitID, logoEl)
 end
 
 ###################################################################################################
+def sanitizeHTML(htmlFragment)
+  return Sanitize.fragment(htmlFragment,
+    elements: %w{b em i strong u} +                         # all 'restricted' tags
+              %w{a br li ol p small strike sub sup ul hr},  # subset of ''basic' tags
+    attributes: { a: ['href'] },
+    protocols:  { a: {'href' => ['ftp', 'http', 'https', 'mailto', :relative]} }
+  )
+end
+
+###################################################################################################
+def convertBlurb(unitID, blurbEl)
+  # Make sure there's a div
+  divEl = blurbEl && blurbEl.at("div")
+  divEl or return {}
+
+  # Make sure the HTML conforms to our specs
+  html = sanitizeHTML(divEl.inner_html)
+  html.length > 0 or return {}
+  return { about: html }
+end
+
+###################################################################################################
+def convertPage(unitID, navBar, contentDiv, slug, name)
+  html = sanitizeHTML(contentDiv.inner_html)
+  html.length > 0 or return
+  Page.create(unit_id: unitID,
+              name: name, title: name,
+              ordering: Page.where(unit_id: unitID).count,
+              nav_element: slug,
+              attrs: JSON.generate({ html: html }))
+  navBar << { slug: slug, name: name }
+end
+
+###################################################################################################
+def convertNavBar(unitID, generalEl)
+  # Blow away existing database pages for this unit
+  Page.where(unit_id: unitID).delete
+
+  navBar = [ { name: "Unit Home", slug: "" } ]
+  generalEl or return { navBar: navBar }
+
+  # Convert contact info
+  convertPage(unitID, navBar, generalEl.at("contactInfo/div"), "contact", "Contact Us")
+
+  # Convert each link in linkset
+  linkedPagesUsed = Set.new
+  generalEl.xpath("linkSet/div").each { |linkDiv|
+    linkDiv.children.each { |para|
+      # First, a bunch of validation checks. We're expecting this kind of thing:
+      # <p><a href="http://blah">Link name</a></p>
+      para.comment? and next
+      if para.text?
+        text = para.text.strip
+        if !text.empty?
+          puts "Extraneous text in linkSet: #{para}"
+        end
+        next
+      end
+      if para.name != "p"
+        puts "Extraneous element in linkSet: #{para}"
+        next
+      end
+
+      links = para.xpath("a")
+      if links.empty?
+        puts "Missing <a> in linkSet: #{para.inner_html}"
+        next
+      end
+      if links.length > 1
+        puts "Too many <a> in linkSet: #{para.inner_html}"
+        next
+      end
+
+      link = links[0]
+      linkName = link.text
+      linkName and linkName.strip!
+      if !linkName || linkName.empty?
+        puts "Missing link text: #{para.inner_html}"
+        next
+      end
+
+      linkTarget = link.attr('href')
+      if !linkTarget
+        puts "Missing link target: #{para.inner_html}"
+        next
+      end
+
+      if linkTarget =~ %r{/uc/search\?entity=[^;]+;view=([^;]+)$}
+        slug = $1
+        linkedPage = generalEl.at("linkedPages/div[@id=#{slug}]")
+        if !linkedPage
+          puts "Can't find linked page #{slug.inspect}"
+          next
+        end
+        convertPage(unitID, navBar, linkedPage, slug, linkName)
+        linkedPagesUsed << slug
+      elsif linkTarget =~ %r{^https?://}
+        navBar << { name: linkName, url: linkTarget }
+      elsif linkTarget =~ %r{/brand/}
+        puts "TODO: handle file links in nav bar: #{linkTarget}"
+      else
+        puts "Invalid link target: #{para.inner_html}"
+        next
+      end
+    }
+  }
+
+  # Note unused linked pages
+  generalEl.xpath("linkedPages/div").each { |page|
+    !linkedPagesUsed.include?(page.attr('id')) and puts "Unused linked page, id=#{page.attr('id').inspect}"
+  }
+
+  # All done.
+  return { nav_bar: navBar }
+end
+
+###################################################################################################
 def convertUnitBrand(unitID)
   begin
-    navBar = [ { name: "Unit Home", slug: "" } ]
-    dataOut =  { nav_bar: navBar }
+    dataOut = {}
 
     bfPath = "/apps/eschol/erep/xtf/static/brand/#{unitID}/#{unitID}.xml"
     if File.exist?(bfPath)
       dataIn = Nokogiri::XML(File.new(bfPath), &:noblanks).root
-      logoEl = dataIn.at("display/mainFrame/logo")
-      logoEl and dataOut.merge!(convertLogo(unitID, logoEl))
+      dataOut.merge!(convertLogo(unitID, dataIn.at("display/mainFrame/logo")))
+      dataOut.merge!(convertBlurb(unitID, dataIn.at("display/mainFrame/blurb")))
+      dataOut.merge!(convertNavBar(unitID, dataIn.at("display/generalInfo")))
+    else
+      # default nav bar
+      puts "Warning: no brand file found for unit #{unitID.inspect}"
+      navBar = [ { name: "Unit Home", slug: "" } ]
+      dataOut.merge!({ nav_bar: navBar })
     end
 
     return dataOut
@@ -260,6 +390,29 @@ def convertUnitBrand(unitID)
     puts "Error converting brand data for #{unitID.inspect}:"
     raise
   end
+end
+
+###################################################################################################
+def addDefaultWidgets(unitID, unitType)
+  # Blow away existing widgets for this unit
+  Widget.where(unit_id: unitID).delete
+
+  widgets = []
+  case unitType
+    when "root"
+      widgets << { kind: "FeaturedArticles", region: "sidebar", attrs: nil }
+      widgets << { kind: "NewJournalIssues", region: "sidebar", attrs: nil }
+      widgets << { kind: "Tweets", region: "sidebar", attrs: nil }
+    when "campus"
+      widgets << { kind: "FeaturedJournals", region: "sidebar", attrs: nil }
+      widgets << { kind: "Tweets", region: "sidebar", attrs: nil }
+    else
+      widgets << { kind: "FeaturedArticles", region: "sidebar", attrs: nil }
+  end
+
+  widgets.each { |widgetInfo|
+    Widget.create(unit_id: unitID, ordering: Widget.where(unit_id: unitID).count, **widgetInfo)
+  }
 end
 
 ###################################################################################################
@@ -271,17 +424,19 @@ def convertUnits(el, parentMap, childMap, allIds)
 
   # Create or update the main database record
   if el.name != "ref"
+    puts "Converting unit #{id}."
     attrs = {}
     el[:directSubmit] and attrs[:directSubmit] = el[:directSubmit]
     el[:hide]         and attrs[:hide]         = el[:hide]
     attrs.merge!(convertUnitBrand(id))
+    unitType = id=="root" ? "root" : el[:type]
     Unit.update_or_replace(id,
+      type:      unitType,
       name:      id=="root" ? "eScholarship" : el[:label],
-      type:      id=="root" ? "root"         : el[:type],
       is_active: id=="root" ? true           : el[:directSubmit] != "moribund",
       attrs:     JSON.generate(attrs)
     )
-    # handled elsewhere
+    addDefaultWidgets(id, unitType)
   end
 
   # Now recursively process the child units
