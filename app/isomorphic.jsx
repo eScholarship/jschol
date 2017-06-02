@@ -41,7 +41,8 @@ app.use((req, res) =>
       return res.status(500).end('Internal server error');
     }
     if (!renderProps) return res.status(404).end('Not found.');
-    var rc = <RouterContext {...renderProps} />
+    var rc = <RouterContext {...renderProps}/>
+    rc.props.location.host = req.get('host')
     var urls = []
     rc.props.location.urlsToFetch = urls
     var renderedHTML = renderToString(rc)
