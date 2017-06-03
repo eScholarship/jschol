@@ -431,17 +431,21 @@ def convertUnits(el, parentMap, childMap, allIds)
   # Create or update the main database record
   if el.name != "ref"
     puts "Converting unit #{id}."
-    attrs = {}
-    el[:directSubmit] and attrs[:directSubmit] = el[:directSubmit]
-    el[:hide]         and attrs[:hide]         = el[:hide]
-    attrs.merge!(convertUnitBrand(id))
     unitType = id=="root" ? "root" : el[:type]
     Unit.update_or_replace(id,
       type:      unitType,
       name:      id=="root" ? "eScholarship" : el[:label],
       is_active: id=="root" ? true           : el[:directSubmit] != "moribund",
-      attrs:     JSON.generate(attrs)
     )
+
+    # We can't totally fill in the brand attributes when initially inserting the record,
+    # so do it as an update after inserting.
+    attrs = {}
+    el[:directSubmit] and attrs[:directSubmit] = el[:directSubmit]
+    el[:hide]         and attrs[:hide]         = el[:hide]
+    attrs.merge!(convertUnitBrand(id))
+    Unit[id].update(attrs: JSON.generate(attrs))
+
     addDefaultWidgets(id, unitType)
   end
 
