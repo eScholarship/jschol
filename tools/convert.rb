@@ -18,6 +18,7 @@ require 'bundler/setup'
 require 'aws-sdk'
 require 'date'
 require 'digest'
+require 'fastimage'
 require 'json'
 require 'logger'
 require 'mimemagic'
@@ -225,6 +226,9 @@ def convertLogo(unitID, logoEl)
   mimeType = MimeMagic.by_magic(File.open(imgPath))
   mimeType && mimeType.mediatype == "image" or raise("Non-image logo file #{imgPath}")
 
+  # Determine the width and height
+  dims = FastImage.size(imgPath)
+
   # Calculate the sha256 hash, and use it to form the s3 path
   md5sum    = Digest::MD5.file(imgPath).hexdigest
   sha256Sum = Digest::SHA256.file(imgPath).hexdigest
@@ -237,13 +241,15 @@ def convertLogo(unitID, logoEl)
     puts "Uploading #{imgPath} to S3."
     obj.put(body: File.new(imgPath),
             metadata: {
-              original_filename: File.basename(imgPath),
-              mime_type: mimeType.to_s
+              original_path: logoImgEl[:src],
+              mime_type: mimeType.to_s,
+              width: dims[0].to_s,
+              height: dims[1].to_s
             })
     obj.etag == "\"#{md5sum}\"" or raise("S3 returned md5 #{resp.etag.inspect} but we expected #{md5sum.inspect}")
   end
 
-  return { logo: { image_data: "s3://#{$s3Config.bucket}/#{s3Path}",
+  return { logo: { asset_id: sha256Sum,
                    image_type: mimeType.subtype,
                    is_banner: logoEl.attr('banner') == "single"
                  }
