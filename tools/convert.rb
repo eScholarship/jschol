@@ -2,14 +2,13 @@
 
 # This script converts data from old eScholarship into the new eschol5 database.
 #
-# The "--units" conversion mode should generally be run on a newly cleaned-out
-# database. This sequence of commands should do the trick:
+# The "--units" mode converts the contents of allStruct.xml and the
+# various brand files into the unit/unitHier/etc tables. It is
+# built to be fully incremental.
 #
-#   bin/sequel config/database.yaml -m migrations/ -M 0 && \
-#   bin/sequel config/database.yaml -m migrations/ && \
-#   ./convert.rb /path/to/allStruct.xml
-#
-# The "--items" conversion mode is built to be fully incremental.
+# The "--items" mode converts combined an XTF index dump with the contents of
+# UCI metadata files into the items/sections/issues/etc. tables. It is also
+# built to be fully incremental.
 
 # Use bundler to keep dependencies local
 require 'rubygems'
@@ -18,6 +17,8 @@ require 'bundler/setup'
 # Remainder are the requirements for this program
 require 'aws-sdk'
 require 'date'
+require 'digest'
+require 'fastimage'
 require 'json'
 require 'logger'
 require 'mimemagic'
@@ -26,7 +27,9 @@ require 'nokogiri'
 require 'open3'
 require 'pp'
 require 'rack'
+require 'sanitize'
 require 'sequel'
+require 'ostruct'
 require 'time'
 require 'yaml'
 
@@ -81,6 +84,10 @@ end
 $csClient = Aws::CloudSearchDomain::Client.new(
   endpoint: YAML.load_file("config/cloudSearch.yaml")["docEndpoint"])
 
+# S3 API client
+$s3Config = OpenStruct.new(YAML.load_file("config/s3.yaml"))
+$s3Client = Aws::S3::Client.new(region: $s3Config.region)
+
 # Caches for speed
 $allUnits = nil
 $unitAncestors = nil
@@ -114,6 +121,20 @@ $discTbl = {"1540" => "Life Sciences",
             "3579" => "Education"}
 
 ###################################################################################################
+# Monkey-patch to add update_or_replace functionality, which is strangely absent in the Sequel gem.
+class Sequel::Model
+  def self.update_or_replace(id, **data)
+    record = self[id]
+    if record
+      record.update(**data)
+    else
+      data[@primary_key] = id
+      Unit.create(**data)
+    end
+  end
+end
+
+###################################################################################################
 # Model classes for easy object-relational mapping in the database
 
 class Unit < Sequel::Model
@@ -140,6 +161,12 @@ class Issue < Sequel::Model
 end
 
 class Section < Sequel::Model
+end
+
+class Widget < Sequel::Model
+end
+
+class Page < Sequel::Model
 end
 
 ###################################################################################################
@@ -184,38 +211,246 @@ def linkDescendants(id, child, childMap, done)
 end
 
 ###################################################################################################
+def convertLogo(unitID, logoEl)
+  # Locate the image reference
+  logoImgEl = logoEl && logoEl.at("div[@id='logoDiv']/img[@src]")
+  logoImgEl or return {}
+  imgPath = logoImgEl && "/apps/eschol/erep/xtf/static/#{logoImgEl[:src]}"
+  imgPath =~ %r{LOGO_PATH|/$} and return {} # logo never configured
+  if !File.file?(imgPath)
+    puts "Warning: Can't find logo image: #{imgPath.inspect}"
+    return {}
+  end
+
+  # Make sure it's an image, and determine which kind of image
+  mimeType = MimeMagic.by_magic(File.open(imgPath))
+  mimeType && mimeType.mediatype == "image" or raise("Non-image logo file #{imgPath}")
+
+  # Determine the width and height
+  dims = FastImage.size(imgPath)
+
+  # Calculate the sha256 hash, and use it to form the s3 path
+  md5sum    = Digest::MD5.file(imgPath).hexdigest
+  sha256Sum = Digest::SHA256.file(imgPath).hexdigest
+  s3Path = "#{$s3Config.prefix}/binaries/#{sha256Sum[0,2]}/#{sha256Sum[2,2]}/#{sha256Sum}"
+
+  # If the S3 file is already correct, don't re-upload it.
+  bucket = Aws::S3::Bucket.new($s3Config.bucket, client: $s3Client)
+  obj = bucket.object(s3Path)
+  if !obj.exists? || obj.etag != "\"#{md5sum}\""
+    puts "Uploading #{imgPath} to S3."
+    obj.put(body: File.new(imgPath),
+            metadata: {
+              original_path: logoImgEl[:src],
+              mime_type: mimeType.to_s,
+              width: dims[0].to_s,
+              height: dims[1].to_s
+            })
+    obj.etag == "\"#{md5sum}\"" or raise("S3 returned md5 #{resp.etag.inspect} but we expected #{md5sum.inspect}")
+  end
+
+  return { logo: { asset_id: sha256Sum,
+                   image_type: mimeType.subtype,
+                   is_banner: logoEl.attr('banner') == "single"
+                 }
+         }
+end
+
+###################################################################################################
+def sanitizeHTML(htmlFragment)
+  return Sanitize.fragment(htmlFragment,
+    elements: %w{b em i strong u} +                         # all 'restricted' tags
+              %w{a br li ol p small strike sub sup ul hr},  # subset of ''basic' tags
+    attributes: { a: ['href'] },
+    protocols:  { a: {'href' => ['ftp', 'http', 'https', 'mailto', :relative]} }
+  )
+end
+
+###################################################################################################
+def convertBlurb(unitID, blurbEl)
+  # Make sure there's a div
+  divEl = blurbEl && blurbEl.at("div")
+  divEl or return {}
+
+  # Make sure the HTML conforms to our specs
+  html = sanitizeHTML(divEl.inner_html)
+  html.length > 0 or return {}
+  return { about: html }
+end
+
+###################################################################################################
+def convertPage(unitID, navBar, contentDiv, slug, name)
+  html = sanitizeHTML(contentDiv.inner_html)
+  html.length > 0 or return
+  Page.create(unit_id: unitID,
+              name: name, title: name,
+              ordering: Page.where(unit_id: unitID).count,
+              nav_element: slug,
+              attrs: JSON.generate({ html: html }))
+  navBar << { slug: slug, name: name }
+end
+
+###################################################################################################
+def convertNavBar(unitID, generalEl)
+  # Blow away existing database pages for this unit
+  Page.where(unit_id: unitID).delete
+
+  navBar = [ { name: "Unit Home", slug: "" } ]
+  generalEl or return { navBar: navBar }
+
+  # Convert contact info
+  convertPage(unitID, navBar, generalEl.at("contactInfo/div"), "contact", "Contact Us")
+
+  # Convert each link in linkset
+  linkedPagesUsed = Set.new
+  generalEl.xpath("linkSet/div").each { |linkDiv|
+    linkDiv.children.each { |para|
+      # First, a bunch of validation checks. We're expecting this kind of thing:
+      # <p><a href="http://blah">Link name</a></p>
+      para.comment? and next
+      if para.text?
+        text = para.text.strip
+        if !text.empty?
+          puts "Extraneous text in linkSet: #{para}"
+        end
+        next
+      end
+      if para.name != "p"
+        puts "Extraneous element in linkSet: #{para}"
+        next
+      end
+
+      links = para.xpath("a")
+      if links.empty?
+        puts "Missing <a> in linkSet: #{para.inner_html}"
+        next
+      end
+      if links.length > 1
+        puts "Too many <a> in linkSet: #{para.inner_html}"
+        next
+      end
+
+      link = links[0]
+      linkName = link.text
+      linkName and linkName.strip!
+      if !linkName || linkName.empty?
+        puts "Missing link text: #{para.inner_html}"
+        next
+      end
+
+      linkTarget = link.attr('href')
+      if !linkTarget
+        puts "Missing link target: #{para.inner_html}"
+        next
+      end
+
+      if linkTarget =~ %r{/uc/search\?entity=[^;]+;view=([^;]+)$}
+        slug = $1
+        linkedPage = generalEl.at("linkedPages/div[@id=#{slug}]")
+        if !linkedPage
+          puts "Can't find linked page #{slug.inspect}"
+          next
+        end
+        convertPage(unitID, navBar, linkedPage, slug, linkName)
+        linkedPagesUsed << slug
+      elsif linkTarget =~ %r{^https?://}
+        navBar << { name: linkName, url: linkTarget }
+      elsif linkTarget =~ %r{/brand/}
+        puts "TODO: handle file links in nav bar: #{linkTarget}"
+      else
+        puts "Invalid link target: #{para.inner_html}"
+        next
+      end
+    }
+  }
+
+  # Note unused linked pages
+  generalEl.xpath("linkedPages/div").each { |page|
+    !linkedPagesUsed.include?(page.attr('id')) and puts "Unused linked page, id=#{page.attr('id').inspect}"
+  }
+
+  # All done.
+  return { nav_bar: navBar }
+end
+
+###################################################################################################
+def convertUnitBrand(unitID)
+  begin
+    dataOut = {}
+
+    bfPath = "/apps/eschol/erep/xtf/static/brand/#{unitID}/#{unitID}.xml"
+    if File.exist?(bfPath)
+      dataIn = Nokogiri::XML(File.new(bfPath), &:noblanks).root
+      dataOut.merge!(convertLogo(unitID, dataIn.at("display/mainFrame/logo")))
+      dataOut.merge!(convertBlurb(unitID, dataIn.at("display/mainFrame/blurb")))
+      dataOut.merge!(convertNavBar(unitID, dataIn.at("display/generalInfo")))
+    else
+      # default nav bar
+      puts "Warning: no brand file found for unit #{unitID.inspect}"
+      navBar = [ { name: "Unit Home", slug: "" } ]
+      dataOut.merge!({ nav_bar: navBar })
+    end
+
+    return dataOut
+  rescue
+    puts "Error converting brand data for #{unitID.inspect}:"
+    raise
+  end
+end
+
+###################################################################################################
+def addDefaultWidgets(unitID, unitType)
+  # Blow away existing widgets for this unit
+  Widget.where(unit_id: unitID).delete
+
+  widgets = []
+  case unitType
+    when "root"
+      widgets << { kind: "FeaturedArticles", region: "sidebar", attrs: nil }
+      widgets << { kind: "NewJournalIssues", region: "sidebar", attrs: nil }
+      widgets << { kind: "Tweets", region: "sidebar", attrs: nil }
+    when "campus"
+      widgets << { kind: "FeaturedJournals", region: "sidebar", attrs: nil }
+      widgets << { kind: "Tweets", region: "sidebar", attrs: nil }
+    else
+      widgets << { kind: "FeaturedArticles", region: "sidebar", attrs: nil }
+  end
+
+  widgets.each { |widgetInfo|
+    Widget.create(unit_id: unitID, ordering: Widget.where(unit_id: unitID).count, **widgetInfo)
+  }
+end
+
+###################################################################################################
 # Convert an allStruct element, and all its child elements, into the database.
-def convertUnits(el, parentMap, childMap)
+def convertUnits(el, parentMap, childMap, allIds)
   id = el[:id] || el[:ref] || "root"
+  allIds << id
   #puts "name=#{el.name} id=#{id.inspect} name=#{el[:label].inspect}"
 
-  # Handle the root of the unit hierarchy
-  if el.name == "allStruct"
-    Unit.create(
-      :id => "root",
-      :name => "eScholarship",
-      :type => "root",
-      :is_active => true,
-      :attrs => nil
+  # Create or update the main database record
+  if el.name != "ref"
+    puts "Converting unit #{id}."
+    unitType = id=="root" ? "root" : el[:type]
+    Unit.update_or_replace(id,
+      type:      unitType,
+      name:      id=="root" ? "eScholarship" : el[:label],
+      is_active: id=="root" ? true           : el[:directSubmit] != "moribund",
     )
-  # Handle regular units
-  elsif el.name == "div"
+
+    # We can't totally fill in the brand attributes when initially inserting the record,
+    # so do it as an update after inserting.
     attrs = {}
     el[:directSubmit] and attrs[:directSubmit] = el[:directSubmit]
     el[:hide]         and attrs[:hide]         = el[:hide]
-    Unit.create(
-      :id => id,
-      :name => el[:label],
-      :type => el[:type],
-      :is_active => el[:directSubmit] != "moribund",
-      :attrs => JSON.generate(attrs)
-    )
-  # Multiple-parent units
-  elsif el.name == "ref"
-    # handled elsewhere
+    attrs.merge!(convertUnitBrand(id))
+    Unit[id].update(attrs: JSON.generate(attrs))
+
+    addDefaultWidgets(id, unitType)
   end
 
   # Now recursively process the child units
+  UnitHier.where(unit_id: id).delete
   el.children.each { |child|
     if child.name != "allStruct"
       id or raise("id-less node with children")
@@ -226,13 +461,16 @@ def convertUnits(el, parentMap, childMap)
       childMap[id] ||= []
       childMap[id] << childID
     end
-    convertUnits(child, parentMap, childMap)
+    convertUnits(child, parentMap, childMap, allIds)
   }
 
   # After traversing the whole thing, it's safe to form all the hierarchy links
   if el.name == "allStruct"
     puts "Linking units."
     linkUnit("root", childMap, Set.new)
+
+    # Delete extraneous units from prior conversions
+    deleteExtraUnits(allIds)
   end
 end
 
@@ -953,17 +1191,31 @@ def processAllBatches
 end
 
 ###################################################################################################
+# Delete extraneous units from prior conversions
+def deleteExtraUnits(allIds)
+  dbUnits = Set.new(Unit.map { |unit| unit.id })
+  (dbUnits - allIds).each { |id|
+    puts "Deleting extra unit: #{id}"
+    DB.transaction do
+      UnitHier.where(unit_id: id).delete
+      Unit[id].delete
+    end
+  }
+end
+
+###################################################################################################
 # Main driver for unit conversion.
 def convertAllUnits
   # Let the user know what we're doing
   puts "Converting units."
   startTime = Time.now
 
-  # Load allStruct and traverse it
+  # Load allStruct and traverse it. This will create Unit and Unit_hier records for all units,
+  # and delete any extraneous old ones.
   DB.transaction do
     allStructPath = "/apps/eschol/erep/xtf/style/textIndexer/mapping/allStruct.xml"
     open(allStructPath, "r") { |io|
-      convertUnits(Nokogiri::XML(io, &:noblanks).root, {}, {})
+      convertUnits(Nokogiri::XML(io, &:noblanks).root, {}, {}, Set.new)
     }
   end
 end
@@ -975,8 +1227,7 @@ def convertAllItems(arks)
   puts "Converting #{arks=="ALL" ? "all" : "selected"} items."
 
   # Build a list of all valid units
-  $allUnits = {}
-  Unit.each { |unit| $allUnits[unit.id] = unit }
+  $allUnits = Unit.map { |unit| [unit.id, unit] }.to_h
 
   # Build a cache of unit ancestors
   $unitAncestors = Hash.new { |h,k| h[k] = [] }

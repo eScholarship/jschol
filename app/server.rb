@@ -6,6 +6,7 @@ require 'bundler/setup'
 
 ###################################################################################################
 # External gems we need
+require 'aws-sdk'
 require 'cgi'
 require 'digest'
 require 'json'
@@ -80,6 +81,13 @@ OJS_DB = ensureConnect(ojsDbConfig)
 
 # Need credentials for fetching content files from MrtExpress
 $mrtExpressConfig = YAML.load_file("config/mrtExpress.yaml")
+
+# S3 API client
+puts "Connecting to S3."
+$s3Config = OpenStruct.new(YAML.load_file("config/s3.yaml"))
+$s3Client = Aws::S3::Client.new(region: $s3Config.region)
+$s3Bucket = Aws::S3::Bucket.new($s3Config.bucket, client: $s3Client)
+puts "Connected."
 
 # Internal modules to implement specific pages and functionality
 require_relative 'dbCache'
@@ -271,6 +279,17 @@ class Fetcher
       puts "Warning: problem while streaming content: #{e.message}"
     end
   end
+end
+
+###################################################################################################
+get %r{/assets/([0-9a-f]{64})$} do |hash|
+  s3Path = "#{$s3Config.prefix}/binaries/#{hash[0,2]}/#{hash[2,2]}/#{hash}"
+  puts "s3Path=#{s3Path}"
+  obj = $s3Bucket.object(s3Path)
+  puts "meta: #{obj.metadata}"
+  obj.exists? && obj.metadata["mime_type"] or halt(404)
+  content_type obj.metadata["mime_type"]
+  return stream { |out| obj.get(response_target: out) }
 end
 
 ###################################################################################################
@@ -640,7 +659,7 @@ end
 # filtering. However, since this is an API we cannot rely on that. This is the second line of
 # defense.
 def sanitizeHTML(htmlFragment)
-  return Sanitize.fragment(params[:newText], 
+  return Sanitize.fragment(htmlFragment,
     elements: %w{b em i strong u} +                      # all 'restricted' tags
               %w{a br li ol p small strike sub sup ul hr},  # subset of ''basic' tags
     attributes: { a: ['href'] },

@@ -64,9 +64,14 @@ Steps to get the app running on your local machine
   * searchEndpoint: https://search-domain-BLAH.amazonaws.com
   * docEndpoint: https://doc-domain-BLAH.amazonaws.com
 
-6. Run `./gulp`. Be on the lookout for errors.
+6. Configure S3 connection parameters: `cp config/s3.yaml.TEMPLATE config/s3.yaml`, then fill in the values in `s3.yaml`:
+  * region: the region, typically "us-west-2"
+  * bucket: bucket name, e.g. "pub-s3-dev"
+  * prefix: top-level path within the bucket, typically "jschol"
 
-7. Browse to `http://localhost:4001/unit/root`, or `http://localhost:4001/item/08s7w2fd`, or `http://localhost:4001/search`
+7. Run `./gulp`. Be on the lookout for errors.
+
+8. Browse to `http://localhost:4001/unit/root`, or `http://localhost:4001/item/08s7w2fd`, or `http://localhost:4001/search`
 
 Steps to set up a new database and index
 ----------------------------------------
