@@ -6,16 +6,22 @@ def traverseHierarchyUp(arr)
   traverseHierarchyUp(arr.unshift({name: unit.name, id: unit.id, url: "/unit/" + unit.id}))
 end
 
+# Generate a link to an image in the S3 bucket
+def getAssetLink(data)
+  data && data['asset_id'] or return nil
+  return "/assets/#{data['asset_id']}"
+end
+
 # Generate breadcrumb and header content for Unit-branded pages
 def getUnitHeader(unit, attrs=nil)
   if !attrs then attrs = JSON.parse(unit[:attrs]) end
   campusID = UnitHier.where(unit_id: unit.id).where(ancestor_unit: $activeCampuses.keys).first.ancestor_unit
-  
+
   header = {
     :campusID => campusID,
     :campusName => $unitsHash[campusID].name,
     :campuses => $activeCampuses.values.map { |c| {id: c.id, name: c.name} }.unshift({id: "", name: "eScholarship at..."}),
-    :logo => attrs['logo'],
+    :logo => getAssetLink(attrs['logo']),
     :nav_bar => attrs['nav_bar'],
     :social => {
       :facebook => attrs['facebook'],
@@ -24,7 +30,7 @@ def getUnitHeader(unit, attrs=nil)
     },
     :breadcrumb => traverseHierarchyUp([{name: unit.name, id: unit.id, url: "/unit/" + unit.id}])
   }
-  
+
   # if this unit doesn't have a nav_bar, get the next unit up the hierarchy's nav_bar
   if !header[:nav_bar]
     ancestor = $hierByUnit[unit.id][0].ancestor
@@ -279,7 +285,7 @@ end
 def addPage()
   # page = Page[unit_id: 'uclalaw']
   # page.update(nav_element: 'contact')
-  
+
   # contactPage = Page.create({
   #   unit_id: 'uclalaw',
   #   nav_element: 'contact',
