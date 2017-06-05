@@ -7,9 +7,10 @@ class AlertObj extends React.Component {
     return (
       <div>
 
-        <h1>Colorless Inline Alert</h1>
+        <h2>Black Inline Alert</h2>
+
         <div className="o-alert1" role="alert">
-          Lorem ipsum <strong>dolor sit amet</strong> consectetur adipisicing elit.
+          This item is <strong>not available</strong> for download from eScholarship.
         </div>
 
       </div>

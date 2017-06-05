@@ -68,6 +68,7 @@ $scholworks-tag-height: 1.4em;
   margin: 0 0 $spacing-md;
   font-size: 1.2em;
   font-weight: bold;
+  overflow: hidden; // hide text beyond max-height
 
   @include bp(screen1) {
     max-height: 2.2em; // truncate beyond 3 lines per jquery.dotdotdot
@@ -91,6 +92,7 @@ $scholworks-tag-height: 1.4em;
 .c-scholworks__abstract {
   max-height: 3.8em; // truncate beyond 3 lines per jquery.dotdotdot
   margin: 0 0 $spacing-md;
+  overflow: hidden; // hide text beyond max-height
 
   @include bp(screen1) {
     max-height: 2.4em; // truncate beyond 2 lines per jquery.dotdotdot
