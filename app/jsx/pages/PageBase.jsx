@@ -8,6 +8,7 @@ import SkipNavComp from '../components/SkipNavComp.jsx'
 import Header1Comp from '../components/Header1Comp.jsx'
 import FooterComp from '../components/FooterComp.jsx'
 import DrawerComp from '../components/DrawerComp.jsx'
+import TestMessageComp from '../components/TestMessageComp.jsx'
 
 // Key used to store login credentials in browser's session storage
 const SESSION_LOGIN_KEY = "escholLogin"
@@ -195,7 +196,7 @@ class PageBase extends React.Component
   }
 
   isStageMachine() {
-    let lookFor = /-stg|-dev/
+    let lookFor = /-stg/
     if (lookFor.test(this.props.location.host))
       return true
     else if (!((typeof window) === "undefined") && window.location && lookFor.test(window.location.origin))
@@ -207,15 +208,7 @@ class PageBase extends React.Component
   stageWatermark() {
     if (!this.isStageMachine())
       return null
-
-    // You can't see them below, but there are actually a bunch of non-breaking space chars
-    // in the string.
-    let watermarkText = "NEW WEBSITE IN PROGRESS                "
-    for (let i = 0; i < 12; i++)
-      watermarkText += watermarkText
-    return <div className="watermarked-parent">
-             <div className="watermarked" data-watermark={watermarkText}/>
-           </div>
+    return <TestMessageComp/>
   }
 
   render() {
