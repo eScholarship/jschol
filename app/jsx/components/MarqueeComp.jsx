@@ -33,20 +33,20 @@ class MarqueeComp extends React.Component {
     var carouselCells;
     if (this.props.marquee.carousel) {
       carouselCells = [
-        <div key="1" className="c-marquee__carousel-cell">
-          <h2>Carousel Cell Title 1</h2>
+        <div key="1" className="c-marquee__carousel-cell" style={{backgroundImage: "url('https://static.pexels.com/photos/27714/pexels-photo-27714.jpg')"}}>
+           <h2>Carousel Cell Title 1</h2>
           <p>Magnam praesentium sint, ducimus aspernatur architecto, deserunt ipsa veniam quia nihil, doloribus, laudantium a ad error tenetur fuga consequuntur laboriosam omnis ipsam.</p>
-          <a href="" className="o-textlink__primary">More&hellip;</a>
+          <a href="">More&hellip;</a>
         </div>,
-        <div key="2" className="c-marquee__carousel-cell">
+        <div key="2" className="c-marquee__carousel-cell" style={{backgroundImage: "url('https://static.pexels.com/photos/40797/wild-flowers-flowers-plant-macro-40797.jpeg')"}}>
           <h2>Carousel Cell Title 2</h2>
           <p>Iure quod itaque maiores optio eveniet assumenda omnis, similique. Possimus, expedita, ea?</p>
-          <a href="" className="o-textlink__primary">More&hellip;</a>
+          <a href="">More&hellip;</a>
         </div>,
-        <div key="3" className="c-marquee__carousel-cell">
+        <div key="3" className="c-marquee__carousel-cell" style={{backgroundImage: "url('http://www.almanac.com/sites/default/files/birth_month_flowers-primary-1920x1280px_pixabay.jpg')"}}>
           <h2>Carousel Cell Title 3</h2>
           <p>Obcaecati consequatur quaerat eaque, beatae eligendi possimus, repudiandae magni quas dolores, sit voluptatem iusto laborum. Incidunt fuga sed dicta nisi voluptates eaque, beatae numquam officia animi, vel.</p>
-          <a href="" className="o-textlink__primary">More&hellip;</a>
+          <a href="">More&hellip;</a>
         </div>
       ]
     }
@@ -60,10 +60,7 @@ class MarqueeComp extends React.Component {
             <header>
               <h2>About</h2>
             </header>
-            {/* FIXME: ask Joel to specify the height so we don't have to manually config it below. */}
-            <div ref={ el => $(el).dotdotdot({watch:"window", height:150}) }>
-              <p>{this.props.marquee.about}</p>
-            </div>
+            <p>{this.props.marquee.about}</p>
           </section>
         </aside>
       </div>

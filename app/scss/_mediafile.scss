@@ -151,6 +151,7 @@ $mediafile-img-height: 120px;
 
 %o-mediafile__heading {
   @extend %o-heading3;
+  @extend %overflow-wrap;
   margin-bottom: $spacing-sm;
   padding-left: 25px;
   background: no-repeat top left / 16px;
@@ -164,6 +165,7 @@ $mediafile-img-height: 120px;
   @include bp(screen1) {
     max-height: 2.3em; // truncate beyond 2 lines per jquery.dotdotdot
     font-size: 1.1em;
+    overflow: hidden; // hide text beyond max-height
   }
 
 }

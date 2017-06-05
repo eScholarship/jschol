@@ -1,10 +1,14 @@
 // ##### Alert Objects ##### //
 
+%o-alert {
+  padding: 0.5em;
+  border: 1px solid $color-light-gray;
+}
+
 .o-alert1 {
+  @extend %o-alert;
   display: inline-block;
   margin-right: $spacing-sm;
   margin-bottom: $spacing-sm;
-  padding: 0.5em;
-  border: 1px solid $color-light-gray;
   font-size: 0.9em;
 }

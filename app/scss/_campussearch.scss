@@ -16,10 +16,10 @@
   display: block;
   margin-bottom: $spacing-sm;
   color: $color-orange;
-  font-size: 5vw;
+  font-size: 5.2vw;
 
   @include bp(screen1) {
-    font-size: 4vw;
+    font-size: 4.2vw;
   }
 
   @include bp(screen2) {
@@ -30,6 +30,7 @@
 
 .c-campussearch__search {
   display: flex;
+  margin-bottom: $spacing-sm;
 
   input[type='search'] {
     @extend %interactive-element-size;
@@ -38,6 +39,7 @@
     border: 1px solid $color-light-gray;
     
     @include bp(screen2) {
+      margin-bottom: $spacing-md;
       font-size: 1.2em;
     }
 
@@ -52,6 +54,19 @@
       margin-left: $spacing-sm;
     }
 
+  }
+
+}
+
+.c-campussearch__subtext {
+  font-size: 0.8em;
+
+  a {
+    @extend %o-textlink__secondary;
+  }
+
+  @include bp(screen2) {
+    font-size: 1em;
   }
 
 }

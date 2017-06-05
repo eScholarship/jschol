@@ -63,7 +63,7 @@ Procedure for merging
 >>> Joel's f41b68ba5458584da599684721a3826b531f6e21, 2017-01-26 <<<
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-Amy manually merged the following components: 
+Amy manually merged the following components:
 
 (removed)   /components/Subheader1Comp.jsx
 (removed)   /components/CarouselComp.jsx
@@ -86,7 +86,7 @@ Amy manually merged the following components:
 
 Andy manually merged all files since last manual merge, except for these unnecessary items:
     app/jsx/app.jsx
-    app/jsx/display/* 
+    app/jsx/display/*
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 >>> by comparing Joel's branch f41b68ba5458584da599684721a3826b531f6e21, 2017-01-26 <<<
 >>>         with Joel's branch 02f3a3e52ea77210f1b81b65c59573e925049c14, 2017-02-02 <<<
@@ -243,4 +243,18 @@ As well as:
         new:        app/jsx/objects/TextListObj.jsx
         modified:   app/jsx/objects/InputObj.jsx
         modified:   app/jsx/pages/BrowsePage.jsx
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's 3eaae0989ef15cd7f91c2e989deb1c1ae9a65fd0, 2017-06-01 <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+Martin added all scss changes since last.
+As well as:
+
+  modified:   app/jsx/components/CampusSearchComp.jsx
+  modified:   app/jsx/components/MarqueeComp.jsx
+  modified:   app/jsx/objects/AlertObj.jsx
+  new:        app/jsx/components/TestMessageComp.jsx
+  new:        app/scss/_testmessage.scss
+
 

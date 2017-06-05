@@ -150,11 +150,29 @@ Set an interactive element's styles if there's a touchscreen (coarse) or mouse-o
 
 }
 
-// Wrap long strings of unbroken text to prevent text overflow
+// Wrap long strings of unbroken text to prevent text overflow.
 
 %overflow-wrap {
   overflow-wrap: break-word; // all except IE
   word-wrap: break-word; // Legacy IE browsers
   word-break: break-all; // Modern Windows browsers
   hyphens: auto;
+}
+
+/*
+
+Background color with progressively-enhanced blur effect. Example:
+
+@include background-filter($color-black);
+
+*/
+
+@mixin background-filter($bgcolor) {
+  background-color: rgba($bgcolor, 0.7);
+
+  @supports (backdrop-filter: blur()) {
+    background-color: rgba($bgcolor, 0.6);
+    backdrop-filter: blur(5px);
+  }
+
 }

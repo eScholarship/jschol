@@ -1,5 +1,8 @@
 // ##### Marquee Component ##### //
 
+$marquee-height: 15.6em;
+$marquee-overlay-size: 50%;
+
 .c-marquee {
   @extend %marquee-flickity-customizations;
 
@@ -14,13 +17,19 @@
   flex: 0 0 $column-width;
 
   @include bp(screen2) {
+    height: $marquee-height; // truncate beyond container per jquery.dotdotdot
     margin-left: $spacing-md;
+    overflow: hidden; // hide text beyond max-height
   }
 
   p {
     font-size: 1.1em;
   }
 
+}
+
+.c-marquee__sidebar-more-link {
+  @extend %o-textlink__secondary;
 }
 
 .c-marquee__carousel {
@@ -34,36 +43,49 @@
 }
 
 .c-marquee__carousel-cell {
+  position: relative;
   width: 100%;
-  height: 250px; // sets the carousel height
-  background-color: $color-light-gray;
+  height: $marquee-height; // sets the carousel height
+  padding: $spacing-md 4.4em;
+  background: right center / cover no-repeat;
+  // background-image url property/value is set as an inline style after this class within the component
+  z-index: -1;
 
-  h2 {
-    margin: $spacing-md 70px 0;
-    color: $color-white;
-    font-size: 1.6em;
-    font-weight: normal;
+  &::after {
+    @include background-filter($color-black);
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    content: '';
+    z-index: -1;
+  }
 
-    @include bp(screen1) {
-      width: 350px;
+  @include bp(screen1) {
+    padding: $spacing-md $marquee-overlay-size $spacing-md 4.4em;
+
+    &::after {
+      right: $marquee-overlay-size;
+      margin-right: (-$spacing-md);
     }
 
+  }
+
+  h2 {
+    @extend %o-heading1;
+    color: $color-white;
   }
 
   p {
-    margin: $spacing-md 70px;
+    margin-bottom: $spacing-md;
     color: $color-white;
     font-size: 1.1em;
-
-    @include bp(screen1) {
-      width: 350px;
-    }
-
   }
 
   a {
+    @extend %o-textlink__primary;
     display: inline-block;
-    margin: 0 70px $spacing-md;
     font-size: 1.1em;
   }
 
@@ -72,7 +94,7 @@
 // ***** Flickity Customizations ***** //
 
 .flickity-page-dots {
-  bottom: 10px;
+  bottom: $spacing-sm;
 
   .dot {
     background: $color-white;
@@ -83,14 +105,9 @@
 %marquee-flickity-customizations {
 
   .flickity-prev-next-button {
-    width: 60px;
-    height: 60px;
+    width: 5em;
+    height: 5em;
     background: transparent;
-
-    @include bp(screen1) {
-      width: 80px;
-      height: 80px;
-    }
 
     &:hover {
       background: transparent;
