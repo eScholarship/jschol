@@ -161,10 +161,34 @@ class Widget < Sequel::Model
 end
 
 ##################################################################################################
+# Thread synchronization class
+class Event
+  def initialize
+    @lock = Mutex.new
+    @cond = ConditionVariable.new
+    @flag = false
+  end
+  def set
+    @lock.synchronize do
+      @flag = true
+      @cond.broadcast
+   end
+  end
+  def wait
+    @lock.synchronize do
+      if not @flag
+        @cond.wait(@lock)
+      end
+    end
+  end
+end
+
+##################################################################################################
 # Database caches for speed. We check every 30 seconds for changes. These tables change infrequently.
 
 $unitsHash, $hierByUnit, $hierByAncestor, $activeCampuses, $oruAncestors, $campusJournals,
   $statsCampusPubs, $statsCampusOrus, $statsCampusJournals = nil, nil, nil, nil, nil, nil, nil, nil, nil
+$cachesFilled = Event.new
 Thread.new {
   prevTime = nil
   while true
@@ -175,11 +199,12 @@ Thread.new {
       end
     }
     if !utime || utime != prevTime
-      $unitsHash = getUnitsHash 
+      puts "Filling caches."
+      $unitsHash = getUnitsHash
       $hierByUnit = getHierByUnit
-      $hierByAncestor = getHierByAncestor 
+      $hierByAncestor = getHierByAncestor
       $activeCampuses = getActiveCampuses
-      $oruAncestors = getOruAncestors 
+      $oruAncestors = getOruAncestors
       $campusJournals = getJournalsPerCampus
 
       #####################################################################
@@ -188,12 +213,14 @@ Thread.new {
       $statsCampusPubs = getPubStatsPerCampus
       $statsCampusOrus = getOruStatsPerCampus
       $statsCampusJournals = getJournalStatsPerCampus
+      puts "Filled."
+      $cachesFilled.set
       prevTime = utime
     end
     sleep 30
   end
 }
-
+$cachesFilled.wait
 
 ###################################################################################################
 # ISOMORPHIC JAVASCRIPT
@@ -634,7 +661,7 @@ get "/api/static/:unitID/:pageName" do |unitID, pageName|
   page = Page.where(unit_id: unitID, name: pageName).first
   page or halt(404, "Page not found")
 
-  body = { 
+  body = {
     header: unitID=='root' ? getGlobalHeader : getUnitHeader(unit),
     campuses: getCampusesAsMenu,
     page: {
@@ -642,11 +669,12 @@ get "/api/static/:unitID/:pageName" do |unitID, pageName|
       html: JSON.parse(page.attrs)['html']
     },
     sidebarWidgets: Widget.where(unit_id: unitID, region: 'sidebar').order(:ordering).map { |w|
-      attrs = JSON.parse(w.attrs)
+      attrs = w.attrs ? JSON.parse(w.attrs) : {}
       { id: w.id,
         kind: w.kind,
-        title: attrs['title'],
-        html: attrs['html'] }
+        title: attrs['title'] ? attrs['title'] : w.kind,
+        html: attrs['html'] ? attrs['html'] :
+                "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Labore, saepe fugiat nihil molestias quam fugit harum suscipit, soluta debitis praesentium. Minus repudiandae debitis non dolore dignissimos, aliquam corporis ratione, quasi." }
     },
     sidebarNavLinks: [{"name" => "About eScholarship", "url" => request.path.sub("/api/", "/")},]
   }
