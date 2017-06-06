@@ -12,6 +12,16 @@ def getAssetLink(data)
   return "/assets/#{data['asset_id']}"
 end
 
+# Add a URL to each nav bar item
+def getNavBar(unitID, navItems)
+  navItems.each { |navItem|
+    if navItem['slug']
+      navItem['url'] = "/unit/#{unitID}/#{navItem['slug']}"
+    end
+  }
+  return navItems
+end
+
 # Generate breadcrumb and header content for Unit-branded pages
 def getUnitHeader(unit, attrs=nil)
   if !attrs then attrs = JSON.parse(unit[:attrs]) end
@@ -22,7 +32,7 @@ def getUnitHeader(unit, attrs=nil)
     :campusName => $unitsHash[campusID].name,
     :campuses => $activeCampuses.values.map { |c| {id: c.id, name: c.name} }.unshift({id: "", name: "eScholarship at..."}),
     :logo => getAssetLink(attrs['logo']),
-    :nav_bar => attrs['nav_bar'],
+    :nav_bar => getNavBar(unit.id, attrs['nav_bar']),
     :social => {
       :facebook => attrs['facebook'],
       :twitter => attrs['twitter'],
@@ -212,12 +222,12 @@ end
 #   newAttrs = {
 #     about: "Here's some sample text about the UCLA School of Law's Asian Pacific American Law Journal. Lalalalala!",
 #     nav_bar: [
-#        {name: 'Journal Home', slug: ''},
+#        {name: 'Journal Home', url: '/unit/uclalaw', slug: ''},
 #        {name: 'Issues', subNav: true},
-#        {name: 'About', slug: 'about'},
-#        {name: 'Policies', slug: 'policies'},
-#        {name: 'Submission Guidelines', slug: 'submission'},
-#        {name: 'Contact', slug: 'contact'}
+#        {name: 'About', url: '/unit/uclalaw/about', slug: 'about'},
+#        {name: 'Policies', url: '/unit/uclalaw/policies', slug: 'policies'},
+#        {name: 'Submission Guidelines', url: '/unit/uclalaw/submission', slug: 'submission'},
+#        {name: 'Contact', url: '/unit/uclalaw/contact', slug: 'contact'}
 #      ],
 #      twitter: "apalj",
 #      directSubmit: "enabled",
