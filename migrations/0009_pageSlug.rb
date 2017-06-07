@@ -1,12 +1,9 @@
 # We're now storing the order implicitly in the nav_bar JSON of the unit.
-# Likewise the name is now in the nav_bar JSON.
-# Title is moving into the attrs.
+# Note that 'name' is duplicated within the nav_bar JSON in unit.
 Sequel.migration do
   up do
     alter_table(:pages) do
-      drop_column :name
       drop_column :ordering
-      drop_column :title
       rename_column :nav_element, :slug
     end
   end
