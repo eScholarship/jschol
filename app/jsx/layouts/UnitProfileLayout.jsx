@@ -92,7 +92,7 @@ class UnitProfileLayout extends React.Component {
                   <label style={labelStyle}>Slug (behind the last "/" in your URL):</label>
                   <input style={style} type="text" value={data.slug}/>
                 
-                  <label style={labelStyle}>Logo Banner: <span style={{color: '#555'}}>{data.logo}</span></label>
+                  {/*<label style={labelStyle}>Logo Banner: <span style={{color: '#555'}}>{data.logo}</span></label>*/}
                   <div style={{marginBottom: '20px', color: '#555', width: '100%'}}>
                     <button>Choose File</button> 
                     <button>Remove File</button>

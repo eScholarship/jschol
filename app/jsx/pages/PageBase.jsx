@@ -161,7 +161,7 @@ class PageBase extends React.Component
     } else if (this.state.adminLogin && this.state.adminLogin.loggedIn && this.state.pageData) {
       return (
         <DrawerComp data={this.state.pageData}>
-          <div className="body">
+          <div className="body" style={{ padding: "10px" }}>
             <SkipNavComp/>
             {this.renderData(this.state.pageData)}
             <FooterComp/>
