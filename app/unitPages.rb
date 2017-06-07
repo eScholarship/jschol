@@ -177,7 +177,7 @@ def unitSearch(params, unit)
 end
 
 def getUnitStaticPage(unit, attrs, pageName)
-  page = Page[:nav_element=>pageName, :unit_id=>unit.id].values
+  page = Page[:slug=>pageName, :unit_id=>unit.id].values
   page[:attrs] = JSON.parse(page[:attrs])
   return page
 end
@@ -294,11 +294,11 @@ end
 
 def addPage()
   # page = Page[unit_id: 'uclalaw']
-  # page.update(nav_element: 'contact')
+  # page.update(slug: 'contact')
 
   # contactPage = Page.create({
   #   unit_id: 'uclalaw',
-  #   nav_element: 'contact',
+  #   slug: 'contact',
   #   title: 'Contact Us'
   #   # html: '<b>Content here!</b>'
   # })

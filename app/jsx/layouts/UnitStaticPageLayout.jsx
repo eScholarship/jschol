@@ -8,7 +8,7 @@ class UnitStaticPageLayout extends React.Component {
   onSaveContent(newText, adminLogin) {
     console.log(this.props.fetchPageData());
     return $
-      .ajax({ url: `/api/unit/${this.props.unit.id}/${this.props.data.nav_element}`,
+      .ajax({ url: `/api/unit/${this.props.unit.id}/${this.props.data.slug}`,
             type: 'PUT', data: { token: adminLogin.token, newText: newText }})
       .done(()=>{
         this.props.fetchPageData()  // re-fetch page state after DB is updated

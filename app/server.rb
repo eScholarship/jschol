@@ -311,9 +311,7 @@ end
 ###################################################################################################
 get %r{/assets/([0-9a-f]{64})$} do |hash|
   s3Path = "#{$s3Config.prefix}/binaries/#{hash[0,2]}/#{hash[2,2]}/#{hash}"
-  puts "s3Path=#{s3Path}"
   obj = $s3Bucket.object(s3Path)
-  puts "meta: #{obj.metadata}"
   obj.exists? && obj.metadata["mime_type"] or halt(404)
   content_type obj.metadata["mime_type"]
   return stream { |out| obj.get(response_target: out) }
@@ -699,7 +697,7 @@ put "/api/unit/:unitID/:pageName" do |unitID, pageName|
   params[:token] == 'xyz123' or halt(401)
   puts "TODO: permission check"
 
-  page = Page.where(unit_id: unitID, nav_element: pageName).first or halt(404, "Page not found")
+  page = Page.where(unit_id: unitID, slug: pageName).first or halt(404, "Page not found")
 
   safeText = sanitizeHTML(params[:newText])
 
