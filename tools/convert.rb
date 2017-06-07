@@ -251,7 +251,9 @@ def convertLogo(unitID, logoEl)
 
   return { logo: { asset_id: sha256Sum,
                    image_type: mimeType.subtype,
-                   is_banner: logoEl.attr('banner') == "single"
+                   is_banner: logoEl.attr('banner') == "single",
+                   width: dims[0],
+                   height: dims[1]
                  }
          }
 end
