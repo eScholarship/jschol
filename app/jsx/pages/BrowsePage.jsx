@@ -119,7 +119,7 @@ class AllJournals extends React.Component {
     let foundOne = false
     let r = journals.map(function(j, i) {
       let p = (campusID =="" || j['ancestor_unit'].includes(campusID)) &&
-        <li key={i}><a href={"/unit/" + j["id"]}>{j["name"]}</a></li>
+        <li key={i}><Link href={"/uc/" + j["id"]}>{j["name"]}</Link></li>
       if (p) {foundOne = true}
       return p
     })
@@ -190,7 +190,7 @@ class CampusJournals extends React.Component {
       </header>
       <ul className="o-textlist2">
         {this.props.journals.map((j, i) => {
-          return (<li key={i}><a href={"/unit/" + j["id"]}>{j["name"]}</a></li>) })
+          return (<li key={i}><Link href={"/uc/" + j["id"]}>{j["name"]}</Link></li>) })
         }
       </ul>
     </section>

@@ -3,7 +3,7 @@ def traverseHierarchyUp(arr)
     return arr
   end
   unit = $unitsHash[$hierByUnit[arr[0][:id]][0].ancestor_unit]
-  traverseHierarchyUp(arr.unshift({name: unit.name, id: unit.id, url: "/unit/" + unit.id}))
+  traverseHierarchyUp(arr.unshift({name: unit.name, id: unit.id, url: "/uc/" + unit.id}))
 end
 
 # Generate a link to an image in the S3 bucket
@@ -28,7 +28,7 @@ def getUnitHeader(unit, attrs=nil)
       :twitter => attrs['twitter'],
       :rss => attrs['rss']
     },
-    :breadcrumb => traverseHierarchyUp([{name: unit.name, id: unit.id, url: "/unit/" + unit.id}])
+    :breadcrumb => traverseHierarchyUp([{name: unit.name, id: unit.id, url: "/uc/" + unit.id}])
   }
 
   # if this unit doesn't have a nav_bar, get the next unit up the hierarchy's nav_bar

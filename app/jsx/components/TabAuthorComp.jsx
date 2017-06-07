@@ -26,7 +26,7 @@ class TabAuthorComp extends React.Component {
         )}),
         issn = p.attrs['ext_journal'] && p.attrs['ext_journal']['issn'],
         peer_reviewed = p.attrs['is_peer_reviewed'] ? "True" : "False",
-        permalink = "http://www.escholarship.org/item/" + p.id,
+        permalink = "http://www.escholarship.org/uc/item/" + p.id,
         ezid = "http://ezid.cdlib.org/id/ark:/13030/qt" + p.id,
         appearsIn = p.appearsIn.map(function(node, i) {
           return ( <span key={i}><Link to={node.url}>{node.name}</Link><br/></span> )
@@ -84,7 +84,7 @@ class TabAuthorComp extends React.Component {
           }
           {p.campusID && 
             [<dt key="0"><strong>Campus</strong></dt>,
-             <dd key="1"><Link to={"/unit/" + p.campusID}>{p.campusID}</Link></dd>]
+             <dd key="1"><Link to={"/uc/" + p.campusID}>{p.campusID}</Link></dd>]
           }
             <dt><strong>Peer-Reviewed</strong></dt>
             <dd>{peer_reviewed}</dd>

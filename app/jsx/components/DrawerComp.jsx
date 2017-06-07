@@ -23,7 +23,7 @@ class DrawerItem extends React.Component {
     }
     if ('slug' in navItem) {
       return (
-        <Link key={navItem.slug} to={"/unit/" + this.props.unit.id + "/" + navItem.slug }>{navItem.name}</Link>
+        <Link key={navItem.slug} to={"/uc/" + this.props.unit.id + "/" + navItem.slug }>{navItem.name}</Link>
       )
     }
     //TODO: if ('file' in navItem)...
@@ -229,7 +229,7 @@ class DrawerComp extends React.Component {
     var sidebarContent = data ? (
       <div>
         <div className="c-drawer__list-item" style={{backgroundImage: 'none', paddingLeft: '20px'}}>
-          <Link key="profile" to={"/unit/" + this.props.data.unit.id + "/profile" }>
+          <Link key="profile" to={"/uc/" + this.props.data.unit.id + "/profile" }>
             {
               (this.props.data.unit.type === 'journal' && 'Journal Profile') || 
               (this.props.data.unit.type === 'series' && 'Series Profile') ||
@@ -254,19 +254,19 @@ class DrawerComp extends React.Component {
           </div>
         </div>
         <div className="c-drawer__list-item">
-          <Link key="sidebar-featured-articles" to={"/unit/" + this.props.data.unit.id + "/sidebar#featured-articles" }>
+          <Link key="sidebar-featured-articles" to={"/uc/" + this.props.data.unit.id + "/sidebar#featured-articles" }>
             Featured Articles
           </Link>
             {buttons}
         </div>
         <div className="c-drawer__list-item">
-          <Link key="sidebar-twitter-feed" to={"/unit/" + this.props.data.unit.id + "/sidebar#twitter-feed" }>
+          <Link key="sidebar-twitter-feed" to={"/uc/" + this.props.data.unit.id + "/sidebar#twitter-feed" }>
             Twitter Feed
           </Link>
             {buttons}
         </div>
         <div className="c-drawer__list-item">
-          <Link key="sidebar-twitter-feed" to={"/unit/" + this.props.data.unit.id + "/sidebar#other-widgets" }>
+          <Link key="sidebar-twitter-feed" to={"/uc/" + this.props.data.unit.id + "/sidebar#other-widgets" }>
             Other Widgets?
           </Link>
             {buttons}

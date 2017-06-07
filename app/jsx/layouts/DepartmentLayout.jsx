@@ -27,11 +27,11 @@ class SeriesComp extends React.Component {
   render() {
     return (
       <div style={{marginBottom: '30px'}}>
-      <h4>Series: <Link to={"/unit/"+this.props.data.unit_id}>{this.props.data.name}</Link></h4>
+      <h4>Series: <Link to={"/uc/"+this.props.data.unit_id}>{this.props.data.name}</Link></h4>
       <div style={{paddingLeft: '20px'}}>
         { this.props.data.items.map((item) =>
           <ScholWorksComp key={item.id} result={item}/>) }
-        <p>{this.props.data.count-3} more works - <Link to={"/unit/"+this.props.data.unit_id}>show all</Link></p>
+        <p>{this.props.data.count-3} more works - <Link to={"/uc/"+this.props.data.unit_id}>show all</Link></p>
       </div>
       </div>
     )
@@ -87,7 +87,7 @@ class DepartmentLayout extends React.Component {
                     <div><h3>Journals by {this.props.unit.name}</h3>
                     <ul>
                       { data.journals.map((child) =>
-                        <li key={child.unit_id}><Link to={"/unit/"+child.unit_id}>{child.name}</Link></li>) }
+                        <li key={child.unit_id}><Link to={"/uc/"+child.unit_id}>{child.name}</Link></li>) }
                     </ul></div>
                   }
                   <h3>Works by {this.props.unit.name}</h3>
@@ -99,7 +99,7 @@ class DepartmentLayout extends React.Component {
               <h3>Related Research Centers & Groups</h3>
               <ul>
                 { data.related_orus.map((child) =>
-                  <li key={child.unit_id}><Link to={"/unit/"+child.unit_id}>{child.name}</Link></li>) }
+                  <li key={child.unit_id}><Link to={"/uc/"+child.unit_id}>{child.name}</Link></li>) }
               </ul>
             </section>
           </main>

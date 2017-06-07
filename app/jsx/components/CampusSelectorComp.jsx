@@ -12,7 +12,7 @@ class CampusSelectorComp extends React.Component {
 
   campusSelector(campuses) {
     return campuses.map((c, i) => {
-      return c['id'] != "" && <Link key={i} to={"/unit/"+ c['id']}
+      return c['id'] != "" && <Link key={i} to={"/uc/"+ c['id']}
                                     onClick={()=>this.closeSelector()}>{c['name']}</Link>
     })
   }
@@ -22,7 +22,7 @@ class CampusSelectorComp extends React.Component {
     return (
       <div className="c-campusselector">
         <h2 className="c-campusselector__heading">
-          <Link to={"/unit/" + p.campusID}>{p.campusName ? p.campusName : "eScholarship"}</Link>
+          <Link to={"/uc/" + p.campusID}>{p.campusName ? p.campusName : "eScholarship"}</Link>
         </h2>
         <details open={this.state.isOpen}
                  ref={domElement => this.details=domElement}

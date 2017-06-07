@@ -35,7 +35,7 @@ class SeriesLayout extends React.Component {
             <h4>Other series in this department: </h4>
             <ul>
               { data.series.map((s) => 
-                <li key={s.unit_id}><Link to={"/unit/"+s.unit_id}>{s.name}</Link></li>)}
+                <li key={s.unit_id}><Link to={"/uc/"+s.unit_id}>{s.name}</Link></li>)}
             </ul>
             <Subscriber channel="cms">
               { cms => 

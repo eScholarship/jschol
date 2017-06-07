@@ -20,12 +20,12 @@ class ToggleListComp extends React.Component {
         { this.props.depts.map((node) => 
             node.children ?
               <li key={node.id}>
-                <Link to={"/unit/" + node.id}>
+                <Link to={"/uc/" + node.id}>
                   {node.name}</Link>
                 <ToggleListSubComp override={this.state.override}>{node.children}</ToggleListSubComp></li>
              : 
               <li key={node.id}>
-                <Link to={"/unit/" + node.id}>
+                <Link to={"/uc/" + node.id}>
                   {node.name}</Link></li> )}
         </ul>
       </div>

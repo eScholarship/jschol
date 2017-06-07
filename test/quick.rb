@@ -54,7 +54,7 @@ class TestQuick < Test::Unit::TestCase
   end
 
   def test_dept
-    html = fetchAndStrip("http://localhost:4001/unit/uclalaw")
+    html = fetchAndStrip("http://localhost:4001/uc/uclalaw")
     assert_match /UCLA School of Law/, html
     assert /There are (\d+) publications/ =~ html
     assert $1.to_i > 10, "At least 10 docs should be in uclalaw"
