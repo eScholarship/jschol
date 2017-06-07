@@ -501,7 +501,7 @@ get "/api/unit/:unitID/?:pageName/?" do
       unit: unit.values.reject{|k,v| k==:attrs}
     }
   end
-  puts "pageData=#{pageData}"
+  #print "pageData="; pp pageData
   return pageData.to_json
 end
 

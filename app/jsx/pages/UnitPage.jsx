@@ -54,20 +54,17 @@ class UnitPage extends PageBase
   }
 
   renderSidebar = sidebarData =>
-    <aside>
-      { sidebarData.map(sb =>
-        <section key={sb.id} className="o-columnbox1">
-          <header>
-            <h2>{sb.title ? sb.title : sb.kind.replace(/([a-z])([A-Z][a-z])/g, "$1 $2")}</h2>
-          </header>
-          <p>
-            Optio distinctio nemo numquam dolorem rerum quae eum, ipsum amet repudiandae,
-            cum a quibusdam magnam praesentium nostrum quidem eaque maiores ipsam. Iste voluptate
-            similique sapiente totam sit, minus numquam enim?
-          </p>
-        </section>)
-      }
-      </aside>
+    sidebarData.map(sb =>
+      <section key={sb.id} className="o-columnbox1">
+        <header>
+          <h2>{sb.title ? sb.title : sb.kind.replace(/([a-z])([A-Z][a-z])/g, "$1 $2")}</h2>
+        </header>
+        <p>
+          Optio distinctio nemo numquam dolorem rerum quae eum, ipsum amet repudiandae,
+          cum a quibusdam magnam praesentium nostrum quidem eaque maiores ipsam. Iste voluptate
+          similique sapiente totam sit, minus numquam enim?
+        </p>
+      </section>)
 
   // [********** AMY NOTES 3/15/17 **********]
   // TODO: each of the content layouts currently include the sidebars, 
@@ -79,7 +76,7 @@ class UnitPage extends PageBase
     if (this.state.fetchingData)
       contentLayout = (<h2 style={{ marginTop: "5em", marginBottom: "5em" }}>Loading...</h2>);
     else if (this.props.params.pageName === 'search') {
-      contentLayout = (<UnitSearchLayout unit={data.unit} data={data.content}/>);
+      contentLayout = (<UnitSearchLayout unit={data.unit} data={data.content} sidebar={sidebar}/>);
     } else if (this.props.params.pageName === 'profile') {
       contentLayout = (<UnitProfileLayout unit={data.unit} data={data.content}/>);
     } else if (this.props.params.pageName === 'sidebar') {
@@ -89,11 +86,11 @@ class UnitPage extends PageBase
     } else {
       data.marquee.carousel = true;
       if (data.unit.type === 'oru') {
-        contentLayout = (<DepartmentLayout unit={data.unit} data={data.content} marquee={data.marquee}/>);
+        contentLayout = (<DepartmentLayout unit={data.unit} data={data.content} sidebar={sidebar} marquee={data.marquee}/>);
       } else if (data.unit.type.includes('series')) {
-        contentLayout = (<SeriesLayout unit={data.unit} data={data.content} marquee={data.marquee}/>);
+        contentLayout = (<SeriesLayout unit={data.unit} data={data.content} sidebar={sidebar} marquee={data.marquee}/>);
       } else if (data.unit.type === 'journal') {
-        contentLayout = (<JournalLayout unit={data.unit} data={data.content} marquee={data.marquee}/>);
+        contentLayout = (<JournalLayout unit={data.unit} data={data.content} sidebar={sidebar} marquee={data.marquee}/>);
       } else {
         contentLayout = (
           <div>

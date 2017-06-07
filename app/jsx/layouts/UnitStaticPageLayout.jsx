@@ -27,7 +27,9 @@ class UnitStaticPageLayout extends React.Component {
             }
           </Subscriber>
         </main>
-        {this.props.sidebar}
+        <aside>
+          {this.props.sidebar}
+        </aside>
       </div>
     )
   }

@@ -107,22 +107,7 @@ class DepartmentLayout extends React.Component {
             <section className="o-columnbox1">
               <ShareComp type="unit" id={this.props.unit.id} />
             </section>
-            <section className="o-columnbox1">
-              <header>
-                <h2>Featured Articles</h2>
-              </header>
-              <p><a className="o-textlink__secondary" href="">Entre la ficción y el periodismo: Cambio social y la crónica mexicana contemporánea</a> <br/> Nadeau, Evelyn</p> 
-              <p><a className="o-textlink__secondary" href="">Journalism in Catalonia During Francoism</a> <br/> Reguant, Monserrat</p>
-              <p><a className="o-textlink__secondary" href="">En torno a un cuento olvidado de Clarín: "El oso mayor"</a> <br/> Gil, Angeles Ezama</p>
-              <p><a className="o-textlink__secondary" href="">Interview with Guillermo Cabrera Infante</a> <br/> Graham-Jones, Jean; Deosthale, Duleep</p>
-              <p><a className="o-textlink__secondary" href="">Lazlo Moussong. Castillos en la letra. Xalapa, México: Universidad Veracruzana, 1986.</a> <br/> Radchik, Laura</p>
-            </section>
-            <section className="o-columnbox1">
-              <header>
-                <h2>Follow us on Twitter</h2>
-              </header>
-              [content to go here]
-            </section>
+            {this.props.sidebar}
           </aside>
         </div>
       </div>

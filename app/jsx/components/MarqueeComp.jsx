@@ -21,6 +21,7 @@ class MarqueeComp extends React.Component {
         imagesLoaded: true
       }
       this.flkty = new Flickity(carousel, options);
+      $(".c-marquee__carousel-cell").css('visibility', 'visible')
     }
   }
 
@@ -38,12 +39,12 @@ class MarqueeComp extends React.Component {
           <p>Magnam praesentium sint, ducimus aspernatur architecto, deserunt ipsa veniam quia nihil, doloribus, laudantium a ad error tenetur fuga consequuntur laboriosam omnis ipsam.</p>
           <a href="">More&hellip;</a>
         </div>,
-        <div key="2" className="c-marquee__carousel-cell" style={{backgroundImage: "url('https://static.pexels.com/photos/40797/wild-flowers-flowers-plant-macro-40797.jpeg')"}}>
+        <div key="2" className="c-marquee__carousel-cell" style={{visibility: "hidden", backgroundImage: "url('https://static.pexels.com/photos/40797/wild-flowers-flowers-plant-macro-40797.jpeg')"}}>
           <h2>Carousel Cell Title 2</h2>
           <p>Iure quod itaque maiores optio eveniet assumenda omnis, similique. Possimus, expedita, ea?</p>
           <a href="">More&hellip;</a>
         </div>,
-        <div key="3" className="c-marquee__carousel-cell" style={{backgroundImage: "url('http://www.almanac.com/sites/default/files/birth_month_flowers-primary-1920x1280px_pixabay.jpg')"}}>
+        <div key="3" className="c-marquee__carousel-cell" style={{visibility: "hidden", backgroundImage: "url('http://www.almanac.com/sites/default/files/birth_month_flowers-primary-1920x1280px_pixabay.jpg')"}}>
           <h2>Carousel Cell Title 3</h2>
           <p>Obcaecati consequatur quaerat eaque, beatae eligendi possimus, repudiandae magni quas dolores, sit voluptatem iusto laborum. Incidunt fuga sed dicta nisi voluptates eaque, beatae numquam officia animi, vel.</p>
           <a href="">More&hellip;</a>
@@ -55,14 +56,16 @@ class MarqueeComp extends React.Component {
         <div className="c-marquee__carousel">
           {carouselCells}
         </div>
-        <aside className="c-marquee__sidebar">
-          <section className="o-columnbox2">
-            <header>
-              <h2>About</h2>
-            </header>
-            <p>{this.props.marquee.about}</p>
-          </section>
-        </aside>
+        { this.props.marquee.about &&
+          <aside className="c-marquee__sidebar">
+            <section className="o-columnbox2">
+              <header>
+                <h2>About</h2>
+              </header>
+              <p dangerouslySetInnerHTML={{__html: this.props.marquee.about}}/>
+            </section>
+          </aside>
+        }
       </div>
     )
   }

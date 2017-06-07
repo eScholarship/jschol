@@ -7,9 +7,9 @@ def traverseHierarchyUp(arr)
 end
 
 # Generate a link to an image in the S3 bucket
-def getAssetLink(data)
-  data && data['asset_id'] or return nil
-  return "/assets/#{data['asset_id']}"
+def getLogoData(data)
+  data && data['asset_id'] && data['width'] && data['height'] or return nil
+  return { url: "/assets/#{data['asset_id']}", width: data['width'], height: data['height'] }
 end
 
 # Add a URL to each nav bar item
@@ -24,6 +24,8 @@ end
 
 # Generate the last part of the breadcrumb for a static page within a unit
 def getPageBreadcrumb(unit, pageName)
+  pageName == "home" and return []
+  pageName == "search" and return [{ name: "search", id: unit.id + ":" + pageName}]
   p = Page.where(unit_id: unit.id, slug: pageName).first
   p or raise("Page lookup failed: unit=#{unit.id} slug=#{pageName}")
   return [{ name: p[:name], id: unit.id + ":" + pageName, url: "/#{unit.id}/#{pageName}" }]
@@ -38,7 +40,7 @@ def getUnitHeader(unit, pageName=nil, attrs=nil)
     :campusID => campusID,
     :campusName => $unitsHash[campusID].name,
     :campuses => $activeCampuses.values.map { |c| {id: c.id, name: c.name} }.unshift({id: "", name: "eScholarship at..."}),
-    :logo => getAssetLink(attrs['logo']),
+    :logo => getLogoData(attrs['logo']),
     :nav_bar => getNavBar(unit.id, pageName, attrs['nav_bar']),
     :social => {
       :facebook => attrs['facebook'],
@@ -48,7 +50,6 @@ def getUnitHeader(unit, pageName=nil, attrs=nil)
     :breadcrumb => traverseHierarchyUp([{name: unit.name, id: unit.id, url: "/unit/" + unit.id}]) +
                    getPageBreadcrumb(unit, pageName)
   }
-  puts "pageName=#{pageName}"
 
   # if this unit doesn't have a nav_bar, get the next unit up the hierarchy's nav_bar
   if !header[:nav_bar]
