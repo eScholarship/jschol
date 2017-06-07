@@ -279,14 +279,83 @@ def convertBlurb(unitID, blurbEl)
 end
 
 ###################################################################################################
+def stripXMLWhitespace(node)
+  node.children.each_with_index { |kid, idx|
+    if kid.comment?
+      kid.remove
+    elsif kid.element?
+      stripXMLWhitespace(kid)
+    elsif kid.text?
+      prevIsElement = node.children[idx-1] && node.children[idx-1].element?
+      nextIsElement = node.children[idx+1] && node.children[idx+1].element?
+      ls = kid.content.lstrip
+      if ls != kid.content
+        if idx == 0
+          if ls.empty?
+            kid.remove
+            next
+          else
+            kid.content = ls
+          end
+        elsif prevIsElement && nextIsElement
+          kid.remove
+          next
+        else
+          kid.content = " " + ls
+        end
+      end
+      rs = kid.content.rstrip
+      if rs != kid.content
+        if idx == node.children.length - 1
+          if rs.empty?
+            kid.remove
+            next
+          else
+            kid.content = rs
+          end
+        else
+          kid.content = rs + " "
+        end
+      end
+    end
+  }
+end
+
+###################################################################################################
 def convertPage(unitID, navBar, contentDiv, slug, name)
+  title = nil
+  stripXMLWhitespace(contentDiv)
+  if contentDiv.children.empty?
+    puts "Warning: empty page content for page #{slug} #{name.inspect}"
+    return
+  end
+
+  # If content consists of a single <p>, strip it off.
+  kid = contentDiv.children[0]
+  if contentDiv.children.length == 1 && kid.name =~ /^[pP]$/
+    contentDiv = kid
+  end
+
+  # If it starts with a heading, grab that.
+  kid = contentDiv.children[0]
+  if kid.name =~ /^h1|h2|h3|H1|H2|H3$/
+    title = kid.inner_html
+    kid.remove
+  else
+    puts("Warning: no title for page #{slug} #{name.inspect}")
+  end
+
+  # If remaining content consists of a single <p>, strip it off.
+  kid = contentDiv.children[0]
+  if contentDiv.children.length == 1 && kid.name =~ /^[pP]$/
+    contentDiv = kid
+  end
+
   html = sanitizeHTML(contentDiv.inner_html)
   html.length > 0 or return
-  Page.create(unit_id: unitID,
-              name: name, title: name,
-              ordering: Page.where(unit_id: unitID).count,
-              nav_element: slug,
-              attrs: JSON.generate({ html: html }))
+  attrs = { html: html }
+  title and attrs[:title] = title
+  Page.create(unit_id: unitID, slug: slug, attrs: JSON.generate(attrs))
   navBar << { slug: slug, name: name }
 end
 
