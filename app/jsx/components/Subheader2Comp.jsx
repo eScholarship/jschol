@@ -50,7 +50,7 @@ class Subheader2Comp extends React.Component {
                             campusName={p.campusName}
                             campuses={p.campuses} />
         <Link to={"/unit/"+p.unit.id}>
-          <img className="c-subheader2__banner" src={logo.url} width={logo.width} height={logo.height} alt={p.unit.name} />
+          <img className="c-subheader2__banner" src={logo.url} width={logo.width} height={logo.height} alt={"Logo image for " + p.unit.name} />
         </Link>
         <div className="c-subheader2__sidebar">
           {btns}

@@ -56,7 +56,6 @@ def ensureConnect(dbConfig)
   db = Sequel.connect(dbConfig)
   n = db.fetch("SHOW TABLE STATUS").all.length
   n > 0 or raise("Failed to connect to db.")
-  puts "Connected.                     "  # extra spaces to overwrite other gulpfile stuff
   return db
 end
 
@@ -72,10 +71,10 @@ if File.exist? "config/socks.yaml"
   TCPSocket::socks_port = socksPort
   require_relative 'socksMysql'
 end
-puts "Connecting to eschol DB."
+puts "Connecting to eschol DB.    "
 DB = ensureConnect(escholDbConfig)
 #DB.loggers << Logger.new('server.sql_log')  # Enable to debug SQL queries on main db
-puts "Connecting to OJS DB."
+puts "Connecting to OJS DB.       "
 OJS_DB = ensureConnect(ojsDbConfig)
 #OJS_DB.loggers << Logger.new('ojs.sql_log')  # Enable to debug SQL queries on OJS db
 
@@ -83,11 +82,10 @@ OJS_DB = ensureConnect(ojsDbConfig)
 $mrtExpressConfig = YAML.load_file("config/mrtExpress.yaml")
 
 # S3 API client
-puts "Connecting to S3."
+puts "Connecting to S3.           "
 $s3Config = OpenStruct.new(YAML.load_file("config/s3.yaml"))
 $s3Client = Aws::S3::Client.new(region: $s3Config.region)
 $s3Bucket = Aws::S3::Bucket.new($s3Config.bucket, client: $s3Client)
-puts "Connected."
 
 # Internal modules to implement specific pages and functionality
 require_relative 'dbCache'
@@ -199,7 +197,7 @@ Thread.new {
       end
     }
     if !utime || utime != prevTime
-      puts "Filling caches."
+      puts "Filling caches.           "
       $unitsHash = getUnitsHash
       $hierByUnit = getHierByUnit
       $hierByAncestor = getHierByAncestor
@@ -213,7 +211,6 @@ Thread.new {
       $statsCampusPubs = getPubStatsPerCampus
       $statsCampusOrus = getOruStatsPerCampus
       $statsCampusJournals = getJournalStatsPerCampus
-      puts "Filled."
       $cachesFilled.set
       prevTime = utime
     end

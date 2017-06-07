@@ -39,8 +39,8 @@ class UnitProfileLayout extends React.Component {
     var mainContentConfig;
     var journalConfigOpts;
     if (this.props.unit.type == 'oru') {
-      mainContentConfig = [
-        <h3>Main Content Configuration</h3>,
+      mainContentConfig = <div>
+        <h3>Main Content Configuration</h3>
         <div className="c-columns">
           <main id="maincontent">
             <section className="o-columnbox1">
@@ -50,10 +50,10 @@ class UnitProfileLayout extends React.Component {
             </section>
           </main>
         </div>
-      ]
+      </div>
     } else if (this.props.unit.type == 'journal') {
-      mainContentConfig = [
-        <h3 id="main-content-config">Main Content Configuration</h3>,
+      mainContentConfig = <div>
+        <h3 id="main-content-config">Main Content Configuration</h3>
         <div className="c-columns">
           <main>
             <section className="o-columnbox1">
@@ -67,15 +67,15 @@ class UnitProfileLayout extends React.Component {
             </section>
           </main>
         </div>
-      ];
-      journalConfigOpts = [
+      </div>
+      journalConfigOpts = <div>
         <label style={labelStyle}>DOAJ Seal: </label>,
-        <input style={style} type="text" value={data.doaj}/>,
+        <input style={style} type="text" defaultValue={data.doaj}/>,
         <label style={labelStyle}>License: </label>,
-        <input style={style} type="text" value={data.license}/>,
+        <input style={style} type="text" defaultValue={data.license}/>,
         <label style={labelStyle}>E-ISSN: </label>,
-        <input style={style} type="text" value={data.eissn}/>
-      ];
+        <input style={style} type="text" defaultValue={data.eissn}/>
+      </div>
     }
     return (
       <Subscriber channel="cms">
@@ -87,17 +87,22 @@ class UnitProfileLayout extends React.Component {
               <section className="o-columnbox1">
                 <div style={{width: '550px'}}>
                   <label style={labelStyle}>Name: </label>
-                  <input style={style} type="text" value={data.name}/>
-                
+                  <input style={style} type="text" defaultValue={data.name}/>
+
                   <label style={labelStyle}>Slug (behind the last "/" in your URL):</label>
-                  <input style={style} type="text" value={data.slug}/>
-                
-                  {/*<label style={labelStyle}>Logo Banner: <span style={{color: '#555'}}>{data.logo}</span></label>*/}
+                  <input style={style} type="text" defaultValue={data.slug}/>
+
+                  <label style={labelStyle}>Logo image:</label>
+                  { data.logo
+                    ? <img src={"/assets/"+data.logo.asset_id} width={data.logo.width} height={data.logo.height} alt="Logo image" />
+                    : <img src="http://placehold.it/400x100?text=No+logo" width="400" height="100" alt="Missing logo image" />
+                  }
+
                   <div style={{marginBottom: '20px', color: '#555', width: '100%'}}>
                     <button>Choose File</button> 
                     <button>Remove File</button>
                   </div>
-          
+
                   {journalConfigOpts}
 
                   <button>Save Changes</button> <button>Cancel</button>
@@ -111,10 +116,10 @@ class UnitProfileLayout extends React.Component {
               <section className="o-columnbox1">
                 <div style={{width: '550px'}}>
                   <label style={labelStyle}>Facebook Page: </label>
-                  <input style={style} type="text" value={data.facebook}/>
+                  <input style={style} type="text" defaultValue={data.facebook}/>
 
                   <label style={labelStyle}>Twitter Username: </label>
-                  <input style={style} type="text" value={data.twitter}/>
+                  <input style={style} type="text" defaultValue={data.twitter}/>
 
                   <button>Save Changes</button> <button>Cancel</button>
                 </div>
@@ -128,12 +133,12 @@ class UnitProfileLayout extends React.Component {
               <section className="o-columnbox1">
                 <div style={{width: '550px'}}>
                   <h4>Carousel Configuration</h4>
-                  <label style={labelStyle}>Show Carousel? <input type="checkbox" checked/></label>
+                  <label style={labelStyle}>Show Carousel? <input type="checkbox" defaultChecked/></label>
                   <label style={labelStyle}>Header:</label>
-                  <input style={style} type="text" value="Carousel Cell Title 1"/>
+                  <input style={style} type="text" defaultValue="Carousel Cell Title 1"/>
                 
                   <label style={labelStyle}>Text:</label>
-                  <textarea style={style} value="Magnam praesentium sint, ducimus aspernatur architecto, deserunt ipsa veniam quia nihil, doloribus, laudantium a ad error tenetur fuga consequuntur laboriosam omnis ipsam."/>
+                  <textarea style={style} defaultValue="Magnam praesentium sint, ducimus aspernatur architecto, deserunt ipsa veniam quia nihil, doloribus, laudantium a ad error tenetur fuga consequuntur laboriosam omnis ipsam."/>
                 
                   <label style={labelStyle}>Image: <span style={{color: '#555'}}>img1.jpg</span></label>
                   <div style={{marginBottom: '20px', color: '#555', width: '100%'}}>
@@ -142,7 +147,7 @@ class UnitProfileLayout extends React.Component {
                   </div>
                   
                   <label style={labelStyle}>About Text</label>
-                  <textarea style={style} value={data.about}/>
+                  <textarea style={style} defaultValue={data.about}/>
                 </div>
               </section>
             </main>

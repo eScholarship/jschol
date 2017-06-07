@@ -16,7 +16,7 @@ end
 def getNavBar(unitID, pageName, navItems)
   navItems.each { |navItem|
     if navItem['slug']
-      navItem['url'] = "/unit/#{unitID}/#{navItem['slug']}"
+      navItem['url'] = "/unit/#{unitID}#{navItem['slug']=="" ? "" : "/"+navItem['slug']}"
     end
   }
   return navItems
