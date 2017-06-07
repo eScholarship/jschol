@@ -261,8 +261,8 @@ def sanitizeHTML(htmlFragment)
   return Sanitize.fragment(htmlFragment,
     elements: %w{b em i strong u} +                         # all 'restricted' tags
               %w{a br li ol p small strike sub sup ul hr},  # subset of ''basic' tags
-    attributes: { a: ['href'] },
-    protocols:  { a: {'href' => ['ftp', 'http', 'https', 'mailto', :relative]} }
+    attributes: { 'a' => ['href'] },
+    protocols:  { 'a' => {'href' => ['ftp', 'http', 'https', 'mailto', :relative]} }
   )
 end
 
@@ -354,8 +354,11 @@ def convertPage(unitID, navBar, contentDiv, slug, name)
   html = sanitizeHTML(contentDiv.inner_html)
   html.length > 0 or return
   attrs = { html: html }
-  title and attrs[:title] = title
-  Page.create(unit_id: unitID, slug: slug, attrs: JSON.generate(attrs))
+  Page.create(unit_id: unitID,
+              slug: slug,
+              name: name,
+              title: title ? title : name,
+              attrs: JSON.generate(attrs))
   navBar << { slug: slug, name: name }
 end
 
