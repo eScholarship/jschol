@@ -59,7 +59,9 @@ class UnitPage extends PageBase
   // TODO [UNIT-CONTENT-AJAX-ISSUE]: handle the AJAX issue described above pageDataURL method definition
   renderData(data) { 
     var contentLayout;
-    if (this.props.params.pageName === 'search') {
+    if (this.state.fetchingData)
+      contentLayout = (<h2 style={{ marginTop: "5em", marginBottom: "5em" }}>Loading...</h2>);
+    else if (this.props.params.pageName === 'search') {
       contentLayout = (<UnitSearchLayout unit={data.unit} data={data.content}/>);
     } else if (this.props.params.pageName === 'profile') {
       contentLayout = (<UnitProfileLayout unit={data.unit} data={data.content}/>);

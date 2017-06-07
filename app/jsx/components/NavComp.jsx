@@ -30,30 +30,11 @@ class NavComp extends React.Component {
   }
 
   getNavItemJSX(navItem) {
-    if (navItem.url) {
-      return (
-        <a href={navItem.url} key={navItem.name}>
-          {navItem.name}
-        </a>
-      )
-    }
-    if (navItem.slug) {
-      return (
-        <Link key={navItem.slug} to={ navItem.slug }>{navItem.name}</Link>
-      )
-    }
-    if (navItem.unitId) {
-      return (
-        <Link key={navItem.unitId} to={"/unit/" + navItem.unitId }>{navItem.name}</Link>
-      )
-    }
-    //TODO: if ('file' in navItem)...
-    if (navItem.file) {
-      return (
-        <a key={navItem.name}>{navItem.name}</a>
-      )
-    }
-    return <a key={navItem.name}>{navItem.name}</a>
+    // TODO: Handle file URLs
+    if (navItem.url && navItem.url.startsWith("http"))
+      return (<a href={navItem.url} key={navItem.name}>{navItem.name}</a>)
+    else
+      return (<Link to={navItem.url} key={navItem.name}>{navItem.name}</Link>)
   }
 
   render() {

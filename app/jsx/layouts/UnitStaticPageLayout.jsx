@@ -18,7 +18,6 @@ class UnitStaticPageLayout extends React.Component {
   
   render() {
     var data = this.props.data;
-    console.log(data.attrs.html);
     return (
       <div className="c-columns">
         <main id="maincontent">
