@@ -16,7 +16,7 @@ end
 def getNavBar(unitID, navItems)
   navItems.each { |navItem|
     if navItem['slug']
-      navItem['url'] = "/unit/#{unitID}/#{navItem['slug']}"
+      navItem['url'] = "/uc/#{unitID}/#{navItem['slug']}"
     end
   }
   return navItems
@@ -222,12 +222,12 @@ end
 #   newAttrs = {
 #     about: "Here's some sample text about the UCLA School of Law's Asian Pacific American Law Journal. Lalalalala!",
 #     nav_bar: [
-#        {name: 'Journal Home', url: '/unit/uclalaw', slug: ''},
+#        {name: 'Journal Home', url: '/uc/uclalaw', slug: ''},
 #        {name: 'Issues', subNav: true},
-#        {name: 'About', url: '/unit/uclalaw/about', slug: 'about'},
-#        {name: 'Policies', url: '/unit/uclalaw/policies', slug: 'policies'},
-#        {name: 'Submission Guidelines', url: '/unit/uclalaw/submission', slug: 'submission'},
-#        {name: 'Contact', url: '/unit/uclalaw/contact', slug: 'contact'}
+#        {name: 'About', url: '/uc/uclalaw/about', slug: 'about'},
+#        {name: 'Policies', url: '/uc/uclalaw/policies', slug: 'policies'},
+#        {name: 'Submission Guidelines', url: '/uc/uclalaw/submission', slug: 'submission'},
+#        {name: 'Contact', url: '/uc/uclalaw/contact', slug: 'contact'}
 #      ],
 #      twitter: "apalj",
 #      directSubmit: "enabled",
