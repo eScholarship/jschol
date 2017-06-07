@@ -35,20 +35,27 @@ class PageBase extends React.Component
     if (dataURL)
     {
       // Phase 1: Initial server-side load. We just save the URL, and iso will later fetch it and re-run React
-      if (this.props.location.urlsToFetch)
-          this.props.location.urlsToFetch.push(dataURL)
+      if (this.props.location.urlsToFetch) {
+        state.fetchingData = true
+        this.props.location.urlsToFetch.push(dataURL)
+      }
       // Phase 2: Second server-side load, where our data has been fetched and stored in props.location
-      else if (this.props.location.urlsFetched)
+      else if (this.props.location.urlsFetched) {
+        state.fetchingData = false
         state.pageData = this.props.location.urlsFetched[this.pageDataURL(this.props)]
+      }
       // Phase 3: Initial browser load. Server should have placed our data in window.
       else if (window.jscholApp_initialPageData) {
+        state.fetchingData = false
         state.pageData = window.jscholApp_initialPageData
         delete window.jscholApp_initialPageData
       }
       // Phase 4: Browser-side page switch. We have to fetch new data ourselves. Start with basic
       // state, and the pageData will get filled when the ajax returns.
-      else
+      else {
+        state.fetchingData = true
         this.fetchPageData(this.props)
+      }
     }
     else
       state.pageData = {}
@@ -105,8 +112,8 @@ class PageBase extends React.Component
 
   // Browser-side AJAX fetch of page data. Sets state when the data is returned to us.
   fetchPageData(props) {
-    let dataURL = this.pageDataURL(props)
-    if (dataURL) {
+    this.dataURL = this.pageDataURL(props)
+    if (this.dataURL) {
       this.setState({ fetchingData: true })
       $.getJSON(this.pageDataURL(props)).done((data) => {
         this.setState({ pageData: data, fetchingData: false })
@@ -122,6 +129,7 @@ class PageBase extends React.Component
   componentWillReceiveProps(nextProps) {
     if (!_.isEqual(this.props, nextProps)) {
       //this.setState(this.getEmptyState())   bad: this causes loss of context when clicking search facets
+      this.setState({ fetchingData: true })
       setTimeout(()=>this.fetchPageData(), 0) // fetch right after setting the new props
     }
   }
