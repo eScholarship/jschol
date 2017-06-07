@@ -475,37 +475,34 @@ get "/api/unit/:unitID/?:pageName/?" do
   unit = $unitsHash.dig(params[:unitID])
   unit or halt(404, "Unit not found")
 
-  begin
-    attrs = JSON.parse(unit[:attrs])
-    pageName = params[:pageName]
-    if pageName
-      pageData = {
-        unit: unit.values.reject{|k,v| k==:attrs}.merge(:extent => extent(unit.id, unit.type)),
-        header: getUnitHeader(unit, attrs), 
-        sidebar: [],
-      }
-      if pageName == 'search'
-        pageData[:content] = unitSearch(CGI::parse(request.query_string), unit)
-      elsif pageName == 'home'
-        pageData[:content] = getUnitPageContent(unit, attrs, pageName)
-      elsif pageName == 'profile'
-        pageData[:content] = getUnitProfile(unit, attrs)
-      elsif pageName == 'sidebar'
-        pageData[:content] = getUnitSidebar(unit, attrs)
-      else
-        pageData[:content] = getUnitStaticPage(unit, attrs, pageName)
-      end
-      pageData[:marquee] = getUnitMarquee(unit, attrs) if pageName == 'home'
+  attrs = JSON.parse(unit[:attrs])
+  pageName = params[:pageName]
+  if pageName
+    pageData = {
+      unit: unit.values.reject{|k,v| k==:attrs}.merge(:extent => extent(unit.id, unit.type)),
+      header: getUnitHeader(unit, pageName, attrs),
+      sidebar: getUnitSidebar(unit)
+    }
+    if pageName == 'search'
+      pageData[:content] = unitSearch(CGI::parse(request.query_string), unit)
+    elsif pageName == 'home'
+      pageData[:content] = getUnitPageContent(unit, attrs, pageName)
+    elsif pageName == 'profile'
+      pageData[:content] = getUnitProfile(unit, attrs)
+    elsif pageName == 'sidebar'
+      pageData[:content] = getUnitSidebar(unit)
     else
-      #public API data
-      pageData = {
-        unit: unit.values.reject{|k,v| k==:attrs}
-      }
+      pageData[:content] = getUnitStaticPage(unit, attrs, pageName)
     end
-    return pageData.to_json
-  rescue Exception => e
-    halt 404, e.message
+    pageData[:marquee] = getUnitMarquee(unit, attrs) if pageName == 'home'
+  else
+    #public API data
+    pageData = {
+      unit: unit.values.reject{|k,v| k==:attrs}
+    }
   end
+  puts "pageData=#{pageData}"
+  return pageData.to_json
 end
 
 ###################################################################################################

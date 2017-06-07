@@ -13,7 +13,7 @@ def getAssetLink(data)
 end
 
 # Add a URL to each nav bar item
-def getNavBar(unitID, navItems)
+def getNavBar(unitID, pageName, navItems)
   navItems.each { |navItem|
     if navItem['slug']
       navItem['url'] = "/unit/#{unitID}/#{navItem['slug']}"
@@ -22,8 +22,15 @@ def getNavBar(unitID, navItems)
   return navItems
 end
 
+# Generate the last part of the breadcrumb for a static page within a unit
+def getPageBreadcrumb(unit, pageName)
+  p = Page.where(unit_id: unit.id, slug: pageName).first
+  p or raise("Page lookup failed: unit=#{unit.id} slug=#{pageName}")
+  return [{ name: p[:name], id: unit.id + ":" + pageName, url: "/#{unit.id}/#{pageName}" }]
+end
+
 # Generate breadcrumb and header content for Unit-branded pages
-def getUnitHeader(unit, attrs=nil)
+def getUnitHeader(unit, pageName=nil, attrs=nil)
   if !attrs then attrs = JSON.parse(unit[:attrs]) end
   campusID = UnitHier.where(unit_id: unit.id).where(ancestor_unit: $activeCampuses.keys).first.ancestor_unit
 
@@ -32,14 +39,16 @@ def getUnitHeader(unit, attrs=nil)
     :campusName => $unitsHash[campusID].name,
     :campuses => $activeCampuses.values.map { |c| {id: c.id, name: c.name} }.unshift({id: "", name: "eScholarship at..."}),
     :logo => getAssetLink(attrs['logo']),
-    :nav_bar => getNavBar(unit.id, attrs['nav_bar']),
+    :nav_bar => getNavBar(unit.id, pageName, attrs['nav_bar']),
     :social => {
       :facebook => attrs['facebook'],
       :twitter => attrs['twitter'],
       :rss => attrs['rss']
     },
-    :breadcrumb => traverseHierarchyUp([{name: unit.name, id: unit.id, url: "/unit/" + unit.id}])
+    :breadcrumb => traverseHierarchyUp([{name: unit.name, id: unit.id, url: "/unit/" + unit.id}]) +
+                   getPageBreadcrumb(unit, pageName)
   }
+  puts "pageName=#{pageName}"
 
   # if this unit doesn't have a nav_bar, get the next unit up the hierarchy's nav_bar
   if !header[:nav_bar]
@@ -205,18 +214,10 @@ def getUnitProfile(unit, attrs)
   return profile
 end
 
-def getUnitSidebar(unit, attrs)
-  sidebar = [
-    {
-      name: "Featured Articles",
-      displayName: "Featured Articles",
-      config: "Article picker"
-    },
-    {
-      name: "Twitter Feed",
-      config: "Twitter username"
-    }
-  ]
+def getUnitSidebar(unit)
+  return Widget.where(unit_id: unit.id, region: "sidebar").order(:ordering).map { |widget|
+    { id: widget[:id], kind: widget[:kind], attrs: widget[:attrs] ? JSON.parse(widget[:attrs]) : {} }
+  }
 end
 
 #   newAttrs = {
