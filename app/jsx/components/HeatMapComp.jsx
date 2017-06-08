@@ -5,7 +5,7 @@ import React from 'react'
 class HeatMapComp extends React.Component {
   render() {
     return (
-      <div className="c-heatmap" style={{backgroundImage: "url('images/sample_heatmap.png')"}}>
+      <div className="c-heatmap" style={{backgroundImage: "url('/images/sample_heatmap.png')"}}>
         <h1 className="c-heatmap__heading">Share your research with a <br/><strong>global audience</strong></h1>
         <button className="c-heatmap__button">Get Started</button>
         <div className="c-heatmap__text">

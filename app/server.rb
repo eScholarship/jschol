@@ -445,10 +445,7 @@ get "/api/browse/:browse_type/:campusID" do |browse_type, campusID|
     :browse_type => browse_type,
     :pageTitle => pageTitle,
     :unit => unit ? unit.values.reject { |k,v| k==:attrs } : nil,
-    # ToDo: Campus nav does not need to deal with ancestors
-    # :header => unit ? getUnitHeader(unit, attrs) : getGlobalHeader,
-    :campusID => campusID,
-    :campusName => unit.name,
+    :header => unit ? getUnitHeader(unit, attrs) : getGlobalHeader,
     :campusUnits => cu ? cu.compact : nil,
     :campusJournals => cj 
   }
@@ -490,6 +487,8 @@ get "/api/unit/:unitID/?:pageName/?" do
         pageData[:content] = unitSearch(CGI::parse(request.query_string), unit)
       elsif pageName == 'home'
         pageData[:content] = getUnitPageContent(unit, attrs, pageName)
+      elsif pageName == 'campus_landing'
+        nil
       elsif pageName == 'profile'
         pageData[:content] = getUnitProfile(unit, attrs)
       elsif pageName == 'sidebar'
@@ -626,7 +625,7 @@ def getHeaderElements(breadcrumb, topItem)
   campuses = topItem ? getCampusesAsMenu(topItem) : getCampusesAsMenu
   return {
     :campuses => campuses,
-    :breadcrumb => Hierarchy_Manual.new(breadcrumb).generateCrumb
+    :breadcrumb => breadcrumb ? Hierarchy_Manual.new(breadcrumb).generateCrumb : nil
   }
 end
 

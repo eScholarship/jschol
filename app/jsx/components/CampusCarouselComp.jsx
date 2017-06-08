@@ -20,12 +20,15 @@ class CampusCarouselComp extends React.Component {
       this.flkty.destroy();
     }
   }
+  static propTypes = {
+    campusName: React.PropTypes.string.isRequired,
+  }
   render() {
     return (
       <div className="c-campuscarousel">
         <div className="c-campuscarousel__section">
           <h2 className="c-campuscarousel__cell-heading">
-            UC Berkeley
+            {this.props.campusName}
           </h2>
           <div className="c-campuscarousel__cell--item">
             <strong>24,844</strong> Items

@@ -9,7 +9,6 @@ import Header2Comp from '../components/Header2Comp.jsx'
 import Subheader2Comp from '../components/Subheader2Comp.jsx'
 import NavComp from '../components/NavComp.jsx'
 import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
-import Breakpoints from '../../js/breakpoints.json'
 import WellComp from '../components/WellComp.jsx'
 import DescriptionListComp from '../components/DescriptionListComp.jsx'
 import ToggleListComp from '../components/ToggleListComp.jsx'
@@ -45,8 +44,8 @@ class BrowsePage extends PageBase
         <div>
           <Header2Comp type="campus" unitID={data.campusID} />
           <Subheader2Comp unit={data.unit}
-                          campusID={data.campusID}
-                          campusName={data.campusName}
+                          campusID={data.header.campusID}
+                          campusName={data.header.campusName}
                           campuses={data.campuses} />
           <div className="c-navbar">
             {/* ToDo: Properly call header.nav_bar for unit type="campus" */}

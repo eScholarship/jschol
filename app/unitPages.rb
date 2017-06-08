@@ -8,24 +8,28 @@ end
 
 # Generate a link to an image in the S3 bucket
 def getAssetLink(data)
-  data && data['asset_id'] or return nil
-  return "/assets/#{data['asset_id']}"
+  return (data && data['asset_id']) ? "/assets/#{data['asset_id']}" : nil
 end
 
 # Add a URL to each nav bar item
 def getNavBar(unitID, navItems)
-  navItems.each { |navItem|
-    if navItem['slug']
-      navItem['url'] = "/uc/#{unitID}/#{navItem['slug']}"
-    end
-  }
-  return navItems
+  if navItems
+    navItems.each { |navItem|
+      if navItem['slug']
+        navItem['url'] = "/uc/#{unitID}/#{navItem['slug']}"
+      end
+    }
+    return navItems
+  else
+    return nil
+  end 
 end
 
 # Generate breadcrumb and header content for Unit-branded pages
 def getUnitHeader(unit, attrs=nil)
   if !attrs then attrs = JSON.parse(unit[:attrs]) end
-  campusID = UnitHier.where(unit_id: unit.id).where(ancestor_unit: $activeCampuses.keys).first.ancestor_unit
+  campusID = (unit.type=='campus') ? unit.id
+    : UnitHier.where(unit_id: unit.id).where(ancestor_unit: $activeCampuses.keys).first.ancestor_unit
 
   header = {
     :campusID => campusID,
@@ -38,11 +42,12 @@ def getUnitHeader(unit, attrs=nil)
       :twitter => attrs['twitter'],
       :rss => attrs['rss']
     },
-    :breadcrumb => traverseHierarchyUp([{name: unit.name, id: unit.id, url: "/uc/" + unit.id}])
+    :breadcrumb => (unit.type!='campus') ?
+      traverseHierarchyUp([{name: unit.name, id: unit.id, url: "/uc/" + unit.id}]) : nil
   }
 
   # if this unit doesn't have a nav_bar, get the next unit up the hierarchy's nav_bar
-  if !header[:nav_bar]
+  if !header[:nav_bar] and unit.type != 'campus'
     ancestor = $hierByUnit[unit.id][0].ancestor
     until header[:nav_bar] || ancestor.id == 'root'
       header[:nav_bar] = JSON.parse(ancestor[:attrs])['nav_bar']
