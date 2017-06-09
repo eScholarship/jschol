@@ -1,6 +1,6 @@
 // ##### Unit Page ##### //
 // this.props = {
-//   unit: {id: , name: , type: , is_active }}
+//   unit: {id: , name: , type: , status }}
 //   header: {breadcrumb: [], campusID: , campusName: , campuses: [], logo: , nav_bar: [], social: }
 //   content: { page content },
 //   marquee: {about: , carousel: , extent: }
