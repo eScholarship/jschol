@@ -3,6 +3,7 @@ import { Subscriber } from 'react-broadcast'
 import { Link } from 'react-router'
 import Sidebar from 'react-sidebar'
 import { sortable } from 'react-sortable'
+import _ from 'lodash'
 
 class DrawerItem extends React.Component {
   state = {editing: false, type:
@@ -138,6 +139,13 @@ const SortableListItem = sortable(ListItem);
 class SortableList extends React.Component {
   state = {draggingIndex: null, data: this.props.data, lastPos: null}
 
+  // This gets called when props change by switching to a new page.
+  // It is *not* called on first-time construction.
+  componentWillReceiveProps(nextProps) {
+    if (!_.isEqual(this.props, nextProps))
+      this.setState({ data: nextProps.data })
+  }
+
   updateState = (obj) => {
     if (obj.draggingIndex === null) {
       console.log('dropped: ')
@@ -176,6 +184,7 @@ class SortableList extends React.Component {
 class DrawerComp extends React.Component {
   state = {
     navList: 'header' in this.props.data && 'nav_bar' in this.props.data.header ? this.props.data.header.nav_bar : undefined,
+    sidebarList: this.props.data.sidebar
   };
 
   onSetSideBarOpen(open) {
@@ -183,13 +192,15 @@ class DrawerComp extends React.Component {
   }
 
   addNavItem = () => {
-    var navList = this.state.navList;
+    var navList = _.clone(this.state.navList);
     navList.push({name: ""});
     this.setState({navList: navList});
   }
 
   addSidebarItem = () => {
-    console.log("add an item below the last sidebar widget item in drawer. item is a drop down to select widget type; then navigate to /sidebar page")
+    var curList = _.clone(this.state.sidebarList);
+    curList.push({id: "new", title: "New widget"});
+    this.setState({sidebarList: curList});
   }
 
   addFolder = () => {
@@ -231,7 +242,7 @@ class DrawerComp extends React.Component {
         <div className="c-drawer__heading">
           Navigation Items
           <div className="c-drawer__nav-buttons">
-            <button onClick={e => this.addNavItem()}><img src="/images/white/plus.svg"/></button>
+            <button onClick={this.addNavItem}><img src="/images/white/plus.svg"/></button>
           </div>
         </div>
         <SortableList data={this.state.navList} unit={this.props.data.unit}/>
@@ -239,13 +250,13 @@ class DrawerComp extends React.Component {
         <div className="c-drawer__heading">
           Sidebar Widgets
           <div className="c-drawer__nav-buttons">
-            <button onClick={e => this.addSidebarItem()}><img src="/images/white/plus.svg"/></button>
+            <button onClick={this.addSidebarItem}><img src="/images/white/plus.svg"/></button>
           </div>
         </div>
-        { this.props.data.sidebar.map( (widget, i) =>
-            <div key={i} className="c-drawer__list-item">
-              <Link to={"/unit/" + this.props.data.unit.id + "/sidebar#featured-articles" }>
-                Featured Articles
+        { this.state.sidebarList.map( sb =>
+            <div key={sb.id} className="c-drawer__list-item">
+              <Link to={"/unit/" + this.props.data.unit.id + "/sidebar#" + sb.id }>
+                {sb.title ? sb.title : sb.kind.replace(/([a-z])([A-Z][a-z])/g, "$1 $2")}
               </Link>
               {buttons}
             </div>

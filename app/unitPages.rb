@@ -27,6 +27,7 @@ def getPageBreadcrumb(unit, pageName)
   pageName == "home" and return []
   pageName == "search" and return [{ name: "Search", id: unit.id + ":" + pageName}]
   pageName == "profile" and return [{ name: "Profile", id: unit.id + ":" + pageName}]
+  pageName == "sidebar" and return [{ name: "Sidebars", id: unit.id + ":" + pageName}]
   p = Page.where(unit_id: unit.id, slug: pageName).first
   p or raise("Page lookup failed: unit=#{unit.id} slug=#{pageName}")
   return [{ name: p[:name], id: unit.id + ":" + pageName, url: "/#{unit.id}/#{pageName}" }]

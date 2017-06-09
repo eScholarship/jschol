@@ -111,7 +111,7 @@ class PageBase extends React.Component
   }
 
   // Browser-side AJAX fetch of page data. Sets state when the data is returned to us.
-  fetchPageData(props) {
+  fetchPageData = props => {
     this.dataURL = this.pageDataURL(props)
     if (this.dataURL) {
       this.setState({ fetchingData: true })

@@ -688,8 +688,9 @@ def sanitizeHTML(htmlFragment)
 end
 
 put "/api/unit/:unitID/:pageName" do |unitID, pageName|
-  params[:token] == 'xyz123' or halt(401)
-  puts "TODO: permission check"
+  # Check user permissions
+  perms = getUserPermissions(params[:username], params[:token], unitID)
+  perms[:admin] or halt(401)
 
   page = Page.where(unit_id: unitID, slug: pageName).first or halt(404, "Page not found")
 
@@ -711,7 +712,7 @@ put "/api/static/:unitID/:pageName/mainText" do |unitID, pageName|
   perms[:admin] or halt(401)
 
   # Grab page data from the database
-  page = Page.where(unit_id: unitID, name: pageName).first or halt(404, "Page not found")
+  page = Page.where(unit_id: unitID, slug: pageName).first or halt(404, "Page not found")
 
   # Parse the HTML text, and sanitize to be sure only allowed tags are used.
   safeText = sanitizeHTML(params[:newText])
