@@ -320,8 +320,8 @@ def extent(id, type)
   else 
     throw "Not a valid unit type"
   end
-  
   response = normalizeResponse($csClient.search(return: '_no_fields', **aws_params))
-  pub_years = response['facets']['pub_year']['buckets'].sort_by { |bucket| Integer(bucket['value']) }
+  pb = response['facets']['pub_year']['buckets']
+  pub_years = pb.empty? ? [{"value"=>"0"}, {"value"=>"0"}] : pb.sort_by { |bucket| Integer(bucket['value']) }
   return {:count => response['hits']['found'], :pub_year => {:start => pub_years[0]['value'], :end => pub_years[-1]['value']}}
 end  
