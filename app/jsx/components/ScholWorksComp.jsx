@@ -111,7 +111,7 @@ class ScholWorksComp extends React.Component {
           </ul>
           <heading>
             <DotH2 className="c-scholworks__heading">
-              <Link to={"/item/"+this.props.result.id.replace(/^qt/, "")}>{this.props.result.title}</Link>
+              <Link to={"/uc/item/"+this.props.result.id.replace(/^qt/, "")}>{this.props.result.title}</Link>
             </DotH2>
           </heading>
           {authorList && 
@@ -123,7 +123,7 @@ class ScholWorksComp extends React.Component {
           }
           {this.props.result.pub_year && publishingInfo && 
             <div className="c-scholworks__publication">
-              <Link to={"/unit/" + unitId}>{publishingInfo}</Link> ({this.props.result.pub_year})
+              <Link to={"/uc/" + unitId}>{publishingInfo}</Link> ({this.props.result.pub_year})
             </div>
           }
           {this.props.result.abstract && 

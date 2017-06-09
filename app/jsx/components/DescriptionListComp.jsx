@@ -33,7 +33,7 @@ class DescriptionListComp extends React.Component {
         <dl className="c-descriptionlist">
           {this.props.campusesStats.map(function(c, i) {
             return c['id'] != "" &&
-              [<dt key={i}><Link to={"/unit/" + c['id']}>{c['name']}</Link></dt>, 
+              [<dt key={i}><Link to={"/uc/" + c['id']}>{c['name']}</Link></dt>, 
                <StatNum key="99" item={c} />]
           })}
         </dl>
@@ -41,7 +41,7 @@ class DescriptionListComp extends React.Component {
         <dl className="c-descriptionlist">
           {this.props.affiliatedStats.map(function(c, i) {
             return c['id'] != "" &&
-              [<dt key={i}><Link to={"/unit/" + c['id']}>{c['name']}</Link></dt>, 
+              [<dt key={i}><Link to={"/uc/" + c['id']}>{c['name']}</Link></dt>, 
               <StatNum key="99" item={c} />]
           })}
         </dl>

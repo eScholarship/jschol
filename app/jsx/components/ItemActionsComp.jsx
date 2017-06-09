@@ -76,6 +76,7 @@ class Downloadable extends React.Component {
                   <li><a href="">Video</a></li>
                   <li><a href="">Zip</a></li>
                   <li><a href="">File</a></li>
+                  <li><a href="">All Supplemental Material</a></li>
                 </ul>
               </li>
             }

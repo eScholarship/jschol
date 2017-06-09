@@ -47,7 +47,7 @@ class SearchComp2 extends React.Component {
     if (event.target.value == 'eScholarship') {
       this.setState({search: '/search'})
     } else {
-      this.setState({search: '/unit/' + event.target.value + '/search'})
+      this.setState({search: '/uc/' + event.target.value + '/search'})
     }
   }
 

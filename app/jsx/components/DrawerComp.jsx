@@ -229,7 +229,7 @@ class DrawerComp extends React.Component {
     var sidebarContent = data ? (
       <div>
         <div className="c-drawer__list-item" style={{backgroundImage: 'none', paddingLeft: '20px'}}>
-          <Link key="profile" to={"/unit/" + this.props.data.unit.id + "/profile" }>
+          <Link key="profile" to={"/uc/" + this.props.data.unit.id + "/profile" }>
             {
               (this.props.data.unit.type === 'journal' && 'Journal Profile') ||
               (this.props.data.unit.type === 'series' && 'Series Profile') ||
@@ -255,7 +255,7 @@ class DrawerComp extends React.Component {
         </div>
         { this.state.sidebarList.map( sb =>
             <div key={sb.id} className="c-drawer__list-item">
-              <Link to={"/unit/" + this.props.data.unit.id + "/sidebar#" + sb.id }>
+              <Link to={"/uc/" + this.props.data.unit.id + "/sidebar#" + sb.id }>
                 {sb.title ? sb.title : sb.kind.replace(/([a-z])([A-Z][a-z])/g, "$1 $2")}
               </Link>
               {buttons}
