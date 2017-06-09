@@ -5,6 +5,7 @@
   padding: 0.5em;
   background: $color-dark-gray;
   color: $color-white;
+  margin: -10px; // offsets body style
 }
 
 .c-adminbar__logged-in-msg {

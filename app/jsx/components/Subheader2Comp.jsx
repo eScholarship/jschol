@@ -10,7 +10,11 @@ class Subheader2Comp extends React.Component {
     campusID: React.PropTypes.string.isRequired,
     campusName: React.PropTypes.string.isRequired,
     campuses: React.PropTypes.array.isRequired,
-    logo: React.PropTypes.string,
+    logo: React.PropTypes.shape({
+      url: React.PropTypes.string.isRequired,
+      width: React.PropTypes.number.isRequired,
+      height: React.PropTypes.number.isRequired
+    }).isRequired,
     unit: React.PropTypes.shape({
       id: React.PropTypes.string.isRequired,
       name: React.PropTypes.string.isRequired,
@@ -26,7 +30,7 @@ class Subheader2Comp extends React.Component {
     if (p.logo) {
       logo = p.logo
     } else {
-      logo = "http://placehold.it/400x100?text="+p.unit.id
+      logo = { url: "http://placehold.it/400x100?text="+p.unit.id, width: 400, height: 100 }
     }
 
     var btns;
@@ -45,7 +49,9 @@ class Subheader2Comp extends React.Component {
         <CampusSelectorComp campusID={p.campusID}
                             campusName={p.campusName}
                             campuses={p.campuses} />
-        <Link to={"/unit/"+p.unit.id}><img className="c-subheader2__banner" src={logo} alt={p.unit.name} /></Link>
+        <Link to={"/unit/"+p.unit.id}>
+          <img className="c-subheader2__banner" src={logo.url} width={logo.width} height={logo.height} alt={"Logo image for " + p.unit.name} />
+        </Link>
         <div className="c-subheader2__sidebar">
           {btns}
         </div>
