@@ -56,7 +56,6 @@ def ensureConnect(dbConfig)
   db = Sequel.connect(dbConfig)
   n = db.fetch("SHOW TABLE STATUS").all.length
   n > 0 or raise("Failed to connect to db.")
-  puts "Connected.                     "  # extra spaces to overwrite other gulpfile stuff
   return db
 end
 
@@ -72,10 +71,10 @@ if File.exist? "config/socks.yaml"
   TCPSocket::socks_port = socksPort
   require_relative 'socksMysql'
 end
-puts "Connecting to eschol DB."
+puts "Connecting to eschol DB.    "
 DB = ensureConnect(escholDbConfig)
 #DB.loggers << Logger.new('server.sql_log')  # Enable to debug SQL queries on main db
-puts "Connecting to OJS DB."
+puts "Connecting to OJS DB.       "
 OJS_DB = ensureConnect(ojsDbConfig)
 #OJS_DB.loggers << Logger.new('ojs.sql_log')  # Enable to debug SQL queries on OJS db
 
@@ -83,11 +82,10 @@ OJS_DB = ensureConnect(ojsDbConfig)
 $mrtExpressConfig = YAML.load_file("config/mrtExpress.yaml")
 
 # S3 API client
-puts "Connecting to S3."
+puts "Connecting to S3.           "
 $s3Config = OpenStruct.new(YAML.load_file("config/s3.yaml"))
 $s3Client = Aws::S3::Client.new(region: $s3Config.region)
 $s3Bucket = Aws::S3::Bucket.new($s3Config.bucket, client: $s3Client)
-puts "Connected."
 
 # Internal modules to implement specific pages and functionality
 require_relative 'dbCache'
@@ -199,7 +197,7 @@ Thread.new {
       end
     }
     if !utime || utime != prevTime
-      puts "Filling caches."
+      puts "Filling caches.           "
       $unitsHash = getUnitsHash
       $hierByUnit = getHierByUnit
       $hierByAncestor = getHierByAncestor
@@ -213,7 +211,6 @@ Thread.new {
       $statsCampusPubs = getPubStatsPerCampus
       $statsCampusOrus = getOruStatsPerCampus
       $statsCampusJournals = getJournalStatsPerCampus
-      puts "Filled."
       $cachesFilled.set
       prevTime = utime
     end
@@ -311,9 +308,7 @@ end
 ###################################################################################################
 get %r{/assets/([0-9a-f]{64})$} do |hash|
   s3Path = "#{$s3Config.prefix}/binaries/#{hash[0,2]}/#{hash[2,2]}/#{hash}"
-  puts "s3Path=#{s3Path}"
   obj = $s3Bucket.object(s3Path)
-  puts "meta: #{obj.metadata}"
   obj.exists? && obj.metadata["mime_type"] or halt(404)
   content_type obj.metadata["mime_type"]
   return stream { |out| obj.get(response_target: out) }
@@ -477,37 +472,34 @@ get "/api/unit/:unitID/?:pageName/?" do
   unit = $unitsHash.dig(params[:unitID])
   unit or halt(404, "Unit not found")
 
-  begin
-    attrs = JSON.parse(unit[:attrs])
-    pageName = params[:pageName]
-    if pageName
-      pageData = {
-        unit: unit.values.reject{|k,v| k==:attrs}.merge(:extent => extent(unit.id, unit.type)),
-        header: getUnitHeader(unit, attrs), 
-        sidebar: [],
-      }
-      if pageName == 'search'
-        pageData[:content] = unitSearch(CGI::parse(request.query_string), unit)
-      elsif pageName == 'home'
-        pageData[:content] = getUnitPageContent(unit, attrs, pageName)
-      elsif pageName == 'profile'
-        pageData[:content] = getUnitProfile(unit, attrs)
-      elsif pageName == 'sidebar'
-        pageData[:content] = getUnitSidebar(unit, attrs)
-      else
-        pageData[:content] = getUnitStaticPage(unit, attrs, pageName)
-      end
-      pageData[:marquee] = getUnitMarquee(unit, attrs) if pageName == 'home'
+  attrs = JSON.parse(unit[:attrs])
+  pageName = params[:pageName]
+  if pageName
+    pageData = {
+      unit: unit.values.reject{|k,v| k==:attrs}.merge(:extent => extent(unit.id, unit.type)),
+      header: getUnitHeader(unit, pageName, attrs),
+      sidebar: getUnitSidebar(unit)
+    }
+    if pageName == 'search'
+      pageData[:content] = unitSearch(CGI::parse(request.query_string), unit)
+    elsif pageName == 'home'
+      pageData[:content] = getUnitPageContent(unit, attrs, pageName)
+    elsif pageName == 'profile'
+      pageData[:content] = getUnitProfile(unit, attrs)
+    elsif pageName == 'sidebar'
+      pageData[:content] = getUnitSidebar(unit)
     else
-      #public API data
-      pageData = {
-        unit: unit.values.reject{|k,v| k==:attrs}
-      }
+      pageData[:content] = getUnitStaticPage(unit, attrs, pageName)
     end
-    return pageData.to_json
-  rescue Exception => e
-    halt 404, e.message
+    pageData[:marquee] = getUnitMarquee(unit, attrs) if pageName == 'home'
+  else
+    #public API data
+    pageData = {
+      unit: unit.values.reject{|k,v| k==:attrs}
+    }
   end
+  #print "pageData="; pp pageData
+  return pageData.to_json
 end
 
 ###################################################################################################
@@ -557,9 +549,12 @@ get "/api/item/:shortArk" do |shortArk|
 
       return body.to_json
     rescue Exception => e
+      puts "Error in item API:"
+      pp e
       halt 404, e.message
     end
   else 
+    puts "Item not found!"
     halt 404, "Item not found"
   end
 end
@@ -690,16 +685,17 @@ def sanitizeHTML(htmlFragment)
   return Sanitize.fragment(htmlFragment,
     elements: %w{b em i strong u} +                      # all 'restricted' tags
               %w{a br li ol p small strike sub sup ul hr},  # subset of ''basic' tags
-    attributes: { a: ['href'] },
-    protocols:  { a: {'href' => ['ftp', 'http', 'https', 'mailto', :relative]} }
+    attributes: { "a" => ['href'] },
+    protocols:  { "a" => {'href' => ['ftp', 'http', 'https', 'mailto', :relative]} }
   )
 end
 
 put "/api/unit/:unitID/:pageName" do |unitID, pageName|
-  params[:token] == 'xyz123' or halt(401)
-  puts "TODO: permission check"
+  # Check user permissions
+  perms = getUserPermissions(params[:username], params[:token], unitID)
+  perms[:admin] or halt(401)
 
-  page = Page.where(unit_id: unitID, nav_element: pageName).first or halt(404, "Page not found")
+  page = Page.where(unit_id: unitID, slug: pageName).first or halt(404, "Page not found")
 
   safeText = sanitizeHTML(params[:newText])
 
@@ -719,7 +715,7 @@ put "/api/static/:unitID/:pageName/mainText" do |unitID, pageName|
   perms[:admin] or halt(401)
 
   # Grab page data from the database
-  page = Page.where(unit_id: unitID, name: pageName).first or halt(404, "Page not found")
+  page = Page.where(unit_id: unitID, slug: pageName).first or halt(404, "Page not found")
 
   # Parse the HTML text, and sanitize to be sure only allowed tags are used.
   safeText = sanitizeHTML(params[:newText])

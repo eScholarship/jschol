@@ -104,6 +104,10 @@ function restartSinatra()
     console.log("Restarting Sinatra.")
     sinatraProc.on('exit', function(code) {
       startSinatra()
+      spawn('ruby', ['tools/waitForServer.rb', 'http://localhost:4001/check', '20'])
+      .on('exit', function() {
+        livereload.reload()
+      })
     })
     sinatraProc.kill()
     sinatraProc = null
