@@ -48,7 +48,7 @@ class TestQuick < Test::Unit::TestCase
   end
 
   def test_item
-    html = fetchAndStrip("http://localhost:4001/item/9j48n0p8")
+    html = fetchAndStrip("http://localhost:4001/uc/item/9j48n0p8")
     assert_match /China’s contingencies and globalisation/, html
     assert_match /pdfjs-cdl-wrapper/, html
   end
