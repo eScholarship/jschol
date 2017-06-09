@@ -415,8 +415,8 @@ get "/api/browse/journals" do
   body = {
     :header => getGlobalHeader,
     :browse_type => "all_journals",
-    :journals => journals.select{ |h| h[:is_active]==true },
-    :archived => journals.select{ |h| h[:is_active]==false }
+    :journals => journals.select{ |h| h[:status]!="archived" },
+    :archived => journals.select{ |h| h[:status]=="archived" }
   }
   breadcrumb = [{"name" => "Journals", "url" => "/journals"},]
   return body.merge(getHeaderElements(breadcrumb, "All Campuses")).to_json
