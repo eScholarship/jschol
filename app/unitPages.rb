@@ -93,6 +93,17 @@ def getORULandingPageData(id)
   }
 end
 
+# Get data for Campus Landing Page
+def getCampusLandingPageContent(unit, attrs)
+  return {
+    :pub_count =>     ($statsCampusPubs.keys.include? unit.id)  ? $statsCampusPubs[unit.id]     : 0,
+    :view_count =>    0,
+    :opened_count =>    0,
+    :journal_count => ($statsCampusJournals.keys.include? unit.id) ? $statsCampusJournals[unit.id] : 0,
+    :unit_count =>    ($statsCampusOrus.keys.include? unit.id)  ? $statsCampusOrus[unit.id]     : 0
+  }
+end
+
 # Preview of Series for a Department Landing Page
 def seriesPreview(u)
   items = UnitItem.filter(:unit_id => u.unit_id, :is_direct => true)

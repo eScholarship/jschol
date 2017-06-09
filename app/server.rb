@@ -205,11 +205,25 @@ Thread.new {
       $hierByAncestor = getHierByAncestor
       $activeCampuses = getActiveCampuses
       $oruAncestors = getOruAncestors
-      $campusJournals = getJournalsPerCampus
+      $campusJournals = getJournalsPerCampus    # Used for browse pages, includes non-active
 
       #####################################################################
       # STATISTICS
       # These are dependent on instantation of $activeCampuses
+
+      # HOME PAGE statistics
+      # ToDo:
+      $statsViews = countViews
+      $statsDownloads = countDownloads
+      $statsOpenItems = countOpenItems
+      $statsOrus = countOrus
+      $statsItems =  countItems
+      $statsThesesDiss = countThesisDiss
+      $statsBooks = countBooks
+      $statsEscholJournals = countEscholJournals
+      $statsStudentJournals = countStudentJournals
+
+      # BROWSE PAGE statistics
       $statsCampusPubs = getPubStatsPerCampus
       $statsCampusOrus = getOruStatsPerCampus
       $statsCampusJournals = getJournalStatsPerCampus
@@ -488,7 +502,7 @@ get "/api/unit/:unitID/?:pageName/?" do
       elsif pageName == 'home'
         pageData[:content] = getUnitPageContent(unit, attrs, pageName)
       elsif pageName == 'campus_landing'
-        nil
+        pageData[:content] = getCampusLandingPageContent(unit, attrs)
       elsif pageName == 'profile'
         pageData[:content] = getUnitProfile(unit, attrs)
       elsif pageName == 'sidebar'

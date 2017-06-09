@@ -20,7 +20,19 @@ class CampusPage extends PageBase
     return "/api/unit/" + this.props.route.path.split('/')[2] + "/campus_landing"
   }
 
+  dashUrlList = {
+    'ucb': 'https://dash.berkeley.edu/stash',
+    'uci': 'https://dash.lib.uci.edu/stash',
+    'ucm': 'https://dash.ucmerced.edu/stash',
+    'ucop': 'https://dash.ucop.edu/stash',
+    'ucr': 'https://dash.ucr.edu/stash',
+    'ucsc': 'https://dash.library.ucsc.edu/stash',
+    'ucsf': 'https://datashare.ucsf.edu/stash',
+  }
+
   renderData(data) {
+    let dash = Object.keys(this.dashUrlList).includes(data.header.campusID),
+        dashUrl = dash ? this.dashUrlList[data.header.campusID] : null
     return (
       <div>
         <Header2Comp type="campus" unitID={data.header.campusID} /> 
@@ -36,7 +48,7 @@ class CampusPage extends PageBase
         <CampusCarouselComp campusName={data.header.campusName} />
         <div className="c-columns">
           <main id="maincontent">
-            <CampusSearchComp campusID={data.header.campusID} campusName={data.header.campusName} />
+            <CampusSearchComp campusName={data.header.campusName} dashUrl={dashUrl} />
             <section className="o-columnbox1">
               [collections section to go here]
             </section>
@@ -57,12 +69,14 @@ class CampusPage extends PageBase
               <br/>Berkeley, CA 94720-6000
               <br/>(510) 664-9815
             </section>
+          {dashUrl &&
             <section className="o-columnbox1">
               <header>
                 <h2>UC Berkeley Datasets</h2>
               </header>
-              [content to go here]
+              To publish the data that accompanies your resarch, <a href={dashUrl}>visit {data.header.campusName} Dash</a>.
             </section>
+          }
             <section className="o-columnbox1">
               <header>
                 <h2>Follow Us On Twitter</h2>
