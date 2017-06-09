@@ -39,9 +39,9 @@ const routes = (
     <Route path="/journals" component={BrowsePage} />
     <Route path="/:campusID/units" component={BrowsePage} />
     <Route path="/:campusID/journals" component={BrowsePage} />
-    <Route path="/unit/:unitID" component={UnitPage} />
-    <Route path="/unit/:unitID/:pageName" component={UnitPage} />
-    <Route path="/item/:itemID" component={ItemPage} />
+    <Route path="/uc/item/:itemID" component={ItemPage} />
+    <Route path="/uc/:unitID" component={UnitPage} />
+    <Route path="/uc/:unitID/:pageName" component={UnitPage} />
     <Route path="/search" component={SearchPage} />
     <Route path="/static/:unitID/:pageName" component={StaticPage} />
     <Route path="/login" component={LoginPage} />

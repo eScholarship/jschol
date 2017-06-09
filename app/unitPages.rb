@@ -3,7 +3,7 @@ def traverseHierarchyUp(arr)
     return arr
   end
   unit = $unitsHash[$hierByUnit[arr[0][:id]][0].ancestor_unit]
-  traverseHierarchyUp(arr.unshift({name: unit.name, id: unit.id, url: "/unit/" + unit.id}))
+  traverseHierarchyUp(arr.unshift({name: unit.name, id: unit.id, url: "/uc/" + unit.id}))
 end
 
 # Generate a link to an image in the S3 bucket
@@ -16,7 +16,7 @@ end
 def getNavBar(unitID, pageName, navItems)
   navItems.each { |navItem|
     if navItem['slug']
-      navItem['url'] = "/unit/#{unitID}#{navItem['slug']=="" ? "" : "/"+navItem['slug']}"
+      navItem['url'] = "/uc/#{unitID}#{navItem['slug']=="" ? "" : "/"+navItem['slug']}"
     end
   }
   return navItems
@@ -24,7 +24,7 @@ end
 
 # Generate the last part of the breadcrumb for a static page within a unit
 def getPageBreadcrumb(unit, pageName)
-  pageName == "home" and return []
+  (!pageName || pageName == "home") and return []
   pageName == "search" and return [{ name: "Search", id: unit.id + ":" + pageName}]
   pageName == "profile" and return [{ name: "Profile", id: unit.id + ":" + pageName}]
   pageName == "sidebar" and return [{ name: "Sidebars", id: unit.id + ":" + pageName}]
@@ -49,7 +49,7 @@ def getUnitHeader(unit, pageName=nil, attrs=nil)
       :twitter => attrs['twitter'],
       :rss => attrs['rss']
     },
-    :breadcrumb => traverseHierarchyUp([{name: unit.name, id: unit.id, url: "/unit/" + unit.id}]) +
+    :breadcrumb => traverseHierarchyUp([{name: unit.name, id: unit.id, url: "/uc/" + unit.id}]) +
                    getPageBreadcrumb(unit, pageName)
   }
 
@@ -226,12 +226,12 @@ end
 #   newAttrs = {
 #     about: "Here's some sample text about the UCLA School of Law's Asian Pacific American Law Journal. Lalalalala!",
 #     nav_bar: [
-#        {name: 'Journal Home', url: '/unit/uclalaw', slug: ''},
+#        {name: 'Journal Home', url: '/uc/uclalaw', slug: ''},
 #        {name: 'Issues', subNav: true},
-#        {name: 'About', url: '/unit/uclalaw/about', slug: 'about'},
-#        {name: 'Policies', url: '/unit/uclalaw/policies', slug: 'policies'},
-#        {name: 'Submission Guidelines', url: '/unit/uclalaw/submission', slug: 'submission'},
-#        {name: 'Contact', url: '/unit/uclalaw/contact', slug: 'contact'}
+#        {name: 'About', url: '/uc/uclalaw/about', slug: 'about'},
+#        {name: 'Policies', url: '/uc/uclalaw/policies', slug: 'policies'},
+#        {name: 'Submission Guidelines', url: '/uc/uclalaw/submission', slug: 'submission'},
+#        {name: 'Contact', url: '/uc/uclalaw/contact', slug: 'contact'}
 #      ],
 #      twitter: "apalj",
 #      directSubmit: "enabled",

@@ -449,7 +449,7 @@ get "/api/browse/:browse_type/:campusID" do |browse_type, campusID|
   }
   breadcrumb = [
     {"name" => pageTitle, "url" => "/" + campusID + "/" + browse_type},
-    {"name" => unit.name, "url" => "/unit/" + campusID}]
+    {"name" => unit.name, "url" => "/uc/" + campusID}]
   return body.merge(getHeaderElements(breadcrumb, nil)).to_json
 end
 
@@ -542,16 +542,19 @@ get "/api/item/:shortArk" do |shortArk|
         issue_id = Item.join(:sections, :id => :section).filter(:items__id => id).map(:issue_id)[0]
         volume, issue = Section.join(:issues, :id => issue_id).map([:volume, :issue])[0]
         body[:header][:breadcrumb] << {name: "Volume #{volume}, Issue #{issue}",
-          url: "/unit/#{unitIDs[0]}/#{volume}/#{issue}"}
+          url: "/uc/#{unitIDs[0]}/#{volume}/#{issue}"}
         body[:citation][:volume] = volume
         body[:citation][:issue] = issue
       end
 
       return body.to_json
     rescue Exception => e
+      puts "Error in item API:"
+      pp e
       halt 404, e.message
     end
   else 
+    puts "Item not found!"
     halt 404, "Item not found"
   end
 end
