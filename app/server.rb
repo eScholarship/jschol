@@ -549,9 +549,12 @@ get "/api/item/:shortArk" do |shortArk|
 
       return body.to_json
     rescue Exception => e
+      puts "Error in item API:"
+      pp e
       halt 404, e.message
     end
   else 
+    puts "Item not found!"
     halt 404, "Item not found"
   end
 end
