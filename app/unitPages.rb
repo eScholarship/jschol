@@ -7,26 +7,37 @@ def traverseHierarchyUp(arr)
 end
 
 # Generate a link to an image in the S3 bucket
-def getAssetLink(data)
-  return (data && data['asset_id']) ? "/assets/#{data['asset_id']}" : nil
+def getLogoData(data)
+  data && data['asset_id'] && data['width'] && data['height'] or return nil
+  return { url: "/assets/#{data['asset_id']}", width: data['width'], height: data['height'] }
 end
 
 # Add a URL to each nav bar item
-def getNavBar(unitID, navItems)
+def getNavBar(unitID, pageName, navItems)
   if navItems
     navItems.each { |navItem|
       if navItem['slug']
-        navItem['url'] = "/uc/#{unitID}/#{navItem['slug']}"
+        navItem['url'] = "/uc/#{unitID}#{navItem['slug']=="" ? "" : "/"+navItem['slug']}"
       end
     }
     return navItems
-  else
-    return nil
-  end 
+  end
+  return nil
+end
+
+# Generate the last part of the breadcrumb for a static page within a unit
+def getPageBreadcrumb(unit, pageName)
+  (!pageName || pageName == "home" || pageName == "campus_landing") and return []
+  pageName == "search" and return [{ name: "Search", id: unit.id + ":" + pageName}]
+  pageName == "profile" and return [{ name: "Profile", id: unit.id + ":" + pageName}]
+  pageName == "sidebar" and return [{ name: "Sidebars", id: unit.id + ":" + pageName}]
+  p = Page.where(unit_id: unit.id, slug: pageName).first
+  p or raise("Page lookup failed: unit=#{unit.id} slug=#{pageName}")
+  return [{ name: p[:name], id: unit.id + ":" + pageName, url: "/#{unit.id}/#{pageName}" }]
 end
 
 # Generate breadcrumb and header content for Unit-branded pages
-def getUnitHeader(unit, attrs=nil)
+def getUnitHeader(unit, pageName=nil, attrs=nil)
   if !attrs then attrs = JSON.parse(unit[:attrs]) end
   campusID = (unit.type=='campus') ? unit.id
     : UnitHier.where(unit_id: unit.id).where(ancestor_unit: $activeCampuses.keys).first.ancestor_unit
@@ -35,15 +46,16 @@ def getUnitHeader(unit, attrs=nil)
     :campusID => campusID,
     :campusName => $unitsHash[campusID].name,
     :campuses => $activeCampuses.values.map { |c| {id: c.id, name: c.name} }.unshift({id: "", name: "eScholarship at..."}),
-    :logo => getAssetLink(attrs['logo']),
-    :nav_bar => getNavBar(unit.id, attrs['nav_bar']),
+    :logo => getLogoData(attrs['logo']),
+    :nav_bar => getNavBar(unit.id, pageName, attrs['nav_bar']),
     :social => {
       :facebook => attrs['facebook'],
       :twitter => attrs['twitter'],
       :rss => attrs['rss']
     },
     :breadcrumb => (unit.type!='campus') ?
-      traverseHierarchyUp([{name: unit.name, id: unit.id, url: "/uc/" + unit.id}]) : nil
+      traverseHierarchyUp([{name: unit.name, id: unit.id, url: "/uc/" + unit.id}]) + getPageBreadcrumb(unit, pageName)
+      : getPageBreadcrumb(unit, pageName)
   }
 
   # if this unit doesn't have a nav_bar, get the next unit up the hierarchy's nav_bar
@@ -193,7 +205,7 @@ def unitSearch(params, unit)
 end
 
 def getUnitStaticPage(unit, attrs, pageName)
-  page = Page[:nav_element=>pageName, :unit_id=>unit.id].values
+  page = Page[:slug=>pageName, :unit_id=>unit.id].values
   page[:attrs] = JSON.parse(page[:attrs])
   return page
 end
@@ -221,18 +233,10 @@ def getUnitProfile(unit, attrs)
   return profile
 end
 
-def getUnitSidebar(unit, attrs)
-  sidebar = [
-    {
-      name: "Featured Articles",
-      displayName: "Featured Articles",
-      config: "Article picker"
-    },
-    {
-      name: "Twitter Feed",
-      config: "Twitter username"
-    }
-  ]
+def getUnitSidebar(unit)
+  return Widget.where(unit_id: unit.id, region: "sidebar").order(:ordering).map { |widget|
+    { id: widget[:id], kind: widget[:kind], attrs: widget[:attrs] ? JSON.parse(widget[:attrs]) : {} }
+  }
 end
 
 #   newAttrs = {
@@ -310,11 +314,11 @@ end
 
 def addPage()
   # page = Page[unit_id: 'uclalaw']
-  # page.update(nav_element: 'contact')
+  # page.update(slug: 'contact')
 
   # contactPage = Page.create({
   #   unit_id: 'uclalaw',
-  #   nav_element: 'contact',
+  #   slug: 'contact',
   #   title: 'Contact Us'
   #   # html: '<b>Content here!</b>'
   # })

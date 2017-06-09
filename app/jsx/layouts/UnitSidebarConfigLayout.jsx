@@ -30,15 +30,15 @@ class UnitSidebarConfigLayout extends React.Component {
             </header>
             <div style={{width: "600px"}}>
               <label style={labelStyle}>Article 1</label>
-              <input type="text" style={style} value="Entre la ficción y el periodismo: Cambio social y la crónica mexicana contemporánea"/>
+              <input type="text" style={style} defaultValue="Entre la ficción y el periodismo: Cambio social y la crónica mexicana contemporánea"/>
               <label style={labelStyle}>Article 2</label>
-              <input type="text" style={style} value="Journalism in Catalonia During Francoism"/>
+              <input type="text" style={style} defaultValue="Journalism in Catalonia During Francoism"/>
               <label style={labelStyle}>Article 3</label>
-              <input type="text" style={style} value="En torno a un cuento olvidado de Clarín: &quot;El oso mayor&quot;"/>
+              <input type="text" style={style} defaultValue="En torno a un cuento olvidado de Clarín: &quot;El oso mayor&quot;"/>
               <label style={labelStyle}>Article 4</label>
-              <input type="text" style={style} value="Interview with Guillermo Cabrera Infante"/>
+              <input type="text" style={style} defaultValue="Interview with Guillermo Cabrera Infante"/>
               <label style={labelStyle}>Article 5</label>
-              <input type="text" style={style} value="Lazlo Moussong. Castillos en la letra. Xalapa, México: Universidad Veracruzana, 1986."/>
+              <input type="text" style={style} defaultValue="Lazlo Moussong. Castillos en la letra. Xalapa, México: Universidad Veracruzana, 1986."/>
               <button>Save</button> <button>Cancel</button>
             </div>
           </section>
@@ -64,7 +64,7 @@ class UnitSidebarConfigLayout extends React.Component {
             </header>
               <div style={{width: "600px"}}>
                 <label style={labelStyle}>Twitter Username</label>
-                <input type="text" style={style} value="" placeholder="Enter your twitter username"/>
+                <input type="text" style={style} defaultValue="" placeholder="Enter your twitter username"/>
                 <button>Save</button> <button>Cancel</button>
               </div>
           </section>

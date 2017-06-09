@@ -70,7 +70,7 @@ class Content extends React.Component {
         {/* Global browse pages */}
         { p.browse_type == "campuses" && <AllCampuses campusesStats={p.campusesStats} affiliatedStats={p.affiliatedStats}/> }
         { p.browse_type == "all_journals" && <AllJournals journals={p.journals}
-          archived={p.archived} campuses={p.campuses} campusID=""/> }
+            archived={p.archived} campuses={p.campuses} /> }
         {/* Campus-specific browse pages */}
         { p.browse_type == "units" && <CampusUnits units={p.campusUnits} pageTitle={p.pageTitle} /> }
         { p.browse_type == "journals" && <CampusJournals journals={p.campusJournals} pageTitle={p.pageTitle} /> }
@@ -104,9 +104,13 @@ class AllCampuses extends React.Component {
 class AllJournals extends React.Component {
   constructor(props) {
     super(props)
-    this.state = {campusID: props.campusID,
+    this.state = {campusID: "",
                   isActive: props.isActive}
     this.changeCampus = this.changeCampus.bind(this)
+  }
+
+  componentWillUnmount() {
+    this.setState({campusID: ""})
   }
 
 // 'journals' property (JSON)
