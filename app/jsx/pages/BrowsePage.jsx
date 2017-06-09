@@ -117,7 +117,7 @@ class AllJournals extends React.Component {
 // i.e. {:id=>"ao4elt4",
 //       :name=> "Adaptive Optics ...",
 //       :ancestor_unit=>["ucla", "ucsc"],
-//       :is_active=>true}
+//       :status=>"active"}
   getVisibleJournals(journals, campusID) {
     let foundOne = false
     let r = journals.map(function(j, i) {

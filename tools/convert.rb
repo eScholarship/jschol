@@ -509,7 +509,9 @@ def convertUnits(el, parentMap, childMap, allIds)
     Unit.update_or_replace(id,
       type:      unitType,
       name:      id=="root" ? "eScholarship" : el[:label],
-      is_active: id=="root" ? true           : el[:directSubmit] != "moribund",
+      status:    el[:directSubmit] == "moribund" ? "archived" :
+                 el[:hide] == "eschol" ? "hidden" :
+                 "active"
     )
 
     # We can't totally fill in the brand attributes when initially inserting the record,

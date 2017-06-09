@@ -16,7 +16,7 @@ end
 # Get hash of all active root level campuses/ORUs, sorted by ordering in unit_hier table
 def getActiveCampuses
   return Unit.join(:unit_hier, :unit_id=>:id).
-           filter(:ancestor_unit=>'root', :is_direct=>1, :is_active=>1).
+           filter(:ancestor_unit=>'root', :is_direct=>1).exclude(:status=>"hidden").
            order_by(:ordering).to_hash(:id)
 end
 
@@ -26,14 +26,14 @@ end
 
 # Get list of journals, their parent campus(es), and active/non-active.
 # i.e. {:id=>"ao4elt4",
-#       :name=> "Adaptive Optics ...",
+#       :name=>"Adaptive Optics ...",
 #       :ancestor_unit=>["ucla", "ucsc"],
-#       :is_active=>true},
+#       :status=>"active"},
 def getJournalsPerCampus
-  allJournals = Unit.filter(type: 'journal').map(:id)
+  allJournals = Unit.filter(type: 'journal').exclude(status: "hidden").map(:id)
   activeCampusIds = $activeCampuses.map{|id, c| id }
   array = UnitHier.join(:units, :id=>:unit_id).
-    where(:unit_id=>allJournals, :ancestor_unit=>activeCampusIds).select(:id, :name, :ancestor_unit, :is_active).
+    where(:unit_id=>allJournals, :ancestor_unit=>activeCampusIds).select(:id, :name, :ancestor_unit, :status).
     map { |h| h.values }
   # Combine journals that have mult. campuses into single hash to allow for easy filtering on Journal Browse page
   array_new = []
@@ -108,7 +108,7 @@ end
 # Get number of ORUs per campus as one hash. ORUs must contain items in unit_items table to be counted
 # {"ucb"=>117, "ucd"=>42 ...}
 def getOruStatsPerCampus
-  orusWithContent = Unit.join(UnitItem, :unit_id=>:id).filter(type: 'oru').distinct.select(:id).map(:id)
+  orusWithContent = Unit.join(UnitItem, :unit_id=>:id).filter(type: 'oru').exclude(status: 'hidden').distinct.select(:id).map(:id)
   activeCampusIds = $activeCampuses.map{|id, c| id }
   array = UnitHier.join(:units, :id=>:unit_id).
     where(:unit_id=>orusWithContent, :ancestor_unit=>activeCampusIds).group_and_count(:ancestor_unit).
@@ -119,11 +119,10 @@ end
 # Get number of journals per campus as one hash.
 # {"ucb"=>53, "ucd"=>20 ...}
 def getJournalStatsPerCampus
-  activeJournals = Unit.filter(type: 'journal', is_active: 1).map(:id)
+  activeJournals = Unit.filter(type: 'journal').exclude(status: "hidden").map(:id)
   activeCampusIds = $activeCampuses.map{|id, c| id }
   array = UnitHier.join(:units, :id=>:unit_id).
     where(:unit_id=>activeJournals, :ancestor_unit=>activeCampusIds).group_and_count(:ancestor_unit).
     map{|y| y.values}
   return Hash[array.map(&:values).map(&:flatten)]
 end
-
