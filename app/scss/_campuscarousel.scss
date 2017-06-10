@@ -40,50 +40,9 @@ $campuscarousel-heading-height: 1.1em;
   font-weight: normal;
 }
 
-%c-campuscarousel__cell {
+.c-campuscarousel__cell {
   width: 15vw;
   min-width: 6.3em;
-  padding: 2.2em $spacing-base $spacing-base;
-  background: top center / 1.5em no-repeat;
-  text-align: center;
-
-  strong {
-    display: block;
-    color: $color-teal;
-    font-family: 'KievitWebLight';
-    font-size: 1.3em;
-
-    @include bp(screen3) {
-      font-size: 1.6em;
-    }
-
-  }
-
-}
-
-.c-campuscarousel__cell--item {
-  @extend %c-campuscarousel__cell;
-  background-image: inline('../images/icon_book-light-black.svg');
-}
-
-.c-campuscarousel__cell--view {
-  @extend %c-campuscarousel__cell;
-  background-image: inline('../images/icon_eye-light-black.svg');
-}
-
-.c-campuscarousel__cell--passed {
-  @extend %c-campuscarousel__cell;
-  background-image: inline('../images/icon_unlock-alt-light-black.svg');
-}
-
-.c-campuscarousel__cell--journals {
-  @extend %c-campuscarousel__cell;
-  background-image: inline('../images/icon_file-text-light-black.svg');
-}
-
-.c-campuscarousel__cell--units {
-  @extend %c-campuscarousel__cell;
-  background-image: inline('../images/icon_university-light-black.svg');
 }
 
 // ***** Flickity Customizations ***** //

@@ -32,7 +32,7 @@ class CampusSelectorComp extends React.Component {
             <div className="c-campusselector__menu">
             <div className="c-campusselector__sub-heading" id="c-campusselector__sub-heading">eScholarship at &hellip;</div>
             <div className="c-campusselector__items" aria-labelledby="c-campusselector__sub-heading" role="list">
-              {this.campusSelector(this.props.campuses)}
+              {this.campusSelector(p.campuses)}
             </div>
           </div>
         </details>

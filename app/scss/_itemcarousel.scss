@@ -1,13 +1,57 @@
 // ##### Item Carousel Component ##### //
 
 .c-itemcarousel {
-  display: flex;
+  background-color: $color-white;
+
+  @include bp(screen1) {
+
+    @supports (display: grid) {
+      display: grid;
+      grid-template-columns: auto 15%;
+    }
+
+  }
+
 }
 
 .c-itemcarousel__carousel {
+
+  @include bp(screen1) {
+
+    @supports (display: grid) {
+      grid-row: 1 / 3;
+    }
+
+  }
+
+}
+
+.c-itemcarousel__item {
+  width: 200px;
   min-height: 10em;
 }
 
-.c-itemcarousel__stats {
-  // no styles yet
+%c-itemcarousel__stats {
+  @extend %clearfix;
+  width: 50%;
+  background-color: $color-white;
+
+  @include bp(screen1) {
+
+    @supports (display: grid) {
+      width: auto;
+    }
+
+  }
+
+}
+
+.c-itemcarousel__stats-item {
+  @extend %c-itemcarousel__stats;
+  float: left;
+}
+
+.c-itemcarousel__stats-view {
+  @extend %c-itemcarousel__stats;
+  float: right;
 }

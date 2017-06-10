@@ -5,7 +5,7 @@ import $ from 'jquery'
 
 import PageBase from './PageBase.jsx'
 import Header2Comp from '../components/Header2Comp.jsx'
-import Subheader2Comp from '../components/Subheader2Comp.jsx'
+import SubheaderComp from '../components/SubheaderComp.jsx'
 import NavBarComp from '../components/NavBarComp.jsx'
 import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
 import TabsComp from '../components/TabsComp.jsx'
@@ -68,7 +68,8 @@ class ItemPage extends PageBase {
       <div>
         <Header2Comp type={data.unit ? data.unit.type: null}
                      unitID={data.appearsIn.length > 0 ? data.appearsIn[0]["id"] : null } />
-        {data.header && <Subheader2Comp unit={data.unit} logo={data.header.logo}
+        {/* Some items have no parent unit, so check for empty data.header */}
+        {data.header && <SubheaderComp unit={data.unit} logo={data.header.logo}
                                         campusID={data.header.campusID}
                                         campusName={data.header.campusName}
                                         campuses={data.header.campuses} />}
