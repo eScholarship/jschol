@@ -325,6 +325,7 @@ get %r{/assets/([0-9a-f]{64})$} do |hash|
   obj = $s3Bucket.object(s3Path)
   obj.exists? && obj.metadata["mime_type"] or halt(404)
   content_type obj.metadata["mime_type"]
+  response.headers['Content-Length'] = obj.content_length.to_s
   return stream { |out| obj.get(response_target: out) }
 end
 

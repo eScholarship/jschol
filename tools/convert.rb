@@ -87,6 +87,7 @@ $csClient = Aws::CloudSearchDomain::Client.new(
 # S3 API client
 $s3Config = OpenStruct.new(YAML.load_file("config/s3.yaml"))
 $s3Client = Aws::S3::Client.new(region: $s3Config.region)
+$s3Bucket = Aws::S3::Bucket.new($s3Config.bucket, client: $s3Client)
 
 # Caches for speed
 $allUnits = nil
@@ -211,6 +212,31 @@ def linkDescendants(id, child, childMap, done)
 end
 
 ###################################################################################################
+# Upload an asset file to S3 (if not already there), and return the asset ID. Attaches a hash of
+# metadata to it.
+def putAsset(filePath, metadata)
+
+  # Calculate the sha256 hash, and use it to form the s3 path
+  md5sum    = Digest::MD5.file(filePath).hexdigest
+  sha256Sum = Digest::SHA256.file(filePath).hexdigest
+  s3Path = "#{$s3Config.prefix}/binaries/#{sha256Sum[0,2]}/#{sha256Sum[2,2]}/#{sha256Sum}"
+
+  # If the S3 file is already correct, don't re-upload it.
+  obj = $s3Bucket.object(s3Path)
+  if !obj.exists? || obj.etag != "\"#{md5sum}\""
+    puts "Uploading #{filePath} to S3."
+    obj.put(body: File.new(filePath), 
+            metadata: metadata.merge({
+              original_path: filePath.sub(%r{.*/([^/]+/[^/]+)$}, '\1'), # retain only last directory plus filename
+              mime_type: MimeMagic.by_magic(File.open(filePath)).to_s
+            }))
+    obj.etag == "\"#{md5sum}\"" or raise("S3 returned md5 #{resp.etag.inspect} but we expected #{md5sum.inspect}")
+  end
+
+  return sha256Sum
+end
+
+###################################################################################################
 def convertLogo(unitID, logoEl)
   # Locate the image reference
   logoImgEl = logoEl && logoEl.at("div[@id='logoDiv']/img[@src]")
@@ -222,34 +248,15 @@ def convertLogo(unitID, logoEl)
     return {}
   end
 
-  # Make sure it's an image, and determine which kind of image
   mimeType = MimeMagic.by_magic(File.open(imgPath))
   mimeType && mimeType.mediatype == "image" or raise("Non-image logo file #{imgPath}")
-
-  # Determine the width and height
   dims = FastImage.size(imgPath)
+  assetID = putAsset(imgPath, {
+    width: dims[0].to_s,
+    height: dims[1].to_s
+  })
 
-  # Calculate the sha256 hash, and use it to form the s3 path
-  md5sum    = Digest::MD5.file(imgPath).hexdigest
-  sha256Sum = Digest::SHA256.file(imgPath).hexdigest
-  s3Path = "#{$s3Config.prefix}/binaries/#{sha256Sum[0,2]}/#{sha256Sum[2,2]}/#{sha256Sum}"
-
-  # If the S3 file is already correct, don't re-upload it.
-  bucket = Aws::S3::Bucket.new($s3Config.bucket, client: $s3Client)
-  obj = bucket.object(s3Path)
-  if !obj.exists? || obj.etag != "\"#{md5sum}\""
-    puts "Uploading #{imgPath} to S3."
-    obj.put(body: File.new(imgPath),
-            metadata: {
-              original_path: logoImgEl[:src],
-              mime_type: mimeType.to_s,
-              width: dims[0].to_s,
-              height: dims[1].to_s
-            })
-    obj.etag == "\"#{md5sum}\"" or raise("S3 returned md5 #{resp.etag.inspect} but we expected #{md5sum.inspect}")
-  end
-
-  return { logo: { asset_id: sha256Sum,
+  return { logo: { asset_id: assetID,
                    image_type: mimeType.subtype,
                    is_banner: logoEl.attr('banner') == "single",
                    width: dims[0],
@@ -365,6 +372,18 @@ def convertPage(unitID, navBar, contentDiv, slug, name)
 end
 
 ###################################################################################################
+def convertFileLink(unitID, navBar, linkName, linkTarget)
+  # Locate the file referenced in the brand directory
+  filePath = "/apps/eschol/erep/xtf/static/#{linkTarget}"
+  if !File.file?(filePath)
+    puts "Warning: Can't find brand-linked file: #{filePath.inspect}"
+    return
+  end
+
+  navBar << { name: linkName, asset_id: putAsset(filePath, {}) }
+end
+
+###################################################################################################
 def convertNavBar(unitID, generalEl)
   # Blow away existing database pages for this unit
   Page.where(unit_id: unitID).delete
@@ -372,11 +391,9 @@ def convertNavBar(unitID, generalEl)
   navBar = [ { name: "Unit Home", slug: "" } ]
   generalEl or return { navBar: navBar }
 
-  # Convert contact info
-  convertPage(unitID, navBar, generalEl.at("contactInfo/div"), "contact", "Contact Us")
-
   # Convert each link in linkset
   linkedPagesUsed = Set.new
+  aboutBar = nil
   generalEl.xpath("linkSet/div").each { |linkDiv|
     linkDiv.children.each { |para|
       # First, a bunch of validation checks. We're expecting this kind of thing:
@@ -418,6 +435,19 @@ def convertNavBar(unitID, generalEl)
         next
       end
 
+      slug = nil
+      linkTarget =~ %r{/uc/search\?entity=[^;]+;view=([^;]+)$} and slug = $1
+
+      if slug =~ /contact|contactUs|policyStatement|policies|policiesProcedures|submitPaper|submissionGuidelines/i
+        addTo = navBar
+      else
+        if !aboutBar
+          aboutBar = { name: "About", sub_nav: [] }
+          navBar << aboutBar
+        end
+        addTo = aboutBar[:sub_nav]
+      end
+
       if linkTarget =~ %r{/uc/search\?entity=[^;]+;view=([^;]+)$}
         slug = $1
         linkedPage = generalEl.at("linkedPages/div[@id=#{slug}]")
@@ -425,18 +455,24 @@ def convertNavBar(unitID, generalEl)
           puts "Can't find linked page #{slug.inspect}"
           next
         end
-        convertPage(unitID, navBar, linkedPage, slug, linkName)
+        convertPage(unitID, addTo, linkedPage, slug, linkName)
         linkedPagesUsed << slug
       elsif linkTarget =~ %r{^https?://}
-        navBar << { name: linkName, url: linkTarget }
+        addTo << { name: linkName, url: linkTarget }
       elsif linkTarget =~ %r{/brand/}
-        puts "TODO: handle file links in nav bar: #{linkTarget}"
+        convertFileLink(unitID, addTo, linkName, linkTarget)
+        puts "unit=#{unitID} navBar=#{navBar}"
+        exit 1
       else
         puts "Invalid link target: #{para.inner_html}"
         next
       end
     }
   }
+
+  # TODO: The "contactInfo" part of the brand file is supposed to end up in the "Journal Information"
+  # box at the right side of the eschol UI. Database conversion TBD.
+  #convertPage(unitID, navBar, generalEl.at("contactInfo/div"), "journalInfo", BLAH)
 
   # Note unused linked pages
   generalEl.xpath("linkedPages/div").each { |page|
