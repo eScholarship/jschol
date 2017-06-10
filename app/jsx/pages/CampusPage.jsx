@@ -42,13 +42,13 @@ class CampusPage extends PageBase
                         campuses={data.header.campuses} />
         <div className="c-navbar">
           {/* ToDo: Properly call header.nav_bar */}
-          <NavComp data={[{name: 'Open Access Policies', slug: ''}, {name: 'Journals', slug: '/' + data.campusID + '/journals'}, {name: 'Academic Units', slug: '/' + data.campusID + '/units'}]} />
+          <NavComp data={[{name: 'Open Access Policies', url: ''}, {name: 'Journals', url: '/' + data.header.campusID + '/journals'}, {name: 'Academic Units', url: '/' + data.header.campusID + '/units'}]} />
         </div>
         <HeatMapComp />
         <CampusCarouselComp campusName={data.header.campusName} />
         <div className="c-columns">
           <main id="maincontent">
-            <CampusSearchComp campusName={data.header.campusName} dashUrl={dashUrl} />
+            <CampusSearchComp campusID={data.header.campusID} campusName={data.header.campusName} dashUrl={dashUrl} />
             <section className="o-columnbox1">
               [collections section to go here]
             </section>

@@ -41,7 +41,6 @@ def getUnitHeader(unit, pageName=nil, attrs=nil)
   if !attrs then attrs = JSON.parse(unit[:attrs]) end
   campusID = (unit.type=='campus') ? unit.id
     : UnitHier.where(unit_id: unit.id).where(ancestor_unit: $activeCampuses.keys).first.ancestor_unit
-
   header = {
     :campusID => campusID,
     :campusName => $unitsHash[campusID].name,

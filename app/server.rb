@@ -203,7 +203,7 @@ Thread.new {
       $hierByAncestor = getHierByAncestor
       $activeCampuses = getActiveCampuses
       $oruAncestors = getOruAncestors
-      $campusJournals = getJournalsPerCampus    # Used for browse pages, includes non-active
+      $campusJournals = getJournalsPerCampus    # Used for browse pages
 
       #####################################################################
       # STATISTICS
@@ -445,7 +445,9 @@ get "/api/browse/:browse_type/:campusID" do |browse_type, campusID|
     cu = $hierByAncestor[campusID].map do |a| getChildDepts($unitsHash[a.unit_id]); end
     pageTitle = "Academic Units"
   else   # journals
-    cj = $campusJournals.select{ |j| j[:ancestor_unit].include?(campusID) }
+    cj  = $campusJournals.select{ |j| j[:ancestor_unit].include?(campusID) }.sort_by{ |h| h[:name].downcase }
+    cja = cj.select{ |h| h[:status]=="archived" }
+    cj  = cj.select{ |h| h[:status]!="archived" }
     pageTitle = "Journals"
   end
   unit = $unitsHash[campusID]
@@ -454,9 +456,10 @@ get "/api/browse/:browse_type/:campusID" do |browse_type, campusID|
     :browse_type => browse_type,
     :pageTitle => pageTitle,
     :unit => unit ? unit.values.reject { |k,v| k==:attrs } : nil,
-    :header => unit ? getUnitHeader(unit, attrs) : getGlobalHeader,
+    :header => unit ? getUnitHeader(unit, nil, attrs) : getGlobalHeader,
     :campusUnits => cu ? cu.compact : nil,
-    :campusJournals => cj 
+    :campusJournals => cj,
+    :campusJournalsArchived => cja
   }
   breadcrumb = [
     {"name" => pageTitle, "url" => "/" + campusID + "/" + browse_type},

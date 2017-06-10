@@ -43,13 +43,13 @@ class BrowsePage extends PageBase
         // Campus-specific browse page
         <div>
           <Header2Comp type="campus" unitID={data.campusID} />
-          <Subheader2Comp unit={data.unit}
+          <Subheader2Comp unit={data.unit} logo={data.header.logo}
                           campusID={data.header.campusID}
                           campusName={data.header.campusName}
                           campuses={data.campuses} />
           <div className="c-navbar">
             {/* ToDo: Properly call header.nav_bar for unit type="campus" */}
-            <NavComp data={[{name: 'Open Access Policies', slug: ''}, {name: 'Journals', slug: '/' + data.campusID + '/journals'}, {name: 'Academic Units', slug: '/' + data.campusID + '/units'}]} />
+            <NavComp data={[{name: 'Open Access Policies', url: ''}, {name: 'Journals', url: '/' + data.header.campusID + '/journals'}, {name: 'Academic Units', url: '/' + data.header.campusID + '/units'}]} />
           </div>
         </div>
       }
@@ -73,7 +73,9 @@ class Content extends React.Component {
             archived={p.archived} campuses={p.campuses} /> }
         {/* Campus-specific browse pages */}
         { p.browse_type == "units" && <CampusUnits units={p.campusUnits} pageTitle={p.pageTitle} /> }
-        { p.browse_type == "journals" && <CampusJournals journals={p.campusJournals} pageTitle={p.pageTitle} /> }
+        { p.browse_type == "journals" && <CampusJournals journals={p.campusJournals}
+                                                         archived={p.campusJournalsArchived}
+                                                         pageTitle={p.pageTitle} /> }
         </main>
         <aside>
           <section className="o-columnbox1">
@@ -185,18 +187,35 @@ class CampusUnits extends React.Component {
 }
 
 class CampusJournals extends React.Component {
+  getVisibleJournals(journals) {
+    return journals.map(function(j, i) {
+      return <li key={i}><Link href={"/uc/" + j["id"]}>{j["name"]}</Link></li>
+    })
+  }
+
   render() {
+    let p = this.props,
+        visibleJournals = (p.journals.length > 0) ? this.getVisibleJournals(p.journals) : null,
+        visibleArchived = (p.archived.length > 0) ? this.getVisibleJournals(p.archived) : null
     return (
     <section className="o-columnbox1">
       <header>
         <h2>{this.props.pageTitle}</h2>
       </header>
-      <ul className="o-textlist2">
-        {this.props.journals.map((j, i) => {
-          return (<li key={i}><Link href={"/uc/" + j["id"]}>{j["name"]}</Link></li>) })
-        }
-      </ul>
+    {visibleJournals && 
+      <ul className="o-textlist2">{visibleJournals}</ul>
+    }
+    {visibleArchived &&
+      <div>
+        <h3>Archived Journals</h3> 
+        <ul className="o-textlist2">{visibleArchived}</ul>
+      </div>
+    }
+    {(!(visibleJournals || visibleArchived)) && 
+     [<p key="0"><br/></p>, <p key="1">No journals currently listed.<br/><br/><br/></p>]
+    }
     </section>
   )}
 }
+
 module.exports = BrowsePage
