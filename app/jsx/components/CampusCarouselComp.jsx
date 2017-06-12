@@ -1,35 +1,20 @@
 // ##### Campus Carousel Component ##### //
 
 import React from 'react'
-import $ from 'jquery'
-
-// Only load flickity when in the browser (not server-side)
-if (!(typeof document === "undefined")) {
-  var Flickity = require('flickity-imagesloaded')
-}
+import CarouselComp from '../components/CarouselComp.jsx'
 
 class CampusCarouselComp extends React.Component {
-  componentDidMount () {
-    var carousel = $('.c-campuscarousel')[0];
-    var options = {
-      cellAlign: 'left',
-      contain: true,
-      initialIndex: 0,
-      pageDots: false
-    }
-    this.flkty = new Flickity(carousel, options);
-  }
-  componentWillUnmount() {
-    if (this.flkty) {
-      this.flkty.destroy();
-    }
-  }
   static propTypes = {
     campusName: React.PropTypes.string.isRequired,
   }
   render() {
     return (
-      <div className="c-campuscarousel">
+      <CarouselComp className="c-campuscarousel" options={{
+          cellAlign: 'left',
+          contain: true,
+          initialIndex: 0,
+          pageDots: false
+        }}>
         <div className="c-campuscarousel__section">
           <h2 className="c-campuscarousel__cell-heading">
             {this.props.campusName}
@@ -70,7 +55,7 @@ class CampusCarouselComp extends React.Component {
             <b>500</b> Research Units
           </div>
         </div>
-      </div>
+      </CarouselComp>
     )
   }
 }
