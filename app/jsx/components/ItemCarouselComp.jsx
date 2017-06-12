@@ -2,7 +2,11 @@
 
 import React from 'react'
 import $ from 'jquery'
-import Flickity from 'flickity-imagesloaded'
+
+// Only load flickity when in the browser (not server-side)
+if (!(typeof document === "undefined")) {
+  var Flickity = require('flickity-imagesloaded')
+}
 
 class ItemCarouselComp extends React.Component {
   componentDidMount () {
