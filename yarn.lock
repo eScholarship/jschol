@@ -5518,9 +5518,9 @@ pbkdf2@^3.0.3:
   dependencies:
     create-hmac "^1.1.2"
 
-pdfjs-embed@escholarship/pdfjs-embed#111a72415d0f0cda5f3809e3046ab9b6498d2538:
+pdfjs-embed@escholarship/pdfjs-embed#bb559ed50c39b25220ea000793d8e40c5b2b284d:
   version "1.6.210.CDL_02"
-  resolved "https://codeload.github.com/escholarship/pdfjs-embed/tar.gz/111a72415d0f0cda5f3809e3046ab9b6498d2538"
+  resolved "https://codeload.github.com/escholarship/pdfjs-embed/tar.gz/bb559ed50c39b25220ea000793d8e40c5b2b284d"
   dependencies:
     node-ensure "0.0.0"
 
