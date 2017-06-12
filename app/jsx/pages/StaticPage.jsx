@@ -6,7 +6,8 @@ import _ from 'lodash'
 import { Subscriber } from 'react-broadcast'
 
 import PageBase from './PageBase.jsx'
-import Subheader1Comp from '../components/Subheader1Comp.jsx'
+import Header1Comp from '../components/Header1Comp.jsx'
+import NavComp from '../components/NavComp.jsx'
 import SidebarNavComp from '../components/SidebarNavComp.jsx'
 import EditableMainContentComp from '../components/EditableMainContentComp.jsx'
 import EditableSidebarTextComp from '../components/EditableSidebarTextComp.jsx'
@@ -40,7 +41,10 @@ export default class StaticPage extends PageBase
   renderData = data => { return(
     <div>
       <AdminBarComp/>
-      <Subheader1Comp navdata={data.header.nav_bar} />
+      <Header1Comp />
+      <div className="c-navbar">
+        <NavComp data={data.header.nav_bar} />
+      </div>
       <Subscriber channel="cms">
         { cms =>
           <div className="c-columns">

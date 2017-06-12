@@ -203,11 +203,25 @@ Thread.new {
       $hierByAncestor = getHierByAncestor
       $activeCampuses = getActiveCampuses
       $oruAncestors = getOruAncestors
-      $campusJournals = getJournalsPerCampus
+      $campusJournals = getJournalsPerCampus    # Used for browse pages
 
       #####################################################################
       # STATISTICS
       # These are dependent on instantation of $activeCampuses
+
+      # HOME PAGE statistics
+      # ToDo:
+      $statsViews = countViews
+      $statsDownloads = countDownloads
+      $statsOpenItems = countOpenItems
+      $statsOrus = countOrus
+      $statsItems =  countItems
+      $statsThesesDiss = countThesisDiss
+      $statsBooks = countBooks
+      $statsEscholJournals = countEscholJournals
+      $statsStudentJournals = countStudentJournals
+
+      # BROWSE PAGE statistics
       $statsCampusPubs = getPubStatsPerCampus
       $statsCampusOrus = getOruStatsPerCampus
       $statsCampusJournals = getJournalStatsPerCampus
@@ -432,7 +446,9 @@ get "/api/browse/:browse_type/:campusID" do |browse_type, campusID|
     cu = $hierByAncestor[campusID].map do |a| getChildDepts($unitsHash[a.unit_id]); end
     pageTitle = "Academic Units"
   else   # journals
-    cj = $campusJournals.select{ |j| j[:ancestor_unit].include?(campusID) }
+    cj  = $campusJournals.select{ |j| j[:ancestor_unit].include?(campusID) }.sort_by{ |h| h[:name].downcase }
+    cja = cj.select{ |h| h[:status]=="archived" }
+    cj  = cj.select{ |h| h[:status]!="archived" }
     pageTitle = "Journals"
   end
   unit = $unitsHash[campusID]
@@ -441,12 +457,10 @@ get "/api/browse/:browse_type/:campusID" do |browse_type, campusID|
     :browse_type => browse_type,
     :pageTitle => pageTitle,
     :unit => unit ? unit.values.reject { |k,v| k==:attrs } : nil,
-    # ToDo: Campus nav does not need to deal with ancestors
-    # :header => unit ? getUnitHeader(unit, attrs) : getGlobalHeader,
-    :campusID => campusID,
-    :campusName => unit.name,
+    :header => unit ? getUnitHeader(unit, nil, attrs) : getGlobalHeader,
     :campusUnits => cu ? cu.compact : nil,
-    :campusJournals => cj 
+    :campusJournals => cj,
+    :campusJournalsArchived => cja
   }
   breadcrumb = [
     {"name" => pageTitle, "url" => "/" + campusID + "/" + browse_type},
@@ -485,6 +499,8 @@ get "/api/unit/:unitID/?:pageName/?" do
       pageData[:content] = unitSearch(CGI::parse(request.query_string), unit)
     elsif pageName == 'home'
       pageData[:content] = getUnitPageContent(unit, attrs, pageName)
+    elsif pageName == 'campus_landing'
+      pageData[:content] = getCampusLandingPageContent(unit, attrs)
     elsif pageName == 'profile'
       pageData[:content] = getUnitProfile(unit, attrs)
     elsif pageName == 'sidebar'
@@ -622,7 +638,7 @@ def getHeaderElements(breadcrumb, topItem)
   campuses = topItem ? getCampusesAsMenu(topItem) : getCampusesAsMenu
   return {
     :campuses => campuses,
-    :breadcrumb => Hierarchy_Manual.new(breadcrumb).generateCrumb
+    :breadcrumb => breadcrumb ? Hierarchy_Manual.new(breadcrumb).generateCrumb : nil
   }
 end
 

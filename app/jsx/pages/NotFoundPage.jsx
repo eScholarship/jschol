@@ -10,10 +10,10 @@ class NotFoundPage extends PageBase
 {
   // PageBase will fetch the following URL for us, and place the results in this.state.pageData
   pageDataURL() {
-    return "/api/browse/" + this.props.params.type
+    return null
   }
 
-  render() { return (
+  renderContent() { return (
     <div>
       <Header1Comp />
       <Nav1Comp />

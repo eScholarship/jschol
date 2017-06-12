@@ -1,0 +1,83 @@
+// ##### Subheader Component ##### //
+
+.c-subheader {
+  display: flex;
+  position: relative; // to absolute positioned nav component
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 (-$spacing-sm);
+  padding: 0 $spacing-sm $spacing-sm;
+  background-color: $color-white;
+}
+
+.c-subheader__banner {
+  display: none;
+
+  @include bp(screen3) {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    max-width: 800px;
+    margin-right: $spacing-md;
+  }
+
+}
+
+.c-subheader__sidebar {
+  display: flex;
+  flex-direction: row;
+
+  @include bp(screen3) {
+    flex-direction: column;
+  }
+
+  button {
+
+    &:not(:first-child) {
+      margin-left: 2px;
+
+      @include bp(screen3) {
+        margin: 2px 0 0;
+      }
+
+    }
+
+  }
+
+}
+
+.c-subheader__sidebar-text {
+  display: none;
+
+  @include bp(screen3) {
+    display: block;
+    width: 14em;
+    margin: $spacing-sm 0;
+    font-size: 0.8em;
+    text-align: right;
+  }
+
+}
+
+.c-subheader__sidebar-number {
+  display: none;
+
+  @include bp(screen3) {
+    display: block;
+    color: $color-teal;
+    text-align: right;
+  }
+
+}
+
+.c-subheader__button-fragment {
+  position: absolute;
+  left: -9999px;
+
+  @include bp(screen3) {
+    display: block;
+    position: static;
+    left: auto;
+  }
+
+}

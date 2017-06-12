@@ -12,7 +12,7 @@ import { Link } from 'react-router'
 
 import PageBase from './PageBase.jsx'
 import Header2Comp from '../components/Header2Comp.jsx'
-import Subheader2Comp from '../components/Subheader2Comp.jsx'
+import SubheaderComp from '../components/SubheaderComp.jsx'
 import NavBarComp from '../components/NavBarComp.jsx'
 import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
 import DepartmentLayout from '../layouts/DepartmentLayout.jsx'
@@ -110,7 +110,7 @@ class UnitPage extends PageBase
       <div>
         <AdminBarComp/>
         <Header2Comp type={data.unit.type} unitID={data.unit.id} />
-        <Subheader2Comp unit={data.unit} logo={data.header.logo} 
+        <SubheaderComp unit={data.unit} logo={data.header.logo} 
           campusID={data.header.campusID}
           campusName={data.header.campusName}
           campuses={data.header.campuses}/>

@@ -2,7 +2,11 @@
 
 import React from 'react'
 import $ from 'jquery'
-import Flickity from 'flickity-imagesloaded'
+
+// Only load flickity when in the browser (not server-side)
+if (!(typeof document === "undefined")) {
+  var Flickity = require('flickity-imagesloaded')
+}
 
 class CampusCarouselComp extends React.Component {
   componentDidMount () {
@@ -20,47 +24,50 @@ class CampusCarouselComp extends React.Component {
       this.flkty.destroy();
     }
   }
+  static propTypes = {
+    campusName: React.PropTypes.string.isRequired,
+  }
   render() {
     return (
       <div className="c-campuscarousel">
         <div className="c-campuscarousel__section">
           <h2 className="c-campuscarousel__cell-heading">
-            UC Berkeley
+            {this.props.campusName}
           </h2>
-          <div className="c-campuscarousel__cell--item">
-            <strong>24,844</strong> Items
+          <div className="o-stat--item c-campuscarousel__cell">
+            <b>24,844</b> Items
           </div>
-          <div className="c-campuscarousel__cell--view">
-            <strong>380,941</strong> Views
+          <div className="o-stat--view c-campuscarousel__cell">
+            <b>380,941</b> Views
           </div>
-          <div className="c-campuscarousel__cell--passed">
-            <strong>6,532</strong> Items since UC OA Policy passed
+          <div className="o-stat--passed c-campuscarousel__cell">
+            <b>6,532</b> Items since UC OA Policy passed
           </div>
-          <div className="c-campuscarousel__cell--journals">
-            <strong>31</strong> eScholarship Journals
+          <div className="o-stat--journals c-campuscarousel__cell">
+            <b>31</b> eScholarship Journals
           </div>
-          <div className="c-campuscarousel__cell--units">
-            <strong>119</strong> Research Units
+          <div className="o-stat--units c-campuscarousel__cell">
+            <b>119</b> Research Units
           </div>
         </div>
         <div className="c-campuscarousel__section">
           <h2 className="c-campuscarousel__cell-heading">
             All eScholarship
           </h2>
-          <div className="c-campuscarousel__cell--item">
-            <strong>127,057</strong> Items
+          <div className="o-stat--item c-campuscarousel__cell">
+            <b>127,057</b> Items
           </div>
-          <div className="c-campuscarousel__cell--view">
-            <strong>35,489,231</strong> Views
+          <div className="o-stat--view c-campuscarousel__cell">
+            <b>35,489,231</b> Views
           </div>
-          <div className="c-campuscarousel__cell--passed">
-            <strong>31,750</strong> Items since UC OA Policy passed
+          <div className="o-stat--passed c-campuscarousel__cell">
+            <b>31,750</b> Items since UC OA Policy passed
           </div>
-          <div className="c-campuscarousel__cell--journals">
-            <strong>91</strong> eScholarship Journals
+          <div className="o-stat--journals c-campuscarousel__cell">
+            <b>91</b> eScholarship Journals
           </div>
-          <div className="c-campuscarousel__cell--units">
-            <strong>500</strong> Research Units
+          <div className="o-stat--units c-campuscarousel__cell">
+            <b>500</b> Research Units
           </div>
         </div>
       </div>

@@ -257,4 +257,16 @@ As well as:
   new:        app/jsx/components/TestMessageComp.jsx
   new:        app/scss/_testmessage.scss
 
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's 3a2c2d659ee224ca4945ec963074810a0db46a70, 2017-06-09 <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+Andy added all scss changes since last.
+As well as:
+
+  modified:   app/jsx/components/CampusCarouselComp.jsx
+  modified:   app/jsx/components/ItemCarouselComp.jsx
+  modified:   app/jsx/components/Search1Comp.jsx
+  new:        app/jsx/components/SubheaderComp.jsx
+  new:        app/jsx/objects/StatsObj.jsx
 

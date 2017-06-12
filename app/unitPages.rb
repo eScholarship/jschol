@@ -14,17 +14,20 @@ end
 
 # Add a URL to each nav bar item
 def getNavBar(unitID, pageName, navItems)
-  navItems.each { |navItem|
-    if navItem['slug']
-      navItem['url'] = "/uc/#{unitID}#{navItem['slug']=="" ? "" : "/"+navItem['slug']}"
-    end
-  }
-  return navItems
+  if navItems
+    navItems.each { |navItem|
+      if navItem['slug']
+        navItem['url'] = "/uc/#{unitID}#{navItem['slug']=="" ? "" : "/"+navItem['slug']}"
+      end
+    }
+    return navItems
+  end
+  return nil
 end
 
 # Generate the last part of the breadcrumb for a static page within a unit
 def getPageBreadcrumb(unit, pageName)
-  (!pageName || pageName == "home") and return []
+  (!pageName || pageName == "home" || pageName == "campus_landing") and return []
   pageName == "search" and return [{ name: "Search", id: unit.id + ":" + pageName}]
   pageName == "profile" and return [{ name: "Profile", id: unit.id + ":" + pageName}]
   pageName == "sidebar" and return [{ name: "Sidebars", id: unit.id + ":" + pageName}]
@@ -36,8 +39,8 @@ end
 # Generate breadcrumb and header content for Unit-branded pages
 def getUnitHeader(unit, pageName=nil, attrs=nil)
   if !attrs then attrs = JSON.parse(unit[:attrs]) end
-  campusID = UnitHier.where(unit_id: unit.id).where(ancestor_unit: $activeCampuses.keys).first.ancestor_unit
-
+  campusID = (unit.type=='campus') ? unit.id
+    : UnitHier.where(unit_id: unit.id).where(ancestor_unit: $activeCampuses.keys).first.ancestor_unit
   header = {
     :campusID => campusID,
     :campusName => $unitsHash[campusID].name,
@@ -49,12 +52,13 @@ def getUnitHeader(unit, pageName=nil, attrs=nil)
       :twitter => attrs['twitter'],
       :rss => attrs['rss']
     },
-    :breadcrumb => traverseHierarchyUp([{name: unit.name, id: unit.id, url: "/uc/" + unit.id}]) +
-                   getPageBreadcrumb(unit, pageName)
+    :breadcrumb => (unit.type!='campus') ?
+      traverseHierarchyUp([{name: unit.name, id: unit.id, url: "/uc/" + unit.id}]) + getPageBreadcrumb(unit, pageName)
+      : getPageBreadcrumb(unit, pageName)
   }
 
   # if this unit doesn't have a nav_bar, get the next unit up the hierarchy's nav_bar
-  if !header[:nav_bar]
+  if !header[:nav_bar] and unit.type != 'campus'
     ancestor = $hierByUnit[unit.id][0].ancestor
     until header[:nav_bar] || ancestor.id == 'root'
       header[:nav_bar] = JSON.parse(ancestor[:attrs])['nav_bar']
@@ -97,6 +101,17 @@ def getORULandingPageData(id)
     :series => children ? children.select { |u| u.unit.type == 'series' }.map { |u| seriesPreview(u) } : [],
     :journals => children ? children.select { |u| u.unit.type == 'journal' }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : [],
     :related_orus => children ? children.select { |u| u.unit.type != 'series' && u.unit.type != 'journal' }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : []
+  }
+end
+
+# Get data for Campus Landing Page
+def getCampusLandingPageContent(unit, attrs)
+  return {
+    :pub_count =>     ($statsCampusPubs.keys.include? unit.id)  ? $statsCampusPubs[unit.id]     : 0,
+    :view_count =>    0,
+    :opened_count =>    0,
+    :journal_count => ($statsCampusJournals.keys.include? unit.id) ? $statsCampusJournals[unit.id] : 0,
+    :unit_count =>    ($statsCampusOrus.keys.include? unit.id)  ? $statsCampusOrus[unit.id]     : 0
   }
 end
 

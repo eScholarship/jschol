@@ -1,6 +1,6 @@
 // ##### UI Library ##### //
 
-.ui-library-header {
+.ui-library__header {
   display: flex;
   justify-content: space-between;
   margin: (-$spacing-body) (-$spacing-body) $spacing-body;
@@ -33,6 +33,15 @@
       color: inherit;
     }
 
+  }
+
+}
+
+.ui-library__list {
+  line-height: $line-height;
+
+  ul {
+    margin: $spacing-sm 0;
   }
 
 }
