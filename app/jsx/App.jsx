@@ -41,7 +41,7 @@ const routes = (
     <Route path="/:campusID/units" component={BrowsePage} />
     <Route path="/:campusID/journals" component={BrowsePage} />
     <Route path="/uc/item/:itemID" component={ItemPage} />
-    // Temporary hack until UnitPage is refactored 
+    {/* Temporary hack until UnitPage is refactored */}
     <Route path="/uc/ucb" component={CampusPage} /><Route path="/uc/ucd" component={CampusPage} /><Route path="/uc/uci" component={CampusPage} /><Route path="/uc/ucla" component={CampusPage} /><Route path="/uc/ucm" component={CampusPage} /><Route path="/uc/ucop" component={CampusPage} /><Route path="/uc/ucr" component={CampusPage} /><Route path="/uc/ucsb" component={CampusPage} /><Route path="/uc/ucsc" component={CampusPage} /><Route path="/uc/ucsd" component={CampusPage} /><Route path="/uc/ucsf" component={CampusPage} />
     <Route path="/uc/:unitID" component={UnitPage} />
     <Route path="/uc/:unitID/:pageName" component={UnitPage} />

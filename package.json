@@ -57,7 +57,7 @@
   },
   "dependencies-note": "These modules get bundled into lib-bundle.js",
   "dependencies": {
-    "array-includes": "^3.0.2",
+    "array-includes": "^3.0.3",
     "details-polyfill": "^1.0.2",
     "flickity": "^2.0.5",
     "flickity-imagesloaded": "^2.0.0",
@@ -76,7 +76,7 @@
   },
   "optionalDependencies-note": "These modules are separately bundled and loaded on-demand via require.ensure",
   "optionalDependencies": {
-    "pdfjs-embed": "escholarship/pdfjs-embed#111a72415d0f0cda5f3809e3046ab9b6498d2538",
+    "pdfjs-embed": "escholarship/pdfjs-embed#bb559ed50c39b25220ea000793d8e40c5b2b284d",
     "react-trumbowyg": "^1.1.0"
   }
 }
