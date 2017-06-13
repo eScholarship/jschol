@@ -57,7 +57,7 @@
   },
   "dependencies-note": "These modules get bundled into lib-bundle.js",
   "dependencies": {
-    "array-includes": "^3.0.2",
+    "array-includes": "^3.0.3",
     "details-polyfill": "^1.0.2",
     "flickity": "^2.0.5",
     "flickity-imagesloaded": "^2.0.0",
