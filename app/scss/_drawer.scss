@@ -8,6 +8,7 @@
   background-color: $color-dark-gray;
   color: $color-white;
   text-transform: uppercase;
+  position: relative;
 }
 
 .c-drawer__list-item, .c-drawer__list-item-subnav {
@@ -230,5 +231,21 @@
     font-size: 1.5em;
     background-color: $color-teal;
     color: white;
+  }
+}
+
+.c-drawer__working-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba($color-white, 0.5);
+  overflow: auto;
+  z-index: 99; // stack above all components
+
+  @supports (backdrop-filter: blur()) {
+    background-color: rgba($color-white, 0.5);
+    backdrop-filter: blur(5px);
   }
 }

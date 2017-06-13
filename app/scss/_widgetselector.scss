@@ -1,0 +1,107 @@
+// ##### Widget Selector Component ##### //
+
+$widget-selector-right-margin: 30px;
+
+.c-widgetselector {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 2px;
+
+  @include bp(screen3) {
+    position: relative;
+    align-items: flex-end;
+    min-height: $element-height;
+    margin-right: $widget-selector-right-margin + $spacing-md;
+  }
+
+}
+
+.c-widgetselector__heading {
+  margin: 0 $spacing-sm 0 0;
+  font-size: 1em;
+  text-align: right;
+
+  @include bp(screen1) {
+    font-size: 1.3em;
+  }
+
+  @include bp(screen3) {
+    width: 7.5em; // component width
+    font-size: 1.5em;
+  }
+
+  a {
+    @extend %o-textlink__colorless;
+  }
+
+}
+
+.c-widgetselector__selector {
+
+  summary {
+    @extend %interactive-element-size;
+    position: relative;
+
+    @include bp(screen3) {
+      position: absolute;
+      right: 0; /* MH */
+      top: 0;
+      bottom: 0;
+      height: auto;
+    }
+
+    &::after {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      border: 1px solid $color-dark-gray;
+      border-radius: $round-corner;
+      background: inline('../images/icon_arrow-down.svg') no-repeat center / 13px;
+      content: '+';
+      font-size: 1.8em;
+    }
+
+  }
+
+  &[open] {
+
+    summary::after {
+      transform: rotate(180deg);
+    }
+
+  }
+
+}
+
+.c-widgetselector__menu {
+  position: absolute; // to .c-subheader
+  right: $spacing-sm;
+  left: $spacing-sm;
+  margin-top: 26px; /*MH 5px;*/
+  background-color: $color-white;
+  z-index: 2;
+
+  @include bp(screen3) {
+    right: 0;
+    left: 0;
+    /*MH margin-right: (-$widget-selector-right-margin);*/
+  }
+
+}
+
+.c-widgetselector__sub-heading {
+  @extend %nav-item;
+  background-color: $color-light-gray;
+  color: $color-black;
+}
+
+.c-widgetselector__items {
+
+  a {
+    @extend %nav-item;
+    border-top: none;
+  }
+
+}

@@ -181,6 +181,27 @@ class SortableList extends React.Component {
 
 }
 
+class AddWidgetMenu extends React.Component {
+  state = { isOpen: false }
+  render() {
+    return (
+      <div className="c-drawer__nav-buttons" >
+        <details className="c-widgetselector__selector" open={this.state.isOpen} ref={el=>this.detailsEl=el}>
+          <summary aria-label="select widget type" 
+                   onClick={e=>setTimeout(()=>this.setState({isOpen: this.detailsEl.open}), 0)}/>
+          <div className="c-widgetselector__menu">
+            <div className="c-widgetselector__sub-heading" id="c-widgetselector__sub-heading">{this.props.title}</div>
+            <div className="c-widgetselector__items" aria-labelledby="c-widgetselector__sub-heading" role="list"
+              onClick={e=>this.setState({isOpen: false})}>
+              {this.props.children}
+            </div>
+          </div>
+        </details>
+      </div>
+    )
+  }
+}
+
 class DrawerComp extends React.Component {
   state = {
     navList: 'header' in this.props.data && 'nav_bar' in this.props.data.header ? this.props.data.header.nav_bar : undefined,
@@ -191,10 +212,11 @@ class DrawerComp extends React.Component {
     this.setState({sidebarOpen: open});
   }
 
-  addNavItem = () => {
+  addNavItem = (event, itemKind) => {
+    event.preventDefault()
     var navList = _.clone(this.state.navList);
     navList.push({name: ""});
-    this.setState({navList: navList});
+    this.setState({navList: navList, working: true});
   }
 
   addSidebarItem = () => {
@@ -241,9 +263,12 @@ class DrawerComp extends React.Component {
 
         <div className="c-drawer__heading">
           Navigation Items
-          <div className="c-drawer__nav-buttons">
-            <button onClick={this.addNavItem}><img src="/images/white/plus.svg"/></button>
-          </div>
+          <AddWidgetMenu title="Add Nav Item">
+            <a href="" key="page" onClick={e=>this.addNavItem(e, 'page')}>Page</a>
+            <a href="" key="url" onClick={e=>this.addNavItem(e, 'url')}>URL</a>
+            <a href="" key="file" onClick={e=>this.addNavItem(e, 'file')}>File</a>
+            <a href="" key="folder" onClick={e=>this.addNavItem(e, 'folder')}>Folder</a>
+          </AddWidgetMenu>
         </div>
         <SortableList data={this.state.navList} unit={this.props.data.unit}/>
 
@@ -265,20 +290,22 @@ class DrawerComp extends React.Component {
       </div>
     ) : (<div></div>);
     return (
-      <Subscriber channel="cms">
-        { cms =>
-          ('header' in this.props.data && 'nav_bar' in this.props.data.header) ?
-            <Sidebar
-              sidebar={sidebarContent}
-              open={cms.isEditingPage}
-              docked={cms.isEditingPage}
-              onSetOpen={this.onSetSidebarOpen}
-              sidebarClassName="c-drawer">
-
-              {this.props.children}
-            </Sidebar> : <div>{this.props.children}</div>
-        }
-      </Subscriber>
+      ('header' in this.props.data && 'nav_bar' in this.props.data.header)
+      ? <div>
+          {this.state.working && <div className="c-drawer__working-overlay"/>}
+          <Subscriber channel="cms">
+            { cms =>
+              <Sidebar sidebar={sidebarContent}
+                       open={cms.isEditingPage}
+                       docked={cms.isEditingPage}
+                       onSetOpen={this.onSetSidebarOpen}
+                       sidebarClassName="c-drawer">
+                {this.props.children}
+              </Sidebar>
+            }
+          </Subscriber>
+        </div>
+      : this.props.children
     )
   }
 }
