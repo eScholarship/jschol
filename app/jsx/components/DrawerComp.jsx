@@ -214,11 +214,14 @@ class DrawerComp extends React.Component {
 
   addNavItem = (event, cms, navType) => {
     event.preventDefault()
-    $.ajax({ type: 'POST', url: `/api/unit/${this.props.data.unit.id}/nav`,
+    $.getJSON({ type: 'POST', url: `/api/unit/${this.props.data.unit.id}/nav`,
              data: { username: cms.username, token: cms.token, navType: navType }})
-    .done(()=>{
+    .done(data=>{
       console.log("Ajax finished.")
       //this.props.fetchPageData()  // re-fetch page state after DB is updated
+    })
+    .error(()=>{
+      alert("Error adding item.")
     })
 
     //var navList = _.clone(this.state.navList);
