@@ -620,6 +620,8 @@ get "/api/mediaLink/:type/:id/:service" do |type, id, service| # service e.g. fa
       url = "http://www.mendeley.com/import?url=" + sharedLink + "&title=" + title
     when "citeulike"
       url = "http://www.citeulike.org/posturl?url=" + sharedLink + "&title=" + title
+    else
+      raise("unrecognized service")
   end
   return { url: url }.to_json
 end
@@ -721,6 +723,56 @@ put "/api/unit/:unitID/:pageName" do |unitID, pageName|
 
   content_type :json
   return {status: "ok"}.to_json
+end
+
+###################################################################################################
+# *Post* to add an item to a nav bar
+post "/api/unit/:unitID/nav" do |unitID|
+  # Check user permissions
+  perms = getUserPermissions(params[:username], params[:token], unitID)
+  perms[:admin] or halt(401)
+
+  # Grab unit data
+  unit = Unit[unitID]
+  unit or halt(404)
+
+  # Validate the nav type
+  navType = params[:navType]
+  ['page', 'link', 'file', 'folder'].include?(navType) or halt(400)
+
+  # Find the existing nav bar
+  attrs = JSON.parse(unit.attrs)
+  (navBar = attrs['nav_bar']) or raise("Unit has non-existent nav bar")
+
+  # Invent a unique name for the new item
+  slug = name = nil
+  (0..9999).each { |n|
+    slug = "new#{navType.gsub(/\b('?[a-z])/) { $1.capitalize }}#{n>0 ? ' '+n.to_s : ''}"
+    name = "New #{navType}#{n>0 ? ' '+n.to_s : ''}"
+    break if navBar.none? { |nav| nav['slug'] == slug || nav['name'] == name }
+  }
+
+  DB.transaction {
+    navBar << { name: name, slug: slug, hidden: true }.merge(case navType
+      when "page"
+        Page.create(slug: slug, unit_id: unitID, title: name) && {}
+      when "link"
+        { url: nil }
+      when "file"
+        { asset_id: nil }
+      when "folder"
+        { sub_nav: {} }
+      else
+        halt(400)
+      end
+    )
+
+    attrs['nav_bar'] = navBar
+    unit[:attrs] = attrs.to_json
+    unit.save
+
+    return { status: "ok", slug: slug }.to_json
+  }
 end
 
 ###################################################################################################

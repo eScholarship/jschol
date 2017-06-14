@@ -187,7 +187,7 @@ class AddWidgetMenu extends React.Component {
     return (
       <div className="c-drawer__nav-buttons" >
         <details className="c-widgetselector__selector" open={this.state.isOpen} ref={el=>this.detailsEl=el}>
-          <summary aria-label="select widget type" 
+          <summary aria-label="select widget type"
                    onClick={e=>setTimeout(()=>this.setState({isOpen: this.detailsEl.open}), 0)}/>
           <div className="c-widgetselector__menu">
             <div className="c-widgetselector__sub-heading" id="c-widgetselector__sub-heading">{this.props.title}</div>
@@ -212,11 +212,18 @@ class DrawerComp extends React.Component {
     this.setState({sidebarOpen: open});
   }
 
-  addNavItem = (event, itemKind) => {
+  addNavItem = (event, cms, navType) => {
     event.preventDefault()
-    var navList = _.clone(this.state.navList);
-    navList.push({name: ""});
-    this.setState({navList: navList, working: true});
+    $.ajax({ type: 'POST', url: `/api/unit/${this.props.data.unit.id}/nav`,
+             data: { username: cms.username, token: cms.token, navType: navType }})
+    .done(()=>{
+      console.log("Ajax finished.")
+      //this.props.fetchPageData()  // re-fetch page state after DB is updated
+    })
+
+    //var navList = _.clone(this.state.navList);
+    //navList.push({name: ""});
+    //this.setState({navList: navList, working: false/*FIXME FOO: true*/});
   }
 
   addSidebarItem = () => {
@@ -229,26 +236,13 @@ class DrawerComp extends React.Component {
     console.log('add folder!');
   }
 
-  render() {
-    var data = this.state.navList
-
-    //BIG buttons at the bottom of the drawer for adding an item
-        // <div className="c-drawer__add-buttons">
-    //       <div className="c-drawer__add-item">
-    //         <button onClick={e => this.addNavItem()}><img src="/images/white/plus.svg"/></button>
-    //       </div>
-    //       <div className="c-drawer__add-folder">
-    //         <button onClick={e => this.addFolder()}><img src="/images/white/folder.svg"/></button>
-    //       </div>
-    //     </div>
-    //
+  drawerContent(cms) {
     var buttons = (
       <div className="c-drawer__nav-buttons">
         <button onClick={e => console.log('reveal drop down to select widget type?')}><img src="/images/icon_gear-black.svg"/></button>
       </div>
     )
-
-    var sidebarContent = data ? (
+    return (
       <div>
         <div className="c-drawer__list-item" style={{backgroundImage: 'none', paddingLeft: '20px'}}>
           <Link key="profile" to={"/uc/" + this.props.data.unit.id + "/profile" }>
@@ -264,10 +258,10 @@ class DrawerComp extends React.Component {
         <div className="c-drawer__heading">
           Navigation Items
           <AddWidgetMenu title="Add Nav Item">
-            <a href="" key="page" onClick={e=>this.addNavItem(e, 'page')}>Page</a>
-            <a href="" key="url" onClick={e=>this.addNavItem(e, 'url')}>URL</a>
-            <a href="" key="file" onClick={e=>this.addNavItem(e, 'file')}>File</a>
-            <a href="" key="folder" onClick={e=>this.addNavItem(e, 'folder')}>Folder</a>
+            <a href="" key="page"   onClick={e=>this.addNavItem(e, cms, 'page')  }>Page</a>
+            <a href="" key="url"    onClick={e=>this.addNavItem(e, cms, 'link')  }>Link</a>
+            <a href="" key="file"   onClick={e=>this.addNavItem(e, cms, 'file')  }>File</a>
+            <a href="" key="folder" onClick={e=>this.addNavItem(e, cms, 'folder')}>Folder</a>
           </AddWidgetMenu>
         </div>
         <SortableList data={this.state.navList} unit={this.props.data.unit}/>
@@ -288,14 +282,17 @@ class DrawerComp extends React.Component {
           )
         }
       </div>
-    ) : (<div></div>);
+    )
+  }
+
+  render() {
     return (
       ('header' in this.props.data && 'nav_bar' in this.props.data.header)
       ? <div>
           {this.state.working && <div className="c-drawer__working-overlay"/>}
           <Subscriber channel="cms">
             { cms =>
-              <Sidebar sidebar={sidebarContent}
+              <Sidebar sidebar={this.state.navList ? this.drawerContent(cms) : <div/>}
                        open={cms.isEditingPage}
                        docked={cms.isEditingPage}
                        onSetOpen={this.onSetSidebarOpen}
