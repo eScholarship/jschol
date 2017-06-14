@@ -1,5 +1,6 @@
 
 import React from 'react'
+import PropTypes from 'prop-types'
 import { Link } from 'react-router'
 import $ from 'jquery'
 import _ from 'lodash'
@@ -16,9 +17,9 @@ import AdminBarComp from '../components/AdminBarComp.jsx'
 export default class StaticPage extends PageBase
 {
   static propTypes = {
-    params: React.PropTypes.shape({
-      unitID:   React.PropTypes.string.isRequired,
-      pageName: React.PropTypes.string.isRequired
+    params: PropTypes.shape({
+      unitID:   PropTypes.string.isRequired,
+      pageName: PropTypes.string.isRequired
     }).isRequired
   }
 

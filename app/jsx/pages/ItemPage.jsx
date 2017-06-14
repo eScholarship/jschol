@@ -1,6 +1,7 @@
 // ##### Item Page ##### //
 
 import React from 'react'
+import PropTypes from 'prop-types'
 import $ from 'jquery'
 
 import PageBase from './PageBase.jsx'
@@ -22,7 +23,7 @@ const anchors = tab_anchors.concat(['article_abstract', 'article_main', 'article
 
 class ItemPage extends PageBase {
   static propTypes = {
-    currentTab: React.PropTypes.oneOf(anchors)
+    currentTab: PropTypes.oneOf(anchors)
   }
 
   // PageBase will fetch the following URL for us, and place the results in this.state.pageData

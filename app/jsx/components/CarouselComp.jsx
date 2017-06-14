@@ -1,6 +1,7 @@
 // ##### Campus Carousel Component ##### //
 
 import React from 'react'
+import PropTypes from 'prop-types'
 import $ from 'jquery'
 
 // Only load flickity when in the browser (not server-side)
@@ -24,8 +25,8 @@ class CarouselComp extends React.Component {
       this.flkty.destroy();
   }
   static propTypes = {
-    className: React.PropTypes.string.isRequired,
-    options: React.PropTypes.object.isRequired,
+    className: PropTypes.string.isRequired,
+    options: PropTypes.object.isRequired,
   }
   render() {
     return (

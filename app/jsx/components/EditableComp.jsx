@@ -1,17 +1,18 @@
 // ##### Wrapper Component for Editables ##### //
 
 import React from 'react'
+import PropTypes from 'prop-types'
 import { Subscriber } from 'react-broadcast'
 import ModalComp from '../components/ModalComp.jsx'
 
 export default class EditableComp extends React.Component
 {
   static propTypes = {
-    widgetName: React.PropTypes.string.isRequired,
-    children: React.PropTypes.element.isRequired,
-    html: React.PropTypes.string.isRequired,
-    onSave: React.PropTypes.func.isRequired,
-    canDelete: React.PropTypes.bool // optional
+    widgetName: PropTypes.string.isRequired,
+    children: PropTypes.element.isRequired,
+    html: PropTypes.string.isRequired,
+    onSave: PropTypes.func.isRequired,
+    canDelete: PropTypes.bool // optional
   }
 
   state = { isEditingComp: false, workingMsg: null }

@@ -1,4 +1,5 @@
 import React from 'react'
+import PropTypes from 'prop-types'
 import { Link } from 'react-router'
 
 import ScholWorksComp from '../components/ScholWorksComp.jsx'
@@ -19,24 +20,24 @@ import ShareComp from '../components/ShareComp.jsx'
 
 class UnitSearchLayout extends React.Component {
   static propTypes = {
-    unit: React.PropTypes.shape({
-      id: React.PropTypes.string.isRequired,
-      name: React.PropTypes.string.isRequired,
-      type: React.PropTypes.string.isRequired
+    unit: PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      name: PropTypes.string.isRequired,
+      type: PropTypes.string.isRequired
     }).isRequired,
-    data: React.PropTypes.shape({
-      count: React.PropTypes.number.isRequired,
-      searchResults: React.PropTypes.array.isRequired,
-      query: React.PropTypes.shape({
-        q: React.PropTypes.string,
-        rows: React.PropTypes.string,
-        sort: React.PropTypes.string,
-        start: React.PropTypes.string,
-        filters: React.PropTypes.shape({
-          departments: React.PropTypes.shape({
-            display: React.PropTypes.string,
-            fieldName: React.PropTypes.string,
-            filters: React.PropTypes.array
+    data: PropTypes.shape({
+      count: PropTypes.number.isRequired,
+      searchResults: PropTypes.array.isRequired,
+      query: PropTypes.shape({
+        q: PropTypes.string,
+        rows: PropTypes.string,
+        sort: PropTypes.string,
+        start: PropTypes.string,
+        filters: PropTypes.shape({
+          departments: PropTypes.shape({
+            display: PropTypes.string,
+            fieldName: PropTypes.string,
+            filters: PropTypes.array
           })
         })
       }).isRequired,

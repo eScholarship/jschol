@@ -1,4 +1,5 @@
 import React from 'react'
+import PropTypes from 'prop-types'
 import { Link } from 'react-router'
 import { Subscriber } from 'react-broadcast'
 
@@ -8,19 +9,19 @@ import ScholWorksComp from '../components/ScholWorksComp.jsx'
 
 class SeriesComp extends React.Component {
   static propTypes = {
-    data: React.PropTypes.shape({
-      count: React.PropTypes.number.isRequired,
-      items: React.PropTypes.arrayOf(React.PropTypes.shape({
-        id: React.PropTypes.string.isRequired,
-        title: React.PropTypes.string.isRequired,
+    data: PropTypes.shape({
+      count: PropTypes.number.isRequired,
+      items: PropTypes.arrayOf(PropTypes.shape({
+        id: PropTypes.string.isRequired,
+        title: PropTypes.string.isRequired,
         
-        abstract: React.PropTypes.string,
-        authors: React.PropTypes.array,
-        content_type: React.PropTypes.string,
-        supp_files: React.PropTypes.array
+        abstract: PropTypes.string,
+        authors: PropTypes.array,
+        content_type: PropTypes.string,
+        supp_files: PropTypes.array
       })).isRequired,
-      name: React.PropTypes.string.isRequired,
-      unit_id: React.PropTypes.string.isRequired
+      name: PropTypes.string.isRequired,
+      unit_id: PropTypes.string.isRequired
     })
   }
   
@@ -40,26 +41,26 @@ class SeriesComp extends React.Component {
 
 class DepartmentLayout extends React.Component {
   static propTypes = {
-    unit: React.PropTypes.shape({
-      id: React.PropTypes.string.isRequired,
-      name: React.PropTypes.string.isRequired,
-      type: React.PropTypes.string.isRequired,
-      extent: React.PropTypes.object
+    unit: PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      name: PropTypes.string.isRequired,
+      type: PropTypes.string.isRequired,
+      extent: PropTypes.object
     }).isRequired,
-    data: React.PropTypes.shape({
-      journals: React.PropTypes.arrayOf(React.PropTypes.shape({
-        name: React.PropTypes.string,
-        unit_id: React.PropTypes.string
+    data: PropTypes.shape({
+      journals: PropTypes.arrayOf(PropTypes.shape({
+        name: PropTypes.string,
+        unit_id: PropTypes.string
       })),
-      related_orus: React.PropTypes.arrayOf(React.PropTypes.shape({
-        name: React.PropTypes.string,
-        unit_id: React.PropTypes.string
+      related_orus: PropTypes.arrayOf(PropTypes.shape({
+        name: PropTypes.string,
+        unit_id: PropTypes.string
       })),
-      series: React.PropTypes.array.isRequired  //See SeriesComp directly above for Array element structure
+      series: PropTypes.array.isRequired  //See SeriesComp directly above for Array element structure
     }).isRequired,
-    marquee: React.PropTypes.shape({
-      carousel: React.PropTypes.any,
-      about: React.PropTypes.about
+    marquee: PropTypes.shape({
+      carousel: PropTypes.any,
+      about: PropTypes.about
     })
   }
   
