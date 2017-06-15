@@ -1,11 +1,12 @@
 // ##### Campus Carousel Component ##### //
 
 import React from 'react'
+import PropTypes from 'prop-types'
 import CarouselComp from '../components/CarouselComp.jsx'
 
 class CampusCarouselComp extends React.Component {
   static propTypes = {
-    campusName: React.PropTypes.string.isRequired,
+    campusName: PropTypes.string.isRequired,
   }
   render() {
     return (

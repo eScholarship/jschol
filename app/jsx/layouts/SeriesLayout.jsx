@@ -1,4 +1,5 @@
 import React from 'react'
+import PropTypes from 'prop-types'
 import { Link } from 'react-router'
 import { Subscriber } from 'react-broadcast'
 
@@ -8,21 +9,21 @@ import ShareComp from '../components/ShareComp.jsx'
 
 class SeriesLayout extends React.Component {
   static propTypes = {
-    unit: React.PropTypes.shape({
-      id: React.PropTypes.string.isRequired,
-      name: React.PropTypes.string,
-      type: React.PropTypes.string,
-      extent: React.PropTypes.object
+    unit: PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      name: PropTypes.string,
+      type: PropTypes.string,
+      extent: PropTypes.object
     }).isRequired,
-    data: React.PropTypes.shape({
-      count: React.PropTypes.number,
-      query: React.PropTypes.object,
-      searchResults: React.PropTypes.array,
-      series: React.PropTypes.array
+    data: PropTypes.shape({
+      count: PropTypes.number,
+      query: PropTypes.object,
+      searchResults: PropTypes.array,
+      series: PropTypes.array
     }),
-    marquee: React.PropTypes.shape({
-      carousel: React.PropTypes.object,
-      about: React.PropTypes.string
+    marquee: PropTypes.shape({
+      carousel: PropTypes.object,
+      about: PropTypes.string
     })
   }
   

@@ -5,14 +5,15 @@
 // Props used to provide specificity to search box behavior
 
 import React from 'react'
+import PropTypes from 'prop-types'
 import { Link } from 'react-router'
 import Search2Comp from '../components/Search2Comp.jsx'
 import Breakpoints from '../../js/breakpoints.json'
 
 class HeaderComp2 extends React.Component {
   static propTypes = {
-    type: React.PropTypes.string,  // not required, at least on global search page
-    unitID: React.PropTypes.string // ditto
+    type: PropTypes.string,  // not required, at least on global search page
+    unitID: PropTypes.string // ditto
   }
 
   constructor(props){

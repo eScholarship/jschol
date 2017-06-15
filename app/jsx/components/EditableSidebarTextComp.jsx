@@ -1,15 +1,16 @@
 // ##### Sidebar Text Widget Component ##### //
 
 import React from 'react'
+import PropTypes from 'prop-types'
 import EditableComp from './EditableComp.jsx'
 import WysiwygEditorComp from './WysiwygEditorComp.jsx'
 
 export default class EditableSidebarTextComp extends React.Component
 {
   static propTypes = {
-    onSave: React.PropTypes.func.isRequired,
-    title: React.PropTypes.string.isRequired,
-    html: React.PropTypes.string.isRequired
+    onSave: PropTypes.func.isRequired,
+    title: PropTypes.string.isRequired,
+    html: PropTypes.string.isRequired
   }
 
   state = { newText: null }
@@ -31,8 +32,8 @@ export default class EditableSidebarTextComp extends React.Component
 class SidebarTextComp extends React.Component
 {
   static propTypes = {
-    title: React.PropTypes.string.isRequired,
-    html: React.PropTypes.string.isRequired
+    title: PropTypes.string.isRequired,
+    html: PropTypes.string.isRequired
   }
 
   render() { return(

@@ -1,6 +1,7 @@
 // ##### Wrapper Component for the Trumbo WYSIWIG editor ##### //
 
 import React from 'react'
+import PropTypes from 'prop-types'
 import { Subscriber } from 'react-broadcast'
 
 // Formatting buttons to display in the Trumbowyg editor
@@ -17,7 +18,7 @@ const TRUMBO_BUTTONS = [
 export default class WysiwygEditorComp extends React.Component
 {
   static propTypes = {
-    html: React.PropTypes.string.isRequired,
+    html: PropTypes.string.isRequired,
   }
 
   componentWillMount() {

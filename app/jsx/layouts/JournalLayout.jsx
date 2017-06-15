@@ -1,4 +1,5 @@
 import React from 'react'
+import PropTypes from 'prop-types'
 import { Link } from 'react-router'
 
 import MarqueeComp from '../components/MarqueeComp.jsx'
@@ -7,11 +8,11 @@ import ScholWorksComp from '../components/ScholWorksComp.jsx'
 
 class SectionComp extends React.Component {
   static PropTypes = {
-    section: React.PropTypes.shape({
-      articles: React.PropTypes.array,
-      id: React.PropTypes.number,
-      issue_id: React.PropTypes.number,
-      name: React.PropTypes.string
+    section: PropTypes.shape({
+      articles: PropTypes.array,
+      id: PropTypes.number,
+      issue_id: PropTypes.number,
+      name: PropTypes.string
     }).isRequired
   }
   render() {
@@ -26,14 +27,14 @@ class SectionComp extends React.Component {
 
 class IssueComp extends React.Component {
   static PropTypes = {
-    issue: React.PropTypes.shape({
-      cover_page: React.PropTypes.string,
-      id: React.PropTypes.number,
-      issue: React.PropTypes.string,
-      pub_date: React.PropTypes.string,
-      sections: React.PropTypes.array,    //See SectionComp prop types directly above 
-      unit_id: React.PropTypes.string,
-      volume: React.PropTypes.string
+    issue: PropTypes.shape({
+      cover_page: PropTypes.string,
+      id: PropTypes.number,
+      issue: PropTypes.string,
+      pub_date: PropTypes.string,
+      sections: PropTypes.array,    //See SectionComp prop types directly above 
+      unit_id: PropTypes.string,
+      volume: PropTypes.string
     }).isRequired
   }
   
@@ -49,19 +50,19 @@ class IssueComp extends React.Component {
 
 class JournalLayout extends React.Component {
   static propTypes = {
-    unit: React.PropTypes.shape({
-      id: React.PropTypes.string.isRequired,
-      name: React.PropTypes.string.isRequired,
-      type: React.PropTypes.string.isRequired,
-      extent: React.PropTypes.object
+    unit: PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      name: PropTypes.string.isRequired,
+      type: PropTypes.string.isRequired,
+      extent: PropTypes.object
     }).isRequired,
-    data: React.PropTypes.shape({
-      display: React.PropTypes.string,
-      issue: React.PropTypes.object          // See IssueComp prop types directly above
+    data: PropTypes.shape({
+      display: PropTypes.string,
+      issue: PropTypes.object          // See IssueComp prop types directly above
     }).isRequired,
-    marquee: React.PropTypes.shape({
-      carousel: React.PropTypes.any,
-      about: React.PropTypes.about
+    marquee: PropTypes.shape({
+      carousel: PropTypes.any,
+      about: PropTypes.about
     })
   }
   

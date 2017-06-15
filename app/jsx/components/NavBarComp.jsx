@@ -2,30 +2,31 @@
 // this.props = {navBar: {}, unit: {}, socialProps: {}}
 
 import React from 'react'
+import PropTypes from 'prop-types'
 import LanguageComp from '../components/LanguageComp.jsx'
 import NavComp from '../components/NavComp.jsx'
 import SocialIconsComp from '../components/SocialIconsComp.jsx'
 
 class NavBarComp extends React.Component {
   static propTypes = {
-    navBar: React.PropTypes.arrayOf(React.PropTypes.shape({
-      name: React.PropTypes.string.isRequired,
+    navBar: PropTypes.arrayOf(PropTypes.shape({
+      name: PropTypes.string.isRequired,
 
-      slug: React.PropTypes.string,
-      url: React.PropTypes.string,
-      file: React.PropTypes.file,
-      sub_nav: React.PropTypes.array      // Array Of the same things included in navBar
+      slug: PropTypes.string,
+      url: PropTypes.string,
+      file: PropTypes.file,
+      sub_nav: PropTypes.array      // Array Of the same things included in navBar
     })),
-    socialProps: React.PropTypes.shape({
-      facebook: React.PropTypes.string,
-      twitter: React.PropTypes.string,
-      rss: React.PropTypes.string
+    socialProps: PropTypes.shape({
+      facebook: PropTypes.string,
+      twitter: PropTypes.string,
+      rss: PropTypes.string
     }),
-    unit: React.PropTypes.shape({
-      id: React.PropTypes.string.isRequired,
-      name: React.PropTypes.string.isRequired,
-      type: React.PropTypes.string.isRequired,
-      extent: React.PropTypes.object
+    unit: PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      name: PropTypes.string.isRequired,
+      type: PropTypes.string.isRequired,
+      extent: PropTypes.object
     }).isRequired,
   }
 

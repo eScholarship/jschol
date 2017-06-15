@@ -1,24 +1,25 @@
 // ##### Subheader Component ##### //
 
 import React from 'react'
+import PropTypes from 'prop-types'
 import { Link } from 'react-router'
 import CampusSelectorComp from '../components/CampusSelectorComp.jsx'
 
 class SubheaderComp extends React.Component {
   static propTypes = {
-    campusID: React.PropTypes.string.isRequired,
-    campusName: React.PropTypes.string.isRequired,
-    campuses: React.PropTypes.array.isRequired,
-    logo: React.PropTypes.shape({
-      url: React.PropTypes.string.isRequired,
-      width: React.PropTypes.number.isRequired,
-      height: React.PropTypes.number.isRequired
+    campusID: PropTypes.string.isRequired,
+    campusName: PropTypes.string.isRequired,
+    campuses: PropTypes.array.isRequired,
+    logo: PropTypes.shape({
+      url: PropTypes.string.isRequired,
+      width: PropTypes.number.isRequired,
+      height: PropTypes.number.isRequired
     }).isRequired,
-    unit: React.PropTypes.shape({
-      id: React.PropTypes.string.isRequired,
-      name: React.PropTypes.string.isRequired,
-      type: React.PropTypes.string.isRequired,
-      extent: React.PropTypes.object
+    unit: PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      name: PropTypes.string.isRequired,
+      type: PropTypes.string.isRequired,
+      extent: PropTypes.object
     }).isRequired,
   }
 
