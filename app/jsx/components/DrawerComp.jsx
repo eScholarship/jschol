@@ -238,7 +238,6 @@ class DrawerComp extends React.Component {
   }
 
   drawerContent(cms) {
-    console.log("cms:", cms)
     if (!SortableListItem)
       SortableListItem = cms.modules.sortable(ListItem)
     var buttons = (
