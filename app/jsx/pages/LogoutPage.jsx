@@ -19,7 +19,9 @@ class LogoutPage extends PageBase
       // Only redirect on browser, not on server
       setTimeout(()=>{
         window.location = "https://submit.escholarship.org/Shibboleth.sso/Logout?return=" +
-          encodeURIComponent(window.location.href.replace("/logout", "/logoutSuccess"))}, 100)
+          encodeURIComponent(window.location.href.replace("/logout",
+            "/logoutSuccess" + (this.props.location.prevPathname ? this.props.location.prevPathname : "")))
+      }, 100)
     }
     return (
       <div>

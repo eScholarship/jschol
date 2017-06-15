@@ -7,11 +7,17 @@ import NavComp from '../components/NavComp.jsx'
 import FooterComp from '../components/FooterComp.jsx'
 import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
 
-class LogoutPage extends PageBase
+class LogoutSuccessPage extends PageBase
 {
   pageDataURL() { return null /* no API data */ }
 
-  renderData() { return(
+  renderData() {
+    if (!(typeof document === "undefined")) {
+      // Return to the page whence the user originally came, if any
+      if (this.props.params.splat)
+        setTimeout(()=>this.props.router.push("/" + this.props.params.splat), 1000)
+    }
+    return(
     <div>
       <Header1Comp/>
       <div className="c-navbar">
@@ -25,8 +31,9 @@ class LogoutPage extends PageBase
             </header>
             <div>
               <p>Logged out.</p>
-              { this.props.location.prevPathname &&
-                <p>You may <Link to={this.props.location.prevPathname}>return</Link> to where you were.</p> }
+              {this.props.params.splat &&
+                <p>Returning to where you left off...</p>
+              }
             </div>
           </section>
         </main>
@@ -35,4 +42,4 @@ class LogoutPage extends PageBase
   )}
 }
 
-module.exports = LogoutPage
+module.exports = LogoutSuccessPage
