@@ -9,6 +9,10 @@ bundle install --path=gems --binstubs
 printf "\n== Installing node packages (used by gulp and iso via Node) ==\n"
 yarn install
 
+printf "\n== Patching React to suppress unavoidable warnings from sub-modules ==\n"
+perl -pi -e 's/warnedForCreateClass = false/warnedForCreateClass = true/' node_modules/react/lib/React.js
+perl -pi -e 's/didWarnPropTypesDeprecated = false/didWarnPropTypesDeprecated = true/' node_modules/react/lib/React.js
+
 printf "\n== Installing bower packages (used in browser) ==\n"
 node_modules/.bin/bower install
 
