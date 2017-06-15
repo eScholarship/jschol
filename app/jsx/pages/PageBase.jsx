@@ -195,12 +195,19 @@ class PageBase extends React.Component
         && !this.state.permissions) 
     {
       this.fetchingPerms = true
-      $.getJSON(`/api/permissions/${unit}?username=${this.state.adminLogin.username}&token=${this.state.adminLogin.token}`)
+      $.getJSON(
+        `/api/permissions/${unit}?username=${this.state.adminLogin.username}&token=${this.state.adminLogin.token}`)
       .done((data) => {
-        this.setState({ permissions: data })
+        if (data.error) {
+          sessionStorage.setItem(SESSION_LOGIN_KEY, null)
+          this.setState({ adminLogin: null, permissions: null, isEditingPage: false })
+          alert("Login note: " + data.message)
+        }
+        else
+          this.setState({ permissions: data })
       })
       .fail((jqxhr, textStatus, err)=> {
-        this.setState({ error: textStatus })
+        this.setState({ error: textStatus, adminLogin: null, permissions: null, isEditingPage: false })
       })
     }
   }
