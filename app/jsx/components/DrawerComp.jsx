@@ -1,8 +1,6 @@
 import React from 'react'
 import { Subscriber } from 'react-broadcast'
 import { Link } from 'react-router'
-import Sidebar from 'react-sidebar'
-import { sortable } from 'react-sortable'
 import _ from 'lodash'
 
 class DrawerItem extends React.Component {
@@ -134,7 +132,7 @@ class ListItem extends React.Component {
   }
 }
 
-const SortableListItem = sortable(ListItem);
+var SortableListItem = null;
 
 class SortableList extends React.Component {
   state = {draggingIndex: null, data: this.props.data, lastPos: null}
@@ -217,7 +215,7 @@ class DrawerComp extends React.Component {
     $.getJSON({ type: 'POST', url: `/api/unit/${this.props.data.unit.id}/nav`,
              data: { username: cms.username, token: cms.token, navType: navType }})
     .done(data=>{
-      console.log("Ajax finished.")
+      console.log("Ajax finished. Data=", data)
       //this.props.fetchPageData()  // re-fetch page state after DB is updated
     })
     .error(()=>{
@@ -240,6 +238,9 @@ class DrawerComp extends React.Component {
   }
 
   drawerContent(cms) {
+    console.log("cms:", cms)
+    if (!SortableListItem)
+      SortableListItem = cms.modules.sortable(ListItem)
     var buttons = (
       <div className="c-drawer__nav-buttons">
         <button onClick={e => console.log('reveal drop down to select widget type?')}><img src="/images/icon_gear-black.svg"/></button>
@@ -288,26 +289,24 @@ class DrawerComp extends React.Component {
     )
   }
 
-  render() {
-    return (
-      ('header' in this.props.data && 'nav_bar' in this.props.data.header)
-      ? <div>
-          {this.state.working && <div className="c-drawer__working-overlay"/>}
-          <Subscriber channel="cms">
-            { cms =>
-              <Sidebar sidebar={this.state.navList ? this.drawerContent(cms) : <div/>}
-                       open={cms.isEditingPage}
-                       docked={cms.isEditingPage}
-                       onSetOpen={this.onSetSidebarOpen}
-                       sidebarClassName="c-drawer">
-                {this.props.children}
-              </Sidebar>
-            }
-          </Subscriber>
-        </div>
-      : this.props.children
-    )
-  }
+  render = ()=>
+    <Subscriber channel="cms">
+      { cms => 
+        (cms.isEditingPage && 'header' in this.props.data && 'nav_bar' in this.props.data.header)
+        ? <div>
+            {this.state.working && <div className="c-drawer__working-overlay"/>}
+            return (
+            <cms.modules.Sidebar sidebar={this.state.navList ? this.drawerContent(cms) : <div/>}
+                     open={cms.isEditingPage}
+                     docked={cms.isEditingPage}
+                     onSetOpen={this.onSetSidebarOpen}
+                     sidebarClassName="c-drawer">
+              {this.props.children}
+            </cms.modules.Sidebar>
+          </div>
+        : this.props.children
+      }
+    </Subscriber>
 }
 
 module.exports = DrawerComp;
