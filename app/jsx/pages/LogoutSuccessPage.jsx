@@ -9,9 +9,9 @@ import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
 
 class LogoutSuccessPage extends PageBase
 {
-  pageDataURL() { return null /* no API data */ }
+  pageDataURL() { return "/api/logoutSuccess" }
 
-  renderData() {
+  renderData(data) {
     if (!(typeof document === "undefined")) {
       // Return to the page whence the user originally came, if any
       if (this.props.params.splat)
@@ -21,7 +21,7 @@ class LogoutSuccessPage extends PageBase
     <div>
       <Header1Comp/>
       <div className="c-navbar">
-        <NavComp data={[{name: 'Campus Sites', url: ''}, {name: 'UC Open Access Policies', url: ''}, {name: 'eScholarship Publishing', url: ''}]} />
+        <NavComp data={data.header.nav_bar} />
       </div>
       <div className="c-columns">
         <main id="maincontent">

@@ -14,20 +14,21 @@ class LogoutPage extends PageBase
     return `/api/loginEnd?username=${sessionData.username}&token=${sessionData.token}`
   }
 
-  render() {
+  renderData(data) {
     if (!(typeof document === "undefined")) {
       // Only redirect on browser, not on server
       setTimeout(()=>{
+        let prevPath = this.props.location.prevPathname
         window.location = "https://submit.escholarship.org/Shibboleth.sso/Logout?return=" +
           encodeURIComponent(window.location.href.replace("/logout",
-            "/logoutSuccess" + (this.props.location.prevPathname ? this.props.location.prevPathname : "")))
+            "/logoutSuccess" + (prevPath && !prevPath.match(/login|logout/) ? prevPath : "")))
       }, 100)
     }
     return (
       <div>
         <Header1Comp/>
         <div className="c-navbar">
-          <NavComp data={[{name: 'Campus Sites', url: ''}, {name: 'UC Open Access Policies', url: ''}, {name: 'eScholarship Publishing', url: ''}]} />
+          <NavComp data={data.header.nav_bar} />
         </div>
         <div className="c-columns">
           <main id="maincontent">

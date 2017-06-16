@@ -19,16 +19,17 @@ class LoginPage extends PageBase
     if (!(typeof document === "undefined")) {
       // Only redirect on browser, not on server
       setTimeout(()=>{
+        let prevPath = this.props.location.prevPathname
         window.location = "https://submit.escholarship.org/secure/jscholLogin?returnTo=" +
           encodeURIComponent(window.location.href.replace("/login",
-            "/loginSuccess" + (this.props.location.prevPathname ? this.props.location.prevPathname : ""))) +
+            "/loginSuccess" + (prevPath && !prevPath.match(/login|logout/) ? prevPath : ""))) +
           "&nonce=" + this.state.pageData.nonce}, 100)
     }
     return (
       <div>
         <Header1Comp/>
         <div className="c-navbar">
-          <NavComp data={[{name: 'Campus Sites', url: ''}, {name: 'UC Open Access Policies', url: ''}, {name: 'eScholarship Publishing', url: ''}]} />
+          <NavComp data={data.header.nav_bar} />
         </div>
         <div className="c-columns">
           <main id="maincontent">

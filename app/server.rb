@@ -390,13 +390,10 @@ get %r{^/(?!(api/.*|content/.*|locale/.*|.*\.\w{1,4}$))} do
 end
 
 ###################################################################################################
-# Home page data
-get '/api/home' do
+# Pages with no data
+get %r{/api/(home|notFound|logoutSuccess)} do
   content_type :json
-  body = {
-    :header => getGlobalHeader
-  }
-  return body.to_json
+  return { :header => getGlobalHeader }.to_json
 end
 
 ###################################################################################################
@@ -631,8 +628,16 @@ end
 # Helper methods
 
 def getGlobalHeader
-  return {
-   :nav_bar => JSON.parse($unitsHash['root'][:attrs])['nav_bar']
+    return {
+   nav_bar: [
+     { name: "About", sub_nav: [ { name: "TBD", url: "#" } ] },
+     { name: "Campus Sites",
+       sub_nav: $activeCampuses.map { |k, v| { name: v.values[:name], url: "/uc/#{k}" } }
+     },
+     { name: "UC Open Access", sub_nav: [ { name: "TBD", url: "#" } ] },
+     { name: "eScholarship Publishing", url: "#" },
+   ]
+    # was: JSON.parse($unitsHash['root'][:attrs])['nav_bar']
   }
 end
 
