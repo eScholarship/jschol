@@ -83,7 +83,7 @@ end
 ###################################################################################################
 def permFail(msg)
   puts "Permission failure: #{msg.inspect}"
-  return JSON.generate({ error: true, message: msg })
+  return { error: true, message: msg }
 end
 
 ###################################################################################################
@@ -135,5 +135,6 @@ end
 ###################################################################################################
 # Retrieve page permissions for the user's session
 get "/api/permissions/:unitID" do |unitID|
+  content_type :json
   return JSON.generate(getUserPermissions(params[:username], params[:token], unitID))
 end

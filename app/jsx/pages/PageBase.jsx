@@ -96,9 +96,11 @@ class PageBase extends React.Component
   {
     if (flag && !this.state.cmsModules) {
       // Load CMS-specific modules asynchronously
-      require.ensure(['react-trumbowyg'], (require) => {
+      require.ensure(['react-trumbowyg', 'react-sidebar', 'react-sortable'], (require) => {
         this.setState({ isEditingPage: true,
-                        cmsModules: { Trumbowyg: require('react-trumbowyg').default } })
+                        cmsModules: { Trumbowyg: require('react-trumbowyg').default,
+                                      Sidebar: require('react-sidebar').default,
+                                      sortable: require('react-sortable').sortable } })
       }, "cms") // load from webpack "cms" bundle
     }
     else
@@ -158,10 +160,10 @@ class PageBase extends React.Component
           {this.renderError()}
           <FooterComp/>
         </div>);
-    } else if (this.state.adminLogin && this.state.adminLogin.loggedIn && this.state.pageData) {
+    } else if (this.state.adminLogin && this.state.adminLogin.loggedIn && this.state.isEditingPage && this.state.pageData) {
       return (
         <DrawerComp data={this.state.pageData}>
-          <div className="body" style={{ padding: "10px" }}>
+          <div className="body" style={{ padding: "10px" }}> {/* Not sure why the padding is needed, but it is */}
             <SkipNavComp/>
             {this.renderData(this.state.pageData)}
             <FooterComp/>
@@ -193,12 +195,19 @@ class PageBase extends React.Component
         && !this.state.permissions) 
     {
       this.fetchingPerms = true
-      $.getJSON(`/api/permissions/${unit}?username=${this.state.adminLogin.username}&token=${this.state.adminLogin.token}`)
+      $.getJSON(
+        `/api/permissions/${unit}?username=${this.state.adminLogin.username}&token=${this.state.adminLogin.token}`)
       .done((data) => {
-        this.setState({ permissions: data })
+        if (data.error) {
+          sessionStorage.setItem(SESSION_LOGIN_KEY, null)
+          this.setState({ adminLogin: null, permissions: null, isEditingPage: false })
+          alert("Login note: " + data.message)
+        }
+        else
+          this.setState({ permissions: data })
       })
       .fail((jqxhr, textStatus, err)=> {
-        this.setState({ error: textStatus })
+        this.setState({ error: textStatus, adminLogin: null, permissions: null, isEditingPage: false })
       })
     }
   }

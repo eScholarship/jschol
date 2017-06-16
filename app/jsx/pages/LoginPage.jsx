@@ -20,7 +20,8 @@ class LoginPage extends PageBase
       // Only redirect on browser, not on server
       setTimeout(()=>{
         window.location = "https://submit.escholarship.org/secure/jscholLogin?returnTo=" +
-          encodeURIComponent(window.location.href.replace("/login", "/loginSuccess")) +
+          encodeURIComponent(window.location.href.replace("/login",
+            "/loginSuccess" + (this.props.location.prevPathname ? this.props.location.prevPathname : ""))) +
           "&nonce=" + this.state.pageData.nonce}, 100)
     }
     return (

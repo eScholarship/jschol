@@ -31,3 +31,19 @@ $color-black-semitrans: rgba(124, 126, 127, 0.5);
 .c-editable__delete-button {
   margin-left: 0.5em;
 }
+
+.c-editable-page__label {
+  font-weight: 700;
+  margin-bottom: 5px;
+  display: block;
+}
+
+.c-editable-page__input {
+  margin-bottom: 20px;
+  padding: 6px 12px;
+  line-height: 1.4;
+  color: #555;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 100%;
+}
