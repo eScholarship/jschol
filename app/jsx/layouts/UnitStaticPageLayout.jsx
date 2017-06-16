@@ -2,6 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Link } from 'react-router'
 import { Subscriber } from 'react-broadcast'
+import EditableComp from '../components/EditableComp.jsx'
 
 class EditableMainContentComp extends React.Component
 {

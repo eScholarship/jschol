@@ -135,13 +135,17 @@ class ListItem extends React.Component {
 var SortableListItem = null;
 
 class SortableList extends React.Component {
-  state = {draggingIndex: null, data: this.props.data, lastPos: null}
+  state = this.setupState(this.props)
+
+  setupState(props) {
+    return {draggingIndex: null, data: props.data, lastPos: null}
+  }
 
   // This gets called when props change by switching to a new page.
   // It is *not* called on first-time construction.
   componentWillReceiveProps(nextProps) {
     if (!_.isEqual(this.props, nextProps))
-      this.setState({ data: nextProps.data })
+      this.setState(this.setupState(nextProps))
   }
 
   updateState = (obj) => {
@@ -201,10 +205,19 @@ class AddWidgetMenu extends React.Component {
 }
 
 class DrawerComp extends React.Component {
-  state = {
-    navList: 'header' in this.props.data && 'nav_bar' in this.props.data.header ? this.props.data.header.nav_bar : undefined,
-    sidebarList: this.props.data.sidebar
-  };
+  state = this.setupState(this.props)
+
+  setupState(props) {
+    return {
+      navList: 'header' in props.data && 'nav_bar' in props.data.header ? props.data.header.nav_bar : undefined,
+      sidebarList: props.data.sidebar
+    }
+  }
+
+  componentWillReceiveProps(nextProps) {
+    if (!_.isEqual(this.props, nextProps))
+      this.setState(this.setupState(nextProps))
+  }
 
   onSetSideBarOpen(open) {
     this.setState({sidebarOpen: open});
@@ -212,19 +225,17 @@ class DrawerComp extends React.Component {
 
   addNavItem = (event, cms, navType) => {
     event.preventDefault()
+    this.setState({working: true})
     $.getJSON({ type: 'POST', url: `/api/unit/${this.props.data.unit.id}/nav`,
              data: { username: cms.username, token: cms.token, navType: navType }})
     .done(data=>{
-      console.log("Ajax finished. Data=", data)
-      //this.props.fetchPageData()  // re-fetch page state after DB is updated
+      this.setState({working: false})
+      this.props.router.push(`/uc/${this.props.data.unit.id}/${data.slug}`)
     })
-    .error(()=>{
+    .fail(()=>{
+      this.setState({working: false})
       alert("Error adding item.")
     })
-
-    //var navList = _.clone(this.state.navList);
-    //navList.push({name: ""});
-    //this.setState({navList: navList, working: false/*FIXME FOO: true*/});
   }
 
   addSidebarItem = () => {
@@ -290,11 +301,9 @@ class DrawerComp extends React.Component {
 
   render = ()=>
     <Subscriber channel="cms">
-      { cms => 
-        (cms.isEditingPage && 'header' in this.props.data && 'nav_bar' in this.props.data.header)
-        ? <div>
-            {this.state.working && <div className="c-drawer__working-overlay"/>}
-            return (
+      { cms =>
+        <div>
+            {(this.state.working || this.props.fetchingData) && <div className="c-drawer__working-overlay"/>}
             <cms.modules.Sidebar sidebar={this.state.navList ? this.drawerContent(cms) : <div/>}
                      open={cms.isEditingPage}
                      docked={cms.isEditingPage}
@@ -302,8 +311,7 @@ class DrawerComp extends React.Component {
                      sidebarClassName="c-drawer">
               {this.props.children}
             </cms.modules.Sidebar>
-          </div>
-        : this.props.children
+        </div>
       }
     </Subscriber>
 }

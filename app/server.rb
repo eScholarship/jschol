@@ -481,7 +481,7 @@ end
 # Unit page data.
 get "/api/unit/:unitID/?:pageName/?" do
   content_type :json
-  unit = $unitsHash.dig(params[:unitID])
+  unit = Unit[params[:unitID]]
   unit or halt(404, "Unit not found")
 
   attrs = JSON.parse(unit[:attrs])
@@ -674,8 +674,9 @@ end
 get "/api/static/:unitID/:pageName" do |unitID, pageName|
   content_type :json
 
-  # Grab unit and page data from the database
-  unit = $unitsHash[unitID]
+  # Grab unit and page data from the database, not the cache, so they are instantly updated
+  # when adding a page.
+  unit = Unit[unitID]
   unit or halt(404, "Unit not found")
 
   page = Page.where(unit_id: unitID, name: pageName).first
@@ -752,16 +753,16 @@ post "/api/unit/:unitID/nav" do |unitID|
 
   # Invent a unique name for the new item
   slug = name = nil
-  (0..9999).each { |n|
-    slug = "new#{navType.gsub(/\b('?[a-z])/) { $1.capitalize }}#{n>0 ? ' '+n.to_s : ''}"
-    name = "New #{navType}#{n>0 ? ' '+n.to_s : ''}"
+  (1..9999).each { |n|
+    slug = "new#{navType.gsub(/\b('?[a-z])/) { $1.capitalize }}#{n>=2 ? n.to_s : ''}"
+    name = "New #{navType}#{n>=2 ? ' '+n.to_s : ''}"
     break if navBar.none? { |nav| nav['slug'] == slug || nav['name'] == name }
   }
 
   DB.transaction {
     navBar << { name: name, slug: slug, hidden: true }.merge(case navType
       when "page"
-        Page.create(slug: slug, unit_id: unitID, title: name) && {}
+        Page.create(slug: slug, unit_id: unitID, title: name, attrs: {}.to_json) && {}
       when "link"
         { url: nil }
       when "file"

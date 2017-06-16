@@ -154,36 +154,35 @@ class PageBase extends React.Component
   }
   
   renderContent() {
+    // Error case
     if (this.state.error) {
       return (
         <div className="body">
           {this.renderError()}
           <FooterComp/>
-        </div>);
-    } else if (this.state.adminLogin && this.state.adminLogin.loggedIn && this.state.isEditingPage && this.state.pageData) {
+        </div>)
+    }
+
+    // CMS drawer case
+    if (this.state.adminLogin && this.state.adminLogin.loggedIn && this.state.cmsModules) {
       return (
-        <DrawerComp data={this.state.pageData}>
-          <div className="body" style={{ padding: "10px" }}> {/* Not sure why the padding is needed, but it is */}
+        <DrawerComp data={this.state.pageData} router={this.props.router} fetchingData={this.state.fetchingData}>
+          {/* Not sure why the padding is needed, but it is */}
+          <div className="body" style={{ padding: "10px" }}>
             <SkipNavComp/>
-            {this.renderData(this.state.pageData)}
+            {this.state.pageData ? this.renderData(this.state.pageData) : this.renderLoading()}
             <FooterComp/>
           </div>
-        </DrawerComp>);
-    } else if (this.state.pageData) {
-      return (
-        <div className="body">
-          <SkipNavComp/>
-          {this.renderData(this.state.pageData)}
-          <FooterComp/>
-        </div>);
-    } else {
-      return (
-        <div className="body">
-          <SkipNavComp/>
-          {this.renderLoading()}
-          <FooterComp/>
-        </div>);
+        </DrawerComp>)
     }
+
+    // Normal case
+    return (
+      <div className="body">
+        <SkipNavComp/>
+        {this.state.pageData ? this.renderData(this.state.pageData) : this.renderLoading()}
+        <FooterComp/>
+      </div>)
   }
 
   fetchPermissions() {
