@@ -7,7 +7,7 @@ import { Link } from 'react-router'
 import PageBase from './PageBase.jsx'
 import Header2Comp from '../components/Header2Comp.jsx'
 import SubheaderComp from '../components/SubheaderComp.jsx'
-import NavComp from '../components/NavComp.jsx'
+import NavBarComp from '../components/NavBarComp.jsx'
 import CampusSearchComp from '../components/CampusSearchComp.jsx'
 import CampusSelectorComp from '../components/CampusSelectorComp.jsx'
 import HeatMapComp from '../components/HeatMapComp.jsx'
@@ -51,11 +51,11 @@ class CampusPage extends PageBase
             <div className="c-subheader__sidebar-number">##,###</div>
           </div>
         </div>
-        <div className="c-navbar">
-          {/* ToDo: Properly call header.nav_bar */}
-          <NavComp data={[{name: 'Open Access Policies', url: ''}, {name: 'Journals', url: '/' + data.header.campusID + '/journals'}, {name: 'Academic Units', url: '/' + data.header.campusID + '/units'}]} />
-        </div>
-
+        <NavBarComp
+          // ToDo: Properly call header.nav_bar
+          // navBar={data.header.nav_bar}
+          navBar={[{name: 'Open Access Policies', url: ''}, {name: 'Journals', url: '/' + data.header.campusID + '/journals'}, {name: 'Academic Units', url: '/' + data.header.campusID + '/units'}]}
+          unit={data.unit} socialProps={data.header.social} />
         <HeatMapComp />
         <CampusCarouselComp campusName={data.header.campusName} />
         <div className="c-columns">

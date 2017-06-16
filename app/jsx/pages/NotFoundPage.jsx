@@ -3,7 +3,7 @@ import { Link } from 'react-router'
 
 import PageBase from './PageBase.jsx'
 import Header1Comp from '../components/Header1Comp.jsx'
-import Nav1Comp from '../components/Nav1Comp.jsx'
+import NavComp from '../components/NavComp.jsx'
 import FooterComp from '../components/FooterComp.jsx'
 
 class NotFoundPage extends PageBase
@@ -16,7 +16,9 @@ class NotFoundPage extends PageBase
   renderContent() { return (
     <div>
       <Header1Comp />
-      <Nav1Comp />
+      <div className="c-navbar">
+        <NavComp data={[{name: 'Campus Sites', url: ''}, {name: 'UC Open Access Policies', url: ''}, {name: 'eScholarship Publishing', url: ''}]} />
+      </div>
       <br/>
       <h2>Error: Page not found.</h2>
       <br/>

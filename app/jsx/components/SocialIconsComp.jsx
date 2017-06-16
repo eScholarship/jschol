@@ -8,7 +8,7 @@ class SocialIconsComp extends React.Component {
     return (
       <div className="c-socialicons">
         {this.props.facebook && 
-          <a href={this.props.facebook}>
+          <a href={"http://www.facebook.com/" + this.props.facebook}>
             <img src="/images/logo_facebook-circle-black.svg" alt="Facebook"/>
           </a>
         }
