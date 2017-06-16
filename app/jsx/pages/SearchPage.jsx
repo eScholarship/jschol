@@ -13,6 +13,7 @@ import FilterComp from '../components/FilterComp.jsx'
 import ExportComp from '../components/ExportComp.jsx'
 import SortPaginationComp from '../components/SortPaginationComp.jsx'
 import InfoPagesComp from '../components/InfoPagesComp.jsx'
+import PaginationComp from '../components/PaginationComp.jsx'
 
 // Load dotdotdot in browser but not server
 if (!(typeof document === "undefined")) {
@@ -240,14 +241,11 @@ class PubYear extends React.Component {
 //   }
 // }
 class FacetFieldset extends React.Component {
-  handleChange = this.handleChange.bind(this);
-  pubDateChange = this.pubDateChange.bind(this);
-
   //Called by a FacetItem's handleChange function
   //event is the browser event, filter is an array of filters to be applied
   //and filter_cleanup is an array of filters to be removed as an implication of the filters to be applied
   //(as is the case when a child facet is already selected, but then it's parent facet is selected)
-  handleChange(event, filter, filter_cleanup) {
+  handleChange = (event, filter, filter_cleanup) => {
     var newQuery;
     //event.target.checked means we're in the business of adding filters
     if (event.target.checked) {
@@ -287,7 +285,7 @@ class FacetFieldset extends React.Component {
     this.props.handler(event, newQuery, event.target.name);
   }
 
-  pubDateChange(event, filter) {
+  pubDateChange = (event, filter) => {
     var newQuery;
     if (filter.value !== "") {
       if (!_.isEmpty(this.props.query)) {
@@ -322,7 +320,7 @@ class FacetFieldset extends React.Component {
     }
     
     return (
-      <details className="c-facetbox" id={this.props.data.fieldName}>
+      <details className="c-facetbox" id={this.props.data.fieldName} open={this.props.open}>
         <summary className="c-facetbox__summary"><span>{this.props.data.display}</span></summary>
         <div className="facetItems c-checkbox">
           {facetItemNodes}
@@ -402,17 +400,25 @@ class FacetForm extends React.Component {
     return true;
   }
 
+  componentWillReceiveProps(nextProps) {
+    if (!_.isEqual(this.props.query, nextProps.query))
+      this.setState({query: nextProps.query})
+  }
+
   render() {
-    var facetForm = this.props.data.facets.map(fieldset => {
+    var facetForm = this.props.data.facets.map((fieldset, i) => {
       var fieldName = fieldset.fieldName;
       var filters = this.state.query.filters && this.state.query.filters[fieldName] ? this.state.query.filters[fieldName] : {};
       return (
-        <FacetFieldset key={fieldName} data={fieldset} query={filters} handler={this.changeFacet} />
+        <FacetFieldset key={fieldName} data={fieldset} query={filters} handler={this.changeFacet}
+                       // Have first two open by default
+                       open={[0,1].includes(i)}/>
       )
     });
 
     return (
       <Form id="facetForm" to='/search' method="GET" onSubmit={this.handleSubmit}>
+        {/* Top-aligned box with title "Your search: "Teletubbies"" and active filters */}
         <FilterComp query={this.state.query} count={this.props.data.count} handler={this.removeFilters}/>
         {facetForm}
         {/* Submit button needs to be present so our logic can "press" it at certain times.
@@ -430,12 +436,13 @@ class SearchPage extends PageBase {
   }
 
   renderData(data) {
+    // console.log(data)
     var facetFormData = {facets: data.facets, count: data.count};
     return(
       <div className="l_search">
         <Header1Comp />
         <div className="c-navbar">
-          <NavComp data={[{name: 'Campus Sites', url: ''}, {name: 'UC Open Access Policies', url: ''}, {name: 'eScholarship Publishing', url: ''}]} />
+          <NavComp data={data.header.nav_bar} />
         </div>
         <ExportComp />
         <div className="c-columns">
@@ -455,12 +462,17 @@ class SearchPage extends PageBase {
                 <h2 className="o-columnbox1__heading">
                   Scholarly Works ({data.count + " results" + (data.count > 10000 ? ", showing first 10000" : "")})</h2>
               </header>
+            {(data.count > 10) &&
               <SortPaginationComp query={data.query} count={data.count}/>
+            }
               <div>
                 { data.searchResults.map(result =>
                   <ScholWorksComp key={result.id} result={result} />)
                 }
               </div>
+            {(data.count > 10) &&
+              <PaginationComp query={data.query} count={data.count}/>
+            }
             </section>
           </main>
         </div>

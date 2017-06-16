@@ -581,12 +581,13 @@ end
 get "/api/search/" do
   # Amy, hack here
   content_type :json
-  header = {
+  body = {
+    :header => getGlobalHeader,
     :campuses => getCampusesAsMenu
   }
   facetList = ['type_of_work', 'peer_reviewed', 'supp_file_types',
                'campuses', 'departments', 'journals', 'disciplines', 'rights']
-  return header.merge(search(CGI::parse(request.query_string), facetList)).to_json
+  return body.merge(search(CGI::parse(request.query_string), facetList)).to_json
 end
 
 ###################################################################################################
