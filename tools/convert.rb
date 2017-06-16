@@ -461,8 +461,6 @@ def convertNavBar(unitID, generalEl)
         addTo << { name: linkName, url: linkTarget }
       elsif linkTarget =~ %r{/brand/}
         convertFileLink(unitID, addTo, linkName, linkTarget)
-        puts "unit=#{unitID} navBar=#{navBar}"
-        exit 1
       else
         puts "Invalid link target: #{para.inner_html}"
         next
@@ -484,7 +482,54 @@ def convertNavBar(unitID, generalEl)
 end
 
 ###################################################################################################
-def convertUnitBrand(unitID)
+def convertSocial(unitID, divs)
+  # Hack in some social media for now
+  if unitID == "ucla"
+    return { twitter: "UCLA", facebook: "uclabruins" }
+  elsif unitID == "uclalaw"
+   return { twitter: "UCLA_Law", facebook: "pages/UCLA-School-of-Law-Official/148867995080" }
+  end
+
+  dataOut = {}
+  divs.each { |div|
+    next unless div.attr('id') =~ /^(contact|contactUs)$/
+
+    # See if we can find twitter or facebook info
+    div.xpath(".//a[@href]").each { |el|
+      href = el.attr('href')
+      if href =~ %r{^http.*twitter.com/(.*)}
+        dataOut[:twitter] = $1
+      elsif href =~ %r{^http.*facebook.com/(.*)}
+        dataOut[:facebook] = $1
+      end
+    }
+  }
+  return dataOut
+end
+
+###################################################################################################
+def defaultNav(unitID, unitType)
+  if unitType == "root"
+    return [ 
+      { name: "About", sub_nav: [] },
+      { name: "Campus Sites", sub_nav: [] },
+      { name: "UC Open Access", sub_nav: [] },
+      { name: "eScholarship Publishing", url: "#" }
+    ]
+  elsif unitType == "campus"
+    return [
+      { name: "Open Access Policies", url: "#" },
+      { name: "Journals", url: "/#{unitID}/journals" },
+      { name: "Academic Units", url: "/#{unitID}/units" }
+    ]
+  else
+    puts "Warning: no brand file found for unit #{unitID.inspect}"
+    return [ { name: "Unit Home", slug: "" } ]
+  end
+end
+
+###################################################################################################
+def convertUnitBrand(unitID, unitType)
   begin
     dataOut = {}
 
@@ -493,12 +538,14 @@ def convertUnitBrand(unitID)
       dataIn = Nokogiri::XML(File.new(bfPath), &:noblanks).root
       dataOut.merge!(convertLogo(unitID, dataIn.at("display/mainFrame/logo")))
       dataOut.merge!(convertBlurb(unitID, dataIn.at("display/mainFrame/blurb")))
-      dataOut.merge!(convertNavBar(unitID, dataIn.at("display/generalInfo")))
+      if unitType == "campus"
+        dataOut.merge!({ nav_bar: defaultNav(unitID, unitType) })
+      else
+        dataOut.merge!(convertNavBar(unitID, dataIn.at("display/generalInfo")))
+      end
+      dataOut.merge!(convertSocial(unitID, dataIn.xpath("display/generalInfo/linkedPages/div")))
     else
-      # default nav bar
-      puts "Warning: no brand file found for unit #{unitID.inspect}"
-      navBar = [ { name: "Unit Home", slug: "" } ]
-      dataOut.merge!({ nav_bar: navBar })
+      dataOut.merge!({ nav_bar: defaultNav(unitID, unitType) })
     end
 
     return dataOut
@@ -555,7 +602,7 @@ def convertUnits(el, parentMap, childMap, allIds)
     attrs = {}
     el[:directSubmit] and attrs[:directSubmit] = el[:directSubmit]
     el[:hide]         and attrs[:hide]         = el[:hide]
-    attrs.merge!(convertUnitBrand(id))
+    attrs.merge!(convertUnitBrand(id, unitType))
     Unit[id].update(attrs: JSON.generate(attrs))
 
     addDefaultWidgets(id, unitType)
