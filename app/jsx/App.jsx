@@ -49,8 +49,10 @@ const routes = (
     <Route path="/static/:unitID/:pageName" component={StaticPage} />
     <Route path="/login" component={LoginPage} />
     <Route path="/loginSuccess/**" component={LoginSuccessPage} />
+    <Route path="/loginSuccess" component={LoginSuccessPage} />
     <Route path="/logout" component={LogoutPage} />
     <Route path="/logoutSuccess/**" component={LogoutSuccessPage} />
+    <Route path="/logoutSuccess" component={LogoutSuccessPage} />
     <Route path="*" component={NotFoundPage}/>
   </Route>
 )

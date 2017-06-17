@@ -15,14 +15,14 @@ class LoginSuccessPage extends PageBase
     return `/api/loginValidate?nonce=${props.location.query.nonce}&data=${props.location.query.data}`
   }
 
-  renderData() {
+  renderData(data) {
     // start is something like:  https://submit.escholarship.org/secure/jscholLogin?nonce=1234567890ABCDEF&returnTo=http%3A%2F%2Flocalhost%3A4001%2FloginSuccess
     // return is something like: http://localhost:4001/loginSuccess?data=fQpdFQ7Ah+UscNPkgSA9PtQ07BcPplF/ggKvNDIrjrHvIwC9gt73X7I61lGq%0APGv1w3aBBbwtcYLtt0EFfktWd/QYr6Z+6YamJyO5bDM1mzXDcPJcakuBfljg%0A8qXi
     return(
     <div>
       <Header1Comp/>
       <div className="c-navbar">
-        <NavComp data={[{name: 'Campus Sites', url: ''}, {name: 'UC Open Access Policies', url: ''}, {name: 'eScholarship Publishing', url: ''}]} />
+        <NavComp data={data.header.nav_bar} />
       </div>
       <div className="c-columns">
         <main id="maincontent">

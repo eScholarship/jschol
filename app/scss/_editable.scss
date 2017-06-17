@@ -47,3 +47,11 @@ $color-black-semitrans: rgba(124, 126, 127, 0.5);
   border-radius: 4px;
   width: 100%;
 }
+
+.c-editable-page__button {
+  margin-right: 10px;
+}
+
+.c-editable-page__button:disabled {
+  color: graytext
+}
