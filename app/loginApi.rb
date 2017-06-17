@@ -22,7 +22,8 @@ get "/api/loginStart" do
                            remember: false,
                            data: nil,
                            acting_as: 0)
-  return JSON.generate({nonce: nonce})
+  content_type :json
+  return JSON.generate({ header: getGlobalHeader, nonce: nonce})
 end
 
 ###################################################################################################
@@ -54,7 +55,7 @@ get "/api/loginValidate" do
   decrypted = JSON.parse(decryptedStr)
 
   username = decrypted["eppn"]
-  puts "DECRYPTED: #{decrypted.inspect}"
+  #puts "DECRYPTED: #{decrypted.inspect}"
 
   # Record the username, plus user id if any, in the OJS database.
   OJS_DB.transaction do
@@ -67,23 +68,25 @@ get "/api/loginValidate" do
   end
 
   # And return the data
-  return JSON.generate({username: username, key: params[:nonce]})
+  content_type :json
+  return JSON.generate({header: getGlobalHeader, username: username, key: params[:nonce]})
 end
 
 ###################################################################################################
 # Logout record keeping
 get "/api/loginEnd" do
-  userID = getUserID(params[:username]) or return permFail("invalid username")
+  content_type :json
+  userID = getUserID(params[:username]) or return JSON.generate(permFail("invalid username"))
   sessionID = params[:token]
-  sessionID =~ /^\w{32}$/ or return permFail("invalid session ID")
+  sessionID =~ /^\w{32}$/ or return JSON.generate(permFail("invalid session ID"))
   OJS_DB[:sessions].where(user_id: userID, session_id: sessionID).delete
-  return { message: "ok" }
+  return JSON.generate({ header: getGlobalHeader, message: "ok" })
 end
 
 ###################################################################################################
 def permFail(msg)
   puts "Permission failure: #{msg.inspect}"
-  return { error: true, message: msg }
+  return { header: getGlobalHeader, error: true, message: msg }
 end
 
 ###################################################################################################

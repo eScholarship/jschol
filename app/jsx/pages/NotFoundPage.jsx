@@ -10,19 +10,18 @@ class NotFoundPage extends PageBase
 {
   // PageBase will fetch the following URL for us, and place the results in this.state.pageData
   pageDataURL() {
-    return null
+    return "/api/notFound"
   }
 
-  renderContent() { return (
+  renderData(data) {
+    return (
     <div>
       <Header1Comp />
       <div className="c-navbar">
-        <NavComp data={[{name: 'Campus Sites', url: ''}, {name: 'UC Open Access Policies', url: ''}, {name: 'eScholarship Publishing', url: ''}]} />
+        <NavComp data={data.header.nav_bar} />
       </div>
       <br/>
       <h2>Error: Page not found.</h2>
-      <br/>
-      <FooterComp />
     </div>
   )}
 
