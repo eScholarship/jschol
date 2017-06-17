@@ -9,7 +9,7 @@ class FiltersShowHide extends React.Component {
       <div>
         <div className="c-filter__active-header">
           <span id="c-filter__active-title">Active filters:</span>
-          <button onClick={this.clearAll}>clear all</button>
+          <button onClick={this.props.clearAll}>clear all</button>
         </div>
         <div role="group" aria-labelledby="c-filter__active-title" className="c-filter__active">
           { this.props.activeFilters.map((filter) => {
@@ -24,11 +24,11 @@ class FiltersShowHide extends React.Component {
 }
 
 class FilterComp extends React.Component {
-  clearAll(event) {
+  clearAll = (event) => {
     $('[name=start]').val('0');
     var filters = $(':checked').prop('checked', false);
   }
-  
+ 
   render() {
     var searchString = 'Your search: "' + this.props.query.q + '"',
         activeFilters = null
@@ -54,9 +54,9 @@ class FilterComp extends React.Component {
       <div className="c-filter">
         <h2 className="c-filter__heading">{searchString}</h2>
         <input type="hidden" name="q" value={this.props.query.q} />
-        <div>Results: {Math.ceil(this.props.count/10)} pages, {this.props.count} works</div>
+        <div>Results: {Math.ceil(this.props.count/this.props.query.rows)} pages, {this.props.count} works</div>
       {activeFilters &&
-        <FiltersShowHide activeFilters={activeFilters} handler={this.props.handler} />
+        <FiltersShowHide activeFilters={activeFilters} handler={this.props.handler} clearAll={this.clearAll} />
       }
         {/* <a href="" className="c-filter__tips">search tips</a> */}
       </div>

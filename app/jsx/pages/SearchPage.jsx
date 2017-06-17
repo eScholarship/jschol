@@ -436,7 +436,6 @@ class SearchPage extends PageBase {
   }
 
   renderData(data) {
-    // console.log(data)
     var facetFormData = {facets: data.facets, count: data.count};
     return(
       <div className="l_search">
@@ -462,15 +461,13 @@ class SearchPage extends PageBase {
                 <h2 className="o-columnbox1__heading">
                   Scholarly Works ({data.count + " results" + (data.count > 10000 ? ", showing first 10000" : "")})</h2>
               </header>
-            {(data.count > 10) &&
               <SortPaginationComp query={data.query} count={data.count}/>
-            }
               <div>
                 { data.searchResults.map(result =>
                   <ScholWorksComp key={result.id} result={result} />)
                 }
               </div>
-            {(data.count > 10) &&
+            {(data.count > data.query.rows) &&
               <PaginationComp query={data.query} count={data.count}/>
             }
             </section>
