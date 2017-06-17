@@ -22,22 +22,6 @@ class DrawerItem extends React.Component {
     return undefined
   }
 
-  editItem = () => {
-    this.setState({editing: true});
-  }
-
-  onSave = () => {
-    this.setState({editing: false});
-  }
-
-  cancel = () => {
-    this.setState({editing: false});
-  }
-
-  deleteItem = () => {
-    console.log('deleteItem');
-  }
-
 // radio buttons replaced by <select>
           // <label className="c-drawer__list-item-radio-input">
           //   <input id="navItemType" type="radio"
@@ -57,67 +41,20 @@ class DrawerItem extends React.Component {
 
 
   render() {
-    if (this.state.editing || this.props.navItem.name === '') {
-      var buttons = ([
-        <button onClick={e => this.onSave()}>Save</button>,
-        <button onClick={e => this.cancel()}>Cancel</button>,
-        <button onClick={e => this.deleteItem()}>Delete</button>
-      ])
-      var config;
-      if (this.props.navItem.sub_nav) {
-        config = <SortableList data={this.props.navItem.sub_nav} unit={this.props.unit}/>
-      } else {
-        config = [
-          <label className="c-drawer__list-label" htmlFor="navItemData">
-            {this.props.navItem.slug ? "Slug: " : this.props.navItem.url ? "URL: " : this.props.navItem.file ? "File: " : ""}
-          </label>,
-          <input className="c-drawer__list-item-text-input" id="navItemData" onChange={e => console.log(e)}
-            name='navItemData' value={this.props.navItem.slug ? this.props.navItem.slug : this.props.navItem.url ? this.props.navItem.url : ''}/>
-        ]
-      }
+    if ('sub_nav' in this.props.navItem) {
       return (
-        <div className="c-drawer__list-item">
-          {this.props.navItem.name === '' ?
-            <label className="c-drawer__list-label" style={{marginBottom: '9px'}}>Page Name:</label> :
-            <label className="c-drawer__list-hidden-label">Navigation Item Label (to appear in the Nav Bar):</label>
-          }
-          <input id="navItemName" className="c-drawer__list-item-text-input nav-element"
-            name='navItemName' value={this.props.navItem.name} onChange={e => console.log(e)}/>
-
-          <select value={this.state.type} style={{marginBottom: '10px'}} onChange={e => console.log(e)}>
-            <option value="page">Page</option>
-            <option value="url">URL</option>
-            <option value="file">File</option>
-            <option value="sub_nav">Folder</option>
-          </select>
-          {config}
-          {buttons}
+        <div className="c-drawer__list-item-subnav">
+          <div className="c-drawer__list-item-subnav-header">
+            {this.props.navItem.name}
+          </div>
         </div>
       )
     } else {
-      var buttons = (
-        <div className="c-drawer__nav-buttons">
-          <button onClick={e => this.editItem()}><img src="/images/icon_gear-black.svg"/></button>
+      return (
+        <div className="c-drawer__list-item">
+          {this.getNavItemJSX(this.props.navItem)}
         </div>
       )
-
-      if ('sub_nav' in this.props.navItem) {
-        return (
-          <div className="c-drawer__list-item-subnav">
-            <div className="c-drawer__list-item-subnav-header">
-              {this.props.navItem.name}
-              {buttons}
-            </div>
-          </div>
-        )
-      } else {
-        return (
-          <div className="c-drawer__list-item">
-            {this.getNavItemJSX(this.props.navItem)}
-            {this.props.navItem.slug == "" ? null : buttons}
-          </div>
-        )
-      }
     }
   }
 }
@@ -251,11 +188,6 @@ class DrawerComp extends React.Component {
   drawerContent(cms) {
     if (!SortableListItem)
       SortableListItem = cms.modules.sortable(ListItem)
-    var buttons = (
-      <div className="c-drawer__nav-buttons">
-        <button onClick={e => console.log('reveal drop down to select widget type?')}><img src="/images/icon_gear-black.svg"/></button>
-      </div>
-    )
     return (
       <div>
         <div className="c-drawer__list-item" style={{backgroundImage: 'none', paddingLeft: '20px'}}>
@@ -291,7 +223,6 @@ class DrawerComp extends React.Component {
               <Link to={"/uc/" + this.props.data.unit.id + "/sidebar#" + sb.id }>
                 {sb.title ? sb.title : sb.kind.replace(/([a-z])([A-Z][a-z])/g, "$1 $2")}
               </Link>
-              {buttons}
             </div>
           )
         }

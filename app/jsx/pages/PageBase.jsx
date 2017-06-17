@@ -164,7 +164,10 @@ class PageBase extends React.Component
     }
 
     // CMS drawer case
-    if (this.state.adminLogin && this.state.adminLogin.loggedIn && this.state.cmsModules) {
+    if (this.state.adminLogin && this.state.adminLogin.loggedIn &&
+        this.state.cmsModules &&
+        'header' in this.state.pageData && 'nav_bar' in this.state.pageData.header)
+    {
       return (
         <DrawerComp data={this.state.pageData} router={this.props.router} fetchingData={this.state.fetchingData}>
           {/* Not sure why the padding is needed, but it is */}
@@ -239,6 +242,8 @@ class PageBase extends React.Component
                                            onLogout: this.onLogout,
                                            isEditingPage: this.state.isEditingPage,
                                            onEditingPageChange: this.onEditingPageChange,
+                                           fetchPageData: ()=>this.fetchPageData(this.props),
+                                           goLocation: (loc)=>this.props.router.push(loc),
                                            modules: this.state.cmsModules,
                                            permissions: this.state.permissions } }>
           {this.renderContent()}
