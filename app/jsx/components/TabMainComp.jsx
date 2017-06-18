@@ -27,8 +27,11 @@ class Abstract extends React.Component {
       <details className="c-togglecontent" open>
         <summary>Abstract</summary>
         <p>{this.props.abstract}</p>
+      {(this.props.unit.id.match(/^.*_postprints/)) &&
+        <p className="c-well">Many UC-authored scholarly publications are freely available on this site because of the UC Academic Senate&apos;s Open Access Policy. 
         {/* ToDo: Add Link */}
-        <p className="c-well">Many UC-authored scholarly publications are freely available on this site because of the UC Academic Senate&apos;s Open Access Policy. *** LINK *** Let us know how this access is important for you.</p>
+        *** LINK *** Let us know how this access is important for you.</p>
+      }
       </details>
     )
   }
@@ -146,7 +149,8 @@ class TabMainComp extends React.Component {
         {this.props.attrs.abstract && (this.props.status != "withdrawn") &&
           [<ScrollingAnchorComp key="0" name="article_abstract" />,
            <Abstract key="1" status={p.status}
-                             abstract={p.attrs.abstract} />] }
+                             abstract={p.attrs.abstract}
+                             unit={p.unit} />] }
         <ScrollingAnchorComp name="article_main" />
         <MainContent {...p} />
       </div>

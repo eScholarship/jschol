@@ -576,7 +576,6 @@ end
 ###################################################################################################
 # Search page data
 get "/api/search/" do
-  # Amy, hack here
   content_type :json
   body = {
     :header => getGlobalHeader,
@@ -584,7 +583,9 @@ get "/api/search/" do
   }
   facetList = ['type_of_work', 'peer_reviewed', 'supp_file_types',
                'campuses', 'departments', 'journals', 'disciplines', 'rights']
-  return body.merge(search(CGI::parse(request.query_string), facetList)).to_json
+  params = CGI::parse(request.query_string)
+  params["departments"] = params["searchType"] if params["searchType"] != ["eScholarship"]
+  return body.merge(search(params, facetList)).to_json
 end
 
 ###################################################################################################

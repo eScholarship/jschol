@@ -174,6 +174,7 @@ end
 
 
 def unitSearch(params, unit)
+  # ToDo: remove this section now that unit search display looks just like global search
   if unit.type.include? 'series'
     resultsListFields = ['thumbnail', 'pub_year', 'publication_information', 'type_of_work', 'rights']
     params["series"] = [unit.id]
