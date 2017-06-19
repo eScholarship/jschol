@@ -461,7 +461,9 @@ class SearchPage extends PageBase {
                 <h2 className="o-columnbox1__heading">
                   Scholarly Works ({data.count + " results" + (data.count > 10000 ? ", showing first 10000" : "")})</h2>
               </header>
+            {(data.count > 2) &&
               <SortPaginationComp query={data.query} count={data.count}/>
+            }
               <div>
                 { data.searchResults.map(result =>
                   <ScholWorksComp key={result.id} result={result} />)

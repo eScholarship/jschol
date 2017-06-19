@@ -83,8 +83,10 @@ class PaginationComp extends React.Component {
           { displayedPages.map(page => {
             return (<a href="" key={page.num} className={page.className} onClick={this.page}>{page.num}</a>)
           }) }
-          <span className="c-pagination__ellipses">&hellip;</span>
-          <a href="" className="c-pagination__item" onClick={this.last}>{pages}</a>
+          { (pages > 3) && 
+            [<span key="0" className="c-pagination__ellipses">&hellip;</span>,
+             <a key="1" href="" className="c-pagination__item" onClick={this.last}>{pages}</a>]
+          }
           <a href="" className="c-pagination__prevnext" onClick={this.next}>Next</a>
         </div>
       )
@@ -96,8 +98,10 @@ class PaginationComp extends React.Component {
       return (
         <div className="c-pagination">
           <a href="" className="c-pagination__prevnext" onClick={this.previous}>Previous</a>
-          <a href="" className="c-pagination__item" onClick={this.first}>1</a>
-          <span className="c-pagination__ellipses">&hellip;</span>
+          { (pages > 3) && 
+            [<a key="0" href="" className="c-pagination__item" onClick={this.first}>1</a>,
+             <span key="1" className="c-pagination__ellipses">&hellip;</span>]
+          }
           { displayedPages.map(page => {
             return (<a href="" key={page.num} className={page.className} onClick={this.page}>{page.num}</a>)
           }) }

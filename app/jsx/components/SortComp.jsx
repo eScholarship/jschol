@@ -35,11 +35,12 @@ class SortComp extends React.Component {
             <option value="dsc">Date Decending</option>
           </select>
         </div>
+      {(this.props.count > 10) && 
         <div className="o-input__droplist1 c-sort__page-input">
           <label htmlFor="c-sort2">Show:</label>
           <select name="rows" id="c-sort2" form="facetForm" value={ this.state.rows } onChange={ this.handleChange }>
           {/* ToDo: Make this more concise */}
-          {(this.props.count > 10) && <option value="10">10</option> }
+          <option value="10">10</option>
           {(this.props.count > 20) && <option value="20">20</option> }
           {(this.props.count > 30) && <option value="30">30</option> }
           {(this.props.count > 40) && <option value="40">40</option> }
@@ -47,6 +48,7 @@ class SortComp extends React.Component {
           {(this.props.count > 100) && <option value="100">100</option> }
           </select>
         </div>
+      }
       </div>
     )
   }
