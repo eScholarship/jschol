@@ -588,7 +588,7 @@ def convertUnits(el, parentMap, childMap, allIds)
   # Create or update the main database record
   if el.name != "ref"
     puts "Converting unit #{id}."
-    unitType = id=="root" ? "root" : el[:type]
+    unitType = id=="root" ? "root" : id=="lbnl" ? "campus" : el[:type]
     Unit.update_or_replace(id,
       type:      unitType,
       name:      id=="root" ? "eScholarship" : el[:label],
