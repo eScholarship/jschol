@@ -69,19 +69,15 @@ def getUnitHeader(unit, pageName=nil, attrs=nil)
   return header
 end
 
-def getUnitPageContent(unit, attrs, pageName)
-  if pageName == "home"
-    if unit.type == 'oru'
-      return getORULandingPageData(unit.id)
-    end
-    if unit.type.include? 'series'
-      return getSeriesLandingPageData(unit)
-    end
-    if unit.type == 'journal'
-      return getJournalLandingPageData(unit.id)
-    end
-  elsif pageName == "search"
-    return getUnitSearchData(unit)
+def getUnitPageContent(unit, attrs)
+  if unit.type == 'oru'
+    return getORULandingPageData(unit.id)
+  end
+  if unit.type.include? 'series'
+    return getSeriesLandingPageData(unit)
+  end
+  if unit.type == 'journal'
+    return getJournalLandingPageData(unit.id)
   end
 end
 
@@ -174,6 +170,7 @@ end
 
 
 def unitSearch(params, unit)
+  # ToDo: remove this section now that unit search display looks just like global search
   if unit.type.include? 'series'
     resultsListFields = ['thumbnail', 'pub_year', 'publication_information', 'type_of_work', 'rights']
     params["series"] = [unit.id]

@@ -492,10 +492,8 @@ get "/api/unit/:unitID/?:pageName/?" do
       header: getUnitHeader(unit, pageName, attrs),
       sidebar: getUnitSidebar(unit)
     }
-    if pageName == 'search'
-      pageData[:content] = unitSearch(CGI::parse(request.query_string), unit)
-    elsif pageName == 'home'
-      pageData[:content] = getUnitPageContent(unit, attrs, pageName)
+    if pageName == 'home'
+      pageData[:content] = getUnitPageContent(unit, attrs)
     elsif pageName == 'campus_landing'
       pageData[:content] = getCampusLandingPageContent(unit, attrs)
     elsif pageName == 'profile'
@@ -576,7 +574,6 @@ end
 ###################################################################################################
 # Search page data
 get "/api/search/" do
-  # Amy, hack here
   content_type :json
   body = {
     :header => getGlobalHeader,
@@ -584,7 +581,22 @@ get "/api/search/" do
   }
   facetList = ['type_of_work', 'peer_reviewed', 'supp_file_types',
                'campuses', 'departments', 'journals', 'disciplines', 'rights']
-  return body.merge(search(CGI::parse(request.query_string), facetList)).to_json
+  params = CGI::parse(request.query_string)
+  searchType = params["searchType"][0]
+  # ToDo:Could there be more than one searchType? 
+  if searchType and searchType != "eScholarship"
+    unit = Unit[searchType]
+    if unit
+      if unit.type.include? 'series'
+        params["series"] = [unit.id]
+      else
+        facetChoice = {"oru"=> "departments", "journal"=> "journals", "campus"=> "campuses"}
+        choice = facetChoice[unit.type]
+        choice and params[choice] = [unit.id]
+      end
+    end
+  end
+  return body.merge(search(params, facetList)).to_json
 end
 
 ###################################################################################################

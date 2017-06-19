@@ -23,15 +23,15 @@ class SearchControls extends React.Component {
       // Note below: "Department" is too long to fix in the slide-down box, so we have to abbreviate it.
       searchUnit = [
         <input key="r2" type="radio" id="c-search2__refine-campus" name="searchType" value={p.unitID}
-               onClick={this.props.handleRadioSelect} onFocus={this.props.makeActive} onBlur={this.props.makeInactive}/>,
+               onFocus={this.props.makeActive} onBlur={this.props.makeInactive}/>,
         <label key="l2" htmlFor="c-search2__refine-campus">This {p.label=="Department" ? "Dept." : p.label}</label>
       ]
     }
 
     return (
     <div className={this.props.refineActive ? "c-search2__refine--active" : "c-search2__refine"}>
-      <input key="r1" type="radio" id="c-search2__refine-eschol" name="searchType" value="eScholarship" defaultChecked={true}
-             onClick={this.props.handleRadioSelect} onFocus={this.props.makeActive} onBlur={this.props.makeInactive}/>
+      <input key="r1" type="radio" id="c-search2__refine-eschol" name="searchType" value="eScholarship"
+             defaultChecked={true} onFocus={this.props.makeActive} onBlur={this.props.makeInactive}/>
       <label key="l1" htmlFor="c-search2__refine-eschol" >All of eScholarship</label>
       { searchUnit }
     </div>
@@ -39,17 +39,9 @@ class SearchControls extends React.Component {
 }
 
 class SearchComp2 extends React.Component {
-  state={refineActive: false, search: '/search'}
+  state={refineActive: false}
   makeActive = ()=> this.setState({refineActive: true})
   makeInactive = ()=> this.setState({refineActive: false})
-
-  handleRadioSelect = event => {
-    if (event.target.value == 'eScholarship') {
-      this.setState({search: '/search'})
-    } else {
-      this.setState({search: '/uc/' + event.target.value + '/search'})
-    }
-  }
 
   render() {
     var label;
@@ -64,16 +56,15 @@ class SearchComp2 extends React.Component {
     }
 
     return (
-        <Form to={this.state.search} method="GET">
+        <Form to="/search" method="GET" autoComplete="off">
           <div className="c-search2">
             <div className="c-search2__inputs">
               <div className="c-search2__form">
                   <label className="c-search2__label" htmlFor="global-search">Search eScholarship</label>
                   <input type="search" name="q" id="global-search" className="c-search2__field" placeholder="Search" 
-                         onFocus={this.makeActive} onBlur={this.makeInactive}/>
+                         onFocus={this.makeActive} onBlur={this.makeInactive} autoComplete="off" />
               </div>
               <SearchControls refineActive={this.state.refineActive}
-                              handleRadioSelect={this.handleRadioSelect}
                               label={label}
                               makeActive={this.makeActive}
                               makeInactive={this.makeInactive}

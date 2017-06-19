@@ -7,9 +7,8 @@ class SortComp extends React.Component {
     rows: this.props.query.rows ? this.props.query.rows : "10",
     sort: this.props.query.sort ? this.props.query.sort : "rel"
   }
-  handleChange = this.handleChange.bind(this);
 
-  handleChange(event) {
+  handleChange = (event) => {
     if (event.target.name == "rows") {
       this.setState({rows: event.target.value});
     }
@@ -36,16 +35,20 @@ class SortComp extends React.Component {
             <option value="dsc">Date Decending</option>
           </select>
         </div>
+      {(this.props.count > 10) && 
         <div className="o-input__droplist1 c-sort__page-input">
           <label htmlFor="c-sort2">Show:</label>
           <select name="rows" id="c-sort2" form="facetForm" value={ this.state.rows } onChange={ this.handleChange }>
-            <option value="10">10</option>
-            <option value="20">20</option>
-            <option value="30">30</option>
-            <option value="50">50</option>
-            <option value="100">100</option>
+          {/* ToDo: Make this more concise */}
+          <option value="10">10</option>
+          {(this.props.count > 20) && <option value="20">20</option> }
+          {(this.props.count > 30) && <option value="30">30</option> }
+          {(this.props.count > 40) && <option value="40">40</option> }
+          {(this.props.count > 50) && <option value="50">50</option> }
+          {(this.props.count > 100) && <option value="100">100</option> }
           </select>
         </div>
+      }
       </div>
     )
   }
