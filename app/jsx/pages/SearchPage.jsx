@@ -242,7 +242,7 @@ class PubYear extends React.Component {
 //   }
 // }
 class FacetFieldset extends React.Component {
-  state = { deptModalOpen: false }
+  state = { modalOpen: false }
 
   //Called by a FacetItem's handleChange function
   //event is the browser event, filter is an array of filters to be applied
@@ -284,7 +284,7 @@ class FacetFieldset extends React.Component {
         }
       }
     }
-    //call FacetForm's changeFacet function - event, fieldsetQuery, fieldType
+    //call FacetForm's changeFacet function - event, fieldsetQuery, fieldType, selectedFieldset
     this.props.handler(event, newQuery, event.target.name)
   }
 
@@ -305,6 +305,12 @@ class FacetFieldset extends React.Component {
     this.props.handler(event, newQuery, 'pub_year')
   }
 
+  closeModal = (e, facetType) => {
+    // Open FacetFieldset of facetType since that's where user left off.
+    this.props.handler(e, null, null, facetType)
+    this.setState({modalOpen:false})
+  }
+
   getFacetNodes = facets => {
     return facets.map( facet => {
       var facetItemData = {
@@ -316,10 +322,10 @@ class FacetFieldset extends React.Component {
   }
 
   render() {
-    if (!this.state.deptModalOpen) {
+    if (!this.state.modalOpen) {
       var facets, facetItemNodes
       if (this.props.data.facets) {
-        facets = (this.props.deptModal) ? this.props.data.facets.slice(0, 5) : this.props.data.facets
+        facets = (this.props.modal) ? this.props.data.facets.slice(0, 5) : this.props.data.facets
         facetItemNodes = this.getFacetNodes(facets)
       } else {
         //pub_year
@@ -332,8 +338,10 @@ class FacetFieldset extends React.Component {
           <summary className="c-facetbox__summary"><span>{this.props.data.display}</span></summary>
           <div className="facetItems c-checkbox">
             {facetItemNodes}
-            {this.props.deptModal &&
-              <a href="" onClick={e=>this.setState({deptModalOpen:true})}>show more &raquo;</a>
+            {this.props.modal &&
+              <a href="" onClick={(event)=>{
+                this.setState({modalOpen:true})
+                event.preventDefault()}}>show more &raquo;</a>
             }
           </div>
         </details>
@@ -341,9 +349,10 @@ class FacetFieldset extends React.Component {
     } else {
       return (
         <ModalComp isOpen
-          // onCancel={}
-          header="Refine By Department"
-          content={this.getFacetNodes(this.props.data.facets)} onOK={"FOO"} okLabel="Select" />
+          onCancel={e=>this.closeModal(e, this.props.data.fieldName)}
+          header={"Refine By " + this.props.data.display}
+          content={this.getFacetNodes(this.props.data.facets)}
+          onOK={e=>this.closeModal(e, this.props.data.fieldName)} okLabel="Select" />
       )
     }
   }
@@ -380,19 +389,26 @@ class FacetFieldset extends React.Component {
 class FacetForm extends React.Component {
   state = {
     query: this.props.query,
+    selectedFieldset: null 
   }
 
   // Called by FacetFieldset's handleChange function
-  changeFacet = (event, fieldsetQuery, fieldType)=>{
-    var newQuery = $.extend(true, {}, this.state.query) // true=deep copy
-
+  changeFacet = (event, fieldsetQuery, fieldType, selectedFieldset)=>{
     if (fieldsetQuery) {
-      newQuery.filters[fieldType] = fieldsetQuery
-    } else {
-      delete newQuery.filters[fieldType]
-    }
+      var newQuery = $.extend(true, {}, this.state.query) // true=deep copy
 
-    this.setState({query: newQuery})
+      if (fieldsetQuery) {
+        newQuery.filters[fieldType] = fieldsetQuery
+      } else {
+        delete newQuery.filters[fieldType]
+      }
+      this.setState({query: newQuery, selectedFieldset: selectedFieldset})
+    }
+    // For now, fieldsetQuery and selectedFieldSet will be mutually exclusive conditions.
+    // Not sure we need a separate handler for determining selectedFieldset.
+    if (selectedFieldset) {
+      this.setState({selectedFieldset: selectedFieldset})
+    }
   }
 
   // Set as the onClick handler for FilterComp's active filter buttons
@@ -432,8 +448,9 @@ class FacetForm extends React.Component {
       return (
         <FacetFieldset key={fieldName} data={fieldset} query={filters} handler={this.changeFacet}
                        // Have first two open by default
-                       open={[0,1].includes(i)}
-                       deptModal={((fieldName == "departments") && (facets) && (facets.length > 6))} />
+                       open={([0,1].includes(i) || this.state.selectedFieldset == fieldName)}
+                       modal={((["departments", "journals"].includes(fieldName)) &&
+                              (facets) && (facets.length > 6))} />
       )
     })
 
