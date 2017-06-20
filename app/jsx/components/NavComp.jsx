@@ -30,22 +30,20 @@ class NavComp extends React.Component {
   }
 
   getNavItemJSX(navItem) {
-    if (navItem.asset_id)
-      return (<a href={"/assets/"+navItem.asset_id} key={navItem.name}>{navItem.name}</a>)
-    else if (navItem.url && navItem.url.startsWith("http"))
-      return (<a href={navItem.url} key={navItem.name}>{navItem.name}</a>)
+    if (navItem.type == "link")
+      return (<a href={navItem.url} key={navItem.id}>{navItem.name}</a>)
     else
-      return (<Link to={navItem.url} key={navItem.name}>{navItem.name}</Link>)
+      return (<Link to={navItem.url} key={navItem.id}>{navItem.name}</Link>)
   }
 
   render() {
     var navList = this.props.data.map((navItem) => {
-      if ('sub_nav' in navItem) {
+      if (navItem.type == "folder") {
         return (
           <NavSubComp name={navItem.name}
             open={this.state.submenuActive == navItem.name}
             onSubmenuChanged={(flag)=> this.setState({submenuActive:flag ? navItem.name : null})}
-            key={navItem.name}>
+            key={navItem.id}>
             {navItem.sub_nav.map((subItem) => {
               return this.getNavItemJSX(subItem);
             })}

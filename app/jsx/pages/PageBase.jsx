@@ -96,11 +96,11 @@ class PageBase extends React.Component
   {
     if (flag && !this.state.cmsModules) {
       // Load CMS-specific modules asynchronously
-      require.ensure(['react-trumbowyg', 'react-sidebar', 'react-sortable'], (require) => {
+      require.ensure(['react-trumbowyg', 'react-sidebar', 'react-sortable-tree'], (require) => {
         this.setState({ isEditingPage: true,
                         cmsModules: { Trumbowyg: require('react-trumbowyg').default,
                                       Sidebar: require('react-sidebar').default,
-                                      sortable: require('react-sortable').sortable } })
+                                      SortableTree: require('react-sortable-tree').default } })
       }, "cms") // load from webpack "cms" bundle
     }
     else

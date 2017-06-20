@@ -20,6 +20,7 @@ def getNavBar(unitID, pageName, navItems)
         navItem['url'] = "/uc/#{unitID}#{navItem['slug']=="" ? "" : "/"+navItem['slug']}"
       end
     }
+    navItems.unshift({ id: 0, type: "home", name: "Unit Home", url: "/uc/#{unitID}" })
     return navItems
   end
   return nil

@@ -771,6 +771,12 @@ put "/api/unit/:unitID/:pageName" do |unitID, pageName|
 end
 
 ###################################################################################################
+def maxNavID(navBar)
+  return [0, navBar.map{ |nav| 
+      [nav["id"], nav["type"] == "folder" ? maxNavID(nav["sub_nav"]) : 0]}].flatten.max
+end
+
+###################################################################################################
 # *Post* to add an item to a nav bar
 post "/api/unit/:unitID/nav" do |unitID|
   # Check user permissions
@@ -783,7 +789,7 @@ post "/api/unit/:unitID/nav" do |unitID|
 
   # Validate the nav type
   navType = params[:navType]
-  ['page', 'link', 'file', 'folder'].include?(navType) or halt(400)
+  ['page', 'link', 'folder'].include?(navType) or halt(400)
 
   # Find the existing nav bar
   attrs = JSON.parse(unit.attrs)
@@ -792,31 +798,32 @@ post "/api/unit/:unitID/nav" do |unitID|
   # Invent a unique name for the new item
   slug = name = nil
   (1..9999).each { |n|
-    slug = "new#{navType.gsub(/\b('?[a-z])/) { $1.capitalize }}#{n>=2 ? n.to_s : ''}"
-    name = "New #{navType}#{n>=2 ? ' '+n.to_s : ''}"
+    slug = "#{navType}#{n.to_s}"
+    name = "New #{navType} #{n.to_s}"
     break if navBar.none? { |nav| nav['slug'] == slug || nav['name'] == name }
   }
 
-  DB.transaction {
-    navBar << { name: name, slug: slug, hidden: true }.merge(case navType
-      when "page"
-        Page.create(slug: slug, unit_id: unitID, name: name, title: name, attrs: { html: "" }.to_json) && {}
-      when "link"
-        { url: nil }
-      when "file"
-        { asset_id: nil }
-      when "folder"
-        { sub_nav: {} }
-      else
-        halt(400)
-      end
-    )
+  nextID = maxNavID(navBar) + 1
 
+  DB.transaction {
+    newNav = case navType
+    when "page"
+      Page.create(slug: slug, unit_id: unitID, name: name, title: name, attrs: { html: "" }.to_json)
+      newNav = { id: nextID, type: "page", name: name, slug: slug, hidden: true }
+    when "link"
+      newNav = { id: nextID, type: "link", name: name, url: "" }
+    when "folder"
+      newNav = { id: nextID, type: "folder", name: name, sub_nav: [] }
+    else
+      halt(400, "unknown navType")
+    end
+
+    navBar << newNav
     attrs['nav_bar'] = navBar
     unit[:attrs] = attrs.to_json
     unit.save
 
-    return { status: "ok", slug: slug }.to_json
+    return { status: "ok", slug: newNav[:slug] }.to_json
   }
 end
 
