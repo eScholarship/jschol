@@ -331,7 +331,7 @@ def stripXMLWhitespace(node)
 end
 
 ###################################################################################################
-def convertPage(unitID, navBar, contentDiv, slug, name)
+def convertPage(unitID, navBar, navID, contentDiv, slug, name)
   title = nil
   stripXMLWhitespace(contentDiv)
   if contentDiv.children.empty?
@@ -368,19 +368,7 @@ def convertPage(unitID, navBar, contentDiv, slug, name)
               name: name,
               title: title ? title : name,
               attrs: JSON.generate(attrs))
-  navBar << { slug: slug, name: name }
-end
-
-###################################################################################################
-def convertFileLink(unitID, navBar, linkName, linkTarget)
-  # Locate the file referenced in the brand directory
-  filePath = "/apps/eschol/erep/xtf/static/#{linkTarget}"
-  if !File.file?(filePath)
-    puts "Warning: Can't find brand-linked file: #{filePath.inspect}"
-    return
-  end
-
-  navBar << { name: linkName, asset_id: putAsset(filePath, {}) }
+  navBar << { id: navID, type: "page", slug: slug, name: name }
 end
 
 ###################################################################################################
@@ -388,12 +376,13 @@ def convertNavBar(unitID, generalEl)
   # Blow away existing database pages for this unit
   Page.where(unit_id: unitID).delete
 
-  navBar = [ { name: "Unit Home", slug: "" } ]
-  generalEl or return { navBar: navBar }
+  navBar = []
+  generalEl or return { nav_bar: navBar }
 
   # Convert each link in linkset
   linkedPagesUsed = Set.new
   aboutBar = nil
+  curNavID = 0
   generalEl.xpath("linkSet/div").each { |linkDiv|
     linkDiv.children.each { |para|
       # First, a bunch of validation checks. We're expecting this kind of thing:
@@ -442,7 +431,7 @@ def convertNavBar(unitID, generalEl)
         addTo = navBar
       else
         if !aboutBar
-          aboutBar = { name: "About", sub_nav: [] }
+          aboutBar = { id: curNavID+=1, type: "folder", name: "About", sub_nav: [] }
           navBar << aboutBar
         end
         addTo = aboutBar[:sub_nav]
@@ -455,15 +444,14 @@ def convertNavBar(unitID, generalEl)
           puts "Can't find linked page #{slug.inspect}"
           next
         end
-        convertPage(unitID, addTo, linkedPage, slug, linkName)
+        convertPage(unitID, addTo, curNavID+=1, linkedPage, slug, linkName)
         linkedPagesUsed << slug
       elsif linkTarget =~ %r{^https?://}
-        addTo << { name: linkName, url: linkTarget }
+        addTo << { id: curNavID+=1, type: "link", name: linkName, url: linkTarget }
       elsif linkTarget =~ %r{/brand/}
-        convertFileLink(unitID, addTo, linkName, linkTarget)
+        puts "TODO: convert nav files to stub pages."
       else
         puts "Invalid link target: #{para.inner_html}"
-        next
       end
     }
   }
@@ -511,20 +499,20 @@ end
 def defaultNav(unitID, unitType)
   if unitType == "root"
     return [ 
-      { name: "About", sub_nav: [] },
-      { name: "Campus Sites", sub_nav: [] },
-      { name: "UC Open Access", sub_nav: [] },
-      { name: "eScholarship Publishing", url: "#" }
+      { id: 1, type: "folder", name: "About", sub_nav: [] },
+      { id: 2, type: "folder", name: "Campus Sites", sub_nav: [] },
+      { id: 3, type: "folder", name: "UC Open Access", sub_nav: [] },
+      { id: 4, type: "link", name: "eScholarship Publishing", url: "#" }
     ]
   elsif unitType == "campus"
     return [
-      { name: "Open Access Policies", url: "#" },
-      { name: "Journals", url: "/#{unitID}/journals" },
-      { name: "Academic Units", url: "/#{unitID}/units" }
+      { id: 1, type: "link", name: "Open Access Policies", url: "#" },
+      { id: 2, type: "link", name: "Journals", url: "/#{unitID}/journals" },
+      { id: 3, type: "link", name: "Academic Units", url: "/#{unitID}/units" }
     ]
   else
     puts "Warning: no brand file found for unit #{unitID.inspect}"
-    return [ { name: "Unit Home", slug: "" } ]
+    return []
   end
 end
 
@@ -588,7 +576,7 @@ def convertUnits(el, parentMap, childMap, allIds)
   # Create or update the main database record
   if el.name != "ref"
     puts "Converting unit #{id}."
-    unitType = id=="root" ? "root" : el[:type]
+    unitType = id=="root" ? "root" : id=="lbnl" ? "campus" : el[:type]
     Unit.update_or_replace(id,
       type:      unitType,
       name:      id=="root" ? "eScholarship" : el[:label],
