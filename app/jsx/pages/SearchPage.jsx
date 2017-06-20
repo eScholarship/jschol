@@ -430,8 +430,8 @@ class FacetForm extends React.Component {
       }
     }
     // Handy for debugging
-    // console.log(this.state.query)
-    // console.log(JSON.stringify(formData))
+    console.log(this.state.query)
+    console.log(JSON.stringify(formData))
     return true
   }
 
