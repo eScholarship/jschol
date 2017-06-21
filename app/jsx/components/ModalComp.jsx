@@ -9,6 +9,7 @@ class ModalComp extends React.Component {
   render() {
     return (
       <ReactModal isOpen={this.props.isOpen}
+                  parentSelector={this.props.parentSelector}
                   contentLabel="onRequestClose Example"
                   onRequestClose={this.props.onCancel}
                   className="c-modal--open"

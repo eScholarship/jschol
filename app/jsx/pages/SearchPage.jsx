@@ -77,8 +77,8 @@ class FacetItem extends React.Component {
   }
 
   handleChange = event => {  // compact syntax that takes care of binding the event handler
-    var filter
-    var filter_cleanup = []
+    let filter
+    let filter_cleanup = []
     // Rights label includes an icon and descriptive text, but value is just the code: 'CC-BY'
     // the Active Filters panel at the top of the lefthand sidebar displays just the codes
     if (this.props.data.facetType == 'rights' && this.props.data.facet.value != 'public') {
@@ -105,13 +105,13 @@ class FacetItem extends React.Component {
   }
 
   render() {
-    var facet = this.props.data.facet
+    let facet = this.props.data.facet
     this.label = facet.displayName ? facet.displayName : facet.value
 
-    var descendents
+    let descendents
     if (facet.descendents) {
       descendents = facet.descendents.map( d => {
-        var descendentItemData = {
+        let descendentItemData = {
           facetType: this.props.data.facetType,
           facet: d,
           ancestorChecked: this.checkFacet(this.props)
@@ -160,7 +160,7 @@ class PubYear extends React.Component {
   }
 
   onBlur = event=>{
-    var displayYears
+    let displayYears
     if (this.state.pub_year_start || this.state.pub_year_end) {
       displayYears = this.state.pub_year_start + "-" + this.state.pub_year_end
     }
@@ -249,7 +249,7 @@ class FacetFieldset extends React.Component {
   //and filter_cleanup is an array of filters to be removed as an implication of the filters to be applied
   //(as is the case when a child facet is already selected, but then it's parent facet is selected)
   handleChange = (event, filter, filter_cleanup) => {
-    var newQuery
+    let newQuery
     //event.target.checked means we're in the business of adding filters
     if (event.target.checked) {
       if (!_.isEmpty(this.props.query)) {
@@ -258,8 +258,8 @@ class FacetFieldset extends React.Component {
         //remove filters specified in filter_cleanup array
         //(this is any child facets that were selected at the time when the parent facet is selected)
         if (filter_cleanup.length > 0) {
-          for (var f in filter_cleanup) {
-            var i = newQuery.filters.findIndex(j => { return j.value == filter_cleanup[f].value })
+          for (let f in filter_cleanup) {
+            let i = newQuery.filters.findIndex(j => { return j.value == filter_cleanup[f].value })
             if (i >= 0) // only remove if found
               newQuery.filters.splice(i, 1)
           }
@@ -278,18 +278,18 @@ class FacetFieldset extends React.Component {
       //!event.target.checked means we're in the business of removing filters
       if (this.props.query.filters.length > 1) {
         newQuery = $.extend(true, {}, this.props.query) // true=deep copy
-        for (var f in filter) {
-          var i = newQuery.filters.findIndex(j => { return j.value == filter[f].value })
+        for (let f in filter) {
+          let i = newQuery.filters.findIndex(j => { return j.value == filter[f].value })
           newQuery.filters.splice(i, 1)
         }
       }
     }
-    //call FacetForm's changeFacet function - event, fieldsetQuery, fieldType, selectedFieldset
+    //call FacetForm's changeFacet function - event, fieldsetQuery, fieldType
     this.props.handler(event, newQuery, event.target.name)
   }
 
   pubDateChange = (event, filter) => {
-    var newQuery
+    let newQuery
     if (filter.value !== "") {
       if (!_.isEmpty(this.props.query)) {
         newQuery = $.extend(true, {}, this.props.query) // true=deep copy
@@ -311,9 +311,9 @@ class FacetFieldset extends React.Component {
     this.setState({modalOpen:false})
   }
 
-  getFacetNodes = facets => {
+  getFacetNodes = (facets) => {
     return facets.map( facet => {
-      var facetItemData = {
+      let facetItemData = {
         facetType: this.props.data.fieldName,
         facet: facet,
       }
@@ -321,40 +321,44 @@ class FacetFieldset extends React.Component {
     })
   }
 
+  //Temporary, for testing
+  componentDidMount() {
+    this.props.modal && console.log(this.parentSelector)
+  }
+
   render() {
-    if (!this.state.modalOpen) {
-      var facets, facetItemNodes
-      if (this.props.data.facets) {
-        facets = (this.props.modal) ? this.props.data.facets.slice(0, 5) : this.props.data.facets
-        facetItemNodes = this.getFacetNodes(facets)
-      } else {
-        //pub_year
-        facetItemNodes = (
-          <PubYear data={this.props.data} query={this.props.query} handler={this.pubDateChange} />
-        )
-      }
-      return (
-        <details className="c-facetbox" id={this.props.data.fieldName} open={this.props.open}>
-          <summary className="c-facetbox__summary"><span>{this.props.data.display}</span></summary>
-          <div className="facetItems c-checkbox">
-            {facetItemNodes}
-            {this.props.modal &&
+    let data = this.props.data
+    let facets, facetItemNodes
+    if (data.facets) {
+      facets = (this.props.modal) ? this.props.data.facets.slice(0, 5) : this.props.data.facets
+      facetItemNodes = this.getFacetNodes(facets)
+    } else {
+      //pub_year
+      facetItemNodes = (
+        <PubYear data={data} query={this.props.query} handler={this.pubDateChange} />
+      )
+    }
+    return (
+      <details className="c-facetbox" id={data.fieldName} open={this.props.open}>
+        <summary className="c-facetbox__summary"><span>{data.display}</span></summary>
+        <div className="facetItems c-checkbox">
+          {facetItemNodes}
+          {this.props.modal &&
+            <div ref={(el)=> {this.parentSelector = el}}>
               <a href="" onClick={(event)=>{
                 this.setState({modalOpen:true})
                 event.preventDefault()}}>show more &raquo;</a>
-            }
-          </div>
-        </details>
-      )
-    } else {
-      return (
-        <ModalComp isOpen
-          onCancel={e=>this.closeModal(e, this.props.data.fieldName)}
-          header={"Refine By " + this.props.data.display}
-          content={this.getFacetNodes(this.props.data.facets)}
-          onOK={e=>this.closeModal(e, this.props.data.fieldName)} okLabel="Select" />
-      )
-    }
+              <ModalComp isOpen={this.state.modalOpen}
+                parentSelector={()=>setTimeout(()=>this.parentSelector, 0)}
+                onCancel={e=>this.closeModal(e, data.fieldName)}
+                header={"Refine By " + data.display}
+                content={facetItemNodes}
+                onOK={e=>this.closeModal(e, data.fieldName)} okLabel="Select" />
+            </div>
+          }
+        </div>
+      </details>
+    )
   }
 }
 
@@ -389,39 +393,30 @@ class FacetFieldset extends React.Component {
 class FacetForm extends React.Component {
   state = {
     query: this.props.query,
-    selectedFieldset: null 
   }
 
   // Called by FacetFieldset's handleChange function
-  changeFacet = (event, fieldsetQuery, fieldType, selectedFieldset)=>{
+  changeFacet = (event, fieldsetQuery, fieldType)=>{
+    let newQuery = $.extend(true, {}, this.state.query) // true=deep copy
     if (fieldsetQuery) {
-      var newQuery = $.extend(true, {}, this.state.query) // true=deep copy
-
-      if (fieldsetQuery) {
-        newQuery.filters[fieldType] = fieldsetQuery
-      } else {
-        delete newQuery.filters[fieldType]
-      }
-      this.setState({query: newQuery, selectedFieldset: selectedFieldset})
+      newQuery.filters[fieldType] = fieldsetQuery
+    } else {
+      delete newQuery.filters[fieldType]
     }
-    // For now, fieldsetQuery and selectedFieldSet will be mutually exclusive conditions.
-    // Not sure we need a separate handler for determining selectedFieldset.
-    if (selectedFieldset) {
-      this.setState({selectedFieldset: selectedFieldset})
-    }
+    this.setState({query: newQuery})
   }
 
   // Set as the onClick handler for FilterComp's active filter buttons
   removeFilters = event=>{
-    var newQuery = $.extend(true, {}, this.state.query) // true=deep copy
-    var fieldType = $(event.target).data('filter-type')
+    let newQuery = $.extend(true, {}, this.state.query) // true=deep copy
+    let fieldType = $(event.target).data('filter-type')
     delete newQuery.filters[fieldType]
     this.setState({query: newQuery})
   }
 
   // Set as the Form's onSubmit handler
   handleSubmit = (event, formData)=>{
-    for(var key in formData) {
+    for(let key in formData) {
       if (formData[key] == "" ||
       (key === 'sort' && formData[key] === 'rel') ||
       (key === 'rows' && formData[key] === '10') ||
@@ -430,7 +425,7 @@ class FacetForm extends React.Component {
       }
     }
     // Handy for debugging
-    console.log(this.state.query)
+    // console.log(this.state.query)
     console.log(JSON.stringify(formData))
     return true
   }
@@ -441,14 +436,14 @@ class FacetForm extends React.Component {
   }
 
   render() {
-    var facetForm = this.props.data.facets.map((fieldset, i) => {
-      var fieldName = fieldset.fieldName
-      var filters = this.state.query.filters && this.state.query.filters[fieldName] ? this.state.query.filters[fieldName] : {}
-      var facets = fieldset.facets
+    let facetForm = this.props.data.facets.map((fieldset, i) => {
+      let fieldName = fieldset.fieldName
+      let filters = this.state.query.filters && this.state.query.filters[fieldName] ? this.state.query.filters[fieldName] : {}
+      let facets = fieldset.facets
       return (
         <FacetFieldset key={fieldName} data={fieldset} query={filters} handler={this.changeFacet}
                        // Have first two open by default
-                       open={([0,1].includes(i) || this.state.selectedFieldset == fieldName)}
+                       open={[0,1].includes(i)}
                        modal={((["departments", "journals"].includes(fieldName)) &&
                               (facets) && (facets.length > 6))} />
       )
@@ -474,7 +469,7 @@ class SearchPage extends PageBase {
   }
 
   renderData(data) {
-    var facetFormData = {facets: data.facets, count: data.count}
+    let facetFormData = {facets: data.facets, count: data.count}
     return(
       <div className="l_search">
         <Header1Comp />
