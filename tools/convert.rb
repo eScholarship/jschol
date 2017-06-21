@@ -19,6 +19,7 @@ require 'aws-sdk'
 require 'date'
 require 'digest'
 require 'fastimage'
+require 'httparty'
 require 'json'
 require 'logger'
 require 'mimemagic'
@@ -102,6 +103,16 @@ def puts(*args)
     super(*args)
     STDOUT.flush
   }
+end
+
+###################################################################################################
+# Determine the old front-end server to use for thumbnailing
+$hostname = `/bin/hostname`.strip
+$thumbnailServer = case $hostname
+  when 'pub-submit-dev'; 'http://pub-eschol-dev.escholarship.org'
+  when 'pub-submit-stg-2a', 'pub-submit-stg-2c'; 'http://pub-eschol-stg.escholarship.org'
+  when 'pub-submit-prd-2a', 'pub-submit-prd-2c'; 'http://escholarship.org'
+  else raise("unrecognized host #{hostname}")
 end
 
 # Item counts for status updates
@@ -224,8 +235,8 @@ def putAsset(filePath, metadata)
   # If the S3 file is already correct, don't re-upload it.
   obj = $s3Bucket.object(s3Path)
   if !obj.exists? || obj.etag != "\"#{md5sum}\""
-    puts "Uploading #{filePath} to S3."
-    obj.put(body: File.new(filePath), 
+    #puts "Uploading #{filePath} to S3."
+    obj.put(body: File.new(filePath),
             metadata: metadata.merge({
               original_path: filePath.sub(%r{.*/([^/]+/[^/]+)$}, '\1'), # retain only last directory plus filename
               mime_type: MimeMagic.by_magic(File.open(filePath)).to_s
@@ -668,13 +679,24 @@ def prefilterBatch(batch)
     # Process each line, looking for BEGIN prefiltered ... END prefiltered
     shortArk, buf = nil, []
     outer = []
+    eatNext = false
     stdoutAndErr.each { |line|
 
+      if eatNext && line =~ /\s+[^<>]+\s*$/
+        eatNext = false
+        next
+      end
+
       # Filter out warning messages that get interspersed
+      eatNext = false
       if line =~ /(.*)Warning: Unrecognized meta-data/
         line = $1
       elsif line =~ /(.*)WARNING: LBNL subject does not map/
         line = $1
+      elsif line =~ /(.*)WARNING: User supplied discipline term not found in taxonomy/
+        line = $1
+        # Sadly, the prefilter dumps the offending discipline on the *following* line; so eat it.
+        eatNext = true
       end
 
       # Look for start and end of record
@@ -898,6 +920,41 @@ def mimeTypeToSummaryType(mimeType)
 end
 
 ###################################################################################################
+def generatePdfThumbnail(itemID, timestamp)
+  url = "#{$thumbnailServer}/uc/item/#{itemID.sub(/^qt/, '')}?image.view=generateImage;imgWidth=121;pageNum=1"
+  response = HTTParty.get(url)
+  response.code.to_i == 200 or raise("Error generating thumbnail: HTTP #{response.code}: #{response.message}")
+  tempFile = Tempfile.new("thumbnail")
+  begin
+    tempFile.write(response.body)
+    tempFile.close
+    imgPath = tempFile.path
+
+    mimeType = MimeMagic.by_magic(File.open(imgPath))
+    mimeType && mimeType.mediatype == "image" or raise("Non-image thumbnail #{imgPath}")
+    dims = FastImage.size(imgPath)
+    assetID = putAsset(imgPath, {
+      width: dims[0].to_s,
+      height: dims[1].to_s
+    })
+
+    return { asset_id: assetID,
+             image_type: mimeType.subtype,
+             width: dims[0],
+             height: dims[1],
+             timestamp: timestamp
+           }
+  ensure
+    begin
+      tempFile.close
+    rescue Exception => e
+      # ignore
+    end
+    tempFile.unlink
+  end
+end
+
+###################################################################################################
 # Extract metadata for an item, and add it to the current index batch.
 # Note that we create, but don't yet add, records to our database. We put off really inserting
 # into the database until the batch has been successfully processed by AWS.
@@ -1030,6 +1087,31 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
   contentPath = contentFile && contentFile[:path]
   mimeType    = contentFile && contentFile.at("mimeType") && contentFile.at("mimeType").text
 
+  # Generate thumbnails (but only for non-suppressed PDF items)
+  existingItem = Item[itemID]
+  if !attrs[:suppress_content] && data.single("pdfExists") == "yes"
+    pdfPath = "#{DATA_DIR}/13030/pairtree_root/#{itemID.scan(/\w\w/).join('/')}/#{itemID}/content/#{itemID}.pdf"
+    if File.exist?(pdfPath)
+      pdfTimestamp = File.mtime(pdfPath).to_i
+      existingThumb = existingItem ? JSON.parse(existingItem.attrs)["thumbnail"] : nil
+      if existingThumb && existingThumb["timestamp"] == pdfTimestamp
+        # Rebuilding to keep order of fields consistent
+        attrs[:thumbnail] = { asset_id: existingThumb["asset_id"],
+                              image_type: existingThumb["image_type"],
+                              width: existingThumb["width"].to_i,
+                              height: existingThumb["height"].to_i,
+                              timestamp: existingThumb["timestamp"].to_i
+                            }
+      else
+        begin
+          attrs[:thumbnail] = generatePdfThumbnail(itemID, pdfTimestamp)
+        rescue Exception => e
+          puts "Warning: error generating thumbnail: #{e}"
+        end
+      end
+    end
+  end
+
   # Populate the Item model instance
   dbItem = Item.new
   dbItem[:id]           = itemID
@@ -1142,8 +1224,9 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
     }
   end
 
-  # Calculate a digest of the index data and database records
+  # Calculate digests of the index data and database records
   idxData = JSON.generate(idxItem)
+  idxDigest = Digest::MD5.base64digest(idxData)
   dbCombined = {
     dbItem: dbItem.to_hash,
     dbAuthors: dbAuthors.map { |authRecord| authRecord.to_hash },
@@ -1151,23 +1234,54 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
     dbSection: section ? section.to_hash : nil,
     units: units
   }
-  dbData = JSON.generate(dbCombined)
-  digest = Digest::MD5.base64digest(idxData + dbData)
+  dataDigest = Digest::MD5.base64digest(JSON.generate(dbCombined))
+
+  # Add time-varying things into the database item now that we've generated a stable digest.
+  dbItem[:last_indexed] = timestamp
+  dbItem[:index_digest] = idxDigest
+  dbItem[:data_digest] = dataDigest
+
+  dbDataBlock = { dbItem: dbItem, dbAuthors: dbAuthors, dbIssue: issue, dbSection: section, units: units }
+
+  # Single-item debug
+  if $testMode
+    puts data.root.at('meta').to_s
+    pp dbCombined
+    fooData = idxItem.clone
+    fooData[:fields] and fooData[:fields][:text] and fooData[:fields].delete(:text)
+    pp fooData
+    exit 1
+  end
 
   # If nothing has changed, skip the work of updating this record.
-  existingItem = Item[itemID]
-  if existingItem && existingItem[:index_digest] == digest && !$testMode && !$forceMode
+
+  # Bootstrapping the addition of data digest (temporary)
+  # FIXME: Remove this soon
+  if existingItem && existingItem[:data_digest].nil?
+    existingItem[:index_digest] = idxDigest
+  end
+
+  if existingItem && !$forceMode && existingItem[:index_digest] == idxDigest
+
+    # If only the database portion changed, we can safely skip the CloudSearch re-indxing
+    if existingItem[:data_digest] != dataDigest
+      puts "Changed item. (database change only, search data unchanged)"
+      DB.transaction do
+        updateDbItem(dbDataBlock)
+      end
+      $nProcessed += 1
+      return
+    end
+
+    # Nothing changed; just update the timestamp.
     puts "Unchanged item."
     existingItem.last_indexed = timestamp
     existingItem.save
     $nUnchanged += 1
     return
   end
-  puts "#{existingItem ? 'Changed' : 'New'} item.#{attrs[:suppress_content] ? " (suppressed content)" : ""}"
 
-  # Add time-varying things into the database item now that we've generated a stable digest.
-  dbItem[:last_indexed] = timestamp
-  dbItem[:index_digest] = digest
+  puts "#{existingItem ? 'Changed' : 'New'} item.#{attrs[:suppress_content] ? " (suppressed content)" : ""}"
 
   # Make doubly sure the logic above didn't generate a record that's too big.
   if idxData.bytesize >= 1024*1024
@@ -1186,18 +1300,9 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
   batch[:items].empty? or batch[:idxData] << ",\n"  # Separator between records
   batch[:idxData] << idxData
   batch[:idxDataSize] += idxData.bytesize
-  batch[:items] << { dbItem: dbItem, dbAuthors: dbAuthors, dbIssue: issue, dbSection: section, units: units }
+  batch[:items] << dbDataBlock
   #puts "current batch size: #{batch[:idxDataSize]}"
 
-  # Single-item debug
-  if $testMode
-    puts data.root.at('meta').to_s
-    pp dbCombined
-    fooData = idxItem.clone
-    fooData[:fields] and fooData[:fields][:text] and fooData[:fields].delete(:text)
-    pp fooData
-    exit 1
-  end
 end
 
 ###################################################################################################
@@ -1227,6 +1332,72 @@ def indexAllItems
 end
 
 ###################################################################################################
+def updateDbItem(data)
+
+  itemID = data[:dbItem][:id]
+
+  # Delete any existing data related to this item (except counts which can stay)
+  ItemAuthor.where(item_id: itemID).delete
+  UnitItem.where(item_id: itemID).delete
+
+  # Insert (or update) the issue and section
+  iss, sec = data[:dbIssue], data[:dbSection]
+  if iss
+    found = Issue.first(unit_id: iss.unit_id, volume: iss.volume, issue: iss.issue)
+    if found
+      iss = found
+    else
+      iss.save
+    end
+    if sec
+      found = Section.first(issue_id: iss.id, name: sec.name)
+      if found
+        sec = found
+      else
+        sec.issue_id = iss.id
+        sec.save
+      end
+      data[:dbItem][:section] = sec.id
+    end
+  end
+
+  # Now insert the item and its authors
+  Item.where(id: itemID).delete
+  data[:dbItem].save()
+  data[:dbAuthors].each { |dbAuth|
+    dbAuth.save()
+  }
+
+  # Link the item to its units
+  done = Set.new
+  aorder = 10000
+  data[:units].each_with_index { |unitID, order|
+    if !done.include?(unitID)
+      UnitItem.create(
+        :unit_id => unitID,
+        :item_id => itemID,
+        :ordering_of_units => order,
+        :is_direct => true
+      )
+      done << unitID
+
+      $unitAncestors[unitID].each { |ancestor|
+        if !done.include?(ancestor)
+          UnitItem.create(
+            :unit_id => ancestor,
+            :item_id => itemID,
+            :ordering_of_units => aorder,  # maybe should this column allow null?
+            :is_direct => false
+          )
+          aorder += 1
+          done << ancestor
+        end
+      }
+    end
+  }
+end
+
+###################################################################################################
 def processBatch(batch)
   puts "Processing batch: nItems=#{batch[:items].size}, size=#{batch[:idxDataSize]}."
 
@@ -1248,73 +1419,9 @@ def processBatch(batch)
   end
 
   # Now that we've successfully added the documents to AWS CloudSearch, insert records into
-  # our database. For efficience, do all the records in a single transaction.
+  # our database. For efficiency, do all the records in a single transaction.
   DB.transaction do
-
-    # Do each item in the batch
-    batch[:items].each { |data|
-      itemID = data[:dbItem][:id]
-
-      # Delete any existing data related to this item (except counts which can stay)
-      ItemAuthor.where(item_id: itemID).delete
-      UnitItem.where(item_id: itemID).delete
-
-      # Insert (or update) the issue and section
-      iss, sec = data[:dbIssue], data[:dbSection]
-      if iss
-        found = Issue.first(unit_id: iss.unit_id, volume: iss.volume, issue: iss.issue)
-        if found
-          iss = found
-        else
-          iss.save
-        end
-        if sec
-          found = Section.first(issue_id: iss.id, name: sec.name)
-          if found
-            sec = found
-          else
-            sec.issue_id = iss.id
-            sec.save
-          end
-          data[:dbItem][:section] = sec.id
-        end
-      end
-
-      # Now insert the item and its authors
-      Item.where(id: itemID).delete
-      data[:dbItem].save()
-      data[:dbAuthors].each { |dbAuth|
-        dbAuth.save()
-      }
-
-      # Link the item to its units
-      done = Set.new
-      aorder = 10000
-      data[:units].each_with_index { |unitID, order|
-        if !done.include?(unitID)
-          UnitItem.create(
-            :unit_id => unitID,
-            :item_id => itemID,
-            :ordering_of_units => order,
-            :is_direct => true
-          )
-          done << unitID
-
-          $unitAncestors[unitID].each { |ancestor|
-            if !done.include?(ancestor)
-              UnitItem.create(
-                :unit_id => ancestor,
-                :item_id => itemID,
-                :ordering_of_units => aorder,  # maybe should this column allow null?
-                :is_direct => false
-              )
-              aorder += 1
-              done << ancestor
-            end
-          }
-        end
-      }
-    }
+    batch[:items].each { |data| updateDbItem(data) }
   end
 
   # Update status
