@@ -5,6 +5,7 @@ app/js/*.map
 bin/
 .bundle/
 bower_components/
+cache/
 config/
 dist
 Gemfile.lock
