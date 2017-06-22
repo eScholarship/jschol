@@ -305,9 +305,20 @@ class FacetFieldset extends React.Component {
     this.props.handler(event, newQuery, 'pub_year')
   }
 
+  cancelModal = e => {
+    this.clearFacet(e, this.props.data.fieldName)
+    this.closeModal(e, this.props.data.fieldName)
+  }
+
+  clearFacet = (e, facetType) => {
+    $('[name=start]').val('0')
+    // console.log($('[id="'+facetType+'"] input:checked'))
+    var filters = $('[id="'+facetType+'"] input:checked').prop('checked', false)
+  }
+
   closeModal = (e, facetType) => {
-    // Open FacetFieldset of facetType since that's where user left off.
-    this.props.handler(e, null, null, facetType)
+    // ToDo? Open FacetFieldset of facetType since that's where user left off.
+    // this.props.handler(e, null, null, facetType)
     this.setState({modalOpen:false})
   }
 
@@ -321,16 +332,11 @@ class FacetFieldset extends React.Component {
     })
   }
 
-  //Temporary, for testing
-  componentDidMount() {
-    this.props.modal && console.log(this.parentSelector)
-  }
-
   render() {
     let data = this.props.data
     let facets, facetItemNodes
     if (data.facets) {
-      facets = (this.props.modal) ? this.props.data.facets.slice(0, 5) : this.props.data.facets
+      facets = (this.props.modal) ? data.facets.slice(0, 5) : data.facets
       facetItemNodes = this.getFacetNodes(facets)
     } else {
       //pub_year
@@ -344,15 +350,15 @@ class FacetFieldset extends React.Component {
         <div className="facetItems c-checkbox">
           {facetItemNodes}
           {this.props.modal &&
-            <div ref={(el)=> {this.parentSelector = el}}>
+            <div id="facetModalBase">
               <a href="" onClick={(event)=>{
                 this.setState({modalOpen:true})
                 event.preventDefault()}}>show more &raquo;</a>
               <ModalComp isOpen={this.state.modalOpen}
-                parentSelector={()=>setTimeout(()=>this.parentSelector, 0)}
-                onCancel={e=>this.closeModal(e, data.fieldName)}
+                parentSelector={()=>$("#facetModalBase")[0]}
+                onCancel={e=>this.cancelModal(e)}
                 header={"Refine By " + data.display}
-                content={facetItemNodes}
+                content={this.getFacetNodes(data.facets)}
                 onOK={e=>this.closeModal(e, data.fieldName)} okLabel="Select" />
             </div>
           }
