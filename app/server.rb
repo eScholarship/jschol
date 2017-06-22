@@ -579,7 +579,7 @@ get "/api/search/" do
     :header => getGlobalHeader,
     :campuses => getCampusesAsMenu
   }
-  facetList = ['type_of_work', 'peer_reviewed', 'supp_file_types',
+  facetList = ['type_of_work', 'peer_reviewed', 'supp_file_types', 'pub_year',
                'campuses', 'departments', 'journals', 'disciplines', 'rights']
   params = CGI::parse(request.query_string)
   searchType = params["searchType"][0]
