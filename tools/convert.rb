@@ -1486,6 +1486,7 @@ def convertAllItems(arks)
 
   # Build a list of all valid units
   $allUnits = Unit.map { |unit| [unit.id, unit] }.to_h
+  $allUnits['lbnl'].type = 'campus'
 
   # Build a cache of unit ancestors
   $unitAncestors = Hash.new { |h,k| h[k] = [] }
