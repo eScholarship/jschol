@@ -38,7 +38,7 @@ $modal-footer-height: 3.5em;
   left: 0;
   background-color: rgba($color-light-black, 0.8);
   overflow: auto;
-  z-index: 1; // stack above some components that contain higher z-indexes than 0
+  z-index: 2; // stack above some components that contain higher z-indexes than 0
 
   @supports (backdrop-filter: blur()) {
     background-color: rgba($color-black, 0.6);

@@ -51,7 +51,7 @@ if (!(typeof document === "undefined")) {
 //   query: [{displayName: 'UCLA School of Law (All)', value: 'uclalaw'}]
 // }
 class FacetItem extends React.Component {
-  
+
   //if the facet item is in the query list, or the facet item's ancestor is checked, 
   //return true - this facet item should be checked
   checkFacet(props) {
@@ -305,44 +305,56 @@ class FacetFieldset extends React.Component {
     this.props.handler(event, newQuery, 'pub_year')
   }
 
-  cancelModal = e => {
-    this.clearFacet(e, this.props.data.fieldName)
-    this.closeModal(e, this.props.data.fieldName)
-  }
-
-  clearFacet = (e, facetType) => {
-    $('[name=start]').val('0')
-    // console.log($('[id="'+facetType+'"] input:checked'))
-    var filters = $('[id="'+facetType+'"] input:checked').prop('checked', false)
-  }
-
   closeModal = (e, facetType) => {
-    // ToDo? Open FacetFieldset of facetType since that's where user left off.
-    // this.props.handler(e, null, null, facetType)
     this.setState({modalOpen:false})
   }
 
-  getFacetNodes = (facets) => {
-    return facets.map( facet => {
-      let facetItemData = {
-        facetType: this.props.data.fieldName,
-        facet: facet,
+  getFacetNodes = facets =>
+    <div style={{maxHeight: "300px", overflowY: "auto"}}>
+      {/* TODO: MH: I hacked in the style above to make scrolling happen, but ought to put in CSS somewhere */}
+      {facets.map( facet =>
+        <FacetItem key={facet.value}
+                   data={{facetType: this.props.data.fieldName, facet: facet}}
+                   query={this.props.query.filters} handler={this.handleChange} /> )
       }
-      return ( <FacetItem key={facet.value} data={facetItemData} query={this.props.query.filters} handler={this.handleChange} /> )
-    })
+    </div>
+
+  sliceFacets(facets)
+  {
+    if (!this.props.query.filters)
+      return facets.slice(0, 5)
+
+    let checked = {}
+    console.log("slice: filters=", this.props.query.filters)
+    for (let filter of this.props.query.filters)
+      checked[filter.value] = true
+
+    let out = []
+    for (let facet of facets) {
+      if (facet.value in checked)
+        out.push(facet)
+      else if (out.length < 5)
+        out.push(facet)
+    }
+
+    return out
   }
 
   render() {
     let data = this.props.data
     let facets, facetItemNodes
     if (data.facets) {
-      facets = (this.props.modal) ? data.facets.slice(0, 5) : data.facets
+      facets = this.state.modalOpen ? [] :
+               (this.props.modal && data.facets.length > 5) ? this.sliceFacets(data.facets) :
+               data.facets
       facetItemNodes = this.getFacetNodes(facets)
-    } else {
-      //pub_year
+    } else if (data.fieldName == "pub_year") {
       facetItemNodes = (
         <PubYear data={data} query={this.props.query} handler={this.pubDateChange} />
       )
+    }
+    else {
+      facetItemNodes = []
     }
     return (
       <details className="c-facetbox" id={data.fieldName} open={this.props.open}>
@@ -356,7 +368,6 @@ class FacetFieldset extends React.Component {
                 event.preventDefault()}}>show more &raquo;</a>
               <ModalComp isOpen={this.state.modalOpen}
                 parentSelector={()=>$("#facetModalBase")[0]}
-                onCancel={e=>this.cancelModal(e)}
                 header={"Refine By " + data.display}
                 content={this.getFacetNodes(data.facets)}
                 onOK={e=>this.closeModal(e, data.fieldName)} okLabel="Select" />
