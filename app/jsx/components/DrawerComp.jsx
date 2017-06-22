@@ -24,27 +24,70 @@ class AddWidgetMenu extends React.Component {
   }
 }
 
+class SortableNavList extends React.Component {
+  state = this.setupState(this.props)
+
+  setupState(props) {
+    return {
+      data: this.generateData(props.navItems)
+    }
+  }
+
+  generateData(navItems) {
+    if (!navItems)
+      return undefined
+    return navItems.map(nav => {
+      let data = { id: nav.id, type: nav.type, title: nav.name, subtitle: <i>{nav.type}</i> }
+      if (nav.type == "folder")
+        data.children = this.generateData(nav.sub_nav)
+      else
+        data.noChildren = true
+
+      if (nav.type == "home")
+        data.title = <Link to={"/uc/" + this.props.unit}>{nav.name}</Link>
+      else if (nav.type == "page")
+        data.title = <Link to={"/uc/" + this.props.unit + "/" + nav.slug}>{nav.name}</Link>
+
+      return data
+    })
+  }
+
+  render() {
+    const SortableTree = this.props.cms.modules.SortableTree
+    return (
+      <SortableTree
+        treeData={this.state.data}
+        isVirtualized={false}
+        scaffoldBlockPxWidth={30}
+        maxDepth={2}
+        canDrag={({ node }) => {
+          if (node.type == "home") // don't allow dragging unit home
+            return false
+          return true
+        }}
+        canDrop={({ nextTreeIndex, nextParent }) => {
+          if (nextTreeIndex == 0) // don't allow rearranging above the unit home
+            return false
+          if (!nextParent)
+            return true
+          if (nextParent.noChildren)
+            return false
+          if (nextParent.type != "folder")
+            return false
+          return true
+        }}
+        onChange={treeData=>this.setState({data: treeData})}/>
+    )
+  }
+}
+
 class DrawerComp extends React.Component {
   state = this.setupState(this.props)
 
   setupState(props) {
     return {
-      sidebarList: props.data.sidebar,
-      navList: this.navItems(props.data.header.nav_bar)
+      sidebarList: props.data.sidebar
     }
-  }
-
-  navItems(navBar) {
-    if (!navBar)
-      return undefined
-    return navBar.map(nav => {
-      let data = { id: nav.id, type: nav.type, title: nav.name }
-      if (nav.type == "folder")
-        data.children = this.navItems(nav.sub_nav)
-      else
-        data.noChildren = true
-      return data
-    })
   }
 
   componentWillReceiveProps(nextProps) {
@@ -103,13 +146,7 @@ class DrawerComp extends React.Component {
           </AddWidgetMenu>
         </div>
 
-        <cms.modules.SortableTree
-          treeData={this.state.navList}
-          isVirtualized={false}
-          scaffoldBlockPxWidth={30}
-          maxDepth={2}
-          canDrop={({ node, nextParent }) => !nextParent || !(nextParent.noChildren || node.type == nextParent.type)}
-          onChange={treeData=>this.setState({navList: treeData})}/>
+        <SortableNavList cms={cms} unit={this.props.data.unit.id} navItems={this.props.data.header.nav_bar}/>
 
         <div className="c-drawer__heading">
           Sidebar Widgets
@@ -133,14 +170,14 @@ class DrawerComp extends React.Component {
     <Subscriber channel="cms">
       { cms =>
         <div>
-            {(this.state.working || this.props.fetchingData) && <div className="c-drawer__working-overlay"/>}
-            <cms.modules.Sidebar sidebar={this.state.navList ? this.drawerContent(cms) : <div/>}
-                     open={cms.isEditingPage}
-                     docked={cms.isEditingPage}
-                     onSetOpen={this.onSetSidebarOpen}
-                     sidebarClassName="c-drawer">
-              {this.props.children}
-            </cms.modules.Sidebar>
+          {(this.state.working || this.props.fetchingData) && <div className="c-drawer__working-overlay"/>}
+          <cms.modules.Sidebar sidebar={this.drawerContent(cms)}
+                   open={cms.isEditingPage}
+                   docked={cms.isEditingPage}
+                   onSetOpen={this.onSetSidebarOpen}
+                   sidebarClassName="c-drawer">
+            {this.props.children}
+          </cms.modules.Sidebar>
         </div>
       }
     </Subscriber>

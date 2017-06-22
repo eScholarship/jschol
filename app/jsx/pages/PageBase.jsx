@@ -93,19 +93,7 @@ class PageBase extends React.Component
 
   // Called when user clicks Edit Page, or Done Editing
   onEditingPageChange = flag =>
-  {
-    if (flag && !this.state.cmsModules) {
-      // Load CMS-specific modules asynchronously
-      require.ensure(['react-trumbowyg', 'react-sidebar', 'react-sortable-tree'], (require) => {
-        this.setState({ isEditingPage: true,
-                        cmsModules: { Trumbowyg: require('react-trumbowyg').default,
-                                      Sidebar: require('react-sidebar').default,
-                                      SortableTree: require('react-sortable-tree').default } })
-      }, "cms") // load from webpack "cms" bundle
-    }
-    else
-      this.setState({ isEditingPage: flag })
-  };
+    this.setState({ isEditingPage: flag })
 
   // Pages with any editable components should override this.
   isPageEditable() {
@@ -205,8 +193,17 @@ class PageBase extends React.Component
           this.setState({ adminLogin: null, permissions: null, isEditingPage: false })
           alert("Login note: " + data.message)
         }
-        else
+        else {
           this.setState({ permissions: data })
+          if (!this.state.cmsModules) {
+            // Load CMS-specific modules asynchronously
+            require.ensure(['react-trumbowyg', 'react-sidebar', 'react-sortable-tree'], (require) => {
+              this.setState({ cmsModules: { Trumbowyg: require('react-trumbowyg').default,
+                                            Sidebar: require('react-sidebar').default,
+                                            SortableTree: require('react-sortable-tree').default } })
+            }, "cms") // load from webpack "cms" bundle
+          }
+        }
       })
       .fail((jqxhr, textStatus, err)=> {
         this.setState({ error: textStatus, adminLogin: null, permissions: null, isEditingPage: false })
