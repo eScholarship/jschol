@@ -679,13 +679,8 @@ def prefilterBatch(batch)
     # Process each line, looking for BEGIN prefiltered ... END prefiltered
     shortArk, buf = nil, []
     outer = []
-    eatNext = false
+    xmlStarted = false
     stdoutAndErr.each { |line|
-
-      if eatNext && line =~ /\s+[^<>]+\s*$/
-        eatNext = false
-        next
-      end
 
       # Filter out warning messages that get interspersed
       eatNext = false
@@ -695,8 +690,10 @@ def prefilterBatch(batch)
         line = $1
       elsif line =~ /(.*)WARNING: User supplied discipline term not found in taxonomy/
         line = $1
-        # Sadly, the prefilter dumps the offending discipline on the *following* line; so eat it.
-        eatNext = true
+      end
+
+      if line =~ /\s*<\?xml / and shortArk
+        xmlStarted = true
       end
 
       # Look for start and end of record
@@ -707,9 +704,14 @@ def prefilterBatch(batch)
         timestamps.include?(shortArk) or
           raise("Can't find timestamp for item #{shortArk.inspect} - did we not request it?")
         $indexQueue << [shortArk, timestamps[shortArk], buf.join]
-        shortArk, buf = nil, []
+        shortArk, buf, xmlStarted = nil, [], false
       elsif shortArk
-        buf << line
+        if !xmlStarted
+          #puts "Skip line before XML: #{line}"
+          outer << line
+        else
+          buf << line
+        end
       else
         outer << line
       end
@@ -933,6 +935,8 @@ def generatePdfThumbnail(itemID, timestamp)
     mimeType = MimeMagic.by_magic(File.open(imgPath))
     mimeType && mimeType.mediatype == "image" or raise("Non-image thumbnail #{imgPath}")
     dims = FastImage.size(imgPath)
+    dims[0] == 121 or raise("Got thumbnail width #{dims[0]}, wanted 121")
+    dims[1] < 300 or raise("Got thumbnail height #{dims[1]}, wanted less than 300")
     assetID = putAsset(imgPath, {
       width: dims[0].to_s,
       height: dims[1].to_s
