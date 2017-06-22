@@ -33,7 +33,7 @@ def getPageBreadcrumb(unit, pageName)
   pageName == "profile" and return [{ name: "Profile", id: unit.id + ":" + pageName}]
   pageName == "sidebar" and return [{ name: "Sidebars", id: unit.id + ":" + pageName}]
   p = Page.where(unit_id: unit.id, slug: pageName).first
-  p or raise("Page lookup failed: unit=#{unit.id} slug=#{pageName}")
+  p or halt(404, "Unknown page #{pageName} in #{unit.id}")
   return [{ name: p[:name], id: unit.id + ":" + pageName, url: "/#{unit.id}/#{pageName}" }]
 end
 
@@ -234,6 +234,25 @@ def getUnitSidebar(unit)
   return Widget.where(unit_id: unit.id, region: "sidebar").order(:ordering).map { |widget|
     { id: widget[:id], kind: widget[:kind], attrs: widget[:attrs] ? JSON.parse(widget[:attrs]) : {} }
   }
+end
+
+def getUnitNavConfig(unit, navBar, navID, level=1)
+  navBar.each { |nav|
+    if nav['id'].to_s == navID.to_s
+      if nav['type'] == 'page'
+        page = Page.where(unit_id: unit.id, slug: nav['slug']).first
+        page or halt(404, "Unknown page #{nav['slug']} for unit #{unit.id}")
+        nav['title'] = page.title
+        nav['attrs'] = JSON.parse(page.attrs)
+      end
+      return nav
+    end
+    if nav['type'] == 'folder'
+      chk = getUnitNav(unit, nav['sub_nav'], navID, level+1)
+      chk and return chk
+    end
+  }
+  level == 1 and halt(404, "Unknown nav ID #{navID} for unit #{unit.id}")
 end
 
 #   newAttrs = {

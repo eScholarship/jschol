@@ -486,10 +486,11 @@ get "/api/unit/:unitID/?:pageName/?" do
 
   attrs = JSON.parse(unit[:attrs])
   pageName = params[:pageName]
+  puts "api: pageName=#{pageName}"
   if pageName
     pageData = {
       unit: unit.values.reject{|k,v| k==:attrs}.merge(:extent => extent(unit.id, unit.type)),
-      header: getUnitHeader(unit, pageName, attrs),
+      header: getUnitHeader(unit, pageName =~ /^(nav|sidebar)/ ? nil : pageName, attrs),
       sidebar: getUnitSidebar(unit)
     }
     if pageName == 'home'
@@ -498,6 +499,8 @@ get "/api/unit/:unitID/?:pageName/?" do
       pageData[:content] = getCampusLandingPageContent(unit, attrs)
     elsif pageName == 'profile'
       pageData[:content] = getUnitProfile(unit, attrs)
+    elsif pageName == 'nav'
+      pageData[:content] = getUnitNavConfig(unit, attrs['nav_bar'], params[:subPage])
     elsif pageName == 'sidebar'
       pageData[:content] = getUnitSidebar(unit)
     else
@@ -642,12 +645,12 @@ end
 def getGlobalHeader
     return {
    nav_bar: [
-     { name: "About", sub_nav: [ { name: "TBD", url: "#" } ] },
-     { name: "Campus Sites",
+     { id: 1, name: "About", sub_nav: [ { name: "TBD", url: "#" } ] },
+     { id: 2, name: "Campus Sites",
        sub_nav: $activeCampuses.map { |k, v| { name: v.values[:name], url: "/uc/#{k}" } }
      },
-     { name: "UC Open Access", sub_nav: [ { name: "TBD", url: "#" } ] },
-     { name: "eScholarship Publishing", url: "#" },
+     { id: 3, name: "UC Open Access", sub_nav: [ { name: "TBD", url: "#" } ] },
+     { id: 4, name: "eScholarship Publishing", url: "#" },
    ]
     # was: JSON.parse($unitsHash['root'][:attrs])['nav_bar']
   }

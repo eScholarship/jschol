@@ -22,6 +22,7 @@ import UnitSearchLayout from '../layouts/UnitSearchLayout.jsx'
 import UnitStaticPageLayout from '../layouts/UnitStaticPageLayout.jsx'
 import UnitProfileLayout from '../layouts/UnitProfileLayout.jsx'
 import UnitSidebarConfigLayout from '../layouts/UnitSidebarConfigLayout.jsx'
+import UnitStaticPageConfigLayout from '../layouts/UnitStaticPageConfigLayout.jsx'
 import AdminBarComp from '../components/AdminBarComp.jsx'
 
 class UnitPage extends PageBase
@@ -38,14 +39,16 @@ class UnitPage extends PageBase
   // (ie - switch between DeparmentLayout and Series Layout or UnitSearchLayout)
   // before the AJAX call for the different content has returned and then there are lots of issues!
   pageDataURL() {
-    if (this.props.params.pageName) {
-      if (this.props.params.pageName === 'search') {
-        return "/api/unit/" + this.props.params.unitID + "/search/" + this.props.location.search
-      } else {
-        return "/api/unit/" + this.props.params.unitID + "/" + this.props.params.pageName
-      }
+    const pm = this.props.params
+    if (pm.pageName) {
+      if (pm.pageName === 'search')
+        return "/api/unit/" + pm.unitID + "/search/" + this.props.location.search
+      else if (/navPage|navLink|navFolder/.test(pm.pageName))
+        return "/api/unit/" + pm.unitID + "/nav/" + pm.splat
+      else
+        return "/api/unit/" + pm.unitID + "/" + pm.pageName
     }
-    return "/api/unit/" + this.props.params.unitID + "/home"
+    return "/api/unit/" + pm.unitID + "/home"
   }
 
   // Unit ID for permissions checking
@@ -79,6 +82,8 @@ class UnitPage extends PageBase
       contentLayout = (<UnitSearchLayout unit={data.unit} data={data.content} sidebar={sidebar}/>);
     } else if (this.props.params.pageName === 'profile') {
       contentLayout = (<UnitProfileLayout unit={data.unit} data={data.content}/>);
+    } else if (this.props.params.pageName === 'navPage') {
+      contentLayout = (<UnitStaticPageConfigLayout unit={data.unit} data={data.content}/>);
     } else if (this.props.params.pageName === 'sidebar') {
       contentLayout = (<UnitSidebarConfigLayout unit={data.unit} data={data.content}/>);
     } else if (this.props.params.pageName) {

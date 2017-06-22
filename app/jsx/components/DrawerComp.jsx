@@ -46,7 +46,7 @@ class SortableNavList extends React.Component {
       if (nav.type == "home")
         data.title = <Link to={"/uc/" + this.props.unit}>{nav.name}</Link>
       else if (nav.type == "page")
-        data.title = <Link to={"/uc/" + this.props.unit + "/" + nav.slug}>{nav.name}</Link>
+        data.title = <Link to={`/uc/${this.props.unit}/navPage/${nav.id}`}>{nav.name}</Link>
 
       return data
     })
