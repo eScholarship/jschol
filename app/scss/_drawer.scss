@@ -131,7 +131,9 @@
 //}
 
 .c-drawer__nav-buttons {
-  float: right;
+  position: absolute;
+  right: 0;
+  top: 0;
   
   button {
     padding-right: $spacing-sm;
