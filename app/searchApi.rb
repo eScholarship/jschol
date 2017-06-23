@@ -211,7 +211,7 @@ def aws_encode(params, facetTypes)
   # create facet query, only create facet query for fields specified in facetTypes
   facetQuery = {}
   facetTypes.each { |facetType| facetQuery[facetType] = FACETS[facetType]['awsFacetParam'] }
-  
+
   if !facetQuery.empty? then aws_params[:facet] = JSON.generate(facetQuery) end
 
   # create filter queries, always apply filters for all available fields in cloudsearch

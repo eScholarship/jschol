@@ -21,7 +21,8 @@ class ModalComp extends React.Component {
           {this.props.content}
         </div>
         <div className="c-modal__footer">
-          <button className="c-modal__button-close" onClick={this.props.onCancel}>Cancel</button>
+          { this.props.onCancel &&
+            <button className="c-modal__button-close" onClick={this.props.onCancel}>Cancel</button> }
           <button className="o-button__3" onClick={this.props.onOK}>{this.props.okLabel}</button>
         </div>
       </ReactModal>
