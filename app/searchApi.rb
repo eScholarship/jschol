@@ -318,7 +318,7 @@ def extent(id, type)
   elsif (type == 'series' || type == 'monograph_series' || type == 'seminar_series') then 
     aws_params[:filter_query] = "(term field=series '#{id}')"
   else 
-    throw "Not a valid unit type"
+    raise("Not a valid unit type.")
   end
   response = normalizeResponse($csClient.search(return: '_no_fields', **aws_params))
   pb = response['facets']['pub_year']['buckets']

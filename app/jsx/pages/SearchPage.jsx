@@ -121,7 +121,7 @@ class FacetItem extends React.Component {
     }
 
     return (
-      <div className="facetItem">
+      <div>
         <input id={facet.value} className="c-checkbox__input" type="checkbox"
           name={this.props.data.facetType} value={facet.value}
           onChange={this.handleChange}
@@ -310,8 +310,7 @@ class FacetFieldset extends React.Component {
   }
 
   getFacetNodes = facets =>
-    <div style={{maxHeight: "300px", overflowY: "auto"}}>
-      {/* TODO: MH: I hacked in the style above to make scrolling happen, but ought to put in CSS somewhere */}
+    <div className="c-facetitems">
       {facets.map( facet =>
         <FacetItem key={facet.value}
                    data={{facetType: this.props.data.fieldName, facet: facet}}
@@ -370,7 +369,7 @@ class FacetFieldset extends React.Component {
                 parentSelector={()=>$("#facetModalBase")[0]}
                 header={"Refine By " + data.display}
                 content={this.getFacetNodes(data.facets)}
-                onOK={e=>this.closeModal(e, data.fieldName)} okLabel="Select" />
+                onOK={e=>this.closeModal(e, data.fieldName)} okLabel="Done" />
             </div>
           }
         </div>

@@ -487,8 +487,14 @@ get "/api/unit/:unitID/?:pageName/?" do
   attrs = JSON.parse(unit[:attrs])
   pageName = params[:pageName]
   if pageName
+    ext = nil
+    begin
+      ext = extent(unit.id, unit.type)
+    rescue Exception => e
+      halt 404, "Error building page data:" + e.message
+    end
     pageData = {
-      unit: unit.values.reject{|k,v| k==:attrs}.merge(:extent => extent(unit.id, unit.type)),
+      unit: unit.values.reject{|k,v| k==:attrs}.merge(:extent => ext),
       header: getUnitHeader(unit, pageName, attrs),
       sidebar: getUnitSidebar(unit)
     }
