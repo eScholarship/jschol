@@ -11,18 +11,24 @@ if (!(typeof document === "undefined")) {
 
 class DotDiv extends React.Component {
   componentDidMount() {
-    $(this.domEl).dotdotdot({watch:"window"})
+    $(this.refs[0]).dotdotdot({watch:"window", after:'.c-authorlist__list-more-link', ellipsis:' ', wrap:'children'})
+    setTimeout(()=> $('.c-authorlist__list').trigger("update"), 0)
   }
 
-  render = () =>
-    <div className={this.props.className} ref={el => this.domEl = el}>
-      {this.props.children}
-    </div>
+  render() {
+    return (
+      <div className={this.props.className}>
+        {React.Children.map(this.props.children, (element, idx) => {
+          return React.cloneElement(element, { ref: idx })
+        })}
+      </div>
+    ) 
+  }
 }
 
 class DotH2 extends React.Component {
-  xcomponentDidMount() {
-    $(this.domEl).dotdotdot({watch:"window"})
+  componentDidMount() {
+    $(this.domEl).dotdotdot({watch:"window", after:'.c-authorlist__list-more-link', ellipsis:' ', wrap:'children'})
   }
 
   render = () =>
@@ -62,13 +68,10 @@ class ScholWorksComp extends React.Component {
 
     var authorList;
     if (this.props.result.authors) {
+      // Joel's CSS handles inserting semicolons here.
       authorList = this.props.result.authors.map(function(author, i, a) {
-        if (i === a.length-1) {
-          return (<li key={author+i}><Link to={"/search/?q="+author.name}>{author.name}</Link></li>);
-        } else {
-          return (<li key={author+i}><Link to={"/search/?q="+author.name}>{author.name}</Link>; </li>);
-        }
-      });
+        return (<li key={i}><a href={"/search/?q="+author.name}>{author.name}</a></li>)
+      })
     }
 
     var supp_files = this.props.result.supp_files.map(function(supp_file, i, a) {
@@ -116,8 +119,9 @@ class ScholWorksComp extends React.Component {
           </heading>
           {authorList && 
             <DotDiv className="c-authorlist">
-              <ul className="c-authorlist__list">
+              <ul className="c-authorlist__list" ref="foo">
                 {authorList}
+                <li><a href="" className="c-authorlist__list-more-link">et al.</a></li>
               </ul>
             </DotDiv>
           }
