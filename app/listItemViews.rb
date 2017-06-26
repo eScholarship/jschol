@@ -25,9 +25,8 @@ def itemResultData(itemIds, itemData, fields=[])
 
       itemListItem[:supp_files] = [{:type => 'video'}, {:type => 'image'}, {:type => 'pdf'}, {:type => 'audio'}]
       for supp_file_hash in itemListItem[:supp_files]
-        # pp(attrs['supp_files'])
         if attrs['supp_files']
-          supp_file_hash[:count] = attrs['supp_files'].count { |supp_file| supp_file['mimeType'].start_with?(supp_file_hash[:type])}
+          supp_file_hash[:count] = attrs['supp_files'].count { |supp_file| supp_file['mimeType'].include?(supp_file_hash[:type])}
         else
           supp_file_hash[:count] = 0
         end
