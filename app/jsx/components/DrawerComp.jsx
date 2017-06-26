@@ -34,7 +34,7 @@ class SortableNavList extends React.Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    if (!_.isEqual(this.props, nextProps))
+    if (!nextProps.fetchingData && !_.isEqual(this.props, nextProps))
       this.setState(this.setupState(nextProps))
   }
 
@@ -43,8 +43,10 @@ class SortableNavList extends React.Component {
       return undefined
     return navItems.map(nav => {
       let data = { id: nav.id, type: nav.type, title: nav.name, subtitle: <i>{nav.type}</i> }
-      if (nav.type == "folder")
+      if (nav.type == "folder") {
         data.children = this.generateData(nav.sub_nav)
+        data.expanded = true
+      }
       else
         data.noChildren = true
 
@@ -67,7 +69,7 @@ class SortableNavList extends React.Component {
   }
 
   onMoveNode = ({ treeData }) => {
-    this.setState({ data: treeData, working: true })
+    this.setState({ working: true })
     $.getJSON({ url: `/api/unit/${this.props.unit}/navOrder`,
                 type: 'PUT',
                 data: { order: JSON.stringify(this.travOrder(treeData)),
@@ -181,7 +183,10 @@ class DrawerComp extends React.Component {
           </AddWidgetMenu>
         </div>
 
-        <SortableNavList cms={cms} unit={this.props.data.unit.id} navItems={this.props.data.header.nav_bar}/>
+        <SortableNavList cms={cms}
+                         unit={this.props.data.unit.id}
+                         navItems={this.props.data.header.nav_bar}
+                         fetchingData={this.props.fetchingData}/>
 
         <div className="c-drawer__heading">
           Sidebar Widgets
