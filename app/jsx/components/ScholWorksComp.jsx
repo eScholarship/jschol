@@ -90,6 +90,7 @@ class ScholWorksComp extends React.Component {
       tagList.push({display: 'Peer Reviewed', tagStyle: 'peer'})
     }
     
+    let itemLink = "/uc/item/"+pr.id.replace(/^qt/, "")
     let publishingInfo
     let unitId
     if ('journalInfo' in pr) {
@@ -133,14 +134,14 @@ class ScholWorksComp extends React.Component {
           </ul>
           <heading>
             <DotH2 className="c-scholworks__heading">
-              <Link to={"/uc/item/"+pr.id.replace(/^qt/, "")}>{pr.title}</Link>
+              <Link to={itemLink}>{pr.title}</Link>
             </DotH2>
           </heading>
           {authorList && 
             <div className="c-authorlist">
               <DotAuthorUl className="c-authorlist__list">
                 {authorList}
-                <li><a href="" className="c-authorlist__list-more-link">et al.</a></li>
+                <li><Link to={itemLink} className="c-authorlist__list-more-link">et al.</Link></li>
               </DotAuthorUl>
             </div>
           }

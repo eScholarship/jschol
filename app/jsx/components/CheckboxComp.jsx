@@ -6,6 +6,7 @@ class CheckboxComp extends React.Component {
   render() {
     return (
       <div className="c-checkbox">
+      {/* 'id' and 'htmlFor' values must contain a unique number per pair below for accessibility */}
         <input id="c-checkbox__number1" type="checkbox" className="c-checkbox__input"/>
         <label htmlFor="c-checkbox__number1" className="c-checkbox__label">Video</label>
 

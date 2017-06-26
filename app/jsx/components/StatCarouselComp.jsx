@@ -10,49 +10,49 @@ class CampusCarouselComp extends React.Component {
   }
   render() {
     return (
-      <CarouselComp className="c-campuscarousel" options={{
+      <CarouselComp className="c-statcarousel" options={{
           cellAlign: 'left',
           contain: true,
           initialIndex: 0,
           pageDots: false
         }}>
-        <div className="c-campuscarousel__section">
-          <h2 className="c-campuscarousel__cell-heading">
+        <div className="c-statcarousel__section">
+          <h2 className="c-statcarousel__cell-heading">
             {this.props.campusName}
           </h2>
-          <div className="o-stat--item c-campuscarousel__cell">
+          <div className="o-stat--item c-statcarousel__cell">
             <b>99,999</b> Items
           </div>
-          <div className="o-stat--view c-campuscarousel__cell">
+          <div className="o-stat--view c-statcarousel__cell">
             <b>999,999</b> Views
           </div>
-          <div className="o-stat--passed c-campuscarousel__cell">
+          <div className="o-stat--passed c-statcarousel__cell">
             <b>9,999</b> Items since UC OA Policy passed
           </div>
-          <div className="o-stat--journals c-campuscarousel__cell">
+          <div className="o-stat--journals c-statcarousel__cell">
             <b>99</b> eScholarship Journals
           </div>
-          <div className="o-stat--units c-campuscarousel__cell">
+          <div className="o-stat--units c-statcarousel__cell">
             <b>999</b> Research Units
           </div>
         </div>
-        <div className="c-campuscarousel__section">
-          <h2 className="c-campuscarousel__cell-heading">
+        <div className="c-statcarousel__section">
+          <h2 className="c-statcarousel__cell-heading">
             All eScholarship
           </h2>
-          <div className="o-stat--item c-campuscarousel__cell">
+          <div className="o-stat--item c-statcarousel__cell">
             <b>999,999</b> Items
           </div>
-          <div className="o-stat--view c-campuscarousel__cell">
+          <div className="o-stat--view c-statcarousel__cell">
             <b>99,999,999</b> Views
           </div>
-          <div className="o-stat--passed c-campuscarousel__cell">
+          <div className="o-stat--passed c-statcarousel__cell">
             <b>99,999</b> Items since UC OA Policy passed
           </div>
-          <div className="o-stat--journals c-campuscarousel__cell">
+          <div className="o-stat--journals c-statcarousel__cell">
             <b>99</b> eScholarship Journals
           </div>
-          <div className="o-stat--units c-campuscarousel__cell">
+          <div className="o-stat--units c-statcarousel__cell">
             <b>999</b> Research Units
           </div>
         </div>

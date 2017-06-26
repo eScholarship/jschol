@@ -1,24 +1,24 @@
-// ##### Campus Carousel Component ##### //
+// ##### Statistics Carousel Component ##### //
 
-$campuscarousel-heading-height: 1.1em;
+$statcarousel-heading-height: 1.1em;
 
-.c-campuscarousel {
-  @extend %campuscarousel-flickity-customizations;
+.c-statcarousel {
+  @extend %statcarousel-flickity-customizations;
   margin-bottom: $spacing-md;
   padding: $spacing-sm 2.5em;
   background-color: $color-white;
   box-shadow: $box-shadow1;
 }
 
-.c-campuscarousel__section {
+.c-statcarousel__section {
   display: flex;
   position: relative;
-  padding-top: $campuscarousel-heading-height + 0.5em;
+  padding-top: $statcarousel-heading-height + 0.5em;
   background-color: $color-white; // hides section underneith when overlapping upon browser resize
 
   &:not(:first-child) {
 
-    [class^='c-campuscarousel__cell--'] {
+    [class^='c-statcarousel__cell--'] {
 
       &:first-of-type {
         border-left: 1px solid $color-dark-gray;
@@ -30,24 +30,24 @@ $campuscarousel-heading-height: 1.1em;
 
 }
 
-.c-campuscarousel__cell-heading {
+.c-statcarousel__cell-heading {
   position: absolute;
   top: 0;
   left: $spacing-sm;
   margin: 0;
   color: $color-dark-gray;
-  font-size: $campuscarousel-heading-height;
+  font-size: $statcarousel-heading-height;
   font-weight: normal;
 }
 
-.c-campuscarousel__cell {
+.c-statcarousel__cell {
   width: 15vw;
   min-width: 6.3em;
 }
 
 // ***** Flickity Customizations ***** //
 
-%campuscarousel-flickity-customizations {
+%statcarousel-flickity-customizations {
 
   .flickity-prev-next-button {
     width: 3.8em;
