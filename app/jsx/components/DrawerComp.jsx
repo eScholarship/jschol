@@ -33,6 +33,11 @@ class SortableNavList extends React.Component {
     }
   }
 
+  componentWillReceiveProps(nextProps) {
+    if (!_.isEqual(this.props, nextProps))
+      this.setState(this.setupState(nextProps))
+  }
+
   generateData(navItems) {
     if (!navItems)
       return undefined
@@ -45,8 +50,8 @@ class SortableNavList extends React.Component {
 
       if (nav.type == "home")
         data.title = <Link to={"/uc/" + this.props.unit}>{nav.name}</Link>
-      else if (nav.type == "page")
-        data.title = <Link to={`/uc/${this.props.unit}/navPage/${nav.id}`}>{nav.name}</Link>
+      else
+        data.title = <Link to={`/uc/${this.props.unit}/nav/${nav.id}`}>{nav.name}</Link>
 
       return data
     })
@@ -106,8 +111,8 @@ class DrawerComp extends React.Component {
              data: { username: cms.username, token: cms.token, navType: navType }})
     .done(data=>{
       this.setState({working: false})
-      if (data.slug)
-        this.props.router.push(`/uc/${this.props.data.unit.id}/${data.slug}`)
+      if (data.id)
+        this.props.router.push(`/uc/${this.props.data.unit.id}/nav/${data.id}`)
       else
         cms.fetchPageData()
     })

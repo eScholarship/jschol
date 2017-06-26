@@ -22,7 +22,7 @@ import UnitSearchLayout from '../layouts/UnitSearchLayout.jsx'
 import UnitStaticPageLayout from '../layouts/UnitStaticPageLayout.jsx'
 import UnitProfileLayout from '../layouts/UnitProfileLayout.jsx'
 import UnitSidebarConfigLayout from '../layouts/UnitSidebarConfigLayout.jsx'
-import UnitStaticPageConfigLayout from '../layouts/UnitStaticPageConfigLayout.jsx'
+import UnitNavConfigLayout from '../layouts/UnitNavConfigLayout.jsx'
 import AdminBarComp from '../components/AdminBarComp.jsx'
 
 class UnitPage extends PageBase
@@ -43,7 +43,7 @@ class UnitPage extends PageBase
     if (pm.pageName) {
       if (pm.pageName === 'search')
         return "/api/unit/" + pm.unitID + "/search/" + this.props.location.search
-      else if (/navPage|navLink|navFolder/.test(pm.pageName))
+      else if (pm.pageName == "nav")
         return "/api/unit/" + pm.unitID + "/nav/" + pm.splat
       else
         return "/api/unit/" + pm.unitID + "/" + pm.pageName
@@ -53,7 +53,7 @@ class UnitPage extends PageBase
 
   // Unit ID for permissions checking
   pagePermissionsUnit() {
-    return this.props.params.unitID;
+    return this.props.params.unitID
   }
 
   renderSidebar = sidebarData =>
@@ -75,27 +75,27 @@ class UnitPage extends PageBase
   // TODO [UNIT-CONTENT-AJAX-ISSUE]: handle the AJAX issue described above pageDataURL method definition
   renderData(data) { 
     let sidebar = this.renderSidebar(data.sidebar)
-    let contentLayout;
+    let contentLayout
     if (this.state.fetchingData)
-      contentLayout = (<h2 style={{ marginTop: "5em", marginBottom: "5em" }}>Loading...</h2>);
+      contentLayout = (<h2 style={{ marginTop: "5em", marginBottom: "5em" }}>Loading...</h2>)
     else if (this.props.params.pageName === 'search') {
-      contentLayout = (<UnitSearchLayout unit={data.unit} data={data.content} sidebar={sidebar}/>);
+      contentLayout = (<UnitSearchLayout unit={data.unit} data={data.content} sidebar={sidebar}/>)
     } else if (this.props.params.pageName === 'profile') {
-      contentLayout = (<UnitProfileLayout unit={data.unit} data={data.content}/>);
-    } else if (this.props.params.pageName === 'navPage') {
-      contentLayout = (<UnitStaticPageConfigLayout unit={data.unit} data={data.content}/>);
+      contentLayout = (<UnitProfileLayout unit={data.unit} data={data.content}/>)
+    } else if (this.props.params.pageName === 'nav') {
+      contentLayout = (<UnitNavConfigLayout unit={data.unit} data={data.content}/>)
     } else if (this.props.params.pageName === 'sidebar') {
-      contentLayout = (<UnitSidebarConfigLayout unit={data.unit} data={data.content}/>);
+      contentLayout = (<UnitSidebarConfigLayout unit={data.unit} data={data.content}/>)
     } else if (this.props.params.pageName) {
-      contentLayout = (<UnitStaticPageLayout unit={data.unit} data={data.content} sidebar={sidebar} fetchPageData={this.fetchPageData}/>);
+      contentLayout = (<UnitStaticPageLayout unit={data.unit} data={data.content} sidebar={sidebar} fetchPageData={this.fetchPageData}/>)
     } else {
-      data.marquee.carousel = true;
+      data.marquee.carousel = true
       if (data.unit.type === 'oru') {
-        contentLayout = (<DepartmentLayout unit={data.unit} data={data.content} sidebar={sidebar} marquee={data.marquee}/>);
+        contentLayout = (<DepartmentLayout unit={data.unit} data={data.content} sidebar={sidebar} marquee={data.marquee}/>)
       } else if (data.unit.type.includes('series')) {
-        contentLayout = (<SeriesLayout unit={data.unit} data={data.content} sidebar={sidebar} marquee={data.marquee}/>);
+        contentLayout = (<SeriesLayout unit={data.unit} data={data.content} sidebar={sidebar} marquee={data.marquee}/>)
       } else if (data.unit.type === 'journal') {
-        contentLayout = (<JournalLayout unit={data.unit} data={data.content} sidebar={sidebar} marquee={data.marquee}/>);
+        contentLayout = (<JournalLayout unit={data.unit} data={data.content} sidebar={sidebar} marquee={data.marquee}/>)
       } else {
         contentLayout = (
           <div>
@@ -108,7 +108,7 @@ class UnitPage extends PageBase
             </ul>
           </div>
           </div>
-        );
+        )
       }
     }
     return (

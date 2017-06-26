@@ -10,8 +10,9 @@ import FooterComp from '../components/FooterComp.jsx'
 import DrawerComp from '../components/DrawerComp.jsx'
 import TestMessageComp from '../components/TestMessageComp.jsx'
 
-// Key used to store login credentials in browser's session storage
+// Keys used to store CMS-related data in browser's session storage
 const SESSION_LOGIN_KEY = "escholLogin"
+const SESSION_EDITING_KEY = "escholEditingPage"
 
 // Session storage is not available on server, only on browser
 let sessionStorage = (typeof window != "undefined") ? window.sessionStorage : null
@@ -66,9 +67,10 @@ class PageBase extends React.Component
 
   componentDidMount() {
     // Retrieve login info from session storage (but after initial init, so that ISO matches for first render)
-    if (this.getSessionData()) {
-      this.setState({ adminLogin:
-        { loggedIn: true, username: this.getSessionData().username, token: this.getSessionData().token } })
+    let d = this.getSessionData()
+    if (d) {
+      this.setState({ adminLogin: { loggedIn: true, username: d.username, token: d.token },
+                      isEditingPage: d.isEditingPage })
     }
   }
 
@@ -76,24 +78,29 @@ class PageBase extends React.Component
     return sessionStorage && JSON.parse(sessionStorage.getItem(SESSION_LOGIN_KEY))
   }
 
+  setSessionData(data) {
+    return sessionStorage && sessionStorage.setItem(SESSION_LOGIN_KEY, JSON.stringify(data))
+  }
+
   onLogin = (username, token) => {
     if (!this.state.adminLogin || username != this.state.adminLogin.username || token != this.state.adminLogin.token)
     {
-      if (sessionStorage)
-        sessionStorage.setItem(SESSION_LOGIN_KEY, JSON.stringify({ username: username, token: token }))
-      this.setState({ adminLogin: { loggedIn: true, username: username, token: token } })
+      this.setSessionData({ username: username, token: token })
+      this.setState({ adminLogin: { loggedIn: true, username: username, token: token },
+                      isEditingPage: false })
     }
   };
 
   onLogout = () => {
-    if (sessionStorage)
-      sessionStorage.setItem(SESSION_LOGIN_KEY, JSON.stringify(null))
+    this.setSessionData(null)
     this.setState({ adminLogin: { loggedIn: false } })
   };
 
   // Called when user clicks Edit Page, or Done Editing
-  onEditingPageChange = flag =>
+  onEditingPageChange = flag => {
+    this.setSessionData(Object.assign(this.getSessionData(), { isEditingPage: flag }))
     this.setState({ isEditingPage: flag })
+  }
 
   // Pages with any editable components should override this.
   isPageEditable() {
@@ -189,7 +196,7 @@ class PageBase extends React.Component
         `/api/permissions/${unit}?username=${this.state.adminLogin.username}&token=${this.state.adminLogin.token}`)
       .done((data) => {
         if (data.error) {
-          sessionStorage.setItem(SESSION_LOGIN_KEY, null)
+          this.setSessionData(null)
           this.setState({ adminLogin: null, permissions: null, isEditingPage: false })
           alert("Login note: " + data.message)
         }
@@ -237,7 +244,7 @@ class PageBase extends React.Component
                                            token: this.state.adminLogin && this.state.adminLogin.token,
                                            onLogin: this.onLogin,
                                            onLogout: this.onLogout,
-                                           isEditingPage: this.state.isEditingPage,
+                                           isEditingPage: this.state.adminLogin && this.state.adminLogin.loggedIn && this.state.isEditingPage,
                                            onEditingPageChange: this.onEditingPageChange,
                                            fetchPageData: ()=>this.fetchPageData(this.props),
                                            goLocation: (loc)=>this.props.router.push(loc),

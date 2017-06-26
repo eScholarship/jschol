@@ -236,8 +236,33 @@ def getUnitSidebar(unit)
   }
 end
 
-def getUnitNavConfig(unit, navBar, navID, level=1)
+# Traverse the nav bar, including sub-folders, yielding each item in turn
+# to the supplied block.
+def travNav(navBar, &block)
   navBar.each { |nav|
+    block.yield(nav)
+    if nav['type'] == 'folder'
+      travNav(nav['sub_nav'], &block)
+    end
+  }
+end
+
+def getNavByID(navBar, navID)
+  travNav(navBar) { |nav|
+    nav['id'].to_s == navID.to_s and return nav
+  }
+end
+
+def deleteNavByID(navBar, navID)
+  return navBar.map { |nav|
+    nav['id'].to_s == navID.to_s ? nil :
+    nav['type'] == "folder" ? nav.merge({ sub_nav: deleteNavByID(nav['sub_nav'], navID) })
+    : nav
+  }.compact
+end
+
+def getUnitNavConfig(unit, navBar, navID)
+  travNav(navBar) { |nav|
     if nav['id'].to_s == navID.to_s
       if nav['type'] == 'page'
         page = Page.where(unit_id: unit.id, slug: nav['slug']).first
@@ -247,12 +272,15 @@ def getUnitNavConfig(unit, navBar, navID, level=1)
       end
       return nav
     end
-    if nav['type'] == 'folder'
-      chk = getUnitNav(unit, nav['sub_nav'], navID, level+1)
-      chk and return chk
-    end
   }
-  level == 1 and halt(404, "Unknown nav ID #{navID} for unit #{unit.id}")
+  halt(404, "Unknown nav #{navID} for unit #{unit.id}")
+end
+
+###################################################################################################
+def maxNavID(navBar)
+  n = 0
+  travNav(navBar) { |nav| n = [n, nav["id"]].max }
+  return n
 end
 
 #   newAttrs = {

@@ -5,46 +5,40 @@ import { Subscriber } from 'react-broadcast'
 import EditableComp from '../components/EditableComp.jsx'
 import WysiwygEditorComp from '../components/WysiwygEditorComp.jsx'
 
-class EditableMainContentComp extends React.Component
+class EditableNavContentComp extends React.Component
 {
   static propTypes = {
     cms: PropTypes.object.isRequired,
     data: PropTypes.shape({
-      slug: PropTypes.string.isRequired,
-      name: PropTypes.string.isRequired,
-      title: PropTypes.string.isRequired,
-      attrs: PropTypes.shape({
-        html: PropTypes.string.isRequired
-      })
+      id: PropTypes.number.isRequired,
+      name: PropTypes.string.isRequired
     })
   }
 
   state = { newData: this.props.data }
 
-  componentWillReceiveProps() {
+  componentWillReceiveProps(nextProps) {
     if (!_.isEqual(this.props, nextProps))
       this.setState({ newData: nextProps.data })
   }
 
   onSave = () =>
-    $.getJSON({ url: `/api/unit/${this.props.unit.id}/${this.props.data.slug}`,
+    $.getJSON({ url: `/api/unit/${this.props.unit.id}/nav/${this.props.data.id}`,
                 type: 'PUT',
                 data: Object.assign(this.state.newData,
                         { username: this.props.cms.username, token: this.props.cms.token })
               })
     .done((data)=>{
-      if (this.props.data.slug == this.state.newData.slug)
-        this.props.cms.fetchPageData()  // re-fetch page state after DB is updated
-      else
-        this.props.cms.goLocation(`/uc/${this.props.unit.id}/${this.state.newData.slug}`)
+      this.props.cms.fetchPageData()  // re-fetch page state after DB is updated
     })
     .fail((data)=>{
+      console.log("fail data:", data)
       alert("Save failed" + (data.responseJSON ? ":\n"+data.responseJSON.message : "."))
       this.props.cms.fetchPageData()  // re-fetch page state after DB is updated
     })
 
   onDelete = () =>
-    $.ajax({ url: `/api/unit/${this.props.unit.id}/${this.props.data.slug}`,
+    $.ajax({ url: `/api/unit/${this.props.unit.id}/nav/${this.props.data.id}`,
             type: 'DELETE',
             data: { username: this.props.cms.username, token: this.props.cms.token }
           })
@@ -61,25 +55,34 @@ class EditableMainContentComp extends React.Component
   }
 
   render() {
-    let d = this.props.data
-    let dataIsSame = _.isEqual(this.props.data, this.state.newData)
+    let data = this.props.data
+    let dataIsSame = _.isEqual(data, this.state.newData)
     return (
       <div>
-        <label className="c-editable-page__label" htmlFor="slug">Slug</label>
-        <input className="c-editable-page__input" id="slug" type="text" defaultValue={d.slug}
-               onChange={ event => this.setData({ slug: event.target.value }) }/>
+        { (data.type == "page") && [
+          <label className="c-editable-page__label" htmlFor="slug">Slug</label>,
+          <input className="c-editable-page__input" id="slug" type="text" defaultValue={data.slug}
+                 onChange={ event => this.setData({ slug: event.target.value }) }/>]
+        }
 
         <label className="c-editable-page__label" htmlFor="name">Name</label>
-        <input className="c-editable-page__input" id="name" type="text" defaultValue={d.name}
+        <input className="c-editable-page__input" id="name" type="text" defaultValue={data.name}
                onChange={ event => this.setData({ name: event.target.value }) }/>
 
-        <label className="c-editable-page__label" htmlFor="title">Title</label>
-        <input className="c-editable-page__input" id="title" type="text" defaultValue={d.title}
-               onChange={ event => this.setData({ title: event.target.value }) }/>
+        { (data.type == "page") && [
+          <label className="c-editable-page__label" htmlFor="title">Title</label>,
+          <input className="c-editable-page__input" id="title" type="text" defaultValue={data.title}
+                 onChange={ event => this.setData({ title: event.target.value }) }/>,
+          <label className="c-editable-page__label" htmlFor="text">Text</label>,
+          <WysiwygEditorComp id="text" html={data.attrs.html}
+            onChange={ newText => this.setData({ attrs: { html: newText }}) }/>]
+        }
 
-        <label className="c-editable-page__label" htmlFor="text">Text</label>
-        <WysiwygEditorComp id="text" html={d.attrs.html}
-          onChange={ newText => this.setData({ attrs: { html: newText }}) }/>
+        { (data.type == "link") && [
+          <label className="c-editable-page__label" htmlFor="url">URL</label>,
+          <input className="c-editable-page__input" id="url" type="text" defaultValue={data.url}
+                 onChange={ event => this.setData({ url: event.target.value }) }/>]
+        }
 
         <p>
           <button className="c-editable-page__button" onClick={this.onSave} disabled={dataIsSame}>Save</button>
@@ -90,16 +93,12 @@ class EditableMainContentComp extends React.Component
   }
 }
 
-class UnitStaticPageLayout extends React.Component
+export default class UnitNavConfigLayout extends React.Component
 {
   static propTypes = {
     data: PropTypes.shape({
-      slug: PropTypes.string.isRequired,
-      name: PropTypes.string.isRequired,
-      title: PropTypes.string.isRequired,
-      attrs: PropTypes.shape({
-        html: PropTypes.string.isRequired
-      })
+      id: PropTypes.number.isRequired,
+      name: PropTypes.string.isRequired
     })
   }
 
@@ -109,12 +108,17 @@ class UnitStaticPageLayout extends React.Component
         <main id="maincontent">
           <section className="o-columnbox1">
             <header>
-              <h1 className="o-columnbox1__heading">{this.props.data.title}</h1>
+              <h1 className="o-columnbox1__heading">
+                {
+                  this.props.data.title ? this.props.data.title :
+                  this.props.data.name + " (" + this.props.data.type + ")"
+                }
+              </h1>
             </header>
             <Subscriber channel="cms">
               { cms =>
                 cms.isEditingPage
-                ? <EditableMainContentComp cms={cms} unit={this.props.unit} data={this.props.data}/>
+                ? <EditableNavContentComp cms={cms} unit={this.props.unit} data={this.props.data}/>
                 : <div>TODO: redirect to page</div>
               }
             </Subscriber>
@@ -124,5 +128,3 @@ class UnitStaticPageLayout extends React.Component
     )
   }
 }
-
-module.exports = UnitStaticPageLayout
