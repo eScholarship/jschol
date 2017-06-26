@@ -70,11 +70,13 @@ class SortableNavList extends React.Component {
             return false
           return true
         }}
-        canDrop={({ nextTreeIndex, nextParent }) => {
+        canDrop={({ node, nextTreeIndex, nextParent }) => {
           if (nextTreeIndex == 0) // don't allow rearranging above the unit home
             return false
           if (!nextParent)
             return true
+          if (node.type == "folder")
+            return false
           if (nextParent.noChildren)
             return false
           if (nextParent.type != "folder")
