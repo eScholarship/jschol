@@ -20,6 +20,7 @@ def getNavBar(unitID, pageName, navItems)
         navItem['url'] = "/uc/#{unitID}#{navItem['slug']=="" ? "" : "/"+navItem['slug']}"
       end
     }
+    navItems.unshift({ id: 0, type: "home", name: "Unit Home", url: "/uc/#{unitID}" })
     return navItems
   end
   return nil
@@ -32,7 +33,7 @@ def getPageBreadcrumb(unit, pageName)
   pageName == "profile" and return [{ name: "Profile", id: unit.id + ":" + pageName}]
   pageName == "sidebar" and return [{ name: "Sidebars", id: unit.id + ":" + pageName}]
   p = Page.where(unit_id: unit.id, slug: pageName).first
-  p or raise("Page lookup failed: unit=#{unit.id} slug=#{pageName}")
+  p or halt(404, "Unknown page #{pageName} in #{unit.id}")
   return [{ name: p[:name], id: unit.id + ":" + pageName, url: "/#{unit.id}/#{pageName}" }]
 end
 
@@ -234,6 +235,53 @@ def getUnitSidebar(unit)
   return Widget.where(unit_id: unit.id, region: "sidebar").order(:ordering).map { |widget|
     { id: widget[:id], kind: widget[:kind], attrs: widget[:attrs] ? JSON.parse(widget[:attrs]) : {} }
   }
+end
+
+# Traverse the nav bar, including sub-folders, yielding each item in turn
+# to the supplied block.
+def travNav(navBar, &block)
+  navBar.each { |nav|
+    block.yield(nav)
+    if nav['type'] == 'folder'
+      travNav(nav['sub_nav'], &block)
+    end
+  }
+end
+
+def getNavByID(navBar, navID)
+  travNav(navBar) { |nav|
+    nav['id'].to_s == navID.to_s and return nav
+  }
+end
+
+def deleteNavByID(navBar, navID)
+  return navBar.map { |nav|
+    nav['id'].to_s == navID.to_s ? nil :
+    nav['type'] == "folder" ? nav.merge({ sub_nav: deleteNavByID(nav['sub_nav'], navID) })
+    : nav
+  }.compact
+end
+
+def getUnitNavConfig(unit, navBar, navID)
+  travNav(navBar) { |nav|
+    if nav['id'].to_s == navID.to_s
+      if nav['type'] == 'page'
+        page = Page.where(unit_id: unit.id, slug: nav['slug']).first
+        page or halt(404, "Unknown page #{nav['slug']} for unit #{unit.id}")
+        nav['title'] = page.title
+        nav['attrs'] = JSON.parse(page.attrs)
+      end
+      return nav
+    end
+  }
+  halt(404, "Unknown nav #{navID} for unit #{unit.id}")
+end
+
+###################################################################################################
+def maxNavID(navBar)
+  n = 0
+  travNav(navBar) { |nav| n = [n, nav["id"]].max }
+  return n
 end
 
 #   newAttrs = {

@@ -479,7 +479,7 @@ end
 
 ###################################################################################################
 # Unit page data.
-get "/api/unit/:unitID/?:pageName/?" do
+get "/api/unit/:unitID/:pageName/?:subPage?" do
   content_type :json
   unit = Unit[params[:unitID]]
   unit or halt(404, "Unit not found")
@@ -495,7 +495,7 @@ get "/api/unit/:unitID/?:pageName/?" do
     end
     pageData = {
       unit: unit.values.reject{|k,v| k==:attrs}.merge(:extent => ext),
-      header: getUnitHeader(unit, pageName, attrs),
+      header: getUnitHeader(unit, pageName =~ /^(nav|sidebar)/ ? nil : pageName, attrs),
       sidebar: getUnitSidebar(unit)
     }
     if pageName == 'home'
@@ -504,6 +504,8 @@ get "/api/unit/:unitID/?:pageName/?" do
       pageData[:content] = getCampusLandingPageContent(unit, attrs)
     elsif pageName == 'profile'
       pageData[:content] = getUnitProfile(unit, attrs)
+    elsif pageName == 'nav'
+      pageData[:content] = getUnitNavConfig(unit, attrs['nav_bar'], params[:subPage])
     elsif pageName == 'sidebar'
       pageData[:content] = getUnitSidebar(unit)
     else
@@ -648,12 +650,12 @@ end
 def getGlobalHeader
     return {
    nav_bar: [
-     { name: "About", sub_nav: [ { name: "TBD", url: "#" } ] },
-     { name: "Campus Sites",
+     { id: 1, name: "About", sub_nav: [ { name: "TBD", url: "#" } ] },
+     { id: 2, name: "Campus Sites",
        sub_nav: $activeCampuses.map { |k, v| { name: v.values[:name], url: "/uc/#{k}" } }
      },
-     { name: "UC Open Access", sub_nav: [ { name: "TBD", url: "#" } ] },
-     { name: "eScholarship Publishing", url: "#" },
+     { id: 3, name: "UC Open Access", sub_nav: [ { name: "TBD", url: "#" } ] },
+     { id: 4, name: "eScholarship Publishing", url: "#" },
    ]
     # was: JSON.parse($unitsHash['root'][:attrs])['nav_bar']
   }
@@ -734,46 +736,52 @@ def sanitizeHTML(htmlFragment)
   )
 end
 
-put "/api/unit/:unitID/:pageName" do |unitID, pageName|
+put "/api/unit/:unitID/nav/:navID" do |unitID, navID|
   # Check user permissions
   perms = getUserPermissions(params[:username], params[:token], unitID)
   perms[:admin] or halt(401)
+  content_type :json
 
   DB.transaction {
-    page = Page.where(unit_id: unitID, slug: pageName).first or halt(404, "Page not found")
     unit = Unit[unitID] or halt(404, "Unit not found")
+    unitAttrs = JSON.parse(unit.attrs)
+    params[:name].empty? and halt(400, { error: true, message: "Page name must be supplied." }.to_json)
 
-    oldSlug = page.slug
-    newSlug = params[:slug]
-    newSlug.empty? and halt(400, { error: true, message: "Slug must be supplied." }.to_json)
-    newSlug =~ /^[a-zA-Z][a-zA-Z0-9_]+$/ or halt(400, { error: true, 
-      message: "Slug must start with a letter a-z, and consist only of letters a-z, numbers, or underscores." }.to_json)
-    page.slug = params[:slug]
+    travNav(unitAttrs['nav_bar']) { |nav|
+      next unless nav['id'].to_s == navID.to_s
+      nav['name'] = params[:name]
+      if nav['type'] == "page"
+        page = Page.where(unit_id: unitID, slug: nav['slug']).first or halt(404, "Page not found")
 
-    page.name = params[:name]
-    page.name.empty? and halt(400, { error: true, message: "Page name must be supplied." }.to_json)
+        oldSlug = page.slug
+        newSlug = params[:slug]
+        newSlug.empty? and halt(400, { error: true, message: "Slug must be supplied." }.to_json)
+        newSlug =~ /^[a-zA-Z][a-zA-Z0-9_]+$/ or halt(400, { error: true, 
+          message: "Slug must start with a letter a-z, and consist only of letters a-z, numbers, or underscores." }.to_json)
+        page.slug = newSlug
+        nav['slug'] = newSlug
 
-    page.title = params[:title]
-    page.title.empty? and halt(400, { error: true, message: "Title must be supplied." }.to_json)
+        page.name = params[:name]
+        page.name.empty? and halt(400, { error: true, message: "Page name must be supplied." }.to_json)
 
-    newHTML = sanitizeHTML(params[:attrs][:html])
-    newHTML.empty? and halt(400, { error: true, message: "Text must be supplied." }.to_json)
-    page.attrs = JSON.parse(page.attrs).merge({ "html" => newHTML }).to_json
+        page.title = params[:title]
+        page.title.empty? and halt(400, { error: true, message: "Title must be supplied." }.to_json)
 
-    # There's some overlap (for convenience and speed) between units.attrs.nav_bar and pages.
-    # So update the unit also.
-    uAtts = JSON.parse(unit.attrs)
-    uAtts['nav_bar'] = uAtts['nav_bar'].map { |nav|
-      (nav['slug'] == oldSlug) ? { slug: newSlug, name: params[:name] } : nav
+        newHTML = sanitizeHTML(params[:attrs][:html])
+        newHTML.empty? and halt(400, { error: true, message: "Text must be supplied." }.to_json)
+        page.attrs = JSON.parse(page.attrs).merge({ "html" => newHTML }).to_json
+        page.save
+      elsif nav['type'] == "link"
+        params[:url] =~ %r{^https?://.*} or halt(400, { error: true, message: "Invalid URL." }.to_json)
+        nav['url'] = params[:url]
+      end
+      puts "New unit attrs: #{unitAttrs}"
+      unit.attrs = unitAttrs.to_json
+      unit.save
+      return {status: "ok"}.to_json
     }
-    unit.attrs = uAtts.to_json
-
-    unit.save
-    page.save
+    halt(404, { error: true, message: "Unknown nav #{navID} for unit #{unitID}" }.to_json)
   }
-
-  content_type :json
-  return {status: "ok"}.to_json
 end
 
 ###################################################################################################
@@ -789,7 +797,7 @@ post "/api/unit/:unitID/nav" do |unitID|
 
   # Validate the nav type
   navType = params[:navType]
-  ['page', 'link', 'file', 'folder'].include?(navType) or halt(400)
+  ['page', 'link', 'folder'].include?(navType) or halt(400)
 
   # Find the existing nav bar
   attrs = JSON.parse(unit.attrs)
@@ -798,53 +806,59 @@ post "/api/unit/:unitID/nav" do |unitID|
   # Invent a unique name for the new item
   slug = name = nil
   (1..9999).each { |n|
-    slug = "new#{navType.gsub(/\b('?[a-z])/) { $1.capitalize }}#{n>=2 ? n.to_s : ''}"
-    name = "New #{navType}#{n>=2 ? ' '+n.to_s : ''}"
+    slug = "#{navType}#{n.to_s}"
+    name = "New #{navType} #{n.to_s}"
     break if navBar.none? { |nav| nav['slug'] == slug || nav['name'] == name }
   }
 
-  DB.transaction {
-    navBar << { name: name, slug: slug, hidden: true }.merge(case navType
-      when "page"
-        Page.create(slug: slug, unit_id: unitID, name: name, title: name, attrs: { html: "" }.to_json) && {}
-      when "link"
-        { url: nil }
-      when "file"
-        { asset_id: nil }
-      when "folder"
-        { sub_nav: {} }
-      else
-        halt(400)
-      end
-    )
+  nextID = maxNavID(navBar) + 1
 
+  DB.transaction {
+    newNav = case navType
+    when "page"
+      Page.create(slug: slug, unit_id: unitID, name: name, title: name, attrs: { html: "" }.to_json)
+      newNav = { id: nextID, type: "page", name: name, slug: slug, hidden: true }
+    when "link"
+      newNav = { id: nextID, type: "link", name: name, url: "" }
+    when "folder"
+      newNav = { id: nextID, type: "folder", name: name, sub_nav: [] }
+    else
+      halt(400, "unknown navType")
+    end
+
+    navBar << newNav
     attrs['nav_bar'] = navBar
     unit[:attrs] = attrs.to_json
     unit.save
 
-    return { status: "ok", slug: slug }.to_json
+    return { status: "ok", id: newNav[:id] }.to_json
   }
 end
 
 ###################################################################################################
 # *Delete* to remove a static page from a unit
-delete "/api/unit/:unitID/:pageName" do |unitID, pageName|
+delete "/api/unit/:unitID/nav/:navID" do |unitID, navID|
   # Check user permissions
   perms = getUserPermissions(params[:username], params[:token], unitID)
   perms[:admin] or halt(401)
 
   DB.transaction {
-    page = Page.where(unit_id: unitID, slug: pageName).first or halt(404, "Page not found")
     unit = Unit[unitID] or halt(404, "Unit not found")
+    unitAttrs = JSON.parse(unit.attrs)
+    nav = getNavByID(unitAttrs['nav_bar'], navID)
+    if nav['type'] == "folder" && !nav['sub_nav'].empty?
+      halt(404, { error: true, message: "Can't delete non-empty folder" })
+    end
+    if nav['type'] == "page"
+      page = Page.where(unit_id: unitID, slug: nav['slug']).first or halt(404, { error: true, message: "Page not found" })
+      page.delete
+    end
 
     # There's some overlap (for convenience and speed) between units.attrs.nav_bar and pages.
     # So update the unit also.
-    uAtts = JSON.parse(unit.attrs)
-    uAtts['nav_bar'] = uAtts['nav_bar'].select { |nav| nav['slug'] != pageName }
-    unit.attrs = uAtts.to_json
-
+    unitAttrs['nav_bar'] = deleteNavByID(unitAttrs['nav_bar'], navID)
+    unit.attrs = unitAttrs.to_json
     unit.save
-    page.delete
   }
 
   content_type :json
