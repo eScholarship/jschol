@@ -324,7 +324,7 @@ class FacetFieldset extends React.Component {
       return facets.slice(0, 5)
 
     let checked = {}
-    console.log("slice: filters=", this.props.query.filters)
+    // console.log("slice: filters=", this.props.query.filters)
     for (let filter of this.props.query.filters)
       checked[filter.value] = true
 
@@ -442,7 +442,7 @@ class FacetForm extends React.Component {
     }
     // Handy for debugging
     // console.log(this.state.query)
-    console.log(JSON.stringify(formData))
+    // console.log(JSON.stringify(formData))
     return true
   }
 
