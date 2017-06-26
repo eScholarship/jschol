@@ -211,7 +211,7 @@ def aws_encode(params, facetTypes)
   # create facet query, only create facet query for fields specified in facetTypes
   facetQuery = {}
   facetTypes.each { |facetType| facetQuery[facetType] = FACETS[facetType]['awsFacetParam'] }
-  
+
   if !facetQuery.empty? then aws_params[:facet] = JSON.generate(facetQuery) end
 
   # create filter queries, always apply filters for all available fields in cloudsearch
@@ -318,7 +318,7 @@ def extent(id, type)
   elsif (type == 'series' || type == 'monograph_series' || type == 'seminar_series') then 
     aws_params[:filter_query] = "(term field=series '#{id}')"
   else 
-    throw "Not a valid unit type"
+    raise("Not a valid unit type.")
   end
   response = normalizeResponse($csClient.search(return: '_no_fields', **aws_params))
   pb = response['facets']['pub_year']['buckets']

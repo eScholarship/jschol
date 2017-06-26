@@ -54,7 +54,7 @@ class FilterComp extends React.Component {
       <div className="c-filter">
         <h2 className="c-filter__heading">{searchString}</h2>
         <input type="hidden" name="q" value={this.props.query.q} />
-        <div>Results: {Math.ceil(this.props.count/this.props.query.rows)} pages, {this.props.count} works</div>
+        <div>Results: 12 pages, {this.props.count} works</div>
       {activeFilters &&
         <FiltersShowHide activeFilters={activeFilters} handler={this.props.handler} clearAll={this.clearAll} />
       }

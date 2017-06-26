@@ -51,7 +51,7 @@ if (!(typeof document === "undefined")) {
 //   query: [{displayName: 'UCLA School of Law (All)', value: 'uclalaw'}]
 // }
 class FacetItem extends React.Component {
-  
+
   //if the facet item is in the query list, or the facet item's ancestor is checked, 
   //return true - this facet item should be checked
   checkFacet(props) {
@@ -77,8 +77,8 @@ class FacetItem extends React.Component {
   }
 
   handleChange = event => {  // compact syntax that takes care of binding the event handler
-    var filter
-    var filter_cleanup = []
+    let filter
+    let filter_cleanup = []
     // Rights label includes an icon and descriptive text, but value is just the code: 'CC-BY'
     // the Active Filters panel at the top of the lefthand sidebar displays just the codes
     if (this.props.data.facetType == 'rights' && this.props.data.facet.value != 'public') {
@@ -105,13 +105,13 @@ class FacetItem extends React.Component {
   }
 
   render() {
-    var facet = this.props.data.facet
+    let facet = this.props.data.facet
     this.label = facet.displayName ? facet.displayName : facet.value
 
-    var descendents
+    let descendents
     if (facet.descendents) {
       descendents = facet.descendents.map( d => {
-        var descendentItemData = {
+        let descendentItemData = {
           facetType: this.props.data.facetType,
           facet: d,
           ancestorChecked: this.checkFacet(this.props)
@@ -121,7 +121,7 @@ class FacetItem extends React.Component {
     }
 
     return (
-      <div className="facetItem">
+      <div>
         <input id={facet.value} className="c-checkbox__input" type="checkbox"
           name={this.props.data.facetType} value={facet.value}
           onChange={this.handleChange}
@@ -160,7 +160,7 @@ class PubYear extends React.Component {
   }
 
   onBlur = event=>{
-    var displayYears
+    let displayYears
     if (this.state.pub_year_start || this.state.pub_year_end) {
       displayYears = this.state.pub_year_start + "-" + this.state.pub_year_end
     }
@@ -242,14 +242,14 @@ class PubYear extends React.Component {
 //   }
 // }
 class FacetFieldset extends React.Component {
-  state = { deptModalOpen: false }
+  state = { modalOpen: false }
 
   //Called by a FacetItem's handleChange function
   //event is the browser event, filter is an array of filters to be applied
   //and filter_cleanup is an array of filters to be removed as an implication of the filters to be applied
   //(as is the case when a child facet is already selected, but then it's parent facet is selected)
   handleChange = (event, filter, filter_cleanup) => {
-    var newQuery
+    let newQuery
     //event.target.checked means we're in the business of adding filters
     if (event.target.checked) {
       if (!_.isEmpty(this.props.query)) {
@@ -258,8 +258,8 @@ class FacetFieldset extends React.Component {
         //remove filters specified in filter_cleanup array
         //(this is any child facets that were selected at the time when the parent facet is selected)
         if (filter_cleanup.length > 0) {
-          for (var f in filter_cleanup) {
-            var i = newQuery.filters.findIndex(j => { return j.value == filter_cleanup[f].value })
+          for (let f in filter_cleanup) {
+            let i = newQuery.filters.findIndex(j => { return j.value == filter_cleanup[f].value })
             if (i >= 0) // only remove if found
               newQuery.filters.splice(i, 1)
           }
@@ -278,8 +278,8 @@ class FacetFieldset extends React.Component {
       //!event.target.checked means we're in the business of removing filters
       if (this.props.query.filters.length > 1) {
         newQuery = $.extend(true, {}, this.props.query) // true=deep copy
-        for (var f in filter) {
-          var i = newQuery.filters.findIndex(j => { return j.value == filter[f].value })
+        for (let f in filter) {
+          let i = newQuery.filters.findIndex(j => { return j.value == filter[f].value })
           newQuery.filters.splice(i, 1)
         }
       }
@@ -289,7 +289,7 @@ class FacetFieldset extends React.Component {
   }
 
   pubDateChange = (event, filter) => {
-    var newQuery
+    let newQuery
     if (filter.value !== "") {
       if (!_.isEmpty(this.props.query)) {
         newQuery = $.extend(true, {}, this.props.query) // true=deep copy
@@ -305,47 +305,76 @@ class FacetFieldset extends React.Component {
     this.props.handler(event, newQuery, 'pub_year')
   }
 
-  getFacetNodes = facets => {
-    return facets.map( facet => {
-      var facetItemData = {
-        facetType: this.props.data.fieldName,
-        facet: facet,
+  closeModal = (e, facetType) => {
+    this.setState({modalOpen:false})
+  }
+
+  getFacetNodes = facets =>
+    <div className="c-facetitems">
+      {facets.map( facet =>
+        <FacetItem key={facet.value}
+                   data={{facetType: this.props.data.fieldName, facet: facet}}
+                   query={this.props.query.filters} handler={this.handleChange} /> )
       }
-      return ( <FacetItem key={facet.value} data={facetItemData} query={this.props.query.filters} handler={this.handleChange} /> )
-    })
+    </div>
+
+  sliceFacets(facets)
+  {
+    if (!this.props.query.filters)
+      return facets.slice(0, 5)
+
+    let checked = {}
+    // console.log("slice: filters=", this.props.query.filters)
+    for (let filter of this.props.query.filters)
+      checked[filter.value] = true
+
+    let out = []
+    for (let facet of facets) {
+      if (facet.value in checked)
+        out.push(facet)
+      else if (out.length < 5)
+        out.push(facet)
+    }
+
+    return out
   }
 
   render() {
-    if (!this.state.deptModalOpen) {
-      var facets, facetItemNodes
-      if (this.props.data.facets) {
-        facets = (this.props.deptModal) ? this.props.data.facets.slice(0, 5) : this.props.data.facets
-        facetItemNodes = this.getFacetNodes(facets)
-      } else {
-        //pub_year
-        facetItemNodes = (
-          <PubYear data={this.props.data} query={this.props.query} handler={this.pubDateChange} />
-        )
-      }
-      return (
-        <details className="c-facetbox" id={this.props.data.fieldName} open={this.props.open}>
-          <summary className="c-facetbox__summary"><span>{this.props.data.display}</span></summary>
-          <div className="facetItems c-checkbox">
-            {facetItemNodes}
-            {this.props.deptModal &&
-              <a href="" onClick={e=>this.setState({deptModalOpen:true})}>show more &raquo;</a>
-            }
-          </div>
-        </details>
-      )
-    } else {
-      return (
-        <ModalComp isOpen
-          // onCancel={}
-          header="Refine By Department"
-          content={this.getFacetNodes(this.props.data.facets)} onOK={"FOO"} okLabel="Select" />
+    let data = this.props.data
+    let facets, facetItemNodes
+    if (data.facets) {
+      facets = this.state.modalOpen ? [] :
+               (this.props.modal && data.facets.length > 5) ? this.sliceFacets(data.facets) :
+               data.facets
+      facetItemNodes = this.getFacetNodes(facets)
+    } else if (data.fieldName == "pub_year") {
+      facetItemNodes = (
+        <PubYear data={data} query={this.props.query} handler={this.pubDateChange} />
       )
     }
+    else {
+      facetItemNodes = []
+    }
+    return (
+      <details className="c-facetbox" id={data.fieldName} open={this.props.open}>
+        <summary className="c-facetbox__summary"><span>{data.display}</span></summary>
+        <div className="facetItems c-checkbox">
+          {facetItemNodes}
+          {this.props.modal &&
+            <div id="facetModalBase">
+              <a href="" onClick={(event)=>{
+                this.setState({modalOpen:true})
+                event.preventDefault()}}>show more &raquo;</a>
+              <ModalComp isOpen={this.state.modalOpen}
+                parentSelector={()=>$("#facetModalBase")[0]}
+                header={"Refine By " + data.display}
+                content={this.getFacetNodes(data.facets)}
+                onOK={e=>this.closeModal(e, data.fieldName)} okLabel="Done" />
+            </div>
+          }
+        </div>
+      </details>
+    )
   }
 }
 
@@ -384,28 +413,26 @@ class FacetForm extends React.Component {
 
   // Called by FacetFieldset's handleChange function
   changeFacet = (event, fieldsetQuery, fieldType)=>{
-    var newQuery = $.extend(true, {}, this.state.query) // true=deep copy
-
+    let newQuery = $.extend(true, {}, this.state.query) // true=deep copy
     if (fieldsetQuery) {
       newQuery.filters[fieldType] = fieldsetQuery
     } else {
       delete newQuery.filters[fieldType]
     }
-
     this.setState({query: newQuery})
   }
 
   // Set as the onClick handler for FilterComp's active filter buttons
   removeFilters = event=>{
-    var newQuery = $.extend(true, {}, this.state.query) // true=deep copy
-    var fieldType = $(event.target).data('filter-type')
+    let newQuery = $.extend(true, {}, this.state.query) // true=deep copy
+    let fieldType = $(event.target).data('filter-type')
     delete newQuery.filters[fieldType]
     this.setState({query: newQuery})
   }
 
   // Set as the Form's onSubmit handler
   handleSubmit = (event, formData)=>{
-    for(var key in formData) {
+    for(let key in formData) {
       if (formData[key] == "" ||
       (key === 'sort' && formData[key] === 'rel') ||
       (key === 'rows' && formData[key] === '10') ||
@@ -425,15 +452,16 @@ class FacetForm extends React.Component {
   }
 
   render() {
-    var facetForm = this.props.data.facets.map((fieldset, i) => {
-      var fieldName = fieldset.fieldName
-      var filters = this.state.query.filters && this.state.query.filters[fieldName] ? this.state.query.filters[fieldName] : {}
-      var facets = fieldset.facets
+    let facetForm = this.props.data.facets.map((fieldset, i) => {
+      let fieldName = fieldset.fieldName
+      let filters = this.state.query.filters && this.state.query.filters[fieldName] ? this.state.query.filters[fieldName] : {}
+      let facets = fieldset.facets
       return (
         <FacetFieldset key={fieldName} data={fieldset} query={filters} handler={this.changeFacet}
                        // Have first two open by default
                        open={[0,1].includes(i)}
-                       deptModal={((fieldName == "departments") && (facets) && (facets.length > 6))} />
+                       modal={((["departments", "journals"].includes(fieldName)) &&
+                              (facets) && (facets.length > 6))} />
       )
     })
 
@@ -457,7 +485,7 @@ class SearchPage extends PageBase {
   }
 
   renderData(data) {
-    var facetFormData = {facets: data.facets, count: data.count}
+    let facetFormData = {facets: data.facets, count: data.count}
     return(
       <div className="l_search">
         <Header1Comp />
