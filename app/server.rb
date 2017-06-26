@@ -784,6 +784,43 @@ put "/api/unit/:unitID/nav/:navID" do |unitID, navID|
   }
 end
 
+def remapOrder(oldNav, newOrder)
+  newOrder = newOrder.map { |stub| stub['id'] == 0 ? nil : stub }.compact
+  return newOrder.map { |stub|
+    source = getNavByID(oldNav, stub['id'])
+    source or raise("Unknown nav id #{stub['id']}")
+    puts "stub=#{stub} source=#{source}"
+    newNav = source.clone
+    if source['type'] == "folder"
+      stub['sub_nav'] or raise("can't change nav type")
+      newNav['sub_nav'] = remapOrder(oldNav, stub['sub_nav'])
+    end
+    next newNav
+  }
+end
+
+put "/api/unit/:unitID/navOrder" do |unitID|
+  # Check user permissions
+  perms = getUserPermissions(params[:username], params[:token], unitID)
+  perms[:admin] or halt(401)
+  content_type :json
+
+  DB.transaction {
+    unit = Unit[unitID] or halt(404, "Unit not found")
+    unitAttrs = JSON.parse(unit.attrs)
+    newOrder = JSON.parse(params[:order])
+    puts "newOrder=#{newOrder}"
+    newOrder.empty? and halt(400, { error: true, message: "Page name must be supplied." }.to_json)
+    newNav = remapOrder(unitAttrs['nav_bar'], newOrder)
+    puts "newNav:"
+    pp newNav
+    unitAttrs['nav_bar'] = newNav
+    unit.attrs = unitAttrs.to_json
+    unit.save
+    return {status: "ok"}.to_json
+  }
+end
+
 ###################################################################################################
 # *Post* to add an item to a nav bar
 post "/api/unit/:unitID/nav" do |unitID|

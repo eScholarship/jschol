@@ -32,7 +32,6 @@ class EditableNavContentComp extends React.Component
       this.props.cms.fetchPageData()  // re-fetch page state after DB is updated
     })
     .fail((data)=>{
-      console.log("fail data:", data)
       alert("Save failed" + (data.responseJSON ? ":\n"+data.responseJSON.message : "."))
       this.props.cms.fetchPageData()  // re-fetch page state after DB is updated
     })
@@ -59,29 +58,35 @@ class EditableNavContentComp extends React.Component
     let dataIsSame = _.isEqual(data, this.state.newData)
     return (
       <div>
-        { (data.type == "page") && [
-          <label className="c-editable-page__label" htmlFor="slug">Slug</label>,
-          <input className="c-editable-page__input" id="slug" type="text" defaultValue={data.slug}
-                 onChange={ event => this.setData({ slug: event.target.value }) }/>]
+        { (data.type == "page") &&
+          <div>
+            <label className="c-editable-page__label" htmlFor="slug">Slug</label>
+            <input className="c-editable-page__input" id="slug" type="text" defaultValue={data.slug}
+                   onChange={ event => this.setData({ slug: event.target.value }) }/>
+          </div>
         }
 
         <label className="c-editable-page__label" htmlFor="name">Name</label>
         <input className="c-editable-page__input" id="name" type="text" defaultValue={data.name}
                onChange={ event => this.setData({ name: event.target.value }) }/>
 
-        { (data.type == "page") && [
-          <label className="c-editable-page__label" htmlFor="title">Title</label>,
-          <input className="c-editable-page__input" id="title" type="text" defaultValue={data.title}
-                 onChange={ event => this.setData({ title: event.target.value }) }/>,
-          <label className="c-editable-page__label" htmlFor="text">Text</label>,
-          <WysiwygEditorComp id="text" html={data.attrs.html}
-            onChange={ newText => this.setData({ attrs: { html: newText }}) }/>]
+        { (data.type == "page") &&
+          <div>
+            <label className="c-editable-page__label" htmlFor="title">Title</label>
+            <input className="c-editable-page__input" id="title" type="text" defaultValue={data.title}
+                   onChange={ event => this.setData({ title: event.target.value }) }/>
+            <label className="c-editable-page__label" htmlFor="text">Text</label>
+            <WysiwygEditorComp id="text" html={data.attrs.html}
+              onChange={ newText => this.setData({ attrs: { html: newText }}) }/>
+          </div>
         }
 
-        { (data.type == "link") && [
-          <label className="c-editable-page__label" htmlFor="url">URL</label>,
-          <input className="c-editable-page__input" id="url" type="text" defaultValue={data.url}
-                 onChange={ event => this.setData({ url: event.target.value }) }/>]
+        { (data.type == "link") &&
+          <div>
+            <label className="c-editable-page__label" htmlFor="url">URL</label>,
+            <input className="c-editable-page__input" id="url" type="text" defaultValue={data.url}
+                   onChange={ event => this.setData({ url: event.target.value }) }/>
+          </div>
         }
 
         <p>
