@@ -57,6 +57,33 @@ class SortableNavList extends React.Component {
     })
   }
 
+  travOrder(treeData) {
+    return treeData.map(item => {
+      let out = { id: item.id }
+      if (item.children)
+        out.sub_nav = this.travOrder(item.children)
+      return out
+    })
+  }
+
+  onMoveNode = ({ treeData }) => {
+    this.setState({ data: treeData, working: true })
+    $.getJSON({ url: `/api/unit/${this.props.unit}/navOrder`,
+                type: 'PUT',
+                data: { order: JSON.stringify(this.travOrder(treeData)),
+                        username: this.props.cms.username, token: this.props.cms.token }
+              })
+    .done((data)=>{
+      this.setState({working: false})
+      this.props.cms.fetchPageData()  // re-fetch page state after DB is updated
+    })
+    .fail((data)=>{
+      this.setState({working: false})
+      alert("Reorder failed" + (data.responseJSON ? ":\n"+data.responseJSON.message : "."))
+      this.props.cms.fetchPageData()  // re-fetch page state after DB is updated
+    })
+  }
+
   render() {
     const SortableTree = this.props.cms.modules.SortableTree
     return (
@@ -83,7 +110,8 @@ class SortableNavList extends React.Component {
             return false
           return true
         }}
-        onChange={treeData=>this.setState({data: treeData})}/>
+        onChange={treeData => this.setState({ data: treeData })}
+        onMoveNode={this.onMoveNode}/>
     )
   }
 }

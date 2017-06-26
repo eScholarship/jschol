@@ -32,7 +32,6 @@ class EditableNavContentComp extends React.Component
       this.props.cms.fetchPageData()  // re-fetch page state after DB is updated
     })
     .fail((data)=>{
-      console.log("fail data:", data)
       alert("Save failed" + (data.responseJSON ? ":\n"+data.responseJSON.message : "."))
       this.props.cms.fetchPageData()  // re-fetch page state after DB is updated
     })
