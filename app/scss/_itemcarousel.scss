@@ -1,44 +1,70 @@
-// ##### Item Carousel Component ##### //
+// ##### Item Carousel Objects ##### //
 
-.c-itemcarousel {
+$itemcarousel-spacing: 2.5rem;
+
+.o-itemcarousel {
+  @extend %itemcarousel-flickity-customizations;
+  @extend %clearfix;
+  margin-bottom: $spacing-md;
+  padding: $spacing-md $spacing-sm;
   background-color: $color-white;
+  box-shadow: $box-shadow1;
 
   @include bp(screen1) {
 
     @supports (display: grid) {
       display: grid;
-      grid-template-columns: auto 15%;
+      grid-template-columns: 1fr minmax(15%, auto);
     }
 
   }
 
 }
 
-.c-itemcarousel__carousel {
+.o-itemcarousel__heading {
+  @extend %o-heading3;
+  margin-left: $itemcarousel-spacing;
 
   @include bp(screen1) {
 
     @supports (display: grid) {
-      grid-row: 1 / 3;
+      grid-column: 1 / 3;
     }
 
   }
 
 }
 
-.c-itemcarousel__item {
-  width: 200px;
-  min-height: 10em;
+.o-itemcarousel__carousel {
+  margin-bottom: $spacing-md;
+  padding: 0 $itemcarousel-spacing;
+
+  @include bp(screen1) {
+    margin-bottom: 0;
+
+    @supports (display: grid) {
+      grid-row: 2 / 4;
+    }
+
+  }
+
 }
 
-%c-itemcarousel__stats {
-  @extend %clearfix;
+.o-itemcarousel__item {
+  display: flex;
+  align-items: center;
+  height: $itemcarousel-height;
+  margin-left: $spacing-md;
+}
+
+%o-itemcarousel__stats {
   width: 50%;
   background-color: $color-white;
 
   @include bp(screen1) {
 
     @supports (display: grid) {
+      align-self: center;
       width: auto;
     }
 
@@ -46,12 +72,45 @@
 
 }
 
-.c-itemcarousel__stats-item {
-  @extend %c-itemcarousel__stats;
+.o-itemcarousel__stats-item {
+  @extend %o-itemcarousel__stats;
   float: left;
 }
 
-.c-itemcarousel__stats-view {
-  @extend %c-itemcarousel__stats;
+.o-itemcarousel__stats-view {
+  @extend %o-itemcarousel__stats;
   float: right;
+}
+
+// ***** Flickity Customizations ***** //
+
+%itemcarousel-flickity-customizations {
+
+  .flickity-prev-next-button {
+    width: 5em;
+    height: 5em;
+    background: transparent;
+
+    &:hover {
+      background: transparent;
+    }
+
+    &.previous {
+      left: -1.3em;
+    }
+
+    &.next {
+      right: -1.3em;
+    }
+
+    .arrow {
+      fill: $color-dark-gray;
+    }
+
+    .no-svg {
+      color: $color-dark-gray;
+    }
+
+  }
+
 }

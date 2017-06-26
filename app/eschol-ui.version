@@ -270,3 +270,19 @@ As well as:
   new:        app/jsx/components/SubheaderComp.jsx
   new:        app/jsx/objects/StatsObj.jsx
 
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's 3a81ee1ecad1bc1c066baf97cf6b5398c7783ed7, 2017-06-26 <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+Andy added all scss and image changes since last.
+As well as:
+
+  renamed:    app/jsx/components/CampusCarouselComp.jsx -> app/jsx/components/StatCarouselComp.jsx
+  modified:   app/jsx/components/CheckboxComp.jsx
+  modified:   app/jsx/components/ScholWorksComp.jsx
+  modified:   app/jsx/objects/JournalObj.jsx
+  modified:   app/jsx/pages/CampusPage.jsx
+  deleted:    app/jsx/components/ItemCarouselComp.jsx
+
+
+
