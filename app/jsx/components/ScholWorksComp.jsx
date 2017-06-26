@@ -121,7 +121,7 @@ class ScholWorksComp extends React.Component {
         return (<li key={supp_file+i} className={"c-scholworks__media-" + supp_file.type}>Contains {supp_file.count} {display}</li>)   
       }
     })
-    console.log(pr.supp_files)
+    // console.log(pr.supp_files)
     if ('supp_files' in pr && pr.supp_files !== null) {
       if ('video' in pr.supp_files && pr.supp_files.video !== 0) {
         supp_files.append(<li className="c-scholworks__media-video">Contains {pr.supp_files.video} videos</li>)

@@ -38,19 +38,10 @@ class CampusPage extends PageBase
     return (
       <div>
         <Header2Comp type="campus" unitID={data.header.campusID} /> 
-        <div className="c-subheader">
-          <CampusSelectorComp campusID={data.header.campusID}
-                              campusName={data.header.campusName}
-                              campuses={data.header.campuses} />
-          <Link to={"/uc/"+data.unit.id}>
-            <img className="c-subheader__banner" src={logo.url} width={logo.width} height={logo.height} alt={"Logo image for " + data.unit.name} />
-          </Link>
-          <div className="c-subheader__sidebar">
-            <button className="o-button__3">Deposit</button>
-            <div className="c-subheader__sidebar-text">{data.header.campusName} <br/>Publications in eScholarship</div>
-            <div className="c-subheader__sidebar-number">##,###</div>
-          </div>
-        </div>
+        <SubheaderComp unit={data.unit} logo={data.header.logo}
+                                        campusID={data.header.campusID}
+                                        campusName={data.header.campusName}
+                                        campuses={data.header.campuses} />
         <NavBarComp
           // ToDo: Properly call header.nav_bar
           // navBar={data.header.nav_bar}
