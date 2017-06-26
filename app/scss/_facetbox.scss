@@ -48,3 +48,12 @@
   }
 
 }
+
+// ##### Facet Items Sub-Component ##### //
+
+// This is used for facets in the left column, as well as for the modal
+.c-facetitems {
+  max-height: 24.1em; // Allows for all facet items to appear in campus facet without scrolling
+  overflow-y: auto;
+}
+

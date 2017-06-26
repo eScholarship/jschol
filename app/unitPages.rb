@@ -171,7 +171,8 @@ end
 
 
 def unitSearch(params, unit)
-  # ToDo: remove this section now that unit search display looks just like global search
+  # ToDo: Right now, series landing page is the only unit type using this block. Clean this up
+  # once a final decision has been made about display of different unit search pages
   if unit.type.include? 'series'
     resultsListFields = ['thumbnail', 'pub_year', 'publication_information', 'type_of_work', 'rights']
     params["series"] = [unit.id]
