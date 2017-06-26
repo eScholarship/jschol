@@ -3,6 +3,11 @@
 $modal-header-height: 2.5em;
 $modal-footer-height: 3.5em;
 
+// Remove scrolling on the the body while the modal is open
+.ReactModal__Body--open {
+    overflow: hidden;
+}
+
 .c-modal {
   // no styles
 }

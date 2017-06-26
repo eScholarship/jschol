@@ -47,7 +47,7 @@ class DotH2 extends React.Component {
 class ScholWorksComp extends React.Component {
   static propTypes = {
     result: PropTypes.shape({
-      genre: PropTypes.string.isRequired,
+      genre: PropTypes.string,
       peerReviewed: PropTypes.bool,
       journalInfo: PropTypes.shape({
         unitId: PropTypes.string.isRequired,
@@ -121,20 +121,21 @@ class ScholWorksComp extends React.Component {
         return (<li key={supp_file+i} className={"c-scholworks__media-" + supp_file.type}>Contains {supp_file.count} {display}</li>)   
       }
     })
-    // if ('supp_files' in pr && pr.supp_files !== null) {
-    //   if ('video' in pr.supp_files && pr.supp_files.video !== 0) {
-    //     supp_files.append(<li className="c-scholworks__media-video">Contains {pr.supp_files.video} videos</li>)
-    //   }
-    //   if ('image' in pr.supp_files && pr.supp_files.image !== 0) {
-    //     supp_files.append(<li className="c-scholworks__media-image">Contains {pr.supp_files.image} images</li>)
-    //   }
-    //   if ('pdf' in pr.supp_files && pr.supp_files.pdf !== 0) {
-    //     supp_files.append(<li className="c-scholworks__media-pdf">Contains {pr.supp_files.pdf} additional PDFs</li>)
-    //   }
-    //   if ('audio' in pr.supp_files && pr.supp_files.audio !== 0) {
-    //     supp_files.append(<li className="c-scholworks__media-audio">Contains {pr.supp_files.audio} audio files</li>)
-    //   }
-    // }
+    console.log(pr.supp_files)
+    if ('supp_files' in pr && pr.supp_files !== null) {
+      if ('video' in pr.supp_files && pr.supp_files.video !== 0) {
+        supp_files.append(<li className="c-scholworks__media-video">Contains {pr.supp_files.video} videos</li>)
+      }
+      if ('image' in pr.supp_files && pr.supp_files.image !== 0) {
+        supp_files.append(<li className="c-scholworks__media-image">Contains {pr.supp_files.image} images</li>)
+      }
+      if ('pdf' in pr.supp_files && pr.supp_files.pdf !== 0) {
+        supp_files.append(<li className="c-scholworks__media-pdf">Contains {pr.supp_files.pdf} additional PDFs</li>)
+      }
+      if ('audio' in pr.supp_files && pr.supp_files.audio !== 0) {
+        supp_files.append(<li className="c-scholworks__media-audio">Contains {pr.supp_files.audio} audio files</li>)
+      }
+    }
     return (
       <section className="c-scholworks">
         <div className="c-scholworks__main-column">
