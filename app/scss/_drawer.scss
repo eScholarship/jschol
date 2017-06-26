@@ -1,5 +1,6 @@
 .c-drawer {
-  width: 20%;
+  width: 22%;
+  min-width: 350px;
   background-color: lighten($color-light-gray, 15%);
 }
 
@@ -130,7 +131,9 @@
 //}
 
 .c-drawer__nav-buttons {
-  float: right;
+  position: absolute;
+  right: 0;
+  top: 0;
   
   button {
     padding-right: $spacing-sm;
