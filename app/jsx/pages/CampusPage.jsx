@@ -11,7 +11,9 @@ import NavBarComp from '../components/NavBarComp.jsx'
 import CampusSearchComp from '../components/CampusSearchComp.jsx'
 import CampusSelectorComp from '../components/CampusSelectorComp.jsx'
 import HeatMapComp from '../components/HeatMapComp.jsx'
-import CampusCarouselComp from '../components/CampusCarouselComp.jsx'
+import StatCarouselComp from '../components/StatCarouselComp.jsx'
+import UnitCarouselComp from '../components/UnitCarouselComp.jsx'
+import JournalCarouselComp from '../components/JournalCarouselComp.jsx'
 
 class CampusPage extends PageBase
 {
@@ -48,16 +50,12 @@ class CampusPage extends PageBase
           navBar={[{name: 'Open Access Policies', url: ''}, {name: 'Journals', url: '/' + data.header.campusID + '/journals'}, {name: 'Academic Units', url: '/' + data.header.campusID + '/units'}]}
           unit={data.unit} socialProps={data.header.social} />
         <HeatMapComp />
-        <CampusCarouselComp campusName={data.header.campusName} />
+        <StatCarouselComp campusName={data.header.campusName} />
         <div className="c-columns">
           <main id="maincontent">
             <CampusSearchComp campusID={data.header.campusID} campusName={data.header.campusName} dashUrl={dashUrl} />
-            <section className="o-columnbox1">
-              [collections section to go here]
-            </section>
-            <section className="o-columnbox1">
-              [journal section to go here]
-            </section>
+            <UnitCarouselComp />
+            <JournalCarouselComp />
           </main>
           <aside>
             <section className="o-columnbox1">
