@@ -113,29 +113,14 @@ class ScholWorksComp extends React.Component {
         let display
         if (supp_file.type === 'video' || supp_file.type === 'image') {
           display = supp_file.count != 1 ? supp_file.type + 's' : supp_file.type
-        } else if (true || supp_file.type === 'audio') {
+        } else if (supp_file.type === 'audio') {
           display = supp_file.count != 1 ? 'audio files' : 'audio file'
         } else if (supp_file.type === 'pdf') {
           display = supp_file.count != 1 ? 'additional PDFs' : 'additional PDF'
         }
-        return (<li key={supp_file+i} className={"c-scholworks__media-" + supp_file.type}>Contains {supp_file.count} {display}</li>)   
+        return (<li key={supp_file+i} className={"c-medialist__" + supp_file.type}>Contains {supp_file.count} {display}</li>)   
       }
     })
-    console.log(pr.supp_files)
-    if ('supp_files' in pr && pr.supp_files !== null) {
-      if ('video' in pr.supp_files && pr.supp_files.video !== 0) {
-        supp_files.append(<li className="c-scholworks__media-video">Contains {pr.supp_files.video} videos</li>)
-      }
-      if ('image' in pr.supp_files && pr.supp_files.image !== 0) {
-        supp_files.append(<li className="c-scholworks__media-image">Contains {pr.supp_files.image} images</li>)
-      }
-      if ('pdf' in pr.supp_files && pr.supp_files.pdf !== 0) {
-        supp_files.append(<li className="c-scholworks__media-pdf">Contains {pr.supp_files.pdf} additional PDFs</li>)
-      }
-      if ('audio' in pr.supp_files && pr.supp_files.audio !== 0) {
-        supp_files.append(<li className="c-scholworks__media-audio">Contains {pr.supp_files.audio} audio files</li>)
-      }
-    }
     return (
       <section className="c-scholworks">
         <div className="c-scholworks__main-column">
@@ -170,8 +155,8 @@ class ScholWorksComp extends React.Component {
             </DotDiv>
           }
           <div className="c-scholworks__media">
-            <ul className="c-scholworks__media-list">{ supp_files }</ul>
-            {pr.rights && pr.rights !== 'public' && <img className="c-scholworks__rights" src="/images/cc-by-small.svg" alt="creative commons attribution 4.0 international public license"/>}
+            <ul className="c-medialist">{ supp_files }</ul>
+            {pr.rights && pr.rights !== 'public' && <img className="c-scholworks__license" src="/images/cc-by-small.svg" alt="creative commons attribution 4.0 international public license"/>}
           </div>
         </div>
         {pr.thumbnail && <img className="c-scholworks__article-preview" src={"/assets/"+pr.thumbnail.asset_id} width={pr.thumbnail.width} height={pr.thumbnail.height} alt="Article image" />}
