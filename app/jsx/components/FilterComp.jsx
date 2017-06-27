@@ -49,12 +49,14 @@ class FilterComp extends React.Component {
         }
       }
     }
-    
+    let infoPagesCount = 12
+    let resultCount = this.props.count + infoPagesCount 
     return (
       <div className="c-filter">
         <h2 className="c-filter__heading">{searchString}</h2>
         <input type="hidden" name="q" value={this.props.query.q} />
-        <div>Results: 12 pages, {this.props.count} works</div>
+        {/* ToDo: Once informational pages are impleented, rig up the proper number here*/}
+        <div>{resultCount} results</div>
       {activeFilters &&
         <FiltersShowHide activeFilters={activeFilters} handler={this.props.handler} clearAll={this.clearAll} />
       }
