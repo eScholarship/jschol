@@ -1,57 +1,124 @@
 // ##### Filter Component ##### //
 
-.c-filter {
-  margin: 0 0 $spacing-md;
+%c-filter {
+  @extend %clearfix;
+  margin-bottom: $spacing-md;
   padding: $spacing-sm;
   background: $color-white;
   box-shadow: $box-shadow1;
 }
 
+.c-filter {
+  @extend %c-filter;
+}
+
+.c-filter--active {
+  @extend %c-filter;
+
+  .c-filter__results {
+    margin-bottom: $spacing-sm;
+  }
+
+  .c-filter__inactive-note {
+    display: none;
+  }
+
+  .c-filter__active {
+    display: block;
+  }
+
+}
+
 .c-filter__heading {
   @extend %o-heading3;
-  margin-bottom: $spacing-sm;
+  margin-bottom: $spacing-md;
   font-weight: normal;
 }
 
-.c-filter__active-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin: $spacing-base 0 0;
+.c-filter__results {
+  margin-bottom: $spacing-md;
+}
 
-  button {
-    @extend %interactive-element-size;
-    display: inline-flex;
-    align-items: center;
-    padding-right: 1.3em;
-    border: none;
-    background: $color-white inline('../images/icon_times.svg') no-repeat right -0.2em center / auto 60%;
-    color: $color-teal;
+.c-filter__inactive-note {
+  margin-bottom: $spacing-sm;
+}
 
-    @include interactive-element-pointer(coarse) {
-      padding-right: 1.8em;
+.c-filter__active {
+  display: none; // gets set to 'block' with c-filter--active declaration above
+
+  summary {
+    margin-right: $spacing-md;
+    float: left;
+    user-select: none;
+
+    span {
+      @extend %interactive-element-size;
+      display: flex;
+      align-items: center;
+      color: $color-teal;
+
+      &::before {
+        content: 'Show ';
+      }
+
+      strong {
+        margin: 0 0.3em; // reinstate collapsed flexbox whitespace
+      }
+
     }
 
   }
 
 }
 
-.c-filter__active {
-  display: flex;
-  flex-flow: column nowrap;
-  align-items: flex-start;
+.c-filter__active[open] {
+  
+  summary {
+
+    span {
+
+      &::before {
+        content: 'Hide ';
+      }
+
+    }
+
+  }
+
+}
+
+.c-filter__active-list {
+  @extend %no-bullet-ul;
+  clear: left;
 
   button {
     @extend %o-button__5;
     background-image: inline('../images/icon_times-circle.svg');
     color: $color-black;
     font-weight: normal;
+    text-align: left;
+  }
+
+}
+
+.c-filter__clear-all {
+  @extend %interactive-element-size;
+  padding: 0 1.3em 0 0;
+  float: right;
+  border: none;
+  background: $color-white inline('../images/icon_times.svg') no-repeat right -0.2em center / auto 60%;
+  color: $color-teal;
+  text-align: right;
+
+  @include interactive-element-pointer(coarse) {
+    padding-right: 1.8em;
   }
 
 }
 
 .c-filter__tips {
   @extend %o-textlink__secondary;
-  display: flex;
-  justify-content: flex-end;
+  display: block;
+  padding-top: $spacing-sm;
+  clear: left;
 }

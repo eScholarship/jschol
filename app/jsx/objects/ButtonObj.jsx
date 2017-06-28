@@ -23,6 +23,8 @@ class InputObj extends React.Component {
 
         <button className="o-button__8">Get Started</button>
 
+        <button className="o-button__9" aria-label="search"></button>
+
       </div>
     )
   }

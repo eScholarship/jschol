@@ -5,7 +5,6 @@ $scholworks-tag-height: 1.4em;
 .c-scholworks {
   display: flex;
   flex-flow: column nowrap;
-  align-items: flex-end;
 
   @include bp(screen1) {
     flex-flow: row nowrap;
@@ -21,6 +20,10 @@ $scholworks-tag-height: 1.4em;
     margin-bottom: $spacing-sm;
   }
 
+}
+
+.c-scholworks__main-column {
+  flex: 1 1 auto;
 }
 
 .c-scholworks__tag-list {
@@ -101,8 +104,10 @@ $scholworks-tag-height: 1.4em;
 
 .c-scholworks__article-preview {
   flex: 0 0 auto;
+  align-self: flex-end;
 
   @include bp(screen1) {
+    align-self: flex-start;
     margin-top: calc(#{$scholworks-tag-height} + #{$spacing-md});
     margin-left: $spacing-md;
   }

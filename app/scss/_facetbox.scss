@@ -6,11 +6,12 @@
 }
 
 .c-facetbox__summary {
+  @extend %o-heading3;
   position: relative;
   margin: 0 (-$spacing-sm);
   padding: 0 $spacing-sm;
   background: $color-light-gray;
-  font-size: 1.2em;
+  font-weight: normal;
   box-shadow: $box-shadow1;
   user-select: none;
 
