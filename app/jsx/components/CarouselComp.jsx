@@ -11,12 +11,7 @@ if (!(typeof document === "undefined")) {
 
 class CarouselComp extends React.Component {
   componentDidMount() {
-    // The forceUpdate and setTimeout below work around a problem with isomorphic
-    // rendering. Basically, React has to fully recognize that the server's code
-    // matches the client's before we init Flickity. Otherwise, we get a message
-    // "Unable to find element with ID ##"
-    this.forceUpdate()
-    this.timer = setTimeout(()=>this.flkty = new Flickity(this.domEl, this.props.options), 0)
+    this.flkty = new Flickity(this.domEl, this.props.options)
   }
   componentWillUnmount() {
     if (this.timer)

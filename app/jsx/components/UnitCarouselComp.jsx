@@ -2,35 +2,30 @@
 
 import React from 'react'
 import $ from 'jquery'
-import Flickity from 'flickity-imagesloaded'
-import dotdotdot from 'jquery.dotdotdot'
+import CarouselComp from '../components/CarouselComp.jsx'
+// Load dotdotdot in browser but not server
+if (!(typeof document === "undefined")) {
+  const dotdotdot = require('jquery.dotdotdot')
+}
 
 class UnitCarouselComp extends React.Component {
   componentDidMount () {
-    var carousel = $('.c-unitcarousel')[0];
-    var options = {
-      cellAlign: 'left',
-      initialIndex: 0,
-      pageDots: false,
-      percentPosition: false, // px instead of % cells
-    }
-    this.flkty = new Flickity(carousel, options);
-
     /* jquery dotdotdot */
     $('.o-unititem__title, .o-unititem__author').dotdotdot({
       watch: 'window'
     });
   }
-  componentWillUnmount() {
-    if (this.flkty) {
-      this.flkty.destroy();
-    }
-  }
   render() {
     return (
       <div className="o-itemcarousel">
         <h2 className="o-itemcarousel__heading">Center for Medieval and Renaissance Studies</h2>
-        <div className="c-unitcarousel o-itemcarousel__carousel">
+        <CarouselComp className="c-unitcarousel o-itemcarousel__carousel"
+                      options={{
+                        cellAlign: 'left',
+                        initialIndex: 0,
+                        pageDots: false,
+                        percentPosition: false // px instead of % cells
+                      }}>
           <div className="o-itemcarousel__item">
             <a href="" className="o-unititem--vert">
               <div className="o-unititem__type--article">Article</div>
@@ -116,7 +111,7 @@ class UnitCarouselComp extends React.Component {
               </ul>
             </a>
           </div>
-        </div>
+        </CarouselComp>
         <div className="o-stat--item o-itemcarousel__stats-item">
           <b>1,000</b>Items
         </div>
