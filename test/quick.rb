@@ -23,7 +23,7 @@ class TestQuick < Test::Unit::TestCase
   def test_search
     html = fetchAndStrip("http://localhost:4001/search?q=china")
     assert_match /Your search:.*china/, html
-    assert /Results: [^<]*?(\d+) works/ =~ html
+    assert /\b(\d+) results/ =~ html
     assert $1.to_i > 10, "At least 10 docs should match 'china'"
   end
 
