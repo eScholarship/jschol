@@ -591,17 +591,14 @@ get "/api/search/" do
                'campuses', 'departments', 'journals', 'disciplines', 'rights']
   params = CGI::parse(request.query_string)
   searchType = params["searchType"][0]
-  # ToDo:Could there be more than one searchType? 
+  # Perform global search when searchType is assigned 'eScholarship'
+  # otherwise: 'searchType' will be assigned the unit ID - and then 'searchUnitType' specifies type of unit.
   if searchType and searchType != "eScholarship"
-    unit = Unit[searchType]
-    if unit
-      if unit.type.include? 'series'
-        params["series"] = [unit.id]
-      else
-        facetChoice = {"oru"=> "departments", "journal"=> "journals", "campus"=> "campuses"}
-        choice = facetChoice[unit.type]
-        choice and params[choice] = [unit.id]
-      end
+    searchUnitType = params["searchUnitType"][0]
+    if searchUnitType.nil? or searchUnitType == ''
+      params["searchType"] = ["eScholarship"]
+    else
+      params[searchUnitType] = [searchType]
     end
   end
   return body.merge(search(params, facetList)).to_json
