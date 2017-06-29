@@ -1,10 +1,11 @@
 // ##### Media List Component ##### //
 
-$medialist-item-length: 13em;
+$medialist-item-length: 11em;
 
 .c-medialist {
   @extend %no-bullet-ul;
   @extend %clearfix;
+  flex: 1 0 auto; // to c-scholworks__media flexbox
   margin-right: $spacing-md;
 
   @supports (display: grid) {
@@ -41,6 +42,11 @@ $medialist-item-length: 13em;
   background-image: inline('../images/icon_picture-black.svg');
 }
 
+.c-medialist__other {
+  @extend %c-medialist__item;
+  background-image: inline('../images/icon_file-text-o-black.svg');
+}
+
 .c-medialist__pdf {
   @extend %c-medialist__item;
   background-image: inline('../images/icon_pdf-black.svg');
@@ -49,4 +55,9 @@ $medialist-item-length: 13em;
 .c-medialist__video {
   @extend %c-medialist__item;
   background-image: inline('../images/icon_play-circle-o-black.svg');
+}
+
+.c-medialist__zip {
+  @extend %c-medialist__item;
+  background-image: inline('../images/icon_file-archive-o-black.svg');
 }

@@ -8,11 +8,11 @@
     margin: (-$spacing-sm) (-$spacing-sm) $spacing-sm;
 
     @include headings() {
+      @extend %o-heading3;
       margin: 0;
       padding: 0.4em $spacing-sm;
       background: $color-light-gray;
-      font-family: 'KievitWebLight';
-      font-size: 1.2em;
+      font-weight: normal !important; // override %o-heading3 default bold;
     }
 
   }

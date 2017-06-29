@@ -25,25 +25,24 @@ Procedure for merging
 
 - In jschol:
     git status                  # should be clean
-    git pull upstream master    # make sure up to date (again, 'origin' if no 'upstream')
+    git pull origin master      # make sure up to date
 - Git clone a copy of eschol-ui, and call it just eschol-ui
 - In eschol-ui:
     git branch -D merge-tmp     # delete old merge-tmp branch, if any
     git clean -n                # says what un-tracked files it will delete
     git clean -f                # then deletes them
-    get checkout master
-    git pull upstream master    # or origin if you don't have upstream defined
+    git checkout master
+    git pull origin master
     git log -1                  # grab the changeset ID, and update this file
     git checkout -b merge-tmp   # create new merge-tmp branch
 - Git clone another copy of eschol-ui, and call it eschol-ui-old
 - In eschol-ui-old:
-    git branch -D merge-tmp     # delete old merge-tmp branch, if any
     git clean -n                # says what un-tracked files it will delete
     git clean -f                # then deletes them
-    get checkout master
+    git checkout -f master
+    git branch -D merge-tmp     # delete old merge-tmp branch, if any
     git fetch origin master
-    git checkout <changeset>"   # using the changeset ID above.
-    git checkout -b merge-tmp   # create new merge-tmp branch
+    git checkout -b merge-tmp <changeset>  # using prev changeset from bottom of this file
 - Perform 3-way merge. Left=jschol  Middle=eschol-ui-old  Right=eschol-ui
     + Merge both directions to make all equal (or ignored)
 - Commit in jschol
@@ -284,5 +283,14 @@ As well as:
   modified:   app/jsx/pages/CampusPage.jsx
   deleted:    app/jsx/components/ItemCarouselComp.jsx
 
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's cb142f0ccc17fad302bd24d361d119a25f8ec824, 2017-06-28 <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
+Martin added all scss and image changes since last.
+As well as:
 
+  modified:   app/jsx/components/CheckboxComp.jsx
+  modified:   app/jsx/components/FilterComp.jsx (big merge here)
+  modified:   app/jsx/components/MediaListComp.jsx
+  modified:   app/jsx/objects/ButtonObj.jsx

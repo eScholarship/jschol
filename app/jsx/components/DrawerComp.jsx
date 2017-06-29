@@ -34,7 +34,7 @@ class SortableNavList extends React.Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    if (!_.isEqual(this.props, nextProps))
+    if (!nextProps.fetchingData && !_.isEqual(this.props, nextProps))
       this.setState(this.setupState(nextProps))
   }
 
@@ -43,8 +43,10 @@ class SortableNavList extends React.Component {
       return undefined
     return navItems.map(nav => {
       let data = { id: nav.id, type: nav.type, title: nav.name, subtitle: <i>{nav.type}</i> }
-      if (nav.type == "folder")
+      if (nav.type == "folder") {
         data.children = this.generateData(nav.sub_nav)
+        data.expanded = true
+      }
       else
         data.noChildren = true
 
@@ -54,6 +56,33 @@ class SortableNavList extends React.Component {
         data.title = <Link to={`/uc/${this.props.unit}/nav/${nav.id}`}>{nav.name}</Link>
 
       return data
+    })
+  }
+
+  travOrder(treeData) {
+    return treeData.map(item => {
+      let out = { id: item.id }
+      if (item.children)
+        out.sub_nav = this.travOrder(item.children)
+      return out
+    })
+  }
+
+  onMoveNode = ({ treeData }) => {
+    this.setState({ working: true })
+    $.getJSON({ url: `/api/unit/${this.props.unit}/navOrder`,
+                type: 'PUT',
+                data: { order: JSON.stringify(this.travOrder(treeData)),
+                        username: this.props.cms.username, token: this.props.cms.token }
+              })
+    .done((data)=>{
+      this.setState({working: false})
+      this.props.cms.fetchPageData()  // re-fetch page state after DB is updated
+    })
+    .fail((data)=>{
+      this.setState({working: false})
+      alert("Reorder failed" + (data.responseJSON ? ":\n"+data.responseJSON.message : "."))
+      this.props.cms.fetchPageData()  // re-fetch page state after DB is updated
     })
   }
 
@@ -83,7 +112,8 @@ class SortableNavList extends React.Component {
             return false
           return true
         }}
-        onChange={treeData=>this.setState({data: treeData})}/>
+        onChange={treeData => this.setState({ data: treeData })}
+        onMoveNode={this.onMoveNode}/>
     )
   }
 }
@@ -153,7 +183,10 @@ class DrawerComp extends React.Component {
           </AddWidgetMenu>
         </div>
 
-        <SortableNavList cms={cms} unit={this.props.data.unit.id} navItems={this.props.data.header.nav_bar}/>
+        <SortableNavList cms={cms}
+                         unit={this.props.data.unit.id}
+                         navItems={this.props.data.header.nav_bar}
+                         fetchingData={this.props.fetchingData}/>
 
         <div className="c-drawer__heading">
           Sidebar Widgets
