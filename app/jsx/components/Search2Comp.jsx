@@ -3,17 +3,6 @@
 import React from 'react'
 import Form from 'react-router-form'
 
-// var customRadioLabel = ""
-// if (["oru", "series", "monograph_series", "seminar_series", "special"].includes(p.type)) {
-//    customRadioLabel = "This department"
-// }
-// if (p.type == 'journal') {
-//    customRadioLabel = "This Journal"
-// }
-// if (p.type == 'campus') {
-//    customRadioLabel = "This campus"
-// }
-
 class SearchControls extends React.Component {
   render() {
     let p = this.props,
@@ -24,7 +13,8 @@ class SearchControls extends React.Component {
       searchUnit = [
         <input key="r2" type="radio" id="c-search2__refine-campus" name="searchType" value={p.unitID}
                onFocus={this.props.makeActive} onBlur={this.props.makeInactive}/>,
-        <label key="l2" htmlFor="c-search2__refine-campus">This {p.label=="Department" ? "Dept." : p.label}</label>
+        <label key="l2" htmlFor="c-search2__refine-campus">This {p.label=="Department" ? "Dept." : p.label}</label>,
+        <input key="h" type="hidden" name="searchUnitType" value={this.props.searchUnitType} />
       ]
     }
 
@@ -44,15 +34,19 @@ class SearchComp2 extends React.Component {
   makeInactive = ()=> this.setState({refineActive: false})
 
   render() {
-    var label;
+    let label, searchUnitType;
     if (["series", "monograph_series", "seminar_series", "special"].includes(this.props.type)) {
       label = "Series"
+      searchUnitType = "series"
     } else if (this.props.type == "oru") {
       label = "Department"
+      searchUnitType = "departments"
     } else if (this.props.type == "journal") {
       label = "Journal"
+      searchUnitType = "journals"
     } else if (this.props.type == "campus") {
       label = "Campus"
+      searchUnitType = "campuses"
     }
 
     return (
@@ -68,7 +62,8 @@ class SearchComp2 extends React.Component {
                               label={label}
                               makeActive={this.makeActive}
                               makeInactive={this.makeInactive}
-                              unitID={this.props.unitID} />
+                              unitID={this.props.unitID}
+                              searchUnitType={searchUnitType} />
             </div>
             <button type="submit" className="c-search2__submit-button" aria-label="search"></button>
             <button className="c-search2__search-close-button" aria-label="close search field" onClick = {()=>this.props.onClose()}></button>

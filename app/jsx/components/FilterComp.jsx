@@ -30,11 +30,15 @@ class FilterComp extends React.Component {
       }
     }
 
+    let infoPagesCount = 12
+    let resultCount = this.props.count + infoPagesCount
+
     return (
       <div className={activeFilters ? "c-filter--active" : "c-filter"}>
         <h2 className="c-filter__heading">{searchString}</h2>
         <input type="hidden" name="q" value={this.props.query.q} />
-        <div className="c-filter__results">Results: 12 pages, {this.props.count} works</div>
+        {/* ToDo: Once informational pages are impleented, rig up the proper number here*/}
+        <div className="c-filter__results">{resultCount} results</div>
         <div className="c-filter__inactive-note">No filters applied</div>
         <details className="c-filter__active">
           <summary><span><strong>{activeFilters && activeFilters.length}</strong> filter{!activeFilters || activeFilters.length != 1 ? "s" : ""} applied</span></summary>

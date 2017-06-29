@@ -47,7 +47,7 @@ class CampusPage extends PageBase
         <NavBarComp
           // ToDo: Properly call header.nav_bar
           // navBar={data.header.nav_bar}
-          navBar={[{name: 'Open Access Policies', url: ''}, {name: 'Journals', url: '/' + data.header.campusID + '/journals'}, {name: 'Academic Units', url: '/' + data.header.campusID + '/units'}]}
+          navBar={[{id: 1, name: 'Open Access Policies', url: ''}, {id: 2, name: 'Journals', url: '/' + data.header.campusID + '/journals'}, {id: 3, name: 'Academic Units', url: '/' + data.header.campusID + '/units'}]}
           unit={data.unit} socialProps={data.header.social} />
         <HeatMapComp />
         <StatCarouselComp campusName={data.header.campusName} />
