@@ -255,13 +255,14 @@ def getNavByID(navBar, navID)
   travNav(navBar) { |nav|
     nav['id'].to_s == navID.to_s and return nav
   }
+  return nil
 end
 
 def deleteNavByID(navBar, navID)
   return navBar.map { |nav|
-    nav['id'].to_s == navID.to_s ? nil :
-    nav['type'] == "folder" ? nav.merge({ sub_nav: deleteNavByID(nav['sub_nav'], navID) })
-    : nav
+    nav['id'].to_s == navID.to_s ? nil
+      : nav['type'] == "folder" ? nav.merge({'sub_nav'=>deleteNavByID(nav['sub_nav'], navID) })
+      : nav
   }.compact
 end
 

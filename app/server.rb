@@ -731,6 +731,11 @@ def sanitizeHTML(htmlFragment)
   )
 end
 
+def jsonHalt(httpCode, message)
+  content_type :json
+  halt(httpCode, { error: true, message: message }.to_json)
+end
+
 put "/api/unit/:unitID/nav/:navID" do |unitID, navID|
   # Check user permissions
   perms = getUserPermissions(params[:username], params[:token], unitID)
@@ -738,9 +743,9 @@ put "/api/unit/:unitID/nav/:navID" do |unitID, navID|
   content_type :json
 
   DB.transaction {
-    unit = Unit[unitID] or halt(404, "Unit not found")
+    unit = Unit[unitID] or jsonHalt(404, "Unit not found")
     unitAttrs = JSON.parse(unit.attrs)
-    params[:name].empty? and halt(400, { error: true, message: "Page name must be supplied." }.to_json)
+    params[:name].empty? and jsonHalt(400, "Page name must be supplied.")
 
     travNav(unitAttrs['nav_bar']) { |nav|
       next unless nav['id'].to_s == navID.to_s
@@ -750,24 +755,24 @@ put "/api/unit/:unitID/nav/:navID" do |unitID, navID|
 
         oldSlug = page.slug
         newSlug = params[:slug]
-        newSlug.empty? and halt(400, { error: true, message: "Slug must be supplied." }.to_json)
-        newSlug =~ /^[a-zA-Z][a-zA-Z0-9_]+$/ or halt(400, { error: true, 
-          message: "Slug must start with a letter a-z, and consist only of letters a-z, numbers, or underscores." }.to_json)
+        newSlug.empty? and jsonHalt(400, "Slug must be supplied.")
+        newSlug =~ /^[a-zA-Z][a-zA-Z0-9_]+$/ or jsonHalt(400,
+          message: "Slug must start with a letter a-z, and consist only of letters a-z, numbers, or underscores.")
         page.slug = newSlug
         nav['slug'] = newSlug
 
         page.name = params[:name]
-        page.name.empty? and halt(400, { error: true, message: "Page name must be supplied." }.to_json)
+        page.name.empty? and jsonHalt(400, "Page name must be supplied.")
 
         page.title = params[:title]
-        page.title.empty? and halt(400, { error: true, message: "Title must be supplied." }.to_json)
+        page.title.empty? and jsonHalt(400, "Title must be supplied.")
 
         newHTML = sanitizeHTML(params[:attrs][:html])
-        newHTML.empty? and halt(400, { error: true, message: "Text must be supplied." }.to_json)
+        newHTML.empty? and jsonHalt(400, "Text must be supplied.")
         page.attrs = JSON.parse(page.attrs).merge({ "html" => newHTML }).to_json
         page.save
       elsif nav['type'] == "link"
-        params[:url] =~ %r{^https?://.*} or halt(400, { error: true, message: "Invalid URL." }.to_json)
+        params[:url] =~ %r{^https?://.*} or jsonHalt(400, "Invalid URL.")
         nav['url'] = params[:url]
       end
       puts "New unit attrs: #{unitAttrs}"
@@ -775,7 +780,7 @@ put "/api/unit/:unitID/nav/:navID" do |unitID, navID|
       unit.save
       return {status: "ok"}.to_json
     }
-    halt(404, { error: true, message: "Unknown nav #{navID} for unit #{unitID}" }.to_json)
+    jsonHalt(404, "Unknown nav #{navID} for unit #{unitID}")
   }
 end
 
@@ -784,7 +789,6 @@ def remapOrder(oldNav, newOrder)
   return newOrder.map { |stub|
     source = getNavByID(oldNav, stub['id'])
     source or raise("Unknown nav id #{stub['id']}")
-    puts "stub=#{stub} source=#{source}"
     newNav = source.clone
     if source['type'] == "folder"
       stub['sub_nav'] or raise("can't change nav type")
@@ -804,11 +808,8 @@ put "/api/unit/:unitID/navOrder" do |unitID|
     unit = Unit[unitID] or halt(404, "Unit not found")
     unitAttrs = JSON.parse(unit.attrs)
     newOrder = JSON.parse(params[:order])
-    puts "newOrder=#{newOrder}"
-    newOrder.empty? and halt(400, { error: true, message: "Page name must be supplied." }.to_json)
+    newOrder.empty? and jsonHalt(400, "Page name must be supplied.")
     newNav = remapOrder(unitAttrs['nav_bar'], newOrder)
-    puts "newNav:"
-    pp newNav
     unitAttrs['nav_bar'] = newNav
     unit.attrs = unitAttrs.to_json
     unit.save
@@ -863,7 +864,7 @@ post "/api/unit/:unitID/nav" do |unitID|
     unit[:attrs] = attrs.to_json
     unit.save
 
-    return { status: "ok", id: newNav[:id] }.to_json
+    return { status: "ok", nextURL: "/uc/#{unitID}/nav/#{newNav[:id]}" }.to_json
   }
 end
 
@@ -878,17 +879,16 @@ delete "/api/unit/:unitID/nav/:navID" do |unitID, navID|
     unit = Unit[unitID] or halt(404, "Unit not found")
     unitAttrs = JSON.parse(unit.attrs)
     nav = getNavByID(unitAttrs['nav_bar'], navID)
+    unitAttrs['nav_bar'] = deleteNavByID(unitAttrs['nav_bar'], navID)
+    getNavByID(unitAttrs['nav_bar'], navID).nil? or raise("delete failed")
     if nav['type'] == "folder" && !nav['sub_nav'].empty?
-      halt(404, { error: true, message: "Can't delete non-empty folder" })
+      jsonHalt(404, "Can't delete non-empty folder")
     end
     if nav['type'] == "page"
-      page = Page.where(unit_id: unitID, slug: nav['slug']).first or halt(404, { error: true, message: "Page not found" })
+      page = Page.where(unit_id: unitID, slug: nav['slug']).first or jsonHalt(404, "Page not found")
       page.delete
     end
 
-    # There's some overlap (for convenience and speed) between units.attrs.nav_bar and pages.
-    # So update the unit also.
-    unitAttrs['nav_bar'] = deleteNavByID(unitAttrs['nav_bar'], navID)
     unit.attrs = unitAttrs.to_json
     unit.save
   }
