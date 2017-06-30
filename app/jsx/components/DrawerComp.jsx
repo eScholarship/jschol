@@ -105,7 +105,7 @@ class SortableSidebarList extends React.Component {
 
   setupState(props) {
     return {
-      data: this.generateData(props.sidebarItems)
+      data: this.generateData(props.sidebarWidgets)
     }
   }
 
@@ -114,10 +114,14 @@ class SortableSidebarList extends React.Component {
       this.setState(this.setupState(nextProps))
   }
 
-  generateData(sidebarItems) {
-    if (!sidebarItems)
+  generateData(sidebarWidgets) {
+    if (!sidebarWidgets)
       return undefined
-    return sidebarItems.map(sb => {return { id: sb.id, kind: sb.kind, title: sb.title, subtitle: <i>{sb.kind}</i> }})
+    return sidebarWidgets.map(sb => { return {
+      id: sb.id,
+      kind: sb.kind,
+      title: sb.title ? sb.title : sb.kind.replace(/([a-z])([A-Z][a-z])/g, "$1 $2"),
+      subtitle: <i>widget</i> }})
   }
 
   travOrder(treeData) {
@@ -164,9 +168,9 @@ class DrawerComp extends React.Component {
     this.sendApiData(cms, 'POST', `/api/unit/${this.props.data.unit.id}/nav`, { navType: navType })
   }
 
-  addSidebarItem = (event, cms, sidebarKind) => {
+  addSidebarWidget = (event, cms, widgetKind) => {
     event.preventDefault()
-    this.sendApiData(cms, 'POST', `/api/unit/${this.props.data.unit.id}/sidebar`, { sidebarKind: sidebarKind })
+    this.sendApiData(cms, 'POST', `/api/unit/${this.props.data.unit.id}/sidebar`, { widgetKind: widgetKind })
   }
 
   reorderNav = (cms, newOrder) => {
@@ -209,14 +213,14 @@ class DrawerComp extends React.Component {
         <div className="c-drawer__heading">
           Sidebar Widgets
           <AddWidgetMenu title="Add Sidebar">
-            <a href="" key="RecentArticles" onClick={e=>this.addSidebar(e, cms, 'RecentArticles')  }>Recent Articles</a>
-            <a href="" key="Text" onClick={e=>this.addSidebar(e, cms, 'Text')  }>Text</a>
+            <a href="" key="RecentArticles" onClick={e=>this.addSidebarWidget(e, cms, 'RecentArticles')  }>Recent Articles</a>
+            <a href="" key="Text" onClick={e=>this.addSidebarWidget(e, cms, 'Text')  }>Text</a>
           </AddWidgetMenu>
         </div>
 
         <SortableSidebarList cms={cms}
                              unit={this.props.data.unit.id}
-                             sidebarItems={this.props.data.sidebar}
+                             sidebarWidgets={this.props.data.sidebar}
                              fetchingData={this.props.fetchingData}
                              onChangeOrder={this.reorderSidebar}/>
       </div>

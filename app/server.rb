@@ -869,6 +869,30 @@ post "/api/unit/:unitID/nav" do |unitID|
 end
 
 ###################################################################################################
+# *Post* to add a widget to the sidebar
+post "/api/unit/:unitID/sidebar" do |unitID|
+  # Check user permissions
+  perms = getUserPermissions(params[:username], params[:token], unitID)
+  perms[:admin] or jsonHalt(401, "unauthorized")
+
+  # Grab unit data
+  unit = Unit[unitID]
+  unit or jsonHalt(404, "unknown unit")
+
+  # Validate the widget kind
+  widgetKind = params[:widgetKind]
+  ['RecentArticles', 'Text', 'Tweets'].include?(widgetKind) or jsonHalt(400, "Invalid widget kind")
+
+  # Determine an ordering that will place this last.
+  lastOrder = Widget.where(unit_id: unitID).max(:ordering)
+  order = (lastOrder || 0) + 1
+
+  newID = Widget.create(unit_id: unitID, kind: widgetKind, 
+                        ordering: order, attrs: {}.to_json, region: "sidebar").id
+  return { status: "ok", nextURL: "/uc/#{unitID}/sidebar/#{newID}" }.to_json
+end
+
+###################################################################################################
 # *Delete* to remove a static page from a unit
 delete "/api/unit/:unitID/nav/:navID" do |unitID, navID|
   # Check user permissions
