@@ -73,12 +73,15 @@ end
 def getUnitPageContent(unit, attrs)
   if unit.type == 'oru'
     return getORULandingPageData(unit.id)
-  end
-  if unit.type.include? 'series'
+  elsif unit.type == 'campus'
+    return getCampusLandingPageData(unit, attrs)
+  elsif unit.type.include? 'series'
     return getSeriesLandingPageData(unit)
-  end
-  if unit.type == 'journal'
+  elsif unit.type == 'journal'
     return getJournalLandingPageData(unit.id)
+  else
+    # ToDo: handle 'special' type here
+    halt(404, "Unknown unit type #{unit.type}")
   end
 end
 
@@ -102,7 +105,7 @@ def getORULandingPageData(id)
 end
 
 # Get data for Campus Landing Page
-def getCampusLandingPageContent(unit, attrs)
+def getCampusLandingPageData(unit, attrs)
   return {
     :pub_count =>     ($statsCampusPubs.keys.include? unit.id)  ? $statsCampusPubs[unit.id]     : 0,
     :view_count =>    0,

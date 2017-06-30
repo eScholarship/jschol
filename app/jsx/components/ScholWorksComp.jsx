@@ -48,6 +48,8 @@ class DotH2 extends React.Component {
 class ScholWorksComp extends React.Component {
   static propTypes = {
     result: PropTypes.shape({
+      id: PropTypes.string,
+      title: PropTypes.string,
       genre: PropTypes.string,
       peerReviewed: PropTypes.bool,
       journalInfo: PropTypes.shape({

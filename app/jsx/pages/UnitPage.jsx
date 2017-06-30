@@ -15,6 +15,7 @@ import Header2Comp from '../components/Header2Comp.jsx'
 import SubheaderComp from '../components/SubheaderComp.jsx'
 import NavBarComp from '../components/NavBarComp.jsx'
 import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
+import CampusLayout from '../layouts/CampusLayout.jsx'
 import DepartmentLayout from '../layouts/DepartmentLayout.jsx'
 import SeriesLayout from '../layouts/SeriesLayout.jsx'
 import JournalLayout from '../layouts/JournalLayout.jsx'
@@ -92,6 +93,8 @@ class UnitPage extends PageBase
       data.marquee.carousel = true
       if (data.unit.type === 'oru') {
         contentLayout = (<DepartmentLayout unit={data.unit} data={data.content} sidebar={sidebar} marquee={data.marquee}/>)
+      } else if (data.unit.type == 'campus') {
+        contentLayout = (<CampusLayout unit={data.unit} data={data.content} sidebar={sidebar}/>)
       } else if (data.unit.type.includes('series')) {
         contentLayout = (<SeriesLayout unit={data.unit} data={data.content} sidebar={sidebar} marquee={data.marquee}/>)
       } else if (data.unit.type === 'journal') {

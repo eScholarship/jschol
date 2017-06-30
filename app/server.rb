@@ -500,8 +500,6 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
     }
     if pageName == 'home'
       pageData[:content] = getUnitPageContent(unit, attrs)
-    elsif pageName == 'campus_landing'
-      pageData[:content] = getCampusLandingPageContent(unit, attrs)
     elsif pageName == 'profile'
       pageData[:content] = getUnitProfile(unit, attrs)
     elsif pageName == 'nav'
