@@ -91,7 +91,7 @@ class UnitPage extends PageBase
       contentLayout = (<UnitStaticPageLayout unit={data.unit} data={data.content} sidebar={sidebar} fetchPageData={this.fetchPageData}/>)
     } else {
       data.marquee.carousel = true
-      data.unit.splashy = true
+      data.unit.splashy = false 
       if (data.unit.type === 'oru') {
         contentLayout = (<DepartmentLayout unit={data.unit} data={data.content} sidebar={sidebar} marquee={data.marquee}/>)
       } else if (data.unit.type == 'campus') {
