@@ -50,6 +50,7 @@ class SectionComp extends React.Component {
   }
 }
 
+// Issue SIMPLE
 class IssueSimpleComp extends React.Component {
   static PropTypes = {
     issue: PropTypes.shape({
@@ -64,8 +65,9 @@ class IssueSimpleComp extends React.Component {
   }
 
   render() {
-    let year = this.props.issue.pub_date.match(/\d{4}/),
-        issueCurrent = [this.props.issue.volume, this.props.issue.issue, year]
+    let pi = this.props.issue,
+        year = pi.pub_date.match(/\d{4}/),
+        issueCurrent = [pi.volume, pi.issue, year]
     return (
       <section className="o-columnbox1">
         {/* ToDo: Enhance ItemActioncComp for journal issue */}
@@ -73,16 +75,18 @@ class IssueSimpleComp extends React.Component {
         <div className="c-pub">
           <VolumeSelector vip={issueCurrent} />
           <div className="c-pub__subheading">Focus: Caribbean Studies and Literatures</div>
+          {/* No cover page image for simple layout */}
           <p>
             Lorem ipsum dolor sit amet, consectetur adipisicing elit. Pariatur fuga laborum, qui debitis vitae quaerat quas ab officia, dolor dignissimos ipsum nam ratione unde animi? Officiis rerum unde eveniet natus. Laboriosam tenetur vel, rem culpa maiores non, tempora voluptatibus quasi quos provident exercitationem itaque dolorum quam sequi dolor odio hic accusamus, repellendus ut dignissimos. Labore modi consectetur ullam, iste accusamus!
           </p>
         </div>
-        {this.props.issue.sections.map(section => <SectionComp key={section.name} section={section}/>)}
+        {pi.sections.map(section => <SectionComp key={section.name} section={section}/>)}
       </section>
     )
   }
 }
 
+// Issue SPLASHY
 class IssueSplashyComp extends React.Component {
   static PropTypes = {
     issue: PropTypes.shape({
@@ -97,14 +101,24 @@ class IssueSplashyComp extends React.Component {
   }
   
   render() {
+    let pi = this.props.issue,
+        year = pi.pub_date.match(/\d{4}/),
+        issueCurrent = [pi.volume, pi.issue, year]
     return (
       <section className="o-columnbox1">
         {/* ToDo: Enhance ItemActioncComp for journal issue */}
         <ItemActionsComp />
-        {/* ToDo: Stick an article here with thumbnail left-aligned */}
+        <div className="c-pub">
+          <VolumeSelector vip={issueCurrent} />
+          {pi.cover_page && <img className="c-scholworks__article-preview" src={"/assets/"+pi.cover_page.asset_id} width={pi.cover_page.width} height={pi.cover_page.height} alt={_.capitalize(pr.genre) + " image"} />}
+          <div className="c-pub__subheading">Focus: Caribbean Studies and Literatures</div>
+          <p>
+            Lorem ipsum dolor sit amet, consectetur adipisicing elit. Pariatur fuga laborum, qui debitis vitae quaerat quas ab officia, dolor dignissimos ipsum nam ratione unde animi? Officiis rerum unde eveniet natus. Laboriosam tenetur vel, rem culpa maiores non, tempora voluptatibus quasi quos provident exercitationem itaque dolorum quam sequi dolor odio hic accusamus, repellendus ut dignissimos. Labore modi consectetur ullam, iste accusamus!
+          </p>
+        </div>
         {/* <h3 className="o-heading3">Table of Contents</h3> */}
         <div className="o-dividecontent2x--ruled">
-          {this.props.issue.sections.map(section => <SectionComp key={section.name} section={section}/>)}
+          {pi.sections.map(section => <SectionComp key={section.name} section={section}/>)}
         </div>
       </section>
     )
@@ -131,15 +145,18 @@ class JournalLayout extends React.Component {
   }
   
   render() {
-    let data = this.props.data,
-        splashy = this.props.splashy 
-
+    let data = this.props.data
     return (
       <div>
         {this.props.marquee && <MarqueeComp marquee={this.props.marquee} unit={this.props.unit}/>}
         <div className="c-columns">
           <main id="maincontent">
-          {splashy ? <IssueSplashyComp issue={data.issue}/> : <IssueSimpleComp issue={data.issue}/> }
+          {this.props.unit.issue ?
+            this.props.unit.splashy ? <IssueSplashyComp issue={data.issue}/> : <IssueSimpleComp issue={data.issue}/>
+          :
+            <p>Currently no issues to display     {/* ToDo: Bring in issue-specific about text here? */}
+            </p>
+          }
           </main>
           <aside>
             <section className="o-columnbox1">
