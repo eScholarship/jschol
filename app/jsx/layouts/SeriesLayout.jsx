@@ -5,7 +5,22 @@ import { Subscriber } from 'react-broadcast'
 
 import ScholWorksComp from '../components/ScholWorksComp.jsx'
 import SortPaginationComp from '../components/SortPaginationComp.jsx'
+import PaginationComp from '../components/PaginationComp.jsx'
 import ShareComp from '../components/ShareComp.jsx'
+
+class SeriesSelector extends React.Component {
+  render() {
+    return (
+      <div className="o-input__droplist1">
+        <label htmlFor="c-sort1">Select</label>
+        <select name="" id="c-sort1">
+        { this.props.data.series.map((s) => 
+          <option key={s.unit_id} value={"/uc/"+s.unit_id}>{s.name}</option>)}
+        </select>
+      </div>
+    )
+  }
+}
 
 class SeriesLayout extends React.Component {
   static propTypes = {
@@ -28,29 +43,33 @@ class SeriesLayout extends React.Component {
   }
   
   render() {
-    var data = this.props.data;
+    let data = this.props.data
     return (
       <div className="c-columns">
+        {/* No marquee component used in series layout. But note marquee.about data used below */}
         <main id="maincontent">
           <section className="o-columnbox1">
-            <h4>Other series in this department: </h4>
-            <ul>
-              { data.series.map((s) => 
-                <li key={s.unit_id}><Link to={"/uc/"+s.unit_id}>{s.name}</Link></li>)}
-            </ul>
-            <p>Some about text for the series. Lorem ipsum dolor sit amet, consectetur adipisicing elit. Quos quo error expedita nobis modi a non, accusantium, ut at assumenda. Obcaecati sequi ducimus sint tenetur laboriosam alias corporis temporibus error? Nemo doloremque, possimus neque ea suscipit consectetur, ducimus ad veritatis laborum quia sunt modi accusamus pariatur sed. Blanditiis est, distinctio ad aut, quo doloremque voluptatibus consequatur ipsa placeat dolorum necessitatibus?</p>  
+            <div className="c-itemactions">
+              <SeriesSelector data={data} />
+              <ShareComp type="unit" id={this.props.unit.id} />
+            </div>
+          {this.props.marquee.about &&
+            <p dangerouslySetInnerHTML={{__html: this.props.marquee.about}}/>
+          }
+          {(this.props.data.count > 2) &&
             <SortPaginationComp query={data.query} count={data.count}/>
+          }
             <div>
               { data.searchResults.map(result =>
                 <ScholWorksComp key={result.id} result={result} />)
               }
             </div>
+          {(data.count > data.query.rows) &&
+            <PaginationComp query={data.query} count={data.count}/>
+          }
           </section>
         </main>
         <aside>
-          <section className="o-columnbox1">
-            <ShareComp type="unit" id={this.props.unit.id} />
-          </section>
           {this.props.sidebar}
         </aside>
       </div>
