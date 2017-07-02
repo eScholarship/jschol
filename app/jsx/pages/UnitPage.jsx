@@ -80,7 +80,9 @@ class UnitPage extends PageBase
     if (this.state.fetchingData)
       contentLayout = (<h2 style={{ marginTop: "5em", marginBottom: "5em" }}>Loading...</h2>)
     else if (this.props.params.pageName === 'search') {
-      contentLayout = (<UnitSearchLayout unit={data.unit} data={data.content} sidebar={sidebar}/>)
+      {/* ToDo: For now, serieslayout is the only unit search that occurs, but this should be properly componentized
+      contentLayout = (<UnitSearchLayout unit={data.unit} data={data.content} sidebar={sidebar}/>) */}
+      contentLayout = (<SeriesLayout unit={data.unit} data={data.content} sidebar={sidebar} marquee={data.marquee}/>)
     } else if (this.props.params.pageName === 'profile') {
       contentLayout = (<UnitProfileLayout unit={data.unit} data={data.content}/>)
     } else if (this.props.params.pageName === 'nav') {

@@ -501,7 +501,8 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
     if ["home", "search"].include? pageName
       q = nil
       q = CGI::parse(request.query_string) if pageName == "search"
-      pageData[:content] = getUnitPageContent(unit, pageName, attrs, q)
+      pageData[:content] = getUnitPageContent(unit, attrs, q)
+    # This is subsumed under getUnitPageContent right now
     # elsif pageName == 'search'
     #   pageData[:content] = unitSearch(CGI::parse(request.query_string), unit)
     elsif pageName == 'profile'
@@ -513,7 +514,7 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
     else
       pageData[:content] = getUnitStaticPage(unit, attrs, pageName)
     end
-    pageData[:marquee] = getUnitMarquee(unit, attrs) if pageName == 'home'
+    pageData[:marquee] = getUnitMarquee(unit, attrs) if ["home", "search"].include? pageName
   else
     #public API data
     pageData = {

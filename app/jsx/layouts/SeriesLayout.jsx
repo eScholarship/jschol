@@ -27,10 +27,6 @@ class SeriesSelector extends React.Component {
 }
 
 class SeriesLayout extends React.Component {
-  state = {
-    query: this.props.query,
-  }
-
   static propTypes = {
     unit: PropTypes.shape({
       id: PropTypes.string.isRequired,
@@ -66,8 +62,7 @@ class SeriesLayout extends React.Component {
       }
     }
     // Handy for debugging
-    console.log(this.state.query)
-    console.log(JSON.stringify(formData))
+    // console.log(JSON.stringify(formData))
     return true
   }
  
@@ -75,7 +70,6 @@ class SeriesLayout extends React.Component {
     let data = this.props.data,
         formName = "seriesForm",
         formButton = "series-form-submit"
-    console.log(this.props)
     return (
       <div className="c-columns">
         {/* No marquee component used in series layout. But note marquee.about data used below */}
@@ -98,7 +92,7 @@ class SeriesLayout extends React.Component {
                 }
               </div>
             {(data.count > data.query.rows) &&
-              <PaginationComp query={data.query} count={data.count}/>
+              <PaginationComp formName={formName} formButton={formButton} query={data.query} count={data.count}/>
             }
               {/* Submit button needs to be present so our logic can "press" it at certain times.
                   But hide it with display:none so user doesn't see it. */}
