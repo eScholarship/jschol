@@ -70,18 +70,22 @@ def getUnitHeader(unit, pageName=nil, attrs=nil)
   return header
 end
 
-def getUnitPageContent(unit, attrs)
-  if unit.type == 'oru'
-    return getORULandingPageData(unit.id)
-  elsif unit.type == 'campus'
-    return getCampusLandingPageData(unit, attrs)
-  elsif unit.type.include? 'series'
-    return getSeriesLandingPageData(unit)
-  elsif unit.type == 'journal'
-    return getJournalLandingPageData(unit.id)
-  else
-    # ToDo: handle 'special' type here
-    halt(404, "Unknown unit type #{unit.type}")
+def getUnitPageContent(unit, pageName, attrs, q)
+  if pageName == "search"
+    return unitSearch(q, unit)
+  else   # pageName == 'home'
+    if unit.type == 'oru'
+      return getORULandingPageData(unit.id)
+    elsif unit.type == 'campus'
+      return getCampusLandingPageData(unit, attrs)
+    elsif unit.type.include? 'series'
+      return getSeriesLandingPageData(unit)
+    elsif unit.type == 'journal'
+      return getJournalLandingPageData(unit.id)
+    else
+      # ToDo: handle 'special' type here
+      halt(404, "Unknown unit type #{unit.type}")
+    end
   end
 end
 
@@ -130,6 +134,8 @@ def seriesPreview(u)
   }
 end
 
+# First hit on Series Landing Page.
+# Any subsequent queries on series page (pagination, sorting) goes through the 'unitSearch' method
 def getSeriesLandingPageData(unit)
   parent = $hierByUnit[unit.id]
   if parent.length > 1

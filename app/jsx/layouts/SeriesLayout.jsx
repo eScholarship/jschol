@@ -7,6 +7,10 @@ import ScholWorksComp from '../components/ScholWorksComp.jsx'
 import SortPaginationComp from '../components/SortPaginationComp.jsx'
 import PaginationComp from '../components/PaginationComp.jsx'
 import ShareComp from '../components/ShareComp.jsx'
+import Form from 'react-router-form'
+
+// [********** AJM - 7/03/17 **********]
+// TODO: If UnitSearchLayout is going to be resuscitated, should this layout be wrapped into it?
 
 class SeriesSelector extends React.Component {
   render() {
@@ -23,6 +27,10 @@ class SeriesSelector extends React.Component {
 }
 
 class SeriesLayout extends React.Component {
+  state = {
+    query: this.props.query,
+  }
+
   static propTypes = {
     unit: PropTypes.shape({
       id: PropTypes.string.isRequired,
@@ -31,20 +39,43 @@ class SeriesLayout extends React.Component {
       extent: PropTypes.object
     }).isRequired,
     data: PropTypes.shape({
-      count: PropTypes.number,
-      query: PropTypes.object,
-      searchResults: PropTypes.array,
+      count: PropTypes.number.isRequired,
+      query: PropTypes.shape({
+        q: PropTypes.string,
+        rows: PropTypes.string,
+        sort: PropTypes.string,
+        start: PropTypes.string,
+      }).isRequired,
+      searchResults: PropTypes.array.isRequired,
       series: PropTypes.array
-    }),
+    }).isRequired,
     marquee: PropTypes.shape({
       carousel: PropTypes.object,
       about: PropTypes.string
     })
   }
-  
+
+  // Set as the Form's onSubmit handler
+  handleSubmit = (event, formData)=>{
+    for(let key in formData) {
+      if (formData[key] == "" ||
+      (key === 'sort' && formData[key] === 'rel') ||
+      (key === 'rows' && formData[key] === '10') ||
+      (key === 'start' && formData[key] === '0')) {
+        delete formData[key]
+      }
+    }
+    // Handy for debugging
+    // console.log(this.state.query)
+    // console.log(JSON.stringify(formData))
+    return true
+  }
+ 
   render() {
     let data = this.props.data
+     console.log(this.props)
     return (
+      <Form id="seriesForm" to={"/uc/"+this.props.unit.id+"/search"} method="GET" onSubmit={this.handleSubmit}>
       <div className="c-columns">
         {/* No marquee component used in series layout. But note marquee.about data used below */}
         <main id="maincontent">
@@ -73,6 +104,10 @@ class SeriesLayout extends React.Component {
           {this.props.sidebar}
         </aside>
       </div>
+      {/* Submit button needs to be present so our logic can "press" it at certain times.
+          But hide it with display:none so user doesn't see it. */}
+      <button type="submit" id="series-form-submit" style={{display: "none"}}>Search</button>
+      </Form>
     )
   }
 }

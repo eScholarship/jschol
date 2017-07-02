@@ -498,8 +498,12 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
       header: getUnitHeader(unit, pageName =~ /^(nav|sidebar)/ ? nil : pageName, attrs),
       sidebar: getUnitSidebar(unit)
     }
-    if pageName == 'home'
-      pageData[:content] = getUnitPageContent(unit, attrs)
+    if ["home", "search"].include? pageName
+      q = nil
+      q = CGI::parse(request.query_string) if pageName == "search"
+      pageData[:content] = getUnitPageContent(unit, pageName, attrs, q)
+    # elsif pageName == 'search'
+    #   pageData[:content] = unitSearch(CGI::parse(request.query_string), unit)
     elsif pageName == 'profile'
       pageData[:content] = getUnitProfile(unit, attrs)
     elsif pageName == 'nav'
