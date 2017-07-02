@@ -1,6 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { Link } from 'react-router'
+import { Link, browserHistory } from 'react-router'
 import { Subscriber } from 'react-broadcast'
 
 import ScholWorksComp from '../components/ScholWorksComp.jsx'
@@ -13,9 +13,9 @@ class SeriesSelector extends React.Component {
     return (
       <div className="o-input__droplist1">
         <label htmlFor="c-sort1">Select</label>
-        <select name="" id="c-sort1">
+        <select name="" id="c-sort1" value={this.props.unit.id} onChange={(e)=>{browserHistory.push("/uc/"+e.target.value)}}>
         { this.props.data.series.map((s) => 
-          <option key={s.unit_id} value={"/uc/"+s.unit_id}>{s.name}</option>)}
+          <option key={s.unit_id} value={s.unit_id}>{s.name}</option>)}
         </select>
       </div>
     )
@@ -50,7 +50,7 @@ class SeriesLayout extends React.Component {
         <main id="maincontent">
           <section className="o-columnbox1">
             <div className="c-itemactions">
-              <SeriesSelector data={data} />
+              <SeriesSelector unit={this.props.unit} data={data} />
               <ShareComp type="unit" id={this.props.unit.id} />
             </div>
           {this.props.marquee.about &&
