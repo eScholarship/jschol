@@ -66,16 +66,17 @@ class SeriesLayout extends React.Component {
       }
     }
     // Handy for debugging
-    // console.log(this.state.query)
-    // console.log(JSON.stringify(formData))
+    console.log(this.state.query)
+    console.log(JSON.stringify(formData))
     return true
   }
  
   render() {
-    let data = this.props.data
-     console.log(this.props)
+    let data = this.props.data,
+        formName = "seriesForm",
+        formButton = "series-form-submit"
+    console.log(this.props)
     return (
-      <Form id="seriesForm" to={"/uc/"+this.props.unit.id+"/search"} method="GET" onSubmit={this.handleSubmit}>
       <div className="c-columns">
         {/* No marquee component used in series layout. But note marquee.about data used below */}
         <main id="maincontent">
@@ -87,27 +88,28 @@ class SeriesLayout extends React.Component {
           {this.props.marquee.about &&
             <p dangerouslySetInnerHTML={{__html: this.props.marquee.about}}/>
           }
-          {(this.props.data.count > 2) &&
-            <SortPaginationComp query={data.query} count={data.count}/>
-          }
-            <div>
-              { data.searchResults.map(result =>
-                <ScholWorksComp key={result.id} result={result} />)
-              }
-            </div>
-          {(data.count > data.query.rows) &&
-            <PaginationComp query={data.query} count={data.count}/>
-          }
+            <Form id={formName} to={"/uc/"+this.props.unit.id+"/search"} method="GET" onSubmit={this.handleSubmit}>
+            {(this.props.data.count > 2) &&
+              <SortPaginationComp formName={formName} formButton={formButton} query={data.query} count={data.count}/>
+            }
+              <div>
+                { data.searchResults.map(result =>
+                  <ScholWorksComp key={result.id} result={result} />)
+                }
+              </div>
+            {(data.count > data.query.rows) &&
+              <PaginationComp query={data.query} count={data.count}/>
+            }
+              {/* Submit button needs to be present so our logic can "press" it at certain times.
+                  But hide it with display:none so user doesn't see it. */}
+              <button type="submit" id={formButton} style={{display: "none"}}>Search</button>
+            </Form>
           </section>
         </main>
         <aside>
           {this.props.sidebar}
         </aside>
       </div>
-      {/* Submit button needs to be present so our logic can "press" it at certain times.
-          But hide it with display:none so user doesn't see it. */}
-      <button type="submit" id="series-form-submit" style={{display: "none"}}>Search</button>
-      </Form>
     )
   }
 }
