@@ -119,7 +119,7 @@ class SortableSidebarList extends React.Component {
       id: sb.id,
       kind: sb.kind,
       title: <Link to={`/uc/${this.props.unit}/sidebar/${sb.id}`}>
-               {sb.title ? sb.title : sb.kind.replace(/([a-z])([A-Z][a-z])/g, "$1 $2")}
+               {(sb.attrs && sb.attrs.title) ? sb.attrs.title : sb.kind.replace(/([a-z])([A-Z][a-z])/g, "$1 $2")}
              </Link>,
       subtitle: <i>{sb.kind=='Text' ? "text widget" : "built-in widget"}</i> }})
   }
@@ -193,7 +193,7 @@ class DrawerComp extends React.Component {
 
         <div className="c-drawer__heading">
           Sidebar Widgets
-          <AddWidgetMenu title="Add Sidebar">
+          <AddWidgetMenu title="Add Widget">
             <a href="" key="RecentArticles" onClick={e=>this.addSidebarWidget(e, 'RecentArticles')  }>Recent Articles</a>
             <a href="" key="Text" onClick={e=>this.addSidebarWidget(e, 'Text')  }>Text</a>
           </AddWidgetMenu>

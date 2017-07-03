@@ -240,6 +240,12 @@ def getUnitSidebar(unit)
   }
 end
 
+def getUnitSidebarWidget(unit, widgetID)
+  widget = Widget[widgetID]
+  widget.unit_id == unit.id && widget.region == "sidebar" or jsonHalt(400, "invalid widget")
+  return { id: widget[:id], kind: widget[:kind], attrs: widget[:attrs] ? JSON.parse(widget[:attrs]) : {} }
+end
+
 # Traverse the nav bar, including sub-folders, yielding each item in turn
 # to the supplied block.
 def travNav(navBar, &block)
@@ -441,12 +447,21 @@ post "/api/unit/:unitID/sidebar" do |unitID|
   widgetKind = params[:widgetKind]
   ['RecentArticles', 'Text', 'Tweets'].include?(widgetKind) or jsonHalt(400, "Invalid widget kind")
 
+  # Initial attributes are kind-specific
+  attrs = case widgetKind
+  when "Text"
+    { title: "New #{widgetKind}", html: "" }
+  else
+    {}
+  end
+
   # Determine an ordering that will place this last.
   lastOrder = Widget.where(unit_id: unitID).max(:ordering)
   order = (lastOrder || 0) + 1
 
-  newID = Widget.create(unit_id: unitID, kind: widgetKind, 
-                        ordering: order, attrs: {}.to_json, region: "sidebar").id
+  # Okay, create it.
+  newID = Widget.create(unit_id: unitID, kind: widgetKind,
+                        ordering: order, attrs: attrs.to_json, region: "sidebar").id
   return { status: "ok", nextURL: "/uc/#{unitID}/sidebar/#{newID}" }.to_json
 end
 
@@ -480,6 +495,24 @@ put "/api/unit/:unitID/sidebarOrder" do |unitID|
 end
 
 ###################################################################################################
+# *Delete* to remove sidebar widget
+delete "/api/unit/:unitID/sidebar/:widgetID" do |unitID, widgetID|
+  # Check user permissions
+  perms = getUserPermissions(params[:username], params[:token], unitID)
+  perms[:admin] or halt(401)
+
+  DB.transaction {
+    unit = Unit[unitID] or halt(404, "Unit not found")
+    widget = Widget[widgetID]
+    widget.unit_id == unitID and widget.region == "sidebar" or jsonHalt(400, "invalid widget")
+    widget.delete
+  }
+
+  content_type :json
+  return {status: "ok", nextURL: "/uc/#{unitID}" }.to_json
+end
+
+###################################################################################################
 # *Delete* to remove a static page from a unit
 delete "/api/unit/:unitID/nav/:navID" do |unitID, navID|
   # Check user permissions
@@ -506,6 +539,26 @@ delete "/api/unit/:unitID/nav/:navID" do |unitID, navID|
 
   content_type :json
   return {status: "ok", nextURL: "/uc/#{unitID}" }.to_json
+end
+
+###################################################################################################
+# *Put* to change the attributes of a sidebar widget
+put "/api/unit/:unitID/sidebar/:widgetID" do |unitID, widgetID|
+
+  # Check user permissions
+  perms = getUserPermissions(params[:username], params[:token], unitID)
+  perms[:admin] or halt(401)
+
+  DB.transaction {
+    unit = Unit[unitID] or halt(404, "Unit not found")
+    widget = Widget[widgetID]
+    widget.attrs = params[:attrs].to_json
+    widget.save
+  }
+
+  # And let the caller know it went fine.
+  content_type :json
+  return { status: "ok" }.to_json
 end
 
 ###################################################################################################

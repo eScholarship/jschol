@@ -505,7 +505,7 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
     elsif pageName == 'nav'
       pageData[:content] = getUnitNavConfig(unit, attrs['nav_bar'], params[:subPage])
     elsif pageName == 'sidebar'
-      pageData[:content] = getUnitSidebar(unit)
+      pageData[:content] = getUnitSidebarWidget(unit, params[:subPage])
     else
       pageData[:content] = getUnitStaticPage(unit, attrs, pageName)
     end

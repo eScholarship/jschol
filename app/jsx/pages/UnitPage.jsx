@@ -42,14 +42,14 @@ class UnitPage extends PageBase
   pageDataURL() {
     const pm = this.props.params
     if (pm.pageName) {
-      if (pm.pageName === 'search')
-        return "/api/unit/" + pm.unitID + "/search/" + this.props.location.search
-      else if (pm.pageName == "nav")
-        return "/api/unit/" + pm.unitID + "/nav/" + pm.splat
+      if (pm.pageName == 'search')
+        return `/api/unit/${pm.unitID}/search/${this.props.location.search}`
+      else if (pm.pageName == "nav" || pm.pageName == "sidebar")
+        return `/api/unit/${pm.unitID}/${pm.pageName}/${pm.splat}`
       else
-        return "/api/unit/" + pm.unitID + "/" + pm.pageName
+        return `/api/unit/${pm.unitID}/${pm.pageName}`
     }
-    return "/api/unit/" + pm.unitID + "/home"
+    return `/api/unit/${pm.unitID}/home`
   }
 
   // Unit ID for permissions checking
