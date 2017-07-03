@@ -70,6 +70,15 @@ class UnitPage extends PageBase
         </p>
       </section>)
 
+  cmsPage(data, page) {
+    if (this.state.adminLogin && !this.state.fetchingPerms && !this.state.isEditingPage) {
+      console.log("Editing turned off; redirecting to unit page.")
+      setTimeout(()=>this.props.router.push(`/uc/${data.unit.id}`), 0)
+    }
+    else
+      return page
+  }
+
   // [********** AMY NOTES 3/15/17 **********]
   // TODO: each of the content layouts currently include the sidebars, 
   // but this should get stripped out and handled here in UnitPage
@@ -82,11 +91,11 @@ class UnitPage extends PageBase
     else if (this.props.params.pageName === 'search') {
       contentLayout = (<UnitSearchLayout unit={data.unit} data={data.content} sidebar={sidebar}/>)
     } else if (this.props.params.pageName === 'profile') {
-      contentLayout = (<UnitProfileLayout unit={data.unit} data={data.content}/>)
+      contentLayout = this.cmsPage(data, <UnitProfileLayout unit={data.unit} data={data.content}/>)
     } else if (this.props.params.pageName === 'nav') {
-      contentLayout = (<UnitNavConfigLayout unit={data.unit} data={data.content} sendApiData={this.sendApiData}/>)
+      contentLayout = this.cmsPage(data, <UnitNavConfigLayout unit={data.unit} data={data.content} sendApiData={this.sendApiData}/>)
     } else if (this.props.params.pageName === 'sidebar') {
-      contentLayout = (<UnitSidebarConfigLayout unit={data.unit} data={data.content} sendApiData={this.sendApiData}/>)
+      contentLayout = this.cmsPage(data, <UnitSidebarConfigLayout unit={data.unit} data={data.content} sendApiData={this.sendApiData}/>)
     } else if (this.props.params.pageName) {
       contentLayout = (<UnitStaticPageLayout unit={data.unit} data={data.content} sidebar={sidebar} fetchPageData={this.fetchPageData}/>)
     } else {

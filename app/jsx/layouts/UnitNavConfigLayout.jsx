@@ -1,7 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Link } from 'react-router'
-import { Subscriber } from 'react-broadcast'
 import EditableComp from '../components/EditableComp.jsx'
 import WysiwygEditorComp from '../components/WysiwygEditorComp.jsx'
 
@@ -103,13 +102,7 @@ export default class UnitNavConfigLayout extends React.Component
                 }
               </h1>
             </header>
-            <Subscriber channel="cms">
-              { cms =>
-                cms.isEditingPage
-                ? <EditableNavContentComp unit={p.unit} data={p.data} sendApiData={p.sendApiData}/>
-                : <div>TODO: redirect to page</div>
-              }
-            </Subscriber>
+            <EditableNavContentComp unit={p.unit} data={p.data} sendApiData={p.sendApiData}/>
           </section>
         </main>
       </div>
