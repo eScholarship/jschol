@@ -125,7 +125,7 @@ class SortableSidebarList extends React.Component {
   }
 
   travOrder(treeData) {
-    return treeData.map(item => {return { id: item.id }})
+    return treeData.map(item => item.id)
   }
 
   render() {

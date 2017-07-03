@@ -798,6 +798,8 @@ def remapOrder(oldNav, newOrder)
   }
 end
 
+###################################################################################################
+# *Put* to change the ordering of nav bar items
 put "/api/unit/:unitID/navOrder" do |unitID|
   # Check user permissions
   perms = getUserPermissions(params[:username], params[:token], unitID)
@@ -890,6 +892,35 @@ post "/api/unit/:unitID/sidebar" do |unitID|
   newID = Widget.create(unit_id: unitID, kind: widgetKind, 
                         ordering: order, attrs: {}.to_json, region: "sidebar").id
   return { status: "ok", nextURL: "/uc/#{unitID}/sidebar/#{newID}" }.to_json
+end
+
+###################################################################################################
+# *Put* to change the ordering of sidebar widgets
+put "/api/unit/:unitID/sidebarOrder" do |unitID|
+  # Check user permissions
+  perms = getUserPermissions(params[:username], params[:token], unitID)
+  perms[:admin] or halt(401)
+  content_type :json
+
+  DB.transaction {
+    unit = Unit[unitID] or jsonHalt(404, "Unit not found")
+    newOrder = JSON.parse(params[:order])
+    Widget.where(unit_id: unitID).count == newOrder.length or jsonHalt(400, "must reorder all at once")
+
+    # Make two passes, to absolutely avoid conflicting order in the table at any time.
+    maxOldOrder = Widget.where(unit_id: unitID).max(:ordering)
+    (1..2).each { |pass|
+      offset = (pass == 1) ? maxOldOrder+1 : 1
+      newOrder.each_with_index { |widgetID, idx|
+        w = Widget[widgetID]
+        w.unit_id == unitID or jsonHalt(400, "widget/unit mistmatch")
+        w.ordering = idx + offset
+        w.save
+      }
+    }
+  }
+
+  return {status: "ok"}.to_json
 end
 
 ###################################################################################################
