@@ -8,7 +8,6 @@ import WysiwygEditorComp from '../components/WysiwygEditorComp.jsx'
 class EditableNavContentComp extends React.Component
 {
   static propTypes = {
-    cms: PropTypes.object.isRequired,
     data: PropTypes.shape({
       id: PropTypes.number.isRequired,
       name: PropTypes.string.isRequired
@@ -22,32 +21,11 @@ class EditableNavContentComp extends React.Component
       this.setState({ newData: nextProps.data })
   }
 
-  onSave = () =>
-    $.getJSON({ url: `/api/unit/${this.props.unit.id}/nav/${this.props.data.id}`,
-                type: 'PUT',
-                data: Object.assign(this.state.newData,
-                        { username: this.props.cms.username, token: this.props.cms.token })
-              })
-    .done((data)=>{
-      this.props.cms.fetchPageData()  // re-fetch page state after DB is updated
-    })
-    .fail((data)=>{
-      alert("Save failed" + (data.responseJSON ? ":\n"+data.responseJSON.message : "."))
-      this.props.cms.fetchPageData()  // re-fetch page state after DB is updated
-    })
+  onSave = () => this.props.sendApiData('PUT',
+                   `/api/unit/${this.props.unit.id}/nav/${this.props.data.id}`, this.state.newData)
 
-  onDelete = () =>
-    $.ajax({ url: `/api/unit/${this.props.unit.id}/nav/${this.props.data.id}`,
-            type: 'DELETE',
-            data: { username: this.props.cms.username, token: this.props.cms.token }
-          })
-    .done(()=>{
-      this.props.cms.goLocation(`/uc/${this.props.unit.id}`)
-    })
-    .fail((data)=>{
-      alert("Delete failed" + (data.responseJSON ? ":\n"+data.responseJSON.message : "."))
-      this.props.cms.fetchPageData()  // re-fetch page state after DB is updated
-    })
+  onDelete = () => this.props.sendApiData('DELETE',
+                     `/api/unit/${this.props.unit.id}/nav/${this.props.data.id}`, {})
 
   setData = (newStuff) => {
     this.setState({newData: Object.assign(_.cloneDeep(this.state.newData), newStuff)})
@@ -101,6 +79,10 @@ class EditableNavContentComp extends React.Component
 export default class UnitNavConfigLayout extends React.Component
 {
   static propTypes = {
+    sendApiData: PropTypes.func.isRequired,
+    unit: PropTypes.shape({
+      id: PropTypes.string.isRequired
+    }).isRequired,
     data: PropTypes.shape({
       id: PropTypes.number.isRequired,
       name: PropTypes.string.isRequired
@@ -108,6 +90,7 @@ export default class UnitNavConfigLayout extends React.Component
   }
 
   render() {
+    let p = this.props
     return (
       <div className="c-columns">
         <main id="maincontent">
@@ -115,15 +98,15 @@ export default class UnitNavConfigLayout extends React.Component
             <header>
               <h1 className="o-columnbox1__heading">
                 {
-                  this.props.data.title ? this.props.data.title :
-                  this.props.data.name + " (" + this.props.data.type + ")"
+                  p.data.title ? p.data.title :
+                  p.data.name + " (" + p.data.type + ")"
                 }
               </h1>
             </header>
             <Subscriber channel="cms">
               { cms =>
                 cms.isEditingPage
-                ? <EditableNavContentComp cms={cms} unit={this.props.unit} data={this.props.data}/>
+                ? <EditableNavContentComp unit={p.unit} data={p.data} sendApiData={p.sendApiData}/>
                 : <div>TODO: redirect to page</div>
               }
             </Subscriber>

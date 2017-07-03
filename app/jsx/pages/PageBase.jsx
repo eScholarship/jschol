@@ -120,6 +120,26 @@ class PageBase extends React.Component
     }
   }
 
+  // Send API data (e.g. to edit page contents) and go to a new URL or refresh page data
+  sendApiData = (method, apiURL, data) => {
+    this.setState({ fetchingData: true })
+    $.getJSON({ type: method, url: apiURL,
+                data: Object.assign(_.cloneDeep(data), 
+                        { username: this.state.adminLogin.username, token: this.state.adminLogin.token })})
+    .done(data=>{
+      if (data.nextURL) {
+        this.setState({ fetchingData: false })
+        this.props.router.push(data.nextURL)
+      }
+      else
+        this.fetchPageData()
+    })
+    .fail(()=>{
+      alert("Error" + (data.responseJSON ? ":\n"+data.responseJSON.message : "."))
+      this.fetchPageData()
+    })
+  }
+
   // This gets called when props change by switching to a new page.
   // It is *not* called on first-time construction. We use it to fetch new page data
   // for the page being switched to.
@@ -164,8 +184,10 @@ class PageBase extends React.Component
         'header' in this.state.pageData && 'nav_bar' in this.state.pageData.header)
     {
       return (
-        <DrawerComp data={this.state.pageData} router={this.props.router} fetchingData={this.state.fetchingData}>
-          {/* Not sure why the padding is needed, but it is */}
+        <DrawerComp data={this.state.pageData}
+                    sendApiData={this.sendApiData}
+                    fetchingData={this.state.fetchingData}>
+          {/* Not sure why the padding below is needed, but it is */}
           <div className="body" style={{ padding: "10px" }}>
             <SkipNavComp/>
             {this.state.pageData ? this.renderData(this.state.pageData) : this.renderLoading()}

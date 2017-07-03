@@ -42,19 +42,17 @@ class SortableNavList extends React.Component {
     if (!navItems)
       return undefined
     return navItems.map(nav => {
-      let data = { id: nav.id, type: nav.type, title: nav.name, subtitle: <i>{nav.type}</i> }
+      let data = {
+        id: nav.id, type: nav.type,
+        title: <Link to={`/uc/${this.props.unit}${(nav.type == "home") ? "" : `/nav/${nav.id}`}`}>{nav.name}</Link>,
+        subtitle: <i>{nav.type}</i>
+      }
       if (nav.type == "folder") {
         data.children = this.generateData(nav.sub_nav)
         data.expanded = true
       }
       else
         data.noChildren = true
-
-      if (nav.type == "home")
-        data.title = <Link to={"/uc/" + this.props.unit}>{nav.name}</Link>
-      else
-        data.title = <Link to={`/uc/${this.props.unit}/nav/${nav.id}`}>{nav.name}</Link>
-
       return data
     })
   }
@@ -95,7 +93,7 @@ class SortableNavList extends React.Component {
           return true
         }}
         onChange={treeData => this.setState({ data: treeData })}
-        onMoveNode={()=>this.props.onChangeOrder(this.props.cms, this.travOrder(this.state.data))}/>
+        onMoveNode={()=>this.props.onChangeOrder(this.travOrder(this.state.data))}/>
     )
   }
 }
@@ -120,8 +118,10 @@ class SortableSidebarList extends React.Component {
     return sidebarWidgets.map(sb => { return {
       id: sb.id,
       kind: sb.kind,
-      title: sb.title ? sb.title : sb.kind.replace(/([a-z])([A-Z][a-z])/g, "$1 $2"),
-      subtitle: <i>widget</i> }})
+      title: <Link to={`/uc/${this.props.unit}/sidebar/${sb.id}`}>
+               {sb.title ? sb.title : sb.kind.replace(/([a-z])([A-Z][a-z])/g, "$1 $2")}
+             </Link>,
+      subtitle: <i>{sb.kind=='Text' ? "text widget" : "built-in widget"}</i> }})
   }
 
   travOrder(treeData) {
@@ -137,48 +137,29 @@ class SortableSidebarList extends React.Component {
         scaffoldBlockPxWidth={30}
         maxDepth={1}
         onChange={treeData => this.setState({ data: treeData })}
-        onMoveNode={()=>this.props.onChangeOrder(this.props.cms, this.travOrder(this.state.data))}/>
+        onMoveNode={()=>this.props.onChangeOrder(this.travOrder(this.state.data))}/>
     )
   }
 }
 
 class DrawerComp extends React.Component {
 
-  state = { working: false }
-
-  sendApiData = (cms, method, apiURL, data) => {
-    this.setState({working: true})
-    $.getJSON({ type: method, url: apiURL,
-             data: Object.assign(_.cloneDeep(data), { username: cms.username, token: cms.token })})
-    .done(data=>{
-      this.setState({working: false})
-      if (data.nextURL)
-        this.props.router.push(data.nextURL)
-      else
-        cms.fetchPageData()
-    })
-    .fail(()=>{
-      this.setState({working: false})
-      alert("Error" + (data.responseJSON ? ":\n"+data.responseJSON.message : "."))
-    })
-  }
-
-  addNavItem = (event, cms, navType) => {
+  addNavItem = (event, navType) => {
     event.preventDefault()
-    this.sendApiData(cms, 'POST', `/api/unit/${this.props.data.unit.id}/nav`, { navType: navType })
+    this.props.sendApiData('POST', `/api/unit/${this.props.data.unit.id}/nav`, { navType: navType })
   }
 
-  addSidebarWidget = (event, cms, widgetKind) => {
+  addSidebarWidget = (event, widgetKind) => {
     event.preventDefault()
-    this.sendApiData(cms, 'POST', `/api/unit/${this.props.data.unit.id}/sidebar`, { widgetKind: widgetKind })
+    this.props.sendApiData('POST', `/api/unit/${this.props.data.unit.id}/sidebar`, { widgetKind: widgetKind })
   }
 
-  reorderNav = (cms, newOrder) => {
-    this.sendApiData(cms, 'PUT', `/api/unit/${this.props.data.unit.id}/navOrder`, { order: JSON.stringify(newOrder) })
+  reorderNav = (newOrder) => {
+    this.props.sendApiData('PUT', `/api/unit/${this.props.data.unit.id}/navOrder`, { order: JSON.stringify(newOrder) })
   }
 
-  reorderSidebar = (cms, newOrder) => {
-    this.sendApiData(cms, 'PUT', `/api/unit/${this.props.data.unit.id}/sidebarOrder`, { order: JSON.stringify(newOrder) })
+  reorderSidebar = (newOrder) => {
+    this.props.sendApiData('PUT', `/api/unit/${this.props.data.unit.id}/sidebarOrder`, { order: JSON.stringify(newOrder) })
   }
 
   drawerContent(cms) {
@@ -198,9 +179,9 @@ class DrawerComp extends React.Component {
         <div className="c-drawer__heading">
           Navigation Items
           <AddWidgetMenu title="Add Nav Item">
-            <a href="" key="page"   onClick={e=>this.addNavItem(e, cms, 'page')  }>Page</a>
-            <a href="" key="url"    onClick={e=>this.addNavItem(e, cms, 'link')  }>Link</a>
-            <a href="" key="folder" onClick={e=>this.addNavItem(e, cms, 'folder')}>Folder</a>
+            <a href="" key="page"   onClick={e=>this.addNavItem(e, 'page')  }>Page</a>
+            <a href="" key="url"    onClick={e=>this.addNavItem(e, 'link')  }>Link</a>
+            <a href="" key="folder" onClick={e=>this.addNavItem(e, 'folder')}>Folder</a>
           </AddWidgetMenu>
         </div>
 
@@ -213,8 +194,8 @@ class DrawerComp extends React.Component {
         <div className="c-drawer__heading">
           Sidebar Widgets
           <AddWidgetMenu title="Add Sidebar">
-            <a href="" key="RecentArticles" onClick={e=>this.addSidebarWidget(e, cms, 'RecentArticles')  }>Recent Articles</a>
-            <a href="" key="Text" onClick={e=>this.addSidebarWidget(e, cms, 'Text')  }>Text</a>
+            <a href="" key="RecentArticles" onClick={e=>this.addSidebarWidget(e, 'RecentArticles')  }>Recent Articles</a>
+            <a href="" key="Text" onClick={e=>this.addSidebarWidget(e, 'Text')  }>Text</a>
           </AddWidgetMenu>
         </div>
 
@@ -231,7 +212,7 @@ class DrawerComp extends React.Component {
     <Subscriber channel="cms">
       { cms =>
         <div>
-          {(this.state.working || this.props.fetchingData) && <div className="c-drawer__working-overlay"/>}
+          {this.props.fetchingData && <div className="c-drawer__working-overlay"/>}
           <cms.modules.Sidebar sidebar={this.drawerContent(cms)}
                    open={cms.isEditingPage}
                    docked={cms.isEditingPage}

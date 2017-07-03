@@ -288,87 +288,270 @@ def maxNavID(navBar)
   return n
 end
 
-#   newAttrs = {
-#     about: "Here's some sample text about the UCLA School of Law's Asian Pacific American Law Journal. Lalalalala!",
-#     nav_bar: [
-#        {name: 'Journal Home', url: '/uc/uclalaw', slug: ''},
-#        {name: 'Issues', subNav: true},
-#        {name: 'About', url: '/uc/uclalaw/about', slug: 'about'},
-#        {name: 'Policies', url: '/uc/uclalaw/policies', slug: 'policies'},
-#        {name: 'Submission Guidelines', url: '/uc/uclalaw/submission', slug: 'submission'},
-#        {name: 'Contact', url: '/uc/uclalaw/contact', slug: 'contact'}
-#      ],
-#      twitter: "apalj",
-#      directSubmit: "enabled",
-#      magazine: true
-#   }
-
-
-def modifyUnit()
-  unit = $unitsHash['uclalaw']
-  currentAttrs = JSON.parse(unit.attrs)
-
-  currentAttrs['nav_bar'] = [
-    {
-      "name": "Unit Home",
-      "slug": ""
-    },
-    {
-      "name": "About",
-      "sub_nav": [
-        {"name": "About Us", "slug": "about-us"},
-        {"name": "Aims & Scope", "slug": "aims-scope"},
-        {"name": "Editorial Board", "slug": "editorial-board"}
-      ]
-    },
-    {
-      "name": "Policies",
-      "url": "http://lmgtfy.com/?q=policies"
-    },
-    {
-      "name": "Submission Guidelines",
-      "slug": "submission-guidelines"
-    },
-    {
-      "name": "Contact",
-      "slug": "contact"
-    }
-  ]
-
-  attrs = JSON.generate(currentAttrs)
-  unit.update(:attrs => attrs)
+def jsonHalt(httpCode, message)
+  content_type :json
+  halt(httpCode, { error: true, message: message }.to_json)
 end
 
-# def addWidget()
-#   carouselWidget = new Widget({
-#     unit_id: 'uclalaw',
-#     kind: 'carousel',
-#     region: 'top_panel',
-#     order: '0',
-#     attrs: [
-#       { image: ,
-#         header: ,
-#         text: ,
-#         link: ,
-#         altTag: ,
-#         textColor: ,
-#         gradientColor: ,
-#         headerColor: ,
-#         linkColor: ,
-#         textAlignment:
-#       }
-#     ]
-#   })
-# end
+put "/api/unit/:unitID/nav/:navID" do |unitID, navID|
+  # Check user permissions
+  perms = getUserPermissions(params[:username], params[:token], unitID)
+  perms[:admin] or halt(401)
+  content_type :json
 
-def addPage()
-  # page = Page[unit_id: 'uclalaw']
-  # page.update(slug: 'contact')
+  DB.transaction {
+    unit = Unit[unitID] or jsonHalt(404, "Unit not found")
+    unitAttrs = JSON.parse(unit.attrs)
+    params[:name].empty? and jsonHalt(400, "Page name must be supplied.")
 
-  # contactPage = Page.create({
-  #   unit_id: 'uclalaw',
-  #   slug: 'contact',
-  #   title: 'Contact Us'
-  #   # html: '<b>Content here!</b>'
-  # })
+    travNav(unitAttrs['nav_bar']) { |nav|
+      next unless nav['id'].to_s == navID.to_s
+      nav['name'] = params[:name]
+      if nav['type'] == "page"
+        page = Page.where(unit_id: unitID, slug: nav['slug']).first or halt(404, "Page not found")
+
+        oldSlug = page.slug
+        newSlug = params[:slug]
+        newSlug.empty? and jsonHalt(400, "Slug must be supplied.")
+        newSlug =~ /^[a-zA-Z][a-zA-Z0-9_]+$/ or jsonHalt(400,
+          message: "Slug must start with a letter a-z, and consist only of letters a-z, numbers, or underscores.")
+        page.slug = newSlug
+        nav['slug'] = newSlug
+
+        page.name = params[:name]
+        page.name.empty? and jsonHalt(400, "Page name must be supplied.")
+
+        page.title = params[:title]
+        page.title.empty? and jsonHalt(400, "Title must be supplied.")
+
+        newHTML = sanitizeHTML(params[:attrs][:html])
+        newHTML.empty? and jsonHalt(400, "Text must be supplied.")
+        page.attrs = JSON.parse(page.attrs).merge({ "html" => newHTML }).to_json
+        page.save
+      elsif nav['type'] == "link"
+        params[:url] =~ %r{^https?://.*} or jsonHalt(400, "Invalid URL.")
+        nav['url'] = params[:url]
+      end
+      unit.attrs = unitAttrs.to_json
+      unit.save
+      return {status: "ok"}.to_json
+    }
+    jsonHalt(404, "Unknown nav #{navID} for unit #{unitID}")
+  }
+end
+
+def remapOrder(oldNav, newOrder)
+  newOrder = newOrder.map { |stub| stub['id'] == 0 ? nil : stub }.compact
+  return newOrder.map { |stub|
+    source = getNavByID(oldNav, stub['id'])
+    source or raise("Unknown nav id #{stub['id']}")
+    newNav = source.clone
+    if source['type'] == "folder"
+      stub['sub_nav'] or raise("can't change nav type")
+      newNav['sub_nav'] = remapOrder(oldNav, stub['sub_nav'])
+    end
+    next newNav
+  }
+end
+
+###################################################################################################
+# *Put* to change the ordering of nav bar items
+put "/api/unit/:unitID/navOrder" do |unitID|
+  # Check user permissions
+  perms = getUserPermissions(params[:username], params[:token], unitID)
+  perms[:admin] or halt(401)
+  content_type :json
+
+  DB.transaction {
+    unit = Unit[unitID] or halt(404, "Unit not found")
+    unitAttrs = JSON.parse(unit.attrs)
+    newOrder = JSON.parse(params[:order])
+    newOrder.empty? and jsonHalt(400, "Page name must be supplied.")
+    newNav = remapOrder(unitAttrs['nav_bar'], newOrder)
+    unitAttrs['nav_bar'] = newNav
+    unit.attrs = unitAttrs.to_json
+    unit.save
+    return {status: "ok"}.to_json
+  }
+end
+
+###################################################################################################
+# *Post* to add an item to a nav bar
+post "/api/unit/:unitID/nav" do |unitID|
+  # Check user permissions
+  perms = getUserPermissions(params[:username], params[:token], unitID)
+  perms[:admin] or halt(401)
+
+  # Grab unit data
+  unit = Unit[unitID]
+  unit or halt(404)
+
+  # Validate the nav type
+  navType = params[:navType]
+  ['page', 'link', 'folder'].include?(navType) or halt(400)
+
+  # Find the existing nav bar
+  attrs = JSON.parse(unit.attrs)
+  (navBar = attrs['nav_bar']) or raise("Unit has non-existent nav bar")
+
+  # Invent a unique name for the new item
+  slug = name = nil
+  (1..9999).each { |n|
+    slug = "#{navType}#{n.to_s}"
+    name = "New #{navType} #{n.to_s}"
+    break if navBar.none? { |nav| nav['slug'] == slug || nav['name'] == name }
+  }
+
+  nextID = maxNavID(navBar) + 1
+
+  DB.transaction {
+    newNav = case navType
+    when "page"
+      Page.create(slug: slug, unit_id: unitID, name: name, title: name, attrs: { html: "" }.to_json)
+      newNav = { id: nextID, type: "page", name: name, slug: slug, hidden: true }
+    when "link"
+      newNav = { id: nextID, type: "link", name: name, url: "" }
+    when "folder"
+      newNav = { id: nextID, type: "folder", name: name, sub_nav: [] }
+    else
+      halt(400, "unknown navType")
+    end
+
+    navBar << newNav
+    attrs['nav_bar'] = navBar
+    unit[:attrs] = attrs.to_json
+    unit.save
+
+    return { status: "ok", nextURL: "/uc/#{unitID}/nav/#{newNav[:id]}" }.to_json
+  }
+end
+
+###################################################################################################
+# *Post* to add a widget to the sidebar
+post "/api/unit/:unitID/sidebar" do |unitID|
+  # Check user permissions
+  perms = getUserPermissions(params[:username], params[:token], unitID)
+  perms[:admin] or jsonHalt(401, "unauthorized")
+
+  # Grab unit data
+  unit = Unit[unitID]
+  unit or jsonHalt(404, "unknown unit")
+
+  # Validate the widget kind
+  widgetKind = params[:widgetKind]
+  ['RecentArticles', 'Text', 'Tweets'].include?(widgetKind) or jsonHalt(400, "Invalid widget kind")
+
+  # Determine an ordering that will place this last.
+  lastOrder = Widget.where(unit_id: unitID).max(:ordering)
+  order = (lastOrder || 0) + 1
+
+  newID = Widget.create(unit_id: unitID, kind: widgetKind, 
+                        ordering: order, attrs: {}.to_json, region: "sidebar").id
+  return { status: "ok", nextURL: "/uc/#{unitID}/sidebar/#{newID}" }.to_json
+end
+
+###################################################################################################
+# *Put* to change the ordering of sidebar widgets
+put "/api/unit/:unitID/sidebarOrder" do |unitID|
+  # Check user permissions
+  perms = getUserPermissions(params[:username], params[:token], unitID)
+  perms[:admin] or halt(401)
+  content_type :json
+
+  DB.transaction {
+    unit = Unit[unitID] or jsonHalt(404, "Unit not found")
+    newOrder = JSON.parse(params[:order])
+    Widget.where(unit_id: unitID).count == newOrder.length or jsonHalt(400, "must reorder all at once")
+
+    # Make two passes, to absolutely avoid conflicting order in the table at any time.
+    maxOldOrder = Widget.where(unit_id: unitID).max(:ordering)
+    (1..2).each { |pass|
+      offset = (pass == 1) ? maxOldOrder+1 : 1
+      newOrder.each_with_index { |widgetID, idx|
+        w = Widget[widgetID]
+        w.unit_id == unitID or jsonHalt(400, "widget/unit mistmatch")
+        w.ordering = idx + offset
+        w.save
+      }
+    }
+  }
+
+  return {status: "ok"}.to_json
+end
+
+###################################################################################################
+# *Delete* to remove a static page from a unit
+delete "/api/unit/:unitID/nav/:navID" do |unitID, navID|
+  # Check user permissions
+  perms = getUserPermissions(params[:username], params[:token], unitID)
+  perms[:admin] or halt(401)
+
+  DB.transaction {
+    unit = Unit[unitID] or halt(404, "Unit not found")
+    unitAttrs = JSON.parse(unit.attrs)
+    nav = getNavByID(unitAttrs['nav_bar'], navID)
+    unitAttrs['nav_bar'] = deleteNavByID(unitAttrs['nav_bar'], navID)
+    getNavByID(unitAttrs['nav_bar'], navID).nil? or raise("delete failed")
+    if nav['type'] == "folder" && !nav['sub_nav'].empty?
+      jsonHalt(404, "Can't delete non-empty folder")
+    end
+    if nav['type'] == "page"
+      page = Page.where(unit_id: unitID, slug: nav['slug']).first or jsonHalt(404, "Page not found")
+      page.delete
+    end
+
+    unit.attrs = unitAttrs.to_json
+    unit.save
+  }
+
+  content_type :json
+  return {status: "ok", nextURL: "/uc/#{unitID}" }.to_json
+end
+
+###################################################################################################
+# *Put* to change the main text on a static page
+put "/api/static/:unitID/:pageName/mainText" do |unitID, pageName|
+
+  # Check user permissions
+  perms = getUserPermissions(params[:username], params[:token], unitID)
+  perms[:admin] or halt(401)
+
+  # Grab page data from the database
+  page = Page.where(unit_id: unitID, slug: pageName).first or halt(404, "Page not found")
+
+  # Parse the HTML text, and sanitize to be sure only allowed tags are used.
+  safeText = sanitizeHTML(params[:newText])
+
+  # Update the database
+  page.attrs = JSON.parse(page.attrs).merge({ "html" => safeText }).to_json
+  page.save
+
+  # And let the caller know it went fine.
+  content_type :json
+  return { status: "ok" }.to_json
+end
+
+###################################################################################################
+# *Put* to change widget text
+put "/api/widget/:unitID/:widgetID/text" do |unitID, widgetID|
+
+  # In future the token will be looked up in a sessions table of logged in users. For now
+  # it's just a placeholder.
+  params[:token] == 'xyz123' or halt(401) # TODO: make this actually secure
+  # TODO: check that logged in user has permission to edit this unit and page
+  puts "TODO: permission check"
+
+  # Grab widget data from the database
+  widget = Widget.where(unit_id: unitID, id: widgetID).first or halt(404, "Widget not found")
+
+  # Parse the HTML text, and sanitize to be sure only allowed tags are used.
+  safeText = sanitizeHTML(params[:newText])
+
+  # Update the database
+  widget.attrs = JSON.parse(widget.attrs).merge({ "html" => safeText }).to_json
+  widget.save
+
+  # And let the caller know it went fine.
+  content_type :json
+  return { status: "ok" }.to_json
 end

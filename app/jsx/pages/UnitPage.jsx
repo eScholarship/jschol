@@ -84,9 +84,9 @@ class UnitPage extends PageBase
     } else if (this.props.params.pageName === 'profile') {
       contentLayout = (<UnitProfileLayout unit={data.unit} data={data.content}/>)
     } else if (this.props.params.pageName === 'nav') {
-      contentLayout = (<UnitNavConfigLayout unit={data.unit} data={data.content}/>)
+      contentLayout = (<UnitNavConfigLayout unit={data.unit} data={data.content} sendApiData={this.sendApiData}/>)
     } else if (this.props.params.pageName === 'sidebar') {
-      contentLayout = (<UnitSidebarConfigLayout unit={data.unit} data={data.content}/>)
+      contentLayout = (<UnitSidebarConfigLayout unit={data.unit} data={data.content} sendApiData={this.sendApiData}/>)
     } else if (this.props.params.pageName) {
       contentLayout = (<UnitStaticPageLayout unit={data.unit} data={data.content} sidebar={sidebar} fetchPageData={this.fetchPageData}/>)
     } else {
