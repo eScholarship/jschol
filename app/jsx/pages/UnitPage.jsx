@@ -92,8 +92,9 @@ class UnitPage extends PageBase
     } else if (this.props.params.pageName) {
       contentLayout = (<UnitStaticPageLayout unit={data.unit} data={data.content} sidebar={sidebar} fetchPageData={this.fetchPageData}/>)
     } else {
+      {/* Temporary, for testing */}
       data.marquee.carousel = true
-      data.unit.splashy = true 
+      data.content.display = 'splashy'
       if (data.unit.type === 'oru') {
         contentLayout = (<DepartmentLayout unit={data.unit} data={data.content} sidebar={sidebar} marquee={data.marquee}/>)
       } else if (data.unit.type == 'campus') {

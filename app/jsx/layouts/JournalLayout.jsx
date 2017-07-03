@@ -131,7 +131,6 @@ class JournalLayout extends React.Component {
       id: PropTypes.string.isRequired,
       name: PropTypes.string.isRequired,
       type: PropTypes.string.isRequired,
-      splashy: PropTypes.bool.isRequired, 
       extent: PropTypes.object
     }).isRequired,
     data: PropTypes.shape({
@@ -152,7 +151,7 @@ class JournalLayout extends React.Component {
         <div className="c-columns">
           <main id="maincontent">
           {this.props.data.issue ?
-            this.props.unit.splashy ? <IssueSplashyComp issue={data.issue}/> : <IssueSimpleComp issue={data.issue}/>
+            data.display=='splashy' ? <IssueSplashyComp issue={data.issue}/> : <IssueSimpleComp issue={data.issue}/>
           :
             <p>Currently no issues to display     {/* ToDo: Bring in issue-specific about text here? */}
             </p>

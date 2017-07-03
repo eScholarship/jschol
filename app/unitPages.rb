@@ -147,7 +147,7 @@ def getJournalLandingPageData(id)
   unit = $unitsHash[id]
   attrs = JSON.parse(unit.attrs)
   return {
-    display: attrs['magainze'] ? 'magazine' : 'simple',
+    display: attrs['splashy'] ? 'splashy' : 'simple',
     issue: getIssue(id)
   }
 end
@@ -301,7 +301,6 @@ end
 #      ],
 #      twitter: "apalj",
 #      directSubmit: "enabled",
-#      magazine: true
 #   }
 
 
