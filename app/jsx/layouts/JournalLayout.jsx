@@ -151,7 +151,7 @@ class JournalLayout extends React.Component {
         {this.props.marquee && <MarqueeComp marquee={this.props.marquee} unit={this.props.unit}/>}
         <div className="c-columns">
           <main id="maincontent">
-          {this.props.unit.issue ?
+          {this.props.data.issue ?
             this.props.unit.splashy ? <IssueSplashyComp issue={data.issue}/> : <IssueSimpleComp issue={data.issue}/>
           :
             <p>Currently no issues to display     {/* ToDo: Bring in issue-specific about text here? */}

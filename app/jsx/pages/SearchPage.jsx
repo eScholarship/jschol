@@ -1,4 +1,3 @@
-
 import React from 'react'
 import $ from 'jquery'
 import _ from 'lodash'   // mainly for _.isEmtpy() which also works server-side (unlike $.isEmptyObject)
@@ -466,13 +465,13 @@ class FacetForm extends React.Component {
     })
 
     return (
-      <Form id="facetForm" to='/search' method="GET" onSubmit={this.handleSubmit}>
+      <Form id={this.props.formName} to='/search' method="GET" onSubmit={this.handleSubmit}>
         {/* Top-aligned box with title "Your search: "Teletubbies"" and active filters */}
         <FilterComp query={this.state.query} count={this.props.data.count} handler={this.removeFilters}/>
         {facetForm}
         {/* Submit button needs to be present so our logic can "press" it at certain times.
             But hide it with display:none so user doesn't see it. */}
-        <button type="submit" id="facet-form-submit" style={{display: "none"}}>Search</button>
+        <button type="submit" id={this.props.formButton} style={{display: "none"}}>Search</button>
       </Form>
     )
   }
@@ -485,7 +484,9 @@ class SearchPage extends PageBase {
   }
 
   renderData(data) {
-    let facetFormData = {facets: data.facets, count: data.count}
+    let facetFormData = {facets: data.facets, count: data.count},
+        formName = "facetForm",
+        formButton = "facet-form-submit"
     return(
       <div className="l_search">
         <Header1Comp />
@@ -495,7 +496,7 @@ class SearchPage extends PageBase {
         <ExportComp />
         <div className="c-columns">
           <aside>
-            <FacetForm data={facetFormData} query={data.query} />
+            <FacetForm formName={formName} formButton={formButton} data={facetFormData} query={data.query} />
           </aside>
           <main id="maincontent" style={{position: "relative"}}>
             { this.state.fetchingData ? <div className="c-search-extra__loading-overlay"/> : null }
@@ -511,15 +512,16 @@ class SearchPage extends PageBase {
                   Scholarly Works ({data.count + " results" + (data.count > 10000 ? ", showing first 10000" : "")})</h2>
               </header>
             {(data.count > 2) &&
-              <SortPaginationComp query={data.query} count={data.count}/>
+              <SortPaginationComp formName={formName} formButton={formButton} query={data.query} count={data.count}/>
             }
               <div>
                 { data.searchResults.map(result =>
                   <ScholWorksComp key={result.id} result={result} />)
                 }
               </div>
+              <p><br/></p>
             {(data.count > data.query.rows) &&
-              <PaginationComp query={data.query} count={data.count}/>
+              <PaginationComp formName={formName} formButton={formButton} query={data.query} count={data.count}/>
             }
             </section>
           </main>
