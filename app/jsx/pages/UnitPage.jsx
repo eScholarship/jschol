@@ -25,6 +25,7 @@ import UnitProfileLayout from '../layouts/UnitProfileLayout.jsx'
 import UnitSidebarConfigLayout from '../layouts/UnitSidebarConfigLayout.jsx'
 import UnitNavConfigLayout from '../layouts/UnitNavConfigLayout.jsx'
 import AdminBarComp from '../components/AdminBarComp.jsx'
+import RecentArticlesComp from "../components/RecentArticlesComp.jsx"
 
 class UnitPage extends PageBase
 {
@@ -61,13 +62,12 @@ class UnitPage extends PageBase
     sidebarData.map(sb =>
       <section key={sb.id} className="o-columnbox1">
         <header>
-          <h2>{sb.title ? sb.title : sb.kind.replace(/([a-z])([A-Z][a-z])/g, "$1 $2")}</h2>
+          <h2>{(sb.attrs && sb.attrs.title) ? sb.attrs.title : sb.kind.replace(/([a-z])([A-Z][a-z])/g, "$1 $2")}</h2>
         </header>
-        <p>
-          Optio distinctio nemo numquam dolorem rerum quae eum, ipsum amet repudiandae,
-          cum a quibusdam magnam praesentium nostrum quidem eaque maiores ipsam. Iste voluptate
-          similique sapiente totam sit, minus numquam enim?
-        </p>
+        {   sb.kind == "Text"           ? <div dangerouslySetInnerHTML={{__html: sb.attrs.html}}/>
+          : sb.kind == "RecentArticles" ? <RecentArticlesComp data={sb.attrs}/>
+          : <p><i>Not yet implemented</i></p>
+        }
       </section>)
 
   cmsPage(data, page) {
