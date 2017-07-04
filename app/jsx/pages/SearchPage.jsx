@@ -106,8 +106,12 @@ class FacetItem extends React.Component {
   render() {
     let facet = this.props.data.facet
     this.label = facet.displayName ? facet.displayName : facet.value
+    // Put a special class name on the rights facet to show Creative Commons icons
+    let className = this.props.data.facetType == "rights"
+                      ? `c-checkbox__attrib-${facet.value.toLowerCase()}`.replace(/ /g, '-')
+                      : ""
     return (
-      <li>
+      <li className={className}>
         <input id={`${this.props.data.facetType}-${facet.value}`} className="c-checkbox__input" type="checkbox"
           name={this.props.data.facetType} value={facet.value}
           onChange={this.handleChange}
@@ -307,7 +311,7 @@ class FacetFieldset extends React.Component {
   }
 
   getFacetNodes = facets =>
-    <ul className="c-checkbox">
+    <ul className={this.props.data.fieldName == "supp_file_types" ? "c-checkbox--2column" : "c-checkbox"}>
       {facets.map( facet =>
         <FacetItem key={facet.value}
                    data={{facetType: this.props.data.fieldName, facet: facet}}
