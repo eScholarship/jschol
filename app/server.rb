@@ -367,6 +367,13 @@ get %r{^/(?!(api/.*|content/.*|locale/.*|.*\.\w{1,4}$))} do
 
   puts "Page fetch: #{request.url}"
 
+  template = File.new("app/app.html").read
+
+  # Replace startup URLs for proper cache busting
+  webpackManifest = JSON.parse(File.read('app/js/manifest.json'))
+  template.sub!("lib-bundle.js", webpackManifest["lib.js"])
+  template.sub!("app-bundle.js", webpackManifest["app.js"])
+
   if DO_ISO
     # We need to grab the hostname from the URL. There's probably a better way to do this.
     request.url =~ %r{^https?://([^/:]+)(:\d+)?(.*)$} or fail
@@ -379,13 +386,12 @@ get %r{^/(?!(api/.*|content/.*|locale/.*|.*\.\w{1,4}$))} do
     response.code == "200" or halt(500, "ISO fetch failed")
 
     # Read in the template file, and substitute the results from React/ReactRouter
-    template = File.new("app/app.html").read
     lookFor = '<div id="main"></div>'
     template.include?(lookFor) or raise("can't find #{lookFor.inspect} in template")
     return template.sub(lookFor, response.body)
   else
     # Development mode - skip iso
-    return File.new("app/app.html").read
+    return template
   end
 end
 
