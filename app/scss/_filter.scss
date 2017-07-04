@@ -97,6 +97,12 @@
     color: $color-black;
     font-weight: normal;
     text-align: left;
+
+    &:focus,
+    &:hover {
+      background-image: inline('../images/icon_times-circle-orange.svg');
+    }
+
   }
 
 }
@@ -106,14 +112,9 @@
   padding: 0 1.3em 0 0;
   float: right;
   border: none;
-  background: $color-white inline('../images/icon_times.svg') no-repeat right -0.2em center / auto 60%;
+  background: $color-white inline('../images/icon_times.svg') no-repeat right -0.2em center / 1.3em;
   color: $color-teal;
   text-align: right;
-
-  @include interactive-element-pointer(coarse) {
-    padding-right: 1.8em;
-  }
-
 }
 
 .c-filter__tips {
