@@ -1,5 +1,6 @@
 const webpack = require("webpack");
 const _ = require('lodash');
+const ManifestPlugin = require('webpack-manifest-plugin');
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // read package.json and get dependencies' package ids
@@ -19,7 +20,7 @@ module.exports = {
     lib: getNPMPackageIds()
   },
   output: {
-    filename: '[name]-bundle.js',
+    filename: '[name]-bundle-[chunkhash].js',
     path: __dirname + '/app/js',
     publicPath: "/js/"
   },
@@ -30,7 +31,9 @@ module.exports = {
     new webpack.ProvidePlugin({
       $: "jquery",
       jQuery: "jquery"
-    })
+    }),
+    // Generates manifest.json so app can know the exact names of files for cache-busting
+    new ManifestPlugin()
   ],
   module: {
     loaders: [{

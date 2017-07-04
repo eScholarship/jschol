@@ -108,7 +108,7 @@ end
 # Get number of ORUs per campus as one hash. ORUs must contain items in unit_items table to be counted
 # {"ucb"=>117, "ucd"=>42 ...}
 def getOruStatsPerCampus
-  orusWithContent = Unit.join(UnitItem, :unit_id=>:id).filter(type: 'oru').exclude(status: 'hidden').distinct.select(:id).map(:id)
+  orusWithContent = Unit.join(:unit_items, :unit_id=>:id).filter(type: 'oru').exclude(status: 'hidden').distinct.select(:id).map(:id)
   activeCampusIds = $activeCampuses.map{|id, c| id }
   array = UnitHier.join(:units, :id=>:unit_id).
     where(:unit_id=>orusWithContent, :ancestor_unit=>activeCampusIds).group_and_count(:ancestor_unit).

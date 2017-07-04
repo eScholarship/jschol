@@ -53,7 +53,8 @@
     "progress": "^1.1.8",
     "react-addons-test-utils": "^15.5.1",
     "run-sequence": "^1.2.2",
-    "webpack": "^2.3.3"
+    "webpack": "^2.3.3",
+    "webpack-manifest-plugin": "^1.1.0"
   },
   "dependencies-note": "These modules get bundled into lib-bundle.js",
   "dependencies": {
@@ -76,7 +77,7 @@
   "optionalDependencies": {
     "pdfjs-embed": "escholarship/pdfjs-embed#bb559ed50c39b25220ea000793d8e40c5b2b284d",
     "react-sidebar": "^2.3.0",
-    "react-trumbowyg": "^1.1.0",
-    "react-sortable-tree": "^0.1.19"
+    "react-sortable-tree": "^0.1.19",
+    "react-trumbowyg": "^1.1.0"
   }
 }

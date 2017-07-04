@@ -243,7 +243,7 @@ end
 # Get recent items (with author info) for a unit, by most recent eschol_date
 def getRecentItems(unit)
   items = Item.join(:unit_items, :item_id => :id).where(unit_id: unit.id)
-              .where('attrs->"$.suppress_content" is null')
+              .where(Sequel.lit("attrs->\"$.suppress_content\" is null"))
               .reverse(:eschol_date).limit(5)
   return items.map { |item|
     { id: item.id, title: item.title, authors: getItemAuthors(item.id) }

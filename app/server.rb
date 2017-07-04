@@ -33,6 +33,20 @@ def puts(*args)
   }
 end
 
+# Moneky patch for nasty problem in Sinatra contrib library "Streaming": it calls a thing
+# called "errback" that doesn't exist.
+module Sinatra
+  module Streaming
+    module Stream
+      def self.extended(obj)
+        obj.closed, obj.lineno, obj.pos = false, 0, 0
+        obj.callback { obj.closed = true }
+        #THISISTHEFIX# obj.errback  { obj.closed = true }
+      end
+    end
+  end
+end
+
 # Make it clear where the new session starts in the log file.
 puts "\n\n=====================================================================================\n"
 
@@ -320,7 +334,7 @@ class Fetcher
 end
 
 ###################################################################################################
-get %r{/assets/([0-9a-f]{64})$} do |hash|
+get %r{/assets/([0-9a-f]{64})} do |hash|
   s3Path = "#{$s3Config.prefix}/binaries/#{hash[0,2]}/#{hash[2,2]}/#{hash}"
   obj = $s3Bucket.object(s3Path)
   obj.exists? && obj.metadata["mime_type"] or halt(404)
@@ -359,13 +373,31 @@ get "/content/:fullItemID/*" do |fullItemID, path|
 end
 
 ###################################################################################################
+# If a cache buster comes in, strip it down to the original, and re-dispatch the request to return
+# the actual file.
+get %r{\/css\/main-[a-zA-Z0-9]{16}\.css} do
+  call env.merge("PATH_INFO" => "/css/main.css")
+end
+
+###################################################################################################
 # The outer framework of every page is essentially the same, substituting in the intial page
 # data and initial elements from React.
-# The regex below matches every URL except /api/* (similarly content and locale), as well as
-# things ending with a file ext. Those all get served elsewhere.
-get %r{^/(?!(api/.*|content/.*|locale/.*|.*\.\w{1,4}$))} do
+get %r{.*} do
+
+  # The regex below ensures that /api, /content, /locale, and files with a file ext get served
+  # elsewhere.
+  pass if request.path_info =~ %r{api/.*|content/.*|locale/.*|.*\.\w{1,4}}
 
   puts "Page fetch: #{request.url}"
+
+  template = File.new("app/app.html").read
+
+  # Replace startup URLs for proper cache busting
+  # TODO: speed this up by caching (if it's too slow)
+  webpackManifest = JSON.parse(File.read('app/js/manifest.json'))
+  template.sub!("lib-bundle.js", webpackManifest["lib.js"])
+  template.sub!("app-bundle.js", webpackManifest["app.js"])
+  template.sub!("main.css", "main-#{Digest::MD5.file("app/css/main.css").hexdigest[0,16]}.css")
 
   if DO_ISO
     # We need to grab the hostname from the URL. There's probably a better way to do this.
@@ -379,13 +411,12 @@ get %r{^/(?!(api/.*|content/.*|locale/.*|.*\.\w{1,4}$))} do
     response.code == "200" or halt(500, "ISO fetch failed")
 
     # Read in the template file, and substitute the results from React/ReactRouter
-    template = File.new("app/app.html").read
     lookFor = '<div id="main"></div>'
     template.include?(lookFor) or raise("can't find #{lookFor.inspect} in template")
     return template.sub(lookFor, response.body)
   else
     # Development mode - skip iso
-    return File.new("app/app.html").read
+    return template
   end
 end
 
