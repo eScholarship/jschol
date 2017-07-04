@@ -33,6 +33,20 @@ def puts(*args)
   }
 end
 
+# Moneky patch for nasty problem in Sinatra contrib library "Streaming": it calls a thing
+# called "errback" that doesn't exist.
+module Sinatra
+  module Streaming
+    module Stream
+      def self.extended(obj)
+        obj.closed, obj.lineno, obj.pos = false, 0, 0
+        obj.callback { obj.closed = true }
+        #THISISTHEFIX# obj.errback  { obj.closed = true }
+      end
+    end
+  end
+end
+
 # Make it clear where the new session starts in the log file.
 puts "\n\n=====================================================================================\n"
 
@@ -320,7 +334,7 @@ class Fetcher
 end
 
 ###################################################################################################
-get %r{/assets/([0-9a-f]{64})$} do |hash|
+get %r{/assets/([0-9a-f]{64})} do |hash|
   s3Path = "#{$s3Config.prefix}/binaries/#{hash[0,2]}/#{hash[2,2]}/#{hash}"
   obj = $s3Bucket.object(s3Path)
   obj.exists? && obj.metadata["mime_type"] or halt(404)
@@ -361,9 +375,11 @@ end
 ###################################################################################################
 # The outer framework of every page is essentially the same, substituting in the intial page
 # data and initial elements from React.
-# The regex below matches every URL except /api/* (similarly content and locale), as well as
-# things ending with a file ext. Those all get served elsewhere.
-get %r{^/(?!(api/.*|content/.*|locale/.*|.*\.\w{1,4}$))} do
+get %r{.*} do
+
+  # The regex below ensures that /api, /content, /locale, and files with a file ext get served
+  # elsewhere.
+  pass if request.path_info =~ %r{api/.*|content/.*|locale/.*|.*\.\w{1,4}}
 
   puts "Page fetch: #{request.url}"
 
