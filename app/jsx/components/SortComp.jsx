@@ -16,7 +16,7 @@ class SortComp extends React.Component {
       this.setState({sort: event.target.value});
     }
     $('[name=start]').val('0');
-    $('#facet-form-submit').click();
+    $('#'+this.props.formButton).click();
   }
   
   render() {
@@ -24,7 +24,7 @@ class SortComp extends React.Component {
       <div className="c-sort">
         <div className="o-input__droplist1">
           <label htmlFor="c-sort1">Sort By:</label>
-          <select name="sort" id="c-sort1" form="facetForm" value={ this.state.sort } onChange={ this.handleChange }>
+          <select name="sort" id="c-sort1" form={this.props.formName} value={ this.state.sort } onChange={ this.handleChange }>
             <option value="rel">Relevance</option>
             <option value="pop">Most Popular</option>
             <option value="a-title">A-Z By Title</option>
@@ -38,7 +38,7 @@ class SortComp extends React.Component {
       {(this.props.count > 10) && 
         <div className="o-input__droplist1 c-sort__page-input">
           <label htmlFor="c-sort2">Show:</label>
-          <select name="rows" id="c-sort2" form="facetForm" value={ this.state.rows } onChange={ this.handleChange }>
+          <select name="rows" id="c-sort2" form={this.props.formName} value={ this.state.rows } onChange={ this.handleChange }>
           {/* ToDo: Make this more concise */}
           <option value="10">10</option>
           <option value="20">20</option>

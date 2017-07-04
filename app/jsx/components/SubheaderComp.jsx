@@ -44,12 +44,12 @@ class SubheaderComp extends React.Component {
         </Link>
       {p.unit.type == 'journal' ?
         <div className="c-subheader__sidebar">
-          <NotYetLink><button className="o-button__3">Submit</button></NotYetLink>
-          <NotYetLink><button className="o-button__3">Manage <span className="c-subheader__button-fragment">Submissions</span></button></NotYetLink>
+          <NotYetLink className="o-button__3" element="button">Submit</NotYetLink>
+          <NotYetLink className="o-button__3" element="button">Manage <span className="c-subheader__button-fragment">Submissions</span></NotYetLink>
         </div>
       :
         <div className="c-subheader__sidebar">
-          <NotYetLink><button className="o-button__3">Deposit</button></NotYetLink>
+          <NotYetLink className="o-button__3" element="button">Deposit</NotYetLink>
         </div>
       }
       </div>
