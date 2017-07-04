@@ -66,7 +66,7 @@ class FacetItem extends React.Component {
     }
     return false
   }
-  
+
   // this is what actually submits the form when a checkbox has been checked
   componentDidUpdate(prevProps, prevState) {
     if(this.checkFacet(this.props) !== this.checkFacet(prevProps) && !this.props.data.ancestorChecked && !prevProps.data.ancestorChecked) {
@@ -106,28 +106,27 @@ class FacetItem extends React.Component {
   render() {
     let facet = this.props.data.facet
     this.label = facet.displayName ? facet.displayName : facet.value
-
-    let descendents
-    if (facet.descendents) {
-      descendents = facet.descendents.map( d => {
-        let descendentItemData = {
-          facetType: this.props.data.facetType,
-          facet: d,
-          ancestorChecked: this.checkFacet(this.props)
-        }
-        return (<FacetItem key={d.value} data={descendentItemData} query={this.props.query} handler={this.props.handler}/>)
-      })
-    }
-
     return (
-      <div>
-        <input id={facet.value} className="c-checkbox__input" type="checkbox"
+      <li>
+        <input id={`${this.props.data.facetType}-${facet.value}`} className="c-checkbox__input" type="checkbox"
           name={this.props.data.facetType} value={facet.value}
           onChange={this.handleChange}
           checked={this.checkFacet(this.props)} disabled={this.props.data.ancestorChecked ? true : false}/>
-        <label htmlFor={facet.value} className="c-checkbox__label">{this.label} ({facet.count})</label>
-        <div style={{paddingLeft: '30px'}}>{descendents}</div>
-      </div>
+        <label htmlFor={`${this.props.data.facetType}-${facet.value}`} className="c-checkbox__label">{this.label} ({facet.count})</label>
+        { facet.descendents &&
+          <ul className="c-checkbox">
+            { facet.descendents.map(d => {
+                let descendentItemData = {
+                  facetType: this.props.data.facetType,
+                  facet: d,
+                  ancestorChecked: this.checkFacet(this.props)
+                }
+                return (<FacetItem key={d.value} data={descendentItemData} query={this.props.query} handler={this.props.handler}/>)
+              })
+            }
+          </ul>
+        }
+      </li>
     )
   }
 }
@@ -309,13 +308,13 @@ class FacetFieldset extends React.Component {
   }
 
   getFacetNodes = facets =>
-    <div className="c-facetitems">
+    <ul className="c-checkbox">
       {facets.map( facet =>
         <FacetItem key={facet.value}
                    data={{facetType: this.props.data.fieldName, facet: facet}}
                    query={this.props.query.filters} handler={this.handleChange} /> )
       }
-    </div>
+    </ul>
 
   sliceFacets(facets)
   {
@@ -357,21 +356,23 @@ class FacetFieldset extends React.Component {
     return (
       <details className="c-facetbox" id={data.fieldName} open={this.props.open}>
         <summary className="c-facetbox__summary"><span>{data.display}</span></summary>
-        <div className="facetItems c-checkbox">
-          {facetItemNodes}
-          {this.props.modal &&
-            <div id="facetModalBase">
-              <a href="" onClick={(event)=>{
-                this.setState({modalOpen:true})
-                event.preventDefault()}}>show more &raquo;</a>
-              <ModalComp isOpen={this.state.modalOpen}
-                parentSelector={()=>$("#facetModalBase")[0]}
-                header={"Refine By " + data.display}
-                content={this.getFacetNodes(data.facets)}
-                onOK={e=>this.closeModal(e, data.fieldName)} okLabel="Done" />
-            </div>
-          }
-        </div>
+        {facetItemNodes}
+        {this.props.modal &&
+          <div id="facetModalBase">
+            <button className="c-facetbox__show-more"
+                    onClick={(event)=>{
+                              this.setState({modalOpen:true})
+                              event.preventDefault()}
+                            }>
+              Show more
+            </button>
+            <ModalComp isOpen={this.state.modalOpen}
+              parentSelector={()=>$("#facetModalBase")[0]}
+              header={"Refine By " + data.display}
+              content={this.getFacetNodes(data.facets)}
+              onOK={e=>this.closeModal(e, data.fieldName)} okLabel="Done" />
+          </div>
+        }
       </details>
     )
   }
