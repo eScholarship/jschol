@@ -89,9 +89,6 @@ class UnitProfileLayout extends React.Component {
                   <label style={labelStyle}>Name: </label>
                   <input style={style} type="text" defaultValue={data.name}/>
 
-                  <label style={labelStyle}>Slug (behind the last "/" in your URL):</label>
-                  <input style={style} type="text" defaultValue={data.slug}/>
-
                   <label style={labelStyle}>Logo image:</label>
                   { data.logo
                     ? <img src={"/assets/"+data.logo.asset_id} width={data.logo.width} height={data.logo.height} alt="Logo image" />
