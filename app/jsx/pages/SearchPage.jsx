@@ -134,18 +134,18 @@ class FacetItem extends React.Component {
 class PubYear extends React.Component {
   constructor(props) {
     super(props)
-    this.state = { 
-      pub_year_start: props.data.range && props.data.range.pub_year_start ? props.data.range.pub_year_start : '',
-      pub_year_end: props.data.range && props.data.range.pub_year_end ? props.data.range.pub_year_end : ''
-    }
+    this.state = this.setupState(props)
   }
 
   componentWillReceiveProps(nextProps) {
-    if (_.isEmpty(nextProps.query) && (this.state.pub_year_start !== '' || this.state.pub_year_end !== '')) {
-      this.setState({
-        pub_year_start: '',
-        pub_year_end: ''
-      }, this.submitForm)
+    if (!_.isEqual(this.props.query, nextProps.query))
+      this.setState(this.setupState(nextProps))
+  }
+
+  setupState(props) {
+    return {
+      pub_year_start: props.data.range && props.data.range.pub_year_start ? props.data.range.pub_year_start : '',
+      pub_year_end: props.data.range && props.data.range.pub_year_end ? props.data.range.pub_year_end : ''
     }
   }
 
@@ -185,15 +185,14 @@ class PubYear extends React.Component {
 
   render() {
     return (
-      <div>
+      <div className="c-pubyear">
         <label htmlFor="pub_year_start">From: </label>
-        <input id="pub_year_start" name="pub_year_start" type="text"
-          value={this.state.pub_year_start}
+        <input id="pub_year_start" name="pub_year_start" type="text" maxLength="4" placeholder="YYYY"
+          defaultValue={this.state.pub_year_start}
           onChange={ this.handleChange } onBlur={ this.onBlur }/>
-        <br/>
         <label htmlFor="pub_year_end">To: </label>
-        <input id="pub_year_end" name="pub_year_end" type="text"
-          value={this.state.pub_year_end}
+        <input id="pub_year_end" name="pub_year_end" type="text" maxLength="4" placeholder="YYYY"
+          defaultValue={this.state.pub_year_end}
           onChange={ this.handleChange } onBlur={ this.onBlur }/>
       </div>
     ) 
@@ -322,7 +321,6 @@ class FacetFieldset extends React.Component {
       return facets.slice(0, 5)
 
     let checked = {}
-    // console.log("slice: filters=", this.props.query.filters)
     for (let filter of this.props.query.filters)
       checked[filter.value] = true
 
@@ -358,7 +356,7 @@ class FacetFieldset extends React.Component {
         <summary className="c-facetbox__summary"><span>{data.display}</span></summary>
         {facetItemNodes}
         {this.props.modal &&
-          <div id="facetModalBase">
+          <div id={`facetModalBase-${data.fieldName}`}>
             <button className="c-facetbox__show-more"
                     onClick={(event)=>{
                               this.setState({modalOpen:true})
@@ -366,11 +364,18 @@ class FacetFieldset extends React.Component {
                             }>
               Show more
             </button>
+            {/* style: maxHeight and overflowY hack below makes scrolling modal,
+                until Joel propagates the change to the scss where it really belongs.
+            */}
             <ModalComp isOpen={this.state.modalOpen}
-              parentSelector={()=>$("#facetModalBase")[0]}
+              parentSelector={()=>$(`#facetModalBase-${data.fieldName}`)[0]}
               header={"Refine By " + data.display}
-              content={this.getFacetNodes(data.facets)}
-              onOK={e=>this.closeModal(e, data.fieldName)} okLabel="Done" />
+              onOK={e=>this.closeModal(e, data.fieldName)} okLabel="Done"
+              onCancel={e=>this.closeModal(e, data.fieldName)}
+              content={ <div style={{ maxHeight: "45vh", overflowY: "auto" }}>
+                          { this.getFacetNodes(data.facets) }
+                        </div> }
+            />
           </div>
         }
       </details>
