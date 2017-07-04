@@ -25,6 +25,7 @@ import UnitProfileLayout from '../layouts/UnitProfileLayout.jsx'
 import UnitSidebarConfigLayout from '../layouts/UnitSidebarConfigLayout.jsx'
 import UnitNavConfigLayout from '../layouts/UnitNavConfigLayout.jsx'
 import AdminBarComp from '../components/AdminBarComp.jsx'
+import RecentArticlesComp from "../components/RecentArticlesComp.jsx"
 
 class UnitPage extends PageBase
 {
@@ -42,14 +43,14 @@ class UnitPage extends PageBase
   pageDataURL() {
     const pm = this.props.params
     if (pm.pageName) {
-      if (pm.pageName === 'search')
-        return "/api/unit/" + pm.unitID + "/search/" + this.props.location.search
-      else if (pm.pageName == "nav")
-        return "/api/unit/" + pm.unitID + "/nav/" + pm.splat
+      if (pm.pageName == 'search')
+        return `/api/unit/${pm.unitID}/search/${this.props.location.search}`
+      else if (pm.pageName == "nav" || pm.pageName == "sidebar")
+        return `/api/unit/${pm.unitID}/${pm.pageName}/${pm.splat}`
       else
-        return "/api/unit/" + pm.unitID + "/" + pm.pageName
+        return `/api/unit/${pm.unitID}/${pm.pageName}`
     }
-    return "/api/unit/" + pm.unitID + "/home"
+    return `/api/unit/${pm.unitID}/home`
   }
 
   // Unit ID for permissions checking
@@ -61,14 +62,22 @@ class UnitPage extends PageBase
     sidebarData.map(sb =>
       <section key={sb.id} className="o-columnbox1">
         <header>
-          <h2>{sb.title ? sb.title : sb.kind.replace(/([a-z])([A-Z][a-z])/g, "$1 $2")}</h2>
+          <h2>{(sb.attrs && sb.attrs.title) ? sb.attrs.title : sb.kind.replace(/([a-z])([A-Z][a-z])/g, "$1 $2")}</h2>
         </header>
-        <p>
-          Optio distinctio nemo numquam dolorem rerum quae eum, ipsum amet repudiandae,
-          cum a quibusdam magnam praesentium nostrum quidem eaque maiores ipsam. Iste voluptate
-          similique sapiente totam sit, minus numquam enim?
-        </p>
+        {   sb.kind == "Text"           ? <div dangerouslySetInnerHTML={{__html: sb.attrs.html}}/>
+          : sb.kind == "RecentArticles" ? <RecentArticlesComp data={sb.attrs}/>
+          : <p><i>Not yet implemented</i></p>
+        }
       </section>)
+
+  cmsPage(data, page) {
+    if (this.state.adminLogin && !this.state.fetchingPerms && !this.state.isEditingPage) {
+      //console.log("Editing turned off; redirecting to unit page.")
+      setTimeout(()=>this.props.router.push(`/uc/${data.unit.id}`), 0)
+    }
+    else
+      return page
+  }
 
   // [********** AMY NOTES 3/15/17 **********]
   // TODO: each of the content layouts currently include the sidebars, 
@@ -82,11 +91,11 @@ class UnitPage extends PageBase
     else if (this.props.params.pageName === 'search') {
       contentLayout = (<UnitSearchLayout unit={data.unit} data={data.content} sidebar={sidebar}/>)
     } else if (this.props.params.pageName === 'profile') {
-      contentLayout = (<UnitProfileLayout unit={data.unit} data={data.content}/>)
+      contentLayout = this.cmsPage(data, <UnitProfileLayout unit={data.unit} data={data.content} sendApiData={this.sendApiData}/>)
     } else if (this.props.params.pageName === 'nav') {
-      contentLayout = (<UnitNavConfigLayout unit={data.unit} data={data.content}/>)
+      contentLayout = this.cmsPage(data, <UnitNavConfigLayout unit={data.unit} data={data.content} sendApiData={this.sendApiData}/>)
     } else if (this.props.params.pageName === 'sidebar') {
-      contentLayout = (<UnitSidebarConfigLayout unit={data.unit} data={data.content}/>)
+      contentLayout = this.cmsPage(data, <UnitSidebarConfigLayout unit={data.unit} data={data.content} sendApiData={this.sendApiData}/>)
     } else if (this.props.params.pageName) {
       contentLayout = (<UnitStaticPageLayout unit={data.unit} data={data.content} sidebar={sidebar} fetchPageData={this.fetchPageData}/>)
     } else {

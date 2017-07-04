@@ -114,7 +114,6 @@ def getUserPermissions(username, sessionID, unitID)
   # Make sure the login session is valid
   row = OJS_DB[:sessions].where(session_id: sessionID, user_id: userID).first
   row or return permFail("no matching session")
-  puts "Last used: #{Time.at(row[:last_used])}"
   (Time.now - Time.at(row[:last_used])) < (60*60) or return permFail("session expired")
   userID = row[:user_id]
   userID > 0 or return permFail("no user_id")
@@ -131,7 +130,6 @@ def getUserPermissions(username, sessionID, unitID)
     ret[:admin] = true
     ret[:super] = true
   end
-  ret.empty? and return permFail("no permissions found")
   return ret
 end
 
