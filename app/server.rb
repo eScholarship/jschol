@@ -373,6 +373,14 @@ get "/content/:fullItemID/*" do |fullItemID, path|
 end
 
 ###################################################################################################
+# If a cache buster comes in, strip it down to the original, and re-dispatch the request to return
+# the actual file.
+get %r{\/css\/main-[a-zA-Z0-9]{16}\.css} do
+  puts "match"
+  call env.merge("PATH_INFO" => "/css/main.css")
+end
+
+###################################################################################################
 # The outer framework of every page is essentially the same, substituting in the intial page
 # data and initial elements from React.
 get %r{.*} do
@@ -386,9 +394,11 @@ get %r{.*} do
   template = File.new("app/app.html").read
 
   # Replace startup URLs for proper cache busting
+  # TODO: speed this up by caching (if it's too slow)
   webpackManifest = JSON.parse(File.read('app/js/manifest.json'))
   template.sub!("lib-bundle.js", webpackManifest["lib.js"])
   template.sub!("app-bundle.js", webpackManifest["app.js"])
+  template.sub!("main.css", "main-#{Digest::MD5.file("app/css/main.css").hexdigest[0,16]}.css")
 
   if DO_ISO
     # We need to grab the hostname from the URL. There's probably a better way to do this.
