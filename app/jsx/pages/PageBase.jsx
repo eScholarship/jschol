@@ -126,7 +126,7 @@ class PageBase extends React.Component
   sendApiData = (method, apiURL, data) => {
     this.setState({ fetchingData: true })
     $.getJSON({ type: method, url: apiURL,
-                data: Object.assign(_.cloneDeep(data), 
+                data: _.merge(_.cloneDeep(data),
                         { username: this.state.adminLogin.username, token: this.state.adminLogin.token })})
     .done(data=>{
       if (data.nextURL) {
@@ -136,8 +136,9 @@ class PageBase extends React.Component
       else
         this.fetchPageData()
     })
-    .fail(()=>{
-      alert("Error" + (data.responseJSON ? ":\n"+data.responseJSON.message : "."))
+    .fail(data=>{
+      alert("Error" + (data.responseJSON ? `:\n${data.responseJSON.message}`
+                                         : ` ${data.status}:\n${data.statusText}.`))
       this.fetchPageData()
     })
   }

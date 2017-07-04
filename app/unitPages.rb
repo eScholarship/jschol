@@ -222,11 +222,11 @@ def getUnitProfile(unit, attrs)
     about: attrs['about']
   }
   if unit.type == 'journal'
-    profile[:doaj] = true
-    profile[:license] = 'cc-by'
-    profile[:eissn] = '0160-2764'
-    profile[:issue] = 'most recent'
-    profile[:layout] = 'simple'
+    profile[:doaj] = attrs['doaj']
+    profile[:license] = attrs['license']
+    profile[:eissn] = attrs['eissn']
+    profile[:splashy] = attrs['splashy']
+    profile[:issue_rule] = attrs['issue_rule']
   end
   if unit.type == 'oru'
     profile[:seriesSelector] = true
@@ -601,26 +601,32 @@ put "/api/static/:unitID/:pageName/mainText" do |unitID, pageName|
 end
 
 ###################################################################################################
-# *Put* to change widget text
-put "/api/widget/:unitID/:widgetID/text" do |unitID, widgetID|
+# *Put* to change unit profile properties: content configuration
+put "/api/unit/:unitID/profileContentConfig" do |unitID|
+  # Check user permissions
+  perms = getUserPermissions(params[:username], params[:token], unitID)
+  perms[:admin] or halt(401)
 
-  # In future the token will be looked up in a sessions table of logged in users. For now
-  # it's just a placeholder.
-  params[:token] == 'xyz123' or halt(401) # TODO: make this actually secure
-  # TODO: check that logged in user has permission to edit this unit and page
-  puts "TODO: permission check"
+  DB.transaction {
+    unit = Unit[unitID] or jsonHalt(404, "Unit not found")
+    unitAttrs = JSON.parse(unit.attrs)
 
-  # Grab widget data from the database
-  widget = Widget.where(unit_id: unitID, id: widgetID).first or halt(404, "Widget not found")
+    if params['data']['splashy'] == "on"
+      unitAttrs['splashy'] = true
+    else
+      unitAttrs.delete('splashy')
+    end
 
-  # Parse the HTML text, and sanitize to be sure only allowed tags are used.
-  safeText = sanitizeHTML(params[:newText])
+    if params['data']['issue_rule'] == "secondMostRecent"
+      unitAttrs['issue_rule'] = "secondMostRecent"
+    else
+      unitAttrs.delete('issue_rule')
+    end
 
-  # Update the database
-  widget.attrs = JSON.parse(widget.attrs).merge({ "html" => safeText }).to_json
-  widget.save
+    unit.attrs = unitAttrs.to_json
+    unit.save
+  }
 
-  # And let the caller know it went fine.
   content_type :json
   return { status: "ok" }.to_json
 end

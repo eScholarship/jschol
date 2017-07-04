@@ -72,7 +72,7 @@ class UnitPage extends PageBase
 
   cmsPage(data, page) {
     if (this.state.adminLogin && !this.state.fetchingPerms && !this.state.isEditingPage) {
-      console.log("Editing turned off; redirecting to unit page.")
+      //console.log("Editing turned off; redirecting to unit page.")
       setTimeout(()=>this.props.router.push(`/uc/${data.unit.id}`), 0)
     }
     else
@@ -91,7 +91,7 @@ class UnitPage extends PageBase
     else if (this.props.params.pageName === 'search') {
       contentLayout = (<UnitSearchLayout unit={data.unit} data={data.content} sidebar={sidebar}/>)
     } else if (this.props.params.pageName === 'profile') {
-      contentLayout = this.cmsPage(data, <UnitProfileLayout unit={data.unit} data={data.content}/>)
+      contentLayout = this.cmsPage(data, <UnitProfileLayout unit={data.unit} data={data.content} sendApiData={this.sendApiData}/>)
     } else if (this.props.params.pageName === 'nav') {
       contentLayout = this.cmsPage(data, <UnitNavConfigLayout unit={data.unit} data={data.content} sendApiData={this.sendApiData}/>)
     } else if (this.props.params.pageName === 'sidebar') {
