@@ -9,7 +9,6 @@ bower_components/
 cache/
 config/
 dist
-Gemfile.lock
 gems/
 gomysql
 node_modules/
