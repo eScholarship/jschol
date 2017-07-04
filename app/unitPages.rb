@@ -70,13 +70,13 @@ def getUnitHeader(unit, pageName=nil, attrs=nil)
   return header
 end
 
-def getUnitPageContent(unit, attrs)
+def getUnitPageContent(unit, attrs, q)
   if unit.type == 'oru'
-    return getORULandingPageData(unit.id)
+   return getORULandingPageData(unit.id)
   elsif unit.type == 'campus'
     return getCampusLandingPageData(unit, attrs)
   elsif unit.type.include? 'series'
-    return getSeriesLandingPageData(unit)
+    return getSeriesLandingPageData(unit, q)
   elsif unit.type == 'journal'
     return getJournalLandingPageData(unit.id)
   else
@@ -130,7 +130,7 @@ def seriesPreview(u)
   }
 end
 
-def getSeriesLandingPageData(unit)
+def getSeriesLandingPageData(unit, q)
   parent = $hierByUnit[unit.id]
   if parent.length > 1
     pp parent
@@ -138,7 +138,7 @@ def getSeriesLandingPageData(unit)
     children = parent ? $hierByAncestor[parent[0].ancestor_unit] : []
   end
 
-  response = unitSearch({"sort" => ['desc']}, unit)
+  response = unitSearch(q ? q : {"sort" => ['desc']}, unit)
   response[:series] = children ? children.select { |u| u.unit.type == 'series' }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : []
   return response
 end
@@ -147,13 +147,15 @@ def getJournalLandingPageData(id)
   unit = $unitsHash[id]
   attrs = JSON.parse(unit.attrs)
   return {
-    display: attrs['magainze'] ? 'magazine' : 'simple',
+    display: attrs['splashy'] ? 'splashy' : 'simple',
     issue: getIssue(id)
   }
 end
 
 def getIssue(id)
-  issue = Issue.where(:unit_id => id).order(Sequel.desc(:pub_date)).first.values
+  issue1 = Issue.where(:unit_id => id).order(Sequel.desc(:pub_date)).first
+  return nil if issue1.nil?
+  issue = issue1.values
   issue[:sections] = Section.where(:issue_id => issue[:id]).order(:ordering).all
 
   issue[:sections].map! do |section|
