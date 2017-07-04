@@ -376,7 +376,6 @@ end
 # If a cache buster comes in, strip it down to the original, and re-dispatch the request to return
 # the actual file.
 get %r{\/css\/main-[a-zA-Z0-9]{16}\.css} do
-  puts "match"
   call env.merge("PATH_INFO" => "/css/main.css")
 end
 

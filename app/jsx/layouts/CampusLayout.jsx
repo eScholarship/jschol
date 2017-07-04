@@ -57,7 +57,7 @@ class CampusLayout extends React.Component {
               <header>
                 <h2>UC Berkeley Datasets</h2>
               </header>
-              To publish the data that accompanies your resarch, <a href={dashUrl}>visit {unit.name} Dash</a>.
+              To publish the data that accompanies your research, <a href={dashUrl}>visit {unit.name} Dash</a>.
             </section>
           }
             <section className="o-columnbox1">
