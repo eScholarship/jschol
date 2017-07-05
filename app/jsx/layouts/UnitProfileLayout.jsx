@@ -120,8 +120,8 @@ class UnitProfileLayout extends React.Component {
               <main>
                 <section className="o-columnbox1">
                   <Form to={`/api/unit/${this.props.unit.id}/profileContentConfig`} onSubmit={this.handleSubmit}>
-                    <label className="c-editable-page__label" htmlFor="splashy">Magazine layout?</label>
-                    <input type="checkbox" id="splashy" name="splashy" defaultChecked={data.splashy}/>
+                    <label className="c-editable-page__label" htmlFor="magazine_layout">Magazine layout?</label>
+                    <input type="checkbox" id="magazine_layout" name="magazine_layout" defaultChecked={data.magazine_layout}/>
                     <p>(leave this unchecked for simple layout)</p>
                     <p>Display Issue Rule:</p>
                     <input className="c-editable-page__radio" type="radio"
