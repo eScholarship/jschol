@@ -147,7 +147,7 @@ def getJournalLandingPageData(id)
   unit = $unitsHash[id]
   attrs = JSON.parse(unit.attrs)
   return {
-    display: attrs['splashy'] ? 'splashy' : 'simple',
+    display: attrs['magazine_layout'] ? 'splashy' : 'simple',
     issue: getIssue(id)
   }
 end
@@ -227,7 +227,7 @@ def getUnitProfile(unit, attrs)
     profile[:doaj] = attrs['doaj']
     profile[:license] = attrs['license']
     profile[:eissn] = attrs['eissn']
-    profile[:splashy] = attrs['splashy']
+    profile[:magazine_layout] = attrs['magazine_layout']
     profile[:issue_rule] = attrs['issue_rule']
   end
   if unit.type == 'oru'
@@ -613,10 +613,10 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
     unit = Unit[unitID] or jsonHalt(404, "Unit not found")
     unitAttrs = JSON.parse(unit.attrs)
 
-    if params['data']['splashy'] == "on"
-      unitAttrs['splashy'] = true
+    if params['data']['magazine_layout'] == "on"
+      unitAttrs['magazine_layout'] = true
     else
-      unitAttrs.delete('splashy')
+      unitAttrs.delete('magazine_layout')
     end
 
     if params['data']['issue_rule'] == "secondMostRecent"
