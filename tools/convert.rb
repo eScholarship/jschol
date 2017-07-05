@@ -93,6 +93,7 @@ $s3Bucket = Aws::S3::Bucket.new($s3Config.bucket, client: $s3Client)
 # Caches for speed
 $allUnits = nil
 $unitAncestors = nil
+$issueCoverCache = {}
 
 # Make puts thread-safe, and prepend each line with the thread it's coming from. While we're at it,
 # let's auto-flush the output.
@@ -248,6 +249,25 @@ def putAsset(filePath, metadata)
 end
 
 ###################################################################################################
+# Upload an image to S3, and return hash of its attributes. If a block is supplied, it will receive
+# the dimensions first, and have a chance to raise exceptions on them.
+def putImage(imgPath, &block)
+  mimeType = MimeMagic.by_magic(File.open(imgPath))
+  mimeType && mimeType.mediatype == "image" or raise("Non-image file #{imgPath}")
+  dims = FastImage.size(imgPath)
+  block and block.yield(dims)
+  assetID = putAsset(imgPath, {
+    width: dims[0].to_s,
+    height: dims[1].to_s
+  })
+  return { asset_id: assetID,
+           image_type: mimeType.subtype,
+           width: dims[0],
+           height: dims[1]
+         }
+end
+
+###################################################################################################
 def convertLogo(unitID, logoEl)
   # Locate the image reference
   logoImgEl = logoEl && logoEl.at("div[@id='logoDiv']/img[@src]")
@@ -259,21 +279,9 @@ def convertLogo(unitID, logoEl)
     return {}
   end
 
-  mimeType = MimeMagic.by_magic(File.open(imgPath))
-  mimeType && mimeType.mediatype == "image" or raise("Non-image logo file #{imgPath}")
-  dims = FastImage.size(imgPath)
-  assetID = putAsset(imgPath, {
-    width: dims[0].to_s,
-    height: dims[1].to_s
-  })
-
-  return { logo: { asset_id: assetID,
-                   image_type: mimeType.subtype,
-                   is_banner: logoEl.attr('banner') == "single",
-                   width: dims[0],
-                   height: dims[1]
-                 }
-         }
+  data = putImage(imgPath)
+  data[:is_banner] = logoEl.attr('banner') == "single"
+  return { logo: data }
 end
 
 ###################################################################################################
@@ -283,7 +291,7 @@ def sanitizeHTML(htmlFragment)
               %w{a br li ol p small strike sub sup ul hr},  # subset of ''basic' tags
     attributes: { 'a' => ['href'] },
     protocols:  { 'a' => {'href' => ['ftp', 'http', 'https', 'mailto', :relative]} }
-  )
+  ).strip
 end
 
 ###################################################################################################
@@ -560,20 +568,23 @@ def addDefaultWidgets(unitID, unitType)
   Widget.where(unit_id: unitID).delete
 
   widgets = []
-  case unitType
-    when "root"
-      widgets << { kind: "FeaturedArticles", region: "sidebar", attrs: nil }
-      widgets << { kind: "NewJournalIssues", region: "sidebar", attrs: nil }
-      widgets << { kind: "Tweets", region: "sidebar", attrs: nil }
-    when "campus"
-      widgets << { kind: "FeaturedJournals", region: "sidebar", attrs: nil }
-      widgets << { kind: "Tweets", region: "sidebar", attrs: nil }
-    else
-      widgets << { kind: "FeaturedArticles", region: "sidebar", attrs: nil }
-  end
+  # The following are from the wireframes, but we haven't implemented the widgets yet
+  #case unitType
+  #  when "root"
+  #    widgets << { kind: "FeaturedArticles", region: "sidebar", attrs: nil }
+  #    widgets << { kind: "NewJournalIssues", region: "sidebar", attrs: nil }
+  #    widgets << { kind: "Tweets", region: "sidebar", attrs: nil }
+  #  when "campus"
+  #    widgets << { kind: "FeaturedJournals", region: "sidebar", attrs: nil }
+  #    widgets << { kind: "Tweets", region: "sidebar", attrs: nil }
+  #  else
+  #    widgets << { kind: "FeaturedArticles", region: "sidebar", attrs: nil }
+  #end
+  # So for now, just put RecentArticles on everything.
+  widgets << { kind: "RecentArticles", region: "sidebar", attrs: {}.to_json }
 
-  widgets.each { |widgetInfo|
-    Widget.create(unit_id: unitID, ordering: Widget.where(unit_id: unitID).count, **widgetInfo)
+  widgets.each_with_index { |widgetInfo, idx|
+    Widget.create(unit_id: unitID, ordering: idx+1, **widgetInfo)
   }
 end
 
@@ -930,24 +941,12 @@ def generatePdfThumbnail(itemID, timestamp)
   begin
     tempFile.write(response.body)
     tempFile.close
-    imgPath = tempFile.path
-
-    mimeType = MimeMagic.by_magic(File.open(imgPath))
-    mimeType && mimeType.mediatype == "image" or raise("Non-image thumbnail #{imgPath}")
-    dims = FastImage.size(imgPath)
-    dims[0] == 121 or raise("Got thumbnail width #{dims[0]}, wanted 121")
-    dims[1] < 300 or raise("Got thumbnail height #{dims[1]}, wanted less than 300")
-    assetID = putAsset(imgPath, {
-      width: dims[0].to_s,
-      height: dims[1].to_s
-    })
-
-    return { asset_id: assetID,
-             image_type: mimeType.subtype,
-             width: dims[0],
-             height: dims[1],
-             timestamp: timestamp
-           }
+    data = putImage(tempFile.path) { |dims|
+      dims[0] == 121 or raise("Got thumbnail width #{dims[0]}, wanted 121")
+      dims[1] < 300 or raise("Got thumbnail height #{dims[1]}, wanted less than 300")
+    }
+    data[:timestamp] = timestamp
+    return data
   ensure
     begin
       tempFile.close
@@ -956,6 +955,24 @@ def generatePdfThumbnail(itemID, timestamp)
     end
     tempFile.unlink
   end
+end
+
+###################################################################################################
+# See if we can find a cover image for the given issue. If so, add it to dbAttrs.
+def findIssueCover(unit, volume, issue, caption, dbAttrs)
+  key = "#{unit}:#{volume}:#{issue}"
+  if !$issueCoverCache.key?(key)
+    # Check the special directory for a cover image.
+    imgPath = "/apps/eschol/erep/xtf/static/issueCovers/#{unit}/#{volume.rjust(2,'0')}_#{issue.rjust(2,'0')}_cover.png"
+    data = nil
+    if File.exist?(imgPath)
+      data = putImage(imgPath)
+      caption and data[:caption] = sanitizeHTML(caption)
+    end
+    $issueCoverCache[key] = data
+  end
+
+  $issueCoverCache[key] and dbAttrs['cover'] = $issueCoverCache[key]
 end
 
 ###################################################################################################
@@ -1064,7 +1081,20 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
       issue[:unit_id] = issueUnit
       issue[:volume]  = data.single("volume")
       issue[:issue]   = issueNum
-      issue[:pub_date] = parseDate(itemID, data.single("date")) || "1901-01-01"
+      tmp = rawMeta.at("/record/context/issueDate")
+      issue[:pub_date] = (tmp && tmp.text && !tmp.text.empty? && parseDate(itemID, tmp.text)) ||
+                         parseDate(itemID, data.single("date")) ||
+                         "1901-01-01"
+      issueAttrs = {}
+      tmp = rawMeta.at("/record/context/issueTitle")
+      (tmp && tmp.text && !tmp.text.empty?) and issueAttrs[:title] = tmp.text
+      tmp = rawMeta.at("/record/context/issueDescription")
+      (tmp && tmp.text && !tmp.text.empty?) and issueAttrs[:description] = tmp.text
+      tmp = rawMeta.at("/record/context/issueCoverCaption")
+      findIssueCover(issueUnit, data.single("volume"), issueNum,
+                     (tmp && tmp.text && !tmp.text.empty?) ? tmp : nil,
+                     issueAttrs)
+      !issueAttrs.empty? and issue[:attrs] = issueAttrs.to_json
 
       section = Section.new
       section[:name]  = data.single("sectionHeader") ? data.single("sectionHeader") : "default"
@@ -1336,6 +1366,40 @@ def indexAllItems
 end
 
 ###################################################################################################
+def updateIssueAndSection(data)
+  iss, sec = data[:dbIssue], data[:dbSection]
+  (iss && sec) or return
+
+  found = Issue.first(unit_id: iss.unit_id, volume: iss.volume, issue: iss.issue)
+  if found
+    issueChanged = false
+    if found.pub_date != iss.pub_date
+      #puts "issue #{iss.unit_id} #{iss.volume}/#{iss.issue} pub date changed from #{found.pub_date.inspect} to #{iss.pub_date.inspect}."
+      found.pub_date = iss.pub_date
+      issueChanged = true
+    end
+    if found.attrs != iss.attrs
+      #puts "issue #{iss.unit_id} #{iss.volume}/#{iss.issue} attrs changed from #{found.attrs.inspect} to #{iss.attrs.inspect}."
+      found.attrs = iss.attrs
+      issueChanged = true
+    end
+    issueChanged and found.save
+    iss = found
+  else
+    iss.save
+  end
+
+  found = Section.first(issue_id: iss.id, name: sec.name)
+  if found
+    sec = found
+  else
+    sec.issue_id = iss.id
+    sec.save
+  end
+  data[:dbItem][:section] = sec.id
+end
+
+###################################################################################################
 def updateDbItem(data)
 
   itemID = data[:dbItem][:id]
@@ -1345,25 +1409,7 @@ def updateDbItem(data)
   UnitItem.where(item_id: itemID).delete
 
   # Insert (or update) the issue and section
-  iss, sec = data[:dbIssue], data[:dbSection]
-  if iss
-    found = Issue.first(unit_id: iss.unit_id, volume: iss.volume, issue: iss.issue)
-    if found
-      iss = found
-    else
-      iss.save
-    end
-    if sec
-      found = Section.first(issue_id: iss.id, name: sec.name)
-      if found
-        sec = found
-      else
-        sec.issue_id = iss.id
-        sec.save
-      end
-      data[:dbItem][:section] = sec.id
-    end
-  end
+  updateIssueAndSection(data)
 
   # Now insert the item and its authors
   Item.where(id: itemID).delete
