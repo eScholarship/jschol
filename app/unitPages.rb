@@ -144,9 +144,9 @@ def getSeriesLandingPageData(unit, q)
 end
 
 # Landing page data does not pass arguments volume/issue. It just gets most recent journal
-def getJournalIssueData(unit, attrs, volume=nil, issue=nil)
+def getJournalIssueData(unit, unit_attrs, volume=nil, issue=nil)
   return {
-    display: attrs['splashy'] ? 'splashy' : 'simple',
+    display: unit_attrs['magazine_layout'] ? 'magazine' : 'simple',
     issue: getIssue(unit.id, volume, issue),
     issues: Issue.where(:unit_id => unit.id).order(Sequel.desc(:pub_date)).to_hash(:id).map{|id, issue| issue.to_hash}
   }
@@ -164,6 +164,10 @@ def getIssue(id, volume=nil, issue=nil)
   end
   return nil if issue.nil?
   issue = issue.values
+  attrs = JSON.parse(issue[:attrs])
+  issue[:title] = attrs['title']
+  issue[:description] = attrs['description'] 
+  issue[:cover] = attrs['cover'] 
   issue[:sections] = Section.where(:issue_id => issue[:id]).order(:ordering).all
 
   issue[:sections].map! do |section|
@@ -233,7 +237,7 @@ def getUnitProfile(unit, attrs)
     profile[:doaj] = attrs['doaj']
     profile[:license] = attrs['license']
     profile[:eissn] = attrs['eissn']
-    profile[:splashy] = attrs['splashy']
+    profile[:magazine_layout] = attrs['magazine_layout']
     profile[:issue_rule] = attrs['issue_rule']
   end
   if unit.type == 'oru'
@@ -619,10 +623,10 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
     unit = Unit[unitID] or jsonHalt(404, "Unit not found")
     unitAttrs = JSON.parse(unit.attrs)
 
-    if params['data']['splashy'] == "on"
-      unitAttrs['splashy'] = true
+    if params['data']['magazine_layout'] == "on"
+      unitAttrs['magazine_layout'] = true
     else
-      unitAttrs.delete('splashy')
+      unitAttrs.delete('magazine_layout')
     end
 
     if params['data']['issue_rule'] == "secondMostRecent"

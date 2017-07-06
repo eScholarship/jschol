@@ -58,13 +58,20 @@ class SectionComp extends React.Component {
 class IssueSimpleComp extends React.Component {
   static PropTypes = {
     issue: PropTypes.shape({
-      cover_page: PropTypes.string,
       id: PropTypes.number,
+      unit_id: PropTypes.string,
+      volume: PropTypes.string,
       issue: PropTypes.string,
       pub_date: PropTypes.string,
+      title: PropTypes.string,
+      description: PropTypes.string,
+      cover: PropTypes.shape({
+        asset_id: PropTypes.string.isRequired,
+        width: PropTypes.number.isRequired,
+        height: PropTypes.number.isRequired,
+        image_type: PropTypes.string.isRequired
+      }),
       sections: PropTypes.array,    //See SectionComp prop types directly above 
-      unit_id: PropTypes.string,
-      volume: PropTypes.string
     }).isRequired,
     issues: PropTypes.array.isRequired   // Array of issue hashes
   }
@@ -79,11 +86,11 @@ class IssueSimpleComp extends React.Component {
         <ItemActionsComp />
         <div className="c-pub">
           <VolumeSelector vip={issueCurrent} issues={this.props.issues} />
-          <div className="c-pub__subheading">Focus: Caribbean Studies and Literatures</div>
           {/* No cover page image for simple layout */}
-          <p>
-            Lorem ipsum dolor sit amet, consectetur adipisicing elit. Pariatur fuga laborum, qui debitis vitae quaerat quas ab officia, dolor dignissimos ipsum nam ratione unde animi? Officiis rerum unde eveniet natus. Laboriosam tenetur vel, rem culpa maiores non, tempora voluptatibus quasi quos provident exercitationem itaque dolorum quam sequi dolor odio hic accusamus, repellendus ut dignissimos. Labore modi consectetur ullam, iste accusamus!
-          </p>
+        {pi.title &&
+          <div className="c-pub__subheading">{pi.title}</div> }
+        {pi.description &&
+          <p>{pi.description}</p> }
         </div>
         {pi.sections.map(section => <SectionComp key={section.name} section={section}/>)}
       </section>
@@ -95,13 +102,20 @@ class IssueSimpleComp extends React.Component {
 class IssueMagazineComp extends React.Component {
   static PropTypes = {
     issue: PropTypes.shape({
-      cover_page: PropTypes.string,
       id: PropTypes.number,
+      unit_id: PropTypes.string,
+      volume: PropTypes.string,
       issue: PropTypes.string,
       pub_date: PropTypes.string,
+      title: PropTypes.string,
+      description: PropTypes.string,
+      cover: PropTypes.shape({
+        asset_id: PropTypes.string.isRequired,
+        width: PropTypes.number.isRequired,
+        height: PropTypes.number.isRequired,
+        image_type: PropTypes.string.isRequired
+      }),
       sections: PropTypes.array,    //See SectionComp prop types directly above 
-      unit_id: PropTypes.string,
-      volume: PropTypes.string
     }).isRequired,
     issues: PropTypes.array.isRequired   // Array of issue hashes
   }
@@ -116,11 +130,12 @@ class IssueMagazineComp extends React.Component {
         <ItemActionsComp />
         <div className="c-pub">
           <VolumeSelector vip={issueCurrent} issues={this.props.issues} />
-          {pi.cover_page && <img className="c-scholworks__article-preview" src={"/assets/"+pi.cover_page.asset_id} width={pi.cover_page.width} height={pi.cover_page.height} alt={_.capitalize(pr.genre) + " image"} />}
-          <div className="c-pub__subheading">Focus: Caribbean Studies and Literatures</div>
-          <p>
-            Lorem ipsum dolor sit amet, consectetur adipisicing elit. Pariatur fuga laborum, qui debitis vitae quaerat quas ab officia, dolor dignissimos ipsum nam ratione unde animi? Officiis rerum unde eveniet natus. Laboriosam tenetur vel, rem culpa maiores non, tempora voluptatibus quasi quos provident exercitationem itaque dolorum quam sequi dolor odio hic accusamus, repellendus ut dignissimos. Labore modi consectetur ullam, iste accusamus!
-          </p>
+        {pi.cover &&
+          <img className="c-scholworks__article-preview" src={"/assets/"+pi.cover.asset_id} width="150" height="200" alt="Issue cover image" />}
+        {pi.title &&
+          <div className="c-pub__subheading">{pi.title}</div> }
+        {pi.description &&
+          <p>{pi.description}</p> }
         </div>
         {/* <h3 className="o-heading3">Table of Contents</h3> */}
         <div className="o-dividecontent2x--ruled">
@@ -158,7 +173,7 @@ class JournalLayout extends React.Component {
         <div className="c-columns">
           <main id="maincontent">
           {this.props.data.issue ?
-            data.display=='splashy' ?
+            data.display=='magazine' ?
               <IssueMagazineComp issue={data.issue} issues={data.issues} />
             : <IssueSimpleComp issue={data.issue} issues={data.issues} />
           :
