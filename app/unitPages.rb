@@ -156,6 +156,7 @@ def getIssue(id)
   issue1 = Issue.where(:unit_id => id).order(Sequel.desc(:pub_date)).first
   return nil if issue1.nil?
   issue = issue1.values
+  issue[:attrs] and issue[:attrs] = JSON.parse(issue[:attrs])
   issue[:sections] = Section.where(:issue_id => issue[:id]).order(:ordering).all
 
   issue[:sections].map! do |section|

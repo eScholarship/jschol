@@ -1097,7 +1097,7 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
       !issueAttrs.empty? and issue[:attrs] = issueAttrs.to_json
 
       section = Section.new
-      section[:name]  = data.single("sectionHeader") ? data.single("sectionHeader") : "default"
+      section[:name]  = data.single("sectionHeader") ? data.single("sectionHeader") : "Articles"
     else
       "Warning: issue associated with unknown unit #{issueUnit.inspect}"
     end
