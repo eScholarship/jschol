@@ -164,10 +164,12 @@ def getIssue(id, volume=nil, issue=nil)
   end
   return nil if issue.nil?
   issue = issue.values
-  attrs = JSON.parse(issue[:attrs])
-  issue[:title] = attrs['title']
-  issue[:description] = attrs['description'] 
-  issue[:cover] = attrs['cover'] 
+  if issue[:attrs]
+    attrs = JSON.parse(issue[:attrs])
+    issue[:title] = attrs['title']
+    issue[:description] = attrs['description'] 
+    issue[:cover] = attrs['cover'] 
+  end
   issue[:sections] = Section.where(:issue_id => issue[:id]).order(:ordering).all
 
   issue[:sections].map! do |section|
