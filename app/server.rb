@@ -87,7 +87,7 @@ if File.exist? "config/socks.yaml"
 end
 puts "Connecting to eschol DB.    "
 DB = ensureConnect(escholDbConfig)
-#DB.loggers << Logger.new('server.sql_log')  # Enable to debug SQL queries on main db
+DB.loggers << Logger.new('server.sql_log')  # Enable to debug SQL queries on main db
 puts "Connecting to OJS DB.       "
 OJS_DB = ensureConnect(ojsDbConfig)
 #OJS_DB.loggers << Logger.new('ojs.sql_log')  # Enable to debug SQL queries on OJS db
@@ -509,7 +509,8 @@ end
 
 
 ###################################################################################################
-# Unit page data.
+# Unit page data. 
+# pageName may be some designated function (nav, profile), specific journal volume, or static page name
 get "/api/unit/:unitID/:pageName/?:subPage?" do
   content_type :json
   unit = Unit[params[:unitID]]
@@ -517,6 +518,7 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
 
   attrs = JSON.parse(unit[:attrs])
   pageName = params[:pageName]
+  isIssue = false 
   if pageName
     ext = nil
     begin
@@ -526,26 +528,27 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
     end
     pageData = {
       unit: unit.values.reject{|k,v| k==:attrs}.merge(:extent => ext),
-      header: getUnitHeader(unit, pageName =~ /^(nav|sidebar)/ ? nil : pageName, attrs),
       sidebar: getUnitSidebar(unit)
     }
     if ["home", "search"].include? pageName
       q = nil
       q = CGI::parse(request.query_string) if pageName == "search"
       pageData[:content] = getUnitPageContent(unit, attrs, q)
-    # This is subsumed under getUnitPageContent right now
-    # elsif pageName == 'search'
-    #   pageData[:content] = unitSearch(CGI::parse(request.query_string), unit)
     elsif pageName == 'profile'
       pageData[:content] = getUnitProfile(unit, attrs)
     elsif pageName == 'nav'
       pageData[:content] = getUnitNavConfig(unit, attrs['nav_bar'], params[:subPage])
     elsif pageName == 'sidebar'
       pageData[:content] = getUnitSidebarWidget(unit, params[:subPage])
+    elsif isJournalIssue?(unit.id, params[:pageName], params[:subPage])
+      # A specific issue, otherwise get journal landing through normal channel (getUnitPageContent) 
+      isIssue = true
+      pageData[:content] = getJournalIssueData(unit, attrs, params[:pageName], params[:subPage])
     else
       pageData[:content] = getUnitStaticPage(unit, attrs, pageName)
     end
-    pageData[:marquee] = getUnitMarquee(unit, attrs) if ["home", "search"].include? pageName
+    pageData[:header] = getUnitHeader(unit, (pageName =~ /^(nav|sidebar)/ or isIssue) ? nil : pageName, attrs)
+    pageData[:marquee] = getUnitMarquee(unit, attrs) if (["home", "search"].include? pageName or isIssue)
   else
     #public API data
     pageData = {

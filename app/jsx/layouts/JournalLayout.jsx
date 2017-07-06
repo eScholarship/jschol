@@ -1,6 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { Link } from 'react-router'
+import { Link, browserHistory } from 'react-router'
 
 import MarqueeComp from '../components/MarqueeComp.jsx'
 import JournalInfoComp from '../components/JournalInfoComp.jsx'
@@ -9,11 +9,16 @@ import ItemActionsComp from '../components/ItemActionsComp.jsx'
 
 class VolumeSelector extends React.Component {
   static PropTypes = {
-    vip: PropTypes.array.isRequired  // [Volume, Issue, Pub_date]
+    vip: PropTypes.array.isRequired,     // [unit_id, Volume, Issue, Pub_date]
+    issues: PropTypes.array.isRequired   // [ {:id=>3258, :volume=>"1", :issue=>"2", :pub_date=>#<Date: ...}, ... ]
   }
 
-  getIssuePath = (v,i) => {
-    return (v+"/"+i)
+  getIssuePath = (unit_id, v,i) => {
+    return `${unit_id}/${v}/${i}`
+  }
+
+  getPubYear = date => {
+    return date.match(/\d{4}/)
   }
 
   render() {
@@ -21,10 +26,9 @@ class VolumeSelector extends React.Component {
     return (
       <div className="o-input__droplist1">
         <label htmlFor="c-sort1">Select</label>
-        <select name="" id="c-sort1">
-          <option value={this.getIssuePath(p.vip[0], p.vip[1])}>Volume {p.vip[0]}, Issue {p.vip[1]}, {p.vip[2]}</option>
-          <option value="1/2">Volume 1, Issue 2, 1901</option>
-          <option value="1/3">Volume 1, Issue 3, 1901</option>
+        <select name="" id="c-sort1" value={this.getIssuePath(p.vip[0], p.vip[1], p.vip[2])} onChange={(e)=>{browserHistory.push("/uc/"+e.target.value)}}>
+        {p.issues.map((i) => 
+          <option key={i.id} value={this.getIssuePath(i.unit_id, i.volume, i.issue)}>Volume {i.volume}, Issue {i.issue}, {this.getPubYear(i.pub_date)}</option>)}
         </select>
       </div>
     )
@@ -61,19 +65,20 @@ class IssueSimpleComp extends React.Component {
       sections: PropTypes.array,    //See SectionComp prop types directly above 
       unit_id: PropTypes.string,
       volume: PropTypes.string
-    }).isRequired
+    }).isRequired,
+    issues: PropTypes.array.isRequired   // Array of issue hashes
   }
 
   render() {
     let pi = this.props.issue,
         year = pi.pub_date.match(/\d{4}/),
-        issueCurrent = [pi.volume, pi.issue, year]
+        issueCurrent = [pi.unit_id, pi.volume, pi.issue, year]
     return (
       <section className="o-columnbox1">
         {/* ToDo: Enhance ItemActioncComp for journal issue */}
         <ItemActionsComp />
         <div className="c-pub">
-          <VolumeSelector vip={issueCurrent} />
+          <VolumeSelector vip={issueCurrent} issues={this.props.issues} />
           <div className="c-pub__subheading">Focus: Caribbean Studies and Literatures</div>
           {/* No cover page image for simple layout */}
           <p>
@@ -86,8 +91,8 @@ class IssueSimpleComp extends React.Component {
   }
 }
 
-// Issue SPLASHY
-class IssueSplashyComp extends React.Component {
+// Issue 2-column magazine layout 
+class IssueMagazineComp extends React.Component {
   static PropTypes = {
     issue: PropTypes.shape({
       cover_page: PropTypes.string,
@@ -97,19 +102,20 @@ class IssueSplashyComp extends React.Component {
       sections: PropTypes.array,    //See SectionComp prop types directly above 
       unit_id: PropTypes.string,
       volume: PropTypes.string
-    }).isRequired
+    }).isRequired,
+    issues: PropTypes.array.isRequired   // Array of issue hashes
   }
   
   render() {
     let pi = this.props.issue,
         year = pi.pub_date.match(/\d{4}/),
-        issueCurrent = [pi.volume, pi.issue, year]
+        issueCurrent = [pi.unit_id, pi.volume, pi.issue, year]
     return (
       <section className="o-columnbox1">
         {/* ToDo: Enhance ItemActioncComp for journal issue */}
         <ItemActionsComp />
         <div className="c-pub">
-          <VolumeSelector vip={issueCurrent} />
+          <VolumeSelector vip={issueCurrent} issues={this.props.issues} />
           {pi.cover_page && <img className="c-scholworks__article-preview" src={"/assets/"+pi.cover_page.asset_id} width={pi.cover_page.width} height={pi.cover_page.height} alt={_.capitalize(pr.genre) + " image"} />}
           <div className="c-pub__subheading">Focus: Caribbean Studies and Literatures</div>
           <p>
@@ -135,7 +141,8 @@ class JournalLayout extends React.Component {
     }).isRequired,
     data: PropTypes.shape({
       display: PropTypes.string,
-      issue: PropTypes.object          // See IssueComp prop types directly above
+      issue: PropTypes.object,     // See IssueComp prop types directly above
+      issues: PropTypes.array
     }).isRequired,
     marquee: PropTypes.shape({
       carousel: PropTypes.any,
@@ -151,7 +158,9 @@ class JournalLayout extends React.Component {
         <div className="c-columns">
           <main id="maincontent">
           {this.props.data.issue ?
-            data.display=='splashy' ? <IssueSplashyComp issue={data.issue}/> : <IssueSimpleComp issue={data.issue}/>
+            data.display=='splashy' ?
+              <IssueMagazineComp issue={data.issue} issues={data.issues} />
+            : <IssueSimpleComp issue={data.issue} issues={data.issues} />
           :
             <p>Currently no issues to display     {/* ToDo: Bring in issue-specific about text here? */}
             </p>

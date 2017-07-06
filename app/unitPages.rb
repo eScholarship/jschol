@@ -70,15 +70,15 @@ def getUnitHeader(unit, pageName=nil, attrs=nil)
   return header
 end
 
-def getUnitPageContent(unit, attrs, q)
+def getUnitPageContent(unit, attrs, query)
   if unit.type == 'oru'
    return getORULandingPageData(unit.id)
   elsif unit.type == 'campus'
     return getCampusLandingPageData(unit, attrs)
   elsif unit.type.include? 'series'
-    return getSeriesLandingPageData(unit, q)
+    return getSeriesLandingPageData(unit, query)
   elsif unit.type == 'journal'
-    return getJournalLandingPageData(unit.id)
+    return getJournalIssueData(unit, attrs)
   else
     # ToDo: handle 'special' type here
     halt(404, "Unknown unit type #{unit.type}")
@@ -143,19 +143,27 @@ def getSeriesLandingPageData(unit, q)
   return response
 end
 
-def getJournalLandingPageData(id)
-  unit = $unitsHash[id]
-  attrs = JSON.parse(unit.attrs)
+# Landing page data does not pass arguments volume/issue. It just gets most recent journal
+def getJournalIssueData(unit, attrs, volume=nil, issue=nil)
   return {
     display: attrs['splashy'] ? 'splashy' : 'simple',
-    issue: getIssue(id)
+    issue: getIssue(unit.id, volume, issue),
+    issues: Issue.where(:unit_id => unit.id).order(Sequel.desc(:pub_date)).to_hash(:id).map{|id, issue| issue.to_hash}
   }
 end
 
-def getIssue(id)
-  issue1 = Issue.where(:unit_id => id).order(Sequel.desc(:pub_date)).first
-  return nil if issue1.nil?
-  issue = issue1.values
+def isJournalIssue?(unit_id, volume, issue)
+  !!Issue.first(:unit_id => unit_id, :volume => volume, :issue => issue)
+end
+
+def getIssue(id, volume=nil, issue=nil)
+  if volume.nil?  # Landing page (most recent journal)
+    issue = Issue.where(:unit_id => id).order(Sequel.desc(:pub_date)).first
+  else
+    issue = Issue.first(:unit_id => id, :volume => volume, :issue => issue)
+  end
+  return nil if issue.nil?
+  issue = issue.values
   issue[:sections] = Section.where(:issue_id => issue[:id]).order(:ordering).all
 
   issue[:sections].map! do |section|
@@ -172,8 +180,6 @@ def getIssue(id)
   end
   return issue
 end
-
-
 
 def unitSearch(params, unit)
   # ToDo: Right now, series landing page is the only unit type using this block. Clean this up

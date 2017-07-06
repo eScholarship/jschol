@@ -45,10 +45,8 @@ class UnitPage extends PageBase
     if (pm.pageName) {
       if (pm.pageName == 'search')
         return `/api/unit/${pm.unitID}/search/${this.props.location.search}`
-      else if (pm.pageName == "nav" || pm.pageName == "sidebar")
-        return `/api/unit/${pm.unitID}/${pm.pageName}/${pm.splat}`
       else
-        return `/api/unit/${pm.unitID}/${pm.pageName}`
+        return `/api/unit/${pm.unitID}/${pm.pageName}/${pm.splat}`
     }
     return `/api/unit/${pm.unitID}/home`
   }
@@ -98,7 +96,8 @@ class UnitPage extends PageBase
       contentLayout = this.cmsPage(data, <UnitNavConfigLayout unit={data.unit} data={data.content} sendApiData={this.sendApiData}/>)
     } else if (this.props.params.pageName === 'sidebar') {
       contentLayout = this.cmsPage(data, <UnitSidebarConfigLayout unit={data.unit} data={data.content} sendApiData={this.sendApiData}/>)
-    } else if (this.props.params.pageName) {
+    } else if (this.props.params.pageName && !(data.content.issue)) {
+      // If there's issue data here it's a journal page, otherwise it's static content
       contentLayout = (<UnitStaticPageLayout unit={data.unit} data={data.content} sidebar={sidebar} fetchPageData={this.fetchPageData}/>)
     } else {
       {/* Temporary, for testing */}
