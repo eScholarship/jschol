@@ -148,7 +148,11 @@ def getJournalIssueData(unit, unit_attrs, volume=nil, issue=nil)
   return {
     display: unit_attrs['magazine_layout'] ? 'magazine' : 'simple',
     issue: getIssue(unit.id, volume, issue),
-    issues: Issue.where(:unit_id => unit.id).order(Sequel.desc(:pub_date)).to_hash(:id).map{|id, issue| issue.to_hash}
+    issues: Issue.where(:unit_id => unit.id).order(Sequel.desc(:pub_date)).to_hash(:id).map{|id, issue|
+      h = issue.to_hash
+      h[:attrs] and h[:attrs] = JSON.parse(h[:attrs])
+      h
+    }
   }
 end
 
