@@ -1,16 +1,18 @@
 // ##### Facet Box Component ##### //
 
 .c-facetbox {
+  @extend %clearfix;
   margin-bottom: $spacing-sm;
   padding: 0 $spacing-sm;
 }
 
 .c-facetbox__summary {
+  @extend %o-heading3;
   position: relative;
   margin: 0 (-$spacing-sm);
   padding: 0 $spacing-sm;
   background: $color-light-gray;
-  font-size: 1.2em;
+  font-weight: normal;
   box-shadow: $box-shadow1;
   user-select: none;
 
@@ -49,11 +51,11 @@
 
 }
 
-// ##### Facet Items Sub-Component ##### //
-
-// This is used for facets in the left column, as well as for the modal
-.c-facetitems {
-  max-height: 24.1em; // Allows for all facet items to appear in campus facet without scrolling
-  overflow-y: auto;
+.c-facetbox__show-more {
+  @extend %interactive-element-size;
+  padding: 0 1em 0 0;
+  float: right;
+  border: none;
+  background: inline('../images/icon_angle-double-right-teal.svg') no-repeat center right / 0.9em;
+  color: $color-teal;
 }
-

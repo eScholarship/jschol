@@ -3,6 +3,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import $ from 'jquery'
+import _ from 'lodash'
 import { Link } from 'react-router'
 
 // Load dotdotdot in browser but not server
@@ -47,6 +48,8 @@ class DotH2 extends React.Component {
 class ScholWorksComp extends React.Component {
   static propTypes = {
     result: PropTypes.shape({
+      id: PropTypes.string,
+      title: PropTypes.string,
       genre: PropTypes.string,
       peerReviewed: PropTypes.bool,
       journalInfo: PropTypes.shape({
@@ -160,7 +163,7 @@ class ScholWorksComp extends React.Component {
             {pr.rights && pr.rights !== 'public' && <img className="c-scholworks__license" src="/images/cc-by-small.svg" alt="creative commons attribution 4.0 international public license"/>}
           </div>
         </div>
-        {pr.thumbnail && <img className="c-scholworks__article-preview" src={"/assets/"+pr.thumbnail.asset_id} width={pr.thumbnail.width} height={pr.thumbnail.height} alt="Article image" />}
+        {pr.thumbnail && <img className="c-scholworks__article-preview" src={"/assets/"+pr.thumbnail.asset_id} width={pr.thumbnail.width} height={pr.thumbnail.height} alt={_.capitalize(pr.genre) + " image"} />}
       </section>
     )
   }

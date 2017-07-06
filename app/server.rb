@@ -33,6 +33,20 @@ def puts(*args)
   }
 end
 
+# Moneky patch for nasty problem in Sinatra contrib library "Streaming": it calls a thing
+# called "errback" that doesn't exist.
+module Sinatra
+  module Streaming
+    module Stream
+      def self.extended(obj)
+        obj.closed, obj.lineno, obj.pos = false, 0, 0
+        obj.callback { obj.closed = true }
+        #THISISTHEFIX# obj.errback  { obj.closed = true }
+      end
+    end
+  end
+end
+
 # Make it clear where the new session starts in the log file.
 puts "\n\n=====================================================================================\n"
 
@@ -320,7 +334,7 @@ class Fetcher
 end
 
 ###################################################################################################
-get %r{/assets/([0-9a-f]{64})$} do |hash|
+get %r{/assets/([0-9a-f]{64})} do |hash|
   s3Path = "#{$s3Config.prefix}/binaries/#{hash[0,2]}/#{hash[2,2]}/#{hash}"
   obj = $s3Bucket.object(s3Path)
   obj.exists? && obj.metadata["mime_type"] or halt(404)
@@ -359,13 +373,31 @@ get "/content/:fullItemID/*" do |fullItemID, path|
 end
 
 ###################################################################################################
+# If a cache buster comes in, strip it down to the original, and re-dispatch the request to return
+# the actual file.
+get %r{\/css\/main-[a-zA-Z0-9]{16}\.css} do
+  call env.merge("PATH_INFO" => "/css/main.css")
+end
+
+###################################################################################################
 # The outer framework of every page is essentially the same, substituting in the intial page
 # data and initial elements from React.
-# The regex below matches every URL except /api/* (similarly content and locale), as well as
-# things ending with a file ext. Those all get served elsewhere.
-get %r{^/(?!(api/.*|content/.*|locale/.*|.*\.\w{1,4}$))} do
+get %r{.*} do
+
+  # The regex below ensures that /api, /content, /locale, and files with a file ext get served
+  # elsewhere.
+  pass if request.path_info =~ %r{api/.*|content/.*|locale/.*|.*\.\w{1,4}}
 
   puts "Page fetch: #{request.url}"
+
+  template = File.new("app/app.html").read
+
+  # Replace startup URLs for proper cache busting
+  # TODO: speed this up by caching (if it's too slow)
+  webpackManifest = JSON.parse(File.read('app/js/manifest.json'))
+  template.sub!("lib-bundle.js", webpackManifest["lib.js"])
+  template.sub!("app-bundle.js", webpackManifest["app.js"])
+  template.sub!("main.css", "main-#{Digest::MD5.file("app/css/main.css").hexdigest[0,16]}.css")
 
   if DO_ISO
     # We need to grab the hostname from the URL. There's probably a better way to do this.
@@ -379,13 +411,12 @@ get %r{^/(?!(api/.*|content/.*|locale/.*|.*\.\w{1,4}$))} do
     response.code == "200" or halt(500, "ISO fetch failed")
 
     # Read in the template file, and substitute the results from React/ReactRouter
-    template = File.new("app/app.html").read
     lookFor = '<div id="main"></div>'
     template.include?(lookFor) or raise("can't find #{lookFor.inspect} in template")
     return template.sub(lookFor, response.body)
   else
     # Development mode - skip iso
-    return File.new("app/app.html").read
+    return template
   end
 end
 
@@ -498,20 +529,23 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
       header: getUnitHeader(unit, pageName =~ /^(nav|sidebar)/ ? nil : pageName, attrs),
       sidebar: getUnitSidebar(unit)
     }
-    if pageName == 'home'
-      pageData[:content] = getUnitPageContent(unit, attrs)
-    elsif pageName == 'campus_landing'
-      pageData[:content] = getCampusLandingPageContent(unit, attrs)
+    if ["home", "search"].include? pageName
+      q = nil
+      q = CGI::parse(request.query_string) if pageName == "search"
+      pageData[:content] = getUnitPageContent(unit, attrs, q)
+    # This is subsumed under getUnitPageContent right now
+    # elsif pageName == 'search'
+    #   pageData[:content] = unitSearch(CGI::parse(request.query_string), unit)
     elsif pageName == 'profile'
       pageData[:content] = getUnitProfile(unit, attrs)
     elsif pageName == 'nav'
       pageData[:content] = getUnitNavConfig(unit, attrs['nav_bar'], params[:subPage])
     elsif pageName == 'sidebar'
-      pageData[:content] = getUnitSidebar(unit)
+      pageData[:content] = getUnitSidebarWidget(unit, params[:subPage])
     else
       pageData[:content] = getUnitStaticPage(unit, attrs, pageName)
     end
-    pageData[:marquee] = getUnitMarquee(unit, attrs) if pageName == 'home'
+    pageData[:marquee] = getUnitMarquee(unit, attrs) if ["home", "search"].include? pageName
   else
     #public API data
     pageData = {
@@ -591,17 +625,14 @@ get "/api/search/" do
                'campuses', 'departments', 'journals', 'disciplines', 'rights']
   params = CGI::parse(request.query_string)
   searchType = params["searchType"][0]
-  # ToDo:Could there be more than one searchType? 
+  # Perform global search when searchType is assigned 'eScholarship'
+  # otherwise: 'searchType' will be assigned the unit ID - and then 'searchUnitType' specifies type of unit.
   if searchType and searchType != "eScholarship"
-    unit = Unit[searchType]
-    if unit
-      if unit.type.include? 'series'
-        params["series"] = [unit.id]
-      else
-        facetChoice = {"oru"=> "departments", "journal"=> "journals", "campus"=> "campuses"}
-        choice = facetChoice[unit.type]
-        choice and params[choice] = [unit.id]
-      end
+    searchUnitType = params["searchUnitType"][0]
+    if searchUnitType.nil? or searchUnitType == ''
+      params["searchType"] = ["eScholarship"]
+    else
+      params[searchUnitType] = [searchType]
     end
   end
   return body.merge(search(params, facetList)).to_json
@@ -734,220 +765,6 @@ def sanitizeHTML(htmlFragment)
     attributes: { "a" => ['href'] },
     protocols:  { "a" => {'href' => ['ftp', 'http', 'https', 'mailto', :relative]} }
   )
-end
-
-put "/api/unit/:unitID/nav/:navID" do |unitID, navID|
-  # Check user permissions
-  perms = getUserPermissions(params[:username], params[:token], unitID)
-  perms[:admin] or halt(401)
-  content_type :json
-
-  DB.transaction {
-    unit = Unit[unitID] or halt(404, "Unit not found")
-    unitAttrs = JSON.parse(unit.attrs)
-    params[:name].empty? and halt(400, { error: true, message: "Page name must be supplied." }.to_json)
-
-    travNav(unitAttrs['nav_bar']) { |nav|
-      next unless nav['id'].to_s == navID.to_s
-      nav['name'] = params[:name]
-      if nav['type'] == "page"
-        page = Page.where(unit_id: unitID, slug: nav['slug']).first or halt(404, "Page not found")
-
-        oldSlug = page.slug
-        newSlug = params[:slug]
-        newSlug.empty? and halt(400, { error: true, message: "Slug must be supplied." }.to_json)
-        newSlug =~ /^[a-zA-Z][a-zA-Z0-9_]+$/ or halt(400, { error: true, 
-          message: "Slug must start with a letter a-z, and consist only of letters a-z, numbers, or underscores." }.to_json)
-        page.slug = newSlug
-        nav['slug'] = newSlug
-
-        page.name = params[:name]
-        page.name.empty? and halt(400, { error: true, message: "Page name must be supplied." }.to_json)
-
-        page.title = params[:title]
-        page.title.empty? and halt(400, { error: true, message: "Title must be supplied." }.to_json)
-
-        newHTML = sanitizeHTML(params[:attrs][:html])
-        newHTML.empty? and halt(400, { error: true, message: "Text must be supplied." }.to_json)
-        page.attrs = JSON.parse(page.attrs).merge({ "html" => newHTML }).to_json
-        page.save
-      elsif nav['type'] == "link"
-        params[:url] =~ %r{^https?://.*} or halt(400, { error: true, message: "Invalid URL." }.to_json)
-        nav['url'] = params[:url]
-      end
-      puts "New unit attrs: #{unitAttrs}"
-      unit.attrs = unitAttrs.to_json
-      unit.save
-      return {status: "ok"}.to_json
-    }
-    halt(404, { error: true, message: "Unknown nav #{navID} for unit #{unitID}" }.to_json)
-  }
-end
-
-def remapOrder(oldNav, newOrder)
-  newOrder = newOrder.map { |stub| stub['id'] == 0 ? nil : stub }.compact
-  return newOrder.map { |stub|
-    source = getNavByID(oldNav, stub['id'])
-    source or raise("Unknown nav id #{stub['id']}")
-    puts "stub=#{stub} source=#{source}"
-    newNav = source.clone
-    if source['type'] == "folder"
-      stub['sub_nav'] or raise("can't change nav type")
-      newNav['sub_nav'] = remapOrder(oldNav, stub['sub_nav'])
-    end
-    next newNav
-  }
-end
-
-put "/api/unit/:unitID/navOrder" do |unitID|
-  # Check user permissions
-  perms = getUserPermissions(params[:username], params[:token], unitID)
-  perms[:admin] or halt(401)
-  content_type :json
-
-  DB.transaction {
-    unit = Unit[unitID] or halt(404, "Unit not found")
-    unitAttrs = JSON.parse(unit.attrs)
-    newOrder = JSON.parse(params[:order])
-    puts "newOrder=#{newOrder}"
-    newOrder.empty? and halt(400, { error: true, message: "Page name must be supplied." }.to_json)
-    newNav = remapOrder(unitAttrs['nav_bar'], newOrder)
-    puts "newNav:"
-    pp newNav
-    unitAttrs['nav_bar'] = newNav
-    unit.attrs = unitAttrs.to_json
-    unit.save
-    return {status: "ok"}.to_json
-  }
-end
-
-###################################################################################################
-# *Post* to add an item to a nav bar
-post "/api/unit/:unitID/nav" do |unitID|
-  # Check user permissions
-  perms = getUserPermissions(params[:username], params[:token], unitID)
-  perms[:admin] or halt(401)
-
-  # Grab unit data
-  unit = Unit[unitID]
-  unit or halt(404)
-
-  # Validate the nav type
-  navType = params[:navType]
-  ['page', 'link', 'folder'].include?(navType) or halt(400)
-
-  # Find the existing nav bar
-  attrs = JSON.parse(unit.attrs)
-  (navBar = attrs['nav_bar']) or raise("Unit has non-existent nav bar")
-
-  # Invent a unique name for the new item
-  slug = name = nil
-  (1..9999).each { |n|
-    slug = "#{navType}#{n.to_s}"
-    name = "New #{navType} #{n.to_s}"
-    break if navBar.none? { |nav| nav['slug'] == slug || nav['name'] == name }
-  }
-
-  nextID = maxNavID(navBar) + 1
-
-  DB.transaction {
-    newNav = case navType
-    when "page"
-      Page.create(slug: slug, unit_id: unitID, name: name, title: name, attrs: { html: "" }.to_json)
-      newNav = { id: nextID, type: "page", name: name, slug: slug, hidden: true }
-    when "link"
-      newNav = { id: nextID, type: "link", name: name, url: "" }
-    when "folder"
-      newNav = { id: nextID, type: "folder", name: name, sub_nav: [] }
-    else
-      halt(400, "unknown navType")
-    end
-
-    navBar << newNav
-    attrs['nav_bar'] = navBar
-    unit[:attrs] = attrs.to_json
-    unit.save
-
-    return { status: "ok", id: newNav[:id] }.to_json
-  }
-end
-
-###################################################################################################
-# *Delete* to remove a static page from a unit
-delete "/api/unit/:unitID/nav/:navID" do |unitID, navID|
-  # Check user permissions
-  perms = getUserPermissions(params[:username], params[:token], unitID)
-  perms[:admin] or halt(401)
-
-  DB.transaction {
-    unit = Unit[unitID] or halt(404, "Unit not found")
-    unitAttrs = JSON.parse(unit.attrs)
-    nav = getNavByID(unitAttrs['nav_bar'], navID)
-    if nav['type'] == "folder" && !nav['sub_nav'].empty?
-      halt(404, { error: true, message: "Can't delete non-empty folder" })
-    end
-    if nav['type'] == "page"
-      page = Page.where(unit_id: unitID, slug: nav['slug']).first or halt(404, { error: true, message: "Page not found" })
-      page.delete
-    end
-
-    # There's some overlap (for convenience and speed) between units.attrs.nav_bar and pages.
-    # So update the unit also.
-    unitAttrs['nav_bar'] = deleteNavByID(unitAttrs['nav_bar'], navID)
-    unit.attrs = unitAttrs.to_json
-    unit.save
-  }
-
-  content_type :json
-  return {status: "ok"}.to_json
-end
-
-###################################################################################################
-# *Put* to change the main text on a static page
-put "/api/static/:unitID/:pageName/mainText" do |unitID, pageName|
-
-  # Check user permissions
-  perms = getUserPermissions(params[:username], params[:token], unitID)
-  perms[:admin] or halt(401)
-
-  # Grab page data from the database
-  page = Page.where(unit_id: unitID, slug: pageName).first or halt(404, "Page not found")
-
-  # Parse the HTML text, and sanitize to be sure only allowed tags are used.
-  safeText = sanitizeHTML(params[:newText])
-
-  # Update the database
-  page.attrs = JSON.parse(page.attrs).merge({ "html" => safeText }).to_json
-  page.save
-
-  # And let the caller know it went fine.
-  content_type :json
-  return { status: "ok" }.to_json
-end
-
-###################################################################################################
-# *Put* to change widget text
-put "/api/widget/:unitID/:widgetID/text" do |unitID, widgetID|
-
-  # In future the token will be looked up in a sessions table of logged in users. For now
-  # it's just a placeholder.
-  params[:token] == 'xyz123' or halt(401) # TODO: make this actually secure
-  # TODO: check that logged in user has permission to edit this unit and page
-  puts "TODO: permission check"
-
-  # Grab widget data from the database
-  widget = Widget.where(unit_id: unitID, id: widgetID).first or halt(404, "Widget not found")
-
-  # Parse the HTML text, and sanitize to be sure only allowed tags are used.
-  safeText = sanitizeHTML(params[:newText])
-
-  # Update the database
-  widget.attrs = JSON.parse(widget.attrs).merge({ "html" => safeText }).to_json
-  widget.save
-
-  # And let the caller know it went fine.
-  content_type :json
-  return { status: "ok" }.to_json
 end
 
 ###################################################################################################

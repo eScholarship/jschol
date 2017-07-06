@@ -2,36 +2,31 @@
 
 import React from 'react'
 import $ from 'jquery'
-import Flickity from 'flickity-imagesloaded'
-import dotdotdot from 'jquery.dotdotdot'
+import CarouselComp from '../components/CarouselComp.jsx'
+// Load dotdotdot in browser but not server
+if (!(typeof document === "undefined")) {
+  const dotdotdot = require('jquery.dotdotdot')
+}
 
-class UnitCarouselComp extends React.Component {
+class JournalCarouselComp extends React.Component {
   componentDidMount () {
-    var carousel = $('.c-journalcarousel')[0];
-    var options = {
-      cellAlign: 'left',
-      initialIndex: 0,
-      pageDots: false,
-      imagesLoaded: true,
-      percentPosition: false, // px instead of % cells
-    }
-    this.flkty = new Flickity(carousel, options);
-
     /* jquery dotdotdot */
     $('.o-journal2 figcaption').dotdotdot({
       watch: 'window'
     });
   }
-  componentWillUnmount() {
-    if (this.flkty) {
-      this.flkty.destroy();
-    }
-  }
   render() {
     return (
       <div className="o-itemcarousel">
         <h2 className="o-itemcarousel__heading">UC Berkeley Journals</h2>
-        <div className="c-journalcarousel o-itemcarousel__carousel">
+        <CarouselComp className="c-journalcarousel o-itemcarousel__carousel" 
+                      options={{
+                        cellAlign: 'left',
+                        initialIndex: 0,
+                        pageDots: false,
+                        imagesLoaded: true,
+                        percentPosition: false // px instead of % cells
+                      }}>
           <div className="o-itemcarousel__item">
             <a href="" className="o-journal2">
               <figure>
@@ -72,7 +67,7 @@ class UnitCarouselComp extends React.Component {
               </figure>
             </a>
           </div>
-        </div>
+        </CarouselComp>
         <div className="o-stat--item o-itemcarousel__stats-item">
           <b>1,000</b>Items
         </div>
@@ -84,4 +79,4 @@ class UnitCarouselComp extends React.Component {
   }
 }
 
-module.exports = UnitCarouselComp;
+module.exports = JournalCarouselComp;

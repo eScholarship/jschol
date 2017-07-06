@@ -1,121 +1,93 @@
 import React from 'react'
+import PropTypes from 'prop-types'
 import { Link } from 'react-router'
-import { Subscriber } from 'react-broadcast'
+import EditableComp from '../components/EditableComp.jsx'
+import WysiwygEditorComp from '../components/WysiwygEditorComp.jsx'
 
-import EditableMainContentComp from '../components/EditableMainContentComp.jsx'
+class EditableSidebarContentComp extends React.Component
+{
+  static propTypes = {
+    data: PropTypes.shape({
+      id: PropTypes.number.isRequired,
+      kind: PropTypes.string.isRequired,
+      attrs: PropTypes.object.isRequired
+    })
+  }
 
-class UnitSidebarConfigLayout extends React.Component {
+  state = { newData: this.props.data }
+
+  componentWillReceiveProps(nextProps) {
+    if (!_.isEqual(this.props, nextProps))
+      this.setState({ newData: nextProps.data })
+  }
+
+  onSave = () => this.props.sendApiData('PUT',
+                   `/api/unit/${this.props.unit.id}/sidebar/${this.props.data.id}`, this.state.newData)
+
+  onDelete = () => this.props.sendApiData('DELETE',
+                     `/api/unit/${this.props.unit.id}/sidebar/${this.props.data.id}`, {})
+
+  setData = (newStuff) => {
+    this.setState({newData: _.merge(_.cloneDeep(this.state.newData), newStuff)})
+  }
+
   render() {
-    var style = {
-      marginBottom: '20px',
-      padding: '6px 12px',
-      lineHeight: '1.4',
-      color: '#555',
-      border: '1px solid #ccc',
-      borderRadius: '4px',
-      width: '100%'
-    }
-    var labelStyle = {
-      fontWeight: '700',
-      marginBottom: '5px',
-      display: 'block'
-    }
+    let data = this.props.data
+    let dataIsSame = _.isEqual(data, this.state.newData)
     return (
       <div>
-      <div className="c-columns">
-        <main id="maincontent">
-          <section className="o-columnbox1">
-            <header id="featured-articles">
-              <h2 style={{background: '#147a8d', color: 'white'}}>Configure the Featured Articles Widget</h2>
-            </header>
-            <div style={{width: "600px"}}>
-              <label style={labelStyle}>Article 1</label>
-              <input type="text" style={style} defaultValue="Entre la ficción y el periodismo: Cambio social y la crónica mexicana contemporánea"/>
-              <label style={labelStyle}>Article 2</label>
-              <input type="text" style={style} defaultValue="Journalism in Catalonia During Francoism"/>
-              <label style={labelStyle}>Article 3</label>
-              <input type="text" style={style} defaultValue="En torno a un cuento olvidado de Clarín: &quot;El oso mayor&quot;"/>
-              <label style={labelStyle}>Article 4</label>
-              <input type="text" style={style} defaultValue="Interview with Guillermo Cabrera Infante"/>
-              <label style={labelStyle}>Article 5</label>
-              <input type="text" style={style} defaultValue="Lazlo Moussong. Castillos en la letra. Xalapa, México: Universidad Veracruzana, 1986."/>
-              <button>Save</button> <button>Cancel</button>
-            </div>
-          </section>
-        </main>
-        <aside>
-          <section className="o-columnbox1">
-            <header>
-              <h2>Featured Articles</h2>
-            </header>
-            <p><a className="o-textlink__secondary" href="">Entre la ficción y el periodismo: Cambio social y la crónica mexicana contemporánea</a> <br/> Nadeau, Evelyn</p> 
-            <p><a className="o-textlink__secondary" href="">Journalism in Catalonia During Francoism</a> <br/> Reguant, Monserrat</p>
-            <p><a className="o-textlink__secondary" href="">En torno a un cuento olvidado de Clarín: "El oso mayor"</a> <br/> Gil, Angeles Ezama</p>
-            <p><a className="o-textlink__secondary" href="">Interview with Guillermo Cabrera Infante</a> <br/> Graham-Jones, Jean; Deosthale, Duleep</p>
-            <p><a className="o-textlink__secondary" href="">Lazlo Moussong. Castillos en la letra. Xalapa, México: Universidad Veracruzana, 1986.</a> <br/> Radchik, Laura</p>
-          </section>
-        </aside>
-      </div>
-      <div className="c-columns">
-        <main>
-          <section className="o-columnbox1">
-            <header id="twitter-feed">
-              <h2 style={{background: '#147a8d', color: 'white'}}>Configure the Twitter Feed Widget</h2>
-            </header>
-              <div style={{width: "600px"}}>
-                <label style={labelStyle}>Twitter Username</label>
-                <input type="text" style={style} defaultValue="" placeholder="Enter your twitter username"/>
-                <button>Save</button> <button>Cancel</button>
-              </div>
-          </section>
-        </main>
-        <aside>
-          <section className="o-columnbox1">
-            <header>
-              <h2>Follow us on Twitter</h2>
-            </header>
-            [content to go here]<br/>
-            [content to go here]<br/>
-            [content to go here]<br/>
-            [content to go here]<br/>
-            [content to go here]<br/>
-            [content to go here]<br/>
-            [content to go here]<br/>
-            [content to go here]<br/>
-            [content to go here]<br/>
-          </section>
-        </aside>
-      </div>
-      <div className="c-columns">
-        <main>
-          <section className="o-columnbox1">
-            <header id="other-widgets">
-              <h2 style={{background: '#147a8d', color: 'white'}}>Configure other widget</h2>
-            </header>
-            <p>Configuration options for other widgets?</p>
-            <button>Save</button> <button>Cancel</button>
-          </section>
-        </main>
-        <aside>
-          <section className="o-columnbox1">
-            <header>
-              <h2>Other Widget</h2>
-            </header>
-            [content to go here]<br/>
-            [content to go here]<br/>
-            [content to go here]<br/>
-            [content to go here]<br/>
-            [content to go here]<br/>
-            [content to go here]<br/>
-            [content to go here]<br/>
-            [content to go here]<br/>
-          </section>
-        </aside>
-      </div>
+        { (data.kind == "Text") &&
+          <div>
+            <label className="c-editable-page__label" htmlFor="title">Title</label>
+            <input className="c-editable-page__input" id="title" type="text" defaultValue={data.attrs.title}
+                   onChange={ event => this.setData({ attrs: { title: event.target.value } }) }/>
 
+            <label className="c-editable-page__label" htmlFor="text">Text</label>
+            <WysiwygEditorComp id="text" html={data.attrs.html}
+              onChange={ newText => this.setData({ attrs: { html: newText }}) }/>
+          </div>
+        }
+
+        <p>
+          <button className="c-editable-page__button" onClick={this.onSave} disabled={dataIsSame}>Save</button>
+          <button className="c-editable-page__button" onClick={this.onDelete}>Delete</button>
+        </p>
       </div>
     )
   }
 }
 
-module.exports = UnitSidebarConfigLayout
+export default class UnitSidebarConfigLayout extends React.Component
+{
+  static propTypes = {
+    sendApiData: PropTypes.func.isRequired,
+    unit: PropTypes.shape({
+      id: PropTypes.string.isRequired
+    }).isRequired,
+    data: PropTypes.shape({
+      id: PropTypes.number.isRequired,
+      kind: PropTypes.string.isRequired,
+      attrs: PropTypes.object.isRequired
+    })
+  }
+
+  render() {
+    let p = this.props
+    let title = p.data.attrs.title ? p.data.attrs.title : p.data.kind.replace(/([a-z])([A-Z][a-z])/g, "$1 $2")
+    let kindStr = p.data.kind == "Text" ? "text widget" : "built-in widget"
+    return (
+      <div className="c-columns">
+        <main id="maincontent">
+          <section className="o-columnbox1">
+            <header>
+              <h1 className="o-columnbox1__heading">
+                { `${title} (${kindStr})` }
+              </h1>
+            </header>
+            <EditableSidebarContentComp unit={p.unit} data={p.data} sendApiData={p.sendApiData}/>
+          </section>
+        </main>
+      </div>
+    )
+  }
+}

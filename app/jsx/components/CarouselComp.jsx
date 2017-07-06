@@ -1,6 +1,7 @@
 // ##### Campus Carousel Component ##### //
 
 import React from 'react'
+import ReactDOMServer from 'react-dom/server'
 import PropTypes from 'prop-types'
 import $ from 'jquery'
 
@@ -11,28 +12,35 @@ if (!(typeof document === "undefined")) {
 
 class CarouselComp extends React.Component {
   componentDidMount() {
-    // The forceUpdate and setTimeout below work around a problem with isomorphic
-    // rendering. Basically, React has to fully recognize that the server's code
-    // matches the client's before we init Flickity. Otherwise, we get a message
-    // "Unable to find element with ID ##"
-    this.forceUpdate()
-    this.timer = setTimeout(()=>this.flkty = new Flickity(this.domEl, this.props.options), 0)
+    try {
+      this.flkty = new Flickity(this.domEl.firstChild, this.props.options)
+    }
+    catch (e) {
+      console.log("Exception initializing flickity:", e)
+    }
   }
+
   componentWillUnmount() {
-    if (this.timer)
-      clearTimeout(this.timer)
-    if (this.flkty)
-      this.flkty.destroy();
+    try {
+      if (this.flkty)
+        this.flkty.destroy();
+    }
+    catch (e) {
+      console.log("Exception destroying flickity:", e)
+    }
   }
+
   static propTypes = {
     className: PropTypes.string.isRequired,
     options: PropTypes.object.isRequired,
   }
   render() {
+    // The 'dangerouslySetInnerHTML' rigarmarole below is to keep React from attaching event handlers
+    // to the children, because after Flickity takes over those children, the handlers otherwise become
+    // confused and put out warnings to the console.
     return (
-      <div className={this.props.className} ref={ el => this.domEl = el }>
-        {this.props.children}
-      </div>
+      <div className={this.props.className} ref={ el => this.domEl = el }
+        dangerouslySetInnerHTML={{__html: ReactDOMServer.renderToStaticMarkup(<div>{this.props.children}</div>)}}/>
     )
   }
 }

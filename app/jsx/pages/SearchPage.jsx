@@ -1,4 +1,3 @@
-
 import React from 'react'
 import $ from 'jquery'
 import _ from 'lodash'   // mainly for _.isEmtpy() which also works server-side (unlike $.isEmptyObject)
@@ -67,7 +66,7 @@ class FacetItem extends React.Component {
     }
     return false
   }
-  
+
   // this is what actually submits the form when a checkbox has been checked
   componentDidUpdate(prevProps, prevState) {
     if(this.checkFacet(this.props) !== this.checkFacet(prevProps) && !this.props.data.ancestorChecked && !prevProps.data.ancestorChecked) {
@@ -107,28 +106,31 @@ class FacetItem extends React.Component {
   render() {
     let facet = this.props.data.facet
     this.label = facet.displayName ? facet.displayName : facet.value
-
-    let descendents
-    if (facet.descendents) {
-      descendents = facet.descendents.map( d => {
-        let descendentItemData = {
-          facetType: this.props.data.facetType,
-          facet: d,
-          ancestorChecked: this.checkFacet(this.props)
-        }
-        return (<FacetItem key={d.value} data={descendentItemData} query={this.props.query} handler={this.props.handler}/>)
-      })
-    }
-
+    // Put a special class name on the rights facet to show Creative Commons icons
+    let className = this.props.data.facetType == "rights"
+                      ? `c-checkbox__attrib-${facet.value.toLowerCase()}`.replace(/ /g, '-')
+                      : ""
     return (
-      <div>
-        <input id={facet.value} className="c-checkbox__input" type="checkbox"
+      <li className={className}>
+        <input id={`${this.props.data.facetType}-${facet.value}`} className="c-checkbox__input" type="checkbox"
           name={this.props.data.facetType} value={facet.value}
           onChange={this.handleChange}
           checked={this.checkFacet(this.props)} disabled={this.props.data.ancestorChecked ? true : false}/>
-        <label htmlFor={facet.value} className="c-checkbox__label">{this.label} ({facet.count})</label>
-        <div style={{paddingLeft: '30px'}}>{descendents}</div>
-      </div>
+        <label htmlFor={`${this.props.data.facetType}-${facet.value}`} className="c-checkbox__label">{this.label} ({facet.count})</label>
+        { facet.descendents &&
+          <ul className="c-checkbox">
+            { facet.descendents.map(d => {
+                let descendentItemData = {
+                  facetType: this.props.data.facetType,
+                  facet: d,
+                  ancestorChecked: this.checkFacet(this.props)
+                }
+                return (<FacetItem key={d.value} data={descendentItemData} query={this.props.query} handler={this.props.handler}/>)
+              })
+            }
+          </ul>
+        }
+      </li>
     )
   }
 }
@@ -136,18 +138,18 @@ class FacetItem extends React.Component {
 class PubYear extends React.Component {
   constructor(props) {
     super(props)
-    this.state = { 
-      pub_year_start: props.data.range && props.data.range.pub_year_start ? props.data.range.pub_year_start : '',
-      pub_year_end: props.data.range && props.data.range.pub_year_end ? props.data.range.pub_year_end : ''
-    }
+    this.state = this.setupState(props)
   }
 
   componentWillReceiveProps(nextProps) {
-    if (_.isEmpty(nextProps.query) && (this.state.pub_year_start !== '' || this.state.pub_year_end !== '')) {
-      this.setState({
-        pub_year_start: '',
-        pub_year_end: ''
-      }, this.submitForm)
+    if (!_.isEqual(this.props.query, nextProps.query))
+      this.setState(this.setupState(nextProps))
+  }
+
+  setupState(props) {
+    return {
+      pub_year_start: props.data.range && props.data.range.pub_year_start ? props.data.range.pub_year_start : '',
+      pub_year_end: props.data.range && props.data.range.pub_year_end ? props.data.range.pub_year_end : ''
     }
   }
 
@@ -187,15 +189,14 @@ class PubYear extends React.Component {
 
   render() {
     return (
-      <div>
+      <div className="c-pubyear">
         <label htmlFor="pub_year_start">From: </label>
-        <input id="pub_year_start" name="pub_year_start" type="text"
-          value={this.state.pub_year_start}
+        <input id="pub_year_start" name="pub_year_start" type="text" maxLength="4" placeholder="YYYY"
+          defaultValue={this.state.pub_year_start}
           onChange={ this.handleChange } onBlur={ this.onBlur }/>
-        <br/>
         <label htmlFor="pub_year_end">To: </label>
-        <input id="pub_year_end" name="pub_year_end" type="text"
-          value={this.state.pub_year_end}
+        <input id="pub_year_end" name="pub_year_end" type="text" maxLength="4" placeholder="YYYY"
+          defaultValue={this.state.pub_year_end}
           onChange={ this.handleChange } onBlur={ this.onBlur }/>
       </div>
     ) 
@@ -310,13 +311,13 @@ class FacetFieldset extends React.Component {
   }
 
   getFacetNodes = facets =>
-    <div className="c-facetitems">
+    <ul className={this.props.data.fieldName == "supp_file_types" ? "c-checkbox--2column" : "c-checkbox"}>
       {facets.map( facet =>
         <FacetItem key={facet.value}
                    data={{facetType: this.props.data.fieldName, facet: facet}}
                    query={this.props.query.filters} handler={this.handleChange} /> )
       }
-    </div>
+    </ul>
 
   sliceFacets(facets)
   {
@@ -324,7 +325,6 @@ class FacetFieldset extends React.Component {
       return facets.slice(0, 5)
 
     let checked = {}
-    // console.log("slice: filters=", this.props.query.filters)
     for (let filter of this.props.query.filters)
       checked[filter.value] = true
 
@@ -358,21 +358,30 @@ class FacetFieldset extends React.Component {
     return (
       <details className="c-facetbox" id={data.fieldName} open={this.props.open}>
         <summary className="c-facetbox__summary"><span>{data.display}</span></summary>
-        <div className="facetItems c-checkbox">
-          {facetItemNodes}
-          {this.props.modal &&
-            <div id="facetModalBase">
-              <a href="" onClick={(event)=>{
-                this.setState({modalOpen:true})
-                event.preventDefault()}}>show more &raquo;</a>
-              <ModalComp isOpen={this.state.modalOpen}
-                parentSelector={()=>$("#facetModalBase")[0]}
-                header={"Refine By " + data.display}
-                content={this.getFacetNodes(data.facets)}
-                onOK={e=>this.closeModal(e, data.fieldName)} okLabel="Done" />
-            </div>
-          }
-        </div>
+        {facetItemNodes}
+        {this.props.modal &&
+          <div id={`facetModalBase-${data.fieldName}`}>
+            <button className="c-facetbox__show-more"
+                    onClick={(event)=>{
+                              this.setState({modalOpen:true})
+                              event.preventDefault()}
+                            }>
+              Show more
+            </button>
+            {/* style: maxHeight and overflowY hack below makes scrolling modal,
+                until Joel propagates the change to the scss where it really belongs.
+            */}
+            <ModalComp isOpen={this.state.modalOpen}
+              parentSelector={()=>$(`#facetModalBase-${data.fieldName}`)[0]}
+              header={"Refine By " + data.display}
+              onOK={e=>this.closeModal(e, data.fieldName)} okLabel="Done"
+              onCancel={e=>this.closeModal(e, data.fieldName)}
+              content={ <div style={{ maxHeight: "45vh", overflowY: "auto" }}>
+                          { this.getFacetNodes(data.facets) }
+                        </div> }
+            />
+          </div>
+        }
       </details>
     )
   }
@@ -466,13 +475,13 @@ class FacetForm extends React.Component {
     })
 
     return (
-      <Form id="facetForm" to='/search' method="GET" onSubmit={this.handleSubmit}>
+      <Form id={this.props.formName} to='/search' method="GET" onSubmit={this.handleSubmit}>
         {/* Top-aligned box with title "Your search: "Teletubbies"" and active filters */}
         <FilterComp query={this.state.query} count={this.props.data.count} handler={this.removeFilters}/>
         {facetForm}
         {/* Submit button needs to be present so our logic can "press" it at certain times.
             But hide it with display:none so user doesn't see it. */}
-        <button type="submit" id="facet-form-submit" style={{display: "none"}}>Search</button>
+        <button type="submit" id={this.props.formButton} style={{display: "none"}}>Search</button>
       </Form>
     )
   }
@@ -485,7 +494,9 @@ class SearchPage extends PageBase {
   }
 
   renderData(data) {
-    let facetFormData = {facets: data.facets, count: data.count}
+    let facetFormData = {facets: data.facets, count: data.count},
+        formName = "facetForm",
+        formButton = "facet-form-submit"
     return(
       <div className="l_search">
         <Header1Comp />
@@ -495,7 +506,7 @@ class SearchPage extends PageBase {
         <ExportComp />
         <div className="c-columns">
           <aside>
-            <FacetForm data={facetFormData} query={data.query} />
+            <FacetForm formName={formName} formButton={formButton} data={facetFormData} query={data.query} />
           </aside>
           <main id="maincontent" style={{position: "relative"}}>
             { this.state.fetchingData ? <div className="c-search-extra__loading-overlay"/> : null }
@@ -511,15 +522,16 @@ class SearchPage extends PageBase {
                   Scholarly Works ({data.count + " results" + (data.count > 10000 ? ", showing first 10000" : "")})</h2>
               </header>
             {(data.count > 2) &&
-              <SortPaginationComp query={data.query} count={data.count}/>
+              <SortPaginationComp formName={formName} formButton={formButton} query={data.query} count={data.count}/>
             }
               <div>
                 { data.searchResults.map(result =>
                   <ScholWorksComp key={result.id} result={result} />)
                 }
               </div>
+              <p><br/></p>
             {(data.count > data.query.rows) &&
-              <PaginationComp query={data.query} count={data.count}/>
+              <PaginationComp formName={formName} formButton={formButton} query={data.query} count={data.count}/>
             }
             </section>
           </main>

@@ -69,8 +69,10 @@ class PageBase extends React.Component
     // Retrieve login info from session storage (but after initial init, so that ISO matches for first render)
     let d = this.getSessionData()
     if (d) {
-      this.setState({ adminLogin: { loggedIn: true, username: d.username, token: d.token },
-                      isEditingPage: d.isEditingPage })
+      let newState = { adminLogin: { loggedIn: true, username: d.username, token: d.token },
+                       isEditingPage: d.isEditingPage }
+      this.setState(newState)
+      this.fetchPermissions(newState)
     }
   }
 
@@ -120,6 +122,27 @@ class PageBase extends React.Component
     }
   }
 
+  // Send API data (e.g. to edit page contents) and go to a new URL or refresh page data
+  sendApiData = (method, apiURL, data) => {
+    this.setState({ fetchingData: true })
+    $.getJSON({ type: method, url: apiURL,
+                data: _.merge(_.cloneDeep(data),
+                        { username: this.state.adminLogin.username, token: this.state.adminLogin.token })})
+    .done(data=>{
+      if (data.nextURL) {
+        this.setState({ fetchingData: false })
+        this.props.router.push(data.nextURL)
+      }
+      else
+        this.fetchPageData()
+    })
+    .fail(data=>{
+      alert("Error" + (data.responseJSON ? `:\n${data.responseJSON.message}`
+                                         : ` ${data.status}:\n${data.statusText}.`))
+      this.fetchPageData()
+    })
+  }
+
   // This gets called when props change by switching to a new page.
   // It is *not* called on first-time construction. We use it to fetch new page data
   // for the page being switched to.
@@ -147,7 +170,7 @@ class PageBase extends React.Component
   renderData() {
     throw "Derived class must override renderData method"
   }
-  
+
   renderContent() {
     // Error case
     if (this.state.error) {
@@ -164,8 +187,10 @@ class PageBase extends React.Component
         'header' in this.state.pageData && 'nav_bar' in this.state.pageData.header)
     {
       return (
-        <DrawerComp data={this.state.pageData} router={this.props.router} fetchingData={this.state.fetchingData}>
-          {/* Not sure why the padding is needed, but it is */}
+        <DrawerComp data={this.state.pageData}
+                    sendApiData={this.sendApiData}
+                    fetchingData={this.state.fetchingData}>
+          {/* Not sure why the padding below is needed, but it is */}
           <div className="body" style={{ padding: "10px" }}>
             <SkipNavComp/>
             {this.state.pageData ? this.renderData(this.state.pageData) : this.renderLoading()}
@@ -183,26 +208,26 @@ class PageBase extends React.Component
       </div>)
   }
 
-  fetchPermissions() {
+  fetchPermissions(state) {
     const unit = this.pagePermissionsUnit()
     if (unit
-        && this.state.adminLogin
-        && this.state.adminLogin.loggedIn
-        && !this.fetchingPerms
-        && !this.state.permissions) 
+        && state.adminLogin
+        && state.adminLogin.loggedIn
+        && !state.fetchingPerms
+        && !state.permissions) 
     {
-      this.fetchingPerms = true
+      this.setState({ fetchingPerms: true })
       $.getJSON(
-        `/api/permissions/${unit}?username=${this.state.adminLogin.username}&token=${this.state.adminLogin.token}`)
+        `/api/permissions/${unit}?username=${state.adminLogin.username}&token=${state.adminLogin.token}`)
       .done((data) => {
         if (data.error) {
           this.setSessionData(null)
-          this.setState({ adminLogin: null, permissions: null, isEditingPage: false })
+          this.setState({ fetchingPerms: false, adminLogin: null, permissions: null, isEditingPage: false })
           alert("Login note: " + data.message)
         }
         else {
-          this.setState({ permissions: data })
-          if (!this.state.cmsModules) {
+          this.setState({ fetchingPerms: false, permissions: data })
+          if (!state.cmsModules) {
             // Load CMS-specific modules asynchronously
             require.ensure(['react-trumbowyg', 'react-sidebar', 'react-sortable-tree'], (require) => {
               this.setState({ cmsModules: { Trumbowyg: require('react-trumbowyg').default,
@@ -213,7 +238,7 @@ class PageBase extends React.Component
         }
       })
       .fail((jqxhr, textStatus, err)=> {
-        this.setState({ error: textStatus, adminLogin: null, permissions: null, isEditingPage: false })
+        this.setState({ error: textStatus, fetchingPerms: false, adminLogin: null, permissions: null, isEditingPage: false })
       })
     }
   }
@@ -235,7 +260,6 @@ class PageBase extends React.Component
   }
 
   render() {
-    this.fetchPermissions()
     return (
       <div>
         { this.stageWatermark() }

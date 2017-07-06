@@ -1,8 +1,18 @@
 // ##### Pagination Component ##### //
 
 import React from 'react'
+import PropTypes from 'prop-types'
 
 class PaginationComp extends React.Component {
+  static propTypes = {
+    query: PropTypes.shape({
+      q: PropTypes.string,
+      rows: PropTypes.string,
+      sort: PropTypes.string,
+      start: PropTypes.string
+    }).isRequired
+  }
+
   clampedCount() {
     // AWS CloudSearch will not let us paginate beyond 10,000 results - so limit the pagination to that.
     return Math.min(this.props.count, 9999)
@@ -11,8 +21,8 @@ class PaginationComp extends React.Component {
   next = event=>{
     if (parseInt(this.props.query.start) + parseInt(this.props.query.rows) <= this.clampedCount()) {
       var newStart = parseInt(this.props.query.start) + parseInt(this.props.query.rows);
-      $('[form=facetForm][name=start]').val(newStart);
-      $('#facet-form-submit').click();
+      $('[form='+this.props.formName+'][name=start]').val(newStart);
+      $('#'+this.props.formButton).click();
     }
     event.preventDefault()
   }
@@ -20,16 +30,16 @@ class PaginationComp extends React.Component {
   previous = event=>{
     if (parseInt(this.props.query.start) >= parseInt(this.props.query.rows)) {
       var newStart = parseInt(this.props.query.start) - parseInt(this.props.query.rows);
-      $('[form=facetForm][name=start]').val(newStart);
-      $('#facet-form-submit').click();
+      $('[form='+this.props.formName+'][name=start]').val(newStart);
+      $('#'+this.props.formButton).click();
     }
     event.preventDefault()
   }
 
   first = event=>{
     if (parseInt(this.props.query.start) > 0) {
-      $('[form=facetForm][name=start]').val(0);
-      $('#facet-form-submit').click();
+      $('[form='+this.props.formName+'][name=start]').val(0);
+      $('#'+this.props.formButton).click();
     }
     event.preventDefault()
   }
@@ -38,8 +48,8 @@ class PaginationComp extends React.Component {
     var newStart = Math.floor(this.clampedCount() / this.props.query.rows);
     newStart = newStart * this.props.query.rows;
     if (newStart != this.props.query.start) {
-      $('[form=facetForm][name=start]').val(newStart);
-      $('#facet-form-submit').click();
+      $('[form='+this.props.formName+'][name=start]').val(newStart);
+      $('#'+this.props.formButton).click();
     }
     event.preventDefault()
   }
@@ -47,8 +57,8 @@ class PaginationComp extends React.Component {
   page = event=>{
     var newStart = (event.target.text - 1) * this.props.query.rows;
     if (newStart != this.props.query.start) {
-      $('[form=facetForm][name=start]').val(newStart);
-      $('#facet-form-submit').click();
+      $('[form='+this.props.formName+'][name=start]').val(newStart);
+      $('#'+this.props.formButton).click();
     }
     event.preventDefault()
   }

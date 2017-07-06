@@ -4,6 +4,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Link } from 'react-router'
 import CampusSelectorComp from '../components/CampusSelectorComp.jsx'
+import NotYetLink from '../components/NotYetLink.jsx'
 
 class SubheaderComp extends React.Component {
   static propTypes = {
@@ -43,12 +44,12 @@ class SubheaderComp extends React.Component {
         </Link>
       {p.unit.type == 'journal' ?
         <div className="c-subheader__sidebar">
-          <button className="o-button__3">Submit</button>
-          <button className="o-button__3">Manage <span className="c-subheader__button-fragment">Submissions</span></button>
+          <NotYetLink className="o-button__3" element="button">Submit</NotYetLink>
+          <NotYetLink className="o-button__3" element="button">Manage <span className="c-subheader__button-fragment">Submissions</span></NotYetLink>
         </div>
       :
         <div className="c-subheader__sidebar">
-          <button className="o-button__3">Deposit</button>
+          <NotYetLink className="o-button__3" element="button">Deposit</NotYetLink>
         </div>
       }
       </div>

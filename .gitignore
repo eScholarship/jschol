@@ -1,6 +1,7 @@
 app/bower_components
 app/css
-app/js/*bundle.js
+app/js/*bundle*.js
+app/js/manifest.json
 app/js/*.map
 bin/
 .bundle/
@@ -8,7 +9,6 @@ bower_components/
 cache/
 config/
 dist
-Gemfile.lock
 gems/
 gomysql
 node_modules/
