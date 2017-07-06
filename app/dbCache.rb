@@ -16,7 +16,7 @@ end
 # Get hash of all active root level campuses/ORUs, sorted by ordering in unit_hier table
 def getActiveCampuses
   return Unit.join(:unit_hier, :unit_id=>:id).
-           filter(:ancestor_unit=>'root', :is_direct=>1).exclude(:status=>"hidden").
+           filter(:ancestor_unit=>'root', :is_direct=>1).exclude(:status=>["hidden", "archived"]).
            order_by(:ordering).to_hash(:id)
 end
 
