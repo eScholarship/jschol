@@ -4,7 +4,7 @@ import React from 'react'
 import ModalComp from '../components/ModalComp.jsx'
 
 class ModalNotYetComp extends React.Component {
-  content = (<div>You've reached a portion of our beta site that isn't quite ready,<br/>but will be included in the final release.<br/>For more information, or to provide feedback, visit the <a href="http://help.escholarship.org/support/discussions/forums/9000203294" target="_blank">Help Center</a>.</div>)
+  content = (<div>You've reached a portion of our beta site that isn't quite ready, but will be included in the final release.<br/><br/>For more information, or to provide feedback, visit the <a href="http://help.escholarship.org/support/discussions/forums/9000203294" target="_blank">Help Center</a>.</div>)
   render () {
     return (
       <ModalComp isOpen={this.props.isOpen}
