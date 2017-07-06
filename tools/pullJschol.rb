@@ -35,7 +35,7 @@ end
 checkCall("eye stop jschol")
 
 # Pull and update
-checkCall("git pull upstream master")
+checkCall("git pull origin master")
 checkCall("./setup.sh")
 
 # Restart tasks
