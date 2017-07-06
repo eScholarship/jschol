@@ -5,10 +5,44 @@ import Form from 'react-router-form'
 import MarqueeComp from '../components/MarqueeComp.jsx'
 
 class UnitProfileLayout extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      file: '',
+      imagePreviewUrl: ''
+    };
+  }
 
   handleSubmit = (event, formData) => {
     event.preventDefault()
     this.props.sendApiData("PUT", event.target.action, { data: formData })
+  }
+
+  handleImageChange = (event) => {
+    event.preventDefault()
+
+    let reader = new FileReader();
+    let file = event.target.files[0];
+
+    reader.onloadend = () => {
+      this.setState({
+        file: file,
+        imagePreviewUrl: reader.result
+      });
+    }
+
+    reader.readAsDataURL(file)
+  }
+
+  upload = (event, data) => {
+    event.preventDefault();
+
+    let imageFormData = new FormData();
+    imageFormData.append('imageFile', this.state.file);
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('post', '/api/unit/' + this.props.unit.id + '/upload', true);
+    xhr.send(imageFormData);
   }
 
   render() {
@@ -20,10 +54,10 @@ class UnitProfileLayout extends React.Component {
         <div className="c-columns">
           <main>
             <section className="o-columnbox1">
-              <Form to="" onSubmit={this.handleSubmit}>
                 <label className="c-editable-page__label">Name: </label>
                 <input className="c-editable-page__input" type="text" defaultValue={data.name}/>
 
+              <Form to={`/api/unit/${this.props.unit.id}/profileContentConfig`} onSubmit={this.upload}>
                 <label className="c-editable-page__label">Logo image:</label>
                 { data.logo
                   ? <img src={"/assets/"+data.logo.asset_id} width={data.logo.width} height={data.logo.height} alt="Logo image" />
@@ -31,6 +65,7 @@ class UnitProfileLayout extends React.Component {
                 }
 
                 <div>
+                  <input type="file" name="logo_file" onChange={this.handleImageChange}/>
                   <button>Choose File</button>
                   <button>Remove File</button>
                 </div>

@@ -1,3 +1,51 @@
+require 'digest'
+require 'fastimage'
+
+###################################################################################################
+# Upload an asset file to S3 (if not already there), and return the asset ID. Attaches a hash of
+# metadata to it.
+def putAsset(filePath, metadata)
+
+  # Calculate the sha256 hash, and use it to form the s3 path
+  md5sum    = Digest::MD5.file(filePath).hexdigest
+  sha256Sum = Digest::SHA256.file(filePath).hexdigest
+  s3Path = "#{$s3Config.prefix}/binaries/#{sha256Sum[0,2]}/#{sha256Sum[2,2]}/#{sha256Sum}"
+
+  # If the S3 file is already correct, don't re-upload it.
+  obj = $s3Bucket.object(s3Path)
+  if !obj.exists? || obj.etag != "\"#{md5sum}\""
+    #puts "Uploading #{filePath} to S3."
+    obj.put(body: File.new(filePath),
+            metadata: metadata.merge({
+              original_path: filePath.sub(%r{.*/([^/]+/[^/]+)$}, '\1'), # retain only last directory plus filename
+              mime_type: MimeMagic.by_magic(File.open(filePath)).to_s
+            }))
+    obj.etag == "\"#{md5sum}\"" or raise("S3 returned md5 #{resp.etag.inspect} but we expected #{md5sum.inspect}")
+  end
+
+  return sha256Sum
+end
+
+###################################################################################################
+# Upload an image to S3, and return hash of its attributes. If a block is supplied, it will receive
+# the dimensions first, and have a chance to raise exceptions on them.
+def putImage(imgPath, &block)
+  mimeType = MimeMagic.by_magic(File.open(imgPath))
+  mimeType && mimeType.mediatype == "image" or raise("Non-image file #{imgPath}")
+  dims = FastImage.size(imgPath)
+  block and block.yield(dims)
+  assetID = putAsset(imgPath, {
+    width: dims[0].to_s,
+    height: dims[1].to_s
+  })
+  return { asset_id: assetID,
+           image_type: mimeType.subtype,
+           width: dims[0],
+           height: dims[1]
+         }
+end
+#################################################################################################
+
 def traverseHierarchyUp(arr)
   if ['root', nil].include? arr[0][:id]
     return arr
@@ -631,4 +679,9 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
 
   content_type :json
   return { status: "ok" }.to_json
+end
+
+post "/api/unit/:unitID/upload" do |unitID|
+  data = putImage(params[:imageFile][:tempfile].path)
+  pp data
 end
