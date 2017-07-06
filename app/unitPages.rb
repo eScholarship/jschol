@@ -20,7 +20,9 @@ def getNavBar(unitID, pageName, navItems)
         navItem['url'] = "/uc/#{unitID}#{navItem['slug']=="" ? "" : "/"+navItem['slug']}"
       end
     }
-    navItems.unshift({ id: 0, type: "home", name: "Unit Home", url: "/uc/#{unitID}" })
+    if unitID != 'root'
+      navItems.unshift({ id: 0, type: "home", name: "Unit Home", url: "/uc/#{unitID}" })
+    end
     return navItems
   end
   return nil
@@ -59,7 +61,7 @@ def getUnitHeader(unit, pageName=nil, attrs=nil)
   }
 
   # if this unit doesn't have a nav_bar, get the next unit up the hierarchy's nav_bar
-  if !header[:nav_bar] and unit.type != 'campus'
+  if !header[:nav_bar] and unit.type != 'campus' and unit.type != 'root'
     ancestor = $hierByUnit[unit.id][0].ancestor
     until header[:nav_bar] || ancestor.id == 'root'
       header[:nav_bar] = JSON.parse(ancestor[:attrs])['nav_bar']

@@ -440,8 +440,11 @@ get "/api/browse/campuses" do
     stats.push({"id"=>k, "name"=>v.values[:name], "type"=>v.values[:type], 
       "publications"=>pub_count, "units"=>unit_count, "journals"=>journal_count})
   end
+  unit = $unitsHash['root']
   body = {
     :header => getGlobalHeader,
+    :unit => unit.values.reject{|k,v| k==:attrs},
+    :sidebar => getUnitSidebar(unit),
     :browse_type => "campuses",
     :campusesStats => stats.select { |h| h['type']=="campus" },
     :affiliatedStats => stats.select { |h| h['type']=="oru" }
@@ -679,17 +682,7 @@ end
 # Helper methods
 
 def getGlobalHeader
-    return {
-   nav_bar: [
-     { id: 1, name: "About", sub_nav: [ { name: "TBD", url: "#" } ] },
-     { id: 2, name: "Campus Sites",
-       sub_nav: $activeCampuses.map { |k, v| { name: v.values[:name], url: "/uc/#{k}" } }
-     },
-     { id: 3, name: "UC Open Access", sub_nav: [ { name: "TBD", url: "#" } ] },
-     { id: 4, name: "eScholarship Publishing", url: "#" },
-   ]
-    # was: JSON.parse($unitsHash['root'][:attrs])['nav_bar']
-  }
+  return getUnitHeader($unitsHash['root'])
 end
 
 # Generate breadcrumb and header content for Browse or Static page

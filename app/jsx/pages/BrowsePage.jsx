@@ -12,6 +12,8 @@ import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
 import WellComp from '../components/WellComp.jsx'
 import DescriptionListComp from '../components/DescriptionListComp.jsx'
 import ToggleListComp from '../components/ToggleListComp.jsx'
+import AdminBarComp from '../components/AdminBarComp.jsx'
+import SidebarComp from '../components/SidebarComp.jsx'
 
 class BrowsePage extends PageBase
 {
@@ -27,6 +29,10 @@ class BrowsePage extends PageBase
     }
   }
 
+  pagePermissionsUnit() {
+    return this.props.params.campusID ? this.props.params.campusID : "root"
+  }
+
   renderData(data) {
     return (
       <div>
@@ -34,6 +40,7 @@ class BrowsePage extends PageBase
       { ["campuses", "all_journals"].includes(data.browse_type) ? 
         // Global browse page
         <div>
+          <AdminBarComp/>
           <Header1Comp />
           <div className="c-navbar">
             <NavComp data={data.header.nav_bar} />
@@ -42,6 +49,7 @@ class BrowsePage extends PageBase
         :
         // Campus-specific browse page
         <div>
+          <AdminBarComp/>
           <Header2Comp type="campus" unitID={data.campusID} />
           <SubheaderComp unit={data.unit} logo={data.header.logo}
                           campusID={data.header.campusID}
@@ -78,12 +86,7 @@ class Content extends React.Component {
                                                          pageTitle={p.pageTitle} /> }
         </main>
         <aside>
-          <section className="o-columnbox1">
-            <header>
-              <h2>Featured Journals</h2>
-            </header>
-            <p>[content to go here]</p>
-          </section>
+          <SidebarComp data={this.props.sidebar}/>
         </aside>
       </div>
   )}

@@ -25,7 +25,7 @@ import UnitProfileLayout from '../layouts/UnitProfileLayout.jsx'
 import UnitSidebarConfigLayout from '../layouts/UnitSidebarConfigLayout.jsx'
 import UnitNavConfigLayout from '../layouts/UnitNavConfigLayout.jsx'
 import AdminBarComp from '../components/AdminBarComp.jsx'
-import RecentArticlesComp from "../components/RecentArticlesComp.jsx"
+import SidebarComp from '../components/SidebarComp.jsx'
 
 class UnitPage extends PageBase
 {
@@ -58,18 +58,6 @@ class UnitPage extends PageBase
     return this.props.params.unitID
   }
 
-  renderSidebar = sidebarData =>
-    sidebarData.map(sb =>
-      <section key={sb.id} className="o-columnbox1">
-        <header>
-          <h2>{(sb.attrs && sb.attrs.title) ? sb.attrs.title : sb.kind.replace(/([a-z])([A-Z][a-z])/g, "$1 $2")}</h2>
-        </header>
-        {   sb.kind == "Text"           ? <div dangerouslySetInnerHTML={{__html: sb.attrs.html}}/>
-          : sb.kind == "RecentArticles" ? <RecentArticlesComp data={sb.attrs}/>
-          : <p><i>Not yet implemented</i></p>
-        }
-      </section>)
-
   cmsPage(data, page) {
     if (this.state.adminLogin && !this.state.fetchingPerms && !this.state.isEditingPage) {
       //console.log("Editing turned off; redirecting to unit page.")
@@ -84,7 +72,7 @@ class UnitPage extends PageBase
   // but this should get stripped out and handled here in UnitPage
   // TODO [UNIT-CONTENT-AJAX-ISSUE]: handle the AJAX issue described above pageDataURL method definition
   renderData(data) { 
-    let sidebar = this.renderSidebar(data.sidebar)
+    let sidebar = <SidebarComp data={data.sidebar}/>
     let contentLayout
     if (this.state.fetchingData)
       contentLayout = (<h2 style={{ marginTop: "5em", marginBottom: "5em" }}>Loading...</h2>)
