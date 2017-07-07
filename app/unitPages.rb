@@ -13,14 +13,16 @@ def getLogoData(data)
 end
 
 # Add a URL to each nav bar item
-def getNavBar(unit, pageName, navItems)
+def getNavBar(unit, pageName, navItems, level=1)
   if navItems
     navItems.each { |navItem|
-      if navItem['slug']
+      if navItem['type'] == 'folder'
+        navItem['sub_nav'] = getNavBar(unit, pageName, navItem['sub_nav'], level+1)
+      elsif navItem['slug']
         navItem['url'] = "/uc/#{unit.id}#{navItem['slug']=="" ? "" : "/"+navItem['slug']}"
       end
     }
-    if !['root','campus'].include?(unit.type)
+    if level==1 && !['root','campus'].include?(unit.type)
       navItems.unshift({ id: 0, type: "home", name: "Unit Home", url: "/uc/#{unit.id}" })
     end
     return navItems
@@ -356,11 +358,12 @@ put "/api/unit/:unitID/nav/:navID" do |unitID, navID|
         page.attrs = JSON.parse(page.attrs).merge({ "html" => newHTML }).to_json
         page.save
       elsif nav['type'] == "link"
-        params[:url] =~ %r{^https?://.*} or jsonHalt(400, "Invalid URL.")
+        params[:url] =~ %r{^(/\w|https?://).*} or jsonHalt(400, "Invalid URL.")
         nav['url'] = params[:url]
       end
       unit.attrs = unitAttrs.to_json
       unit.save
+      refreshUnitsHash
       return {status: "ok"}.to_json
     }
     jsonHalt(404, "Unknown nav #{navID} for unit #{unitID}")
@@ -398,6 +401,7 @@ put "/api/unit/:unitID/navOrder" do |unitID|
     unitAttrs['nav_bar'] = newNav
     unit.attrs = unitAttrs.to_json
     unit.save
+    refreshUnitsHash
     return {status: "ok"}.to_json
   }
 end
@@ -426,7 +430,13 @@ post "/api/unit/:unitID/nav" do |unitID|
   (1..9999).each { |n|
     slug = "#{navType}#{n.to_s}"
     name = "New #{navType} #{n.to_s}"
-    break if navBar.none? { |nav| nav['slug'] == slug || nav['name'] == name }
+    existing = nil
+    travNav(navBar) { |nav|
+      if nav['slug'] == slug || nav['name'] == name
+        existing = nav
+      end
+    }
+    break unless existing
   }
 
   nextID = maxNavID(navBar) + 1
@@ -448,6 +458,7 @@ post "/api/unit/:unitID/nav" do |unitID|
     attrs['nav_bar'] = navBar
     unit[:attrs] = attrs.to_json
     unit.save
+    refreshUnitsHash
 
     return { status: "ok", nextURL: "/uc/#{unitID}/nav/#{newNav[:id]}" }.to_json
   }
@@ -512,6 +523,7 @@ put "/api/unit/:unitID/sidebarOrder" do |unitID|
     }
   }
 
+  refreshUnitsHash
   return {status: "ok"}.to_json
 end
 
@@ -530,7 +542,7 @@ delete "/api/unit/:unitID/sidebar/:widgetID" do |unitID, widgetID|
   }
 
   content_type :json
-  return {status: "ok", nextURL: "/uc/#{unitID}" }.to_json
+  return {status: "ok", nextURL: unitID=="root" ? "/" : "/uc/#{unitID}" }.to_json
 end
 
 ###################################################################################################
@@ -558,8 +570,9 @@ delete "/api/unit/:unitID/nav/:navID" do |unitID, navID|
     unit.save
   }
 
+  refreshUnitsHash
   content_type :json
-  return {status: "ok", nextURL: "/uc/#{unitID}" }.to_json
+  return {status: "ok", nextURL: unitID=="root" ? "/" : "/uc/#{unitID}" }.to_json
 end
 
 ###################################################################################################
@@ -632,6 +645,7 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
     unit.save
   }
 
+  refreshUnitsHash
   content_type :json
   return { status: "ok" }.to_json
 end

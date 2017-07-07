@@ -5,6 +5,10 @@ def getUnitsHash
   return Unit.to_hash(:id)
 end
 
+def refreshUnitsHash
+  $unitsHash = getUnitsHash
+end
+
 def getHierByUnit
   return UnitHier.filter(is_direct: true).to_hash_groups(:unit_id)
 end

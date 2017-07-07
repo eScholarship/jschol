@@ -424,7 +424,12 @@ end
 # Pages with no data
 get %r{/api/(home|notFound|logoutSuccess)} do
   content_type :json
-  return { :header => getGlobalHeader }.to_json
+  unit = $unitsHash['root']
+  body = {
+    :header => getGlobalHeader,
+    :unit => unit.values.reject{|k,v| k==:attrs},
+    :sidebar => getUnitSidebar(unit)
+  }.to_json
 end
 
 ###################################################################################################
