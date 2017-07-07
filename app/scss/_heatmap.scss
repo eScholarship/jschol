@@ -12,13 +12,18 @@
   // background-image url property/value is an inline style within the component
   box-shadow: $box-shadow1;
 
+  // Linear gradient:
   &::after {
     position: absolute;
     top: 0;
     right: 0;
     bottom: 0;
     left: 0;
-    background-image: linear-gradient($color-white, $color-light-teal, $color-white);
+    background-image: linear-gradient(
+      $color-white,
+      $color-light-teal 15%,
+      $color-light-teal 85%,
+      $color-white);
     content: '';
     z-index: -1;
   }
@@ -35,6 +40,7 @@
   }
 
   @include bp(screen3) {
+    justify-content: space-around;
     padding-left: 5vw;
   }
 
@@ -62,6 +68,11 @@
     text-align: left;
   }
 
+  @include bp(screen4) {
+    width: 7em;
+    font-size: 3.5em;
+  }
+
 }
 
 .c-heatmap__button {
@@ -70,6 +81,10 @@
 
   @include bp(screen1) {
     width: 23vw;
+  }
+
+  @include bp(screen3) {
+    width: 13em;
   }
 
 }

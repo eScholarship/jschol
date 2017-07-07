@@ -1,7 +1,5 @@
 // ##### Campus Selector Component ##### //
 
-$campus-selector-right-margin: 30px;
-
 .c-campusselector {
   display: inline-flex;
   align-items: center;
@@ -10,14 +8,12 @@ $campus-selector-right-margin: 30px;
   @include bp(screen3) {
     position: relative;
     align-items: flex-end;
-    min-height: $element-height;
-    margin-right: $campus-selector-right-margin + $spacing-md;
   }
 
 }
 
 .c-campusselector__heading {
-  margin: 0 $spacing-sm 0 0;
+  margin: 0 $spacing-base 0 0;
   font-size: 1em;
   text-align: right;
 
@@ -26,7 +22,6 @@ $campus-selector-right-margin: 30px;
   }
 
   @include bp(screen3) {
-    width: 7.5em; // component width
     font-size: 1.5em;
   }
 
@@ -42,23 +37,19 @@ $campus-selector-right-margin: 30px;
     @extend %interactive-element-size;
     position: relative;
 
-    @include bp(screen3) {
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      height: auto;
-    }
-
     &::after {
       position: absolute;
       top: 0;
       right: 0;
       bottom: 0;
       left: 0;
-      border: 1px solid $color-dark-gray;
-      border-radius: $round-corner;
-      background: inline('../images/icon_arrow-down.svg') no-repeat center / 13px;
+      background: inline('../images/icon_arrow-down.svg') no-repeat center / 0.8em;
       content: '';
+
+      @include bp(screen3) {
+        bottom: -0.4em;
+      }
+
     }
 
   }
@@ -77,14 +68,14 @@ $campus-selector-right-margin: 30px;
   position: absolute; // to .c-subheader
   right: $spacing-sm;
   left: $spacing-sm;
-  margin-top: 5px;
+  margin-top: $spacing-base;
   background-color: $color-white;
   z-index: 2;
 
   @include bp(screen3) {
     right: 0;
     left: 0;
-    margin-right: (-$campus-selector-right-margin);
+    min-width: 10em;
   }
 
 }

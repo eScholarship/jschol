@@ -305,3 +305,13 @@ As well as:
   modified:   app/jsx/components/FacetBoxComp.jsx
   modified:   app/jsx/components/PubYearComp.jsx
   big merge:  app/jsx/pages/SearchPage.jsx
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's 2fed78538907c4db497a3b1f386fd4f1b74d43c1, 2017-07-06 <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+Andy added all scss and image changes since last.
+As well as:
+  modified:   app/jsx/components/HeatMapComp.jsx
+
+
