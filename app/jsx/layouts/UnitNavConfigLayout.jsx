@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Link } from 'react-router'
-import EditableComp from '../components/EditableComp.jsx'
+import _ from 'lodash'
 import WysiwygEditorComp from '../components/WysiwygEditorComp.jsx'
 
 class EditableNavContentComp extends React.Component
@@ -60,7 +60,7 @@ class EditableNavContentComp extends React.Component
 
         { (data.type == "link") &&
           <div>
-            <label className="c-editable-page__label" htmlFor="url">URL</label>,
+            <label className="c-editable-page__label" htmlFor="url">URL</label>
             <input className="c-editable-page__input" id="url" type="text" defaultValue={data.url}
                    onChange={ event => this.setData({ url: event.target.value }) }/>
           </div>

@@ -13,7 +13,7 @@ class UnitStaticPageLayout extends React.Component
         html: PropTypes.string.isRequired
       })
     }),
-    sidebar: PropTypes.array.isRequired
+    sidebar: PropTypes.object.isRequired
   }
 
   render() {

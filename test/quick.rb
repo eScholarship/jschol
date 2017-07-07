@@ -8,6 +8,12 @@ require 'open-uri'
 require 'sanitize'
 require 'test/unit'
 
+if !File.file?("config/do_iso")
+  puts "FATAL ERROR: Must turn iso mode on for tests to run."
+  puts "Hint: touch config/do_iso, then restart gulp."
+  exit 1
+end
+
 class TestQuick < Test::Unit::TestCase
 
   def fetch(url)
@@ -28,8 +34,8 @@ class TestQuick < Test::Unit::TestCase
   end
 
   def test_static
-    html = fetchAndStrip("http://localhost:4001/static/root/aboutEschol")
-    assert_match /About eScholarship/, html
+    html = fetchAndStrip("http://localhost:4001/uc/uclalaw/policyStatement")
+    assert_match /School of Law only publishes materials about/, html
   end
 
   def test_browse_campuses

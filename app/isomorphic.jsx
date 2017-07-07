@@ -22,7 +22,7 @@ app.use((req, res) =>
   }
 
   // Cache the app code. We can base the cache on the app bundle.
-  var curStamp = new Date(fs.statSync("app/js/app-bundle.js").mtime)
+  var curStamp = new Date(fs.statSync("app/js/manifest.json").mtime)
   if ((lastStamp - curStamp) != 0) {
     console.log("ISO: Loading new app bundle.")
     lastStamp = curStamp
@@ -90,6 +90,7 @@ app.use((req, res) =>
           }
           catch (e) {
             console.log("Exception generating React HTML:", e)
+            console.log(e.stack)
             res.status(500).send("Exception generating React HTML")
           }
         });
