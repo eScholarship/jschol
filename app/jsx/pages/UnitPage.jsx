@@ -61,7 +61,8 @@ class UnitPage extends PageBase
   cmsPage(data, page) {
     if (this.state.adminLogin && !this.state.fetchingPerms && !this.state.isEditingPage) {
       //console.log("Editing turned off; redirecting to unit page.")
-      setTimeout(()=>this.props.router.push(`/uc/${data.unit.id}`), 0)
+      setTimeout(()=>this.props.router.push(
+        data.unit.id == "root" ? "/" : `/uc/${data.unit.id}`), 0)
     }
     else
       return page

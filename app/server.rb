@@ -516,7 +516,7 @@ end
 get "/api/unit/:unitID/:pageName/?:subPage?" do
   content_type :json
   unit = Unit[params[:unitID]]
-  unit or halt(404, "Unit not found")
+  unit or jsonHalt(404, "Unit not found")
 
   attrs = JSON.parse(unit[:attrs])
   pageName = params[:pageName]
@@ -525,7 +525,7 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
     begin
       ext = extent(unit.id, unit.type)
     rescue Exception => e
-      halt 404, "Error building page data:" + e.message
+      jsonHalt 404, "Error building page data:" + e.message
     end
     pageData = {
       unit: unit.values.reject{|k,v| k==:attrs}.merge(:extent => ext),
