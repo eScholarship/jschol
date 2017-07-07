@@ -458,8 +458,11 @@ end
 get "/api/browse/journals" do 
   content_type :json
   journals = $campusJournals.sort_by{ |h| h[:name].downcase }
+  unit = $unitsHash['root']
   body = {
     :header => getGlobalHeader,
+    :unit => unit.values.reject{|k,v| k==:attrs},
+    :sidebar => getUnitSidebar(unit),
     :browse_type => "all_journals",
     :journals => journals.select{ |h| h[:status]!="archived" },
     :archived => journals.select{ |h| h[:status]=="archived" }
@@ -489,6 +492,7 @@ get "/api/browse/:browse_type/:campusID" do |browse_type, campusID|
     :pageTitle => pageTitle,
     :unit => unit ? unit.values.reject { |k,v| k==:attrs } : nil,
     :header => unit ? getUnitHeader(unit, nil, attrs) : getGlobalHeader,
+    :sidebar => getUnitSidebar(unit),
     :campusUnits => cu ? cu.compact : nil,
     :campusJournals => cj,
     :campusJournalsArchived => cja

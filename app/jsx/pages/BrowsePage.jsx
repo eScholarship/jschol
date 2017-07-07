@@ -56,8 +56,7 @@ class BrowsePage extends PageBase
                           campusName={data.header.campusName}
                           campuses={data.campuses} />
           <div className="c-navbar">
-            {/* ToDo: Properly call header.nav_bar for unit type="campus" */}
-            <NavComp data={[{name: 'Open Access Policies', url: ''}, {name: 'Journals', url: '/' + data.header.campusID + '/journals'}, {name: 'Academic Units', url: '/' + data.header.campusID + '/units'}]} />
+            <NavComp data={data.header.nav_bar} />
           </div>
         </div>
       }

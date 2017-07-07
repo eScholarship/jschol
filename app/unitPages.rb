@@ -13,15 +13,15 @@ def getLogoData(data)
 end
 
 # Add a URL to each nav bar item
-def getNavBar(unitID, pageName, navItems)
+def getNavBar(unit, pageName, navItems)
   if navItems
     navItems.each { |navItem|
       if navItem['slug']
-        navItem['url'] = "/uc/#{unitID}#{navItem['slug']=="" ? "" : "/"+navItem['slug']}"
+        navItem['url'] = "/uc/#{unit.id}#{navItem['slug']=="" ? "" : "/"+navItem['slug']}"
       end
     }
-    if unitID != 'root'
-      navItems.unshift({ id: 0, type: "home", name: "Unit Home", url: "/uc/#{unitID}" })
+    if !['root','campus'].include?(unit.type)
+      navItems.unshift({ id: 0, type: "home", name: "Unit Home", url: "/uc/#{unit.id}" })
     end
     return navItems
   end
@@ -49,7 +49,7 @@ def getUnitHeader(unit, pageName=nil, attrs=nil)
     :campusName => $unitsHash[campusID].name,
     :campuses => $activeCampuses.values.map { |c| {id: c.id, name: c.name} }.unshift({id: "", name: "eScholarship at..."}),
     :logo => getLogoData(attrs['logo']),
-    :nav_bar => getNavBar(unit.id, pageName, attrs['nav_bar']),
+    :nav_bar => getNavBar(unit, pageName, attrs['nav_bar']),
     :social => {
       :facebook => attrs['facebook'],
       :twitter => attrs['twitter'],
