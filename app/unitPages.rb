@@ -30,19 +30,25 @@ def getNavBar(unit, pageName, navItems, level=1)
   return nil
 end
 
-# Generate the last part of the breadcrumb for a static page within a unit
-def getPageBreadcrumb(unit, pageName)
-  (!pageName || pageName == "home" || pageName == "campus_landing") and return []
-  pageName == "search" and return [{ name: "Search", id: unit.id + ":" + pageName}]
-  pageName == "profile" and return [{ name: "Profile", id: unit.id + ":" + pageName}]
-  pageName == "sidebar" and return [{ name: "Sidebars", id: unit.id + ":" + pageName}]
-  p = Page.where(unit_id: unit.id, slug: pageName).first
-  p or halt(404, "Unknown page #{pageName} in #{unit.id}")
-  return [{ name: p[:name], id: unit.id + ":" + pageName, url: "/#{unit.id}/#{pageName}" }]
+# Generate the last part of the breadcrumb for a static page or journal issue
+def getPageBreadcrumb(unit, pageName, issue=nil)
+  ((!pageName and !issue) || pageName == "home") and return []
+  if issue
+   return [{name: "Volume #{issue[:volume]}, Issue #{issue[:issue]}",
+               id: issue[:unit_id] + ":" + issue[:volume] + ":" + issue[:issue],
+              url: "/uc/#{issue[:unit_id]}/#{issue[:volume]}/#{issue[:issue]}"}]
+  else
+    pageName == "search" and return [{ name: "Search", id: unit.id + ":" + pageName}]
+    pageName == "profile" and return [{ name: "Profile", id: unit.id + ":" + pageName}]
+    pageName == "sidebar" and return [{ name: "Sidebars", id: unit.id + ":" + pageName}]
+    p = Page.where(unit_id: unit.id, slug: pageName).first
+    p or halt(404, "Unknown page #{pageName} in #{unit.id}")
+    return [{ name: p[:name], id: unit.id + ":" + pageName, url: "/#{unit.id}/#{pageName}" }]
+  end
 end
 
 # Generate breadcrumb and header content for Unit-branded pages
-def getUnitHeader(unit, pageName=nil, attrs=nil)
+def getUnitHeader(unit, pageName=nil, journalIssue=nil, attrs=nil)
   if !attrs then attrs = JSON.parse(unit[:attrs]) end
   r = UnitHier.where(unit_id: unit.id).where(ancestor_unit: $activeCampuses.keys).first
   campusID = (unit.type=='campus') ? unit.id : r ? r.ancestor_unit : 'root'
@@ -58,7 +64,7 @@ def getUnitHeader(unit, pageName=nil, attrs=nil)
       :rss => attrs['rss']
     },
     :breadcrumb => (unit.type!='campus') ?
-      traverseHierarchyUp([{name: unit.name, id: unit.id, url: "/uc/" + unit.id}]) + getPageBreadcrumb(unit, pageName)
+      traverseHierarchyUp([{name: unit.name, id: unit.id, url: "/uc/" + unit.id}]) + getPageBreadcrumb(unit, pageName, journalIssue)
       : getPageBreadcrumb(unit, pageName)
   }
 
@@ -74,15 +80,15 @@ def getUnitHeader(unit, pageName=nil, attrs=nil)
   return header
 end
 
-def getUnitPageContent(unit, attrs, q)
+def getUnitPageContent(unit, attrs, query)
   if unit.type == 'oru'
    return getORULandingPageData(unit.id)
   elsif unit.type == 'campus'
     return getCampusLandingPageData(unit, attrs)
   elsif unit.type.include? 'series'
-    return getSeriesLandingPageData(unit, q)
+    return getSeriesLandingPageData(unit, query)
   elsif unit.type == 'journal'
-    return getJournalLandingPageData(unit.id)
+    return getJournalIssueData(unit, attrs)
   else
     # ToDo: handle 'special' type here
     halt(404, "Unknown unit type #{unit.type}")
@@ -147,20 +153,37 @@ def getSeriesLandingPageData(unit, q)
   return response
 end
 
-def getJournalLandingPageData(id)
-  unit = $unitsHash[id]
-  attrs = JSON.parse(unit.attrs)
+# Landing page data does not pass arguments volume/issue. It just gets most recent journal
+def getJournalIssueData(unit, unit_attrs, volume=nil, issue=nil)
   return {
-    display: attrs['magazine_layout'] ? 'splashy' : 'simple',
-    issue: getIssue(id)
+    display: unit_attrs['magazine_layout'] ? 'magazine' : 'simple',
+    issue: getIssue(unit.id, volume, issue),
+    issues: Issue.where(:unit_id => unit.id).order(Sequel.desc(:pub_date)).to_hash(:id).map{|id, issue|
+      h = issue.to_hash
+      h[:attrs] and h[:attrs] = JSON.parse(h[:attrs])
+      h
+    }
   }
 end
 
-def getIssue(id)
-  issue1 = Issue.where(:unit_id => id).order(Sequel.desc(:pub_date)).first
-  return nil if issue1.nil?
-  issue = issue1.values
-  issue[:attrs] and issue[:attrs] = JSON.parse(issue[:attrs])
+def isJournalIssue?(unit_id, volume, issue)
+  !!Issue.first(:unit_id => unit_id, :volume => volume, :issue => issue)
+end
+
+def getIssue(id, volume=nil, issue=nil)
+  if volume.nil?  # Landing page (most recent journal)
+    issue = Issue.where(:unit_id => id).order(Sequel.desc(:pub_date)).first
+  else
+    issue = Issue.first(:unit_id => id, :volume => volume, :issue => issue)
+  end
+  return nil if issue.nil?
+  issue = issue.values
+  if issue[:attrs]
+    attrs = JSON.parse(issue[:attrs])
+    issue[:title] = attrs['title']
+    issue[:description] = attrs['description'] 
+    issue[:cover] = attrs['cover'] 
+  end
   issue[:sections] = Section.where(:issue_id => issue[:id]).order(:ordering).all
 
   issue[:sections].map! do |section|
@@ -177,8 +200,6 @@ def getIssue(id)
   end
   return issue
 end
-
-
 
 def unitSearch(params, unit)
   # ToDo: Right now, series landing page is the only unit type using this block. Clean this up
