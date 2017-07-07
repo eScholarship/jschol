@@ -317,6 +317,9 @@ def extent(id, type)
     aws_params[:filter_query] = "(term field=campuses '#{id}')"
   elsif (type == 'series' || type == 'monograph_series' || type == 'seminar_series') then 
     aws_params[:filter_query] = "(term field=series '#{id}')"
+  elsif (type == 'root') then 
+    # no extent for now
+    return {}
   else 
     raise("Not a valid unit type.")
   end

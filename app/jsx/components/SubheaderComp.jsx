@@ -15,7 +15,7 @@ class SubheaderComp extends React.Component {
       url: PropTypes.string.isRequired,
       width: PropTypes.number.isRequired,
       height: PropTypes.number.isRequired
-    }).isRequired,
+    }),
     unit: PropTypes.shape({
       id: PropTypes.string.isRequired,
       name: PropTypes.string.isRequired,
