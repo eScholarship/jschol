@@ -1,6 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Link } from 'react-router'
+import _ from 'lodash'
 import WysiwygEditorComp from '../components/WysiwygEditorComp.jsx'
 
 class EditableSidebarContentComp extends React.Component
