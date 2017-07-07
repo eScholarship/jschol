@@ -34,8 +34,8 @@ class TestQuick < Test::Unit::TestCase
   end
 
   def test_static
-    html = fetchAndStrip("http://localhost:4001/static/root/aboutEschol")
-    assert_match /About eScholarship/, html
+    html = fetchAndStrip("http://localhost:4001/uc/uclalaw/policyStatement")
+    assert_match /School of Law only publishes materials about/, html
   end
 
   def test_browse_campuses

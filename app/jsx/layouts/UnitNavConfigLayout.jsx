@@ -1,7 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Link } from 'react-router'
-import EditableComp from '../components/EditableComp.jsx'
 import WysiwygEditorComp from '../components/WysiwygEditorComp.jsx'
 
 class EditableNavContentComp extends React.Component
