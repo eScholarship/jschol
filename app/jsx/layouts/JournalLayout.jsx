@@ -54,53 +54,9 @@ class SectionComp extends React.Component {
   }
 }
 
-// Issue SIMPLE
-class IssueSimpleComp extends React.Component {
+class IssueComp extends React.Component {
   static PropTypes = {
-    issue: PropTypes.shape({
-      id: PropTypes.number,
-      unit_id: PropTypes.string,
-      volume: PropTypes.string,
-      issue: PropTypes.string,
-      pub_date: PropTypes.string,
-      title: PropTypes.string,
-      description: PropTypes.string,
-      cover: PropTypes.shape({
-        asset_id: PropTypes.string.isRequired,
-        width: PropTypes.number.isRequired,
-        height: PropTypes.number.isRequired,
-        image_type: PropTypes.string.isRequired
-      }),
-      sections: PropTypes.array,    //See SectionComp prop types directly above 
-    }).isRequired,
-    issues: PropTypes.array.isRequired   // Array of issue hashes
-  }
-
-  render() {
-    let pi = this.props.issue,
-        year = pi.pub_date.match(/\d{4}/),
-        issueCurrent = [pi.unit_id, pi.volume, pi.issue, year]
-    return (
-      <section className="o-columnbox1">
-        {/* ToDo: Enhance ItemActioncComp for journal issue */}
-        <ItemActionsComp />
-        <div className="c-pub">
-          <VolumeSelector vip={issueCurrent} issues={this.props.issues} />
-          {/* No cover page image for simple layout */}
-        {pi.title &&
-          <div className="c-pub__subheading">{pi.title}</div> }
-        {pi.description &&
-          <p>{pi.description}</p> }
-        </div>
-        {pi.sections.map(section => <SectionComp key={section.name} section={section}/>)}
-      </section>
-    )
-  }
-}
-
-// Issue 2-column magazine layout 
-class IssueMagazineComp extends React.Component {
-  static PropTypes = {
+    display: PropTypes.string.isRequired,
     issue: PropTypes.shape({
       id: PropTypes.number,
       unit_id: PropTypes.string,
@@ -127,20 +83,27 @@ class IssueMagazineComp extends React.Component {
     return (
       <section className="o-columnbox1">
         {/* ToDo: Enhance ItemActioncComp for journal issue */}
-        <ItemActionsComp />
+        {/* <IssueActionsComp_preJoel id={p.id}
+                         status={p.status}
+                         content_type={p.content_type}
+                         supp_files={p.attrs.supp_files}
+                         buy_link={p.attrs.buy_link} /> */}
         <div className="c-pub">
           <VolumeSelector vip={issueCurrent} issues={this.props.issues} />
-        {pi.cover &&
-          <img className="c-scholworks__article-preview" src={"/assets/"+pi.cover.asset_id} width="150" height="200" alt="Issue cover image" />}
+        {this.props.display=="magazine" && pi.cover &&
+          <img className="c-scholworks__article-preview" src={"/assets/"+pi.cover.asset_id} width="150" height="200" alt="Issue cover image" /> }
         {pi.title &&
           <div className="c-pub__subheading">{pi.title}</div> }
         {pi.description &&
           <p>{pi.description}</p> }
         </div>
-        {/* <h3 className="o-heading3">Table of Contents</h3> */}
+      {this.props.display=="magazine" ?
         <div className="o-dividecontent2x--ruled">
           {pi.sections.map(section => <SectionComp key={section.name} section={section}/>)}
         </div>
+      :
+        (pi.sections.map(section => <SectionComp key={section.name} section={section}/>))
+      }
       </section>
     )
   }
@@ -173,9 +136,7 @@ class JournalLayout extends React.Component {
         <div className="c-columns">
           <main id="maincontent">
           {this.props.data.issue ?
-            data.display=='magazine' ?
-              <IssueMagazineComp issue={data.issue} issues={data.issues} />
-            : <IssueSimpleComp issue={data.issue} issues={data.issues} />
+            <IssueComp issue={data.issue} issues={data.issues} display={data.display} />
           :
             <p>Currently no issues to display     {/* ToDo: Bring in issue-specific about text here? */}
             </p>

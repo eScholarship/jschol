@@ -101,7 +101,7 @@ class UnitPage extends PageBase
       contentLayout = (<UnitStaticPageLayout unit={data.unit} data={data.content} sidebar={sidebar} fetchPageData={this.fetchPageData}/>)
     } else {
       {/* Temporary, for testing */}
-      data.marquee.carousel = true
+      data.marquee.carousel = true 
       data.content.display = 'magazine'
       if (data.unit.type === 'oru') {
         contentLayout = (<DepartmentLayout unit={data.unit} data={data.content} sidebar={sidebar} marquee={data.marquee}/>)

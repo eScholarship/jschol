@@ -26,19 +26,25 @@ def getNavBar(unitID, pageName, navItems)
   return nil
 end
 
-# Generate the last part of the breadcrumb for a static page within a unit
-def getPageBreadcrumb(unit, pageName)
-  (!pageName || pageName == "home" || pageName == "campus_landing") and return []
-  pageName == "search" and return [{ name: "Search", id: unit.id + ":" + pageName}]
-  pageName == "profile" and return [{ name: "Profile", id: unit.id + ":" + pageName}]
-  pageName == "sidebar" and return [{ name: "Sidebars", id: unit.id + ":" + pageName}]
-  p = Page.where(unit_id: unit.id, slug: pageName).first
-  p or halt(404, "Unknown page #{pageName} in #{unit.id}")
-  return [{ name: p[:name], id: unit.id + ":" + pageName, url: "/#{unit.id}/#{pageName}" }]
+# Generate the last part of the breadcrumb for a static page or journal issue
+def getPageBreadcrumb(unit, pageName, issue=nil)
+  ((!pageName and !issue) || pageName == "home") and return []
+  if issue
+   return [{name: "Volume #{issue[:volume]}, Issue #{issue[:issue]}",
+               id: issue[:unit_id] + ":" + issue[:volume] + ":" + issue[:issue],
+              url: "/uc/#{issue[:unit_id]}/#{issue[:volume]}/#{issue[:issue]}"}]
+  else
+    pageName == "search" and return [{ name: "Search", id: unit.id + ":" + pageName}]
+    pageName == "profile" and return [{ name: "Profile", id: unit.id + ":" + pageName}]
+    pageName == "sidebar" and return [{ name: "Sidebars", id: unit.id + ":" + pageName}]
+    p = Page.where(unit_id: unit.id, slug: pageName).first
+    p or halt(404, "Unknown page #{pageName} in #{unit.id}")
+    return [{ name: p[:name], id: unit.id + ":" + pageName, url: "/#{unit.id}/#{pageName}" }]
+  end
 end
 
 # Generate breadcrumb and header content for Unit-branded pages
-def getUnitHeader(unit, pageName=nil, attrs=nil)
+def getUnitHeader(unit, pageName=nil, journalIssue=nil, attrs=nil)
   if !attrs then attrs = JSON.parse(unit[:attrs]) end
   r = UnitHier.where(unit_id: unit.id).where(ancestor_unit: $activeCampuses.keys).first
   campusID = (unit.type=='campus') ? unit.id : r ? r.ancestor_unit : 'root'
@@ -54,7 +60,7 @@ def getUnitHeader(unit, pageName=nil, attrs=nil)
       :rss => attrs['rss']
     },
     :breadcrumb => (unit.type!='campus') ?
-      traverseHierarchyUp([{name: unit.name, id: unit.id, url: "/uc/" + unit.id}]) + getPageBreadcrumb(unit, pageName)
+      traverseHierarchyUp([{name: unit.name, id: unit.id, url: "/uc/" + unit.id}]) + getPageBreadcrumb(unit, pageName, journalIssue)
       : getPageBreadcrumb(unit, pageName)
   }
 

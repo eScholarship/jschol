@@ -485,7 +485,7 @@ get "/api/browse/:browse_type/:campusID" do |browse_type, campusID|
     :browse_type => browse_type,
     :pageTitle => pageTitle,
     :unit => unit ? unit.values.reject { |k,v| k==:attrs } : nil,
-    :header => unit ? getUnitHeader(unit, nil, attrs) : getGlobalHeader,
+    :header => unit ? getUnitHeader(unit, nil, nil, attrs) : getGlobalHeader,
     :campusUnits => cu ? cu.compact : nil,
     :campusJournals => cj,
     :campusJournalsArchived => cja
@@ -518,7 +518,7 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
 
   attrs = JSON.parse(unit[:attrs])
   pageName = params[:pageName]
-  isIssue = false 
+  issueData = nil
   if pageName
     ext = nil
     begin
@@ -534,6 +534,11 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
       q = nil
       q = CGI::parse(request.query_string) if pageName == "search"
       pageData[:content] = getUnitPageContent(unit, attrs, q)
+      if unit.type == 'journal'   # need this information for building header breadcrumb
+        issueData = {'unit_id': params[:unitID],
+                     'volume': pageData[:content][:issue][:volume],
+                     'issue': pageData[:content][:issue][:issue]}
+      end
     elsif pageName == 'profile'
       pageData[:content] = getUnitProfile(unit, attrs)
     elsif pageName == 'nav'
@@ -541,14 +546,16 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
     elsif pageName == 'sidebar'
       pageData[:content] = getUnitSidebarWidget(unit, params[:subPage])
     elsif isJournalIssue?(unit.id, params[:pageName], params[:subPage])
-      # A specific issue, otherwise get journal landing through normal channel (getUnitPageContent) 
-      isIssue = true
+      # A specific issue, otherwise you get journal landing (through getUnitPageContent method above)
+      issueData = {'unit_id': params[:unitID], 'volume': params[:pageName], 'issue': params[:subPage]}
       pageData[:content] = getJournalIssueData(unit, attrs, params[:pageName], params[:subPage])
     else
       pageData[:content] = getUnitStaticPage(unit, attrs, pageName)
     end
-    pageData[:header] = getUnitHeader(unit, (pageName =~ /^(nav|sidebar)/ or isIssue) ? nil : pageName, attrs)
-    pageData[:marquee] = getUnitMarquee(unit, attrs) if (["home", "search"].include? pageName or isIssue)
+    pageData[:header] = getUnitHeader(unit,
+                                      (pageName =~ /^(nav|sidebar)/ or issueData) ? nil : pageName,
+                                      issueData, attrs)
+    pageData[:marquee] = getUnitMarquee(unit, attrs) if (["home", "search"].include? pageName or issueData)
   else
     #public API data
     pageData = {
@@ -588,20 +595,19 @@ get "/api/item/:shortArk" do |shortArk|
         :attrs => attrs,
         :appearsIn => unitIDs ? unitIDs.map { |unitID| {"id" => unitID, "name" => Unit[unitID].name} }
                               : nil,
-        :header => unit ? getUnitHeader(unit) : nil,
         :unit => unit ? unit.values.reject { |k,v| k==:attrs } : nil
       }
 
-      # TODO: at some point we'll want to modify the breadcrumb code to include CMS pages and issues
-      # in a better way - I don't think this belongs here in the item-level code.
-      # Unit type dependency also affects citation
-      if unit && unit.type == 'journal'
-        issue_id = Item.join(:sections, :id => :section).filter(:items__id => id).map(:issue_id)[0]
-        volume, issue = Section.join(:issues, :id => issue_id).map([:volume, :issue])[0]
-        body[:header][:breadcrumb] << {name: "Volume #{volume}, Issue #{issue}",
-          url: "/uc/#{unitIDs[0]}/#{volume}/#{issue}"}
-        body[:citation][:volume] = volume
-        body[:citation][:issue] = issue
+      if unit
+        if unit.type != 'journal'
+          body[:header] = getUnitHeader(unit)
+        else 
+          issue_id = Item.join(:sections, :id => :section).filter(:items__id => id).map(:issue_id)[0]
+          unit_id, volume, issue = Section.join(:issues, :id => issue_id).map([:unit_id, :volume, :issue])[0]
+          body[:header] = getUnitHeader(unit, nil, {'unit_id': unit_id, 'volume': volume, 'issue': issue}, attrs)
+          body[:citation][:volume] = volume
+          body[:citation][:issue] = issue
+        end
       end
 
       return body.to_json
