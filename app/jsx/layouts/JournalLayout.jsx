@@ -5,7 +5,7 @@ import { Link, browserHistory } from 'react-router'
 import MarqueeComp from '../components/MarqueeComp.jsx'
 import JournalInfoComp from '../components/JournalInfoComp.jsx'
 import ScholWorksComp from '../components/ScholWorksComp.jsx'
-import ItemActionsComp from '../components/ItemActionsComp.jsx'
+import IssueActionsComp_preJoel from '../components/IssueActionsComp_preJoel.jsx'
 
 class VolumeSelector extends React.Component {
   static PropTypes = {
@@ -82,20 +82,25 @@ class IssueComp extends React.Component {
         issueCurrent = [pi.unit_id, pi.volume, pi.issue, year]
     return (
       <section className="o-columnbox1">
-        {/* ToDo: Enhance ItemActioncComp for journal issue */}
-        {/* <IssueActionsComp_preJoel id={p.id}
-                         status={p.status}
-                         content_type={p.content_type}
-                         supp_files={p.attrs.supp_files}
-                         buy_link={p.attrs.buy_link} /> */}
+        <IssueActionsComp_preJoel unit_id={pi.unit_id} />
+        {/*              articles={}
+                         buy_link={} */}
         <div className="c-pub">
           <VolumeSelector vip={issueCurrent} issues={this.props.issues} />
-        {this.props.display=="magazine" && pi.cover &&
-          <img className="c-scholworks__article-preview" src={"/assets/"+pi.cover.asset_id} width="150" height="200" alt="Issue cover image" /> }
-        {pi.title &&
-          <div className="c-pub__subheading">{pi.title}</div> }
-        {pi.description &&
-          <p>{pi.description}</p> }
+        {this.props.display=="magazine" &&
+          <div className="c-pubpreview">
+          {pi.cover &&
+            <a className="c-pubpreview__img" href=""><img className="c-scholworks__article-preview" src={"/assets/"+pi.cover.asset_id} width="150" height="200" alt="Issue cover image" /></a> }
+          {pi.title &&
+            <h2 className="c-pub__subheading">{pi.title}</h2> }
+          {pi.description &&
+            <p>{pi.description}</p> }
+          </div>
+        } 
+        {this.props.display!="magazine" && pi.title &&
+          <h2 className="c-pub__subheading">{pi.title}</h2> }
+        {this.props.display!="magazine" && pi.description &&
+          (<p>{pi.description}</p>) }
         </div>
       {this.props.display=="magazine" ?
         <div className="o-dividecontent2x--ruled">
@@ -138,8 +143,10 @@ class JournalLayout extends React.Component {
           {this.props.data.issue ?
             <IssueComp issue={data.issue} issues={data.issues} display={data.display} />
           :
-            <p>Currently no issues to display     {/* ToDo: Bring in issue-specific about text here? */}
-            </p>
+            <section className="o-columnbox1">
+              <p>Currently no issues to display     {/* ToDo: Bring in issue-specific about text here? */}
+              <br/> <br/> <br/> <br/> </p>
+            </section>
           }
           </main>
           <aside>

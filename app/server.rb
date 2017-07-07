@@ -534,7 +534,8 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
       q = nil
       q = CGI::parse(request.query_string) if pageName == "search"
       pageData[:content] = getUnitPageContent(unit, attrs, q)
-      if unit.type == 'journal'   # need this information for building header breadcrumb
+      if unit.type == 'journal' and pageData[:content][:issue]
+        # need this information for building header breadcrumb
         issueData = {'unit_id': params[:unitID],
                      'volume': pageData[:content][:issue][:volume],
                      'issue': pageData[:content][:issue][:issue]}
