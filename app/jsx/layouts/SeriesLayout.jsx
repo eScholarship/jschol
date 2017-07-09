@@ -82,6 +82,9 @@ class SeriesLayout extends React.Component {
           {this.props.marquee.about &&
             <p dangerouslySetInnerHTML={{__html: this.props.marquee.about}}/>
           }
+          {this.props.data.count == 0 ? 
+            <p><hr/><br/><br/>There are currently no publications in this series &quot;{this.props.unit.name}&quot;.</p>
+           :
             <Form id={formName} to={"/uc/"+this.props.unit.id+"/search"} method="GET" onSubmit={this.handleSubmit}>
             {(this.props.data.count > 2) &&
               <SortPaginationComp formName={formName} formButton={formButton} query={data.query} count={data.count}/>
@@ -98,6 +101,7 @@ class SeriesLayout extends React.Component {
                   But hide it with display:none so user doesn't see it. */}
               <button type="submit" id={formButton} style={{display: "none"}}>Search</button>
             </Form>
+          }
           </section>
         </main>
         <aside>

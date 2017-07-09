@@ -17,7 +17,7 @@ class IssueActionsComp_preJoel extends React.Component {
         <div className="o-download">
           <NotYetLink element="button" className="o-button__8">Download Issue</NotYetLink>
         </div>
-        <ShareComp type="uc" id={this.props.unit_id} />
+        <ShareComp type="unit" id={this.props.unit_id} />
       </div>
     )
   }
