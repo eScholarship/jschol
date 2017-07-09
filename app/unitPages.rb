@@ -155,9 +155,10 @@ end
 
 # Landing page data does not pass arguments volume/issue. It just gets most recent journal
 def getJournalIssueData(unit, unit_attrs, volume=nil, issue=nil)
+  display = unit_attrs['magazine_layout'] ? 'magazine' : 'simple'
   return {
-    display: unit_attrs['magazine_layout'] ? 'magazine' : 'simple',
-    issue: getIssue(unit.id, volume, issue),
+    display: display,
+    issue: getIssue(unit.id, display, volume, issue),
     issues: Issue.where(:unit_id => unit.id).order(Sequel.desc(:pub_date)).to_hash(:id).map{|id, issue|
       h = issue.to_hash
       h[:attrs] and h[:attrs] = JSON.parse(h[:attrs])
@@ -170,7 +171,7 @@ def isJournalIssue?(unit_id, volume, issue)
   !!Issue.first(:unit_id => unit_id, :volume => volume, :issue => issue)
 end
 
-def getIssue(id, volume=nil, issue=nil)
+def getIssue(id, display, volume=nil, issue=nil)
   if volume.nil?  # Landing page (most recent journal)
     issue = Issue.where(:unit_id => id).order(Sequel.desc(:pub_date)).first
   else
@@ -193,8 +194,9 @@ def getIssue(id, volume=nil, issue=nil)
     authors = ItemAuthors.where(item_id: itemIds).order(:ordering).to_hash_groups(:item_id)
 
     itemData = {items: items, authors: authors}
-
-    section[:articles] = itemResultData(itemIds, itemData)
+    # Additional data field needed ontop of default
+    resultsListFields = (display != "magazine") ? ['thumbnail'] : []
+    section[:articles] = itemResultData(itemIds, itemData, resultsListFields)
 
     next section
   end

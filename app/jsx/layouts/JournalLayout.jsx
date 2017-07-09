@@ -5,6 +5,7 @@ import { Link, browserHistory } from 'react-router'
 import MarqueeComp from '../components/MarqueeComp.jsx'
 import JournalInfoComp from '../components/JournalInfoComp.jsx'
 import ScholWorksComp from '../components/ScholWorksComp.jsx'
+import PubPreviewComp from '../components/PubPreviewComp.jsx'
 import IssueActionsComp_preJoel from '../components/IssueActionsComp_preJoel.jsx'
 
 class VolumeSelector extends React.Component {
@@ -48,7 +49,11 @@ class SectionComp extends React.Component {
     return (
       <div>
         <h3 className="o-heading3">{this.props.section.name}</h3>
-        {this.props.section.articles.map(article => <ScholWorksComp key={article.id} result={article}/>)}
+        {this.props.display == "magazine" ?
+          this.props.section.articles.map(article => <ScholWorksComp key={article.id} result={article}/>)
+        :
+          this.props.section.articles.map(article => <PubPreviewComp key={article.id} result={article}/>)
+        }
       </div>
     )
   }
@@ -90,11 +95,12 @@ class IssueComp extends React.Component {
         {this.props.display=="magazine" &&
           <div className="c-pubpreview">
           {pi.cover &&
-            <a className="c-pubpreview__img" href=""><img className="c-scholworks__article-preview" src={"/assets/"+pi.cover.asset_id} width="150" height="200" alt="Issue cover image" /></a> }
-          {pi.title &&
-            <h2 className="c-pub__subheading">{pi.title}</h2> }
-          {pi.description &&
-            <p>{pi.description}</p> }
+            <div className="c-pubpreview__img"><img className="c-scholworks__article-preview" src={"/assets/"+pi.cover.asset_id} width="150" height="200" alt="Issue cover image" /></div> }
+            <div className="c-pub">
+            {pi.title &&
+              <h2 className="c-pub__subheading">{pi.title}</h2> }
+              <p>{pi.description}</p>
+            </div>
           </div>
         } 
         {this.props.display!="magazine" && pi.title &&
@@ -104,10 +110,10 @@ class IssueComp extends React.Component {
         </div>
       {this.props.display=="magazine" ?
         <div className="o-dividecontent2x--ruled">
-          {pi.sections.map(section => <SectionComp key={section.name} section={section}/>)}
+          {pi.sections.map(section => <SectionComp key={section.name} section={section} display={this.props.display} />)}
         </div>
       :
-        (pi.sections.map(section => <SectionComp key={section.name} section={section}/>))
+        (pi.sections.map(section => <SectionComp key={section.name} section={section} display={this.props.display} />))
       }
       </section>
     )
@@ -144,7 +150,7 @@ class JournalLayout extends React.Component {
             <IssueComp issue={data.issue} issues={data.issues} display={data.display} />
           :
             <section className="o-columnbox1">
-              <p>Currently no issues to display     {/* ToDo: Bring in issue-specific about text here? */}
+              <p>Currently no issues to display
               <br/> <br/> <br/> <br/> </p>
             </section>
           }
