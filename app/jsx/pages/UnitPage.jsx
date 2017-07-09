@@ -91,7 +91,7 @@ class UnitPage extends PageBase
     } else {
       {/* Temporary, for testing */}
       data.marquee.carousel = false 
-      data.content.display = 'simple'
+      // data.content.display = 'simple'
       if (data.unit.type === 'oru') {
         contentLayout = (<DepartmentLayout unit={data.unit} data={data.content} sidebar={sidebar} marquee={data.marquee}/>)
       } else if (data.unit.type == 'campus') {

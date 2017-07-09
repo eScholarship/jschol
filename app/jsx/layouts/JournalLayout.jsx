@@ -74,7 +74,8 @@ class IssueComp extends React.Component {
         asset_id: PropTypes.string.isRequired,
         width: PropTypes.number.isRequired,
         height: PropTypes.number.isRequired,
-        image_type: PropTypes.string.isRequired
+        image_type: PropTypes.string.isRequired,
+        caption: PropTypes.string
       }),
       sections: PropTypes.array,    //See SectionComp prop types directly above 
     }).isRequired,
