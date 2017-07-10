@@ -2,7 +2,7 @@
 
 # This script converts data from old eScholarship into the new eschol5 database.
 #
-# The "--units" mode converts the contents of allStruct.xml and the
+# The "--units" mode converts the contents of allStruct-eschol5.xml and the
 # various brand files into the unit/unitHier/etc tables. It is
 # built to be fully incremental.
 #
@@ -122,6 +122,8 @@ $nUnchanged = 0
 $nProcessed = 0
 $nTotal = 0
 
+$scrubCount = 0
+
 $discTbl = {"1540" => "Life Sciences",
             "3566" => "Medicine and Health Sciences",
             "3864" => "Physical Sciences and Mathematics",
@@ -187,7 +189,6 @@ end
 def linkUnit(id, childMap, done)
   childMap[id].each_with_index { |child, idx|
     if !done.include?([id, child])
-      #puts "linkUnit: id=#{id} child=#{child}"
       UnitHier.create(
         :ancestor_unit => id,
         :unit_id => child,
@@ -596,27 +597,31 @@ def convertUnits(el, parentMap, childMap, allIds)
   #puts "name=#{el.name} id=#{id.inspect} name=#{el[:label].inspect}"
 
   # Create or update the main database record
-  if el.name != "ref"
-    puts "Converting unit #{id}."
-    unitType = id=="root" ? "root" : id=="lbnl" ? "campus" : el[:type]
-    Unit.update_or_replace(id,
-      type:      unitType,
-      name:      id=="root" ? "eScholarship" : el[:label],
-      status:    el[:directSubmit] == "moribund" ? "archived" :
-                 el[:hide] == "eschol" ? "hidden" :
-                 "active"
-    )
+  if el.name != "ptr"
+    if id == "root" && Unit.where(id: "root").first
+      puts "Skipping existing root unit."
+    else
+      puts "Converting unit #{id}."
+      unitType = id=="root" ? "root" : el[:type]
+      Unit.update_or_replace(id,
+        type:      unitType,
+        name:      id=="root" ? "eScholarship" : el[:label],
+        status:    el[:directSubmit] == "moribund" ? "archived" :
+                   el[:hide] == "eschol" ? "hidden" :
+                   "active"
+      )
 
-    # We can't totally fill in the brand attributes when initially inserting the record,
-    # so do it as an update after inserting.
-    attrs = {}
-    el[:directSubmit] and attrs[:directSubmit] = el[:directSubmit]
-    el[:hide]         and attrs[:hide]         = el[:hide]
-    attrs.merge!(convertUnitBrand(id, unitType))
-    attrs[:magazine_layout] = [true, false].sample
-    Unit[id].update(attrs: JSON.generate(attrs))
+      # We can't totally fill in the brand attributes when initially inserting the record,
+      # so do it as an update after inserting.
+      attrs = {}
+      el[:directSubmit] and attrs[:directSubmit] = el[:directSubmit]
+      el[:hide]         and attrs[:hide]         = el[:hide]
+      attrs.merge!(convertUnitBrand(id, unitType))
+      attrs[:magazine_layout] = [true, false].sample
+      Unit[id].update(attrs: JSON.generate(attrs))
 
-    addDefaultWidgets(id, unitType)
+      addDefaultWidgets(id, unitType)
+    end
   end
 
   # Now recursively process the child units
@@ -636,11 +641,11 @@ def convertUnits(el, parentMap, childMap, allIds)
 
   # After traversing the whole thing, it's safe to form all the hierarchy links
   if el.name == "allStruct"
-    puts "Linking units."
-    linkUnit("root", childMap, Set.new)
-
     # Delete extraneous units from prior conversions
     deleteExtraUnits(allIds)
+
+    puts "Linking units."
+    linkUnit("root", childMap, Set.new)
   end
 end
 
@@ -1401,8 +1406,14 @@ def updateIssueAndSection(data)
 end
 
 ###################################################################################################
-def updateDbItem(data)
+def scrubSectionsAndIssues()
+  # Remove orphaned sections and issues (can happen when items change)
+  DB.run("delete from sections where id not in (select distinct section from items where section is not null)")
+  DB.run("delete from issues where id not in (select distinct issue_id from sections where issue_id is not null)")
+end
 
+###################################################################################################
+def updateDbItem(data)
   itemID = data[:dbItem][:id]
 
   # Delete any existing data related to this item (except counts which can stay)
@@ -1446,6 +1457,13 @@ def updateDbItem(data)
       }
     end
   }
+
+  # Periodically scrub out orphaned sections and issues
+  $scrubCount += 1
+  if $scrubCount > 5
+    scrubSectionsAndIssues()
+    $scrubCount = 0
+  end
 end
 
 ###################################################################################################
@@ -1502,7 +1520,25 @@ def deleteExtraUnits(allIds)
   (dbUnits - allIds).each { |id|
     puts "Deleting extra unit: #{id}"
     DB.transaction do
+      items = UnitItem.where(unit_id: id).map { |link| link.item_id }
+      UnitItem.where(unit_id: id).delete
+      items.each { |itemID|
+        if UnitItem.where(item_id: itemID).empty?
+          ItemAuthor.where(item_id: itemID).delete
+          Item[itemID].delete
+        end
+      }
+
+      Issue.where(unit_id: id).each { |issue|
+        Section.where(issue_id: issue.id).delete
+      }
+      Issue.where(unit_id: id).delete
+
+      Widget.where(unit_id: id).delete
+
+      UnitHier.where(ancestor_unit: id).delete
       UnitHier.where(unit_id: id).delete
+
       Unit[id].delete
     end
   }
@@ -1518,7 +1554,7 @@ def convertAllUnits
   # Load allStruct and traverse it. This will create Unit and Unit_hier records for all units,
   # and delete any extraneous old ones.
   DB.transaction do
-    allStructPath = "/apps/eschol/erep/xtf/style/textIndexer/mapping/allStruct.xml"
+    allStructPath = "/apps/eschol/erep/xtf/style/textIndexer/mapping/allStruct-eschol5.xml"
     open(allStructPath, "r") { |io|
       convertUnits(Nokogiri::XML(io, &:noblanks).root, {}, {}, Set.new)
     }
@@ -1533,7 +1569,6 @@ def convertAllItems(arks)
 
   # Build a list of all valid units
   $allUnits = Unit.map { |unit| [unit.id, unit] }.to_h
-  $allUnits['lbnl'].type = 'campus'
 
   # Build a cache of unit ancestors
   $unitAncestors = Hash.new { |h,k| h[k] = [] }
@@ -1573,6 +1608,8 @@ def convertAllItems(arks)
   prefilterThread.join
   indexThread.join
   batchThread.join
+
+  scrubSectionsAndIssues() # one final scrub
 end
 
 ###################################################################################################
