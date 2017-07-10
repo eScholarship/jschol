@@ -664,14 +664,16 @@ end
 # Social Media Links  for type = (item|unit)
 get "/api/mediaLink/:type/:id/:service" do |type, id, service| # service e.g. facebook, google, etc.
   content_type :json
-  sharedLink = "http://www.escholarship.org/" + type + "/" + id 
-  item = ''
+  item = ''; path = ''
   if (type == "item")
     item = Item["qt"+id]
     title = item.title
+    path = 'uc/item'
   else
     title = $unitsHash[id].name
+    path = 'uc'
   end
+  sharedLink = "http://www.escholarship.org/" + path + "/" + id 
   case service
     when "facebook"
       url = "http://www.facebook.com/sharer.php?u=" + sharedLink
