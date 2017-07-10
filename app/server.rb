@@ -18,7 +18,6 @@ require 'pp'
 require 'sanitize'
 require 'sequel'
 require 'sinatra'
-require 'sinatra/streaming'
 require 'yaml'
 require 'socksify'
 require 'socket'
@@ -31,20 +30,6 @@ def puts(*args)
     super(*args)
     STDOUT.flush
   }
-end
-
-# Moneky patch for nasty problem in Sinatra contrib library "Streaming": it calls a thing
-# called "errback" that doesn't exist.
-module Sinatra
-  module Streaming
-    module Stream
-      def self.extended(obj)
-        obj.closed, obj.lineno, obj.pos = false, 0, 0
-        obj.callback { obj.closed = true }
-        #THISISTHEFIX# obj.errback  { obj.closed = true }
-      end
-    end
-  end
 end
 
 # Make it clear where the new session starts in the log file.
@@ -285,7 +270,7 @@ def sanitizeFilePath(path)
 end
 
 ###################################################################################################
-class Fetcher
+class HttpFetcher
   def start(uri)
     # We have to fetch the file in a different thread, because it needs to keep the HTTP request
     # open in that thread while we return the status code to Sinatra. Then the remaining data can
@@ -308,7 +293,7 @@ class Fetcher
           end
         end
       rescue Exception => e
-        puts "Fetch exception: #{e}"
+        puts "HTTP fetch exception: #{e}"
       ensure
         @queue << nil  # mark end-of-data
       end
@@ -320,15 +305,59 @@ class Fetcher
   end
 
   # Now we're ready to set the content type and return the contents in streaming fashion.
-  def copyTo(out)
+  def each
     begin
       while true
         data = @queue.pop_with_timeout(10)
         data.nil? and break
-        out.write(data)
+        data.length > 0 and yield data
       end
     rescue Exception => e
-      puts "Warning: problem while streaming content: #{e.message}"
+      puts "Warning: problem while streaming HTTP content: #{e.message}"
+      raise
+    end
+  end
+end
+
+###################################################################################################
+# The 'streaming' library from sinatra-contrib seems to be unreliable with recent versions of
+# Thin/Rack, so let's just roll our own so we can understand the control flow. Theirs is crazy.
+class S3Fetcher
+  class S3Passer
+    def initialize(queue)
+      @queue = queue
+    end
+    def write(chunk)
+      @queue << chunk
+    end
+    def close()
+      @queue << nil
+    end
+  end
+
+  def initialize(s3Obj)
+    @queue = QueueWithTimeout.new
+    Thread.new do
+      begin
+        s3Obj.get(response_target: S3Passer.new(@queue))
+      rescue Exception => e
+        puts "S3 fetch exception: #{e}"
+      ensure
+        @queue << nil  # mark end-of-data
+      end
+    end
+  end
+
+  def each
+    begin
+      while true
+        data = @queue.pop_with_timeout(10)
+        data.nil? and break
+        data.length > 0 and yield data
+      end
+    rescue Exception => e
+      puts "Warning: problem while streaming S3 content: #{e.message}"
+      raise
     end
   end
 end
@@ -340,7 +369,7 @@ get %r{/assets/([0-9a-f]{64})} do |hash|
   obj.exists? && obj.metadata["mime_type"] or halt(404)
   content_type obj.metadata["mime_type"]
   response.headers['Content-Length'] = obj.content_length.to_s
-  return stream { |out| obj.get(response_target: out) }
+  return [200, S3Fetcher.new(obj)]
 end
 
 ###################################################################################################
@@ -352,7 +381,7 @@ get "/content/:fullItemID/*" do |fullItemID, path|
   path = sanitizeFilePath(path)  # protect against attacks
 
   # Fetch the file from Merritt
-  fetcher = Fetcher.new
+  fetcher = HttpFetcher.new
   epath = URI::encode(path)
   code, msg = fetcher.start(URI("https://#{$mrtExpressConfig['host']}/dl/ark:/13030/#{fullItemID}/content/#{epath}"))
   code == 401 and raise("Error: mrtExpress credentials not recognized - check config/mrtExpress.yaml")
@@ -360,7 +389,7 @@ get "/content/:fullItemID/*" do |fullItemID, path|
   # Temporary fallback: if we can't find on Merritt, try the raw_data hack on pub-eschol-stg.
   # This is needed for ETDs, since we don't yet record their proper original Merritt location.
   if code != 200
-    fetcher = Fetcher.new
+    fetcher = HttpFetcher.new
     code2, msg2 = fetcher.start(URI("https://pub-eschol-stg.escholarship.org/raw_data/13030/pairtree_root/" +
                                     "#{fullItemID.scan(/../).join('/')}/#{fullItemID}/content/#{epath}"))
     code2 == 200 or halt(code, msg)
@@ -369,7 +398,7 @@ get "/content/:fullItemID/*" do |fullItemID, path|
   # Guess the content type by path for now, and stream the results (don't buffer the whole thing,
   # as some files are huge and would blow out our RAM).
   content_type MimeMagic.by_path(path)
-  return stream { |out| fetcher.copyTo(out) }
+  return [200, fetcher]
 end
 
 ###################################################################################################
