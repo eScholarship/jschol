@@ -424,7 +424,12 @@ end
 # Pages with no data
 get %r{/api/(home|notFound|logoutSuccess)} do
   content_type :json
-  return { :header => getGlobalHeader }.to_json
+  unit = $unitsHash['root']
+  body = {
+    :header => getGlobalHeader,
+    :unit => unit.values.reject{|k,v| k==:attrs},
+    :sidebar => getUnitSidebar(unit)
+  }.to_json
 end
 
 ###################################################################################################
@@ -440,8 +445,11 @@ get "/api/browse/campuses" do
     stats.push({"id"=>k, "name"=>v.values[:name], "type"=>v.values[:type], 
       "publications"=>pub_count, "units"=>unit_count, "journals"=>journal_count})
   end
+  unit = $unitsHash['root']
   body = {
     :header => getGlobalHeader,
+    :unit => unit.values.reject{|k,v| k==:attrs},
+    :sidebar => getUnitSidebar(unit),
     :browse_type => "campuses",
     :campusesStats => stats.select { |h| h['type']=="campus" },
     :affiliatedStats => stats.select { |h| h['type']=="oru" }
@@ -455,8 +463,11 @@ end
 get "/api/browse/journals" do 
   content_type :json
   journals = $campusJournals.sort_by{ |h| h[:name].downcase }
+  unit = $unitsHash['root']
   body = {
     :header => getGlobalHeader,
+    :unit => unit.values.reject{|k,v| k==:attrs},
+    :sidebar => getUnitSidebar(unit),
     :browse_type => "all_journals",
     :journals => journals.select{ |h| h[:status]!="archived" },
     :archived => journals.select{ |h| h[:status]=="archived" }
@@ -486,6 +497,7 @@ get "/api/browse/:browse_type/:campusID" do |browse_type, campusID|
     :pageTitle => pageTitle,
     :unit => unit ? unit.values.reject { |k,v| k==:attrs } : nil,
     :header => unit ? getUnitHeader(unit, nil, attrs) : getGlobalHeader,
+    :sidebar => getUnitSidebar(unit),
     :campusUnits => cu ? cu.compact : nil,
     :campusJournals => cj,
     :campusJournalsArchived => cja
@@ -513,7 +525,7 @@ end
 get "/api/unit/:unitID/:pageName/?:subPage?" do
   content_type :json
   unit = Unit[params[:unitID]]
-  unit or halt(404, "Unit not found")
+  unit or jsonHalt(404, "Unit not found")
 
   attrs = JSON.parse(unit[:attrs])
   pageName = params[:pageName]
@@ -522,7 +534,7 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
     begin
       ext = extent(unit.id, unit.type)
     rescue Exception => e
-      halt 404, "Error building page data:" + e.message
+      jsonHalt 404, "Error building page data:" + e.message
     end
     pageData = {
       unit: unit.values.reject{|k,v| k==:attrs}.merge(:extent => ext),
@@ -679,17 +691,7 @@ end
 # Helper methods
 
 def getGlobalHeader
-    return {
-   nav_bar: [
-     { id: 1, name: "About", sub_nav: [ { name: "TBD", url: "#" } ] },
-     { id: 2, name: "Campus Sites",
-       sub_nav: $activeCampuses.map { |k, v| { name: v.values[:name], url: "/uc/#{k}" } }
-     },
-     { id: 3, name: "UC Open Access", sub_nav: [ { name: "TBD", url: "#" } ] },
-     { id: 4, name: "eScholarship Publishing", url: "#" },
-   ]
-    # was: JSON.parse($unitsHash['root'][:attrs])['nav_bar']
-  }
+  return getUnitHeader($unitsHash['root'])
 end
 
 # Generate breadcrumb and header content for Browse or Static page

@@ -11,7 +11,6 @@ import BrowsePage from './pages/BrowsePage.jsx'
 import ItemPage from './pages/ItemPage.jsx'
 import UnitPage from './pages/UnitPage.jsx'
 import { SearchPage } from './pages/SearchPage.jsx';
-import StaticPage from './pages/StaticPage.jsx'
 import NotFoundPage from './pages/NotFoundPage.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import LoginSuccessPage from './pages/LoginSuccessPage.jsx'
@@ -44,7 +43,6 @@ const routes = (
     <Route path="/uc/:unitID/:pageName" component={UnitPage} />
     <Route path="/uc/:unitID/:pageName/**" component={UnitPage} />
     <Route path="/search" component={SearchPage} />
-    <Route path="/static/:unitID/:pageName" component={StaticPage} />
     <Route path="/login" component={LoginPage} />
     <Route path="/loginSuccess/**" component={LoginSuccessPage} />
     <Route path="/loginSuccess" component={LoginSuccessPage} />
