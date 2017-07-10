@@ -26,6 +26,10 @@
     font-size: 2.6vw;
   }
 
+  @include bp(screen4) {
+    font-size: 2.1em;
+  }
+
 }
 
 .c-campussearch__search {
@@ -39,6 +43,11 @@
     
     @include bp(screen2) {
       font-size: 1.2em;
+    }
+
+    @include bp(screen4) {
+      flex: 0 1 auto;
+      width: 23em;
     }
 
   }

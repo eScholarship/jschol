@@ -5,7 +5,7 @@ $statcarousel-heading-height: 1.1em;
 .c-statcarousel {
   @extend %statcarousel-flickity-customizations;
   margin-bottom: $spacing-md;
-  padding: $spacing-sm 2.5em;
+  padding: $spacing-sm 2.5em $spacing-md;
   background-color: $color-white;
   box-shadow: $box-shadow1;
 }
