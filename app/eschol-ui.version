@@ -320,4 +320,6 @@ As well as:
 
 Martin added all scss and image changes since last.
 As well as:
-
+  modified:   app/jsx/components/JournalCarouselComp.jsx
+  modified:   app/jsx/components/StatCarouselComp.jsx
+  modified:   app/jsx/objects/StatsObj.jsx

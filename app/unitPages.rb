@@ -8,7 +8,7 @@ end
 
 # Generate a link to an image in the S3 bucket
 def getLogoData(data)
-  data && data['asset_id'] && data['width'] && data['height'] or return nil
+  data && data['asset_id'] or return nil
   return { url: "/assets/#{data['asset_id']}", width: data['width'], height: data['height'] }
 end
 
