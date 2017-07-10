@@ -21,19 +21,19 @@ class CampusCarouselComp extends React.Component {
             {this.props.campusName}
           </h2>
           <div className="o-stat--item c-statcarousel__cell">
-            <b>99,999</b> Items
+            <a href="">99,999</a> Items
           </div>
           <div className="o-stat--view c-statcarousel__cell">
-            <b>999,999</b> Views
+            <a href="">999,999</a> Views
           </div>
           <div className="o-stat--passed c-statcarousel__cell">
-            <b>9,999</b> Items since UC OA Policy passed
+             <a href="">9,999</a> Items since UC OA Policy passed
           </div>
           <div className="o-stat--journals c-statcarousel__cell">
-            <b>99</b> eScholarship Journals
+             <a href="">99</a> eScholarship Journals
           </div>
           <div className="o-stat--units c-statcarousel__cell">
-            <b>999</b> Research Units
+             <a href="">999</a> Research Units
           </div>
         </div>
         <div className="c-statcarousel__section">
@@ -41,19 +41,19 @@ class CampusCarouselComp extends React.Component {
             All eScholarship
           </h2>
           <div className="o-stat--item c-statcarousel__cell">
-            <b>999,999</b> Items
+             <a href="">999,999</a> Items
           </div>
           <div className="o-stat--view c-statcarousel__cell">
-            <b>99,999,999</b> Views
+             <a href="">99,999,999</a> Views
           </div>
           <div className="o-stat--passed c-statcarousel__cell">
-            <b>99,999</b> Items since UC OA Policy passed
+             <a href="">99,999</a> Items since UC OA Policy passed
           </div>
           <div className="o-stat--journals c-statcarousel__cell">
-            <b>99</b> eScholarship Journals
+             <a href="">99</a> eScholarship Journals
           </div>
           <div className="o-stat--units c-statcarousel__cell">
-            <b>999</b> Research Units
+             <a href="">999</a> Research Units
           </div>
         </div>
       </CarouselComp>
