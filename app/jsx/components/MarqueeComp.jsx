@@ -6,6 +6,9 @@ import { Link } from 'react-router'
 
 class MarqueeComp extends React.Component {
   render() {
+    let about_block = this.props.marquee.about ?
+      <p dangerouslySetInnerHTML={{__html: this.props.marquee.about}}/>
+      : null
     return (
       <div className="c-marquee">
         { this.props.marquee.carousel &&
@@ -32,15 +35,23 @@ class MarqueeComp extends React.Component {
             </div>
           </CarouselComp>
         }
-        { this.props.marquee.about &&
+        { this.props.marquee.carousel && this.props.marquee.about &&
           <aside className="c-marquee__sidebar">
             <section className="o-columnbox2">
               <header>
                 <h2>About</h2>
               </header>
-              <p dangerouslySetInnerHTML={{__html: this.props.marquee.about}}/>
+              {about_block} 
             </section>
           </aside>
+        }
+        { !this.props.marquee.carousel && this.props.marquee.about &&
+          <section className="o-columnbox1">
+            <header>
+              <h2>About</h2>
+            </header>
+            {about_block} 
+          </section>
         }
       </div>
     )

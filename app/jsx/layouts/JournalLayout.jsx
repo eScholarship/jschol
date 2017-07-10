@@ -5,7 +5,8 @@ import { Link, browserHistory } from 'react-router'
 import MarqueeComp from '../components/MarqueeComp.jsx'
 import JournalInfoComp from '../components/JournalInfoComp.jsx'
 import ScholWorksComp from '../components/ScholWorksComp.jsx'
-import ItemActionsComp from '../components/ItemActionsComp.jsx'
+import PubPreviewComp from '../components/PubPreviewComp.jsx'
+import IssueActionsComp_preJoel from '../components/IssueActionsComp_preJoel.jsx'
 
 class VolumeSelector extends React.Component {
   static PropTypes = {
@@ -48,7 +49,11 @@ class SectionComp extends React.Component {
     return (
       <div>
         <h3 className="o-heading3">{this.props.section.name}</h3>
-        {this.props.section.articles.map(article => <ScholWorksComp key={article.id} result={article}/>)}
+        {this.props.display == "magazine" ?
+          this.props.section.articles.map(article => <ScholWorksComp key={article.id} result={article}/>)
+        :
+          this.props.section.articles.map(article => <PubPreviewComp key={article.id} result={article}/>)
+        }
       </div>
     )
   }
@@ -69,7 +74,8 @@ class IssueComp extends React.Component {
         asset_id: PropTypes.string.isRequired,
         width: PropTypes.number.isRequired,
         height: PropTypes.number.isRequired,
-        image_type: PropTypes.string.isRequired
+        image_type: PropTypes.string.isRequired,
+        caption: PropTypes.string
       }),
       sections: PropTypes.array,    //See SectionComp prop types directly above 
     }).isRequired,
@@ -82,27 +88,33 @@ class IssueComp extends React.Component {
         issueCurrent = [pi.unit_id, pi.volume, pi.issue, year]
     return (
       <section className="o-columnbox1">
-        {/* ToDo: Enhance ItemActioncComp for journal issue */}
-        {/* <IssueActionsComp_preJoel id={p.id}
-                         status={p.status}
-                         content_type={p.content_type}
-                         supp_files={p.attrs.supp_files}
-                         buy_link={p.attrs.buy_link} /> */}
+        <IssueActionsComp_preJoel unit_id={pi.unit_id} />
+        {/*              articles={}
+                         buy_link={} */}
         <div className="c-pub">
           <VolumeSelector vip={issueCurrent} issues={this.props.issues} />
-        {this.props.display=="magazine" && pi.cover &&
-          <img className="c-scholworks__article-preview" src={"/assets/"+pi.cover.asset_id} width="150" height="200" alt="Issue cover image" /> }
-        {pi.title &&
-          <div className="c-pub__subheading">{pi.title}</div> }
-        {pi.description &&
-          <p>{pi.description}</p> }
+        {this.props.display=="magazine" &&
+          <div className="c-pubpreview">
+          {pi.cover &&
+            <div className="c-pubpreview__img"><img className="c-scholworks__article-preview" src={"/assets/"+pi.cover.asset_id} width="150" height="200" alt="Issue cover image" /></div> }
+            <div className="c-pub">
+            {pi.title &&
+              <h2 className="c-pub__subheading">{pi.title}</h2> }
+              <p>{pi.description}</p>
+            </div>
+          </div>
+        } 
+        {this.props.display!="magazine" && pi.title &&
+          <h2 className="c-pub__subheading">{pi.title}</h2> }
+        {this.props.display!="magazine" && pi.description &&
+          (<p>{pi.description}</p>) }
         </div>
       {this.props.display=="magazine" ?
         <div className="o-dividecontent2x--ruled">
-          {pi.sections.map(section => <SectionComp key={section.name} section={section}/>)}
+          {pi.sections.map(section => <SectionComp key={section.name} section={section} display={this.props.display} />)}
         </div>
       :
-        (pi.sections.map(section => <SectionComp key={section.name} section={section}/>))
+        (pi.sections.map(section => <SectionComp key={section.name} section={section} display={this.props.display} />))
       }
       </section>
     )
@@ -138,8 +150,10 @@ class JournalLayout extends React.Component {
           {this.props.data.issue ?
             <IssueComp issue={data.issue} issues={data.issues} display={data.display} />
           :
-            <p>Currently no issues to display     {/* ToDo: Bring in issue-specific about text here? */}
-            </p>
+            <section className="o-columnbox1">
+              <p>Currently no issues to display
+              <br/> <br/> <br/> <br/> </p>
+            </section>
           }
           </main>
           <aside>

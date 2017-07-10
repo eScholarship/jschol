@@ -617,7 +617,7 @@ def convertUnits(el, parentMap, childMap, allIds)
       el[:directSubmit] and attrs[:directSubmit] = el[:directSubmit]
       el[:hide]         and attrs[:hide]         = el[:hide]
       attrs.merge!(convertUnitBrand(id, unitType))
-      attrs[:magazine_layout] = [true, false].sample 
+      attrs[:magazine_layout] = [true, false].sample
       Unit[id].update(attrs: JSON.generate(attrs))
 
       addDefaultWidgets(id, unitType)

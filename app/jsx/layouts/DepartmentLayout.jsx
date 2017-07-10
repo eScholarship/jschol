@@ -80,28 +80,27 @@ class DepartmentLayout extends React.Component {
         <div className="c-columns">
           <main id="maincontent">
             <section className="o-columnbox1">
-            {(data.journals.length == 0 && seriesList.length == 0 && data.related_orus.length == 0) ?
+            {(data.journals.length == 0 && seriesList.length == 0 && data.related_orus.length == 0) &&
               <p>There are currently no publications in this collection.</p>
-              :
-              <p>There are {this.props.unit.extent.count} publications in this collection, published between {this.props.unit.extent.pub_year.start} and {this.props.unit.extent.pub_year.end}.</p>
+            }
+            {seriesList.length > 0 &&
+              <div>
+                <h3 className="o-heading3">Works by {this.props.unit.name}</h3>
+                <p>There are {this.props.unit.extent.count} publications in this collection, published between {this.props.unit.extent.pub_year.start} and {this.props.unit.extent.pub_year.end}.</p>
+                {seriesList}
+                <hr/>
+              </div>
             }
             {data.journals.length > 0 && 
-              <div><h3>Journals by {this.props.unit.name}</h3>
+              <div><h3 className="o-heading3">Journals by {this.props.unit.name}</h3>
               <ul>
               { data.journals.map((child) =>
                 <li key={child.unit_id}><Link to={"/uc/"+child.unit_id}>{child.name}</Link></li>) }
               </ul></div>
             }
-            {seriesList.length > 0 &&
-              <div>
-                <h3>Works by {this.props.unit.name}</h3>
-                {seriesList}
-                <hr/>
-              </div>
-            }
             {data.related_orus.length > 0 &&
               <div>
-                <h3>Related Research Centers & Groups</h3>
+                <h3 className="o-heading3">Related Research Centers & Groups</h3>
                 <ul>
                   { data.related_orus.map((child) =>
                     <li key={child.unit_id}><Link to={"/uc/"+child.unit_id}>{child.name}</Link></li>) }
