@@ -1,9 +1,9 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { Link, browserHistory } from 'react-router'
-import { Subscriber } from 'react-broadcast'
+import { Link } from 'react-router'
 
 import ScholWorksComp from '../components/ScholWorksComp.jsx'
+import CampusSelectorComp from '../components/CampusSelectorComp.jsx'
 import SortPaginationComp from '../components/SortPaginationComp.jsx'
 import PaginationComp from '../components/PaginationComp.jsx'
 import ShareComp from '../components/ShareComp.jsx'
@@ -13,14 +13,43 @@ import Form from 'react-router-form'
 // TODO: If UnitSearchLayout is going to be resuscitated, should this layout be wrapped into it?
 
 class SeriesSelector extends React.Component {
+  static propTypes = {
+    unit: PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      name: PropTypes.string.isRequired,
+      type: PropTypes.string,
+      extent: PropTypes.object
+    }).isRequired,
+    series: PropTypes.array.isRequired
+    // unit_id: PropTypes.string.isRequired,
+    // name: PropTypes.string.isRequired
+  }
+ 
+  state = { isOpen: false }
+
+  closeSelector() {
+    this.setState({isOpen: false})
+  }
+
   render() {
+    let p = this.props
     return (
-      <div className="o-input__droplist1">
-        <label htmlFor="c-sort1">Select</label>
-        <select name="" id="c-sort1" value={this.props.unit.id} onChange={(e)=>{browserHistory.push("/uc/"+e.target.value)}}>
-        { this.props.data.series.map((s) => 
-          <option key={s.unit_id} value={s.unit_id}>{s.name}</option>)}
-        </select>
+      <div className="c-campusselector">
+        <h2 className="c-campusselector__heading">
+          <Link to={"/uc/" + p.unit.id}>{p.unit.name}</Link>
+        </h2>
+        <details open={this.state.isOpen}
+                 ref={domElement => this.details=domElement}
+                 onClick={()=>setTimeout(()=>this.setState({isOpen: this.details.open}), 0)}
+                 className="c-campusselector__selector">
+          <summary aria-label="select campus"></summary>
+            <div className="c-campusselector__menu">
+            <div className="c-campusselector__items" aria-labelledby="c-campusselector__sub-heading" role="list">
+            {p.series.map((s, i) =>
+              <Link key={i} to={"/uc/"+ s.unit_id} onClick={()=>this.closeSelector()}>{s.name}</Link> )}
+            </div>
+          </div>
+        </details>
       </div>
     )
   }
@@ -68,6 +97,8 @@ class SeriesLayout extends React.Component {
  
   render() {
     let data = this.props.data,
+        unit = this.props.unit,
+        selectorList = data.series.filter(function(s){ return (s.unit_id != unit.id) }),
         formName = "seriesForm",
         formButton = "series-form-submit"
     return (
@@ -76,18 +107,23 @@ class SeriesLayout extends React.Component {
         <main id="maincontent">
           <section className="o-columnbox1">
             <div className="c-itemactions">
-              <SeriesSelector unit={this.props.unit} data={data} />
-              <ShareComp type="unit" id={this.props.unit.id} />
+            {data.series.length > 1 ?
+              <SeriesSelector unit={unit} series={selectorList} />
+            :
+              <h3 className="o-heading3">{unit.name}</h3>
+            }
+              <ShareComp type="unit" id={unit.id} />
             </div>
           {this.props.marquee.about &&
             <p dangerouslySetInnerHTML={{__html: this.props.marquee.about}}/>
           }
           {this.props.data.count == 0 ? 
-            <p><hr/><br/><br/>There are currently no publications in this series &quot;{this.props.unit.name}&quot;.</p>
+            <div><hr/>
+              <p><br/><br/>There are currently no publications in this series &quot;{unit.name}&quot;.</p></div>
            :
             <Form id={formName} to={"/uc/"+this.props.unit.id+"/search"} method="GET" onSubmit={this.handleSubmit}>
             {(this.props.data.count > 2) &&
-              <SortPaginationComp formName={formName} formButton={formButton} query={data.query} count={data.count}/>
+              <SortPaginationComp formName={formName} formButton={formButton} query={data.query} count={data.count}relQueryOff={true} />
             }
               <div>
                 { data.searchResults.map(result =>

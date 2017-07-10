@@ -9,7 +9,7 @@ class SortPaginationComp extends React.Component {
     let p = this.props
     return (
       <div className="c-sortpagination">
-        <SortComp formName={p.formName} formButton={p.formButton} query={p.query} count={p.count} />
+        <SortComp formName={p.formName} formButton={p.formButton} query={p.query} count={p.count} relQueryOff={p.relQueryOff} />
         <input type="hidden" name="start" form={p.formName} value={p.query.start} />
       {(this.props.count > this.props.query.rows) &&
         <PaginationComp formName={p.formName} formButton={p.formButton} query={p.query} count={p.count}/>
