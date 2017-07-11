@@ -62,7 +62,7 @@ class UnitSearchLayout extends React.Component {
           <section className="o-columnbox2">
             <ShareComp />
           </section>
-          {this.props.sidebar}
+          {this.props.sidebar.props.data.length > 1 && this.props.sidebar}
         </aside>
       </div>
     )

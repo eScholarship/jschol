@@ -163,7 +163,7 @@ class JournalLayout extends React.Component {
               </header>
               <JournalInfoComp />
             </section>
-            {this.props.sidebar}
+            {this.props.sidebar.props.data.length > 1 && this.props.sidebar}
           </aside>
         </div>
       </div>

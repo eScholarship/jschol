@@ -26,6 +26,7 @@ class SeriesComp extends React.Component {
   }
   
   render() {
+    let plural = (this.props.data.count == 4) ? '' : 's'
     return (
       <div style={{marginBottom: '30px'}}>
         <h4><Link to={"/uc/"+this.props.data.unit_id}>{this.props.data.name}</Link></h4>
@@ -33,7 +34,7 @@ class SeriesComp extends React.Component {
         { this.props.data.items.map((item) =>
           <ScholWorksComp key={item.id} result={item}/>) }
         {this.props.data.count > 3 &&
-          <p>{this.props.data.count-3} more works - <Link to={"/uc/"+this.props.data.unit_id}>show all</Link></p> }
+          <p>{this.props.data.count-3} more work{plural} - <Link to={"/uc/"+this.props.data.unit_id}>show all</Link></p> }
         </div>
       </div>
     )
@@ -109,11 +110,12 @@ class DepartmentLayout extends React.Component {
               </div>
             }
             {data.journals.length > 0 && 
-              <div><h3 className="o-heading3">Journals</h3>
-              <ul>
-              { data.journals.map((child) =>
-                <li key={child.unit_id}><Link to={"/uc/"+child.unit_id}>{child.name}</Link></li>) }
-              </ul></div>
+              <div>
+                <h3 className="o-heading3">Journals</h3>
+                <ul>{ data.journals.map((child) =>
+                  <li key={child.unit_id}><Link to={"/uc/"+child.unit_id}>{child.name}</Link></li>) } </ul>
+                <hr/>
+              </div>
             }
             {data.related_orus.length > 0 &&
               <div>
@@ -127,7 +129,7 @@ class DepartmentLayout extends React.Component {
             </section>
           </main>
           <aside>
-            {this.props.sidebar}
+            {this.props.sidebar.props.data.length > 1 && this.props.sidebar}
           </aside>
         </div>
       </div>

@@ -111,7 +111,7 @@ def getORULandingPageData(id)
     :series => children ? children.select { |u| u.unit.type == 'series' }.map { |u| seriesPreview(u) } : [],
     :monograph_series => children ? children.select { |u| u.unit.type == 'monograph_series' }.map { |u| seriesPreview(u) } : [],
     :journals => children ? children.select { |u| u.unit.type == 'journal' }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : [],
-    :related_orus => children ? children.select { |u| u.unit.type != 'series' && u.unit.type != 'journal' }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : []
+    :related_orus => children ? children.select { |u| u.unit.type == 'oru' }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : []
   }
 end
 
