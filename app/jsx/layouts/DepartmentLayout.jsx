@@ -10,7 +10,10 @@ import ScholWorksComp from '../components/ScholWorksComp.jsx'
 class SeriesComp extends React.Component {
   static propTypes = {
     data: PropTypes.shape({
+      unit_id: PropTypes.string.isRequired,
+      name: PropTypes.string.isRequired,
       count: PropTypes.number.isRequired,
+      previewLimit: PropTypes.number.isRequired,
       items: PropTypes.arrayOf(PropTypes.shape({
         id: PropTypes.string.isRequired,
         title: PropTypes.string.isRequired,
@@ -19,22 +22,21 @@ class SeriesComp extends React.Component {
         authors: PropTypes.array,
         content_type: PropTypes.string,
         supp_files: PropTypes.array
-      })).isRequired,
-      name: PropTypes.string.isRequired,
-      unit_id: PropTypes.string.isRequired
+      })).isRequired
     })
   }
   
   render() {
-    let plural = (this.props.data.count == 4) ? '' : 's'
+    let data = this.props.data,
+        plural = (data.count == data.previewLimit + 1) ? '' : 's'
     return (
       <div style={{marginBottom: '30px'}}>
-        <h4><Link to={"/uc/"+this.props.data.unit_id}>{this.props.data.name}</Link></h4>
+        <h4><Link to={"/uc/"+data.unit_id}>{data.name}</Link></h4>
         <div style={{paddingLeft: '20px'}}>
-        { this.props.data.items.map((item) =>
+        { data.items.map((item) =>
           <ScholWorksComp key={item.id} result={item}/>) }
-        {this.props.data.count > 3 &&
-          <p>{this.props.data.count-3} more work{plural} - <Link to={"/uc/"+this.props.data.unit_id}>show all</Link></p> }
+        {data.count > data.previewLimit &&
+          <p>{data.count - data.previewLimit} more work{plural} - <Link to={"/uc/"+data.unit_id}>show all</Link></p> }
         </div>
       </div>
     )

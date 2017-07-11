@@ -130,13 +130,15 @@ end
 def seriesPreview(u)
   items = UnitItem.filter(:unit_id => u.unit_id, :is_direct => true)
   count = items.count
-  preview = items.limit(3).map(:item_id)
+  previewLimit = 3
+  preview = items.limit(previewLimit).map(:item_id)
   itemData = readItemData(preview)
 
   {
     :unit_id => u.unit_id,
     :name => u.unit.name,
     :count => count,
+    :previewLimit => previewLimit,
     :items => itemResultData(preview, itemData)
   }
 end
