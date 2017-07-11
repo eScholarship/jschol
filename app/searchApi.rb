@@ -307,6 +307,7 @@ def search(params, facetTypes=$allFacets.keys)
 end
 
 def extent(id, type)
+  initAllFacets()
   aws_params =
   {
     query: "matchall",
