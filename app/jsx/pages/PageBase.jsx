@@ -184,6 +184,7 @@ class PageBase extends React.Component
     // CMS drawer case
     if (this.state.adminLogin && this.state.adminLogin.loggedIn &&
         this.state.cmsModules && this.state.pageData &&
+        this.state.permissions && this.state.permissions.admin &&
         'header' in this.state.pageData && 'nav_bar' in this.state.pageData.header)
     {
       return (
