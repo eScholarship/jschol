@@ -1,8 +1,22 @@
 // ##### Sort By Component ##### //
 
 import React from 'react'
+import PropTypes from 'prop-types'
 
 class SortComp extends React.Component {
+  static propTypes = {
+    formName: PropTypes.string,
+    formButton: PropTypes.string,
+    relQueryOff: PropTypes.bool,
+    query: PropTypes.shape({
+      q: PropTypes.string,
+      rows: PropTypes.string,
+      sort: PropTypes.string,
+      start: PropTypes.string,
+    }).isRequired,
+    count: PropTypes.number.isRequired
+  }
+
   state = {
     rows: this.props.query.rows ? this.props.query.rows : "10",
     sort: this.props.query.sort ? this.props.query.sort : "rel"
@@ -25,7 +39,11 @@ class SortComp extends React.Component {
         <div className="o-input__droplist1">
           <label htmlFor="c-sort1">Sort By:</label>
           <select name="sort" id="c-sort1" form={this.props.formName} value={ this.state.sort } onChange={ this.handleChange }>
+          {this.props.relQueryOff ?
+            <option value="">Default</option>
+          :
             <option value="rel">Relevance</option>
+          }
             <option value="pop">Most Popular</option>
             <option value="a-title">A-Z By Title</option>
             <option value="z-title">Z-A By Title</option>

@@ -5,7 +5,7 @@ import { Link } from 'react-router'
 import Form from 'react-router-form'
 
 import PageBase from './PageBase.jsx'
-import Header1Comp from '../components/Header1Comp.jsx'
+import Header2Comp from '../components/Header2Comp.jsx'
 import NavComp from '../components/NavComp.jsx'
 import ScholWorksComp from '../components/ScholWorksComp.jsx'
 import FilterComp from '../components/FilterComp.jsx'
@@ -499,7 +499,7 @@ class SearchPage extends PageBase {
         formButton = "facet-form-submit"
     return(
       <div className="l_search">
-        <Header1Comp />
+        <Header2Comp searchComp="1" />
         <div className="c-navbar">
           <NavComp data={data.header.nav_bar} />
         </div>
@@ -525,9 +525,12 @@ class SearchPage extends PageBase {
               <SortPaginationComp formName={formName} formButton={formButton} query={data.query} count={data.count}/>
             }
               <div>
-                { data.searchResults.map(result =>
+              {(data.count != 0 ) ? 
+                data.searchResults.map(result =>
                   <ScholWorksComp key={result.id} result={result} />)
-                }
+              :
+                <p><br/><br/>No results found.<br/><br/></p>
+              }
               </div>
               <p><br/></p>
             {(data.count > data.query.rows) &&
