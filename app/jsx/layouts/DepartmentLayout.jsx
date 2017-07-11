@@ -49,6 +49,8 @@ class DepartmentLayout extends React.Component {
       extent: PropTypes.object
     }).isRequired,
     data: PropTypes.shape({
+      series: PropTypes.array.isRequired,  //See SeriesComp directly above for Array element structure
+      monograph_series: PropTypes.array.isRequired,  //See SeriesComp directly above for Array element structure
       journals: PropTypes.arrayOf(PropTypes.shape({
         name: PropTypes.string,
         unit_id: PropTypes.string
@@ -57,7 +59,6 @@ class DepartmentLayout extends React.Component {
         name: PropTypes.string,
         unit_id: PropTypes.string
       })),
-      series: PropTypes.array.isRequired  //See SeriesComp directly above for Array element structure
     }).isRequired,
     marquee: PropTypes.shape({
       carousel: PropTypes.any,
@@ -65,15 +66,20 @@ class DepartmentLayout extends React.Component {
     })
   }
   
-  render() {
-    var data = this.props.data;
-
-    var seriesList = [];
-    for (var s in data.series) {
-      if (data.series[s].items.length > 0) {
-        seriesList.push(<SeriesComp key={data.series[s].unit_id} data={data.series[s]}/>);
+  seriesCompListMaker = (data, compList) => {
+    compList = []
+    for (let s in data) {
+      if (data[s].items.length > 0) {
+        compList.push(<SeriesComp key={data[s].unit_id} data={data[s]}/>);
       }
     }
+    return compList
+  }
+
+  render() {
+    let data = this.props.data,
+        seriesList = this.seriesCompListMaker(data.series),
+        monographSeriesList = this.seriesCompListMaker(data.monograph_series)
 
     return (
       <div>
@@ -81,14 +87,24 @@ class DepartmentLayout extends React.Component {
         <div className="c-columns">
           <main id="maincontent">
             <section className="o-columnbox1">
-            {(data.journals.length == 0 && seriesList.length == 0 && data.related_orus.length == 0) &&
+              <div className="c-itemactions">
+                <ShareComp type="unit" id={this.props.unit.id} />
+              </div>
+            {(seriesList.length == 0 && monographSeriesList.length ==  0 && data.journals.length == 0 && data.related_orus.length == 0) &&
               <p>There are currently no publications in this collection.</p>
             }
             {seriesList.length > 0 &&
               <div>
-                <h3 className="o-heading3">Works</h3>
+                <h3 className="o-heading3">Paper Series</h3>
                 <p>There are {this.props.unit.extent.count} publications in this collection, published between {this.props.unit.extent.pub_year.start} and {this.props.unit.extent.pub_year.end}.</p>
                 {seriesList}
+                <hr/>
+              </div>
+            }
+            {monographSeriesList.length > 0 &&
+              <div>
+                <h3 className="o-heading3">Monograph Series</h3>
+                {monographSeriesList}
                 <hr/>
               </div>
             }
@@ -111,9 +127,6 @@ class DepartmentLayout extends React.Component {
             </section>
           </main>
           <aside>
-            <section className="o-columnbox1">
-              <ShareComp type="unit" id={this.props.unit.id} />
-            </section>
             {this.props.sidebar}
           </aside>
         </div>
