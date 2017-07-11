@@ -254,34 +254,44 @@ end
 # the dimensions first, and have a chance to raise exceptions on them.
 def putImage(imgPath, &block)
   mimeType = MimeMagic.by_magic(File.open(imgPath))
-  mimeType && mimeType.mediatype == "image" or raise("Non-image file #{imgPath}")
-  dims = FastImage.size(imgPath)
-  block and block.yield(dims)
-  assetID = putAsset(imgPath, {
-    width: dims[0].to_s,
-    height: dims[1].to_s
-  })
-  return { asset_id: assetID,
-           image_type: mimeType.subtype,
-           width: dims[0],
-           height: dims[1]
-         }
+  if mimeType.subtype == "svg+xml"
+    # Special handling for SVG images -- no width/height
+    return { asset_id: putAsset(imgPath, {}),
+             image_type: mimeType.subtype
+           }
+  else
+    mimeType && mimeType.mediatype == "image" or raise("Non-image file #{imgPath}")
+    dims = FastImage.size(imgPath)
+    block and block.yield(dims)
+    return { asset_id: putAsset(imgPath, { width: dims[0].to_s, height: dims[1].to_s }),
+             image_type: mimeType.subtype,
+             width: dims[0],
+             height: dims[1]
+           }
+  end
 end
 
 ###################################################################################################
-def convertLogo(unitID, logoEl)
+def convertLogo(unitID, unitType, logoEl)
   # Locate the image reference
   logoImgEl = logoEl && logoEl.at("div[@id='logoDiv']/img[@src]")
-  logoImgEl or return {}
-  imgPath = logoImgEl && "/apps/eschol/erep/xtf/static/#{logoImgEl[:src]}"
-  imgPath =~ %r{LOGO_PATH|/$} and return {} # logo never configured
+  if !logoImgEl
+    if unitType != "campus"
+      return {}
+    end
+    # Default logo for campus
+    imgPath = "app/images/logo_#{unitID}.svg"
+  else
+    imgPath = logoImgEl && "/apps/eschol/erep/xtf/static/#{logoImgEl[:src]}"
+    imgPath =~ %r{LOGO_PATH|/$} and return {} # logo never configured
+  end
   if !File.file?(imgPath)
     puts "Warning: Can't find logo image: #{imgPath.inspect}"
     return {}
   end
 
   data = putImage(imgPath)
-  data[:is_banner] = logoEl.attr('banner') == "single"
+  (logoEl && logoEl.attr('banner') == "single") and data[:is_banner] = true
   return { logo: data }
 end
 
@@ -544,7 +554,7 @@ def convertUnitBrand(unitID, unitType)
     bfPath = "/apps/eschol/erep/xtf/static/brand/#{unitID}/#{unitID}.xml"
     if File.exist?(bfPath)
       dataIn = Nokogiri::XML(File.new(bfPath), &:noblanks).root
-      dataOut.merge!(convertLogo(unitID, dataIn.at("display/mainFrame/logo")))
+      dataOut.merge!(convertLogo(unitID, unitType, dataIn.at("display/mainFrame/logo")))
       dataOut.merge!(convertBlurb(unitID, dataIn.at("display/mainFrame/blurb")))
       if unitType == "campus"
         dataOut.merge!({ nav_bar: defaultNav(unitID, unitType) })
@@ -617,7 +627,9 @@ def convertUnits(el, parentMap, childMap, allIds)
       el[:directSubmit] and attrs[:directSubmit] = el[:directSubmit]
       el[:hide]         and attrs[:hide]         = el[:hide]
       attrs.merge!(convertUnitBrand(id, unitType))
-      attrs[:magazine_layout] = [true, false].sample
+      if unitType == "journal"
+        attrs[:magazine_layout] = id[0] > 'm'  # IDs starting with m-z are magazine layout (for now)
+      end
       Unit[id].update(attrs: JSON.generate(attrs))
 
       addDefaultWidgets(id, unitType)
