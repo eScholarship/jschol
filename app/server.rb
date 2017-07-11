@@ -644,7 +644,8 @@ get "/api/item/:shortArk" do |shortArk|
         if unit.type != 'journal'
           body[:header] = getUnitHeader(unit)
         else 
-          issue_id = Item.join(:sections, :id => :section).filter(:items__id => id).map(:issue_id)[0]
+          issue_id = Item.join(:sections, :id => :section).filter(Sequel.qualify("items", "id") => id).map(:issue_id)[0]
+          pp(issue_id)
           unit_id, volume, issue = Section.join(:issues, :id => issue_id).map([:unit_id, :volume, :issue])[0]
           body[:header] = getUnitHeader(unit, nil, {'unit_id': unit_id, 'volume': volume, 'issue': issue}, attrs)
           body[:citation][:volume] = volume

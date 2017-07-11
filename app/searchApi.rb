@@ -311,11 +311,10 @@ def extent(id, type)
   {
     query: "matchall",
     query_parser: "structured",
-    facet: JSON.generate({
-      'pub_year' => $allFacets['pub_year']['awsFacetParam'],
-      }),
     size: 0
   }
+  aws_params = aws_encode(aws_params, [])
+  aws_params[:facet] = JSON.generate({'pub_year' => $allFacets['pub_year']['awsFacetParam']})
   if (type == 'oru') then
     aws_params[:filter_query] = "(term field=departments '#{id}')"
   elsif (type == 'journal') then
