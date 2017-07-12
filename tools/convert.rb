@@ -613,9 +613,10 @@ def convertUnits(el, parentMap, childMap, allIds)
     else
       puts "Converting unit #{id}."
       unitType = id=="root" ? "root" : el[:type]
+      name = id=="root" ? "eScholarship" : el[:label]
       Unit.update_or_replace(id,
         type:      unitType,
-        name:      id=="root" ? "eScholarship" : el[:label],
+        name:      name,
         status:    el[:directSubmit] == "moribund" ? "archived" :
                    el[:hide] == "eschol" ? "hidden" :
                    "active"
@@ -627,9 +628,11 @@ def convertUnits(el, parentMap, childMap, allIds)
       el[:directSubmit] and attrs[:directSubmit] = el[:directSubmit]
       el[:hide]         and attrs[:hide]         = el[:hide]
       attrs.merge!(convertUnitBrand(id, unitType))
+      nameChar = name[0].upcase
       if unitType == "journal"
-        attrs[:magazine_layout] = id[0] > 'm'  # IDs starting with m-z are magazine layout (for now)
+        attrs[:magazine_layout] = nameChar > 'M'  # Names starting with M-Z are magazine layout (for now)
       end
+      attrs[:carousel] = (nameChar >= 'F' && nameChar <= 'R')  # Names F-R have carousels (for now)
       Unit[id].update(attrs: JSON.generate(attrs))
 
       addDefaultWidgets(id, unitType)
