@@ -9,8 +9,8 @@ class JournalInfoComp extends React.Component {
         <img src="/images/temp_journalinfo.png" alt="DOAJ"/>
         <img src="/images/cc-by-large.svg" alt="creative commons attribution 4.0 international public license"/>
         <ul>
-          <li><b>e-ISSN-</b> 0160-2764</li>
-          <li><b>e-ISSN-</b> 0160-2765</li>
+          <li><b>e-ISSN-</b> 9999-9999</li>
+          <li><b>e-ISSN-</b> 9999-9999</li>
         </ul>
       </div>
     )

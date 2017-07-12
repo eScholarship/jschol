@@ -44,7 +44,7 @@ class SeriesSelector extends React.Component {
                  className="c-campusselector__selector">
           <summary aria-label="select campus"></summary>
             <div className="c-campusselector__menu">
-            <div className="c-campusselector__items" aria-labelledby="c-campusselector__sub-heading" role="list">
+            <div className="c-campusselector__items" role="list">
             {p.series.map((s, i) =>
               <Link key={i} to={"/uc/"+ s.unit_id} onClick={()=>this.closeSelector()}>{s.name}</Link> )}
             </div>
