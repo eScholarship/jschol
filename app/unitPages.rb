@@ -682,6 +682,24 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
 end
 
 post "/api/unit/:unitID/upload" do |unitID|
-  data = putImage(params[:imageFile][:tempfile].path)
-  pp data
+  perms = getUserPermissions(params[:username], params[:token], unitID)
+  perms[:admin] or halt(401)
+
+  logo_data = putImage(params[:logo_file][:tempfile].path)
+
+  DB.transaction {
+    unit = Unit[unitID] or jsonHalt(404, "Unit not found")
+    unitAttrs = JSON.parse(unit.attrs)
+
+    unitAttrs['logo']['width'] = logo_data[:width]
+    unitAttrs['logo']['height'] = logo_data[:height]
+    unitAttrs['logo']['asset_id'] = logo_data[:asset_id]
+    unitAttrs['logo']['image_type'] = logo_data[:image_type]
+
+    unit.attrs = unitAttrs.to_json
+    unit.save
+  }
+
+  content_type :json
+  return { status: "okay" }.to_json
 end

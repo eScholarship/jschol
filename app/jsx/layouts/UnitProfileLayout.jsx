@@ -9,13 +9,34 @@ class UnitProfileLayout extends React.Component {
     super(props);
     this.state = {
       file: '',
-      imagePreviewUrl: ''
+      imagePreviewUrl: this.props.data.logo 
+        ? "/assets/" + this.props.data.logo.asset_id 
+        : "http://placehold.it/400x100?text=No+logo"
     };
   }
 
-  handleSubmit = (event, formData) => {
+  handleSubmit = (event, data) => {
     event.preventDefault()
-    this.props.sendApiData("PUT", event.target.action, { data: formData })
+
+    let binaryFormData = new FormData();
+    let binaryFormFields = [];
+    for (var fieldName in data) {
+      if (data[fieldName] instanceof File) {
+        binaryFormData.append(fieldName, data[fieldName]);
+        binaryFormFields.push(fieldName);
+      }
+    }
+
+    if (binaryFormFields.length !== 0) {
+      for (var field in binaryFormFields) {
+        delete data[binaryFormFields[field]];
+      }
+      this.props.sendBinaryFileData("POST", "/api/unit/" + this.props.unit.id + "/upload", binaryFormData)
+    }
+    if (!$.isEmptyObject(data)) {
+      this.props.sendApiData("PUT", event.target.action, {data: data})
+    }
+
   }
 
   handleImageChange = (event) => {
@@ -34,41 +55,29 @@ class UnitProfileLayout extends React.Component {
     reader.readAsDataURL(file)
   }
 
-  upload = (event, data) => {
-    event.preventDefault();
-
-    let imageFormData = new FormData();
-    imageFormData.append('imageFile', this.state.file);
-
-    var xhr = new XMLHttpRequest();
-    xhr.open('post', '/api/unit/' + this.props.unit.id + '/upload', true);
-    xhr.send(imageFormData);
-  }
-
   render() {
     var data = this.props.data;
     var journalConfigOpts;
+    // { data.logo
+    //   ? <img src={"/assets/"+data.logo.asset_id} width={data.logo.width} height={data.logo.height} alt="Logo image" />
+    //   : <img src="http://placehold.it/400x100?text=No+logo" width="400" height="100" alt="Missing logo image" />
+    // }
+    
     return (
       <div>
         <h3>Unit Configuration</h3>
         <div className="c-columns">
           <main>
             <section className="o-columnbox1">
-                <label className="c-editable-page__label">Name: </label>
-                <input className="c-editable-page__input" type="text" defaultValue={data.name}/>
+              <Form to={`/api/unit/${this.props.unit.id}/profileContentConfig`} onSubmit={this.handleSubmit}>
+                <label className="c-editable-page__label" htmlFor="unitName">Name: </label>
+                <input className="c-editable-page__input" id="unitName" type="text" defaultValue={data.name}/>
 
-              <Form to={`/api/unit/${this.props.unit.id}/profileContentConfig`} onSubmit={this.upload}>
                 <label className="c-editable-page__label">Logo image:</label>
-                { data.logo
-                  ? <img src={"/assets/"+data.logo.asset_id} width={data.logo.width} height={data.logo.height} alt="Logo image" />
-                  : <img src="http://placehold.it/400x100?text=No+logo" width="400" height="100" alt="Missing logo image" />
-                }
+                <img src={this.state.imagePreviewUrl}/>
 
-                <div>
-                  <input type="file" name="logo_file" onChange={this.handleImageChange}/>
-                  <button>Choose File</button>
-                  <button>Remove File</button>
-                </div>
+                <input type="file" name="logo_file" onChange={this.handleImageChange}/>
+                <button>Remove File</button>
                 <br/>
 
                 { this.props.unit.type == 'journal' &&

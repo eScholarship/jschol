@@ -93,7 +93,7 @@ class UnitPage extends PageBase
       contentLayout = (<UnitSearchLayout unit={data.unit} data={data.content} sidebar={sidebar}/>) */}
       contentLayout = (<SeriesLayout unit={data.unit} data={data.content} sidebar={sidebar} marquee={data.marquee}/>)
     } else if (this.props.params.pageName === 'profile') {
-      contentLayout = this.cmsPage(data, <UnitProfileLayout unit={data.unit} data={data.content} sendApiData={this.sendApiData}/>)
+      contentLayout = this.cmsPage(data, <UnitProfileLayout unit={data.unit} data={data.content} sendApiData={this.sendApiData} sendBinaryFileData={this.sendBinaryFileData}/>)
     } else if (this.props.params.pageName === 'nav') {
       contentLayout = this.cmsPage(data, <UnitNavConfigLayout unit={data.unit} data={data.content} sendApiData={this.sendApiData}/>)
     } else if (this.props.params.pageName === 'sidebar') {
