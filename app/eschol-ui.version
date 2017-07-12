@@ -323,3 +323,21 @@ As well as:
   modified:   app/jsx/components/JournalCarouselComp.jsx
   modified:   app/jsx/components/StatCarouselComp.jsx
   modified:   app/jsx/objects/StatsObj.jsx
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's be887fce9c603c3bd0532ca9ffade8403ecd250d, 2017-07-11 <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+Andy added all scss changes since last.
+As well as:
+
+  modified:   app/jsx/components/JournalCarouselComp.jsx
+  modified:   app/jsx/components/MarqueeComp.jsx
+  modified:   app/jsx/components/StatCarouselComp.jsx
+  modified:   app/jsx/layouts/CampusLayout.jsx
+  modified:   app/jsx/layouts/DepartmentLayout.jsx
+  deleted:    app/scss/_debug.scss
+  deleted:    app/scss/_tabs2.scss
+  deleted:    app/scss/_test.scss
+

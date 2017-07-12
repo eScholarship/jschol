@@ -31,7 +31,7 @@ class SeriesComp extends React.Component {
         plural = (data.count == data.previewLimit + 1) ? '' : 's'
     return (
       <div style={{marginBottom: '30px'}}>
-        <h4><Link to={"/uc/"+data.unit_id}>{data.name}</Link></h4>
+        <h5><Link to={"/uc/"+data.unit_id}>{data.name}</Link></h5>
         <div style={{paddingLeft: '20px'}}>
         { data.items.map((item) =>
           <ScholWorksComp key={item.id} result={item}/>) }
@@ -90,38 +90,43 @@ class DepartmentLayout extends React.Component {
         <div className="c-columns">
           <main id="maincontent">
             <section className="o-columnbox1">
+              <header>
+                <h3>Works by the {this.props.unit.name}</h3>
+              </header>
               <div className="c-itemactions">
                 <ShareComp type="unit" id={this.props.unit.id} />
               </div>
-            {(seriesList.length == 0 && monographSeriesList.length ==  0 && data.journals.length == 0 && data.related_orus.length == 0) &&
+            {(seriesList.length == 0 && monographSeriesList.length ==  0 && data.journals.length == 0 && data.related_orus.length == 0) ?
               <p>There are currently no publications in this collection.</p>
+             :
+              <p>There are {this.props.unit.extent.count} publications in this collection, published between {this.props.unit.extent.pub_year.start} and {this.props.unit.extent.pub_year.end}.</p>
             }
             {seriesList.length > 0 &&
               <div>
-                <h3 className="o-heading3">Paper Series</h3>
-                <p>There are {this.props.unit.extent.count} publications in this collection, published between {this.props.unit.extent.pub_year.start} and {this.props.unit.extent.pub_year.end}.</p>
+                <h4 className="o-heading3">Paper Series</h4>
                 {seriesList}
                 <hr/>
               </div>
             }
             {monographSeriesList.length > 0 &&
               <div>
-                <h3 className="o-heading3">Monograph Series</h3>
+                <h4 className="o-heading3">Monograph Series</h4>
                 {monographSeriesList}
                 <hr/>
               </div>
             }
             {data.journals.length > 0 && 
               <div>
-                <h3 className="o-heading3">Journals</h3>
+                <h4 className="o-heading3">Journals</h4>
                 <ul>{ data.journals.map((child) =>
                   <li key={child.unit_id}><Link to={"/uc/"+child.unit_id}>{child.name}</Link></li>) } </ul>
+                <br/>
                 <hr/>
               </div>
             }
             {data.related_orus.length > 0 &&
               <div>
-                <h3 className="o-heading3">Related Research Centers & Groups</h3>
+                <h4 className="o-heading3">Related Research Centers & Groups</h4>
                 <ul>
                   { data.related_orus.map((child) =>
                     <li key={child.unit_id}><Link to={"/uc/"+child.unit_id}>{child.name}</Link></li>) }

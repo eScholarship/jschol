@@ -16,7 +16,7 @@ class StatsObj extends React.Component {
           <b>380,941</b> Views
         </div>
         <div className="o-stat--passed">
-          <a href="">6,532</a> Items since UC OA Policy passed
+          <a href="">6,532</a> Items since UC <br/> OA Policy passed
         </div>
         <div className="o-stat--journals">
           <a href="">31</a> eScholarship Journals
