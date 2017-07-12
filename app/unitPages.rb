@@ -8,7 +8,7 @@ end
 
 # Generate a link to an image in the S3 bucket
 def getLogoData(data)
-  data && data['asset_id'] && data['width'] && data['height'] or return nil
+  data && data['asset_id'] or return nil
   return { url: "/assets/#{data['asset_id']}", width: data['width'], height: data['height'] }
 end
 
@@ -109,8 +109,9 @@ def getORULandingPageData(id)
 
   return {
     :series => children ? children.select { |u| u.unit.type == 'series' }.map { |u| seriesPreview(u) } : [],
+    :monograph_series => children ? children.select { |u| u.unit.type == 'monograph_series' }.map { |u| seriesPreview(u) } : [],
     :journals => children ? children.select { |u| u.unit.type == 'journal' }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : [],
-    :related_orus => children ? children.select { |u| u.unit.type != 'series' && u.unit.type != 'journal' }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : []
+    :related_orus => children ? children.select { |u| u.unit.type == 'oru' }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : []
   }
 end
 
@@ -129,13 +130,15 @@ end
 def seriesPreview(u)
   items = UnitItem.filter(:unit_id => u.unit_id, :is_direct => true)
   count = items.count
-  preview = items.limit(3).map(:item_id)
+  previewLimit = 3
+  preview = items.limit(previewLimit).map(:item_id)
   itemData = readItemData(preview)
 
   {
     :unit_id => u.unit_id,
     :name => u.unit.name,
     :count => count,
+    :previewLimit => previewLimit,
     :items => itemResultData(preview, itemData)
   }
 end
@@ -143,7 +146,7 @@ end
 def getSeriesLandingPageData(unit, q)
   parent = $hierByUnit[unit.id]
   if parent.length > 1
-    pp parent
+    pp parent    # ToDo: Is this case ever met?
   else
     children = parent ? $hierByAncestor[parent[0].ancestor_unit] : []
   end

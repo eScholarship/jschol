@@ -26,8 +26,8 @@ class VolumeSelector extends React.Component {
     let p = this.props
     return (
       <div className="o-input__droplist1">
-        <label htmlFor="c-sort1">Select</label>
-        <select name="" id="c-sort1" value={this.getIssuePath(p.vip[0], p.vip[1], p.vip[2])} onChange={(e)=>{browserHistory.push("/uc/"+e.target.value)}}>
+        <label className="o-input__label--hidden" htmlFor="o-input__droplist-label3">Select</label>
+        <select name="" id="o-input__droplist-label3" value={this.getIssuePath(p.vip[0], p.vip[1], p.vip[2])} onChange={(e)=>{browserHistory.push("/uc/"+e.target.value)}}>
         {p.issues.map((i) => 
           <option key={i.id} value={this.getIssuePath(i.unit_id, i.volume, i.issue)}>Volume {i.volume}, Issue {i.issue}, {this.getPubYear(i.pub_date)}</option>)}
         </select>
