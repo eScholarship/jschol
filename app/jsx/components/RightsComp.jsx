@@ -1,4 +1,4 @@
-// ##### Published Location Component ##### //
+// ##### Rights Component ##### //
 
 import React from 'react'
 
