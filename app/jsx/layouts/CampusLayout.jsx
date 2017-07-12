@@ -36,8 +36,8 @@ class CampusLayout extends React.Component {
         <div className="c-columns">
           <main id="maincontent">
             <CampusSearchComp campusID={unit.id} campusName={unit.name} dashUrl={dashUrl} />
-            <UnitCarouselComp />
-            <JournalCarouselComp />
+            <UnitCarouselComp campusID={unit.id} campusName={unit.name} />
+            <JournalCarouselComp campusID={unit.id} campusName={unit.name} />
           </main>
           <aside>
             <section className="o-columnbox1">
