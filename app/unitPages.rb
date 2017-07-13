@@ -159,6 +159,11 @@ end
 # Landing page data does not pass arguments volume/issue. It just gets most recent journal
 def getJournalIssueData(unit, unit_attrs, volume=nil, issue=nil)
   display = unit_attrs['magazine_layout'] ? 'magazine' : 'simple'
+  if unit_attrs['issue_rule'] and unit_attrs['issue_rule'] == 'secondMostRecent' and volume.nil? and issue.nil?
+    secondIssue = Issue.where(:unit_id => unit.id).order(Sequel.desc(:pub_date)).first(2)[1]
+    volume = secondIssue ? secondIssue.values[:volume] : nil
+    issue = secondIssue ? secondIssue.values[:issue] : nil
+  end
   return {
     display: display,
     issue: getIssue(unit.id, display, volume, issue),
