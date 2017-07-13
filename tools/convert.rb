@@ -1196,7 +1196,7 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
     when "cc4"; "CC BY-NC"
     when "cc5"; "CC BY-NC-SA"
     when "cc6"; "CC BY-NC-ND"
-    when nil, "public"; "public"
+    when nil, "public"; nil
     else puts "Unknown rights value #{data.single("rights").inspect}"
   end
 
@@ -1240,7 +1240,7 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
       peer_reviewed: attrs[:is_peer_reviewed] ? 1 : 0,
       pub_date:      dbItem[:pub_date].to_date.iso8601 + "T00:00:00Z",
       pub_year:      dbItem[:pub_date].year,
-      rights:        dbItem[:rights],
+      rights:        dbItem[:rights] || "",
       sort_author:   (data.multiple("creator")[0] || "").gsub(/[^\w ]/, '').downcase,
     }
   }
