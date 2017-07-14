@@ -32,7 +32,7 @@ class NotYetLink extends React.Component {
     let element = this.props.element
     return (
      element == "button" ?
-       <button key="1" className={this.props.className} onClick={(e)=>this.clickHandler(e)}>
+       <button className={this.props.className} onClick={(e)=>this.clickHandler(e)}>
          {this.props.children}
          <ModalNotYetComp isOpen={this.state.modalOpen} onOK={e=>this.closeModal(e)}/>
        </button>

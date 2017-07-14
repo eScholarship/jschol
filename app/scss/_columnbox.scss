@@ -2,7 +2,7 @@
 
 %o-columnbox {
   margin-bottom: $spacing-md;
-  padding: $spacing-sm;
+  padding: $spacing-sm $spacing-sm 0;
 
   header {
     margin: (-$spacing-sm) (-$spacing-sm) $spacing-sm;
@@ -18,7 +18,7 @@
   }
   
   @include bp(screen1) {
-    padding: $spacing-lg;
+    padding: $spacing-lg $spacing-lg 0;
 
     header {
       margin: (-$spacing-lg) (-$spacing-lg) $spacing-md;
@@ -35,8 +35,14 @@
 
 .o-columnbox1 {
   @extend %o-columnbox;
+  padding: $spacing-sm;
   background: $color-white;
   box-shadow: $box-shadow1;
+
+  @include bp(screen1) {
+    padding: $spacing-lg;
+  }
+
 }
 
 .o-columnbox2 {
@@ -49,9 +55,16 @@ aside {
 
   @include bp(screen1) {
 
+    .o-columnbox1 {
+      padding: $spacing-md;
+    }
+
+    .o-columnbox2 {
+      padding: $spacing-md $spacing-md 0;
+    }
+
     .o-columnbox1,
     .o-columnbox2 {
-      padding: $spacing-md;
 
       header {
         margin: (-$spacing-md) (-$spacing-md) $spacing-md;
@@ -61,4 +74,20 @@ aside {
 
   }
 
+}
+
+// ***** If jQuery Dotdotdot Used ***** //
+
+.o-columnbox__truncate1 {
+  max-height: 5.5em; // truncate to 5 lines per jquery.dotdotdot
+  overflow: hidden; // hide text beyond max-height
+}
+
+.o-columnbox__truncate2 {
+  max-height: 11em; // truncate to 5 lines per jquery.dotdotdot
+  overflow: hidden; // hide text beyond max-height
+}
+
+.o-columnbox__truncate-more-link {
+  @extend %o-textlink__secondary;
 }

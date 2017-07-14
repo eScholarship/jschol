@@ -33,6 +33,10 @@ $itemcarousel-spacing: 2.5rem;
 
   }
 
+  a {
+    @extend %o-textlink__colorless;
+  }
+
 }
 
 .o-itemcarousel__carousel {

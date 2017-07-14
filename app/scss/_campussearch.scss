@@ -1,5 +1,7 @@
 // ##### Campus Search Component ##### //
 
+$campussearch-max-width: 29em;
+
 .c-campussearch {
   margin-bottom: $spacing-md;
   padding: $spacing-sm;
@@ -8,6 +10,12 @@
 
   @include bp(screen1) {
     padding: $spacing-md 15vw;
+  }
+
+  @include bp(screen4) {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
 
 }
@@ -35,6 +43,10 @@
 .c-campussearch__search {
   display: flex;
 
+  @include bp(screen4) {
+    width: $campussearch-max-width;
+  }
+
   input[type='search'] {
     @extend %interactive-element-size;
     flex: 1 1 auto;
@@ -43,11 +55,6 @@
     
     @include bp(screen2) {
       font-size: 1.2em;
-    }
-
-    @include bp(screen4) {
-      flex: 0 1 auto;
-      width: 23em;
     }
 
   }
@@ -77,6 +84,10 @@
   @include bp(screen2) {
     margin-top: $spacing-md;
     font-size: 1em;
+  }
+
+  @include bp(screen4) {
+    width: $campussearch-max-width;
   }
 
 }

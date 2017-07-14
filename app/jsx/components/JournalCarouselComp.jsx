@@ -3,6 +3,8 @@
 import React from 'react'
 import $ from 'jquery'
 import CarouselComp from '../components/CarouselComp.jsx'
+import { Link } from 'react-router'
+
 // Load dotdotdot in browser but not server
 if (!(typeof document === "undefined")) {
   const dotdotdot = require('jquery.dotdotdot')
@@ -18,7 +20,7 @@ class JournalCarouselComp extends React.Component {
   render() {
     return (
       <div className="o-itemcarousel">
-        <h2 className="o-itemcarousel__heading">UC Berkeley Journals</h2>
+        <h2 className="o-itemcarousel__heading"><Link to={"/" + this.props.campusID + "/journals"}>{this.props.campusName} Journals</Link></h2>
         <CarouselComp className="c-journalcarousel o-itemcarousel__carousel" 
                       options={{
                         cellAlign: 'left',
@@ -69,10 +71,10 @@ class JournalCarouselComp extends React.Component {
           </div>
         </CarouselComp>
         <div className="o-stat--item o-itemcarousel__stats-item">
-          <a href="">1,000</a>Items
+          <Link to={"/" + this.props.campusID + "/journals"}>9,999</Link>Items
         </div>
         <div className="o-stat--view o-itemcarousel__stats-view">
-          <b>100,000</b>Views
+          <b>999,999</b>Views
         </div>
       </div>
     )
