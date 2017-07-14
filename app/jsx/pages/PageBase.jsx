@@ -265,8 +265,9 @@ class PageBase extends React.Component
   }
 
   render() {
+    // If ScrollToTopComp gives you trouble, you can disable by replacing it with a plain <div>
     return (
-      <ScrollToTopComp> {/* If this gives you any trouble, replace it with a plain <div> */}
+      <ScrollToTopComp>
         <Broadcast channel="cms" value={ { loggedIn: this.state.adminLogin && this.state.adminLogin.loggedIn,
                                            username: this.state.adminLogin && this.state.adminLogin.username,
                                            token: this.state.adminLogin && this.state.adminLogin.token,
