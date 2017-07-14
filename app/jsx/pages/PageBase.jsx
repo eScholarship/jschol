@@ -176,6 +176,7 @@ class PageBase extends React.Component
     if (this.state.error) {
       return (
         <div className="body">
+          { this.stageWatermark() }
           {this.renderError()}
           <FooterComp/>
         </div>)
@@ -193,6 +194,7 @@ class PageBase extends React.Component
                     fetchingData={this.state.fetchingData}>
           {/* Not sure why the padding below is needed, but it is */}
           <div className="body" style={{ padding: "10px" }}>
+            { this.stageWatermark() }
             <SkipNavComp/>
             {this.state.pageData ? this.renderData(this.state.pageData) : this.renderLoading()}
             <FooterComp/>
@@ -203,6 +205,7 @@ class PageBase extends React.Component
     // Normal case
     return (
       <div className="body">
+        { this.stageWatermark() }
         <SkipNavComp/>
         {this.state.pageData ? this.renderData(this.state.pageData) : this.renderLoading()}
         <FooterComp/>
@@ -263,7 +266,6 @@ class PageBase extends React.Component
   render() {
     return (
       <div>
-        { this.stageWatermark() }
         <Broadcast channel="cms" value={ { loggedIn: this.state.adminLogin && this.state.adminLogin.loggedIn,
                                            username: this.state.adminLogin && this.state.adminLogin.username,
                                            token: this.state.adminLogin && this.state.adminLogin.token,
