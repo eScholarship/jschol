@@ -9,6 +9,7 @@ import Header1Comp from '../components/Header1Comp.jsx'
 import FooterComp from '../components/FooterComp.jsx'
 import DrawerComp from '../components/DrawerComp.jsx'
 import TestMessageComp from '../components/TestMessageComp.jsx'
+import ScrollToTopComp from '../components/ScrollToTopComp.jsx'
 
 // Keys used to store CMS-related data in browser's session storage
 const SESSION_LOGIN_KEY = "escholLogin"
@@ -265,7 +266,7 @@ class PageBase extends React.Component
 
   render() {
     return (
-      <div>
+      <ScrollToTopComp> {/* If this gives you any trouble, replace it with a plain <div> */}
         <Broadcast channel="cms" value={ { loggedIn: this.state.adminLogin && this.state.adminLogin.loggedIn,
                                            username: this.state.adminLogin && this.state.adminLogin.username,
                                            token: this.state.adminLogin && this.state.adminLogin.token,
@@ -279,7 +280,7 @@ class PageBase extends React.Component
                                            permissions: this.state.permissions } }>
           {this.renderContent()}
         </Broadcast>
-      </div>
+      </ScrollToTopComp>
     )
   }
 
