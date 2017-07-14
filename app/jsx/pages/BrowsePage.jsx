@@ -14,6 +14,7 @@ import DescriptionListComp from '../components/DescriptionListComp.jsx'
 import ToggleListComp from '../components/ToggleListComp.jsx'
 import AdminBarComp from '../components/AdminBarComp.jsx'
 import SidebarComp from '../components/SidebarComp.jsx'
+import NotYetLink from '../components/NotYetLink.jsx'
 
 class BrowsePage extends PageBase
 {
@@ -61,9 +62,7 @@ class BrowsePage extends PageBase
         </div>
       }
       <BreadcrumbComp array={data.breadcrumb} />
-      <Content
-        {...data}
-      />
+      <Content {...data} />
       </div> )
   }
 }
@@ -182,7 +181,9 @@ class CampusUnits extends React.Component {
       <header>
         <h2>{this.props.pageTitle}</h2>
       </header>
-      <WellComp />
+      <div className="c-well">
+        Looking for an academic or research unit that's not listed? <NotYetLink element="a">Learn how to add yours</NotYetLink>.
+      </div>
       <ToggleListComp depts={this.props.units} />
     </section>
   )}
