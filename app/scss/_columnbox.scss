@@ -83,11 +83,7 @@ aside {
   overflow: hidden; // hide text beyond max-height
 }
 
-.o-columnbox__truncate2 {
-  max-height: 11em; // truncate to 5 lines per jquery.dotdotdot
-  overflow: hidden; // hide text beyond max-height
-}
-
-.o-columnbox__truncate-more-link {
-  @extend %o-textlink__secondary;
+// Button to show untruncated text:
+.o-columnbox__truncate-more {
+  @extend %o-button__7;
 }

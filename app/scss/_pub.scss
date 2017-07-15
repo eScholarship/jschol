@@ -1,7 +1,16 @@
 // ##### Publication Component ##### //
 
+%c-pub {
+  margin-bottom: $spacing-md;
+}
+
 .c-pub {
-  margin-bottom: $spacing-sm;
+  @extend %c-pub;
+}
+
+.c-pub--indent {
+  @extend %c-pub;
+  padding-left: 4%;
 }
 
 .c-pub__heading {
