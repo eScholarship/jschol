@@ -12,25 +12,38 @@ if (!(typeof document === "undefined")) {
 
 class MarqueeComp extends React.Component {
   componentDidMount() {
-    $('.o-columnbox__truncate1, .o-columnbox__truncate2').dotdotdot({
-      watch: 'window',
-      after: '.o-columnbox__truncate-more-link'
-    });
-    setTimeout(()=> $('.o-columnbox__truncate1').trigger('update'), 0) // removes 'more' link upon page load if less than truncation threshold
-    $('.c-marquee__carousel-cell').dotdotdot({
-      watch: 'window',
-      after: '.c-marquee__sidebar-more-link'
-    });
+    if (this.aboutElement) {
+      $(this.aboutElement).dotdotdot({
+        watch: 'window',
+        after: '.c-marquee__sidebar-more',
+        callback: ()=> {
+          $(this.aboutElement).find(".c-marquee__sidebar-more").click(this.destroydotdotdot)
+        }
+      })
+      setTimeout(()=> $(this.aboutElement).trigger('update'), 0) // removes 'more' link upon page load if less than truncation threshold
+    }
+  }
+
+  destroydotdotdot = event => {
+    $(this.aboutElement).trigger('destroy')
+    $(this.aboutElement).removeClass("c-marquee__sidebar-truncate")
+    $(this.aboutElement).removeClass("o-columnbox__truncate1")
+    $(this.aboutElement).find(".c-marquee__sidebar-more").hide()
   }
 
   render() {
-    let about_block = this.props.marquee.about ?
-      <p dangerouslySetInnerHTML={{__html: this.props.marquee.about}}/>
-      : null
-    return (
+      let about_block = this.props.marquee.about ?
+        <div>
+          <div dangerouslySetInnerHTML={{__html: this.props.marquee.about}}/>
+          <button className="c-marquee__sidebar-more">More</button>
+        </div>
+        : null
+      return (
       <div className="c-marquee">
         { this.props.marquee.carousel &&
-          <CarouselComp className="c-marquee__carousel" options={{
+          <CarouselComp className="c-marquee__carousel"
+            truncate=".c-marquee__carousel-cell"
+            options={{
               cellAlign: 'left',
               contain: true,
               initialIndex: 0,
@@ -57,8 +70,8 @@ class MarqueeComp extends React.Component {
               <header>
                 <h2>About</h2>
               </header>
-              <div className="o-columnbox__truncate2">
-                {about_block} 
+              <div className="c-marquee__sidebar-truncate" ref={element => this.aboutElement = element}>
+                {about_block}
               </div>
             </section>
           </aside>
@@ -68,8 +81,8 @@ class MarqueeComp extends React.Component {
             <header>
               <h2>About</h2>
             </header>
-            <div className="o-columnbox__truncate1">
-              {about_block} 
+            <div className="o-columnbox__truncate1" ref={element => this.aboutElement = element}>
+              {about_block}
             </div>
           </section>
         }

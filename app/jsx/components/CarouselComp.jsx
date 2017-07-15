@@ -8,6 +8,7 @@ import $ from 'jquery'
 // Only load flickity when in the browser (not server-side)
 if (!(typeof document === "undefined")) {
   var Flickity = require('flickity-imagesloaded')
+  var dotdotdot = require('jquery.dotdotdot')
 }
 
 class CarouselComp extends React.Component {
@@ -17,6 +18,14 @@ class CarouselComp extends React.Component {
     }
     catch (e) {
       console.log("Exception initializing flickity:", e)
+    }
+    if (this.props.truncate) {
+      let cells = $(this.domEl).find(this.props.truncate)
+      $(this.domEl).find(this.props.truncate).each(function() {
+        $(this).dotdotdot({
+          watch: 'window',
+        })
+      })
     }
   }
 

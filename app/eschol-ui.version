@@ -341,3 +341,14 @@ As well as:
   deleted:    app/scss/_tabs2.scss
   deleted:    app/scss/_test.scss
 
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's 1fd20d1c538fe7bdc1bf9b45b5c7a347caa0c5fe, 2017-07-14 <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+Martin added all scss changes since last.
+As well as:
+
+  modified:   app/jsx/components/CarouselComp.jsx
+  modified:   app/jsx/components/MarqueeComp.jsx
+  modified:   app/jsx/components/PubComp.jsx
+  modified:   app/jsx/objects/ColumnBoxObj.jsx
