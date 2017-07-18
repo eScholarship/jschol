@@ -5,15 +5,10 @@ import Form from 'react-router-form'
 import MarqueeComp from '../components/MarqueeComp.jsx'
 
 class UnitProfileLayout extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      file: '',
-      imagePreviewUrl: this.props.data.logo 
-        ? "/assets/" + this.props.data.logo.asset_id 
-        : "http://placehold.it/400x100?text=No+logo"
-    };
-  }
+  // static propTypes = {
+  // }
+
+  state = { newData: this.props.data }
 
   handleSubmit = (event, data) => {
     event.preventDefault()
@@ -42,27 +37,94 @@ class UnitProfileLayout extends React.Component {
   handleImageChange = (event) => {
     event.preventDefault()
 
-    let reader = new FileReader();
-    let file = event.target.files[0];
+    let reader = new FileReader()
+    let file = event.target.files[0]
+    let imgObj = {}
+    let fieldName = event.target.name
 
     reader.onloadend = () => {
-      this.setState({
-        file: file,
-        imagePreviewUrl: reader.result
-      });
+      imgObj[fieldName] = {imagePreviewUrl: reader.result}
+      this.setData(imgObj);
     }
 
     reader.readAsDataURL(file)
   }
 
-  render() {
-    var data = this.props.data;
-    var journalConfigOpts;
-    // { data.logo
-    //   ? <img src={"/assets/"+data.logo.asset_id} width={data.logo.width} height={data.logo.height} alt="Logo image" />
-    //   : <img src="http://placehold.it/400x100?text=No+logo" width="400" height="100" alt="Missing logo image" />
-    // }
+  removeImage = (event) => {
+    event.preventDefault()
     
+    let imgObj = {}
+    imgObj[event.target.dataset.input] = {imagePreviewUrl: "http://placehold.it/400x100?text=No+logo"}
+    this.setData(imgObj);
+
+    let binaryFormData = new FormData();
+    binaryFormData.append(event.target.dataset.input, '')
+    this.props.sendBinaryFileData("POST", "/api/unit/" + this.props.unit.id + "/upload", binaryFormData)
+  }
+
+  setData = (newStuff) => {
+    this.setState({newData: Object.assign(_.cloneDeep(this.state.newData), newStuff)})
+  }
+
+  setSlideData = (newStuff, i) => {
+    var slides = this.state.newData.marquee.slides
+    slides[i] = Object.assign(_.cloneDeep(slides[i]), newStuff)
+
+    this.setMarqueeData({slides: slides})
+  }
+
+  removeImagePreview = (i) => {
+    var slides = _.cloneDeep(this.state.newData.marquee.slides)
+    delete slides[i].imagePreviewUrl
+
+    document.getElementById("slideImage").value = ""
+
+    this.setMarqueeData({slides: slides})
+  }
+
+  handleSlideImageChange = (event, i) => {
+    event.preventDefault()
+
+    let reader = new FileReader()
+    let file = event.target.files[0]
+
+    reader.onloadend = () => {
+      this.setSlideData({imagePreviewUrl: reader.result}, i);
+    }
+
+    reader.readAsDataURL(file)
+  }
+
+  setMarqueeData = (newStuff) => {
+    var marquee = Object.assign(_.cloneDeep(this.state.newData.marquee), newStuff)
+    this.setData({marquee: marquee})
+  }
+
+  addSlide = () => {
+    var slides = _.cloneDeep(this.state.newData.marquee.slides) || []
+    slides.push({
+      header: 'Sample header',
+      text: 'sample text',
+      image: 'https://static.pexels.com/photos/40797/wild-flowers-flowers-plant-macro-40797.jpeg'
+    })
+    this.setMarqueeData({slides: slides})
+  }
+
+  //TODO
+  removeSlide = (i) => {
+    var slides = _.cloneDeep(this.state.newData.marquee.slides)
+    slides.splice(i, 1)
+    this.setMarqueeData({slides: slides})
+  }
+
+  renderUnitConfig() {
+    let data = this.props.data
+    let logoUrl = this.state.newData.logo && this.state.newData.logo.imagePreviewUrl
+        ? this.state.newData.logo.imagePreviewUrl
+        : data.logo
+            ? "/assets/" + data.logo.asset_id
+            : "http://placehold.it/400x100?text=No+logo"
+
     return (
       <div>
         <h3>Unit Configuration</h3>
@@ -71,13 +133,16 @@ class UnitProfileLayout extends React.Component {
             <section className="o-columnbox1">
               <Form to={`/api/unit/${this.props.unit.id}/profileContentConfig`} onSubmit={this.handleSubmit}>
                 <label className="c-editable-page__label" htmlFor="unitName">Name: </label>
-                <input className="c-editable-page__input" id="unitName" type="text" defaultValue={data.name}/>
+                <input className="c-editable-page__input" id="unitName" type="text" defaultValue={data.name}
+                        onChange={ event => this.setData({ name: event.target.value }) }/>
 
-                <label className="c-editable-page__label">Logo image:</label>
-                <img src={this.state.imagePreviewUrl}/>
+                <label className="c-editable-page__label" htmlFor="logoImage">Logo image:</label>
+                <img src={ logoUrl } alt="Logo image"/>
 
-                <input type="file" name="logo_file" onChange={this.handleImageChange}/>
-                <button>Remove File</button>
+                <input type="file" id="logoImage" name="logo" onChange={this.handleImageChange}/>
+                { this.state.newData.logo && this.state.newData.logo.imagePreviewUrl && <button>Cancel</button> }
+                {/* TODO */}
+                <button onClick={this.removeImage} data-input="logo">Remove File</button>
                 <br/>
 
                 { this.props.unit.type == 'journal' &&
@@ -87,8 +152,8 @@ class UnitProfileLayout extends React.Component {
                     <br/><br/>
                     <label className="c-editable-page__label" htmlFor="license">License: </label>
                     <input className="c-editable-page__input" id="license" name="license" type="text" defaultValue={data.license}/>
-                    <label className="c-editable-page__label">E-ISSN: </label>
-                    <input className="c-editable-page__input" type="text" defaultValue={data.eissn}/>
+                    <label className="c-editable-page__label" htmlFor="eissn">E-ISSN: </label>
+                    <input className="c-editable-page__input" id="eissn" type="text" defaultValue={data.eissn}/>
                   </div>
                 }
 
@@ -97,93 +162,162 @@ class UnitProfileLayout extends React.Component {
             </section>
           </main>
         </div>
+      </div>
+    )
+  }
+
+  renderSocialConfig() {
+    let data = this.props.data
+
+    return (
+      <div>
         <h3>Social Configuration</h3>
         <div className="c-columns">
           <main>
             <section className="o-columnbox1">
               <div>
-                <label className="c-editable-page__label" htmlFor="facebook">Facebook Page: </label>
-                <input className="c-editable-page__input" id="facebook" name="facebook" type="text" defaultValue={data.facebook}/>
+                <Form to={`/api/unit/${this.props.unit.id}/profileContentConfig`} onSubmit={this.handleSubmit}>
+                  <label className="c-editable-page__label" htmlFor="facebook">Facebook Page: </label>
+                  <input className="c-editable-page__input" id="facebook" name="facebook" type="text" defaultValue={data.facebook}
+                          onChange={ event => this.setData({ facebook: event.target.value }) }/>
 
-                <label className="c-editable-page__label" htmlFor="twitter">Twitter Username: </label>
-                <input className="c-editable-page__input" id="twitter" name="twitter" type="text" defaultValue={data.twitter}/>
+                  <label className="c-editable-page__label" htmlFor="twitter">Twitter Username: </label>
+                  <input className="c-editable-page__input" id="twitter" name="twitter" type="text" defaultValue={data.twitter}
+                          onChange={ event => this.setData({ twitter: event.target.value }) }/>
 
-                <button>Save Changes</button> <button>Cancel</button>
+                  <button type="submit">Save Changes</button> <button type="reset">Cancel</button>
+                </Form>
               </div>
             </section>
           </main>
         </div>
-        <h3 id="marquee">Marquee Configuration</h3>
-        <MarqueeComp marquee={{carousel: true, about: data.about}} unit={this.props.unit}/>
+      </div>
+    )
+  }
+
+  renderDepartmentConfig() {
+    let data = this.props.data
+
+    return (
+      <div>
+        <h3>Main Content Configuration</h3>
+        <div className="c-columns">
+          <main id="maincontent">
+            <section className="o-columnbox1">
+              <div>
+                Here you can suppress a given series, and reorder series.
+                <br/><i>(not yet implemented)</i>
+              </div>
+            </section>
+          </main>
+        </div>
+      </div>
+    )
+  }
+
+  renderJournalConfig() {
+    let data = this.props.data
+
+    return (
+      <div>
+        <h3 id="main-content-config">Main Content Configuration</h3>
         <div className="c-columns">
           <main>
             <section className="o-columnbox1">
-              <div>
-                <h4>Carousel Configuration</h4>
-                {/* TO DO: add htmlFor and id+name below; make everything actually work */}
-                <label className="c-editable-page__label">Show Carousel? <input type="checkbox" defaultChecked/></label>
-                <label className="c-editable-page__label">Header:</label>
-                <input className="c-editable-page__input" type="text" defaultValue="Carousel Cell Title 1"/>
-
-                <label className="c-editable-page__label">Text:</label>
-                <textarea className="c-editable-page__input" defaultValue="Magnam praesentium sint, ducimus aspernatur architecto, deserunt ipsa veniam quia nihil, doloribus, laudantium a ad error tenetur fuga consequuntur laboriosam omnis ipsam."/>
-
-                <label className="c-editable-page__label">Image: <span style={{color: '#555'}}>img1.jpg</span></label>
-                <div style={{marginBottom: '20px', color: '#555', width: '100%'}}>
-                  <button>Choose File</button>
-                  <button>Remove File</button>
-                </div>
-
-                <label className="c-editable-page__label">About Text</label>
-                <textarea className="c-editable-page__input" defaultValue={data.about}/>
-              </div>
+              <Form to={`/api/unit/${this.props.unit.id}/profileContentConfig`} onSubmit={this.handleSubmit}>
+                <label className="c-editable-page__label" htmlFor="magazine_layout">Magazine layout?</label>
+                <input type="checkbox" id="magazine_layout" name="magazine_layout" defaultChecked={data.magazine_layout}/>
+                <p>(leave this unchecked for simple layout)</p>
+                <p>Display Issue Rule:</p>
+                <input className="c-editable-page__radio" type="radio"
+                       id="issueRuleFirstMostRecent" name="issue_rule" value="firstMostRecent"
+                       defaultChecked={data.issue_rule!="secondMostRecent"}/>
+                <label className="c-editable-page__radio-label" htmlFor="issueRuleFirstMostRecent">Most recent issue</label>
+                <input className="c-editable-page__radio" type="radio"
+                       id="issueRuleSecondMostRecent" name="issue_rule" value="secondMostRecent"
+                       defaultChecked={data.issue_rule=="secondMostRecent"}/>
+                <label className="c-editable-page__radio-label" htmlFor="issueRuleSecondMostRecent">Second-most recent issue</label>
+                <br/><br/>
+                <button>Save Changes</button> <button>Cancel</button>
+              </Form>
             </section>
           </main>
         </div>
+      </div>
+    )
+  }
 
-        { this.props.unit.type == 'oru' &&
-          <div>
-            <h3>Main Content Configuration</h3>
-            <div className="c-columns">
-              <main id="maincontent">
-                <section className="o-columnbox1">
-                  <div>
-                    Here you can suppress a given series, and reorder series.
-                    <br/><i>(not yet implemented)</i>
-                  </div>
-                </section>
-              </main>
-            </div>
-          </div>
-        }
+  renderSlideConfig() {
+    var slideData = this.state.newData.marquee.slides;
+    return slideData.map((slide, i) => {
+      return (
+        <div style={{padding: "10px", border: "1px solid black"}} key={i}>
+          <label className="c-editable-page__label" htmlFor="header">Header:</label>
+          <input className="c-editable-page__input" id="header" name="header" type="text" defaultValue={slide.header}
+                  onChange={ event => this.setSlideData({header: event.target.value}, i) }/>
 
-        { this.props.unit.type == 'journal' &&
-          <div>
-            <h3 id="main-content-config">Main Content Configuration</h3>
-            <div className="c-columns">
-              <main>
-                <section className="o-columnbox1">
-                  <Form to={`/api/unit/${this.props.unit.id}/profileContentConfig`} onSubmit={this.handleSubmit}>
-                    <label className="c-editable-page__label" htmlFor="magazine_layout">Magazine layout?</label>
-                    <input type="checkbox" id="magazine_layout" name="magazine_layout" defaultChecked={data.magazine_layout}/>
-                    <p>(leave this unchecked for simple layout)</p>
-                    <p>Display Issue Rule:</p>
-                    <input className="c-editable-page__radio" type="radio"
-                           id="issueRuleFirstMostRecent" name="issue_rule" value="firstMostRecent"
-                           defaultChecked={data.issue_rule!="secondMostRecent"}/>
-                    <label className="c-editable-page__radio-label" htmlFor="issueRuleFirstMostRecent">Most recent issue</label>
-                    <input className="c-editable-page__radio" type="radio"
-                           id="issueRuleSecondMostRecent" name="issue_rule" value="secondMostRecent"
-                           defaultChecked={data.issue_rule=="secondMostRecent"}/>
-                    <label className="c-editable-page__radio-label" htmlFor="issueRuleSecondMostRecent">Second-most recent issue</label>
-                    <br/><br/>
-                    <button>Save Changes</button> <button>Cancel</button>
-                  </Form>
-                </section>
-              </main>
-            </div>
+          <label className="c-editable-page__label">Text:</label>
+          <textarea className="c-editable-page__input" defaultValue={slide.text}
+                  onChange={ event => this.setSlideData({text: event.target.value}, i) }/>
+
+          <label className="c-editable-page__label">Image: <span style={{color: '#555'}}>{slide.image}</span></label>
+
+          <div style={{marginBottom: '20px', color: '#555', width: '100%'}}>
+            <input type="file" id="slideImage" name="slideImage"
+                  onChange={ (event) => this.handleSlideImageChange(event, i) }/>
+            {slide.imagePreviewUrl && <button onClick={ () => this.removeImagePreview(i) }>Cancel Image Upload</button>}
+            {/* TODO */}
+            <button>Remove File</button>
+            <button onClick={ () => this.removeSlide(i) }>Remove Slide</button>
           </div>
-        }
+        </div>
+      )
+    })
+  }
+
+  renderMarqueeConfig() {
+    var data = this.state.newData;
+
+    if (data.marquee.slides) {
+      data.marquee.carousel = true;
+    }
+
+    return (
+      <div>
+        <h3 id="marquee">Marquee Configuration</h3>
+        <MarqueeComp marquee={data.marquee} unit={this.props.unit}/>
+        <div className="c-columns">
+          <main>
+            <section className="o-columnbox1">
+              <label className="c-editable-page__label" htmlFor="aboutText">About Text</label>
+              <textarea className="c-editable-page__input" name="about" id="aboutText" defaultValue={data.marquee.about}
+                      onChange={ event => this.setMarqueeData({about: event.target.value}) }/>
+
+              {!data.marquee.slides && <button onClick={ () => this.addSlide() }>Add an image carousel</button>}
+              {data.marquee.slides && this.renderSlideConfig() }
+              {data.marquee.slides && <button onClick={ () => this.addSlide() }>Add slide</button>}
+
+              <label className="c-editable-page__label" htmlFor="displayCarousel">Publish Carousel?
+              <input name="carouselFlag" id="displayCarousel" type="checkbox" defaultChecked={data.marquee.carousel}
+                      onChange={ event => this.setMarqueeData({carousel: true}) }/>
+              </label>
+
+              <button type="submit">Save Changes</button> <button type="reset">Cancel</button>
+            </section>
+          </main>
+        </div>
+      </div>
+    )
+  }
+
+  render() {
+    return (
+      <div>
+        { this.renderUnitConfig() }
+        { this.renderSocialConfig() }
+        { this.renderMarqueeConfig() }
+        { this.props.unit.type == 'oru' && this.renderDepartmentConfig() }
+        { this.props.unit.type == 'journal' && this.renderJournalConfig() }
       </div>
     )
   }

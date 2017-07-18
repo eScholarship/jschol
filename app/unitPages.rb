@@ -133,10 +133,19 @@ def getUnitPageContent(unit, attrs, q)
   end
 end
 
+# TODO carouselAttrs should not = ""
 def getUnitMarquee(unit, attrs)
+  carousel = Widget.where(unit_id: unit.id, region: "marquee", kind: "Carousel", ordering: 0).first
+  if carousel && carousel.attrs
+    carouselAttrs = JSON.parse(carousel.attrs)
+  else
+    carouselAttrs = ""
+  end
+
   return {
     :about => attrs['about'],
-    :carousel => attrs['carousel']
+    :carousel => attrs['carousel'],
+    :slides => carouselAttrs['slides']
   }
 end
 
@@ -268,9 +277,9 @@ def getUnitProfile(unit, attrs)
     logo: attrs['logo'],
     facebook: attrs['facebook'],
     twitter: attrs['twitter'],
-    carousel: attrs['carousel'],
-    about: attrs['about']
+    marquee: getUnitMarquee(unit, attrs)
   }
+  
   if unit.type == 'journal'
     profile[:doaj] = attrs['doaj']
     profile[:license] = attrs['license']
@@ -672,7 +681,10 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
     else
       unitAttrs.delete('issue_rule')
     end
-
+    
+    if params['data']['facebook'] then unitAttrs['facebook'] = params['data']['facebook'] end
+    if params['data']['twitter'] then unitAttrs['twitter'] = params['data']['twitter'] end
+    
     unit.attrs = unitAttrs.to_json
     unit.save
   }
@@ -681,11 +693,47 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
   return { status: "ok" }.to_json
 end
 
+get "/api/unit/:unitID/carouselConfig" do |unitID|
+  carousel = Widget.where(unit_id: unitID, region: "marquee", kind: "Carousel", ordering: 0).first
+  if !carousel
+    carousel = Widget.new(unit_id: unitID, region: "marquee", kind: "Carousel", ordering: 0)
+  end
+  
+  if carousel.attrs
+    carouselAttrs = JSON.parse(carousel.attrs)
+  else
+    carouselAttrs = {slides: [
+      {
+        image: "https://static.pexels.com/photos/40797/wild-flowers-flowers-plant-macro-40797.jpeg",
+        header: "Carousel Cell Title 1",
+        text: "Magnam praesentium sint, ducimus aspernatur architecto, deserunt ipsa veniam quia nihil, doloribus, laudantium a ad error tenetur fuga consequuntur laboriosam omnis ipsam."
+      },
+      {
+        image: "https://static.pexels.com/photos/27714/pexels-photo-27714.jpg",
+        header: "Carousel Cell Title 2",
+        text: "Iure quod itaque maiores optio eveniet assumenda omnis, similique. Possimus, expedita, ea?"
+      },
+      {
+        image: "http://www.almanac.com/sites/default/files/birth_month_flowers-primary-1920x1280px_pixabay.jpg",
+        header: "Carousel Cell Title 3",
+        text: "Obcaecati consequatur quaerat eaque, beatae eligendi possimus, repudiandae magni quas dolores, sit voluptatem iusto laborum. Incidunt fuga sed dicta nisi voluptates eaque, beatae numquam officia animi, vel."
+      }
+    ]}
+  end
+  
+  carousel.attrs = carouselAttrs.to_json
+  # carousel.save
+end
+
 post "/api/unit/:unitID/upload" do |unitID|
   perms = getUserPermissions(params[:username], params[:token], unitID)
   perms[:admin] or halt(401)
 
-  logo_data = putImage(params[:logo_file][:tempfile].path)
+  if params[:logo] != ""
+    logo_data = putImage(params[:logo][:tempfile].path)
+  elsif params[:logo] == ""
+    #REMOVE LOGO
+  end
 
   DB.transaction {
     unit = Unit[unitID] or jsonHalt(404, "Unit not found")
