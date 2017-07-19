@@ -252,24 +252,28 @@ class UnitProfileLayout extends React.Component {
     return slideData.map((slide, i) => {
       return (
         <div style={{padding: "10px", border: "1px solid black"}} key={i}>
-          <label className="c-editable-page__label" htmlFor="header">Header:</label>
-          <input className="c-editable-page__input" id="header" name="header" type="text" defaultValue={slide.header}
+          <label className="c-editable-page__label" htmlFor={"header-" + i}>Header:</label>
+          <input className="c-editable-page__input" id={"header-" + i} name={"header" + i} 
+                  type="text" defaultValue={slide.header}
                   onChange={ event => this.setSlideData({header: event.target.value}, i) }/>
 
-          <label className="c-editable-page__label">Text:</label>
-          <textarea className="c-editable-page__input" defaultValue={slide.text}
+          <label className="c-editable-page__label" htmlFor={"text-" + i}>Text:</label>
+          <textarea className="c-editable-page__input" id={"text-" + i} name={"text" + i} 
+                  defaultValue={slide.text}
                   onChange={ event => this.setSlideData({text: event.target.value}, i) }/>
 
-          <label className="c-editable-page__label">Image: <span style={{color: '#555'}}>{slide.image}</span></label>
+          <label className="c-editable-page__label" htmlFor={"slideImage-" + i}>Image: <span style={{color: '#555'}}>{slide.image.asset_id}</span></label>
+          {/*not currently passing the filename back with the slide image*/}
+          {/*TODO: remove 'no file chosen' text https://stackoverflow.com/questions/21842274/cross-browser-custom-styling-for-file-upload-button/21842275#21842275 */}
 
           <div style={{marginBottom: '20px', color: '#555', width: '100%'}}>
-            <input type="file" id="slideImage" name="slideImage"
+            <input type="file" id={"slideImage" + i} name={"slideImage" + i}
                   onChange={ (event) => this.handleSlideImageChange(event, i) }/>
             {slide.imagePreviewUrl && <button onClick={ () => this.removeImagePreview(i) }>Cancel Image Upload</button>}
-            {/* TODO */}
-            <button>Remove File</button>
-            <button onClick={ () => this.removeSlide(i) }>Remove Slide</button>
           </div>
+          {/* TODO */}
+          <button>Remove File</button>
+          <button onClick={ () => this.removeSlide(i) }>Remove Slide</button>
         </div>
       )
     })
@@ -289,20 +293,22 @@ class UnitProfileLayout extends React.Component {
         <div className="c-columns">
           <main>
             <section className="o-columnbox1">
-              <label className="c-editable-page__label" htmlFor="aboutText">About Text</label>
-              <textarea className="c-editable-page__input" name="about" id="aboutText" defaultValue={data.marquee.about}
-                      onChange={ event => this.setMarqueeData({about: event.target.value}) }/>
+              <Form to={`/api/unit/${this.props.unit.id}/profileContentConfig`} onSubmit={this.handleSubmit}>
+                <label className="c-editable-page__label" htmlFor="aboutText">About Text</label>
+                <textarea className="c-editable-page__input" name="about" id="aboutText" defaultValue={data.marquee.about}
+                        onChange={ event => this.setMarqueeData({about: event.target.value}) }/>
 
-              {!data.marquee.slides && <button onClick={ () => this.addSlide() }>Add an image carousel</button>}
-              {data.marquee.slides && this.renderSlideConfig() }
-              {data.marquee.slides && <button onClick={ () => this.addSlide() }>Add slide</button>}
+                {!data.marquee.slides && <button onClick={ () => this.addSlide() }>Add an image carousel</button>}
+                {data.marquee.slides && this.renderSlideConfig() }<br/>
+                {data.marquee.slides && <button onClick={ () => this.addSlide() }>Add slide</button>}
 
-              <label className="c-editable-page__label" htmlFor="displayCarousel">Publish Carousel?
-              <input name="carouselFlag" id="displayCarousel" type="checkbox" defaultChecked={data.marquee.carousel}
-                      onChange={ event => this.setMarqueeData({carousel: true}) }/>
-              </label>
+                <label className="c-editable-page__label" htmlFor="displayCarousel">Publish Carousel?
+                <input name="carouselFlag" id="displayCarousel" type="checkbox" defaultChecked={data.marquee.carousel}
+                        onChange={ event => this.setMarqueeData({carousel: true}) }/>
+                </label>
 
-              <button type="submit">Save Changes</button> <button type="reset">Cancel</button>
+                <button type="submit">Save Changes</button> <button type="reset">Cancel</button>
+              </Form>
             </section>
           </main>
         </div>

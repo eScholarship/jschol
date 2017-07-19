@@ -18,7 +18,7 @@ class MarqueeComp extends React.Component {
       carousel: PropTypes.bool,
       slides: PropTypes.arrayOf(PropTypes.shape({
         header: PropTypes.string,
-        image: PropTypes.string,
+        image: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
         text: PropTypes.string,
         imagePreviewUrl: PropTypes.string
       }))
@@ -29,7 +29,17 @@ class MarqueeComp extends React.Component {
     var slides = []
     if (this.props.marquee.slides) {
       slides = this.props.marquee.slides.map((slide, i) => {
-        let imgUrl = slide.imagePreviewUrl ? slide.imagePreviewUrl : slide.image ? slide.image : ""
+        var imgUrl
+        if (slide.imagePreviewUrl) {
+          imgUrl = slide.imagePreviewUrl
+        } else if (slide.image && typeof slide.image === "string") {
+          imgUrl = slide.image
+        } else if (slide.image && slide.image.asset_id) {
+          imgUrl = "/assets/" + slide.image.asset_id
+        } else {
+          imgUrl = ""
+        }
+
         return (
           <div key={i} className="c-marquee__carousel-cell" style={{backgroundImage: "url('" + imgUrl + "')"}}>
             <h2>{slide.header}</h2>

@@ -666,6 +666,17 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
   perms = getUserPermissions(params[:username], params[:token], unitID)
   perms[:admin] or halt(401)
 
+  carouselKeys = params['data'].keys.grep /(header|text)\d+/
+  carouselSlides = {}
+  if carouselKeys
+    numSlides = carouselKeys.map! {|x| /(header|text)(\d+)/.match(x)[2].to_i}.max
+    (0..numSlides).each do |n|
+      slide = {header: params['data']["header#{n}"], text: params['data']["text#{n}"]}
+      carouselSlides[n] = slide
+    end
+  end
+  carouselConfig(carouselSlides, unitID)
+
   DB.transaction {
     unit = Unit[unitID] or jsonHalt(404, "Unit not found")
     unitAttrs = JSON.parse(unit.attrs)
@@ -682,6 +693,8 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
       unitAttrs.delete('issue_rule')
     end
     
+    if params['data']['about'] then unitAttrs['about'] = params['data']['about'] end
+    if params['data']['carouselFlag'] then unitAttrs['carousel'] = params['data']['carouselFlag'] end
     if params['data']['facebook'] then unitAttrs['facebook'] = params['data']['facebook'] end
     if params['data']['twitter'] then unitAttrs['twitter'] = params['data']['twitter'] end
     
@@ -693,60 +706,63 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
   return { status: "ok" }.to_json
 end
 
-get "/api/unit/:unitID/carouselConfig" do |unitID|
+def carouselConfig(slides, unitID)
   carousel = Widget.where(unit_id: unitID, region: "marquee", kind: "Carousel", ordering: 0).first
   if !carousel
     carousel = Widget.new(unit_id: unitID, region: "marquee", kind: "Carousel", ordering: 0)
   end
   
+  # TODO: creating new slides
+  # TODO: race condition if adding a new slide - does the image get uploaded first or the slide added to the DB first? 
   if carousel.attrs
     carouselAttrs = JSON.parse(carousel.attrs)
+    slides.each { |k,v| carouselAttrs['slides'][k] = carouselAttrs['slides'][k].merge(v.to_a.collect{|x| [x[0].to_s, x[1]]}.to_h) }
   else
-    carouselAttrs = {slides: [
-      {
-        image: "https://static.pexels.com/photos/40797/wild-flowers-flowers-plant-macro-40797.jpeg",
-        header: "Carousel Cell Title 1",
-        text: "Magnam praesentium sint, ducimus aspernatur architecto, deserunt ipsa veniam quia nihil, doloribus, laudantium a ad error tenetur fuga consequuntur laboriosam omnis ipsam."
-      },
-      {
-        image: "https://static.pexels.com/photos/27714/pexels-photo-27714.jpg",
-        header: "Carousel Cell Title 2",
-        text: "Iure quod itaque maiores optio eveniet assumenda omnis, similique. Possimus, expedita, ea?"
-      },
-      {
-        image: "http://www.almanac.com/sites/default/files/birth_month_flowers-primary-1920x1280px_pixabay.jpg",
-        header: "Carousel Cell Title 3",
-        text: "Obcaecati consequatur quaerat eaque, beatae eligendi possimus, repudiandae magni quas dolores, sit voluptatem iusto laborum. Incidunt fuga sed dicta nisi voluptates eaque, beatae numquam officia animi, vel."
-      }
-    ]}
+    carouselAttrs = {slides: ''}
   end
   
   carousel.attrs = carouselAttrs.to_json
-  # carousel.save
+  carousel.save
 end
 
 post "/api/unit/:unitID/upload" do |unitID|
   perms = getUserPermissions(params[:username], params[:token], unitID)
   perms[:admin] or halt(401)
 
-  if params[:logo] != ""
+  # upload images for carousel configuration
+  slideImageKeys = params.keys.grep /slideImage/
+  if slideImageKeys.length > 0
+    slideImage_data = []
+    for slideImageKey in slideImageKeys
+      image_data = putImage(params[slideImageKey][:tempfile].path)
+      image_data[:slideNumber] = /slideImage(\d*)/.match(slideImageKey)[1]
+      slideImage_data.push(image_data)
+    end
+    DB.transaction {
+      carousel = Widget.where(unit_id: unitID, region: "marquee", kind: "Carousel", ordering: 0).first
+      carouselAttrs = JSON.parse(carousel.attrs)
+      for slideImage in slideImage_data
+        slideNumber = slideImage[:slideNumber].to_i
+        carouselAttrs['slides'][slideNumber]['image'] = slideImage.reject{|k,v| k == :slideNumber}.to_a.collect{|x| [x[0].to_s, x[1]]}.to_h
+      end
+      carousel.attrs = carouselAttrs.to_json
+      carousel.save
+    }
+  end
+
+  # upload images for unit profile logo
+  if params.has_key? :logo and params[:logo] != ""
     logo_data = putImage(params[:logo][:tempfile].path)
+    DB.transaction {
+      unit = Unit[unitID] or jsonHalt(404, "Unit not found")
+      unitAttrs = JSON.parse(unit.attrs)
+      unitAttrs['logo'] = logo_data.to_a.collect{|x| [x[0].to_s, x[1]]}.to_h
+      unit.attrs = unitAttrs.to_json
+      unit.save
+    }
   elsif params[:logo] == ""
     #REMOVE LOGO
   end
-
-  DB.transaction {
-    unit = Unit[unitID] or jsonHalt(404, "Unit not found")
-    unitAttrs = JSON.parse(unit.attrs)
-
-    unitAttrs['logo']['width'] = logo_data[:width]
-    unitAttrs['logo']['height'] = logo_data[:height]
-    unitAttrs['logo']['asset_id'] = logo_data[:asset_id]
-    unitAttrs['logo']['image_type'] = logo_data[:image_type]
-
-    unit.attrs = unitAttrs.to_json
-    unit.save
-  }
 
   content_type :json
   return { status: "okay" }.to_json
