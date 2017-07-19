@@ -29,7 +29,8 @@ class SortableNavList extends React.Component {
 
   setupState(props) {
     return {
-      data: this.generateData(props.navItems)
+      data: this.generateData(props.navItems),
+      firstIsHome: props.navItems[0].type == "home"
     }
   }
 
@@ -80,7 +81,7 @@ class SortableNavList extends React.Component {
           return true
         }}
         canDrop={({ node, nextTreeIndex, nextParent }) => {
-          if (nextTreeIndex == 0) // don't allow rearranging above the unit home
+          if (this.state.firstIsHome && nextTreeIndex == 0) // don't allow rearranging above the unit home
             return false
           if (!nextParent)
             return true

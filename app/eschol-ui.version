@@ -305,3 +305,50 @@ As well as:
   modified:   app/jsx/components/FacetBoxComp.jsx
   modified:   app/jsx/components/PubYearComp.jsx
   big merge:  app/jsx/pages/SearchPage.jsx
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's 2fed78538907c4db497a3b1f386fd4f1b74d43c1, 2017-07-06 <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+Andy added all scss and image changes since last.
+As well as:
+  modified:   app/jsx/components/HeatMapComp.jsx
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's 931d8f3b222f1024c7c08a10c25dffda83b39e37, 2017-07-10 <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+Martin added all scss and image changes since last.
+As well as:
+  modified:   app/jsx/components/JournalCarouselComp.jsx
+  modified:   app/jsx/components/StatCarouselComp.jsx
+  modified:   app/jsx/objects/StatsObj.jsx
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's be887fce9c603c3bd0532ca9ffade8403ecd250d, 2017-07-11 <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+Andy added all scss changes since last.
+As well as:
+
+  modified:   app/jsx/components/JournalCarouselComp.jsx
+  modified:   app/jsx/components/MarqueeComp.jsx
+  modified:   app/jsx/components/StatCarouselComp.jsx
+  modified:   app/jsx/layouts/CampusLayout.jsx
+  modified:   app/jsx/layouts/DepartmentLayout.jsx
+  deleted:    app/scss/_debug.scss
+  deleted:    app/scss/_tabs2.scss
+  deleted:    app/scss/_test.scss
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's 1fd20d1c538fe7bdc1bf9b45b5c7a347caa0c5fe, 2017-07-14 <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+Martin added all scss changes since last.
+As well as:
+
+  modified:   app/jsx/components/CarouselComp.jsx
+  modified:   app/jsx/components/MarqueeComp.jsx
+  modified:   app/jsx/components/PubComp.jsx
+  modified:   app/jsx/objects/ColumnBoxObj.jsx

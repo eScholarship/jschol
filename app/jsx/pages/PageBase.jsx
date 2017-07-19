@@ -9,6 +9,7 @@ import Header1Comp from '../components/Header1Comp.jsx'
 import FooterComp from '../components/FooterComp.jsx'
 import DrawerComp from '../components/DrawerComp.jsx'
 import TestMessageComp from '../components/TestMessageComp.jsx'
+import ScrollToTopComp from '../components/ScrollToTopComp.jsx'
 
 // Keys used to store CMS-related data in browser's session storage
 const SESSION_LOGIN_KEY = "escholLogin"
@@ -203,6 +204,7 @@ class PageBase extends React.Component
     if (this.state.error) {
       return (
         <div className="body">
+          { this.stageWatermark() }
           {this.renderError()}
           <FooterComp/>
         </div>)
@@ -211,6 +213,7 @@ class PageBase extends React.Component
     // CMS drawer case
     if (this.state.adminLogin && this.state.adminLogin.loggedIn &&
         this.state.cmsModules && this.state.pageData &&
+        this.state.permissions && this.state.permissions.admin &&
         'header' in this.state.pageData && 'nav_bar' in this.state.pageData.header)
     {
       return (
@@ -220,6 +223,7 @@ class PageBase extends React.Component
                     fetchingData={this.state.fetchingData}>
           {/* Not sure why the padding below is needed, but it is */}
           <div className="body" style={{ padding: "10px" }}>
+            { this.stageWatermark() }
             <SkipNavComp/>
             {this.state.pageData ? this.renderData(this.state.pageData) : this.renderLoading()}
             <FooterComp/>
@@ -230,6 +234,7 @@ class PageBase extends React.Component
     // Normal case
     return (
       <div className="body">
+        { this.stageWatermark() }
         <SkipNavComp/>
         {this.state.pageData ? this.renderData(this.state.pageData) : this.renderLoading()}
         <FooterComp/>
@@ -288,9 +293,9 @@ class PageBase extends React.Component
   }
 
   render() {
+    // If ScrollToTopComp gives you trouble, you can disable by replacing it with a plain <div>
     return (
-      <div>
-        { this.stageWatermark() }
+      <ScrollToTopComp>
         <Broadcast channel="cms" value={ { loggedIn: this.state.adminLogin && this.state.adminLogin.loggedIn,
                                            username: this.state.adminLogin && this.state.adminLogin.username,
                                            token: this.state.adminLogin && this.state.adminLogin.token,
@@ -304,7 +309,7 @@ class PageBase extends React.Component
                                            permissions: this.state.permissions } }>
           {this.renderContent()}
         </Broadcast>
-      </div>
+      </ScrollToTopComp>
     )
   }
 

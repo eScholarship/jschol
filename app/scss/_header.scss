@@ -6,6 +6,11 @@
   margin: (-$spacing-sm) (-$spacing-sm) 0;
   padding: $spacing-sm;
   background: $color-white;
+
+  @include bp(screen4) {
+    padding: $spacing-sm $spacing-lg;
+  }
+
 }
 
 // Header 1 component logo:

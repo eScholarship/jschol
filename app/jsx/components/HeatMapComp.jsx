@@ -6,7 +6,7 @@ import NotYetLink from '../components/NotYetLink.jsx'
 class HeatMapComp extends React.Component {
   render() {
     return (
-      <div className="c-heatmap" style={{backgroundImage: "url('/images/sample_heatmap.png')"}}>
+      <div className="c-heatmap" style={{backgroundImage: "url('/images/world-map.svg')"}}>
         <h1 className="c-heatmap__heading">Share your research with a <br/><strong>global audience</strong></h1>
         <NotYetLink className="c-heatmap__button" element="button">Get Started</NotYetLink>
         <div className="c-heatmap__text">

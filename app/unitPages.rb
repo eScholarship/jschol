@@ -56,37 +56,47 @@ end
 
 # Generate a link to an image in the S3 bucket
 def getLogoData(data)
-  data && data['asset_id'] && data['width'] && data['height'] or return nil
+  data && data['asset_id'] or return nil
   return { url: "/assets/#{data['asset_id']}", width: data['width'], height: data['height'] }
 end
 
 # Add a URL to each nav bar item
-def getNavBar(unitID, pageName, navItems)
+def getNavBar(unit, pageName, navItems, level=1)
   if navItems
     navItems.each { |navItem|
-      if navItem['slug']
-        navItem['url'] = "/uc/#{unitID}#{navItem['slug']=="" ? "" : "/"+navItem['slug']}"
+      if navItem['type'] == 'folder'
+        navItem['sub_nav'] = getNavBar(unit, pageName, navItem['sub_nav'], level+1)
+      elsif navItem['slug']
+        navItem['url'] = "/uc/#{unit.id}#{navItem['slug']=="" ? "" : "/"+navItem['slug']}"
       end
     }
-    navItems.unshift({ id: 0, type: "home", name: "Unit Home", url: "/uc/#{unitID}" })
+    if level==1 && !['root','campus'].include?(unit.type)
+      navItems.unshift({ id: 0, type: "home", name: "Unit Home", url: "/uc/#{unit.id}" })
+    end
     return navItems
   end
   return nil
 end
 
-# Generate the last part of the breadcrumb for a static page within a unit
-def getPageBreadcrumb(unit, pageName)
-  (!pageName || pageName == "home" || pageName == "campus_landing") and return []
-  pageName == "search" and return [{ name: "Search", id: unit.id + ":" + pageName}]
-  pageName == "profile" and return [{ name: "Profile", id: unit.id + ":" + pageName}]
-  pageName == "sidebar" and return [{ name: "Sidebars", id: unit.id + ":" + pageName}]
-  p = Page.where(unit_id: unit.id, slug: pageName).first
-  p or halt(404, "Unknown page #{pageName} in #{unit.id}")
-  return [{ name: p[:name], id: unit.id + ":" + pageName, url: "/#{unit.id}/#{pageName}" }]
+# Generate the last part of the breadcrumb for a static page or journal issue
+def getPageBreadcrumb(unit, pageName, issue=nil)
+  ((!pageName and !issue) || pageName == "home") and return []
+  if issue
+   return [{name: "Volume #{issue[:volume]}, Issue #{issue[:issue]}",
+               id: issue[:unit_id] + ":" + issue[:volume] + ":" + issue[:issue],
+              url: "/uc/#{issue[:unit_id]}/#{issue[:volume]}/#{issue[:issue]}"}]
+  else
+    pageName == "search" and return [{ name: "Search", id: unit.id + ":" + pageName}]
+    pageName == "profile" and return [{ name: "Profile", id: unit.id + ":" + pageName}]
+    pageName == "sidebar" and return [{ name: "Sidebars", id: unit.id + ":" + pageName}]
+    p = Page.where(unit_id: unit.id, slug: pageName).first
+    p or halt(404, "Unknown page #{pageName} in #{unit.id}")
+    return [{ name: p[:name], id: unit.id + ":" + pageName, url: "/#{unit.id}/#{pageName}" }]
+  end
 end
 
 # Generate breadcrumb and header content for Unit-branded pages
-def getUnitHeader(unit, pageName=nil, attrs=nil)
+def getUnitHeader(unit, pageName=nil, journalIssue=nil, attrs=nil)
   if !attrs then attrs = JSON.parse(unit[:attrs]) end
   r = UnitHier.where(unit_id: unit.id).where(ancestor_unit: $activeCampuses.keys).first
   campusID = (unit.type=='campus') ? unit.id : r ? r.ancestor_unit : 'root'
@@ -95,19 +105,19 @@ def getUnitHeader(unit, pageName=nil, attrs=nil)
     :campusName => $unitsHash[campusID].name,
     :campuses => $activeCampuses.values.map { |c| {id: c.id, name: c.name} }.unshift({id: "", name: "eScholarship at..."}),
     :logo => getLogoData(attrs['logo']),
-    :nav_bar => getNavBar(unit.id, pageName, attrs['nav_bar']),
+    :nav_bar => getNavBar(unit, pageName, attrs['nav_bar']),
     :social => {
       :facebook => attrs['facebook'],
       :twitter => attrs['twitter'],
       :rss => attrs['rss']
     },
     :breadcrumb => (unit.type!='campus') ?
-      traverseHierarchyUp([{name: unit.name, id: unit.id, url: "/uc/" + unit.id}]) + getPageBreadcrumb(unit, pageName)
+      traverseHierarchyUp([{name: unit.name, id: unit.id, url: "/uc/" + unit.id}]) + getPageBreadcrumb(unit, pageName, journalIssue)
       : getPageBreadcrumb(unit, pageName)
   }
 
   # if this unit doesn't have a nav_bar, get the next unit up the hierarchy's nav_bar
-  if !header[:nav_bar] and unit.type != 'campus'
+  if !header[:nav_bar] and unit.type != 'campus' and unit.type != 'root'
     ancestor = $hierByUnit[unit.id][0].ancestor
     until header[:nav_bar] || ancestor.id == 'root'
       header[:nav_bar] = JSON.parse(ancestor[:attrs])['nav_bar']
@@ -118,15 +128,15 @@ def getUnitHeader(unit, pageName=nil, attrs=nil)
   return header
 end
 
-def getUnitPageContent(unit, attrs, q)
+def getUnitPageContent(unit, attrs, query)
   if unit.type == 'oru'
    return getORULandingPageData(unit.id)
   elsif unit.type == 'campus'
     return getCampusLandingPageData(unit, attrs)
   elsif unit.type.include? 'series'
-    return getSeriesLandingPageData(unit, q)
+    return getSeriesLandingPageData(unit, query)
   elsif unit.type == 'journal'
-    return getJournalLandingPageData(unit.id)
+    return getJournalIssueData(unit, attrs)
   else
     # ToDo: handle 'special' type here
     halt(404, "Unknown unit type #{unit.type}")
@@ -156,8 +166,9 @@ def getORULandingPageData(id)
 
   return {
     :series => children ? children.select { |u| u.unit.type == 'series' }.map { |u| seriesPreview(u) } : [],
+    :monograph_series => children ? children.select { |u| u.unit.type == 'monograph_series' }.map { |u| seriesPreview(u) } : [],
     :journals => children ? children.select { |u| u.unit.type == 'journal' }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : [],
-    :related_orus => children ? children.select { |u| u.unit.type != 'series' && u.unit.type != 'journal' }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : []
+    :related_orus => children ? children.select { |u| u.unit.type == 'oru' }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : []
   }
 end
 
@@ -176,13 +187,15 @@ end
 def seriesPreview(u)
   items = UnitItem.filter(:unit_id => u.unit_id, :is_direct => true)
   count = items.count
-  preview = items.limit(3).map(:item_id)
+  previewLimit = 3
+  preview = items.limit(previewLimit).map(:item_id)
   itemData = readItemData(preview)
 
   {
     :unit_id => u.unit_id,
     :name => u.unit.name,
     :count => count,
+    :previewLimit => previewLimit,
     :items => itemResultData(preview, itemData)
   }
 end
@@ -190,7 +203,7 @@ end
 def getSeriesLandingPageData(unit, q)
   parent = $hierByUnit[unit.id]
   if parent.length > 1
-    pp parent
+    pp parent    # ToDo: Is this case ever met?
   else
     children = parent ? $hierByAncestor[parent[0].ancestor_unit] : []
   end
@@ -200,19 +213,43 @@ def getSeriesLandingPageData(unit, q)
   return response
 end
 
-def getJournalLandingPageData(id)
-  unit = $unitsHash[id]
-  attrs = JSON.parse(unit.attrs)
+# Landing page data does not pass arguments volume/issue. It just gets most recent journal
+def getJournalIssueData(unit, unit_attrs, volume=nil, issue=nil)
+  display = unit_attrs['magazine_layout'] ? 'magazine' : 'simple'
+  if unit_attrs['issue_rule'] and unit_attrs['issue_rule'] == 'secondMostRecent' and volume.nil? and issue.nil?
+    secondIssue = Issue.where(:unit_id => unit.id).order(Sequel.desc(:pub_date)).first(2)[1]
+    volume = secondIssue ? secondIssue.values[:volume] : nil
+    issue = secondIssue ? secondIssue.values[:issue] : nil
+  end
   return {
-    display: attrs['magazine_layout'] ? 'splashy' : 'simple',
-    issue: getIssue(id)
+    display: display,
+    issue: getIssue(unit.id, display, volume, issue),
+    issues: Issue.where(:unit_id => unit.id).order(Sequel.desc(:pub_date)).to_hash(:id).map{|id, issue|
+      h = issue.to_hash
+      h[:attrs] and h[:attrs] = JSON.parse(h[:attrs])
+      h
+    }
   }
 end
 
-def getIssue(id)
-  issue1 = Issue.where(:unit_id => id).order(Sequel.desc(:pub_date)).first
-  return nil if issue1.nil?
-  issue = issue1.values
+def isJournalIssue?(unit_id, volume, issue)
+  !!Issue.first(:unit_id => unit_id, :volume => volume, :issue => issue)
+end
+
+def getIssue(id, display, volume=nil, issue=nil)
+  if volume.nil?  # Landing page (most recent journal)
+    issue = Issue.where(:unit_id => id).order(Sequel.desc(:pub_date)).first
+  else
+    issue = Issue.first(:unit_id => id, :volume => volume, :issue => issue)
+  end
+  return nil if issue.nil?
+  issue = issue.values
+  if issue[:attrs]
+    attrs = JSON.parse(issue[:attrs])
+    issue[:title] = attrs['title']
+    issue[:description] = attrs['description'] 
+    issue[:cover] = attrs['cover'] 
+  end
   issue[:sections] = Section.where(:issue_id => issue[:id]).order(:ordering).all
 
   issue[:sections].map! do |section|
@@ -222,15 +259,14 @@ def getIssue(id)
     authors = ItemAuthors.where(item_id: itemIds).order(:ordering).to_hash_groups(:item_id)
 
     itemData = {items: items, authors: authors}
-
-    section[:articles] = itemResultData(itemIds, itemData)
+    # Additional data field needed ontop of default
+    resultsListFields = (display != "magazine") ? ['thumbnail'] : []
+    section[:articles] = itemResultData(itemIds, itemData, resultsListFields)
 
     next section
   end
   return issue
 end
-
-
 
 def unitSearch(params, unit)
   # ToDo: Right now, series landing page is the only unit type using this block. Clean this up
@@ -410,11 +446,12 @@ put "/api/unit/:unitID/nav/:navID" do |unitID, navID|
         page.attrs = JSON.parse(page.attrs).merge({ "html" => newHTML }).to_json
         page.save
       elsif nav['type'] == "link"
-        params[:url] =~ %r{^https?://.*} or jsonHalt(400, "Invalid URL.")
+        params[:url] =~ %r{^(/\w|https?://).*} or jsonHalt(400, "Invalid URL.")
         nav['url'] = params[:url]
       end
       unit.attrs = unitAttrs.to_json
       unit.save
+      refreshUnitsHash
       return {status: "ok"}.to_json
     }
     jsonHalt(404, "Unknown nav #{navID} for unit #{unitID}")
@@ -452,6 +489,7 @@ put "/api/unit/:unitID/navOrder" do |unitID|
     unitAttrs['nav_bar'] = newNav
     unit.attrs = unitAttrs.to_json
     unit.save
+    refreshUnitsHash
     return {status: "ok"}.to_json
   }
 end
@@ -480,7 +518,13 @@ post "/api/unit/:unitID/nav" do |unitID|
   (1..9999).each { |n|
     slug = "#{navType}#{n.to_s}"
     name = "New #{navType} #{n.to_s}"
-    break if navBar.none? { |nav| nav['slug'] == slug || nav['name'] == name }
+    existing = nil
+    travNav(navBar) { |nav|
+      if nav['slug'] == slug || nav['name'] == name
+        existing = nav
+      end
+    }
+    break unless existing
   }
 
   nextID = maxNavID(navBar) + 1
@@ -502,6 +546,7 @@ post "/api/unit/:unitID/nav" do |unitID|
     attrs['nav_bar'] = navBar
     unit[:attrs] = attrs.to_json
     unit.save
+    refreshUnitsHash
 
     return { status: "ok", nextURL: "/uc/#{unitID}/nav/#{newNav[:id]}" }.to_json
   }
@@ -566,6 +611,7 @@ put "/api/unit/:unitID/sidebarOrder" do |unitID|
     }
   }
 
+  refreshUnitsHash
   return {status: "ok"}.to_json
 end
 
@@ -584,7 +630,7 @@ delete "/api/unit/:unitID/sidebar/:widgetID" do |unitID, widgetID|
   }
 
   content_type :json
-  return {status: "ok", nextURL: "/uc/#{unitID}" }.to_json
+  return {status: "ok", nextURL: unitID=="root" ? "/" : "/uc/#{unitID}" }.to_json
 end
 
 ###################################################################################################
@@ -612,8 +658,9 @@ delete "/api/unit/:unitID/nav/:navID" do |unitID, navID|
     unit.save
   }
 
+  refreshUnitsHash
   content_type :json
-  return {status: "ok", nextURL: "/uc/#{unitID}" }.to_json
+  return {status: "ok", nextURL: unitID=="root" ? "/" : "/uc/#{unitID}" }.to_json
 end
 
 ###################################################################################################
@@ -702,6 +749,7 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
     unit.save
   }
 
+  refreshUnitsHash
   content_type :json
   return { status: "ok" }.to_json
 end

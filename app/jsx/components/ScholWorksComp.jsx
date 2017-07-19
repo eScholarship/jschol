@@ -2,6 +2,7 @@
 
 import React from 'react'
 import PropTypes from 'prop-types'
+import RightsComp from '../components/RightsComp.jsx'
 import $ from 'jquery'
 import _ from 'lodash'
 import { Link } from 'react-router'
@@ -160,7 +161,7 @@ class ScholWorksComp extends React.Component {
           }
           <div className="c-scholworks__media">
             <ul className="c-medialist">{ supp_files }</ul>
-            {pr.rights && pr.rights !== 'public' && <img className="c-scholworks__license" src="/images/cc-by-small.svg" alt="creative commons attribution 4.0 international public license"/>}
+            {pr.rights && <RightsComp rights={pr.rights} size="small" />}
           </div>
         </div>
         {pr.thumbnail && <img className="c-scholworks__article-preview" src={"/assets/"+pr.thumbnail.asset_id} width={pr.thumbnail.width} height={pr.thumbnail.height} alt={_.capitalize(pr.genre) + " image"} />}

@@ -15,6 +15,9 @@
 
   } @else if $point == screen4 {
     @media (min-width: $screen4) { @content; }
+
+  } @else if $point == screen5 {
+    @media (min-width: $screen5) { @content; }
   }
 
 }

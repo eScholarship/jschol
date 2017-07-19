@@ -13,9 +13,9 @@ class SubheaderComp extends React.Component {
     campuses: PropTypes.array.isRequired,
     logo: PropTypes.shape({
       url: PropTypes.string.isRequired,
-      width: PropTypes.number.isRequired,
-      height: PropTypes.number.isRequired
-    }).isRequired,
+      width: PropTypes.number, // optional for SVG
+      height: PropTypes.number // optional for SVG
+    }),
     unit: PropTypes.shape({
       id: PropTypes.string.isRequired,
       name: PropTypes.string.isRequired,

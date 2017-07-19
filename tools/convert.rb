@@ -2,7 +2,7 @@
 
 # This script converts data from old eScholarship into the new eschol5 database.
 #
-# The "--units" mode converts the contents of allStruct.xml and the
+# The "--units" mode converts the contents of allStruct-eschol5.xml and the
 # various brand files into the unit/unitHier/etc tables. It is
 # built to be fully incremental.
 #
@@ -122,6 +122,8 @@ $nUnchanged = 0
 $nProcessed = 0
 $nTotal = 0
 
+$scrubCount = 0
+
 $discTbl = {"1540" => "Life Sciences",
             "3566" => "Medicine and Health Sciences",
             "3864" => "Physical Sciences and Mathematics",
@@ -187,7 +189,6 @@ end
 def linkUnit(id, childMap, done)
   childMap[id].each_with_index { |child, idx|
     if !done.include?([id, child])
-      #puts "linkUnit: id=#{id} child=#{child}"
       UnitHier.create(
         :ancestor_unit => id,
         :unit_id => child,
@@ -253,34 +254,44 @@ end
 # the dimensions first, and have a chance to raise exceptions on them.
 def putImage(imgPath, &block)
   mimeType = MimeMagic.by_magic(File.open(imgPath))
-  mimeType && mimeType.mediatype == "image" or raise("Non-image file #{imgPath}")
-  dims = FastImage.size(imgPath)
-  block and block.yield(dims)
-  assetID = putAsset(imgPath, {
-    width: dims[0].to_s,
-    height: dims[1].to_s
-  })
-  return { asset_id: assetID,
-           image_type: mimeType.subtype,
-           width: dims[0],
-           height: dims[1]
-         }
+  if mimeType.subtype == "svg+xml"
+    # Special handling for SVG images -- no width/height
+    return { asset_id: putAsset(imgPath, {}),
+             image_type: mimeType.subtype
+           }
+  else
+    mimeType && mimeType.mediatype == "image" or raise("Non-image file #{imgPath}")
+    dims = FastImage.size(imgPath)
+    block and block.yield(dims)
+    return { asset_id: putAsset(imgPath, { width: dims[0].to_s, height: dims[1].to_s }),
+             image_type: mimeType.subtype,
+             width: dims[0],
+             height: dims[1]
+           }
+  end
 end
 
 ###################################################################################################
-def convertLogo(unitID, logoEl)
+def convertLogo(unitID, unitType, logoEl)
   # Locate the image reference
   logoImgEl = logoEl && logoEl.at("div[@id='logoDiv']/img[@src]")
-  logoImgEl or return {}
-  imgPath = logoImgEl && "/apps/eschol/erep/xtf/static/#{logoImgEl[:src]}"
-  imgPath =~ %r{LOGO_PATH|/$} and return {} # logo never configured
+  if !logoImgEl
+    if unitType != "campus"
+      return {}
+    end
+    # Default logo for campus
+    imgPath = "app/images/logo_#{unitID}.svg"
+  else
+    imgPath = logoImgEl && "/apps/eschol/erep/xtf/static/#{logoImgEl[:src]}"
+    imgPath =~ %r{LOGO_PATH|/$} and return {} # logo never configured
+  end
   if !File.file?(imgPath)
     puts "Warning: Can't find logo image: #{imgPath.inspect}"
     return {}
   end
 
   data = putImage(imgPath)
-  data[:is_banner] = logoEl.attr('banner') == "single"
+  (logoEl && logoEl.attr('banner') == "single") and data[:is_banner] = true
   return { logo: data }
 end
 
@@ -543,7 +554,7 @@ def convertUnitBrand(unitID, unitType)
     bfPath = "/apps/eschol/erep/xtf/static/brand/#{unitID}/#{unitID}.xml"
     if File.exist?(bfPath)
       dataIn = Nokogiri::XML(File.new(bfPath), &:noblanks).root
-      dataOut.merge!(convertLogo(unitID, dataIn.at("display/mainFrame/logo")))
+      dataOut.merge!(convertLogo(unitID, unitType, dataIn.at("display/mainFrame/logo")))
       dataOut.merge!(convertBlurb(unitID, dataIn.at("display/mainFrame/blurb")))
       if unitType == "campus"
         dataOut.merge!({ nav_bar: defaultNav(unitID, unitType) })
@@ -596,26 +607,36 @@ def convertUnits(el, parentMap, childMap, allIds)
   #puts "name=#{el.name} id=#{id.inspect} name=#{el[:label].inspect}"
 
   # Create or update the main database record
-  if el.name != "ref"
-    puts "Converting unit #{id}."
-    unitType = id=="root" ? "root" : id=="lbnl" ? "campus" : el[:type]
-    Unit.update_or_replace(id,
-      type:      unitType,
-      name:      id=="root" ? "eScholarship" : el[:label],
-      status:    el[:directSubmit] == "moribund" ? "archived" :
-                 el[:hide] == "eschol" ? "hidden" :
-                 "active"
-    )
+  if el.name != "ptr"
+    if id == "root" && Unit.where(id: "root").first
+      puts "Skipping existing root unit."
+    else
+      puts "Converting unit #{id}."
+      unitType = id=="root" ? "root" : el[:type]
+      name = id=="root" ? "eScholarship" : el[:label]
+      Unit.update_or_replace(id,
+        type:      unitType,
+        name:      name,
+        status:    el[:directSubmit] == "moribund" ? "archived" :
+                   el[:hide] == "eschol" ? "hidden" :
+                   "active"
+      )
 
-    # We can't totally fill in the brand attributes when initially inserting the record,
-    # so do it as an update after inserting.
-    attrs = {}
-    el[:directSubmit] and attrs[:directSubmit] = el[:directSubmit]
-    el[:hide]         and attrs[:hide]         = el[:hide]
-    attrs.merge!(convertUnitBrand(id, unitType))
-    Unit[id].update(attrs: JSON.generate(attrs))
+      # We can't totally fill in the brand attributes when initially inserting the record,
+      # so do it as an update after inserting.
+      attrs = {}
+      el[:directSubmit] and attrs[:directSubmit] = el[:directSubmit]
+      el[:hide]         and attrs[:hide]         = el[:hide]
+      attrs.merge!(convertUnitBrand(id, unitType))
+      nameChar = name[0].upcase
+      if unitType == "journal"
+        attrs[:magazine_layout] = nameChar > 'M'  # Names starting with M-Z are magazine layout (for now)
+      end
+      attrs[:carousel] = (nameChar >= 'F' && nameChar <= 'R')  # Names F-R have carousels (for now)
+      Unit[id].update(attrs: JSON.generate(attrs))
 
-    addDefaultWidgets(id, unitType)
+      addDefaultWidgets(id, unitType)
+    end
   end
 
   # Now recursively process the child units
@@ -635,11 +656,11 @@ def convertUnits(el, parentMap, childMap, allIds)
 
   # After traversing the whole thing, it's safe to form all the hierarchy links
   if el.name == "allStruct"
-    puts "Linking units."
-    linkUnit("root", childMap, Set.new)
-
     # Delete extraneous units from prior conversions
     deleteExtraUnits(allIds)
+
+    puts "Linking units."
+    linkUnit("root", childMap, Set.new)
   end
 end
 
@@ -1097,7 +1118,7 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
       !issueAttrs.empty? and issue[:attrs] = issueAttrs.to_json
 
       section = Section.new
-      section[:name]  = data.single("sectionHeader") ? data.single("sectionHeader") : "default"
+      section[:name]  = data.single("sectionHeader") ? data.single("sectionHeader") : "Articles"
     else
       "Warning: issue associated with unknown unit #{issueUnit.inspect}"
     end
@@ -1175,7 +1196,7 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
     when "cc4"; "CC BY-NC"
     when "cc5"; "CC BY-NC-SA"
     when "cc6"; "CC BY-NC-ND"
-    when nil, "public"; "public"
+    when nil, "public"; nil
     else puts "Unknown rights value #{data.single("rights").inspect}"
   end
 
@@ -1219,7 +1240,7 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
       peer_reviewed: attrs[:is_peer_reviewed] ? 1 : 0,
       pub_date:      dbItem[:pub_date].to_date.iso8601 + "T00:00:00Z",
       pub_year:      dbItem[:pub_date].year,
-      rights:        dbItem[:rights],
+      rights:        dbItem[:rights] || "",
       sort_author:   (data.multiple("creator")[0] || "").gsub(/[^\w ]/, '').downcase,
     }
   }
@@ -1400,8 +1421,14 @@ def updateIssueAndSection(data)
 end
 
 ###################################################################################################
-def updateDbItem(data)
+def scrubSectionsAndIssues()
+  # Remove orphaned sections and issues (can happen when items change)
+  DB.run("delete from sections where id not in (select distinct section from items where section is not null)")
+  DB.run("delete from issues where id not in (select distinct issue_id from sections where issue_id is not null)")
+end
 
+###################################################################################################
+def updateDbItem(data)
   itemID = data[:dbItem][:id]
 
   # Delete any existing data related to this item (except counts which can stay)
@@ -1445,6 +1472,13 @@ def updateDbItem(data)
       }
     end
   }
+
+  # Periodically scrub out orphaned sections and issues
+  $scrubCount += 1
+  if $scrubCount > 5
+    scrubSectionsAndIssues()
+    $scrubCount = 0
+  end
 end
 
 ###################################################################################################
@@ -1501,7 +1535,25 @@ def deleteExtraUnits(allIds)
   (dbUnits - allIds).each { |id|
     puts "Deleting extra unit: #{id}"
     DB.transaction do
+      items = UnitItem.where(unit_id: id).map { |link| link.item_id }
+      UnitItem.where(unit_id: id).delete
+      items.each { |itemID|
+        if UnitItem.where(item_id: itemID).empty?
+          ItemAuthor.where(item_id: itemID).delete
+          Item[itemID].delete
+        end
+      }
+
+      Issue.where(unit_id: id).each { |issue|
+        Section.where(issue_id: issue.id).delete
+      }
+      Issue.where(unit_id: id).delete
+
+      Widget.where(unit_id: id).delete
+
+      UnitHier.where(ancestor_unit: id).delete
       UnitHier.where(unit_id: id).delete
+
       Unit[id].delete
     end
   }
@@ -1517,7 +1569,7 @@ def convertAllUnits
   # Load allStruct and traverse it. This will create Unit and Unit_hier records for all units,
   # and delete any extraneous old ones.
   DB.transaction do
-    allStructPath = "/apps/eschol/erep/xtf/style/textIndexer/mapping/allStruct.xml"
+    allStructPath = "/apps/eschol/erep/xtf/style/textIndexer/mapping/allStruct-eschol5.xml"
     open(allStructPath, "r") { |io|
       convertUnits(Nokogiri::XML(io, &:noblanks).root, {}, {}, Set.new)
     }
@@ -1532,7 +1584,6 @@ def convertAllItems(arks)
 
   # Build a list of all valid units
   $allUnits = Unit.map { |unit| [unit.id, unit] }.to_h
-  $allUnits['lbnl'].type = 'campus'
 
   # Build a cache of unit ancestors
   $unitAncestors = Hash.new { |h,k| h[k] = [] }
@@ -1572,6 +1623,8 @@ def convertAllItems(arks)
   prefilterThread.join
   indexThread.join
   batchThread.join
+
+  scrubSectionsAndIssues() # one final scrub
 end
 
 ###################################################################################################

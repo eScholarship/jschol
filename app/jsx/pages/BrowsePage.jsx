@@ -12,6 +12,9 @@ import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
 import WellComp from '../components/WellComp.jsx'
 import DescriptionListComp from '../components/DescriptionListComp.jsx'
 import ToggleListComp from '../components/ToggleListComp.jsx'
+import AdminBarComp from '../components/AdminBarComp.jsx'
+import SidebarComp from '../components/SidebarComp.jsx'
+import NotYetLink from '../components/NotYetLink.jsx'
 
 class BrowsePage extends PageBase
 {
@@ -27,6 +30,10 @@ class BrowsePage extends PageBase
     }
   }
 
+  pagePermissionsUnit() {
+    return this.props.params.campusID ? this.props.params.campusID : "root"
+  }
+
   renderData(data) {
     return (
       <div>
@@ -34,6 +41,7 @@ class BrowsePage extends PageBase
       { ["campuses", "all_journals"].includes(data.browse_type) ? 
         // Global browse page
         <div>
+          <AdminBarComp/>
           <Header1Comp />
           <div className="c-navbar">
             <NavComp data={data.header.nav_bar} />
@@ -42,21 +50,19 @@ class BrowsePage extends PageBase
         :
         // Campus-specific browse page
         <div>
+          <AdminBarComp/>
           <Header2Comp type="campus" unitID={data.campusID} />
           <SubheaderComp unit={data.unit} logo={data.header.logo}
                           campusID={data.header.campusID}
                           campusName={data.header.campusName}
                           campuses={data.campuses} />
           <div className="c-navbar">
-            {/* ToDo: Properly call header.nav_bar for unit type="campus" */}
-            <NavComp data={[{name: 'Open Access Policies', url: ''}, {name: 'Journals', url: '/' + data.header.campusID + '/journals'}, {name: 'Academic Units', url: '/' + data.header.campusID + '/units'}]} />
+            <NavComp data={data.header.nav_bar} />
           </div>
         </div>
       }
       <BreadcrumbComp array={data.breadcrumb} />
-      <Content
-        {...data}
-      />
+      <Content {...data} />
       </div> )
   }
 }
@@ -78,12 +84,7 @@ class Content extends React.Component {
                                                          pageTitle={p.pageTitle} /> }
         </main>
         <aside>
-          <section className="o-columnbox1">
-            <header>
-              <h2>Featured Journals</h2>
-            </header>
-            <p>[content to go here]</p>
-          </section>
+          <SidebarComp data={this.props.sidebar}/>
         </aside>
       </div>
   )}
@@ -180,7 +181,9 @@ class CampusUnits extends React.Component {
       <header>
         <h2>{this.props.pageTitle}</h2>
       </header>
-      <WellComp />
+      <div className="c-well">
+        Looking for an academic or research unit that's not listed? <NotYetLink element="a">Learn how to add yours</NotYetLink>.
+      </div>
       <ToggleListComp depts={this.props.units} />
     </section>
   )}

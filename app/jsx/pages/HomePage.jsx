@@ -6,6 +6,8 @@ import PageBase from './PageBase.jsx'
 import Header1Comp from '../components/Header1Comp.jsx'
 import NavComp from '../components/NavComp.jsx'
 import FooterComp from '../components/FooterComp.jsx'
+import AdminBarComp from '../components/AdminBarComp.jsx'
+import SidebarComp from '../components/SidebarComp.jsx'
 
 class HomePage extends PageBase
 {
@@ -14,16 +16,34 @@ class HomePage extends PageBase
     return "/api/home"
   }
 
+  pagePermissionsUnit() {
+    return "root"
+  }
+
   renderData(data) { 
     return(
-    <div>
-      <Header1Comp />
-      <div className="c-navbar">
-        <NavComp data={data.header.nav_bar} />
+      <div>
+        <AdminBarComp/>
+        <Header1Comp />
+        <div className="c-navbar">
+          <NavComp data={data.header.nav_bar} />
+        </div>
+        <div className="c-columns">
+          <main id="maincontent">
+            <section className="o-columnbox1">
+              <header>
+                <h2>Home Page</h2>
+              </header>
+              <p>Home page content here</p>
+            </section>
+          </main>
+          <aside>
+            <SidebarComp data={data.sidebar}/>
+          </aside>
+        </div>
       </div>
-      <h2 style={{ marginTop: "5em", marginBottom: "5em" }}>Home page content here</h2>
-    </div>
-  )}
+    )
+  }
 }
 
 module.exports = HomePage;

@@ -25,7 +25,7 @@ import UnitProfileLayout from '../layouts/UnitProfileLayout.jsx'
 import UnitSidebarConfigLayout from '../layouts/UnitSidebarConfigLayout.jsx'
 import UnitNavConfigLayout from '../layouts/UnitNavConfigLayout.jsx'
 import AdminBarComp from '../components/AdminBarComp.jsx'
-import RecentArticlesComp from "../components/RecentArticlesComp.jsx"
+import SidebarComp from '../components/SidebarComp.jsx'
 
 class UnitPage extends PageBase
 {
@@ -45,10 +45,8 @@ class UnitPage extends PageBase
     if (pm.pageName) {
       if (pm.pageName == 'search')
         return `/api/unit/${pm.unitID}/search/${this.props.location.search}`
-      else if (pm.pageName == "nav" || pm.pageName == "sidebar")
-        return `/api/unit/${pm.unitID}/${pm.pageName}/${pm.splat}`
       else
-        return `/api/unit/${pm.unitID}/${pm.pageName}`
+        return `/api/unit/${pm.unitID}/${pm.pageName}/${pm.splat}`
     }
     return `/api/unit/${pm.unitID}/home`
   }
@@ -58,22 +56,11 @@ class UnitPage extends PageBase
     return this.props.params.unitID
   }
 
-  renderSidebar = sidebarData =>
-    sidebarData.map(sb =>
-      <section key={sb.id} className="o-columnbox1">
-        <header>
-          <h2>{(sb.attrs && sb.attrs.title) ? sb.attrs.title : sb.kind.replace(/([a-z])([A-Z][a-z])/g, "$1 $2")}</h2>
-        </header>
-        {   sb.kind == "Text"           ? <div dangerouslySetInnerHTML={{__html: sb.attrs.html}}/>
-          : sb.kind == "RecentArticles" ? <RecentArticlesComp data={sb.attrs}/>
-          : <p><i>Not yet implemented</i></p>
-        }
-      </section>)
-
   cmsPage(data, page) {
     if (this.state.adminLogin && !this.state.fetchingPerms && !this.state.isEditingPage) {
       //console.log("Editing turned off; redirecting to unit page.")
-      setTimeout(()=>this.props.router.push(`/uc/${data.unit.id}`), 0)
+      setTimeout(()=>this.props.router.push(
+        data.unit.id == "root" ? "/" : `/uc/${data.unit.id}`), 0)
     }
     else
       return page
@@ -84,7 +71,7 @@ class UnitPage extends PageBase
   // but this should get stripped out and handled here in UnitPage
   // TODO [UNIT-CONTENT-AJAX-ISSUE]: handle the AJAX issue described above pageDataURL method definition
   renderData(data) { 
-    let sidebar = this.renderSidebar(data.sidebar)
+    let sidebar = <SidebarComp data={data.sidebar}/>
     let contentLayout
     if (this.state.fetchingData)
       contentLayout = (<h2 style={{ marginTop: "5em", marginBottom: "5em" }}>Loading...</h2>)
@@ -98,13 +85,13 @@ class UnitPage extends PageBase
       contentLayout = this.cmsPage(data, <UnitNavConfigLayout unit={data.unit} data={data.content} sendApiData={this.sendApiData}/>)
     } else if (this.props.params.pageName === 'sidebar') {
       contentLayout = this.cmsPage(data, <UnitSidebarConfigLayout unit={data.unit} data={data.content} sendApiData={this.sendApiData}/>)
-    } else if (this.props.params.pageName) {
+    } else if (this.props.params.pageName && !(data.content.issue)) {
+      // If there's issue data here it's a journal page, otherwise it's static content
       contentLayout = (<UnitStaticPageLayout unit={data.unit} data={data.content} sidebar={sidebar} fetchPageData={this.fetchPageData}/>)
     } else {
       {/* Temporary, for testing */}
-      // data.marquee.carousel = true
-      // data.marquee.about = "Hello there this is some test about text"
-      data.content.display = 'splashy'
+      // data.marquee.carousel = false
+      // data.content.display = 'simple'
       if (data.unit.type === 'oru') {
         contentLayout = (<DepartmentLayout unit={data.unit} data={data.content} sidebar={sidebar} marquee={data.marquee}/>)
       } else if (data.unit.type == 'campus') {
