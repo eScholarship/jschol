@@ -715,7 +715,7 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
 
   carouselKeys = params['data'].keys.grep /(header|text)\d+/
   carouselSlides = {}
-  if carouselKeys
+  if carouselKeys.length > 0
     numSlides = carouselKeys.map! {|x| /(header|text)(\d+)/.match(x)[2].to_i}.max
     (0..numSlides).each do |n|
       slide = {header: params['data']["header#{n}"], text: params['data']["text#{n}"]}
@@ -741,7 +741,11 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
     end
     
     if params['data']['about'] then unitAttrs['about'] = params['data']['about'] end
-    if params['data']['carouselFlag'] then unitAttrs['carousel'] = params['data']['carouselFlag'] end
+    if params['data']['carouselFlag'] && params['data']['carouselFlag'] == 'on'
+      unitAttrs['carousel'] = true
+    else
+      unitAttrs['carousel'] = false
+    end
     if params['data']['facebook'] then unitAttrs['facebook'] = params['data']['facebook'] end
     if params['data']['twitter'] then unitAttrs['twitter'] = params['data']['twitter'] end
     

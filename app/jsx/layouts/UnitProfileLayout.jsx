@@ -282,10 +282,6 @@ class UnitProfileLayout extends React.Component {
   renderMarqueeConfig() {
     var data = this.state.newData;
 
-    if (data.marquee.slides) {
-      data.marquee.carousel = true;
-    }
-
     return (
       <div>
         <h3 id="marquee">Marquee Configuration</h3>
@@ -304,7 +300,7 @@ class UnitProfileLayout extends React.Component {
 
                 <label className="c-editable-page__label" htmlFor="displayCarousel">Publish Carousel?
                 <input name="carouselFlag" id="displayCarousel" type="checkbox" defaultChecked={data.marquee.carousel}
-                        onChange={ event => this.setMarqueeData({carousel: true}) }/>
+                        onChange={ event => this.setMarqueeData({carousel: event.target.checked}) }/>
                 </label>
 
                 <button type="submit">Save Changes</button> <button type="reset">Cancel</button>
