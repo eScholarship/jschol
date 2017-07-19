@@ -100,7 +100,8 @@ class UnitProfileLayout extends React.Component {
     this.setData({marquee: marquee})
   }
 
-  addSlide = () => {
+  addSlide = (event) => {
+    event.preventDefault()
     var slides = _.cloneDeep(this.state.newData.marquee.slides) || []
     slides.push({
       header: 'Sample header',
@@ -294,9 +295,9 @@ class UnitProfileLayout extends React.Component {
                 <textarea className="c-editable-page__input" name="about" id="aboutText" defaultValue={data.marquee.about}
                         onChange={ event => this.setMarqueeData({about: event.target.value}) }/>
 
-                {!data.marquee.slides && <button onClick={ () => this.addSlide() }>Add an image carousel</button>}
+                {!data.marquee.slides && <button onClick={ event => this.addSlide(event) }>Add an image carousel</button>}
                 {data.marquee.slides && this.renderSlideConfig() }<br/>
-                {data.marquee.slides && <button onClick={ () => this.addSlide() }>Add slide</button>}
+                {data.marquee.slides && <button onClick={ (event) => this.addSlide(event) }>Add slide</button>}
 
                 <label className="c-editable-page__label" htmlFor="displayCarousel">Publish Carousel?
                 <input name="carouselFlag" id="displayCarousel" type="checkbox" defaultChecked={data.marquee.carousel}
