@@ -43,7 +43,11 @@ class MainContent extends React.Component {
     switch(p.status) {
       case "published":
         if (!p.content_type) {
-          return (<NoContent pub_web_loc={p.attrs.pub_web_loc} />)
+          if ((p.attrs.pub_web_loc.length > 0) || (p.attrs.supp_files && p.attrs.supp_files.length > 0)) {
+            return (<NoContent pub_web_loc={p.attrs.pub_web_loc} supp_files={p.attrs.supp_files} />)
+          } else {
+            return (<Withdrawn message="This item is not available from eScholarship." />)
+          }
         } else {
           return (p.content_type == "application/pdf" ?
                     <PdfViewComp url={"/content/qt" + p.id + "/qt" + p.id + ".pdf"}/>
@@ -80,12 +84,15 @@ class MainContent extends React.Component {
 class Withdrawn extends React.Component {
   render() {
     return (
-      <div className="o-itemunavailable__withdrawn">
-      {this.props.message ? 
-        <p className="o-itemunavailable__lede">{this.props.message}</p>
-        :
-        <p className="o-itemunavailable__lede">This item has been withdrawn and is <strong>no longer available</strong>.</p>
-      }
+      <div>
+        <p><br/></p>
+        <div className="o-itemunavailable__withdrawn">
+        {this.props.message ? 
+          <p className="o-itemunavailable__lede">{this.props.message}</p>
+          :
+          <p className="o-itemunavailable__lede">This item has been withdrawn and is <strong>no longer available</strong>.</p>
+        }
+        </div>
       </div>
     )
   }
@@ -114,12 +121,10 @@ class NoContent extends React.Component {
   render() {
     return (
       <div>
-      {(this.props.pub_web_loc.length > 0) ?
-        <ViewExternalComp pub_web_loc={this.props.pub_web_loc[0]} />
-        :
-        [<h1 key="0">CONTENT IS NULL, NO PUBLISHED WEB LOC.</h1>,
-        <h1 key="1">TO BE FIXED ....</h1>,
-        <h1 key="2">*OR* HERE WILL BE DISPLAYED MAIN MULTIMEDIA CONTENT NOT YET INGESTED</h1>]
+      {this.props.pub_web_loc.length > 0 && 
+        <ViewExternalComp pub_web_loc={this.props.pub_web_loc[0]} /> }
+      {this.props.supp_files && this.props.supp_files.length > 0 &&
+        <p><br/><br/>All content for this item is under the &quot;Supplemental material&quot; tab.</p>
       }
       <p>&nbsp;</p>
       <p>&nbsp;</p>

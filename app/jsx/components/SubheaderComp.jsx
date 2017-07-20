@@ -42,14 +42,23 @@ class SubheaderComp extends React.Component {
         <Link to={"/uc/"+p.unit.id}>
           <img className="c-subheader__banner" src={logo.url} width={logo.width} height={logo.height} alt={"Logo image for " + p.unit.name} />
         </Link>
+  {/* unit.type == 'journal'  -->  Submit / Manage Submissions
+      unit.type == 'campus'  -->  Deposit
+      unit.type == '%series | oru'  -->  Deposit / Manage Submissions  */}
       {p.unit.type == 'journal' ?
         <div className="c-subheader__sidebar">
           <NotYetLink className="o-button__3" element="button">Submit</NotYetLink>
-          <NotYetLink className="o-button__3" element="button">Manage <span className="c-subheader__button-fragment">Submissions</span></NotYetLink>
+          <NotYetLink className="o-button__3" element="button">Manage<span className="c-subheader__button-fragment">Submissions</span></NotYetLink>
+        </div>
+      :
+        p.unit.type == 'campus' ?
+        <div className="c-subheader__sidebar">
+          <NotYetLink className="o-button__3" element="button">Deposit</NotYetLink>
         </div>
       :
         <div className="c-subheader__sidebar">
           <NotYetLink className="o-button__3" element="button">Deposit</NotYetLink>
+          <NotYetLink className="o-button__3" element="button">Manage<span className="c-subheader__button-fragment">Submissions</span></NotYetLink>
         </div>
       }
       </div>

@@ -98,7 +98,7 @@ class MarqueeComp extends React.Component {
             {slides}
           </CarouselComp>
         }
-        { this.props.marquee.carousel && this.props.marquee.about &&
+        { this.props.marquee.carousel && this.props.marquee.slides && this.props.marquee.about &&
           <aside className="c-marquee__sidebar">
             <section className="o-columnbox2">
               <header>
@@ -110,7 +110,8 @@ class MarqueeComp extends React.Component {
             </section>
           </aside>
         }
-        { !this.props.marquee.carousel && this.props.marquee.about &&
+        { ((this.props.marquee.carousel && !this.props.marquee.slides) || 
+           !this.props.marquee.carousel) && this.props.marquee.about &&
           <section className="o-columnbox2">
             <header>
               <h1>About</h1>
