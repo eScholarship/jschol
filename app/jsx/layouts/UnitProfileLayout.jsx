@@ -116,11 +116,10 @@ class UnitProfileLayout extends React.Component {
     this.setMarqueeData({slides: slides})
   }
 
-  //TODO
+  //TODO: should go ahead and save current form state before filing this delete off.
   removeSlide = (i) => {
-    var slides = _.cloneDeep(this.state.newData.marquee.slides)
-    slides.splice(i, 1)
-    this.setMarqueeData({slides: slides})
+    this.props.sendApiData("DELETE",
+      "/api/unit/" + this.props.unit.id + "/removeCarouselSlide/" + i)
   }
 
   renderUnitConfig() {

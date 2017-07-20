@@ -722,9 +722,10 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
       carouselSlides[n] = slide
     end
   end
-  carouselConfig(carouselSlides, unitID)
 
   DB.transaction {
+    carouselConfig(carouselSlides, unitID)
+
     unit = Unit[unitID] or jsonHalt(404, "Unit not found")
     unitAttrs = JSON.parse(unit.attrs)
 
@@ -834,4 +835,24 @@ post "/api/unit/:unitID/upload" do |unitID|
 
   content_type :json
   return { status: "okay" }.to_json
+end
+
+delete "/api/unit/:unitID/removeCarouselSlide/:slideNumber" do |unitID, slideNumber|
+  # Check user permissions
+  perms = getUserPermissions(params[:username], params[:token], unitID)
+  perms[:admin] or halt(401)
+
+  DB.transaction {
+    carousel = Widget.where(unit_id: unitID, region: "marquee", kind: "Carousel", ordering: 0).first
+
+    if carousel.attrs
+      carouselAttrs = JSON.parse(carousel.attrs)
+      carouselAttrs['slides'].delete_at(slideNumber.to_i)
+    end
+    carousel.attrs = carouselAttrs.to_json
+    carousel.save
+  }
+
+  content_type :json
+  return { status: "ok" }.to_json
 end

@@ -79,7 +79,6 @@ class MarqueeComp extends React.Component {
           <div key={i} className="c-marquee__carousel-cell" style={{backgroundImage: "url('" + imgUrl + "')"}}>
             <h2>{slide.header}</h2>
             <p>{slide.text}</p>
-            <a className="c-marquee__sidebar-more-link" href="">More</a>
           </div>
         )
       })
