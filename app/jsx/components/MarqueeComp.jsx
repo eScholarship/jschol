@@ -1,6 +1,7 @@
 // ##### Carousel Component ##### //
 
 import React from 'react'
+import PropTypes from 'prop-types'
 import CarouselComp from '../components/CarouselComp.jsx'
 import $ from 'jquery'
 import { Link } from 'react-router'
@@ -11,6 +12,25 @@ if (!(typeof document === "undefined")) {
 }
 
 class MarqueeComp extends React.Component {
+  static propTypes = {
+    unit: PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      name: PropTypes.string.isRequired,
+      type: PropTypes.string.isRequired,
+      extent: PropTypes.object
+    }).isRequired,
+    marquee: PropTypes.shape({
+      about: PropTypes.string,
+      carousel: PropTypes.bool,
+      slides: PropTypes.arrayOf(PropTypes.shape({
+        header: PropTypes.string,
+        image: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+        text: PropTypes.string,
+        imagePreviewUrl: PropTypes.string
+      }))
+    })
+  }
+
   componentDidMount() {
     if (this.aboutElement) {
       $(this.aboutElement).dotdotdot({
@@ -38,10 +58,36 @@ class MarqueeComp extends React.Component {
           <button className="c-marquee__sidebar-more">More</button>
         </div>
         : null
-      return (
+    
+    var slides = []
+    if (this.props.marquee.slides) {
+      slides = this.props.marquee.slides.map((slide, i) => {
+        var imgUrl
+        if (slide.imagePreviewUrl) {
+          imgUrl = slide.imagePreviewUrl
+          //for testing - amy used image urls in slide.image before she got upload working
+          //seems useful so keeping this logic here
+        } else if (slide.image && typeof slide.image === "string") {
+          imgUrl = slide.image
+        } else if (slide.image && slide.image.asset_id) {
+          imgUrl = "/assets/" + slide.image.asset_id
+        } else {
+          imgUrl = ""
+        }
+
+        return (
+          <div key={i} className="c-marquee__carousel-cell" style={{backgroundImage: "url('" + imgUrl + "')"}}>
+            <h2>{slide.header}</h2>
+            <p>{slide.text}</p>
+          </div>
+        )
+      })
+    }
+
+    return (
       <div className="c-marquee">
-        { this.props.marquee.carousel &&
-          <CarouselComp className="c-marquee__carousel"
+        { this.props.marquee.carousel && this.props.marquee.slides &&
+          <CarouselComp className="c-marquee__carousel" 
             truncate=".c-marquee__carousel-cell"
             options={{
               cellAlign: 'left',
@@ -49,19 +95,7 @@ class MarqueeComp extends React.Component {
               initialIndex: 0,
               imagesLoaded: true
             }}>
-            <div className="c-marquee__carousel-cell" style={{backgroundImage: "url('https://static.pexels.com/photos/27714/pexels-photo-27714.jpg')"}}>
-               <h2>Carousel Cell Title 1</h2>
-              <p>Totam iusto vero, omnis ut modi, possimus fugiat consequuntur incidunt eius delectus, enim commodi dicta itaque! Dolores quis natus itaque delectus fuga. Id debitis, corporis, suscipit placeat architecto doloremque reprehenderit deleniti in iure assumenda cum dignissimos sit! Exercitationem reiciendis quas voluptatibus tempora.</p>
-              <a className="c-marquee__sidebar-more-link" href="">More</a>
-            </div>
-            <div className="c-marquee__carousel-cell" style={{backgroundImage: "url('https://static.pexels.com/photos/40797/wild-flowers-flowers-plant-macro-40797.jpeg')"}}>
-              <h2>Carousel Cell Title 2</h2>
-              <p>Iure quod itaque maiores optio eveniet assumenda omnis, similique. Possimus, expedita, ea?</p>
-            </div>
-            <div className="c-marquee__carousel-cell" style={{backgroundImage: "url('http://www.almanac.com/sites/default/files/birth_month_flowers-primary-1920x1280px_pixabay.jpg')"}}>
-              <h2>Carousel Cell Title 3</h2>
-              <p>Obcaecati consequatur quaerat eaque, beatae eligendi possimus, repudiandae magni quas dolores, sit voluptatem iusto laborum. Incidunt fuga sed dicta nisi voluptates eaque, beatae numquam officia animi, vel.</p>
-            </div>
+            {slides}
           </CarouselComp>
         }
         { this.props.marquee.carousel && this.props.marquee.about &&

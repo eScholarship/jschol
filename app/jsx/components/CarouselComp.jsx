@@ -29,6 +29,18 @@ class CarouselComp extends React.Component {
     }
   }
 
+  componentDidUpdate(prevProps) {
+    try {
+      if (this.flkty) {
+        this.flkty.destroy();
+      }
+      this.flkty = new Flickity(this.domEl.firstChild, this.props.options)
+    }
+    catch (e) {
+      console.log("Exception re-initializing flickity:", e)
+    }
+  }
+
   componentWillUnmount() {
     try {
       if (this.flkty)
