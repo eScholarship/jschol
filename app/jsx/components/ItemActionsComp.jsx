@@ -6,6 +6,7 @@
 
 import React from 'react'
 import ShareComp from '../components/ShareComp.jsx'
+import NotYetLink from '../components/NotYetLink.jsx'
 
 class ItemActionsComp extends React.Component {
   render() {
@@ -40,8 +41,9 @@ class Downloadable extends React.Component {
       <div className="c-itemactions">
         <div className="o-download">
           {/* ToDo: Once main multimedia content is ingested, this button should say 'Download Content' */}
-          <button className="o-download__button">Download {label}</button>
-          <details className="o-download__formats">
+          {/* Temporarily disabling button. rename class to "o-download__button" to reactivate */}
+          <NotYetLink element="button" className="o-button__8">Download {label}</NotYetLink>
+{/*          <details className="o-download__formats">
             <summary aria-label="formats"></summary>
             <ul className="o-download__nested-menu">
             {p.content_type && ["HTML", "PDF"].includes(label) &&
@@ -81,7 +83,7 @@ class Downloadable extends React.Component {
               </li>
             }
             </ul>
-          </details>
+          </details>  */}
         </div>
       {p.buy_link &&
         <button onClick={() => {this.linkBuyPrint()}} className="c-itemactions__button-print">Buy in Print</button>
