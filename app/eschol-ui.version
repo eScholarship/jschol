@@ -352,3 +352,37 @@ As well as:
   modified:   app/jsx/components/MarqueeComp.jsx
   modified:   app/jsx/components/PubComp.jsx
   modified:   app/jsx/objects/ColumnBoxObj.jsx
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's 1c1fc0b8a6019d944ce6bbe4f6807a823de512de, 2017-07-19 <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+Andy added all scss changes since last.
+As well as:
+
+  deleted:    app/images/icon_book-white.svg
+  modified:   app/jsx/components/CampusSearchComp.jsx
+  modified:   app/jsx/components/CampusSelectorComp.jsx
+  modified:   app/jsx/components/FilterComp.jsx
+  modified:   app/jsx/components/FooterComp.jsx
+  modified:   app/jsx/components/MarqueeComp.jsx
+  modified:   app/jsx/components/PubComp.jsx
+  modified:   app/jsx/components/PubPreviewComp.jsx
+  modified:   app/jsx/components/ScholWorksComp.jsx
+  modified:   app/jsx/components/Search2Comp.jsx
+  modified:   app/jsx/components/SidebarComp.jsx
+  modified:   app/jsx/components/TabMainComp.jsx
+  modified:   app/jsx/layouts/DepartmentLayout.jsx
+  modified:   app/jsx/layouts/JournalLayout.jsx
+  modified:   app/jsx/objects/HeadingObj.jsx
+  modified:   app/jsx/pages/BrowsePage.jsx
+  modified:   app/jsx/pages/ItemPage.jsx
+  modified:   app/jsx/pages/SearchPage.jsx
+  new file:   app/images/icon_shopping-cart-white.svg
+  new file:   app/jsx/components/UnitListComp.jsx
+  new file:   app/jsx/components/UnitPubComp.jsx
+  renamed:    app/jsx/components/IssueActionsComp_preJoel.jsx -> app/jsx/components/IssueActionsComp.jsx
+
+
+

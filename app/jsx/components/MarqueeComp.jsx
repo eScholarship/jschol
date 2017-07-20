@@ -50,16 +50,16 @@ class MarqueeComp extends React.Component {
               imagesLoaded: true
             }}>
             <div className="c-marquee__carousel-cell" style={{backgroundImage: "url('https://static.pexels.com/photos/27714/pexels-photo-27714.jpg')"}}>
-               <h2>Carousel Cell Title 1</h2>
+               <h1>Carousel Cell Title 1</h1>
               <p>Totam iusto vero, omnis ut modi, possimus fugiat consequuntur incidunt eius delectus, enim commodi dicta itaque! Dolores quis natus itaque delectus fuga. Id debitis, corporis, suscipit placeat architecto doloremque reprehenderit deleniti in iure assumenda cum dignissimos sit! Exercitationem reiciendis quas voluptatibus tempora.</p>
               <a className="c-marquee__sidebar-more-link" href="">More</a>
             </div>
             <div className="c-marquee__carousel-cell" style={{backgroundImage: "url('https://static.pexels.com/photos/40797/wild-flowers-flowers-plant-macro-40797.jpeg')"}}>
-              <h2>Carousel Cell Title 2</h2>
+              <h1>Carousel Cell Title 2</h1>
               <p>Iure quod itaque maiores optio eveniet assumenda omnis, similique. Possimus, expedita, ea?</p>
             </div>
             <div className="c-marquee__carousel-cell" style={{backgroundImage: "url('http://www.almanac.com/sites/default/files/birth_month_flowers-primary-1920x1280px_pixabay.jpg')"}}>
-              <h2>Carousel Cell Title 3</h2>
+              <h1>Carousel Cell Title 3</h1>
               <p>Obcaecati consequatur quaerat eaque, beatae eligendi possimus, repudiandae magni quas dolores, sit voluptatem iusto laborum. Incidunt fuga sed dicta nisi voluptates eaque, beatae numquam officia animi, vel.</p>
             </div>
           </CarouselComp>
@@ -68,7 +68,7 @@ class MarqueeComp extends React.Component {
           <aside className="c-marquee__sidebar">
             <section className="o-columnbox2">
               <header>
-                <h2>About</h2>
+                <h1>About</h1>
               </header>
               <div className="c-marquee__sidebar-truncate" ref={element => this.aboutElement = element}>
                 {about_block}
@@ -79,7 +79,7 @@ class MarqueeComp extends React.Component {
         { !this.props.marquee.carousel && this.props.marquee.about &&
           <section className="o-columnbox2">
             <header>
-              <h2>About</h2>
+              <h1>About</h1>
             </header>
             <div className="o-columnbox__truncate1" ref={element => this.aboutElement = element}>
               {about_block}

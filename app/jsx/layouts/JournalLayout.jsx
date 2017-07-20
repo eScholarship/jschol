@@ -6,7 +6,7 @@ import MarqueeComp from '../components/MarqueeComp.jsx'
 import JournalInfoComp from '../components/JournalInfoComp.jsx'
 import ScholWorksComp from '../components/ScholWorksComp.jsx'
 import PubPreviewComp from '../components/PubPreviewComp.jsx'
-import IssueActionsComp_preJoel from '../components/IssueActionsComp_preJoel.jsx'
+import IssueActionsComp from '../components/IssueActionsComp.jsx'
 
 class VolumeSelector extends React.Component {
   static PropTypes = {
@@ -48,7 +48,7 @@ class SectionComp extends React.Component {
   render() {
     return (
       <div>
-        <h3 className="o-heading3">{this.props.section.name}</h3>
+        <h2 className="o-heading3">{this.props.section.name}</h2>
         {this.props.display == "magazine" ?
           this.props.section.articles.map(article => <ScholWorksComp key={article.id} result={article}/>)
         :
@@ -88,7 +88,7 @@ class IssueComp extends React.Component {
         issueCurrent = [pi.unit_id, pi.volume, pi.issue, year]
     return (
       <section className="o-columnbox1">
-        <IssueActionsComp_preJoel unit_id={pi.unit_id} />
+        <IssueActionsComp unit_id={pi.unit_id} />
         {/*              articles={}
                          buy_link={} */}
         <div className="c-pub">
@@ -99,13 +99,13 @@ class IssueComp extends React.Component {
             <div className="c-pubpreview__img"><img className="c-scholworks__article-preview" src={"/assets/"+pi.cover.asset_id} width="150" height="200" alt="Issue cover image" /></div> }
             <div className="c-pub">
             {pi.title &&
-              <h2 className="c-pub__subheading">{pi.title}</h2> }
+              <div className="c-pub__subheading">{pi.title}</div> }
               <p>{pi.description}</p>
             </div>
           </div>
         } 
         {this.props.display!="magazine" && pi.title &&
-          <h2 className="c-pub__subheading">{pi.title}</h2> }
+          <div className="c-pub__subheading">{pi.title}</div> }
         {this.props.display!="magazine" && pi.description &&
           (<p>{pi.description}</p>) }
         </div>

@@ -1,9 +1,8 @@
-// ##### Pub Preview Component  - ##### //
-// Very similar to Scholarly Works Comp. ToDo: Make parent class and extend both //
-// Variables in ScholWorks not used here: tagList, peerReviewed, rights
+// ##### Scholarly Works Component ##### //
 
 import React from 'react'
 import PropTypes from 'prop-types'
+import RightsComp from '../components/RightsComp.jsx'
 import $ from 'jquery'
 import _ from 'lodash'
 import { Link } from 'react-router'
@@ -36,18 +35,22 @@ class DotDiv extends React.Component {
     </div>
 }
 
-class DotH3 extends React.Component {
+class DotH extends React.Component {
   componentDidMount() {
     $(this.domEl).dotdotdot({watch:"window"})
   }
 
-  render = () =>
-    <h3 className={this.props.className} ref={el => this.domEl = el}>
-      {this.props.children}
-    </h3>
+  render() {
+    let r = this.props.h && (this.props.h == "H4") ?
+         <h4 className={this.props.className} ref={el => this.domEl = el}>{this.props.children}</h4>
+        :
+         <h2 className={this.props.className} ref={el => this.domEl = el}>{this.props.children}</h2>
+    console.log(r)
+    return (<div>{r}</div>)
+  }
 }
 
-class PubPreviewComp extends React.Component {
+class ScholWorksComp extends React.Component {
   static propTypes = {
     result: PropTypes.shape({
       id: PropTypes.string,
@@ -78,6 +81,23 @@ class PubPreviewComp extends React.Component {
   }
   render() {
     let pr = this.props.result
+    let tagList = []
+    if (pr.genre === 'article') {
+      tagList.push({display: 'Article', tagStyle: 'article'})
+    }
+    if (pr.genre === 'monograph') {
+      tagList.push({display: 'Book', tagStyle: 'book'})
+    }
+    if (pr.genre === 'dissertation') {
+      tagList.push({display: 'Thesis', tagStyle: 'thesis'})
+    }
+    if (pr.genre === 'multimedia') {
+      tagList.push({display: 'Multimedia', tagStyle: 'multimedia'})
+    }
+    if (pr.peerReviewed === true) {
+      tagList.push({display: 'Peer Reviewed', tagStyle: 'peer'})
+    }
+    
     let itemLink = "/uc/item/"+pr.id.replace(/^qt/, "")
     let publishingInfo
     let unitId
@@ -110,14 +130,22 @@ class PubPreviewComp extends React.Component {
         return (<li key={supp_file+i} className={"c-medialist__" + supp_file.type}>Contains {supp_file.count} {display}</li>)   
       }
     })
+    console.log(this.props.h)
     return (
-      <div className="c-pubpreview">
-      {pr.thumbnail &&
-        <Link to={itemLink} className="c-pubpreview__img"><img src={"/assets/"+pr.thumbnail.asset_id} width={pr.thumbnail.width} height={pr.thumbnail.height} alt="Article image" /></Link> }
-        <div className="c-pub">
-          <DotH3 className="c-pub__heading">
-            <Link to={itemLink}>{pr.title}</Link>
-          </DotH3>
+      <section className="c-scholworks">
+        <div className="c-scholworks__main-column">
+          <ul className="c-scholworks__tag-list">
+            { tagList.map(function(tag, i, a) { 
+              return (
+                <li key={tag+i} className={ "c-scholworks__tag-" + tag.tagStyle }>{tag.display}</li>
+              ) 
+            }) }
+          </ul>
+          <heading>
+            <DotH className="c-scholworks__heading" h={this.props.h} >
+              <Link to={itemLink}>{pr.title}</Link>
+            </DotH>
+          </heading>
           {authorList && 
             <div className="c-authorlist">
               <DotAuthorUl className="c-authorlist__list">
@@ -126,16 +154,25 @@ class PubPreviewComp extends React.Component {
               </DotAuthorUl>
             </div>
           }
+          {pr.pub_year && publishingInfo && 
+            <div className="c-scholworks__publication">
+              <Link to={"/uc/" + unitId}>{publishingInfo}</Link> ({pr.pub_year})
+            </div>
+          }
           {pr.abstract && 
             <DotDiv className="c-scholworks__abstract">
               <p>{pr.abstract}</p>
             </DotDiv>
           }
-          <ul className="c-medialist">{ supp_files }</ul>
+          <div className="c-scholworks__media">
+            <ul className="c-medialist">{ supp_files }</ul>
+            {pr.rights && <RightsComp rights={pr.rights} size="small" />}
+          </div>
         </div>
-      </div>
+        {pr.thumbnail && <img className="c-scholworks__article-preview" src={"/assets/"+pr.thumbnail.asset_id} width={pr.thumbnail.width} height={pr.thumbnail.height} alt={_.capitalize(pr.genre) + " image"} />}
+      </section>
     )
   }
 }
 
-module.exports = PubPreviewComp
+module.exports = ScholWorksComp

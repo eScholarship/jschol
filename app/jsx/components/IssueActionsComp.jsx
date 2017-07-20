@@ -8,13 +8,14 @@ import React from 'react'
 import ShareComp from '../components/ShareComp.jsx'
 import NotYetLink from '../components/NotYetLink.jsx'
 
-class IssueActionsComp_preJoel extends React.Component {
+class IssueActionsComp extends React.Component {
   render() {
     let p = this.props
     return (
       <div className="c-itemactions">
-        <NotYetLink element="button" className="c-itemactions__button-print">Buy Issue</NotYetLink>
+        <NotYetLink element="button" className="c-itemactions__button-buy">Buy Issue</NotYetLink>
         <div className="o-download">
+        {/* ToDo: Change class of this button to "o-download__button" when details are filled in */}
           <NotYetLink element="button" className="o-button__8">Download Issue</NotYetLink>
         </div>
         <ShareComp type="unit" id={this.props.unit_id} />
@@ -23,4 +24,4 @@ class IssueActionsComp_preJoel extends React.Component {
   }
 }
 
-module.exports = IssueActionsComp_preJoel;
+module.exports = IssueActionsComp;

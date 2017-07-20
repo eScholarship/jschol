@@ -19,12 +19,17 @@ class SearchControls extends React.Component {
     }
 
     return (
-    <div className={this.props.refineActive ? "c-search2__refine--active" : "c-search2__refine"}>
-      <input key="r1" type="radio" id="c-search2__refine-eschol" name="searchType" value="eScholarship"
-             defaultChecked={true} onFocus={this.props.makeActive} onBlur={this.props.makeInactive}/>
-      <label key="l1" htmlFor="c-search2__refine-eschol" >All of eScholarship</label>
-      { searchUnit }
-    </div>
+    <fieldset>
+      <legend>Refine Search</legend>
+      <div className={this.props.refineActive ? "c-search2__refine--active" : "c-search2__refine"}>
+
+        <input key="r1" type="radio" id="c-search2__refine-eschol" name="searchType" value="eScholarship"
+               defaultChecked={true} onFocus={this.props.makeActive} onBlur={this.props.makeInactive}/>
+        <label key="l1" htmlFor="c-search2__refine-eschol" >All of eScholarship</label>
+        { searchUnit }
+
+      </div>
+    </fieldset>
   )}
 }
 
