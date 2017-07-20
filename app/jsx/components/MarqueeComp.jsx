@@ -102,7 +102,7 @@ class MarqueeComp extends React.Component {
           <aside className="c-marquee__sidebar">
             <section className="o-columnbox2">
               <header>
-                <h2>About</h2>
+                <h1>About</h1>
               </header>
               <div className="c-marquee__sidebar-truncate" ref={element => this.aboutElement = element}>
                 {about_block}
@@ -113,7 +113,7 @@ class MarqueeComp extends React.Component {
         { !this.props.marquee.carousel && this.props.marquee.about &&
           <section className="o-columnbox2">
             <header>
-              <h2>About</h2>
+              <h1>About</h1>
             </header>
             <div className="o-columnbox__truncate1" ref={element => this.aboutElement = element}>
               {about_block}

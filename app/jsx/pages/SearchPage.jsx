@@ -512,14 +512,14 @@ class SearchPage extends PageBase {
             { this.state.fetchingData ? <div className="c-search-extra__loading-overlay"/> : null }
             <section className="o-columnbox1">
               <header>
-                <h2 className="o-columnbox1__heading">Informational Pages (12 results)</h2>
+                <h1 className="o-columnbox1__heading">Informational Pages (12 results)</h1>
               </header>
               <InfoPagesComp />
             </section>
             <section className="o-columnbox1">
               <header>
-                <h2 className="o-columnbox1__heading">
-                  Scholarly Works ({data.count + " results" + (data.count > 10000 ? ", showing first 10000" : "")})</h2>
+                <h1 className="o-columnbox1__heading">
+                  Scholarly Works ({data.count + " results" + (data.count > 10000 ? ", showing first 10000" : "")})</h1>
               </header>
             {(data.count > 2) &&
               <SortPaginationComp formName={formName} formButton={formButton} query={data.query} count={data.count}/>

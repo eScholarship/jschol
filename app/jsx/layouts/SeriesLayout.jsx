@@ -35,15 +35,13 @@ class SeriesSelector extends React.Component {
     let p = this.props
     return (
       <div className="c-campusselector">
-        <h2 className="c-campusselector__heading">
-          <Link to={"/uc/" + p.unit.id}>{p.unit.name}</Link>
-        </h2>
+        <Link to={"/uc/" + p.unit.id} className="c-campusselector__heading">{p.unit.name}</Link>
         <details open={this.state.isOpen}
                  ref={domElement => this.details=domElement}
                  onClick={()=>setTimeout(()=>this.setState({isOpen: this.details.open}), 0)}
                  className="c-campusselector__selector">
           <summary aria-label="select campus"></summary>
-            <div className="c-campusselector__menu">
+          <div className="c-campusselector__menu">
             <div className="c-campusselector__items" role="list">
             {p.series.map((s, i) =>
               <Link key={i} to={"/uc/"+ s.unit_id} onClick={()=>this.closeSelector()}>{s.name}</Link> )}

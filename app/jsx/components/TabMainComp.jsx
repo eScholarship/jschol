@@ -98,8 +98,8 @@ class Embargoed extends React.Component {
       <details className="c-togglecontent" open>
         <summary>Main Content</summary>
         <div className="o-itemunavailable__embargoed">
-          <h2 className="o-itemunavailable__lede">This item is under embargo until
-            <strong> {eDate_formatted}</strong>.</h2>
+          <h1 className="o-itemunavailable__lede">This item is under embargo until
+            <strong> {eDate_formatted}</strong>.</h1>
         {(this.props.pub_web_loc.length > 0) &&
           [<p key="0">You may have access to the publisher's version here:</p>,
           <a key="1" href={this.props.pub_web_loc[0]} className="o-textlink__secondary">{this.props.pub_web_loc[0]}</a>,
