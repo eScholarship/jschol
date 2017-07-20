@@ -144,6 +144,33 @@ class PageBase extends React.Component
     })
   }
 
+  sendBinaryFileData = (method, apiURL, formData) => {
+    this.setState({ fetchingData: true })
+    formData.append('username', this.state.adminLogin.username)
+    formData.append('token', this.state.adminLogin.token)
+
+    $.ajax({
+      type: method,
+      url: apiURL,
+      data: formData,
+      contentType: false,
+      processData: false
+    })
+    .done(data=>{
+      if (data.nextURL) {
+        this.setState({ fetchingData: false })
+        this.props.router.push(data.nextURL)
+      }
+      else
+        this.fetchPageData()
+    })
+    .fail(data=>{
+      alert("Error" + (data.responseJSON ? `:\n${data.responseJSON.message}`
+                                         : ` ${data.status}:\n${data.statusText}.`))
+      this.fetchPageData()
+    })
+  }
+
   // This gets called when props change by switching to a new page.
   // It is *not* called on first-time construction. We use it to fetch new page data
   // for the page being switched to.
@@ -192,6 +219,7 @@ class PageBase extends React.Component
       return (
         <DrawerComp data={this.state.pageData}
                     sendApiData={this.sendApiData}
+                    sendBinaryFileData={this.sendBinaryFileData}
                     fetchingData={this.state.fetchingData}>
           {/* Not sure why the padding below is needed, but it is */}
           <div className="body" style={{ padding: "10px" }}>
