@@ -744,7 +744,7 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
     if params['data']['carouselFlag'] && params['data']['carouselFlag'] == 'on'
       unitAttrs['carousel'] = true
     else
-      unitAttrs['carousel'] = false
+      unitAttrs.delete('carousel')
     end
     if params['data']['facebook'] then unitAttrs['facebook'] = params['data']['facebook'] end
     if params['data']['twitter'] then unitAttrs['twitter'] = params['data']['twitter'] end
@@ -770,9 +770,11 @@ def carouselConfig(slides, unitID)
       # if the slide already exists, merge new config with old config
       if k < carouselAttrs['slides'].length
         carouselAttrs['slides'][k] = carouselAttrs['slides'][k].merge(v.to_a.collect{|x| [x[0].to_s, x[1]]}.to_h) 
-      else
+      elsif carouselAttrs['slides'].length > 0
         # TODO: shouldn't technically be a PUSH - if multiple new slides are added at once, new slide 6 could be before new slide 5 in slides.each; slide 6 is pushed and is now slide 5, then slide 5 comes and overwrites the data for slide 6
         carouselAttrs['slides'].push(v.to_a.collect{|x| [x[0].to_s, x[1]]}.to_h)
+      else 
+        carouselAttrs['slides'] = [v.to_a.collect{|x| [x[0].to_s, x[1]]}.to_h]
       end
     end
   else
@@ -804,9 +806,11 @@ post "/api/unit/:unitID/upload" do |unitID|
         image_data = slideImage.reject{|k,v| k == :slideNumber}.to_a.collect{|x| [x[0].to_s, x[1]]}.to_h
         if slideNumber < carouselAttrs['slides'].length
           carouselAttrs['slides'][slideNumber]['image'] = image_data
-        else
+        elsif carouselAttrs['slides'].length > 0
           # TODO: shouldn't technically be a PUSH - if multiple new slides are added at once, new slide 6 could be before new slide 5 in slides.each; slide 6 is pushed and is now slide 5, then slide 5 comes and overwrites the data for slide 6
           carouselAttrs['slides'].push({'image': image_data})
+        else
+          carouselAttrs['slides'] = [{'images': image_data}]
         end
       end
       carousel.attrs = carouselAttrs.to_json

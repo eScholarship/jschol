@@ -13,6 +13,7 @@ class UnitProfileLayout extends React.Component {
   handleSubmit = (event, data) => {
     event.preventDefault()
 
+    // adds input type="file" fields to FormData
     let binaryFormData = new FormData();
     let binaryFormFields = [];
     for (var fieldName in data) {
@@ -22,6 +23,7 @@ class UnitProfileLayout extends React.Component {
       }
     }
 
+    // removes input type="file" fields from 'data' parameter
     if (binaryFormFields.length !== 0) {
       for (var field in binaryFormFields) {
         delete data[binaryFormFields[field]];
@@ -34,6 +36,7 @@ class UnitProfileLayout extends React.Component {
 
   }
 
+  //handles image preview BEFORE any image is POST'ed to server/BEFORE any asset_id is generated
   handleImageChange = (event) => {
     event.preventDefault()
 
@@ -66,6 +69,8 @@ class UnitProfileLayout extends React.Component {
     this.setState({newData: Object.assign(_.cloneDeep(this.state.newData), newStuff)})
   }
 
+  // ex: newStuff = {header: 'stuff and things'}, i=slide number
+  // calls setMarqueeData with {slides: [{header: , text: , }, {header: , text: ,}]}
   setSlideData = (newStuff, i) => {
     var slides = this.state.newData.marquee.slides
     slides[i] = Object.assign(_.cloneDeep(slides[i]), newStuff)
@@ -263,7 +268,7 @@ class UnitProfileLayout extends React.Component {
                   defaultValue={slide.text}
                   onChange={ event => this.setSlideData({text: event.target.value}, i) }/>
 
-          <label className="c-editable-page__label" htmlFor={"slideImage-" + i}>Image: <span style={{color: '#555'}}>{slide.image.asset_id}</span></label>
+                  <label className="c-editable-page__label" htmlFor={"slideImage-" + i}>Image: </label>
           {/*not currently passing the filename back with the slide image*/}
           {/*TODO: remove 'no file chosen' text https://stackoverflow.com/questions/21842274/cross-browser-custom-styling-for-file-upload-button/21842275#21842275 */}
 

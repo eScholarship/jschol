@@ -65,6 +65,8 @@ class MarqueeComp extends React.Component {
         var imgUrl
         if (slide.imagePreviewUrl) {
           imgUrl = slide.imagePreviewUrl
+          //for testing - amy used image urls in slide.image before she got upload working
+          //seems useful so keeping this logic here
         } else if (slide.image && typeof slide.image === "string") {
           imgUrl = slide.image
         } else if (slide.image && slide.image.asset_id) {
