@@ -18,6 +18,9 @@ class HeadingObj extends React.Component {
         <h2>Heading Style 3</h2>
         <h3 className="o-heading3">From the New Heights: The City and Migrating Latinas in Real Women Have Curves and María Full of Grace</h3>
 
+        <h2>Heading Style 3a</h2>
+        <h3 className="o-heading3a">From the New Heights: The City and Migrating Latinas in Real Women Have Curves and María Full of Grace</h3>
+
         <h2>Heading Style 4</h2>
         <h3 className="o-heading4">From the New Heights: The City and Migrating Latinas in Real Women Have Curves and María Full of Grace</h3>
 

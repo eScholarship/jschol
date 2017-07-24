@@ -3,7 +3,6 @@
 %o-heading {
   margin-top: 0;
   margin-bottom: $spacing-md;
-  line-height: $line-height;
 }
 
 %o-heading1 {
@@ -17,6 +16,16 @@
   @extend %o-heading1;
 }
 
+%o-heading1a {
+  @extend %o-heading;
+  font-size: 1.6em;
+  font-weight: normal;
+}
+
+.o-heading1a {
+  @extend %o-heading1a;
+}
+
 %o-heading2 {
   @extend %o-heading;
   color: $color-teal;
@@ -28,6 +37,17 @@
   @extend %o-heading2;
 }
 
+%o-heading2a {
+  @extend %o-heading;
+  color: $color-teal;
+  font-size: 1.3em;
+  font-weight: bold;
+}
+
+.o-heading2a {
+  @extend %o-heading2a;
+}
+
 %o-heading3 {
   @extend %o-heading;
   font-size: 1.2em;
@@ -36,6 +56,16 @@
 
 .o-heading3 {
   @extend %o-heading3;
+}
+
+%o-heading3a {
+  @extend %o-heading;
+  font-size: 1.2em;
+  font-weight: normal;
+}
+
+.o-heading3a {
+  @extend %o-heading3a;
 }
 
 %o-heading4 {
