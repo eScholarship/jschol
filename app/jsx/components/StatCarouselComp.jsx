@@ -27,7 +27,7 @@ class CampusCarouselComp extends React.Component {
             <a href="">999,999</a> Views
           </div>
           <div className="o-stat--passed c-statcarousel__cell">
-             <a href="">9,999</a> Items since UC OA Policy passed
+             <a href="">9,999</a> Items since UC <br/> OA Policy passed
           </div>
           <div className="o-stat--journals c-statcarousel__cell">
              <a href="">99</a> eScholarship Journals
