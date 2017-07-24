@@ -1,0 +1,63 @@
+// ##### Server Error Component ##### //
+
+$servererror-element-width: 18.8em;
+
+.c-servererror {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  small {
+    margin-bottom: $spacing-sm;
+    font-size: 1em;
+    text-align: center;
+  }
+
+  a {
+    @extend %o-textlink__primary;
+  }
+
+}
+
+.c-servererror__message {
+  @extend %o-heading1;
+  margin-bottom: $spacing-lg;
+}
+
+.c-servererror__image {
+  width: $servererror-element-width;
+  max-width: 100%;
+  margin-bottom: $spacing-lg;
+  border: 1px solid $color-light-gray;
+  box-shadow: $box-shadow1;
+}
+
+.c-servererror__search {
+  display: flex;
+  width: $servererror-element-width;
+  max-width: 100%;
+  margin-bottom: $spacing-lg;
+
+  label {
+    @extend %hide;
+  }
+
+  input[type='search'] {
+    @extend %interactive-element-size;
+    flex: 1 1 auto;
+    padding: 0 $spacing-sm;
+    border: 1px solid $color-light-gray;
+  }
+
+  button {
+    @extend %o-button__9;
+    margin-left: $spacing-base;
+    background-image: inline('../images/icon_magnify-teal.svg');
+
+    @include bp(screen2) {
+      margin-left: $spacing-sm;
+    }
+
+  }
+
+}

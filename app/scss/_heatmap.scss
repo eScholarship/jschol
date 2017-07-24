@@ -57,11 +57,6 @@
   font-weight: normal;
   text-align: center;
 
-  strong {
-    color: $color-teal;
-    font-weight: inherit;
-  }
-
   @include bp(screen1) {
     font-size: 6vw;
   }
@@ -87,6 +82,7 @@
 .c-heatmap__button {
   @extend %o-button__8;
   margin-bottom: $spacing-md;
+  font-size: 1.1em;
 
   @include bp(screen1) {
     width: 23vw;

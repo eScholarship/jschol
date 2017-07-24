@@ -7,6 +7,7 @@ import PdfViewComp from '../components/PdfViewComp.jsx'
 import PubLocationComp from '../components/PubLocationComp.jsx'
 import PubDataComp from '../components/PubDataComp.jsx'
 import ViewExternalComp from '../components/ViewExternalComp.jsx'
+import NotYetLink from '../components/NotYetLink.jsx'
 
 class ScrollingAnchorComp extends React.Component {
   // Used to trigger scrolling for anchors linked from JumpComp (i.e. 'article_abstract')
@@ -27,11 +28,11 @@ class Abstract extends React.Component {
       <details className="c-togglecontent" open>
         <summary>Abstract</summary>
         <p>{this.props.abstract}</p>
-      {(this.props.unit.id.match(/^.*_postprints/)) &&
-        <p className="c-well">Many UC-authored scholarly publications are freely available on this site because of the UC Academic Senate&apos;s Open Access Policy. 
-        {/* ToDo: Add Link */}
-        *** LINK *** Let us know how this access is important for you.</p>
-      }
+        {(this.props.unit.id.match(/^.*_postprints/)) &&
+          <p className="c-well">Many UC-authored scholarly publications are freely available on this site because of the
+            UC Academic Senate&apos;s Open Access Policy. <NotYetLink className="" element="a">Let us know how this access is important for you.</NotYetLink>
+          </p>
+        }
       </details>
     )
   }

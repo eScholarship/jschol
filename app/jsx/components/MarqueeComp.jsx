@@ -52,13 +52,9 @@ class MarqueeComp extends React.Component {
   }
 
   render() {
-      let about_block = this.props.marquee.about ?
-        <div>
-          <div dangerouslySetInnerHTML={{__html: this.props.marquee.about}}/>
-          <button className="c-marquee__sidebar-more">More</button>
-        </div>
-        : null
-    
+    let about_block = this.props.marquee.about ?
+      ("<div>" + this.props.marquee.about + "</div>" +
+       "<button class=\"c-marquee__sidebar-more\">More</button>") : null
     var slides = []
     if (this.props.marquee.slides) {
       slides = this.props.marquee.slides.map((slide, i) => {
@@ -104,9 +100,8 @@ class MarqueeComp extends React.Component {
               <header>
                 <h1>About</h1>
               </header>
-              <div className="c-marquee__sidebar-truncate" ref={element => this.aboutElement = element}>
-                {about_block}
-              </div>
+              <div className="c-marquee__sidebar-truncate" ref={element => this.aboutElement = element}
+                   dangerouslySetInnerHTML={{__html: about_block}} />
             </section>
           </aside>
         }
@@ -116,9 +111,8 @@ class MarqueeComp extends React.Component {
             <header>
               <h1>About</h1>
             </header>
-            <div className="o-columnbox__truncate1" ref={element => this.aboutElement = element}>
-              {about_block}
-            </div>
+            <div className="o-columnbox__truncate1" ref={element => this.aboutElement = element}
+                   dangerouslySetInnerHTML={{__html: about_block}} />
           </section>
         }
       </div>

@@ -2,9 +2,9 @@
 
 // ***** Global Settings ***** //
 
+@import 'breakpoints';
 @import 'variables';
 @import 'mixins';
-@import 'breakpoints';
 
 // ***** Vendor Libraries ***** //
 
@@ -74,7 +74,7 @@
 @import 'scholworks';
 @import 'search1';
 @import 'search2';
-@import 'searchExtra';
+@import 'servererror';
 @import 'share';
 @import 'sidebarnav';
 @import 'skipnav';
@@ -108,9 +108,14 @@ body {
   background-color: lighten($color-light-gray, 15%);
   font-family: 'KievitWeb';
   overflow-x: hidden;
+
+  @include bp (screen2) {
+    padding: $spacing-sm $spacing-md 0;
+  }
+
 }
 
 p {
   margin: 0 0 $spacing-sm;
-  line-height: $line-height;
+  line-height: $line-height1;
 }

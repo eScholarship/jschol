@@ -1,9 +1,10 @@
 // ##### Header 1 & 2 Component Styles ##### //
 
 .c-header {
+  @extend %page-bleed;
   display: flex;
   justify-content: space-between;
-  margin: (-$spacing-sm) (-$spacing-sm) 0;
+  margin-top: (-$spacing-sm);
   padding: $spacing-sm;
   background: $color-white;
 
