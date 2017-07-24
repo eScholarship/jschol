@@ -91,7 +91,7 @@ app.use((req, res) =>
           catch (e) {
             console.log("Exception generating React HTML:", e)
             console.log(e.stack)
-            res.status(500).send("Exception generating React HTML")
+            res.status(500).send(e)
           }
         });
       }).on('error', function(e) {
