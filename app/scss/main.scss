@@ -108,9 +108,14 @@ body {
   background-color: lighten($color-light-gray, 15%);
   font-family: 'KievitWeb';
   overflow-x: hidden;
+
+  @include bp (screen2) {
+    padding: $spacing-sm $spacing-md 0;
+  }
+
 }
 
 p {
   margin: 0 0 $spacing-sm;
-  line-height: $line-height;
+  line-height: $line-height1;
 }
