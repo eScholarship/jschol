@@ -1,18 +1,13 @@
 // ##### Breadcrumb Component ##### //
 
 .c-breadcrumb {
-  margin-bottom: $spacing-sm;
+  margin-bottom: $spacing-base;
 
   a {
+    @extend %o-textlink__secondary;
     display: inline-flex;
-    margin-bottom: $spacing-sm;
-    color: $color-black;
-    font-size: 1.1em;
-    text-decoration: none;
-
-    &:hover {
-      text-decoration: underline;
-    }
+    margin-bottom: $spacing-base;
+    font-size: 0.9em;
 
     &:not(:last-child) {
 

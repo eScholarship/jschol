@@ -6,6 +6,11 @@
 
 .c-togglelist__buttons {
   margin-bottom: $spacing-sm;
+  margin-left: $pointer-size-fine;
+
+  @include interactive-element-pointer(coarse) {
+    margin-left: $pointer-size-coarse;
+  }
 
   button {
 

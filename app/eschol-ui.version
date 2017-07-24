@@ -384,5 +384,9 @@ As well as:
   new file:   app/jsx/components/UnitPubComp.jsx
   renamed:    app/jsx/components/IssueActionsComp_preJoel.jsx -> app/jsx/components/IssueActionsComp.jsx
 
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's 40f2fbd876e54fb0d4446d3797a4331e5c3dfd8b, 2017-07-24 <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-
+Martin added all scss changes since last.
+As well as:

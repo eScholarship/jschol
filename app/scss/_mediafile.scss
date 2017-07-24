@@ -156,7 +156,6 @@ $mediafile-img-height: 120px;
   padding-left: 25px;
   background: no-repeat top left / 16px;
   font-weight: normal;
-  box-sizing: border-box; // for Chrome & Safari (don't know why this in _resets.scss isn't getting applied here)
 
   a {
     @extend %o-textlink__secondary;

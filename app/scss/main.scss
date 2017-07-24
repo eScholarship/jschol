@@ -2,9 +2,9 @@
 
 // ***** Global Settings ***** //
 
+@import 'breakpoints';
 @import 'variables';
 @import 'mixins';
-@import 'breakpoints';
 
 // ***** Vendor Libraries ***** //
 
@@ -74,7 +74,7 @@
 @import 'scholworks';
 @import 'search1';
 @import 'search2';
-@import 'searchExtra';
+@import 'servererror';
 @import 'share';
 @import 'sidebarnav';
 @import 'skipnav';
