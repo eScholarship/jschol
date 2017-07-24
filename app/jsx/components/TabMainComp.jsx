@@ -29,8 +29,8 @@ class Abstract extends React.Component {
         <summary>Abstract</summary>
         <p>{this.props.abstract}</p>
         {(this.props.unit.id.match(/^.*_postprints/)) &&
-          <p className="c-well">Many UC-authored scholarly publications are freely available on this site because of the UC Academic Senate&apos;s Open Access Policy.
-            <NotYetLink className="" element="a">Let us know how this access is important for you.</NotYetLink>
+          <p className="c-well">Many UC-authored scholarly publications are freely available on this site because of the
+            UC Academic Senate&apos;s Open Access Policy. <NotYetLink className="" element="a">Let us know how this access is important for you.</NotYetLink>
           </p>
         }
       </details>
