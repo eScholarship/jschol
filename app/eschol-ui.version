@@ -388,5 +388,14 @@ As well as:
 >>> Joel's 40f2fbd876e54fb0d4446d3797a4331e5c3dfd8b, 2017-07-24 <<<
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-Martin added all scss changes since last.
+Martin added all scss and image changes since last.
 As well as:
+
+  app/jsx/components/HeatMapComp.jsx
+  app/jsx/components/ServerErrorComp.jsx
+  app/jsx/components/StatCarouselComp.jsx
+  app/jsx/components/TabMainComp.jsx
+  app/jsx/components/WellComp.jsx
+  app/jsx/layouts/CampusLayout.jsx
+  app/jsx/layouts/Error404Layout.jsx
+  app/jsx/objects/HeadingObj.jsx
