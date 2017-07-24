@@ -70,10 +70,11 @@ class PageBase extends React.Component
     // Retrieve login info from session storage (but after initial init, so that ISO matches for first render)
     let d = this.getSessionData()
     if (d) {
-      let newState = { adminLogin: { loggedIn: true, username: d.username, token: d.token },
-                       isEditingPage: d.isEditingPage }
-      this.setState(newState)
-      this.fetchPermissions(newState)
+      setTimeout(()=>{
+        this.setState({ adminLogin: { loggedIn: true, username: d.username, token: d.token },
+                        isEditingPage: d.isEditingPage })
+        setTimeout(()=>this.fetchPermissions(), 0)
+      }, 0)
     }
   }
 
@@ -114,12 +115,16 @@ class PageBase extends React.Component
   fetchPageData = props => {
     this.dataURL = this.pageDataURL(props)
     if (this.dataURL) {
-      this.setState({ fetchingData: true })
+      this.setState({ fetchingData: true, permissions: null })
       $.getJSON(this.pageDataURL(props)).done((data) => {
         this.setState({ pageData: data, fetchingData: false })
+        this.fetchPermissions()
       }).fail((jqxhr, textStatus, err)=> {
         this.setState({ pageData: null, error: textStatus, fetchingData: false })
       })
+    }
+    else {
+      this.setState({ fetchingData: false, permissions: null })
     }
   }
 
@@ -241,17 +246,17 @@ class PageBase extends React.Component
       </div>)
   }
 
-  fetchPermissions(state) {
+  fetchPermissions() {
     const unit = this.pagePermissionsUnit()
     if (unit
-        && state.adminLogin
-        && state.adminLogin.loggedIn
-        && !state.fetchingPerms
-        && !state.permissions) 
+        && this.state.adminLogin
+        && this.state.adminLogin.loggedIn
+        && !this.state.fetchingPerms
+        && !this.state.permissions) 
     {
       this.setState({ fetchingPerms: true })
       $.getJSON(
-        `/api/permissions/${unit}?username=${state.adminLogin.username}&token=${state.adminLogin.token}`)
+        `/api/permissions/${unit}?username=${this.state.adminLogin.username}&token=${this.state.adminLogin.token}`)
       .done((data) => {
         if (data.error) {
           this.setSessionData(null)
@@ -260,7 +265,7 @@ class PageBase extends React.Component
         }
         else {
           this.setState({ fetchingPerms: false, permissions: data })
-          if (!state.cmsModules) {
+          if (!this.state.cmsModules) {
             // Load CMS-specific modules asynchronously
             require.ensure(['react-trumbowyg', 'react-sidebar', 'react-sortable-tree'], (require) => {
               this.setState({ cmsModules: { Trumbowyg: require('react-trumbowyg').default,
