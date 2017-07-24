@@ -13,18 +13,6 @@
     width: 22em;
   }
 
-  // Reset default fieldset styles; hide legend:
-  fieldset {
-    margin: 0;
-    padding: 0;
-    border: none;
-
-    legend {
-      @extend %hide;
-    }
-
-  }
-
 }
 
 .c-search2__inputs {

@@ -26,7 +26,7 @@
 
 }
 
-// Specific itemaction button styles appearing in various layouts:
+// Specific button styles appearing in various layouts:
 
 .c-itemactions__button-print {
   @extend %o-button__6;
@@ -35,5 +35,5 @@
 
 .c-itemactions__button-buy {
   @extend %o-button__6;
-  background-image: inline('../images/icon_shopping-cart-white.svg');
+  background-image: inline('../images/icon_book-white.svg');
 }

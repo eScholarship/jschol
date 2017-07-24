@@ -13,8 +13,7 @@
 }
 
 .c-campusselector__heading {
-  @extend %o-textlink__colorless;
-  margin-right: $spacing-base;
+  margin: 0 $spacing-base 0 0;
   font-size: 1em;
   text-align: right;
 
@@ -24,6 +23,10 @@
 
   @include bp(screen3) {
     font-size: 1.5em;
+  }
+
+  a {
+    @extend %o-textlink__colorless;
   }
 
 }

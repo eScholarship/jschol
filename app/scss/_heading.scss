@@ -17,16 +17,6 @@
   @extend %o-heading1;
 }
 
-%o-heading1a {
-  @extend %o-heading;
-  font-size: 1.6em;
-  font-weight: normal;
-}
-
-.o-heading1a {
-  @extend %o-heading1a;
-}
-
 %o-heading2 {
   @extend %o-heading;
   color: $color-teal;
@@ -36,17 +26,6 @@
 
 .o-heading2 {
   @extend %o-heading2;
-}
-
-%o-heading2a {
-  @extend %o-heading;
-  color: $color-teal;
-  font-size: 1.3em;
-  font-weight: bold;
-}
-
-.o-heading2a {
-  @extend %o-heading2a;
 }
 
 %o-heading3 {
