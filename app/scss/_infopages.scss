@@ -45,14 +45,12 @@
   }
 
   @include headings() {
-    margin: 0;
-    font-size: 1em;
+    margin: 0 0 $spacing-sm;
+    font-size: 1.1em;
     font-weight: normal;
 
     a {
       @extend %o-textlink__secondary;
-      display: block;
-      margin-bottom: $spacing-sm;
     }
 
   }
@@ -60,17 +58,18 @@
 }
 
 .c-infopages__title {
-  @extend %o-heading3;
+  display: block;
+  font-size: 1.1em;
+  font-weight: bold;
 }
 
 .c-infopages__text {
-  max-height: 4.2em; // truncate beyond 3 lines via jQuery dotdotdot
-  line-height: $line-height2;
+  max-height: 3.3em; // truncate beyond 3 lines via jQuery dotdotdot
   overflow: hidden; // hide text beyond max-height
 }
 
 .c-infopages__all {
-  @extend %o-textlink__colorless;
+  @extend %o-textlink__secondary;
   display: flex;
   justify-content: flex-end;
 }

@@ -1,10 +1,10 @@
 // ##### Footer Component ##### //
 
 .c-footer {
-  @extend %page-bleed;
   display: flex;
   flex-direction: column;
   align-items: center;
+  margin: 0 (-$spacing-sm);
   padding: $spacing-md;
   background-color: $color-light-black;
 

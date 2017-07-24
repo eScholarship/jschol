@@ -1,10 +1,9 @@
 // ##### Nav Bar Component ##### //
 
 .c-navbar {
-  @extend %page-bleed;
   display: flex;
   align-items: center;
-  margin-bottom: $spacing-sm;
+  margin: 0 (-$spacing-sm) $spacing-sm;
   padding: $spacing-sm;
   border-top: 1px solid $color-light-gray;
   border-bottom: 1px solid $color-light-gray;

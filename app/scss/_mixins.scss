@@ -45,17 +45,6 @@ Selector pattern using above media query mixin:
 
 */
 
-// Bleed component to left/right of viewport by equalling <body> left/right padding:
-
-%page-bleed {
-  margin: 0 (-$spacing-sm);
-
-  @include bp(screen2) {
-    margin: 0 (-$spacing-md);
-  }
-
-}
-
 // Enlarge an interactive element's minimum width and height if there's a touch screen:
 
 %interactive-element-size { 

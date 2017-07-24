@@ -1,6 +1,6 @@
 // ##### Toggle Content Component ##### //
 
-$togglecontent-spacing: 25px;
+$togglecontent-left-spacing: 25px;
 
 .c-togglecontent {
   position: relative; // for c-pdfview
@@ -11,19 +11,15 @@ $togglecontent-spacing: 25px;
     border-top: 1px solid $color-light-gray;
   }
 
-  p {
-    line-height: $line-height2;
-  }
-
   @include bp(screen2) {
-    padding: 0 $togglecontent-spacing;
+    padding-left: $togglecontent-left-spacing;
   }
 
   > summary {
     display: inline-block;
     position: relative;
     margin-bottom: $spacing-sm;
-    padding-left: $togglecontent-spacing;
+    padding-left: $togglecontent-left-spacing;
     font-size: 1.2em;
     font-weight: bold;
     user-select: none;
@@ -39,7 +35,7 @@ $togglecontent-spacing: 25px;
     }
 
     @include bp(screen2) {
-      margin-left: (-$togglecontent-spacing);
+      margin-left: (-$togglecontent-left-spacing);
     }
 
   }

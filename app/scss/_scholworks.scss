@@ -66,8 +66,10 @@ $scholworks-tag-height: 1.4em;
 }
 
 .c-scholworks__heading {
-  @extend %o-heading1a;
   max-height: 3.2em; // truncate beyond 3 lines per jquery.dotdotdot
+  margin: 0 0 $spacing-md;
+  font-size: 1.2em;
+  font-weight: bold;
   overflow: hidden; // hide text beyond max-height
 
   @include bp(screen1) {
@@ -81,7 +83,7 @@ $scholworks-tag-height: 1.4em;
 }
 
 .c-scholworks__publication {
-  margin-bottom: $spacing-md;
+  margin: (-$spacing-md) 0 $spacing-md;
 
   a {
     @extend %o-textlink__secondary;
@@ -95,11 +97,7 @@ $scholworks-tag-height: 1.4em;
   overflow: hidden; // hide text beyond max-height
 
   @include bp(screen1) {
-    max-height: 2.7em; // truncate beyond 2 lines per jquery.dotdotdot
-  }
-
-  p {
-    line-height: $line-height2;
+    max-height: 2.4em; // truncate beyond 2 lines per jquery.dotdotdot
   }
 
 }

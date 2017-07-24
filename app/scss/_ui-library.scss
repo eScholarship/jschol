@@ -1,11 +1,9 @@
 // ##### UI Library ##### //
 
 .ui-library__header {
-  @extend %page-bleed;
   display: flex;
   justify-content: space-between;
-  margin-top: (-$spacing-body);
-  margin-bottom: $spacing-body;
+  margin: (-$spacing-body) (-$spacing-body) $spacing-body;
   padding: $spacing-body;
   background-color: $color-light-gray;
   overflow: hidden;
@@ -40,7 +38,7 @@
 }
 
 .ui-library__list {
-  line-height: $line-height1;
+  line-height: $line-height;
 
   ul {
     margin: $spacing-sm 0;

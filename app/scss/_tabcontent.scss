@@ -5,7 +5,7 @@
 }
 
 .c-tabcontent__main-heading {
-  @extend %o-heading1a;
+  @extend %o-heading1;
 
   &:focus {
     outline: $color-light-gray solid 1px;

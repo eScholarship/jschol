@@ -19,6 +19,8 @@ class SearchControls extends React.Component {
     }
 
     return (
+    <fieldset>
+      <legend>Refine Search</legend>
       <div className={this.props.refineActive ? "c-search2__refine--active" : "c-search2__refine"}>
 
         <input key="r1" type="radio" id="c-search2__refine-eschol" name="searchType" value="eScholarship"
@@ -27,6 +29,7 @@ class SearchControls extends React.Component {
         { searchUnit }
 
       </div>
+    </fieldset>
   )}
 }
 
