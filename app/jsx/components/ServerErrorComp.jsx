@@ -14,9 +14,9 @@ class ServerErrorComp extends React.Component {
     return (
       <div className="c-servererror">
         <h1 className="c-servererror__message">
-          {this.props.error == "Not Found" ?
-            "I couldn't find what you were looking for." :
-            "Error: " + this.props.error + "." }
+          {this.props.error == "Not Found" ? "I couldn't find what you were looking for." :
+           this.props.error ? this.props.error :
+           "Error."}
         </h1>
         <img className="c-servererror__image" src="/images/squirrel.jpg" alt="squirrel"/>
         <Form to='/search' method="GET" className="c-servererror__search">

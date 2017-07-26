@@ -122,7 +122,7 @@ class PageBase extends React.Component
         this.setState({ pageData: data, fetchingData: false })
         this.fetchPermissions()
       }).fail((jqxhr, textStatus, err)=> {
-        this.setState({ pageData: null, error: textStatus=="error" ? err : textStatus, fetchingData: false })
+        this.setState({ pageData: { error: textStatus=="error" ? err : textStatus }, fetchingData: false })
       })
     }
     else {
@@ -208,7 +208,7 @@ class PageBase extends React.Component
 
   renderContent() {
     // Error case
-    if (this.state.error) {
+    if (this.state.pageData && this.state.pageData.error) {
       return (
         <div className="body">
           { this.stageWatermark() }
@@ -278,7 +278,7 @@ class PageBase extends React.Component
         }
       })
       .fail((jqxhr, textStatus, err)=> {
-        this.setState({ error: textStatus, fetchingPerms: false, adminLogin: null, permissions: null, isEditingPage: false })
+        this.setState({ pageData: { error: textStatus }, fetchingPerms: false, adminLogin: null, permissions: null, isEditingPage: false })
       })
     }
   }
@@ -335,7 +335,7 @@ class PageBase extends React.Component
       <div className="c-columns">
         <main id="maincontent">
           <section className="o-columnbox1">
-            <ServerErrorComp error={this.state.error}/>
+            <ServerErrorComp error={this.state.pageData.error}/>
           </section>
         </main>
       </div>
