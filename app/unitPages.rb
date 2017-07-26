@@ -209,9 +209,8 @@ def getSeriesLandingPageData(unit, q)
   end
 
   response = unitSearch(q ? q : {"sort" => ['desc']}, unit)
-  seriesList = children ? children.select { |u| u.unit.type == 'series' }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : []
-  monographSeriesList = children ? children.select { |u| u.unit.type == 'monograph_series' }.map { |u| seriesPreview(u) } : []
-  response[:series] = seriesList + monographSeriesList
+  response[:series] = children ? (children.select { |u| u.unit.type == 'series' } + 
+    children.select { |u| u.unit.type == 'monograph_series' }).map { |u| seriesPreview(u) } : []
   return response
 end
 
