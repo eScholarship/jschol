@@ -6,7 +6,7 @@ class WellComp extends React.Component {
   render() {
     return (
       <div className="c-well">
-        Here is the well component. <a href="">Lorem ipsum dolor sit amet</a>, consectetur adipisicing elit. Totam delectus adipisci quis dicta consectetur, nesciunt quam, amet soluta, pariatur, eum eligendi libero exercitationem dolore. Optio tempore assumenda eligendi architecto, veritatis?
+        Are you a UC-affiliated faculty member, researcher, or student interested in publishing on eScholarship? <a href="/uc/root/aboutEschol">Learn how to get started.</a>
       </div>
     )
   }
