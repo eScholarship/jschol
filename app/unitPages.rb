@@ -1,3 +1,51 @@
+require 'digest'
+require 'fastimage'
+
+###################################################################################################
+# Upload an asset file to S3 (if not already there), and return the asset ID. Attaches a hash of
+# metadata to it.
+def putAsset(filePath, metadata)
+
+  # Calculate the sha256 hash, and use it to form the s3 path
+  md5sum    = Digest::MD5.file(filePath).hexdigest
+  sha256Sum = Digest::SHA256.file(filePath).hexdigest
+  s3Path = "#{$s3Config.prefix}/binaries/#{sha256Sum[0,2]}/#{sha256Sum[2,2]}/#{sha256Sum}"
+
+  # If the S3 file is already correct, don't re-upload it.
+  obj = $s3Bucket.object(s3Path)
+  if !obj.exists? || obj.etag != "\"#{md5sum}\""
+    #puts "Uploading #{filePath} to S3."
+    obj.put(body: File.new(filePath),
+            metadata: metadata.merge({
+              original_path: filePath.sub(%r{.*/([^/]+/[^/]+)$}, '\1'), # retain only last directory plus filename
+              mime_type: MimeMagic.by_magic(File.open(filePath)).to_s
+            }))
+    obj.etag == "\"#{md5sum}\"" or raise("S3 returned md5 #{resp.etag.inspect} but we expected #{md5sum.inspect}")
+  end
+
+  return sha256Sum
+end
+
+###################################################################################################
+# Upload an image to S3, and return hash of its attributes. If a block is supplied, it will receive
+# the dimensions first, and have a chance to raise exceptions on them.
+def putImage(imgPath, &block)
+  mimeType = MimeMagic.by_magic(File.open(imgPath))
+  mimeType && mimeType.mediatype == "image" or raise("Non-image file #{imgPath}")
+  dims = FastImage.size(imgPath)
+  block and block.yield(dims)
+  assetID = putAsset(imgPath, {
+    width: dims[0].to_s,
+    height: dims[1].to_s
+  })
+  return { asset_id: assetID,
+           image_type: mimeType.subtype,
+           width: dims[0],
+           height: dims[1]
+         }
+end
+#################################################################################################
+
 def traverseHierarchyUp(arr)
   if ['root', nil].include? arr[0][:id]
     return arr
@@ -85,7 +133,7 @@ def getUnitPageContent(unit, attrs, query)
    return getORULandingPageData(unit.id)
   elsif unit.type == 'campus'
     return getCampusLandingPageData(unit, attrs)
-  elsif unit.type.include? 'series'
+  elsif ['series', 'monograph_series', 'seminar_series'].include? unit.type
     return getSeriesLandingPageData(unit, query)
   elsif unit.type == 'journal'
     return getJournalIssueData(unit, attrs)
@@ -95,10 +143,19 @@ def getUnitPageContent(unit, attrs, query)
   end
 end
 
+# TODO carouselAttrs should not = ""
 def getUnitMarquee(unit, attrs)
+  carousel = Widget.where(unit_id: unit.id, region: "marquee", kind: "Carousel", ordering: 0).first
+  if carousel && carousel.attrs
+    carouselAttrs = JSON.parse(carousel.attrs)
+  else
+    carouselAttrs = ""
+  end
+
   return {
     :about => attrs['about'],
-    :carousel => attrs['carousel']
+    :carousel => attrs['carousel'],
+    :slides => carouselAttrs['slides']
   }
 end
 
@@ -152,13 +209,19 @@ def getSeriesLandingPageData(unit, q)
   end
 
   response = unitSearch(q ? q : {"sort" => ['desc']}, unit)
-  response[:series] = children ? children.select { |u| u.unit.type == 'series' }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : []
+  type = unit.type
+  response[:series] = children ? children.select { |u| u.unit.type == type }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : []
   return response
 end
 
 # Landing page data does not pass arguments volume/issue. It just gets most recent journal
 def getJournalIssueData(unit, unit_attrs, volume=nil, issue=nil)
   display = unit_attrs['magazine_layout'] ? 'magazine' : 'simple'
+  if unit_attrs['issue_rule'] and unit_attrs['issue_rule'] == 'secondMostRecent' and volume.nil? and issue.nil?
+    secondIssue = Issue.where(:unit_id => unit.id).order(Sequel.desc(:pub_date)).first(2)[1]
+    volume = secondIssue ? secondIssue.values[:volume] : nil
+    issue = secondIssue ? secondIssue.values[:issue] : nil
+  end
   return {
     display: display,
     issue: getIssue(unit.id, display, volume, issue),
@@ -251,9 +314,9 @@ def getUnitProfile(unit, attrs)
     logo: attrs['logo'],
     facebook: attrs['facebook'],
     twitter: attrs['twitter'],
-    carousel: attrs['carousel'],
-    about: attrs['about']
+    marquee: getUnitMarquee(unit, attrs)
   }
+  
   if unit.type == 'journal'
     profile[:doaj] = attrs['doaj']
     profile[:license] = attrs['license']
@@ -651,7 +714,19 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
   perms = getUserPermissions(params[:username], params[:token], unitID)
   perms[:admin] or halt(401)
 
+  carouselKeys = params['data'].keys.grep /(header|text)\d+/
+  carouselSlides = {}
+  if carouselKeys.length > 0
+    numSlides = carouselKeys.map! {|x| /(header|text)(\d+)/.match(x)[2].to_i}.max
+    (0..numSlides).each do |n|
+      slide = {header: params['data']["header#{n}"], text: params['data']["text#{n}"]}
+      carouselSlides[n] = slide
+    end
+  end
+
   DB.transaction {
+    carouselConfig(carouselSlides, unitID)
+
     unit = Unit[unitID] or jsonHalt(404, "Unit not found")
     unitAttrs = JSON.parse(unit.attrs)
 
@@ -666,12 +741,119 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
     else
       unitAttrs.delete('issue_rule')
     end
-
+    
+    if params['data']['about'] then unitAttrs['about'] = params['data']['about'] end
+    if params['data']['carouselFlag'] && params['data']['carouselFlag'] == 'on'
+      unitAttrs['carousel'] = true
+    else
+      unitAttrs.delete('carousel')
+    end
+    if params['data']['facebook'] then unitAttrs['facebook'] = params['data']['facebook'] end
+    if params['data']['twitter'] then unitAttrs['twitter'] = params['data']['twitter'] end
+    
     unit.attrs = unitAttrs.to_json
     unit.save
   }
 
   refreshUnitsHash
+  content_type :json
+  return { status: "ok" }.to_json
+end
+
+def carouselConfig(slides, unitID)
+  carousel = Widget.where(unit_id: unitID, region: "marquee", kind: "Carousel", ordering: 0).first
+  if !carousel
+    carousel = Widget.new(unit_id: unitID, region: "marquee", kind: "Carousel", ordering: 0)
+  end
+  
+  if carousel.attrs
+    carouselAttrs = JSON.parse(carousel.attrs)
+    slides.each do |k,v|
+      # if the slide already exists, merge new config with old config
+      if k < carouselAttrs['slides'].length
+        carouselAttrs['slides'][k] = carouselAttrs['slides'][k].merge(v.to_a.collect{|x| [x[0].to_s, x[1]]}.to_h) 
+      elsif carouselAttrs['slides'].length > 0
+        # TODO: shouldn't technically be a PUSH - if multiple new slides are added at once, new slide 6 could be before new slide 5 in slides.each; slide 6 is pushed and is now slide 5, then slide 5 comes and overwrites the data for slide 6
+        carouselAttrs['slides'].push(v.to_a.collect{|x| [x[0].to_s, x[1]]}.to_h)
+      else 
+        carouselAttrs['slides'] = [v.to_a.collect{|x| [x[0].to_s, x[1]]}.to_h]
+      end
+    end
+  else
+    carouselAttrs = {slides: ''}
+  end
+  
+  carousel.attrs = carouselAttrs.to_json
+  carousel.save
+end
+
+post "/api/unit/:unitID/upload" do |unitID|
+  perms = getUserPermissions(params[:username], params[:token], unitID)
+  perms[:admin] or halt(401)
+
+  # upload images for carousel configuration
+  slideImageKeys = params.keys.grep /slideImage/
+  if slideImageKeys.length > 0
+    slideImage_data = []
+    for slideImageKey in slideImageKeys
+      image_data = putImage(params[slideImageKey][:tempfile].path)
+      image_data[:slideNumber] = /slideImage(\d*)/.match(slideImageKey)[1]
+      slideImage_data.push(image_data)
+    end
+    DB.transaction {
+      carousel = Widget.where(unit_id: unitID, region: "marquee", kind: "Carousel", ordering: 0).first
+      carouselAttrs = JSON.parse(carousel.attrs)
+      for slideImage in slideImage_data
+        slideNumber = slideImage[:slideNumber].to_i
+        image_data = slideImage.reject{|k,v| k == :slideNumber}.to_a.collect{|x| [x[0].to_s, x[1]]}.to_h
+        if slideNumber < carouselAttrs['slides'].length
+          carouselAttrs['slides'][slideNumber]['image'] = image_data
+        elsif carouselAttrs['slides'].length > 0
+          # TODO: shouldn't technically be a PUSH - if multiple new slides are added at once, new slide 6 could be before new slide 5 in slides.each; slide 6 is pushed and is now slide 5, then slide 5 comes and overwrites the data for slide 6
+          carouselAttrs['slides'].push({'image': image_data})
+        else
+          carouselAttrs['slides'] = [{'images': image_data}]
+        end
+      end
+      carousel.attrs = carouselAttrs.to_json
+      carousel.save
+    }
+  end
+
+  # upload images for unit profile logo
+  if params.has_key? :logo and params[:logo] != ""
+    logo_data = putImage(params[:logo][:tempfile].path)
+    DB.transaction {
+      unit = Unit[unitID] or jsonHalt(404, "Unit not found")
+      unitAttrs = JSON.parse(unit.attrs)
+      unitAttrs['logo'] = logo_data.to_a.collect{|x| [x[0].to_s, x[1]]}.to_h
+      unit.attrs = unitAttrs.to_json
+      unit.save
+    }
+  elsif params[:logo] == ""
+    #REMOVE LOGO
+  end
+
+  content_type :json
+  return { status: "okay" }.to_json
+end
+
+delete "/api/unit/:unitID/removeCarouselSlide/:slideNumber" do |unitID, slideNumber|
+  # Check user permissions
+  perms = getUserPermissions(params[:username], params[:token], unitID)
+  perms[:admin] or halt(401)
+
+  DB.transaction {
+    carousel = Widget.where(unit_id: unitID, region: "marquee", kind: "Carousel", ordering: 0).first
+
+    if carousel.attrs
+      carouselAttrs = JSON.parse(carousel.attrs)
+      carouselAttrs['slides'].delete_at(slideNumber.to_i)
+    end
+    carousel.attrs = carouselAttrs.to_json
+    carousel.save
+  }
+
   content_type :json
   return { status: "ok" }.to_json
 end

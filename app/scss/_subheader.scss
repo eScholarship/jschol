@@ -1,11 +1,11 @@
 // ##### Subheader Component ##### //
 
 .c-subheader {
+  @extend %page-bleed;
   display: flex;
   position: relative; // to absolute positioned nav component
   align-items: center;
   justify-content: space-between;
-  margin: 0 (-$spacing-sm);
   padding: $spacing-sm;
   border-top: 2px solid $color-light-gray;
   background-color: $color-white;

@@ -40,10 +40,17 @@ class DotH2 extends React.Component {
     $(this.domEl).dotdotdot({watch:"window"})
   }
 
-  render = () =>
-    <h2 className={this.props.className} ref={el => this.domEl = el}>
-      {this.props.children}
-    </h2>
+  render = () => 
+    <h2 className={this.props.className} ref={el => this.domEl = el}>{this.props.children}</h2>
+}
+
+class DotH4 extends React.Component {
+  componentDidMount() {
+    $(this.domEl).dotdotdot({watch:"window"})
+  }
+
+  render = () => 
+    <h4 className={this.props.className} ref={el => this.domEl = el}>{this.props.children}</h4>
 }
 
 class ScholWorksComp extends React.Component {
@@ -137,9 +144,15 @@ class ScholWorksComp extends React.Component {
             }) }
           </ul>
           <heading>
-            <DotH2 className="c-scholworks__heading">
+          {this.props.h && this.props.h == "H4" ?
+            <DotH2 className="c-scholworks__heading" >
               <Link to={itemLink}>{pr.title}</Link>
             </DotH2>
+          :
+            <DotH4 className="c-scholworks__heading" >
+              <Link to={itemLink}>{pr.title}</Link>
+            </DotH4>
+          }
           </heading>
           {authorList && 
             <div className="c-authorlist">

@@ -9,6 +9,9 @@ import Header1Comp from '../components/Header1Comp.jsx'
 import FooterComp from '../components/FooterComp.jsx'
 import DrawerComp from '../components/DrawerComp.jsx'
 import TestMessageComp from '../components/TestMessageComp.jsx'
+import ScrollToTopComp from '../components/ScrollToTopComp.jsx'
+import NavComp from '../components/NavComp.jsx'
+import ServerErrorComp from '../components/ServerErrorComp.jsx'
 
 // Keys used to store CMS-related data in browser's session storage
 const SESSION_LOGIN_KEY = "escholLogin"
@@ -69,10 +72,11 @@ class PageBase extends React.Component
     // Retrieve login info from session storage (but after initial init, so that ISO matches for first render)
     let d = this.getSessionData()
     if (d) {
-      let newState = { adminLogin: { loggedIn: true, username: d.username, token: d.token },
-                       isEditingPage: d.isEditingPage }
-      this.setState(newState)
-      this.fetchPermissions(newState)
+      setTimeout(()=>{
+        this.setState({ adminLogin: { loggedIn: true, username: d.username, token: d.token },
+                        isEditingPage: d.isEditingPage })
+        setTimeout(()=>this.fetchPermissions(), 0)
+      }, 0)
     }
   }
 
@@ -113,12 +117,16 @@ class PageBase extends React.Component
   fetchPageData = props => {
     this.dataURL = this.pageDataURL(props)
     if (this.dataURL) {
-      this.setState({ fetchingData: true })
+      this.setState({ fetchingData: true, permissions: null })
       $.getJSON(this.pageDataURL(props)).done((data) => {
         this.setState({ pageData: data, fetchingData: false })
+        this.fetchPermissions()
       }).fail((jqxhr, textStatus, err)=> {
-        this.setState({ pageData: null, error: textStatus, fetchingData: false })
+        this.setState({ pageData: { error: textStatus=="error" ? err : textStatus }, fetchingData: false })
       })
+    }
+    else {
+      this.setState({ fetchingData: false, permissions: null })
     }
   }
 
@@ -128,6 +136,33 @@ class PageBase extends React.Component
     $.getJSON({ type: method, url: apiURL,
                 data: _.merge(_.cloneDeep(data),
                         { username: this.state.adminLogin.username, token: this.state.adminLogin.token })})
+    .done(data=>{
+      if (data.nextURL) {
+        this.setState({ fetchingData: false })
+        this.props.router.push(data.nextURL)
+      }
+      else
+        this.fetchPageData()
+    })
+    .fail(data=>{
+      alert("Error" + (data.responseJSON ? `:\n${data.responseJSON.message}`
+                                         : ` ${data.status}:\n${data.statusText}.`))
+      this.fetchPageData()
+    })
+  }
+
+  sendBinaryFileData = (method, apiURL, formData) => {
+    this.setState({ fetchingData: true })
+    formData.append('username', this.state.adminLogin.username)
+    formData.append('token', this.state.adminLogin.token)
+
+    $.ajax({
+      type: method,
+      url: apiURL,
+      data: formData,
+      contentType: false,
+      processData: false
+    })
     .done(data=>{
       if (data.nextURL) {
         this.setState({ fetchingData: false })
@@ -173,9 +208,10 @@ class PageBase extends React.Component
 
   renderContent() {
     // Error case
-    if (this.state.error) {
+    if (this.state.pageData && this.state.pageData.error) {
       return (
         <div className="body">
+          { this.stageWatermark() }
           {this.renderError()}
           <FooterComp/>
         </div>)
@@ -190,9 +226,11 @@ class PageBase extends React.Component
       return (
         <DrawerComp data={this.state.pageData}
                     sendApiData={this.sendApiData}
+                    sendBinaryFileData={this.sendBinaryFileData}
                     fetchingData={this.state.fetchingData}>
           {/* Not sure why the padding below is needed, but it is */}
           <div className="body" style={{ padding: "10px" }}>
+            { this.stageWatermark() }
             <SkipNavComp/>
             {this.state.pageData ? this.renderData(this.state.pageData) : this.renderLoading()}
             <FooterComp/>
@@ -203,23 +241,24 @@ class PageBase extends React.Component
     // Normal case
     return (
       <div className="body">
+        { this.stageWatermark() }
         <SkipNavComp/>
         {this.state.pageData ? this.renderData(this.state.pageData) : this.renderLoading()}
         <FooterComp/>
       </div>)
   }
 
-  fetchPermissions(state) {
+  fetchPermissions() {
     const unit = this.pagePermissionsUnit()
     if (unit
-        && state.adminLogin
-        && state.adminLogin.loggedIn
-        && !state.fetchingPerms
-        && !state.permissions) 
+        && this.state.adminLogin
+        && this.state.adminLogin.loggedIn
+        && !this.state.fetchingPerms
+        && !this.state.permissions) 
     {
       this.setState({ fetchingPerms: true })
       $.getJSON(
-        `/api/permissions/${unit}?username=${state.adminLogin.username}&token=${state.adminLogin.token}`)
+        `/api/permissions/${unit}?username=${this.state.adminLogin.username}&token=${this.state.adminLogin.token}`)
       .done((data) => {
         if (data.error) {
           this.setSessionData(null)
@@ -228,7 +267,7 @@ class PageBase extends React.Component
         }
         else {
           this.setState({ fetchingPerms: false, permissions: data })
-          if (!state.cmsModules) {
+          if (!this.state.cmsModules) {
             // Load CMS-specific modules asynchronously
             require.ensure(['react-trumbowyg', 'react-sidebar', 'react-sortable-tree'], (require) => {
               this.setState({ cmsModules: { Trumbowyg: require('react-trumbowyg').default,
@@ -239,7 +278,7 @@ class PageBase extends React.Component
         }
       })
       .fail((jqxhr, textStatus, err)=> {
-        this.setState({ error: textStatus, fetchingPerms: false, adminLogin: null, permissions: null, isEditingPage: false })
+        this.setState({ pageData: { error: textStatus }, fetchingPerms: false, adminLogin: null, permissions: null, isEditingPage: false })
       })
     }
   }
@@ -261,9 +300,9 @@ class PageBase extends React.Component
   }
 
   render() {
+    // If ScrollToTopComp gives you trouble, you can disable by replacing it with a plain <div>
     return (
-      <div>
-        { this.stageWatermark() }
+      <ScrollToTopComp>
         <Broadcast channel="cms" value={ { loggedIn: this.state.adminLogin && this.state.adminLogin.loggedIn,
                                            username: this.state.adminLogin && this.state.adminLogin.username,
                                            token: this.state.adminLogin && this.state.adminLogin.token,
@@ -277,7 +316,7 @@ class PageBase extends React.Component
                                            permissions: this.state.permissions } }>
           {this.renderContent()}
         </Broadcast>
-      </div>
+      </ScrollToTopComp>
     )
   }
 
@@ -291,7 +330,15 @@ class PageBase extends React.Component
   renderError() { return (
     <div>
       <Header1Comp/>
-      <h2 style={{ marginTop: "5em", marginBottom: "5em" }}>Unable to reach the server: {this.state.error}</h2>
+      <div className="c-navbar">
+      </div>
+      <div className="c-columns">
+        <main id="maincontent">
+          <section className="o-columnbox1">
+            <ServerErrorComp error={this.state.pageData.error}/>
+          </section>
+        </main>
+      </div>
     </div>
   )}
 

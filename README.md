@@ -69,9 +69,24 @@ Steps to get the app running on your local machine
   * bucket: bucket name, e.g. "pub-s3-dev"
   * prefix: top-level path within the bucket, typically "jschol"
 
-7. Run `./gulp`. Be on the lookout for errors.
+7. Configure OJS database connection parameters: `cp config/ojsDb.yaml.TEMPLATE config/ojsDb.yaml`, then fill in the values in `ojsDb.yaml`:
+  * adapter: mysql2
+  * host: rds-BLAH.amazonaws.com
+  * port: 3306
+  * database: ojs
+  * username: SECRET
+  * password: SECRET
 
-8. Browse to `http://localhost:4001/unit/root`, or `http://localhost:4001/item/08s7w2fd`, or `http://localhost:4001/search`
+8. Configure Merritt Express connection parameters: `cp config/mrtExpress.yaml.TEMPLATE config/mrtExpress.yaml`, then fill in the values in `mrtExpress.yaml`:
+  * host: host name (e.g. mrtexpress.cdlib.org)
+  * username: SECRET
+  * password: SECRET
+
+9. Create a jscholKey.dat file
+
+10. Run `./gulp`. Be on the lookout for errors.
+
+11. Browse to `http://localhost:4001/unit/root`, or `http://localhost:4001/item/08s7w2fd`, or `http://localhost:4001/search`
 
 Steps to set up a new database and index
 ----------------------------------------

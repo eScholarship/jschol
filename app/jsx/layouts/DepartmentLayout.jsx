@@ -30,14 +30,12 @@ class SeriesComp extends React.Component {
     let data = this.props.data,
         plural = (data.count == data.previewLimit + 1) ? '' : 's'
     return (
-      <div style={{marginBottom: '30px'}}>
-        <h5><Link to={"/uc/"+data.unit_id}>{data.name}</Link></h5>
-        <div style={{paddingLeft: '20px'}}>
-        { data.items.map((item) =>
-          <ScholWorksComp key={item.id} result={item}/>) }
-        {data.count > data.previewLimit &&
-          <p>{data.count - data.previewLimit} more work{plural} - <Link to={"/uc/"+data.unit_id}>show all</Link></p> }
-        </div>
+      <div className="c-unitpub">
+        <h3 className="c-unitpub__heading"><Link to={"/uc/"+data.unit_id}>{data.name}</Link></h3>
+      {data.items.map((item) =>
+        <ScholWorksComp key={item.id} result={item} h="H4" />) }
+      {data.count > data.previewLimit &&
+        <div className="c-unitpub__publications">{data.count - data.previewLimit} more work{plural} &mdash; <Link to={"/uc/"+data.unit_id}>show all</Link></div> }
       </div>
     )
   }
@@ -91,42 +89,38 @@ class DepartmentLayout extends React.Component {
           <main id="maincontent">
             <section className="o-columnbox1">
               <header>
-                <h3>Works by the {this.props.unit.name}</h3>
+                <h1>Works by the {this.props.unit.name}</h1>
               </header>
               <div className="c-itemactions">
                 <ShareComp type="unit" id={this.props.unit.id} />
               </div>
             {(seriesList.length == 0 && monographSeriesList.length ==  0 && data.journals.length == 0 && data.related_orus.length == 0) ?
-              <p>There are currently no publications in this collection.</p>
+              <div className="c-unitpub__publications">There are currently no publications in this collection.</div>
              :
-              <p>There are {this.props.unit.extent.count} publications in this collection, published between {this.props.unit.extent.pub_year.start} and {this.props.unit.extent.pub_year.end}.</p>
+              <div className="c-unitpub__publications">There are {this.props.unit.extent.count} publications in this collection, published between {this.props.unit.extent.pub_year.start} and {this.props.unit.extent.pub_year.end}.</div>
             }
             {seriesList.length > 0 &&
               <div>
-                <h4 className="o-heading3">Paper Series</h4>
+                <h2 className="o-heading1a">Paper Series</h2>
                 {seriesList}
-                <hr/>
               </div>
             }
             {monographSeriesList.length > 0 &&
               <div>
-                <h4 className="o-heading3">Monograph Series</h4>
+                <h2 className="o-heading1a">Monograph Series</h2>
                 {monographSeriesList}
-                <hr/>
               </div>
             }
             {data.journals.length > 0 && 
-              <div>
-                <h4 className="o-heading3">Journals</h4>
+              <div className="c-unitlist">
+                <h2>Journals</h2>
                 <ul>{ data.journals.map((child) =>
                   <li key={child.unit_id}><Link to={"/uc/"+child.unit_id}>{child.name}</Link></li>) } </ul>
-                <br/>
-                <hr/>
               </div>
             }
             {data.related_orus.length > 0 &&
-              <div>
-                <h4 className="o-heading3">Related Research Centers & Groups</h4>
+              <div className="c-unitlist">
+                <h2>Related Research Centers & Groups</h2>
                 <ul>
                   { data.related_orus.map((child) =>
                     <li key={child.unit_id}><Link to={"/uc/"+child.unit_id}>{child.name}</Link></li>) }

@@ -437,7 +437,7 @@ get %r{.*} do
     # Pass the full path and query string to our little Node Express app, which will run it through
     # ReactRouter and React.
     response = Net::HTTP.new(host, 4002).start {|http| http.request(Net::HTTP::Get.new(remainder)) }
-    response.code == "200" or halt(500, "ISO fetch failed")
+    status response.code.to_i
 
     # Read in the template file, and substitute the results from React/ReactRouter
     lookFor = '<div id="main"></div>'

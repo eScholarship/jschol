@@ -12,7 +12,7 @@ export default class SidebarComp extends React.Component {
         :
         <section key={sb.id} className="o-columnbox1">
           <header>
-            <h2>{(sb.attrs && sb.attrs.title) ? sb.attrs.title : sb.kind.replace(/([a-z])([A-Z][a-z])/g, "$1 $2")}</h2>
+            <h1>{(sb.attrs && sb.attrs.title) ? sb.attrs.title : sb.kind.replace(/([a-z])([A-Z][a-z])/g, "$1 $2")}</h1>
           </header>
           {   sb.kind == "Text"           ? <div dangerouslySetInnerHTML={{__html: sb.attrs.html}}/>
             : sb.kind == "RecentArticles" ? <RecentArticlesComp data={sb.attrs}/>

@@ -36,15 +36,15 @@ class DotDiv extends React.Component {
     </div>
 }
 
-class DotH2 extends React.Component {
+class DotH3 extends React.Component {
   componentDidMount() {
     $(this.domEl).dotdotdot({watch:"window"})
   }
 
   render = () =>
-    <h2 className={this.props.className} ref={el => this.domEl = el}>
+    <h3 className={this.props.className} ref={el => this.domEl = el}>
       {this.props.children}
-    </h2>
+    </h3>
 }
 
 class PubPreviewComp extends React.Component {
@@ -115,9 +115,9 @@ class PubPreviewComp extends React.Component {
       {pr.thumbnail &&
         <Link to={itemLink} className="c-pubpreview__img"><img src={"/assets/"+pr.thumbnail.asset_id} width={pr.thumbnail.width} height={pr.thumbnail.height} alt="Article image" /></Link> }
         <div className="c-pub">
-          <DotH2 className="c-pub__heading">
+          <DotH3 className="c-pub__heading">
             <Link to={itemLink}>{pr.title}</Link>
-          </DotH2>
+          </DotH3>
           {authorList && 
             <div className="c-authorlist">
               <DotAuthorUl className="c-authorlist__list">
