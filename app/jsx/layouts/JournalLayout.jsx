@@ -88,9 +88,8 @@ class IssueComp extends React.Component {
         issueCurrent = [pi.unit_id, pi.volume, pi.issue, year]
     return (
       <section className="o-columnbox1">
-        <IssueActionsComp unit_id={pi.unit_id} />
-        {/*              articles={}
-                         buy_link={} */}
+        <IssueActionsComp unit_id={pi.unit_id} buy_link={pi.buy_link} />
+        {/*              articles={} */}
         <div className="c-pub">
           <VolumeSelector vip={issueCurrent} issues={this.props.issues} />
         {this.props.display=="magazine" &&
