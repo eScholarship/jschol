@@ -609,11 +609,12 @@ def convertUnits(el, parentMap, childMap, allIds)
 
   # Create or update the main database record
   if el.name != "ptr"
-    if id == "root" && Unit.where(id: "root").first
-      puts "Skipping existing root unit."
+    unitType = id=="root" ? "root" : el[:type]
+    # Retain CMS modifications to root and campuses
+    if ['root','campus'].include?(unitType) && Unit.where(id: id).first
+      puts "Preserving #{id}."
     else
-      puts "Converting unit #{id}."
-      unitType = id=="root" ? "root" : el[:type]
+      puts "Converting #{unitType} #{id}."
       name = id=="root" ? "eScholarship" : el[:label]
       Unit.update_or_replace(id,
         type:      unitType,
