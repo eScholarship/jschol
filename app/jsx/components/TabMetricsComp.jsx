@@ -7,6 +7,11 @@ class TabMetricsComp extends React.Component {
     return (
       <div className="c-tabcontent">
         <h1 className="c-tabcontent__main-heading" tabIndex="-1">Metrics</h1>
+        <div className="c-well">
+          <br/>
+          Beta Note: Metrics data below are demonstration samples.
+          <br/><br/>
+        </div>
         <div className="c-tabcontent__divide2x">
           <div className="c-tabcontent__divide2x-child">
             <table className="c-datatable">

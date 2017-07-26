@@ -31,11 +31,11 @@ class CampusLayout extends React.Component {
 
     return (
       <div>
-        <HeatMapComp />
+        <HeatMapComp campusID={unit.id} />
         <StatCarouselComp campusName={unit.name} />
         <div className="c-columns">
           <main id="maincontent">
-            <CampusSearchComp campusID={unit.id} campusName={unit.name} dashUrl={dashUrl} />
+            <CampusSearchComp campusID={unit.id} campusName={unit.name} />
             <UnitCarouselComp campusID={unit.id} campusName={unit.name} />
             <JournalCarouselComp campusID={unit.id} campusName={unit.name} />
           </main>

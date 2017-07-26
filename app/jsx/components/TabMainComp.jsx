@@ -7,6 +7,7 @@ import PdfViewComp from '../components/PdfViewComp.jsx'
 import PubLocationComp from '../components/PubLocationComp.jsx'
 import PubDataComp from '../components/PubDataComp.jsx'
 import ViewExternalComp from '../components/ViewExternalComp.jsx'
+import { Link } from 'react-router'
 import NotYetLink from '../components/NotYetLink.jsx'
 
 class ScrollingAnchorComp extends React.Component {
@@ -45,7 +46,7 @@ class MainContent extends React.Component {
       case "published":
         if (!p.content_type) {
           if ((p.attrs.pub_web_loc.length > 0) || (p.attrs.supp_files && p.attrs.supp_files.length > 0)) {
-            return (<NoContent pub_web_loc={p.attrs.pub_web_loc} supp_files={p.attrs.supp_files} />)
+            return (<NoContent pub_web_loc={p.attrs.pub_web_loc} supp_files={p.attrs.supp_files} changeTab={p.changeTab} />)
           } else {
             return (<Withdrawn message="This item is not available from eScholarship." />)
           }
@@ -119,13 +120,21 @@ class Embargoed extends React.Component {
 }
 
 class NoContent extends React.Component {
+  handleClick(e, tabName) {
+    e.preventDefault()
+    this.props.changeTab(tabName)
+  }
+
   render() {
     return (
       <div>
       {this.props.pub_web_loc.length > 0 && 
         <ViewExternalComp pub_web_loc={this.props.pub_web_loc[0]} /> }
       {this.props.supp_files && this.props.supp_files.length > 0 &&
-        <p><br/><br/>All content for this item is under the &quot;Supplemental material&quot; tab.</p>
+        <div style={{paddingLeft: '25px'}}>
+          <br/><br/>
+          All content for this item is under the <Link to="#" onClick={(e)=>this.handleClick(e, "supplemental")} className="o-textlink__secondary">Supplemental material</Link> tab.
+        </div>
       }
       <p>&nbsp;</p>
       <p>&nbsp;</p>
