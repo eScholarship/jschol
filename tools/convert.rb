@@ -47,6 +47,7 @@ DATA_DIR = "/apps/eschol/erep/data"
 
 # The main database we're inserting data into
 DB = Sequel.connect(YAML.load_file("config/database.yaml"))
+$dbMutex = Mutex.new
 
 # Log SQL statements, to aid debugging
 File.exists?('convert.sql_log') and File.delete('convert.sql_log')
@@ -1321,9 +1322,11 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
     # If only the database portion changed, we can safely skip the CloudSearch re-indxing
     if existingItem[:data_digest] != dataDigest
       puts "Changed item. (database change only, search data unchanged)"
-      DB.transaction do
-        updateDbItem(dbDataBlock)
-      end
+      $dbMutex.synchronize {
+        DB.transaction do
+          updateDbItem(dbDataBlock)
+        end
+      }
       $nProcessed += 1
       return
     end
@@ -1423,8 +1426,10 @@ end
 ###################################################################################################
 def scrubSectionsAndIssues()
   # Remove orphaned sections and issues (can happen when items change)
-  DB.run("delete from sections where id not in (select distinct section from items where section is not null)")
-  DB.run("delete from issues where id not in (select distinct issue_id from sections where issue_id is not null)")
+  $dbMutex.synchronize {
+    DB.run("delete from sections where id not in (select distinct section from items where section is not null)")
+    DB.run("delete from issues where id not in (select distinct issue_id from sections where issue_id is not null)")
+  }
 end
 
 ###################################################################################################
@@ -1497,9 +1502,11 @@ def processBatch(batch)
 
   # Now that we've successfully added the documents to AWS CloudSearch, insert records into
   # our database. For efficiency, do all the records in a single transaction.
-  DB.transaction do
-    batch[:items].each { |data| updateDbItem(data) }
-  end
+  $dbMutex.synchronize {
+    DB.transaction do
+      batch[:items].each { |data| updateDbItem(data) }
+    end
+  }
 
   # Periodically scrub out orphaned sections and issues
   $scrubCount += 1
