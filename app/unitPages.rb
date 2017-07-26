@@ -247,9 +247,10 @@ def getIssue(id, display, volume=nil, issue=nil)
   issue = issue.values
   if issue[:attrs]
     attrs = JSON.parse(issue[:attrs])
-    issue[:title] = attrs['title']
-    issue[:description] = attrs['description'] 
-    issue[:cover] = attrs['cover'] 
+    attrs['title']       and issue[:title] = attrs['title']
+    attrs['description'] and issue[:description] = attrs['description']
+    attrs['cover']       and issue[:cover] = attrs['cover']
+    attrs['buy_link']    and issue[:buy_link] = attrs['buy_link']
   end
   issue[:sections] = Section.where(:issue_id => issue[:id]).order(:ordering).all
 

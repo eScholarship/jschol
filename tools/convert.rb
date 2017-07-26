@@ -95,6 +95,9 @@ $s3Bucket = Aws::S3::Bucket.new($s3Config.bucket, client: $s3Client)
 $allUnits = nil
 $unitAncestors = nil
 $issueCoverCache = {}
+$issueBuyLinks = Hash[*File.readlines("/apps/eschol/erep/xtf/style/textIndexer/mapping/buyLinks.txt").map { |line|
+  line =~ %r{^.*entity=(.*);volume=(.*);issue=(.*)\|(.*?)\s*$} ? ["#{$1}:#{$2}:#{$3}", $4] : [nil, line]
+}.flatten]
 
 # Make puts thread-safe, and prepend each line with the thread it's coming from. While we're at it,
 # let's auto-flush the output.
@@ -999,6 +1002,14 @@ def findIssueCover(unit, volume, issue, caption, dbAttrs)
 end
 
 ###################################################################################################
+# See if we can find a buy link for this issue, from the table Lisa made.
+def addIssueBuyLink(unit, volume, issue, dbAttrs)
+  key = "#{unit}:#{volume}:#{issue}"
+  link = $issueBuyLinks[key]
+  link and dbAttrs[:buy_link] = link
+end
+
+###################################################################################################
 # Extract metadata for an item, and add it to the current index batch.
 # Note that we create, but don't yet add, records to our database. We put off really inserting
 # into the database until the batch has been successfully processed by AWS.
@@ -1117,6 +1128,7 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
       findIssueCover(issueUnit, data.single("volume"), issueNum,
                      (tmp && tmp.text && !tmp.text.empty?) ? tmp : nil,
                      issueAttrs)
+      addIssueBuyLink(issueUnit, data.single("volume"), issueNum, issueAttrs)
       !issueAttrs.empty? and issue[:attrs] = issueAttrs.to_json
 
       section = Section.new
