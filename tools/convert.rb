@@ -1472,13 +1472,6 @@ def updateDbItem(data)
       }
     end
   }
-
-  # Periodically scrub out orphaned sections and issues
-  $scrubCount += 1
-  if $scrubCount > 5
-    scrubSectionsAndIssues()
-    $scrubCount = 0
-  end
 end
 
 ###################################################################################################
@@ -1493,7 +1486,7 @@ def processBatch(batch)
     begin
       $csClient.upload_documents(documents: batch[:idxData], content_type: "application/json")
     rescue Exception => res
-      if res.inspect =~ /Http(408|5\d\d)Error/ && (Time.now - startTime < 10*60)
+      if res.inspect =~ /Http(408|5\d\d)Error|ReadTimeout/ && (Time.now - startTime < 10*60)
         puts "Will retry in 30 sec, response was: #{res}"
         sleep 30; puts "Retrying."; retry
       end
@@ -1506,6 +1499,13 @@ def processBatch(batch)
   # our database. For efficiency, do all the records in a single transaction.
   DB.transaction do
     batch[:items].each { |data| updateDbItem(data) }
+  end
+
+  # Periodically scrub out orphaned sections and issues
+  $scrubCount += 1
+  if $scrubCount > 5
+    scrubSectionsAndIssues()
+    $scrubCount = 0
   end
 
   # Update status
