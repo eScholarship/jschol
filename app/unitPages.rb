@@ -133,7 +133,7 @@ def getUnitPageContent(unit, attrs, query)
    return getORULandingPageData(unit.id)
   elsif unit.type == 'campus'
     return getCampusLandingPageData(unit, attrs)
-  elsif ['series', 'monograph_series', 'seminar_series'].include? unit.type
+  elsif unit.type.include? 'series'
     return getSeriesLandingPageData(unit, query)
   elsif unit.type == 'journal'
     return getJournalIssueData(unit, attrs)
@@ -209,8 +209,8 @@ def getSeriesLandingPageData(unit, q)
   end
 
   response = unitSearch(q ? q : {"sort" => ['desc']}, unit)
-  type = unit.type
-  response[:series] = children ? children.select { |u| u.unit.type == type }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : []
+  response[:series] = children ? (children.select { |u| u.unit.type == 'series' } + 
+    children.select { |u| u.unit.type == 'monograph_series' }).map { |u| seriesPreview(u) } : []
   return response
 end
 

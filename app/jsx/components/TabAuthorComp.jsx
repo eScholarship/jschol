@@ -2,6 +2,7 @@
 //
 import React from 'react'
 import { Link } from 'react-router'
+import NotYetLink from '../components/NotYetLink.jsx'
 
 class CitationComp extends React.Component {
   render() {
@@ -20,7 +21,7 @@ class TabAuthorComp extends React.Component {
     let p = this.props,
         authorList = p.authors.map(function(a, i) {return (
           // ToDo: Link to author 
-          [<dt key={i}><a href="">{a.name}</a></dt>,
+          [<dt key={i}><a href={"/search/?q="+a.name}>{a.name}</a></dt>,
            <dd key={i+1}>{a.institution ? a.institution : ""}
             {a.email ? <span>&nbsp;&nbsp;&nbsp;{a.email}</span> : ""}</dd>]
         )}),
@@ -29,7 +30,7 @@ class TabAuthorComp extends React.Component {
         permalink = "http://www.escholarship.org/uc/item/" + p.id,
         ezid = "http://ezid.cdlib.org/id/ark:/13030/qt" + p.id,
         appearsIn = p.appearsIn.map(function(node, i) {
-          return ( <span key={i}><Link to={node.url}>{node.name}</Link><br/></span> )
+          return ( <span key={i}><Link to={"/uc/"+node.id} className="o-textlink__secondary">{node.name}</Link><br/></span> )
         }),
         retrieved_suffix = ''
     if (p.attrs['orig_citation']) {
@@ -43,14 +44,14 @@ class TabAuthorComp extends React.Component {
       {!p.attrs['orig_citation'] &&
         <div className="c-itemactions">
           <div className="o-download">
-            <button className="o-download__button">Download Citation</button>
+            <NotYetLink element="button" className="o-download__button">Download Citation</NotYetLink>
             <details className="o-download__formats">
               <summary aria-label="formats"></summary>
               <ul className="o-download__single-menu">
-                <li><a href="">RIS</a></li>
-                <li><a href="">BibTex</a></li>
-                <li><a href="">EndNote</a></li>
-                <li><a href="">RefWorks</a></li>
+                <li><NotYetLink element="a">RIS</NotYetLink></li>
+                <li><NotYetLink element="a">BibTex</NotYetLink></li>
+                <li><NotYetLink element="a">EndNote</NotYetLink></li>
+                <li><NotYetLink element="a">RefWorks</NotYetLink></li>
               </ul>
             </details>
           </div>
@@ -91,9 +92,9 @@ class TabAuthorComp extends React.Component {
             <dt><strong>License</strong></dt>
             <dd>**************** TBD **************</dd>
             <dt><strong>Permalink</strong></dt>
-            <dd><Link to={permalink}>{permalink}</Link></dd>
+            <dd><Link to={permalink} className="o-textlink__secondary">{permalink}</Link></dd>
             <dt><strong>EZID Label Name</strong></dt>
-            <dd><Link to={ezid}>{ezid}</Link></dd>
+            <dd><Link to={ezid} className="o-textlink__secondary">{ezid}</Link></dd>
             <dt><strong>Dash Label Name</strong></dt>
             <dd>**************** TBD **************</dd>
             <dt><strong>Appears in</strong></dt>

@@ -15,11 +15,6 @@ class CampusSearchComp extends React.Component {
           <input type="hidden" name="searchType" value={this.props.campusID} />
           <button type="submit" className="c-campussearch__button" aria-label="Search"></button>
         </div>
-      {this.props.dashUrl &&
-        <small className="c-campussearch__subtext">
-          Looking for research data? <a href={this.props.dashUrl}>Visit {this.props.campusName} Dash</a>.
-        </small>
-      }
       </div>
     </Form>
     )
