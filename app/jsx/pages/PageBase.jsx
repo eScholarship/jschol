@@ -10,6 +10,8 @@ import FooterComp from '../components/FooterComp.jsx'
 import DrawerComp from '../components/DrawerComp.jsx'
 import TestMessageComp from '../components/TestMessageComp.jsx'
 import ScrollToTopComp from '../components/ScrollToTopComp.jsx'
+import NavComp from '../components/NavComp.jsx'
+import ServerErrorComp from '../components/ServerErrorComp.jsx'
 
 // Keys used to store CMS-related data in browser's session storage
 const SESSION_LOGIN_KEY = "escholLogin"
@@ -120,7 +122,7 @@ class PageBase extends React.Component
         this.setState({ pageData: data, fetchingData: false })
         this.fetchPermissions()
       }).fail((jqxhr, textStatus, err)=> {
-        this.setState({ pageData: null, error: textStatus, fetchingData: false })
+        this.setState({ pageData: { error: textStatus=="error" ? err : textStatus }, fetchingData: false })
       })
     }
     else {
@@ -206,7 +208,7 @@ class PageBase extends React.Component
 
   renderContent() {
     // Error case
-    if (this.state.error) {
+    if (this.state.pageData && this.state.pageData.error) {
       return (
         <div className="body">
           { this.stageWatermark() }
@@ -276,7 +278,7 @@ class PageBase extends React.Component
         }
       })
       .fail((jqxhr, textStatus, err)=> {
-        this.setState({ error: textStatus, fetchingPerms: false, adminLogin: null, permissions: null, isEditingPage: false })
+        this.setState({ pageData: { error: textStatus }, fetchingPerms: false, adminLogin: null, permissions: null, isEditingPage: false })
       })
     }
   }
@@ -328,7 +330,15 @@ class PageBase extends React.Component
   renderError() { return (
     <div>
       <Header1Comp/>
-      <h2 style={{ marginTop: "5em", marginBottom: "5em" }}>Unable to reach the server: {this.state.error}</h2>
+      <div className="c-navbar">
+      </div>
+      <div className="c-columns">
+        <main id="maincontent">
+          <section className="o-columnbox1">
+            <ServerErrorComp error={this.state.pageData.error}/>
+          </section>
+        </main>
+      </div>
     </div>
   )}
 
