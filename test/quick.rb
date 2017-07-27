@@ -33,9 +33,14 @@ class TestQuick < Test::Unit::TestCase
     assert $1.to_i > 10, "At least 10 docs should match 'china'"
   end
 
-  def test_static
+  def test_unitStatic
     html = fetchAndStrip("http://localhost:4001/uc/uclalaw/policyStatement")
     assert_match /School of Law only publishes materials about/, html
+  end
+
+  def test_rootStatic
+    html = fetchAndStrip("http://localhost:4001/uc/root/aboutEschol")
+    assert_match /provides a suite of repository tools/, html
   end
 
   def test_browse_campuses
@@ -53,7 +58,12 @@ class TestQuick < Test::Unit::TestCase
     assert_match /UCLA Civil and Environmental Engineering/, html
   end
 
-  def test_item
+  def test_browse_campus_journals
+    html = fetchAndStrip("http://localhost:4001/ucb/journals")
+    assert_match /Berkeley Scientific Journal/, html
+  end
+
+  def test_itemMain
     html = fetchAndStrip("http://localhost:4001/uc/item/9j48n0p8")
     assert_match /China’s contingencies and globalisation/, html
     assert_match /pdfjs-cdl-wrapper/, html
@@ -64,6 +74,17 @@ class TestQuick < Test::Unit::TestCase
     assert_match /UCLA School of Law/, html
     assert /There are (\d+) publications/ =~ html
     assert $1.to_i > 10, "At least 10 docs should be in uclalaw"
+  end
+
+  def test_journal
+    html = fetchAndStrip("http://localhost:4001/uc/ismrg_cisj/6/1")
+    assert_match /Repetition, Variation, and the Idea of Art in Renaissance Italy/, html
+  end
+
+  def test_series
+    html = fetchAndStrip("http://localhost:4001/uc/anthropology_ucb_postprints")
+    assert_match /Founded in September 1901/, html
+    assert_match /Oikos\/Anthropos: Rationality, Technology, Infrastructure/, html
   end
 
   def test_login
