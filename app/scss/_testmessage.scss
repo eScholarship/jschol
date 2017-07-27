@@ -1,9 +1,11 @@
 // ##### Test Message Component ##### //
 
 %c-testmessage {
+  @extend %page-bleed;
   display: grid;
   align-items: center;
-  margin: (-$spacing-sm) (-$spacing-sm) $spacing-sm;
+  margin-top: (-$spacing-sm);
+  margin-bottom: $spacing-sm;
   padding-right: $spacing-sm;
   padding-left: $spacing-sm;
   transition-duration: 0.5s;
