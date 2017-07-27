@@ -162,7 +162,7 @@ class AllJournals extends React.Component {
     }
     {visibleArchived &&
       <div>
-        <h3>Archived Journals</h3> 
+        <h2>Archived Journals</h2> 
         <ul className="o-textlist2">{visibleArchived}</ul>
       </div>
     }
@@ -210,7 +210,7 @@ class CampusJournals extends React.Component {
     }
     {visibleArchived &&
       <div>
-        <h3>Archived Journals</h3> 
+        <h2>Archived Journals</h2> 
         <ul className="o-textlist2">{visibleArchived}</ul>
       </div>
     }

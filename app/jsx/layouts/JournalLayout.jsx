@@ -95,7 +95,7 @@ class IssueComp extends React.Component {
           {this.props.display=="magazine" &&
             <div className="c-pubpreview">
             {pi.cover &&
-              <div className="c-pubpreview__img"><img className="c-scholworks__article-preview" src={"/assets/"+pi.cover.asset_id} width="150" height="200" alt="Issue cover image" /></div> }
+              <div className="c-pubpreview__img"><img className="c-scholworks__article-preview" src={"/assets/"+pi.cover.asset_id} width="150" height="200" alt="Issue cover" /></div> }
               <div className="c-pub">
               {pi.title &&
                 <div className="c-pub__subheading">{pi.title}</div> }
