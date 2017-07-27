@@ -125,7 +125,7 @@ class SeriesLayout extends React.Component {
             }
               <div>
                 { data.searchResults.map(result =>
-                  <ScholWorksComp key={result.id} result={result} />)
+                  <ScholWorksComp h="h2" key={result.id} result={result} />)
                 }
               </div>
             {(data.count > data.query.rows) &&

@@ -32,7 +32,7 @@ class HomePage extends PageBase
           <main id="maincontent">
             <section className="o-columnbox1">
               <header>
-                <h2>Home Page</h2>
+                <h1>Home Page</h1>
               </header>
               <p>Home page content here</p>
             </section>

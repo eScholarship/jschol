@@ -50,9 +50,9 @@ class SectionComp extends React.Component {
       <div>
         <h2 className="o-heading3">{this.props.section.name}</h2>
         {this.props.display == "magazine" ?
-          this.props.section.articles.map(article => <ScholWorksComp key={article.id} result={article}/>)
+          this.props.section.articles.map(article => <ScholWorksComp h="h3" key={article.id} result={article}/>)
         :
-          this.props.section.articles.map(article => <PubPreviewComp key={article.id} result={article}/>)
+          this.props.section.articles.map(article => <PubPreviewComp h="h3" key={article.id} result={article}/>)
         }
       </div>
     )
@@ -92,21 +92,21 @@ class IssueComp extends React.Component {
         {/*              articles={} */}
         <div className="c-pub">
           <VolumeSelector vip={issueCurrent} issues={this.props.issues} />
-        {this.props.display=="magazine" &&
-          <div className="c-pubpreview">
-          {pi.cover &&
-            <div className="c-pubpreview__img"><img className="c-scholworks__article-preview" src={"/assets/"+pi.cover.asset_id} width="150" height="200" alt="Issue cover image" /></div> }
-            <div className="c-pub">
-            {pi.title &&
-              <div className="c-pub__subheading">{pi.title}</div> }
-              <p>{pi.description}</p>
+          {this.props.display=="magazine" &&
+            <div className="c-pubpreview">
+            {pi.cover &&
+              <div className="c-pubpreview__img"><img className="c-scholworks__article-preview" src={"/assets/"+pi.cover.asset_id} width="150" height="200" alt="Issue cover" /></div> }
+              <div className="c-pub">
+              {pi.title &&
+                <div className="c-pub__subheading">{pi.title}</div> }
+                <p>{pi.description}</p>
+              </div>
             </div>
-          </div>
-        } 
-        {this.props.display!="magazine" && pi.title &&
-          <div className="c-pub__subheading">{pi.title}</div> }
-        {this.props.display!="magazine" && pi.description &&
-          (<p>{pi.description}</p>) }
+          } 
+          {this.props.display!="magazine" && pi.title &&
+            <div className="c-pub__subheading">{pi.title}</div> }
+          {this.props.display!="magazine" && pi.description &&
+            (<p>{pi.description}</p>) }
         </div>
       {this.props.display=="magazine" ?
         <div className="o-dividecontent2x--ruled">

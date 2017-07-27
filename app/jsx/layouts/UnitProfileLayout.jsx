@@ -142,7 +142,7 @@ class UnitProfileLayout extends React.Component {
                         onChange={ event => this.setData({ name: event.target.value }) }/>
 
                 <label className="c-editable-page__label" htmlFor="logoImage">Logo image:</label>
-                <img src={ logoUrl } alt="Logo image"/>
+                <img src={ logoUrl } alt="Logo"/>
 
                 <input type="file" id="logoImage" name="logo" onChange={this.handleImageChange}/>
                 { this.state.newData.logo && this.state.newData.logo.imagePreviewUrl && <button>Cancel</button> }
