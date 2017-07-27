@@ -24,37 +24,18 @@ class DotAuthorUl extends React.Component {
     </ul>
 }
 
-class DotDiv extends React.Component {
+class DotElement extends React.Component {
   componentDidMount() {
     $(this.domEl).dotdotdot({watch:"window"})
   }
 
   render = () =>
-    <div className={this.props.className} ref={el => this.domEl = el}>
-      {this.props.children}
-    </div>
-}
-
-class DotH2 extends React.Component {
-  componentDidMount() {
-    $(this.domEl).dotdotdot({watch:"window"})
-  }
-
-  render = () => 
-    <h2 className={this.props.className} ref={el => this.domEl = el}>{this.props.children}</h2>
-}
-
-class DotH4 extends React.Component {
-  componentDidMount() {
-    $(this.domEl).dotdotdot({watch:"window"})
-  }
-
-  render = () => 
-    <h4 className={this.props.className} ref={el => this.domEl = el}>{this.props.children}</h4>
+    React.createElement(this.props.element, { className: this.props.className, ref: el => this.domEl = el }, this.props.children)
 }
 
 class ScholWorksComp extends React.Component {
   static propTypes = {
+    h: PropTypes.string.isRequired,
     result: PropTypes.shape({
       id: PropTypes.string,
       title: PropTypes.string,
@@ -144,15 +125,9 @@ class ScholWorksComp extends React.Component {
             }) }
           </ul>
           <heading>
-          {this.props.h && this.props.h == "H4" ?
-            <DotH2 className="c-scholworks__heading" >
+            <DotElement element={this.props.h} className="c-scholworks__heading">
               <Link to={itemLink}>{pr.title}</Link>
-            </DotH2>
-          :
-            <DotH4 className="c-scholworks__heading" >
-              <Link to={itemLink}>{pr.title}</Link>
-            </DotH4>
-          }
+            </DotElement>
           </heading>
           {authorList && 
             <div className="c-authorlist">
@@ -168,16 +143,16 @@ class ScholWorksComp extends React.Component {
             </div>
           }
           {pr.abstract && 
-            <DotDiv className="c-scholworks__abstract">
+            <DotElement element="div" className="c-scholworks__abstract">
               <p>{pr.abstract}</p>
-            </DotDiv>
+            </DotElement>
           }
           <div className="c-scholworks__media">
             <ul className="c-medialist">{ supp_files }</ul>
             {pr.rights && <RightsComp rights={pr.rights} size="small" />}
           </div>
         </div>
-        {pr.thumbnail && <img className="c-scholworks__article-preview" src={"/assets/"+pr.thumbnail.asset_id} width={pr.thumbnail.width} height={pr.thumbnail.height} alt={_.capitalize(pr.genre) + " image"} />}
+        {pr.thumbnail && <img className="c-scholworks__article-preview" src={"/assets/"+pr.thumbnail.asset_id} width={pr.thumbnail.width} height={pr.thumbnail.height} alt={`Cover page: ${pr.title}`} />}
       </section>
     )
   }

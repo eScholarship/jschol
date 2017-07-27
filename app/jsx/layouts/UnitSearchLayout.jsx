@@ -53,7 +53,7 @@ class UnitSearchLayout extends React.Component {
             <SortPaginationComp query={data.query} count={data.count}/>
             <div>
               { data.searchResults.map(result =>
-                <ScholWorksComp key={result.id} result={result} />)
+                <ScholWorksComp h="h2" key={result.id} result={result} />)
               }
             </div>
           </section>

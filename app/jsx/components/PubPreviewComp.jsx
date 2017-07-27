@@ -113,7 +113,7 @@ class PubPreviewComp extends React.Component {
     return (
       <div className="c-pubpreview">
       {pr.thumbnail &&
-        <Link to={itemLink} className="c-pubpreview__img"><img src={"/assets/"+pr.thumbnail.asset_id} width={pr.thumbnail.width} height={pr.thumbnail.height} alt="Article image" /></Link> }
+        <Link to={itemLink} className="c-pubpreview__img"><img src={"/assets/"+pr.thumbnail.asset_id} width={pr.thumbnail.width} height={pr.thumbnail.height} alt={`Cover page of ${pr.title}`} /></Link> }
         <div className="c-pub">
           <DotH3 className="c-pub__heading">
             <Link to={itemLink}>{pr.title}</Link>
