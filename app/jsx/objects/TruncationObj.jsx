@@ -35,8 +35,6 @@ class JobQueue
       job()
       n++
     }
-    if (n > 0)
-      console.log("Processed " + n + " in " + (new Date() - start) + " sec.")
     setTimeout(this.service, 10)
   }
 }
