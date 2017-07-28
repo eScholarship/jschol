@@ -1,7 +1,7 @@
 // ##### Breadcrumb Component ##### //
 
 .c-breadcrumb {
-  margin-bottom: $spacing-base;
+  margin-bottom: $spacing-sm;
 
   a {
     @extend %o-textlink__secondary;

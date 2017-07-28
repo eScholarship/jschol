@@ -44,7 +44,7 @@ $medialist-item-length: 11em;
 
 .c-medialist__other {
   @extend %c-medialist__item;
-  background-image: inline('../images/icon_file-text-o-black.svg');
+  background-image: inline('../images/icon_file-o-black.svg');
 }
 
 .c-medialist__pdf {

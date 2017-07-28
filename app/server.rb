@@ -520,12 +520,11 @@ get "/api/browse/:browse_type/:campusID" do |browse_type, campusID|
     pageTitle = "Journals"
   end
   unit = $unitsHash[campusID]
-  attrs = JSON.parse(unit[:attrs])
   body = {
     :browse_type => browse_type,
     :pageTitle => pageTitle,
     :unit => unit ? unit.values.reject { |k,v| k==:attrs } : nil,
-    :header => unit ? getUnitHeader(unit, nil, nil, attrs) : getGlobalHeader,
+    :header => unit ? getUnitHeader(unit) : getGlobalHeader,
     :sidebar => getUnitSidebar(unit),
     :campusUnits => cu ? cu.compact : nil,
     :campusJournals => cj,
@@ -646,7 +645,7 @@ get "/api/item/:shortArk" do |shortArk|
         else 
           issue_id = Item.join(:sections, :id => :section).filter(Sequel.qualify("items", "id") => id).map(:issue_id)[0]
           unit_id, volume, issue = Section.join(:issues, :id => issue_id).map([:unit_id, :volume, :issue])[0]
-          body[:header] = getUnitHeader(unit, nil, {'unit_id': unit_id, 'volume': volume, 'issue': issue}, attrs)
+          body[:header] = getUnitHeader(unit, nil, {'unit_id': unit_id, 'volume': volume, 'issue': issue})
           body[:citation][:volume] = volume
           body[:citation][:issue] = issue
         end
