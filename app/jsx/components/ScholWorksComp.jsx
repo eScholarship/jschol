@@ -6,31 +6,14 @@ import RightsComp from '../components/RightsComp.jsx'
 import $ from 'jquery'
 import _ from 'lodash'
 import { Link } from 'react-router'
-
-// Load dotdotdot in browser but not server
-if (!(typeof document === "undefined")) {
-  const dotdotdot = require('jquery.dotdotdot')
-}
+import TruncationObj from '../objects/TruncationObj.jsx'
 
 class DotAuthorUl extends React.Component {
-  componentDidMount() {
-    $(this.domEl).dotdotdot({watch:"window", after:'.c-authorlist__list-more-link', ellipsis:' ', wrap:'children'})
-    setTimeout(()=> $('.c-authorlist__list').trigger("update"), 0)
-  }
-
   render = () =>
-    <ul className={this.props.className} ref={el => this.domEl = el}>
+    <TruncationObj element="ul" className={this.props.className}
+                options={{watch:"window", after:'.c-authorlist__list-more-link', ellipsis:' ', wrap:'children'}}>
       {this.props.children}
-    </ul>
-}
-
-class DotElement extends React.Component {
-  componentDidMount() {
-    $(this.domEl).dotdotdot({watch:"window"})
-  }
-
-  render = () =>
-    React.createElement(this.props.element, { className: this.props.className, ref: el => this.domEl = el }, this.props.children)
+    </TruncationObj>
 }
 
 class ScholWorksComp extends React.Component {
@@ -125,9 +108,9 @@ class ScholWorksComp extends React.Component {
             }) }
           </ul>
           <heading>
-            <DotElement element={this.props.h} className="c-scholworks__heading">
+            <TruncationObj element={this.props.h} className="c-scholworks__heading">
               <Link to={itemLink}>{pr.title}</Link>
-            </DotElement>
+            </TruncationObj>
           </heading>
           {authorList && 
             <div className="c-authorlist">
@@ -143,9 +126,9 @@ class ScholWorksComp extends React.Component {
             </div>
           }
           {pr.abstract && 
-            <DotElement element="div" className="c-scholworks__abstract">
+            <TruncationObj element="div" className="c-scholworks__abstract">
               <p>{pr.abstract}</p>
-            </DotElement>
+            </TruncationObj>
           }
           <div className="c-scholworks__media">
             <ul className="c-medialist">{ supp_files }</ul>
