@@ -78,6 +78,7 @@ class IssueComp extends React.Component {
         caption: PropTypes.string
       }),
       sections: PropTypes.array,    //See SectionComp prop types directly above 
+      rights: PropTypes.string,
     }).isRequired,
     issues: PropTypes.array.isRequired   // Array of issue hashes
   }
@@ -160,7 +161,7 @@ class JournalLayout extends React.Component {
               <header>
                 <h2>Journal Information</h2>
               </header>
-              <JournalInfoComp />
+              <JournalInfoComp rights={data.issue.rights} />
             </section>
             {this.props.sidebar}
           </aside>
