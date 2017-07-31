@@ -50,9 +50,9 @@ class SectionComp extends React.Component {
       <div>
         <h2 className="o-heading3">{this.props.section.name}</h2>
         {this.props.display == "magazine" ?
-          this.props.section.articles.map(article => <ScholWorksComp key={article.id} result={article}/>)
+          this.props.section.articles.map(article => <ScholWorksComp h="h3" key={article.id} result={article}/>)
         :
-          this.props.section.articles.map(article => <PubPreviewComp key={article.id} result={article}/>)
+          this.props.section.articles.map(article => <PubPreviewComp h="h3" key={article.id} result={article}/>)
         }
       </div>
     )
@@ -78,6 +78,7 @@ class IssueComp extends React.Component {
         caption: PropTypes.string
       }),
       sections: PropTypes.array,    //See SectionComp prop types directly above 
+      rights: PropTypes.string,
     }).isRequired,
     issues: PropTypes.array.isRequired   // Array of issue hashes
   }
@@ -88,26 +89,25 @@ class IssueComp extends React.Component {
         issueCurrent = [pi.unit_id, pi.volume, pi.issue, year]
     return (
       <section className="o-columnbox1">
-        <IssueActionsComp unit_id={pi.unit_id} />
-        {/*              articles={}
-                         buy_link={} */}
+        <IssueActionsComp unit_id={pi.unit_id} buy_link={pi.buy_link} />
+        {/*              articles={} */}
         <div className="c-pub">
           <VolumeSelector vip={issueCurrent} issues={this.props.issues} />
-        {this.props.display=="magazine" &&
-          <div className="c-pubpreview">
-          {pi.cover &&
-            <div className="c-pubpreview__img"><img className="c-scholworks__article-preview" src={"/assets/"+pi.cover.asset_id} width="150" height="200" alt="Issue cover image" /></div> }
-            <div className="c-pub">
-            {pi.title &&
-              <div className="c-pub__subheading">{pi.title}</div> }
-              <p>{pi.description}</p>
+          {this.props.display=="magazine" &&
+            <div className="c-pubpreview">
+            {pi.cover &&
+              <div className="c-pubpreview__img"><img className="c-scholworks__article-preview" src={"/assets/"+pi.cover.asset_id} width="150" height="200" alt="Issue cover" /></div> }
+              <div className="c-pub">
+              {pi.title &&
+                <div className="c-pub__subheading">{pi.title}</div> }
+                <p>{pi.description}</p>
+              </div>
             </div>
-          </div>
-        } 
-        {this.props.display!="magazine" && pi.title &&
-          <div className="c-pub__subheading">{pi.title}</div> }
-        {this.props.display!="magazine" && pi.description &&
-          (<p>{pi.description}</p>) }
+          } 
+          {this.props.display!="magazine" && pi.title &&
+            <div className="c-pub__subheading">{pi.title}</div> }
+          {this.props.display!="magazine" && pi.description &&
+            (<p>{pi.description}</p>) }
         </div>
       {this.props.display=="magazine" ?
         <div className="o-dividecontent2x--ruled">
@@ -161,7 +161,7 @@ class JournalLayout extends React.Component {
               <header>
                 <h2>Journal Information</h2>
               </header>
-              <JournalInfoComp />
+              <JournalInfoComp rights={data.issue.rights} />
             </section>
             {this.props.sidebar}
           </aside>

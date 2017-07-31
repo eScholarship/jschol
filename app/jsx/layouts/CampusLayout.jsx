@@ -31,11 +31,11 @@ class CampusLayout extends React.Component {
 
     return (
       <div>
-        <HeatMapComp />
+        <HeatMapComp campusID={unit.id} />
         <StatCarouselComp campusName={unit.name} />
         <div className="c-columns">
           <main id="maincontent">
-            <CampusSearchComp campusID={unit.id} campusName={unit.name} dashUrl={dashUrl} />
+            <CampusSearchComp campusID={unit.id} campusName={unit.name} />
             <UnitCarouselComp campusID={unit.id} campusName={unit.name} />
             <JournalCarouselComp campusID={unit.id} campusName={unit.name} />
           </main>
@@ -44,13 +44,12 @@ class CampusLayout extends React.Component {
               <header>
                 <h2>Campus Contact</h2>
               </header>
-              <p><a className="o-textlink__secondary" href="">Rachael Samberg</a>
+              <p><NotYetLink className="o-textlink__secondary" element="a">Sam Smith</NotYetLink>
                 <br/>Scholarly Communication Officer,
-                <br/>University of California, Berkeley
-                <br/>212/218 Doe Library
-                <br/>UC Berkeley
-                <br/>Berkeley, CA 94720-6000
-                <br/>(510) 664-9815
+                <br/>University of California
+                <br/>415 20th Street
+                <br/>Oakland, CA 94612
+                <br/>(555) 555-4444
               </p>
             </section>
           {dashUrl &&

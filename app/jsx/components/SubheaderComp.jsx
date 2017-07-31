@@ -40,7 +40,7 @@ class SubheaderComp extends React.Component {
                             campusName={p.campusName}
                             campuses={p.campuses} />
         <Link to={"/uc/"+p.unit.id}>
-          <img className="c-subheader__banner" src={logo.url} width={logo.width} height={logo.height} alt={"Logo image for " + p.unit.name} />
+          <img className="c-subheader__banner" src={logo.url} width={logo.width} height={logo.height} alt={"Logo for " + p.unit.name} />
         </Link>
   {/* unit.type == 'journal'  -->  Submit / Manage Submissions
       unit.type == 'campus'  -->  Deposit

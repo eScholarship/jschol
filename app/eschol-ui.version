@@ -399,3 +399,13 @@ As well as:
   app/jsx/layouts/CampusLayout.jsx
   app/jsx/layouts/Error404Layout.jsx
   app/jsx/objects/HeadingObj.jsx
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's 56fcae410ea1d03aed6d434d62f50a9fe7db4c14, 2017-07-27 <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+Martin added all scss and image changes since last.
+As well as:
+
+  modified:   app/jsx/components/MediaListComp.jsx
+  modified:   app/jsx/components/Search1Comp.jsx

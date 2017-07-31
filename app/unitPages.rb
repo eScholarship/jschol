@@ -133,7 +133,7 @@ def getUnitPageContent(unit, attrs, query)
    return getORULandingPageData(unit.id)
   elsif unit.type == 'campus'
     return getCampusLandingPageData(unit, attrs)
-  elsif ['series', 'monograph_series', 'seminar_series'].include? unit.type
+  elsif unit.type.include? 'series'
     return getSeriesLandingPageData(unit, query)
   elsif unit.type == 'journal'
     return getJournalIssueData(unit, attrs)
@@ -209,8 +209,8 @@ def getSeriesLandingPageData(unit, q)
   end
 
   response = unitSearch(q ? q : {"sort" => ['desc']}, unit)
-  type = unit.type
-  response[:series] = children ? children.select { |u| u.unit.type == type }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : []
+  response[:series] = children ? (children.select { |u| u.unit.type == 'series' } + 
+    children.select { |u| u.unit.type == 'monograph_series' }).map { |u| seriesPreview(u) } : []
   return response
 end
 
@@ -239,23 +239,26 @@ end
 
 def getIssue(id, display, volume=nil, issue=nil)
   if volume.nil?  # Landing page (most recent journal)
-    issue = Issue.where(:unit_id => id).order(Sequel.desc(:pub_date)).first
+    i = Issue.where(:unit_id => id).order(Sequel.desc(:pub_date)).first
   else
-    issue = Issue.first(:unit_id => id, :volume => volume, :issue => issue)
+    i = Issue.first(:unit_id => id, :volume => volume, :issue => issue)
   end
-  return nil if issue.nil?
-  issue = issue.values
-  if issue[:attrs]
-    attrs = JSON.parse(issue[:attrs])
-    issue[:title] = attrs['title']
-    issue[:description] = attrs['description'] 
-    issue[:cover] = attrs['cover'] 
+  return nil if i.nil?
+  i = i.values
+  if i[:attrs]
+    attrs = JSON.parse(i[:attrs])
+    attrs['title']       and i[:title] = attrs['title']
+    attrs['description'] and i[:description] = attrs['description']
+    attrs['cover']       and i[:cover] = attrs['cover']
+    attrs['buy_link']    and i[:buy_link] = attrs['buy_link']
   end
-  issue[:sections] = Section.where(:issue_id => issue[:id]).order(:ordering).all
+  i[:sections] = Section.where(:issue_id => i[:id]).order(:ordering).all
 
-  issue[:sections].map! do |section|
+  itemCC = {}
+  i[:sections].map! do |section|
     section = section.values
     items = Item.where(:section=>section[:id]).order(:ordering_in_sect).to_hash(:id)
+    itemCC[items.values[0][:rights]] = 1 unless items.values[0][:rights].nil?
     itemIds = items.keys
     authors = ItemAuthors.where(item_id: itemIds).order(:ordering).to_hash_groups(:item_id)
 
@@ -266,7 +269,14 @@ def getIssue(id, display, volume=nil, issue=nil)
 
     next section
   end
-  return issue
+  # We're currently assigning an issue's rights by grabbing that of first article found
+  i[:rights] = itemCC.keys.any? ? itemCC.keys[0] : nil
+  if itemCC.keys.length > 1
+    print "Warning: Expected only one license type across articles. Found #{itemCC.keys} for unit '#{id}'"
+    volume and issue and print " Volume: '#{volume}', Issue: '#{issue}'. "
+    puts "Just using first one found."
+  end
+  return i 
 end
 
 def unitSearch(params, unit)

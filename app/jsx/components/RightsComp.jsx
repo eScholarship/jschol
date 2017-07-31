@@ -1,8 +1,13 @@
 // ##### Rights Component ##### //
 
 import React from 'react'
+import PropTypes from 'prop-types'
 
 class RightsComp extends React.Component {
+  static PropTypes = {
+    size: PropTypes.oneOf(['small', 'large'])
+  }
+
   render() {
     let r = this.props.rights,
         size = this.props.size,
@@ -18,7 +23,7 @@ class RightsComp extends React.Component {
           a = rightsMap[r],
           altText = "Creative Commons "
     return (
-      <a href={a[0]} className="c-publocation__license"><img src={"/images/"+a[1]} alt={altText + a[2]} /></a>
+      <a href={a[0]}><img src={"/images/"+a[1]} alt={altText + a[2]} className="c-scholworks__license" /></a>
     )
   }
 

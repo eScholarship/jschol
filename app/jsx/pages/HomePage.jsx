@@ -32,9 +32,18 @@ class HomePage extends PageBase
           <main id="maincontent">
             <section className="o-columnbox1">
               <header>
-                <h2>Home Page</h2>
+                <h1>Welcome to the eScholarship Beta Preview</h1>
               </header>
-              <p>Home page content here</p>
+              <p>Use the links below to explore the site and provide feedback:</p>
+              <p>
+                <ul>
+                  <li><a href="/campuses">Explore Campus Sites</a></li>
+                  <li><a href="/journals">Explore eScholarship Journals</a></li>
+                  <li><a href="http://help.escholarship.org/support/solutions/articles/9000124100-using-the-site-editing-tool">Admins: Learn How to Customize Your Site</a></li>
+                  <li><a href="http://help.escholarship.org/support/discussions/9000052123">Share Your Feedback and Ideas</a></li>
+                  <li><a href="http://escholarship.org/">Return to the Public Site</a></li>
+                </ul>
+              </p>
             </section>
           </main>
           <aside>

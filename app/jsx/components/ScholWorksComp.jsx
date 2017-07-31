@@ -6,55 +6,19 @@ import RightsComp from '../components/RightsComp.jsx'
 import $ from 'jquery'
 import _ from 'lodash'
 import { Link } from 'react-router'
-
-// Load dotdotdot in browser but not server
-if (!(typeof document === "undefined")) {
-  const dotdotdot = require('jquery.dotdotdot')
-}
+import TruncationObj from '../objects/TruncationObj.jsx'
 
 class DotAuthorUl extends React.Component {
-  componentDidMount() {
-    $(this.domEl).dotdotdot({watch:"window", after:'.c-authorlist__list-more-link', ellipsis:' ', wrap:'children'})
-    setTimeout(()=> $('.c-authorlist__list').trigger("update"), 0)
-  }
-
   render = () =>
-    <ul className={this.props.className} ref={el => this.domEl = el}>
+    <TruncationObj element="ul" className={this.props.className}
+                options={{watch:"window", after:'.c-authorlist__list-more-link', ellipsis:' ', wrap:'children'}}>
       {this.props.children}
-    </ul>
-}
-
-class DotDiv extends React.Component {
-  componentDidMount() {
-    $(this.domEl).dotdotdot({watch:"window"})
-  }
-
-  render = () =>
-    <div className={this.props.className} ref={el => this.domEl = el}>
-      {this.props.children}
-    </div>
-}
-
-class DotH2 extends React.Component {
-  componentDidMount() {
-    $(this.domEl).dotdotdot({watch:"window"})
-  }
-
-  render = () => 
-    <h2 className={this.props.className} ref={el => this.domEl = el}>{this.props.children}</h2>
-}
-
-class DotH4 extends React.Component {
-  componentDidMount() {
-    $(this.domEl).dotdotdot({watch:"window"})
-  }
-
-  render = () => 
-    <h4 className={this.props.className} ref={el => this.domEl = el}>{this.props.children}</h4>
+    </TruncationObj>
 }
 
 class ScholWorksComp extends React.Component {
   static propTypes = {
+    h: PropTypes.string.isRequired,
     result: PropTypes.shape({
       id: PropTypes.string,
       title: PropTypes.string,
@@ -144,15 +108,9 @@ class ScholWorksComp extends React.Component {
             }) }
           </ul>
           <heading>
-          {this.props.h && this.props.h == "H4" ?
-            <DotH2 className="c-scholworks__heading" >
+            <TruncationObj element={this.props.h} className="c-scholworks__heading">
               <Link to={itemLink}>{pr.title}</Link>
-            </DotH2>
-          :
-            <DotH4 className="c-scholworks__heading" >
-              <Link to={itemLink}>{pr.title}</Link>
-            </DotH4>
-          }
+            </TruncationObj>
           </heading>
           {authorList && 
             <div className="c-authorlist">
@@ -168,16 +126,16 @@ class ScholWorksComp extends React.Component {
             </div>
           }
           {pr.abstract && 
-            <DotDiv className="c-scholworks__abstract">
+            <TruncationObj element="div" className="c-scholworks__abstract">
               <p>{pr.abstract}</p>
-            </DotDiv>
+            </TruncationObj>
           }
           <div className="c-scholworks__media">
             <ul className="c-medialist">{ supp_files }</ul>
             {pr.rights && <RightsComp rights={pr.rights} size="small" />}
           </div>
         </div>
-        {pr.thumbnail && <img className="c-scholworks__article-preview" src={"/assets/"+pr.thumbnail.asset_id} width={pr.thumbnail.width} height={pr.thumbnail.height} alt={_.capitalize(pr.genre) + " image"} />}
+        {pr.thumbnail && <img className="c-scholworks__article-preview" src={"/assets/"+pr.thumbnail.asset_id} width={pr.thumbnail.width} height={pr.thumbnail.height} alt={`Cover page: ${pr.title}`} />}
       </section>
     )
   }
