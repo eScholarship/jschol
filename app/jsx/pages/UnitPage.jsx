@@ -24,7 +24,6 @@ import UnitStaticPageLayout from '../layouts/UnitStaticPageLayout.jsx'
 import UnitProfileLayout from '../layouts/UnitProfileLayout.jsx'
 import UnitSidebarConfigLayout from '../layouts/UnitSidebarConfigLayout.jsx'
 import UnitNavConfigLayout from '../layouts/UnitNavConfigLayout.jsx'
-import AdminBarComp from '../components/AdminBarComp.jsx'
 import SidebarComp from '../components/SidebarComp.jsx'
 
 class UnitPage extends PageBase
@@ -117,7 +116,6 @@ class UnitPage extends PageBase
     }
     return (
       <div>
-        <AdminBarComp/>
         <Header2Comp type={data.unit.type} unitID={data.unit.id} />
         <SubheaderComp unit={data.unit} logo={data.header.logo} 
           campusID={data.header.campusID}

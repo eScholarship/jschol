@@ -10,6 +10,7 @@ import { Link } from 'react-router'
 import Search1Comp from '../components/Search1Comp.jsx'
 import Search2Comp from '../components/Search2Comp.jsx'
 import Breakpoints from '../../js/breakpoints.json'
+import AdminBarComp from '../components/AdminBarComp.jsx'
 
 class HeaderComp2 extends React.Component {
   static propTypes = {
@@ -25,6 +26,7 @@ class HeaderComp2 extends React.Component {
   render() {
     return (
       <div>
+        <AdminBarComp/>
         <header className="c-header">
           <Link className="c-header__logo2" to="/">
             <picture>

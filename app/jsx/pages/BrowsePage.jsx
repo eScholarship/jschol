@@ -12,7 +12,6 @@ import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
 import WellComp from '../components/WellComp.jsx'
 import DescriptionListComp from '../components/DescriptionListComp.jsx'
 import ToggleListComp from '../components/ToggleListComp.jsx'
-import AdminBarComp from '../components/AdminBarComp.jsx'
 import SidebarComp from '../components/SidebarComp.jsx'
 import NotYetLink from '../components/NotYetLink.jsx'
 
@@ -41,7 +40,6 @@ class BrowsePage extends PageBase
       { ["campuses", "all_journals"].includes(data.browse_type) ? 
         // Global browse page
         <div>
-          <AdminBarComp/>
           <Header1Comp />
           <div className="c-navbar">
             <NavComp data={data.header.nav_bar} />
@@ -50,7 +48,6 @@ class BrowsePage extends PageBase
         :
         // Campus-specific browse page
         <div>
-          <AdminBarComp/>
           <Header2Comp type="campus" unitID={data.campusID} />
           <SubheaderComp unit={data.unit} logo={data.header.logo}
                           campusID={data.header.campusID}

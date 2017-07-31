@@ -229,7 +229,7 @@ class PageBase extends React.Component
                     sendBinaryFileData={this.sendBinaryFileData}
                     fetchingData={this.state.fetchingData}>
           {/* Not sure why the padding below is needed, but it is */}
-          <div className="body" style={{ padding: "10px" }}>
+          <div className="body" style={{ padding: "20px" }}>
             { this.stageWatermark() }
             <SkipNavComp/>
             {this.state.pageData ? this.renderData(this.state.pageData) : this.renderLoading()}
