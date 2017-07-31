@@ -161,7 +161,7 @@ class JournalLayout extends React.Component {
               <header>
                 <h2>Journal Information</h2>
               </header>
-              <JournalInfoComp rights={data.issue.rights} />
+              <JournalInfoComp rights={data.issue && data.issue.rights} />
             </section>
             {this.props.sidebar}
           </aside>
