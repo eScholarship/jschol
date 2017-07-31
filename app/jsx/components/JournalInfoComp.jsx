@@ -7,7 +7,7 @@ class JournalInfoComp extends React.Component {
   render() {
     return (
       <div className="c-journalinfo">
-        <img src="/images/temp_journalinfo.png" alt="DOAJ"/>
+        {/* Don't show DOAJ badge until db is up to date: <img src="/images/temp_journalinfo.png" alt="DOAJ"/> */}
       {this.props.rights &&
         <RightsComp rights={this.props.rights} size="large" /> }
         <ul>
