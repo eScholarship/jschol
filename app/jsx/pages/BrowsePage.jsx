@@ -98,7 +98,6 @@ class AllCampuses extends React.Component {
       <header>
         <h1>Campuses and Affiliated Units</h1>
       </header>
-      <WellComp />
       <DescriptionListComp campusesStats={this.props.campusesStats} affiliatedStats={this.props.affiliatedStats} />
     </section>
   )}
