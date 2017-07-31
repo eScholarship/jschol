@@ -39,6 +39,10 @@ require 'yaml'
 # little bit from that and say 4.5 megs.
 MAX_BATCH_SIZE = 4500*1024
 
+# Also, CloudSearch takes a really long time to process huge batches of
+# small objects, so limit to 500 per batch.
+MAX_BATCH_ITEMS = 500
+
 # Max amount of full text we'll send with any single doc. AWS limit is 1 meg, so let's
 # go a little short of that so we've got room for plenty of metadata.
 MAX_TEXT_SIZE  = 950*1024
@@ -1361,7 +1365,7 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
   end
 
   # If this item won't fit in the current batch, send the current batch off and clear it.
-  if batch[:idxDataSize] + idxData.bytesize > MAX_BATCH_SIZE
+  if batch[:idxDataSize] + idxData.bytesize > MAX_BATCH_SIZE || batch[:items].length > MAX_BATCH_ITEMS
     #puts "Prepared batch: nItems=#{batch[:items].length} size=#{batch[:idxDataSize]} "
     batch[:items].empty? or $batchQueue << batch.clone
     emptyBatch(batch)
@@ -1508,7 +1512,7 @@ def processBatch(batch)
         puts "Will retry in 30 sec, response was: #{res}"
         sleep 30; puts "Retrying."; retry
       end
-      puts "Unable to retry: #{res.inspect}"
+      puts "Unable to retry: #{res.inspect}, elapsed=#{Time.now - startTime}"
       raise
     end
   end
