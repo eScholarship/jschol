@@ -1,6 +1,6 @@
-// ##### Campus Selector Component ##### //
+// ##### Custom Selector Objects ##### //
 
-.c-campusselector {
+.o-customselector {
   display: inline-flex;
   align-items: center;
   margin-right: 2px;
@@ -12,7 +12,7 @@
 
 }
 
-.c-campusselector__heading {
+.o-customselector__heading {
   @extend %o-textlink__black;
   margin-right: $spacing-base;
   font-size: 1em;
@@ -28,7 +28,7 @@
 
 }
 
-.c-campusselector__selector {
+.o-customselector__selector {
 
   summary {
     @extend %interactive-element-size;
@@ -61,7 +61,7 @@
 
 }
 
-.c-campusselector__menu {
+.o-customselector__menu {
   position: absolute; // to .c-subheader
   right: $spacing-sm;
   left: $spacing-sm;
@@ -77,20 +77,28 @@
 
 }
 
-.c-campusselector__sub-heading {
+.o-customselector__sub-heading {
   @extend %nav-item;
   border-bottom: none;
   background-color: $color-light-gray;
   color: $color-black;
 }
 
-.c-campusselector__items {
+.o-customselector__items {
+  @extend %no-bullet-ul;
 
-  a {
-    @extend %nav-item;
+  li {
 
     &:not(:first-child) {
-      border-top: none;
+
+      a {
+        border-top: none;
+      }
+      
+    }
+
+    a {
+      @extend %nav-item;
     }
 
   }

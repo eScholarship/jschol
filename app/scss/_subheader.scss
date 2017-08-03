@@ -21,11 +21,14 @@
 
   @include bp(screen3) {
     display: block;
+    margin-right: $spacing-md;
+  }
+
+  img {
     width: 100%;
     min-width: 0;
     max-width: 800px;
     max-height: 90px;
-    margin-right: $spacing-md;
   }
 
 }
