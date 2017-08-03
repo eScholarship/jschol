@@ -1199,7 +1199,10 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
                           data.single("pdfExists") == "yes" ? "application/pdf" :
                           mimeType && mimeType.strip.length > 0 ? mimeType :
                           nil
-  dbItem[:genre]        = data.single("type")
+  dbItem[:genre]        = (!attrs[:suppress_content] &&
+                           dbItem[:content_type].nil? &&
+                           attrs[:supp_files]) ?
+                          "multimedia" : data.single("type")
   dbItem[:pub_date]     = parseDate(itemID, data.single("date")) || "1901-01-01"
   #FIXME: Think about this carefully. What's eschol_date for?
   dbItem[:eschol_date]  = parseDate(itemID, data.single("datestamp")) || "1901-01-01"
@@ -1252,8 +1255,7 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
       title:         dbItem[:title] || "",
       authors:       (authors.length > 1000 ? authors[0,1000] : authors).map { |auth| auth[:name] },
       abstract:      attrs[:abstract] || "",
-      type_of_work:  data.single("type"),
-      content_types: data.multiple("format"),
+      type_of_work:  dbItem[:genre],
       disciplines:   attrs[:disciplines] ? attrs[:disciplines] : [""], # only the numeric parts
       peer_reviewed: attrs[:is_peer_reviewed] ? 1 : 0,
       pub_date:      dbItem[:pub_date].to_date.iso8601 + "T00:00:00Z",
