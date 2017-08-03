@@ -28,17 +28,17 @@ Procedure for merging
     git pull origin master      # make sure up to date
 - Git clone a copy of eschol-ui, and call it just eschol-ui
 - In eschol-ui:
-    git clean -n                # says what un-tracked files it will delete
-    git clean -f                # then deletes them
-    git checkout master
+    git checkout .              # reverts all changes
+    git clean -f                # deletes untracked files
+    git checkout -f master
     git branch -D merge-tmp     # delete old merge-tmp branch, if any
     git pull origin master
     git log -1                  # grab the changeset ID, and update this file
     git checkout -b merge-tmp   # create new merge-tmp branch
 - Git clone another copy of eschol-ui, and call it eschol-ui-old
 - In eschol-ui-old:
-    git clean -n                # says what un-tracked files it will delete
-    git clean -f                # then deletes them
+    git checkout .              # reverts all changes
+    git clean -f                # deletes untracked files
     git checkout -f master
     git branch -D merge-tmp     # delete old merge-tmp branch, if any
     git fetch origin master
@@ -409,3 +409,17 @@ As well as:
 
   modified:   app/jsx/components/MediaListComp.jsx
   modified:   app/jsx/components/Search1Comp.jsx
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's c980f695b87259728ffcbb14a59e33273febaf8d, 2017-07-31 <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+Martin added all scss and image changes since last. Also deleted
+no-longer-used images and scss files.
+
+As well as:
+
+  modified:   app/js/breakpoints.json   # missed this one a while back
+  modified:   app/jsx/components/SubheaderComp.jsx
+  new file:   app/jsx/objects/CustomSelectorObj.jsx
+  modified:   app/jsx/objects/TextlinkObj.jsx

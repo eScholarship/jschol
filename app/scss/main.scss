@@ -9,19 +9,23 @@
 // ***** Vendor Libraries ***** //
 
 @import '../bower_components/normalize-scss/_normalize.scss';
-@import '../bower_components/flickity/dist/flickity.css';
-@import '../bower_components/trumbowyg/dist/ui/trumbowyg.css';
-@import 'eschol_pdf_viewer';
 
 // ***** Added to jschol (not in eschol-ui) ***** //
+@import '../bower_components/flickity/dist/flickity.css';
+@import '../bower_components/trumbowyg/dist/ui/trumbowyg.css';
 @import 'adminbar';
+@import 'drawer';
 @import 'editable';
+@import 'eschol_pdf_viewer';
+@import 'searchExtra';
+@import 'widgetselector';
 
 // ***** Objects ***** //
 
 @import 'alert';
 @import 'button';
 @import 'columnbox';
+@import 'customselector';
 @import 'dividecontent';
 @import 'heading';
 @import 'imagecontent';
@@ -41,7 +45,6 @@
 @import 'depositwizard';
 @import 'descriptionlist';
 @import 'download';
-@import 'drawer';
 @import 'export';
 @import 'facetbox';
 @import 'filter';
@@ -94,7 +97,6 @@
 @import 'unitpub';
 @import 'viewexternal';
 @import 'well';
-@import 'widgetselector';
 
 // ***** Global Styles ***** //
 
