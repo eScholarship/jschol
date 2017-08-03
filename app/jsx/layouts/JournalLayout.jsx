@@ -15,7 +15,7 @@ class VolumeSelector extends React.Component {
   }
 
   getIssuePath = (unit_id, v,i) => {
-    return `${unit_id}/${v}/${i}`
+    return `/uc/${unit_id}/${v}/${i}`
   }
 
   getPubYear = date => {
@@ -25,12 +25,21 @@ class VolumeSelector extends React.Component {
   render() {
     let p = this.props
     return (
-      <div className="o-input__droplist1">
-        <label className="o-input__label--hidden" htmlFor="o-input__droplist-label3">Select</label>
-        <select name="" id="o-input__droplist-label3" value={this.getIssuePath(p.vip[0], p.vip[1], p.vip[2])} onChange={(e)=>{browserHistory.push("/uc/"+e.target.value)}}>
-        {p.issues.map((i) => 
-          <option key={i.id} value={this.getIssuePath(i.unit_id, i.volume, i.issue)}>Volume {i.volume}, Issue {i.issue}, {this.getPubYear(i.pub_date)}</option>)}
-        </select>
+      <div className="o-customselector">
+        <Link className="o-customselector__heading"
+              href={this.getIssuePath(p.vip[0], p.vip[1], p.vip[2])}>{`Volume ${p.vip[1]}, Issue ${p.vip[2]}, ${p.vip[3]}`}
+        </Link>
+        <details className="o-customselector__selector">
+          <summary aria-label="Select a different issue"></summary>
+          <div className="o-customselector__menu">
+            <ul className="o-customselector__items">
+              {p.issues.map((i) => 
+                <li key={i.id}>
+                  <Link to={this.getIssuePath(i.unit_id, i.volume, i.issue)}>Volume {i.volume}, Issue {i.issue}, {this.getPubYear(i.pub_date)}</Link>
+                </li>)}
+            </ul>
+          </div>
+        </details>
       </div>
     )
   }
@@ -93,6 +102,7 @@ class IssueComp extends React.Component {
         {/*              articles={} */}
         <div className="c-pub">
           <VolumeSelector vip={issueCurrent} issues={this.props.issues} />
+          <br/><br/>
           {this.props.display=="magazine" &&
             <div className="c-pubpreview">
             {pi.cover &&
