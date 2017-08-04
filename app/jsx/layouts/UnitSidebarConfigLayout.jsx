@@ -43,7 +43,7 @@ class EditableSidebarContentComp extends React.Component
                    onChange={ event => this.setData({ attrs: { title: event.target.value } }) }/>
 
             <label className="c-editable-page__label" htmlFor="text">Text</label>
-            <WysiwygEditorComp id="text" html={data.attrs.html}
+            <WysiwygEditorComp id="text" html={data.attrs.html} unit={this.props.unit.id}
               onChange={ newText => this.setData({ attrs: { html: newText }}) }/>
           </div>
         }

@@ -269,8 +269,8 @@ class PageBase extends React.Component
           this.setState({ fetchingPerms: false, permissions: data })
           if (!this.state.cmsModules) {
             // Load CMS-specific modules asynchronously
-            require.ensure(['react-trumbowyg', 'react-sidebar', 'react-sortable-tree'], (require) => {
-              this.setState({ cmsModules: { Trumbowyg: require('react-trumbowyg').default,
+            require.ensure(['../objects/TrumbowygObj.jsx', 'react-sidebar', 'react-sortable-tree'], (require) => {
+              this.setState({ cmsModules: { Trumbowyg: require('../objects/TrumbowygObj.jsx').default,
                                             Sidebar: require('react-sidebar').default,
                                             SortableTree: require('react-sortable-tree').default } })
             }, "cms") // load from webpack "cms" bundle

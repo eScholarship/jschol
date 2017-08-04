@@ -9,7 +9,7 @@ const TRUMBO_BUTTONS = [
   ['strong', 'em', 'underline', 'strikethrough'],
   ['superscript', 'subscript'],
   ['link'],
-  ['insertImage'],
+  ['upload'],
   'btnGrp-lists',
   ['horizontalRule'],
   ['removeformat']
@@ -19,6 +19,7 @@ export default class WysiwygEditorComp extends React.Component
 {
   static propTypes = {
     html: PropTypes.string.isRequired,
+    unit: PropTypes.string.isRequired
   }
 
   componentWillMount() {
@@ -31,7 +32,17 @@ export default class WysiwygEditorComp extends React.Component
         <cms.modules.Trumbowyg id='react-trumbowyg'
                    buttons={TRUMBO_BUTTONS}
                    data={this.props.html}
-                   onChange={e => this.props.onChange(e.target.innerHTML)} />
+                   shouldInjectSvgIcons={false}
+                   svgIconsPath="/bower_components/trumbowyg/dist/ui/icons.svg"
+                   onChange={e => this.props.onChange(e.target.innerHTML)}
+                   plugins={{
+                    // Add imagur parameters to upload plugin
+                    upload: {
+                        serverPath: `/api/unit/${this.props.unit}/uploadEditorImg?username=${cms.username}&token=${cms.token}`,
+                        fileFieldName: 'image',
+                        urlPropertyName: 'link'
+                    }
+                  }}/>
       }
     </Subscriber>
   )}

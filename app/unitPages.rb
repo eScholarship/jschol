@@ -848,6 +848,13 @@ post "/api/unit/:unitID/upload" do |unitID|
   return { status: "okay" }.to_json
 end
 
+post "/api/unit/:unitID/uploadEditorImg" do |unitID|
+  getUserPermissions(params[:username], params[:token], unitID)[:admin] or halt(401)
+  img_data = putImage(params[:image][:tempfile].path)
+  content_type :json
+  return { success: true, link: "/assets/#{img_data[:asset_id]}" }.to_json
+end
+
 delete "/api/unit/:unitID/removeCarouselSlide/:slideNumber" do |unitID, slideNumber|
   # Check user permissions
   perms = getUserPermissions(params[:username], params[:token], unitID)
