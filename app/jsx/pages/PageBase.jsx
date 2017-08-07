@@ -118,7 +118,8 @@ class PageBase extends React.Component
     this.dataURL = this.pageDataURL(props)
     if (this.dataURL) {
       this.setState({ fetchingData: true, 
-                      permissions: this.pagePermissionsUnit() == this.state.permissionsUnit ? this.state.permissions : null })
+                      permissions: (this.state && this.pagePermissionsUnit() == this.state.permissionsUnit)
+                        ? this.state.permissions : null })
       $.getJSON(this.pageDataURL(props)).done((data) => {
         this.setState({ pageData: data, fetchingData: false })
         if (this.pagePermissionsUnit() != this.state.permissionsUnit)
