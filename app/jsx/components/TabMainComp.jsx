@@ -9,6 +9,7 @@ import PubDataComp from '../components/PubDataComp.jsx'
 import ViewExternalComp from '../components/ViewExternalComp.jsx'
 import { Link } from 'react-router'
 import NotYetLink from '../components/NotYetLink.jsx'
+import ArbitraryHTMLComp from "../components/ArbitraryHTMLComp.jsx"
 
 class ScrollingAnchorComp extends React.Component {
   // Used to trigger scrolling for anchors linked from JumpComp (i.e. 'article_abstract')
@@ -76,7 +77,7 @@ class MainContent extends React.Component {
   renderHtml = p => { return (
       <details className="c-togglecontent" open>
         <summary>Main Content</summary>
-        <div dangerouslySetInnerHTML={{__html: p.content_html}}/>
+        <ArbitraryHTMLComp html={p.content_html} h1Level={2}/>
         <br/><br/>
       </details>
   )}

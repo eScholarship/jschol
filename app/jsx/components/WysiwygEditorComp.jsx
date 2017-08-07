@@ -6,11 +6,12 @@ import { Subscriber } from 'react-broadcast'
 
 // Formatting buttons to display in the Trumbowyg editor
 const TRUMBO_BUTTONS = [
-  ['strong', 'em', 'underline', 'strikethrough'],
-  ['superscript', 'subscript'],
+  ['strong', 'em', 'underline'],
+  ['formatting'],
   ['link', 'image-upload', 'file-upload'],
   'btnGrp-lists',
   ['horizontalRule'],
+  ['superscript', 'subscript', 'strikethrough'],
   ['removeformat']
 ]
 

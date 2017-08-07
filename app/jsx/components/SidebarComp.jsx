@@ -3,6 +3,7 @@
 import React from 'react'
 
 import RecentArticlesComp from "../components/RecentArticlesComp.jsx"
+import ArbitraryHTMLComp from "../components/ArbitraryHTMLComp.jsx"
 
 export default class SidebarComp extends React.Component {
   render = () =>
@@ -14,7 +15,7 @@ export default class SidebarComp extends React.Component {
           <header>
             <h2>{(sb.attrs && sb.attrs.title) ? sb.attrs.title : sb.kind.replace(/([a-z])([A-Z][a-z])/g, "$1 $2")}</h2>
           </header>
-          {   sb.kind == "Text"           ? <div dangerouslySetInnerHTML={{__html: sb.attrs.html}}/>
+          {   sb.kind == "Text"           ? <ArbitraryHTMLComp html={sb.attrs.html} h1Level={3}/>
             : sb.kind == "RecentArticles" ? <RecentArticlesComp data={sb.attrs}/>
             : <p><i>Not yet implemented</i></p>
           }

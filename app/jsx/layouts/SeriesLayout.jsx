@@ -6,6 +6,7 @@ import ScholWorksComp from '../components/ScholWorksComp.jsx'
 import SortPaginationComp from '../components/SortPaginationComp.jsx'
 import PaginationComp from '../components/PaginationComp.jsx'
 import ShareComp from '../components/ShareComp.jsx'
+import ArbitraryHTMLComp from "../components/ArbitraryHTMLComp.jsx"
 import Form from 'react-router-form'
 
 // [********** AJM - 7/03/17 **********]
@@ -112,7 +113,7 @@ class SeriesLayout extends React.Component {
               <ShareComp type="unit" id={unit.id} />
             </div>
           {this.props.marquee.about &&
-            <p dangerouslySetInnerHTML={{__html: this.props.marquee.about}}/>
+            <ArbitraryHTMLComp html={this.props.marquee.about} h1Level={2}/>
           }
           {this.props.data.count == 0 ? 
             <div><hr/>

@@ -20,6 +20,7 @@ class Trumbowyg extends Component {
     const {
       id,
       buttons,
+      buttonsDef,
       semantic,
       resetCss,
       removeformatPasted,
@@ -47,6 +48,7 @@ class Trumbowyg extends Component {
 
     const trumbowygInstance = $(`#${id}`)
       .trumbowyg({
+        btnsDef: buttonsDef,
         btns: buttons,
         semantic: semantic,
         resetCss: resetCss,

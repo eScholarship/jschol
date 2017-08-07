@@ -117,10 +117,12 @@ class PageBase extends React.Component
   fetchPageData = props => {
     this.dataURL = this.pageDataURL(props)
     if (this.dataURL) {
-      this.setState({ fetchingData: true, permissions: null })
+      this.setState({ fetchingData: true, 
+                      permissions: this.pagePermissionsUnit() == this.state.permissionsUnit ? this.state.permissions : null })
       $.getJSON(this.pageDataURL(props)).done((data) => {
         this.setState({ pageData: data, fetchingData: false })
-        this.fetchPermissions()
+        if (this.pagePermissionsUnit() != this.state.permissionsUnit)
+          this.fetchPermissions()
       }).fail((jqxhr, textStatus, err)=> {
         this.setState({ pageData: { error: textStatus=="error" ? err : textStatus }, fetchingData: false })
       })
@@ -266,7 +268,7 @@ class PageBase extends React.Component
           alert("Login note: " + data.message)
         }
         else {
-          this.setState({ fetchingPerms: false, permissions: data })
+          this.setState({ fetchingPerms: false, permissions: data, permissionsUnit: unit })
           if (!this.state.cmsModules) {
             // Load CMS-specific modules asynchronously
             require.ensure(['../objects/TrumbowygObj.jsx', 'react-sidebar', 'react-sortable-tree'], (require) => {
