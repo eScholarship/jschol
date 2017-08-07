@@ -15,7 +15,6 @@ require 'mimemagic'
 require 'net/http'
 require 'open-uri'
 require 'pp'
-require 'sanitize'
 require 'sequel'
 require 'sinatra'
 require 'yaml'
@@ -95,6 +94,7 @@ require_relative 'queueWithTimeout'
 require_relative 'unitPages'
 require_relative 'citation'
 require_relative 'loginApi'
+require_relative '../util/sanitize.rb'
 
 # Sinatra configuration
 configure do
@@ -794,19 +794,6 @@ get "/api/static/:unitID/:pageName" do |unitID, pageName|
   }
   breadcrumb = [{"name" => "About eScholarship", "url" => request.path.sub("/api/", "/")},]
   return body.merge(getHeaderElements(breadcrumb, nil)).to_json
-end
-
-###################################################################################################
-# The first line of defense against unwanted or unsafe HTML is the WYSIWIG editor's built-in
-# filtering. However, since this is an API we cannot rely on that. This is the second line of
-# defense.
-def sanitizeHTML(htmlFragment)
-  return Sanitize.fragment(htmlFragment,
-    elements: %w{b em i strong u} +                      # all 'restricted' tags
-              %w{a br li ol p small strike sub sup ul hr},  # subset of ''basic' tags
-    attributes: { "a" => ['href'] },
-    protocols:  { "a" => {'href' => ['ftp', 'http', 'https', 'mailto', :relative]} }
-  )
 end
 
 ###################################################################################################

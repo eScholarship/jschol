@@ -175,6 +175,7 @@
                                                     var node = $(html)[0];
                                                     trumbowyg.range.deleteContents();
                                                     trumbowyg.range.insertNode(node);
+                                                    trumbowyg.$c.trigger('tbwchange');
                                                     setTimeout(function () {
                                                         trumbowyg.closeModal();
                                                     }, 250);
