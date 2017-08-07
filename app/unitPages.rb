@@ -685,7 +685,11 @@ put "/api/unit/:unitID/sidebar/:widgetID" do |unitID, widgetID|
   DB.transaction {
     unit = Unit[unitID] or halt(404, "Unit not found")
     widget = Widget[widgetID]
-    widget.attrs = params[:attrs].to_json
+    inAttrs = params[:attrs]
+    attrs = {}
+    inAttrs[:title] and attrs[:title] = sanitizeHTML(inAttrs[:title])
+    inAttrs[:html]  and attrs[:html]  = sanitizeHTML(inAttrs[:html])
+    widget.attrs = attrs.to_json
     widget.save
   }
 

@@ -176,6 +176,7 @@
                                                     var url = getDeep(data, trumbowyg.o.plugins.uploadImage.urlPropertyName.split('.'));
                                                     trumbowyg.execCmd('insertImage', url);
                                                     $('img[src="' + url + '"]:not([alt])', trumbowyg.$box).attr('alt', values.alt);
+                                                    trumbowyg.$c.trigger('tbwchange'); // to pick up the alt added above
                                                     setTimeout(function () {
                                                         trumbowyg.closeModal();
                                                     }, 250);
