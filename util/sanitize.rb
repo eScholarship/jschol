@@ -5,12 +5,11 @@ require 'sanitize'
 # filtering. However, since this is an API we cannot rely on that. This is the second line of
 # defense.
 def sanitizeHTML(htmlFragment)
-  out = Sanitize.fragment(htmlFragment,
-    elements: %w{b em i strong u} +                             # all 'restricted' tags
-              %w{a br li ol p small strike sub sup ul hr img},  # subset of ''basic' tags
+  return Sanitize.fragment(htmlFragment,
+    elements: %w{b em i strong u} +
+              %w{a br li ol p blockquote h1 h2 h3 h4 small strike sub sup ul hr img},
     attributes: { "a" => ['href'], "img" => ['src', 'alt'] },
     protocols:  { "a" => {'href' => ['ftp', 'http', 'https', 'mailto', :relative]},
                   "img" => {'src' => ['http', 'https', :relative]} }
-  )
-  return out
+  ).strip
 end

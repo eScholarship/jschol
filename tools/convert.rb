@@ -28,11 +28,11 @@ require 'nokogiri'
 require 'open3'
 require 'pp'
 require 'rack'
-require 'sanitize'
 require 'sequel'
 require 'ostruct'
 require 'time'
 require 'yaml'
+require_relative '../util/sanitize.rb'
 
 # Max size (in bytes, I think) of a batch to send to AWS CloudSearch.
 # According to the docs the absolute limit is 5 megs, so let's back off a
@@ -301,16 +301,6 @@ def convertLogo(unitID, unitType, logoEl)
   data = putImage(imgPath)
   (logoEl && logoEl.attr('banner') == "single") and data[:is_banner] = true
   return { logo: data }
-end
-
-###################################################################################################
-def sanitizeHTML(htmlFragment)
-  return Sanitize.fragment(htmlFragment,
-    elements: %w{b em i strong u} +                         # all 'restricted' tags
-              %w{a br li ol p small strike sub sup ul hr},  # subset of ''basic' tags
-    attributes: { 'a' => ['href'] },
-    protocols:  { 'a' => {'href' => ['ftp', 'http', 'https', 'mailto', :relative]} }
-  ).strip
 end
 
 ###################################################################################################

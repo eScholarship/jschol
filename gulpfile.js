@@ -154,7 +154,7 @@ gulp.task('start-express', restartExpress)
 gulp.task('watch', function() {
   gulp.watch('app/scss/**/*.scss', ['sass']);
   gulp.watch('app/**/*.html', livereload.reload);
-  gulp.watch('app/*.rb', ['restart-sinatra']);
+  gulp.watch(['app/*.rb', 'util/*.rb'], ['restart-sinatra']);
   gulp.watch(['app/isomorphic.js*'], ['restart-express']);
 });
 
