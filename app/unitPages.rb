@@ -16,10 +16,10 @@ def putAsset(filePath, metadata)
   if !obj.exists? || obj.etag != "\"#{md5sum}\""
     #puts "Uploading #{filePath} to S3."
     obj.put(body: File.new(filePath),
-            metadata: metadata.merge({
+            metadata: {
               original_path: filePath.sub(%r{.*/([^/]+/[^/]+)$}, '\1'), # retain only last directory plus filename
               mime_type: MimeMagic.by_magic(File.open(filePath)).to_s
-            }))
+            }.merge(metadata))
     obj.etag == "\"#{md5sum}\"" or raise("S3 returned md5 #{resp.etag.inspect} but we expected #{md5sum.inspect}")
   end
 
@@ -29,15 +29,15 @@ end
 ###################################################################################################
 # Upload an image to S3, and return hash of its attributes. If a block is supplied, it will receive
 # the dimensions first, and have a chance to raise exceptions on them.
-def putImage(imgPath, &block)
+def putImage(imgPath, metadata={}, &block)
   mimeType = MimeMagic.by_magic(File.open(imgPath))
   mimeType && mimeType.mediatype == "image" or raise("Non-image file #{imgPath}")
   dims = FastImage.size(imgPath)
   block and block.yield(dims)
-  assetID = putAsset(imgPath, {
+  assetID = putAsset(imgPath, metadata.merge({
     width: dims[0].to_s,
     height: dims[1].to_s
-  })
+  }))
   return { asset_id: assetID,
            image_type: mimeType.subtype,
            width: dims[0],
@@ -806,7 +806,7 @@ post "/api/unit/:unitID/upload" do |unitID|
   if slideImageKeys.length > 0
     slideImage_data = []
     for slideImageKey in slideImageKeys
-      image_data = putImage(params[slideImageKey][:tempfile].path)
+      image_data = putImage(params[slideImageKey][:tempfile].path, { original_path: params[slideImageKey][:filename] })
       image_data[:slideNumber] = /slideImage(\d*)/.match(slideImageKey)[1]
       slideImage_data.push(image_data)
     end
@@ -832,7 +832,7 @@ post "/api/unit/:unitID/upload" do |unitID|
 
   # upload images for unit profile logo
   if params.has_key? :logo and params[:logo] != ""
-    logo_data = putImage(params[:logo][:tempfile].path)
+    logo_data = putImage(params[:logo][:tempfile].path, { original_path: params[:logo][:filename] })
     DB.transaction {
       unit = Unit[unitID] or jsonHalt(404, "Unit not found")
       unitAttrs = JSON.parse(unit.attrs)
@@ -846,6 +846,20 @@ post "/api/unit/:unitID/upload" do |unitID|
 
   content_type :json
   return { status: "okay" }.to_json
+end
+
+post "/api/unit/:unitID/uploadEditorImg" do |unitID|
+  getUserPermissions(params[:username], params[:token], unitID)[:admin] or halt(401)
+  img_data = putImage(params[:image][:tempfile].path, { original_path: params[:image][:filename] })
+  content_type :json
+  return { success: true, link: "/assets/#{img_data[:asset_id]}" }.to_json
+end
+
+post "/api/unit/:unitID/uploadEditorFile" do |unitID|
+  getUserPermissions(params[:username], params[:token], unitID)[:admin] or halt(401)
+  assetID = putAsset(params[:file][:tempfile].path, { original_path: params[:file][:filename] })
+  content_type :json
+  return { success: true, link: "/assets/#{assetID}" }.to_json
 end
 
 delete "/api/unit/:unitID/removeCarouselSlide/:slideNumber" do |unitID, slideNumber|
