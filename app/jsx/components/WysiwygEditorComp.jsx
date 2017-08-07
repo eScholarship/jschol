@@ -8,8 +8,7 @@ import { Subscriber } from 'react-broadcast'
 const TRUMBO_BUTTONS = [
   ['strong', 'em', 'underline', 'strikethrough'],
   ['superscript', 'subscript'],
-  ['link'],
-  ['upload'],
+  ['link', 'image-upload', 'file-upload'],
   'btnGrp-lists',
   ['horizontalRule'],
   ['removeformat']
@@ -36,10 +35,16 @@ export default class WysiwygEditorComp extends React.Component
                    svgIconsPath="/bower_components/trumbowyg/dist/ui/icons.svg"
                    onChange={e => this.props.onChange(e.target.innerHTML)}
                    plugins={{
-                    // Add imagur parameters to upload plugin
-                    upload: {
+                    // Add parameters to uploadImage plugin
+                    uploadImage: {
                         serverPath: `/api/unit/${this.props.unit}/uploadEditorImg?username=${cms.username}&token=${cms.token}`,
                         fileFieldName: 'image',
+                        urlPropertyName: 'link'
+                    },
+                    // Add parameters to uploadFile plugin
+                    uploadFile: {
+                        serverPath: `/api/unit/${this.props.unit}/uploadEditorFile?username=${cms.username}&token=${cms.token}`,
+                        fileFieldName: 'file',
                         urlPropertyName: 'link'
                     }
                   }}/>

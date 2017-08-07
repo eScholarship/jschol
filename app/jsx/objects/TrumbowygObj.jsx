@@ -2,8 +2,9 @@ import React, { Component, PropTypes } from 'react'
 import trumbowyg from 'trumbowyg'
 const trumbowygIconsId = 'trumbowyg-icons'
 
-// MH CDL: Load additional plugins we need
-import '../../../node_modules/trumbowyg/dist/plugins/upload/trumbowyg.upload.js'
+// MH CDL: Load our customized plugins
+import './trumbowyg.uploadImage.jsx'
+import './trumbowyg.uploadFile.jsx'
 
 class Trumbowyg extends Component {
   constructor(props) {
