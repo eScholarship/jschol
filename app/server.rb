@@ -582,6 +582,8 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
       end
     elsif pageName == 'profile'
       pageData[:content] = getUnitProfile(unit, attrs)
+    elsif pageName == 'issueConfig'
+      pageData[:content] = getUnitIssueConfig(unit, attrs)
     elsif pageName == 'nav'
       pageData[:content] = getUnitNavConfig(unit, attrs['nav_bar'], params[:subPage])
     elsif pageName == 'sidebar'
@@ -594,7 +596,7 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
       pageData[:content] = getUnitStaticPage(unit, attrs, pageName)
     end
     pageData[:header] = getUnitHeader(unit,
-                                      (pageName =~ /^(nav|sidebar)/ or issueData) ? nil : pageName,
+                                      (pageName =~ /^(nav|sidebar|profile|issueConfig)/ or issueData) ? nil : pageName,
                                       issueData, attrs)
     pageData[:marquee] = getUnitMarquee(unit, attrs) if (["home", "search"].include? pageName or issueData)
   else
@@ -603,7 +605,6 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
       unit: unit.values.reject{|k,v| k==:attrs}
     }
   end
-  #print "pageData="; pp pageData
   return pageData.to_json
 end
 
