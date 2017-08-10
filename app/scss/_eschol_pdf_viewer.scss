@@ -15,7 +15,7 @@
   font-size: 10px;
 
   /* Overrides, to keep number of changes in the vendor file very small */
-  #sidebarContainer, .toolbar {
+  #sidebarContainer, #toolbarViewer {
     display: none;
   }
 
@@ -26,6 +26,30 @@
   #mainContainer {
     position: relative; /* was "absolute" */
   }
+
+  /* Styles for Loading Status */
+  .toolbar {
+    z-index: 9;
+  }
+
+  #toolbarContainer, #loadingBar {
+    box-shadow: 0px;
+    background: #ffffff;
+    height: 26px;
+    border-bottom: none;
+  }
+
+  #loadingBar .progress.indeterminate .glimmer {
+    animation: none;
+    background: #ffffff;
+    font-size: 18px;
+  }
+
+  .glimmer:after {
+    content: "Loading...";
+  }
+  /* End styles for Loading status */
+
 
   /* Turn off a bunch of button features we don't need in our UI */
   #viewerContainer {
