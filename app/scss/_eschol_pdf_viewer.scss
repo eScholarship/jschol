@@ -34,19 +34,8 @@
 
   #toolbarContainer, #loadingBar {
     box-shadow: 0px;
-    background: #ffffff;
-    height: 26px;
+    height: 16px;
     border-bottom: none;
-  }
-
-  #loadingBar .progress.indeterminate .glimmer {
-    animation: none;
-    background: #ffffff;
-    font-size: 18px;
-  }
-
-  .glimmer:after {
-    content: "Loading...";
   }
   /* End styles for Loading status */
 
