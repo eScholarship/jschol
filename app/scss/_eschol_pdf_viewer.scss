@@ -28,6 +28,10 @@
   }
 
   /* Styles for Loading Status */
+  .toolbar {
+    z-index: 9;
+  }
+
   #toolbarContainer, #loadingBar {
     box-shadow: 0px;
     background: #ffffff;
