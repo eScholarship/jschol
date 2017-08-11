@@ -143,6 +143,35 @@ class SortableSidebarList extends React.Component {
   }
 }
 
+class NonSortableList extends React.Component {
+  state = this.setupState(this.props)
+
+  setupState(props) {
+    return {
+      data: props.items
+    }
+  }
+
+  componentWillReceiveProps(nextProps) {
+    if (!nextProps.fetchingData && !_.isEqual(this.props, nextProps))
+      this.setState(this.setupState(nextProps))
+  }
+
+  render() {
+    const SortableTree = this.props.cms.modules.SortableTree
+    return (
+      <SortableTree
+        treeData={this.state.data}
+        isVirtualized={false}
+        scaffoldBlockPxWidth={30}
+        maxDepth={1}
+        canDrag={()=>false}
+        onChange={treeData => this.setState({ data: treeData })}/>
+    )
+  }
+}
+
+
 class DrawerComp extends React.Component {
 
   addNavItem = (event, navType) => {
@@ -164,18 +193,24 @@ class DrawerComp extends React.Component {
   }
 
   drawerContent(cms) {
+    let siteSettings = [
+      { id: "profile",
+        title: <Link to={`/uc/${this.props.data.unit.id}/profile`}>
+                 {(this.props.data.unit.type === 'journal' && 'Journal Profile') ||
+                  (this.props.data.unit.type === 'series' && 'Series Profile') ||
+                  (this.props.data.unit.type === 'campus' && 'Campus Profile') ||
+                  'Unit Profile'}
+                </Link>
+      }]
+    if (this.props.data.unit.type === 'journal') {
+      siteSettings.push({ id: "issueConfig", 
+                          title: <Link to={`/uc/${this.props.data.unit.id}/issueConfig`}>Issue Configuration</Link>})
+    }
     return (
       <div>
-        <div className="c-drawer__list-item" style={{backgroundImage: 'none', paddingLeft: '20px'}}>
-          <Link key="profile" to={"/uc/" + this.props.data.unit.id + "/profile" }>
-            {
-              (this.props.data.unit.type === 'journal' && 'Journal Profile') ||
-              (this.props.data.unit.type === 'series' && 'Series Profile') ||
-              (this.props.data.unit.type === 'campus' && 'Campus Profile') ||
-              (this.props.data.unit.type && 'Unit Profile')
-            }
-          </Link>
-        </div>
+        <div className="c-drawer__heading">Site Settings</div>
+
+        <NonSortableList cms={cms} items={siteSettings}/>
 
         <div className="c-drawer__heading">
           Navigation Items

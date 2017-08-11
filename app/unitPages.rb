@@ -312,7 +312,9 @@ def unitSearch(params, unit)
 end
 
 def getUnitStaticPage(unit, attrs, pageName)
-  page = Page[:slug=>pageName, :unit_id=>unit.id].values
+  page = Page[:slug=>pageName, :unit_id=>unit.id]
+  page or jsonHalt(404, "unknown page #{pageName}")
+  page = page.values
   page[:attrs] = JSON.parse(page[:attrs])
   return page
 end
@@ -337,6 +339,13 @@ def getUnitProfile(unit, attrs)
   if unit.type == 'oru'
     profile[:seriesSelector] = true
   end
+  return profile
+end
+
+def getUnitIssueConfig(unit, attrs)
+  profile = {
+    name: unit.name
+  }
   return profile
 end
 

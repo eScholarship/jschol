@@ -1,0 +1,14 @@
+// ##### adminbar Component ##### //
+
+.c-issueTable {
+  width: 100%;
+  margin-bottom: 10px;
+  th {
+    font-weight: bold;
+  }
+  tr, th, td {
+    border: 1px solid black;
+    text-align: left;
+    padding: 5px;
+  }
+}
