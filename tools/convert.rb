@@ -102,6 +102,7 @@ $issueCoverCache = {}
 $issueBuyLinks = Hash[*File.readlines("/apps/eschol/erep/xtf/style/textIndexer/mapping/buyLinks.txt").map { |line|
   line =~ %r{^.*entity=(.*);volume=(.*);issue=(.*)\|(.*?)\s*$} ? ["#{$1}:#{$2}:#{$3}", $4] : [nil, line]
 }.flatten]
+$issueNumberingCache = {}
 
 # Make puts thread-safe, and prepend each line with the thread it's coming from. While we're at it,
 # let's auto-flush the output.
@@ -1004,6 +1005,37 @@ def addIssueBuyLink(unit, volume, issue, dbAttrs)
 end
 
 ###################################################################################################
+def addIssueNumberingAttrs(issueUnit, volNum, issueNum, issueAttrs)
+  data = $issueNumberingCache[issueUnit]
+  if !data
+    data = {}
+    bfPath = "/apps/eschol/erep/xtf/static/brand/#{issueUnit}/#{issueUnit}.xml"
+    if File.exist?(bfPath)
+      dataIn = Nokogiri::XML(File.new(bfPath), &:noblanks).root
+      el = dataIn.at(".//singleIssue")
+      if el && el.text == "yes"
+        data[:singleIssue] = true
+        data[:startVolume] = dataIn.at("singleIssue").attr("startVolume")
+      end
+      el = dataIn.at(".//singleVolume")
+      if el && el.text == "yes"
+        data[:singleVolume] = true
+      end
+    end
+    $issueNumberingCache[issueUnit] = data
+  end
+
+  if data[:singleIssue]
+    if data[:startVolume].nil? or volNum.to_i >= data[:startVolume].to_i
+      issueAttrs[:numbering] = "volume_only"
+    end
+  elsif data[:singleVolume]
+    issueAttrs[:numbering] = "issue_only"
+  end
+
+end
+
+###################################################################################################
 # Extract metadata for an item, and add it to the current index batch.
 # Note that we create, but don't yet add, records to our database. We put off really inserting
 # into the database until the batch has been successfully processed by AWS.
@@ -1099,15 +1131,28 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
     }
   end
 
+  # Do some translation on rights codes
+  rights = case data.single("rights")
+    when "cc1"; "CC BY"
+    when "cc2"; "CC BY-SA"
+    when "cc3"; "CC BY-ND"
+    when "cc4"; "CC BY-NC"
+    when "cc5"; "CC BY-NC-SA"
+    when "cc6"; "CC BY-NC-ND"
+    when nil, "public"; nil
+    else puts "Unknown rights value #{data.single("rights").inspect}"
+  end
+
   # For eschol journals, populate the issue and section models.
   issue = section = nil
   issueNum = data.single("issue[@tokenize='no']") # untokenized is actually from "number"
-  if data.single("pubType") == "journal" && data.single("volume") && issueNum
+  volNum = data.single("volume")
+  if data.single("pubType") == "journal" && volNum && issueNum
     issueUnit = data.multiple("entityOnly")[0]
     if $allUnits.include?(issueUnit)
       issue = Issue.new
       issue[:unit_id] = issueUnit
-      issue[:volume]  = data.single("volume")
+      issue[:volume]  = volNum
       issue[:issue]   = issueNum
       tmp = rawMeta.at("/record/context/issueDate")
       issue[:pub_date] = (tmp && tmp.text && !tmp.text.empty? && parseDate(itemID, tmp.text)) ||
@@ -1119,10 +1164,12 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
       tmp = rawMeta.at("/record/context/issueDescription")
       (tmp && tmp.text && !tmp.text.empty?) and issueAttrs[:description] = tmp.text
       tmp = rawMeta.at("/record/context/issueCoverCaption")
-      findIssueCover(issueUnit, data.single("volume"), issueNum,
+      findIssueCover(issueUnit, volNum, issueNum,
                      (tmp && tmp.text && !tmp.text.empty?) ? tmp : nil,
                      issueAttrs)
-      addIssueBuyLink(issueUnit, data.single("volume"), issueNum, issueAttrs)
+      addIssueBuyLink(issueUnit, volNum, issueNum, issueAttrs)
+      addIssueNumberingAttrs(issueUnit, volNum, issueNum, issueAttrs)
+      rights and issueAttrs[:rights] = rights
       !issueAttrs.empty? and issue[:attrs] = issueAttrs.to_json
 
       section = Section.new
@@ -1135,7 +1182,7 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
   # Data for external journals
   if !issue
     data.single("journal") and (attrs[:ext_journal] ||= {})[:name]   = data.single("journal")
-    data.single("volume")  and (attrs[:ext_journal] ||= {})[:volume] = data.single("volume")
+    volNum                 and (attrs[:ext_journal] ||= {})[:volume] = volNum
     issueNum               and (attrs[:ext_journal] ||= {})[:issue]  = issueNum
     data.single("issn")    and (attrs[:ext_journal] ||= {})[:issn]   = data.single("issn")
     if data.single("coverage") =~ /^([\w.]+) - ([\w.]+)$/
@@ -1197,19 +1244,8 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
   #FIXME: Think about this carefully. What's eschol_date for?
   dbItem[:eschol_date]  = parseDate(itemID, data.single("datestamp")) || "1901-01-01"
   dbItem[:attrs]        = JSON.generate(attrs)
+  dbItem[:rights]       = rights
   dbItem[:ordering_in_sect] = data.single("document-order")
-
-  # Do some translation on rights codes
-  dbItem[:rights] = case data.single("rights")
-    when "cc1"; "CC BY"
-    when "cc2"; "CC BY-SA"
-    when "cc3"; "CC BY-ND"
-    when "cc4"; "CC BY-NC"
-    when "cc5"; "CC BY-NC-SA"
-    when "cc6"; "CC BY-NC-ND"
-    when nil, "public"; nil
-    else puts "Unknown rights value #{data.single("rights").inspect}"
-  end
 
   # Populate ItemAuthor model instances
   authors = getAuthors(data, rawMeta)
