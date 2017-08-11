@@ -26,9 +26,7 @@ class VolumeSelector extends React.Component {
     let p = this.props
     return (
       <div className="o-customselector">
-        <Link className="o-customselector__heading"
-              href={this.getIssuePath(p.vip[0], p.vip[1], p.vip[2])}>{`Volume ${p.vip[1]}, Issue ${p.vip[2]}, ${p.vip[3]}`}
-        </Link>
+        <h1 className="o-customselector__heading">{`Volume ${p.vip[1]}, Issue ${p.vip[2]}, ${p.vip[3]}`}</h1>
         <details className="o-customselector__selector">
           <summary aria-label="Select a different issue"></summary>
           <div className="o-customselector__menu">

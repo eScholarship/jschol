@@ -78,7 +78,7 @@ $marquee-overlay-size: 50%;
 
   }
 
-  h2 {
+  @include headings() {
     @extend %o-heading1;
     color: $color-white;
   }

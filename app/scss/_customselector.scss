@@ -1,38 +1,74 @@
 // ##### Custom Selector Objects ##### //
 
-.o-customselector {
+%o-customselector {
   display: inline-flex;
   align-items: center;
-  margin-right: 2px;
+  margin-bottom: $spacing-md;
 
   @include bp(screen3) {
     position: relative;
-    align-items: flex-end;
   }
 
 }
 
-.o-customselector__heading {
-  @extend %o-textlink__black;
-  margin-right: $spacing-base;
-  font-size: 1em;
-  text-align: right;
+// Normal selector:
+.o-customselector {
+  @extend %o-customselector;
+}
 
-  @include bp(screen1) {
-    font-size: 1.3em;
-  }
+// Campus selector:
+.o-customselector--campus {
+  @extend %o-customselector;
+  margin-right: 2px;
+  margin-bottom: 0;
 
   @include bp(screen3) {
-    font-size: 1.5em;
+    margin-right: $spacing-sm;
   }
 
+  // Campus selector heading:
+  .o-customselector__heading {
+    @extend %o-customselector__heading;
+    font-size: 1em;
+    text-align: right;
+
+    @include bp(screen1) {
+      font-size: 1.3em;
+    }
+
+    @include bp(screen3) {
+      font-size: 1.5em;
+    }
+
+    a {
+      @extend %o-textlink__black;
+    }
+
+  }
+
+}
+
+%o-customselector__heading {
+  margin: 0 $spacing-base 0 0;
+  font-weight: normal;
+}
+
+// Normal selector heading:
+.o-customselector__heading {
+  @extend %o-customselector__heading;
+  font-size: 1.5em;
 }
 
 .o-customselector__selector {
+  @extend %interactive-element-size;
 
   summary {
     @extend %interactive-element-size;
     position: relative;
+
+    @include bp(screen3) {
+      position: absolute;
+    }
 
     &::after {
       position: absolute;
@@ -42,11 +78,6 @@
       left: 0;
       background: inline('../images/icon_arrow-down.svg') no-repeat center / 0.8em;
       content: '';
-
-      @include bp(screen3) {
-        bottom: -0.4em;
-      }
-
     }
 
   }
@@ -62,7 +93,7 @@
 }
 
 .o-customselector__menu {
-  position: absolute; // to .c-subheader
+  position: absolute; // to o-customselector at base screen or .o-customselector__selector at screen3
   right: $spacing-sm;
   left: $spacing-sm;
   margin-top: $spacing-base;
@@ -70,6 +101,7 @@
   z-index: 2;
 
   @include bp(screen3) {
+    top: 100%;
     right: 0;
     left: 0;
     min-width: 10em;
