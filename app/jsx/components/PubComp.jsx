@@ -1,30 +1,59 @@
 // ##### Publication Component ##### //
 
 import React from 'react'
-import $ from 'jquery'
-import dotdotdot from 'jquery.dotdotdot'
-import AuthorListComp from '../components/AuthorListComp.jsx'
+import PropTypes from 'prop-types'
+import { Link } from 'react-router'
+import TruncationObj from '../objects/TruncationObj.jsx'
 import MediaListComp from '../components/MediaListComp.jsx'
 
+class DotAuthorUl extends React.Component {
+  render = () =>
+    <TruncationObj element="ul" className={this.props.className}
+                options={{watch:"window", after:'.c-authorlist__list-more-link', ellipsis:' ', wrap:'children'}}>
+      {this.props.children}
+    </TruncationObj>
+}
+
 class PubComp extends React.Component {
-  componentDidMount() {
-    $('.c-pub__heading, .c-pub__abstract').dotdotdot({watch: 'window'
-    });
+  static propTypes = {
+    h: PropTypes.string.isRequired,
+    result: PropTypes.shape({
+      id: PropTypes.string,
+      title: PropTypes.string,
+      authors: PropTypes.array,
+      abstract: PropTypes.string,
+    }).isRequired,
   }
+
   render() {
+    let pr = this.props.result
+    let itemLink = "/uc/item/"+pr.id.replace(/^qt/, "")
+    let authorList
+    if (pr.authors) {
+      // Joel's CSS handles inserting semicolons here.
+      authorList = pr.authors.map(function(author, i, a) {
+        return (<li key={i}><a href={"/search/?q="+author.name}>{author.name}</a></li>)
+      })
+    }
     return (
       <div className="c-pub">
-        <h2 className="c-pub__heading">
-          <a href="">From the New Heights: The City and Migrating Latinas in Real Women Have Curves and María Full of Grace</a>
-        </h2>
-        <AuthorListComp />
-        <div className="c-pub__abstract">
-          <p>Quaerat impedit debitis vero officia ullam, nesciunt, culpa labore at praesentium, accusantium quibusdam est voluptate accusamus ab odit non ipsa, qui sed similique! Culpa vitae nesciunt ratione quos vel quasi, nemo neque! Id debitis consequatur saepe, rem, excepturi illum obcaecati commodi dolore eaque esse quod impedit assumenda voluptatem voluptate, ex deserunt suscipit.
-          </p>
-          <p>In similique deleniti nemo atque cumque mollitia sint quam beatae. Culpa sunt modi, deleniti dolore praesentium aspernatur eum dolor architecto illum, assumenda mollitia quos reiciendis, similique facilis laborum qui placeat vel a. Porro illo tenetur voluptates libero error sed iure fuga aperiam, facere natus reiciendis voluptatibus, vitae ipsam earum repellendus eos, officia provident soluta sapiente numquam quo molestiae illum quasi!
-          </p>
+        <TruncationObj element={this.props.h} className="c-pub__heading">
+          <Link to={itemLink}>{pr.title}</Link>
+        </TruncationObj>
+      {authorList && 
+        <div className="c-authorlist">
+          <DotAuthorUl className="c-authorlist__list">
+            {authorList}
+            <li><Link to={itemLink} className="c-authorlist__list-more-link">et al.</Link></li>
+          </DotAuthorUl>
         </div>
-        <MediaListComp />
+      }
+      {pr.abstract && 
+        <TruncationObj element="div" className="c-pub__abstract">
+          <p>{pr.abstract}</p>
+        </TruncationObj>
+      }
+      {/*  <MediaListComp /> */}
       </div>
     )
   }

@@ -11,7 +11,7 @@ def itemResultData(itemIds, itemData, fields=[])
   searchResults = []
 
   for itemID in itemIds
-    # data needed in every list of items: ['id', 'title', 'authors', 'abstract', 'content_type', 'supp_files']
+    # data needed in every list of items: ['id', 'title', 'authors', 'abstract', 'content_type']
     item = itemData[:items][itemID]
     if item
       attrs = JSON.parse(item.attrs)
@@ -23,12 +23,14 @@ def itemResultData(itemIds, itemData, fields=[])
       }
       itemListItem[:authors] = itemData[:authors][itemID].map { |author| JSON.parse(author.attrs) } if itemData.dig(:authors, itemID)
 
-      itemListItem[:supp_files] = [{:type => 'video'}, {:type => 'image'}, {:type => 'pdf'}, {:type => 'audio'}]
-      for supp_file_hash in itemListItem[:supp_files]
-        if attrs['supp_files']
-          supp_file_hash[:count] = attrs['supp_files'].count { |supp_file| supp_file['mimeType'].include?(supp_file_hash[:type])}
-        else
-          supp_file_hash[:count] = 0
+      if fields.include? 'supp_files'
+        itemListItem[:supp_files] = [{:type => 'video'}, {:type => 'image'}, {:type => 'pdf'}, {:type => 'audio'}]
+        for supp_file_hash in itemListItem[:supp_files]
+          if attrs['supp_files']
+            supp_file_hash[:count] = attrs['supp_files'].count { |supp_file| supp_file['mimeType'].include?(supp_file_hash[:type])}
+          else
+            supp_file_hash[:count] = 0
+          end
         end
       end
 

@@ -4,7 +4,6 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import RightsComp from '../components/RightsComp.jsx'
 import $ from 'jquery'
-import _ from 'lodash'
 import { Link } from 'react-router'
 import TruncationObj from '../objects/TruncationObj.jsx'
 
