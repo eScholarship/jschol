@@ -66,14 +66,6 @@ class MainContent extends React.Component {
     }
   }
 
-  renderPdf = p => { return (
-      <details className="c-togglecontent" open>
-        <summary>Main Content</summary>
-        {/*Fetch content through server app, which will check credentials and proxy to proper back-end*/}
-        <PdfViewComp url={"/content/qt" + p.id + "/qt" + p.id + ".pdf"}/>
-      </details>
-  )}
-
   renderHtml = p => { return (
       <details className="c-togglecontent" open>
         <summary>Main Content</summary>
