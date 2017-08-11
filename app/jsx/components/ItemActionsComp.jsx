@@ -45,7 +45,8 @@ class Downloadable extends React.Component {
       <div className="c-itemactions">
         <div className="o-download">
           {/* ToDo: Once main multimedia content is ingested, this button should say 'Download Content' */}
-          <a href={url} className="o-download__button" download={filename}>Download {label}</a>
+          {/* <a href={url} className="o-download__button" download={filename}>Download {label}</a> */}
+          <a href={url} className="o-button__8" download={filename}>Download {label}</a>
 {/*       <details className="o-download__formats">
             <summary aria-label="formats"></summary>
             <ul className="o-download__nested-menu">
