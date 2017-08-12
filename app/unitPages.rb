@@ -342,13 +342,6 @@ def getUnitProfile(unit, attrs)
   return profile
 end
 
-def getUnitIssueConfig(unit, attrs)
-  profile = {
-    name: unit.name
-  }
-  return profile
-end
-
 def getItemAuthors(itemID)
   return ItemAuthors.filter(:item_id => itemID).order(:ordering).map(:attrs).collect{ |h| JSON.parse(h)}
 end
@@ -893,4 +886,79 @@ delete "/api/unit/:unitID/removeCarouselSlide/:slideNumber" do |unitID, slideNum
 
   content_type :json
   return { status: "ok" }.to_json
+end
+
+###################################################################################################
+# Issue configuration section
+
+def getUnitIssueConfig(unit, unitAttrs)
+  template = { "numbering" => "both", "rights" => nil, "buy_link" => nil }
+  issues = Issue.where(unit_id: unit.id).reverse(:pub_date).map { |issue|
+    { voliss: "#{issue.volume}.#{issue.issue}" }.merge(template).
+      merge(JSON.parse(issue.attrs).select { |k,v| template.key?(k) })
+  }
+  # Fill default issue from db, or most recent issue, else default values
+  issues.unshift({ voliss: "default" }.merge(template).merge(
+    unitAttrs["default_issue"] ||
+    (issues[0] || {}).select { |k,v| template.key?(k) }))
+  return issues
+end
+
+def validateRights(rights)
+  rights == "none" and return nil
+  ["CC BY", "CC BY-NC", "CC BY-NC-ND", "CC BY-NC-SA", "CC BY-ND", "CC BY-SA"].
+    include?(rights) or jsonHalt(400, "Invalid rights")
+  return rights
+end
+
+def validateNumbering(numbering)
+  numbering == "both" and return nil
+  %w{volume_only issue_only}.include?(numbering) or jsonHalt(400, "Invalid numbering")
+  return numbering
+end
+
+def validateLink(link)
+  link.empty? and return nil
+  link =~ %r{^(https?://)|(^/)} or jsonHalt(400, "Invalid link")
+  return link
+end
+
+def updateIssueConfig(inputAttrs, data, voliss)
+  ret = (inputAttrs || {}).merge(
+    { "rights" => validateRights(data["rights-#{voliss}"]),
+      "numbering" => validateNumbering(data["numbering-#{voliss}"]),
+      "buy_link" => validateLink(data["buy_link-#{voliss}"]) }).
+    select { |k,v| !v.nil? }
+  return ret.empty? ? nil : ret
+end
+
+put "/api/unit/:unitID/issueConfig" do |unitID|
+  getUserPermissions(params[:username], params[:token], unitID)[:super] or halt(401)
+  DB.transaction {
+    issueMap = Hash[Issue.where(unit_id: unitID).map { |iss| ["#{iss.volume}.#{iss.issue}", iss] }]
+    params['data'].keys.select { |k| k =~ /^rights-/ }.map { |k| k.sub(/^rights-/, '') }.each { |voliss|
+      if voliss == "default"
+        unit = Unit[unitID] or jsonHalt(404, "Unit not found")
+        unitAttrs = JSON.parse(unit.attrs)
+        unitAttrs["default_issue"] = updateIssueConfig(unitAttrs["default_issue"], params["data"], voliss)
+        unitAttrs["default_issue"] or unitAttrs.delete("default_issue")
+        unit.attrs = unitAttrs.to_json
+        puts "new unit attrs: #{unit.attrs}"
+        unit.save
+      else
+        issue = issueMap[voliss] or jsonHalt(404, "Unknown volume/issue #{voliss.inspect}")
+        oldAttrs = JSON.parse(issue.attrs)
+        newAttrs = updateIssueConfig(JSON.parse(issue.attrs), params["data"], voliss)
+        if oldAttrs.to_json != newAttrs.to_json
+          issue.attrs = newAttrs.to_json
+          issue.save
+          if oldAttrs["rights"] != newAttrs["rights"]
+            Item.where(section: Section.where(issue_id: issue.id).select(:id)).update(rights: newAttrs["rights"])
+          end
+        end
+      end
+    }
+  }
+  content_type :json
+  return { success: true }.to_json
 end
