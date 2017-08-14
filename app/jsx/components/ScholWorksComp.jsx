@@ -6,6 +6,7 @@ import RightsComp from '../components/RightsComp.jsx'
 import $ from 'jquery'
 import { Link } from 'react-router'
 import TruncationObj from '../objects/TruncationObj.jsx'
+import MediaListComp from '../components/MediaListComp.jsx'
 
 class DotAuthorUl extends React.Component {
   render = () =>
@@ -83,19 +84,6 @@ class ScholWorksComp extends React.Component {
       })
     }
 
-    let supp_files = pr.supp_files.map(function(supp_file, i, a) {
-      if (supp_file.count >= 1) {
-        let display
-        if (supp_file.type === 'video' || supp_file.type === 'image') {
-          display = supp_file.count != 1 ? supp_file.type + 's' : supp_file.type
-        } else if (supp_file.type === 'audio') {
-          display = supp_file.count != 1 ? 'audio files' : 'audio file'
-        } else if (supp_file.type === 'pdf') {
-          display = supp_file.count != 1 ? 'additional PDFs' : 'additional PDF'
-        }
-        return (<li key={supp_file+i} className={"c-medialist__" + supp_file.type}>Contains {supp_file.count} {display}</li>)   
-      }
-    })
     return (
       <section className="c-scholworks">
         <div className="c-scholworks__main-column">
@@ -130,7 +118,7 @@ class ScholWorksComp extends React.Component {
             </TruncationObj>
           }
           <div className="c-scholworks__media">
-            <ul className="c-medialist">{ supp_files }</ul>
+            <MediaListComp supp_files={pr.supp_files} />
             {pr.rights && <RightsComp rights={pr.rights} size="small" />}
           </div>
         </div>

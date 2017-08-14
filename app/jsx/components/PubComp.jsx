@@ -20,8 +20,13 @@ class PubComp extends React.Component {
     result: PropTypes.shape({
       id: PropTypes.string,
       title: PropTypes.string,
+      genre: PropTypes.string,
+      peerReviewed: PropTypes.bool,
       authors: PropTypes.array,
+      supp_files: PropTypes.array,
+      pub_year: PropTypes.number,
       abstract: PropTypes.string,
+      rights: PropTypes.string,
     }).isRequired,
   }
 
@@ -48,12 +53,19 @@ class PubComp extends React.Component {
           </DotAuthorUl>
         </div>
       }
+      {pr.pub_year &&
+        <div className="c-scholworks__publication">
+          ({pr.pub_year})
+        </div>
+      }
       {pr.abstract && 
         <TruncationObj element="div" className="c-pub__abstract">
           <p>{pr.abstract}</p>
         </TruncationObj>
       }
-      {/*  <MediaListComp /> */}
+      {pr.supp_files && 
+        <MediaListComp supp_files={pr.supp_files} />
+      }
       </div>
     )
   }

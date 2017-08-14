@@ -4,51 +4,12 @@
 
 import React from 'react'
 import PropTypes from 'prop-types'
-import $ from 'jquery'
-import _ from 'lodash'
 import { Link } from 'react-router'
-
-// Load dotdotdot in browser but not server
-if (!(typeof document === "undefined")) {
-  const dotdotdot = require('jquery.dotdotdot')
-}
-
-class DotAuthorUl extends React.Component {
-  componentDidMount() {
-    $(this.domEl).dotdotdot({watch:"window", after:'.c-authorlist__list-more-link', ellipsis:' ', wrap:'children'})
-    setTimeout(()=> $('.c-authorlist__list').trigger("update"), 0)
-  }
-
-  render = () =>
-    <ul className={this.props.className} ref={el => this.domEl = el}>
-      {this.props.children}
-    </ul>
-}
-
-class DotDiv extends React.Component {
-  componentDidMount() {
-    $(this.domEl).dotdotdot({watch:"window"})
-  }
-
-  render = () =>
-    <div className={this.props.className} ref={el => this.domEl = el}>
-      {this.props.children}
-    </div>
-}
-
-class DotH3 extends React.Component {
-  componentDidMount() {
-    $(this.domEl).dotdotdot({watch:"window"})
-  }
-
-  render = () =>
-    <h3 className={this.props.className} ref={el => this.domEl = el}>
-      {this.props.children}
-    </h3>
-}
+import PubComp from '../components/PubComp.jsx'
 
 class PubPreviewComp extends React.Component {
   static propTypes = {
+    h: PropTypes.string.isRequired,
     result: PropTypes.shape({
       id: PropTypes.string,
       title: PropTypes.string,
@@ -79,60 +40,13 @@ class PubPreviewComp extends React.Component {
   render() {
     let pr = this.props.result
     let itemLink = "/uc/item/"+pr.id.replace(/^qt/, "")
-    let publishingInfo
-    let unitId
-    if ('journalInfo' in pr) {
-      publishingInfo = pr.journalInfo.displayName
-      unitId = pr.journalInfo.unitId
-    } else if ('unitInfo' in pr) {
-      publishingInfo = pr.unitInfo.displayName
-      unitId = pr.unitInfo.unitId
-    }
 
-    let authorList
-    if (pr.authors) {
-      // Joel's CSS handles inserting semicolons here.
-      authorList = pr.authors.map(function(author, i, a) {
-        return (<li key={i}><a href={"/search/?q="+author.name}>{author.name}</a></li>)
-      })
-    }
-
-    let supp_files = pr.supp_files.map(function(supp_file, i, a) {
-      if (supp_file.count >= 1) {
-        let display
-        if (supp_file.type === 'video' || supp_file.type === 'image') {
-          display = supp_file.count != 1 ? supp_file.type + 's' : supp_file.type
-        } else if (supp_file.type === 'audio') {
-          display = supp_file.count != 1 ? 'audio files' : 'audio file'
-        } else if (supp_file.type === 'pdf') {
-          display = supp_file.count != 1 ? 'additional PDFs' : 'additional PDF'
-        }
-        return (<li key={supp_file+i} className={"c-medialist__" + supp_file.type}>Contains {supp_file.count} {display}</li>)   
-      }
-    })
     return (
       <div className="c-pubpreview">
       {pr.thumbnail &&
-        <Link to={itemLink} className="c-pubpreview__img"><img src={"/assets/"+pr.thumbnail.asset_id} width={pr.thumbnail.width} height={pr.thumbnail.height} alt={`Cover page of ${pr.title}`} /></Link> }
-        <div className="c-pub">
-          <DotH3 className="c-pub__heading">
-            <Link to={itemLink}>{pr.title}</Link>
-          </DotH3>
-          {authorList && 
-            <div className="c-authorlist">
-              <DotAuthorUl className="c-authorlist__list">
-                {authorList}
-                <li><Link to={itemLink} className="c-authorlist__list-more-link">et al.</Link></li>
-              </DotAuthorUl>
-            </div>
-          }
-          {pr.abstract && 
-            <DotDiv className="c-scholworks__abstract">
-              <p>{pr.abstract}</p>
-            </DotDiv>
-          }
-          <ul className="c-medialist">{ supp_files }</ul>
-        </div>
+        <Link to={itemLink} className="c-pubpreview__img"><img src={"/assets/"+pr.thumbnail.asset_id} width={pr.thumbnail.width} height={pr.thumbnail.height} alt={`Cover page of ${pr.title}`} /></Link>
+      }
+        <PubComp result={this.props.result} h={this.props.h} />
       </div>
     )
   }

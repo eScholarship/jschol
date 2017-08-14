@@ -264,8 +264,7 @@ def getIssue(id, display, volume=nil, issue=nil)
 
     itemData = {items: items, authors: authors}
     # Additional data field needed ontop of default
-    resultsListFields = ['supp_files']
-    resultsListFields.push('thumbail') if display != "magazine"
+    resultsListFields = (display != "magazine") ? ['thumbnail'] : []
     section[:articles] = itemResultData(itemIds, itemData, resultsListFields)
 
     next section
@@ -284,16 +283,16 @@ def unitSearch(params, unit)
   # ToDo: Right now, series landing page is the only unit type using this block. Clean this up
   # once a final decision has been made about display of different unit search pages
   if unit.type.include? 'series'
-    resultsListFields = ['supp_files', 'thumbnail', 'pub_year', 'publication_information', 'type_of_work', 'rights']
+    resultsListFields = ['thumbnail', 'pub_year', 'publication_information', 'type_of_work', 'rights']
     params["series"] = [unit.id]
   elsif unit.type == 'oru'
-    resultsListFields = ['supp_files', 'thumbnail', 'pub_year', 'publication_information', 'type_of_work']
+    resultsListFields = ['thumbnail', 'pub_year', 'publication_information', 'type_of_work']
     params["departments"] = [unit.id]
   elsif unit.type == 'journal'
-    resultsListFields = ['supp_files', 'thumbnail', 'pub_year', 'publication_information']
+    resultsListFields = ['thumbnail', 'pub_year', 'publication_information']
     params["journals"] = [unit.id]
   elsif unit.type == 'campus'
-    resultsListFields = ['supp_files', 'thumbnail', 'pub_year', 'publication_information', 'type_of_work', 'rights', 'peer_reviewed']
+    resultsListFields = ['thumbnail', 'pub_year', 'publication_information', 'type_of_work', 'rights', 'peer_reviewed']
     params["campuses"] = [unit.id]
   else
     #throw 404

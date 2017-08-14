@@ -55,12 +55,7 @@ class SectionComp extends React.Component {
   render() {
     return (
       <div>
-        <h2 className="o-heading3">{this.props.section.name}</h2>
-        {this.props.display == "magazine" ?
-          this.props.section.articles.map(article => <ScholWorksComp h="h3" key={article.id} result={article}/>)
-        :
-          this.props.section.articles.map(article => <PubPreviewComp h="h3" key={article.id} result={article}/>)
-        }
+        {this.props.section.articles.map(article => <PubPreviewComp h="h3" key={article.id} result={article}/>)}
       </div>
     )
   }
@@ -117,13 +112,25 @@ class IssueComp extends React.Component {
           {this.props.display!="magazine" && pi.description &&
             (<p>{pi.description}</p>) }
         </div>
-      {this.props.display=="magazine" ?
-        <div className="o-dividecontent2x--ruled">
-          {pi.sections.map(section => <SectionComp key={section.name} section={section} display={this.props.display} />)}
-        </div>
+        <div>
+      { this.props.display=="magazine" ?
+        pi.sections.map(section =>
+          <div key={section.name}>
+            <h2 className="o-heading1a">{section.name}</h2>
+            <div className="o-dividecontent2x--ruled">
+              {section.articles.map(article => <PubPreviewComp h="h3" key={article.id} result={article}/>)}
+            </div>
+          </div>
+        )
       :
-        (pi.sections.map(section => <SectionComp key={section.name} section={section} display={this.props.display} />))
+        pi.sections.map(section =>
+          <div key={section.name}>
+            <h2 className="o-heading1a">{section.name}</h2>
+            {section.articles.map(article => <PubPreviewComp h="h3" key={article.id} result={article}/>)}
+          </div>
+        )
       }
+        </div>
       </section>
     )
   }
