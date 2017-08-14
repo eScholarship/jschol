@@ -33,6 +33,7 @@ require 'ostruct'
 require 'time'
 require 'yaml'
 require_relative '../util/sanitize.rb'
+require_relative '../util/nailgun.rb'
 
 # Max size (in bytes, I think) of a batch to send to AWS CloudSearch.
 # According to the docs the absolute limit is 5 megs, so let's back off a
@@ -1036,55 +1037,48 @@ def addIssueNumberingAttrs(issueUnit, volNum, issueNum, issueAttrs)
 end
 
 ###################################################################################################
-# Extract metadata for an item, and add it to the current index batch.
-# Note that we create, but don't yet add, records to our database. We put off really inserting
-# into the database until the batch has been successfully processed by AWS.
-def indexItem(itemID, timestamp, prefilteredData, batch)
+# Extract metadata the old way, combining data from the XTF index prefilters and the raw UCIngest
+# metadata files.
+def parsePrefilteredData(itemID, existingItem, rawMeta, prefilteredData)
 
   # Add in the namespace declaration to the individual article (since we're taking the articles
   # out of their outer context)
   prefilteredData.sub! "<erep-article>", "<erep-article xmlns:xtf=\"http://cdlib.org/xtf\">"
 
   # Parse the metadata
-  data = MetaAccess.new(prefilteredData)
-  if data.root.nil?
+  pf = MetaAccess.new(prefilteredData)
+  if pf.root.nil?
     raise("Error parsing prefiltered data as XML. First part: " +
       (prefilteredData.size > 500 ? prefilteredData[0,500]+"..." : prefilteredData).inspect)
   end
 
-  # Also grab the original metadata file
-  metaPath = "#{DATA_DIR}/13030/pairtree_root/#{itemID.scan(/\w\w/).join('/')}/#{itemID}/meta/#{itemID}.meta.xml"
-  rawMeta = Nokogiri::XML(File.new(metaPath), &:noblanks)
-  rawMeta.remove_namespaces!
-  rawMeta = rawMeta.root
-
   # Grab the stuff we're jamming into the JSON 'attrs' field
   attrs = {}
-  data.multiple("contentExists")[0] == "yes" or attrs[:suppress_content] = true  # yes, inverting the sense
-  data.single("peerReview"   ) == "yes" and attrs[:is_peer_reviewed] = true
-  data.single("undergrad "   ) == "yes" and attrs[:is_undergrad] = true
-  data.single("language"     )          and attrs[:language] = data.single("language")
-  data.single("embargoed")              and attrs[:embargo_date] = data.single("embargoed")
-  data.single("publisher")              and attrs[:publisher] = data.single("publisher")
-  data.single("originalCitation")       and attrs[:orig_citation] = data.single("originalCitation")
-  data.single("customCitation")         and attrs[:custom_citation] = data.single("customCitation")
-  data.single("localID")                and attrs[:local_id] = { type: data.singleAttr("localID", :type, "other"),
-                                                                 id:   data.single("localID") }
-  data.multiple("publishedWebLocation") and attrs[:pub_web_loc] = data.multiple("publishedWebLocation")
-  data.single("buyLink")                and attrs[:buy_link] = data.single("buyLink")
-  if data.single("withdrawn")
-    attrs[:withdrawn_date] = data.single("withdrawn")
+  pf.multiple("contentExists")[0] == "yes" or attrs[:suppress_content] = true  # yes, inverting the sense
+  pf.single("peerReview"   ) == "yes" and attrs[:is_peer_reviewed] = true
+  pf.single("undergrad "   ) == "yes" and attrs[:is_undergrad] = true
+  pf.single("language"     )          and attrs[:language] = pf.single("language")
+  pf.single("embargoed")              and attrs[:embargo_date] = pf.single("embargoed")
+  pf.single("publisher")              and attrs[:publisher] = pf.single("publisher")
+  pf.single("originalCitation")       and attrs[:orig_citation] = pf.single("originalCitation")
+  pf.single("customCitation")         and attrs[:custom_citation] = pf.single("customCitation")
+  pf.single("localID")                and attrs[:local_id] = { type: pf.singleAttr("localID", :type, "other"),
+                                                                 id:   pf.single("localID") }
+  pf.multiple("publishedWebLocation") and attrs[:pub_web_loc] = pf.multiple("publishedWebLocation")
+  pf.single("buyLink")                and attrs[:buy_link] = pf.single("buyLink")
+  if pf.single("withdrawn")
+    attrs[:withdrawn_date] = pf.single("withdrawn")
     msg = rawMeta.at("/record/history/stateChange[@state='withdrawn']/comment")
     msg and attrs[:withdrawn_message] = msg.text
   end
 
   # Filter out "n/a" abstracts
-  data.single("description") && data.single("description").size > 3 and attrs[:abstract] = data.single("description")
+  pf.single("description") && pf.single("description").size > 3 and attrs[:abstract] = pf.single("description")
 
   # Disciplines are a little extra work; we want to transform numeric IDs to plain old labels
-  if data.any("facet-discipline")
+  if pf.any("facet-discipline")
     attrs[:disciplines] = []
-    data.multiple("facet-discipline").each { |discStr|
+    pf.multiple("facet-discipline").each { |discStr|
       discID = discStr[/^\d+/] # only the numeric part
       label = $discTbl[discID]
       label ? (attrs[:disciplines] << label) : puts("Warning: unknown discipline ID #{discID.inspect}")
@@ -1104,7 +1098,7 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
     }
   else
     # For non-UCIngest format, read supp data from the index
-    data.multiple("supplemental-file").each { |supp|
+    pf.multiple("supplemental-file").each { |supp|
       pair = supp.split("::")
       if pair.length != 2
         puts "Warning: can't parse supp file data #{supp.inspect}"
@@ -1132,7 +1126,7 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
   end
 
   # Do some translation on rights codes
-  rights = case data.single("rights")
+  rights = case pf.single("rights")
     when "cc1"; "CC BY"
     when "cc2"; "CC BY-SA"
     when "cc3"; "CC BY-ND"
@@ -1140,15 +1134,15 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
     when "cc5"; "CC BY-NC-SA"
     when "cc6"; "CC BY-NC-ND"
     when nil, "public"; nil
-    else puts "Unknown rights value #{data.single("rights").inspect}"
+    else puts "Unknown rights value #{pf.single("rights").inspect}"
   end
 
   # For eschol journals, populate the issue and section models.
   issue = section = nil
-  issueNum = data.single("issue[@tokenize='no']") # untokenized is actually from "number"
-  volNum = data.single("volume")
-  if data.single("pubType") == "journal" && volNum && issueNum
-    issueUnit = data.multiple("entityOnly")[0]
+  issueNum = pf.single("issue[@tokenize='no']") # untokenized is actually from "number"
+  volNum = pf.single("volume")
+  if pf.single("pubType") == "journal" && volNum && issueNum
+    issueUnit = pf.multiple("entityOnly")[0]
     if $allUnits.include?(issueUnit)
       issue = Issue.new
       issue[:unit_id] = issueUnit
@@ -1156,7 +1150,7 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
       issue[:issue]   = issueNum
       tmp = rawMeta.at("/record/context/issueDate")
       issue[:pub_date] = (tmp && tmp.text && !tmp.text.empty? && parseDate(itemID, tmp.text)) ||
-                         parseDate(itemID, data.single("date")) ||
+                         parseDate(itemID, pf.single("date")) ||
                          "1901-01-01"
       issueAttrs = {}
       tmp = rawMeta.at("/record/context/issueTitle")
@@ -1173,7 +1167,7 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
       !issueAttrs.empty? and issue[:attrs] = issueAttrs.to_json
 
       section = Section.new
-      section[:name]  = data.single("sectionHeader") ? data.single("sectionHeader") : "Articles"
+      section[:name]  = pf.single("sectionHeader") ? pf.single("sectionHeader") : "Articles"
     else
       "Warning: issue associated with unknown unit #{issueUnit.inspect}"
     end
@@ -1181,11 +1175,11 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
 
   # Data for external journals
   if !issue
-    data.single("journal") and (attrs[:ext_journal] ||= {})[:name]   = data.single("journal")
+    pf.single("journal") and (attrs[:ext_journal] ||= {})[:name]   = pf.single("journal")
     volNum                 and (attrs[:ext_journal] ||= {})[:volume] = volNum
     issueNum               and (attrs[:ext_journal] ||= {})[:issue]  = issueNum
-    data.single("issn")    and (attrs[:ext_journal] ||= {})[:issn]   = data.single("issn")
-    if data.single("coverage") =~ /^([\w.]+) - ([\w.]+)$/
+    pf.single("issn")    and (attrs[:ext_journal] ||= {})[:issn]   = pf.single("issn")
+    if pf.single("coverage") =~ /^([\w.]+) - ([\w.]+)$/
       (attrs[:ext_journal] ||= {})[:fpage] = $1
       (attrs[:ext_journal] ||= {})[:lpage] = $2
     end
@@ -1198,8 +1192,7 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
   mimeType    = contentFile && contentFile.at("mimeType") && contentFile.at("mimeType").text
 
   # Generate thumbnails (but only for non-suppressed PDF items)
-  existingItem = Item[itemID]
-  if !attrs[:suppress_content] && data.single("pdfExists") == "yes"
+  if !attrs[:suppress_content] && pf.single("pdfExists") == "yes"
     pdfPath = "#{DATA_DIR}/13030/pairtree_root/#{itemID.scan(/\w\w/).join('/')}/#{itemID}/content/#{itemID}.pdf"
     if File.exist?(pdfPath)
       pdfTimestamp = File.mtime(pdfPath).to_i
@@ -1225,44 +1218,37 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
   # Populate the Item model instance
   dbItem = Item.new
   dbItem[:id]           = itemID
-  dbItem[:source]       = data.single("source")
+  dbItem[:source]       = pf.single("source")
   dbItem[:status]       = attrs[:withdrawn_date] ? "withdrawn" :
                           attrs[:embargo_date] ? "embargoed" :
                           (rawMeta.attr("state") || "published")
-  dbItem[:title]        = data.single("title")
-  dbItem[:content_type] = !(data.multiple("contentExists")[0] == "yes") ? nil :
+  dbItem[:title]        = pf.single("title")
+  dbItem[:content_type] = !(pf.multiple("contentExists")[0] == "yes") ? nil :
                           attrs[:withdrawn_date] ? nil :
                           attrs[:embargo_date] ? nil :
-                          data.single("pdfExists") == "yes" ? "application/pdf" :
+                          pf.single("pdfExists") == "yes" ? "application/pdf" :
                           mimeType && mimeType.strip.length > 0 ? mimeType :
                           nil
   dbItem[:genre]        = (!attrs[:suppress_content] &&
                            dbItem[:content_type].nil? &&
                            attrs[:supp_files]) ?
-                          "multimedia" : data.single("type")
-  dbItem[:pub_date]     = parseDate(itemID, data.single("date")) || "1901-01-01"
+                          "multimedia" : pf.single("type")
+  dbItem[:pub_date]     = parseDate(itemID, pf.single("date")) || "1901-01-01"
   #FIXME: Think about this carefully. What's eschol_date for?
-  dbItem[:eschol_date]  = parseDate(itemID, data.single("datestamp")) || "1901-01-01"
+  dbItem[:eschol_date]  = parseDate(itemID, pf.single("datestamp")) || "1901-01-01"
   dbItem[:attrs]        = JSON.generate(attrs)
   dbItem[:rights]       = rights
-  dbItem[:ordering_in_sect] = data.single("document-order")
+  dbItem[:ordering_in_sect] = pf.single("document-order")
 
   # Populate ItemAuthor model instances
-  authors = getAuthors(data, rawMeta)
-  dbAuthors = authors.each_with_index.map { |data, idx|
-    ItemAuthor.new { |auth|
-      auth[:item_id] = itemID
-      auth[:attrs] = JSON.generate(data)
-      auth[:ordering] = idx
-    }
-  }
+  authors = getAuthors(pf, rawMeta)
 
   # Process all the text nodes
   text = ""
-  traverseText(data.root, text)
+  traverseText(pf.root, text)
 
   # Make a list of all the units this item belongs to
-  units = data.multiple("entityOnly").select { |unitID|
+  units = pf.multiple("entityOnly").select { |unitID|
     unitID =~ /^(postprints|demo-journal|test-journal|unknown|withdrawn|uciem_westjem_aip)$/ ? false :
       !$allUnits.include?(unitID) ? (puts("Warning: unknown unit #{unitID.inspect}") && false) :
       true
@@ -1271,6 +1257,50 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
   # It's actually ok for there to be no units, e.g. for old withdrawn items
   if units.empty?
     #do nothing
+  end
+
+  return dbItem, attrs, authors, units, issue, section, suppSummaryTypes, text
+end
+
+###################################################################################################
+def processETD(metaPath, nailgun)
+  puts "ETD processing."
+  begin
+    xslPath = "/apps/eschol/erep/xtf/normalization/etd/normalize_etd.xsl"
+    output = nailgun.call("net.sf.saxon.Transform", metaPath, xslPath)
+    #puts "ETD output: #{output}"
+  rescue Exception => e
+    puts "Error processing ETD: #{e}"
+  end
+end
+
+###################################################################################################
+def processBiomed(metaPath, nailgun)
+  # No special biomed processing yet.
+end
+
+###################################################################################################
+# Extract metadata for an item, and add it to the current index batch.
+# Note that we create, but don't yet add, records to our database. We put off really inserting
+# into the database until the batch has been successfully processed by AWS.
+def indexItem(itemID, timestamp, prefilteredData, batch, nailgun)
+
+  # Also grab the original metadata file
+  metaPath = "#{DATA_DIR}/13030/pairtree_root/#{itemID.scan(/\w\w/).join('/')}/#{itemID}/meta/#{itemID}.meta.xml"
+  rawMeta = Nokogiri::XML(File.new(metaPath), &:noblanks)
+  rawMeta.remove_namespaces!
+  rawMeta = rawMeta.root
+
+  existingItem = Item[itemID]
+
+  dbItem, attrs, authors, units, issue, section,
+    suppSummaryTypes, text = parsePrefilteredData(itemID, existingItem, rawMeta, prefilteredData)
+
+  if rawMeta.name =~ /^DISS_submission/ ||
+     (rawMeta.name == "mets" && rawMeta.attr("PROFILE") == "http://www.loc.gov/mets/profiles/00000026.html")
+    processETD(metaPath, nailgun)
+  elsif rawMeta.name == "mets"
+    processBiomed(metaPath, nailgun)
   end
 
   # Create JSON for the full text index
@@ -1287,7 +1317,7 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
       pub_date:      dbItem[:pub_date].to_date.iso8601 + "T00:00:00Z",
       pub_year:      dbItem[:pub_date].year,
       rights:        dbItem[:rights] || "",
-      sort_author:   (data.multiple("creator")[0] || "").gsub(/[^\w ]/, '').downcase,
+      sort_author:   (authors[0] || {name:""})[:name].gsub(/[^\w ]/, '').downcase,
     }
   }
 
@@ -1325,6 +1355,14 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
     }
   end
 
+  dbAuthors = authors.each_with_index.map { |data, idx|
+    ItemAuthor.new { |auth|
+      auth[:item_id] = itemID
+      auth[:attrs] = JSON.generate(data)
+      auth[:ordering] = idx
+    }
+  }
+
   # Calculate digests of the index data and database records
   idxData = JSON.generate(idxItem)
   idxDigest = Digest::MD5.base64digest(idxData)
@@ -1346,7 +1384,7 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
 
   # Single-item debug
   if $testMode
-    puts data.root.at('meta').to_s
+    #puts prefilteredData
     pp dbCombined
     fooData = idxItem.clone
     fooData[:fields] and fooData[:fields][:text] and fooData[:fields].delete(:text)
@@ -1413,21 +1451,25 @@ end
 def indexAllItems
   Thread.current[:name] = "index thread"  # label all stdout from this thread
   batch = emptyBatch({})
-  loop do
-    # Grab an item from the input queue
-    Thread.current[:name] = "index thread"  # label all stdout from this thread
-    itemID, timestamp, prefilteredData = $indexQueue.pop
-    itemID or break
 
-    # Extract data and index it (in batches)
-    begin
-      Thread.current[:name] = "index thread: #{itemID}"  # label all stdout from this thread
-      indexItem(itemID, timestamp, prefilteredData, batch)
-    rescue Exception => e
-      puts "Error indexing item #{itemID}"
-      raise
+  classPath = "/apps/eschol/erep/xtf/WEB-INF/lib/saxonb-8.9.jar"
+  Nailgun.run(classPath) { |nailgun|
+    loop do
+      # Grab an item from the input queue
+      Thread.current[:name] = "index thread"  # label all stdout from this thread
+      itemID, timestamp, prefilteredData = $indexQueue.pop
+      itemID or break
+
+      # Extract data and index it (in batches)
+      begin
+        Thread.current[:name] = "index thread: #{itemID}"  # label all stdout from this thread
+        indexItem(itemID, timestamp, prefilteredData, batch, nailgun)
+      rescue Exception => e
+        puts "Error indexing item #{itemID}"
+        raise
+      end
     end
-  end
+  }
 
   # Finish off the last batch.
   batch[:items].empty? or $batchQueue << batch
