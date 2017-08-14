@@ -943,7 +943,6 @@ put "/api/unit/:unitID/issueConfig" do |unitID|
         unitAttrs["default_issue"] = updateIssueConfig(unitAttrs["default_issue"], params["data"], voliss)
         unitAttrs["default_issue"] or unitAttrs.delete("default_issue")
         unit.attrs = unitAttrs.to_json
-        puts "new unit attrs: #{unit.attrs}"
         unit.save
       else
         issue = issueMap[voliss] or jsonHalt(404, "Unknown volume/issue #{voliss.inspect}")
