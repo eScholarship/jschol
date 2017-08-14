@@ -43,24 +43,6 @@ class VolumeSelector extends React.Component {
   }
 }
 
-class SectionComp extends React.Component {
-  static PropTypes = {
-    section: PropTypes.shape({
-      articles: PropTypes.array,
-      id: PropTypes.number,
-      issue_id: PropTypes.number,
-      name: PropTypes.string
-    }).isRequired
-  }
-  render() {
-    return (
-      <div>
-        {this.props.section.articles.map(article => <PubPreviewComp h="h3" key={article.id} result={article}/>)}
-      </div>
-    )
-  }
-}
-
 class IssueComp extends React.Component {
   static PropTypes = {
     display: PropTypes.string.isRequired,
@@ -79,8 +61,13 @@ class IssueComp extends React.Component {
         image_type: PropTypes.string.isRequired,
         caption: PropTypes.string
       }),
-      sections: PropTypes.array,    //See SectionComp prop types directly above 
       rights: PropTypes.string,
+      sections: PropTypes.arrayOf(PropTypes.shape({
+        articles: PropTypes.array,
+        id: PropTypes.number,
+        issue_id: PropTypes.number,
+        name: PropTypes.string
+      })).isRequired,
     }).isRequired,
     issues: PropTypes.array.isRequired   // Array of issue hashes
   }
