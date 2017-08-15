@@ -91,33 +91,6 @@ $mediafile-img-height: 120px;
 
 }
 
-.o-mediafile--audio,
-.o-mediafile--audio--selected,
-.o-mediafile--data,
-.o-mediafile--data--selected {
-
-  .o-mediafile__link {
-    margin-bottom: $spacing-sm;
-
-    &::after {
-      display: block;
-      height: $mediafile-img-height;
-      background-color: $color-dark-gray;
-      content: '';
-    }
-
-    img {
-      display: none; // if there's an image in the html
-    }
-
-    @include bp(screen1) {
-      margin-bottom: 0;
-    }
-
-  }
-
-}
-
 // Media-specific icons within links:
 
 @each $mediafile-type, $mediafile-icon in
@@ -196,7 +169,10 @@ $mediafile-img-height: 120px;
 .o-mediafile__link {
   display: block;
   position: relative;
+  height: $mediafile-img-height;
+  margin-bottom: $spacing-sm;
   clear: left;
+  background-color: $color-dark-gray;
 
   &::before {
     position: absolute;
@@ -207,6 +183,10 @@ $mediafile-img-height: 120px;
     background: no-repeat center / 60px;
     content: '';
     opacity: 0.7;
+  }
+
+  @include bp(screen1) {
+    margin-bottom: 0;
   }
 
 }

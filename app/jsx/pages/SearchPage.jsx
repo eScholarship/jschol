@@ -357,31 +357,33 @@ class FacetFieldset extends React.Component {
     }
     return (
       <details className="c-facetbox" id={data.fieldName} open={this.props.open}>
-        <summary className="c-facetbox__summary"><span>{data.display}</span></summary>
-        {facetItemNodes}
-        {this.props.modal &&
-          <div id={`facetModalBase-${data.fieldName}`}>
-            <button className="c-facetbox__show-more"
-                    onClick={(event)=>{
-                              this.setState({modalOpen:true})
-                              event.preventDefault()}
-                            }>
-              Show more
-            </button>
-            {/* style: maxHeight and overflowY hack below makes scrolling modal,
-                until Joel propagates the change to the scss where it really belongs.
-            */}
-            <ModalComp isOpen={this.state.modalOpen}
-              parentSelector={()=>$(`#facetModalBase-${data.fieldName}`)[0]}
-              header={"Refine By " + data.display}
-              onOK={e=>this.closeModal(e, data.fieldName)} okLabel="Done"
-              onCancel={e=>this.closeModal(e, data.fieldName)}
-              content={ <div style={{ maxHeight: "45vh", overflowY: "auto" }}>
-                          { this.getFacetNodes(data.facets) }
-                        </div> }
-            />
-          </div>
-        }
+        <summary className="c-facetbox__summary"><span id={data.fieldName}>{data.display}</span></summary>
+          <fieldset aria-labelledby={data.fieldName}>
+            {facetItemNodes}
+          {this.props.modal &&
+            <div id={`facetModalBase-${data.fieldName}`}>
+              <button className="c-facetbox__show-more"
+                      onClick={(event)=>{
+                                this.setState({modalOpen:true})
+                                event.preventDefault()}
+                              }>
+                Show more
+              </button>
+              {/* style: maxHeight and overflowY hack below makes scrolling modal,
+                  until Joel propagates the change to the scss where it really belongs.
+              */}
+              <ModalComp isOpen={this.state.modalOpen}
+                parentSelector={()=>$(`#facetModalBase-${data.fieldName}`)[0]}
+                header={"Refine By " + data.display}
+                onOK={e=>this.closeModal(e, data.fieldName)} okLabel="Done"
+                onCancel={e=>this.closeModal(e, data.fieldName)}
+                content={ <div style={{ maxHeight: "45vh", overflowY: "auto" }}>
+                            { this.getFacetNodes(data.facets) }
+                          </div> }
+              />
+            </div>
+          }
+          </fieldset>
       </details>
     )
   }
@@ -499,7 +501,7 @@ class SearchPage extends PageBase {
         formButton = "facet-form-submit"
     return(
       <div className="l_search">
-        <Header2Comp searchComp="1" />
+        <Header2Comp searchComp="1" query={data.query.q} />
         <div className="c-navbar">
           <NavComp data={data.header.nav_bar} />
         </div>

@@ -8,6 +8,12 @@
   box-sizing: border-box;
 }
 
+// Set common style to all focusable elements:
+
+*:focus {
+  outline: $color-orange solid 1px;
+}
+
 abbr {
   border: none; // for older browsers
   text-decoration: none; // for newer browsers

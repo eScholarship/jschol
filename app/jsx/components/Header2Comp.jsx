@@ -16,7 +16,8 @@ class HeaderComp2 extends React.Component {
   static propTypes = {
     type: PropTypes.string,       // not required, at least on global search page
     unitID: PropTypes.string,     // ditto
-    searchComp: PropTypes.string  // ditto
+    searchComp: PropTypes.string, // ditto
+    query: PropTypes.string
   }
 
   constructor(props){
@@ -39,7 +40,8 @@ class HeaderComp2 extends React.Component {
           </Link>  
           <div className={this.state.searchActive ? "c-header__search--active" : "c-header__search"}>
           {this.props.searchComp && this.props.searchComp == "1" ?
-            <Search1Comp onClose = {()=>this.setState({searchActive: false})} />
+            <Search1Comp query={this.props.query}
+                         onClose = {()=>this.setState({searchActive: false})} />
             :
             <Search2Comp type={this.props.type}
                          unitID={this.props.unitID}
