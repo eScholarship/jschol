@@ -499,7 +499,7 @@ class SearchPage extends PageBase {
         formButton = "facet-form-submit"
     return(
       <div className="l_search">
-        <Header2Comp searchComp="1" />
+        <Header2Comp searchComp="1" query={data.query.q} />
         <div className="c-navbar">
           <NavComp data={data.header.nav_bar} />
         </div>
