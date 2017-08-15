@@ -31,21 +31,21 @@ class Downloadable extends React.Component {
     let p = this.props,
       contentVars = content_type => {
         let v = {
-          'application/pdf': () => ['PDF', "/content/qt" + p.id + "/qt" + p.id + ".pdf" ],
-          'text/html':       () => ['HTML', '' ],
-          'default':         () => ['Content', '' ]
+          'application/pdf': () => [ 'PDF', "/content/qt" + p.id + "/qt" + p.id + ".pdf", '.pdf' ],
+          'text/html':       () => [ 'HTML', '' , '.html' ],
+          'default':         () => [ 'Content', '' , '' ]
         }
         return v[content_type]()
       },
       x = p.content_type ? contentVars(p.content_type) : contentVars('default'),
       label = x[0],
       url = x[1],
-      filename="eScholarship UC item " + p.id
+      filename="eScholarship UC item " + p.id + x[2] 
     return (
       <div className="c-itemactions">
         <div className="o-download">
           {/* ToDo: Once main multimedia content is ingested, this button should say 'Download Content' */}
-          {/* <a href={url} className="o-download__button" download={filename}>Download {label}</a> */}
+          {/* className="o-download__button" */}
           <a href={url} className="o-button__8" download={filename}>Download {label}</a>
 {/*       <details className="o-download__formats">
             <summary aria-label="formats"></summary>

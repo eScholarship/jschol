@@ -5,7 +5,7 @@ import { Link, browserHistory } from 'react-router'
 import MarqueeComp from '../components/MarqueeComp.jsx'
 import JournalInfoComp from '../components/JournalInfoComp.jsx'
 import ScholWorksComp from '../components/ScholWorksComp.jsx'
-import PubPreviewComp from '../components/PubPreviewComp.jsx'
+import PubComp from '../components/PubComp.jsx'
 import IssueActionsComp from '../components/IssueActionsComp.jsx'
 
 class VolumeSelector extends React.Component {
@@ -82,7 +82,7 @@ class IssueComp extends React.Component {
         {/*              articles={} */}
         <div className="c-pub">
           <VolumeSelector vip={issueCurrent} issues={this.props.issues} />
-          <br/><br/>
+    {/* TITLE AND DESCRIPTION */}
           {this.props.display=="magazine" &&
             <div className="c-pubpreview">
             {pi.cover &&
@@ -99,13 +99,14 @@ class IssueComp extends React.Component {
           {this.props.display!="magazine" && pi.description &&
             (<p>{pi.description}</p>) }
         </div>
+    {/* ARTICLE LISTINGS */}
         <div>
       { this.props.display=="magazine" ?
         pi.sections.map(section =>
           <div key={section.name}>
             <h2 className="o-heading1a">{section.name}</h2>
             <div className="o-dividecontent2x--ruled">
-              {section.articles.map(article => <PubPreviewComp h="h3" key={article.id} result={article}/>)}
+              {section.articles.map(article => <PubComp h="h3" key={article.id} result={article}/>)}
             </div>
           </div>
         )
@@ -113,7 +114,7 @@ class IssueComp extends React.Component {
         pi.sections.map(section =>
           <div key={section.name}>
             <h2 className="o-heading1a">{section.name}</h2>
-            {section.articles.map(article => <PubPreviewComp h="h3" key={article.id} result={article}/>)}
+            {section.articles.map(article => <PubComp h="h3" key={article.id} result={article}/>)}
           </div>
         )
       }

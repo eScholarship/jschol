@@ -105,6 +105,7 @@ class FacetItem extends React.Component {
 
   render() {
     let facet = this.props.data.facet
+    let facetValueKey = facet.value.replace(/ /g, '_')
     this.label = facet.displayName ? facet.displayName : facet.value
     // Put a special class name on the rights facet to show Creative Commons icons
     let className = this.props.data.facetType == "rights"
@@ -112,11 +113,11 @@ class FacetItem extends React.Component {
                       : ""
     return (
       <li className={className}>
-        <input id={`${this.props.data.facetType}-${facet.value}`} className="c-checkbox__input" type="checkbox"
+        <input id={`${this.props.data.facetType}-${facetValueKey}`} className="c-checkbox__input" type="checkbox"
           name={this.props.data.facetType} value={facet.value}
           onChange={this.handleChange}
           checked={this.checkFacet(this.props)} disabled={this.props.data.ancestorChecked ? true : false}/>
-        <label htmlFor={`${this.props.data.facetType}-${facet.value}`} className="c-checkbox__label">{this.label} ({facet.count})</label>
+        <label htmlFor={`${this.props.data.facetType}-${facetValueKey}`} className="c-checkbox__label">{this.label} ({facet.count})</label>
         { facet.descendents &&
           <ul className="c-checkbox">
             { facet.descendents.map(d => {
@@ -356,9 +357,9 @@ class FacetFieldset extends React.Component {
       facetItemNodes = []
     }
     return (
-      <details className="c-facetbox" id={data.fieldName} open={this.props.open}>
-        <summary className="c-facetbox__summary"><span id={data.fieldName}>{data.display}</span></summary>
-          <fieldset aria-labelledby={data.fieldName}>
+      <details className="c-facetbox" open={this.props.open}>
+        <summary className="c-facetbox__summary"><span id={this.props.index}>{data.display}</span></summary>
+          <fieldset aria-labelledby={this.props.index}>
             {facetItemNodes}
           {this.props.modal &&
             <div id={`facetModalBase-${data.fieldName}`}>
@@ -468,7 +469,7 @@ class FacetForm extends React.Component {
       let filters = this.state.query.filters && this.state.query.filters[fieldName] ? this.state.query.filters[fieldName] : {}
       let facets = fieldset.facets
       return (
-        <FacetFieldset key={fieldName} data={fieldset} query={filters} handler={this.changeFacet}
+        <FacetFieldset key={fieldName} index={"facetbox" + i} data={fieldset} query={filters} handler={this.changeFacet}
                        // Have first two open by default
                        open={[0,1].includes(i)}
                        modal={((["departments", "journals"].includes(fieldName)) &&
