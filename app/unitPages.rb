@@ -895,7 +895,7 @@ def getUnitIssueConfig(unit, unitAttrs)
   template = { "numbering" => "both", "rights" => nil, "buy_link" => nil }
   issues = Issue.where(unit_id: unit.id).reverse(:pub_date).map { |issue|
     { voliss: "#{issue.volume}.#{issue.issue}" }.merge(template).
-      merge(JSON.parse(issue.attrs).select { |k,v| template.key?(k) })
+      merge(JSON.parse(issue.attrs || "{}").select { |k,v| template.key?(k) })
   }
   # Fill default issue from db, or most recent issue, else default values
   issues.unshift({ voliss: "default" }.merge(template).merge(
@@ -946,13 +946,13 @@ put "/api/unit/:unitID/issueConfig" do |unitID|
         unit.save
       else
         issue = issueMap[voliss] or jsonHalt(404, "Unknown volume/issue #{voliss.inspect}")
-        oldAttrs = JSON.parse(issue.attrs)
-        newAttrs = updateIssueConfig(JSON.parse(issue.attrs), params["data"], voliss)
+        oldAttrs = issue.attrs ? JSON.parse(issue.attrs) : nil
+        newAttrs = updateIssueConfig(JSON.parse(issue.attrs || "{}"), params["data"], voliss)
         if oldAttrs.to_json != newAttrs.to_json
           issue.attrs = newAttrs.to_json
           issue.save
-          if oldAttrs["rights"] != newAttrs["rights"]
-            Item.where(section: Section.where(issue_id: issue.id).select(:id)).update(rights: newAttrs["rights"])
+          if oldAttrs&.dig("rights") != newAttrs&.dig("rights")
+            Item.where(section: Section.where(issue_id: issue.id).select(:id)).update(rights: newAttrs&.dig("rights"))
           end
         end
       end
