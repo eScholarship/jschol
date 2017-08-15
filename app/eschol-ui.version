@@ -436,5 +436,21 @@ As well as:
   modified: app/jsx/layouts/JournalLayout.jsx
   modified: app/jsx/layouts/SeriesLayout.jsx
 
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's dcac1f536f4fdafa75726e8933dc504ebddb8481, 2017-08-14 <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+Andy added all scss changes since last.
+As well as:
+
+  modified:   app/jsx/objects/MediaFeatureObj.jsx
+  modified:   app/jsx/objects/MediaFileObj.jsx
+  modified:   app/jsx/pages/SearchPage.jsx  (based on changes from Joel's FacetBoxComp.jsx)
+
+  ignored:    app/jsx/components/MediaFileGridComp.jsx  (just comments)
+  ignored for now:    app/jsx/layouts/JournalItemMultimediaLayout.jsx (not ready to implement multimedia view)
+  ignored:    app/jsx/layouts/SearchLayout.jsx (Implemented @ ../pages/SearchPage.jsx )
+
+
 
 

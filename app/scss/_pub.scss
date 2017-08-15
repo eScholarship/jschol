@@ -2,6 +2,7 @@
 
 .c-pub {
   margin-bottom: $spacing-md;
+  break-inside: avoid;
 }
 
 .c-pub__heading {
