@@ -2,7 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Link } from 'react-router'
 
-import ScholWorksComp from '../components/ScholWorksComp.jsx'
+import PubPreviewComp from '../components/PubPreviewComp.jsx'
 import SortPaginationComp from '../components/SortPaginationComp.jsx'
 import PaginationComp from '../components/PaginationComp.jsx'
 import ShareComp from '../components/ShareComp.jsx'
@@ -35,7 +35,7 @@ class SeriesSelector extends React.Component {
     let p = this.props
     return (
       <div className="o-customselector">
-        <Link to={"/uc/" + p.unit.id} className="o-customselector__heading">{p.unit.name}</Link>
+        <h1 className="o-customselector__heading">{p.unit.name}</h1>
         <details open={this.state.isOpen}
                  ref={domElement => this.details=domElement}
                  onClick={()=>setTimeout(()=>this.setState({isOpen: this.details.open}), 0)}
@@ -44,7 +44,7 @@ class SeriesSelector extends React.Component {
           <div className="o-customselector__menu">
             <ul className="o-customselector__items" role="list">
               {p.series.map((s, i) =>
-                <li><Link key={i} to={"/uc/"+ s.unit_id} onClick={()=>this.closeSelector()}>{s.name}</Link></li> )}
+                <li key={i}><Link to={"/uc/"+ s.unit_id} onClick={()=>this.closeSelector()}>{s.name}</Link></li> )}
             </ul>
           </div>
         </details>
@@ -73,7 +73,6 @@ class SeriesLayout extends React.Component {
       series: PropTypes.array
     }).isRequired,
     marquee: PropTypes.shape({
-      carousel: PropTypes.object,
       about: PropTypes.string
     })
   }
@@ -125,7 +124,7 @@ class SeriesLayout extends React.Component {
             }
               <div>
                 { data.searchResults.map(result =>
-                  <ScholWorksComp h="h2" key={result.id} result={result} />)
+                  <PubPreviewComp h="h2" key={result.id} result={result} />)
                 }
               </div>
             {(data.count > data.query.rows) &&

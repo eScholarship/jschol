@@ -5,7 +5,7 @@ import { Subscriber } from 'react-broadcast'
 
 import MarqueeComp from '../components/MarqueeComp.jsx'
 import ShareComp from '../components/ShareComp.jsx'
-import ScholWorksComp from '../components/ScholWorksComp.jsx'
+import PubComp from '../components/PubComp.jsx'
 
 class SeriesComp extends React.Component {
   static propTypes = {
@@ -17,7 +17,6 @@ class SeriesComp extends React.Component {
       items: PropTypes.arrayOf(PropTypes.shape({
         id: PropTypes.string.isRequired,
         title: PropTypes.string.isRequired,
-        
         abstract: PropTypes.string,
         authors: PropTypes.array,
         content_type: PropTypes.string,
@@ -32,13 +31,10 @@ class SeriesComp extends React.Component {
     return (
       <div className="c-unitpub">
         <h3 className="c-unitpub__heading"><Link to={"/uc/"+data.unit_id}>{data.name}</Link></h3>
-      {/* ToDo: Temporary styling until we bring in Joel's PubComp */}
-        <div style={{paddingLeft: '20px'}}>
       {data.items.map((item) =>
-        <ScholWorksComp key={item.id} result={item} h="H4" />) }
+        <PubComp key={item.id} result={item} h="H4" />) }
       {data.count > data.previewLimit &&
         <div className="c-unitpub__publications">{data.count - data.previewLimit} more work{plural} &mdash; <Link to={"/uc/"+data.unit_id}>show all</Link></div> }
-        </div>
       </div>
     )
   }

@@ -26,9 +26,7 @@ class VolumeSelector extends React.Component {
     let p = this.props
     return (
       <div className="o-customselector">
-        <Link className="o-customselector__heading"
-              href={this.getIssuePath(p.vip[0], p.vip[1], p.vip[2])}>{`Volume ${p.vip[1]}, Issue ${p.vip[2]}, ${p.vip[3]}`}
-        </Link>
+        <h1 className="o-customselector__heading">{`Volume ${p.vip[1]}, Issue ${p.vip[2]}, ${p.vip[3]}`}</h1>
         <details className="o-customselector__selector">
           <summary aria-label="Select a different issue"></summary>
           <div className="o-customselector__menu">
@@ -40,29 +38,6 @@ class VolumeSelector extends React.Component {
             </ul>
           </div>
         </details>
-      </div>
-    )
-  }
-}
-
-class SectionComp extends React.Component {
-  static PropTypes = {
-    section: PropTypes.shape({
-      articles: PropTypes.array,
-      id: PropTypes.number,
-      issue_id: PropTypes.number,
-      name: PropTypes.string
-    }).isRequired
-  }
-  render() {
-    return (
-      <div>
-        <h2 className="o-heading3">{this.props.section.name}</h2>
-        {this.props.display == "magazine" ?
-          this.props.section.articles.map(article => <ScholWorksComp h="h3" key={article.id} result={article}/>)
-        :
-          this.props.section.articles.map(article => <PubPreviewComp h="h3" key={article.id} result={article}/>)
-        }
       </div>
     )
   }
@@ -86,8 +61,13 @@ class IssueComp extends React.Component {
         image_type: PropTypes.string.isRequired,
         caption: PropTypes.string
       }),
-      sections: PropTypes.array,    //See SectionComp prop types directly above 
       rights: PropTypes.string,
+      sections: PropTypes.arrayOf(PropTypes.shape({
+        articles: PropTypes.array,
+        id: PropTypes.number,
+        issue_id: PropTypes.number,
+        name: PropTypes.string
+      })).isRequired,
     }).isRequired,
     issues: PropTypes.array.isRequired   // Array of issue hashes
   }
@@ -119,13 +99,25 @@ class IssueComp extends React.Component {
           {this.props.display!="magazine" && pi.description &&
             (<p>{pi.description}</p>) }
         </div>
-      {this.props.display=="magazine" ?
-        <div className="o-dividecontent2x--ruled">
-          {pi.sections.map(section => <SectionComp key={section.name} section={section} display={this.props.display} />)}
-        </div>
+        <div>
+      { this.props.display=="magazine" ?
+        pi.sections.map(section =>
+          <div key={section.name}>
+            <h2 className="o-heading1a">{section.name}</h2>
+            <div className="o-dividecontent2x--ruled">
+              {section.articles.map(article => <PubPreviewComp h="h3" key={article.id} result={article}/>)}
+            </div>
+          </div>
+        )
       :
-        (pi.sections.map(section => <SectionComp key={section.name} section={section} display={this.props.display} />))
+        pi.sections.map(section =>
+          <div key={section.name}>
+            <h2 className="o-heading1a">{section.name}</h2>
+            {section.articles.map(article => <PubPreviewComp h="h3" key={article.id} result={article}/>)}
+          </div>
+        )
       }
+        </div>
       </section>
     )
   }

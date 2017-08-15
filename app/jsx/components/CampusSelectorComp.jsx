@@ -20,8 +20,10 @@ class CampusSelectorComp extends React.Component {
   render() {
     let p = this.props
     return (
-      <div className="o-customselector">
-        <Link to={"/uc/" + p.campusID} className="o-customselector__heading">{p.campusName ? p.campusName : "eScholarship"}</Link>
+      <div className="o-customselector--campus">
+        <h1 className="o-customselector__heading">
+          <Link to={"/uc/" + p.campusID}>{p.campusName ? p.campusName : "eScholarship"}</Link>
+        </h1>
         <details open={this.state.isOpen}
                  ref={domElement => this.details=domElement}
                  onClick={()=>setTimeout(()=>this.setState({isOpen: this.details.open}), 0)}
