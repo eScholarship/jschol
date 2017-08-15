@@ -66,6 +66,7 @@ class CampusLayout extends React.Component {
               </header>
               [content to go here]
             </section>
+            {this.props.sidebar}
           </aside>
         </div>
       </div>

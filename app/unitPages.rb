@@ -85,8 +85,10 @@ def getPageBreadcrumb(unit, pageName, issue=nil)
    return [{name: "Volume #{issue[:volume]}, Issue #{issue[:issue]}",
                id: issue[:unit_id] + ":" + issue[:volume] + ":" + issue[:issue],
               url: "/uc/#{issue[:unit_id]}/#{issue[:volume]}/#{issue[:issue]}"}]
+  elsif pageName == "search"
+    # don't add "Search" breadcrumb on Series pages
+    return unit.type.include?('series') ? [] : [{ name: "Search", id: unit.id + ":" + pageName}]
   else
-    pageName == "search" and return [{ name: "Search", id: unit.id + ":" + pageName}]
     pageName == "profile" and return [{ name: "Profile", id: unit.id + ":" + pageName}]
     pageName == "sidebar" and return [{ name: "Sidebars", id: unit.id + ":" + pageName}]
     p = Page.where(unit_id: unit.id, slug: pageName).first
@@ -159,16 +161,26 @@ def getUnitMarquee(unit, attrs)
   }
 end
 
-# Get ORU-specific data for Department Landing Page
+# Department Landing Page
+# Grab data about: related series (children), related journals (children)
+#   and related ORUs, which include children ORUs, sibling ORUs, and parent ORU
 def getORULandingPageData(id)
-  # addPage()
   children = $hierByAncestor[id]
+  oru_children = children ? children.select { |u| u.unit.type == 'oru' }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : []
+  oru_siblings, oru_ancestor = [], []
+  oru_ancestor_id = $oruAncestors[id]
+  if oru_ancestor_id
+    oru_ancestor = [{unit_id: oru_ancestor_id, name: $unitsHash[oru_ancestor_id].name}]
+    siblings = $hierByAncestor[oru_ancestor_id]
+    oru_siblings = siblings ? siblings.select { |u| u.unit.type == 'oru' and u.id != id }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : []
+  end
+  related_orus = oru_children + oru_siblings + oru_ancestor
 
   return {
     :series => children ? children.select { |u| u.unit.type == 'series' }.map { |u| seriesPreview(u) } : [],
     :monograph_series => children ? children.select { |u| u.unit.type == 'monograph_series' }.map { |u| seriesPreview(u) } : [],
     :journals => children ? children.select { |u| u.unit.type == 'journal' }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : [],
-    :related_orus => children ? children.select { |u| u.unit.type == 'oru' }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : []
+    :related_orus => related_orus 
   }
 end
 
