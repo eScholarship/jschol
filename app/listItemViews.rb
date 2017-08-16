@@ -23,14 +23,32 @@ def itemResultData(itemIds, itemData, fields=[])
       }
       itemListItem[:authors] = itemData[:authors][itemID].map { |author| JSON.parse(author.attrs) } if itemData.dig(:authors, itemID)
 
-      itemListItem[:supp_files] = [{:type => 'video'}, {:type => 'image'}, {:type => 'pdf'}, {:type => 'audio'}]
-      for supp_file_hash in itemListItem[:supp_files]
-        if attrs['supp_files']
-          supp_file_hash[:count] = attrs['supp_files'].count { |supp_file| supp_file['mimeType'].include?(supp_file_hash[:type])}
-        else
-          supp_file_hash[:count] = 0
+      pdfCnt, imageCnt, videoCnt, audioCnt, zipCnt, otherCnt = 0, 0, 0, 0, 0, 0
+      if attrs['supp_files']
+        for supp_file in attrs['supp_files']
+          subtype = supp_file['mimeType'].split('/')[1]
+          if supp_file['mimeType'].include?('pdf')
+            pdfCnt += 1
+          elsif supp_file['mimeType'].include?('image')
+            imageCnt += 1
+          elsif supp_file['mimeType'].include?('video')
+            videoCnt += 1
+          elsif supp_file['mimeType'].include?('audio')
+            audioCnt += 1
+          elsif ['zip', 'x-bzip', 'x-bzip2', 'x-gtar', 'x-gzip', 'gnutar', 'x-tar', 'x-zip'].include?(subtype)
+            zipCnt += 1
+          else
+            otherCnt += 1
+          end 
         end
       end
+      itemListItem[:supp_files] = [
+        {:type => 'pdf',   :count => pdfCnt},
+        {:type => 'image', :count => imageCnt},
+        {:type => 'video', :count => videoCnt},
+        {:type => 'audio', :count => audioCnt},
+        {:type => 'zip',   :count => zipCnt},
+        {:type => 'other', :count => otherCnt} ]
 
       #conditional data included as needed as specified by 'fields' parameter
       itemListItem[:thumbnail] = attrs['thumbnail'] if fields.include? 'thumbnail'
