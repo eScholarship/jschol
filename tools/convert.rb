@@ -32,8 +32,9 @@ require 'sequel'
 require 'ostruct'
 require 'time'
 require 'yaml'
-require_relative '../util/sanitize.rb'
 require_relative '../util/nailgun.rb'
+require_relative '../util/sanitize.rb'
+require_relative '../util/xmlutil.rb'
 
 # Max size (in bytes, I think) of a batch to send to AWS CloudSearch.
 # According to the docs the absolute limit is 5 megs, so let's back off a
@@ -144,6 +145,21 @@ $discTbl = {"1540" => "Life Sciences",
             "3688" => "Business",
             "2932" => "Architecture",
             "3579" => "Education"}
+
+###################################################################################################
+# Monkey-patch to nicely ellide strings.
+class String
+  # https://gist.github.com/1168961
+  # remove middle from strings exceeding max length.
+  def ellipsize(options={})
+    max = options[:max] || 40
+    delimiter = options[:delimiter] || "..."
+    return self if self.size <= max
+    remainder = max - delimiter.size
+    offset = remainder / 2
+    (self[0,offset + (remainder.odd? ? 1 : 0)].to_s + delimiter + self[-offset,offset].to_s)[0,max].to_s
+  end unless defined? ellipsize
+end
 
 ###################################################################################################
 # Monkey-patch to add update_or_replace functionality, which is strangely absent in the Sequel gem.
@@ -528,7 +544,7 @@ end
 ###################################################################################################
 def defaultNav(unitID, unitType)
   if unitType == "root"
-    return [ 
+    return [
       { id: 1, type: "folder", name: "About", sub_nav: [] },
       { id: 2, type: "folder", name: "Campus Sites", sub_nav: [] },
       { id: 3, type: "folder", name: "UC Open Access", sub_nav: [] },
@@ -553,7 +569,7 @@ def convertUnitBrand(unitID, unitType)
 
     bfPath = "/apps/eschol/erep/xtf/static/brand/#{unitID}/#{unitID}.xml"
     if File.exist?(bfPath)
-      dataIn = Nokogiri::XML(File.new(bfPath), &:noblanks).root
+      dataIn = fileToXML(bfPath).root
       dataOut.merge!(convertLogo(unitID, unitType, dataIn.at("display/mainFrame/logo")))
       dataOut.merge!(convertBlurb(unitID, dataIn.at("display/mainFrame/blurb")))
       if unitType == "campus"
@@ -628,6 +644,7 @@ def convertUnits(el, parentMap, childMap, allIds)
       attrs = {}
       el[:directSubmit] and attrs[:directSubmit] = el[:directSubmit]
       el[:hide]         and attrs[:hide]         = el[:hide]
+      el[:issn]         and attrs[:issn]         = el[:issn]
       attrs.merge!(convertUnitBrand(id, unitType))
       nameChar = name[0].upcase
       if unitType == "journal"
@@ -666,6 +683,13 @@ def convertUnits(el, parentMap, childMap, allIds)
 end
 
 ###################################################################################################
+def arkToFile(ark, subpath, root = DATA_DIR)
+  shortArk = getShortArk(ark)
+  path = "#{root}/13030/pairtree_root/#{shortArk.scan(/\w\w/).join('/')}/#{shortArk}/#{subpath}"
+  return path.sub(%r{^/13030}, "13030").gsub(%r{//+}, "/").gsub(/\bbase\b/, shortArk).sub(%r{/+$}, "")
+end
+
+###################################################################################################
 def prefilterBatch(batch)
 
   # Build a file with the relative directory names of all the items to prefilter in this batch
@@ -673,9 +697,8 @@ def prefilterBatch(batch)
   nAdded = 0
   open("prefilterDirs.txt", "w") { |io|
     batch.each { |itemID, timestamp|
-      shortArk = itemID.sub(%r{^ark:/?13030/}, '')
-      partialPath = "13030/pairtree_root/#{shortArk.scan(/\w\w/).join('/')}/#{shortArk}"
-      metaPath = "#{DATA_DIR}/#{partialPath}/meta/#{shortArk}.meta.xml"
+      shortArk = getShortArk(itemID)
+      metaPath = arkToFile(shortArk, "meta/base.meta.xml")
       if !File.exists?(metaPath) || File.size(metaPath) < 50
         puts "Warning: skipping #{shortArk} due to missing or truncated meta.xml"
         $nSkipped += 1
@@ -689,7 +712,7 @@ def prefilterBatch(batch)
         next
       end
 
-      io.puts partialPath
+      io.puts arkToFile(shortArk, "", "")
       timestamps[shortArk] = timestamp
       nAdded += 1
     }
@@ -809,7 +832,7 @@ class MetaAccess
 
   # Parse prefiltered data into XML, and remove the namespaces.
   def initialize(prefilteredData)
-    doc = Nokogiri::XML(prefilteredData, &:noblanks)
+    doc = stringToXML(prefilteredData)
     doc.remove_namespaces!
     @root = doc.root
   end
@@ -819,6 +842,13 @@ class MetaAccess
     els = @root.xpath("meta/#{name}[@meta='yes']")
     els.length <= 1 or puts("Warning: multiple #{name.inspect} elements found.")
     return els[0] ? els[0].content : nil
+  end
+
+  # Get the sanitized HTML content of a metadata field which we expect only one of
+  def singleHTML(name)
+    els = @root.xpath("meta/#{name}[@meta='yes']")
+    els.length <= 1 or puts("Warning: multiple #{name.inspect} elements found.")
+    return els[0] ? els[0].html_at(".") : nil
   end
 
   # Get attribute of a single metadata field
@@ -955,27 +985,45 @@ def mimeTypeToSummaryType(mimeType)
 end
 
 ###################################################################################################
-def generatePdfThumbnail(itemID, timestamp)
-  url = "#{$thumbnailServer}/uc/item/#{itemID.sub(/^qt/, '')}?image.view=generateImage;imgWidth=121;pageNum=1"
-  response = HTTParty.get(url)
-  response.code.to_i == 200 or raise("Error generating thumbnail: HTTP #{response.code}: #{response.message}")
-  tempFile = Tempfile.new("thumbnail")
+def generatePdfThumbnail(itemID, existingItem)
   begin
-    tempFile.write(response.body)
-    tempFile.close
-    data = putImage(tempFile.path) { |dims|
-      dims[0] == 121 or raise("Got thumbnail width #{dims[0]}, wanted 121")
-      dims[1] < 300 or raise("Got thumbnail height #{dims[1]}, wanted less than 300")
-    }
-    data[:timestamp] = timestamp
-    return data
-  ensure
-    begin
-      tempFile.close
-    rescue Exception => e
-      # ignore
+    pdfPath = arkToFile(itemID, "content/base.pdf")
+    File.exist?(pdfPath) or return nil
+    pdfTimestamp = File.mtime(pdfPath).to_i
+    existingThumb = existingItem ? JSON.parse(existingItem.attrs)["thumbnail"] : nil
+    if existingThumb && existingThumb["timestamp"] == pdfTimestamp
+      # Rebuilding to keep order of fields consistent
+      return { asset_id:   existingThumb["asset_id"],
+               image_type: existingThumb["image_type"],
+               width:      existingThumb["width"].to_i,
+               height:     existingThumb["height"].to_i,
+               timestamp:  existingThumb["timestamp"].to_i
+              }
     end
-    tempFile.unlink
+
+    url = "#{$thumbnailServer}/uc/item/#{itemID.sub(/^qt/, '')}?image.view=generateImage;imgWidth=121;pageNum=1"
+    response = HTTParty.get(url)
+    response.code.to_i == 200 or raise("Error generating thumbnail: HTTP #{response.code}: #{response.message}")
+    tempFile = Tempfile.new("thumbnail")
+    begin
+      tempFile.write(response.body)
+      tempFile.close
+      data = putImage(tempFile.path) { |dims|
+        dims[0] == 121 or raise("Got thumbnail width #{dims[0]}, wanted 121")
+        dims[1] < 300 or raise("Got thumbnail height #{dims[1]}, wanted less than 300")
+      }
+      data[:timestamp] = pdfTimestamp
+      return data
+    ensure
+      begin
+        tempFile.close
+      rescue Exception => e
+        # ignore
+      end
+      tempFile.unlink
+    end
+  rescue Exception => e
+    puts "Warning: error generating thumbnail: #{e}: #{e.backtrace.join("; ")}"
   end
 end
 
@@ -1012,7 +1060,7 @@ def addIssueNumberingAttrs(issueUnit, volNum, issueNum, issueAttrs)
     data = {}
     bfPath = "/apps/eschol/erep/xtf/static/brand/#{issueUnit}/#{issueUnit}.xml"
     if File.exist?(bfPath)
-      dataIn = Nokogiri::XML(File.new(bfPath), &:noblanks).root
+      dataIn = fileToXML(bfPath).root
       el = dataIn.at(".//singleIssue")
       if el && el.text == "yes"
         data[:singleIssue] = true
@@ -1034,6 +1082,56 @@ def addIssueNumberingAttrs(issueUnit, volNum, issueNum, issueAttrs)
     issueAttrs[:numbering] = "issue_only"
   end
 
+end
+
+###################################################################################################
+def grabUCISupps(rawMeta)
+  # For UCIngest format, read supp data from the raw metadata file.
+  supps = []
+  rawMeta.xpath("//content/supplemental/file").each { |fileEl|
+    suppAttrs = { file: fileEl[:path].sub(%r{.*content/supp/}, "") }
+    fileEl.children.each { |subEl|
+      suppAttrs[subEl.name] = subEl.text
+    }
+    supps << suppAttrs
+  }
+  puts "supps=#{supps}"
+  return supps
+end
+
+###################################################################################################
+def summarizeSupps(itemID, inSupps)
+  outSupps = nil
+  suppSummaryTypes = Set.new
+  inSupps.each { |supp|
+    suppPath = arkToFile(itemID, "content/supp/#{supp[:file]}")
+    if !File.exist?(suppPath)
+      puts "Warning: can't find supp file #{supp[:file]}"
+    else
+      # Mime types aren't always reliable coming from Subi. Let's try harder.
+      mimeType = MimeMagic.by_magic(File.open(suppPath))
+      if mimeType && mimeType.type
+        supp[:mimeType] = mimeType.to_s
+      end
+      suppSummaryTypes << mimeTypeToSummaryType(mimeType)
+      (outSupps ||= []) << supp
+    end
+  }
+  return outSupps, suppSummaryTypes
+end
+
+###################################################################################################
+def translateRights(oldRights)
+  case oldRights
+    when "cc1"; "CC BY"
+    when "cc2"; "CC BY-SA"
+    when "cc3"; "CC BY-ND"
+    when "cc4"; "CC BY-NC"
+    when "cc5"; "CC BY-NC-SA"
+    when "cc6"; "CC BY-NC-ND"
+    when nil, "public"; nil
+    else puts "Unknown rights value #{pf.single("rights").inspect}"
+  end
 end
 
 ###################################################################################################
@@ -1073,7 +1171,8 @@ def parsePrefilteredData(itemID, existingItem, rawMeta, prefilteredData)
   end
 
   # Filter out "n/a" abstracts
-  pf.single("description") && pf.single("description").size > 3 and attrs[:abstract] = pf.single("description")
+  abstract = pf.singleHTML("description")
+  abstract && abstract.size > 3 and attrs[:abstract] = abstract
 
   # Disciplines are a little extra work; we want to transform numeric IDs to plain old labels
   if pf.any("facet-discipline")
@@ -1088,14 +1187,7 @@ def parsePrefilteredData(itemID, existingItem, rawMeta, prefilteredData)
   # Supplemental files
   supps = []
   if rawMeta.at("/record/content")
-    # For UCIngest format, read supp data from the raw metadata file.
-    rawMeta.xpath("/record/content/supplemental/file").each { |fileEl|
-      suppAttrs = { file: fileEl[:path].sub(%r{.*content/supp/}, "") }
-      fileEl.children.each { |subEl|
-        suppAttrs[subEl.name] = subEl.text
-      }
-      supps << suppAttrs
-    }
+    supps = grabUCISupps(rawMeta)
   else
     # For non-UCIngest format, read supp data from the index
     pf.multiple("supplemental-file").each { |supp|
@@ -1107,35 +1199,10 @@ def parsePrefilteredData(itemID, existingItem, rawMeta, prefilteredData)
       supps << { file: pair[1], title: pair[0] }
     }
   end
-  suppSummaryTypes = Set.new
-  if !supps.empty?
-    supps.each { |supp|
-      suppPath = "#{DATA_DIR}/13030/pairtree_root/#{itemID.scan(/\w\w/).join('/')}/#{itemID}/content/supp/#{supp[:file]}"
-      if !File.exist?(suppPath)
-        puts "Warning: can't find supp file #{supp[:file]}"
-      else
-        # Mime types aren't always reliable coming from Subi. Let's try harder.
-        mimeType = MimeMagic.by_magic(File.open(suppPath))
-        if mimeType && mimeType.type
-          supp['mimeType'] = mimeType
-        end
-        suppSummaryTypes << mimeTypeToSummaryType(mimeType)
-        (attrs[:supp_files] ||= []) << supp
-      end
-    }
-  end
+  attrs[:supp_files], suppSummaryTypes = summarizeSupps(itemID, supps)
 
   # Do some translation on rights codes
-  rights = case pf.single("rights")
-    when "cc1"; "CC BY"
-    when "cc2"; "CC BY-SA"
-    when "cc3"; "CC BY-ND"
-    when "cc4"; "CC BY-NC"
-    when "cc5"; "CC BY-NC-SA"
-    when "cc6"; "CC BY-NC-ND"
-    when nil, "public"; nil
-    else puts "Unknown rights value #{pf.single("rights").inspect}"
-  end
+  rights = translateRights(pf.single("rights"))
 
   # For eschol journals, populate the issue and section models.
   issue = section = nil
@@ -1176,8 +1243,8 @@ def parsePrefilteredData(itemID, existingItem, rawMeta, prefilteredData)
   # Data for external journals
   if !issue
     pf.single("journal") and (attrs[:ext_journal] ||= {})[:name]   = pf.single("journal")
-    volNum                 and (attrs[:ext_journal] ||= {})[:volume] = volNum
-    issueNum               and (attrs[:ext_journal] ||= {})[:issue]  = issueNum
+    volNum               and (attrs[:ext_journal] ||= {})[:volume] = volNum
+    issueNum             and (attrs[:ext_journal] ||= {})[:issue]  = issueNum
     pf.single("issn")    and (attrs[:ext_journal] ||= {})[:issn]   = pf.single("issn")
     if pf.single("coverage") =~ /^([\w.]+) - ([\w.]+)$/
       (attrs[:ext_journal] ||= {})[:fpage] = $1
@@ -1193,26 +1260,8 @@ def parsePrefilteredData(itemID, existingItem, rawMeta, prefilteredData)
 
   # Generate thumbnails (but only for non-suppressed PDF items)
   if !attrs[:suppress_content] && pf.single("pdfExists") == "yes"
-    pdfPath = "#{DATA_DIR}/13030/pairtree_root/#{itemID.scan(/\w\w/).join('/')}/#{itemID}/content/#{itemID}.pdf"
-    if File.exist?(pdfPath)
-      pdfTimestamp = File.mtime(pdfPath).to_i
-      existingThumb = existingItem ? JSON.parse(existingItem.attrs)["thumbnail"] : nil
-      if existingThumb && existingThumb["timestamp"] == pdfTimestamp
-        # Rebuilding to keep order of fields consistent
-        attrs[:thumbnail] = { asset_id: existingThumb["asset_id"],
-                              image_type: existingThumb["image_type"],
-                              width: existingThumb["width"].to_i,
-                              height: existingThumb["height"].to_i,
-                              timestamp: existingThumb["timestamp"].to_i
-                            }
-      else
-        begin
-          attrs[:thumbnail] = generatePdfThumbnail(itemID, pdfTimestamp)
-        rescue Exception => e
-          puts "Warning: error generating thumbnail: #{e}"
-        end
-      end
-    end
+    thumbData = generatePdfThumbnail(itemID, existingItem)
+    thumbData and attrs[:thumbnail] = thumbData
   end
 
   # Populate the Item model instance
@@ -1263,20 +1312,145 @@ def parsePrefilteredData(itemID, existingItem, rawMeta, prefilteredData)
 end
 
 ###################################################################################################
-def processETD(metaPath, nailgun)
+def shouldSuppressContent(itemID, inMeta)
+  # Suppress if withdrawn.
+  inMeta.attr("state") == "withdrawn" and return true
+
+  # Supresss if we can't find any of: PDF file, HTML file, supp file, publishedWebLocation.
+  inMeta.at("content/file[@path]") and return false
+  inMeta.at("content/supplemental/file[@path]") and return false
+  inMeta.text_at("context/publishedWebLocation") and return false
+  if File.exist?(arkToFile(itemID, "content/base.pdf"))
+    puts "Warning: PDF content file without corresponding content/file metadata"
+    return false
+  end
+
+  puts "Warning: content-free item"
+  return true
+end
+
+###################################################################################################
+def parseUCIngest(itemID, inMeta, fileType)
+  attrs = {}
+  attrs[:suppress_content] = shouldSuppressContent(itemID, inMeta)
+  attrs[:is_peer_reviewed] = inMeta[:peerReview] == "yes"
+  attrs[:is_undergrad] = inMeta[:undergrad] == "yes"
+  attrs[:embargo_date] = inMeta[:embargoDate]
+  attrs[:publisher] = inMeta[:publisher]
+  attrs[:orig_citation] = inMeta.text_at("originalCitation")
+  attrs[:custom_citation] = inMeta.text_at("customCitation")
+  attrs[:local_ids] = inMeta.xpath("context/localID").map { |el| { type: el[:type], id: el.text } }
+  attrs[:pub_web_loc] = inMeta.text_at("context/publishedWebLocation")
+  attrs[:buy_link] = inMeta.text_at("context/buyLink")
+  attrs[:language] = inMeta.text_at("context/language")
+
+  tmp = inMeta.at("context/file[@disableDownload]")
+  tmp and attrs[:disable_download] = tmp[:disableDownload]
+
+  if inMeta[:state] == "withdrawn"
+    tmp = inMeta.at("history/stateChange[@state='withdrawn']")
+    tmp and attrs[:withdrawn_date] = tmp[:date].sub(/T.+$/, "")
+    if !attrs[:withdrawn_date]
+      puts "Warning: no withdraw date found; using stateDate."
+      attrs[:withdrawn_date] = inMeta[:stateDate]
+    end
+  end
+
+  # Filter out "n/a" abstracts
+  abstract = inMeta.html_at("abstract")
+  abstract and abstract = sanitizeHTML(abstract)
+  abstract && abstract.size > 3 and attrs[:abstract] = abstract
+
+  # Disciplines are a little extra work; we want to transform numeric IDs to plain old labels
+  attrs[:disciplines] = inMeta.xpath("disciplines/discipline").map { |discEl|
+    label = $discTbl[discEl[:id]]
+    label or puts("Warning: unknown discipline #{discEl[:id].inspect}")
+  }.select { |v| v }
+
+  # Supplemental files
+  attrs[:supp_files], suppSummaryTypes = summarizeSupps(itemID, grabUCISupps(inMeta))
+
+  # Data for external journals
+  if inMeta.xpath("context/entity[@id]").none? { |ent| $allUnits[ent[:id]].type == "journal" }
+    exAtts = {}
+    exAtts[:journal] = inMeta.text_at("context/journal")
+    exAtts[:volume] = inMeta.text_at("context/volume")
+    exAtts[:issue] = inMeta.text_at("context/issue")
+    exAtts[:issn] = inMeta.text_at("context/issn")
+    exAtts[:fpage] = inMeta.text_at("extent/fpage")
+    exAtts[:lpage] = inMeta.text_at("extent/lpage")
+    exAtts.reject! { |k, v| !v }
+    exAtts.empty? or attrs[:ext_journal] = exAtts
+  end
+
+  # Generate thumbnails (but only for non-suppressed PDF items)
+  if !attrs[:suppress_content] && File.exist?(arkToFile(itemID, "content/base.pdf"))
+    attrs[:thumbnail] = generatePdfThumbnail(itemID, Item[itemID])
+  end
+
+  # Remove empty attrs
+  attrs.reject! { |k, v| !v || (v.respond_to?(:empty?) && v.empty?) }
+end
+
+###################################################################################################
+def processETD(itemID, metaPath, nailgun)
   puts "ETD processing."
   begin
+    # Run the raw (ProQuest or METS) data through a normalization stylesheet using Saxon via nailgun
     xslPath = "/apps/eschol/erep/xtf/normalization/etd/normalize_etd.xsl"
-    output = nailgun.call("net.sf.saxon.Transform", metaPath, xslPath)
-    #puts "ETD output: #{output}"
+    normText = nailgun.call("net.sf.saxon.Transform", [metaPath, xslPath])
+
+    # Write it out to a file locally (useful for debugging and validation)
+    FileUtils.mkdir_p(arkToFile(itemID, "", "normalized")) # store in local dir
+    normFile = arkToFile(itemID, "base.norm.xml", "normalized")
+    normXML = stringToXML(normText)
+    File.open(normFile, "w") { |io| normXML.write_xml_to(io, indent:3) }
+
+    # Validate using jing.
+    schemaPath = "/apps/eschol/erep/xtf/schema/uci_schema.rnc"
+    validationProbs = nailgun.call("com.thaiopensource.relaxng.util.Driver", ["-c", schemaPath, normFile], true)
+    if !validationProbs.empty?
+      validationProbs.split("\n").each { |line|
+        next if line =~ /missing required element "(subject|mimeType)"/ # we don't care
+        puts line.sub(/.*norm.xml:/, "")
+      }
+    end
+
+    # And parse the data
+    return parseUCIngest(itemID, normXML.root, "ETD")
   rescue Exception => e
-    puts "Error processing ETD: #{e}"
+    puts "Error processing ETD: #{e} at #{e.backtrace.join("; ")}"
   end
 end
 
 ###################################################################################################
-def processBiomed(metaPath, nailgun)
+def processBiomed(itemID, metaPath, nailgun)
   # No special biomed processing yet.
+end
+
+###################################################################################################
+def compareAttrs(oldAttrs, newAttrs)
+  if oldAttrs[:local_id]
+    oldAttrs[:local_ids] = [oldAttrs[:local_id]]
+    oldAttrs.delete(:local_id)
+  end
+
+  (oldAttrs.keys & newAttrs.keys).each { |key|
+    next if oldAttrs[key] == newAttrs[key]
+    next if key == :local_ids # known differences, and unused by current front-end anyway
+    puts "normDiff: old[:#{key}]=#{oldAttrs[key].inspect.ellipsize(max:200)}"
+    puts "       vs new[:#{key}]=#{newAttrs[key].inspect.ellipsize(max:200)}"
+  }
+  (oldAttrs.keys - newAttrs.keys).each { |key|
+    next if !oldAttrs[key]
+    next if oldAttrs[key].respond_to?(:empty?) && oldAttrs[key].empty?
+    puts "normDiff: removed old[:#{key}]=#{oldAttrs[key].inspect.ellipsize}"
+  }
+  (newAttrs.keys - oldAttrs.keys).each { |key|
+    next if key == :embargo_date # old converter omits if item no longer embargoed
+    next if key == :local_ids # known differences, and unused by current front-end anyway
+    puts "normDiff: added new[:#{key}]=#{newAttrs[key].inspect.ellipsize}"
+  }
 end
 
 ###################################################################################################
@@ -1286,8 +1460,8 @@ end
 def indexItem(itemID, timestamp, prefilteredData, batch, nailgun)
 
   # Also grab the original metadata file
-  metaPath = "#{DATA_DIR}/13030/pairtree_root/#{itemID.scan(/\w\w/).join('/')}/#{itemID}/meta/#{itemID}.meta.xml"
-  rawMeta = Nokogiri::XML(File.new(metaPath), &:noblanks)
+  metaPath = arkToFile(itemID, "meta/base.meta.xml")
+  rawMeta = fileToXML(metaPath)
   rawMeta.remove_namespaces!
   rawMeta = rawMeta.root
 
@@ -1298,9 +1472,10 @@ def indexItem(itemID, timestamp, prefilteredData, batch, nailgun)
 
   if rawMeta.name =~ /^DISS_submission/ ||
      (rawMeta.name == "mets" && rawMeta.attr("PROFILE") == "http://www.loc.gov/mets/profiles/00000026.html")
-    processETD(metaPath, nailgun)
+    newAttrs = processETD(itemID, metaPath, nailgun)
+    compareAttrs(attrs, newAttrs)
   elsif rawMeta.name == "mets"
-    processBiomed(metaPath, nailgun)
+    processBiomed(itemID, metaPath, nailgun)
   end
 
   # Create JSON for the full text index
@@ -1452,7 +1627,7 @@ def indexAllItems
   Thread.current[:name] = "index thread"  # label all stdout from this thread
   batch = emptyBatch({})
 
-  classPath = "/apps/eschol/erep/xtf/WEB-INF/lib/saxonb-8.9.jar"
+  classPath = "/apps/eschol/erep/xtf/WEB-INF/lib/saxonb-8.9.jar:/apps/eschol/erep/xtf/control/xsl/jing.jar"
   Nailgun.run(classPath) { |nailgun|
     loop do
       # Grab an item from the input queue
@@ -1665,9 +1840,17 @@ def convertAllUnits
   DB.transaction do
     allStructPath = "/apps/eschol/erep/xtf/style/textIndexer/mapping/allStruct-eschol5.xml"
     open(allStructPath, "r") { |io|
-      convertUnits(Nokogiri::XML(io, &:noblanks).root, {}, {}, Set.new)
+      convertUnits(fileToXML(allStructPath).root, {}, {}, Set.new)
     }
   end
+end
+
+###################################################################################################
+def getShortArk(arkStr)
+  arkStr =~ %r{^ark:/?13030/(qt\w{8})$} and return $1
+  arkStr =~ /^(qt\w{8})$/ and return arkStr
+  arkStr =~ /^\w{8}$/ and return "qt#{arkStr}"
+  raise("Can't parse ark from #{arkStr.inspect}")
 end
 
 ###################################################################################################
@@ -1701,7 +1884,7 @@ def convertAllItems(arks)
     $nSkipped = $nTotal - query.count
   end
   query.all.each do |row|   # all so we don't keep db locked
-    shortArk = row[:itemId].sub(%r{^ark:/?13030/}, '')
+    shortArk = getShortArk(row[:itemId])
     next if arks != 'ALL' && !arks.include?(shortArk)
     erepTime = Time.at(row[:time].to_i).to_time
     item = Item[shortArk]

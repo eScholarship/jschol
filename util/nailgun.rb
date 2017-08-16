@@ -34,23 +34,23 @@ class Nailgun
     cmd = "java -cp #{fullClassPath} -server com.martiansoftware.nailgun.NGServer #{@port} > nailgun.log 2>&1"
     pid = spawn(cmd)
 
-    # Wait for it to warm up
     begin
-      retries ||= 0
-      callInternal(true, "ng-version")
-    rescue Exception => e
-      sleep 0.1
-      retry if (retries += 1) < 100
-      raise("Nailgun failed to start within 10 seconds.")
-    end
+      # Wait for it to warm up
+      begin
+        retries ||= 0
+        callInternal(true, false, "ng-version")
+      rescue Exception => e
+        sleep 0.1
+        retry if (retries += 1) < 100
+        raise("Nailgun failed to start within 10 seconds.")
+      end
 
-    # Run the block
-    begin
+      # Run the jobs
       blk.yield(self)
     ensure
       # Tell nailgun to shut down
       begin
-        callInternal(true, "ng-stop")
+        callInternal(true, false, "ng-stop")
       rescue
         # ignore errors during stop
       end
@@ -61,20 +61,20 @@ class Nailgun
     end
   end
 
-  def callInternal(eatOutput, argStr)
+  def callInternal(eatOutput, joinStderr, argStr)
     # Do the transform
     cmd = "ng --nailgun-port #{@port} #{argStr}"
     #puts cmd
     stdout, stderr, status = Open3.capture3(cmd)
-    eatOutput or print stderr
-    if not status.success?
+    eatOutput or joinStderr or print stderr
+    if !(status.success?) && !joinStderr
       eatOutput or print stdout
       raise("Command #{cmd.inspect} failed with code #{status.exitstatus}")
     end
-    return stdout
+    return (joinStderr ? (stderr+stdout) : stdout).strip
   end
 
-  def call(javaClass, *args)
-    callInternal(false, ([javaClass] + args).join(" "))
+  def call(javaClass, args, joinStderr = false)
+    callInternal(false, joinStderr, ([javaClass] + args).join(" "))
   end
 end

@@ -12,6 +12,7 @@ dist
 gems/
 gomysql
 node_modules/
+normalized/
 prefilterDirs.txt
 public/css/
 public/js/
