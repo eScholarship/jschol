@@ -813,8 +813,26 @@ end
 # Traverse the XML output from prefilters, looking for indexable text to add to the buffer.
 def traverseText(node, buf)
   return if node['meta'] == "yes" || node['index'] == "no"
-  node.text? and buf << node.to_s.strip + "\n"
+  node.text? and buf << node.to_s.strip
   node.children.each { |child| traverseText(child, buf) }
+end
+
+###################################################################################################
+def grabText(itemID, contentType)
+  buf = []
+  textCoordsPath = arkToFile(itemID, "rip/base.textCoords.xml")
+  htmlPath = arkToFile(itemID, "content/base.html")
+  if contentType == "application/pdf" && File.file?(textCoordsPath)
+    traverseText(fileToXML(textCoordsPath), buf)
+  elsif contentType == "text/html" && File.file?(htmlPath)
+    traverseText(fileToXML(htmlPath), buf)
+  elsif contentType.nil?
+    return nil
+  else
+    puts "Warning: no text found"
+    return nil
+  end
+  return buf.join("\n")
 end
 
 ###################################################################################################
@@ -910,7 +928,7 @@ def traceUnits(units)
 end
 
 ###################################################################################################
-def parseDate(itemID, str)
+def parseDate(str)
   text = str
   text or return nil
   begin
@@ -921,7 +939,7 @@ def parseDate(itemID, str)
     end
     return Date.strptime(text, "%Y-%m-%d").iso8601  # throws exception on bad date
   rescue
-    puts "Warning: invalid date in item #{itemID}: #{str.inspect}"
+    puts "Warning: invalid date: #{str.inspect}"
     return nil
   end
 end
@@ -949,7 +967,7 @@ end
 # Try to get fine-grained author info from UCIngest metadata; if not avail, fall back to index data.
 def getAuthors(indexMeta, rawMeta)
   # If not UC-Ingest formatted, fall back on index info
-  if !rawMeta.at("/record/authors")
+  if !rawMeta.at("/record/authors") && indexMeta
     return indexMeta.multiple("creator").map { |name| {name: name} }
   end
 
@@ -1095,7 +1113,6 @@ def grabUCISupps(rawMeta)
     }
     supps << suppAttrs
   }
-  puts "supps=#{supps}"
   return supps
 end
 
@@ -1111,6 +1128,7 @@ def summarizeSupps(itemID, inSupps)
       # Mime types aren't always reliable coming from Subi. Let's try harder.
       mimeType = MimeMagic.by_magic(File.open(suppPath))
       if mimeType && mimeType.type
+        supp.delete("mimeType")  # in case old string-based mimeType is present
         supp[:mimeType] = mimeType.to_s
       end
       suppSummaryTypes << mimeTypeToSummaryType(mimeType)
@@ -1196,7 +1214,7 @@ def parsePrefilteredData(itemID, existingItem, rawMeta, prefilteredData)
         puts "Warning: can't parse supp file data #{supp.inspect}"
         next
       end
-      supps << { file: pair[1], title: pair[0] }
+      supps << { file: pair[1], "description" => pair[0] }
     }
   end
   attrs[:supp_files], suppSummaryTypes = summarizeSupps(itemID, supps)
@@ -1216,8 +1234,8 @@ def parsePrefilteredData(itemID, existingItem, rawMeta, prefilteredData)
       issue[:volume]  = volNum
       issue[:issue]   = issueNum
       tmp = rawMeta.at("/record/context/issueDate")
-      issue[:pub_date] = (tmp && tmp.text && !tmp.text.empty? && parseDate(itemID, tmp.text)) ||
-                         parseDate(itemID, pf.single("date")) ||
+      issue[:pub_date] = (tmp && tmp.text && !tmp.text.empty? && parseDate(tmp.text)) ||
+                         parseDate(pf.single("date")) ||
                          "1901-01-01"
       issueAttrs = {}
       tmp = rawMeta.at("/record/context/issueTitle")
@@ -1282,19 +1300,15 @@ def parsePrefilteredData(itemID, existingItem, rawMeta, prefilteredData)
                            dbItem[:content_type].nil? &&
                            attrs[:supp_files]) ?
                           "multimedia" : pf.single("type")
-  dbItem[:pub_date]     = parseDate(itemID, pf.single("date")) || "1901-01-01"
+  dbItem[:pub_date]     = parseDate(pf.single("date")) || "1901-01-01"
   #FIXME: Think about this carefully. What's eschol_date for?
-  dbItem[:eschol_date]  = parseDate(itemID, pf.single("datestamp")) || "1901-01-01"
+  dbItem[:eschol_date]  = parseDate(pf.single("datestamp")) || "1901-01-01"
   dbItem[:attrs]        = JSON.generate(attrs)
-  dbItem[:rights]       = rights
+  dbItem[:rights]       = translateRights(inMeta.text_at("rights"))
   dbItem[:ordering_in_sect] = pf.single("document-order")
 
   # Populate ItemAuthor model instances
   authors = getAuthors(pf, rawMeta)
-
-  # Process all the text nodes
-  text = ""
-  traverseText(pf.root, text)
 
   # Make a list of all the units this item belongs to
   units = pf.multiple("entityOnly").select { |unitID|
@@ -1308,7 +1322,7 @@ def parsePrefilteredData(itemID, existingItem, rawMeta, prefilteredData)
     #do nothing
   end
 
-  return dbItem, attrs, authors, units, issue, section, suppSummaryTypes, text
+  return dbItem, attrs, authors, units, issue, section, suppSummaryTypes
 end
 
 ###################################################################################################
@@ -1390,6 +1404,52 @@ def parseUCIngest(itemID, inMeta, fileType)
 
   # Remove empty attrs
   attrs.reject! { |k, v| !v || (v.respond_to?(:empty?) && v.empty?) }
+
+  # Detect HTML-formatted items
+  contentFile = inMeta.at("/record/content/file")
+  contentFile && contentFile.at("native") and contentFile = contentFile.at("native")
+  contentPath = contentFile && contentFile[:path]
+  contentType = contentFile && contentFile.at("mimeType") && contentFile.at("mimeType").text
+
+  # Populate the Item model instance
+  dbItem = Item.new
+  dbItem[:id]           = itemID
+  dbItem[:source]       = inMeta.text_at("source") or raise("no source found")
+  dbItem[:status]       = attrs[:withdrawn_date] ? "withdrawn" :
+                          attrs[:embargo_date] ? "embargoed" :
+                          (inMeta[:state] || raise("no state in record"))
+  dbItem[:title]        = inMeta.html_at("title")
+  dbItem[:content_type] = attrs[:suppress_content] ? nil :
+                          attrs[:withdrawn_date] ? nil :
+                          attrs[:embargo_date] ? nil :
+                          File.file?(arkToFile(itemID, "content/base.pdf")) ? "application/pdf" :
+                          contentType && contentType.strip.length > 0 ? contentType :
+                          nil
+  dbItem[:genre]        = (!attrs[:suppress_content] &&
+                           dbItem[:content_type].nil? &&
+                           attrs[:supp_files]) ? "multimedia" :
+                          fileType == "etd" ? "disseration" :
+                          inMeta.at("type")
+  dbItem[:pub_date]     = parseDate(inMeta.text_at("history/originalPublicationDate")) or raise("Can't find originalPublicationDate")
+  dbItem[:eschol_date]  = parseDate(inMeta.text_at("history/escholPublicationDate") || inMeta[:datestamp])
+  dbItem[:attrs]        = JSON.generate(attrs)
+  dbItem[:rights]       = rights
+  dbItem[:ordering_in_sect] = inMeta.text_at("publicationOrder")
+
+  # Populate ItemAuthor model instances
+  authors = getAuthors(nil, rawMeta)
+
+  # Make a list of all the units this item belongs to
+  units = inMeta.xpath("context/entity[@id]").each { |ent|
+    unitID = ent[:id]
+    unitID =~ /^(postprints|demo-journal|test-journal|unknown|withdrawn|uciem_westjem_aip)$/ ? false :
+      !$allUnits.include?(unitID) ? (puts("Warning: unknown unit #{unitID.inspect}") && false) :
+      true
+  }
+
+  issue = section = nil # FIXME
+
+  return dbItem, attrs, authors, units, issue, section, suppSummaryTypes
 end
 
 ###################################################################################################
@@ -1467,16 +1527,19 @@ def indexItem(itemID, timestamp, prefilteredData, batch, nailgun)
 
   existingItem = Item[itemID]
 
-  dbItem, attrs, authors, units, issue, section,
-    suppSummaryTypes, text = parsePrefilteredData(itemID, existingItem, rawMeta, prefilteredData)
+  dbItem, attrs, authors, units, issue, section, suppSummaryTypes =
+     parsePrefilteredData(itemID, existingItem, rawMeta, prefilteredData)
 
   if rawMeta.name =~ /^DISS_submission/ ||
      (rawMeta.name == "mets" && rawMeta.attr("PROFILE") == "http://www.loc.gov/mets/profiles/00000026.html")
-    newAttrs = processETD(itemID, metaPath, nailgun)
-    compareAttrs(attrs, newAttrs)
+    new_dbItem, new_attrs, new_authors, new_units, new_issue, new_section, new_suppSummaryTypes =
+      processETD(itemID, metaPath, nailgun)
+    compareAttrs(attrs, new_attrs)
   elsif rawMeta.name == "mets"
     processBiomed(itemID, metaPath, nailgun)
   end
+
+  text = grabText(itemID, dbItem.content_type)
 
   # Create JSON for the full text index
   idxItem = {
