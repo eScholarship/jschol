@@ -827,10 +827,10 @@ def grabText(itemID, contentType)
   elsif contentType == "text/html" && File.file?(htmlPath)
     traverseText(fileToXML(htmlPath), buf)
   elsif contentType.nil?
-    return nil
+    return ""
   else
     puts "Warning: no text found"
-    return nil
+    return ""
   end
   return buf.join("\n")
 end
@@ -967,12 +967,12 @@ end
 # Try to get fine-grained author info from UCIngest metadata; if not avail, fall back to index data.
 def getAuthors(indexMeta, rawMeta)
   # If not UC-Ingest formatted, fall back on index info
-  if !rawMeta.at("/record/authors") && indexMeta
+  if !rawMeta.at("//authors") && indexMeta
     return indexMeta.multiple("creator").map { |name| {name: name} }
   end
 
   # For UC-Ingest, we can provide more detailed author info
-  rawMeta.xpath("/record/authors/*").map { |el|
+  rawMeta.xpath("//authors/*").map { |el|
     if el.name == "organization"
       { name: el.text, organization: el.text }
     elsif el.name == "author"
@@ -1304,7 +1304,7 @@ def parsePrefilteredData(itemID, existingItem, rawMeta, prefilteredData)
   #FIXME: Think about this carefully. What's eschol_date for?
   dbItem[:eschol_date]  = parseDate(pf.single("datestamp")) || "1901-01-01"
   dbItem[:attrs]        = JSON.generate(attrs)
-  dbItem[:rights]       = translateRights(inMeta.text_at("rights"))
+  dbItem[:rights]       = rights
   dbItem[:ordering_in_sect] = pf.single("document-order")
 
   # Populate ItemAuthor model instances
@@ -1428,20 +1428,19 @@ def parseUCIngest(itemID, inMeta, fileType)
   dbItem[:genre]        = (!attrs[:suppress_content] &&
                            dbItem[:content_type].nil? &&
                            attrs[:supp_files]) ? "multimedia" :
-                          fileType == "etd" ? "disseration" :
+                          fileType == "ETD" ? "dissertation" :
                           inMeta.at("type")
   dbItem[:pub_date]     = parseDate(inMeta.text_at("history/originalPublicationDate")) or raise("Can't find originalPublicationDate")
   dbItem[:eschol_date]  = parseDate(inMeta.text_at("history/escholPublicationDate") || inMeta[:datestamp])
   dbItem[:attrs]        = JSON.generate(attrs)
-  dbItem[:rights]       = rights
+  dbItem[:rights]       = translateRights(inMeta.text_at("rights"))
   dbItem[:ordering_in_sect] = inMeta.text_at("publicationOrder")
 
   # Populate ItemAuthor model instances
-  authors = getAuthors(nil, rawMeta)
+  authors = getAuthors(nil, inMeta)
 
   # Make a list of all the units this item belongs to
-  units = inMeta.xpath("context/entity[@id]").each { |ent|
-    unitID = ent[:id]
+  units = inMeta.xpath("context/entity[@id]").map { |ent| ent[:id] }.select { |unitID|
     unitID =~ /^(postprints|demo-journal|test-journal|unknown|withdrawn|uciem_westjem_aip)$/ ? false :
       !$allUnits.include?(unitID) ? (puts("Warning: unknown unit #{unitID.inspect}") && false) :
       true
@@ -1490,6 +1489,10 @@ end
 
 ###################################################################################################
 def compareAttrs(oldAttrs, newAttrs)
+  if newAttrs.nil?
+    puts "normDiff: newAttrs is nil"
+    return
+  end
   if oldAttrs[:local_id]
     oldAttrs[:local_ids] = [oldAttrs[:local_id]]
     oldAttrs.delete(:local_id)
@@ -1498,6 +1501,7 @@ def compareAttrs(oldAttrs, newAttrs)
   (oldAttrs.keys & newAttrs.keys).each { |key|
     next if oldAttrs[key] == newAttrs[key]
     next if key == :local_ids # known differences, and unused by current front-end anyway
+    next if key == :eschol_date && oldAttrs[key].to_s =~ /1901-01-01/   # new date processing is better
     puts "normDiff: old[:#{key}]=#{oldAttrs[key].inspect.ellipsize(max:200)}"
     puts "       vs new[:#{key}]=#{newAttrs[key].inspect.ellipsize(max:200)}"
   }
@@ -1534,7 +1538,15 @@ def indexItem(itemID, timestamp, prefilteredData, batch, nailgun)
      (rawMeta.name == "mets" && rawMeta.attr("PROFILE") == "http://www.loc.gov/mets/profiles/00000026.html")
     new_dbItem, new_attrs, new_authors, new_units, new_issue, new_section, new_suppSummaryTypes =
       processETD(itemID, metaPath, nailgun)
-    compareAttrs(attrs, new_attrs)
+    begin
+      compareAttrs(attrs, new_attrs)
+      compareAttrs(dbItem.to_hash.reject { |k,v| k == :attrs },
+                   new_dbItem.to_hash.reject { |k,v| k == :attrs })
+    rescue
+      puts "Error comparing."
+    end
+    #dbItem, attrs, authors, units, issue, section, suppSummaryTypes =
+    #  new_dbItem, new_attrs, new_authors, new_units, new_issue, new_section, new_suppSummaryTypes
   elsif rawMeta.name == "mets"
     processBiomed(itemID, metaPath, nailgun)
   end
