@@ -2,7 +2,6 @@
 
 import React from 'react'
 import { Link } from 'react-router'
-import { Subscriber } from 'react-broadcast'
 
 import Search1Comp from '../components/Search1Comp.jsx'
 import Breakpoints from '../../js/breakpoints.json'
