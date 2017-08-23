@@ -60,6 +60,15 @@ def getLogoData(data)
   return { url: "/assets/#{data['asset_id']}", width: data['width'], height: data['height'] }
 end
 
+def isTopmostUnit(unit)
+  return ['root','campus'].include?(unit.type)
+end
+
+# Assumes unit is not topMost
+def getUnitAncestor(unit)
+  return $hierByUnit[unit.id][0].ancestor
+end
+
 # Add a URL to each nav bar item
 def getNavBar(unit, pageName, navItems, level=1)
   if navItems
@@ -70,8 +79,9 @@ def getNavBar(unit, pageName, navItems, level=1)
         navItem['url'] = "/uc/#{unit.id}#{navItem['slug']=="" ? "" : "/"+navItem['slug']}"
       end
     }
-    if level==1 && !['root','campus'].include?(unit.type)
-      navItems.unshift({ id: 0, type: "home", name: "Unit Home", url: "/uc/#{unit.id}" })
+    if level==1 && !isTopmostUnit(unit)
+      unitID = unit.type.include?('series') ? getUnitAncestor(unit).id : unit.id
+      navItems.unshift({ id: 0, type: "home", name: "Unit Home", url: "/uc/#{unitID}" })
     end
     return navItems
   end
@@ -102,11 +112,11 @@ def getUnitHeader(unit, pageName=nil, journalIssue=nil, attrs=nil)
   if !attrs then attrs = JSON.parse(unit[:attrs]) end
   r = UnitHier.where(unit_id: unit.id).where(ancestor_unit: $activeCampuses.keys).first
   campusID = (unit.type=='campus') ? unit.id : r ? r.ancestor_unit : 'root'
-  ancestor = $hierByUnit[unit.id][0].ancestor
+  ancestor = isTopmostUnit(unit) ?  getUnitAncestor(unit) : nil
   header = {
     :campusID => campusID,
     :campusName => $unitsHash[campusID].name,
-    :ancestorID => ancestor.id,     # Used strictly for linking series back to parent unit
+    :ancestorID => ancestor ? ancestor.id : nil,   # Used strictly for linking series back to parent unit
     :campuses => $activeCampuses.values.map { |c| {id: c.id, name: c.name} }.unshift({id: "", name: "eScholarship at..."}),
     :logo => getLogoData(attrs['logo']),
     :nav_bar => getNavBar(unit, pageName, attrs['nav_bar']),
