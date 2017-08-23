@@ -10,6 +10,7 @@ class SubheaderComp extends React.Component {
   static propTypes = {
     campusID: PropTypes.string.isRequired,
     campusName: PropTypes.string.isRequired,
+    ancestorID: PropTypes.string,    // Intended for series only
     campuses: PropTypes.array.isRequired,
     logo: PropTypes.shape({
       url: PropTypes.string.isRequired,
@@ -25,7 +26,8 @@ class SubheaderComp extends React.Component {
   }
 
   render() {
-    let p = this.props
+    let p = this.props,
+        banner_url_unit = p.unit.type.includes('series') ? p.ancestorID : p.unit.id
 
     var logo;
     if (p.logo) {
@@ -39,7 +41,7 @@ class SubheaderComp extends React.Component {
         <CampusSelectorComp campusID={p.campusID}
                             campusName={p.campusName}
                             campuses={p.campuses} />
-        <Link to={"/uc/"+p.unit.id} className="c-subheader__banner">
+        <Link to={"/uc/"+banner_url_unit} className="c-subheader__banner">
           <img src={logo.url} width={logo.width} height={logo.height} alt={"Logo for " + p.unit.name} />
         </Link>
   {/* unit.type == 'journal'  -->  Submit / Manage Submissions

@@ -124,6 +124,7 @@ class UnitPage extends PageBase
         <Header2Comp type={data.unit.type} unitID={data.unit.id} />
         <SubheaderComp unit={data.unit} logo={data.header.logo} 
           campusID={data.header.campusID}
+          ancestorID={data.header.ancestorID}
           campusName={data.header.campusName}
           campuses={data.header.campuses}/>
         <NavBarComp 

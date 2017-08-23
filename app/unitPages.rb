@@ -102,9 +102,11 @@ def getUnitHeader(unit, pageName=nil, journalIssue=nil, attrs=nil)
   if !attrs then attrs = JSON.parse(unit[:attrs]) end
   r = UnitHier.where(unit_id: unit.id).where(ancestor_unit: $activeCampuses.keys).first
   campusID = (unit.type=='campus') ? unit.id : r ? r.ancestor_unit : 'root'
+  ancestor = $hierByUnit[unit.id][0].ancestor
   header = {
     :campusID => campusID,
     :campusName => $unitsHash[campusID].name,
+    :ancestorID => ancestor.id,     # Used strictly for linking series back to parent unit
     :campuses => $activeCampuses.values.map { |c| {id: c.id, name: c.name} }.unshift({id: "", name: "eScholarship at..."}),
     :logo => getLogoData(attrs['logo']),
     :nav_bar => getNavBar(unit, pageName, attrs['nav_bar']),
@@ -120,7 +122,6 @@ def getUnitHeader(unit, pageName=nil, journalIssue=nil, attrs=nil)
 
   # if this unit doesn't have a nav_bar, get the next unit up the hierarchy's nav_bar
   if !header[:nav_bar] and unit.type != 'campus' and unit.type != 'root'
-    ancestor = $hierByUnit[unit.id][0].ancestor
     until header[:nav_bar] || ancestor.id == 'root'
       header[:nav_bar] = JSON.parse(ancestor[:attrs])['nav_bar']
       ancestor = $hierByUnit[ancestor.id][0].ancestor
