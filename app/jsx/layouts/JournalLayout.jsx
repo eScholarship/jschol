@@ -134,6 +134,9 @@ class JournalLayout extends React.Component {
     }).isRequired,
     data: PropTypes.shape({
       display: PropTypes.string,
+      doaj: PropTypes.string,
+      issn: PropTypes.string,
+      eissn: PropTypes.string,
       issue: PropTypes.object,     // See IssueComp prop types directly above
       issues: PropTypes.array
     }).isRequired,
@@ -164,7 +167,7 @@ class JournalLayout extends React.Component {
               <header>
                 <h2>Journal Information</h2>
               </header>
-              <JournalInfoComp rights={data.issue && data.issue.rights} />
+              <JournalInfoComp doaj={data.doaj} rights={data.issue && data.issue.rights} issn={data.issn} eissn={data.eissn} />
             </section>
             {this.props.sidebar}
           </aside>

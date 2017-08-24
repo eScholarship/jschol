@@ -7,12 +7,15 @@ class JournalInfoComp extends React.Component {
   render() {
     return (
       <div className="c-journalinfo">
-        {/* Don't show DOAJ badge until db is up to date: <img src="/images/temp_journalinfo.png" alt="DOAJ"/> */}
+      {this.props.doaj &&
+        <img src="/images/temp_journalinfo.png" alt="DOAJ"/> }
       {this.props.rights &&
         <RightsComp rights={this.props.rights} size="large" /> }
         <ul>
-          <li><b>e-ISSN-</b> 9999-9999</li>
-          <li><b>e-ISSN-</b> 9999-9999</li>
+      {this.props.issn &&
+          <li><b>ISSN:</b> {this.props.issn}</li> }
+      {this.props.eissn &&
+          <li><b>e-ISSN:</b> {this.props.eissn}</li> }
         </ul>
       </div>
     )

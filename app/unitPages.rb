@@ -60,6 +60,15 @@ def getLogoData(data)
   return { url: "/assets/#{data['asset_id']}", width: data['width'], height: data['height'] }
 end
 
+def isTopmostUnit(unit)
+  return ['root','campus'].include?(unit.type)
+end
+
+# Assumes unit is not topMost
+def getUnitAncestor(unit)
+  return $hierByUnit[unit.id][0].ancestor
+end
+
 # Add a URL to each nav bar item
 def getNavBar(unit, pageName, navItems, level=1)
   if navItems
@@ -70,8 +79,9 @@ def getNavBar(unit, pageName, navItems, level=1)
         navItem['url'] = "/uc/#{unit.id}#{navItem['slug']=="" ? "" : "/"+navItem['slug']}"
       end
     }
-    if level==1 && !['root','campus'].include?(unit.type)
-      navItems.unshift({ id: 0, type: "home", name: "Unit Home", url: "/uc/#{unit.id}" })
+    if level==1 && !isTopmostUnit(unit)
+      unitID = unit.type.include?('series') ? getUnitAncestor(unit).id : unit.id
+      navItems.unshift({ id: 0, type: "home", name: "Unit Home", url: "/uc/#{unitID}" })
     end
     return navItems
   end
@@ -102,9 +112,11 @@ def getUnitHeader(unit, pageName=nil, journalIssue=nil, attrs=nil)
   if !attrs then attrs = JSON.parse(unit[:attrs]) end
   r = UnitHier.where(unit_id: unit.id).where(ancestor_unit: $activeCampuses.keys).first
   campusID = (unit.type=='campus') ? unit.id : r ? r.ancestor_unit : 'root'
+  ancestor = isTopmostUnit(unit) ? nil : getUnitAncestor(unit)
   header = {
     :campusID => campusID,
     :campusName => $unitsHash[campusID].name,
+    :ancestorID => ancestor ? ancestor.id : nil,   # Used strictly for linking series back to parent unit
     :campuses => $activeCampuses.values.map { |c| {id: c.id, name: c.name} }.unshift({id: "", name: "eScholarship at..."}),
     :logo => getLogoData(attrs['logo']),
     :nav_bar => getNavBar(unit, pageName, attrs['nav_bar']),
@@ -120,7 +132,6 @@ def getUnitHeader(unit, pageName=nil, journalIssue=nil, attrs=nil)
 
   # if this unit doesn't have a nav_bar, get the next unit up the hierarchy's nav_bar
   if !header[:nav_bar] and unit.type != 'campus' and unit.type != 'root'
-    ancestor = $hierByUnit[unit.id][0].ancestor
     until header[:nav_bar] || ancestor.id == 'root'
       header[:nav_bar] = JSON.parse(ancestor[:attrs])['nav_bar']
       ancestor = $hierByUnit[ancestor.id][0].ancestor
@@ -241,7 +252,10 @@ def getJournalIssueData(unit, unit_attrs, volume=nil, issue=nil)
       h = issue.to_hash
       h[:attrs] and h[:attrs] = JSON.parse(h[:attrs])
       h
-    }
+    },
+    doaj: unit_attrs['doaj'],
+    issn: unit_attrs['issn'],
+    eissn: unit_attrs['eissn']
   }
 end
 
@@ -262,15 +276,14 @@ def getIssue(id, display, volume=nil, issue=nil)
     attrs['title']       and i[:title] = attrs['title']
     attrs['description'] and i[:description] = attrs['description']
     attrs['cover']       and i[:cover] = attrs['cover']
+    attrs['rights']      and i[:rights] = attrs['rights']
     attrs['buy_link']    and i[:buy_link] = attrs['buy_link']
   end
   i[:sections] = Section.where(:issue_id => i[:id]).order(:ordering).all
 
-  itemCC = {}
   i[:sections].map! do |section|
     section = section.values
     items = Item.where(:section=>section[:id]).order(:ordering_in_sect).to_hash(:id)
-    itemCC[items.values[0][:rights]] = 1 unless items.values[0][:rights].nil?
     itemIds = items.keys
     authors = ItemAuthors.where(item_id: itemIds).order(:ordering).to_hash_groups(:item_id)
 
@@ -280,13 +293,6 @@ def getIssue(id, display, volume=nil, issue=nil)
     section[:articles] = itemResultData(itemIds, itemData, resultsListFields)
 
     next section
-  end
-  # We're currently assigning an issue's rights by grabbing that of first article found
-  i[:rights] = itemCC.keys.any? ? itemCC.keys[0] : nil
-  if itemCC.keys.length > 1
-    print "Warning: Expected only one license type across articles. Found #{itemCC.keys} for unit '#{id}'"
-    volume and issue and print " Volume: '#{volume}', Issue: '#{issue}'. "
-    puts "Just using first one found."
   end
   return i 
 end
@@ -343,7 +349,7 @@ def getUnitProfile(unit, attrs)
   
   if unit.type == 'journal'
     profile[:doaj] = attrs['doaj']
-    profile[:license] = attrs['license']
+    profile[:issn] = attrs['issn']
     profile[:eissn] = attrs['eissn']
     profile[:magazine_layout] = attrs['magazine_layout']
     profile[:issue_rule] = attrs['issue_rule']
@@ -758,6 +764,26 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
     unit = Unit[unitID] or jsonHalt(404, "Unit not found")
     unitAttrs = JSON.parse(unit.attrs)
 
+    if params['data']['unitName'] then unit.name = params['data']['unitName'] end
+
+    if params['data']['doajSeal'] && params['data']['doajSeal'] == 'on'
+      unitAttrs['doaj'] = true
+    else
+      unitAttrs.delete('doaj')
+    end 
+    if params['data']['issn'] then unitAttrs['issn'] = params['data']['issn'] end
+    if params['data']['eissn'] then unitAttrs['eissn'] = params['data']['eissn'] end
+
+    if params['data']['facebook'] then unitAttrs['facebook'] = params['data']['facebook'] end
+    if params['data']['twitter'] then unitAttrs['twitter'] = params['data']['twitter'] end
+
+    if params['data']['about'] then unitAttrs['about'] = params['data']['about'] end
+    if params['data']['carouselFlag'] && params['data']['carouselFlag'] == 'on'
+      unitAttrs['carousel'] = true
+    else
+      unitAttrs.delete('carousel')
+    end
+
     if params['data']['magazine_layout'] == "on"
       unitAttrs['magazine_layout'] = true
     else
@@ -769,15 +795,6 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
     else
       unitAttrs.delete('issue_rule')
     end
-    
-    if params['data']['about'] then unitAttrs['about'] = params['data']['about'] end
-    if params['data']['carouselFlag'] && params['data']['carouselFlag'] == 'on'
-      unitAttrs['carousel'] = true
-    else
-      unitAttrs.delete('carousel')
-    end
-    if params['data']['facebook'] then unitAttrs['facebook'] = params['data']['facebook'] end
-    if params['data']['twitter'] then unitAttrs['twitter'] = params['data']['twitter'] end
     
     unit.attrs = unitAttrs.to_json
     unit.save
