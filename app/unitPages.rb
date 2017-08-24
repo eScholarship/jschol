@@ -112,7 +112,7 @@ def getUnitHeader(unit, pageName=nil, journalIssue=nil, attrs=nil)
   if !attrs then attrs = JSON.parse(unit[:attrs]) end
   r = UnitHier.where(unit_id: unit.id).where(ancestor_unit: $activeCampuses.keys).first
   campusID = (unit.type=='campus') ? unit.id : r ? r.ancestor_unit : 'root'
-  ancestor = isTopmostUnit(unit) ?  getUnitAncestor(unit) : nil
+  ancestor = isTopmostUnit(unit) ? nil : getUnitAncestor(unit)
   header = {
     :campusID => campusID,
     :campusName => $unitsHash[campusID].name,
