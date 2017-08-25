@@ -153,7 +153,9 @@ class TabMetricsComp extends React.Component {
           </div>
         :
           <div className="c-tabcontent__divide2x-child">
-            <p>No usage data found.</p>
+            <div className="c-well">
+              No usage data currently found for this item.
+            </div>
           </div>
         }
           <div className="c-tabcontent__divide2x-child">
