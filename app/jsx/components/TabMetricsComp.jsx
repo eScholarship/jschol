@@ -1,4 +1,9 @@
 // ##### Tab Metrics Component ##### //
+// Usage data represented by an array like this:
+// [
+//    {month: '2016-01', hits: 2000, downloads: 20},
+//    {month: '2016-02', hits: 2762, downloads: 24},
+//    {month: '2016-03', hits: 2221, downloads: 29} ... ]
 
 import React from 'react'
 import PropTypes from 'prop-types'
