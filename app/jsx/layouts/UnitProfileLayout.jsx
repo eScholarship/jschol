@@ -310,7 +310,7 @@ class UnitProfileLayout extends React.Component {
                 <label className="c-editable-page__label" htmlFor="aboutText">About Text</label>
                 <textarea className="c-editable-page__input" name="about" id="aboutText" defaultValue={data.marquee.about}
                           onChange={ event => this.setMarqueeData({about: event.target.value}) }/>
-              {this.props.unit.type == 'journal' &&
+              {["oru", "journal"].includes(this.props.unit.type) &&
                 <div>
                   {!data.marquee.slides && <button onClick={ event => this.addSlide(event) }>Add an image carousel</button>}
                   {data.marquee.slides && this.renderSlideConfig() }<br/>
