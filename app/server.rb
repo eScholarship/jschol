@@ -157,6 +157,9 @@ end
 class Widget < Sequel::Model
 end
 
+class ItemCount < Sequel::Model
+end
+
 ##################################################################################################
 # Thread synchronization class
 class Event
@@ -637,7 +640,8 @@ get "/api/item/:shortArk" do |shortArk|
         :attrs => attrs,
         :appearsIn => unitIDs ? unitIDs.map { |unitID| {"id" => unitID, "name" => Unit[unitID].name} }
                               : nil,
-        :unit => unit ? unit.values.reject { |k,v| k==:attrs } : nil
+        :unit => unit ? unit.values.reject { |k,v| k==:attrs } : nil,
+        :usage => ItemCount.where(item_id: id).order(:month).to_hash(:month).map { |m,v| { "month"=>m, "hits"=>v.hits, "downloads"=>v.downloads }}
       }
 
       if unit
