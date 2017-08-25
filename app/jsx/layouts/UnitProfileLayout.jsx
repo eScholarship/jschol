@@ -309,16 +309,19 @@ class UnitProfileLayout extends React.Component {
               <Form to={`/api/unit/${this.props.unit.id}/profileContentConfig`} onSubmit={this.handleSubmit}>
                 <label className="c-editable-page__label" htmlFor="aboutText">About Text</label>
                 <textarea className="c-editable-page__input" name="about" id="aboutText" defaultValue={data.marquee.about}
-                        onChange={ event => this.setMarqueeData({about: event.target.value}) }/>
+                          onChange={ event => this.setMarqueeData({about: event.target.value}) }/>
+              {["oru", "journal"].includes(this.props.unit.type) &&
+                <div>
+                  {!data.marquee.slides && <button onClick={ event => this.addSlide(event) }>Add an image carousel</button>}
+                  {data.marquee.slides && this.renderSlideConfig() }<br/>
+                  {data.marquee.slides && <button onClick={ (event) => this.addSlide(event) }>Add slide</button>}
 
-                {!data.marquee.slides && <button onClick={ event => this.addSlide(event) }>Add an image carousel</button>}
-                {data.marquee.slides && this.renderSlideConfig() }<br/>
-                {data.marquee.slides && <button onClick={ (event) => this.addSlide(event) }>Add slide</button>}
-
-                <label className="c-editable-page__label" htmlFor="displayCarousel">Publish Carousel?
-                <input name="carouselFlag" id="displayCarousel" type="checkbox" defaultChecked={data.marquee.carousel}
-                        onChange={ event => this.setMarqueeData({carousel: event.target.checked}) }/>
-                </label>
+                  <label className="c-editable-page__label" htmlFor="displayCarousel">Publish Carousel?
+                  <input name="carouselFlag" id="displayCarousel" type="checkbox" defaultChecked={data.marquee.carousel}
+                         onChange={ event => this.setMarqueeData({carousel: event.target.checked}) }/>
+                  </label>
+                </div>
+              }
 
                 <button type="submit">Save Changes</button> <button type="reset">Cancel</button>
               </Form>
