@@ -62,6 +62,9 @@ DB.loggers << Logger.new('convert.sql_log')
 # The old eschol queue database, from which we can get a list of indexable ARKs
 QUEUE_DB = Sequel.connect(YAML.load_file("config/queueDb.yaml"))
 
+# The old stats database, from which we can copy item counts
+STATS_DB = Sequel.connect(YAML.load_file("config/statsDb.yaml"))
+
 # Queues for thread coordination
 $prefilterQueue = SizedQueue.new(100)
 $indexQueue = SizedQueue.new(100)
@@ -196,6 +199,9 @@ end
 
 class ItemAuthor < Sequel::Model
   unrestrict_primary_key
+end
+
+class ItemCount < Sequel::Model
 end
 
 class Issue < Sequel::Model
@@ -1153,6 +1159,11 @@ def translateRights(oldRights)
 end
 
 ###################################################################################################
+def isEmbargoed(embargoDate)
+  return embargoDate && Date.today < Date.parse(embargoDate)
+end
+
+###################################################################################################
 # Extract metadata the old way, combining data from the XTF index prefilters and the raw UCIngest
 # metadata files.
 def parsePrefilteredData(itemID, existingItem, rawMeta, prefilteredData)
@@ -1182,6 +1193,7 @@ def parsePrefilteredData(itemID, existingItem, rawMeta, prefilteredData)
                                                                  id:   pf.single("localID") }
   pf.multiple("publishedWebLocation") and attrs[:pub_web_loc] = pf.multiple("publishedWebLocation")
   pf.single("buyLink")                and attrs[:buy_link] = pf.single("buyLink")
+  pf.single("doi")                    and attrs[:doi] = pf.single("doi")
   if pf.single("withdrawn")
     attrs[:withdrawn_date] = pf.single("withdrawn")
     msg = rawMeta.at("/record/history/stateChange[@state='withdrawn']/comment")
@@ -1287,12 +1299,12 @@ def parsePrefilteredData(itemID, existingItem, rawMeta, prefilteredData)
   dbItem[:id]           = itemID
   dbItem[:source]       = pf.single("source")
   dbItem[:status]       = attrs[:withdrawn_date] ? "withdrawn" :
-                          attrs[:embargo_date] ? "embargoed" :
+                          isEmbargoed(attrs[:embargo_date]) ? "embargoed" :
                           (rawMeta.attr("state") || "published")
   dbItem[:title]        = pf.single("title")
   dbItem[:content_type] = !(pf.multiple("contentExists")[0] == "yes") ? nil :
                           attrs[:withdrawn_date] ? nil :
-                          attrs[:embargo_date] ? nil :
+                          isEmbargoed(attrs[:embargo_date]) ? nil :
                           pf.single("pdfExists") == "yes" ? "application/pdf" :
                           mimeType && mimeType.strip.length > 0 ? mimeType :
                           nil
@@ -1357,6 +1369,7 @@ def parseUCIngest(itemID, inMeta, fileType)
   attrs[:pub_web_loc] = inMeta.text_at("context/publishedWebLocation")
   attrs[:buy_link] = inMeta.text_at("context/buyLink")
   attrs[:language] = inMeta.text_at("context/language")
+  attrs[:doi] = inMeta.text_at("doi")
 
   tmp = inMeta.at("context/file[@disableDownload]")
   tmp and attrs[:disable_download] = tmp[:disableDownload]
@@ -1416,12 +1429,12 @@ def parseUCIngest(itemID, inMeta, fileType)
   dbItem[:id]           = itemID
   dbItem[:source]       = inMeta.text_at("source") or raise("no source found")
   dbItem[:status]       = attrs[:withdrawn_date] ? "withdrawn" :
-                          attrs[:embargo_date] ? "embargoed" :
+                          isEmbargoed(attrs[:embargo_date]) ? "embargoed" :
                           (inMeta[:state] || raise("no state in record"))
   dbItem[:title]        = inMeta.html_at("title")
   dbItem[:content_type] = attrs[:suppress_content] ? nil :
                           attrs[:withdrawn_date] ? nil :
-                          attrs[:embargo_date] ? nil :
+                          isEmbargoed(attrs[:embargo_date]) ? nil :
                           File.file?(arkToFile(itemID, "content/base.pdf")) ? "application/pdf" :
                           contentType && contentType.strip.length > 0 ? contentType :
                           nil
@@ -1502,6 +1515,7 @@ def compareAttrs(oldAttrs, newAttrs)
     next if oldAttrs[key] == newAttrs[key]
     next if key == :local_ids # known differences, and unused by current front-end anyway
     next if key == :eschol_date && oldAttrs[key].to_s =~ /1901-01-01/   # new date processing is better
+    next if key == :title && oldAttrs[key].gsub(/  +/, ' ') == newAttrs[key]  # space normalization better now
     puts "normDiff: old[:#{key}]=#{oldAttrs[key].inspect.ellipsize(max:200)}"
     puts "       vs new[:#{key}]=#{newAttrs[key].inspect.ellipsize(max:200)}"
   }
@@ -1773,9 +1787,10 @@ end
 def updateDbItem(data)
   itemID = data[:dbItem][:id]
 
-  # Delete any existing data related to this item (except counts which can stay)
+  # Delete any existing data related to this item
   ItemAuthor.where(item_id: itemID).delete
   UnitItem.where(item_id: itemID).delete
+  ItemCount.where(item_id: itemID).delete
 
   # Insert (or update) the issue and section
   updateIssueAndSection(data)
@@ -1785,6 +1800,11 @@ def updateDbItem(data)
   data[:dbItem].save()
   data[:dbAuthors].each { |dbAuth|
     dbAuth.save()
+  }
+
+  # Copy item counts from the old stats database
+  STATS_DB.fetch("SELECT * FROM itemCounts WHERE itemId = ?", itemID.sub(/^qt/, "")) { |row|
+    ItemCount.insert(item_id: itemID, month: row[:month], hits: row[:hits], downloads: row[:downloads])
   }
 
   # Link the item to its units

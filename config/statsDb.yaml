@@ -1,0 +1,4 @@
+adapter: sqlite
+database: /apps/eschol/erep/xtf/stats/stats.db
+readonly: true
+timeout: 30000
