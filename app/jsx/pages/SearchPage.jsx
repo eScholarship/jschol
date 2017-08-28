@@ -1,4 +1,5 @@
 import React from 'react'
+import PropTypes from 'prop-types'
 import $ from 'jquery'
 import _ from 'lodash'   // mainly for _.isEmtpy() which also works server-side (unlike $.isEmptyObject)
 import { Link } from 'react-router'
@@ -491,6 +492,28 @@ class FacetForm extends React.Component {
 }
 
 class SearchPage extends PageBase {
+// Rough outline of props. More detail available in components above
+// data = {
+//   infoResultsPreview: [ {ancestor_id: 'uclalaw_jinel', ancestor_name: 'Journal of Islami...',
+//       target_id: 'facultyAdvisors', target_name: 'Faculty Advisors', content: 'Crepuscular Sheep'}, ... ] 
+//   info_count: 12,
+//   query: PropTypes.shape({
+//     q: PropTypes.string,
+//     rows: PropTypes.string,
+//     sort: PropTypes.string,
+//     start: PropTypes.string,
+//   }).isRequired,
+//   searchResults: [ {id: "qt5jf69563", title: "Pulmonaria", abstract: "<p>A collection of ...",
+//      content_type: "application/pdf", authors: [{"name"=>"Gilad Silver, Liza"}],
+//      supp_files: [{:type=>"pdf", :count=>0}, {:type=>"image", :count=>0}, {:type=>"video", :count=>0},
+//        {:type=>"audio", :count=>0}, {:type=>"zip", :count=>0}, {:type=>"other", :count=>0}],
+//      thumbnail: {"width"=>121, "height"=>160, "asset_id"=> "1a43ecb4f4c85ff...",
+//        "timestamp": 1416881075, "image_type"=>"png"},
+//      pub_year: 2014, genre: "dissertation", rights: nil, peerReviewed: true,
+//      unitInfo: {displayName: "UC Riverside Electronic Theses and Dissertations", unitId: "ucr_etd"}}, ...]
+//   count: 331,
+//   facets: [ {display: 'Type of Work', fieldName: 'type_of_work', facets: []} ]
+
   // PageBase will fetch the following URL for us, and place the results in this.state.pageData
   pageDataURL() {
     return "/api/search/" + this.props.location.search  // plus whatever props.params.YourUrlParam, etc.
@@ -508,17 +531,19 @@ class SearchPage extends PageBase {
         </div>
         <ExportComp />
         <div className="c-columns">
-          <aside>
+        <aside>
             <FacetForm formName={formName} formButton={formButton} data={facetFormData} query={data.query} />
           </aside>
           <main id="maincontent" style={{position: "relative"}}>
             { this.state.fetchingData ? <div className="c-search-extra__loading-overlay"/> : null }
+          {data.infoResultsPreview &&
             <section className="o-columnbox1">
               <header>
                 <h1 className="o-columnbox1__heading">Informational Pages (12 results)</h1>
               </header>
-              <InfoPagesComp />
+              <InfoPagesComp info_count={data.info_count} infoResultsPreview={data.infoResultsPreview} />
             </section>
+          }
             <section className="o-columnbox1">
               <header>
                 <h1 className="o-columnbox1__heading">
