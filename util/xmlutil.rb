@@ -1,5 +1,6 @@
 require 'date'
 require 'nokogiri'
+require_relative "./sanitize.rb"
 
 ###################################################################################################
 # Monkey patches to make Nokogiri even more elegant
@@ -44,9 +45,10 @@ class Nokogiri::XML::Node
     at(xpath) ? at(xpath).text : nil
   end
 
-  # Translate entities, e.g. "&#x2019;" to curly quote
-  def translateEntities(text)
-    return text.gsub(/&#x([0-9a-fA-F]+);/) { [$1.hex].pack("U") }
+  def stripped_text_at(xpath)
+    return nil if !at(xpath)
+    txt = at(xpath).text.strip
+    return txt.empty? ? nil : txt
   end
 
   def html_at(xpath)

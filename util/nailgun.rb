@@ -15,12 +15,12 @@ class Nailgun
   #     ng.call([param1,param2,...])           # call, return output as string
   # }
 
-  def self.run(classPath, port = 0, &blk)
+  def self.run(classPath, port = 0, systemProps = nil, &blk)
     inst = Nailgun.new
-    inst.runInternal(classPath, port, &blk)
+    inst.runInternal(classPath, port, systemProps, &blk)
   end
 
-  def runInternal(classPath, port = 0, &blk)
+  def runInternal(classPath, port = 0, systemProps = nil, &blk)
 
     # If no port specified, let the O/S pick one.
     if port == 0
@@ -31,7 +31,7 @@ class Nailgun
     end
 
     fullClassPath = "/apps/eschol/erep/xtf/control/xsl/nailgun.jar:#{classPath}"
-    cmd = "java -cp #{fullClassPath} -server com.martiansoftware.nailgun.NGServer #{@port} > nailgun.log 2>&1"
+    cmd = "java -cp #{fullClassPath} #{systemProps} -server com.martiansoftware.nailgun.NGServer #{@port} > nailgun.log 2>&1"
     pid = spawn(cmd)
 
     begin

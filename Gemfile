@@ -2,6 +2,7 @@
 source 'https://rubygems.org'
 gem 'aws-sdk'             # used to talk to AWS CloudSearch
 gem 'fastimage'           # for determining dimensions of image files
+gem 'htmlentities'        # for decoding HTML entites
 gem 'httparty'            # for fetching URLs easily
 gem 'json'                # safely and quickly parsing and generating JSON data
 gem 'mimemagic'           # for guessing mime types during conversion

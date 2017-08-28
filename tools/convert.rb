@@ -945,6 +945,12 @@ def parseDate(str)
     end
     return Date.strptime(text, "%Y-%m-%d").iso8601  # throws exception on bad date
   rescue
+    begin
+      text.sub! /-02-(29|30|31)$/, "-02-28" # Try to fix some crazy dates
+      return Date.strptime(text, "%Y-%m-%d").iso8601  # throws exception on bad date
+    rescue
+      # pass
+    end
     puts "Warning: invalid date: #{str.inspect}"
     return nil
   end
@@ -954,14 +960,16 @@ end
 # Take a UCI author and make it into a string for ease of display.
 def formatAuthName(auth)
   str = ""
-  if auth.at("lname") && auth.at("fname")
-    str = auth.at("lname").text.strip + ", " + auth.at("fname").text.strip
-    auth.at("mname") and str += " " + auth.at("mname").text.strip
-    auth.at("suffix") and str += ", " + auth.at("suffix").text.strip
-  elsif auth.at("fname")
-    str = auth.at("fname").text
-  elsif auth.at("lname")
-    str = auth.at("lname").text
+  fname, lname = auth.stripped_text_at("fname"), auth.stripped_text_at("lname")
+  if lname && fname
+    str = "#{lname}, #{fname}"
+    mname, suffix = auth.stripped_text_at("mname"), auth.stripped_text_at("suffix")
+    mname and str += " #{mname}"
+    suffix and str += ", #{suffix}"
+  elsif fname
+    str = fname
+  elsif lname
+    str = lname
   else
     puts "Warning: can't figure out author #{auth}"
     str = auth.text
@@ -1115,6 +1123,7 @@ def grabUCISupps(rawMeta)
   rawMeta.xpath("//content/supplemental/file").each { |fileEl|
     suppAttrs = { file: fileEl[:path].sub(%r{.*content/supp/}, "") }
     fileEl.children.each { |subEl|
+      next if subEl.name == "mimeType" && subEl.text == "unknown"
       suppAttrs[subEl.name] = subEl.text
     }
     supps << suppAttrs
@@ -1160,7 +1169,7 @@ end
 
 ###################################################################################################
 def isEmbargoed(embargoDate)
-  return embargoDate && Date.today < Date.parse(embargoDate)
+  return embargoDate && Date.today < Date.parse(parseDate(embargoDate))
 end
 
 ###################################################################################################
@@ -1184,7 +1193,7 @@ def parsePrefilteredData(itemID, existingItem, rawMeta, prefilteredData)
   pf.multiple("contentExists")[0] == "yes" or attrs[:suppress_content] = true  # yes, inverting the sense
   pf.single("peerReview"   ) == "yes" and attrs[:is_peer_reviewed] = true
   pf.single("undergrad "   ) == "yes" and attrs[:is_undergrad] = true
-  pf.single("language"     )          and attrs[:language] = pf.single("language")
+  pf.single("language"     )          and attrs[:language] = pf.single("language").sub("english", "en")
   pf.single("embargoed")              and attrs[:embargo_date] = pf.single("embargoed")
   pf.single("publisher")              and attrs[:publisher] = pf.single("publisher")
   pf.single("originalCitation")       and attrs[:orig_citation] = pf.single("originalCitation")
@@ -1272,6 +1281,7 @@ def parsePrefilteredData(itemID, existingItem, rawMeta, prefilteredData)
 
   # Data for external journals
   if !issue
+    issueNum = pf.single("issue") # tokenization not an issue for external journal articles
     pf.single("journal") and (attrs[:ext_journal] ||= {})[:name]   = pf.single("journal")
     volNum               and (attrs[:ext_journal] ||= {})[:volume] = volNum
     issueNum             and (attrs[:ext_journal] ||= {})[:issue]  = issueNum
@@ -1368,7 +1378,7 @@ def parseUCIngest(itemID, inMeta, fileType)
   attrs[:local_ids] = inMeta.xpath("context/localID").map { |el| { type: el[:type], id: el.text } }
   attrs[:pub_web_loc] = inMeta.text_at("context/publishedWebLocation")
   attrs[:buy_link] = inMeta.text_at("context/buyLink")
-  attrs[:language] = inMeta.text_at("context/language")
+  attrs[:language] = inMeta.text_at("context/language").sub("english", "en")
   attrs[:doi] = inMeta.text_at("doi")
 
   tmp = inMeta.at("context/file[@disableDownload]")
@@ -1398,9 +1408,9 @@ def parseUCIngest(itemID, inMeta, fileType)
   attrs[:supp_files], suppSummaryTypes = summarizeSupps(itemID, grabUCISupps(inMeta))
 
   # Data for external journals
-  if inMeta.xpath("context/entity[@id]").none? { |ent| $allUnits[ent[:id]].type == "journal" }
+  if inMeta.xpath("context/entity[@id]").none? { |ent| $allUnits[ent[:id]] && $allUnits[ent[:id]].type == "journal" }
     exAtts = {}
-    exAtts[:journal] = inMeta.text_at("context/journal")
+    exAtts[:name] = inMeta.text_at("context/journal")
     exAtts[:volume] = inMeta.text_at("context/volume")
     exAtts[:issue] = inMeta.text_at("context/issue")
     exAtts[:issn] = inMeta.text_at("context/issn")
@@ -1431,7 +1441,7 @@ def parseUCIngest(itemID, inMeta, fileType)
   dbItem[:status]       = attrs[:withdrawn_date] ? "withdrawn" :
                           isEmbargoed(attrs[:embargo_date]) ? "embargoed" :
                           (inMeta[:state] || raise("no state in record"))
-  dbItem[:title]        = inMeta.html_at("title")
+  dbItem[:title]        = sanitizeHTML(inMeta.html_at("title"))
   dbItem[:content_type] = attrs[:suppress_content] ? nil :
                           attrs[:withdrawn_date] ? nil :
                           isEmbargoed(attrs[:embargo_date]) ? nil :
@@ -1442,9 +1452,9 @@ def parseUCIngest(itemID, inMeta, fileType)
                            dbItem[:content_type].nil? &&
                            attrs[:supp_files]) ? "multimedia" :
                           fileType == "ETD" ? "dissertation" :
-                          inMeta.at("type")
-  dbItem[:pub_date]     = parseDate(inMeta.text_at("history/originalPublicationDate")) or raise("Can't find originalPublicationDate")
+                          "article"
   dbItem[:eschol_date]  = parseDate(inMeta.text_at("history/escholPublicationDate") || inMeta[:datestamp])
+  dbItem[:pub_date]     = parseDate(inMeta.text_at("history/originalPublicationDate")) || dbItem[:eschol_date]
   dbItem[:attrs]        = JSON.generate(attrs)
   dbItem[:rights]       = translateRights(inMeta.text_at("rights"))
   dbItem[:ordering_in_sect] = inMeta.text_at("publicationOrder")
@@ -1465,12 +1475,23 @@ def parseUCIngest(itemID, inMeta, fileType)
 end
 
 ###################################################################################################
-def processETD(itemID, metaPath, nailgun)
-  puts "ETD processing."
+def processWithNormalizer(fileType, itemID, metaPath, nailgun)
   begin
+    normalizer = case fileType
+      when "ETD"
+        "/apps/eschol/erep/xtf/normalization/etd/normalize_etd.xsl"
+      when "BioMed"
+        "/apps/eschol/erep/xtf/normalization/biomed/normalize_biomed.xsl"
+      else
+        raise("Unknown normalization type")
+    end
+
     # Run the raw (ProQuest or METS) data through a normalization stylesheet using Saxon via nailgun
-    xslPath = "/apps/eschol/erep/xtf/normalization/etd/normalize_etd.xsl"
-    normText = nailgun.call("net.sf.saxon.Transform", [metaPath, xslPath])
+    normText = nailgun.call("net.sf.saxon.Transform",
+      ["-r", "org.apache.xml.resolver.tools.CatalogResolver",
+       "-x", "org.apache.xml.resolver.tools.ResolvingXMLReader",
+       "-y", "org.apache.xml.resolver.tools.ResolvingXMLReader",
+       metaPath, normalizer])
 
     # Write it out to a file locally (useful for debugging and validation)
     FileUtils.mkdir_p(arkToFile(itemID, "", "normalized")) # store in local dir
@@ -1489,15 +1510,10 @@ def processETD(itemID, metaPath, nailgun)
     end
 
     # And parse the data
-    return parseUCIngest(itemID, normXML.root, "ETD")
+    return parseUCIngest(itemID, normXML.root, fileType)
   rescue Exception => e
-    puts "Error processing ETD: #{e} at #{e.backtrace.join("; ")}"
+    puts "Error processing normalized data: #{e} at #{e.backtrace.join("; ")}"
   end
-end
-
-###################################################################################################
-def processBiomed(itemID, metaPath, nailgun)
-  # No special biomed processing yet.
 end
 
 ###################################################################################################
@@ -1512,23 +1528,75 @@ def compareAttrs(oldAttrs, newAttrs)
   end
 
   (oldAttrs.keys & newAttrs.keys).each { |key|
-    next if oldAttrs[key] == newAttrs[key]
+    oldVal, newVal = oldAttrs[key], newAttrs[key]
+    next if oldVal == newVal
     next if key == :local_ids # known differences, and unused by current front-end anyway
-    next if key == :eschol_date && oldAttrs[key].to_s =~ /1901-01-01/   # new date processing is better
-    next if key == :title && oldAttrs[key].gsub(/  +/, ' ') == newAttrs[key]  # space normalization better now
-    puts "normDiff: old[:#{key}]=#{oldAttrs[key].inspect.ellipsize(max:200)}"
-    puts "       vs new[:#{key}]=#{newAttrs[key].inspect.ellipsize(max:200)}"
+    next if oldVal.instance_of?(String) && oldVal.gsub(/\s\s+/, ' ') == newVal  # space normalization better now
+    next if oldVal.instance_of?(String) && newVal.instance_of?(String) &&
+            sanitizeHTML(oldVal) == sanitizeHTML(newVal)   # new normalization is better
+    next if oldVal.instance_of?(Date) && newVal.instance_of?(Date) &&
+            oldVal.year == 1901    # we work harder now for dates
+    puts "normDiff: old[:#{key}]=#{oldVal.inspect.ellipsize(max:200)}"
+    puts "       vs new[:#{key}]=#{newVal.inspect.ellipsize(max:200)}"
   }
   (oldAttrs.keys - newAttrs.keys).each { |key|
-    next if !oldAttrs[key]
-    next if oldAttrs[key].respond_to?(:empty?) && oldAttrs[key].empty?
-    puts "normDiff: removed old[:#{key}]=#{oldAttrs[key].inspect.ellipsize}"
+    oldVal = oldAttrs[key]
+    next if !oldVal
+    next if oldVal.respond_to?(:empty?) && oldVal.empty?
+    next if key == :publisher && oldVal == "BioMed Central Ltd"  # old was bogus
+    puts "normDiff: removed old[:#{key}]=#{oldVal.inspect.ellipsize}"
   }
   (newAttrs.keys - oldAttrs.keys).each { |key|
+    newVal = newAttrs[key]
     next if key == :embargo_date # old converter omits if item no longer embargoed
     next if key == :local_ids # known differences, and unused by current front-end anyway
-    puts "normDiff: added new[:#{key}]=#{newAttrs[key].inspect.ellipsize}"
+    puts "normDiff: added new[:#{key}]=#{newVal.inspect.ellipsize}"
   }
+end
+
+###################################################################################################
+def compareAuthors(oldAuthors, newAuthors)
+  (0..[oldAuthors.length-1, newAuthors.length-1].max).each { |idx|
+    oldAuth, newAuth = oldAuthors[idx], newAuthors[idx]
+    if oldAuth != newAuth
+      next if !oldAuth.nil? && !newAuth.nil? &&
+              !oldAuth[:name].nil? && !newAuth[:name].nil? &&
+              oldAuth[:name] == newAuth[:name]  # ignore lname, mname, etc.
+      puts "normDiff: author #{idx+1} changed: old=#{oldAuth.inspect.ellipsize(max: 200)}"
+      puts "                            new=#{newAuth.inspect.ellipsize(max: 200)}"
+    end
+  }
+end
+
+###################################################################################################
+def compareUnits(oldUnits, newUnits)
+  (0..[oldUnits.length-1, newUnits.length-1].max).each { |idx|
+    oldUnit, newUnit = oldUnits[idx], newUnits[idx]
+    if oldUnit != newUnit
+      puts "normDiff: unit #{idx+1} changed: old=#{oldUnit.inspect}"
+      puts "                          new=#{newUnit.inspect}"
+    end
+  }
+end
+
+###################################################################################################
+def compareIssues(oldIss, newIss, oldSect, newSect)
+  if oldIss.inspect != newIss.inspect
+    puts "normDiff: issue changed. old=#{oldIss.inspect.ellipsize}"
+    puts "                         new=#{newIss.inspect.ellipsize}"
+  end
+  if oldSect.inspect != newSect.inspect
+    puts "normDiff: section changed. old=#{oldSect.inspect.ellipsize}"
+    puts "                           new=#{newSect.inspect.ellipsize}"
+  end
+end
+
+###################################################################################################
+def compareSuppSummaries(oldSumm, newSumm)
+  if oldSumm.inspect != newSumm.inspect
+    puts "normDiff: supp summary changed. old=#{oldSumm.inspect.ellipsize}"
+    puts "                                new=#{newSumm.inspect.ellipsize}"
+  end
 end
 
 ###################################################################################################
@@ -1548,21 +1616,30 @@ def indexItem(itemID, timestamp, prefilteredData, batch, nailgun)
   dbItem, attrs, authors, units, issue, section, suppSummaryTypes =
      parsePrefilteredData(itemID, existingItem, rawMeta, prefilteredData)
 
+  normalize = nil
   if rawMeta.name =~ /^DISS_submission/ ||
      (rawMeta.name == "mets" && rawMeta.attr("PROFILE") == "http://www.loc.gov/mets/profiles/00000026.html")
+    normalize = "ETD"
+  elsif rawMeta.name == "mets"
+    normalize = "BioMed"
+  end
+
+  if normalize
     new_dbItem, new_attrs, new_authors, new_units, new_issue, new_section, new_suppSummaryTypes =
-      processETD(itemID, metaPath, nailgun)
+      processWithNormalizer(normalize, itemID, metaPath, nailgun)
     begin
       compareAttrs(attrs, new_attrs)
       compareAttrs(dbItem.to_hash.reject { |k,v| k == :attrs },
                    new_dbItem.to_hash.reject { |k,v| k == :attrs })
-    rescue
-      puts "Error comparing."
+      compareAuthors(authors, new_authors)
+      compareUnits(units, new_units)
+      compareIssues(issue, new_issue, section, new_section)
+      compareSuppSummaries(suppSummaryTypes, new_suppSummaryTypes)
+    rescue Exception => e
+      puts "Error comparing: #{e} #{e.backtrace.join("; ")}"
     end
     #dbItem, attrs, authors, units, issue, section, suppSummaryTypes =
     #  new_dbItem, new_attrs, new_authors, new_units, new_issue, new_section, new_suppSummaryTypes
-  elsif rawMeta.name == "mets"
-    processBiomed(itemID, metaPath, nailgun)
   end
 
   text = grabText(itemID, dbItem.content_type)
@@ -1716,8 +1793,12 @@ def indexAllItems
   Thread.current[:name] = "index thread"  # label all stdout from this thread
   batch = emptyBatch({})
 
-  classPath = "/apps/eschol/erep/xtf/WEB-INF/lib/saxonb-8.9.jar:/apps/eschol/erep/xtf/control/xsl/jing.jar"
-  Nailgun.run(classPath) { |nailgun|
+  # The resolver and catalog stuff below is to prevent BioMed files from loading external DTDs
+  # (which is not only slow but also unreliable)
+  classPath = "/apps/eschol/erep/xtf/WEB-INF/lib/saxonb-8.9.jar:" +
+              "/apps/eschol/erep/xtf/control/xsl/jing.jar:" +
+              "/apps/eschol/erep/xtf/normalization/resolver.jar"
+  Nailgun.run(classPath, 0, "-Dxml.catalog.files=/apps/eschol/erep/xtf/normalization/catalog.xml") { |nailgun|
     loop do
       # Grab an item from the input queue
       Thread.current[:name] = "index thread"  # label all stdout from this thread
