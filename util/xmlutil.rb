@@ -42,12 +42,11 @@ class Nokogiri::XML::Node
   end
 
   def text_at(xpath)
-    at(xpath) ? at(xpath).text : nil
-  end
-
-  def stripped_text_at(xpath)
-    return nil if !at(xpath)
-    txt = at(xpath).text.strip
+    el = at(xpath)
+    el.nil? and return nil
+    txt = el.text
+    txt.nil? and return nil
+    txt = txt.strip
     return txt.empty? ? nil : txt
   end
 

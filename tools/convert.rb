@@ -864,7 +864,9 @@ class MetaAccess
   # Get the text content of a metadata field which we expect only one of
   def single(name)
     els = @root.xpath("meta/#{name}[@meta='yes']")
-    els.length <= 1 or puts("Warning: multiple #{name.inspect} elements found.")
+    if els.length > 1 && name != "localID"  # known prob with multiple localIDs - fixed in new UCI code
+      puts("Warning: multiple #{name.inspect} elements found.")
+    end
     return els[0] ? els[0].content : nil
   end
 
@@ -878,7 +880,9 @@ class MetaAccess
   # Get attribute of a single metadata field
   def singleAttr(elName, attrName, default=nil)
     els = @root.xpath("meta/#{elName}[@meta='yes']")
-    els.length <= 1 or puts("Warning: multiple #{elName.inspect} elements found.")
+    if els.length > 1 && elName != "localID"  # known prob with multiple localIDs - fixed in new UCI code
+      puts("Warning: multiple #{elName.inspect} elements found.")
+    end
     return els[0] ? (els[0][attrName] || default) : default
   end
 
@@ -960,10 +964,10 @@ end
 # Take a UCI author and make it into a string for ease of display.
 def formatAuthName(auth)
   str = ""
-  fname, lname = auth.stripped_text_at("fname"), auth.stripped_text_at("lname")
+  fname, lname = auth.text_at("fname"), auth.text_at("lname")
   if lname && fname
     str = "#{lname}, #{fname}"
-    mname, suffix = auth.stripped_text_at("mname"), auth.stripped_text_at("suffix")
+    mname, suffix = auth.text_at("mname"), auth.text_at("suffix")
     mname and str += " #{mname}"
     suffix and str += ", #{suffix}"
   elsif fname
@@ -1199,7 +1203,7 @@ def parsePrefilteredData(itemID, existingItem, rawMeta, prefilteredData)
   pf.single("originalCitation")       and attrs[:orig_citation] = pf.single("originalCitation")
   pf.single("customCitation")         and attrs[:custom_citation] = pf.single("customCitation")
   pf.single("localID")                and attrs[:local_id] = { type: pf.singleAttr("localID", :type, "other"),
-                                                                 id:   pf.single("localID") }
+                                                                 id: pf.single("localID") }
   pf.multiple("publishedWebLocation") and attrs[:pub_web_loc] = pf.multiple("publishedWebLocation")
   pf.single("buyLink")                and attrs[:buy_link] = pf.single("buyLink")
   pf.single("doi")                    and attrs[:doi] = pf.single("doi")
@@ -1219,7 +1223,13 @@ def parsePrefilteredData(itemID, existingItem, rawMeta, prefilteredData)
     pf.multiple("facet-discipline").each { |discStr|
       discID = discStr[/^\d+/] # only the numeric part
       label = $discTbl[discID]
-      label ? (attrs[:disciplines] << label) : puts("Warning: unknown discipline ID #{discID.inspect}")
+      if label
+        attrs[:disciplines] << label
+      else
+        puts("Warning: unknown discipline ID #{discID.inspect}")
+        puts "pf: discStr=#{discStr}"
+        puts "pf: discTbl=#{$discTbl}" # FIXME FOO
+      end
     }
   end
 
@@ -1372,15 +1382,20 @@ def parseUCIngest(itemID, inMeta, fileType)
   attrs[:is_peer_reviewed] = inMeta[:peerReview] == "yes"
   attrs[:is_undergrad] = inMeta[:undergrad] == "yes"
   attrs[:embargo_date] = inMeta[:embargoDate]
-  attrs[:publisher] = inMeta[:publisher]
+  attrs[:publisher] = inMeta.text_at("publisher")
   attrs[:orig_citation] = inMeta.text_at("originalCitation")
   attrs[:custom_citation] = inMeta.text_at("customCitation")
   attrs[:local_ids] = inMeta.xpath("context/localID").map { |el| { type: el[:type], id: el.text } }
-  attrs[:pub_web_loc] = inMeta.text_at("context/publishedWebLocation")
+  attrs[:pub_web_loc] = inMeta.xpath("context/publishedWebLocation").map { |el| el.text.strip }
   attrs[:buy_link] = inMeta.text_at("context/buyLink")
-  attrs[:language] = inMeta.text_at("context/language").sub("english", "en")
+  attrs[:language] = inMeta.text_at("context/language")
   attrs[:doi] = inMeta.text_at("doi")
 
+  # Normalize language codes
+  attrs[:language] and attrs[:language] = attrs[:language].sub("english", "en").sub("german", "de").
+                                                           sub("french", "fr").sub("spanish", "es")
+
+  # Set disableDownload flag based on content file
   tmp = inMeta.at("context/file[@disableDownload]")
   tmp and attrs[:disable_download] = tmp[:disableDownload]
 
@@ -1391,6 +1406,8 @@ def parseUCIngest(itemID, inMeta, fileType)
       puts "Warning: no withdraw date found; using stateDate."
       attrs[:withdrawn_date] = inMeta[:stateDate]
     end
+    msg = inMeta.text_at("history/stateChange[@state='withdrawn']/comment")
+    msg and attrs[:withdrawn_message] = msg
   end
 
   # Filter out "n/a" abstracts
@@ -1400,24 +1417,78 @@ def parseUCIngest(itemID, inMeta, fileType)
 
   # Disciplines are a little extra work; we want to transform numeric IDs to plain old labels
   attrs[:disciplines] = inMeta.xpath("disciplines/discipline").map { |discEl|
-    label = $discTbl[discEl[:id]]
-    label or puts("Warning: unknown discipline #{discEl[:id].inspect}")
+    discID = discEl[:id]
+    if discID == "" && discEl.text && discEl.text.strip && $discTbl.values.include?(discEl.text.strip)
+      # Kludge for old <disciplines> with no ID but with exact text
+      label = discEl.text.strip
+    else
+      discID and discID.sub!(/^disc/, "")
+      label = $discTbl[discID]
+    end
+    if !label
+      puts("Warning: unknown discipline ID #{discID.inspect}")
+      puts "uci: discEl=#{discEl}"
+      puts "uci: discTbl=#{$discTbl}" # FIXME FOO
+    end
+    label
   }.select { |v| v }
 
   # Supplemental files
   attrs[:supp_files], suppSummaryTypes = summarizeSupps(itemID, grabUCISupps(inMeta))
 
-  # Data for external journals
-  if inMeta.xpath("context/entity[@id]").none? { |ent| $allUnits[ent[:id]] && $allUnits[ent[:id]].type == "journal" }
-    exAtts = {}
-    exAtts[:name] = inMeta.text_at("context/journal")
-    exAtts[:volume] = inMeta.text_at("context/volume")
-    exAtts[:issue] = inMeta.text_at("context/issue")
-    exAtts[:issn] = inMeta.text_at("context/issn")
-    exAtts[:fpage] = inMeta.text_at("extent/fpage")
-    exAtts[:lpage] = inMeta.text_at("extent/lpage")
-    exAtts.reject! { |k, v| !v }
-    exAtts.empty? or attrs[:ext_journal] = exAtts
+  # We'll need this in a couple places later on
+  rights = translateRights(inMeta.text_at("rights"))
+
+  # For eschol journals, populate the issue and section models.
+  issue = section = nil
+  volNum = inMeta.text_at("context/volume")
+  issueNum = inMeta.text_at("context/issue")
+  if issueNum
+    issueUnit = inMeta.xpath("context/entity[@id]").select {
+                      |ent| $allUnits[ent[:id]] && $allUnits[ent[:id]].type == "journal" }[0]
+    issueUnit and issueUnit = issueUnit[:id]
+    if issueUnit
+      # Data for eScholarship journals
+      if $allUnits.include?(issueUnit)
+        volNum.nil? and raise("missing volume number on eschol journal item")
+
+        issue = Issue.new
+        issue[:unit_id]  = issueUnit
+        issue[:volume]   = volNum
+        issue[:issue]    = issueNum
+        issue[:pub_date] = parseDate(inMeta.text_at("context/issueDate") ||
+                                     inMeta.text_at("history/originalPublicationDate") ||
+                                     inMeta.text_at("history/escholPublicationDate") ||
+                                     inMeta[:datestamp])
+        issueAttrs = {}
+        tmp = inMeta.text_at("/record/context/issueTitle")
+        tmp and issueAttrs[:title] = tmp
+        tmp = inMeta.text_at("/record/context/issueDescription")
+        tmp and issueAttrs[:description] = tmp
+        tmp = inMeta.text_at("/record/context/issueCoverCaption")
+        findIssueCover(issueUnit, volNum, issueNum, tmp, issueAttrs)
+        addIssueBuyLink(issueUnit, volNum, issueNum, issueAttrs)
+        addIssueNumberingAttrs(issueUnit, volNum, issueNum, issueAttrs)
+        rights and issueAttrs[:rights] = rights
+        !issueAttrs.empty? and issue[:attrs] = issueAttrs.to_json
+
+        section = Section.new
+        section[:name] = inMeta.text_at("sectionHeader") || "Articles"
+      else
+        "Warning: issue associated with unknown unit #{issueUnit.inspect}"
+      end
+    else
+      # Data for external journals
+      exAtts = {}
+      exAtts[:name] = inMeta.text_at("context/journal")
+      exAtts[:volume] = inMeta.text_at("context/volume")
+      exAtts[:issue] = inMeta.text_at("context/issue")
+      exAtts[:issn] = inMeta.text_at("context/issn")
+      exAtts[:fpage] = inMeta.text_at("extent/fpage")
+      exAtts[:lpage] = inMeta.text_at("extent/lpage")
+      exAtts.reject! { |k, v| !v }
+      exAtts.empty? or attrs[:ext_journal] = exAtts
+    end
   end
 
   # Generate thumbnails (but only for non-suppressed PDF items)
@@ -1456,7 +1527,7 @@ def parseUCIngest(itemID, inMeta, fileType)
   dbItem[:eschol_date]  = parseDate(inMeta.text_at("history/escholPublicationDate") || inMeta[:datestamp])
   dbItem[:pub_date]     = parseDate(inMeta.text_at("history/originalPublicationDate")) || dbItem[:eschol_date]
   dbItem[:attrs]        = JSON.generate(attrs)
-  dbItem[:rights]       = translateRights(inMeta.text_at("rights"))
+  dbItem[:rights]       = rights
   dbItem[:ordering_in_sect] = inMeta.text_at("publicationOrder")
 
   # Populate ItemAuthor model instances
@@ -1468,8 +1539,6 @@ def parseUCIngest(itemID, inMeta, fileType)
       !$allUnits.include?(unitID) ? (puts("Warning: unknown unit #{unitID.inspect}") && false) :
       true
   }
-
-  issue = section = nil # FIXME
 
   return dbItem, attrs, authors, units, issue, section, suppSummaryTypes
 end
@@ -1487,8 +1556,6 @@ def processWithNormalizer(fileType, itemID, metaPath, nailgun)
       else
         raise("Unknown normalization type")
     end
-
-    puts "Normalizing #{fileType}."
 
     # Run the raw (ProQuest or METS) data through a normalization stylesheet using Saxon via nailgun
     normText = nailgun.call("net.sf.saxon.Transform",
@@ -1540,6 +1607,8 @@ def compareAttrs(oldAttrs, newAttrs)
             sanitizeHTML(oldVal) == sanitizeHTML(newVal)   # new normalization is better
     next if oldVal.instance_of?(Date) && newVal.instance_of?(Date) &&
             oldVal.year == 1901    # we work harder now for dates
+    next if oldVal.instance_of?(String) && newVal.instance_of?(String) &&
+            oldVal.gsub(/\s/, "") == newVal.gsub(%r{</?[^>]+>}, "").gsub(/\s/, "")
     puts "normDiff: old[:#{key}]=#{oldVal.inspect.ellipsize(max:200)}"
     puts "       vs new[:#{key}]=#{newVal.inspect.ellipsize(max:200)}"
   }
@@ -1547,12 +1616,15 @@ def compareAttrs(oldAttrs, newAttrs)
     oldVal = oldAttrs[key]
     next if !oldVal
     next if oldVal.respond_to?(:empty?) && oldVal.empty?
+    next if oldVal == "en"  # old language processing for UCI files was kludged to always be english
+    next if key == :ext_journal && (!oldVal[:issue] || oldVal[:volume])   # silly to have journal without vol/iss
     puts "normDiff: removed old[:#{key}]=#{oldVal.inspect.ellipsize}"
   }
   (newAttrs.keys - oldAttrs.keys).each { |key|
     newVal = newAttrs[key]
     next if key == :embargo_date # old converter omits if item no longer embargoed
     next if key == :local_ids # known differences, and unused by current front-end anyway
+    next if key == :disciplines # new code is better at identifying these
     puts "normDiff: added new[:#{key}]=#{newVal.inspect.ellipsize}"
   }
 end
@@ -1585,20 +1657,20 @@ end
 ###################################################################################################
 def compareIssues(oldIss, newIss, oldSect, newSect)
   if oldIss.inspect != newIss.inspect
-    puts "normDiff: issue changed. old=#{oldIss.inspect.ellipsize}"
-    puts "                         new=#{newIss.inspect.ellipsize}"
+    puts "normDiff: issue changed. old=#{oldIss.inspect.ellipsize(max:200)}"
+    puts "                         new=#{newIss.inspect.ellipsize(max:200)}"
   end
   if oldSect.inspect != newSect.inspect
-    puts "normDiff: section changed. old=#{oldSect.inspect.ellipsize}"
-    puts "                           new=#{newSect.inspect.ellipsize}"
+    puts "normDiff: section changed. old=#{oldSect.inspect.ellipsize(max:200)}"
+    puts "                           new=#{newSect.inspect.ellipsize(max:200)}"
   end
 end
 
 ###################################################################################################
 def compareSuppSummaries(oldSumm, newSumm)
   if oldSumm.inspect != newSumm.inspect
-    puts "normDiff: supp summary changed. old=#{oldSumm.inspect.ellipsize}"
-    puts "                                new=#{newSumm.inspect.ellipsize}"
+    puts "normDiff: supp summary changed. old=#{oldSumm.inspect.ellipsize(max:200)}"
+    puts "                                new=#{newSumm.inspect.ellipsize(max:200)}"
   end
 end
 
@@ -1629,23 +1701,29 @@ def indexItem(itemID, timestamp, prefilteredData, batch, nailgun)
     normalize = "Springer"
   end
 
+  Thread.current[:name] = "index thread: #{itemID} #{normalize ? normalize : "UCIngest"}"
+
   if normalize
     new_dbItem, new_attrs, new_authors, new_units, new_issue, new_section, new_suppSummaryTypes =
       processWithNormalizer(normalize, itemID, metaPath, nailgun)
-    begin
-      compareAttrs(attrs, new_attrs)
-      compareAttrs(dbItem.to_hash.reject { |k,v| k == :attrs },
-                   new_dbItem.to_hash.reject { |k,v| k == :attrs })
-      compareAuthors(authors, new_authors)
-      compareUnits(units, new_units)
-      compareIssues(issue, new_issue, section, new_section)
-      compareSuppSummaries(suppSummaryTypes, new_suppSummaryTypes)
-    rescue Exception => e
-      puts "Error comparing: #{e} #{e.backtrace.join("; ")}"
-    end
-    #dbItem, attrs, authors, units, issue, section, suppSummaryTypes =
-    #  new_dbItem, new_attrs, new_authors, new_units, new_issue, new_section, new_suppSummaryTypes
+  else
+    new_dbItem, new_attrs, new_authors, new_units, new_issue, new_section, new_suppSummaryTypes =
+      parseUCIngest(itemID, rawMeta, "UCIngest")
   end
+
+  begin
+    compareAttrs(attrs, new_attrs)
+    compareAttrs(dbItem.to_hash.reject { |k,v| k == :attrs },
+                 new_dbItem.to_hash.reject { |k,v| k == :attrs })
+    compareAuthors(authors, new_authors)
+    compareUnits(units, new_units)
+    compareIssues(issue, new_issue, section, new_section)
+    compareSuppSummaries(suppSummaryTypes, new_suppSummaryTypes)
+  rescue Exception => e
+    puts "Error comparing: #{e} #{e.backtrace.join("; ")}"
+  end
+  #dbItem, attrs, authors, units, issue, section, suppSummaryTypes =
+  #  new_dbItem, new_attrs, new_authors, new_units, new_issue, new_section, new_suppSummaryTypes
 
   text = grabText(itemID, dbItem.content_type)
 
@@ -1664,6 +1742,7 @@ def indexItem(itemID, timestamp, prefilteredData, batch, nailgun)
       pub_year:      dbItem[:pub_date].year,
       rights:        dbItem[:rights] || "",
       sort_author:   (authors[0] || {name:""})[:name].gsub(/[^\w ]/, '').downcase,
+      is_info:       0
     }
   }
 
