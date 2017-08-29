@@ -188,17 +188,20 @@ class UnitProfileLayout extends React.Component {
 
     return (
       <div>
-        <h3>Social Configuration</h3>
+        <h3>Social Media Links</h3>
         <div className="c-columns">
           <main>
             <section className="o-columnbox1">
               <div>
                 <Form to={`/api/unit/${this.props.unit.id}/profileContentConfig`} onSubmit={this.handleSubmit}>
-                  <label className="c-editable-page__label" htmlFor="facebook">Facebook Page: </label>
+                  <p>You may provide links to your social media page(s). These will appear as icons in your site's navigation bar.</p>
+                  <label className="c-editable-page__label" htmlFor="facebook">Facebook Page Name: </label>
+                  <p>The portion of your Facebook page's URL that appears after: http://www.facebook.com/_____</p>
                   <input className="c-editable-page__input" id="facebook" name="facebook" type="text" defaultValue={data.facebook}
                           onChange={ event => this.setData({ facebook: event.target.value }) }/>
 
                   <label className="c-editable-page__label" htmlFor="twitter">Twitter Username: </label>
+                  <p>The portion of your Twitter page's URL that appears after: http://www.twitter.com/_____</p>
                   <input className="c-editable-page__input" id="twitter" name="twitter" type="text" defaultValue={data.twitter}
                           onChange={ event => this.setData({ twitter: event.target.value }) }/>
 
@@ -308,6 +311,7 @@ class UnitProfileLayout extends React.Component {
             <section className="o-columnbox1">
               <Form to={`/api/unit/${this.props.unit.id}/profileContentConfig`} onSubmit={this.handleSubmit}>
                 <label className="c-editable-page__label" htmlFor="aboutText">About Text</label>
+                <p>About text will appear at the top of your site's landing page. It should be fewer than 400 characters in length.</p>
                 <textarea className="c-editable-page__input" name="about" id="aboutText" defaultValue={data.marquee.about}
                         onChange={ event => this.setMarqueeData({about: event.target.value}) }/>
 
