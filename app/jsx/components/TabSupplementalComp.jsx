@@ -20,6 +20,7 @@ class RefineComp extends React.Component {
         </div>
       }
         <div className="o-download">
+      {/*
         {(this.props.mimeTypes.length > 1) ? 
           [<button key="0" className="o-download__button">Download All Files</button>,
            <details key="1" className="o-download__formats">
@@ -35,6 +36,7 @@ class RefineComp extends React.Component {
          :
            <button className="o-button__8">Download All Files</button>
         }
+      */}
         </div>
       </div>
     ) 
