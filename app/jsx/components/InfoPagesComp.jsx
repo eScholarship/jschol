@@ -30,7 +30,6 @@ class ResultComp extends React.Component {
   render() {
     let r = this.props.result,
         target_path = r.isPage ? r.ancestor_id+"/"+r.target_id : r.target_id
-    console.log(target_path)
     return (
       <div className="c-infopages__item">
         <h2>

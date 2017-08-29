@@ -641,12 +641,14 @@ get "/api/item/:shortArk" do |shortArk|
         :appearsIn => unitIDs ? unitIDs.map { |unitID| {"id" => unitID, "name" => Unit[unitID].name} }
                               : nil,
         :unit => unit ? unit.values.reject { |k,v| k==:attrs } : nil,
-        :usage => ItemCount.where(item_id: id).order(:month).to_hash(:month).map { |m,v| { "month"=>m, "hits"=>v.hits, "downloads"=>v.downloads }}
+        :usage => ItemCount.where(item_id: id).order(:month).to_hash(:month).map { |m,v| { "month"=>m, "hits"=>v.hits, "downloads"=>v.downloads }},
+        :metric_badge => false
       }
 
       if unit
         if unit.type != 'journal'
           body[:header] = getUnitHeader(unit)
+          body[:metric_badge] = true
         else 
           issue_id = Item.join(:sections, :id => :section).filter(Sequel.qualify("items", "id") => id).map(:issue_id)[0]
           unit_id, volume, issue = Section.join(:issues, :id => issue_id).map([:unit_id, :volume, :issue])[0]

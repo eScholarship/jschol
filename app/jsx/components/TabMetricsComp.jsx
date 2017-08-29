@@ -75,8 +75,14 @@ class MonthlyUsage extends React.Component {
 
   render() {
     let months_all = this.props.usage.map( r => { return r.month }),
+        monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+        fullDate = ym => {
+         let d = ym.split('-')
+         let month = monthNames[parseInt(d[1]) - 1]
+         return month + " " + d[0] 
+        },
         selector = months_all.map( (m, i) => {
-          return <option key={i} value={m}>{m}</option>
+          return <option key={i} value={m}>{fullDate(m)}</option>
         }),
         selectedUsage = this.props.usage.map( (r, i) => {
           if ((r.month >= this.state.from) && (r.month <= this.state.to)) { 
@@ -129,11 +135,16 @@ class TabMetricsComp extends React.Component {
       month: PropTypes.string,
       hits: PropTypes.number,
       downloads: PropTypes.number
-    })).isRequired
+    })).isRequired,
+    metric_badge: PropTypes.bool.isRequired,
+    attrs: PropTypes.shape({
+      doi: PropTypes.string
+    })
   }
 
   componentWillMount() {
     if (!(typeof document === "undefined")) {
+      // Altmetric widget  https://api.altmetric.com/embeds.html
       const script = document.createElement("script")
       script.src = "https://d1bxh8uas1mnw7.cloudfront.net/assets/embed.js"
       script.async = true
@@ -145,11 +156,6 @@ class TabMetricsComp extends React.Component {
     return (
       <div className="c-tabcontent">
         <h1 className="c-tabcontent__main-heading" tabIndex="-1">Metrics</h1>
-        <div className="c-well">
-          <br/>
-          Beta Note: Metrics data below are demonstration samples.
-          <br/><br/>
-        </div>
         <div className="c-tabcontent__divide2x">
         {this.props.usage.length > 0 ?
           <div className="c-tabcontent__divide2x-child">
@@ -164,7 +170,13 @@ class TabMetricsComp extends React.Component {
           </div>
         }
           <div className="c-tabcontent__divide2x-child">
-            <div className='altmetric-embed' data-badge-type='donut' data-badge-details='right' data-doi="10.1038/nature.2012.9872"></div>
+          {this.props.metric_badge && this.props.attrs.doi ?
+            <div className='altmetric-embed' data-badge-type='donut' data-badge-details='right' data-doi={this.props.attrs.doi}></div>
+          :
+            <div className="c-well">
+              Altmetrics data currently unavailable for this item.
+            </div>
+          }
           </div>
         </div>
       </div>
