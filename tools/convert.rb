@@ -1482,9 +1482,13 @@ def processWithNormalizer(fileType, itemID, metaPath, nailgun)
         "/apps/eschol/erep/xtf/normalization/etd/normalize_etd.xsl"
       when "BioMed"
         "/apps/eschol/erep/xtf/normalization/biomed/normalize_biomed.xsl"
+      when "Springer"
+        "/apps/eschol/erep/xtf/normalization/springer/normalize_springer.xsl"
       else
         raise("Unknown normalization type")
     end
+
+    puts "Normalizing #{fileType}."
 
     # Run the raw (ProQuest or METS) data through a normalization stylesheet using Saxon via nailgun
     normText = nailgun.call("net.sf.saxon.Transform",
@@ -1543,7 +1547,6 @@ def compareAttrs(oldAttrs, newAttrs)
     oldVal = oldAttrs[key]
     next if !oldVal
     next if oldVal.respond_to?(:empty?) && oldVal.empty?
-    next if key == :publisher && oldVal == "BioMed Central Ltd"  # old was bogus
     puts "normDiff: removed old[:#{key}]=#{oldVal.inspect.ellipsize}"
   }
   (newAttrs.keys - oldAttrs.keys).each { |key|
@@ -1622,6 +1625,8 @@ def indexItem(itemID, timestamp, prefilteredData, batch, nailgun)
     normalize = "ETD"
   elsif rawMeta.name == "mets"
     normalize = "BioMed"
+  elsif rawMeta.name == "Publisher"
+    normalize = "Springer"
   end
 
   if normalize
