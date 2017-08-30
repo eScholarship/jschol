@@ -1523,6 +1523,7 @@ def parseUCIngest(itemID, inMeta, fileType)
                            dbItem[:content_type].nil? &&
                            attrs[:supp_files]) ? "multimedia" :
                           fileType == "ETD" ? "dissertation" :
+                          inMeta[:type] ? inMeta[:type].sub("paper", "article") :
                           "article"
   dbItem[:eschol_date]  = parseDate(inMeta.text_at("history/escholPublicationDate") || inMeta[:datestamp])
   dbItem[:pub_date]     = parseDate(inMeta.text_at("history/originalPublicationDate")) || dbItem[:eschol_date]
@@ -1618,6 +1619,7 @@ def compareAttrs(oldAttrs, newAttrs)
     next if oldVal.respond_to?(:empty?) && oldVal.empty?
     next if oldVal == "en"  # old language processing for UCI files was kludged to always be english
     next if key == :ext_journal && (!oldVal[:issue] || oldVal[:volume])   # silly to have journal without vol/iss
+    next if key == :suppress_content && oldAttrs[:embargo_date] && newAttrs[:embargo_date] # old was incorrectly suppressing
     puts "normDiff: removed old[:#{key}]=#{oldVal.inspect.ellipsize}"
   }
   (newAttrs.keys - oldAttrs.keys).each { |key|
@@ -1701,7 +1703,7 @@ def indexItem(itemID, timestamp, prefilteredData, batch, nailgun)
     normalize = "Springer"
   end
 
-  Thread.current[:name] = "index thread: #{itemID} #{normalize ? normalize : "UCIngest"}"
+  Thread.current[:name] = "index thread: #{itemID} #{sprintf("%-8s", normalize ? normalize : "UCIngest")}"
 
   if normalize
     new_dbItem, new_attrs, new_authors, new_units, new_issue, new_section, new_suppSummaryTypes =
