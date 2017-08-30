@@ -486,7 +486,7 @@ get "/api/browse/campuses" do
     :campusesStats => stats.select { |h| h['type']=="campus" },
     :affiliatedStats => stats.select { |h| h['type']=="oru" }
   }
-  breadcrumb = [{"name" => "Campuses and Affiliated Units", "url" => "/campuses"},]
+  breadcrumb = [{"name" => "Campuses and Other Locations", "url" => "/campuses"},]
   return body.merge(getHeaderElements(breadcrumb, nil)).to_json
 end
 
