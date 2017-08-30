@@ -93,7 +93,7 @@ class AllCampuses extends React.Component {
     return (
     <section className="o-columnbox1">
       <header>
-        <h1>Campuses and Affiliated Units</h1>
+        <h1>Campuses and Other Locations</h1>
       </header>
       <DescriptionListComp campusesStats={this.props.campusesStats} affiliatedStats={this.props.affiliatedStats} />
     </section>
