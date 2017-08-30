@@ -45,13 +45,14 @@ class EditableNavContentComp extends React.Component
         }
 
         <label className="c-editable-page__label" htmlFor="name">Navigation Bar Label</label>
-        <p>Generally the same as Page Title, but in some cases shortened to fit in the navigation bar</p>
+        <p>For optimal display, use fewer than 25 characters</p>
         <input className="c-editable-page__input" id="name" type="text" defaultValue={data.name}
                onChange={ event => this.setData({ name: event.target.value }) }/>
 
         { (data.type == "page") &&
           <div>
             <label className="c-editable-page__label" htmlFor="title">Page Title</label>
+            <p>Generally the same as Navigation Bar Label, but in some cases longer and more descriptive.</p>
             <input className="c-editable-page__input" id="title" type="text" defaultValue={data.title}
                    onChange={ event => this.setData({ title: event.target.value }) }/>
             <label className="c-editable-page__label" htmlFor="text">Text</label>
@@ -62,7 +63,7 @@ class EditableNavContentComp extends React.Component
 
         { (data.type == "link") &&
           <div>
-            <label className="c-editable-page__label" htmlFor="url">URL</label>
+            <label className="c-editable-page__label" htmlFor="url">External Link URL</label>
             <input className="c-editable-page__input" id="url" type="text" defaultValue={data.url}
                    onChange={ event => this.setData({ url: event.target.value }) }/>
           </div>

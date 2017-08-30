@@ -216,8 +216,8 @@ class DrawerComp extends React.Component {
           Navigation Items
           <AddWidgetMenu title="Add Nav Item">
             <a href="" key="page"   onClick={e=>this.addNavItem(e, 'page')  }>Page</a>
-            <a href="" key="url"    onClick={e=>this.addNavItem(e, 'link')  }>Link</a>
-            <a href="" key="folder" onClick={e=>this.addNavItem(e, 'folder')}>Folder</a>
+            <a href="" key="url"    onClick={e=>this.addNavItem(e, 'link')  }>External Link</a>
+            <a href="" key="folder" onClick={e=>this.addNavItem(e, 'folder')}>Dropdown Menu</a>
           </AddWidgetMenu>
         </div>
 
