@@ -37,7 +37,7 @@ class DescriptionListComp extends React.Component {
                <StatNum key="99" item={c} />]
           })}
         </dl>
-        <h3>Affiliated Units</h3>
+        <h3>Other Locations</h3>
         <dl className="c-descriptionlist">
           {this.props.affiliatedStats.map(function(c, i) {
             return c['id'] != "" &&
