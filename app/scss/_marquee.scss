@@ -8,7 +8,6 @@ $marquee-overlay-size: 50%;
 
   @include bp(screen2) {
     display: flex;
-    margin-bottom: $spacing-md;
   }
 
 }
@@ -17,9 +16,7 @@ $marquee-overlay-size: 50%;
   flex: 0 0 $column-width;
 
   @include bp(screen2) {
-    height: $marquee-height; // truncate beyond container per jquery.dotdotdot
     margin-left: $spacing-md;
-    overflow: hidden; // hide text beyond max-height
   }
 
   p {
@@ -28,8 +25,17 @@ $marquee-overlay-size: 50%;
 
 }
 
-.c-marquee__sidebar-more-link {
-  @extend %o-textlink__secondary;
+.c-marquee__sidebar-truncate {
+
+  @include bp(screen2) {
+    height: $marquee-height - 3.5em;
+    overflow: hidden;
+  }
+
+}
+
+.c-marquee__sidebar-more {
+  @extend %o-button__7;
 }
 
 .c-marquee__carousel {
@@ -37,7 +43,7 @@ $marquee-overlay-size: 50%;
   margin-bottom: $spacing-md;
 
   @include bp(screen2) {
-    margin: 0;
+    height: $marquee-height;
   }
 
 }
@@ -45,7 +51,7 @@ $marquee-overlay-size: 50%;
 .c-marquee__carousel-cell {
   position: relative;
   width: 100%;
-  height: $marquee-height; // sets the carousel height
+  height: $marquee-height;
   padding: $spacing-md 4.4em;
   background: right center / cover no-repeat;
   // background-image url property/value is set as an inline style after this class within the component
@@ -72,7 +78,7 @@ $marquee-overlay-size: 50%;
 
   }
 
-  h2 {
+  @include headings() {
     @extend %o-heading1;
     color: $color-white;
   }

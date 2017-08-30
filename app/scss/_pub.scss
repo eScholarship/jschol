@@ -1,7 +1,8 @@
 // ##### Publication Component ##### //
 
 .c-pub {
-  margin-bottom: $spacing-sm;
+  margin-bottom: $spacing-md;
+  break-inside: avoid;
 }
 
 .c-pub__heading {
@@ -21,4 +22,10 @@
 .c-pub__subheading {
   margin-bottom: 0.4em;
   font-size: 1.2em;
+}
+
+.c-pub__abstract {
+  max-height: 8em; // truncate beyond 6 lines per jquery.dotdotdot
+  margin-bottom: $spacing-md;
+  overflow: hidden; // hide text beyond max-height
 }

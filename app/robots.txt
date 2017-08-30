@@ -1,0 +1,4 @@
+# No crawling on stage
+User-agent: *
+Disallow: /
+

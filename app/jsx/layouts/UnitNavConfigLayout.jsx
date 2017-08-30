@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Link } from 'react-router'
-import EditableComp from '../components/EditableComp.jsx'
+import _ from 'lodash'
 import WysiwygEditorComp from '../components/WysiwygEditorComp.jsx'
 
 class EditableNavContentComp extends React.Component
@@ -37,30 +37,32 @@ class EditableNavContentComp extends React.Component
       <div>
         { (data.type == "page") &&
           <div>
-            <label className="c-editable-page__label" htmlFor="slug">Slug</label>
+            <label className="c-editable-page__label" htmlFor="slug">Page URL</label>
+            <p>Must consist of numbers and/or letters only. No spaces.</p>
             <input className="c-editable-page__input" id="slug" type="text" defaultValue={data.slug}
                    onChange={ event => this.setData({ slug: event.target.value }) }/>
           </div>
         }
 
-        <label className="c-editable-page__label" htmlFor="name">Name</label>
+        <label className="c-editable-page__label" htmlFor="name">Navigation Bar Label</label>
+        <p>Generally the same as Page Title, but in some cases shortened to fit in the navigation bar</p>
         <input className="c-editable-page__input" id="name" type="text" defaultValue={data.name}
                onChange={ event => this.setData({ name: event.target.value }) }/>
 
         { (data.type == "page") &&
           <div>
-            <label className="c-editable-page__label" htmlFor="title">Title</label>
+            <label className="c-editable-page__label" htmlFor="title">Page Title</label>
             <input className="c-editable-page__input" id="title" type="text" defaultValue={data.title}
                    onChange={ event => this.setData({ title: event.target.value }) }/>
             <label className="c-editable-page__label" htmlFor="text">Text</label>
-            <WysiwygEditorComp id="text" html={data.attrs.html}
+            <WysiwygEditorComp id="text" html={data.attrs.html} unit={this.props.unit.id}
               onChange={ newText => this.setData({ attrs: { html: newText }}) }/>
           </div>
         }
 
         { (data.type == "link") &&
           <div>
-            <label className="c-editable-page__label" htmlFor="url">URL</label>,
+            <label className="c-editable-page__label" htmlFor="url">URL</label>
             <input className="c-editable-page__input" id="url" type="text" defaultValue={data.url}
                    onChange={ event => this.setData({ url: event.target.value }) }/>
           </div>

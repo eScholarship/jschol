@@ -4,6 +4,11 @@
   @extend %clearfix;
   margin-bottom: $spacing-sm;
   padding: 0 $spacing-sm;
+
+  fieldset {
+    @extend %clear-fieldset-styles;
+  }
+
 }
 
 .c-facetbox__summary {

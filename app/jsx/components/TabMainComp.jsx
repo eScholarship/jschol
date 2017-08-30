@@ -7,6 +7,9 @@ import PdfViewComp from '../components/PdfViewComp.jsx'
 import PubLocationComp from '../components/PubLocationComp.jsx'
 import PubDataComp from '../components/PubDataComp.jsx'
 import ViewExternalComp from '../components/ViewExternalComp.jsx'
+import { Link } from 'react-router'
+import NotYetLink from '../components/NotYetLink.jsx'
+import ArbitraryHTMLComp from "../components/ArbitraryHTMLComp.jsx"
 
 class ScrollingAnchorComp extends React.Component {
   // Used to trigger scrolling for anchors linked from JumpComp (i.e. 'article_abstract')
@@ -27,11 +30,11 @@ class Abstract extends React.Component {
       <details className="c-togglecontent" open>
         <summary>Abstract</summary>
         <p>{this.props.abstract}</p>
-      {(this.props.unit.id.match(/^.*_postprints/)) &&
-        <p className="c-well">Many UC-authored scholarly publications are freely available on this site because of the UC Academic Senate&apos;s Open Access Policy. 
-        {/* ToDo: Add Link */}
-        *** LINK *** Let us know how this access is important for you.</p>
-      }
+        {(this.props.unit.id.match(/^.*_postprints/)) &&
+          <p className="c-well">Many UC-authored scholarly publications are freely available on this site because of the
+            UC Academic Senate&apos;s Open Access Policy. <NotYetLink className="" element="a">Let us know how this access is important for you.</NotYetLink>
+          </p>
+        }
       </details>
     )
   }
@@ -43,7 +46,11 @@ class MainContent extends React.Component {
     switch(p.status) {
       case "published":
         if (!p.content_type) {
-          return (<NoContent pub_web_loc={p.attrs.pub_web_loc} />)
+          if ((p.attrs.pub_web_loc.length > 0) || (p.attrs.supp_files && p.attrs.supp_files.length > 0)) {
+            return (<NoContent pub_web_loc={p.attrs.pub_web_loc} supp_files={p.attrs.supp_files} changeTab={p.changeTab} />)
+          } else {
+            return (<Withdrawn message="This item is not available from eScholarship." />)
+          }
         } else {
           return (p.content_type == "application/pdf" ?
                     <PdfViewComp url={"/content/qt" + p.id + "/qt" + p.id + ".pdf"}/>
@@ -59,18 +66,10 @@ class MainContent extends React.Component {
     }
   }
 
-  renderPdf = p => { return (
-      <details className="c-togglecontent" open>
-        <summary>Main Content</summary>
-        {/*Fetch content through server app, which will check credentials and proxy to proper back-end*/}
-        <PdfViewComp url={"/content/qt" + p.id + "/qt" + p.id + ".pdf"}/>
-      </details>
-  )}
-
   renderHtml = p => { return (
       <details className="c-togglecontent" open>
         <summary>Main Content</summary>
-        <div dangerouslySetInnerHTML={{__html: p.content_html}}/>
+        <ArbitraryHTMLComp html={p.content_html} h1Level={2}/>
         <br/><br/>
       </details>
   )}
@@ -80,12 +79,15 @@ class MainContent extends React.Component {
 class Withdrawn extends React.Component {
   render() {
     return (
-      <div className="o-itemunavailable__withdrawn">
-      {this.props.message ? 
-        <p className="o-itemunavailable__lede">{this.props.message}</p>
-        :
-        <p className="o-itemunavailable__lede">This item has been withdrawn and is <strong>no longer available</strong>.</p>
-      }
+      <div>
+        <p><br/></p>
+        <div className="o-itemunavailable__withdrawn">
+        {this.props.message ? 
+          <p className="o-itemunavailable__lede">{this.props.message}</p>
+          :
+          <p className="o-itemunavailable__lede">This item has been withdrawn and is <strong>no longer available</strong>.</p>
+        }
+        </div>
       </div>
     )
   }
@@ -98,8 +100,8 @@ class Embargoed extends React.Component {
       <details className="c-togglecontent" open>
         <summary>Main Content</summary>
         <div className="o-itemunavailable__embargoed">
-          <h2 className="o-itemunavailable__lede">This item is under embargo until
-            <strong> {eDate_formatted}</strong>.</h2>
+          <h1 className="o-itemunavailable__lede">This item is under embargo until
+            <strong> {eDate_formatted}</strong>.</h1>
         {(this.props.pub_web_loc.length > 0) &&
           [<p key="0">You may have access to the publisher's version here:</p>,
           <a key="1" href={this.props.pub_web_loc[0]} className="o-textlink__secondary">{this.props.pub_web_loc[0]}</a>,
@@ -111,15 +113,21 @@ class Embargoed extends React.Component {
 }
 
 class NoContent extends React.Component {
+  handleClick(e, tabName) {
+    e.preventDefault()
+    this.props.changeTab(tabName)
+  }
+
   render() {
     return (
       <div>
-      {(this.props.pub_web_loc.length > 0) ?
-        <ViewExternalComp pub_web_loc={this.props.pub_web_loc[0]} />
-        :
-        [<h1 key="0">CONTENT IS NULL, NO PUBLISHED WEB LOC.</h1>,
-        <h1 key="1">TO BE FIXED ....</h1>,
-        <h1 key="2">*OR* HERE WILL BE DISPLAYED MAIN MULTIMEDIA CONTENT NOT YET INGESTED</h1>]
+      {this.props.pub_web_loc.length > 0 && 
+        <ViewExternalComp pub_web_loc={this.props.pub_web_loc[0]} /> }
+      {this.props.supp_files && this.props.supp_files.length > 0 &&
+        <div style={{paddingLeft: '25px'}}>
+          <br/><br/>
+          All content for this item is under the <Link to="#" onClick={(e)=>this.handleClick(e, "supplemental")} className="o-textlink__secondary">Supplemental material</Link> tab.
+        </div>
       }
       <p>&nbsp;</p>
       <p>&nbsp;</p>

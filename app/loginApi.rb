@@ -57,6 +57,11 @@ get "/api/loginValidate" do
   username = decrypted["eppn"]
   #puts "DECRYPTED: #{decrypted.inspect}"
 
+  # For beta, only allow two users in: "help@escholarship.org" and "demo@escholarship.org"
+  if username !~ /^(help|demo)@escholarship.org$/
+    halt 403, "Sorry, user logins are restricted for demonstration purposes."
+  end
+
   # Record the username, plus user id if any, in the OJS database.
   OJS_DB.transaction do
     user = OJS_DB[:users].where(username: username).first

@@ -5,7 +5,7 @@ $statcarousel-heading-height: 1.1em;
 .c-statcarousel {
   @extend %statcarousel-flickity-customizations;
   margin-bottom: $spacing-md;
-  padding: $spacing-sm 2.5em;
+  padding: $spacing-md 2.5em;
   background-color: $color-white;
   box-shadow: $box-shadow1;
 }
@@ -18,7 +18,7 @@ $statcarousel-heading-height: 1.1em;
 
   &:not(:first-child) {
 
-    [class^='c-statcarousel__cell--'] {
+    .c-statcarousel__cell {
 
       &:first-of-type {
         border-left: 1px solid $color-dark-gray;

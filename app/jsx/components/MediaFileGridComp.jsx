@@ -5,15 +5,10 @@ import $ from 'jquery'
 import { Link } from 'react-router'
 
 class CellComp extends React.Component {
-  url = "/content/qt" + this.props.id + "/supp/" + this.props.file
-
-  download = () => {
-    event.preventDefault()
-    window.open(this.url)
-  }
 
   render() {
     let p = this.props,
+        url = "/content/qt" + p.id + "/supp/" + p.file,
         mimeSimple = (p.mimeSimple=="doc") ? "data" : p.mimeSimple,
         m = { "audio": "play audio file", "image": "view larger", "video": "play video file" },
         fileLabel = m[mimeSimple] ? m[mimeSimple] : p.file 
@@ -23,14 +18,14 @@ class CellComp extends React.Component {
             Let's make these look better (and load faster) by avoiding dotdotdot in this case only.
         */}
         <h2 className="o-mediafile__heading" ref={ el => { if ((p.useFilenameForTitle) || (p.description && p.description.length > 0)) $(el).dotdotdot({watch:"window"}) } }>
-          <Link to={this.url} target="_blank">{p.title}</Link>
+          <Link to={url} target="_blank">{p.title}</Link>
         </h2>
-        <Link className="o-mediafile__link" to={this.url} aria-label={fileLabel} target="_blank">
+        <Link className="o-mediafile__link" to={url} aria-label={fileLabel} target="_blank">
           {(mimeSimple == "image") &&
-            <img className="o-mediafile__image" src={this.url} alt={p.file} />
+            <img className="o-mediafile__image" src={url} alt={p.file} />
           }
         </Link>
-        <button onClick={() => {this.download()}} className="o-mediafile__button">Download</button>
+        <a href={url} className="o-mediafile__download" download>Download</a>
         <div className="o-mediafile__description" ref={ el => { if (p.description && p.description.length > 0) $(el).dotdotdot({watch:"window"}) } }>
           {p.description}</div>
       </div>

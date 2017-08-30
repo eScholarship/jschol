@@ -31,31 +31,31 @@ class CampusLayout extends React.Component {
 
     return (
       <div>
-        <HeatMapComp />
+        <HeatMapComp campusID={unit.id} />
         <StatCarouselComp campusName={unit.name} />
         <div className="c-columns">
           <main id="maincontent">
-            <CampusSearchComp campusID={unit.id} campusName={unit.name} dashUrl={dashUrl} />
-            <UnitCarouselComp />
-            <JournalCarouselComp />
+            <CampusSearchComp campusID={unit.id} campusName={unit.name} />
+            <UnitCarouselComp campusID={unit.id} campusName={unit.name} />
+            <JournalCarouselComp campusID={unit.id} campusName={unit.name} />
           </main>
           <aside>
             <section className="o-columnbox1">
               <header>
                 <h2>Campus Contact</h2>
               </header>
-              <a className="o-textlink__primary" href="">Rachael Samberg</a>
-              <br/>Scholarly Communication Officer,
-              <br/>University of California, Berkeley
-              <br/>212/218 Doe Library
-              <br/>UC Berkeley
-              <br/>Berkeley, CA 94720-6000
-              <br/>(510) 664-9815
+              <p><NotYetLink className="o-textlink__secondary" element="a">Sam Smith</NotYetLink>
+                <br/>Scholarly Communication Officer,
+                <br/>University of California
+                <br/>415 20th Street
+                <br/>Oakland, CA 94612
+                <br/>(555) 555-4444
+              </p>
             </section>
           {dashUrl &&
             <section className="o-columnbox1">
               <header>
-                <h2>UC Berkeley Datasets</h2>
+                <h2>{unit.name} Datasets</h2>
               </header>
               To publish the data that accompanies your research, <a href={dashUrl}>visit {unit.name} Dash</a>.
             </section>
@@ -66,6 +66,7 @@ class CampusLayout extends React.Component {
               </header>
               [content to go here]
             </section>
+            {this.props.sidebar}
           </aside>
         </div>
       </div>

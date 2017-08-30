@@ -1,9 +1,17 @@
 // ##### Media Feature Objects ##### //
 
 %o-mediafeature {
+  display: flex;
+  flex-direction: column;
   margin-bottom: $spacing-md;
   padding-bottom: $spacing-md;
   border-bottom: 1px solid $color-light-gray;
+
+  @include headings() {
+    @extend %o-heading2;
+    order: 2;
+  }
+
 }
 
 %o-mediafeature__item {
@@ -11,8 +19,13 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  order: 1;
   margin-bottom: $spacing-md;
   background-color: $color-light-gray;
+}
+
+.o-mediafeature__description {
+  order: 3;
 }
 
 .o-mediafeature--audio {
@@ -69,33 +82,6 @@
 
     video {
       max-width: 100%;
-    }
-
-  }
-
-}
-
-.o-mediafeature__title-bar {
-  display: flex;
-  align-items: flex-start;
-  margin-bottom: $spacing-sm;
-
-  @include headings() {
-    flex: 1 1 auto;
-    margin: 0 $spacing-md 0 0;
-    color: $color-teal;
-    font-size: 1.3em;
-    font-weight: normal;
-  }
-
-  button {
-    @extend %o-button__7;
-
-    // if there's more than one button:
-    &:not(:last-child) {
-      margin-right: $spacing-sm;
-      padding-right: $spacing-sm;
-      border-right: 1px solid $color-dark-gray;
     }
 
   }

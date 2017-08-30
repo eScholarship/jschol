@@ -1718,7 +1718,7 @@ create-hmac@^1.1.0, create-hmac@^1.1.2:
     create-hash "^1.1.0"
     inherits "^2.0.1"
 
-create-react-class@^15.5.1, create-react-class@^15.5.2, create-react-class@^15.6.0:
+create-react-class@^15.5.1, create-react-class@^15.6.0:
   version "15.6.0"
   resolved "https://registry.yarnpkg.com/create-react-class/-/create-react-class-15.6.0.tgz#ab448497c26566e1e29413e883207d57cfe7bed4"
   dependencies:
@@ -2229,10 +2229,6 @@ ee-first@1.1.1:
 electron-to-chromium@^1.2.7:
   version "1.3.3"
   resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.3.3.tgz#651eb63fe89f39db70ffc8dbd5d9b66958bc6a0e"
-
-element-class@^0.2.0:
-  version "0.2.2"
-  resolved "https://registry.yarnpkg.com/element-class/-/element-class-0.2.2.tgz#9d3bbd0767f9013ef8e1c8ebe722c1402a60050e"
 
 elliptic@^6.0.0:
   version "6.4.0"
@@ -5565,9 +5561,9 @@ pbkdf2@^3.0.3:
   dependencies:
     create-hmac "^1.1.2"
 
-pdfjs-embed@escholarship/pdfjs-embed#bb559ed50c39b25220ea000793d8e40c5b2b284d:
-  version "1.6.210.CDL_02"
-  resolved "https://codeload.github.com/escholarship/pdfjs-embed/tar.gz/bb559ed50c39b25220ea000793d8e40c5b2b284d"
+pdfjs-embed@escholarship/pdfjs-embed#fb14446558ee836d9e4d133c3a081e6f9d1e5c52:
+  version "1.6.210.CDL_03"
+  resolved "https://codeload.github.com/escholarship/pdfjs-embed/tar.gz/fb14446558ee836d9e4d133c3a081e6f9d1e5c52"
   dependencies:
     node-ensure "0.0.0"
 
@@ -5723,7 +5719,7 @@ promised-io@~0.3.4:
   version "0.3.5"
   resolved "https://registry.yarnpkg.com/promised-io/-/promised-io-0.3.5.tgz#4ad217bb3658bcaae9946b17a8668ecd851e1356"
 
-prop-types@^15.5.10, prop-types@^15.5.4, prop-types@^15.5.6, prop-types@^15.5.7, prop-types@^15.5.8, prop-types@^15.5.9:
+prop-types@^15.5.10, prop-types@^15.5.4, prop-types@^15.5.6, prop-types@^15.5.8, prop-types@^15.5.9:
   version "15.5.10"
   resolved "https://registry.yarnpkg.com/prop-types/-/prop-types-15.5.10.tgz#2797dfc3126182e3a95e3dfbb2e893ddd7456154"
   dependencies:
@@ -5923,7 +5919,7 @@ react-dom-factories@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/react-dom-factories/-/react-dom-factories-1.0.0.tgz#f43c05e5051b304f33251618d5bc859b29e46b6d"
 
-react-dom@^15.3.2, react-dom@^15.6.0:
+react-dom@^15.6.0:
   version "15.6.1"
   resolved "https://registry.yarnpkg.com/react-dom/-/react-dom-15.6.1.tgz#2cb0ed4191038e53c209eb3a79a23e2a4cf99470"
   dependencies:
@@ -5932,15 +5928,12 @@ react-dom@^15.3.2, react-dom@^15.6.0:
     object-assign "^4.1.0"
     prop-types "^15.5.10"
 
-react-modal@^1.9.6:
-  version "1.9.7"
-  resolved "https://registry.yarnpkg.com/react-modal/-/react-modal-1.9.7.tgz#07ef56790b953e3b98ef1e2989e347983c72871d"
+react-modal@^2.2.2:
+  version "2.2.2"
+  resolved "https://registry.yarnpkg.com/react-modal/-/react-modal-2.2.2.tgz#4bbf98bc506e61c446c9f57329c7a488ea7d504b"
   dependencies:
-    create-react-class "^15.5.2"
-    element-class "^0.2.0"
     exenv "1.2.0"
-    lodash.assign "^4.2.0"
-    prop-types "^15.5.7"
+    prop-types "^15.5.10"
     react-dom-factories "^1.0.0"
 
 react-router-form@^3.0.0:
@@ -5977,14 +5970,6 @@ react-sortable-tree@^0.1.19:
     react-dnd-scrollzone "^3.1.0"
     react-virtualized "^9.3.0"
 
-react-trumbowyg@^1.1.0:
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/react-trumbowyg/-/react-trumbowyg-1.1.0.tgz#c1e3b20a10d84175cad79dbbdb5e33e0f9744c45"
-  dependencies:
-    react "^15.3.2"
-    react-dom "^15.3.2"
-    trumbowyg "^2.3.0"
-
 react-virtualized@^9.3.0:
   version "9.8.0"
   resolved "https://registry.yarnpkg.com/react-virtualized/-/react-virtualized-9.8.0.tgz#7c1fe9b723ce39a1c4916cabe1c4f1bda5dbc04b"
@@ -5995,7 +5980,7 @@ react-virtualized@^9.3.0:
     loose-envify "^1.3.0"
     prop-types "^15.5.4"
 
-react@^15.3.2, react@^15.6.0:
+react@^15.6.0:
   version "15.6.1"
   resolved "https://registry.yarnpkg.com/react/-/react-15.6.1.tgz#baa8434ec6780bde997cdc380b79cd33b96393df"
   dependencies:
@@ -6985,9 +6970,9 @@ trim-right@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/trim-right/-/trim-right-1.0.1.tgz#cb2e1203067e0c8de1f614094b9fe45704ea6003"
 
-trumbowyg@^2.3.0:
-  version "2.5.1"
-  resolved "https://registry.yarnpkg.com/trumbowyg/-/trumbowyg-2.5.1.tgz#57e292a468c92f6244ebb41013219288345e78f8"
+trumbowyg@^2.7.0:
+  version "2.7.0"
+  resolved "https://registry.yarnpkg.com/trumbowyg/-/trumbowyg-2.7.0.tgz#8d270031c6afde05a9b637698ef7b3ff01e39933"
 
 tryit@^1.0.1:
   version "1.0.3"

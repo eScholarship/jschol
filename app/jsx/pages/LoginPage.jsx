@@ -1,12 +1,7 @@
 import React from 'react'
-import { Link } from 'react-router'
-import Form from 'react-router-form'
-import { Subscriber } from 'react-broadcast'
-
 import PageBase from './PageBase.jsx'
 import Header1Comp from '../components/Header1Comp.jsx'
 import NavComp from '../components/NavComp.jsx'
-import FooterComp from '../components/FooterComp.jsx'
 
 class LoginPage extends PageBase
 {

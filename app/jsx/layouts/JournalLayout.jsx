@@ -1,124 +1,123 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { Link } from 'react-router'
+import { Link, browserHistory } from 'react-router'
 
 import MarqueeComp from '../components/MarqueeComp.jsx'
 import JournalInfoComp from '../components/JournalInfoComp.jsx'
 import ScholWorksComp from '../components/ScholWorksComp.jsx'
-import ItemActionsComp from '../components/ItemActionsComp.jsx'
+import PubComp from '../components/PubComp.jsx'
+import IssueActionsComp from '../components/IssueActionsComp.jsx'
 
 class VolumeSelector extends React.Component {
   static PropTypes = {
-    vip: PropTypes.array.isRequired  // [Volume, Issue, Pub_date]
+    vip: PropTypes.array.isRequired,     // [unit_id, Volume, Issue, Pub_date]
+    issues: PropTypes.array.isRequired   // [ {:id=>3258, :volume=>"1", :issue=>"2", :pub_date=>#<Date: ...}, ... ]
   }
 
-  getIssuePath = (v,i) => {
-    return (v+"/"+i)
+  getIssuePath = (unit_id, v,i) => {
+    return `/uc/${unit_id}/${v}/${i}`
+  }
+
+  getPubYear = date => {
+    return date.match(/\d{4}/)
   }
 
   render() {
     let p = this.props
     return (
-      <div className="o-input__droplist1">
-        <label htmlFor="c-sort1">Select</label>
-        <select name="" id="c-sort1">
-          <option value={this.getIssuePath(p.vip[0], p.vip[1])}>Volume {p.vip[0]}, Issue {p.vip[1]}, {p.vip[2]}</option>
-          <option value="1/2">Volume 1, Issue 2, 1901</option>
-          <option value="1/3">Volume 1, Issue 3, 1901</option>
-        </select>
+      <div className="o-customselector">
+        <h1 className="o-customselector__heading">{`Volume ${p.vip[1]}, Issue ${p.vip[2]}, ${p.vip[3]}`}</h1>
+        <details className="o-customselector__selector">
+          <summary aria-label="Select a different issue"></summary>
+          <div className="o-customselector__menu">
+            <ul className="o-customselector__items">
+              {p.issues.map((i) => 
+                <li key={i.id}>
+                  <Link to={this.getIssuePath(i.unit_id, i.volume, i.issue)}>Volume {i.volume}, Issue {i.issue}, {this.getPubYear(i.pub_date)}</Link>
+                </li>)}
+            </ul>
+          </div>
+        </details>
       </div>
     )
   }
 }
 
-class SectionComp extends React.Component {
+class IssueComp extends React.Component {
   static PropTypes = {
-    section: PropTypes.shape({
-      articles: PropTypes.array,
-      id: PropTypes.number,
-      issue_id: PropTypes.number,
-      name: PropTypes.string
-    }).isRequired
-  }
-  render() {
-    return (
-      <div>
-        <h3 className="o-heading3">{this.props.section.name}</h3>
-        {this.props.section.articles.map(article => <ScholWorksComp key={article.id} result={article}/>)}
-      </div>
-    )
-  }
-}
-
-// Issue SIMPLE
-class IssueSimpleComp extends React.Component {
-  static PropTypes = {
+    display: PropTypes.string.isRequired,
     issue: PropTypes.shape({
-      cover_page: PropTypes.string,
       id: PropTypes.number,
+      unit_id: PropTypes.string,
+      volume: PropTypes.string,
       issue: PropTypes.string,
       pub_date: PropTypes.string,
-      sections: PropTypes.array,    //See SectionComp prop types directly above 
-      unit_id: PropTypes.string,
-      volume: PropTypes.string
-    }).isRequired
-  }
-
-  render() {
-    let pi = this.props.issue,
-        year = pi.pub_date.match(/\d{4}/),
-        issueCurrent = [pi.volume, pi.issue, year]
-    return (
-      <section className="o-columnbox1">
-        {/* ToDo: Enhance ItemActioncComp for journal issue */}
-        <ItemActionsComp />
-        <div className="c-pub">
-          <VolumeSelector vip={issueCurrent} />
-          <div className="c-pub__subheading">Focus: Caribbean Studies and Literatures</div>
-          {/* No cover page image for simple layout */}
-          <p>
-            Lorem ipsum dolor sit amet, consectetur adipisicing elit. Pariatur fuga laborum, qui debitis vitae quaerat quas ab officia, dolor dignissimos ipsum nam ratione unde animi? Officiis rerum unde eveniet natus. Laboriosam tenetur vel, rem culpa maiores non, tempora voluptatibus quasi quos provident exercitationem itaque dolorum quam sequi dolor odio hic accusamus, repellendus ut dignissimos. Labore modi consectetur ullam, iste accusamus!
-          </p>
-        </div>
-        {pi.sections.map(section => <SectionComp key={section.name} section={section}/>)}
-      </section>
-    )
-  }
-}
-
-// Issue SPLASHY
-class IssueSplashyComp extends React.Component {
-  static PropTypes = {
-    issue: PropTypes.shape({
-      cover_page: PropTypes.string,
-      id: PropTypes.number,
-      issue: PropTypes.string,
-      pub_date: PropTypes.string,
-      sections: PropTypes.array,    //See SectionComp prop types directly above 
-      unit_id: PropTypes.string,
-      volume: PropTypes.string
-    }).isRequired
+      title: PropTypes.string,
+      description: PropTypes.string,
+      cover: PropTypes.shape({
+        asset_id: PropTypes.string.isRequired,
+        width: PropTypes.number.isRequired,
+        height: PropTypes.number.isRequired,
+        image_type: PropTypes.string.isRequired,
+        caption: PropTypes.string
+      }),
+      rights: PropTypes.string,
+      sections: PropTypes.arrayOf(PropTypes.shape({
+        articles: PropTypes.array,
+        id: PropTypes.number,
+        issue_id: PropTypes.number,
+        name: PropTypes.string
+      })).isRequired,
+    }).isRequired,
+    issues: PropTypes.array.isRequired   // Array of issue hashes
   }
   
   render() {
     let pi = this.props.issue,
         year = pi.pub_date.match(/\d{4}/),
-        issueCurrent = [pi.volume, pi.issue, year]
+        issueCurrent = [pi.unit_id, pi.volume, pi.issue, year]
     return (
       <section className="o-columnbox1">
-        {/* ToDo: Enhance ItemActioncComp for journal issue */}
-        <ItemActionsComp />
+        <IssueActionsComp unit_id={pi.unit_id} buy_link={pi.buy_link} />
+        {/*              articles={} */}
         <div className="c-pub">
-          <VolumeSelector vip={issueCurrent} />
-          {pi.cover_page && <img className="c-scholworks__article-preview" src={"/assets/"+pi.cover_page.asset_id} width={pi.cover_page.width} height={pi.cover_page.height} alt={_.capitalize(pr.genre) + " image"} />}
-          <div className="c-pub__subheading">Focus: Caribbean Studies and Literatures</div>
-          <p>
-            Lorem ipsum dolor sit amet, consectetur adipisicing elit. Pariatur fuga laborum, qui debitis vitae quaerat quas ab officia, dolor dignissimos ipsum nam ratione unde animi? Officiis rerum unde eveniet natus. Laboriosam tenetur vel, rem culpa maiores non, tempora voluptatibus quasi quos provident exercitationem itaque dolorum quam sequi dolor odio hic accusamus, repellendus ut dignissimos. Labore modi consectetur ullam, iste accusamus!
-          </p>
+          <VolumeSelector vip={issueCurrent} issues={this.props.issues} />
+    {/* TITLE AND DESCRIPTION */}
+          {this.props.display=="magazine" &&
+            <div className="c-pubpreview">
+            {pi.cover &&
+              <div className="c-pubpreview__img"><img className="c-scholworks__article-preview" src={"/assets/"+pi.cover.asset_id} width="150" height="200" alt="Issue cover" /></div> }
+              <div className="c-pub">
+              {pi.title &&
+                <div className="c-pub__subheading">{pi.title}</div> }
+                <p>{pi.description}</p>
+              </div>
+            </div>
+          } 
+          {this.props.display!="magazine" && pi.title &&
+            <div className="c-pub__subheading">{pi.title}</div> }
+          {this.props.display!="magazine" && pi.description &&
+            (<p>{pi.description}</p>) }
         </div>
-        {/* <h3 className="o-heading3">Table of Contents</h3> */}
-        <div className="o-dividecontent2x--ruled">
-          {pi.sections.map(section => <SectionComp key={section.name} section={section}/>)}
+    {/* ARTICLE LISTINGS */}
+        <div>
+      { this.props.display=="magazine" ?
+        pi.sections.map(section =>
+          <div key={section.name}>
+            <h2 className="o-heading1a">{section.name}</h2>
+            <div className="o-dividecontent2x--ruled">
+              {section.articles.map(article => <PubComp h="h3" key={article.id} result={article}/>)}
+            </div>
+          </div>
+        )
+      :
+        pi.sections.map(section =>
+          <div key={section.name}>
+            <h2 className="o-heading1a">{section.name}</h2>
+            {section.articles.map(article => <PubComp h="h3" key={article.id} result={article}/>)}
+          </div>
+        )
+      }
         </div>
       </section>
     )
@@ -135,7 +134,11 @@ class JournalLayout extends React.Component {
     }).isRequired,
     data: PropTypes.shape({
       display: PropTypes.string,
-      issue: PropTypes.object          // See IssueComp prop types directly above
+      doaj: PropTypes.string,
+      issn: PropTypes.string,
+      eissn: PropTypes.string,
+      issue: PropTypes.object,     // See IssueComp prop types directly above
+      issues: PropTypes.array
     }).isRequired,
     marquee: PropTypes.shape({
       carousel: PropTypes.any,
@@ -151,10 +154,12 @@ class JournalLayout extends React.Component {
         <div className="c-columns">
           <main id="maincontent">
           {this.props.data.issue ?
-            data.display=='splashy' ? <IssueSplashyComp issue={data.issue}/> : <IssueSimpleComp issue={data.issue}/>
+            <IssueComp issue={data.issue} issues={data.issues} display={data.display} />
           :
-            <p>Currently no issues to display     {/* ToDo: Bring in issue-specific about text here? */}
-            </p>
+            <section className="o-columnbox1">
+              <p>Currently no issues to display
+              <br/> <br/> <br/> <br/> </p>
+            </section>
           }
           </main>
           <aside>
@@ -162,7 +167,7 @@ class JournalLayout extends React.Component {
               <header>
                 <h2>Journal Information</h2>
               </header>
-              <JournalInfoComp />
+              <JournalInfoComp doaj={data.doaj} rights={data.issue && data.issue.rights} issn={data.issn} eissn={data.eissn} />
             </section>
             {this.props.sidebar}
           </aside>

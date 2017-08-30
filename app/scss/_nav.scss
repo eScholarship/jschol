@@ -84,10 +84,9 @@
     }
 
     &.c-nav__item--active {
-      color: $color-orange;
+      color: $color-black;
 
       @include bp(screen3) {
-        border-bottom: 3px solid $color-orange;
         font-weight: bold;
       }
 

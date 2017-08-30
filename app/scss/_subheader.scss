@@ -1,13 +1,19 @@
 // ##### Subheader Component ##### //
 
 .c-subheader {
+  @extend %page-bleed;
   display: flex;
   position: relative; // to absolute positioned nav component
   align-items: center;
   justify-content: space-between;
-  margin: 0 (-$spacing-sm);
-  padding: 0 $spacing-sm $spacing-sm;
+  padding: $spacing-sm;
+  border-top: 2px solid $color-light-gray;
   background-color: $color-white;
+
+  @include bp(screen4) {
+    padding: $spacing-sm $spacing-lg;
+  }
+
 }
 
 .c-subheader__banner {
@@ -15,10 +21,14 @@
 
   @include bp(screen3) {
     display: block;
+    margin-right: $spacing-md;
+  }
+
+  img {
     width: 100%;
     min-width: 0;
     max-width: 800px;
-    margin-right: $spacing-md;
+    max-height: 90px;
   }
 
 }

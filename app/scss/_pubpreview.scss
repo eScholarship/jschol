@@ -16,7 +16,6 @@
 }
 
 .c-pubpreview__img {
-  flex: 1 0 auto;
 
   @include bp(screen1) {
     margin-right: $spacing-md;

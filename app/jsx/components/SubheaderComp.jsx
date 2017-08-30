@@ -10,12 +10,13 @@ class SubheaderComp extends React.Component {
   static propTypes = {
     campusID: PropTypes.string.isRequired,
     campusName: PropTypes.string.isRequired,
+    ancestorID: PropTypes.string,    // Intended for series only
     campuses: PropTypes.array.isRequired,
     logo: PropTypes.shape({
       url: PropTypes.string.isRequired,
-      width: PropTypes.number.isRequired,
-      height: PropTypes.number.isRequired
-    }).isRequired,
+      width: PropTypes.number, // optional for SVG
+      height: PropTypes.number // optional for SVG
+    }),
     unit: PropTypes.shape({
       id: PropTypes.string.isRequired,
       name: PropTypes.string.isRequired,
@@ -25,7 +26,8 @@ class SubheaderComp extends React.Component {
   }
 
   render() {
-    let p = this.props
+    let p = this.props,
+        banner_url_unit = p.unit.type.includes('series') ? p.ancestorID : p.unit.id
 
     var logo;
     if (p.logo) {
@@ -39,17 +41,26 @@ class SubheaderComp extends React.Component {
         <CampusSelectorComp campusID={p.campusID}
                             campusName={p.campusName}
                             campuses={p.campuses} />
-        <Link to={"/uc/"+p.unit.id}>
-          <img className="c-subheader__banner" src={logo.url} width={logo.width} height={logo.height} alt={"Logo image for " + p.unit.name} />
+        <Link to={"/uc/"+banner_url_unit} className="c-subheader__banner">
+          <img src={logo.url} width={logo.width} height={logo.height} alt={"Logo for " + p.unit.name} />
         </Link>
+  {/* unit.type == 'journal'  -->  Submit / Manage Submissions
+      unit.type == 'campus'  -->  Deposit
+      unit.type == '%series | oru'  -->  Deposit / Manage Submissions  */}
       {p.unit.type == 'journal' ?
         <div className="c-subheader__sidebar">
           <NotYetLink className="o-button__3" element="button">Submit</NotYetLink>
-          <NotYetLink className="o-button__3" element="button">Manage <span className="c-subheader__button-fragment">Submissions</span></NotYetLink>
+          <NotYetLink className="o-button__3" element="button">Manage<span className="c-subheader__button-fragment">Submissions</span></NotYetLink>
+        </div>
+      :
+        p.unit.type == 'campus' ?
+        <div className="c-subheader__sidebar">
+          <NotYetLink className="o-button__3" element="button">Deposit</NotYetLink>
         </div>
       :
         <div className="c-subheader__sidebar">
           <NotYetLink className="o-button__3" element="button">Deposit</NotYetLink>
+          <NotYetLink className="o-button__3" element="button">Manage<span className="c-subheader__button-fragment">Submissions</span></NotYetLink>
         </div>
       }
       </div>

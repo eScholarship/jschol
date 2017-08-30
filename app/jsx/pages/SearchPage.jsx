@@ -5,7 +5,7 @@ import { Link } from 'react-router'
 import Form from 'react-router-form'
 
 import PageBase from './PageBase.jsx'
-import Header1Comp from '../components/Header1Comp.jsx'
+import Header2Comp from '../components/Header2Comp.jsx'
 import NavComp from '../components/NavComp.jsx'
 import ScholWorksComp from '../components/ScholWorksComp.jsx'
 import FilterComp from '../components/FilterComp.jsx'
@@ -105,6 +105,7 @@ class FacetItem extends React.Component {
 
   render() {
     let facet = this.props.data.facet
+    let facetValueKey = facet.value.replace(/ /g, '_')
     this.label = facet.displayName ? facet.displayName : facet.value
     // Put a special class name on the rights facet to show Creative Commons icons
     let className = this.props.data.facetType == "rights"
@@ -112,11 +113,11 @@ class FacetItem extends React.Component {
                       : ""
     return (
       <li className={className}>
-        <input id={`${this.props.data.facetType}-${facet.value}`} className="c-checkbox__input" type="checkbox"
+        <input id={`${this.props.data.facetType}-${facetValueKey}`} className="c-checkbox__input" type="checkbox"
           name={this.props.data.facetType} value={facet.value}
           onChange={this.handleChange}
           checked={this.checkFacet(this.props)} disabled={this.props.data.ancestorChecked ? true : false}/>
-        <label htmlFor={`${this.props.data.facetType}-${facet.value}`} className="c-checkbox__label">{this.label} ({facet.count})</label>
+        <label htmlFor={`${this.props.data.facetType}-${facetValueKey}`} className="c-checkbox__label">{this.label} ({facet.count})</label>
         { facet.descendents &&
           <ul className="c-checkbox">
             { facet.descendents.map(d => {
@@ -356,32 +357,34 @@ class FacetFieldset extends React.Component {
       facetItemNodes = []
     }
     return (
-      <details className="c-facetbox" id={data.fieldName} open={this.props.open}>
-        <summary className="c-facetbox__summary"><span>{data.display}</span></summary>
-        {facetItemNodes}
-        {this.props.modal &&
-          <div id={`facetModalBase-${data.fieldName}`}>
-            <button className="c-facetbox__show-more"
-                    onClick={(event)=>{
-                              this.setState({modalOpen:true})
-                              event.preventDefault()}
-                            }>
-              Show more
-            </button>
-            {/* style: maxHeight and overflowY hack below makes scrolling modal,
-                until Joel propagates the change to the scss where it really belongs.
-            */}
-            <ModalComp isOpen={this.state.modalOpen}
-              parentSelector={()=>$(`#facetModalBase-${data.fieldName}`)[0]}
-              header={"Refine By " + data.display}
-              onOK={e=>this.closeModal(e, data.fieldName)} okLabel="Done"
-              onCancel={e=>this.closeModal(e, data.fieldName)}
-              content={ <div style={{ maxHeight: "45vh", overflowY: "auto" }}>
-                          { this.getFacetNodes(data.facets) }
-                        </div> }
-            />
-          </div>
-        }
+      <details className="c-facetbox" open={this.props.open}>
+        <summary className="c-facetbox__summary"><span id={this.props.index}>{data.display}</span></summary>
+          <fieldset aria-labelledby={this.props.index}>
+            {facetItemNodes}
+          {this.props.modal &&
+            <div id={`facetModalBase-${data.fieldName}`}>
+              <button className="c-facetbox__show-more"
+                      onClick={(event)=>{
+                                this.setState({modalOpen:true})
+                                event.preventDefault()}
+                              }>
+                Show more
+              </button>
+              {/* style: maxHeight and overflowY hack below makes scrolling modal,
+                  until Joel propagates the change to the scss where it really belongs.
+              */}
+              <ModalComp isOpen={this.state.modalOpen}
+                parentSelector={()=>$(`#facetModalBase-${data.fieldName}`)[0]}
+                header={"Refine By " + data.display}
+                onOK={e=>this.closeModal(e, data.fieldName)} okLabel="Done"
+                onCancel={e=>this.closeModal(e, data.fieldName)}
+                content={ <div style={{ maxHeight: "45vh", overflowY: "auto" }}>
+                            { this.getFacetNodes(data.facets) }
+                          </div> }
+              />
+            </div>
+          }
+          </fieldset>
       </details>
     )
   }
@@ -466,7 +469,7 @@ class FacetForm extends React.Component {
       let filters = this.state.query.filters && this.state.query.filters[fieldName] ? this.state.query.filters[fieldName] : {}
       let facets = fieldset.facets
       return (
-        <FacetFieldset key={fieldName} data={fieldset} query={filters} handler={this.changeFacet}
+        <FacetFieldset key={fieldName} index={"facetbox" + i} data={fieldset} query={filters} handler={this.changeFacet}
                        // Have first two open by default
                        open={[0,1].includes(i)}
                        modal={((["departments", "journals"].includes(fieldName)) &&
@@ -499,7 +502,7 @@ class SearchPage extends PageBase {
         formButton = "facet-form-submit"
     return(
       <div className="l_search">
-        <Header1Comp />
+        <Header2Comp searchComp="1" query={data.query.q} />
         <div className="c-navbar">
           <NavComp data={data.header.nav_bar} />
         </div>
@@ -512,22 +515,25 @@ class SearchPage extends PageBase {
             { this.state.fetchingData ? <div className="c-search-extra__loading-overlay"/> : null }
             <section className="o-columnbox1">
               <header>
-                <h2 className="o-columnbox1__heading">Informational Pages (12 results)</h2>
+                <h1 className="o-columnbox1__heading">Informational Pages (12 results)</h1>
               </header>
               <InfoPagesComp />
             </section>
             <section className="o-columnbox1">
               <header>
-                <h2 className="o-columnbox1__heading">
-                  Scholarly Works ({data.count + " results" + (data.count > 10000 ? ", showing first 10000" : "")})</h2>
+                <h1 className="o-columnbox1__heading">
+                  Scholarly Works ({data.count + " results" + (data.count > 10000 ? ", showing first 10000" : "")})</h1>
               </header>
             {(data.count > 2) &&
               <SortPaginationComp formName={formName} formButton={formButton} query={data.query} count={data.count}/>
             }
               <div>
-                { data.searchResults.map(result =>
-                  <ScholWorksComp key={result.id} result={result} />)
-                }
+              {(data.count != 0 ) ? 
+                data.searchResults.map(result =>
+                  <ScholWorksComp h="h2" key={result.id} result={result} />)
+              :
+                <p><br/><br/>No results found.<br/><br/></p>
+              }
               </div>
               <p><br/></p>
             {(data.count > data.query.rows) &&

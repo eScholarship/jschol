@@ -69,15 +69,15 @@
     "react": "^15.6.0",
     "react-broadcast": "^0.1.2",
     "react-dom": "^15.6.0",
-    "react-modal": "^1.9.6",
+    "react-modal": "^2.2.2",
     "react-router": "^3.0.5",
     "react-router-form": "^3.0.0"
   },
   "optionalDependencies-note": "These modules are separately bundled and loaded on-demand via require.ensure",
   "optionalDependencies": {
-    "pdfjs-embed": "escholarship/pdfjs-embed#bb559ed50c39b25220ea000793d8e40c5b2b284d",
+    "pdfjs-embed": "escholarship/pdfjs-embed#fb14446558ee836d9e4d133c3a081e6f9d1e5c52",
     "react-sidebar": "^2.3.0",
     "react-sortable-tree": "^0.1.19",
-    "react-trumbowyg": "^1.1.0"
+    "trumbowyg": "^2.7.0"
   }
 }

@@ -30,9 +30,7 @@
 }
 
 .c-filter__heading {
-  @extend %o-heading3;
-  margin-bottom: $spacing-md;
-  font-weight: normal;
+  @extend %o-heading3a;
 }
 
 .c-filter__results {
@@ -63,6 +61,7 @@
 
       strong {
         margin: 0 0.3em; // reinstate collapsed flexbox whitespace
+        color: $color-orange;
       }
 
     }
@@ -113,7 +112,6 @@
   float: right;
   border: none;
   background: $color-white inline('../images/icon_times.svg') no-repeat right -0.2em center / 1.3em;
-  color: $color-teal;
   text-align: right;
 }
 

@@ -1,6 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Link } from 'react-router'
+import ArbitraryHTMLComp from '../components/ArbitraryHTMLComp.jsx'
 
 class UnitStaticPageLayout extends React.Component
 {
@@ -13,7 +14,7 @@ class UnitStaticPageLayout extends React.Component
         html: PropTypes.string.isRequired
       })
     }),
-    sidebar: PropTypes.array.isRequired
+    sidebar: PropTypes.object.isRequired
   }
 
   render() {
@@ -24,7 +25,7 @@ class UnitStaticPageLayout extends React.Component
             <header>
               <h1 className="o-columnbox1__heading">{this.props.data.title}</h1>
             </header>
-            <div dangerouslySetInnerHTML={{__html: this.props.data.attrs.html}}/>
+            <ArbitraryHTMLComp html={this.props.data.attrs.html} h1Level={2}/>
           </section>
         </main>
         <aside>

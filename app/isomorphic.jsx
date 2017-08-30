@@ -22,7 +22,7 @@ app.use((req, res) =>
   }
 
   // Cache the app code. We can base the cache on the app bundle.
-  var curStamp = new Date(fs.statSync("app/js/app-bundle.js").mtime)
+  var curStamp = new Date(fs.statSync("app/js/manifest.json").mtime)
   if ((lastStamp - curStamp) != 0) {
     console.log("ISO: Loading new app bundle.")
     lastStamp = curStamp
@@ -62,35 +62,43 @@ app.use((req, res) =>
         ajaxResp.on('end', function() 
         {
           try {
-            if (ajaxResp.statusCode == 200) {
-              var response = {}
-              try {
-                response = JSON.parse(body)
-              }
-              catch (e) {
-                console.log("Exception parsing JSON:", e)
-              }
-              //console.log("Got a response:", response)
-              delete rc.props.location.urlsToFetch
-              rc.props.location.urlsFetched = {}
-              rc.props.location.urlsFetched[partialURL] = response
-              renderedHTML = renderToString(rc)
-              // Note: because this is being turned into code, we have to jump through hoops to properly
-              //       escape special characters.
-              let json = body.replace(/[\u007F-\uFFFF]/g, chr => "\\u" + ("0000" + chr.charCodeAt(0).toString(16)).substr(-4))
-              json = json.replace(/\\/g, "\\\\") // for some reason need to double-escape backslashes, e.g. qt3f3256kv abstract
-              /* Note: must leave comments like <!-- react-text: 14 --> so that react will
-                 properly match up the rendered HTML to client-generated HTML */
-              res.send(
-                "<script>window.jscholApp_initialPageData = " + json + ";</script>\n" +
-                "<div id=\"main\">" + renderedHTML + "</div>")
+            var response
+            try {
+              response = JSON.parse(body)
             }
-            else
-              throw "HTTP Error " + ajaxResp.statusCode + ": " + body
+            catch (e) {
+              console.log("Exception parsing JSON:", e)
+              response = { error: body }
+              body = JSON.stringify(response)
+            }
+
+            // Transform API error format to pageData error format
+            if (response.error === true && response.message) {
+              response = { error: "Error: " + response.message }
+              body = JSON.stringify(response)
+            }
+            //console.log("Got a response:", response)
+
+            // Note: because this is being turned into code, we have to jump through hoops to properly
+            //       escape special characters.
+            let json = body.replace(/[\u007F-\uFFFF]/g, chr => "\\u" + ("0000" + chr.charCodeAt(0).toString(16)).substr(-4))
+            json = json.replace(/\\/g, "\\\\") // for some reason need to double-escape backslashes, e.g. qt3f3256kv abstract
+            /* Note: must leave comments like <!-- react-text: 14 --> so that react will
+               properly match up the rendered HTML to client-generated HTML */
+
+            delete rc.props.location.urlsToFetch
+            rc.props.location.urlsFetched = {}
+            rc.props.location.urlsFetched[partialURL] = response
+
+            renderedHTML = renderToString(rc)
+            res.status(ajaxResp.statusCode).send(
+              "<script>window.jscholApp_initialPageData = " + json + ";</script>\n" +
+              "<div id=\"main\">" + renderedHTML + "</div>")
           }
           catch (e) {
             console.log("Exception generating React HTML:", e)
-            res.status(500).send("Exception generating React HTML")
+            console.log(e.stack)
+            res.status(500).send(e)
           }
         });
       }).on('error', function(e) {

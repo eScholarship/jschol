@@ -35,7 +35,7 @@ class FilterComp extends React.Component {
 
     return (
       <div className={activeFilters ? "c-filter--active" : "c-filter"}>
-        <h2 className="c-filter__heading">{searchString}</h2>
+        <h1 className="c-filter__heading">{searchString}</h1>
         <input type="hidden" name="q" value={this.props.query.q} />
         {/* ToDo: Once informational pages are impleented, rig up the proper number here*/}
         <div className="c-filter__results">{resultCount} results</div>

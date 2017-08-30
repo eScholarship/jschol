@@ -2,28 +2,31 @@
 
 // ***** Global Settings ***** //
 
+@import 'breakpoints';
 @import 'variables';
 @import 'mixins';
-@import 'breakpoints';
-@import 'test';
-@import 'debug';
 
 // ***** Vendor Libraries ***** //
 
 @import '../bower_components/normalize-scss/_normalize.scss';
-@import '../bower_components/flickity/dist/flickity.css';
-@import '../bower_components/trumbowyg/dist/ui/trumbowyg.css';
-@import 'eschol_pdf_viewer';
 
 // ***** Added to jschol (not in eschol-ui) ***** //
+@import '../bower_components/flickity/dist/flickity.css';
+@import '../bower_components/trumbowyg/dist/ui/trumbowyg.css';
 @import 'adminbar';
+@import 'drawer';
 @import 'editable';
+@import 'eschol_pdf_viewer';
+@import 'issueConfig';
+@import 'searchExtra';
+@import 'widgetselector';
 
 // ***** Objects ***** //
 
 @import 'alert';
 @import 'button';
 @import 'columnbox';
+@import 'customselector';
 @import 'dividecontent';
 @import 'heading';
 @import 'imagecontent';
@@ -43,7 +46,6 @@
 @import 'depositwizard';
 @import 'descriptionlist';
 @import 'download';
-@import 'drawer';
 @import 'export';
 @import 'facetbox';
 @import 'filter';
@@ -76,7 +78,7 @@
 @import 'scholworks';
 @import 'search1';
 @import 'search2';
-@import 'searchExtra';
+@import 'servererror';
 @import 'share';
 @import 'sidebarnav';
 @import 'skipnav';
@@ -87,15 +89,15 @@
 @import 'subheader';
 @import 'tabcontent';
 @import 'tabs';
-@import 'tabs2';
 @import 'testmessage';
 @import 'textlist';
 @import 'togglecontent';
 @import 'togglelist';
 @import 'unititem';
+@import 'unitlist';
+@import 'unitpub';
 @import 'viewexternal';
 @import 'well';
-@import 'widgetselector';
 
 // ***** Global Styles ***** //
 
@@ -109,9 +111,14 @@ body {
   background-color: lighten($color-light-gray, 15%);
   font-family: 'KievitWeb';
   overflow-x: hidden;
+
+  @include bp (screen2) {
+    padding: $spacing-sm $spacing-md 0;
+  }
+
 }
 
 p {
   margin: 0 0 $spacing-sm;
-  line-height: $line-height;
+  line-height: $line-height1;
 }

@@ -13,6 +13,16 @@
     width: 22em;
   }
 
+  // Reset default fieldset styles; hide legend:
+  fieldset {
+    @extend %clear-fieldset-styles;
+
+    legend {
+      @extend %hide;
+    }
+
+  }
+
 }
 
 .c-search2__inputs {

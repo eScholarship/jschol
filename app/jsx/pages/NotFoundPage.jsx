@@ -5,6 +5,7 @@ import PageBase from './PageBase.jsx'
 import Header1Comp from '../components/Header1Comp.jsx'
 import NavComp from '../components/NavComp.jsx'
 import FooterComp from '../components/FooterComp.jsx'
+import ServerErrorComp from '../components/ServerErrorComp.jsx'
 
 class NotFoundPage extends PageBase
 {
@@ -16,12 +17,16 @@ class NotFoundPage extends PageBase
   renderData(data) {
     return (
     <div>
-      <Header1Comp />
+      <Header1Comp/>
       <div className="c-navbar">
-        <NavComp data={data.header.nav_bar} />
       </div>
-      <br/>
-      <h2>Error: Page not found.</h2>
+      <div className="c-columns">
+        <main id="maincontent">
+          <section className="o-columnbox1">
+            <ServerErrorComp error="Not Found"/>
+          </section>
+        </main>
+      </div>
     </div>
   )}
 

@@ -2,7 +2,7 @@
 
 # This script converts data from old eScholarship into the new eschol5 database.
 #
-# The "--units" mode converts the contents of allStruct.xml and the
+# The "--units" mode converts the contents of allStruct-eschol5.xml and the
 # various brand files into the unit/unitHier/etc tables. It is
 # built to be fully incremental.
 #
@@ -28,16 +28,20 @@ require 'nokogiri'
 require 'open3'
 require 'pp'
 require 'rack'
-require 'sanitize'
 require 'sequel'
 require 'ostruct'
 require 'time'
 require 'yaml'
+require_relative '../util/sanitize.rb'
 
 # Max size (in bytes, I think) of a batch to send to AWS CloudSearch.
 # According to the docs the absolute limit is 5 megs, so let's back off a
 # little bit from that and say 4.5 megs.
 MAX_BATCH_SIZE = 4500*1024
+
+# Also, CloudSearch takes a really long time to process huge batches of
+# small objects, so limit to 500 per batch.
+MAX_BATCH_ITEMS = 500
 
 # Max amount of full text we'll send with any single doc. AWS limit is 1 meg, so let's
 # go a little short of that so we've got room for plenty of metadata.
@@ -47,6 +51,7 @@ DATA_DIR = "/apps/eschol/erep/data"
 
 # The main database we're inserting data into
 DB = Sequel.connect(YAML.load_file("config/database.yaml"))
+$dbMutex = Mutex.new
 
 # Log SQL statements, to aid debugging
 File.exists?('convert.sql_log') and File.delete('convert.sql_log')
@@ -94,6 +99,10 @@ $s3Bucket = Aws::S3::Bucket.new($s3Config.bucket, client: $s3Client)
 $allUnits = nil
 $unitAncestors = nil
 $issueCoverCache = {}
+$issueBuyLinks = Hash[*File.readlines("/apps/eschol/erep/xtf/style/textIndexer/mapping/buyLinks.txt").map { |line|
+  line =~ %r{^.*entity=(.*);volume=(.*);issue=(.*)\|(.*?)\s*$} ? ["#{$1}:#{$2}:#{$3}", $4] : [nil, line]
+}.flatten]
+$issueNumberingCache = {}
 
 # Make puts thread-safe, and prepend each line with the thread it's coming from. While we're at it,
 # let's auto-flush the output.
@@ -121,6 +130,8 @@ $nSkipped = 0
 $nUnchanged = 0
 $nProcessed = 0
 $nTotal = 0
+
+$scrubCount = 0
 
 $discTbl = {"1540" => "Life Sciences",
             "3566" => "Medicine and Health Sciences",
@@ -187,7 +198,6 @@ end
 def linkUnit(id, childMap, done)
   childMap[id].each_with_index { |child, idx|
     if !done.include?([id, child])
-      #puts "linkUnit: id=#{id} child=#{child}"
       UnitHier.create(
         :ancestor_unit => id,
         :unit_id => child,
@@ -253,45 +263,45 @@ end
 # the dimensions first, and have a chance to raise exceptions on them.
 def putImage(imgPath, &block)
   mimeType = MimeMagic.by_magic(File.open(imgPath))
-  mimeType && mimeType.mediatype == "image" or raise("Non-image file #{imgPath}")
-  dims = FastImage.size(imgPath)
-  block and block.yield(dims)
-  assetID = putAsset(imgPath, {
-    width: dims[0].to_s,
-    height: dims[1].to_s
-  })
-  return { asset_id: assetID,
-           image_type: mimeType.subtype,
-           width: dims[0],
-           height: dims[1]
-         }
+  if mimeType.subtype == "svg+xml"
+    # Special handling for SVG images -- no width/height
+    return { asset_id: putAsset(imgPath, {}),
+             image_type: mimeType.subtype
+           }
+  else
+    mimeType && mimeType.mediatype == "image" or raise("Non-image file #{imgPath}")
+    dims = FastImage.size(imgPath)
+    block and block.yield(dims)
+    return { asset_id: putAsset(imgPath, { width: dims[0].to_s, height: dims[1].to_s }),
+             image_type: mimeType.subtype,
+             width: dims[0],
+             height: dims[1]
+           }
+  end
 end
 
 ###################################################################################################
-def convertLogo(unitID, logoEl)
+def convertLogo(unitID, unitType, logoEl)
   # Locate the image reference
   logoImgEl = logoEl && logoEl.at("div[@id='logoDiv']/img[@src]")
-  logoImgEl or return {}
-  imgPath = logoImgEl && "/apps/eschol/erep/xtf/static/#{logoImgEl[:src]}"
-  imgPath =~ %r{LOGO_PATH|/$} and return {} # logo never configured
+  if !logoImgEl
+    if unitType != "campus"
+      return {}
+    end
+    # Default logo for campus
+    imgPath = "app/images/logo_#{unitID}.svg"
+  else
+    imgPath = logoImgEl && "/apps/eschol/erep/xtf/static/#{logoImgEl[:src]}"
+    imgPath =~ %r{LOGO_PATH|/$} and return {} # logo never configured
+  end
   if !File.file?(imgPath)
     puts "Warning: Can't find logo image: #{imgPath.inspect}"
     return {}
   end
 
   data = putImage(imgPath)
-  data[:is_banner] = logoEl.attr('banner') == "single"
+  (logoEl && logoEl.attr('banner') == "single") and data[:is_banner] = true
   return { logo: data }
-end
-
-###################################################################################################
-def sanitizeHTML(htmlFragment)
-  return Sanitize.fragment(htmlFragment,
-    elements: %w{b em i strong u} +                         # all 'restricted' tags
-              %w{a br li ol p small strike sub sup ul hr},  # subset of ''basic' tags
-    attributes: { 'a' => ['href'] },
-    protocols:  { 'a' => {'href' => ['ftp', 'http', 'https', 'mailto', :relative]} }
-  ).strip
 end
 
 ###################################################################################################
@@ -543,7 +553,7 @@ def convertUnitBrand(unitID, unitType)
     bfPath = "/apps/eschol/erep/xtf/static/brand/#{unitID}/#{unitID}.xml"
     if File.exist?(bfPath)
       dataIn = Nokogiri::XML(File.new(bfPath), &:noblanks).root
-      dataOut.merge!(convertLogo(unitID, dataIn.at("display/mainFrame/logo")))
+      dataOut.merge!(convertLogo(unitID, unitType, dataIn.at("display/mainFrame/logo")))
       dataOut.merge!(convertBlurb(unitID, dataIn.at("display/mainFrame/blurb")))
       if unitType == "campus"
         dataOut.merge!({ nav_bar: defaultNav(unitID, unitType) })
@@ -596,26 +606,37 @@ def convertUnits(el, parentMap, childMap, allIds)
   #puts "name=#{el.name} id=#{id.inspect} name=#{el[:label].inspect}"
 
   # Create or update the main database record
-  if el.name != "ref"
-    puts "Converting unit #{id}."
-    unitType = id=="root" ? "root" : id=="lbnl" ? "campus" : el[:type]
-    Unit.update_or_replace(id,
-      type:      unitType,
-      name:      id=="root" ? "eScholarship" : el[:label],
-      status:    el[:directSubmit] == "moribund" ? "archived" :
-                 el[:hide] == "eschol" ? "hidden" :
-                 "active"
-    )
+  if el.name != "ptr"
+    unitType = id=="root" ? "root" : el[:type]
+    # Retain CMS modifications to root and campuses
+    if ['root','campus'].include?(unitType) && Unit.where(id: id).first
+      puts "Preserving #{id}."
+    else
+      puts "Converting #{unitType} #{id}."
+      name = id=="root" ? "eScholarship" : el[:label]
+      Unit.update_or_replace(id,
+        type:      unitType,
+        name:      name,
+        status:    el[:directSubmit] == "moribund" ? "archived" :
+                   el[:hide] == "eschol" ? "hidden" :
+                   "active"
+      )
 
-    # We can't totally fill in the brand attributes when initially inserting the record,
-    # so do it as an update after inserting.
-    attrs = {}
-    el[:directSubmit] and attrs[:directSubmit] = el[:directSubmit]
-    el[:hide]         and attrs[:hide]         = el[:hide]
-    attrs.merge!(convertUnitBrand(id, unitType))
-    Unit[id].update(attrs: JSON.generate(attrs))
+      # We can't totally fill in the brand attributes when initially inserting the record,
+      # so do it as an update after inserting.
+      attrs = {}
+      el[:directSubmit] and attrs[:directSubmit] = el[:directSubmit]
+      el[:hide]         and attrs[:hide]         = el[:hide]
+      attrs.merge!(convertUnitBrand(id, unitType))
+      nameChar = name[0].upcase
+      if unitType == "journal"
+        attrs[:magazine_layout] = nameChar > 'M'  # Names starting with M-Z are magazine layout (for now)
+      end
+      attrs[:carousel] = (nameChar >= 'F' && nameChar <= 'R')  # Names F-R have carousels (for now)
+      Unit[id].update(attrs: JSON.generate(attrs))
 
-    addDefaultWidgets(id, unitType)
+      addDefaultWidgets(id, unitType)
+    end
   end
 
   # Now recursively process the child units
@@ -635,11 +656,11 @@ def convertUnits(el, parentMap, childMap, allIds)
 
   # After traversing the whole thing, it's safe to form all the hierarchy links
   if el.name == "allStruct"
-    puts "Linking units."
-    linkUnit("root", childMap, Set.new)
-
     # Delete extraneous units from prior conversions
     deleteExtraUnits(allIds)
+
+    puts "Linking units."
+    linkUnit("root", childMap, Set.new)
   end
 end
 
@@ -976,6 +997,45 @@ def findIssueCover(unit, volume, issue, caption, dbAttrs)
 end
 
 ###################################################################################################
+# See if we can find a buy link for this issue, from the table Lisa made.
+def addIssueBuyLink(unit, volume, issue, dbAttrs)
+  key = "#{unit}:#{volume}:#{issue}"
+  link = $issueBuyLinks[key]
+  link and dbAttrs[:buy_link] = link
+end
+
+###################################################################################################
+def addIssueNumberingAttrs(issueUnit, volNum, issueNum, issueAttrs)
+  data = $issueNumberingCache[issueUnit]
+  if !data
+    data = {}
+    bfPath = "/apps/eschol/erep/xtf/static/brand/#{issueUnit}/#{issueUnit}.xml"
+    if File.exist?(bfPath)
+      dataIn = Nokogiri::XML(File.new(bfPath), &:noblanks).root
+      el = dataIn.at(".//singleIssue")
+      if el && el.text == "yes"
+        data[:singleIssue] = true
+        data[:startVolume] = dataIn.at("singleIssue").attr("startVolume")
+      end
+      el = dataIn.at(".//singleVolume")
+      if el && el.text == "yes"
+        data[:singleVolume] = true
+      end
+    end
+    $issueNumberingCache[issueUnit] = data
+  end
+
+  if data[:singleIssue]
+    if data[:startVolume].nil? or volNum.to_i >= data[:startVolume].to_i
+      issueAttrs[:numbering] = "volume_only"
+    end
+  elsif data[:singleVolume]
+    issueAttrs[:numbering] = "issue_only"
+  end
+
+end
+
+###################################################################################################
 # Extract metadata for an item, and add it to the current index batch.
 # Note that we create, but don't yet add, records to our database. We put off really inserting
 # into the database until the batch has been successfully processed by AWS.
@@ -1071,15 +1131,28 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
     }
   end
 
+  # Do some translation on rights codes
+  rights = case data.single("rights")
+    when "cc1"; "CC BY"
+    when "cc2"; "CC BY-SA"
+    when "cc3"; "CC BY-ND"
+    when "cc4"; "CC BY-NC"
+    when "cc5"; "CC BY-NC-SA"
+    when "cc6"; "CC BY-NC-ND"
+    when nil, "public"; nil
+    else puts "Unknown rights value #{data.single("rights").inspect}"
+  end
+
   # For eschol journals, populate the issue and section models.
   issue = section = nil
   issueNum = data.single("issue[@tokenize='no']") # untokenized is actually from "number"
-  if data.single("pubType") == "journal" && data.single("volume") && issueNum
+  volNum = data.single("volume")
+  if data.single("pubType") == "journal" && volNum && issueNum
     issueUnit = data.multiple("entityOnly")[0]
     if $allUnits.include?(issueUnit)
       issue = Issue.new
       issue[:unit_id] = issueUnit
-      issue[:volume]  = data.single("volume")
+      issue[:volume]  = volNum
       issue[:issue]   = issueNum
       tmp = rawMeta.at("/record/context/issueDate")
       issue[:pub_date] = (tmp && tmp.text && !tmp.text.empty? && parseDate(itemID, tmp.text)) ||
@@ -1091,13 +1164,16 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
       tmp = rawMeta.at("/record/context/issueDescription")
       (tmp && tmp.text && !tmp.text.empty?) and issueAttrs[:description] = tmp.text
       tmp = rawMeta.at("/record/context/issueCoverCaption")
-      findIssueCover(issueUnit, data.single("volume"), issueNum,
+      findIssueCover(issueUnit, volNum, issueNum,
                      (tmp && tmp.text && !tmp.text.empty?) ? tmp : nil,
                      issueAttrs)
+      addIssueBuyLink(issueUnit, volNum, issueNum, issueAttrs)
+      addIssueNumberingAttrs(issueUnit, volNum, issueNum, issueAttrs)
+      rights and issueAttrs[:rights] = rights
       !issueAttrs.empty? and issue[:attrs] = issueAttrs.to_json
 
       section = Section.new
-      section[:name]  = data.single("sectionHeader") ? data.single("sectionHeader") : "default"
+      section[:name]  = data.single("sectionHeader") ? data.single("sectionHeader") : "Articles"
     else
       "Warning: issue associated with unknown unit #{issueUnit.inspect}"
     end
@@ -1106,7 +1182,7 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
   # Data for external journals
   if !issue
     data.single("journal") and (attrs[:ext_journal] ||= {})[:name]   = data.single("journal")
-    data.single("volume")  and (attrs[:ext_journal] ||= {})[:volume] = data.single("volume")
+    volNum                 and (attrs[:ext_journal] ||= {})[:volume] = volNum
     issueNum               and (attrs[:ext_journal] ||= {})[:issue]  = issueNum
     data.single("issn")    and (attrs[:ext_journal] ||= {})[:issn]   = data.single("issn")
     if data.single("coverage") =~ /^([\w.]+) - ([\w.]+)$/
@@ -1160,24 +1236,16 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
                           data.single("pdfExists") == "yes" ? "application/pdf" :
                           mimeType && mimeType.strip.length > 0 ? mimeType :
                           nil
-  dbItem[:genre]        = data.single("type")
+  dbItem[:genre]        = (!attrs[:suppress_content] &&
+                           dbItem[:content_type].nil? &&
+                           attrs[:supp_files]) ?
+                          "multimedia" : data.single("type")
   dbItem[:pub_date]     = parseDate(itemID, data.single("date")) || "1901-01-01"
   #FIXME: Think about this carefully. What's eschol_date for?
   dbItem[:eschol_date]  = parseDate(itemID, data.single("datestamp")) || "1901-01-01"
   dbItem[:attrs]        = JSON.generate(attrs)
+  dbItem[:rights]       = rights
   dbItem[:ordering_in_sect] = data.single("document-order")
-
-  # Do some translation on rights codes
-  dbItem[:rights] = case data.single("rights")
-    when "cc1"; "CC BY"
-    when "cc2"; "CC BY-SA"
-    when "cc3"; "CC BY-ND"
-    when "cc4"; "CC BY-NC"
-    when "cc5"; "CC BY-NC-SA"
-    when "cc6"; "CC BY-NC-ND"
-    when nil, "public"; "public"
-    else puts "Unknown rights value #{data.single("rights").inspect}"
-  end
 
   # Populate ItemAuthor model instances
   authors = getAuthors(data, rawMeta)
@@ -1213,13 +1281,12 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
       title:         dbItem[:title] || "",
       authors:       (authors.length > 1000 ? authors[0,1000] : authors).map { |auth| auth[:name] },
       abstract:      attrs[:abstract] || "",
-      type_of_work:  data.single("type"),
-      content_types: data.multiple("format"),
+      type_of_work:  dbItem[:genre],
       disciplines:   attrs[:disciplines] ? attrs[:disciplines] : [""], # only the numeric parts
       peer_reviewed: attrs[:is_peer_reviewed] ? 1 : 0,
       pub_date:      dbItem[:pub_date].to_date.iso8601 + "T00:00:00Z",
       pub_year:      dbItem[:pub_date].year,
-      rights:        dbItem[:rights],
+      rights:        dbItem[:rights] || "",
       sort_author:   (data.multiple("creator")[0] || "").gsub(/[^\w ]/, '').downcase,
     }
   }
@@ -1300,9 +1367,11 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
     # If only the database portion changed, we can safely skip the CloudSearch re-indxing
     if existingItem[:data_digest] != dataDigest
       puts "Changed item. (database change only, search data unchanged)"
-      DB.transaction do
-        updateDbItem(dbDataBlock)
-      end
+      $dbMutex.synchronize {
+        DB.transaction do
+          updateDbItem(dbDataBlock)
+        end
+      }
       $nProcessed += 1
       return
     end
@@ -1324,7 +1393,7 @@ def indexItem(itemID, timestamp, prefilteredData, batch)
   end
 
   # If this item won't fit in the current batch, send the current batch off and clear it.
-  if batch[:idxDataSize] + idxData.bytesize > MAX_BATCH_SIZE
+  if batch[:idxDataSize] + idxData.bytesize > MAX_BATCH_SIZE || batch[:items].length > MAX_BATCH_ITEMS
     #puts "Prepared batch: nItems=#{batch[:items].length} size=#{batch[:idxDataSize]} "
     batch[:items].empty? or $batchQueue << batch.clone
     emptyBatch(batch)
@@ -1400,8 +1469,16 @@ def updateIssueAndSection(data)
 end
 
 ###################################################################################################
-def updateDbItem(data)
+def scrubSectionsAndIssues()
+  # Remove orphaned sections and issues (can happen when items change)
+  $dbMutex.synchronize {
+    DB.run("delete from sections where id not in (select distinct section from items where section is not null)")
+    DB.run("delete from issues where id not in (select distinct issue_id from sections where issue_id is not null)")
+  }
+end
 
+###################################################################################################
+def updateDbItem(data)
   itemID = data[:dbItem][:id]
 
   # Delete any existing data related to this item (except counts which can stay)
@@ -1459,19 +1536,28 @@ def processBatch(batch)
     begin
       $csClient.upload_documents(documents: batch[:idxData], content_type: "application/json")
     rescue Exception => res
-      if res.inspect =~ /Http(408|5\d\d)Error/ && (Time.now - startTime < 10*60)
+      if res.inspect =~ /Http(408|5\d\d)Error|ReadTimeout/ && (Time.now - startTime < 10*60)
         puts "Will retry in 30 sec, response was: #{res}"
         sleep 30; puts "Retrying."; retry
       end
-      puts "Unable to retry: #{res.inspect}"
+      puts "Unable to retry: #{res.inspect}, elapsed=#{Time.now - startTime}"
       raise
     end
   end
 
   # Now that we've successfully added the documents to AWS CloudSearch, insert records into
   # our database. For efficiency, do all the records in a single transaction.
-  DB.transaction do
-    batch[:items].each { |data| updateDbItem(data) }
+  $dbMutex.synchronize {
+    DB.transaction do
+      batch[:items].each { |data| updateDbItem(data) }
+    end
+  }
+
+  # Periodically scrub out orphaned sections and issues
+  $scrubCount += 1
+  if $scrubCount > 5
+    scrubSectionsAndIssues()
+    $scrubCount = 0
   end
 
   # Update status
@@ -1501,7 +1587,25 @@ def deleteExtraUnits(allIds)
   (dbUnits - allIds).each { |id|
     puts "Deleting extra unit: #{id}"
     DB.transaction do
+      items = UnitItem.where(unit_id: id).map { |link| link.item_id }
+      UnitItem.where(unit_id: id).delete
+      items.each { |itemID|
+        if UnitItem.where(item_id: itemID).empty?
+          ItemAuthor.where(item_id: itemID).delete
+          Item[itemID].delete
+        end
+      }
+
+      Issue.where(unit_id: id).each { |issue|
+        Section.where(issue_id: issue.id).delete
+      }
+      Issue.where(unit_id: id).delete
+
+      Widget.where(unit_id: id).delete
+
+      UnitHier.where(ancestor_unit: id).delete
       UnitHier.where(unit_id: id).delete
+
       Unit[id].delete
     end
   }
@@ -1517,7 +1621,7 @@ def convertAllUnits
   # Load allStruct and traverse it. This will create Unit and Unit_hier records for all units,
   # and delete any extraneous old ones.
   DB.transaction do
-    allStructPath = "/apps/eschol/erep/xtf/style/textIndexer/mapping/allStruct.xml"
+    allStructPath = "/apps/eschol/erep/xtf/style/textIndexer/mapping/allStruct-eschol5.xml"
     open(allStructPath, "r") { |io|
       convertUnits(Nokogiri::XML(io, &:noblanks).root, {}, {}, Set.new)
     }
@@ -1532,7 +1636,6 @@ def convertAllItems(arks)
 
   # Build a list of all valid units
   $allUnits = Unit.map { |unit| [unit.id, unit] }.to_h
-  $allUnits['lbnl'].type = 'campus'
 
   # Build a cache of unit ancestors
   $unitAncestors = Hash.new { |h,k| h[k] = [] }
@@ -1572,6 +1675,8 @@ def convertAllItems(arks)
   prefilterThread.join
   indexThread.join
   batchThread.join
+
+  scrubSectionsAndIssues() # one final scrub
 end
 
 ###################################################################################################

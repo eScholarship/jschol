@@ -7,13 +7,17 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Link } from 'react-router'
+import Search1Comp from '../components/Search1Comp.jsx'
 import Search2Comp from '../components/Search2Comp.jsx'
 import Breakpoints from '../../js/breakpoints.json'
+import AdminBarComp from '../components/AdminBarComp.jsx'
 
 class HeaderComp2 extends React.Component {
   static propTypes = {
-    type: PropTypes.string,  // not required, at least on global search page
-    unitID: PropTypes.string // ditto
+    type: PropTypes.string,       // not required, at least on global search page
+    unitID: PropTypes.string,     // ditto
+    searchComp: PropTypes.string, // ditto
+    query: PropTypes.string
   }
 
   constructor(props){
@@ -23,6 +27,7 @@ class HeaderComp2 extends React.Component {
   render() {
     return (
       <div>
+        <AdminBarComp/>
         <header className="c-header">
           <Link className="c-header__logo2" to="/">
             <picture>
@@ -34,9 +39,14 @@ class HeaderComp2 extends React.Component {
             </div>
           </Link>  
           <div className={this.state.searchActive ? "c-header__search--active" : "c-header__search"}>
+          {this.props.searchComp && this.props.searchComp == "1" ?
+            <Search1Comp query={this.props.query}
+                         onClose = {()=>this.setState({searchActive: false})} />
+            :
             <Search2Comp type={this.props.type}
                          unitID={this.props.unitID}
                          onClose={ ()=>this.setState({searchActive: false}) } />
+          }
           </div>
           <button className="c-header__search-open-button" aria-label="open search field" onClick = {()=> this.setState({searchActive: true})}></button>
         </header>

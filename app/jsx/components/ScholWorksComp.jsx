@@ -2,51 +2,23 @@
 
 import React from 'react'
 import PropTypes from 'prop-types'
+import RightsComp from '../components/RightsComp.jsx'
 import $ from 'jquery'
-import _ from 'lodash'
 import { Link } from 'react-router'
-
-// Load dotdotdot in browser but not server
-if (!(typeof document === "undefined")) {
-  const dotdotdot = require('jquery.dotdotdot')
-}
+import TruncationObj from '../objects/TruncationObj.jsx'
+import MediaListComp from '../components/MediaListComp.jsx'
 
 class DotAuthorUl extends React.Component {
-  componentDidMount() {
-    $(this.domEl).dotdotdot({watch:"window", after:'.c-authorlist__list-more-link', ellipsis:' ', wrap:'children'})
-    setTimeout(()=> $('.c-authorlist__list').trigger("update"), 0)
-  }
-
   render = () =>
-    <ul className={this.props.className} ref={el => this.domEl = el}>
+    <TruncationObj element="ul" className={this.props.className}
+                options={{watch:"window", after:'.c-authorlist__list-more-link', ellipsis:' ', wrap:'children'}}>
       {this.props.children}
-    </ul>
-}
-
-class DotDiv extends React.Component {
-  componentDidMount() {
-    $(this.domEl).dotdotdot({watch:"window"})
-  }
-
-  render = () =>
-    <div className={this.props.className} ref={el => this.domEl = el}>
-      {this.props.children}
-    </div>
-}
-
-class DotH2 extends React.Component {
-  componentDidMount() {
-    $(this.domEl).dotdotdot({watch:"window"})
-  }
-
-  render = () =>
-    <h2 className={this.props.className} ref={el => this.domEl = el}>
-      {this.props.children}
-    </h2>
+    </TruncationObj>
 }
 
 class ScholWorksComp extends React.Component {
   static propTypes = {
+    h: PropTypes.string.isRequired,
     result: PropTypes.shape({
       id: PropTypes.string,
       title: PropTypes.string,
@@ -112,19 +84,6 @@ class ScholWorksComp extends React.Component {
       })
     }
 
-    let supp_files = pr.supp_files.map(function(supp_file, i, a) {
-      if (supp_file.count >= 1) {
-        let display
-        if (supp_file.type === 'video' || supp_file.type === 'image') {
-          display = supp_file.count != 1 ? supp_file.type + 's' : supp_file.type
-        } else if (supp_file.type === 'audio') {
-          display = supp_file.count != 1 ? 'audio files' : 'audio file'
-        } else if (supp_file.type === 'pdf') {
-          display = supp_file.count != 1 ? 'additional PDFs' : 'additional PDF'
-        }
-        return (<li key={supp_file+i} className={"c-medialist__" + supp_file.type}>Contains {supp_file.count} {display}</li>)   
-      }
-    })
     return (
       <section className="c-scholworks">
         <div className="c-scholworks__main-column">
@@ -136,9 +95,9 @@ class ScholWorksComp extends React.Component {
             }) }
           </ul>
           <heading>
-            <DotH2 className="c-scholworks__heading">
+            <TruncationObj element={this.props.h} className="c-scholworks__heading">
               <Link to={itemLink}>{pr.title}</Link>
-            </DotH2>
+            </TruncationObj>
           </heading>
           {authorList && 
             <div className="c-authorlist">
@@ -154,16 +113,16 @@ class ScholWorksComp extends React.Component {
             </div>
           }
           {pr.abstract && 
-            <DotDiv className="c-scholworks__abstract">
+            <TruncationObj element="div" className="c-scholworks__abstract">
               <p>{pr.abstract}</p>
-            </DotDiv>
+            </TruncationObj>
           }
           <div className="c-scholworks__media">
-            <ul className="c-medialist">{ supp_files }</ul>
-            {pr.rights && pr.rights !== 'public' && <img className="c-scholworks__license" src="/images/cc-by-small.svg" alt="creative commons attribution 4.0 international public license"/>}
+            <MediaListComp supp_files={pr.supp_files} />
+            {pr.rights && <RightsComp rights={pr.rights} size="small" />}
           </div>
         </div>
-        {pr.thumbnail && <img className="c-scholworks__article-preview" src={"/assets/"+pr.thumbnail.asset_id} width={pr.thumbnail.width} height={pr.thumbnail.height} alt={_.capitalize(pr.genre) + " image"} />}
+        {pr.thumbnail && <img className="c-scholworks__article-preview" src={"/assets/"+pr.thumbnail.asset_id} width={pr.thumbnail.width} height={pr.thumbnail.height} alt={`Cover page: ${pr.title}`} />}
       </section>
     )
   }

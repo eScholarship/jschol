@@ -12,6 +12,8 @@ import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
 import WellComp from '../components/WellComp.jsx'
 import DescriptionListComp from '../components/DescriptionListComp.jsx'
 import ToggleListComp from '../components/ToggleListComp.jsx'
+import SidebarComp from '../components/SidebarComp.jsx'
+import NotYetLink from '../components/NotYetLink.jsx'
 
 class BrowsePage extends PageBase
 {
@@ -25,6 +27,10 @@ class BrowsePage extends PageBase
     } else {                                                      // URL = /journals or /campuses
       return "/api/browse/" + this.props.route.path
     }
+  }
+
+  pagePermissionsUnit() {
+    return this.props.params.campusID ? this.props.params.campusID : "root"
   }
 
   renderData(data) {
@@ -48,15 +54,12 @@ class BrowsePage extends PageBase
                           campusName={data.header.campusName}
                           campuses={data.campuses} />
           <div className="c-navbar">
-            {/* ToDo: Properly call header.nav_bar for unit type="campus" */}
-            <NavComp data={[{name: 'Open Access Policies', url: ''}, {name: 'Journals', url: '/' + data.header.campusID + '/journals'}, {name: 'Academic Units', url: '/' + data.header.campusID + '/units'}]} />
+            <NavComp data={data.header.nav_bar} />
           </div>
         </div>
       }
       <BreadcrumbComp array={data.breadcrumb} />
-      <Content
-        {...data}
-      />
+      <Content {...data} />
       </div> )
   }
 }
@@ -78,12 +81,7 @@ class Content extends React.Component {
                                                          pageTitle={p.pageTitle} /> }
         </main>
         <aside>
-          <section className="o-columnbox1">
-            <header>
-              <h2>Featured Journals</h2>
-            </header>
-            <p>[content to go here]</p>
-          </section>
+          <SidebarComp data={this.props.sidebar}/>
         </aside>
       </div>
   )}
@@ -95,9 +93,8 @@ class AllCampuses extends React.Component {
     return (
     <section className="o-columnbox1">
       <header>
-        <h2>Campuses and Affiliated Units</h2>
+        <h1>Campuses and Affiliated Units</h1>
       </header>
-      <WellComp />
       <DescriptionListComp campusesStats={this.props.campusesStats} affiliatedStats={this.props.affiliatedStats} />
     </section>
   )}
@@ -145,7 +142,7 @@ class AllJournals extends React.Component {
     return (
     <section className="o-columnbox1">
       <header>
-        <h2>Journals</h2>
+        <h1>Journals</h1>
       </header>
       <WellComp />
       <div className="o-input__inline">
@@ -161,7 +158,7 @@ class AllJournals extends React.Component {
     }
     {visibleArchived &&
       <div>
-        <h3>Archived Journals</h3> 
+        <h2>Archived Journals</h2> 
         <ul className="o-textlist2">{visibleArchived}</ul>
       </div>
     }
@@ -178,9 +175,11 @@ class CampusUnits extends React.Component {
     return (
     <section className="o-columnbox1">
       <header>
-        <h2>{this.props.pageTitle}</h2>
+        <h1>{this.props.pageTitle}</h1>
       </header>
-      <WellComp />
+      <div className="c-well">
+        Looking for an academic or research unit that's not listed? <NotYetLink element="a">Learn how to add yours</NotYetLink>.
+      </div>
       <ToggleListComp depts={this.props.units} />
     </section>
   )}
@@ -200,14 +199,14 @@ class CampusJournals extends React.Component {
     return (
     <section className="o-columnbox1">
       <header>
-        <h2>{this.props.pageTitle}</h2>
+        <h1>{this.props.pageTitle}</h1>
       </header>
     {visibleJournals && 
       <ul className="o-textlist2">{visibleJournals}</ul>
     }
     {visibleArchived &&
       <div>
-        <h3>Archived Journals</h3> 
+        <h2>Archived Journals</h2> 
         <ul className="o-textlist2">{visibleArchived}</ul>
       </div>
     }

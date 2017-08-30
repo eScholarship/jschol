@@ -15,6 +15,9 @@
 
   } @else if $point == screen4 {
     @media (min-width: $screen4) { @content; }
+
+  } @else if $point == screen5 {
+    @media (min-width: $screen5) { @content; }
   }
 
 }
@@ -41,6 +44,17 @@ Selector pattern using above media query mixin:
 }
 
 */
+
+// Bleed component to left/right of viewport by equalling <body> left/right padding:
+
+%page-bleed {
+  margin: 0 (-$spacing-sm);
+
+  @include bp(screen2) {
+    margin: 0 (-$spacing-md);
+  }
+
+}
 
 // Enlarge an interactive element's minimum width and height if there's a touch screen:
 
@@ -175,4 +189,10 @@ Background color with progressively-enhanced blur effect. Example:
     backdrop-filter: blur(5px);
   }
 
+}
+
+%clear-fieldset-styles {
+  margin: 0;
+  padding: 0;
+  border: none;
 }

@@ -9,16 +9,16 @@ import ShareComp from '../components/ShareComp.jsx'
 
 class ItemActionsComp extends React.Component {
   render() {
-    let nodownload = (["withdrawn", "embargoed"].includes(this.props.status) || !this.props.content_type)
+    let p = this.props
     return (
       <div>
-        {nodownload ?
-           <Undownloadable id={this.props.id} />
+        {(["withdrawn", "embargoed"].includes(p.status) || !p.content_type) ?
+           <Undownloadable id={p.id} />
          :
-           <Downloadable id={this.props.id}
-                         content_type={this.props.content_type}
-                         supp_files={this.props.supp_files}
-                         buy_link={this.props.buy_link} />}
+           <Downloadable id={p.id}
+                         content_type={p.content_type}
+                         supp_files={p.supp_files}
+                         buy_link={p.buy_link} />}
       </div>
     )
   }
@@ -27,21 +27,27 @@ class ItemActionsComp extends React.Component {
 class Downloadable extends React.Component {
   linkBuyPrint = () => {window.location = this.props.buy_link}
 
-  contentLabel = {
-      'application/pdf': 'PDF',
-      'text/html':       'HTML',
-      'default':         'Content'
-  }
-
   render() {
     let p = this.props,
-        label = this.contentLabel[p.content_type]
+      contentVars = content_type => {
+        let v = {
+          'application/pdf': () => [ 'PDF', "/content/qt" + p.id + "/qt" + p.id + ".pdf", '.pdf' ],
+          'text/html':       () => [ 'HTML', '' , '.html' ],
+          'default':         () => [ 'Content', '' , '' ]
+        }
+        return v[content_type]()
+      },
+      x = p.content_type ? contentVars(p.content_type) : contentVars('default'),
+      label = x[0],
+      url = x[1],
+      filename="eScholarship UC item " + p.id + x[2] 
     return (
       <div className="c-itemactions">
         <div className="o-download">
           {/* ToDo: Once main multimedia content is ingested, this button should say 'Download Content' */}
-          <button className="o-download__button">Download {label}</button>
-          <details className="o-download__formats">
+          {/* className="o-download__button" */}
+          <a href={url} className="o-button__8" download={filename}>Download {label}</a>
+{/*       <details className="o-download__formats">
             <summary aria-label="formats"></summary>
             <ul className="o-download__nested-menu">
             {p.content_type && ["HTML", "PDF"].includes(label) &&
@@ -81,7 +87,7 @@ class Downloadable extends React.Component {
               </li>
             }
             </ul>
-          </details>
+          </details>  */}
         </div>
       {p.buy_link &&
         <button onClick={() => {this.linkBuyPrint()}} className="c-itemactions__button-print">Buy in Print</button>
