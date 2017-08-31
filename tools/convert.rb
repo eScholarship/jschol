@@ -216,6 +216,9 @@ end
 class Page < Sequel::Model
 end
 
+class InfoIndex < Sequel::Model(:info_index)
+end
+
 ###################################################################################################
 # Insert hierarchy links (skipping dupes) for all descendants of the given unit id.
 def linkUnit(id, childMap, done)
@@ -838,7 +841,7 @@ def grabText(itemID, contentType)
     puts "Warning: no text found"
     return ""
   end
-  return buf.join("\n")
+  return translateEntities(buf.join("\n"))
 end
 
 ###################################################################################################
@@ -1677,6 +1680,15 @@ def compareSuppSummaries(oldSumm, newSumm)
 end
 
 ###################################################################################################
+def addIdxUnits(idxItem, units)
+  campuses, departments, journals, series = traceUnits(units)
+  campuses.empty?    or idxItem[:fields][:campuses] = campuses
+  departments.empty? or idxItem[:fields][:departments] = departments
+  journals.empty?    or idxItem[:fields][:journals] = journals
+  series.empty?      or idxItem[:fields][:series] = series
+end
+
+###################################################################################################
 # Extract metadata for an item, and add it to the current index batch.
 # Note that we create, but don't yet add, records to our database. We put off really inserting
 # into the database until the batch has been successfully processed by AWS.
@@ -1749,11 +1761,7 @@ def indexItem(itemID, timestamp, prefilteredData, batch, nailgun)
   }
 
   # Determine campus(es), department(s), and journal(s) by tracing the unit connnections.
-  campuses, departments, journals, series = traceUnits(units)
-  campuses.empty?    or idxItem[:fields][:campuses] = campuses
-  departments.empty? or idxItem[:fields][:departments] = departments
-  journals.empty?    or idxItem[:fields][:journals] = journals
-  series.empty?      or idxItem[:fields][:series] = series
+  addIdxUnits(idxItem, units)
 
   # Summary of supplemental file types
   suppSummaryTypes.empty? or idxItem[:fields][:supp_file_types] = suppSummaryTypes.to_a
@@ -2004,24 +2012,29 @@ def updateDbItem(data)
 end
 
 ###################################################################################################
+def submitBatch(batch)
+  # Try for 10 minutes max. CloudSearch seems to go awol fairly often.
+  startTime = Time.now
+  begin
+    $csClient.upload_documents(documents: batch[:idxData], content_type: "application/json")
+  rescue Exception => res
+    if res.inspect =~ /Http(408|5\d\d)Error|ReadTimeout|ServiceUnavailable/ && (Time.now - startTime < 10*60)
+      puts "Will retry in 30 sec, response was: #{res}"
+      sleep 30; puts "Retrying."; retry
+    end
+    puts "Unable to retry: #{res.inspect}, elapsed=#{Time.now - startTime}"
+    raise
+  end
+end
+
+###################################################################################################
 def processBatch(batch)
   puts "Processing batch: nItems=#{batch[:items].size}, size=#{batch[:idxDataSize]}."
 
   # Finish the data buffer, and send to AWS
   if !$noCloudSearchMode
     batch[:idxData] << "]"
-    # Try for 10 minutes max. CloudSearch seems to go awol fairly often.
-    startTime = Time.now
-    begin
-      $csClient.upload_documents(documents: batch[:idxData], content_type: "application/json")
-    rescue Exception => res
-      if res.inspect =~ /Http(408|5\d\d)Error|ReadTimeout/ && (Time.now - startTime < 10*60)
-        puts "Will retry in 30 sec, response was: #{res}"
-        sleep 30; puts "Retrying."; retry
-      end
-      puts "Unable to retry: #{res.inspect}, elapsed=#{Time.now - startTime}"
-      raise
-    end
+    submitBatch(batch)
   end
 
   # Now that we've successfully added the documents to AWS CloudSearch, insert records into
@@ -2116,17 +2129,22 @@ def getShortArk(arkStr)
 end
 
 ###################################################################################################
-# Main driver for item conversion
-def convertAllItems(arks)
-  # Let the user know what we're doing
-  puts "Converting #{arks=="ALL" ? "all" : "selected"} items."
-
+def cacheAllUnits()
   # Build a list of all valid units
   $allUnits = Unit.map { |unit| [unit.id, unit] }.to_h
 
   # Build a cache of unit ancestors
   $unitAncestors = Hash.new { |h,k| h[k] = [] }
   UnitHier.each { |hier| $unitAncestors[hier.unit_id] << hier.ancestor_unit }
+end
+
+###################################################################################################
+# Main driver for item conversion
+def convertAllItems(arks)
+  # Let the user know what we're doing
+  puts "Converting #{arks=="ALL" ? "all" : "selected"} items."
+
+  cacheAllUnits()
 
   # Fire up threads for doing the work in parallel
   Thread.abort_on_exception = true
@@ -2167,6 +2185,192 @@ def convertAllItems(arks)
 end
 
 ###################################################################################################
+def flushInfoBatch(batch, force = false)
+  if !batch[:dbUpdates].empty? && (force || batch[:idxDataSize] > MAX_BATCH_SIZE)
+    puts "Submitting batch with #{batch[:dbUpdates].length} info records."
+    batch[:idxData] << "]"
+    submitBatch(batch)
+
+    # Now that the data is in AWS, update the DB records.
+    DB.transaction {
+      batch[:dbUpdates].each { |func| func.call }
+    }
+
+    # And clear out the batch for the next round
+    batch[:dbUpdates] = []
+    batch[:idxData] = "["
+    batch[:idxDataSize] = 0
+  end
+end
+
+###################################################################################################
+def indexUnit(row, batch)
+
+  # Create JSON for the full text index
+  unitID = row[:id]
+  oldDigest = row[:index_digest]
+  idxItem = {
+    type:          "add",   # in CloudSearch land this means "add or update"
+    id:            "unit:#{unitID}",
+    fields: {
+      text:          row[:name],
+      is_info:       1
+    }
+  }
+
+  # Determine campus(es), department(s), and journal(s) by tracing the unit connnections.
+  addIdxUnits(idxItem, [unitID])
+
+  idxData = JSON.generate(idxItem)
+  idxDigest = Digest::MD5.base64digest(idxData)
+  if oldDigest && oldDigest == idxDigest
+    #puts "Unchanged: unit #{unitID}"
+  else
+    puts "#{oldDigest ? "Changed" : "New"}: unit #{unitID}"
+
+    # Now add this item to the batch
+    batch[:dbUpdates].empty? or batch[:idxData] << ",\n"  # Separator between records
+    batch[:idxData] << idxData
+    batch[:idxDataSize] += idxData.bytesize
+    batch[:dbUpdates] << lambda {
+      if oldDigest
+        InfoIndex.where(unit_id: unitID, page_slug: nil, freshdesk_id: nil).update(index_digest: idxDigest)
+      else
+        InfoIndex.new { |info|
+          info[:unit_id] = unitID
+          info[:page_slug] = nil
+          info[:freshdesk_id] = nil
+          info[:index_digest] = idxDigest
+        }.save
+      end
+    }
+  end
+end
+
+###################################################################################################
+def indexPage(row, batch)
+
+  # Create JSON for the full text index
+  unitID = row[:unit_id]
+  slug = row[:slug]
+  oldDigest = row[:index_digest]
+  attrs = JSON.parse(row[:attrs])
+  text = "#{$allUnits[unitID][:name]}\n#{row[:name]}\n#{row[:title]}\n"
+  htmlText = attrs["html"]
+  if htmlText
+    buf = []
+    traverseText(stringToXML(htmlText), buf)
+    text += translateEntities(buf.join("\n"))
+  end
+
+  idxItem = {
+    type:          "add",   # in CloudSearch land this means "add or update"
+    id:            "page:#{unitID}:#{slug}",
+    fields: {
+      text:        text,
+      is_info:     1
+    }
+  }
+
+  # Determine campus(es), department(s), and journal(s) by tracing the unit connnections.
+  addIdxUnits(idxItem, [unitID])
+
+  idxData = JSON.generate(idxItem)
+  idxDigest = Digest::MD5.base64digest(idxData)
+  if oldDigest && oldDigest == idxDigest
+    #puts "Unchanged: page #{unitID}:#{slug}"
+  else
+    puts "#{row[:index_digest] ? "Changed" : "New"}: page #{unitID}:#{slug}"
+
+    # Now add this item to the batch
+    batch[:dbUpdates].empty? or batch[:idxData] << ",\n"  # Separator between records
+    batch[:idxData] << idxData
+    batch[:idxDataSize] += idxData.bytesize
+    batch[:dbUpdates] << lambda {
+      if oldDigest
+        InfoIndex.where(unit_id: unitID, page_slug: slug, freshdesk_id: nil).update(index_digest: idxDigest)
+      else
+        InfoIndex.new { |info|
+          info[:unit_id] = unitID
+          info[:page_slug] = slug
+          info[:freshdesk_id] = nil
+          info[:index_digest] = idxDigest
+        }.save
+      end
+    }
+  end
+end
+
+###################################################################################################
+def deleteIndexUnit(unitID, batch)
+  puts "Deleted: unit #{unitID}"
+  idxItem = {
+    type:          "delete",
+    id:            "unit:#{unitID}"
+  }
+  idxData = JSON.generate(idxItem)
+  batch[:dbUpdates].empty? or batch[:idxData] << ",\n"  # Separator between records
+  batch[:idxData] << idxData
+  batch[:idxDataSize] += idxData.bytesize
+  batch[:dbUpdates] << lambda {
+    InfoIndex.where(unit_id: unitID, page_slug: nil, freshdesk_id: nil).delete
+  }
+end
+
+###################################################################################################
+def deleteIndexPage(unitID, slug, batch)
+  puts "Deleted: page #{unitID}:#{slug}"
+  idxItem = {
+    type:          "delete",
+    id:            "page:#{unitID}:#{slug}"
+  }
+  idxData = JSON.generate(idxItem)
+  batch[:dbUpdates].empty? or batch[:idxData] << ",\n"  # Separator between records
+  batch[:idxData] << idxData
+  batch[:idxDataSize] += idxData.bytesize
+  batch[:dbUpdates] << lambda {
+    InfoIndex.where(unit_id: unitID, page_slug: slug, freshdesk_id: nil).delete
+  }
+end
+
+###################################################################################################
+# Update the CloudSearch index for all info pages
+def indexInfo()
+  # Let the user know what we're doing
+  puts "Checking and indexing info pages."
+
+  # Build a list of all valid units
+  cacheAllUnits()
+
+  # First, the units that are new or changed
+  batch = { dbUpdates: [], idxData: "[", idxDataSize: 0 }
+  Unit.left_join(:info_index, unit_id: :id, page_slug: nil, freshdesk_id: nil).
+       select(Sequel[:units][:id], :name, :page_slug, :freshdesk_id, :index_digest).each { |row|
+    indexUnit(row, batch)
+  }
+
+  # Then the pages that are new or changed
+  Page.left_join(:info_index, unit_id: :unit_id, page_slug: :slug).
+       select(Sequel[:pages][:unit_id], :name, :title, :slug, :attrs, :index_digest).each { |row|
+    indexPage(row, batch)
+  }
+
+  # Delete excess units and pages
+  DB.fetch("SELECT unit_id FROM info_index WHERE page_slug IS NULL AND freshdesk_id IS NULL " +
+           "AND NOT EXISTS (SELECT * FROM units WHERE info_index.unit_id = units.id)").each { |row|
+    deleteIndexUnit(row[:unit_id], batch)
+  }
+  DB.fetch("SELECT unit_id, page_slug FROM info_index WHERE page_slug IS NOT NULL " +
+           "AND NOT EXISTS (SELECT * FROM pages WHERE info_index.unit_id = pages.unit_id " +
+           "                                      AND info_index.page_slug = pages.slug)").each { |row|
+    deleteIndexPage(row[:unit_id], row[:page_slug], batch)
+  }
+
+  # Flush the last batch
+  flushInfoBatch(batch, true)
+end
+
+###################################################################################################
 # Main action begins here
 
 startTime = Time.now
@@ -2177,6 +2381,8 @@ case ARGV[0]
   when "--items"
     arks = ARGV.select { |a| a =~ /qt\w{8}/ }
     convertAllItems(arks.empty? ? "ALL" : Set.new(arks))
+  when "--info"
+    indexInfo()
   else
     STDERR.puts "Usage: #{__FILE__} --units|--items"
     exit 1
