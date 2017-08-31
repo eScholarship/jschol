@@ -2223,7 +2223,7 @@ def indexUnit(row, batch)
 
   idxData = JSON.generate(idxItem)
   idxDigest = Digest::MD5.base64digest(idxData)
-  if oldDigest == idxDigest
+  if oldDigest && oldDigest == idxDigest
     #puts "Unchanged: unit #{unitID}"
   else
     puts "#{oldDigest ? "Changed" : "New"}: unit #{unitID}"
@@ -2277,7 +2277,7 @@ def indexPage(row, batch)
 
   idxData = JSON.generate(idxItem)
   idxDigest = Digest::MD5.base64digest(idxData)
-  if oldDigest == idxDigest
+  if oldDigest && oldDigest == idxDigest
     #puts "Unchanged: page #{unitID}:#{slug}"
   else
     puts "#{row[:index_digest] ? "Changed" : "New"}: page #{unitID}:#{slug}"
@@ -2302,6 +2302,38 @@ def indexPage(row, batch)
 end
 
 ###################################################################################################
+def deleteIndexUnit(unitID, batch)
+  puts "Deleted: unit #{unitID}"
+  idxItem = {
+    type:          "delete",
+    id:            "unit:#{unitID}"
+  }
+  idxData = JSON.generate(idxItem)
+  batch[:dbUpdates].empty? or batch[:idxData] << ",\n"  # Separator between records
+  batch[:idxData] << idxData
+  batch[:idxDataSize] += idxData.bytesize
+  batch[:dbUpdates] << lambda {
+    InfoIndex.where(unit_id: unitID, page_slug: nil, freshdesk_id: nil).delete
+  }
+end
+
+###################################################################################################
+def deleteIndexPage(unitID, slug, batch)
+  puts "Deleted: page #{unitID}:#{slug}"
+  idxItem = {
+    type:          "delete",
+    id:            "page:#{unitID}:#{slug}"
+  }
+  idxData = JSON.generate(idxItem)
+  batch[:dbUpdates].empty? or batch[:idxData] << ",\n"  # Separator between records
+  batch[:idxData] << idxData
+  batch[:idxDataSize] += idxData.bytesize
+  batch[:dbUpdates] << lambda {
+    InfoIndex.where(unit_id: unitID, page_slug: slug, freshdesk_id: nil).delete
+  }
+end
+
+###################################################################################################
 # Update the CloudSearch index for all info pages
 def indexInfo()
   # Let the user know what we're doing
@@ -2312,8 +2344,8 @@ def indexInfo()
 
   # First, the units that are new or changed
   batch = { dbUpdates: [], idxData: "[", idxDataSize: 0 }
-  Unit.left_join(:info_index, unit_id: :id).where(page_slug: nil, freshdesk_id: nil).
-       select(Sequel[:units][:id], :name, :index_digest).each { |row|
+  Unit.left_join(:info_index, unit_id: :id, page_slug: nil, freshdesk_id: nil).
+       select(Sequel[:units][:id], :name, :page_slug, :freshdesk_id, :index_digest).each { |row|
     indexUnit(row, batch)
   }
 
@@ -2321,6 +2353,17 @@ def indexInfo()
   Page.left_join(:info_index, unit_id: :unit_id, page_slug: :slug).
        select(Sequel[:pages][:unit_id], :name, :title, :slug, :attrs, :index_digest).each { |row|
     indexPage(row, batch)
+  }
+
+  # Delete excess units and pages
+  DB.fetch("SELECT unit_id FROM info_index WHERE page_slug IS NULL AND freshdesk_id IS NULL " +
+           "AND NOT EXISTS (SELECT * FROM units WHERE info_index.unit_id = units.id)").each { |row|
+    deleteIndexUnit(row[:unit_id], batch)
+  }
+  DB.fetch("SELECT unit_id, page_slug FROM info_index WHERE page_slug IS NOT NULL " +
+           "AND NOT EXISTS (SELECT * FROM pages WHERE info_index.unit_id = pages.unit_id " +
+           "                                      AND info_index.page_slug = pages.slug)").each { |row|
+    deleteIndexPage(row[:unit_id], row[:page_slug], batch)
   }
 
   # Flush the last batch
