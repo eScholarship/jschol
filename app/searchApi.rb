@@ -265,6 +265,23 @@ def normalizeResponse(response)
   end
 end
 
+def getInfoResults(q)
+  DB.fetch('select unit_id, slug from idxtext where match(text) against (?)', q).map { |row|
+    if row[:unit_id]
+      unit = $unitsHash[row[:unit_id]]
+      if row[:slug].nil?   # Unit
+        ancestor = getUnitAncestor(unit)
+        ancestor_name, ancestor_id = ancestor ? [ancestor.name, ancestor.id] : nil
+        unitAttrs = JSON.parse(unit.attrs)
+        {ancestor_id: ancestor_id, ancestor_name: ancestor_name, target_id: row[:unit_id], target_name: unit.name, isPage: false, content: unitAttrs['about']}
+      else                 # Static Page
+        page = Page.where(unit_id: row[:unit_id], slug: row[:slug]).first
+        {ancestor_id: row[:unit_id], ancestor_name: unit.name, target_id: row[:slug], target_name: page.name, isPage: true, content: nil}
+      end
+    end
+  }
+end
+
 def search(params, facetTypes=$allFacets.keys)
   aws_params = aws_encode(params, facetTypes)
   response = normalizeResponse($csClient.search(return: '_no_fields', **aws_params))
@@ -303,7 +320,10 @@ def search(params, facetTypes=$allFacets.keys)
     end
   end
 
-  return {'count' => response['hits']['found'], 'query' => get_query_display(params.clone), 'searchResults' => searchResults, 'facets' => facets}
+  infoResults = getInfoResults(params['q'])
+  infoResultsPreview, info_count = infoResults.length > 0 ? [infoResults[0..2], infoResults.length] : [nil, nil]
+
+  return {'count' => response['hits']['found'], 'query' => get_query_display(params.clone), 'searchResults' => searchResults, 'infoResultsPreview' => infoResultsPreview, 'info_count' => info_count, 'facets' => facets}
 end
 
 def extent(id, type)
