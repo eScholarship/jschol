@@ -4,7 +4,15 @@ import React from 'react'
 import $ from 'jquery'
 import { Link } from 'react-router'
 
+// Load dotdotdot in browser but not server
+if (!(typeof document === "undefined")) {
+  const dotdotdot = require('jquery.dotdotdot')
+}
+
 class CellComp extends React.Component {
+  view = (url) => {
+    window.location = url
+  }
 
   render() {
     let p = this.props,
@@ -14,20 +22,16 @@ class CellComp extends React.Component {
         fileLabel = m[mimeSimple] ? m[mimeSimple] : p.file 
     return (
       <div className={"o-mediafile--" + mimeSimple}>
-        {/* Some items have no titles but use descriptions instead, and these get moved into title.
-            Let's make these look better (and load faster) by avoiding dotdotdot in this case only.
-        */}
-        <h2 className="o-mediafile__heading" ref={ el => { if ((p.useFilenameForTitle) || (p.description && p.description.length > 0)) $(el).dotdotdot({watch:"window"}) } }>
-          <Link to={url} target="_blank">{p.title}</Link>
-        </h2>
-        <Link className="o-mediafile__link" to={url} aria-label={fileLabel} target="_blank">
+        <h2 className="o-mediafile__heading" ref={ el => { if (p.title && p.title.length > 38) $(el).dotdotdot({watch:"window"}) } }>{p.title}</h2>
+        <div className="o-mediafile__preview" onClick={() => {this.view(url)}} aria-label={fileLabel} target="_blank">
           {(mimeSimple == "image") &&
             <img className="o-mediafile__image" src={url} alt={p.file} />
           }
-        </Link>
-        <a href={url} className="o-mediafile__download" download>Download</a>
+        </div>
         <div className="o-mediafile__description" ref={ el => { if (p.description && p.description.length > 0) $(el).dotdotdot({watch:"window"}) } }>
           {p.description}</div>
+        <button className="o-mediafile__view"><span>View Media</span></button>
+        <a href={url} className="o-mediafile__download" download={p.file}>Download</a>
       </div>
     )
   }

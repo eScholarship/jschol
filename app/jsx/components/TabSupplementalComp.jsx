@@ -22,7 +22,7 @@ class RefineComp extends React.Component {
         <div className="o-download">
       {/*
         {(this.props.mimeTypes.length > 1) ? 
-          [<button key="0" className="o-download__button">Download All Files</button>,
+          [<a key="0" href="" className="o-download__button" download="">Download All Files</a>,
            <details key="1" className="o-download__formats">
              <summary aria-label="formats"></summary>
              <ul className="o-download__single-menu">
