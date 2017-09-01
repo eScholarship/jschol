@@ -9,7 +9,7 @@ class DownloadObj extends React.Component {
         <h2>Using Single Menu Items</h2>
 
         <div className="o-download">
-          <button className="o-download__button">Download All Files</button>
+          <a href="" className="o-download__button" download>Download All Files</a>
           <details className="o-download__formats">
             <summary aria-label="formats"></summary>
             <ul className="o-download__single-menu">
@@ -25,7 +25,7 @@ class DownloadObj extends React.Component {
         <h2>Using Nested Menu Items</h2>
 
         <div className="o-download">
-          <button className="o-download__button">Download PDF</button>
+          <a href="" className="o-download__button" download>Download PDF</a>
           <details className="o-download__formats">
             <summary aria-label="formats"></summary>
             <ul className="o-download__nested-menu">

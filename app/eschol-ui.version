@@ -451,6 +451,41 @@ As well as:
   ignored for now:    app/jsx/layouts/JournalItemMultimediaLayout.jsx (not ready to implement multimedia view)
   ignored:    app/jsx/layouts/SearchLayout.jsx (Implemented @ ../pages/SearchPage.jsx )
 
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's 813786835a907a245640b9ef1bd99222b29d0d30, 2017-08-31 <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
+Andy added all scss and image changes since last.
+As well as:
 
+  deleted:    app/jsx/components/DepositWizardComp.jsx
+  deleted:    app/jsx/objects/MediaFileObj.jsx
+  deleted:    app/scss/_depositwizard.scss
+
+  modified:   app/jsx/components/IssueActionsComp.jsx
+  modified:   app/jsx/components/ItemActionsComp.jsx
+  modified:   app/jsx/components/MediaFileGridComp.jsx
+  modified:   app/jsx/components/TabAuthorComp.jsx
+  modified:   app/jsx/components/TabSupplementalComp.jsx
+  modified:   app/jsx/objects/DownloadObj.jsx
+
+Added files:
+
+  app/jsx/components/MediaModalComp.jsx
+  app/jsx/components/WizardCampusComp.jsx
+  app/jsx/components/WizardComp.jsx
+  app/jsx/components/WizardLinkComp.jsx
+  app/jsx/components/WizardRoleComp.jsx
+  app/jsx/components/WizardSeriesComp.jsx
+  app/jsx/components/WizardTypeComp.jsx
+  app/jsx/components/WizardUnitComp.jsx
+  app/jsx/objects/MediaFeatureAudioObj.jsx
+  app/jsx/objects/MediaFeatureFileObj.jsx
+  app/jsx/objects/MediaFeaturePictureObj.jsx
+  app/jsx/objects/MediaFeatureVideoObj.jsx
+  app/jsx/objects/MediaFileAudioObj.jsx
+  app/jsx/objects/MediaFileDataObj.jsx
+  app/jsx/objects/MediaFileImageObj.jsx
+  app/jsx/objects/MediaFileVideoObj.jsx
+ 
 

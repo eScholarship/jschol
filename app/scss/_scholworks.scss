@@ -107,6 +107,11 @@ $scholworks-tag-height: 1.4em;
 .c-scholworks__article-preview {
   flex: 0 0 auto;
   align-self: flex-end;
+  width: 8em;
+  height: auto;
+  margin-bottom: $spacing-sm;
+  border: 1px solid $color-light-gray;
+  box-shadow: $box-shadow2;
 
   @include bp(screen1) {
     align-self: flex-start;

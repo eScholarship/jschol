@@ -14,12 +14,14 @@
 }
 
 .o-download__button {
+  display: flex;
+  align-items: center;
   padding: 0 $spacing-sm;
-  border: none;
   border-right: 1px solid $color-white;
   border-radius: $round-corner 0 0 $round-corner;
   background-color: $color-teal;
   color: $color-white;
+  text-decoration: none;
 }
 
 .o-download__formats {

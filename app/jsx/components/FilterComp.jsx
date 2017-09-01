@@ -30,8 +30,7 @@ class FilterComp extends React.Component {
       }
     }
 
-    let infoPagesCount = 12
-    let resultCount = this.props.count + infoPagesCount
+    let resultCount = this.props.count + this.props.info_count 
 
     return (
       <div className={activeFilters ? "c-filter--active" : "c-filter"}>

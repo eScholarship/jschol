@@ -1,97 +1,132 @@
 // ##### Media File Object ##### //
 
-$mediafile-img-height: 120px;
+// The layout grid for Media File objects is set within _mediafilegrid.scss
 
-// Space and border styles around these objects are contained within _mediafilegrid.scss
-
-%o-mediafile {
-  @extend %clearfix;
-  position: relative;
+div[class^='o-mediafile--'] {
+  display: grid;
 
   @include bp(screen1) {
-    display: block;
     padding: $spacing-sm;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto 1fr auto;
+    grid-column-gap: $spacing-sm;
+  }
+
+}
+
+%o-mediafile__heading {
+  @extend %overflow-wrap;
+  margin: 0 0 $spacing-sm;
+  padding-left: 25px;
+  background: no-repeat top left / 0.9em;
+  font-size: 1.1em;
+  font-weight: normal;
+  grid-column: 1;
+  grid-row: 1;
+
+  @include bp(screen1) {
+    max-height: 2.3em; // truncate beyond 2 lines per jquery.dotdotdot
+    overflow: hidden; // hide text beyond max-height
+    grid-column: 2;
+  }
+
+  @supports (display: grid) {
+    color: $color-teal;
+  }
+
+}
+
+.o-mediafile__preview {
+  position: relative;
+  height: 7.5em;
+  margin-bottom: $spacing-sm;
+  background-color: $color-dark-gray;
+  cursor: pointer;
+
+  &::before {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: no-repeat center / 3.7em;
+    content: '';
+    opacity: 0.7;
+  }
+
+  @include bp(screen1) {
+    grid-row: 1 / 4;
 
     @supports (display: grid) {
-      display: grid;
-      grid-template-columns: 50% 50%;
-      grid-template-rows: auto 1fr auto;
-      grid-column-gap: $spacing-sm;
+      margin-bottom: 0;
     }
 
   }
 
+  img {
+    width: 100%;
+    height: 100%;
+    margin-bottom: $spacing-sm;
+    object-fit: cover;
+  }
+
 }
 
-// ***** Set layout for heading, link, button, and description elements when --audio, --data, --image, or --video classes are appended to .o-mediafile ***** //
-
-.o-mediafile--audio,
-.o-mediafile--audio--selected,
-.o-mediafile--data,
-.o-mediafile--data--selected,
-.o-mediafile--image,
-.o-mediafile--image--selected,
-.o-mediafile--video,
-.o-mediafile--video--selected {
-  @extend %o-mediafile;
+.o-mediafile__description {
+  margin-bottom: $spacing-sm;
+  font-size: 0.9em;
 
   @include bp(screen1) {
+    max-height: 3.2em; // truncate beyond 3 lines per jquery.dotdotdot
+    grid-column: 2;
+    grid-row: 2;
+  }
 
-    .o-mediafile__heading {
-      width: calc(50% - #{$spacing-base});
-      float: right;
+}
 
-      @supports (display: grid) {
-        width: auto;
-        grid-column: 2;
-        grid-row: 1;
-      }
+// 'View Media' button:
+.o-mediafile__view {
+  @extend %o-button__7; // default button styling
+  z-index: 5; // stack above o-mediafile__heading
+  grid-column: 1;
+  grid-row: 1;
 
-    }
+  @include bp(screen1) {
+    grid-column: 2;
+    grid-row: 1;
+  }
 
-    .o-mediafile__link {
-      width: calc(50% - #{$spacing-base});
-      float: left;
+  @supports (display: grid) {
+    // remove default button styling:
+    border: none;
+    background: none;
 
-      @supports (display: grid) {
-        width: 100%;
-        grid-row: 1 / 4;
-      }
-
-    }
-
-    .o-mediafile__button {
+    span { // hide button label
       position: absolute;
-      bottom: 0;
-      left: calc(50% + #{$spacing-base});
-
-      @supports (display: grid) {
-        position: static;
-        grid-column: 2;
-        justify-self: start;
-      }
-
-    }
-
-    .o-mediafile__description {
-      width: calc(50% - #{$spacing-base});
-      float: right;
-      clear: none;
-
-      @supports (display: grid) {
-        width: auto;
-        margin-bottom: 0;
-        grid-column: 2;
-        grid-row: 2;
-      }
-
+      left: -9999px;
     }
 
   }
 
 }
 
-// Media-specific icons within links:
+.o-mediafile__download {
+  @extend %o-textlink__secondary;
+  float: right;
+  justify-self: end;
+
+  @include bp(screen1) {
+    justify-self: start;
+  }
+
+}
+
+div[class$='--selected'] {
+  padding: $spacing-sm;
+  background-color: lighten($color-light-gray, 15%);
+}
+
+// ***** Preview Element Icons ***** //
 
 @each $mediafile-type, $mediafile-icon in
   (audio, icon_volume-up-white),
@@ -99,10 +134,9 @@ $mediafile-img-height: 120px;
   (image, icon_eye-white),
   (video, icon_play-circle-white) {
 
-  .o-mediafile--#{$mediafile-type},
-  .o-mediafile--#{$mediafile-type}--selected {
+  div[class^='o-mediafile--#{$mediafile-type}'] {
 
-    .o-mediafile__link {
+    .o-mediafile__preview {
 
       &::before {
         background-image: inline('../images/#{$mediafile-icon}.svg');
@@ -114,39 +148,7 @@ $mediafile-img-height: 120px;
 
 }
 
-.o-mediafile--audio--selected,
-.o-mediafile--data--selected,
-.o-mediafile--image--selected,
-.o-mediafile--video--selected {
-  padding: $spacing-sm;
-  background-color: lighten($color-light-gray, 15%);
-}
-
-%o-mediafile__heading {
-  @extend %o-heading3;
-  @extend %overflow-wrap;
-  margin-bottom: $spacing-sm;
-  padding-left: 25px;
-  background: no-repeat top left / 16px;
-  font-weight: normal;
-
-  a {
-    @extend %o-textlink__secondary;
-  }
-
-  @include bp(screen1) {
-    max-height: 2.3em; // truncate beyond 2 lines per jquery.dotdotdot
-    font-size: 1.1em;
-    overflow: hidden; // hide text beyond max-height
-  }
-
-}
-
-// Media-specific icons within headings:
-
-.o-mediafile__heading { // if not media-specific, no icon
-  @extend %o-mediafile__heading;
-}
+// ***** Heading Icons ***** //
 
 @each $mediafile-type, $mediafile-icon in
   (audio, icon_volume-up),
@@ -154,77 +156,13 @@ $mediafile-img-height: 120px;
   (image, icon_picture),
   (video, icon_video-camera-teal) {
 
-  .o-mediafile--#{$mediafile-type},
-  .o-mediafile--#{$mediafile-type}--selected {
+  div[class^='o-mediafile--#{$mediafile-type}'] {
 
     .o-mediafile__heading {
       @extend %o-mediafile__heading;
       background-image: inline('../images/#{$mediafile-icon}.svg');
     }
 
-  }
-
-}
-
-.o-mediafile__link {
-  display: block;
-  position: relative;
-  height: $mediafile-img-height;
-  margin-bottom: $spacing-sm;
-  clear: left;
-  background-color: $color-dark-gray;
-
-  &::before {
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    background: no-repeat center / 60px;
-    content: '';
-    opacity: 0.7;
-  }
-
-  @include bp(screen1) {
-    margin-bottom: 0;
-  }
-
-}
-
-.o-mediafile__image {
-  display: block;
-  width: 100%;
-  height: $mediafile-img-height;
-  margin-bottom: $spacing-sm;
-  object-fit: cover;
-
-  @include bp(screen1) {
-    margin-bottom: 0;
-  }
-
-}
-
-.o-mediafile__button {
-  @extend %o-button__7;
-  margin-bottom: $spacing-sm;
-  float: right;
-
-  @include bp(screen1) {
-
-    @supports (display: grid) {
-      margin-bottom: 0;
-    }
-
-  }
-
-}
-
-.o-mediafile__description {
-  clear: both;
-  font-size: 0.9em;
-
-  @include bp(screen1) {
-    max-height: 3.2em; // truncate beyond 3 lines per jquery.dotdotdot
   }
 
 }

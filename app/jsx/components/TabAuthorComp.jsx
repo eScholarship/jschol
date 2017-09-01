@@ -44,7 +44,8 @@ class TabAuthorComp extends React.Component {
       {!p.attrs['orig_citation'] &&
         <div className="c-itemactions">
           <div className="o-download">
-            <NotYetLink element="button" className="o-download__button">Download Citation</NotYetLink>
+            {/* ToDo: Link up citation */}
+            <a href="" className="o-download__button" download="">Download Citation</a>
             <details className="o-download__formats">
               <summary aria-label="formats"></summary>
               <ul className="o-download__single-menu">

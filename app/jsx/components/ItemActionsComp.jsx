@@ -6,6 +6,7 @@
 
 import React from 'react'
 import ShareComp from '../components/ShareComp.jsx'
+import NotYetLink from '../components/NotYetLink.jsx'
 
 class ItemActionsComp extends React.Component {
   render() {
@@ -45,9 +46,8 @@ class Downloadable extends React.Component {
       <div className="c-itemactions">
         <div className="o-download">
           {/* ToDo: Once main multimedia content is ingested, this button should say 'Download Content' */}
-          {/* className="o-download__button" */}
-          <a href={url} className="o-button__8" download={filename}>Download {label}</a>
-{/*       <details className="o-download__formats">
+          <a href={url} className="o-download__button" download={filename}>Download {label}</a>
+          <details className="o-download__formats">
             <summary aria-label="formats"></summary>
             <ul className="o-download__nested-menu">
             {p.content_type && ["HTML", "PDF"].includes(label) &&
@@ -55,11 +55,11 @@ class Downloadable extends React.Component {
                 Main
                 <ul>
                 {label=="PDF" && 
-                  <li><a href="">PDF</a></li>
+                  <li><a href={url} download={filename}>PDF</a></li>
                 }
                 {label=="HTML" && 
-                  [<li key="0"><a href="">ePub</a></li>,
-                  <li key="1"><a href="">HTML</a></li>]
+                  [<li key="0"><NotYetLink element="a">ePub</NotYetLink></li>,
+                  <li key="1"><NotYetLink element="a">HTML</NotYetLink></li>]
                 }
                 </ul>
               </li>
@@ -67,13 +67,13 @@ class Downloadable extends React.Component {
               <li className="o-download__nested-list2">
                 Citation
                 <ul>
-                  <li><a href="">RIS</a></li>
-                  <li><a href="">BibText</a></li>
-                  <li><a href="">EndNote</a></li>
-                  <li><a href="">RefWorks</a></li>
+          {/*     <li><NotYetLink element="a">RIS</NotYetLink></li> 
+                  <li><NotYetLink element="a">BibText</NotYetLink></li>   */}
+                  <li><NotYetLink element="a">EndNote</NotYetLink></li>
+          {/*     <li><NotYetLink element="a">RefWorks</NotYetLink></li>  */}
                 </ul>
               </li>
-            {p.supp_files &&
+          {/* p.supp_files &&
               <li className="o-download__nested-list3">
                 Supplemental Material
                 <ul>
@@ -85,9 +85,9 @@ class Downloadable extends React.Component {
                   <li><a href="">All Supplemental Material</a></li>
                 </ul>
               </li>
-            }
+          */}
             </ul>
-          </details>  */}
+          </details>
         </div>
       {p.buy_link &&
         <button onClick={() => {this.linkBuyPrint()}} className="c-itemactions__button-print">Buy in Print</button>

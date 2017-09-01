@@ -321,7 +321,7 @@ def search(params, facetTypes=$allFacets.keys)
   end
 
   infoResults = getInfoResults(params['q'])
-  infoResultsPreview, info_count = infoResults.length > 0 ? [infoResults[0..2], infoResults.length] : [nil, nil]
+  infoResultsPreview, info_count = infoResults.length > 0 ? [infoResults[0..2], infoResults.length] : [nil, 0]
 
   return {'count' => response['hits']['found'], 'query' => get_query_display(params.clone), 'searchResults' => searchResults, 'infoResultsPreview' => infoResultsPreview, 'info_count' => info_count, 'facets' => facets}
 end
