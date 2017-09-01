@@ -19,6 +19,7 @@
     "body-parser": "^1.17.1",
     "bower": "^1.8.0",
     "chai": "^3.5.0",
+    "clean-webpack-plugin": "^0.1.16",
     "decache": "^4.1.0",
     "del": "^2.2.2",
     "enzyme": "^2.8.0",
