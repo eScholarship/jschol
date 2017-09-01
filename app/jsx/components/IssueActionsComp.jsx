@@ -15,8 +15,8 @@ class IssueActionsComp extends React.Component {
       <div className="c-itemactions">
         { p.buy_link && <a className="c-itemactions__link-buy" href={p.buy_link}>Buy Issue</a> }
         <div className="o-download">
-        {/* ToDo: Change class of this button to "o-download__button" when details are filled in */}
-          <NotYetLink element="button" className="o-button__8">Download Issue</NotYetLink>
+        {/* ToDo: */}
+          <NotYetLink element="a" className="o-download__button">Download Issue</NotYetLink>
         </div>
         <ShareComp type="unit" id={this.props.unit_id} />
       </div>

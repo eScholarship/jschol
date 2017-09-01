@@ -465,6 +465,7 @@ class FacetForm extends React.Component {
   }
 
   render() {
+    let p = this.props
     let facetForm = this.props.data.facets.map((fieldset, i) => {
       let fieldName = fieldset.fieldName
       let filters = this.state.query.filters && this.state.query.filters[fieldName] ? this.state.query.filters[fieldName] : {}
@@ -479,13 +480,13 @@ class FacetForm extends React.Component {
     })
 
     return (
-      <Form id={this.props.formName} to='/search' method="GET" onSubmit={this.handleSubmit}>
+      <Form id={p.formName} to='/search' method="GET" onSubmit={this.handleSubmit}>
         {/* Top-aligned box with title "Your search: "Teletubbies"" and active filters */}
-        <FilterComp query={this.state.query} count={this.props.data.count} handler={this.removeFilters}/>
+        <FilterComp query={this.state.query} count={p.data.count} info_count={p.info_count} handler={this.removeFilters}/>
         {facetForm}
         {/* Submit button needs to be present so our logic can "press" it at certain times.
             But hide it with display:none so user doesn't see it. */}
-        <button type="submit" id={this.props.formButton} style={{display: "none"}}>Search</button>
+        <button type="submit" id={p.formButton} style={{display: "none"}}>Search</button>
       </Form>
     )
   }
@@ -532,14 +533,14 @@ class SearchPage extends PageBase {
         <ExportComp />
         <div className="c-columns">
         <aside>
-            <FacetForm formName={formName} formButton={formButton} data={facetFormData} query={data.query} />
+            <FacetForm formName={formName} formButton={formButton} data={facetFormData} info_count={data.info_count} query={data.query} />
           </aside>
           <main id="maincontent" style={{position: "relative"}}>
             { this.state.fetchingData ? <div className="c-search-extra__loading-overlay"/> : null }
           {data.infoResultsPreview &&
             <section className="o-columnbox1">
               <header>
-                <h1 className="o-columnbox1__heading">Informational Pages (12 results)</h1>
+                <h1 className="o-columnbox1__heading">{"Informational Pages ("+data.info_count+" results)"}</h1>
               </header>
               <InfoPagesComp info_count={data.info_count} infoResultsPreview={data.infoResultsPreview} />
             </section>

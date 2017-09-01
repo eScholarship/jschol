@@ -4,45 +4,16 @@
   @extend %clearfix;
 
   @include bp(screen2) {
-
-    @supports (display: grid) {
-      display: grid;
-      grid-template-columns: 50% 50%;
-    }
-
+    display: grid;
+    grid-template-columns: 1fr 1fr;
   }
 
-  // Create space around mediafile objects and float them to simulate 2-column grid:
+  // If CSS grid isn't supported, float mediafile objects left & right to simulate 2-column grid:
 
-  [class^='o-mediafile--'] {
-
-    &:not(:last-child) {
-      margin-bottom: $spacing-md * 2;
-
-      // Border in-between objects:
-      &::before {
-        position: absolute;
-        right: 0;
-        bottom: (-$spacing-md);
-        left: 0;
-        border-top: 2px solid $color-light-gray;
-        content: '';
-      }
-
-    }
+  div[class^='o-mediafile--'] {
 
     @include bp(screen2) {
-      width: 49%;
-      margin-bottom: $spacing-md;
-
-      &:not(:last-child) {
-        margin-bottom: $spacing-md;
-
-        &::before {
-          display: none;
-        }
-
-      }
+      width: 50%;
 
       &:nth-child(odd) {
         float: left;
@@ -53,19 +24,8 @@
         float: right;
       }
 
-      // If grid is supported, don't float objects (floats & clears get ignored when using grid):
-
       @supports (display: grid) {
         width: auto;
-
-        &:nth-child(odd) {
-          margin-right: $spacing-md / 2;
-        }
-
-        &:nth-child(even) {
-          margin-left: $spacing-md / 2;
-        }
-
       }
 
     }
