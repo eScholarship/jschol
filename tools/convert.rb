@@ -309,7 +309,7 @@ end
 ###################################################################################################
 def convertLogo(unitID, unitType, logoEl)
   # Locate the image reference
-  logoImgEl = logoEl && logoEl.at("div[@id='logoDiv']/img[@src]")
+  logoImgEl = logoEl && logoEl.at("./div[@id='logoDiv']/img[@src]")
   if !logoImgEl
     if unitType != "campus"
       return {}
@@ -333,7 +333,7 @@ end
 ###################################################################################################
 def convertBlurb(unitID, blurbEl)
   # Make sure there's a div
-  divEl = blurbEl && blurbEl.at("div")
+  divEl = blurbEl && blurbEl.at("./div")
   divEl or return {}
 
   # Make sure the HTML conforms to our specs
@@ -438,7 +438,7 @@ def convertNavBar(unitID, generalEl)
   linkedPagesUsed = Set.new
   aboutBar = nil
   curNavID = 0
-  generalEl.xpath("linkSet/div").each { |linkDiv|
+  generalEl.xpath("./linkSet/div").each { |linkDiv|
     linkDiv.children.each { |para|
       # First, a bunch of validation checks. We're expecting this kind of thing:
       # <p><a href="http://blah">Link name</a></p>
@@ -455,7 +455,7 @@ def convertNavBar(unitID, generalEl)
         next
       end
 
-      links = para.xpath("a")
+      links = para.xpath("./a")
       if links.empty?
         puts "Missing <a> in linkSet: #{para.inner_html}"
         next
@@ -494,7 +494,7 @@ def convertNavBar(unitID, generalEl)
 
       if linkTarget =~ %r{/uc/search\?entity=[^;]+;view=([^;]+)$}
         slug = $1
-        linkedPage = generalEl.at("linkedPages/div[@id=#{slug}]")
+        linkedPage = generalEl.at("./linkedPages/div[@id=#{slug}]")
         if !linkedPage
           puts "Can't find linked page #{slug.inspect}"
           next
@@ -513,10 +513,10 @@ def convertNavBar(unitID, generalEl)
 
   # TODO: The "contactInfo" part of the brand file is supposed to end up in the "Journal Information"
   # box at the right side of the eschol UI. Database conversion TBD.
-  #convertPage(unitID, navBar, generalEl.at("contactInfo/div"), "journalInfo", BLAH)
+  #convertPage(unitID, navBar, generalEl.at("./contactInfo/div"), "journalInfo", BLAH)
 
   # Note unused linked pages
-  generalEl.xpath("linkedPages/div").each { |page|
+  generalEl.xpath("./linkedPages/div").each { |page|
     !linkedPagesUsed.include?(page.attr('id')) and puts "Unused linked page, id=#{page.attr('id').inspect}"
   }
 
@@ -579,14 +579,14 @@ def convertUnitBrand(unitID, unitType)
     bfPath = "/apps/eschol/erep/xtf/static/brand/#{unitID}/#{unitID}.xml"
     if File.exist?(bfPath)
       dataIn = fileToXML(bfPath).root
-      dataOut.merge!(convertLogo(unitID, unitType, dataIn.at("display/mainFrame/logo")))
-      dataOut.merge!(convertBlurb(unitID, dataIn.at("display/mainFrame/blurb")))
+      dataOut.merge!(convertLogo(unitID, unitType, dataIn.at("./display/mainFrame/logo")))
+      dataOut.merge!(convertBlurb(unitID, dataIn.at("./display/mainFrame/blurb")))
       if unitType == "campus"
         dataOut.merge!({ nav_bar: defaultNav(unitID, unitType) })
       else
-        dataOut.merge!(convertNavBar(unitID, dataIn.at("display/generalInfo")))
+        dataOut.merge!(convertNavBar(unitID, dataIn.at("./display/generalInfo")))
       end
-      dataOut.merge!(convertSocial(unitID, dataIn.xpath("display/generalInfo/linkedPages/div")))
+      dataOut.merge!(convertSocial(unitID, dataIn.xpath("./display/generalInfo/linkedPages/div")))
     else
       dataOut.merge!({ nav_bar: defaultNav(unitID, unitType) })
     end
@@ -866,8 +866,10 @@ class MetaAccess
 
   # Get the text content of a metadata field which we expect only one of
   def single(name)
-    els = @root.xpath("meta/#{name}[@meta='yes']")
-    if els.length > 1 && name != "localID"  # known prob with multiple localIDs - fixed in new UCI code
+    els = @root.xpath("./meta/#{name}[@meta='yes']")
+    # known prob with multiple localIDs - fixed in new UCI code
+    # known prob with issue IDs - old had two (one tokenized, one not)
+    if els.length > 1 && name != "localID" && name != "issue"
       puts("Warning: multiple #{name.inspect} elements found.")
     end
     return els[0] ? els[0].content : nil
@@ -875,14 +877,14 @@ class MetaAccess
 
   # Get the sanitized HTML content of a metadata field which we expect only one of
   def singleHTML(name)
-    els = @root.xpath("meta/#{name}[@meta='yes']")
+    els = @root.xpath("./meta/#{name}[@meta='yes']")
     els.length <= 1 or puts("Warning: multiple #{name.inspect} elements found.")
     return els[0] ? els[0].html_at(".") : nil
   end
 
   # Get attribute of a single metadata field
   def singleAttr(elName, attrName, default=nil)
-    els = @root.xpath("meta/#{elName}[@meta='yes']")
+    els = @root.xpath("./meta/#{elName}[@meta='yes']")
     if els.length > 1 && elName != "localID"  # known prob with multiple localIDs - fixed in new UCI code
       puts("Warning: multiple #{elName.inspect} elements found.")
     end
@@ -891,13 +893,13 @@ class MetaAccess
 
   # Get an array of the content from a metadata field which we expect zero or more of.
   def multiple(name, limit=nil)
-    all = @root.xpath("meta/#{name}[@meta='yes']").map { |el| el.text }
+    all = @root.xpath("./meta/#{name}[@meta='yes']").map { |el| el.text }
     return limit ? all.slice(0, limit) : all
   end
 
   # Check if there are any metadata elements with the given name
   def any(name)
-    return @root.xpath("meta/#{name}[@meta='yes']").length > 0
+    return @root.xpath("./meta/#{name}[@meta='yes']").length > 0
   end
 
   # The root of the tree
@@ -950,27 +952,30 @@ def parseDate(str)
     elsif text =~ /^\d\d\d\d-\d\d$/   # handle data with no day
       text = "#{text}-01"
     end
-    return Date.strptime(text, "%Y-%m-%d").iso8601  # throws exception on bad date
+    ret = Date.strptime(text, "%Y-%m-%d")  # throws exception on bad date
+    ret.year > 1000 and return ret.iso8601
   rescue
     begin
       text.sub! /-02-(29|30|31)$/, "-02-28" # Try to fix some crazy dates
-      return Date.strptime(text, "%Y-%m-%d").iso8601  # throws exception on bad date
+      ret = Date.strptime(text, "%Y-%m-%d")  # throws exception on bad date
+      ret.year > 1000 and return ret.iso8601
     rescue
       # pass
     end
-    puts "Warning: invalid date: #{str.inspect}"
-    return nil
   end
+
+  puts "Warning: invalid date: #{str.inspect}"
+  return nil
 end
 
 ###################################################################################################
 # Take a UCI author and make it into a string for ease of display.
 def formatAuthName(auth)
   str = ""
-  fname, lname = auth.text_at("fname"), auth.text_at("lname")
+  fname, lname = auth.text_at("./fname"), auth.text_at("./lname")
   if lname && fname
     str = "#{lname}, #{fname}"
-    mname, suffix = auth.text_at("mname"), auth.text_at("suffix")
+    mname, suffix = auth.text_at("./mname"), auth.text_at("./suffix")
     mname and str += " #{mname}"
     suffix and str += ", #{suffix}"
   elsif fname
@@ -978,8 +983,9 @@ def formatAuthName(auth)
   elsif lname
     str = lname
   else
+    str = auth.text.strip
+    str.empty? and return nil # ignore all-empty author
     puts "Warning: can't figure out author #{auth}"
-    str = auth.text
   end
   return str
 end
@@ -1005,11 +1011,11 @@ def getAuthors(indexMeta, rawMeta)
           data[sub.name.to_sym] = sub.text
         end
       }
-      data
+      data && !data[:name].nil? ? data : nil
     else
       raise("Unknown element #{el.name.inspect} within UCIngest authors")
     end
-  }
+  }.select{ |v| v }
 end
 
 ###################################################################################################
@@ -1103,7 +1109,7 @@ def addIssueNumberingAttrs(issueUnit, volNum, issueNum, issueAttrs)
       el = dataIn.at(".//singleIssue")
       if el && el.text == "yes"
         data[:singleIssue] = true
-        data[:startVolume] = dataIn.at("singleIssue").attr("startVolume")
+        data[:startVolume] = dataIn.at("./singleIssue").attr("startVolume")
       end
       el = dataIn.at(".//singleVolume")
       if el && el.text == "yes"
@@ -1307,9 +1313,9 @@ def parsePrefilteredData(itemID, existingItem, rawMeta, prefilteredData)
 
   # Detect HTML-formatted items
   contentFile = rawMeta.at("/record/content/file")
-  contentFile && contentFile.at("native") and contentFile = contentFile.at("native")
+  contentFile && contentFile.at("./native") and contentFile = contentFile.at("./native")
   contentPath = contentFile && contentFile[:path]
-  mimeType    = contentFile && contentFile.at("mimeType") && contentFile.at("mimeType").text
+  mimeType    = contentFile && contentFile.at("./mimeType") && contentFile.at("./mimeType").text
 
   # Generate thumbnails (but only for non-suppressed PDF items)
   if !attrs[:suppress_content] && pf.single("pdfExists") == "yes"
@@ -1337,7 +1343,7 @@ def parsePrefilteredData(itemID, existingItem, rawMeta, prefilteredData)
                           "multimedia" : pf.single("type")
   dbItem[:pub_date]     = parseDate(pf.single("date")) || "1901-01-01"
   #FIXME: Think about this carefully. What's eschol_date for?
-  dbItem[:eschol_date]  = parseDate(pf.single("datestamp")) || "1901-01-01"
+  dbItem[:eschol_date]  = parseDate(pf.single("dateStamp")) || "1901-01-01"
   dbItem[:attrs]        = JSON.generate(attrs)
   dbItem[:rights]       = rights
   dbItem[:ordering_in_sect] = pf.single("document-order")
@@ -1366,11 +1372,11 @@ def shouldSuppressContent(itemID, inMeta)
   inMeta.attr("state") == "withdrawn" and return true
 
   # Supresss if we can't find any of: PDF file, HTML file, supp file, publishedWebLocation.
-  inMeta.at("content/file[@path]") and return false
-  inMeta.at("content/supplemental/file[@path]") and return false
-  inMeta.text_at("context/publishedWebLocation") and return false
+  inMeta.at("./content/file[@path]") and return false
+  inMeta.at("./content/supplemental/file[@path]") and return false
+  inMeta.text_at("./context/publishedWebLocation") and return false
   if File.exist?(arkToFile(itemID, "content/base.pdf"))
-    puts "Warning: PDF content file without corresponding content/file metadata"
+    #puts "Warning: PDF content file without corresponding content/file metadata"
     return false
   end
 
@@ -1385,41 +1391,41 @@ def parseUCIngest(itemID, inMeta, fileType)
   attrs[:is_peer_reviewed] = inMeta[:peerReview] == "yes"
   attrs[:is_undergrad] = inMeta[:undergrad] == "yes"
   attrs[:embargo_date] = inMeta[:embargoDate]
-  attrs[:publisher] = inMeta.text_at("publisher")
-  attrs[:orig_citation] = inMeta.text_at("originalCitation")
-  attrs[:custom_citation] = inMeta.text_at("customCitation")
-  attrs[:local_ids] = inMeta.xpath("context/localID").map { |el| { type: el[:type], id: el.text } }
-  attrs[:pub_web_loc] = inMeta.xpath("context/publishedWebLocation").map { |el| el.text.strip }
-  attrs[:buy_link] = inMeta.text_at("context/buyLink")
-  attrs[:language] = inMeta.text_at("context/language")
-  attrs[:doi] = inMeta.text_at("doi")
+  attrs[:publisher] = inMeta.text_at("./publisher")
+  attrs[:orig_citation] = inMeta.text_at("./originalCitation")
+  attrs[:custom_citation] = inMeta.text_at("./customCitation")
+  attrs[:local_ids] = inMeta.xpath("./context/localID").map { |el| { type: el[:type], id: el.text } }
+  attrs[:pub_web_loc] = inMeta.xpath("./context/publishedWebLocation").map { |el| el.text.strip }
+  attrs[:buy_link] = inMeta.text_at("./context/buyLink")
+  attrs[:language] = inMeta.text_at("./context/language")
+  attrs[:doi] = inMeta.text_at("./doi")
 
   # Normalize language codes
   attrs[:language] and attrs[:language] = attrs[:language].sub("english", "en").sub("german", "de").
                                                            sub("french", "fr").sub("spanish", "es")
 
   # Set disableDownload flag based on content file
-  tmp = inMeta.at("context/file[@disableDownload]")
+  tmp = inMeta.at("./context/file[@disableDownload]")
   tmp and attrs[:disable_download] = tmp[:disableDownload]
 
   if inMeta[:state] == "withdrawn"
-    tmp = inMeta.at("history/stateChange[@state='withdrawn']")
+    tmp = inMeta.at("./history/stateChange[@state='withdrawn']")
     tmp and attrs[:withdrawn_date] = tmp[:date].sub(/T.+$/, "")
     if !attrs[:withdrawn_date]
       puts "Warning: no withdraw date found; using stateDate."
       attrs[:withdrawn_date] = inMeta[:stateDate]
     end
-    msg = inMeta.text_at("history/stateChange[@state='withdrawn']/comment")
+    msg = inMeta.text_at("./history/stateChange[@state='withdrawn']/comment")
     msg and attrs[:withdrawn_message] = msg
   end
 
   # Filter out "n/a" abstracts
-  abstract = inMeta.html_at("abstract")
+  abstract = inMeta.html_at("./abstract")
   abstract and abstract = sanitizeHTML(abstract)
   abstract && abstract.size > 3 and attrs[:abstract] = abstract
 
   # Disciplines are a little extra work; we want to transform numeric IDs to plain old labels
-  attrs[:disciplines] = inMeta.xpath("disciplines/discipline").map { |discEl|
+  attrs[:disciplines] = inMeta.xpath("./disciplines/discipline").map { |discEl|
     discID = discEl[:id]
     if discID == "" && discEl.text && discEl.text.strip && $discTbl.values.include?(discEl.text.strip)
       # Kludge for old <disciplines> with no ID but with exact text
@@ -1440,14 +1446,14 @@ def parseUCIngest(itemID, inMeta, fileType)
   attrs[:supp_files], suppSummaryTypes = summarizeSupps(itemID, grabUCISupps(inMeta))
 
   # We'll need this in a couple places later on
-  rights = translateRights(inMeta.text_at("rights"))
+  rights = translateRights(inMeta.text_at("./rights"))
 
   # For eschol journals, populate the issue and section models.
   issue = section = nil
-  volNum = inMeta.text_at("context/volume")
-  issueNum = inMeta.text_at("context/issue")
+  volNum = inMeta.text_at("./context/volume")
+  issueNum = inMeta.text_at("./context/issue")
   if issueNum
-    issueUnit = inMeta.xpath("context/entity[@id]").select {
+    issueUnit = inMeta.xpath("./context/entity[@id]").select {
                       |ent| $allUnits[ent[:id]] && $allUnits[ent[:id]].type == "journal" }[0]
     issueUnit and issueUnit = issueUnit[:id]
     if issueUnit
@@ -1459,10 +1465,16 @@ def parseUCIngest(itemID, inMeta, fileType)
         issue[:unit_id]  = issueUnit
         issue[:volume]   = volNum
         issue[:issue]    = issueNum
-        issue[:pub_date] = parseDate(inMeta.text_at("context/issueDate") ||
-                                     inMeta.text_at("history/originalPublicationDate") ||
-                                     inMeta.text_at("history/escholPublicationDate") ||
-                                     inMeta[:datestamp])
+        if inMeta.text_at("./context/issueDate") == "0"  # hack for westjem AIP
+          issue[:pub_date] = parseDate(inMeta.text_at("./history/originalPublicationDate") ||
+                                       inMeta.text_at("./history/escholPublicationDate") ||
+                                       inMeta[:dateStamp])
+        else
+          issue[:pub_date] = parseDate(inMeta.text_at("./context/issueDate") ||
+                                       inMeta.text_at("./history/originalPublicationDate") ||
+                                       inMeta.text_at("./history/escholPublicationDate") ||
+                                       inMeta[:dateStamp])
+        end
         issueAttrs = {}
         tmp = inMeta.text_at("/record/context/issueTitle")
         tmp and issueAttrs[:title] = tmp
@@ -1476,19 +1488,19 @@ def parseUCIngest(itemID, inMeta, fileType)
         !issueAttrs.empty? and issue[:attrs] = issueAttrs.to_json
 
         section = Section.new
-        section[:name] = inMeta.text_at("sectionHeader") || "Articles"
+        section[:name] = inMeta.text_at("./context/sectionHeader") || "Articles"
       else
         "Warning: issue associated with unknown unit #{issueUnit.inspect}"
       end
     else
       # Data for external journals
       exAtts = {}
-      exAtts[:name] = inMeta.text_at("context/journal")
-      exAtts[:volume] = inMeta.text_at("context/volume")
-      exAtts[:issue] = inMeta.text_at("context/issue")
-      exAtts[:issn] = inMeta.text_at("context/issn")
-      exAtts[:fpage] = inMeta.text_at("extent/fpage")
-      exAtts[:lpage] = inMeta.text_at("extent/lpage")
+      exAtts[:name] = inMeta.text_at("./context/journal")
+      exAtts[:volume] = inMeta.text_at("./context/volume")
+      exAtts[:issue] = inMeta.text_at("./context/issue")
+      exAtts[:issn] = inMeta.text_at("./context/issn")
+      exAtts[:fpage] = inMeta.text_at("./extent/fpage")
+      exAtts[:lpage] = inMeta.text_at("./extent/lpage")
       exAtts.reject! { |k, v| !v }
       exAtts.empty? or attrs[:ext_journal] = exAtts
     end
@@ -1504,18 +1516,18 @@ def parseUCIngest(itemID, inMeta, fileType)
 
   # Detect HTML-formatted items
   contentFile = inMeta.at("/record/content/file")
-  contentFile && contentFile.at("native") and contentFile = contentFile.at("native")
+  contentFile && contentFile.at("./native") and contentFile = contentFile.at("./native")
   contentPath = contentFile && contentFile[:path]
-  contentType = contentFile && contentFile.at("mimeType") && contentFile.at("mimeType").text
+  contentType = contentFile && contentFile.at("./mimeType") && contentFile.at("./mimeType").text
 
   # Populate the Item model instance
   dbItem = Item.new
   dbItem[:id]           = itemID
-  dbItem[:source]       = inMeta.text_at("source") or raise("no source found")
+  dbItem[:source]       = inMeta.text_at("./source") or raise("no source found")
   dbItem[:status]       = attrs[:withdrawn_date] ? "withdrawn" :
                           isEmbargoed(attrs[:embargo_date]) ? "embargoed" :
                           (inMeta[:state] || raise("no state in record"))
-  dbItem[:title]        = sanitizeHTML(inMeta.html_at("title"))
+  dbItem[:title]        = sanitizeHTML(inMeta.html_at("./title"))
   dbItem[:content_type] = attrs[:suppress_content] ? nil :
                           attrs[:withdrawn_date] ? nil :
                           isEmbargoed(attrs[:embargo_date]) ? nil :
@@ -1528,17 +1540,19 @@ def parseUCIngest(itemID, inMeta, fileType)
                           fileType == "ETD" ? "dissertation" :
                           inMeta[:type] ? inMeta[:type].sub("paper", "article") :
                           "article"
-  dbItem[:eschol_date]  = parseDate(inMeta.text_at("history/escholPublicationDate") || inMeta[:datestamp])
-  dbItem[:pub_date]     = parseDate(inMeta.text_at("history/originalPublicationDate")) || dbItem[:eschol_date]
+  dbItem[:eschol_date]  = parseDate(inMeta.text_at("./history/escholPublicationDate")) ||
+                          parseDate(inMeta[:dateStamp])
+  dbItem[:pub_date]     = parseDate(inMeta.text_at("./history/originalPublicationDate")) ||
+                          dbItem[:eschol_date]
   dbItem[:attrs]        = JSON.generate(attrs)
   dbItem[:rights]       = rights
-  dbItem[:ordering_in_sect] = inMeta.text_at("publicationOrder")
+  dbItem[:ordering_in_sect] = inMeta.text_at("./context/publicationOrder")
 
   # Populate ItemAuthor model instances
   authors = getAuthors(nil, inMeta)
 
   # Make a list of all the units this item belongs to
-  units = inMeta.xpath("context/entity[@id]").map { |ent| ent[:id] }.select { |unitID|
+  units = inMeta.xpath("./context/entity[@id]").map { |ent| ent[:id] }.select { |unitID|
     unitID =~ /^(postprints|demo-journal|test-journal|unknown|withdrawn|uciem_westjem_aip)$/ ? false :
       !$allUnits.include?(unitID) ? (puts("Warning: unknown unit #{unitID.inspect}") && false) :
       true
@@ -1606,13 +1620,22 @@ def compareAttrs(oldAttrs, newAttrs)
     oldVal, newVal = oldAttrs[key], newAttrs[key]
     next if oldVal == newVal
     next if key == :local_ids # known differences, and unused by current front-end anyway
-    next if oldVal.instance_of?(String) && oldVal.gsub(/\s\s+/, ' ') == newVal  # space normalization better now
+    next if oldVal.instance_of?(String) && oldVal.gsub(/\s\s+/, ' ') == newVal.gsub(/\s\s+/, ' ')  # space normalization better now
     next if oldVal.instance_of?(String) && newVal.instance_of?(String) &&
             sanitizeHTML(oldVal) == sanitizeHTML(newVal)   # new normalization is better
     next if oldVal.instance_of?(Date) && newVal.instance_of?(Date) &&
             oldVal.year == 1901    # we work harder now for dates
     next if oldVal.instance_of?(String) && newVal.instance_of?(String) &&
             oldVal.gsub(/\s/, "") == newVal.gsub(%r{</?[^>]+>}, "").gsub(/\s/, "")
+    next if oldVal.instance_of?(Date) && newVal.instance_of?(Date) &&
+            oldAttrs[:withdrawn_date]    # doesn't matter for withdrawn items
+    next if oldVal.instance_of?(String) && newVal.instance_of?(String) &&
+            oldVal.gsub(%r{"\s+|\s+"}, '"') == newVal
+    next if key == :content_type && oldVal.nil?   # better detection of PDFs now
+    next if key == :eschol_date   # old logic was sucky
+    next if oldVal.inspect.gsub(%r{\"\w+\"=>\"\",?\s}, "") == newVal.inspect   # better removal of unused
+    next if key == :ext_journal && oldVal.inspect == newVal.inspect.gsub(%r{, :fpage=>\"[^"]+\"}, "")  # new fpage logic better
+    next if key == :genre && oldVal == "article" && newVal == "chapter"
     puts "normDiff: old[:#{key}]=#{oldVal.inspect.ellipsize(max:200)}"
     puts "       vs new[:#{key}]=#{newVal.inspect.ellipsize(max:200)}"
   }
@@ -1623,6 +1646,9 @@ def compareAttrs(oldAttrs, newAttrs)
     next if oldVal == "en"  # old language processing for UCI files was kludged to always be english
     next if key == :ext_journal && (!oldVal[:issue] || oldVal[:volume])   # silly to have journal without vol/iss
     next if key == :suppress_content && oldAttrs[:embargo_date] && newAttrs[:embargo_date] # old was incorrectly suppressing
+    next if oldVal.respond_to?(:strip) && oldVal.strip.empty?  # new stripping logic is better
+    next if key == :abstract && oldVal =~ %r{n/a|<html/>}i  # new n/a logic is better
+    next if key == :suppress_content && oldAttrs[:content_type].nil?  # better PDF detection now
     puts "normDiff: removed old[:#{key}]=#{oldVal.inspect.ellipsize}"
   }
   (newAttrs.keys - oldAttrs.keys).each { |key|
@@ -1653,6 +1679,7 @@ def compareUnits(oldUnits, newUnits)
   (0..[oldUnits.length-1, newUnits.length-1].max).each { |idx|
     oldUnit, newUnit = oldUnits[idx], newUnits[idx]
     if oldUnit != newUnit
+      next if !oldUnit.nil? && newUnit.nil? && newUnits.include?(oldUnit)  # better de-duping now
       puts "normDiff: unit #{idx+1} changed: old=#{oldUnit.inspect}"
       puts "                          new=#{newUnit.inspect}"
     end
@@ -1661,11 +1688,12 @@ end
 
 ###################################################################################################
 def compareIssues(oldIss, newIss, oldSect, newSect)
-  if oldIss.inspect != newIss.inspect
+  if oldIss.inspect.gsub(/\s\s+/, " ") != newIss.inspect.gsub(/\s\s+/, " ")
     puts "normDiff: issue changed. old=#{oldIss.inspect.ellipsize(max:200)}"
     puts "                         new=#{newIss.inspect.ellipsize(max:200)}"
   end
-  if oldSect.inspect != newSect.inspect
+  if oldSect.inspect.ellipsize(max:200) != newSect.inspect.ellipsize(max:200)
+    return if oldSect.inspect.gsub(%r{"\s+|\s+"}, '"') == newSect.inspect  # new space norm better
     puts "normDiff: section changed. old=#{oldSect.inspect.ellipsize(max:200)}"
     puts "                           new=#{newSect.inspect.ellipsize(max:200)}"
   end
@@ -1736,8 +1764,10 @@ def indexItem(itemID, timestamp, prefilteredData, batch, nailgun)
   rescue Exception => e
     puts "Error comparing: #{e} #{e.backtrace.join("; ")}"
   end
-  #dbItem, attrs, authors, units, issue, section, suppSummaryTypes =
-  #  new_dbItem, new_attrs, new_authors, new_units, new_issue, new_section, new_suppSummaryTypes
+
+  # The new conversion logic is working well, so use it.
+  dbItem, attrs, authors, units, issue, section, suppSummaryTypes =
+    new_dbItem, new_attrs, new_authors, new_units, new_issue, new_section, new_suppSummaryTypes
 
   text = grabText(itemID, dbItem.content_type)
 
