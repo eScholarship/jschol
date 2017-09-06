@@ -46,7 +46,7 @@ class MainContent extends React.Component {
     switch(p.status) {
       case "published":
         if (!p.content_type) {
-          if ((p.attrs.pub_web_loc.length > 0) || (p.attrs.supp_files && p.attrs.supp_files.length > 0)) {
+          if ((p.attrs.pub_web_loc && p.attrs.pub_web_loc.length > 0) || (p.attrs.supp_files && p.attrs.supp_files.length > 0)) {
             return (<NoContent pub_web_loc={p.attrs.pub_web_loc} supp_files={p.attrs.supp_files} changeTab={p.changeTab} />)
           } else {
             return (<Withdrawn message="This item is not available from eScholarship." />)
@@ -102,7 +102,7 @@ class Embargoed extends React.Component {
         <div className="o-itemunavailable__embargoed">
           <h1 className="o-itemunavailable__lede">This item is under embargo until
             <strong> {eDate_formatted}</strong>.</h1>
-        {(this.props.pub_web_loc.length > 0) &&
+        {(this.props.pub_web_loc && this.props.pub_web_loc.length > 0) &&
           [<p key="0">You may have access to the publisher's version here:</p>,
           <a key="1" href={this.props.pub_web_loc[0]} className="o-textlink__secondary">{this.props.pub_web_loc[0]}</a>,
           <a key="2" href="" className="o-textlink__secondary">Notify me by email when this item becomes available</a>]}
@@ -121,7 +121,7 @@ class NoContent extends React.Component {
   render() {
     return (
       <div>
-      {this.props.pub_web_loc.length > 0 && 
+      {this.props.pub_web_loc && this.props.pub_web_loc.length > 0 && 
         <ViewExternalComp pub_web_loc={this.props.pub_web_loc[0]} /> }
       {this.props.supp_files && this.props.supp_files.length > 0 &&
         <div style={{paddingLeft: '25px'}}>
