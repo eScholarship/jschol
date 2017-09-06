@@ -24,6 +24,7 @@ $csClient = Aws::CloudSearchDomain::Client.new(
 # search would need to be modified to understand what to do without a query parameter (matchall & structured)
 # search would also need to be modified to not necessarily do all the results handling
 
+ITEM_SPECIFIC = ['type_of_work', 'peer_reviewed', 'supp_file_types', 'pub_year', 'disciplines', 'rights']
 $allFacets = nil
 
 def initAllFacets()
@@ -273,7 +274,20 @@ def normalizeResponse(response)
 end
 
 # Get search results for 'items' or 'infopages'
-def getResults(params, facetTypes=$allFacets.keys, search_type)
+#  ITEM results look like this
+#  {"query"=>
+#   {"q"=>"Archaeological Research Facility",
+#    "rows"=>"10",
+#    "sort"=>"rel",
+#    "start"=>"0",
+#    "filters"=>{}},
+#  "count"=>1738,
+#  "searchResults"=>
+#
+#  INFO results are the same but replace 'count' and 'searchResults' with these 
+#  "info_count"=>12,
+#  "infoResults"=> ...
+def searchByType(params, facetTypes=$allFacets.keys, search_type)
   aws_params = aws_encode(params, facetTypes, search_type)
   response = normalizeResponse($csClient.search(return: '_no_fields', **aws_params))
 
@@ -330,10 +344,33 @@ def getResults(params, facetTypes=$allFacets.keys, search_type)
   return r
 end
 
+# Add info facet counts on item facets
+def mergeFacets(itemFacets, infoFacets)
+  itemFacets.each do |item_bundle|
+    info_bundle = infoFacets.select {|y| y["fieldName"] == item_bundle["fieldName"]}[0]
+    # Only need to merge facets related to InfoPages
+    unless ITEM_SPECIFIC.include?(info_bundle['fieldName'])
+      item_bundle["facets"].each do |z|
+        infofieldfacet = info_bundle["facets"].select {|f| f["value"] == z["value"]}
+        if infofieldfacet.length > 0
+          z["count"] += infofieldfacet[0]["count"]
+        end
+      end
+    end
+  end
+  return itemFacets
+end
+
 # Query on items. Then, if faceting on anything other than Campus, Department, or Journal, DON'T query for info pages
 def search(params, facetTypes=$allFacets.keys)
-  r = getResults(params, facetTypes, "items")
-  r.merge!(getResults(params, facetTypes, "infopages")) unless (params.keys & ['type_of_work', 'peer_reviewed', 'supp_file_types', 'pub_year', 'disciplines', 'rights']).size > 0
+  r = searchByType(params, facetTypes, "items")
+  if (params.keys & ITEM_SPECIFIC).size == 0
+    info_r = searchByType(params, facetTypes, "infopages")
+    r['info_count'] = info_r['info_count']
+    r['infoResults'] = info_r['infoResults']
+    r['facets'] = mergeFacets(r['facets'], info_r['facets'])
+  end
+  pp(r)
   return r
 end
 

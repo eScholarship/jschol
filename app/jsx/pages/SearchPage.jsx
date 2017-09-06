@@ -537,7 +537,7 @@ class SearchPage extends PageBase {
           </aside>
           <main id="maincontent" style={{position: "relative"}}>
             { this.state.fetchingData ? <div className="c-search-extra__loading-overlay"/> : null }
-          {data.infoResults &&
+          {data.info_count > 0 &&
             <section className="o-columnbox1">
               <header>
                 <h1 className="o-columnbox1__heading">{"Informational Pages ("+data.info_count+" results)"}</h1>
