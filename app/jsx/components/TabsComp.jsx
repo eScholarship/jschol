@@ -37,7 +37,7 @@ class TabsComp extends React.Component {
         [ this.props.attrs.supp_files &&
           <button key="2" className={this.props.currentTab == "supplemental" ? "c-tabs__button--active" : "c-tabs__button"}
                   onClick = {()=> this.tabFocus("supplemental")}>
-            Supplemental material</button>
+            Supplemental Material</button>
          ,
           <button key="3" className={this.props.currentTab == "metrics" ? "c-tabs__button--active" : "c-tabs__button"}
                   onClick = {()=> this.tabFocus("metrics")}>

@@ -28,7 +28,7 @@ class Tabs2Comp extends React.Component {
           </div>
         </details>
         <details className="c-tabs2__details">
-          <summary className={this.state.currentTab === 2 ? "c-tabs2__summary--active" : "c-tabs2__summary"} onClick = {()=> this.tabFocus(2)}>Supplemental material</summary>
+          <summary className={this.state.currentTab === 2 ? "c-tabs2__summary--active" : "c-tabs2__summary"} onClick = {()=> this.tabFocus(2)}>Supplemental Material</summary>
           <div className="c-tabs2__tabpanel">
             {this.state.currentTab === 2 ? <TabSupplementalComp /> : null}
           </div>
