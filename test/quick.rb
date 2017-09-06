@@ -40,7 +40,7 @@ class TestQuick < Test::Unit::TestCase
 
   def test_rootStatic
     html = fetchAndStrip("http://localhost:4001/uc/root/aboutEschol")
-    assert_match /provides a suite of repository tools/, html
+    assert_match /provides scholarly publishing/, html
   end
 
   def test_browse_campuses

@@ -76,6 +76,9 @@ $rescanMode = ARGV.delete('--rescan')
 # Mode to process a single item and just print it out (no inserting or batching)
 $testMode = ARGV.delete('--test')
 
+# Mode to test against old prefilter
+$prefilterMode = ARGV.delete("--prefilter")
+
 # Mode to override up-to-date test
 $forceMode = ARGV.delete('--force')
 $forceMode and $rescanMode = true
@@ -953,12 +956,12 @@ def parseDate(str)
       text = "#{text}-01"
     end
     ret = Date.strptime(text, "%Y-%m-%d")  # throws exception on bad date
-    ret.year > 1000 and return ret.iso8601
+    ret.year > 1000 && ret.year < 3000 and return ret.iso8601
   rescue
     begin
       text.sub! /-02-(29|30|31)$/, "-02-28" # Try to fix some crazy dates
       ret = Date.strptime(text, "%Y-%m-%d")  # throws exception on bad date
-      ret.year > 1000 and return ret.iso8601
+      ret.year > 1000 && ret.year < 3000 and return ret.iso8601
     rescue
       # pass
     end
@@ -982,6 +985,8 @@ def formatAuthName(auth)
     str = fname
   elsif lname
     str = lname
+  elsif auth.text_at("./email")  # special case
+    str = auth.text_at("./email")
   else
     str = auth.text.strip
     str.empty? and return nil # ignore all-empty author
@@ -1005,11 +1010,9 @@ def getAuthors(indexMeta, rawMeta)
     elsif el.name == "author"
       data = { name: formatAuthName(el) }
       el.children.each { |sub|
-        if sub.name == "identifier"
-          data[(sub.attr('type') + "_id").to_sym] = sub.text
-        else
-          data[sub.name.to_sym] = sub.text
-        end
+        text = sub.text.strip
+        next if text.empty?
+        data[(sub.name == "identifier") ? (sub.attr('type') + "_id").to_sym : sub.name.to_sym] = text
       }
       data && !data[:name].nil? ? data : nil
     else
@@ -1385,6 +1388,23 @@ def shouldSuppressContent(itemID, inMeta)
 end
 
 ###################################################################################################
+def parseDataAvail(inMeta, attrs)
+  el = inMeta.at("./content/supplemental/dataStatement")
+  el or return
+  ds = { type: el[:type] }
+  if el.text && !el.text.strip.empty?
+    if el[:type] == "publicRepo"
+      ds[:url] = el.text.strip
+    elsif el[:type] == "notAvail"
+      ds[:reason] = el.text.strip
+    elsif el[:type] == "thirdParty"
+      ds[:contact] = el.text.strip
+    end
+  end
+  attrs[:data_avail_stmnt] = ds
+end
+
+###################################################################################################
 def parseUCIngest(itemID, inMeta, fileType)
   attrs = {}
   attrs[:suppress_content] = shouldSuppressContent(itemID, inMeta)
@@ -1444,6 +1464,9 @@ def parseUCIngest(itemID, inMeta, fileType)
 
   # Supplemental files
   attrs[:supp_files], suppSummaryTypes = summarizeSupps(itemID, grabUCISupps(inMeta))
+
+  # Data availability statement
+  parseDataAvail(inMeta, attrs)
 
   # We'll need this in a couple places later on
   rights = translateRights(inMeta.text_at("./rights"))
@@ -1620,7 +1643,8 @@ def compareAttrs(oldAttrs, newAttrs)
     oldVal, newVal = oldAttrs[key], newAttrs[key]
     next if oldVal == newVal
     next if key == :local_ids # known differences, and unused by current front-end anyway
-    next if oldVal.instance_of?(String) && oldVal.gsub(/\s\s+/, ' ') == newVal.gsub(/\s\s+/, ' ')  # space normalization better now
+    next if oldVal.instance_of?(String) && newVal.instance_of?(String) &&
+            oldVal.gsub(/\s\s+/, ' ') == newVal.gsub(/\s\s+/, ' ')  # space normalization better now
     next if oldVal.instance_of?(String) && newVal.instance_of?(String) &&
             sanitizeHTML(oldVal) == sanitizeHTML(newVal)   # new normalization is better
     next if oldVal.instance_of?(Date) && newVal.instance_of?(Date) &&
@@ -1676,14 +1700,10 @@ end
 
 ###################################################################################################
 def compareUnits(oldUnits, newUnits)
-  (0..[oldUnits.length-1, newUnits.length-1].max).each { |idx|
-    oldUnit, newUnit = oldUnits[idx], newUnits[idx]
-    if oldUnit != newUnit
-      next if !oldUnit.nil? && newUnit.nil? && newUnits.include?(oldUnit)  # better de-duping now
-      puts "normDiff: unit #{idx+1} changed: old=#{oldUnit.inspect}"
-      puts "                          new=#{newUnit.inspect}"
-    end
-  }
+  if oldUnits.uniq != newUnits
+    puts "normDiff: units changed: old=#{oldUnits.uniq.inspect}"
+    puts "                         new=#{newUnits.inspect}"
+  end
 end
 
 ###################################################################################################
@@ -1722,16 +1742,18 @@ end
 # into the database until the batch has been successfully processed by AWS.
 def indexItem(itemID, timestamp, prefilteredData, batch, nailgun)
 
-  # Also grab the original metadata file
+  # Grab the main metadata file
   metaPath = arkToFile(itemID, "meta/base.meta.xml")
+  if !File.exists?(metaPath) || File.size(metaPath) < 50
+    puts "Warning: skipping #{itemID} due to missing or truncated meta.xml"
+    $nSkipped += 1
+    return
+  end
   rawMeta = fileToXML(metaPath)
   rawMeta.remove_namespaces!
   rawMeta = rawMeta.root
 
   existingItem = Item[itemID]
-
-  dbItem, attrs, authors, units, issue, section, suppSummaryTypes =
-     parsePrefilteredData(itemID, existingItem, rawMeta, prefilteredData)
 
   normalize = nil
   if rawMeta.name =~ /^DISS_submission/ ||
@@ -1746,28 +1768,29 @@ def indexItem(itemID, timestamp, prefilteredData, batch, nailgun)
   Thread.current[:name] = "index thread: #{itemID} #{sprintf("%-8s", normalize ? normalize : "UCIngest")}"
 
   if normalize
-    new_dbItem, new_attrs, new_authors, new_units, new_issue, new_section, new_suppSummaryTypes =
+    dbItem, attrs, authors, units, issue, section, suppSummaryTypes =
       processWithNormalizer(normalize, itemID, metaPath, nailgun)
   else
-    new_dbItem, new_attrs, new_authors, new_units, new_issue, new_section, new_suppSummaryTypes =
+    dbItem, attrs, authors, units, issue, section, suppSummaryTypes =
       parseUCIngest(itemID, rawMeta, "UCIngest")
   end
 
-  begin
-    compareAttrs(attrs, new_attrs)
-    compareAttrs(dbItem.to_hash.reject { |k,v| k == :attrs },
-                 new_dbItem.to_hash.reject { |k,v| k == :attrs })
-    compareAuthors(authors, new_authors)
-    compareUnits(units, new_units)
-    compareIssues(issue, new_issue, section, new_section)
-    compareSuppSummaries(suppSummaryTypes, new_suppSummaryTypes)
-  rescue Exception => e
-    puts "Error comparing: #{e} #{e.backtrace.join("; ")}"
+  # Optional: test against old XTF index prefilters
+  if prefilteredData
+    pf_dbItem, pf_attrs, pf_authors, pf_units, pf_issue, pf_section, pf_suppSummaryTypes =
+       parsePrefilteredData(itemID, existingItem, rawMeta, prefilteredData)
+    begin
+      compareAttrs(attrs, new_attrs)
+      compareAttrs(dbItem.to_hash.reject { |k,v| k == :attrs },
+                   new_dbItem.to_hash.reject { |k,v| k == :attrs })
+      compareAuthors(authors, new_authors)
+      compareUnits(units, new_units)
+      compareIssues(issue, new_issue, section, new_section)
+      compareSuppSummaries(suppSummaryTypes, new_suppSummaryTypes)
+    rescue Exception => e
+      puts "Error comparing: #{e} #{e.backtrace.join("; ")}"
+    end
   end
-
-  # The new conversion logic is working well, so use it.
-  dbItem, attrs, authors, units, issue, section, suppSummaryTypes =
-    new_dbItem, new_attrs, new_authors, new_units, new_issue, new_section, new_suppSummaryTypes
 
   text = grabText(itemID, dbItem.content_type)
 
@@ -2178,7 +2201,9 @@ def convertAllItems(arks)
 
   # Fire up threads for doing the work in parallel
   Thread.abort_on_exception = true
-  prefilterThread = Thread.new { prefilterAllItems }
+  if $prefilterMode
+    prefilterThread = Thread.new { prefilterAllItems }
+  end
   indexThread = Thread.new { indexAllItems }
   batchThread = Thread.new { processAllBatches }
 
@@ -2199,15 +2224,23 @@ def convertAllItems(arks)
     erepTime = Time.at(row[:time].to_i).to_time
     item = Item[shortArk]
     if !item || item.last_indexed.nil? || item.last_indexed < erepTime || $rescanMode
-      $prefilterQueue << [shortArk, erepTime]
+      if $prefilterMode
+        $prefilterQueue << [shortArk, erepTime]
+      else
+        $indexQueue << [shortArk, erepTime]
+      end
     else
       #puts "#{shortArk} is up to date, skipping."
       $nSkipped += 1
     end
   end
 
-  $prefilterQueue << nil  # end-of-queue
-  prefilterThread.join
+  if $prefilterMode
+    $prefilterQueue << nil  # end-of-queue
+    prefilterThread.join
+  else
+    $indexQueue << nil  # end-of-queue
+  end
   indexThread.join
   batchThread.join
 

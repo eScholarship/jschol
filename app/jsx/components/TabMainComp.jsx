@@ -126,7 +126,7 @@ class NoContent extends React.Component {
       {this.props.supp_files && this.props.supp_files.length > 0 &&
         <div style={{paddingLeft: '25px'}}>
           <br/><br/>
-          All content for this item is under the <Link to="#" onClick={(e)=>this.handleClick(e, "supplemental")} className="o-textlink__secondary">Supplemental material</Link> tab.
+          All content for this item is under the <Link to="#" onClick={(e)=>this.handleClick(e, "supplemental")} className="o-textlink__secondary">Supplemental Material</Link> tab.
         </div>
       }
       <p>&nbsp;</p>

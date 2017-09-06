@@ -15,7 +15,7 @@ class FooterComp extends React.Component {
           <Link to="/uc/root/ucoapolicies">UC Open Access Policy</Link>
           <Link to="/uc/root/publishing">eScholarship Publishing</Link>
           <Link to="/uc/root/privacypolicy">Privacy Policy</Link>
-          <Link to="/uc/root/terms">Terms & Conditions</Link>
+          <Link to="/uc/root/terms">Terms of Use</Link>
           <Subscriber channel="cms">
             { cms => cms.loggedIn ?
                   <Link to="/logout" onClick={()=>setTimeout(()=>cms.onLogout(), 0)}><strong>Admin Logout</strong></Link>
