@@ -953,12 +953,12 @@ def parseDate(str)
       text = "#{text}-01"
     end
     ret = Date.strptime(text, "%Y-%m-%d")  # throws exception on bad date
-    ret.year > 1000 and return ret.iso8601
+    ret.year > 1000 && ret.year < 3000 and return ret.iso8601
   rescue
     begin
       text.sub! /-02-(29|30|31)$/, "-02-28" # Try to fix some crazy dates
       ret = Date.strptime(text, "%Y-%m-%d")  # throws exception on bad date
-      ret.year > 1000 and return ret.iso8601
+      ret.year > 1000 && ret.year < 3000 and return ret.iso8601
     rescue
       # pass
     end
@@ -982,6 +982,8 @@ def formatAuthName(auth)
     str = fname
   elsif lname
     str = lname
+  elsif auth.text_at("./email")  # special case
+    str = auth.text_at("./email")
   else
     str = auth.text.strip
     str.empty? and return nil # ignore all-empty author
@@ -1005,11 +1007,9 @@ def getAuthors(indexMeta, rawMeta)
     elsif el.name == "author"
       data = { name: formatAuthName(el) }
       el.children.each { |sub|
-        if sub.name == "identifier"
-          data[(sub.attr('type') + "_id").to_sym] = sub.text
-        else
-          data[sub.name.to_sym] = sub.text
-        end
+        text = sub.text.strip
+        next if text.empty?
+        data[(sub.name == "identifier") ? (sub.attr('type') + "_id").to_sym : sub.name.to_sym] = text
       }
       data && !data[:name].nil? ? data : nil
     else
@@ -1620,7 +1620,8 @@ def compareAttrs(oldAttrs, newAttrs)
     oldVal, newVal = oldAttrs[key], newAttrs[key]
     next if oldVal == newVal
     next if key == :local_ids # known differences, and unused by current front-end anyway
-    next if oldVal.instance_of?(String) && oldVal.gsub(/\s\s+/, ' ') == newVal.gsub(/\s\s+/, ' ')  # space normalization better now
+    next if oldVal.instance_of?(String) && newVal.instance_of?(String) &&
+            oldVal.gsub(/\s\s+/, ' ') == newVal.gsub(/\s\s+/, ' ')  # space normalization better now
     next if oldVal.instance_of?(String) && newVal.instance_of?(String) &&
             sanitizeHTML(oldVal) == sanitizeHTML(newVal)   # new normalization is better
     next if oldVal.instance_of?(Date) && newVal.instance_of?(Date) &&
@@ -1676,14 +1677,10 @@ end
 
 ###################################################################################################
 def compareUnits(oldUnits, newUnits)
-  (0..[oldUnits.length-1, newUnits.length-1].max).each { |idx|
-    oldUnit, newUnit = oldUnits[idx], newUnits[idx]
-    if oldUnit != newUnit
-      next if !oldUnit.nil? && newUnit.nil? && newUnits.include?(oldUnit)  # better de-duping now
-      puts "normDiff: unit #{idx+1} changed: old=#{oldUnit.inspect}"
-      puts "                          new=#{newUnit.inspect}"
-    end
-  }
+  if oldUnits.uniq != newUnits
+    puts "normDiff: units changed: old=#{oldUnits.uniq.inspect}"
+    puts "                         new=#{newUnits.inspect}"
+  end
 end
 
 ###################################################################################################
