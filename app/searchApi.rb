@@ -292,11 +292,11 @@ end
 #  "searchResults"=>
 #
 #  INFO results are the same but replace 'count' and 'searchResults' with these 
+#  Note: rows(cards)  will always be set to 12
 #  {"query"=>
 #   {"q"=>"Archaeological Research Facility",
 #    "sort"=>"rel",
-#    "info_rows"=>"10",     <-- different from above
-#    "info_start"=>"0",     <-- different
+#    "info_start"=>"0",     <-- different from above
 #    "filters"=>{}},
 #  "info_count"=>12,        <-- different
 #  "infoResults"=> ...      <-- different
