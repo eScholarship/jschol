@@ -29,6 +29,12 @@ $allFacets = nil
 def initAllFacets()
   return if $allFacets
   $allFacets = {
+  'is_info' => {
+    'displayName' => 'Is Info',
+    'awsFacetParam' => {buckets: [1]},
+    'filterTransform' => lambda { |filterVals| filterVals.map { |filterVal| {'value' => filterVal} } },
+    'facetTransform' => lambda { |facetVals| facetVals.map { |facetVal| {'value' => facetVal['value'], 'count' => facetVal['count'], 'displayName' => 'Informational'} } }
+  },
   'type_of_work' => {
     'displayName' => 'Type of Work',
     'awsFacetParam' => {buckets: ['article', 'monograph', 'dissertation', 'multimedia']},
@@ -203,16 +209,15 @@ def get_query_display(params)
   }
 end
 
-def aws_encode(params, facetTypes)
+def aws_encode(params, facetTypes, search_type)
   initAllFacets()
 
   aws_params = {
     query: params.has_key?('q') ? params['q'].join(" ") : 'matchall',
-    size: params.dig('rows', 0) ? params['rows'][0] : 10,
     sort: params.dig('sort', 0) ? SORT[params['sort'][0]] : '_score desc',
+    size: params.dig('rows', 0) ? params['rows'][0] : 10,
     start: params.dig('start', 0) ? params['start'][0] : 0,
   }
-
   if aws_params[:query] == 'matchall' then aws_params[:query_parser] = "structured" end
 
   # create facet query, only create facet query for fields specified in facetTypes
@@ -237,6 +242,8 @@ def aws_encode(params, facetTypes)
     date_range = params.dig('pub_year_end', 0) ? "#{date_range}#{params['pub_year_end'][0]}]" : "#{date_range}}"
     filterQuery.push("pub_year: #{date_range}")
   end
+  is_info_query = (search_type == "items") ? ["is_info: '0'"] : ["is_info: '1'"]
+  filterQuery << is_info_query
 
   # join filter query
   if filterQuery.length > 1 then filterQuery = "(and #{filterQuery.join(" ")})" end
@@ -246,9 +253,9 @@ def aws_encode(params, facetTypes)
   return aws_params
 end
 
-def facet_secondary_query(params, field_type)
+def facet_secondary_query(params, field_type, search_type)
   params.delete(field_type)
-  aws_params = aws_encode(params, [field_type])
+  aws_params = aws_encode(params, [field_type], search_type)
   response = normalizeResponse($csClient.search(return: '_no_fields', **aws_params))
   return response['facets'][field_type]
 end
@@ -265,32 +272,20 @@ def normalizeResponse(response)
   end
 end
 
-def getInfoResults(q)
-  DB.fetch('select unit_id, slug from idxtext where match(text) against (?)', q).map { |row|
-    if row[:unit_id]
-      unit = $unitsHash[row[:unit_id]]
-      if row[:slug].nil?   # Unit
-        ancestor = getUnitAncestor(unit)
-        ancestor_name, ancestor_id = ancestor ? [ancestor.name, ancestor.id] : nil
-        unitAttrs = JSON.parse(unit.attrs)
-        {ancestor_id: ancestor_id, ancestor_name: ancestor_name, target_id: row[:unit_id], target_name: unit.name, isPage: false, content: unitAttrs['about']}
-      else                 # Static Page
-        page = Page.where(unit_id: row[:unit_id], slug: row[:slug]).first
-        {ancestor_id: row[:unit_id], ancestor_name: unit.name, target_id: row[:slug], target_name: page.name, isPage: true, content: nil}
-      end
-    end
-  }
-end
-
-def search(params, facetTypes=$allFacets.keys)
-  aws_params = aws_encode(params, facetTypes)
+# Get search results for 'items' or 'infopages'
+def getResults(params, facetTypes=$allFacets.keys, search_type)
+  aws_params = aws_encode(params, facetTypes, search_type)
   response = normalizeResponse($csClient.search(return: '_no_fields', **aws_params))
 
   # augment search result items with more item-specific data
   if response['hits'] && response['hits']['hit']
-    itemIds = response['hits']['hit'].map { |item| item['id'] }
-    itemData = readItemData(itemIds)
-    searchResults = itemResultData(itemIds, itemData, ['thumbnail', 'pub_year', 'publication_information', 'type_of_work', 'rights', 'peer_reviewed'])
+    ids = response['hits']['hit'].map { |item| item['id'] }
+    if search_type == "items"
+      itemData = readItemData(ids)
+      searchResults = itemResultData(ids, itemData, ['thumbnail', 'pub_year', 'publication_information', 'type_of_work', 'rights', 'peer_reviewed'])
+    else
+      searchResults = infoResultData(ids)
+    end
   end
 
   facetHash = response['facets']
@@ -302,7 +297,7 @@ def search(params, facetTypes=$allFacets.keys)
       # Make sure the field type is actually in the facet hash returned from aws
       if facetHash.key?(field_type)
         if field_type != 'pub_year' && params.key?(field_type)
-          facetHash[field_type] = facet_secondary_query(params.clone, field_type)
+          facetHash[field_type] = facet_secondary_query(params.clone, field_type, search_type)
         end
 
         facetBundle = {'display' => $allFacets[field_type]['displayName'],
@@ -320,10 +315,26 @@ def search(params, facetTypes=$allFacets.keys)
     end
   end
 
-  infoResults = getInfoResults(params['q'])
-  infoResultsPreview, info_count = infoResults.length > 0 ? [infoResults[0..2], infoResults.length] : [nil, 0]
+  r = {'query' => get_query_display(params.clone)}
+  if search_type == "items" 
+    r['count'] = response['hits']['found']
+    r['info_count'] = 0  #merge with info will overwrite this
+    r['infoResults'] = nil
+    r['searchResults'] = searchResults
+    r['facets'] = facets
+  else    # infopages
+    r['info_count'] = response['hits']['found']
+    r['infoResults'] = searchResults
+    r['facets'] = facets
+  end
+  return r
+end
 
-  return {'count' => response['hits']['found'], 'query' => get_query_display(params.clone), 'searchResults' => searchResults, 'infoResultsPreview' => infoResultsPreview, 'info_count' => info_count, 'facets' => facets}
+# Query on items. Then, if faceting on anything other than Campus, Department, or Journal, DON'T query for info pages
+def search(params, facetTypes=$allFacets.keys)
+  r = getResults(params, facetTypes, "items")
+  r.merge!(getResults(params, facetTypes, "infopages")) unless (params.keys & ['type_of_work', 'peer_reviewed', 'supp_file_types', 'pub_year', 'disciplines', 'rights']).size > 0
+  return r
 end
 
 def extent(id, type)

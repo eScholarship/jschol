@@ -5,11 +5,7 @@ const CleanWebpackPlugin = require('clean-webpack-plugin');
 
 // the path(s) that should be cleaned
 var pathsToClean = [
-  'app/js/0-bundle-.*',
-  'app/js/1-bundle-.*',
-  'app/js/3-bundle-.*',
-  'app/js/app-bundle-.*',
-  'app/js/lib-bundle-.*'
+  'app/js/.*-bundle-.*'
 ]
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

@@ -46,7 +46,7 @@ class ResultComp extends React.Component {
  
 class InfoPagesComp extends React.Component {
   static propTypes = {
-    infoResultsPreview: PropTypes.array.isRequired,
+    infoResults: PropTypes.array.isRequired,
     info_count: PropTypes.number.isRequired
   }
 
@@ -55,8 +55,8 @@ class InfoPagesComp extends React.Component {
       <div className="c-infopages">
         <div className="c-infopages__items">
       {(this.props.info_count != 0 ) ? 
-          this.props.infoResultsPreview.map( (result, i) =>
-            <ResultComp key={i} result={result} />)
+          this.props.infoResults.map( (result) =>
+            <ResultComp key={result.id} result={result} />)
         :
           <p><br/><br/>No results found.<br/><br/></p>
       }
