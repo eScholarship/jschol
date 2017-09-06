@@ -317,7 +317,7 @@ def unitSearch(params, unit)
     pp unit.type
   end
 
-  aws_params = aws_encode(params, [])
+  aws_params = aws_encode(params, [], "items")
   response = normalizeResponse($csClient.search(return: '_no_fields', **aws_params))
 
   if response['hits'] && response['hits']['hit']

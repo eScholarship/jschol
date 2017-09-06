@@ -203,8 +203,9 @@ def get_query_display(params)
 
   display_params = {
     'q' => params['q'] ? params['q'].join(" ") : '',
-    'rows' => params.dig('rows', 0) ? params['rows'][0] : '10',
     'sort' => params.dig('sort', 0) ? params['sort'][0] : 'rel',
+    'rows' => params.dig('rows', 0) ? params['rows'][0] : '10',
+    'info_start' => params.dig('info_start', 0) ? params['info_start'][0] : '0',
     'start' => params.dig('start', 0) ? params['start'][0] : '0',
     'filters' => filters
   }
@@ -216,9 +217,13 @@ def aws_encode(params, facetTypes, search_type)
   aws_params = {
     query: params.has_key?('q') ? params['q'].join(" ") : 'matchall',
     sort: params.dig('sort', 0) ? SORT[params['sort'][0]] : '_score desc',
-    size: params.dig('rows', 0) ? params['rows'][0] : 10,
-    start: params.dig('start', 0) ? params['start'][0] : 0,
   }
+  aws_params[:size] = (search_type == "items") ?
+        params.dig('rows', 0) ? params['rows'][0] : 10
+     :  12
+  aws_params[:start] = (search_type == "items") ?
+        params.dig('start', 0) ? params['start'][0] : 0
+     :  params.dig('info_start', 0) ? params['info_start'][0] : 0
   if aws_params[:query] == 'matchall' then aws_params[:query_parser] = "structured" end
 
   # create facet query, only create facet query for fields specified in facetTypes
@@ -273,20 +278,28 @@ def normalizeResponse(response)
   end
 end
 
-# Get search results for 'items' or 'infopages'
+# Get search results for 'items' or 'infopages'. 'Infopages' means the units and pages
+#   (and freshdesk, when it's added) indexed in CloudSearch
+#
 #  ITEM results look like this
 #  {"query"=>
 #   {"q"=>"Archaeological Research Facility",
-#    "rows"=>"10",
 #    "sort"=>"rel",
+#    "rows"=>"10",
 #    "start"=>"0",
 #    "filters"=>{}},
 #  "count"=>1738,
 #  "searchResults"=>
 #
 #  INFO results are the same but replace 'count' and 'searchResults' with these 
-#  "info_count"=>12,
-#  "infoResults"=> ...
+#  {"query"=>
+#   {"q"=>"Archaeological Research Facility",
+#    "sort"=>"rel",
+#    "info_rows"=>"10",     <-- different from above
+#    "info_start"=>"0",     <-- different
+#    "filters"=>{}},
+#  "info_count"=>12,        <-- different
+#  "infoResults"=> ...      <-- different
 def searchByType(params, facetTypes=$allFacets.keys, search_type)
   aws_params = aws_encode(params, facetTypes, search_type)
   response = normalizeResponse($csClient.search(return: '_no_fields', **aws_params))
@@ -332,7 +345,7 @@ def searchByType(params, facetTypes=$allFacets.keys, search_type)
   r = {'query' => get_query_display(params.clone)}
   if search_type == "items" 
     r['count'] = response['hits']['found']
-    r['info_count'] = 0  #merge with info will overwrite this
+    r['info_count'] = 0
     r['infoResults'] = nil
     r['searchResults'] = searchResults
     r['facets'] = facets
@@ -370,7 +383,6 @@ def search(params, facetTypes=$allFacets.keys)
     r['infoResults'] = info_r['infoResults']
     r['facets'] = mergeFacets(r['facets'], info_r['facets'])
   end
-  pp(r)
   return r
 end
 

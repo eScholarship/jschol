@@ -27,20 +27,24 @@ def itemResultData(itemIds, itemData, fields=[])
       pdfCnt, imageCnt, videoCnt, audioCnt, zipCnt, otherCnt = 0, 0, 0, 0, 0, 0
       if attrs['supp_files']
         for supp_file in attrs['supp_files']
-          subtype = supp_file['mimeType'].split('/')[1]
-          if supp_file['mimeType'].include?('pdf')
-            pdfCnt += 1
-          elsif supp_file['mimeType'].include?('image')
-            imageCnt += 1
-          elsif supp_file['mimeType'].include?('video')
-            videoCnt += 1
-          elsif supp_file['mimeType'].include?('audio')
-            audioCnt += 1
-          elsif ['zip', 'x-bzip', 'x-bzip2', 'x-gtar', 'x-gzip', 'gnutar', 'x-tar', 'x-zip'].include?(subtype)
-            zipCnt += 1
+          if supp_file['mimeType']
+            subtype = supp_file['mimeType'].split('/')[1]
+            if supp_file['mimeType'].include?('pdf')
+              pdfCnt += 1
+            elsif supp_file['mimeType'].include?('image')
+              imageCnt += 1
+            elsif supp_file['mimeType'].include?('video')
+              videoCnt += 1
+            elsif supp_file['mimeType'].include?('audio')
+              audioCnt += 1
+            elsif ['zip', 'x-bzip', 'x-bzip2', 'x-gtar', 'x-gzip', 'gnutar', 'x-tar', 'x-zip'].include?(subtype)
+              zipCnt += 1
+            else
+              otherCnt += 1
+            end
           else
             otherCnt += 1
-          end 
+          end
         end
       end
       itemListItem[:supp_files] = [
