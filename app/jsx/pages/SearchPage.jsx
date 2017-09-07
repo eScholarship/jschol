@@ -495,7 +495,7 @@ class FacetForm extends React.Component {
 class SearchPage extends PageBase {
 // Rough outline of props. More detail available in components above
 // data = {
-//   infoResultsPreview: [ {ancestor_id: 'uclalaw_jinel', ancestor_name: 'Journal of Islami...',
+//   infoResults: [ {ancestor_id: 'uclalaw_jinel', ancestor_name: 'Journal of Islami...',
 //       target_id: 'facultyAdvisors', target_name: 'Faculty Advisors', content: 'Crepuscular Sheep'}, ... ] 
 //   info_count: 12,
 //   query: PropTypes.shape({
@@ -537,12 +537,12 @@ class SearchPage extends PageBase {
           </aside>
           <main id="maincontent" style={{position: "relative"}}>
             { this.state.fetchingData ? <div className="c-search-extra__loading-overlay"/> : null }
-          {data.infoResultsPreview &&
+          {data.info_count > 0 &&
             <section className="o-columnbox1">
               <header>
                 <h1 className="o-columnbox1__heading">{"Informational Pages ("+data.info_count+" results)"}</h1>
               </header>
-              <InfoPagesComp info_count={data.info_count} infoResultsPreview={data.infoResultsPreview} />
+              <InfoPagesComp info_count={data.info_count} infoResults={data.infoResults} />
             </section>
           }
             <section className="o-columnbox1">

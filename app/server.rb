@@ -88,7 +88,7 @@ $s3Bucket = Aws::S3::Bucket.new($s3Config.bucket, client: $s3Client)
 # Internal modules to implement specific pages and functionality
 require_relative 'dbCache'
 require_relative 'hierarchy'
-require_relative 'listItemViews'
+require_relative 'listViews'
 require_relative 'searchApi'
 require_relative 'queueWithTimeout'
 require_relative 'unitPages'
