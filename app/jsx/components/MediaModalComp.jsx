@@ -15,13 +15,10 @@ class MediaModalComp extends React.Component {
           overlayClassName="c-modal__overlay"
         >
           <div className="modal__header">
-            <h2>{this.props.heading}</h2>
+            <button className="c-modal__header-close" onClick={this.props.handleCloseModal}><span>Close</span></button>
           </div>
           <div className="modal__content">
             {this.props.children}
-          </div>
-          <div className="c-modal__footer">
-            <button className="c-modal__button-close" onClick={this.props.handleCloseModal}>Cancel</button>
           </div>
         </ReactModal>
       </div>

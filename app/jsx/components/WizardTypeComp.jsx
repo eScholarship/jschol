@@ -5,14 +5,14 @@ import React from 'react'
 class WizardTypeComp extends React.Component {
   render() {
     return (
-      <div className="c-wizard__step" id="c-wizard__type">
+      <div className="c-wizard__step">
         <header>
           <h1 tabIndex="-1">eScholarship Deposit</h1>
           <a onClick = {(event)=>{
             event.preventDefault()
             this.props.goBackward()}
           } href=""><span>Go back</span></a>
-          <button onClick = {()=>this.props.goForward()}><span>Close</span></button>
+          <button onClick={this.props.closeModal}><span>Close</span></button>
         </header>
         <div className="c-wizard__heading">
           [3] What kind of material are you depositing?

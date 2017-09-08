@@ -25,6 +25,11 @@ abbr {
 
 }
 
+// Make hidden attribute work on any element:
+[hidden] {
+  display: none;
+}
+
 // Remove rounded corners from WebKit search fields on iOS:
 
 input[type='search'] {

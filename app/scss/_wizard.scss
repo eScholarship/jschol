@@ -6,15 +6,14 @@ $wizard-nav-icon-size: 1.5em;
 
 .c-wizard {
   position: relative;
-  width: 400px;
+  max-width: 400px;
+  margin: 0 auto;
 
   .c-wizard__current-bkw,
   .c-wizard__standby-bkw,
   .c-wizard__current-fwd,
   .c-wizard__standby-fwd {
-    position: absolute;
-    border-radius: $round-corner;
-    box-shadow: 5px 5px 15px $color-light-black;
+    position: absolute; // allow stacking
   }
 
 }
@@ -27,8 +26,8 @@ $wizard-nav-icon-size: 1.5em;
 }
 
 .c-wizard__standby-fwd {
-  left: -9999px;
-  opacity: 0;
+  @extend %hide;
+  width: 400px;
   z-index: 1;
   animation: standby-fwd 1s;
 }
@@ -36,12 +35,12 @@ $wizard-nav-icon-size: 1.5em;
 @keyframes current-fwd {
 
   0% {
-    left: 400px;
+    transform: translateX(100%);
     opacity: 0;
   }
 
   100% {
-    left: 0;
+    transform: translateX(0%);
     opacity: 1;
   }
 
@@ -69,8 +68,8 @@ $wizard-nav-icon-size: 1.5em;
 }
 
 .c-wizard__standby-bkw {
-  left: -9999px;
-  opacity: 0;
+  @extend %hide;
+  width: 400px;
   z-index: 1;
   animation: standby-bkw 1s;
 }
@@ -78,12 +77,12 @@ $wizard-nav-icon-size: 1.5em;
 @keyframes current-bkw {
 
   0% {
-    left: -400px;
+    transform: translateX(-100%);
     opacity: 0;
   }
 
   100% {
-    left: 0;
+    transform: translateX(0%);
     opacity: 1;
   }
 
@@ -103,13 +102,13 @@ $wizard-nav-icon-size: 1.5em;
 
 }
 
-// ***** Styles ***** //
+// ***** General Styling ***** //
 
 .c-wizard__step {
-  width: 400px;
-  // margin-bottom: $spacing-md;
   padding: $spacing-md;
+  border-radius: $round-corner;
   background-color: $color-light-gray;
+  box-shadow: 5px 5px 15px $color-light-black;
 
   header {
     display: flex;
@@ -118,11 +117,15 @@ $wizard-nav-icon-size: 1.5em;
     margin: (-$spacing-md) (-$spacing-md) $spacing-md;
     padding-right: $spacing-sm;
     padding-left: $spacing-md;
+    border-top-left-radius: $round-corner;
+    border-top-right-radius: $round-corner;
     background-color: $color-light-black;
+    overflow-x: hidden; // prevents <a> and <button> %hide horizontal scrolling
 
-    @include headings() {
+    h1 {
       order: 2;
       margin: 0;
+      outline: none; // remove focus outline
       color: $color-white;
       font-size: 1em;
       font-weight: normal;
@@ -182,8 +185,10 @@ $wizard-nav-icon-size: 1.5em;
     }
 
     a {
-      display: block;
-      padding: $spacing-sm 2.5em $spacing-sm $spacing-sm;
+      @extend %interactive-element-size;
+      display: flex;
+      align-items: center;
+      padding: $spacing-base 2.5em $spacing-base $spacing-sm;
       background: $color-teal inline('../images/icon_caret-right-white.svg') no-repeat center right #{$spacing-sm} / #{$wizard-nav-icon-size};
       color: $color-white;
       text-decoration: none;
@@ -211,14 +216,12 @@ $wizard-nav-icon-size: 1.5em;
 // ***** Modal ***** //
 
 .c-wizard__modal {
-  display: flex;
   position: absolute;
   top: 0;
-  right: 0;
   bottom: 0;
-  left: 0;
-  justify-content: center;
+  width: 100%;
   margin-top: $spacing-md;
-  outline: none !important;
-  overflow: auto;
+  outline: none !important; // remove default modal focus outline
+  overflow-y: auto;
+  overflow-x: hidden;
 }
