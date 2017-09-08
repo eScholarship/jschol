@@ -129,7 +129,7 @@ div[class$='--selected'] {
 // ***** Preview Element Icons ***** //
 
 @each $mediafile-type, $mediafile-icon in
-  (audio, icon_volume-up-white),
+  (audio, icon_play-circle-white),
   (data, icon_archive-white),
   (image, icon_eye-white),
   (video, icon_play-circle-white) {

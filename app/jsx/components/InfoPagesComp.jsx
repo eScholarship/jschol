@@ -5,6 +5,7 @@ import PropTypes from 'prop-types'
 import $ from 'jquery'
 import { Link } from 'react-router'
 import NotYetLink from '../components/NotYetLink.jsx'
+import PaginationComp from '../components/PaginationComp.jsx'
 
 // Load dotdotdot in browser but not server
 if (!(typeof document === "undefined")) {
@@ -33,6 +34,7 @@ class ResultComp extends React.Component {
     return (
       <div className="c-infopages__item">
         <h2>
+          <b>UC Berkeley</b>
         {r.ancestor_id && r.ancestor_name &&
           <Link to={"/uc/"+r.ancestor_id}>{r.ancestor_name}</Link> }
           <Link to={"/uc/"+target_path} className="c-infopages__title">{r.target_name}</Link>
@@ -46,24 +48,42 @@ class ResultComp extends React.Component {
  
 class InfoPagesComp extends React.Component {
   static propTypes = {
+    query: PropTypes.shape({
+      q: PropTypes.string,
+      rows: PropTypes.string,
+      sort: PropTypes.string,
+      info_start: PropTypes.string,
+      start: PropTypes.string,
+    }).isRequired,
     infoResults: PropTypes.array.isRequired,
     info_count: PropTypes.number.isRequired
   }
 
+  state={showMore: false}
+
   render() {
     return (
       <div className="c-infopages">
-        <div className="c-infopages__items">
-      {/* ToDo: Bring in all 12 cards once Joel has built new version. For now just bringing in 3 */} 
+        <div className="c-infopages__show-less">
+          <div className="c-infopages__items">
       {(this.props.info_count != 0 ) ? 
           this.props.infoResults.slice(0,3).map( (result) =>
             <ResultComp key={result.id} result={result} />)
         :
           <p><br/><br/>No results found.<br/><br/></p>
       }
+          </div>
+        {this.props.info_count > 3 && 
+          <button className="c-infopages__toggle" onClick={()=> this.setState({showMore: true})} hidden={this.state.showMore}>Show more results</button> }
         </div>
-      {this.props.info_count > 3 && 
-        <NotYetLink element="a" className="c-infopages__all">Show all informational page results</NotYetLink> }
+        <div className="c-infopages__show-more" hidden={!this.state.showMore}>
+          <div className="c-infopages__items">
+          {this.props.infoResults.slice(3,12).map( (result) =>
+            <ResultComp key={result.id} result={result} />) }
+          </div>
+          <PaginationComp formName="facetForm" formButton="facet-form-submit" query={this.props.query} count={this.props.info_count} is_info={true} />
+          <button className="c-infopages__toggle" onClick={()=> this.setState({showMore: false})}>Show fewer results</button>
+        </div>
       </div>
     )
   }

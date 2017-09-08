@@ -407,6 +407,7 @@ class FacetFieldset extends React.Component {
 //     q: 'chinese',
 //     rows: '10',
 //     sort: 'rel',
+//     info_start: '0',
 //     start: '0',
 //     filters: {
 //       departments: {
@@ -454,7 +455,7 @@ class FacetForm extends React.Component {
       }
     }
     // Handy for debugging
-    // console.log(this.state.query)
+    // console.log("this.state.query = ", this.state.query)
     // console.log(JSON.stringify(formData))
     return true
   }
@@ -502,6 +503,7 @@ class SearchPage extends PageBase {
 //     q: PropTypes.string,
 //     rows: PropTypes.string,
 //     sort: PropTypes.string,
+//     info_start: PropTypes.string,
 //     start: PropTypes.string,
 //   }).isRequired,
 //   searchResults: [ {id: "qt5jf69563", title: "Pulmonaria", abstract: "<p>A collection of ...",
@@ -533,42 +535,42 @@ class SearchPage extends PageBase {
         <ExportComp />
         <div className="c-columns">
         <aside>
-            <FacetForm formName={formName} formButton={formButton} data={facetFormData} info_count={data.info_count} query={data.query} />
-          </aside>
-          <main id="maincontent" style={{position: "relative"}}>
-            { this.state.fetchingData ? <div className="c-search-extra__loading-overlay"/> : null }
-          {data.info_count > 0 &&
-            <section className="o-columnbox1">
-              <header>
-                <h1 className="o-columnbox1__heading">{"Informational Pages ("+data.info_count+" results)"}</h1>
-              </header>
-              <InfoPagesComp info_count={data.info_count} infoResults={data.infoResults} />
-            </section>
+          <FacetForm formName={formName} formButton={formButton} data={facetFormData} info_count={data.info_count} query={data.query} />
+        </aside>
+        <main id="maincontent" style={{position: "relative"}}>
+          { this.state.fetchingData ? <div className="c-search-extra__loading-overlay"/> : null }
+        {data.info_count > 0 &&
+          <section className="o-columnbox1">
+            <header>
+              <h1 className="o-columnbox1__heading">{"Informational Pages ("+data.info_count+" results)"}</h1>
+            </header>
+            <InfoPagesComp query={data.query} info_count={data.info_count} infoResults={data.infoResults} />
+          </section>
+        }
+          <section className="o-columnbox1">
+            <header>
+              <h1 className="o-columnbox1__heading">
+                Scholarly Works ({data.count + " results" + (data.count > 10000 ? ", showing first 10000" : "")})</h1>
+            </header>
+          {(data.count > 2) &&
+            <SortPaginationComp formName={formName} formButton={formButton} query={data.query} count={data.count}/>
           }
-            <section className="o-columnbox1">
-              <header>
-                <h1 className="o-columnbox1__heading">
-                  Scholarly Works ({data.count + " results" + (data.count > 10000 ? ", showing first 10000" : "")})</h1>
-              </header>
-            {(data.count > 2) &&
-              <SortPaginationComp formName={formName} formButton={formButton} query={data.query} count={data.count}/>
+            <div>
+            {(data.count != 0 ) ? 
+              data.searchResults.map(result =>
+                <ScholWorksComp h="h2" key={result.id} result={result} />)
+            :
+              <p><br/><br/>No results found.<br/><br/></p>
             }
-              <div>
-              {(data.count != 0 ) ? 
-                data.searchResults.map(result =>
-                  <ScholWorksComp h="h2" key={result.id} result={result} />)
-              :
-                <p><br/><br/>No results found.<br/><br/></p>
-              }
-              </div>
-              <p><br/></p>
-            {(data.count > data.query.rows) &&
-              <PaginationComp formName={formName} formButton={formButton} query={data.query} count={data.count}/>
-            }
-            </section>
-          </main>
-        </div>
+            </div>
+            <p><br/></p>
+          {(data.count > data.query.rows) &&
+            <PaginationComp formName={formName} formButton={formButton} query={data.query} count={data.count}/>
+          }
+          </section>
+        </main>
       </div>
+    </div>
   )}
 }
 

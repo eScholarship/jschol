@@ -5,14 +5,14 @@ import React from 'react'
 class WizardSeriesComp extends React.Component {
   render() {
     return (
-      <div className="c-wizard__step" id="c-wizard__series">
+      <div className="c-wizard__step">
         <header>
           <h1 tabIndex="-1">eScholarship Deposit</h1>
           <a onClick = {(event)=>{
             event.preventDefault()
             this.props.goBackward()}
           } href=""><span>Go back</span></a>
-          <button><span>Close</span></button>
+          <button onClick={this.props.closeModal}><span>Close</span></button>
         </header>
         <div className="c-wizard__heading">
           [5] What [title] series would you like to deposit your work in?

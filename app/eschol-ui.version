@@ -489,3 +489,32 @@ Added files:
   app/jsx/objects/MediaFileVideoObj.jsx
  
 
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's dfa15e3eff2ff808a5a97aabd7c0316dac29ffa1, 2017-09-07 <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+Andy added all scss and image changes since last.
+As well as:
+
+  modified:   app/jsx/components/InfoPagesComp.jsx
+  modified:   app/jsx/components/MediaModalComp.jsx
+  modified:   app/jsx/components/PaginationComp.jsx
+  modified:   app/jsx/components/TabMetricsComp.jsx
+  modified:   app/jsx/components/WizardCampusComp.jsx
+  modified:   app/jsx/components/WizardComp.jsx
+  modified:   app/jsx/components/WizardLinkComp.jsx
+  modified:   app/jsx/components/WizardRoleComp.jsx
+  modified:   app/jsx/components/WizardSeriesComp.jsx
+  modified:   app/jsx/components/WizardTypeComp.jsx
+  modified:   app/jsx/components/WizardUnitComp.jsx
+  renamed:    app/jsx/objects/MediaFeatureFileObj.jsx -> app/jsx/objects/MediaFeatureDataObj.jsx
+  renamed:    app/jsx/objects/MediaFeaturePictureObj.jsx -> app/jsx/objects/MediaFeatureImageObj.jsx
+  modified:   app/jsx/objects/MediaFileAudioObj.jsx
+  modified:   app/jsx/objects/MediaFileDataObj.jsx
+  modified:   app/jsx/objects/MediaFileImageObj.jsx
+  modified:   app/jsx/objects/MediaFileVideoObj.jsx
+  modified:   app/jsx/pages/SearchPage.jsx
+
+
+
+

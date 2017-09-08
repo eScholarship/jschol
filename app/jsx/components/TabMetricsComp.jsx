@@ -175,12 +175,9 @@ class TabMetricsComp extends React.Component {
           </div>
         }
           <div className="c-tabcontent__divide2x-child">
-          {this.props.altmetrics_ok && this.props.attrs.doi ?
-            <div className='altmetric-embed' data-badge-type='donut' data-badge-details='right' data-doi={this.props.attrs.doi}></div>
-          :
-            <div className="c-well">
-              Altmetrics data currently unavailable for this item.
-            </div>
+          {this.props.altmetrics_ok && this.props.attrs.doi &&
+           [<h2 key="0" className="o-heading3">Online Attention</h2>,
+            <div key="1" className='altmetric-embed' data-badge-type='donut' data-badge-details='right' data-doi={this.props.attrs.doi}></div>]
           }
           </div>
         </div>

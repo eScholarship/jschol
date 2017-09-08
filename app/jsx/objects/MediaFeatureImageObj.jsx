@@ -1,11 +1,11 @@
-// ##### Media Feature Picture Object ##### //
+// ##### Media Feature Image Object ##### //
 
 import React from 'react'
 
-class MediaFeaturePictureObj extends React.Component {
+class MediaFeatureImageObj extends React.Component {
   render() {
     return (
-      <div className="o-mediafeature--picture">
+      <div className="o-mediafeature--image">
         <h2>New Horizons Full Trajectory - Side View</h2>
         <div className="o-mediafeature__item">
           <img src="images/temp_new-horizons-data.png" alt="New horizons full trajectory side view"/>
@@ -18,4 +18,4 @@ class MediaFeaturePictureObj extends React.Component {
   }
 }
 
-module.exports = MediaFeaturePictureObj;
+module.exports = MediaFeatureImageObj;

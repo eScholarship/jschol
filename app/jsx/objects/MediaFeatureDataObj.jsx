@@ -1,11 +1,11 @@
-// ##### Media Feature File Object ##### //
+// ##### Media Feature Data Object ##### //
 
 import React from 'react'
 
-class MediaFeatureFileObj extends React.Component {
+class MediaFeatureDataObj extends React.Component {
   render() {
     return (
-      <div className="o-mediafeature--file">
+      <div className="o-mediafeature--data">
         <h2>New Horizons Telemetry Data</h2>
         <div className="o-mediafeature__item">
           <strong>No preview available</strong>
@@ -19,4 +19,4 @@ class MediaFeatureFileObj extends React.Component {
   }
 }
 
-module.exports = MediaFeatureFileObj;
+module.exports = MediaFeatureDataObj;
