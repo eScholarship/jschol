@@ -133,7 +133,8 @@ class UnitProfileLayout extends React.Component {
     return (
       <Subscriber channel="cms">
       { cms => {
-         let disableEdit = !(cms.permissions && cms.permissions.super)
+         let disableEdit = !(cms.permissions && cms.permissions.super),
+             superCheckboxInstruction = disableEdit ? "" : " (select checkbox to display)"
          return (
          <div>
            <h3>Unit Configuration</h3>
@@ -157,7 +158,7 @@ class UnitProfileLayout extends React.Component {
                    { this.props.unit.type == 'journal' &&
                      <div>
                        <br/>
-                       <label className="c-editable-page__label" htmlFor="doajSeal">DOAJ Seal (select checkbox to display): </label>
+                       <label className="c-editable-page__label" htmlFor="doajSeal">DOAJ Seal{superCheckboxInstruction}: </label>
                        { disableEdit ?
                            data.doaj ? <span>Seal displayed</span> : <span>No seal displayed</span>
                            :
@@ -167,6 +168,12 @@ class UnitProfileLayout extends React.Component {
                        <input disabled={disableEdit} className="c-editable-page__input" id="issn" type="text" defaultValue={data.issn}/>
                        <label className="c-editable-page__label" htmlFor="eissn">E-ISSN: </label>
                        <input disabled={disableEdit} className="c-editable-page__input" id="eissn" type="text" defaultValue={data.eissn}/>
+                       <label className="c-editable-page__label" htmlFor="altmetrics_ok">Altmetric&#8482;  data{superCheckboxInstruction}: </label>
+                       { disableEdit ?
+                           data.altmetrics_ok ? <span>Altmetric data provided in articles</span> : <span>No Altmetric data provided in articles</span>
+                           :
+                           <input disabled={disableEdit} type="checkbox" id="altmetrics_ok" name="altmetrics_ok" defaultChecked={data.altmetrics_ok}/>  }
+                       <br/><br/>
                      </div>
                     }
 
