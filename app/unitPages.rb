@@ -351,6 +351,7 @@ def getUnitProfile(unit, attrs)
     profile[:doaj] = attrs['doaj']
     profile[:issn] = attrs['issn']
     profile[:eissn] = attrs['eissn']
+    profile[:altmetrics_ok] = attrs['altmetrics_ok']
     profile[:magazine_layout] = attrs['magazine_layout']
     profile[:issue_rule] = attrs['issue_rule']
   end
@@ -773,6 +774,11 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
     end 
     if params['data']['issn'] then unitAttrs['issn'] = params['data']['issn'] end
     if params['data']['eissn'] then unitAttrs['eissn'] = params['data']['eissn'] end
+    if params['data']['altmetrics_ok'] && params['data']['altmetrics_ok'] == 'on'
+      unitAttrs['altmetrics_ok'] = true
+    else
+      unitAttrs.delete('altmetrics_ok')
+    end 
 
     if params['data']['facebook'] then unitAttrs['facebook'] = params['data']['facebook'] end
     if params['data']['twitter'] then unitAttrs['twitter'] = params['data']['twitter'] end
@@ -795,7 +801,7 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
     else
       unitAttrs.delete('issue_rule')
     end
-    
+    unitAttrs.delete_if {|k,v| v.is_a? String and v.empty? }  
     unit.attrs = unitAttrs.to_json
     unit.save
   }
