@@ -57,18 +57,20 @@ class TabSupplementalComp extends React.Component {
     if (supp_files_orig) {  
       // mimeSimple = Normalized mimeType value to make filtering files easier
       for (let f of supp_files_orig) {
-        var mimeSimple = ""
-        var s = f.mimeType.split('/')
-        if ((s[0] == "text") ||
-            (s[0] == "application" && ["pdf", "msword", "postscript", "wordperfect", "pdf"].includes(s[1]))) {
-          mimeSimple = "doc"
+        let mimeSimple = "data"
+        if (f.mimeType && f.mimeType != "unknown") {
+          let s = f.mimeType.split('/')
+          if ((s[0] == "text") ||
+              (s[0] == "application" && ["pdf", "msword", "postscript", "wordperfect", "pdf"].includes(s[1]))) {
+            mimeSimple = "doc"
+          }
+          else if ((s[0] == "image" && ["jpeg", "jpg", "png", "gif"].includes(s[1]))) {
+            mimeSimple = "image"
+          }
+          else if (["music", "audio"].includes(s[0])) { mimeSimple = "audio" }
+          else if (["video"].includes(s[0])) { mimeSimple = s[0] }
+          else { mimeSimple = "data" }
         }
-        else if ((s[0] == "image" && ["jpeg", "jpg", "png", "gif"].includes(s[1]))) {
-          mimeSimple = "image"
-        }
-        else if (["music", "audio"].includes(s[0])) { mimeSimple = "audio" }
-        else if (["video"].includes(s[0])) { mimeSimple = s[0] }
-        else { mimeSimple = "data" }
         f['mimeSimple'] = mimeSimple
         supp_files.push(f) 
       }
