@@ -16,6 +16,10 @@ normalized/
 prefilterDirs.txt
 public/css/
 public/js/
+splash/downloaded/
+splash/*.class
+splash/lib/
+splash/test/
 test.db
 node_modules
 .DS_Store
