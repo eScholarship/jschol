@@ -2,8 +2,9 @@
 
 import React from 'react'
 import PropTypes from 'prop-types'
-import { Link } from 'react-router'
 import CampusSelectorComp from '../components/CampusSelectorComp.jsx'
+import WizardComp from './WizardComp.jsx'
+import { Link } from 'react-router'
 import NotYetLink from '../components/NotYetLink.jsx'
 
 class SubheaderComp extends React.Component {
@@ -55,11 +56,13 @@ class SubheaderComp extends React.Component {
       :
         p.unit.type == 'campus' ?
         <div className="c-subheader__sidebar">
-          <NotYetLink className="o-button__3" element="button">Deposit</NotYetLink>
+          <button className="o-button__3">Deposit</button>
+          {/* <WizardComp /> */}
         </div>
       :
         <div className="c-subheader__sidebar">
-          <NotYetLink className="o-button__3" element="button">Deposit</NotYetLink>
+          <button className="o-button__3">Deposit</button>
+          {/* <WizardComp /> */}
           <NotYetLink className="o-button__3" element="button">Manage<span className="c-subheader__button-fragment">Submissions</span></NotYetLink>
         </div>
       }
