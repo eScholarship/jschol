@@ -780,6 +780,11 @@ def getCampusesAsMenu(topItem="eScholarship at...")
   return campuses.unshift({:id => "", :name=>topItem})
 end
 
+def getCampusId(unit)
+  r = UnitHier.where(unit_id: unit.id).where(ancestor_unit: $activeCampuses.keys).first
+  return (unit.type=='campus') ? unit.id : r ? r.ancestor_unit : 'root'
+end
+
 # Properly target links in HTML blob
 def getItemHtml(content_type, id)
   return false if content_type != "text/html"

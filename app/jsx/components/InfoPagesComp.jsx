@@ -16,6 +16,7 @@ class ResultComp extends React.Component {
   static propTypes = {
     result: PropTypes.shape({
       isPage: PropTypes.bool.isRequired,
+      topmost_name: PropTypes.string,             // Could be null
       ancestor_id: PropTypes.string,              // Parent Unit
       ancestor_name: PropTypes.string,
       target_id: PropTypes.string.isRequired,     // Unit or page
@@ -34,7 +35,8 @@ class ResultComp extends React.Component {
     return (
       <div className="c-infopages__item">
         <h2>
-          <b>UC Berkeley</b>
+        {r.topmost_name &&
+          <b>{r.topmost_name}</b> }
         {r.ancestor_id && r.ancestor_name &&
           <Link to={"/uc/"+r.ancestor_id}>{r.ancestor_name}</Link> }
           <Link to={"/uc/"+target_path} className="c-infopages__title">{r.target_name}</Link>
