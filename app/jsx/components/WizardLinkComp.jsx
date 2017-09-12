@@ -4,7 +4,6 @@ import React from 'react'
 
 class WizardLinkComp extends React.Component {
   render() {
-    console.log(this.props.mode)
     return (
       <div className="c-wizard__step">
         <header>
