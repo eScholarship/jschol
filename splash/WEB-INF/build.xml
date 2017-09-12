@@ -1,0 +1,40 @@
+<project name="XTF" default="compile" basedir=".">
+
+  <description>
+      eScholarship splash page generator
+  </description>
+
+  <!-- set global properties for this build -->
+  <property name="src"     location="src"/>
+  <property name="classes" location="classes"/>
+  <property name="libs"    value="lib/itext7-io-7.0.4.jar:lib/itext7-kernel-7.0.4.jar:lib/itext7-forms-7.0.4.jar:lib/itext7-layout-7.0.4.jar:lib/log4j-over-slf4j-1.7.25.jar:lib/slf4j-api-1.7.25.jar:lib/log4j-slf4j-impl-2.9.0.jar:lib/log4j-api-2.9.0.jar:lib/log4j-core-2.9.0.jar:lib/bcprov-jdk15on-158.jar:/usr/share/tomcat8/lib/tomcat8-servlet-3.1-api.jar
+"/>
+
+  <target name="init">
+    <!-- Create the time stamp -->
+    <tstamp/>
+    <!-- Create the build directory structure used by compile -->
+    <mkdir dir="${classes}"/>
+  </target>
+
+  <!-- ================================================== compile -->
+  <target name="compile" depends="init" description="compile the source " >
+    <!-- Compile the java code from ${src} into ${classes} -->
+    <javac debug="true"
+           classpath="${libs}"
+           encoding="UTF-8"
+           excludes="**/.*/**/*"
+           destdir="${classes}"
+           includeantruntime="false">
+      <src path="${src}"/>
+    </javac>
+  </target>
+
+  <!-- ================================================== clean -->
+  <target name="clean" description="clean up" >
+    <!-- Delete the ${classes} and ${dist} directory trees -->
+    <delete dir="${classes}" quiet="true"/>
+    <delete dir="${dist}" quiet="true"/>
+    <delete dir="${doc}" quiet="true"/>
+  </target>
+</project>

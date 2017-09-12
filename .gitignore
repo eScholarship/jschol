@@ -17,8 +17,8 @@ prefilterDirs.txt
 public/css/
 public/js/
 splash/downloaded/
-splash/*.class
-splash/lib/
+splash/WEB-INF/classes/
+splash/WEB-INF/lib/
 splash/test/
 test.db
 node_modules

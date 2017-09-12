@@ -1,18 +1,70 @@
 import com.itextpdf.forms.PdfPageFormCopier;
-import com.itextpdf.kernel.pdf.EncryptionConstants;
-import com.itextpdf.kernel.pdf.PdfDocument;
-import com.itextpdf.kernel.pdf.PdfReader;
-import com.itextpdf.kernel.pdf.PdfWriter;
-import com.itextpdf.kernel.pdf.ReaderProperties;
-import com.itextpdf.kernel.pdf.WriterProperties;
 import com.itextpdf.kernel.crypto.BadPasswordException;
+import com.itextpdf.kernel.geom.PageSize;
+import com.itextpdf.kernel.geom.Rectangle;
+import com.itextpdf.kernel.font.*;
+import com.itextpdf.kernel.pdf.*;
+import com.itextpdf.io.font.FontConstants;
+import com.itextpdf.layout.Document;
+import com.itextpdf.layout.element.Paragraph;
  
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.UUID;
- 
-public class SplashGen {
-    public static void main(String[] args) throws IOException {
+import javax.servlet.*;
+import javax.servlet.http.*;
+
+public class SplashGen extends HttpServlet
+{
+    public void doGet(HttpServletRequest request, HttpServletResponse response)
+        throws ServletException, IOException
+    {
+        // Set response content type
+        response.setContentType("text/html");
+
+        // Actual logic goes here.
+        PrintWriter out = response.getWriter();
+        String message = "Hi from splash.";
+        out.println("<h1>" + message + "</h1>");
+    }
+
+    private static void createSplash(Rectangle pageSize)
+        throws IOException
+    {
+        PdfWriter writer = new PdfWriter(new File("splashTmp.pdf"));
+        PdfDocument pdf = new PdfDocument(writer);
+        pdf.setDefaultPageSize(new PageSize(pageSize));
+        pdf.setTagged();
+        pdf.getCatalog().setLang(new PdfString("en-US"));
+        pdf.getCatalog().setViewerPreferences(new PdfViewerPreferences().setDisplayDocTitle(true));
+        PdfDocumentInfo info = pdf.getDocumentInfo();
+        info.setTitle("eScholarship splash page");
+
+        Document document = new Document(pdf);
+
+        document.setMargins(50, 50, 50, 50);
+
+        PdfFont normalFont = PdfFontFactory.createFont(FontConstants.HELVETICA);
+        PdfFont boldFont = PdfFontFactory.createFont(FontConstants.HELVETICA_BOLD);
+
+        document.setFont(normalFont);
+
+        Paragraph p = new Paragraph("UC San Diego");
+        p.setFont(boldFont).setFontSize(16);
+        document.add(p);
+
+        p = new Paragraph("Previously Published Works");
+        p.setFont(boldFont).setFontSize(14);
+        document.add(p);
+
+        document.add(new Paragraph("Hello World!"));
+        document.close();
+    }
+
+    public static void main(String[] args)
+        throws IOException
+    {
         String coverPath = args[0];
         String resourcePath = args[1];
         String destPath = args[2];
@@ -64,7 +116,9 @@ public class SplashGen {
                 reEncrypt = true;
             }
 
-            PdfReader reader2 = new PdfReader(coverPath);
+            createSplash(pdfDoc.getPage(1).getPageSize());
+
+            PdfReader reader2 = new PdfReader("splashTmp.pdf");
             cover = new PdfDocument(reader2);
             cover.copyPagesTo(1, 1, pdfDoc, 1, new PdfPageFormCopier());
         }
