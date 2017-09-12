@@ -9,8 +9,10 @@ class PaginationComp extends React.Component {
       q: PropTypes.string,
       rows: PropTypes.string,
       sort: PropTypes.string,
+      info_start: PropTypes.string,
       start: PropTypes.string
-    }).isRequired
+    }).isRequired,
+    is_info: PropTypes.bool
   }
 
   clampedCount() {
@@ -18,123 +20,137 @@ class PaginationComp extends React.Component {
     return Math.min(this.props.count, 9999)
   }
 
-  next = event=>{
-    if (parseInt(this.props.query.start) + parseInt(this.props.query.rows) <= this.clampedCount()) {
-      var newStart = parseInt(this.props.query.start) + parseInt(this.props.query.rows);
-      $('[form='+this.props.formName+'][name=start]').val(newStart);
-      $('#'+this.props.formButton).click();
-    }
+  next = (event, rows, start, start_type) =>{
     event.preventDefault()
+    if (parseInt(start) + parseInt(rows) <= this.clampedCount()) {
+      let newStart = parseInt(start) + parseInt(rows)
+      $('[form='+this.props.formName+'][name='+start_type+']').val(newStart)
+      $('#'+this.props.formButton).click()
+    }
   }
 
-  previous = event=>{
-    if (parseInt(this.props.query.start) >= parseInt(this.props.query.rows)) {
-      var newStart = parseInt(this.props.query.start) - parseInt(this.props.query.rows);
-      $('[form='+this.props.formName+'][name=start]').val(newStart);
-      $('#'+this.props.formButton).click();
-    }
+  previous = (event, rows, start, start_type) =>{
     event.preventDefault()
+    if (parseInt(start) >= parseInt(rows)) {
+      let newStart = parseInt(start) - parseInt(rows)
+      $('[form='+this.props.formName+'][name='+start_type+']').val(newStart)
+      $('#'+this.props.formButton).click()
+    }
   }
 
-  first = event=>{
-    if (parseInt(this.props.query.start) > 0) {
-      $('[form='+this.props.formName+'][name=start]').val(0);
-      $('#'+this.props.formButton).click();
-    }
+  first = (event, start, start_type) =>{
     event.preventDefault()
+    if (parseInt(start) > 0) {
+      $('[form='+this.props.formName+'][name='+start_type+']').val(0)
+      $('#'+this.props.formButton).click()
+    }
   }
 
-  last = event=>{
-    var newStart = Math.floor(this.clampedCount() / this.props.query.rows);
-    newStart = newStart * this.props.query.rows;
-    if (newStart != this.props.query.start) {
-      $('[form='+this.props.formName+'][name=start]').val(newStart);
-      $('#'+this.props.formButton).click();
-    }
+  last = (event, rows, start, start_type) =>{
     event.preventDefault()
+    let floor = Math.floor(this.clampedCount() / rows),
+        newStart = floor * rows
+    newStart = (this.clampedCount() % rows > 0) ? newStart : newStart - rows
+    if (newStart != start) {
+      $('[form='+this.props.formName+'][name='+start_type+']').val(newStart)
+      $('#'+this.props.formButton).click()
+    }
   }
 
-  page = event=>{
-    var newStart = (event.target.text - 1) * this.props.query.rows;
-    if (newStart != this.props.query.start) {
-      $('[form='+this.props.formName+'][name=start]').val(newStart);
-      $('#'+this.props.formButton).click();
-    }
+  page = (event, rows, start, start_type) =>{
     event.preventDefault()
+    let newStart = (event.target.text - 1) * rows
+    if (newStart != start) {
+      $('[form='+this.props.formName+'][name='+start_type+']').val(newStart)
+      $('#'+this.props.formButton).click()
+    }
   }
   
-  render() {
-    var page = Math.ceil(this.props.query.start / this.props.query.rows) + 1;
-    var pages = Math.ceil(this.clampedCount() / this.props.query.rows);
-    var displayedPages = []
+  renderPagination() {
+    let p = this.props
+    let [rows, start, start_type] = p.is_info ? [12, p.query.info_start, "info_start"] : [p.query.rows, p.query.start, "start"]
+    let page = Math.ceil(start / rows) + 1
+    let pages = Math.ceil(this.clampedCount() / rows)
+    let displayedPages = []
 
     if (pages <= 2) {
-      for (var i=1; i<=pages; i++) {
+      for (let i=1; i<=pages; i++) {
         displayedPages.push({num: i, className: i == page ? "c-pagination__item--active" : "c-pagination__item"});
       }
       return (
       <div className="c-pagination">
-        <a href="" className="c-pagination__prevnext" onClick={this.previous}>Previous</a>
+        <a href="" className="c-pagination__prevnext" onClick={ event => this.previous(event, rows, start, start_type) }>Previous</a>
         { displayedPages.map(page => {
-          return (<a href="" key={page.num} className={page.className} onClick={this.page}>{page.num}</a>)
+          return (<a href="" key={page.num} className={page.className} onClick={ event => this.page(event, rows, start, start_type) }>{page.num}</a>)
         }) }
-        <a href="" className="c-pagination__prevnext" onClick={this.next}>Next</a>
+        <a href="" className="c-pagination__prevnext" onClick={ event => this.next(event, rows, start, start_type) }>Next</a>
       </div>
       )
     }
 
     if (page <= 2) {
-      for (var i=1; i<=3; i++) {
+      for (let i=1; i<=3; i++) {
         displayedPages.push({num: i, className: i == page ? "c-pagination__item--active" : "c-pagination__item"});
       }
       return (
         <div className="c-pagination">
-          <a href="" className="c-pagination__prevnext" onClick={this.previous}>Previous</a>
+          <a href="" className="c-pagination__prevnext" onClick={ event => this.previous(event, rows, start, start_type) }>Previous</a>
           { displayedPages.map(page => {
-            return (<a href="" key={page.num} className={page.className} onClick={this.page}>{page.num}</a>)
+            return (<a href="" key={page.num} className={page.className} onClick={ event => this.page(event, rows, start, start_type) }>{page.num}</a>)
           }) }
           { (pages > 3) && 
             [<span key="0" className="c-pagination__ellipses">&hellip;</span>,
-             <a key="1" href="" className="c-pagination__item" onClick={this.last}>{pages}</a>]
+             <a key="1" href="" className="c-pagination__item" onClick={ event => this.last(event, rows, start, start_type) }>{pages}</a>]
           }
-          <a href="" className="c-pagination__prevnext" onClick={this.next}>Next</a>
+          <a href="" className="c-pagination__prevnext" onClick={ event => this.next(event, rows, start, start_type) }>Next</a>
         </div>
       )
     }
     else if (page > pages-2) {
-      for (var i=pages-2; i<=pages; i++) {
+      for (let i=pages-2; i<=pages; i++) {
         displayedPages.push({num: i, className: i == page ? "c-pagination__item--active" : "c-pagination__item"});
       }
       return (
         <div className="c-pagination">
-          <a href="" className="c-pagination__prevnext" onClick={this.previous}>Previous</a>
+          <a href="" className="c-pagination__prevnext" onClick={ event => this.previous(event, rows, start, start_type) }>Previous</a>
           { (pages > 3) && 
-            [<a key="0" href="" className="c-pagination__item" onClick={this.first}>1</a>,
+            [<a key="0" href="" className="c-pagination__item" onClick={ event => this.first(event, start, start_type) }>1</a>,
              <span key="1" className="c-pagination__ellipses">&hellip;</span>]
           }
           { displayedPages.map(page => {
-            return (<a href="" key={page.num} className={page.className} onClick={this.page}>{page.num}</a>)
+            return (<a href="" key={page.num} className={page.className} onClick={ event => this.page(event, rows, start, start_type) }>{page.num}</a>)
           }) }
-          <a href="" className="c-pagination__prevnext" onClick={this.next}>Next</a>
+          <a href="" className="c-pagination__prevnext" onClick={ event => this.next(event, rows, start, start_type) }>Next</a>
         </div>
       )
     }
     else {
       return (
         <div className="c-pagination">
-          <a href="" className="c-pagination__prevnext" onClick={this.previous}>Previous</a>
-          <a href="" className="c-pagination__item" onClick={this.first}>1</a>
+          <a href="" className="c-pagination__prevnext" onClick={ event => this.previous(event, rows, start, start_type) }>Previous</a>
+          <a href="" className="c-pagination__item" onClick={ event => this.first(event, start, start_type) }>1</a>
           { (page > 3) ? <span className="c-pagination__ellipses">&hellip;</span> : null }
-          <a href="" className="c-pagination__item" onClick={this.previous}>{page - 1}</a>
-          <a href="" className="c-pagination__item c-pagination__item--active" onClick={this.page}>{page}</a>
-          <a href="" className="c-pagination__item" onClick={this.next}>{page + 1}</a>
+          <a href="" className="c-pagination__item" onClick={ event => this.previous(event, rows, start, start_type) }>{page - 1}</a>
+          <a href="" className="c-pagination__item c-pagination__item--active" onClick={ event => this.page(event, rows, start, start_type) }>{page}</a>
+          <a href="" className="c-pagination__item" onClick={ event => this.next(event, rows, start, start_type) }>{page + 1}</a>
           { (page < pages-2) ? <span className="c-pagination__ellipses">&hellip;</span> : null }
-          <a href="" className="c-pagination__item" onClick={this.last}>{pages}</a>
-          <a href="" className="c-pagination__prevnext" onClick={this.next}>Next</a>
+          <a href="" className="c-pagination__item" onClick={ event => this.last(event, rows, start, start_type) }>{pages}</a>
+          <a href="" className="c-pagination__prevnext" onClick={ event => this.next(event, rows, start, start_type) }>Next</a>
         </div>
       )
     }
   }
+
+  render() {
+    return (
+      <div>
+      {this.props.is_info &&
+        <input type="hidden" name="info_start" form={this.props.formName} value={this.props.query.info_start} /> }
+        {this.renderPagination()}
+      </div>
+    )
+  }
+
 }
 
 module.exports = PaginationComp;

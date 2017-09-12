@@ -13,15 +13,21 @@ class WizardComp extends React.Component {
 
   constructor(props){
     super(props)
-    this.state = {wizardStep: 1, wizardDir: 'fwd', setFocus: false, showModal: true}
-
-    this.handleOpenModal = this.handleOpenModal.bind(this);
-    this.handleCloseModal = this.handleCloseModal.bind(this);
+    this.state = {wizardStep: this.props.step, wizardDir: 'fwd', showModal: this.props.showModal}
   }
 
-  goForward = (step) =>{this.setState({wizardStep: step, wizardDir: 'fwd', prevStep: this.state.wizardStep})}
+  componentWillReceiveProps(nextProps) {
+    if (!_.isEqual(this.props.showModal, nextProps.showModal))
+      this.setState({showModal: nextProps.showModal})
+  }
+
+  goForward = (step, mode) =>{
+    setTimeout(()=>this.tabFocus(), 0)
+    this.setState({mode: mode, wizardStep: step, wizardDir: 'fwd', prevStep: this.state.wizardStep})
+  }
 
   goBackward = ()=>{
+    setTimeout(()=>this.tabFocus(), 0)
     if (this.state.prevStep)
       this.setState({wizardStep: this.state.prevStep, wizardDir: 'bkw', prevStep: null})
     else
@@ -29,24 +35,23 @@ class WizardComp extends React.Component {
   }
 
   tabFocus = ()=> {
-    // focus method:
-    // document.querySelector('.c-wizard__step h1').focus()
-    document.querySelector(".c-wizard__step").style.backgroundColor = 'red';
-    this.setState({setFocus: true})
+    document.querySelector('.c-wizard__current-fwd h1, .c-wizard__current-bkw h1').focus()
   }
 
-  handleOpenModal () {
-    this.setState({ showModal: true });
+  handleOpenModal = ()=> {
+    this.setState({ showModal: true })
   }
   
-  handleCloseModal () {
-    this.setState({ showModal: false });
-  }
+  handleCloseModal = ()=> {
+    this.setState({ showModal: false })
+    this.props.onCancel()
+  }                 
 
   render() {
     return (
       <div className="c-modal">
         <ReactModal 
+          parentSelector={this.props.parentSelector}
           isOpen={this.state.showModal}
           contentLabel="onRequestClose Example"
           onRequestClose={this.handleCloseModal}
@@ -55,22 +60,31 @@ class WizardComp extends React.Component {
         >
           <div className="c-wizard">
             <div className={this.state.wizardStep === 1 ? `c-wizard__current-${this.state.wizardDir}` : `c-wizard__standby-${this.state.wizardDir}`} aria-hidden={this.state.wizardStep === 1 ? null : true}>
-              <WizardRoleComp goForward = {this.goForward} tabFocus />
+
+            {/* [1] How are you affiliated with [campus]? */}
+              <WizardRoleComp goForward = {this.goForward} closeModal={this.handleCloseModal}
+                              campusName={this.props.campusName} />
             </div>
             <div className={this.state.wizardStep === 2 ? `c-wizard__current-${this.state.wizardDir}` : `c-wizard__standby-${this.state.wizardDir}`} aria-hidden={this.state.wizardStep === 2 ? null : true}>
-              <WizardCampusComp goForward = {this.goForward} goBackward = {this.goBackward} tabFocus />
+
+            {/* [2] Which UC Campus are you affiliated with? */}
+              <WizardCampusComp goForward = {this.goForward} goBackward = {this.goBackward} closeModal={this.handleCloseModal}
+                              campusName={this.props.campusName} />
             </div>
             <div className={this.state.wizardStep === 3 ? `c-wizard__current-${this.state.wizardDir}` : `c-wizard__standby-${this.state.wizardDir}`} aria-hidden={this.state.wizardStep === 3 ? null : true}>
-              <WizardTypeComp goForward = {this.goForward} goBackward = {this.goBackward} tabFocus />
+              <WizardTypeComp goForward = {this.goForward} goBackward = {this.goBackward} closeModal={this.handleCloseModal} />
             </div>
             <div className={this.state.wizardStep === 4 ? `c-wizard__current-${this.state.wizardDir}` : `c-wizard__standby-${this.state.wizardDir}`} aria-hidden={this.state.wizardStep === 4 ? null : true}>
-              <WizardUnitComp goForward = {this.goForward} goBackward = {this.goBackward} tabFocus />
+              <WizardUnitComp goForward = {this.goForward} goBackward = {this.goBackward} closeModal={this.handleCloseModal} />
             </div>
             <div className={this.state.wizardStep === 5 ? `c-wizard__current-${this.state.wizardDir}` : `c-wizard__standby-${this.state.wizardDir}`} aria-hidden={this.state.wizardStep === 5 ? null : true}>
-              <WizardSeriesComp goForward = {this.goForward} goBackward = {this.goBackward} tabFocus />
+              <WizardSeriesComp goForward = {this.goForward} goBackward = {this.goBackward} closeModal={this.handleCloseModal} />
             </div>
             <div className={this.state.wizardStep === 6 ? `c-wizard__current-${this.state.wizardDir}` : `c-wizard__standby-${this.state.wizardDir}`} aria-hidden={this.state.wizardStep === 6 ? null : true}>
-              <WizardLinkComp goBackward = {this.goBackward} tabFocus />
+
+            {/* [6] (LinkModal: Screens vary by mode) */}
+              <WizardLinkComp goBackward = {this.goBackward} closeModal={this.handleCloseModal}
+                              mode = {this.state.mode} />
             </div>
           </div>
         </ReactModal>

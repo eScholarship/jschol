@@ -97,6 +97,19 @@ $modal-footer-height: 3.5em;
 
 }
 
+.c-modal__header-close {
+  @extend %o-button__9;
+  margin-left: auto;
+  background-image: inline('../images/icon_close-black.svg');
+  background-size: 1em;
+
+  span {
+    @extend %hide;
+  }
+
+}
+
+// rename to '.c-modal__footer-close' after adding header-close buttons to all modals:
 .c-modal__button-close {
   @extend %o-button__2;
   margin-right: auto;

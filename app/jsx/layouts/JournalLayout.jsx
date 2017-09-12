@@ -163,12 +163,14 @@ class JournalLayout extends React.Component {
           }
           </main>
           <aside>
+          {(data.doaj || (data.issue && data.issue.rights) || data.issn || data.eissn) && 
             <section className="o-columnbox1">
               <header>
                 <h2>Journal Information</h2>
               </header>
               <JournalInfoComp doaj={data.doaj} rights={data.issue && data.issue.rights} issn={data.issn} eissn={data.eissn} />
             </section>
+          }
             {this.props.sidebar}
           </aside>
         </div>

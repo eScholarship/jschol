@@ -44,20 +44,20 @@ $medialist-item-length: 11em;
 
 .c-medialist__other {
   @extend %c-medialist__item;
-  background-image: inline('../images/icon_file-o-black.svg');
+  background-image: inline('../images/icon_file-black.svg');
 }
 
 .c-medialist__pdf {
   @extend %c-medialist__item;
-  background-image: inline('../images/icon_pdf-black.svg');
+  background-image: inline('../images/icon_custom-pdf-black.svg');
 }
 
 .c-medialist__video {
   @extend %c-medialist__item;
-  background-image: inline('../images/icon_play-circle-o-black.svg');
+  background-image: inline('../images/icon_video-camera-black.svg');
 }
 
 .c-medialist__zip {
   @extend %c-medialist__item;
-  background-image: inline('../images/icon_file-archive-o-black.svg');
+  background-image: inline('../images/icon_archive-black.svg');
 }

@@ -136,7 +136,7 @@ class TabMetricsComp extends React.Component {
       hits: PropTypes.number,
       downloads: PropTypes.number
     })).isRequired,
-    metric_badge: PropTypes.bool.isRequired,
+    altmetrics_ok: PropTypes.bool,
     attrs: PropTypes.shape({
       doi: PropTypes.string
     })
@@ -156,8 +156,13 @@ class TabMetricsComp extends React.Component {
     return (
       <div className="c-tabcontent">
         <h1 className="c-tabcontent__main-heading" tabIndex="-1">Metrics</h1>
+      {!this.props.altmetrics_ok && (!this.props.usage || (this.props.usage && this.props.usage.length == 0)) ?
+        <div className="c-well">
+          No usage data currently found for this item.
+        </div>
+      :
         <div className="c-tabcontent__divide2x">
-        {this.props.usage.length > 0 ?
+        {this.props.usage && this.props.usage.length > 0 ?
           <div className="c-tabcontent__divide2x-child">
             <TotalUsage usage={this.props.usage} />
             <MonthlyUsage usage={this.props.usage} />
@@ -170,15 +175,13 @@ class TabMetricsComp extends React.Component {
           </div>
         }
           <div className="c-tabcontent__divide2x-child">
-          {this.props.metric_badge && this.props.attrs.doi ?
-            <div className='altmetric-embed' data-badge-type='donut' data-badge-details='right' data-doi={this.props.attrs.doi}></div>
-          :
-            <div className="c-well">
-              Altmetrics data currently unavailable for this item.
-            </div>
+          {this.props.altmetrics_ok && this.props.attrs.doi &&
+           [<h2 key="0" className="o-heading3">Online Attention</h2>,
+            <div key="1" className='altmetric-embed' data-badge-type='donut' data-badge-details='right' data-doi={this.props.attrs.doi}></div>]
           }
           </div>
         </div>
+      }
       </div>
     )
   }

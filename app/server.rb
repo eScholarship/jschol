@@ -88,7 +88,7 @@ $s3Bucket = Aws::S3::Bucket.new($s3Config.bucket, client: $s3Client)
 # Internal modules to implement specific pages and functionality
 require_relative 'dbCache'
 require_relative 'hierarchy'
-require_relative 'listItemViews'
+require_relative 'listViews'
 require_relative 'searchApi'
 require_relative 'queueWithTimeout'
 require_relative 'unitPages'
@@ -642,14 +642,15 @@ get "/api/item/:shortArk" do |shortArk|
                               : nil,
         :unit => unit ? unit.values.reject { |k,v| k==:attrs } : nil,
         :usage => ItemCount.where(item_id: id).order(:month).to_hash(:month).map { |m,v| { "month"=>m, "hits"=>v.hits, "downloads"=>v.downloads }},
-        :metric_badge => false
+        :altmetrics_ok => false
       }
 
       if unit
         if unit.type != 'journal'
           body[:header] = getUnitHeader(unit)
-          body[:metric_badge] = true
+          body[:altmetrics_ok] = true
         else 
+          body[:altmetrics_ok] = JSON.parse(unit[:attrs])['altmetrics_ok']
           issue_id = Item.join(:sections, :id => :section).filter(Sequel.qualify("items", "id") => id).map(:issue_id)[0]
           unit_id, volume, issue = Section.join(:issues, :id => issue_id).map([:unit_id, :volume, :issue])[0]
           body[:header] = getUnitHeader(unit, nil, {'unit_id': unit_id, 'volume': volume, 'issue': issue})
@@ -777,6 +778,11 @@ def getCampusesAsMenu(topItem="eScholarship at...")
   campuses = []
   $activeCampuses.each do |id, c| campuses << {id: c.id, name: c.name} end
   return campuses.unshift({:id => "", :name=>topItem})
+end
+
+def getCampusId(unit)
+  r = UnitHier.where(unit_id: unit.id).where(ancestor_unit: $activeCampuses.keys).first
+  return (unit.type=='campus') ? unit.id : r ? r.ancestor_unit : 'root'
 end
 
 # Properly target links in HTML blob

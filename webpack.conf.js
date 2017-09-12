@@ -1,6 +1,12 @@
 const webpack = require("webpack");
 const _ = require('lodash');
 const ManifestPlugin = require('webpack-manifest-plugin');
+const CleanWebpackPlugin = require('clean-webpack-plugin');
+
+// the path(s) that should be cleaned
+var pathsToClean = [
+  'app/js/*-bundle-*'
+]
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // read package.json and get dependencies' package ids
@@ -25,6 +31,7 @@ module.exports = {
     publicPath: "/js/"
   },
   plugins: [
+    new CleanWebpackPlugin(pathsToClean),
     // Chunk up our vendor libraries
     new webpack.optimize.CommonsChunkPlugin("lib"),
     // Provides jQuery globally to all browser modules, so we can use jquery plugins like Trumbowyg
