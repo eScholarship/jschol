@@ -2,6 +2,7 @@
 
 import React from 'react'
 import PropTypes from 'prop-types'
+import $ from 'jquery'
 import CampusSelectorComp from '../components/CampusSelectorComp.jsx'
 import WizardComp from './WizardComp.jsx'
 import { Link } from 'react-router'
@@ -24,6 +25,12 @@ class SubheaderComp extends React.Component {
       type: PropTypes.string.isRequired,
       extent: PropTypes.object
     }).isRequired,
+  }
+
+  state = { modalOpen: false }
+
+  closeWizardModal = e => {
+    this.setState({modalOpen:false})
   }
 
   render() {
@@ -55,14 +62,24 @@ class SubheaderComp extends React.Component {
         </div>
       :
         p.unit.type == 'campus' ?
-        <div className="c-subheader__sidebar">
-          <button className="o-button__3">Deposit</button>
-          {/* <WizardComp /> */}
+        <div id="wizardModalBase" className="c-subheader__sidebar">
+          <button className="o-button__3" onClick={(event)=>{
+                                               this.setState({modalOpen:true})
+                                               event.preventDefault()} }>Deposit</button>
+          <WizardComp showModal={this.state.modalOpen}
+                      parentSelector={()=>$('#wizardModalBase')[0]}
+                      onCancel={e=>this.closeWizardModal(e)}
+                      step={1} campusID={p.campusID} campusName={p.campusName} showModal={this.state.modalOpen} />
         </div>
       :
-        <div className="c-subheader__sidebar">
-          <button className="o-button__3">Deposit</button>
-          {/* <WizardComp /> */}
+        <div id="wizardModalBase" className="c-subheader__sidebar">
+          <button className="o-button__3" onClick={(event)=>{
+                                               this.setState({modalOpen:true})
+                                               event.preventDefault()} }>Deposit</button>
+          <WizardComp showModal={this.state.modalOpen}
+                      parentSelector={()=>$('#wizardModalBase')[0]}
+                      onCancel={e=>this.closeWizardModal(e)}
+                      step={1} campusID={p.campusID} campusName={p.campusName} showModal={this.state.modalOpen} />
           <NotYetLink className="o-button__3" element="button">Manage<span className="c-subheader__button-fragment">Submissions</span></NotYetLink>
         </div>
       }
