@@ -956,12 +956,12 @@ def parseDate(str)
       text = "#{text}-01"
     end
     ret = Date.strptime(text, "%Y-%m-%d")  # throws exception on bad date
-    ret.year > 1000 && ret.year < 3000 and return ret.iso8601
+    ret.year > 1000 && ret.year < 4000 and return ret.iso8601
   rescue
     begin
       text.sub! /-02-(29|30|31)$/, "-02-28" # Try to fix some crazy dates
       ret = Date.strptime(text, "%Y-%m-%d")  # throws exception on bad date
-      ret.year > 1000 && ret.year < 3000 and return ret.iso8601
+      ret.year > 1000 && ret.year < 4000 and return ret.iso8601
     rescue
       # pass
     end
@@ -1409,8 +1409,8 @@ def parseUCIngest(itemID, inMeta, fileType)
   attrs = {}
   attrs[:suppress_content] = shouldSuppressContent(itemID, inMeta)
   attrs[:is_peer_reviewed] = inMeta[:peerReview] == "yes"
-  attrs[:is_undergrad] = inMeta[:undergrad] == "yes"
-  attrs[:embargo_date] = inMeta[:embargoDate]
+  attrs[:is_undergrad] = inMeta[:underGrad] == "yes"
+  attrs[:embargo_date] = parseDate(inMeta[:embargoDate])
   attrs[:publisher] = inMeta.text_at("./publisher")
   attrs[:orig_citation] = inMeta.text_at("./originalCitation")
   attrs[:custom_citation] = inMeta.text_at("./customCitation")
@@ -1419,6 +1419,7 @@ def parseUCIngest(itemID, inMeta, fileType)
   attrs[:buy_link] = inMeta.text_at("./context/buyLink")
   attrs[:language] = inMeta.text_at("./context/language")
   attrs[:doi] = inMeta.text_at("./doi")
+  attrs[:isbn] = inMeta.text_at("./context/isbn")
 
   # Normalize language codes
   attrs[:language] and attrs[:language] = attrs[:language].sub("english", "en").sub("german", "de").
@@ -1586,46 +1587,42 @@ end
 
 ###################################################################################################
 def processWithNormalizer(fileType, itemID, metaPath, nailgun)
-  begin
-    normalizer = case fileType
-      when "ETD"
-        "/apps/eschol/erep/xtf/normalization/etd/normalize_etd.xsl"
-      when "BioMed"
-        "/apps/eschol/erep/xtf/normalization/biomed/normalize_biomed.xsl"
-      when "Springer"
-        "/apps/eschol/erep/xtf/normalization/springer/normalize_springer.xsl"
-      else
-        raise("Unknown normalization type")
-    end
-
-    # Run the raw (ProQuest or METS) data through a normalization stylesheet using Saxon via nailgun
-    normText = nailgun.call("net.sf.saxon.Transform",
-      ["-r", "org.apache.xml.resolver.tools.CatalogResolver",
-       "-x", "org.apache.xml.resolver.tools.ResolvingXMLReader",
-       "-y", "org.apache.xml.resolver.tools.ResolvingXMLReader",
-       metaPath, normalizer])
-
-    # Write it out to a file locally (useful for debugging and validation)
-    FileUtils.mkdir_p(arkToFile(itemID, "", "normalized")) # store in local dir
-    normFile = arkToFile(itemID, "base.norm.xml", "normalized")
-    normXML = stringToXML(normText)
-    File.open(normFile, "w") { |io| normXML.write_xml_to(io, indent:3) }
-
-    # Validate using jing.
-    schemaPath = "/apps/eschol/erep/xtf/schema/uci_schema.rnc"
-    validationProbs = nailgun.call("com.thaiopensource.relaxng.util.Driver", ["-c", schemaPath, normFile], true)
-    if !validationProbs.empty?
-      validationProbs.split("\n").each { |line|
-        next if line =~ /missing required element "(subject|mimeType)"/ # we don't care
-        puts line.sub(/.*norm.xml:/, "")
-      }
-    end
-
-    # And parse the data
-    return parseUCIngest(itemID, normXML.root, fileType)
-  rescue Exception => e
-    puts "Error processing normalized data: #{e} at #{e.backtrace.join("; ")}"
+  normalizer = case fileType
+    when "ETD"
+      "/apps/eschol/erep/xtf/normalization/etd/normalize_etd.xsl"
+    when "BioMed"
+      "/apps/eschol/erep/xtf/normalization/biomed/normalize_biomed.xsl"
+    when "Springer"
+      "/apps/eschol/erep/xtf/normalization/springer/normalize_springer.xsl"
+    else
+      raise("Unknown normalization type")
   end
+
+  # Run the raw (ProQuest or METS) data through a normalization stylesheet using Saxon via nailgun
+  normText = nailgun.call("net.sf.saxon.Transform",
+    ["-r", "org.apache.xml.resolver.tools.CatalogResolver",
+     "-x", "org.apache.xml.resolver.tools.ResolvingXMLReader",
+     "-y", "org.apache.xml.resolver.tools.ResolvingXMLReader",
+     metaPath, normalizer])
+
+  # Write it out to a file locally (useful for debugging and validation)
+  FileUtils.mkdir_p(arkToFile(itemID, "", "normalized")) # store in local dir
+  normFile = arkToFile(itemID, "base.norm.xml", "normalized")
+  normXML = stringToXML(normText)
+  File.open(normFile, "w") { |io| normXML.write_xml_to(io, indent:3) }
+
+  # Validate using jing.
+  schemaPath = "/apps/eschol/erep/xtf/schema/uci_schema.rnc"
+  validationProbs = nailgun.call("com.thaiopensource.relaxng.util.Driver", ["-c", schemaPath, normFile], true)
+  if !validationProbs.empty?
+    validationProbs.split("\n").each { |line|
+      next if line =~ /missing required element "(subject|mimeType)"/ # we don't care
+      puts line.sub(/.*norm.xml:/, "")
+    }
+  end
+
+  # And parse the data
+  return parseUCIngest(itemID, normXML.root, fileType)
 end
 
 ###################################################################################################
