@@ -17,7 +17,7 @@ class MediaFeatureObj extends React.Component {
                </div>
       case "video":
         return <div className="o-mediafeature__item">
-                 <video src={this.props.url} controls poster="/images/sample_video-poster.jpg"></video> 
+                 <video src={this.props.url} controls poster="/images/logo_eschol-media-thumbnail.png"></video> 
                </div>
       case "audio":
         return <div className="o-mediafeature__item">
