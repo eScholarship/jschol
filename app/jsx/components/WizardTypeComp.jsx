@@ -1,4 +1,4 @@
-// ##### Deposit Wizard Component ##### //
+// ##### Deposit Wizard - [3] Type Component ##### //
 
 import React from 'react'
 
@@ -19,13 +19,14 @@ class WizardTypeComp extends React.Component {
         </div>
         <ul className="c-wizard__list">
           <li>
+            <a href={"https://submit.escholarship.org/subi/directSubmit?target="+this.props.arg}>
+              A published (or accepted) scholarly article</a>
+          </li>
+          <li>
             <a onClick = {(event)=>{
             event.preventDefault()
             this.props.goForward(4)}
-          } href="">A published (or accepted) scholarly article</a>
-          </li>
-          <li>
-            <a href="">Data (independent or associated with a publication)</a>
+          } href="">Data (independent or associated with a publication)</a>
           </li>
           <li>
             <a href="">Any other material (e.g., working paper, book, multimedia)</a>

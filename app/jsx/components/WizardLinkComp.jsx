@@ -1,4 +1,4 @@
-// ##### Deposit Wizard - Link Component ##### //
+// ##### Deposit Wizard - [6] Link Component ##### //
 
 import React from 'react'
 
@@ -14,7 +14,7 @@ class WizardLinkComp extends React.Component {
           } href=""><span>Go back</span></a>
           <button onClick={this.props.closeModal}><span>Close</span></button>
         </header>
-      {this.props.mode == "senate" &&
+      {this.props.arg == "6_senate" &&
        [<div key="0" className="c-wizard__heading">
           [6] UC Publication Management
         </div>,
@@ -26,7 +26,7 @@ class WizardLinkComp extends React.Component {
           Alternately, you may choose to wait for the system to automatically detect your new publication and send you a deposit link via email.
         </footer>]
       }
-      {this.props.mode == "sorry" &&
+      {this.props.arg == "6_sorry" &&
        [<div key="0" className="c-wizard__heading">
           We&#8217;re sorry... 
         </div>,

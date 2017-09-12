@@ -17,10 +17,6 @@ class CellComp extends React.Component {
   handleOpenModal = () => this.setState({ showModal: true });
   handleCloseModal = () => this.setState({ showModal: false });
 
-  view = (url) => {
-    window.location = url
-  }
-
   render() {
     let p = this.props,
         url = "/content/qt" + p.id + "/supp/" + p.file,
@@ -30,7 +26,7 @@ class CellComp extends React.Component {
     return (
       <div className={"o-mediafile--" + mimeSimple}>
         <h2 className="o-mediafile__heading" ref={ el => { if (p.title && p.title.length > 38) $(el).dotdotdot({watch:"window"}) } }>{p.title}</h2>
-        <div className="o-mediafile__preview" onClick={() => {this.view(url)}} aria-label={fileLabel} target="_blank">
+        <div className="o-mediafile__preview" onClick={this.handleOpenModal} aria-label={fileLabel} target="_blank">
           {(mimeSimple == "image") &&
             <img className="o-mediafile__image" src={url} alt={p.file} />
           }

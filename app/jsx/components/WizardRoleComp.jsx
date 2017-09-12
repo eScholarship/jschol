@@ -1,4 +1,4 @@
-// ##### Deposit Wizard - Role Component ##### //
+// ##### Deposit Wizard - [1] Role Component ##### //
 
 import React from 'react'
 import { Link } from 'react-router'
@@ -6,7 +6,9 @@ import { Link } from 'react-router'
 class WizardRoleComp extends React.Component {
   render() {
     let name = this.props.campusName,
-        [campusName, affiliation] = name ? [name, name] : ["eScholarship", "University of California"]
+        [campusName, affiliation, nextStep] = name ?
+          [name, name, 3]                                     // Depositing from a campus page
+        : ["eScholarship", "University of California", 2]     // Depositing from a global page
     return (
       <div className="c-wizard__step">
         <header>
@@ -20,25 +22,25 @@ class WizardRoleComp extends React.Component {
           <li>
             <a onClick = {(event)=>{
             event.preventDefault()
-            this.props.goForward(6, "senate")}
+            this.props.goForward(6, "6_senate")}
           } href="">Academic Senate-represented faculty</a>
           </li>
           <li>
             <a onClick = {(event)=>{
             event.preventDefault()
-            this.props.goForward(2)}
+            this.props.goForward(nextStep, nextStep+"_faculty")}
           } href="">Other faculty or staff</a>
           </li>
           <li>
             <a onClick = {(event)=>{
             event.preventDefault()
-            this.props.goForward(2)}
+            this.props.goForward(nextStep, nextStep+"_student")}
           } href="">Student</a>
           </li>
           <li>
             <a onClick = {(event)=>{
             event.preventDefault()
-            this.props.goForward(6, "sorry")}
+            this.props.goForward(6, "6_sorry")}
           } href="">Not affiliated</a>
           </li>
         </ul>

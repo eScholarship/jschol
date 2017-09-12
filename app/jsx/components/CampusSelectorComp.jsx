@@ -11,7 +11,7 @@ class CampusSelectorComp extends React.Component {
   }
 
   campusSelector(campuses) {
-    return campuses.map((c, i) => {
+    return campuses.map( c => {
       return c['id'] != "" && <li key={c['id']}><Link to={"/uc/"+ c['id']}
                                     onClick={()=>this.closeSelector()}>{c['name']}</Link></li>
     })

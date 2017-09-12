@@ -1,6 +1,7 @@
 // ##### Deposit Wizard Component ##### //
 
 import React from 'react'
+import PropTypes from 'prop-types'
 import WizardCampusComp from './WizardCampusComp.jsx'
 import WizardLinkComp from './WizardLinkComp.jsx'
 import WizardRoleComp from './WizardRoleComp.jsx'
@@ -10,6 +11,11 @@ import WizardUnitComp from './WizardUnitComp.jsx'
 import ReactModal from 'react-modal'
 
 class WizardComp extends React.Component {
+  static propTypes = {
+    step: PropTypes.number.isRequired,
+    showModal: PropTypes.bool.isRequired,
+    campuses: PropTypes.array.isRequired
+  }
 
   constructor(props){
     super(props)
@@ -21,9 +27,10 @@ class WizardComp extends React.Component {
       this.setState({showModal: nextProps.showModal})
   }
 
-  goForward = (step, mode) =>{
+  // arg is used for different purposes across the different wizard modals
+  goForward = (step, arg) =>{
     setTimeout(()=>this.tabFocus(), 0)
-    this.setState({mode: mode, wizardStep: step, wizardDir: 'fwd', prevStep: this.state.wizardStep})
+    this.setState({wizardStep: step, arg: arg, wizardDir: 'fwd', prevStep: this.state.wizardStep})
   }
 
   goBackward = ()=>{
@@ -61,30 +68,38 @@ class WizardComp extends React.Component {
           <div className="c-wizard">
             <div className={this.state.wizardStep === 1 ? `c-wizard__current-${this.state.wizardDir}` : `c-wizard__standby-${this.state.wizardDir}`} aria-hidden={this.state.wizardStep === 1 ? null : true}>
 
-            {/* [1] How are you affiliated with [campus]? */}
+          {/* [1] How are you affiliated with [campus]? */}
               <WizardRoleComp goForward = {this.goForward} closeModal={this.handleCloseModal}
                               campusName={this.props.campusName} />
             </div>
             <div className={this.state.wizardStep === 2 ? `c-wizard__current-${this.state.wizardDir}` : `c-wizard__standby-${this.state.wizardDir}`} aria-hidden={this.state.wizardStep === 2 ? null : true}>
 
-            {/* [2] Which UC Campus are you affiliated with? */}
+          {/* [2] Which UC Campus are you affiliated with? */}
               <WizardCampusComp goForward = {this.goForward} goBackward = {this.goBackward} closeModal={this.handleCloseModal}
-                              campusName={this.props.campusName} />
+                              campusName={this.props.campusName} campuses={this.props.campuses} 
+                              arg={this.state.arg} />
             </div>
             <div className={this.state.wizardStep === 3 ? `c-wizard__current-${this.state.wizardDir}` : `c-wizard__standby-${this.state.wizardDir}`} aria-hidden={this.state.wizardStep === 3 ? null : true}>
-              <WizardTypeComp goForward = {this.goForward} goBackward = {this.goBackward} closeModal={this.handleCloseModal} />
+
+          {/* [3] What kind of material are you depositing? */}
+              <WizardTypeComp goForward = {this.goForward} goBackward = {this.goBackward} closeModal={this.handleCloseModal}
+                              arg={this.state.arg} />
             </div>
             <div className={this.state.wizardStep === 4 ? `c-wizard__current-${this.state.wizardDir}` : `c-wizard__standby-${this.state.wizardDir}`} aria-hidden={this.state.wizardStep === 4 ? null : true}>
+
+          {/* [4] What is your departmental affiliation? */}
               <WizardUnitComp goForward = {this.goForward} goBackward = {this.goBackward} closeModal={this.handleCloseModal} />
             </div>
             <div className={this.state.wizardStep === 5 ? `c-wizard__current-${this.state.wizardDir}` : `c-wizard__standby-${this.state.wizardDir}`} aria-hidden={this.state.wizardStep === 5 ? null : true}>
+
+          {/* [5] What [title] series would you like to deposit your work in?  */}
               <WizardSeriesComp goForward = {this.goForward} goBackward = {this.goBackward} closeModal={this.handleCloseModal} />
             </div>
             <div className={this.state.wizardStep === 6 ? `c-wizard__current-${this.state.wizardDir}` : `c-wizard__standby-${this.state.wizardDir}`} aria-hidden={this.state.wizardStep === 6 ? null : true}>
 
-            {/* [6] (LinkModal: Screens vary by mode) */}
+          {/* [6] (LinkModal: Screens vary by arg) */}
               <WizardLinkComp goBackward = {this.goBackward} closeModal={this.handleCloseModal}
-                              mode = {this.state.mode} />
+                              arg={this.state.arg} />
             </div>
           </div>
         </ReactModal>

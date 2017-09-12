@@ -1,4 +1,4 @@
-// ##### Deposit Wizard - Series Component ##### //
+// ##### Deposit Wizard - [5] Series Component ##### //
 
 import React from 'react'
 
