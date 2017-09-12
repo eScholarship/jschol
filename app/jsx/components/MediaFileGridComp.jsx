@@ -1,6 +1,8 @@
 // ##### Media File Grid Component ##### //
 
 import React from 'react'
+import MediaModalComp from '../components/MediaModalComp.jsx'
+import MediaFeatureObj from '../objects/MediaFeatureObj.jsx'
 import $ from 'jquery'
 import { Link } from 'react-router'
 
@@ -10,6 +12,11 @@ if (!(typeof document === "undefined")) {
 }
 
 class CellComp extends React.Component {
+  state={showModal: false}
+
+  handleOpenModal = () => this.setState({ showModal: true });
+  handleCloseModal = () => this.setState({ showModal: false });
+
   view = (url) => {
     window.location = url
   }
@@ -30,8 +37,11 @@ class CellComp extends React.Component {
         </div>
         <div className="o-mediafile__description" ref={ el => { if (p.description && p.description.length > 0) $(el).dotdotdot({watch:"window"}) } }>
           {p.description}</div>
-        <button className="o-mediafile__view"><span>View Media</span></button>
+        <button className="o-mediafile__view" onClick={this.handleOpenModal}><span>View Media</span></button>
         <a href={url} className="o-mediafile__download" download={p.file}>Download</a>
+        <MediaModalComp showModal={this.state.showModal} handleCloseModal={this.handleCloseModal}>
+          <MediaFeatureObj file={p.file} url={url} type={mimeSimple} title={p.title} description={p.description} />
+        </MediaModalComp>
       </div>
     )
   }
