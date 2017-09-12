@@ -68,7 +68,7 @@ class ItemPage extends PageBase {
     return (
       <div>
         <Header2Comp type={data.unit ? data.unit.type: null}
-                     unitID={data.appearsIn.length > 0 ? data.appearsIn[0]["id"] : null } />
+                     unitID={(data.appearsIn && data.appearsIn.length > 0) ? data.appearsIn[0]["id"] : null } />
         {/* Some items have no parent unit, so check for empty data.header */}
         {data.header && <SubheaderComp unit={data.unit} logo={data.header.logo}
                                         campusID={data.header.campusID}

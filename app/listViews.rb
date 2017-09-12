@@ -93,6 +93,10 @@ def infoPageSyntaxError(infoID)
   puts "Unrecognized info page ID: #{infoID}"
 end
 
+def getTopmostId(unit)
+  return isTopmostUnit(unit) ? nil : getCampusId(unit)
+end
+
 # Info Results (Index stored in AWS CloudSearch with 'is_info'=1)
 # Info IDs look like this:
 #   i.e. "unit:ucbclassics_rw"
@@ -116,6 +120,8 @@ def infoResultData(infoIds)
     when "unit"
       ancestor = getUnitAncestor(unit)
       ancestor_name, ancestor_id = ancestor ? [ancestor.name, ancestor.id] : nil
+      # if ancestor_id is campus or root, don't bring in topmost
+      topmost_id = getTopmostId($unitsHash[ancestor_id])
       unitAttrs = JSON.parse(unit.attrs)
       infoListInfo = {
         id: infoID,
@@ -131,6 +137,8 @@ def infoResultData(infoIds)
         infoPageSyntaxError(infoID)
         next
       end
+      # if unit_id/ancestor_id is campus or root, don't bring in topmost
+      topmost_id = getTopmostId(unit)
       page = Page.where(unit_id: unit_id, slug: nodes[2]).first
       page and infoListInfo = {
         id: infoID,
@@ -145,6 +153,7 @@ def infoResultData(infoIds)
       infoPageSyntaxError(infoID)
       next
     end
+    infoListInfo[:topmost_name] = topmost_id ? $unitsHash[topmost_id].name : nil
 
     searchResults << infoListInfo
   end

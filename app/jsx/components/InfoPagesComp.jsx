@@ -16,6 +16,7 @@ class ResultComp extends React.Component {
   static propTypes = {
     result: PropTypes.shape({
       isPage: PropTypes.bool.isRequired,
+      topmost_name: PropTypes.string,             // Could be null
       ancestor_id: PropTypes.string,              // Parent Unit
       ancestor_name: PropTypes.string,
       target_id: PropTypes.string.isRequired,     // Unit or page
@@ -34,7 +35,8 @@ class ResultComp extends React.Component {
     return (
       <div className="c-infopages__item">
         <h2>
-          <b>UC Berkeley</b>
+        {r.topmost_name &&
+          <b>{r.topmost_name}</b> }
         {r.ancestor_id && r.ancestor_name &&
           <Link to={"/uc/"+r.ancestor_id}>{r.ancestor_name}</Link> }
           <Link to={"/uc/"+target_path} className="c-infopages__title">{r.target_name}</Link>
@@ -81,8 +83,12 @@ class InfoPagesComp extends React.Component {
           {this.props.infoResults.slice(3,12).map( (result) =>
             <ResultComp key={result.id} result={result} />) }
           </div>
-          <PaginationComp formName="facetForm" formButton="facet-form-submit" query={this.props.query} count={this.props.info_count} is_info={true} />
+        {(this.props.info_count > 12) ? 
+          [<PaginationComp key="0" formName="facetForm" formButton="facet-form-submit" query={this.props.query} count={this.props.info_count} is_info={true} />,
+          <button key="1" className="c-infopages__toggle" onClick={()=> this.setState({showMore: false})}>Show fewer results</button>]
+        :
           <button className="c-infopages__toggle" onClick={()=> this.setState({showMore: false})}>Show fewer results</button>
+        }
         </div>
       </div>
     )

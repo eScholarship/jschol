@@ -25,7 +25,6 @@ class PaginationComp extends React.Component {
     if (parseInt(start) + parseInt(rows) <= this.clampedCount()) {
       let newStart = parseInt(start) + parseInt(rows)
       $('[form='+this.props.formName+'][name='+start_type+']').val(newStart)
-//      alert( $('[form='+this.props.formName+'][name='+start_type+']').val() )
       $('#'+this.props.formButton).click()
     }
   }
@@ -49,8 +48,9 @@ class PaginationComp extends React.Component {
 
   last = (event, rows, start, start_type) =>{
     event.preventDefault()
-    let newStart = Math.floor(this.clampedCount() / rows)
-    newStart = newStart * rows
+    let floor = Math.floor(this.clampedCount() / rows),
+        newStart = floor * rows
+    newStart = (this.clampedCount() % rows > 0) ? newStart : newStart - rows
     if (newStart != start) {
       $('[form='+this.props.formName+'][name='+start_type+']').val(newStart)
       $('#'+this.props.formButton).click()
@@ -66,7 +66,7 @@ class PaginationComp extends React.Component {
     }
   }
   
-  render() {
+  renderPagination() {
     let p = this.props
     let [rows, start, start_type] = p.is_info ? [12, p.query.info_start, "info_start"] : [p.query.rows, p.query.start, "start"]
     let page = Math.ceil(start / rows) + 1
@@ -140,6 +140,17 @@ class PaginationComp extends React.Component {
       )
     }
   }
+
+  render() {
+    return (
+      <div>
+      {this.props.is_info &&
+        <input type="hidden" name="info_start" form={this.props.formName} value={this.props.query.info_start} /> }
+        {this.renderPagination()}
+      </div>
+    )
+  }
+
 }
 
 module.exports = PaginationComp;
