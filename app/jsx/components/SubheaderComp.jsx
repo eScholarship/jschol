@@ -46,10 +46,11 @@ class SubheaderComp extends React.Component {
     let depositButton = (<button id="wizardlyDeposit" className="o-button__3" onClick={(event)=>{
                                  this.setState({modalOpen:true})
                                  event.preventDefault()} }>Deposit</button>)
+    let data = {wizardStep: 1, wizardDir: 'fwd', campusID: p.campusID, campusName: p.campusName, arg: null}
     let wizard = (<WizardComp showModal={this.state.modalOpen}
                       parentSelector={()=>$('#wizardModalBase')[0]}
-                      onCancel={e=>this.closeWizardModal(e)}
-                      step={1} campusID={p.campusID} campusName={p.campusName} campuses={p.campuses} />)
+                      onCancel={e=>this.closeWizardModal(e)} campuses={p.campuses}
+                      data={data} />)
     return (
       <div className="c-subheader">
         <CampusSelectorComp campusID={p.campusID}

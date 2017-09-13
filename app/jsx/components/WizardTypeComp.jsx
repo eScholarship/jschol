@@ -1,16 +1,17 @@
 // ##### Deposit Wizard - [3] Type Component ##### //
 
 import React from 'react'
+import { Subscriber } from 'react-broadcast'
 import _ from 'lodash'
 
 class WizardTypeComp extends React.Component {
   render() {
-    // this.props.arg is the campusName 
-    let campusName = this.props.arg ? this.props.arg : "eScholarship"
     return (
+      <Subscriber channel="wiz">
+        { wiz =>
       <div className="c-wizard__step">
         <header>
-          <h1 tabIndex="-1">{campusName} Deposit</h1>
+          <h1 tabIndex="-1">{wiz.campusName} Deposit</h1>
           <a onClick = {(event)=>{
             event.preventDefault()
             this.props.goBackward()}
@@ -22,19 +23,19 @@ class WizardTypeComp extends React.Component {
         </div>
         <ul className="c-wizard__list">
           <li>
-            <a href={"https://submit.escholarship.org/subi/directSubmit?target="+this.props.campusID}>
+            <a href={"https://submit.escholarship.org/subi/directSubmit?target="+wiz.campusID}>
               A published (or accepted) scholarly article</a>
           </li>
           <li>
             <a onClick = {(event)=>{
             event.preventDefault()
-            this.props.goForward(6)}
+            this.props.goForward(6, wiz.campusID, "6_dash")}
           } href="">Data (independent or associated with a publication)</a>
           </li>
           <li>
             <a onClick = {(event)=>{
             event.preventDefault()
-            this.props.goForward(4)}
+            this.props.goForward(4, wiz.campusID)}
           } href="">Any other material (e.g., working paper, book, multimedia)</a>
           </li>
         </ul>
@@ -42,6 +43,8 @@ class WizardTypeComp extends React.Component {
           We use these questions to direct you to the right place to deposit your materials.
         </footer>
       </div>
+      }
+      </Subscriber>
     )
   }
 }

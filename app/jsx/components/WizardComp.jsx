@@ -15,40 +15,57 @@ class WizardComp extends React.Component {
   static propTypes = {
     showModal: PropTypes.bool.isRequired,
     onCancel: PropTypes.any,
-    step: PropTypes.number.isRequired,
-    showModal: PropTypes.bool.isRequired,
-    campusID: PropTypes.string,
-    campusName: PropTypes.string,
-    campuses: PropTypes.array.isRequired
+    campuses: PropTypes.array.isRequired,
+    data: PropTypes.shape({
+      wizardStep: PropTypes.number.isRequired,
+      wizardDir: PropTypes.string.isRequired,
+      campusID: PropTypes.string,
+      campusName: PropTypes.string,
+      arg: PropTypes.string
+    })
+
   }
 
-  constructor(props){
-    super(props)
-    this.state = {wizardStep: this.props.step, wizardDir: 'fwd', showModal: this.props.showModal}
-  }
+  state = { showModal: this.props.showModal,
+            data: this.props.data }
 
   componentWillReceiveProps(nextProps) {
     if (!_.isEqual(this.props.showModal, nextProps.showModal))
       this.setState({showModal: nextProps.showModal})
   }
 
+  getCampusName = (campusID) => {
+    if (campusID == 'root') {return "eScholarship"}
+    let h = _.find(this.props.campuses, { 'id': campusID })
+    return h ? h["name"] : this.state.data.campusName
+  }
+
   // 'campusID' as used in state is for global entry point, different from campusID passed in property (from campus page)
   // 'arg' is used for different purposes across the different wizard modals
   goForward = (step, campusID, arg) =>{
     setTimeout(()=>this.tabFocus(), 0)
-    this.setState({wizardStep: step,
-                   campusID: campusID,
-                   arg: arg,
-                   wizardDir: 'fwd',
-                   prevStep: this.state.wizardStep})
+    let campusName = this.getCampusName(campusID)
+    this.setState({data: {wizardStep: step,
+                          wizardDir: 'fwd',
+                          prevStep: this.state.data.wizardStep,
+                          campusID: campusID,
+                          campusName: campusName,
+                          arg: arg ? arg : this.state.data.arg}})
   }
 
   goBackward = ()=>{
     setTimeout(()=>this.tabFocus(), 0)
-    if (this.state.prevStep)
-      this.setState({wizardStep: this.state.prevStep, wizardDir: 'bkw', prevStep: null})
+    let wizardStep
+    if (this.state.data.prevStep)
+      wizardStep = this.state.data.prevStep
     else
-      this.setState({wizardStep: this.state.wizardStep - 1, wizardDir: 'bkw', prevStep: null})
+      wizardStep = this.state.data.wizardStep - 1
+    this.setState({data: {wizardStep: wizardStep,
+                          wizardDir: 'bkw',
+                          prevStep: null,
+                          campusID: this.state.data.campusID,
+                          campusName: this.state.data.campusName,
+                          arg: this.state.data.arg}})
   }
 
   tabFocus = ()=> {
@@ -61,15 +78,18 @@ class WizardComp extends React.Component {
   
   handleCloseModal = ()=> {
     this.setState({ showModal: false })
+    this.setState({data: { wizardStep: 1, wizardDir: 'fwd' }})
     this.props.onCancel()
   }                 
 
   render() {
+    let d = this.state.data
     return (
+      <div className="c-modal">
       <Broadcast className="c-modal" channel="wiz" value={
-         { campusName: this.props.campusName, 
-           campusID: this.state.campusID ? this.state.campusID : this.props.campusID, 
-           arg: this.state.arg
+         { campusName: d.campusName ? d.campusName : "eScholarship", 
+           campusID: d.campusID, 
+           arg: d.arg
       } }>
 
         <ReactModal 
@@ -81,46 +101,47 @@ class WizardComp extends React.Component {
           overlayClassName="c-modal__overlay"
         >
           <div className="c-wizard">
-            <div className={this.state.wizardStep === 1 ? `c-wizard__current-${this.state.wizardDir}` : `c-wizard__standby-${this.state.wizardDir}`} aria-hidden={this.state.wizardStep === 1 ? null : true}>
+            <div className={d.wizardStep === 1 ? `c-wizard__current-${d.wizardDir}` : `c-wizard__standby-${d.wizardDir}`} aria-hidden={d.wizardStep === 1 ? null : true}>
 
           {/* [1] How are you affiliated with [campus]? */}
               <WizardRoleComp goForward = {this.goForward} closeModal={this.handleCloseModal} />
             </div>
-            <div className={this.state.wizardStep === 2 ? `c-wizard__current-${this.state.wizardDir}` : `c-wizard__standby-${this.state.wizardDir}`} aria-hidden={this.state.wizardStep === 2 ? null : true}>
+            <div className={d.wizardStep === 2 ? `c-wizard__current-${d.wizardDir}` : `c-wizard__standby-${d.wizardDir}`} aria-hidden={d.wizardStep === 2 ? null : true}>
 
           {/* [2] Which UC Campus are you affiliated with? */}
               <WizardCampusComp goForward = {this.goForward} goBackward = {this.goBackward} closeModal={this.handleCloseModal}
-                              campuses={this.props.campuses} 
-                              arg={this.state.arg} />
+                              campuses={this.props.campuses}
+                              arg={d.arg} />
             </div>
-            <div className={this.state.wizardStep === 3 ? `c-wizard__current-${this.state.wizardDir}` : `c-wizard__standby-${this.state.wizardDir}`} aria-hidden={this.state.wizardStep === 3 ? null : true}>
+            <div className={d.wizardStep === 3 ? `c-wizard__current-${d.wizardDir}` : `c-wizard__standby-${d.wizardDir}`} aria-hidden={d.wizardStep === 3 ? null : true}>
 
           {/* [3] What kind of material are you depositing? */}
               <WizardTypeComp goForward = {this.goForward} goBackward = {this.goBackward} closeModal={this.handleCloseModal}
-                              campuses={this.props.campuses} 
-                              campusID={this.state.campusID} arg={this.state.arg} />
+                              campuses={this.props.campuses}
+                              campusID={d.campusID} arg={d.arg} />
             </div>
-            <div className={this.state.wizardStep === 4 ? `c-wizard__current-${this.state.wizardDir}` : `c-wizard__standby-${this.state.wizardDir}`} aria-hidden={this.state.wizardStep === 4 ? null : true}>
+            <div className={d.wizardStep === 4 ? `c-wizard__current-${d.wizardDir}` : `c-wizard__standby-${d.wizardDir}`} aria-hidden={d.wizardStep === 4 ? null : true}>
 
           {/* [4] What is your departmental affiliation? */}
               <WizardUnitComp goForward = {this.goForward} goBackward = {this.goBackward} closeModal={this.handleCloseModal} />
             </div>
-            <div className={this.state.wizardStep === 5 ? `c-wizard__current-${this.state.wizardDir}` : `c-wizard__standby-${this.state.wizardDir}`} aria-hidden={this.state.wizardStep === 5 ? null : true}>
+            <div className={d.wizardStep === 5 ? `c-wizard__current-${d.wizardDir}` : `c-wizard__standby-${d.wizardDir}`} aria-hidden={d.wizardStep === 5 ? null : true}>
 
           {/* [5] What [title] series would you like to deposit your work in?  */}
               <WizardSeriesComp goForward = {this.goForward} goBackward = {this.goBackward} closeModal={this.handleCloseModal} />
             </div>
-            <div className={this.state.wizardStep === 6 ? `c-wizard__current-${this.state.wizardDir}` : `c-wizard__standby-${this.state.wizardDir}`} aria-hidden={this.state.wizardStep === 6 ? null : true}>
+            <div className={d.wizardStep === 6 ? `c-wizard__current-${d.wizardDir}` : `c-wizard__standby-${d.wizardDir}`} aria-hidden={d.wizardStep === 6 ? null : true}>
 
           {/* [6] (LinkModal: Screens vary by arg) */}
               <WizardLinkComp goBackward = {this.goBackward} closeModal={this.handleCloseModal}
-                              campuses={this.props.campuses} 
-                              campusID={this.state.campusID}
-                              arg={this.state.arg} />
+                              campuses={this.props.campuses}
+                              campusID={d.campusID}
+                              arg={d.arg} />
             </div>
           </div>
         </ReactModal>
       </Broadcast>
+      </div>
     )
   }
 }
