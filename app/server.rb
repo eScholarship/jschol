@@ -274,29 +274,57 @@ end
 
 ###################################################################################################
 class HttpFetcher
-  def start(uri)
+  def initialize
+    @eof = false
+    @prefix = nil
+    @ioChunk = nil
+  end
+
+  def getContent(uri)
     # We have to fetch the file in a different thread, because it needs to keep the HTTP request
     # open in that thread while we return the status code to Sinatra. Then the remaining data can
     # be streamed from the thread to Sinatra.
     puts "Content fetch: #{uri}."
+    req = Net::HTTP::Get.new(uri.request_uri)
+    req.basic_auth $mrtExpressConfig['username'], $mrtExpressConfig['password']
+    return _fetch(uri, req)
+  end
+
+  def prefix= (str)
+    @prefix = str
+  end
+
+  def postSplashReq(uri, prefix, srcFetcher)
+    puts "PDF splash req: #{uri} #{prefix}."
+    req = Net::HTTP::Post.new(uri.request_uri,
+            { 'Transfer-Encoding' => 'chunked', 'content-type' => 'application/octet-stream' })
+    req.body_stream = srcFetcher
+    srcFetcher.prefix = prefix
+    return _fetch(uri, req)
+  end
+
+  def _fetch(uri, req)
+    # We have to fetch the file in a different thread, because it needs to keep the HTTP request
+    # open in that thread while we return the status code to Sinatra. Then the remaining data can
+    # be streamed from the thread to Sinatra.
     @queue = QueueWithTimeout.new
     Thread.new do
       begin
         # Now jump through Net::HTTP's hijinks to actually fetch the file.
         Net::HTTP.start(uri.host, uri.port, :use_ssl => (uri.scheme == 'https')) do |http|
-          req = Net::HTTP::Get.new(uri.request_uri)
-          req.basic_auth $mrtExpressConfig['username'], $mrtExpressConfig['password']
           http.request(req) do |response|
             @queue << [response.code, response.message]
             if response.code == "200"
               response.read_body { |chunk| @queue << chunk }
             else
+              puts "headers: #{response.to_hash.inspect}"
               puts "Error: Response to #{uri} was HTTP #{response.code}: #{response.message.inspect}"
             end
           end
         end
       rescue Exception => e
-        puts "HTTP fetch exception: #{e}"
+        puts "HTTP fetch exception from #{uri}: #{e}\n#{e.backtrace.join("\n\t")}"
+        raise
       ensure
         @queue << nil  # mark end-of-data
       end
@@ -307,7 +335,7 @@ class HttpFetcher
     return code.to_i, msg
   end
 
-  # Now we're ready to set the content type and return the contents in streaming fashion.
+  # Stream contents in 'each' style (used by middleware)
   def each
     begin
       while true
@@ -316,7 +344,44 @@ class HttpFetcher
         data.length > 0 and yield data
       end
     rescue Exception => e
-      puts "Warning: problem while streaming HTTP content: #{e.message}"
+      puts "Warning: problem while streaming HTTP content via 'each': #{e.message}"
+      raise
+    end
+  end
+
+  # Stream contents in 'io' style (used by Net::HTTP::Post)
+  def eof?
+    @eof
+  end
+
+  def eof!
+    @eof = true
+  end
+
+  def read(size, outBuf = nil)
+    begin
+      size == 0 and return ""
+      while @ioChunk.nil? || @ioChunk.length == 0
+        if @prefix
+          @ioChunk = @prefix
+          @prefix = nil
+        else
+          @ioChunk = @queue.pop_with_timeout(10)
+          if @ioChunk.nil?
+            @eof = true
+            return nil
+          end
+        end
+      end
+      ret = @ioChunk.slice!(0, size.nil? ? @ioChunk.length : size)
+      if outBuf
+        outBuf.clear()
+        outBuf << ret
+        return outBuf
+      end
+      return ret
+    rescue Exception => e
+      puts "Warning: problem while streaming HTTP content via 'read': #{e.message}"
       raise
     end
   end
@@ -386,22 +451,33 @@ get "/content/:fullItemID/*" do |fullItemID, path|
   # Fetch the file from Merritt
   fetcher = HttpFetcher.new
   epath = URI::encode(path)
-  code, msg = fetcher.start(URI("https://#{$mrtExpressConfig['host']}/dl/ark:/13030/#{fullItemID}/content/#{epath}"))
+  code, msg = fetcher.getContent(URI("https://#{$mrtExpressConfig['host']}/dl/ark:/13030/#{fullItemID}/content/#{epath}"))
   code == 401 and raise("Error: mrtExpress credentials not recognized - check config/mrtExpress.yaml")
 
   # Temporary fallback: if we can't find on Merritt, try the raw_data hack on pub-eschol-stg.
   # This is needed for ETDs, since we don't yet record their proper original Merritt location.
   if code != 200
     fetcher = HttpFetcher.new
-    code2, msg2 = fetcher.start(URI("https://pub-eschol-stg.escholarship.org/raw_data/13030/pairtree_root/" +
+    code2, msg2 = fetcher.getContent(URI("https://pub-eschol-stg.escholarship.org/raw_data/13030/pairtree_root/" +
                                     "#{fullItemID.scan(/../).join('/')}/#{fullItemID}/content/#{epath}"))
     code2 == 200 or halt(code, msg)
   end
 
-  # Guess the content type by path for now, and stream the results (don't buffer the whole thing,
-  # as some files are huge and would blow out our RAM).
+  # Guess the content type by path for now
   content_type MimeMagic.by_path(path)
-  return [200, fetcher]
+
+  # For regular (non-PDF) files, we're done.
+  if !(path =~ /\.pdf$/)
+    # Stream the results (don't buffer the whole thing, as some files are huge and would blow out our RAM).
+    return [200, fetcher]
+  end
+
+  # For PDF files, get a splash page.
+  request.url =~ %r{^https?://([^/:]+)(:\d+)?(.*)$} or fail
+  host = $1
+  fetcher2 = HttpFetcher.new
+  code, msg = fetcher2.postSplashReq(URI("http://#{host}:8081/splash/splashGen"), '{"foo":"bar"}|', fetcher)
+  return [200, fetcher2]
 end
 
 ###################################################################################################

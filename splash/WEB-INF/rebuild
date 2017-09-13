@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+set -e
+
+bin/ant
+eye restart tomcat
+sleep 2

@@ -7,7 +7,7 @@
   <!-- set global properties for this build -->
   <property name="src"     location="src"/>
   <property name="classes" location="classes"/>
-  <property name="libs"    value="lib/itext7-io-7.0.4.jar:lib/itext7-kernel-7.0.4.jar:lib/itext7-forms-7.0.4.jar:lib/itext7-layout-7.0.4.jar:lib/log4j-over-slf4j-1.7.25.jar:lib/slf4j-api-1.7.25.jar:lib/log4j-slf4j-impl-2.9.0.jar:lib/log4j-api-2.9.0.jar:lib/log4j-core-2.9.0.jar:lib/bcprov-jdk15on-158.jar:/usr/share/tomcat8/lib/tomcat8-servlet-3.1-api.jar
+  <property name="libs"    value="lib/itext7-io-7.0.4.jar:lib/itext7-kernel-7.0.4.jar:lib/itext7-forms-7.0.4.jar:lib/itext7-layout-7.0.4.jar:lib/log4j-over-slf4j-1.7.25.jar:lib/slf4j-api-1.7.25.jar:lib/log4j-slf4j-impl-2.9.0.jar:lib/log4j-api-2.9.0.jar:lib/log4j-core-2.9.0.jar:lib/bcprov-jdk15on-158.jar:lib/org.json-20161124.jar:/usr/share/tomcat8/lib/tomcat8-servlet-3.1-api.jar
 "/>
 
   <target name="init">
