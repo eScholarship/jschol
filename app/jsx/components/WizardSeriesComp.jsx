@@ -15,7 +15,7 @@ class WizardSeriesComp extends React.Component {
           <button onClick={this.props.closeModal}><span>Close</span></button>
         </header>
         <div className="c-wizard__heading">
-          [5] What [title] series would you like to deposit your work in?
+          What ***title*** series would you like to deposit your work in?
         </div>
         <ul className="c-wizard__list">
           <li>

@@ -15,7 +15,7 @@ class WizardUnitComp extends React.Component {
           <button onClick={this.props.closeModal}><span>Close</span></button>
         </header>
         <div className="c-wizard__heading">
-          [4] What is your departmental affiliation?
+          What is your departmental affiliation?
         </div>
         <ul className="c-wizard__list">
           <li>

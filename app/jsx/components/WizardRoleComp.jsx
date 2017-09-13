@@ -1,50 +1,55 @@
 // ##### Deposit Wizard - [1] Role Component ##### //
 
 import React from 'react'
+import { Subscriber } from 'react-broadcast'
 import { Link } from 'react-router'
 
 class WizardRoleComp extends React.Component {
   render() {
-    let name = this.props.campusName,
-        [campusName, affiliation, nextStep] = name ?
-          [name, name, 3]                                     // Depositing from a campus page
-        : ["eScholarship", "University of California", 2]     // Depositing from a global page
     return (
+      <Subscriber channel="wiz">
+        { wiz => {
+            let name = wiz.campusName,
+                [campusName, affiliation, nextStep] = (name && name != 'eScholarship') ?
+                  [name, name, 3]                                     // Depositing from a campus page
+                : ["eScholarship", "University of California", 2]     // Depositing from a global page
+            console.log("Step 1 campusName = ", name)
+      return (
       <div className="c-wizard__step">
         <header>
           <h1 tabIndex="-1">{campusName} Deposit</h1>
           <button onClick={this.props.closeModal}><span>Close</span></button>
         </header>
         <div className="c-wizard__heading">
-          [1] How are you affiliated with {affiliation}?
+          How are you affiliated with {affiliation}?
         </div>
         <ul className="c-wizard__list">
           <li>
             <a onClick = {(event)=>{
             event.preventDefault()
-            this.props.goForward(6, "6_senate")}
-          } href="">Academic Senate-represented faculty</a>
+            this.props.goForward(6, wiz.campusID, "6_senate")}
+          } href="">Senate-represented faculty</a>
           </li>
           <li>
             <a onClick = {(event)=>{
             event.preventDefault()
-            this.props.goForward(nextStep, nextStep+"_faculty")}
+            this.props.goForward(nextStep, wiz.campusID, nextStep+"_faculty")}
           } href="">Other faculty or staff</a>
           </li>
           <li>
             <a onClick = {(event)=>{
             event.preventDefault()
-            this.props.goForward(nextStep, nextStep+"_student")}
+            this.props.goForward(nextStep, wiz.campusID, nextStep+"_student")}
           } href="">Student</a>
           </li>
           <li>
             <a onClick = {(event)=>{
             event.preventDefault()
-            this.props.goForward(6, "6_sorry")}
+            this.props.goForward(6, wiz.campusID, "6_sorry")}
           } href="">Not affiliated</a>
           </li>
         </ul>
-      {campusName ?
+      {campusName && campusName != "eScholarship" ?
         <footer>We use these questions to direct you to the right place to deposit your materials.</footer>
       :
         <footer>
@@ -53,6 +58,8 @@ class WizardRoleComp extends React.Component {
         </footer>
       }
       </div>
+      )}}
+      </Subscriber>
     )
   }
 }

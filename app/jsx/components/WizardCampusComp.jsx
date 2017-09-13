@@ -5,7 +5,8 @@ import PropTypes from 'prop-types'
 
 class WizardCampusComp extends React.Component {
   static propTypes = {
-    arg: PropTypes.string,    //.isRequired,
+    campusID: PropTypes.string,   // Not used here
+    arg: PropTypes.string,
     goBackward: PropTypes.any.isRequired,
     goForward: PropTypes.any.isRequired,
     campuses: PropTypes.array.isRequired
@@ -17,7 +18,7 @@ class WizardCampusComp extends React.Component {
       <li key={c.id}>
         <a onClick = {(event)=>{
         event.preventDefault()
-        this.props.goForward(next, c.id)}
+        this.props.goForward(next, c.id, c.name)}
       } href="">{c.name}</a>
       </li>
     })
@@ -37,7 +38,7 @@ class WizardCampusComp extends React.Component {
           <button onClick={this.props.closeModal}><span>Close</span></button>
         </header>
         <div className="c-wizard__heading">
-          [2] Which UC Campus are you affiliated with?
+          Which UC Campus are you affiliated with?
         </div>
         <ul className="c-wizard__list">
           {this.campusList(this.props.campuses, nextStep)}
