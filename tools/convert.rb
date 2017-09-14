@@ -95,12 +95,12 @@ if pos
 end
 
 # CloudSearch API client
-$csClient = Aws::CloudSearchDomain::Client.new(
+$csClient = Aws::CloudSearchDomain::Client.new(credentials: Aws::InstanceProfileCredentials.new,
   endpoint: YAML.load_file("config/cloudSearch.yaml")["docEndpoint"])
 
 # S3 API client
 $s3Config = OpenStruct.new(YAML.load_file("config/s3.yaml"))
-$s3Client = Aws::S3::Client.new(region: $s3Config.region)
+$s3Client = Aws::S3::Client.new(credentials: Aws::InstanceProfileCredentials.new, region: $s3Config.region)
 $s3Bucket = Aws::S3::Bucket.new($s3Config.bucket, client: $s3Client)
 
 # Caches for speed
@@ -497,7 +497,7 @@ def convertNavBar(unitID, generalEl)
 
       if linkTarget =~ %r{/uc/search\?entity=[^;]+;view=([^;]+)$}
         slug = $1
-        linkedPage = generalEl.at("./linkedPages/div[@id=#{slug}]")
+        linkedPage = generalEl.at("./linkedPages/div[@id='#{slug}']")
         if !linkedPage
           puts "Can't find linked page #{slug.inspect}"
           next
