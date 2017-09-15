@@ -505,6 +505,7 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
     begin
       ext = extent(unit.id, unit.type)
     rescue Exception => e
+      puts "Error building page data: #{e} #{e.backtrace}"
       jsonHalt 404, "Error building page data:" + e.message
     end
     pageData = {
