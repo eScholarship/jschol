@@ -104,6 +104,7 @@ def sendSplash(itemID, request, mrtFile)
       splashTemp.unlink
     end
   end
+  content_type "application/pdf"
   send_file outFile
 end
 

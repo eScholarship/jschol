@@ -289,20 +289,18 @@ end
 ###################################################################################################
 get %r{/assets/([0-9a-f]{64})} do |hash|
   s3Path = "#{$s3Config.prefix}/binaries/#{hash[0,2]}/#{hash[2,2]}/#{hash}"
-  s3File = $fileCache.find(s3Path)
-  if !s3File
-    obj = $s3Bucket.object(s3Path)
-    obj.exists? or halt(404)
-    Tempfile.open("s3_", TEMP_DIR) { |s3Tmp|
-      obj.get(response_target: s3Tmp)
-      s3Tmp.close
-      # Set time based on the S3 object, so if-modified-since will work properly
-      FileUtils.touch(s3Tmp.path, mtime: obj.last_modified)
-      s3File = $fileCache.take(s3Path, s3Tmp)
-    }
-  end
-  content_type MimeMagic.by_path(s3File)
-  send_file s3File
+  obj = $s3Bucket.object(s3Path)
+  obj.exists? or halt(404)
+  Tempfile.open("s3_", TEMP_DIR) { |s3Tmp|
+    obj.get(response_target: s3Tmp)
+    s3Tmp.seek(0)
+    etag hash
+    send_file(s3Tmp,
+              last_modified: obj.last_modified,
+              type: obj.metadata["mime_type"] || "application/octet-stream",
+              filename: (obj.metadata["original_path"] || "").sub(%r{.*/}, ''))
+    s3Tmp.unlink
+  }
 end
 
 ###################################################################################################
