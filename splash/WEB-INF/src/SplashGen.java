@@ -152,23 +152,6 @@ public class SplashGen extends HttpServlet
 {
   private static final File TEMP_DIR = new File("/apps/eschol/jschol/splash/tmp");
 
-  private void copyStream(InputStream inStream, OutputStream outStream)
-    throws IOException
-  {
-    try {
-      byte[] xferBuf = new byte[8192];
-      while (true) {
-        int len = inStream.read(xferBuf, 0, xferBuf.length);
-        if (len < 0)
-          break;
-        outStream.write(xferBuf, 0, len);
-      }
-    }
-    finally {
-      outStream.close();
-    }
-  }
-
   private void reEncrypt(File combinedPdfFile, long perms, int cryptoMode)
     throws IOException
   {
@@ -210,17 +193,14 @@ public class SplashGen extends HttpServlet
       while ((b = inStream.read()) != -1 && b != '|') {
         jsonBuf.write(b);
       }
-      Object instrucs = new JSONTokener(jsonBuf.toString("UTF-8")).nextValue();
-      System.out.println("Parsed JSON: " + instrucs.toString());
+      JSONObject data = (JSONObject) (new JSONTokener(jsonBuf.toString("UTF-8")).nextValue());
+      System.out.println("Parsed JSON: " + data.toString());
 
-      // The second part is the PDF file data we're going to add a splash to. Spool it
-      // into a temporary file.
-      inputPdfFile = File.createTempFile("pdf_in_", ".pdf", TEMP_DIR);
-      copyStream(inStream, new FileOutputStream(inputPdfFile));
-      System.out.println("xfer complete to " + inputPdfFile.toString());
+      inputPdfFile = new File(data.getString("pdfFile"));
+      splashPdfFile = new File(data.getString("splashFile"));
+      combinedPdfFile = new File(data.getString("combinedFile"));
 
       // Now parse out the input PDF file.
-      combinedPdfFile = File.createTempFile("pdf_out_", ".pdf", TEMP_DIR);
       PdfReader inputPdfReader = new PdfReader(inputPdfFile.toString());
       PdfWriter combinedPdfWriter = new PdfWriter(combinedPdfFile.toString());
       try {
@@ -237,8 +217,7 @@ public class SplashGen extends HttpServlet
       }
 
       // Format the splash page as a PDF
-      splashPdfFile = File.createTempFile("splash_", ".pdf", TEMP_DIR);
-      createSplash(inputDoc.getPage(1).getPageSize(), instrucs, splashPdfFile);
+      createSplash(inputDoc.getPage(1).getPageSize(), data.getJSONArray("instrucs"), splashPdfFile);
 
       // Merge the splash page into the input document as page 1.
       PdfReader splashPdfReader = new PdfReader(splashPdfFile.toString());
@@ -253,25 +232,15 @@ public class SplashGen extends HttpServlet
       if (cryptoMode != 0)
         reEncrypt(combinedPdfFile, perms, cryptoMode);
 
-      // And stream out the final combined file back to the client.
-      response.setContentType("application/pdf");
-      response.setContentLength((int) combinedPdfFile.length());
-      copyStream(new FileInputStream(combinedPdfFile), response.getOutputStream());
+      // All done.
+      response.setContentType("text/plain");
+      response.getWriter().println("ok");
     }
     finally {
       if (inputDoc != null)
         inputDoc.close();
       if (splashDoc != null)
         splashDoc.close();
-      if (inputPdfFile != null && inputPdfFile.exists()) {
-        inputPdfFile.delete();
-      }
-      if (splashPdfFile != null && splashPdfFile.exists()) {
-        splashPdfFile.delete();
-      }
-      if (combinedPdfFile != null && combinedPdfFile.exists()) {
-        combinedPdfFile.delete();
-      }
     }
   }
 

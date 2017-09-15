@@ -9,6 +9,7 @@ require 'bundler/setup'
 require 'aws-sdk'
 require 'cgi'
 require 'digest'
+require 'httparty'
 require 'json'
 require 'logger'
 require 'mimemagic'
@@ -17,6 +18,7 @@ require 'open-uri'
 require 'pp'
 require 'sequel'
 require 'sinatra'
+require 'tempfile'
 require 'yaml'
 require 'socksify'
 require 'socket'
@@ -98,6 +100,7 @@ require_relative 'unitPages'
 require_relative 'citation'
 require_relative 'loginApi'
 require_relative 'splash'
+require_relative 'fileCache'
 require_relative '../util/sanitize.rb'
 
 # Sinatra configuration
@@ -116,6 +119,13 @@ end
 
 # For general app development, set DO_ISO to false. For real deployment, set to true
 DO_ISO = File.exist?("config/do_iso")
+
+# Cache files from Merritt, S3, and the splash generator for a short time.
+CACHE_DIR = "cache"
+$fileCache = FileCache.new("cache")
+
+TEMP_DIR = "tmp"
+FileUtils.mkdir_p(TEMP_DIR)
 
 ###################################################################################################
 # Model classes for easy interaction with the database.
@@ -277,176 +287,22 @@ def sanitizeFilePath(path)
 end
 
 ###################################################################################################
-class HttpFetcher
-  def initialize
-    @eof = false
-    @prefix = nil
-    @ioChunk = nil
-  end
-
-  def getContent(uri)
-    # We have to fetch the file in a different thread, because it needs to keep the HTTP request
-    # open in that thread while we return the status code to Sinatra. Then the remaining data can
-    # be streamed from the thread to Sinatra.
-    puts "Content fetch: #{uri}."
-    req = Net::HTTP::Get.new(uri.request_uri)
-    req.basic_auth $mrtExpressConfig['username'], $mrtExpressConfig['password']
-    return _fetch(uri, req)
-  end
-
-  def prefix= (str)
-    @prefix = str
-  end
-
-  def postSplashReq(uri, prefix, srcFetcher)
-    puts "PDF splash req: #{uri} #{prefix}."
-    req = Net::HTTP::Post.new(uri.request_uri,
-            { 'Transfer-Encoding' => 'chunked', 'content-type' => 'application/octet-stream' })
-    req.body_stream = srcFetcher
-    srcFetcher.prefix = prefix
-    return _fetch(uri, req)
-  end
-
-  def length
-    @length
-  end
-
-  def _fetch(uri, req)
-    # We have to fetch the file in a different thread, because it needs to keep the HTTP request
-    # open in that thread while we return the status code to Sinatra. Then the remaining data can
-    # be streamed from the thread to Sinatra.
-    @queue = QueueWithTimeout.new
-    Thread.new do
-      begin
-        # Now jump through Net::HTTP's hijinks to actually fetch the file.
-        Net::HTTP.start(uri.host, uri.port, :use_ssl => (uri.scheme == 'https')) do |http|
-          http.request(req) do |response|
-            @queue << [response.code, response.message]
-            if response.code == "200"
-              @length = response['Content-Length']
-              puts "length: #{length.inspect}"
-              response.read_body { |chunk| @queue << chunk }
-            else
-              puts "Error: Response to #{uri} was HTTP #{response.code}: #{response.message.inspect}"
-            end
-          end
-        end
-      rescue Exception => e
-        puts "HTTP fetch exception from #{uri}: #{e}\n#{e.backtrace.join("\n\t")}"
-        raise
-      ensure
-        @queue << nil  # mark end-of-data
-      end
-    end
-
-    # Wait for the status code to come back from the fetch thread.
-    code, msg = @queue.pop_with_timeout(60)
-    return code.to_i, msg
-  end
-
-  # Stream contents in 'each' style (used by middleware)
-  def each
-    begin
-      while true
-        data = @queue.pop_with_timeout(10)
-        data.nil? and break
-        data.length > 0 and yield data
-      end
-    rescue Exception => e
-      puts "Warning: problem while streaming HTTP content via 'each': #{e.message}"
-      raise
-    end
-  end
-
-  # Stream contents in 'io' style (used by Net::HTTP::Post)
-  def eof?
-    @eof
-  end
-
-  def eof!
-    @eof = true
-  end
-
-  def read(size, outBuf = nil)
-    begin
-      size == 0 and return ""
-      while @ioChunk.nil? || @ioChunk.length == 0
-        if @prefix
-          @ioChunk = @prefix
-          @prefix = nil
-        else
-          @ioChunk = @queue.pop_with_timeout(10)
-          if @ioChunk.nil?
-            @eof = true
-            return nil
-          end
-        end
-      end
-      ret = @ioChunk.slice!(0, size.nil? ? @ioChunk.length : size)
-      if outBuf
-        outBuf.clear()
-        outBuf << ret
-        return outBuf
-      end
-      return ret
-    rescue Exception => e
-      puts "Warning: problem while streaming HTTP content via 'read': #{e.message}"
-      raise
-    end
-  end
-end
-
-###################################################################################################
-# The 'streaming' library from sinatra-contrib seems to be unreliable with recent versions of
-# Thin/Rack, so let's just roll our own so we can understand the control flow. Theirs is crazy.
-class S3Fetcher
-  class S3Passer
-    def initialize(queue)
-      @queue = queue
-    end
-    def write(chunk)
-      @queue << chunk
-    end
-    def close()
-      @queue << nil
-    end
-  end
-
-  def initialize(s3Obj)
-    @queue = QueueWithTimeout.new
-    Thread.new do
-      begin
-        s3Obj.get(response_target: S3Passer.new(@queue))
-      rescue Exception => e
-        puts "S3 fetch exception: #{e}"
-      ensure
-        @queue << nil  # mark end-of-data
-      end
-    end
-  end
-
-  def each
-    begin
-      while true
-        data = @queue.pop_with_timeout(10)
-        data.nil? and break
-        data.length > 0 and yield data
-      end
-    rescue Exception => e
-      puts "Warning: problem while streaming S3 content: #{e.message}"
-      raise
-    end
-  end
-end
-
-###################################################################################################
 get %r{/assets/([0-9a-f]{64})} do |hash|
   s3Path = "#{$s3Config.prefix}/binaries/#{hash[0,2]}/#{hash[2,2]}/#{hash}"
-  obj = $s3Bucket.object(s3Path)
-  obj.exists? && obj.metadata["mime_type"] or halt(404)
-  content_type obj.metadata["mime_type"]
-  response.headers['Content-Length'] = obj.content_length.to_s
-  return [200, S3Fetcher.new(obj)]
+  s3File = $fileCache.find(s3Path)
+  if !s3File
+    obj = $s3Bucket.object(s3Path)
+    obj.exists? or halt(404)
+    Tempfile.open("s3_", TEMP_DIR) { |s3Tmp|
+      obj.get(response_target: s3Tmp)
+      s3Tmp.close
+      # Set time based on the S3 object, so if-modified-since will work properly
+      FileUtils.touch(s3Tmp.path, mtime: obj.last_modified)
+      s3File = $fileCache.take(s3Path, s3Tmp)
+    }
+  end
+  content_type MimeMagic.by_path(s3File)
+  send_file s3File
 end
 
 ###################################################################################################
@@ -458,18 +314,21 @@ get "/content/:fullItemID/*" do |fullItemID, path|
   path = sanitizeFilePath(path)  # protect against attacks
 
   # Fetch the file from Merritt
-  fetcher = HttpFetcher.new
   epath = URI::encode(path)
-  code, msg = fetcher.getContent(URI("https://#{$mrtExpressConfig['host']}/dl/ark:/13030/#{fullItemID}/content/#{epath}"))
-  code == 401 and raise("Error: mrtExpress credentials not recognized - check config/mrtExpress.yaml")
-
-  # Temporary fallback: if we can't find on Merritt, try the raw_data hack on pub-eschol-stg.
-  # This is needed for ETDs, since we don't yet record their proper original Merritt location.
-  if code != 200
-    fetcher = HttpFetcher.new
-    code2, msg2 = fetcher.getContent(URI("https://pub-eschol-stg.escholarship.org/raw_data/13030/pairtree_root/" +
-                                    "#{fullItemID.scan(/../).join('/')}/#{fullItemID}/content/#{epath}"))
-    code2 == 200 or halt(code, msg)
+  mrtURL = "https://#{$mrtExpressConfig['host']}/dl/ark:/13030/#{fullItemID}/content/#{epath}"
+  mrtFile = $fileCache.find(mrtURL)
+  if !mrtFile
+    Tempfile.open("mrt_", TEMP_DIR) { |mrtTmp|
+      auth = { username: $mrtExpressConfig['username'],
+               password: $mrtExpressConfig['password'] }
+      response = HTTParty.get(mrtURL, stream_body: true, basic_auth: auth) do |fragment|
+        print "."
+        mrtTmp.write(fragment)
+      end
+      response.success? or puts("Error #{response.code} fetching #{mrtURL}: #{response.message}")
+      response.success? or halt(response.code, response.message)
+      mrtFile = $fileCache.take(mrtURL, mrtTmp)
+    }
   end
 
   # Guess the content type by path for now
@@ -482,19 +341,7 @@ get "/content/:fullItemID/*" do |fullItemID, path|
   end
 
   # For all non-splash-page cases, we're done. Stream the result (to prevent huge files from blowing RAM)
-  if !addSplash
-    fetcher.length and response.headers['Content-Length'] = fetcher.length
-    return stream { |out| fetcher.each { |data| out << data } }
-  end
-
-  # When downloading PDF files, push the Merritt stream through the splash page generator.
-  request.url =~ %r{^https?://([^/:]+)(:\d+)?(.*)$} or fail
-  host = $1
-  fetcher2 = HttpFetcher.new
-  code, msg = fetcher2.postSplashReq(URI("http://#{host}:8081/splash/splashGen"), splashInstrucs(fullItemID), fetcher)
-  code == 200 or halt(code, msg)
-  fetcher2.length and response.headers['Content-Length'] = fetcher2.length
-  return stream { |out| fetcher2.each { |data| out << data } }
+  return addSplash ? sendSplash(fullItemID, request, mrtFile) : send_file(mrtFile)
 end
 
 ###################################################################################################

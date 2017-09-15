@@ -1,4 +1,5 @@
 require 'nokogiri'
+require 'pathname'
 
 ###################################################################################################
 def travAndFormat(data, out)
@@ -66,5 +67,43 @@ def splashInstrucs(itemID)
   instruc << { h3: { text: "Permalink:" } } <<
              { paragraph: { link: { url: permalink, text: permalink } } }
 
-  return instruc.to_json.gsub("|", "") + "|"
+  return instruc
 end
+
+###################################################################################################
+def getRealPath(path)
+  Pathname.new(path).realpath.to_s
+end
+
+###################################################################################################
+def sendSplash(itemID, request, mrtFile)
+  # Figure out the hostname so we can properly address the splash page web service.
+  request.url =~ %r{^https?://([^/:]+)(:\d+)?(.*)$} or fail
+  host = $1
+
+  # We'll need a temp file for the splash page and the combined file
+  outFile = $fileCache.find("splash_#{itemID}.pdf")
+  if !outFile
+    splashTemp = Tempfile.new(["splash_", ".pdf"], TEMP_DIR)
+    begin
+      combinedTemp = Tempfile.new(["combined_", ".pdf"], TEMP_DIR)
+      begin
+        data = { pdfFile: getRealPath(mrtFile),
+                 splashFile: getRealPath(splashTemp.path),
+                 combinedFile: getRealPath(combinedTemp.path),
+                 instrucs: splashInstrucs(itemID) }
+        response = HTTParty.post("http://#{host}:8081/splash/splashGen", body: data.to_json.encode("UTF-8"))
+        response.success? or puts("Error #{response.code} fetching splash page: #{response.message}")
+        response.success? or halt(response.code, response.message)
+        outFile = $fileCache.take("splash_#{itemID}.pdf", combinedTemp)
+        return send_file outFile
+      ensure
+        combinedTemp.unlink
+      end
+    ensure
+      splashTemp.unlink
+    end
+  end
+  send_file outFile
+end
+
