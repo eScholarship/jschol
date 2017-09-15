@@ -2,23 +2,26 @@
 
 import React from 'react'
 import { Subscriber } from 'react-broadcast'
-import _ from 'lodash'
 
 class WizardTypeComp extends React.Component {
   render() {
     return (
       <Subscriber channel="wiz">
-        { wiz =>
+        { wiz => {
+            // If logged in as campus, prevStep should send you back to WizardRoleComp
+            let prevStep = wiz.launchedFromRoot ? 2 : 1
+      return (
       <div className="c-wizard__step">
         <header>
           <h1 tabIndex="-1">{wiz.campusName} Deposit</h1>
           <a onClick = {(event)=>{
             event.preventDefault()
-            this.props.goBackward()}
+            this.props.goBackward(prevStep)}
           } href=""><span>Go back</span></a>
           <button onClick={this.props.closeModal}><span>Close</span></button>
         </header>
         <div className="c-wizard__heading">
+          {/* Step [3] */}
           What kind of material are you depositing?
         </div>
         <ul className="c-wizard__list">
@@ -43,7 +46,7 @@ class WizardTypeComp extends React.Component {
           We use these questions to direct you to the right place to deposit your materials.
         </footer>
       </div>
-      }
+     )} }
       </Subscriber>
     )
   }

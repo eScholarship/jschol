@@ -1,6 +1,7 @@
 // ##### Deposit Wizard - [2] Campus Component ##### //
 
 import React from 'react'
+import { Subscriber } from 'react-broadcast'
 import PropTypes from 'prop-types'
 
 class WizardCampusComp extends React.Component {
@@ -28,6 +29,9 @@ class WizardCampusComp extends React.Component {
     // Student is not asked to select type of material (skip step 3)
     let nextStep = (this.props.arg == "2_student") ? 4 : 3
     return (
+      <Subscriber channel="wiz">
+        { wiz => {
+      return (
       <div className="c-wizard__step">
         <header>
           <h1 tabIndex="-1">eScholarship Deposit</h1>
@@ -47,6 +51,8 @@ class WizardCampusComp extends React.Component {
           We use these questions to direct you to the right place to deposit your materials.
         </footer>
       </div>
+      )}}
+      </Subscriber>
     )
   }
 }

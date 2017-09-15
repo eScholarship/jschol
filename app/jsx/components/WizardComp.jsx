@@ -16,6 +16,7 @@ class WizardComp extends React.Component {
     showModal: PropTypes.bool.isRequired,
     onCancel: PropTypes.any,
     campuses: PropTypes.array.isRequired,
+    launchedFromRoot: PropTypes.bool,
     data: PropTypes.shape({
       wizardStep: PropTypes.number.isRequired,
       wizardDir: PropTypes.string.isRequired,
@@ -27,36 +28,43 @@ class WizardComp extends React.Component {
   }
 
   state = { showModal: this.props.showModal,
+            launchedFromRoot: !this.props.data.campusID || this.props.data.campusID == 'root',
             data: this.props.data }
 
   componentWillReceiveProps(nextProps) {
     if (!_.isEqual(this.props.showModal, nextProps.showModal))
-      this.setState({showModal: nextProps.showModal})
+      this.setState({showModal: nextProps.showModal,
+                     data: {wizardStep: nextProps.data.wizardStep,
+                            wizardDir: nextProps.data.wizardDir,
+                            campusID: nextProps.data.campusID,
+                            campusName: nextProps.data.campusName,
+                            arg: nextProps.data.arg}})
   }
 
   getCampusName = (campusID) => {
-    if (campusID == 'root') {return "eScholarship"}
+    if (campusID == 'root') return "eScholarship"
     let h = _.find(this.props.campuses, { 'id': campusID })
     return h ? h["name"] : this.state.data.campusName
   }
 
-  // 'campusID' as used in state is for global entry point, different from campusID passed in property (from campus page)
   // 'arg' is used for different purposes across the different wizard modals
   goForward = (step, campusID, arg) =>{
     setTimeout(()=>this.tabFocus(), 0)
-    let campusName = this.getCampusName(campusID)
     this.setState({data: {wizardStep: step,
                           wizardDir: 'fwd',
                           prevStep: this.state.data.wizardStep,
                           campusID: campusID,
-                          campusName: campusName,
+                          campusName: this.getCampusName(campusID),
                           arg: arg ? arg : this.state.data.arg}})
   }
 
-  goBackward = ()=>{
+  goBackward = (prevStep)=>{
     setTimeout(()=>this.tabFocus(), 0)
     let wizardStep
-    if (this.state.data.prevStep)
+    if (prevStep) {
+      wizardStep = prevStep
+    }
+    else if (this.state.data.prevStep)
       wizardStep = this.state.data.prevStep
     else
       wizardStep = this.state.data.wizardStep - 1
@@ -84,10 +92,12 @@ class WizardComp extends React.Component {
 
   render() {
     let d = this.state.data
+    // console.log(d)
     return (
       <div className="c-modal">
       <Broadcast className="c-modal" channel="wiz" value={
-         { campusName: d.campusName ? d.campusName : "eScholarship", 
+         { launchedFromRoot: this.state.launchedFromRoot,
+           campusName: d.campusName ? d.campusName : "eScholarship", 
            campusID: d.campusID, 
            arg: d.arg
       } }>

@@ -465,6 +465,29 @@ get %r{/api/(home|notFound|logoutSuccess)} do
 end
 
 ###################################################################################################
+# Deposit Wizard get units for a campus
+get "/api/wizardlyUnits/:campusID" do |campusID|
+  cu = flattenDepts($hierByAncestor[campusID].map(&:values).map{|x| x[:unit_id]})
+  return cu.sort_by{ |u| u["name"] }.to_json
+end
+
+# Returns an array like [{"id"=>"uceap", "name"=>"UCEAP Mexico"}, ...]
+def flattenDepts(ids, a=[])
+  if ids.class == Array
+    ids.each {|x| flattenDepts(x,a)}
+  else
+    unit = $unitsHash[ids]
+    a << {"id" => unit.id, "name" => unit.name} unless unit.type != 'oru'
+    children = $hierByAncestor[unit.id]
+    children and children.each do |c|
+        unit = $unitsHash[c.unit_id]
+        flattenDepts(unit.id, a)
+      end
+  end
+  a 
+end
+
+###################################################################################################
 # Browse all campuses
 get "/api/browse/campuses" do 
   content_type :json
