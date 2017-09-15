@@ -1,13 +1,29 @@
+/*
+ * eScholarship 5.0 splash page generator
+ */
+
 import com.itextpdf.forms.PdfPageFormCopier;
 import com.itextpdf.kernel.crypto.BadPasswordException;
 import com.itextpdf.kernel.geom.PageSize;
 import com.itextpdf.kernel.geom.Rectangle;
-import com.itextpdf.kernel.font.*;
-import com.itextpdf.kernel.pdf.*;
+import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfDocumentInfo;
+import com.itextpdf.kernel.pdf.PdfReader;
+import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.kernel.pdf.ReaderProperties;
+import com.itextpdf.kernel.pdf.PdfString;
+import com.itextpdf.kernel.pdf.WriterProperties;
+import com.itextpdf.kernel.pdf.PdfViewerPreferences;
+import com.itextpdf.kernel.pdf.action.PdfAction;
+import com.itextpdf.kernel.font.PdfFont;
+import com.itextpdf.kernel.font.PdfFontFactory;
 import com.itextpdf.io.font.FontConstants;
 import com.itextpdf.layout.Document;
+import com.itextpdf.layout.element.Link;
 import com.itextpdf.layout.element.Paragraph;
+import com.itextpdf.layout.element.Text;
 
+import org.json.JSONArray;
 import org.json.JSONTokener;
 import org.json.JSONObject;
  
@@ -15,162 +31,260 @@ import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.net.URL;
 import java.util.UUID;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+class SplashFormatter
+{
+  PdfDocument pdf;
+  Document doc;
+  PdfFont normalFont;
+  PdfFont boldFont;
+
+  SplashFormatter(PdfDocument in_pdf)
+    throws IOException
+  {
+    pdf = in_pdf;
+    doc = new Document(pdf);
+    doc.setMargins(50, 50, 50, 50);
+    normalFont = PdfFontFactory.createFont(FontConstants.HELVETICA);
+    boldFont = PdfFontFactory.createFont(FontConstants.HELVETICA_BOLD);
+    doc.setFont(normalFont);
+  }
+
+  void finish() {
+    doc.close();
+  }
+
+  /*
+    data = [
+      { paragraph: { text: "This text" } },
+      { paragraph: { text: "that text" } }
+    ]
+  */
+
+  void formatPage(JSONArray arr) {
+    for (int i=0; i<arr.length(); i++)
+      formatElement((JSONObject) arr.get(i));
+  }
+
+  void formatElement(JSONObject obj) {
+    if (obj.length() != 1)
+      throw new RuntimeException(String.format("Element obj should have 1 key: %s", obj));
+    String elName = (String) obj.names().get(0);
+    Paragraph para = new Paragraph();
+    switch (elName) {
+      case "paragraph":
+        para.setFontSize(11);
+        formatContent(obj.getJSONObject(elName), para);
+        break;
+      case "h1":
+        para.setFontSize(16);
+        para.setFont(boldFont);
+        para.setMarginBottom(0);
+        formatContent(obj.getJSONObject(elName), para);
+        break;
+      case "h2":
+        para.setFontSize(14);
+        para.setFont(boldFont);
+        formatContent(obj.getJSONObject(elName), para);
+        break;
+      case "h3":
+        para.setFontSize(12);
+        para.setFont(boldFont);
+        para.setMarginBottom(0);
+        formatContent(obj.getJSONObject(elName), para);
+        break;
+      default:
+        throw new RuntimeException(String.format("Unrecognized element: %s", obj));
+    }
+    doc.add(para);
+  }
+
+  void formatContent(JSONObject obj, Paragraph addTo) {
+    if (obj.has("text"))
+      formatText(obj.get("text"), addTo);
+    else if (obj.has("link"))
+      formatLink((JSONObject)obj.get("link"), addTo);
+    else
+      throw new RuntimeException(String.format("Can't find content: %s", obj));
+  }
+
+  void formatText(Object text, Paragraph addTo) {
+    if (text instanceof String)
+      addTo.add(new Text((String)text));
+    else if (text instanceof JSONObject) {
+      JSONObject obj = (JSONObject) text;
+      Text t = new Text((String) obj.get("str"));
+      if (obj.has("bold"))
+        t.setFont(boldFont);
+      addTo.add(t);
+    }
+    else if (text instanceof JSONArray) {
+      JSONArray arr = (JSONArray) text;
+      for (int i=0; i<arr.length(); i++)
+        formatText(arr.get(i), addTo);
+    }
+    else
+      throw new RuntimeException(String.format("Unknown text type: %s", text));
+  }
+
+  void formatLink(JSONObject data, Paragraph addTo) {
+    PdfAction action = PdfAction.createURI((String) data.get("url"));
+    Link link = new Link((String) data.get("text"), action);
+    link.setUnderline();
+    addTo.add(link);
+  }
+}
+
 public class SplashGen extends HttpServlet
 {
-	public void doPost(HttpServletRequest request, HttpServletResponse response)
-		throws ServletException, IOException
-	{
-    // The first part of the request, up to a pipe '|' symbol, is JSON data encoded
-    // in UTF-8.
-    BufferedInputStream inStream = new BufferedInputStream(request.getInputStream());
-    ByteArrayOutputStream jsonBuf = new ByteArrayOutputStream(5000);
-    int b;
-    while ((b = inStream.read()) != -1 && b != '|') {
-      jsonBuf.write(b);
+  private static final File TEMP_DIR = new File("/apps/eschol/jschol/splash/tmp");
+
+  private void copyStream(InputStream inStream, OutputStream outStream)
+    throws IOException
+  {
+    try {
+      byte[] xferBuf = new byte[8192];
+      while (true) {
+        int len = inStream.read(xferBuf, 0, xferBuf.length);
+        if (len < 0)
+          break;
+        outStream.write(xferBuf, 0, len);
+      }
     }
-    System.out.println("Before json parse: " + jsonBuf.toString("UTF-8"));
-    JSONObject data = (JSONObject) new JSONTokener(jsonBuf.toString("UTF-8")).nextValue();
-
-    // The second part is the PDF file data we're going to add a splash to.
-    System.out.println("Got: " + data.toString());
-
-    // For now, just echo back the entire file.
-    byte[] xferBuf = new byte[8192];
-    OutputStream out = response.getOutputStream();
-    while (true) {
-      int len = inStream.read(xferBuf, 0, xferBuf.length);
-      if (len < 0)
-        break;
-      out.write(xferBuf, 0, len);
+    finally {
+      outStream.close();
     }
-    System.out.println("xfer complete");
-	}
+  }
 
-	private static void createSplash(Rectangle pageSize)
-		throws IOException
-	{
-		PdfWriter writer = new PdfWriter(new File("splashTmp.pdf"));
-		PdfDocument pdf = new PdfDocument(writer);
-		pdf.setDefaultPageSize(new PageSize(pageSize));
-		pdf.setTagged();
-		pdf.getCatalog().setLang(new PdfString("en-US"));
-		pdf.getCatalog().setViewerPreferences(new PdfViewerPreferences().setDisplayDocTitle(true));
-		PdfDocumentInfo info = pdf.getDocumentInfo();
-		info.setTitle("eScholarship splash page");
+  private void reEncrypt(File combinedPdfFile, long perms, int cryptoMode)
+    throws IOException
+  {
+    File oldFile = new File(combinedPdfFile.toString() + ".old");
+    try {
+      combinedPdfFile.renameTo(oldFile);
+      PdfReader reader = new PdfReader(oldFile.toString());
+      PdfWriter writer = new PdfWriter(combinedPdfFile.toString(),
+          new WriterProperties().setStandardEncryption(
+            "".getBytes(),                           // empty user password
+            UUID.randomUUID().toString().getBytes(), // random owner password
+            (int)perms, cryptoMode));
+      new PdfDocument(reader, writer).close();
+    }
+    finally {
+      if (oldFile.exists())
+        oldFile.delete();
+    }
+  }
 
-		Document document = new Document(pdf);
+  public void doPost(HttpServletRequest request, HttpServletResponse response)
+    throws ServletException, IOException
+  {
+    File inputPdfFile = null;
+    File splashPdfFile = null;
+    File combinedPdfFile = null;
+    PdfDocument inputDoc = null;
+    PdfDocument splashDoc = null;
+    long perms = 0;
+    int cryptoMode = 0;
 
-		document.setMargins(50, 50, 50, 50);
+    try
+    {
+      // The first part of the request, up to a pipe '|' symbol, is JSON data encoded
+      // in UTF-8.
+      BufferedInputStream inStream = new BufferedInputStream(request.getInputStream());
+      ByteArrayOutputStream jsonBuf = new ByteArrayOutputStream(5000);
+      int b;
+      while ((b = inStream.read()) != -1 && b != '|') {
+        jsonBuf.write(b);
+      }
+      Object instrucs = new JSONTokener(jsonBuf.toString("UTF-8")).nextValue();
+      System.out.println("Parsed JSON: " + instrucs.toString());
 
-		PdfFont normalFont = PdfFontFactory.createFont(FontConstants.HELVETICA);
-		PdfFont boldFont = PdfFontFactory.createFont(FontConstants.HELVETICA_BOLD);
+      // The second part is the PDF file data we're going to add a splash to. Spool it
+      // into a temporary file.
+      inputPdfFile = File.createTempFile("pdf_in_", ".pdf", TEMP_DIR);
+      copyStream(inStream, new FileOutputStream(inputPdfFile));
+      System.out.println("xfer complete to " + inputPdfFile.toString());
 
-		document.setFont(normalFont);
+      // Now parse out the input PDF file.
+      combinedPdfFile = File.createTempFile("pdf_out_", ".pdf", TEMP_DIR);
+      PdfReader inputPdfReader = new PdfReader(inputPdfFile.toString());
+      PdfWriter combinedPdfWriter = new PdfWriter(combinedPdfFile.toString());
+      try {
+        inputDoc = new PdfDocument(inputPdfReader, combinedPdfWriter);
+      }
+      catch (BadPasswordException e) {
+        inputPdfReader.close();
+        inputPdfReader = new PdfReader(inputPdfFile.toString(),
+                                       new ReaderProperties().setPassword("".getBytes()));
+        inputPdfReader.setUnethicalReading(true); // we're passing files through to user; it's their decision to make.
+        inputDoc = new PdfDocument(inputPdfReader, combinedPdfWriter);
+        cryptoMode = inputPdfReader.getCryptoMode();
+        perms = inputPdfReader.getPermissions();
+      }
 
-		Paragraph p = new Paragraph("UC San Diego");
-		p.setFont(boldFont).setFontSize(16);
-		document.add(p);
+      // Format the splash page as a PDF
+      splashPdfFile = File.createTempFile("splash_", ".pdf", TEMP_DIR);
+      createSplash(inputDoc.getPage(1).getPageSize(), instrucs, splashPdfFile);
 
-		p = new Paragraph("Previously Published Works");
-		p.setFont(boldFont).setFontSize(14);
-		document.add(p);
+      // Merge the splash page into the input document as page 1.
+      PdfReader splashPdfReader = new PdfReader(splashPdfFile.toString());
+      splashDoc = new PdfDocument(splashPdfReader);
+      splashDoc.copyPagesTo(1, 1, inputDoc, 1, new PdfPageFormCopier());
+      splashDoc.close();
+      splashDoc = null;
+      inputDoc.close();
+      inputDoc = null;
 
-		document.add(new Paragraph("Hello World!"));
-		document.close();
-	}
+      // If the original doc was encrypted (i.e. "protected"), preserve that.
+      if (cryptoMode != 0)
+        reEncrypt(combinedPdfFile, perms, cryptoMode);
 
-	public static void main(String[] args)
-		throws IOException
-	{
-		String coverPath = args[0];
-		String resourcePath = args[1];
-		String destPath = args[2];
+      // And stream out the final combined file back to the client.
+      response.setContentType("application/pdf");
+      response.setContentLength((int) combinedPdfFile.length());
+      copyStream(new FileInputStream(combinedPdfFile), response.getOutputStream());
+    }
+    finally {
+      if (inputDoc != null)
+        inputDoc.close();
+      if (splashDoc != null)
+        splashDoc.close();
+      if (inputPdfFile != null && inputPdfFile.exists()) {
+        inputPdfFile.delete();
+      }
+      if (splashPdfFile != null && splashPdfFile.exists()) {
+        splashPdfFile.delete();
+      }
+      if (combinedPdfFile != null && combinedPdfFile.exists()) {
+        combinedPdfFile.delete();
+      }
+    }
+  }
 
-		System.err.format("Processing '%s'.\n", resourcePath);
-
-		PdfDocument pdfDoc = null;
-		PdfDocument cover = null;
-		boolean reEncrypt = false;
-		long perms = 0;
-		int cryptoMode = 0;
-		try {
-			PdfReader reader1 = new PdfReader(resourcePath);
-			PdfWriter writer = new PdfWriter(destPath);
-			try {
-				pdfDoc = new PdfDocument(reader1, writer);
-			}
-			catch (BadPasswordException e) {
-				System.err.println("  Encrypted2 file, trying with empty password.");
-				reader1.close();
-				reader1 = new PdfReader(resourcePath, new ReaderProperties().setPassword("".getBytes()));
-				reader1.setUnethicalReading(true); // we're passing files through to user; it's their decision to make.
-				//writer.close();
-				//writer = new PdfWriter(destPath,
-				//    new WriterProperties().setStandardEncryption("".getBytes(), "".getBytes(), (int)reader1.getPermissions(),
-				//        EncryptionConstants.ENCRYPTION_AES_128 | EncryptionConstants.DO_NOT_ENCRYPT_METADATA));
-				pdfDoc = new PdfDocument(reader1, writer);
-				cryptoMode = reader1.getCryptoMode();
-				perms = reader1.getPermissions();
-				/*
-				System.out.println(String.format("mode=0x%x", reader1.getCryptoMode()));
-				System.out.println(String.format("perm=0x%x", reader1.getPermissions()));
-				System.out.format("STANDARD_ENCRYPTION_40=%d\n", EncryptionConstants.STANDARD_ENCRYPTION_40);
-				System.out.format("STANDARD_ENCRYPTION_128=%d\n", EncryptionConstants.STANDARD_ENCRYPTION_128);
-				System.out.format("ENCRYPTION_AES_128=%d\n", EncryptionConstants.ENCRYPTION_AES_128);
-				System.out.format("ENCRYPTION_AES_256=%d\n", EncryptionConstants.ENCRYPTION_AES_256);
-				System.out.format("DO_NOT_ENCRYPT_METADATA=%d\n", EncryptionConstants.DO_NOT_ENCRYPT_METADATA);
-				System.out.format("EMBEDDED_FILES_ONLY=%d\n", EncryptionConstants.EMBEDDED_FILES_ONLY);
-				System.out.format("ALLOW_PRINTING=%d\n", EncryptionConstants.ALLOW_PRINTING);
-				System.out.format("ALLOW_MODIFY_CONTENTS=%d\n", EncryptionConstants.ALLOW_MODIFY_CONTENTS);
-				System.out.format("ALLOW_MODIFY_CONTENTS=%d\n", EncryptionConstants.ALLOW_MODIFY_CONTENTS);
-				System.out.format("ALLOW_COPY=%d\n", EncryptionConstants.ALLOW_COPY);
-				System.out.format("ALLOW_MODIFY_ANNOTATIONS=%d\n", EncryptionConstants.ALLOW_MODIFY_ANNOTATIONS);
-				System.out.format("ALLOW_FILL_IN=%d\n", EncryptionConstants.ALLOW_FILL_IN);
-				System.out.format("ALLOW_SCREENREADERS=%d\n", EncryptionConstants.ALLOW_SCREENREADERS);
-				System.out.format("ALLOW_ASSEMBLY=%d\n", EncryptionConstants.ALLOW_ASSEMBLY);
-				System.out.format("ALLOW_DEGRADED_PRINTING=%d\n", EncryptionConstants.ALLOW_DEGRADED_PRINTING);
-				*/
-				reEncrypt = true;
-			}
-
-			createSplash(pdfDoc.getPage(1).getPageSize());
-
-			PdfReader reader2 = new PdfReader("splashTmp.pdf");
-			cover = new PdfDocument(reader2);
-			cover.copyPagesTo(1, 1, pdfDoc, 1, new PdfPageFormCopier());
-		}
-		finally {
-			if (cover != null)
-				cover.close();
-			if (pdfDoc != null)
-				pdfDoc.close();
-		}
-
-		if (reEncrypt) {
-			System.err.println("  Re-encrypting.");
-			PdfReader reader = new PdfReader(destPath);
-			PdfWriter writer = new PdfWriter(destPath + "-enc",
-					new WriterProperties().setStandardEncryption(
-						"".getBytes(),  // user password
-						UUID.randomUUID().toString().getBytes(), // owner password
-						(int)perms,
-						cryptoMode));
-			pdfDoc = new PdfDocument(reader, writer);
-			pdfDoc.close();
-			File renFrom = new File(destPath + "-enc");
-			File renTo = new File(destPath);
-			renTo.delete();
-			renFrom.renameTo(renTo);
-		}
-	}
+  private void createSplash(Rectangle pageSize, Object instrucs, File splashPdfFile)
+    throws IOException
+  {
+    PdfWriter writer = new PdfWriter(splashPdfFile);
+    PdfDocument pdf = new PdfDocument(writer);
+    pdf.setDefaultPageSize(new PageSize(pageSize));
+    pdf.setTagged();
+    pdf.getCatalog().setLang(new PdfString("en-US"));
+    SplashFormatter formatter = new SplashFormatter(pdf);
+    formatter.formatPage((JSONArray)instrucs);
+    formatter.finish();
+  }
 }

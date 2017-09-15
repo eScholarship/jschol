@@ -79,6 +79,9 @@ OJS_DB = ensureConnect(ojsDbConfig)
 # Need credentials for fetching content files from MrtExpress
 $mrtExpressConfig = YAML.load_file("config/mrtExpress.yaml")
 
+# Need a key for encrypting login credentials and URL keys
+$jscholKey = open("config/jscholKey.dat").read.strip
+
 # S3 API client
 puts "Connecting to S3.           "
 $s3Config = OpenStruct.new(YAML.load_file("config/s3.yaml"))
@@ -94,6 +97,7 @@ require_relative 'queueWithTimeout'
 require_relative 'unitPages'
 require_relative 'citation'
 require_relative 'loginApi'
+require_relative 'splash'
 require_relative '../util/sanitize.rb'
 
 # Sinatra configuration
@@ -303,6 +307,10 @@ class HttpFetcher
     return _fetch(uri, req)
   end
 
+  def length
+    @length
+  end
+
   def _fetch(uri, req)
     # We have to fetch the file in a different thread, because it needs to keep the HTTP request
     # open in that thread while we return the status code to Sinatra. Then the remaining data can
@@ -315,9 +323,10 @@ class HttpFetcher
           http.request(req) do |response|
             @queue << [response.code, response.message]
             if response.code == "200"
+              @length = response['Content-Length']
+              puts "length: #{length.inspect}"
               response.read_body { |chunk| @queue << chunk }
             else
-              puts "headers: #{response.to_hash.inspect}"
               puts "Error: Response to #{uri} was HTTP #{response.code}: #{response.message.inspect}"
             end
           end
@@ -466,18 +475,26 @@ get "/content/:fullItemID/*" do |fullItemID, path|
   # Guess the content type by path for now
   content_type MimeMagic.by_path(path)
 
-  # For regular (non-PDF) files, we're done.
-  if !(path =~ /\.pdf$/)
-    # Stream the results (don't buffer the whole thing, as some files are huge and would blow out our RAM).
-    return [200, fetcher]
+  if path =~ /\.pdf$/
+    addSplash = !params[:nosplash] || !isValidContentKey(fullItemID.sub(/^qt/, ''), params[:nosplash])
+  else
+    addSplash = false
   end
 
-  # For PDF files, get a splash page.
+  # For all non-splash-page cases, we're done. Stream the result (to prevent huge files from blowing RAM)
+  if !addSplash
+    fetcher.length and response.headers['Content-Length'] = fetcher.length
+    return stream { |out| fetcher.each { |data| out << data } }
+  end
+
+  # When downloading PDF files, push the Merritt stream through the splash page generator.
   request.url =~ %r{^https?://([^/:]+)(:\d+)?(.*)$} or fail
   host = $1
   fetcher2 = HttpFetcher.new
-  code, msg = fetcher2.postSplashReq(URI("http://#{host}:8081/splash/splashGen"), '{"foo":"bar"}|', fetcher)
-  return [200, fetcher2]
+  code, msg = fetcher2.postSplashReq(URI("http://#{host}:8081/splash/splashGen"), splashInstrucs(fullItemID), fetcher)
+  code == 200 or halt(code, msg)
+  fetcher2.length and response.headers['Content-Length'] = fetcher2.length
+  return stream { |out| fetcher2.each { |data| out << data } }
 end
 
 ###################################################################################################
@@ -688,6 +705,21 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
 end
 
 ###################################################################################################
+def calcContentKey(shortArk, date = nil)
+  Digest::MD5.hexdigest("V01:#{shortArk}:#{(date || Date.today).iso8601}:#{$jscholKey}")
+end
+
+###################################################################################################
+def isValidContentKey(shortArk, key)
+  (-1..1).each { |offset|
+    if key == calcContentKey(shortArk, Date.today + offset)
+      return true
+    end
+  }
+  return false
+end
+
+###################################################################################################
 # Item view page data.
 get "/api/item/:shortArk" do |shortArk|
   content_type :json
@@ -713,6 +745,7 @@ get "/api/item/:shortArk" do |shortArk|
         :rights => item.rights,
         :content_type => item.content_type,
         :content_html => getItemHtml(item.content_type, shortArk),
+        :content_key => calcContentKey(shortArk),
         :attrs => attrs,
         :appearsIn => unitIDs ? unitIDs.map { |unitID| {"id" => unitID, "name" => Unit[unitID].name} }
                               : nil,

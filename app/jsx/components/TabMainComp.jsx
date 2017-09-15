@@ -53,7 +53,7 @@ class MainContent extends React.Component {
           }
         } else {
           return (p.content_type == "application/pdf" ?
-                    <PdfViewComp url={"/content/qt" + p.id + "/qt" + p.id + ".pdf"}/>
+                    <PdfViewComp url={"/content/qt" + p.id + "/qt" + p.id + ".pdf"} content_key={p.content_key}/>
                     :
                     p.content_type == "text/html" ? this.renderHtml(p) : null)
         }

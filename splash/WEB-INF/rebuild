@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
+cd "$( dirname "${BASH_SOURCE[0]}" )"
 bin/ant
 eye restart tomcat
-sleep 2
+sleep 3

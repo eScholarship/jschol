@@ -17,7 +17,7 @@ class PdfViewComp extends React.Component {
           <button onClick={() => {this.view()}} className="c-pdfview__button-view">View Larger</button>
         </div>
         <div className="c-pdfview__viewer">
-          <PdfViewerComp url={this.props.url}/> 
+          <PdfViewerComp url={this.props.url + "?nosplash=" + this.props.content_key}/>
         </div>
       </details>
     )
