@@ -16,46 +16,48 @@ class WizardComp extends React.Component {
     showModal: PropTypes.bool.isRequired,
     onCancel: PropTypes.any,
     campuses: PropTypes.array.isRequired,
-    launchedFromRoot: PropTypes.bool,
     data: PropTypes.shape({
-      wizardStep: PropTypes.number.isRequired,
-      wizardDir: PropTypes.string.isRequired,
       campusID: PropTypes.string,
       campusName: PropTypes.string,
-      arg: PropTypes.string
     })
-
   }
 
   state = { showModal: this.props.showModal,
             launchedFromRoot: !this.props.data.campusID || this.props.data.campusID == 'root',
-            data: this.props.data }
+            data: {wizardStep: 1,
+                   wizardDir: 'fwd',
+                   campusID: this.props.data.campusID,
+                   campusName: this.props.data.campusName,
+                   unitID: null,    // To be the department chosen within WizardUnitComp
+                   unitName: null,
+                   arg: null        // An arbitary field used to passs logic between steps
+                   }}
 
   componentWillReceiveProps(nextProps) {
     if (!_.isEqual(this.props.showModal, nextProps.showModal))
-      this.setState({showModal: nextProps.showModal,
-                     data: {wizardStep: nextProps.data.wizardStep,
-                            wizardDir: nextProps.data.wizardDir,
-                            campusID: nextProps.data.campusID,
-                            campusName: nextProps.data.campusName,
-                            arg: nextProps.data.arg}})
+      this.setState({ showModal: nextProps.showModal })
   }
 
   getCampusName = (campusID) => {
-    if (campusID == 'root') return "eScholarship"
+    if (!campusID || campusID == 'root') return "eScholarship"
     let h = _.find(this.props.campuses, { 'id': campusID })
     return h ? h["name"] : this.state.data.campusName
   }
 
-  // 'arg' is used for different purposes across the different wizard modals
-  goForward = (step, campusID, arg) =>{
+  // 'h' hash is used for different purposes across the different wizard modals
+  goForward = (step, h) =>{
     setTimeout(()=>this.tabFocus(), 0)
+    let campusID = (h && h['campusID']) ? h['campusID'] : this.state.data.campusID
+    let unitID = (h && h['unitID']) ? h['unitID'] : this.state.data.unitID
+    let unitName = (h && h['unitName']) ? h['unitName'] : this.state.data.unitName
     this.setState({data: {wizardStep: step,
                           wizardDir: 'fwd',
                           prevStep: this.state.data.wizardStep,
-                          campusID: campusID,
+                          campusID: campusID, 
                           campusName: this.getCampusName(campusID),
-                          arg: arg ? arg : this.state.data.arg}})
+                          unitID: unitID, 
+                          unitName: unitName, 
+                          arg: (h && h['arg']) ? h['arg'] : this.state.data.arg}})
   }
 
   goBackward = (prevStep)=>{
@@ -68,11 +70,15 @@ class WizardComp extends React.Component {
       wizardStep = this.state.data.prevStep
     else
       wizardStep = this.state.data.wizardStep - 1
+    // Strip campus info from state if user is starting over and didn't come originally from a campus
+    let resetCampus = (wizardStep == 1 && this.state.launchedFromRoot)
     this.setState({data: {wizardStep: wizardStep,
                           wizardDir: 'bkw',
                           prevStep: null,
-                          campusID: this.state.data.campusID,
-                          campusName: this.state.data.campusName,
+                          campusID: resetCampus ? null : this.state.data.campusID,
+                          campusName: resetCampus ? null : this.state.data.campusName,
+                          unitID: this.state.data.unitID,
+                          unitName: this.state.data.unitName,
                           arg: this.state.data.arg}})
   }
 
@@ -98,7 +104,9 @@ class WizardComp extends React.Component {
       <Broadcast className="c-modal" channel="wiz" value={
          { launchedFromRoot: this.state.launchedFromRoot,
            campusName: d.campusName ? d.campusName : "eScholarship", 
-           campusID: d.campusID, 
+           campusID: d.campusID,
+           unitID: d.unitID,
+           unitName: d.unitName,
            arg: d.arg
       } }>
 

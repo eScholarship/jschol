@@ -19,7 +19,7 @@ class WizardCampusComp extends React.Component {
       <li key={c.id}>
         <a onClick = {(event)=>{
         event.preventDefault()
-        this.props.goForward(next, c.id)}
+        this.props.goForward(next, {'campusID': c.id})}
       } href="">{c.name}</a>
       </li>
     })

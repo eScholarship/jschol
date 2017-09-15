@@ -1,4 +1,4 @@
-// ##### Deposit Wizard - [4] Unit Component ##### //
+// ##### Deposit Wizard - [4] Unit (ORU) Component ##### //
 
 import React from 'react'
 import { Subscriber } from 'react-broadcast'
@@ -10,9 +10,9 @@ class WizardUnitComp extends React.Component {
   currentCampus = null
 
   fetchUnits = (campusID) => {
-    if (campusID && campusID != this.currentCampus && campusID != "eScholarship") {
+    if (campusID && campusID != this.currentCampus && !["eScholarship", "root"].includes(campusID)) {
       this.currentCampus = campusID
-      $.getJSON(`/api/wizardlyUnits/${campusID}`).done((units) => {
+      $.getJSON(`/api/wizardlyORUs/${campusID}`).done((units) => {
         this.setState({ units: units, fetchingData: false })
       }).fail((jqxhr, textStatus, err)=> {
         // ToDo: Create an error field to display any errors
@@ -27,7 +27,7 @@ class WizardUnitComp extends React.Component {
           return (<li key={u.id}>
                      <a onClick = {(event)=>{
                      event.preventDefault()
-                     this.props.goForward(5)}
+                     this.props.goForward(5, {"unitID": u.id, "unitName": u.name})}
                      } href="">{u.name}</a></li>)
         } )
       : null 

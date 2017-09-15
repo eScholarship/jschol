@@ -26,25 +26,25 @@ class WizardRoleComp extends React.Component {
           <li>
             <a onClick = {(event)=>{
             event.preventDefault()
-            this.props.goForward(6, wiz.campusID, "6_senate")}
+            this.props.goForward(6, {"arg": "6_senate"})}
           } href="">Senate-represented faculty</a>
           </li>
           <li>
             <a onClick = {(event)=>{
             event.preventDefault()
-            this.props.goForward(nextStep, wiz.campusID, nextStep+"_faculty")}
+            this.props.goForward(nextStep, {"arg": nextStep+"_faculty"})}
           } href="">Other faculty or staff</a>
           </li>
           <li>
             <a onClick = {(event)=>{
             event.preventDefault()
-            this.props.goForward(nextStep, wiz.campusID, nextStep+"_student")}
+            this.props.goForward(nextStep, {"arg": nextStep+"_student"})}
           } href="">Student</a>
           </li>
           <li>
             <a onClick = {(event)=>{
             event.preventDefault()
-            this.props.goForward(6, wiz.campusID, "6_sorry")}
+            this.props.goForward(6, {"arg": "6_sorry"})}
           } href="">Not affiliated</a>
           </li>
         </ul>

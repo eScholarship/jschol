@@ -465,8 +465,8 @@ get %r{/api/(home|notFound|logoutSuccess)} do
 end
 
 ###################################################################################################
-# Deposit Wizard get units for a campus
-get "/api/wizardlyUnits/:campusID" do |campusID|
+# Deposit Wizard get ORUS for a campus
+get "/api/wizardlyORUs/:campusID" do |campusID|
   cu = flattenDepts($hierByAncestor[campusID].map(&:values).map{|x| x[:unit_id]})
   return cu.sort_by{ |u| u["name"] }.to_json
 end
@@ -485,6 +485,14 @@ def flattenDepts(ids, a=[])
       end
   end
   a 
+end
+
+###################################################################################################
+# Deposit Wizard get series for an ORU 
+get "/api/wizardlySeries/:unitID" do |unitID|
+  children = $hierByAncestor[unitID]
+  os = children ? children.select { |u| u.unit.type == 'series' }.map {|u| {'id': u.unit_id, 'name': u.unit.name} } : []
+  return os ? os.sort_by{ |u| u[:name] }.to_json : nil
 end
 
 ###################################################################################################
@@ -562,6 +570,7 @@ get "/api/browse/:browse_type/:campusID" do |browse_type, campusID|
   return body.merge(getHeaderElements(breadcrumb, nil)).to_json
 end
 
+# Returns an array like [{"id"=>"uceap", "name"=>"UCEAP Mexico", "children" => []}, ...]
 def getChildDepts(unit)
   if unit.type != 'oru'
     return nil

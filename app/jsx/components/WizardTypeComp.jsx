@@ -32,13 +32,13 @@ class WizardTypeComp extends React.Component {
           <li>
             <a onClick = {(event)=>{
             event.preventDefault()
-            this.props.goForward(6, wiz.campusID, "6_dash")}
+            this.props.goForward(6, {"arg": "6_dash"})}
           } href="">Data (independent or associated with a publication)</a>
           </li>
           <li>
             <a onClick = {(event)=>{
             event.preventDefault()
-            this.props.goForward(4, wiz.campusID)}
+            this.props.goForward(4)}
           } href="">Any other material (e.g., working paper, book, multimedia)</a>
           </li>
         </ul>
