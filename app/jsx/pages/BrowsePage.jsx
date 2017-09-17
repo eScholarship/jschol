@@ -121,7 +121,7 @@ class AllJournals extends React.Component {
     let foundOne = false
     let r = journals.map(function(j, i) {
       let p = (campusID =="" || j['ancestor_unit'].includes(campusID)) &&
-        <li key={i}><Link href={"/uc/" + j["id"]}>{j["name"]}</Link></li>
+        <li key={i}><Link to={"/uc/" + j["id"]}>{j["name"]}</Link></li>
       if (p) {foundOne = true}
       return p
     })
@@ -188,7 +188,7 @@ class CampusUnits extends React.Component {
 class CampusJournals extends React.Component {
   getVisibleJournals(journals) {
     return journals.map(function(j, i) {
-      return <li key={i}><Link href={"/uc/" + j["id"]}>{j["name"]}</Link></li>
+      return <li key={i}><Link to={"/uc/" + j["id"]}>{j["name"]}</Link></li>
     })
   }
 

@@ -3,9 +3,12 @@
 import React from 'react'
 import { Subscriber } from 'react-broadcast'
 
+const SUBI_LINK = "https://submit.escholarship.org/subi/directSubmit?target="
+
 class WizardSeriesComp extends React.Component {
   state = {fetchingData: true,
-           series: null        }
+           series: null,
+           unitID: null }
 
   currentSeries = null
 
@@ -13,7 +16,7 @@ class WizardSeriesComp extends React.Component {
     if (unitID && unitID != this.currentSeries && !["eScholarship", "root"].includes(unitID)) {
       this.currentSeries = unitID
       $.getJSON(`/api/wizardlySeries/${unitID}`).done((series) => {
-        this.setState({ series: series, fetchingData: false })
+        this.setState({ series: series, fetchingData: false, unitID: unitID })
       }).fail((jqxhr, textStatus, err)=> {
         // ToDo: Create an error field to display any errors
         this.setState({ fetchingData: false })
@@ -24,13 +27,28 @@ class WizardSeriesComp extends React.Component {
   render() {
     let seriesList = this.state.series ?
         this.state.series.map((u) => {
-          return (<li key={u.id}>
-                     <a onClick = {(event)=>{
-                     event.preventDefault()
-                     this.props.goForward(5)}
-                     } href="">{u.name}</a></li>)
+          if (u.directSubmit && u.directSubmit == "moribund") {
+            return (<li key={u.id}>
+                      <a onClick = {(event)=>{
+                      event.preventDefault()
+                      this.props.goForward(6, {'arg': '6_moribund', 'seriesName': u.name})}
+                      } href="">{u.name}</a></li>)
+          } else if (u.directSubmit && u.directSubmit == "disabled") {
+            return (<li key={u.id}>
+                      <a onClick = {(event)=>{
+                      event.preventDefault()
+                      this.props.goForward(6, {'arg': '6_disabled', 'seriesName': u.name})}
+                      } href="">{u.name}</a></li>)
+          } else {
+            return (<li key={u.id}>
+                      <a href={SUBI_LINK+u.id}>{u.name}</a></li>)
+          }
         } )
       : null
+    if (!this.state.fetchingData && this.state.series.length < 2) {
+      // There's only one series item, so: Bypass this component and just go direct to subi
+      window.location = SUBI_LINK+this.state.series[0].id
+    }
     return (
       <Subscriber channel="wiz">
         { wiz => {

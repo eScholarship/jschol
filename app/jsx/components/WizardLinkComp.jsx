@@ -2,6 +2,9 @@
 
 import React from 'react'
 import { Subscriber } from 'react-broadcast'
+import { Link } from 'react-router'
+
+const SUPPORT_LINK = "http://help.escholarship.org/support/tickets/new"
 
 class WizardLinkComp extends React.Component {
   render() {
@@ -48,13 +51,33 @@ class WizardLinkComp extends React.Component {
           <p>Check the <a href="http://www.opendoar.org/">Directory of Open Access Repositories</a> to find out if an Open Access repository is available at your institution.</p>
         </div>,
         <footer key="2"></footer>]
+      case "6_moribund":
+        return [<div key="0" className="c-wizard__heading">
+          We&#8217;re sorry... 
+        </div>,
+        <div key="1" className="c-wizard__message">
+          <p>This series <b>({wiz.seriesName})</b> is no longer active and is not accepting new deposits.</p>
+          <p>Check the <a href="http://www.opendoar.org/">Directory of Open Access Repositories</a> to find out if an Open Access repository is available at your institution.</p>
+        </div>,
+        <footer key="2">
+          If you are affiliated with this unit and interested in re-activating this series <a href={SUPPORT_LINK}>contact eScholarship support</a>.
+        </footer>]
+      case "6_disabled":
+        return [<div key="0" className="c-wizard__heading">
+          We&#8217;re sorry... 
+        </div>,
+        <div key="1" className="c-wizard__message">
+          <p>This series <b>({wiz.seriesName})</b> is not currently accepting new deposits.</p>
+          <p>You may find more information on the <Link to={"/uc/"+wiz.unitID}>unit’s page</Link>.</p>
+        </div>,
+        <footer key="2"></footer>]
       default: 
         return [<div key="0" className="c-wizard__heading">
           Error rendering page... 
           {wiz.arg && <span>Template variable {wiz.arg} does not compute</span>}
         </div>,
         <div key="1" className="c-wizard__message">
-          <p>Please <a href="http://help.escholarship.org/support/tickets/new">contact eScholarship</a> and report this error, thank you.</p>
+          <p>Please <a href={SUPPORT_LINK}>contact eScholarship</a> and report this error, thank you.</p>
         </div>,
         <footer key="2"></footer>]
         }

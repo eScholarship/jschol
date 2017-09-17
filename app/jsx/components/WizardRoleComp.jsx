@@ -20,7 +20,7 @@ class WizardRoleComp extends React.Component {
           <button onClick={this.props.closeModal}><span>Close</span></button>
         </header>
         <div className="c-wizard__heading">
-          How are you affiliated with {affiliation}?
+          How are you affiliated with <b>{affiliation}</b>?
         </div>
         <ul className="c-wizard__list">
           <li>

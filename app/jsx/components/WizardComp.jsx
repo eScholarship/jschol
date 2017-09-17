@@ -29,7 +29,8 @@ class WizardComp extends React.Component {
                    campusID: this.props.data.campusID,
                    campusName: this.props.data.campusName,
                    unitID: null,    // To be the department chosen within WizardUnitComp
-                   unitName: null,
+                   unitName: null, 
+                   seriesName: null,
                    arg: null        // An arbitary field used to passs logic between steps
                    }}
 
@@ -47,16 +48,14 @@ class WizardComp extends React.Component {
   // 'h' hash is used for different purposes across the different wizard modals
   goForward = (step, h) =>{
     setTimeout(()=>this.tabFocus(), 0)
-    let campusID = (h && h['campusID']) ? h['campusID'] : this.state.data.campusID
-    let unitID = (h && h['unitID']) ? h['unitID'] : this.state.data.unitID
-    let unitName = (h && h['unitName']) ? h['unitName'] : this.state.data.unitName
     this.setState({data: {wizardStep: step,
                           wizardDir: 'fwd',
                           prevStep: this.state.data.wizardStep,
-                          campusID: campusID, 
+                          campusID: (h && h['campusID']) ? h['campusID'] : this.state.data.campusID,
                           campusName: this.getCampusName(campusID),
-                          unitID: unitID, 
-                          unitName: unitName, 
+                          unitID: (h && h['unitID']) ? h['unitID'] : this.state.data.unitID,
+                          unitName: (h && h['unitName']) ? h['unitName'] : this.state.data.unitName,
+                          seriesName: (h && h['seriesName']) ? h['seriesName'] : this.state.data.seriesName,
                           arg: (h && h['arg']) ? h['arg'] : this.state.data.arg}})
   }
 

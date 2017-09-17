@@ -491,7 +491,10 @@ end
 # Deposit Wizard get series for an ORU 
 get "/api/wizardlySeries/:unitID" do |unitID|
   children = $hierByAncestor[unitID]
-  os = children ? children.select { |u| u.unit.type == 'series' }.map {|u| {'id': u.unit_id, 'name': u.unit.name} } : []
+  os = children ? children.select { |u| u.unit.type == 'series' }.map {|u|
+   unitAttrs = JSON.parse(u.unit.attrs)
+   {'id': u.unit_id, 'name': u.unit.name, 'directSubmit': unitAttrs['directSubmit']}
+  } : []
   return os ? os.sort_by{ |u| u[:name] }.to_json : nil
 end
 
