@@ -131,7 +131,7 @@ end
 
 # Connect to CloudSearch
 csDomain = YAML.load_file("config/cloudSearch.yaml")["domain"]
-cloudSearch = Aws::CloudSearch::Client.new(
+cloudSearch = Aws::CloudSearch::Client.new(credentials: Aws::InstanceProfileCredentials.new,
   #http_wire_trace: true,
   region: "us-west-2")
 isProcessing = cloudSearch.describe_domains(domain_names: [csDomain]).domain_status_list[0].processing
