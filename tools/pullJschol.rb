@@ -31,12 +31,12 @@ for var in ['BUNDLER_ORIG_PATH', 'BUNDLER_VERSION', 'BUNDLE_BIN_PATH', 'BUNDLE_G
   ENV[var] and ENV.delete(var)
 end
 
-# Stop all tasks managed by 'eye'
-checkCall("eye stop jschol")
+# Stop relevant tasks managed by 'eye'
+checkCall("eye stop jschol tomcat")
 
 # Pull and update
 checkCall("git pull origin master")
 checkCall("./setup.sh")
 
 # Restart tasks
-checkCall("eye start jschol")
+checkCall("eye start jschol tomcat")

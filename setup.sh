@@ -21,3 +21,10 @@ node_modules/.bin/bower install
 
 printf "\n== Uninstalling bower packages no longer used ==\n"
 node_modules/.bin/bower prune 
+
+printf "\n== Building splash page generator ==\n"
+if [[ `/bin/hostname` == *"pub-jschol"* ]]; then
+  cd splash
+  ./setupSplash.sh
+  cd ..
+fi

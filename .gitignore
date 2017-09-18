@@ -22,6 +22,7 @@ splash/WEB-INF/classes/
 splash/WEB-INF/lib/
 splash/test/
 test.db
+tmp/
 node_modules
 .DS_Store
 *.css.map

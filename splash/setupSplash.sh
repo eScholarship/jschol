@@ -9,7 +9,7 @@ wget --no-clobber --no-verbose https://www.slf4j.org/dist/slf4j-1.7.25.tar.gz
 wget --no-clobber --no-verbose http://apache.osuosl.org/logging/log4j/2.9.0/apache-log4j-2.9.0-bin.tar.gz
 wget --no-clobber --no-verbose https://www.bouncycastle.org/download/bcprov-jdk15on-158.jar
 wget --no-clobber --no-verbose http://repo1.maven.org/maven2/org/codeartisans/org.json/20161124/org.json-20161124.jar
-wget --no-clobber --no-verbose http://mirrors.sonic.net/apache//ant/binaries/apache-ant-1.10.1-bin.zip
+wget --no-clobber --no-verbose http://mirrors.sonic.net/apache/ant/binaries/apache-ant-1.10.1-bin.zip
 echo "Checking integrity."
 sha256sum -c *.sha256
 echo "Extracting."
@@ -25,4 +25,6 @@ cd ../bin
 unzip -q ../../downloaded/apache-ant-1.10.1-bin.zip
 ln -s apache-ant-1.10.1/bin/ant .
 cd ..
+echo "Building."
+bin/ant
 echo "Done."
