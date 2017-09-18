@@ -49,13 +49,19 @@ class WizardUnitComp extends React.Component {
       <Subscriber channel="wiz">
         { wiz => {
             this.fetchUnits(wiz.campusID)
+            let prevStep = 3    // where other faculty go
+            // Student is not asked to select type of material (always skips step 3)
+            if (wiz.arg && wiz.arg.includes("student")) {
+              // If launched from a campus, go back to step one
+              prevStep = (wiz.launchedFromRoot) ? 2 : 1
+            }
       return(
       <div className="c-wizard__step">
         <header>
           <h1 tabIndex="-1">{wiz.campusName} Deposit</h1>
           <a onClick = {(event)=>{
             event.preventDefault()
-            this.props.goBackward()}
+            this.props.goBackward(prevStep)}
           } href=""><span>Go back</span></a>
           <button onClick={this.props.closeModal}><span>Close</span></button>
         </header>

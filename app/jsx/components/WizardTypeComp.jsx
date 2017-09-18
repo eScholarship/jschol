@@ -3,6 +3,16 @@
 import React from 'react'
 import { Subscriber } from 'react-broadcast'
 
+const DASH_LIST = {
+    'ucb': 'https://dash.berkeley.edu/stash',
+    'uci': 'https://dash.lib.uci.edu/stash',
+    'ucm': 'https://dash.ucmerced.edu/stash',
+    'ucop': 'https://dash.ucop.edu/stash',
+    'ucr': 'https://dash.ucr.edu/stash',
+    'ucsc': 'https://dash.library.ucsc.edu/stash',
+    'ucsf': 'https://datashare.ucsf.edu/stash',
+  }
+
 class WizardTypeComp extends React.Component {
   render() {
     return (
@@ -26,15 +36,17 @@ class WizardTypeComp extends React.Component {
         </div>
         <ul className="c-wizard__list">
           <li>
-            <a href={"https://submit.escholarship.org/subi/directSubmit?target="+wiz.campusID}>
+            <a href={this.props.subi_link+wiz.campusID+"_postprints"}>
               A published (or accepted) scholarly article</a>
           </li>
+        {Object.keys(DASH_LIST).includes(wiz.campusID) &&
           <li>
             <a onClick = {(event)=>{
             event.preventDefault()
-            this.props.goForward(6, {"arg": "6_dash"})}
+            this.props.goForward(6, {"arg": DASH_LIST[wiz.campusID]})}
           } href="">Data (independent or associated with a publication)</a>
           </li>
+        }
           <li>
             <a onClick = {(event)=>{
             event.preventDefault()

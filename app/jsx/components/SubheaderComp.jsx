@@ -67,7 +67,7 @@ class SubheaderComp extends React.Component {
                                    type={p.unit.type} directSubmit={p.directSubmit} />)
 
       } else {
-        depositButton = (<a href={p.directSubmitURL ? p.directSubmitURL : "https://submit.escholarship.org/subi/directSubmit?target="+p.unit.id}>{buttonName}</a>)
+        depositButton = (<a className="o-download__button" href={p.directSubmitURL ? p.directSubmitURL : "https://submit.escholarship.org/subi/directSubmit?target="+p.unit.id}>{buttonName}</a>)
       }
     } else {
       depositButton = <button id="wizardlyDeposit" className="o-button__3" onClick={(event)=>{

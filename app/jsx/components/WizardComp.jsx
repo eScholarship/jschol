@@ -11,6 +11,8 @@ import WizardTypeComp from './WizardTypeComp.jsx'
 import WizardUnitComp from './WizardUnitComp.jsx'
 import ReactModal from 'react-modal'
 
+const SUBI_LINK = "https://submit.escholarship.org/subi/directSubmit?target="
+
 class WizardComp extends React.Component {
   static propTypes = {
     showModal: PropTypes.bool.isRequired,
@@ -135,12 +137,13 @@ class WizardComp extends React.Component {
 
           {/* [2] Which UC Campus are you affiliated with? */}
               <WizardCampusComp goForward = {this.goForward} goBackward = {this.goBackward} closeModal={this.handleCloseModal}
-                              campuses={this.props.campuses} />
+                              campuses={this.props.campuses} subi_link = {SUBI_LINK} />
             </div>
             <div className={d.wizardStep === 3 ? `c-wizard__current-${d.wizardDir}` : `c-wizard__standby-${d.wizardDir}`} aria-hidden={d.wizardStep === 3 ? null : true}>
 
           {/* [3] What kind of material are you depositing? */}
-              <WizardTypeComp goForward = {this.goForward} goBackward = {this.goBackward} closeModal={this.handleCloseModal} />
+              <WizardTypeComp goForward = {this.goForward} goBackward = {this.goBackward} closeModal={this.handleCloseModal}
+                              subi_link = {SUBI_LINK} />
             </div>
             <div className={d.wizardStep === 4 ? `c-wizard__current-${d.wizardDir}` : `c-wizard__standby-${d.wizardDir}`} aria-hidden={d.wizardStep === 4 ? null : true}>
 
@@ -150,7 +153,8 @@ class WizardComp extends React.Component {
             <div className={d.wizardStep === 5 ? `c-wizard__current-${d.wizardDir}` : `c-wizard__standby-${d.wizardDir}`} aria-hidden={d.wizardStep === 5 ? null : true}>
 
           {/* [5] What [title] series would you like to deposit your work in?  */}
-              <WizardSeriesComp goForward = {this.goForward} goBackward = {this.goBackward} closeModal={this.handleCloseModal} />
+              <WizardSeriesComp goForward = {this.goForward} goBackward = {this.goBackward} closeModal={this.handleCloseModal}
+                                subi_link = {SUBI_LINK} />
             </div>
             <div className={d.wizardStep === 6 ? `c-wizard__current-${d.wizardDir}` : `c-wizard__standby-${d.wizardDir}`} aria-hidden={d.wizardStep === 6 ? null : true}>
 
