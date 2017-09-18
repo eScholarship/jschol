@@ -51,6 +51,8 @@ class SplashFormatter
   Document doc;
   PdfFont normalFont;
   PdfFont boldFont;
+  PdfFont italicFont;
+  PdfFont boldItalicFont;
 
   SplashFormatter(PdfDocument in_pdf)
     throws IOException
@@ -60,6 +62,8 @@ class SplashFormatter
     doc.setMargins(50, 50, 50, 50);
     normalFont = PdfFontFactory.createFont(FontConstants.HELVETICA);
     boldFont = PdfFontFactory.createFont(FontConstants.HELVETICA_BOLD);
+    italicFont = PdfFontFactory.createFont(FontConstants.HELVETICA_OBLIQUE);
+    boldItalicFont = PdfFontFactory.createFont(FontConstants.HELVETICA_BOLDOBLIQUE);
     doc.setFont(normalFont);
   }
 
@@ -124,11 +128,24 @@ class SplashFormatter
   void formatText(Object text, Paragraph addTo) {
     if (text instanceof String)
       addTo.add(new Text((String)text));
-    else if (text instanceof JSONObject) {
+    else if (text instanceof JSONObject)
+    {
       JSONObject obj = (JSONObject) text;
       Text t = new Text((String) obj.get("str"));
-      if (obj.has("bold"))
-        t.setFont(boldFont);
+
+      if (obj.has("bold")) {
+        if (obj.has("italic"))
+          t.setFont(boldItalicFont);
+        else
+          t.setFont(boldFont);
+      }
+      else if (obj.has("italic"))
+        t.setFont(italicFont);
+
+      if (obj.has("sup"))
+        t.setTextRise(3).setFontSize(9);
+      else if (obj.has("sub"))
+        t.setTextRise(-3).setFontSize(9);
       addTo.add(t);
     }
     else if (text instanceof JSONArray) {
@@ -244,12 +261,14 @@ public class SplashGen extends HttpServlet
     }
   }
 
-  private void createSplash(Rectangle pageSize, Object instrucs, File splashPdfFile)
+  private void createSplash(Rectangle pageSizeRect, Object instrucs, File splashPdfFile)
     throws IOException
   {
     PdfWriter writer = new PdfWriter(splashPdfFile);
     PdfDocument pdf = new PdfDocument(writer);
-    pdf.setDefaultPageSize(new PageSize(pageSize));
+    PageSize pageSize = new PageSize(Math.max(500, pageSizeRect.getWidth()),
+                                     Math.max(600, pageSizeRect.getHeight()));
+    pdf.setDefaultPageSize(pageSize);
     pdf.setTagged();
     pdf.getCatalog().setLang(new PdfString("en-US"));
     SplashFormatter formatter = new SplashFormatter(pdf);

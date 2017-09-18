@@ -307,7 +307,7 @@ end
 get "/content/:fullItemID/*" do |fullItemID, path|
   # Prep work
   fullItemID =~ /^qt[a-z0-9]{8}$/ or halt(404)  # protect against attacks
-  item = Item[fullItemID]
+  item = Item[fullItemID] or halt(404)
   item.status == 'published' or halt(403)  # prevent access to embargoed and withdrawn files
   path = sanitizeFilePath(path)  # protect against attacks
 

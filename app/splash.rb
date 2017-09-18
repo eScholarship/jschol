@@ -5,9 +5,7 @@ require 'pathname'
 def travAndFormat(data, out)
   if data.text?
     text = data.to_s
-    return if text.nil?
-    text = text.strip
-    return if text.empty?
+    return if text.nil? || text.empty?  # but do not strip - space at beg or end can be significant
     if out[:attrs].empty?
       out[:chunks] << text
     else
