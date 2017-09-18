@@ -126,6 +126,7 @@ class UnitPage extends PageBase
           campusID={data.header.campusID}
           ancestorID={data.header.ancestorID}
           campusName={data.header.campusName}
+          directSubmit={data.header.directSubmit}
           campuses={data.header.campuses}/>
         <NavBarComp 
           navBar={data.header.nav_bar} unit={data.unit} socialProps={data.header.social} />

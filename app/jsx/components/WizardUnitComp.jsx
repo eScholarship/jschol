@@ -1,52 +1,82 @@
-// ##### Deposit Wizard - Unit Component ##### //
+// ##### Deposit Wizard - [4] Unit (ORU) Component ##### //
 
 import React from 'react'
+import { Subscriber } from 'react-broadcast'
 
 class WizardUnitComp extends React.Component {
+  state = {fetchingData: true,
+           units: null        }
+
+  currentCampus = null
+
+  fetchUnits = (campusID) => {
+    if (campusID && campusID != this.currentCampus && !["eScholarship", "root"].includes(campusID)) {
+      this.currentCampus = campusID
+      $.getJSON(`/api/wizardlyORUs/${campusID}`).done((units) => {
+        this.setState({ units: units, fetchingData: false })
+      }).fail((jqxhr, textStatus, err)=> {
+        // ToDo: Create an error field to display any errors
+        this.setState({ fetchingData: false })
+      })
+    }
+  }
+
   render() {
+    let unitList = (this.state.units && this.state.units.length > 0) ?
+        this.state.units.map((u) => {
+          if (u.directSubmit && u.directSubmit == "moribund") {
+            return (<li key={u.id}>
+                      <a onClick = {(event)=>{
+                      event.preventDefault()
+                      this.props.goForward(6, {'arg': '6_moribund', 'type': 'unit', 'unitID': u.id, 'unitName': u.name})}
+                      } href="">{u.name}</a></li>)
+          } else if (u.directSubmit && ["hide", "disabled"].includes(u.directSubmit)) {
+            return (<li key={u.id}>
+                      <a onClick = {(event)=>{
+                      event.preventDefault()
+                      this.props.goForward(6, {'arg': '6_disabled', 'type': 'unit', 'unitID': u.id, 'unitName': u.name})}
+                      } href="">{u.name}</a></li>)
+          } else {
+            return (<li key={u.id}>
+                     <a onClick = {(event)=>{
+                     event.preventDefault()
+                     this.props.goForward(5, {"unitID": u.id, "unitName": u.name})}
+                     } href="">{u.name}</a></li>)
+          }
+        } )
+      : null
     return (
+      <Subscriber channel="wiz">
+        { wiz => {
+            this.fetchUnits(wiz.campusID)
+      return(
       <div className="c-wizard__step">
         <header>
-          <h1 tabIndex="-1">eScholarship Deposit</h1>
+          <h1 tabIndex="-1">{wiz.campusName} Deposit</h1>
           <a onClick = {(event)=>{
             event.preventDefault()
             this.props.goBackward()}
           } href=""><span>Go back</span></a>
           <button onClick={this.props.closeModal}><span>Close</span></button>
         </header>
+      {this.state.fetchingData ?
         <div className="c-wizard__heading">
-          [4] What is your departmental affiliation?
+          Loading... 
         </div>
-        <ul className="c-wizard__list">
-          <li>
-            <a onClick = {(event)=>{
-            event.preventDefault()
-            this.props.goForward(5)}
-          } href="">American Cultures Center</a>
-          </li>
-          <li>
-            <a href="">Archaeological Research Facility</a>
-          </li>
-          <li>
-            <a href="">Bay Area International Group</a>
-          </li>
-          <li>
-            <a href="">Berkeley Graduate School of Journalism</a>
-          </li>
-          <li>
-            <a href="">Berkeley Natural History Museum</a>
-          </li>
-          <li>
-            <a href="">Berkeley Program in Law and Economics</a>
-          </li>
-          <li>
-            <a href="">[etc.]</a>
-          </li>
-        </ul>
-        <footer>
-          Don't see your department? <a href="">Add it to eScholarship here</a>.
-        </footer>
+      :
+       [<div key="0" className="c-wizard__heading">
+          What is your departmental affiliation?
+        </div>,
+        <ul key="1" className="c-wizard__list">
+          {unitList}
+        </ul>,
+        <footer key="2">
+          Don't see your department? <a href="https://help.escholarship.org/support/solutions/articles/9000131086-request-a-new-unit">Add it to eScholarship here</a>.
+        </footer>]
+      }
       </div>
+      )}}
+      </Subscriber>
     )
   }
 }

@@ -118,6 +118,8 @@ def getUnitHeader(unit, pageName=nil, journalIssue=nil, attrs=nil)
     :ancestorID => ancestor ? ancestor.id : nil,   # Used strictly for linking series back to parent unit
     :campuses => $activeCampuses.values.map { |c| {id: c.id, name: c.name} }.unshift({id: "", name: "eScholarship at..."}),
     :logo => getLogoData(attrs['logo']),
+    :directSubmit => attrs['directSubmit'],
+    :directSubmitURL => attrs['directSubmitURL'],
     :nav_bar => getNavBar(unit, pageName, attrs['nav_bar']),
     :social => {
       :facebook => attrs['facebook'],
