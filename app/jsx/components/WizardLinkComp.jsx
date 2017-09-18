@@ -3,7 +3,7 @@
 import React from 'react'
 import { Subscriber } from 'react-broadcast'
 
-const SUPPORT_LINK = "http://help.escholarship.org/support/tickets/new"
+const SUPPORT_LINK = "https://help.escholarship.org/support/tickets/new"
 
 class WizardLinkComp extends React.Component {
   render() {

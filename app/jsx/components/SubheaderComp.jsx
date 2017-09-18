@@ -5,6 +5,7 @@ import PropTypes from 'prop-types'
 import $ from 'jquery'
 import CampusSelectorComp from '../components/CampusSelectorComp.jsx'
 import WizardComp from './WizardComp.jsx'
+import WizardInertComp from './WizardInertComp.jsx'
 import { Link } from 'react-router'
 import NotYetLink from '../components/NotYetLink.jsx'
 
@@ -14,6 +15,7 @@ class SubheaderComp extends React.Component {
     campusName: PropTypes.string.isRequired,
     ancestorID: PropTypes.string,    // Intended for series only
     campuses: PropTypes.array.isRequired,
+    directSubmit: PropTypes.string.isRequired,
     logo: PropTypes.shape({
       url: PropTypes.string.isRequired,
       width: PropTypes.number, // optional for SVG
@@ -44,21 +46,40 @@ class SubheaderComp extends React.Component {
       logo = { url: "http://placehold.it/400x100?text="+p.unit.id, width: 400, height: 100 }
     }
 
-    let [depositButton, unitIDForWiz, unitNameForWiz] = [null, null, null]
-    if (p.unit.type.includes('series')) {
-      // No wizard used for sries landing page
-      depositButton = (<a href={"https://submit.escholarship.org/subi/directSubmit?target="+p.unit.id}>Deposit</a>)
+   // Button Configuration based on unit type
+   //   unit.type == 'journal'  -->  Submit / Manage Submissions
+   //   unit.type == 'campus'  -->  Deposit
+   //   unit.type == '%series | oru'  -->  Deposit / Manage Submissions  */}
+
+    let [wizard, depositButton] = [null, null]
+
+    // For series and journal pages, a basic one-screened wizard will be used when directSubmit = disabled/moribund. 
+    // Otherwise they link direct to subi (or directSubmit URL if that's defined)
+    if (p.unit.type == 'journal' || p.unit.type.includes('series')) {
+      let buttonName = (p.unit.type == 'journal') ? "Submit" : "Deposit"
+      if (["moribund", "disabled", "hide"].includes(p.directSubmit)) {
+        depositButton = <button id="wizardlyDeposit" className="o-button__3" onClick={(event)=>{
+                                 this.setState({modalOpen:true})
+                                 event.preventDefault()} } >{buttonName}</button>
+        wizard = (<WizardInertComp showModal={this.state.modalOpen}
+                                   parentSelector={()=>$('#wizardModalBase')[0]}
+                                   onCancel={e=>this.closeWizardModal(e)} campusName={p.campusName}
+                                   type={p.unit.type} directSubmit={p.directSubmit} />)
+
+      } else {
+        depositButton = (<a href={p.directSubmitURL ? p.directSubmitURL : "https://submit.escholarship.org/subi/directSubmit?target="+p.unit.id}>{buttonName}</a>)
+      }
     } else {
       depositButton = <button id="wizardlyDeposit" className="o-button__3" onClick={(event)=>{
                                  this.setState({modalOpen:true})
                                  event.preventDefault()} } >Deposit</button>
-      if (p.unit.type == 'oru') [unitIDForWiz, unitNameForWiz] = [p.unit.id, p.unit.name]
+      let [unitIDForWiz, unitNameForWiz] = (p.unit.type == 'oru') ? [unitIDForWiz, unitNameForWiz] : [null, null]
+      wizard = (<WizardComp showModal={this.state.modalOpen}
+                  parentSelector={()=>$('#wizardModalBase')[0]}
+                  onCancel={e=>this.closeWizardModal(e)} campuses={p.campuses}
+                  data={{campusID: p.campusID, campusName: p.campusName, unitID: unitIDForWiz, unitName: unitNameForWiz}}
+                />)
     }
-    let data = {campusID: p.campusID, campusName: p.campusName, unitID: unitIDForWiz, unitName: unitNameForWiz},
-        wizard = (<WizardComp showModal={this.state.modalOpen}
-                      parentSelector={()=>$('#wizardModalBase')[0]}
-                      onCancel={e=>this.closeWizardModal(e)} campuses={p.campuses}
-                      data={data} />)
     return (
       <div className="c-subheader">
         <CampusSelectorComp campusID={p.campusID}
@@ -67,12 +88,10 @@ class SubheaderComp extends React.Component {
         <Link to={"/uc/"+banner_url_unit} className="c-subheader__banner">
           <img src={logo.url} width={logo.width} height={logo.height} alt={"Logo for " + p.unit.name} />
         </Link>
-  {/* unit.type == 'journal'  -->  Submit / Manage Submissions
-      unit.type == 'campus'  -->  Deposit
-      unit.type == '%series | oru'  -->  Deposit / Manage Submissions  */}
       {p.unit.type == 'journal' ?
-        <div className="c-subheader__sidebar">
-          <NotYetLink className="o-button__3" element="button">Submit</NotYetLink>
+        <div id="wizardModalBase" className="c-subheader__sidebar">
+          {depositButton}
+          {wizard}
           <NotYetLink className="o-button__3" element="button">Manage<span className="c-subheader__button-fragment">Submissions</span></NotYetLink>
         </div>
       :
