@@ -402,6 +402,41 @@ get %r{/api/(home|notFound|logoutSuccess)} do
 end
 
 ###################################################################################################
+# Deposit Wizard get ORUS for a campus
+get "/api/wizardlyORUs/:campusID" do |campusID|
+  cu = flattenDepts($hierByAncestor[campusID].map(&:values).map{|x| x[:unit_id]})
+  return cu.sort_by{ |u| u["name"] }.to_json
+end
+
+# Returns an array like [{"id"=>"uceap", "name"=>"UCEAP Mexico", "directSubmit"=>"enabled"}, ...]
+def flattenDepts(ids, a=[])
+  if ids.class == Array
+    ids.each {|x| flattenDepts(x,a)}
+  else
+    unit = $unitsHash[ids]
+    unitAttrs = JSON.parse(unit.attrs)
+    a << {"id" => unit.id, "name" => unit.name, "directSubmit" => unitAttrs['directSubmit']} unless unit.type != 'oru'
+    children = $hierByAncestor[unit.id]
+    children and children.each do |c|
+        unit = $unitsHash[c.unit_id]
+        flattenDepts(unit.id, a)
+      end
+  end
+  a 
+end
+
+###################################################################################################
+# Deposit Wizard get series for an ORU 
+get "/api/wizardlySeries/:unitID" do |unitID|
+  children = $hierByAncestor[unitID]
+  os = children ? children.select { |u| u.unit.type == 'series' }.map {|u|
+   unitAttrs = JSON.parse(u.unit.attrs)
+   {'id': u.unit_id, 'name': u.unit.name, 'directSubmit': unitAttrs['directSubmit']}
+  } : []
+  return os ? os.sort_by{ |u| u[:name] }.to_json : nil
+end
+
+###################################################################################################
 # Browse all campuses
 get "/api/browse/campuses" do 
   content_type :json
@@ -476,6 +511,7 @@ get "/api/browse/:browse_type/:campusID" do |browse_type, campusID|
   return body.merge(getHeaderElements(breadcrumb, nil)).to_json
 end
 
+# Returns an array like [{"id"=>"uceap", "name"=>"UCEAP Mexico", "children" => []}, ...]
 def getChildDepts(unit)
   if unit.type != 'oru'
     return nil

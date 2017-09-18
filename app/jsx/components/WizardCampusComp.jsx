@@ -1,10 +1,37 @@
-// ##### Deposit Wizard - Campus Component ##### //
+// ##### Deposit Wizard - [2] Campus Component ##### //
 
 import React from 'react'
+import { Subscriber } from 'react-broadcast'
+import PropTypes from 'prop-types'
 
 class WizardCampusComp extends React.Component {
+  static propTypes = {
+    campusID: PropTypes.string,   // Not used here
+    arg: PropTypes.string,
+    goBackward: PropTypes.any.isRequired,
+    goForward: PropTypes.any.isRequired,
+    campuses: PropTypes.array.isRequired
+  }
+
+  campusList(campuses, next) {
+    return campuses.map( c => {
+      return c.id != "" && 
+      <li key={c.id}>
+        <a onClick = {(event)=>{
+        event.preventDefault()
+        this.props.goForward(next, {'campusID': c.id})}
+      } href="">{c.name}</a>
+      </li>
+    })
+  }
+
   render() {
+    // Student is not asked to select type of material (skip step 3)
+    let nextStep = (this.props.arg == "2_student") ? 4 : 3
     return (
+      <Subscriber channel="wiz">
+        { wiz => {
+      return (
       <div className="c-wizard__step">
         <header>
           <h1 tabIndex="-1">eScholarship Deposit</h1>
@@ -15,56 +42,17 @@ class WizardCampusComp extends React.Component {
           <button onClick={this.props.closeModal}><span>Close</span></button>
         </header>
         <div className="c-wizard__heading">
-          [2] Which UC Campus are you affiliated with?
+          Which UC Campus are you affiliated with?
         </div>
         <ul className="c-wizard__list">
-          <li>
-            <a onClick = {(event)=>{
-            event.preventDefault()
-            this.props.goForward(3)}
-          } href="">UC Berkeley</a>
-          </li>
-          <li>
-            <a href="">UC Davis</a>
-          </li>
-          <li>
-            <a href="">UC Irvine</a>
-          </li>
-          <li>
-            <a href="">UCLA</a>
-          </li>
-          <li>
-            <a href="">UC Merced</a>
-          </li>
-          <li>
-            <a href="">UC Riverside</a>
-          </li>
-          <li>
-            <a href="">UC San Diego</a>
-          </li>
-          <li>
-            <a href="">UC San Francisco</a>
-          </li>
-          <li>
-            <a href="">UC Santa Barbara</a>
-          </li>
-          <li>
-            <a href="">UC Santa Cruz</a>
-          </li>
-          <li>
-            <a href="">UC Office of the President</a>
-          </li>
-          <li>
-            <a href="">Lawrence Berkeley National Lab</a>
-          </li>
-          <li>
-            <a href="">UC Agriculture and Natural Resources</a>
-          </li>
+          {this.campusList(this.props.campuses, nextStep)}
         </ul>
         <footer>
           We use these questions to direct you to the right place to deposit your materials.
         </footer>
       </div>
+      )}}
+      </Subscriber>
     )
   }
 }
