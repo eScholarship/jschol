@@ -11,7 +11,7 @@ class WizardRoleComp extends React.Component {
         { wiz => {
             let name = wiz.campusName,
                 [campusName, affiliation, nextStep] = (name && name != 'eScholarship') ?
-                  [name, name, 3]                                     // Depositing from a campus page
+                  [name, name, 3]                                     // Depositing from a unit page
                 : ["eScholarship", "University of California", 2]     // Depositing from a global page
       return (
       <div className="c-wizard__step">
