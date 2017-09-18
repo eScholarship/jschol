@@ -471,13 +471,14 @@ get "/api/wizardlyORUs/:campusID" do |campusID|
   return cu.sort_by{ |u| u["name"] }.to_json
 end
 
-# Returns an array like [{"id"=>"uceap", "name"=>"UCEAP Mexico"}, ...]
+# Returns an array like [{"id"=>"uceap", "name"=>"UCEAP Mexico", "directSubmit"=>"enabled"}, ...]
 def flattenDepts(ids, a=[])
   if ids.class == Array
     ids.each {|x| flattenDepts(x,a)}
   else
     unit = $unitsHash[ids]
-    a << {"id" => unit.id, "name" => unit.name} unless unit.type != 'oru'
+    unitAttrs = JSON.parse(unit.attrs)
+    a << {"id" => unit.id, "name" => unit.name, "directSubmit" => unitAttrs['directSubmit']} unless unit.type != 'oru'
     children = $hierByAncestor[unit.id]
     children and children.each do |c|
         unit = $unitsHash[c.unit_id]

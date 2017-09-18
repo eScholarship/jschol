@@ -43,11 +43,19 @@ class SubheaderComp extends React.Component {
     } else {
       logo = { url: "http://placehold.it/400x100?text="+p.unit.id, width: 400, height: 100 }
     }
-    let depositButton = (<button id="wizardlyDeposit" className="o-button__3" onClick={(event)=>{
+
+    let [depositButton, unitIDForWiz, unitNameForWiz] = [null, null, null]
+    if (p.unit.type.includes('series')) {
+      // No wizard used for sries landing page
+      depositButton = (<a href={"https://submit.escholarship.org/subi/directSubmit?target="+p.unit.id}>Deposit</a>)
+    } else {
+      depositButton = <button id="wizardlyDeposit" className="o-button__3" onClick={(event)=>{
                                  this.setState({modalOpen:true})
-                                 event.preventDefault()} }>Deposit</button>)
-    let data = {campusID: p.campusID, campusName: p.campusName}
-    let wizard = (<WizardComp showModal={this.state.modalOpen}
+                                 event.preventDefault()} } >Deposit</button>
+      if (p.unit.type == 'oru') [unitIDForWiz, unitNameForWiz] = [p.unit.id, p.unit.name]
+    }
+    let data = {campusID: p.campusID, campusName: p.campusName, unitID: unitIDForWiz, unitName: unitNameForWiz},
+        wizard = (<WizardComp showModal={this.state.modalOpen}
                       parentSelector={()=>$('#wizardModalBase')[0]}
                       onCancel={e=>this.closeWizardModal(e)} campuses={p.campuses}
                       data={data} />)

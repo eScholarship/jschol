@@ -22,15 +22,29 @@ class WizardUnitComp extends React.Component {
   }
 
   render() {
-    let unitList = this.state.units ?
+    let unitList = (this.state.units && this.state.units.length > 0) ?
         this.state.units.map((u) => {
-          return (<li key={u.id}>
+          if (u.directSubmit && u.directSubmit == "moribund") {
+            return (<li key={u.id}>
+                      <a onClick = {(event)=>{
+                      event.preventDefault()
+                      this.props.goForward(6, {'arg': '6_moribund', 'type': 'unit', 'unitID': u.id, 'unitName': u.name})}
+                      } href="">{u.name}</a></li>)
+          } else if (u.directSubmit && ["hide", "disabled"].includes(u.directSubmit)) {
+            return (<li key={u.id}>
+                      <a onClick = {(event)=>{
+                      event.preventDefault()
+                      this.props.goForward(6, {'arg': '6_disabled', 'type': 'unit', 'unitID': u.id, 'unitName': u.name})}
+                      } href="">{u.name}</a></li>)
+          } else {
+            return (<li key={u.id}>
                      <a onClick = {(event)=>{
                      event.preventDefault()
                      this.props.goForward(5, {"unitID": u.id, "unitName": u.name})}
                      } href="">{u.name}</a></li>)
+          }
         } )
-      : null 
+      : null
     return (
       <Subscriber channel="wiz">
         { wiz => {
@@ -57,7 +71,7 @@ class WizardUnitComp extends React.Component {
           {unitList}
         </ul>,
         <footer key="2">
-          Don't see your department? <a href="">Add it to eScholarship here</a>.
+          Don't see your department? <a href="https://help.escholarship.org/support/solutions/articles/9000131086-request-a-new-unit">Add it to eScholarship here</a>.
         </footer>]
       }
       </div>
