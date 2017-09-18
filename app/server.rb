@@ -320,7 +320,6 @@ get "/content/:fullItemID/*" do |fullItemID, path|
       auth = { username: $mrtExpressConfig['username'],
                password: $mrtExpressConfig['password'] }
       response = HTTParty.get(mrtURL, stream_body: true, basic_auth: auth) do |fragment|
-        print "."
         mrtTmp.write(fragment)
       end
       response.success? or puts("Error #{response.code} fetching #{mrtURL}: #{response.message}")

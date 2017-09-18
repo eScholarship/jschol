@@ -4,6 +4,7 @@
 
 import com.itextpdf.forms.PdfPageFormCopier;
 import com.itextpdf.kernel.crypto.BadPasswordException;
+import com.itextpdf.kernel.color.DeviceRgb;
 import com.itextpdf.kernel.geom.PageSize;
 import com.itextpdf.kernel.geom.Rectangle;
 import com.itextpdf.kernel.pdf.PdfDocument;
@@ -71,13 +72,6 @@ class SplashFormatter
     doc.close();
   }
 
-  /*
-    data = [
-      { paragraph: { text: "This text" } },
-      { paragraph: { text: "that text" } }
-    ]
-  */
-
   void formatPage(JSONArray arr) {
     for (int i=0; i<arr.length(); i++)
       formatElement((JSONObject) arr.get(i));
@@ -91,23 +85,33 @@ class SplashFormatter
     switch (elName) {
       case "paragraph":
         para.setFontSize(11);
+        para.setMarginBottom(0);
+        para.setMarginTop(0);
+        para.setMultipliedLeading(1.0f);
         formatContent(obj.getJSONObject(elName), para);
         break;
       case "h1":
         para.setFontSize(16);
         para.setFont(boldFont);
         para.setMarginBottom(0);
+        para.setMultipliedLeading(1.1f);
+        para.setFontColor(new DeviceRgb(50, 50, 50));
         formatContent(obj.getJSONObject(elName), para);
         break;
       case "h2":
         para.setFontSize(14);
         para.setFont(boldFont);
+        para.setMarginTop(0);
+        para.setMultipliedLeading(1.1f);
+        para.setFontColor(new DeviceRgb(128, 128, 128));
         formatContent(obj.getJSONObject(elName), para);
         break;
       case "h3":
         para.setFontSize(12);
         para.setFont(boldFont);
         para.setMarginBottom(0);
+        para.setMarginTop(10);
+        para.setFontColor(new DeviceRgb(50, 50, 50));
         formatContent(obj.getJSONObject(elName), para);
         break;
       default:
@@ -152,6 +156,9 @@ class SplashFormatter
       JSONArray arr = (JSONArray) text;
       for (int i=0; i<arr.length(); i++)
         formatText(arr.get(i), addTo);
+    }
+    else if (text == null) {
+      // ignore for now
     }
     else
       throw new RuntimeException(String.format("Unknown text type: %s", text));
