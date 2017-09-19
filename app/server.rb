@@ -331,7 +331,9 @@ get "/content/:fullItemID/*" do |fullItemID, path|
   # Guess the content type by path for now
   content_type MimeMagic.by_path(path)
 
-  if path =~ /\.pdf$/
+  if !(request.url =~ /pub-jschol/)
+    addSplash = false
+  elsif path =~ /\.pdf$/
     addSplash = !params[:nosplash] || !isValidContentKey(fullItemID.sub(/^qt/, ''), params[:nosplash])
   else
     addSplash = false
