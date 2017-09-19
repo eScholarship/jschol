@@ -209,6 +209,12 @@ public class SplashGen extends HttpServlet
     }
   }
 
+  public void doGet(HttpServletRequest request, HttpServletResponse response)
+    throws ServletException, IOException
+  {
+    response.getWriter().println("splash generator is up");
+  }
+
   public void doPost(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException
   {
