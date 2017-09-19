@@ -46,7 +46,8 @@ class WizardSeriesComp extends React.Component {
     if (!this.state.fetchingData && this.state.series) {
       if (this.state.series.length == 1) {
         // Bypass this component and just go direct to subi
-        window.location = SUBI_LINK+this.state.series[0].id
+        this.props.closeModal()
+        window.location = this.props.subi_link+this.state.series[0].id
       }
       if (this.state.series.length == 0) {
         // HACK: This screen should never comecuz any unit's with zero series should
