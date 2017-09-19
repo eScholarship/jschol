@@ -1405,6 +1405,45 @@ def parseDataAvail(inMeta, attrs)
 end
 
 ###################################################################################################
+def addMerrittPaths(itemID, attrs)
+  feed = fileToXML(arkToFile(itemID, "meta/base.feed.xml"))
+  feed.remove_namespaces!
+  feed = feed.root
+
+  # First, find the path of the main PDF content file
+  pdfSize = File.size(arkToFile(itemID, "content/base.pdf")) or raise
+  pdfFound = false
+  feed.xpath("//link").each { |link|
+    if link[:rel] == "http://purl.org/dc/terms/hasPart" &&
+         link[:type] == "application/pdf" &&
+         link[:length].to_i == pdfSize &&
+         link[:title] =~ %r{^producer/}
+      attrs[:content_merritt_path] = link[:title]
+      pdfFound = true
+      break
+    end
+  }
+  pdfFound or puts "Warning: can't find merritt path for pdf"
+
+  # Then do any supp files
+  attrs[:supp_files] and attrs[:supp_files].each { |supp|
+    suppName = supp[:file]
+    suppSize = File.size(arkToFile(itemID, "content/supp/#{suppName}")) or raise
+    suppFound = false
+    feed.xpath("//link").each { |link|
+      if link[:rel] == "http://purl.org/dc/terms/hasPart" &&
+           link[:length].to_i == suppSize &&
+           link[:title].gsub(/[^\w]/, '').include?(suppName.gsub(/[^\w]/, ''))
+        supp[:merritt_path] = link[:title]
+        suppFound = true
+        break
+      end
+    }
+    suppFound or puts "Warning: can't find merritt path for supp #{suppName}"
+  }
+end
+
+###################################################################################################
 def parseUCIngest(itemID, inMeta, fileType)
   attrs = {}
   attrs[:suppress_content] = shouldSuppressContent(itemID, inMeta)
@@ -1544,6 +1583,12 @@ def parseUCIngest(itemID, inMeta, fileType)
   contentPath = contentFile && contentFile[:path]
   contentType = contentFile && contentFile.at("./mimeType") && contentFile.at("./mimeType").text
 
+  # For ETDs (all in Merritt), figure out the PDF path in the feed file
+  pdfExists = File.file?(arkToFile(itemID, "content/base.pdf"))
+  if fileType == "ETD" && pdfExists
+    addMerrittPaths(itemID, attrs)
+  end
+
   # Populate the Item model instance
   dbItem = Item.new
   dbItem[:id]           = itemID
@@ -1555,7 +1600,7 @@ def parseUCIngest(itemID, inMeta, fileType)
   dbItem[:content_type] = attrs[:suppress_content] ? nil :
                           attrs[:withdrawn_date] ? nil :
                           isEmbargoed(attrs[:embargo_date]) ? nil :
-                          File.file?(arkToFile(itemID, "content/base.pdf")) ? "application/pdf" :
+                          pdfExists ? "application/pdf" :
                           contentType && contentType.strip.length > 0 ? contentType :
                           nil
   dbItem[:genre]        = (!attrs[:suppress_content] &&
@@ -1612,14 +1657,15 @@ def processWithNormalizer(fileType, itemID, metaPath, nailgun)
   File.open(normFile, "w") { |io| normXML.write_xml_to(io, indent:3) }
 
   # Validate using jing.
-  schemaPath = "/apps/eschol/erep/xtf/schema/uci_schema.rnc"
-  validationProbs = nailgun.call("com.thaiopensource.relaxng.util.Driver", ["-c", schemaPath, normFile], true)
-  if !validationProbs.empty?
-    validationProbs.split("\n").each { |line|
-      next if line =~ /missing required element "(subject|mimeType)"/ # we don't care
-      puts line.sub(/.*norm.xml:/, "")
-    }
-  end
+  ## This was only really useful during development of the normalizers
+  #schemaPath = "/apps/eschol/erep/xtf/schema/uci_schema.rnc"
+  #validationProbs = nailgun.call("com.thaiopensource.relaxng.util.Driver", ["-c", schemaPath, normFile], true)
+  #if !validationProbs.empty?
+  #  validationProbs.split("\n").each { |line|
+  #    next if line =~ /missing required element "(subject|mimeType)"/ # we don't care
+  #    puts line.sub(/.*norm.xml:/, "")
+  #  }
+  #end
 
   # And parse the data
   return parseUCIngest(itemID, normXML.root, fileType)
