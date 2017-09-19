@@ -201,7 +201,7 @@ class SplashFormatter
     para.setFontColor(new DeviceRgb(255, 255, 255));
     para.setFontSize(11);
     PdfAction action = PdfAction.createURI("https://escholarship.org");
-    Link link = new Link("escholarship.org", action);
+    Link link = new Link("eScholarship.org", action);
     link.setUnderline();
     para.add(link);
     doc.showTextAligned(para, 57, pageSize.getBottom() + 40, 1, TextAlignment.LEFT, VerticalAlignment.BOTTOM, 0);
