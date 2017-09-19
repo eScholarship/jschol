@@ -56,6 +56,30 @@ def formatText(htmlStr)
 end
 
 ###################################################################################################
+# Parses and formats data availability statement. Returns [text, (link)]
+def getDataAvail(itemAttrs)
+  ds = itemAttrs["data_avail_stmnt"] or return nil
+  case ds["type"]
+    when "publicRepo"
+      return "The data associated with this publication are available at: ", ds["url"]
+    when "publicRepoLater"
+      return "Associated data will be made available after this publication is published."
+    when "suppFiles"
+      return "The data associated with this publication are in the supplemental files."
+    when "withinManuscript"
+      return "The data associated with this publication are within the manuscript."
+    when "onRequest"
+      return "The data associated with this publication are available upon request."
+    when "thirdParty"
+      return "The data associated with this publication are managed by: #{ds["contact"]}"
+    when "notAvail"
+      return "The data associated with this publication are not available for this reason: #{ds["reason"]}"
+    else
+      raise "Unknown data_avail_stmnt type #{ds["type"].inspect}"
+  end
+end
+
+###################################################################################################
 def splashInstrucs(itemID)
   item = Item[itemID]
   attrs = JSON.parse(item[:attrs])
@@ -70,12 +94,14 @@ def splashInstrucs(itemID)
 
   # Title
   if item.title
-    instruc << { h3: { text: "Title:" } } << { paragraph: { text: formatText(item.title) } }
+    instruc << { h3: { text: "Title" } } << { paragraph: { text: formatText(item.title) } }
   end
 
   # Permalink
-  permalink = "http://escholarship.org/uc/item/#{itemID.sub(/^qt/,'')}"
-  instruc << { h3: { text: "Permalink:" } } << { paragraph: { link: { url: permalink, text: permalink } } }
+  request.url =~ %r{^(https?://[^/:]+(:\d+)?)(.*)$} or fail
+  urlStart = $1
+  permalink = "#{urlStart}/uc/item/#{itemID.sub(/^qt/,'')}"
+  instruc << { h3: { text: "Permalink" } } << { paragraph: { link: { url: permalink, text: permalink } } }
 
   # Journal info
   journalText = nil
@@ -101,8 +127,12 @@ def splashInstrucs(itemID)
     issn = ext["issn"]
   end
   if journalText
-    instruc << { h3: { text: "Journal:" } } << { paragraph: { text: journalText } }
+    instruc << { h3: { text: "Journal" } } << { paragraph: { text: journalText } }
   end
+
+  # ISSN / ISBN
+  issn and instruc << { h3: { text: "ISSN" } } << { paragraph: { text: issn } }
+  attrs["isbn"] and instruc << { h3: { text: "ISBN" } } << { paragraph: { text: attrs["isbn"] } }
 
   # Authors
   nAuthors = ItemAuthors.where(item_id: itemID).count
@@ -118,19 +148,40 @@ def splashInstrucs(itemID)
   end
 
   # Publication date
-  instruc << { h3: { text: "Publication date:" } } << { paragraph: { text: item.pub_date } }
+  instruc << { h3: { text: "Publication Date" } } << { paragraph: { text: item.pub_date } }
 
   # DOI
-  attrs["doi"] and instruc << { h3: { text: "DOI:" } } << { paragraph: { text: attrs["doi"] } }
+  attrs["doi"] and instruc << { h3: { text: "DOI" } } << { paragraph: { text: attrs["doi"] } }
 
-  # ISSN / ISBN
-  issn and instruc << { h3: { text: "ISSN:" } } << { paragraph: { text: issn } }
-  attrs["isbn"] and instruc << { h3: { text: "ISBN:" } } << { paragraph: { text: attrs["isbn"] } }
+  # Supplemental material
+  if attrs["supp_files"]
+    link = "#{permalink}#supplemental"
+    instruc << { h3: { text: "Supplemental Material" } } <<
+               { paragraph: { link: { url: link, text: link } } }
+  end
+
+  # Data availability statement
+  dsText, dsLink = getDataAvail(attrs)
+  if dsText
+    instruc << { h3: { text: "Data Availability" } }
+    if dsLink
+      instruc << { paragraph: [ { text: dsText }, { link: { url: dsLink, text: dsLink } } ] }
+    else
+      instruc << { paragraph: { text: dsText } }
+    end
+  end
+
+  # License
+  if item.rights
+    licenseVer = "4.0"
+    ccLink = "https://creativecommons.org/licenses/#{item.rights.sub('CC ', '').downcase}/#{licenseVer}"
+    instruc << { h3: { text: "License" } } <<
+               { paragraph: { link: { url: ccLink, text: "#{item.rights} #{licenseVer}" } } }
+  end
 
   # Flags
   flagText = ""
   attrs["is_peer_reviewed"] and flagText << "#{flagText.empty? ? '' : '|'}Peer reviewed"
-  attrs["is_undergrad"] and flagText << "#{flagText.empty? ? '' : '|'}Undergraduate"
   attrs["is_undergrad"] and flagText << "#{flagText.empty? ? '' : '|'}Undergraduate"
   item.genre == "dissertation" and flagText << "#{flagText.empty? ? '' : '|'}Thesis/dissertation"
   flagText.empty? or instruc << { paragraph: { text: "\n#{flagText}" } }
@@ -160,9 +211,12 @@ def sendSplash(itemID, request, mrtFile)
                  splashFile: getRealPath(splashTemp.path),
                  combinedFile: getRealPath(combinedTemp.path),
                  instrucs: splashInstrucs(itemID) }
+        puts "Sending splash data: #{data.to_json.encode("UTF-8")}"
         response = HTTParty.post("http://#{host}:8081/splash/splashGen", body: data.to_json.encode("UTF-8"))
-        response.success? or puts("Error #{response.code} fetching splash page: #{response.message}")
-        response.success? or halt(response.code, response.message)
+        if !response.success?
+          puts("Warning: Got code #{response.code} fetching splash page: #{response.message}")
+          return send_file mrtFile
+        end
         outFile = $fileCache.take("splash_#{itemID}.pdf", combinedTemp)
         return send_file outFile
       ensure

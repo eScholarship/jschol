@@ -16,9 +16,11 @@ import com.itextpdf.kernel.pdf.PdfString;
 import com.itextpdf.kernel.pdf.WriterProperties;
 import com.itextpdf.kernel.pdf.PdfViewerPreferences;
 import com.itextpdf.kernel.pdf.action.PdfAction;
+import com.itextpdf.kernel.pdf.navigation.PdfExplicitDestination;
 import com.itextpdf.kernel.font.PdfFont;
 import com.itextpdf.kernel.font.PdfFontFactory;
 import com.itextpdf.io.font.FontConstants;
+import com.itextpdf.io.font.PdfEncodings;
 import com.itextpdf.layout.Document;
 import com.itextpdf.layout.element.Link;
 import com.itextpdf.layout.element.Paragraph;
@@ -61,10 +63,10 @@ class SplashFormatter
     pdf = in_pdf;
     doc = new Document(pdf);
     doc.setMargins(50, 50, 50, 50);
-    normalFont = PdfFontFactory.createFont(FontConstants.HELVETICA);
-    boldFont = PdfFontFactory.createFont(FontConstants.HELVETICA_BOLD);
-    italicFont = PdfFontFactory.createFont(FontConstants.HELVETICA_OBLIQUE);
-    boldItalicFont = PdfFontFactory.createFont(FontConstants.HELVETICA_BOLDOBLIQUE);
+    normalFont = PdfFontFactory.createFont("/usr/share/fonts/dejavu/DejaVuSans.ttf", PdfEncodings.IDENTITY_H, true);
+    boldFont = PdfFontFactory.createFont("/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf", PdfEncodings.IDENTITY_H, true);
+    italicFont = PdfFontFactory.createFont("/usr/share/fonts/dejavu/DejaVuSans-Oblique.ttf", PdfEncodings.IDENTITY_H, true);
+    boldItalicFont = PdfFontFactory.createFont("/usr/share/fonts/dejavu/DejaVuSans-BoldOblique.ttf", PdfEncodings.IDENTITY_H, true);
     doc.setFont(normalFont);
   }
 
@@ -88,7 +90,8 @@ class SplashFormatter
         para.setMarginBottom(0);
         para.setMarginTop(0);
         para.setMultipliedLeading(1.0f);
-        formatContent(obj.getJSONObject(elName), para);
+        para.setFont(normalFont);
+        formatContent(obj.get(elName), para);
         break;
       case "h1":
         para.setFontSize(16);
@@ -96,7 +99,7 @@ class SplashFormatter
         para.setMarginBottom(0);
         para.setMultipliedLeading(1.1f);
         para.setFontColor(new DeviceRgb(50, 50, 50));
-        formatContent(obj.getJSONObject(elName), para);
+        formatContent(obj.get(elName), para);
         break;
       case "h2":
         para.setFontSize(14);
@@ -104,7 +107,7 @@ class SplashFormatter
         para.setMarginTop(0);
         para.setMultipliedLeading(1.1f);
         para.setFontColor(new DeviceRgb(128, 128, 128));
-        formatContent(obj.getJSONObject(elName), para);
+        formatContent(obj.get(elName), para);
         break;
       case "h3":
         para.setFontSize(12);
@@ -112,7 +115,7 @@ class SplashFormatter
         para.setMarginBottom(0);
         para.setMarginTop(10);
         para.setFontColor(new DeviceRgb(50, 50, 50));
-        formatContent(obj.getJSONObject(elName), para);
+        formatContent(obj.get(elName), para);
         break;
       default:
         throw new RuntimeException(String.format("Unrecognized element: %s", obj));
@@ -120,13 +123,23 @@ class SplashFormatter
     doc.add(para);
   }
 
-  void formatContent(JSONObject obj, Paragraph addTo) {
-    if (obj.has("text"))
-      formatText(obj.get("text"), addTo);
-    else if (obj.has("link"))
-      formatLink((JSONObject)obj.get("link"), addTo);
+  void formatContent(Object input, Paragraph addTo) {
+    if (input instanceof JSONArray) {
+      JSONArray arr = (JSONArray) input;
+      for (int i=0; i<arr.length(); i++)
+        formatContent(arr.get(i), addTo);
+    }
+    else if (input instanceof JSONObject) {
+      JSONObject obj = (JSONObject) input;
+      if (obj.has("text"))
+        formatText(obj.get("text"), addTo);
+      else if (obj.has("link"))
+        formatLink((JSONObject)obj.get("link"), addTo);
+      else
+        throw new RuntimeException(String.format("Can't find content: %s", obj));
+    }
     else
-      throw new RuntimeException(String.format("Can't find content: %s", obj));
+      throw new RuntimeException(String.format("Unrecognized content type: %s", input));
   }
 
   void formatText(Object text, Paragraph addTo) {
@@ -209,14 +222,12 @@ public class SplashGen extends HttpServlet
 
     try
     {
-      // The first part of the request, up to a pipe '|' symbol, is JSON data encoded
-      // in UTF-8.
+      // The request is JSON data encoded in UTF-8.
       BufferedInputStream inStream = new BufferedInputStream(request.getInputStream());
       ByteArrayOutputStream jsonBuf = new ByteArrayOutputStream(5000);
       int b;
-      while ((b = inStream.read()) != -1 && b != '|') {
+      while ((b = inStream.read()) != -1)
         jsonBuf.write(b);
-      }
       JSONObject data = (JSONObject) (new JSONTokener(jsonBuf.toString("UTF-8")).nextValue());
       System.out.println("Parsed JSON: " + data.toString());
 
@@ -247,10 +258,24 @@ public class SplashGen extends HttpServlet
       PdfReader splashPdfReader = new PdfReader(splashPdfFile.toString());
       splashDoc = new PdfDocument(splashPdfReader);
       splashDoc.copyPagesTo(1, 1, inputDoc, 1, new PdfPageFormCopier());
-      splashDoc.close();
-      splashDoc = null;
-      inputDoc.close();
-      inputDoc = null;
+
+      // Some PDF files contain an explicit jump to *their* first page. Reset to *our* first page.
+      inputDoc.getCatalog().setOpenAction(
+        PdfExplicitDestination.createXYZ(1, 0, inputDoc.getPage(1).getPageSize().getHeight(), 0.75f));
+
+      // Finish everything off
+      try {
+        splashDoc.close();
+      }
+      finally {
+        splashDoc = null;
+      }
+      try {
+        inputDoc.close();
+      }
+      finally {
+        inputDoc = null;
+      }
 
       // If the original doc was encrypted (i.e. "protected"), preserve that.
       if (cryptoMode != 0)
@@ -273,8 +298,8 @@ public class SplashGen extends HttpServlet
   {
     PdfWriter writer = new PdfWriter(splashPdfFile);
     PdfDocument pdf = new PdfDocument(writer);
-    PageSize pageSize = new PageSize(Math.max(500, pageSizeRect.getWidth()),
-                                     Math.max(600, pageSizeRect.getHeight()));
+    PageSize pageSize = new PageSize(Math.max(500, Math.min(800, pageSizeRect.getWidth())),
+                                     Math.max(700, Math.min(900, pageSizeRect.getHeight())));
     pdf.setDefaultPageSize(pageSize);
     pdf.setTagged();
     pdf.getCatalog().setLang(new PdfString("en-US"));
