@@ -105,7 +105,6 @@ class WizardComp extends React.Component {
 
   render() {
     let d = this.state.data
-    // console.log(d)
     return (
       <div className="c-modal">
       <Broadcast className="c-modal" channel="wiz" value={
