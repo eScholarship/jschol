@@ -67,13 +67,13 @@ class SubheaderComp extends React.Component {
                                    type={p.unit.type} directSubmit={p.directSubmit} />)
 
       } else {
-        depositButton = (<a href={p.directSubmitURL ? p.directSubmitURL : "https://submit.escholarship.org/subi/directSubmit?target="+p.unit.id}>{buttonName}</a>)
+        depositButton = (<a className="o-download__button" href={p.directSubmitURL ? p.directSubmitURL : "https://submit.escholarship.org/subi/directSubmit?target="+p.unit.id}>{buttonName}</a>)
       }
     } else {
       depositButton = <button id="wizardlyDeposit" className="o-button__3" onClick={(event)=>{
                                  this.setState({modalOpen:true})
                                  event.preventDefault()} } >Deposit</button>
-      let [unitIDForWiz, unitNameForWiz] = (p.unit.type == 'oru') ? [unitIDForWiz, unitNameForWiz] : [null, null]
+      let [unitIDForWiz, unitNameForWiz] = (p.unit.type == 'oru') ? [p.unit.id, p.unit.name] : [null, null]
       wizard = (<WizardComp showModal={this.state.modalOpen}
                   parentSelector={()=>$('#wizardModalBase')[0]}
                   onCancel={e=>this.closeWizardModal(e)} campuses={p.campuses}
