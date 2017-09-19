@@ -3,8 +3,6 @@
 import React from 'react'
 import { Subscriber } from 'react-broadcast'
 
-const SUBI_LINK = "https://submit.escholarship.org/subi/directSubmit?target="
-
 class WizardSeriesComp extends React.Component {
   state = {fetchingData: true,
            series: null    }
@@ -40,7 +38,7 @@ class WizardSeriesComp extends React.Component {
                       } href="">{u.name}</a></li>)
           } else {
             return (<li key={u.id}>
-                      <a href={SUBI_LINK+u.id}>{u.name}</a></li>)
+                      <a href={this.props.subi_link+u.id}>{u.name}</a></li>)
           }
         } )
       : null

@@ -15,22 +15,26 @@ class WizardCampusComp extends React.Component {
 
   campusList(campuses, next) {
     return campuses.map( c => {
-      return c.id != "" && 
-      <li key={c.id}>
+      if (c.id == "lbnl") {
+        return (<li key={c.id}><a href="https://oapolicy.universityofcalifornia.edu">{c.name}</a></li>)
+      } else if (c.id == "anrcs") {
+        return (<li key={c.id}><a href={this.props.subi_link+c.id}>{c.name}</a></li>)
+      } else if (c.id != "") {
+        return (<li key={c.id}>
         <a onClick = {(event)=>{
-        event.preventDefault()
-        this.props.goForward(next, {'campusID': c.id})}
-      } href="">{c.name}</a>
-      </li>
-    })
+          event.preventDefault()
+          this.props.goForward(next, {'campusID': c.id})}
+        } href="">{c.name}</a>
+      </li>)
+    }})
   }
 
   render() {
-    // Student is not asked to select type of material (skip step 3)
-    let nextStep = (this.props.arg == "2_student") ? 4 : 3
     return (
       <Subscriber channel="wiz">
         { wiz => {
+        // Student is not asked to select type of material (skip step 3)
+        let nextStep = (wiz.arg == "2_student") ? 4 : 3
       return (
       <div className="c-wizard__step">
         <header>

@@ -10,9 +10,9 @@ class WizardRoleComp extends React.Component {
       <Subscriber channel="wiz">
         { wiz => {
             let name = wiz.campusName,
-                [campusName, affiliation, nextStep] = (name && name != 'eScholarship') ?
-                  [name, name, 3]                                     // Depositing from a unit page
-                : ["eScholarship", "University of California", 2]     // Depositing from a global page
+                [campusName, affiliation, facNext, studNext] = wiz.launchedFromRoot ?
+                  ["eScholarship", "University of California", 2, 2]     // Depositing from a global page
+                : [name, name, 3, 4]                                     // Depositing from a unit page
       return (
       <div className="c-wizard__step">
         <header>
@@ -32,13 +32,13 @@ class WizardRoleComp extends React.Component {
           <li>
             <a onClick = {(event)=>{
             event.preventDefault()
-            this.props.goForward(nextStep, {"arg": nextStep+"_faculty"})}
+            this.props.goForward(facNext, {"arg": facNext+"_faculty"})}
           } href="">Other faculty or staff</a>
           </li>
           <li>
             <a onClick = {(event)=>{
             event.preventDefault()
-            this.props.goForward(nextStep, {"arg": nextStep+"_student"})}
+            this.props.goForward(studNext, {"arg": studNext+"_student"})}
           } href="">Student</a>
           </li>
           <li>
