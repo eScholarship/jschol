@@ -16,6 +16,7 @@ import com.itextpdf.kernel.pdf.PdfString;
 import com.itextpdf.kernel.pdf.WriterProperties;
 import com.itextpdf.kernel.pdf.PdfViewerPreferences;
 import com.itextpdf.kernel.pdf.action.PdfAction;
+import com.itextpdf.kernel.pdf.canvas.PdfCanvas;
 import com.itextpdf.kernel.pdf.navigation.PdfExplicitDestination;
 import com.itextpdf.kernel.font.PdfFont;
 import com.itextpdf.kernel.font.PdfFontFactory;
@@ -25,6 +26,8 @@ import com.itextpdf.layout.Document;
 import com.itextpdf.layout.element.Link;
 import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.element.Text;
+import com.itextpdf.layout.property.TextAlignment;
+import com.itextpdf.layout.property.VerticalAlignment;
 
 import org.json.JSONArray;
 import org.json.JSONTokener;
@@ -183,6 +186,42 @@ class SplashFormatter
     link.setUnderline();
     addTo.add(link);
   }
+
+  void addFooter()
+  {
+    Rectangle pageSize = pdf.getPage(1).getPageSize();
+
+    PdfCanvas canvas = new PdfCanvas(pdf.getFirstPage());
+    Rectangle rect = new Rectangle(50, pageSize.getBottom() + 23, pageSize.getWidth() - 100, 34);
+    canvas.rectangle(rect);
+    canvas.fill();
+
+    Paragraph para = new Paragraph();
+    para.setFont(normalFont);
+    para.setFontColor(new DeviceRgb(255, 255, 255));
+    para.setFontSize(11);
+    PdfAction action = PdfAction.createURI("https://escholarship.org");
+    Link link = new Link("escholarship.org", action);
+    link.setUnderline();
+    para.add(link);
+    doc.showTextAligned(para, 57, pageSize.getBottom() + 40, 1, TextAlignment.LEFT, VerticalAlignment.BOTTOM, 0);
+
+    para = new Paragraph("Powered by the ");
+    para.setFont(normalFont);
+    para.setFontColor(new DeviceRgb(255, 255, 255));
+    para.setFontSize(11);
+    action = PdfAction.createURI("http://www.cdlib.org/");
+    link = new Link("California Digital Library", action);
+    link.setUnderline();
+    para.add(link);
+    doc.showTextAligned(para, pageSize.getWidth()-57, pageSize.getBottom() + 40, 1,  TextAlignment.RIGHT, VerticalAlignment.BOTTOM, 0);
+
+    para = new Paragraph("University of California");
+    para.setFont(normalFont);
+    para.setFontColor(new DeviceRgb(255, 255, 255));
+    para.setFontSize(11);
+    doc.showTextAligned(para, pageSize.getWidth()-57, pageSize.getBottom() + 40 - 14, 1,  TextAlignment.RIGHT, VerticalAlignment.BOTTOM, 0);
+  }
 }
 
 public class SplashGen extends HttpServlet
@@ -311,6 +350,7 @@ public class SplashGen extends HttpServlet
     pdf.getCatalog().setLang(new PdfString("en-US"));
     SplashFormatter formatter = new SplashFormatter(pdf);
     formatter.formatPage((JSONArray)instrucs);
+    formatter.addFooter();
     formatter.finish();
   }
 }
