@@ -311,9 +311,32 @@ get "/content/:fullItemID/*" do |fullItemID, path|
   item.status == 'published' or halt(403)  # prevent access to embargoed and withdrawn files
   path = sanitizeFilePath(path)  # protect against attacks
 
+  # Figure out the ID in Merritt. eSchol items just use the eSchol ARK; others are recorded
+  # as local IDs in the attributes.
+  mrtID = "ark:/13030/#{fullItemID}"
+  attrs = JSON.parse(item.attrs)
+  (attrs["local_ids"] || []).each { |localID|
+    localID["type"] == "merritt" and mrtID = localID["id"]
+  }
+
+  # If it's the main content PDF...
+  if path =~ /^qt\w{8}\.pdf$/
+    epath = "content/#{URI::encode(path)}"
+    attrs["content_merritt_path"] and epath = attrs["content_merritt_path"]
+  else
+    # Must be a supp file.
+    attrs["supp_files"] or halt(404)
+    epath = nil
+    attrs["supp_files"].each { |supp|
+      if path == "supp/#{supp["file"]}"
+        epath = supp["merritt_path"] || "content/#{URI::encode(path)}"
+      end
+    }
+    epath or halt(404)
+  end
+
   # Fetch the file from Merritt
-  epath = URI::encode(path)
-  mrtURL = "https://#{$mrtExpressConfig['host']}/dl/ark:/13030/#{fullItemID}/content/#{epath}"
+  mrtURL = "https://#{$mrtExpressConfig['host']}/dl/#{mrtID}/#{epath}"
   mrtFile = $fileCache.find(mrtURL)
   if !mrtFile
     Tempfile.open("mrt_", TEMP_DIR) { |mrtTmp|
