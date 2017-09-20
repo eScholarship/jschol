@@ -362,6 +362,11 @@ get "/content/:fullItemID/*" do |fullItemID, path|
     addSplash = false
   end
 
+  # Sinatra, while it knows how to handle ranges, doesn't let the client know it can.
+  # So we have to explicitly tell the client. With this, pdf.js will show the first page
+  # before downloading the entire file.
+  headers "Accept-Ranges" => "bytes"
+
   # For all non-splash-page cases, we're done. Stream the result (to prevent huge files from blowing RAM)
   return addSplash ? sendSplash(fullItemID, request, mrtFile) : send_file(mrtFile)
 end
