@@ -399,14 +399,13 @@ get %r{.*} do
   template.sub!("main.css", "main-#{Digest::MD5.file("app/css/main.css").hexdigest[0,16]}.css")
 
   if DO_ISO
-    # We need to grab the hostname from the URL. There's probably a better way to do this.
+    # Parse out payload of the URL (i.e. not including the host name)
     request.url =~ %r{^https?://([^/:]+)(:\d+)?(.*)$} or fail
-    host = $1
     remainder = $3
 
     # Pass the full path and query string to our little Node Express app, which will run it through
     # ReactRouter and React.
-    response = Net::HTTP.new(host, 4002).start {|http| http.request(Net::HTTP::Get.new(remainder)) }
+    response = Net::HTTP.new(ENV['HOST'], 4002).start {|http| http.request(Net::HTTP::Get.new(remainder)) }
     status response.code.to_i
 
     # Read in the template file, and substitute the results from React/ReactRouter

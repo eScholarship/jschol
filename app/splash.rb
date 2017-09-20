@@ -196,10 +196,6 @@ end
 
 ###################################################################################################
 def sendSplash(itemID, request, mrtFile)
-  # Figure out the hostname so we can properly address the splash page web service.
-  request.url =~ %r{^https?://([^/:]+)(:\d+)?(.*)$} or fail
-  host = $1
-
   # We'll need a temp file for the splash page and the combined file
   outFile = $fileCache.find("splash_#{itemID}.pdf")
   if !outFile
@@ -212,7 +208,7 @@ def sendSplash(itemID, request, mrtFile)
                  combinedFile: getRealPath(combinedTemp.path),
                  instrucs: splashInstrucs(itemID) }
         puts "Sending splash data: #{data.to_json.encode("UTF-8")}"
-        response = HTTParty.post("http://#{host}:8081/splash/splashGen", body: data.to_json.encode("UTF-8"))
+        response = HTTParty.post("http://#{ENV['HOST']}:8081/splash/splashGen", body: data.to_json.encode("UTF-8"))
         if !response.success?
           puts("Warning: Got code #{response.code} fetching splash page: #{response.message}")
           return send_file mrtFile
