@@ -304,6 +304,61 @@ get %r{/assets/([0-9a-f]{64})} do |hash|
 end
 
 ###################################################################################################
+class MerrittFetcher
+  def initialize(url, putInCache)
+    # We have to fetch the file in a different thread, because it needs to keep the HTTP request
+    # open in that thread while we return the status code to Sinatra. Then the remaining data can
+    # be streamed from the thread to Sinatra.
+    puts "Merritt fetch: #{url}."
+    @queue = QueueWithTimeout.new
+    Thread.new { _fetch(url, putInCache) }
+
+    # Wait for the initial status code to come back from the fetch thread.
+    resp = @queue.pop_with_timeout(60)
+    resp.is_a?(Exception) and raise(resp)
+    resp == "ok" or raise("Merritt fetch failed: code=#{resp.code} message=#{resp.message}")
+  end
+
+  def length
+    @length
+  end
+
+  def _fetch(url, putInCache)
+    begin
+      mrtTmp = putInCache ? Tempfile.open("mrt_", TEMP_DIR) : nil
+      uri = URI(url)
+      Net::HTTP.start(uri.host, uri.port, :use_ssl => (uri.scheme == 'https')) do |http|
+        req = Net::HTTP::Get.new(uri.request_uri)
+        req.basic_auth $mrtExpressConfig['username'], $mrtExpressConfig['password']
+        http.request(req) do |response|
+          response.code == "200" or raise("Response to #{uri} was HTTP #{response.code}: #{response.message.inspect}")
+          @length = response["Expected-Content-Length"]
+          @queue << "ok"
+          response.read_body { |chunk|
+            @queue << chunk
+            mrtTmp and mrtTmp.write(chunk)
+          }
+        end
+      end
+      mrtTmp and $fileCache.take(url, mrtTmp)
+      @queue << nil  # mark end-of-data
+    rescue Exception => e
+      puts "Merritt fetch exception: #{e}"
+      @queue << e
+    end
+  end
+
+  def each
+    while true
+      data = @queue.pop_with_timeout(10)
+      data.nil? and break
+      data.length > 0 and yield data
+    end
+  end
+end
+
+
+###################################################################################################
 get "/content/:fullItemID/*" do |fullItemID, path|
   # Prep work
   fullItemID =~ /^qt[a-z0-9]{8}$/ or halt(404)  # protect against attacks
@@ -323,6 +378,9 @@ get "/content/:fullItemID/*" do |fullItemID, path|
   if path =~ /^qt\w{8}\.pdf$/
     epath = "content/#{URI::encode(path)}"
     attrs["content_merritt_path"] and epath = attrs["content_merritt_path"]
+    noSplash = !(ENV['HOST'] =~ /pub-jschol/) ||
+               (params[:nosplash] && isValidContentKey(fullItemID.sub(/^qt/, ''), params[:nosplash]))
+    mainPDF = true
   else
     # Must be a supp file.
     attrs["supp_files"] or halt(404)
@@ -333,42 +391,35 @@ get "/content/:fullItemID/*" do |fullItemID, path|
       end
     }
     epath or halt(404)
+    noSplash = true
+    mainPDF = false
   end
 
-  # Fetch the file from Merritt
+  # Here's the final Merritt URL
   mrtURL = "https://#{$mrtExpressConfig['host']}/dl/#{mrtID}/#{epath}"
-  mrtFile = $fileCache.find(mrtURL)
-  if !mrtFile
-    Tempfile.open("mrt_", TEMP_DIR) { |mrtTmp|
-      auth = { username: $mrtExpressConfig['username'],
-               password: $mrtExpressConfig['password'] }
-      response = HTTParty.get(mrtURL, stream_body: true, basic_auth: auth) do |fragment|
-        mrtTmp.write(fragment)
-      end
-      response.success? or puts("Error #{response.code} fetching #{mrtURL}: #{response.message}")
-      response.success? or halt(response.code, response.message)
-      mrtFile = $fileCache.take(mrtURL, mrtTmp)
-    }
-  end
 
   # Guess the content type by path for now
   content_type MimeMagic.by_path(path)
-
-  if !(request.url =~ /pub-jschol/)
-    addSplash = false
-  elsif path =~ /\.pdf$/
-    addSplash = !params[:nosplash] || !isValidContentKey(fullItemID.sub(/^qt/, ''), params[:nosplash])
-  else
-    addSplash = false
-  end
 
   # Sinatra, while it knows how to handle ranges, doesn't let the client know it can.
   # So we have to explicitly tell the client. With this, pdf.js will show the first page
   # before downloading the entire file.
   headers "Accept-Ranges" => "bytes"
 
-  # For all non-splash-page cases, we're done. Stream the result (to prevent huge files from blowing RAM)
-  return addSplash ? sendSplash(fullItemID, request, mrtFile) : send_file(mrtFile)
+  # Non-splash cases are fairly simple
+  if true || noSplash # FIXME FOO
+
+    # If we have a cached version of the file, just serve that up.
+    mrtFile = $fileCache.find(mrtURL)
+    mrtFile and return send_file(mrtFile)
+
+    # Otherwise, fetch and stream it.
+    fetcher = MerrittFetcher.new(mrtURL, mainPDF ? true : false) # cache if main PDF
+    fetcher.length and headers "Content-Length" => fetcher.length
+    stream { |out| fetcher.each { |data| out << data } }
+  else
+    raise "not yet"
+  end
 end
 
 ###################################################################################################
