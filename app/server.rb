@@ -324,27 +324,34 @@ class MerrittFetcher
   end
 
   def _fetch(url, putInCache)
+    mrtTmp = nil
     begin
       mrtTmp = putInCache ? Tempfile.open("mrt_", TEMP_DIR) : nil
       uri = URI(url)
       Net::HTTP.start(uri.host, uri.port, :use_ssl => (uri.scheme == 'https')) do |http|
         req = Net::HTTP::Get.new(uri.request_uri)
         req.basic_auth $mrtExpressConfig['username'], $mrtExpressConfig['password']
-        http.request(req) do |response|
-          response.code == "200" or raise("Response to #{uri} was HTTP #{response.code}: #{response.message.inspect}")
-          @length = response["Expected-Content-Length"]
+        startTime = Time.now
+        http.request(req) do |resp|
+          resp.code == "200" or raise("Response to #{uri} was HTTP #{resp.code}: #{resp.message}")
+          @length = resp["Expected-Content-Length"]
           @queue << "ok"
-          response.read_body { |chunk|
+          resp.read_body { |chunk|
             @queue << chunk
             mrtTmp and mrtTmp.write(chunk)
           }
         end
+        puts "Merritt elapsed: #{Time.now - startTime}"
       end
       mrtTmp and $fileCache.take(url, mrtTmp)
       @queue << nil  # mark end-of-data
     rescue Exception => e
       puts "Merritt fetch exception: #{e}"
       @queue << e
+      if mrtTmp
+        mrtTmp.close
+        mrtTmp.unlink
+      end
     end
   end
 
