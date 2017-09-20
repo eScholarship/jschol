@@ -26,7 +26,7 @@ class MediaFeatureObj extends React.Component {
       default:   // data
         return <div className="o-mediafeature__item">
                  <strong>No preview available</strong>
-                 <a className="o-download__button" href={this.props.url} download={this.props.file}>Download {this.props.title}</a>
+                 <a className="o-textlink__left-icon" href={this.props.url} download={this.props.file}>Download {this.props.title}</a>
                </div>
           }
       })()}

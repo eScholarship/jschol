@@ -86,7 +86,8 @@ class SubheaderComp extends React.Component {
                             campusName={p.campusName}
                             campuses={p.campuses} />
         <Link to={"/uc/"+banner_url_unit} className="c-subheader__banner">
-          <img src={logo.url} width={logo.width} height={logo.height} alt={"Logo for " + p.unit.name} />
+          <h1>{p.unit.name}</h1>
+          <img src={logo.url} width={logo.width} height={logo.height} alt={p.unit.name} />
         </Link>
       {p.unit.type == 'journal' ?
         <div id="wizardModalBase" className="c-subheader__sidebar">

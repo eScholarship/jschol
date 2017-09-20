@@ -137,7 +137,7 @@ Set an interactive element's styles if there's a touchscreen (coarse) or mouse-o
   text-decoration: none;
 
   &:hover:not(div) {
-    color: $color-orange;
+    color: $color-dark-orange;
   }
 
 }

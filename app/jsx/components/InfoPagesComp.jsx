@@ -66,18 +66,16 @@ class InfoPagesComp extends React.Component {
   render() {
     return (
       <div className="c-infopages">
-        <div className="c-infopages__show-less">
-          <div className="c-infopages__items">
+        <div className="c-infopages__items">
       {(this.props.info_count != 0 ) ? 
           this.props.infoResults.slice(0,3).map( (result) =>
             <ResultComp key={result.id} result={result} />)
-        :
+       :
           <p><br/><br/>No results found.<br/><br/></p>
       }
-          </div>
-        {this.props.info_count > 3 && 
-          <button className="c-infopages__toggle" onClick={()=> this.setState({showMore: true})} hidden={this.state.showMore}>Show more results</button> }
         </div>
+      {this.props.info_count > 3 && 
+        <button className="c-infopages__toggle" onClick={()=> this.setState({showMore: true})} hidden={this.state.showMore}>Show more results</button> }
         <div className="c-infopages__show-more" hidden={!this.state.showMore}>
           <div className="c-infopages__items">
           {this.props.infoResults.slice(3,12).map( (result) =>

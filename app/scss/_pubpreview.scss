@@ -1,7 +1,7 @@
 // ##### Publication Preview Component ##### //
 
 .c-pubpreview {
-  margin-bottom: $spacing-sm;
+  margin-bottom: $spacing-md;
 
   @include bp(screen1) {
     display: flex;
@@ -16,12 +16,15 @@
 }
 
 .c-pubpreview__img {
+  border: 1px solid $color-light-gray;
+  box-shadow: $box-shadow2;
 
   @include bp(screen1) {
     margin-right: $spacing-md;
   }
 
   img {
+    display: block;
     width: 150px;
   }
 

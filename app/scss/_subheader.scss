@@ -17,39 +17,57 @@
 }
 
 .c-subheader__banner {
-  display: none;
+  @extend %o-textlink__black;
+  display: flex;
+  align-items: center;
+  margin-right: $spacing-md;
 
-  @include bp(screen3) {
-    display: block;
-    margin-right: $spacing-md;
+  h1 {
+    order: 2;
+    margin: 0;
+    font-size: 1em;
+    text-align: right;
+
+    @include bp(screen3) {
+      font-size: 1.2em;
+    }
+
   }
 
   img {
-    width: 100%;
-    min-width: 0;
-    max-width: 800px;
-    max-height: 90px;
+    display: none;
+
+    @include bp(screen3) {
+      display: block;
+      flex: 0 0 auto;
+      order: 1;
+      width: 100%;
+      min-width: 0;
+      max-width: 800px;
+      max-height: 90px;
+    }
+
+  }
+
+  h1 + img {
+    width: auto;
+
+    @include bp(screen3) {
+      margin-right: $spacing-sm;
+    }
+
   }
 
 }
 
 .c-subheader__sidebar {
   display: flex;
-  flex-direction: row;
-
-  @include bp(screen3) {
-    flex-direction: column;
-  }
+  flex-direction: column;
 
   button {
 
     &:not(:first-child) {
-      margin-left: 2px;
-
-      @include bp(screen3) {
-        margin: 2px 0 0;
-      }
-
+      margin-top: 2px;
     }
 
   }

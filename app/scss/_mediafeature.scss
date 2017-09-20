@@ -55,9 +55,9 @@
       text-transform: uppercase;
     }
 
-    button {
-      @extend %o-button__6;
-      background-image: inline('../images/icon_download-white.svg');
+    a {
+      @extend %o-textlink__left-icon;
+      background-image: inline('../images/icon_download-teal.svg');
     }
 
   }
