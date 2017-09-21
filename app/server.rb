@@ -364,6 +364,85 @@ class MerrittFetcher
   end
 end
 
+###################################################################################################
+class MerrittCache
+  def initialize
+    @mutex = Mutex.new
+    @fetching = Set.new
+    @waiting = Hash.new { |h,k| h[k] = [] }
+    @fetched = Hash.new { |h,k| h[k] = 0 }
+    @results = {}
+  end
+
+  def fetch(mrtURL)
+    # If already cached, just return the file
+    mrtFile = $fileCache.find(mrtURL)
+    mrtFile and mrtFile
+
+    # If not yet fetching this, fire up a thread to do so.
+    @mutex.synchronize {
+      if !@fetching.include?(mrtURL)
+        @fetching << mrtURL
+        fetchInThread(mrtURL)
+      end
+      @waiting[mrtURL] << Thread.current
+    }
+
+    # Wait for the thread to complete (successfully or otherwise)
+    result = nil
+    while result.nil?
+      sleep 0.2
+      @mutex.synchronize {
+        if !@fetching.include?(mrtURL)
+          result = @results[mrtURL]
+          # If we're the last thread waiting for the result, clear state
+          # for this URL.
+          @waiting[mrtURL].delete(Thread.current)
+          if @waiting[mrtURL].empty?
+            @waiting.delete(mrtURL)
+            @fetched.delete(mrtURL)
+            @results.delete(mrtURL)
+          end
+        end
+      }
+    end
+
+    # All done.
+    result.is_a?(Exception) and raise(result)
+    return result
+  end
+
+  def fetchInThread(mrtURL)
+    Thread.new(mrtURL) { |mrtURL|
+      begin
+        @mutex.synchronize { @fetched[mrtURL] = 0 }
+        Tempfile.open("mrt_", TEMP_DIR) { |mrtTmp|
+          auth = { username: $mrtExpressConfig['username'],
+                   password: $mrtExpressConfig['password'] }
+          response = HTTParty.get(mrtURL, stream_body: true, basic_auth: auth) do |fragment|
+            mrtTmp.write(fragment)
+            @mutex.synchronize { @fetched[mrtURL] += fragment.length }
+          end
+          response.success? or raise("Error #{response.code} fetching #{mrtURL}: #{response.message}")
+          mrtFile = $fileCache.take(mrtURL, mrtTmp)
+          @mutex.synchronize {
+            @results[mrtURL] = mrtFile
+            @fetching.delete(mrtURL)
+          }
+        }
+      rescue Exception => e
+        @mutex.synchronize {
+          puts "Error in fetch thread: #{e}"
+          @results[mrtURL] = e
+          @fetching.delete(mrtURL)
+        }
+      end
+    }
+  end
+
+end
+
+$merrittCache = MerrittCache.new
 
 ###################################################################################################
 get "/content/:fullItemID/*" do |fullItemID, path|
@@ -412,33 +491,20 @@ get "/content/:fullItemID/*" do |fullItemID, path|
 
   # Here's the final Merritt URL
   mrtURL = "https://#{$mrtExpressConfig['host']}/dl/#{mrtID}/#{epath}"
-  mrtFile = $fileCache.find(mrtURL)
 
-  # Non-splash cases are fairly simple
-  if noSplash
-
-    # If we have a cached version of the file, just serve that up.
-    mrtFile and return send_file(mrtFile)
-
-    # Otherwise, fetch and stream it.
+  # Stream supp files out directly from Merritt without local caching.
+  if !mainPDF
     fetcher = MerrittFetcher.new(mrtURL, mainPDF ? true : false) # cache if main PDF
     fetcher.length and headers "Content-Length" => fetcher.length
-    stream { |out| fetcher.each { |data| out << data } }
-  else
-    if !mrtFile
-      Tempfile.open("mrt_", TEMP_DIR) { |mrtTmp|
-        auth = { username: $mrtExpressConfig['username'],
-                 password: $mrtExpressConfig['password'] }
-        response = HTTParty.get(mrtURL, stream_body: true, basic_auth: auth) do |fragment|
-          mrtTmp.write(fragment)
-        end
-        response.success? or puts("Error #{response.code} fetching #{mrtURL}: #{response.message}")
-        response.success? or halt(response.code, response.message)
-        mrtFile = $fileCache.take(mrtURL, mrtTmp)
-      }
-    end
-    sendSplash(fullItemID, request, mrtFile)
+    return stream { |out| fetcher.each { |data| out << data } }
   end
+
+  # For main PDF, in either case (splash or not), we need to grab the whole file. Because:
+  # 1. For the splash case, the splash generator will need random access to the whole thing
+  # 2. For the non-splash case, we need to be able to serve HTTP ranges, so need the whole thing
+  # In future we can try to use mrtExpress ranges to do this in a fancier way.
+  mrtFile = $merrittCache.fetch(mrtURL)
+  return noSplash ? send_file(mrtFile) : sendSplash(fullItemID, request, mrtFile)
 end
 
 ###################################################################################################
