@@ -150,7 +150,9 @@ class JournalLayout extends React.Component {
     let data = this.props.data
     return (
       <div>
-        {this.props.marquee && <MarqueeComp marquee={this.props.marquee} unit={this.props.unit}/>}
+      {(this.props.marquee.carousel || this.props.marquee.about) &&
+        <MarqueeComp marquee={this.props.marquee} unit={this.props.unit}/>
+      }
         <div className="c-columns">
           <main id="maincontent">
           {this.props.data.issue ?

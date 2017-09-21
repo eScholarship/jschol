@@ -39,13 +39,6 @@ class SubheaderComp extends React.Component {
     let p = this.props,
         banner_url_unit = p.unit.type.includes('series') ? p.ancestorID : p.unit.id
 
-    var logo;
-    if (p.logo) {
-      logo = p.logo
-    } else {
-      logo = { url: "http://placehold.it/400x100?text="+p.unit.id, width: 400, height: 100 }
-    }
-
    // Button Configuration based on unit type
    //   unit.type == 'journal'  -->  Submit / Manage Submissions
    //   unit.type == 'campus'  -->  Deposit
@@ -87,7 +80,9 @@ class SubheaderComp extends React.Component {
                             campuses={p.campuses} />
         <Link to={"/uc/"+banner_url_unit} className="c-subheader__banner">
           <h1>{p.unit.name}</h1>
-          <img src={logo.url} width={logo.width} height={logo.height} alt={p.unit.name} />
+        {p.logo &&
+          <img src={p.logo.url} width={p.logo.width} height={p.logo.height} alt={p.unit.name} />
+        }
         </Link>
       {p.unit.type == 'journal' ?
         <div id="wizardModalBase" className="c-subheader__sidebar">
