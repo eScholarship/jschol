@@ -112,12 +112,13 @@ def getUnitHeader(unit, pageName=nil, journalIssue=nil, attrs=nil)
   if !attrs then attrs = JSON.parse(unit[:attrs]) end
   campusID = getCampusId(unit)
   ancestor = isTopmostUnit(unit) ? nil : getUnitAncestor(unit)
+
   header = {
     :campusID => campusID,
     :campusName => $unitsHash[campusID].name,
     :ancestorID => ancestor ? ancestor.id : nil,   # Used strictly for linking series back to parent unit
     :campuses => $activeCampuses.values.map { |c| {id: c.id, name: c.name} }.unshift({id: "", name: "eScholarship at..."}),
-    :logo => getLogoData(attrs['logo']),
+    :logo => (unit.type.include? 'series') ? getLogoData(JSON.parse(ancestor.attrs)['logo']) : getLogoData(attrs['logo']),
     :directSubmit => attrs['directSubmit'],
     :directSubmitURL => attrs['directSubmitURL'],
     :nav_bar => getNavBar(unit, pageName, attrs['nav_bar']),
@@ -130,7 +131,6 @@ def getUnitHeader(unit, pageName=nil, journalIssue=nil, attrs=nil)
       traverseHierarchyUp([{name: unit.name, id: unit.id, url: "/uc/" + unit.id}]) + getPageBreadcrumb(unit, pageName, journalIssue)
       : getPageBreadcrumb(unit, pageName)
   }
-
   # if this unit doesn't have a nav_bar, get the next unit up the hierarchy's nav_bar
   if !header[:nav_bar] and unit.type != 'campus' and unit.type != 'root'
     until header[:nav_bar] || ancestor.id == 'root'

@@ -79,10 +79,11 @@ class DepartmentLayout extends React.Component {
     let data = this.props.data,
         seriesList = this.seriesCompListMaker(data.series),
         monographSeriesList = this.seriesCompListMaker(data.monograph_series)
-
     return (
       <div>
+      {(this.props.marquee.carousel || this.props.marquee.about) &&
         <MarqueeComp marquee={this.props.marquee} unit={this.props.unit}/>
+      }
         <div className="c-columns">
           <main id="maincontent">
             <section className="o-columnbox1">
