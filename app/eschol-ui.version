@@ -516,5 +516,20 @@ As well as:
   modified:   app/jsx/pages/SearchPage.jsx
 
 
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's 44f3683e1d90b0695294cc5bfa6c752496019178, 2017-09-20 <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+Andy added all scss and image changes since last.
+As well as:
+
+  modified:   app/jsx/components/InfoPagesComp.jsx
+  modified:   app/jsx/components/SubheaderComp.jsx
+  modified:   app/jsx/objects/CustomSelectorObj.jsx
+  modified:   app/jsx/objects/MediaFeatureDataObj.jsx
+  modified:   app/jsx/objects/MediaFeatureObj.jsx
+  modified:   app/jsx/objects/TextlinkObj.jsx
+  new file:   app/jsx/objects/CustomSelectorCampusObj.jsx
+
 
 

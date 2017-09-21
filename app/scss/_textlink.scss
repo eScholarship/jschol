@@ -1,7 +1,7 @@
 // ##### Text Link Objects ##### //
 
 %o-textlink__primary {
-  color: $color-orange;
+  color: $color-dark-orange;
   text-decoration: none;
 
   &:hover {
@@ -56,4 +56,24 @@
   @extend %o-textlink__secondary;
   // Default icon below. To use a different icon, create a new class, @extend with %o-textlink__left-icon, and apply background-image property with different image path:
   background-image: inline('../images/icon_pdf-teal.svg');
+}
+
+%o-textlink__external-link-button {
+  @extend %interactive-element-size;
+  display: inline-flex;
+  align-items: center;
+  padding-right: 0.6em;
+  padding-left: 2.2em;
+  background: no-repeat left 0.6em center / 1.1em;
+}
+
+.o-textlink__external-link-button {
+  @extend %o-textlink__external-link-button;
+  @extend %o-textlink__secondary;
+  @extend %interactive-element-size;
+  border: 2px solid $color-teal;
+  border-radius: $round-corner;
+  background-image: inline('../images/icon_external-link-teal.svg');
+  font-weight: bold;
+  box-shadow: $box-shadow2;
 }

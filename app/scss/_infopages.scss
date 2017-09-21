@@ -4,27 +4,7 @@
   // no styles
 }
 
-%c-infopages__show {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.c-infopages__show-less {
-  @extend %c-infopages__show;
-
-  .c-pagination {
-
-    @include bp(screen2) {
-      margin-bottom: $spacing-base;
-    }
-
-  }
-
-}
-
 .c-infopages__show-more {
-  @extend %c-infopages__show;
   padding-top: $spacing-md;
   border-top: 1px solid $color-dark-gray;
 
@@ -92,7 +72,9 @@
       display: block;
       margin-bottom: $spacing-sm;
       color: $color-dark-gray;
-      font-weight: normal;
+      font-size: 0.8em;
+      font-weight: bold;
+      text-transform: uppercase;
     }
 
     a {
