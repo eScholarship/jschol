@@ -402,9 +402,6 @@ get "/content/:fullItemID/*" do |fullItemID, path|
     mainPDF = false
   end
 
-  # Here's the final Merritt URL
-  mrtURL = "https://#{$mrtExpressConfig['host']}/dl/#{mrtID}/#{epath}"
-
   # Guess the content type by path for now
   content_type MimeMagic.by_path(path)
 
@@ -413,11 +410,14 @@ get "/content/:fullItemID/*" do |fullItemID, path|
   # before downloading the entire file.
   headers "Accept-Ranges" => "bytes"
 
+  # Here's the final Merritt URL
+  mrtURL = "https://#{$mrtExpressConfig['host']}/dl/#{mrtID}/#{epath}"
+  mrtFile = $fileCache.find(mrtURL)
+
   # Non-splash cases are fairly simple
-  if true || noSplash # FIXME FOO
+  if noSplash
 
     # If we have a cached version of the file, just serve that up.
-    mrtFile = $fileCache.find(mrtURL)
     mrtFile and return send_file(mrtFile)
 
     # Otherwise, fetch and stream it.
@@ -425,7 +425,19 @@ get "/content/:fullItemID/*" do |fullItemID, path|
     fetcher.length and headers "Content-Length" => fetcher.length
     stream { |out| fetcher.each { |data| out << data } }
   else
-    raise "not yet"
+    if !mrtFile
+      Tempfile.open("mrt_", TEMP_DIR) { |mrtTmp|
+        auth = { username: $mrtExpressConfig['username'],
+                 password: $mrtExpressConfig['password'] }
+        response = HTTParty.get(mrtURL, stream_body: true, basic_auth: auth) do |fragment|
+          mrtTmp.write(fragment)
+        end
+        response.success? or puts("Error #{response.code} fetching #{mrtURL}: #{response.message}")
+        response.success? or halt(response.code, response.message)
+        mrtFile = $fileCache.take(mrtURL, mrtTmp)
+      }
+    end
+    sendSplash(fullItemID, request, mrtFile)
   end
 end
 
