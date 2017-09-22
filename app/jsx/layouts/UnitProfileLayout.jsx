@@ -312,7 +312,9 @@ class UnitProfileLayout extends React.Component {
     return (
       <div>
         <h3 id="marquee">Marquee Configuration</h3>
+      {(data.marquee.carousel || data.marquee.about) &&
         <MarqueeComp marquee={data.marquee} unit={this.props.unit}/>
+      }
         <div className="c-columns">
           <main>
             <section className="o-columnbox1">
