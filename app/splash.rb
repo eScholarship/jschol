@@ -207,7 +207,7 @@ def sendSplash(itemID, request, mrtFile)
                  splashFile: getRealPath(splashTemp.path),
                  combinedFile: getRealPath(combinedTemp.path),
                  instrucs: splashInstrucs(itemID) }
-        puts "Sending splash data: #{data.to_json.encode("UTF-8")}"
+        #puts "Sending splash data: #{data.to_json.encode("UTF-8")}"
         response = HTTParty.post("http://#{ENV['HOST']}:8081/splash/splashGen", body: data.to_json.encode("UTF-8"))
         if !response.success?
           puts("Warning: Got code #{response.code} fetching splash page: #{response.message}")

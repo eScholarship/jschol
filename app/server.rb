@@ -102,6 +102,7 @@ require_relative 'loginApi'
 require_relative 'splash'
 require_relative 'fileCache'
 require_relative '../util/sanitize.rb'
+require_relative 'merritt'
 
 # Sinatra configuration
 configure do
@@ -126,6 +127,9 @@ $fileCache = FileCache.new("cache")
 
 TEMP_DIR = "tmp"
 FileUtils.mkdir_p(TEMP_DIR)
+
+# Special cache for Merritt that includes fetching synchronization
+$merrittCache = MerrittCache.new
 
 ###################################################################################################
 # Model classes for easy interaction with the database.
@@ -304,147 +308,6 @@ get %r{/assets/([0-9a-f]{64})} do |hash|
 end
 
 ###################################################################################################
-class MerrittFetcher
-  def initialize(url, putInCache)
-    # We have to fetch the file in a different thread, because it needs to keep the HTTP request
-    # open in that thread while we return the status code to Sinatra. Then the remaining data can
-    # be streamed from the thread to Sinatra.
-    puts "Merritt fetch: #{url}."
-    @queue = QueueWithTimeout.new
-    Thread.new { _fetch(url, putInCache) }
-
-    # Wait for the initial status code to come back from the fetch thread.
-    resp = @queue.pop_with_timeout(60)
-    resp.is_a?(Exception) and raise(resp)
-    resp == "ok" or raise("Merritt fetch failed: code=#{resp.code} message=#{resp.message}")
-  end
-
-  def length
-    @length
-  end
-
-  def _fetch(url, putInCache)
-    mrtTmp = nil
-    begin
-      mrtTmp = putInCache ? Tempfile.open("mrt_", TEMP_DIR) : nil
-      uri = URI(url)
-      Net::HTTP.start(uri.host, uri.port, :use_ssl => (uri.scheme == 'https')) do |http|
-        req = Net::HTTP::Get.new(uri.request_uri)
-        req.basic_auth $mrtExpressConfig['username'], $mrtExpressConfig['password']
-        startTime = Time.now
-        http.request(req) do |resp|
-          resp.code == "200" or raise("Response to #{uri} was HTTP #{resp.code}: #{resp.message}")
-          @length = resp["Expected-Content-Length"]
-          @queue << "ok"
-          resp.read_body { |chunk|
-            @queue << chunk
-            mrtTmp and mrtTmp.write(chunk)
-          }
-        end
-        puts "Merritt elapsed: #{Time.now - startTime}"
-      end
-      mrtTmp and $fileCache.take(url, mrtTmp)
-      @queue << nil  # mark end-of-data
-    rescue Exception => e
-      puts "Merritt fetch exception: #{e}"
-      @queue << e
-      if mrtTmp
-        mrtTmp.close
-        mrtTmp.unlink
-      end
-    end
-  end
-
-  def each
-    while true
-      data = @queue.pop_with_timeout(10)
-      data.nil? and break
-      data.length > 0 and yield data
-    end
-  end
-end
-
-###################################################################################################
-class MerrittCache
-  def initialize
-    @mutex = Mutex.new
-    @fetching = Set.new
-    @waiting = Hash.new { |h,k| h[k] = [] }
-    @fetched = Hash.new { |h,k| h[k] = 0 }
-    @results = {}
-  end
-
-  def fetch(mrtURL)
-    # If already cached, just return the file
-    mrtFile = $fileCache.find(mrtURL)
-    mrtFile and mrtFile
-
-    # If not yet fetching this, fire up a thread to do so.
-    @mutex.synchronize {
-      if !@fetching.include?(mrtURL)
-        @fetching << mrtURL
-        fetchInThread(mrtURL)
-      end
-      @waiting[mrtURL] << Thread.current
-    }
-
-    # Wait for the thread to complete (successfully or otherwise)
-    result = nil
-    while result.nil?
-      sleep 0.2
-      @mutex.synchronize {
-        if !@fetching.include?(mrtURL)
-          result = @results[mrtURL]
-          # If we're the last thread waiting for the result, clear state
-          # for this URL.
-          @waiting[mrtURL].delete(Thread.current)
-          if @waiting[mrtURL].empty?
-            @waiting.delete(mrtURL)
-            @fetched.delete(mrtURL)
-            @results.delete(mrtURL)
-          end
-        end
-      }
-    end
-
-    # All done.
-    result.is_a?(Exception) and raise(result)
-    return result
-  end
-
-  def fetchInThread(mrtURL)
-    Thread.new(mrtURL) { |mrtURL|
-      begin
-        @mutex.synchronize { @fetched[mrtURL] = 0 }
-        Tempfile.open("mrt_", TEMP_DIR) { |mrtTmp|
-          auth = { username: $mrtExpressConfig['username'],
-                   password: $mrtExpressConfig['password'] }
-          response = HTTParty.get(mrtURL, stream_body: true, basic_auth: auth) do |fragment|
-            mrtTmp.write(fragment)
-            @mutex.synchronize { @fetched[mrtURL] += fragment.length }
-          end
-          response.success? or raise("Error #{response.code} fetching #{mrtURL}: #{response.message}")
-          mrtFile = $fileCache.take(mrtURL, mrtTmp)
-          @mutex.synchronize {
-            @results[mrtURL] = mrtFile
-            @fetching.delete(mrtURL)
-          }
-        }
-      rescue Exception => e
-        @mutex.synchronize {
-          puts "Error in fetch thread: #{e}"
-          @results[mrtURL] = e
-          @fetching.delete(mrtURL)
-        }
-      end
-    }
-  end
-
-end
-
-$merrittCache = MerrittCache.new
-
-###################################################################################################
 get "/content/:fullItemID/*" do |fullItemID, path|
   # Prep work
   fullItemID =~ /^qt[a-z0-9]{8}$/ or halt(404)  # protect against attacks
@@ -494,9 +357,9 @@ get "/content/:fullItemID/*" do |fullItemID, path|
 
   # Stream supp files out directly from Merritt without local caching.
   if !mainPDF
-    fetcher = MerrittFetcher.new(mrtURL, mainPDF ? true : false) # cache if main PDF
-    fetcher.length and headers "Content-Length" => fetcher.length
-    return stream { |out| fetcher.each { |data| out << data } }
+    fetcher = MerrittFetcher.new(mrtURL, false) # false = don't cache, stream instead
+    headers "Content-Length" => fetcher.length
+    return stream { |out| fetcher.streamTo(out) }
   end
 
   # For main PDF, in either case (splash or not), we need to grab the whole file. Because:
