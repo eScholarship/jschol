@@ -5,8 +5,11 @@ import { Link, browserHistory } from 'react-router'
 
 class HeatMapComp extends React.Component {
   render() {
+    // Holding off on this temporarily
+    // let heroImage = "/images/herocampus_" + this.props.campusID + ".jpg"
+    let heroImage = "/images/world-map.svg"
     return (
-      <div className="c-heatmap" style={{backgroundImage: "url('/images/world-map.svg')"}}>
+      <div className="c-heatmap" style={{backgroundImage: "url(" + heroImage + ")"}}>
         <h1 className="c-heatmap__heading">Share your research with a <br/>global audience</h1>
         <button onClick={(e)=>{browserHistory.push("/uc/"+this.props.campusID+"/about")}} className="c-heatmap__button">Get Started</button>
         <div className="c-heatmap__text">
