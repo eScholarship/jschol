@@ -1584,9 +1584,13 @@ def parseUCIngest(itemID, inMeta, fileType)
   contentType = contentFile && contentFile.at("./mimeType") && contentFile.at("./mimeType").text
 
   # For ETDs (all in Merritt), figure out the PDF path in the feed file
-  pdfExists = File.file?(arkToFile(itemID, "content/base.pdf"))
-  if fileType == "ETD" && pdfExists
-    addMerrittPaths(itemID, attrs)
+  pdfPath = arkToFile(itemID, "content/base.pdf")
+  pdfExists = File.file?(pdfPath)
+  if pdfExists
+    if fileType == "ETD" && pdfExists
+      addMerrittPaths(itemID, attrs)
+    end
+    attrs[:content_length] = File.size(pdfPath)
   end
 
   # Populate the Item model instance
