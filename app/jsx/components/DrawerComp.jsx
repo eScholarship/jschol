@@ -201,6 +201,9 @@ class DrawerComp extends React.Component {
                   (this.props.data.unit.type === 'campus' && 'Campus Profile') ||
                   'Unit Profile'}
                 </Link>
+      },
+      { id: "carousel",
+        title: <Link to={`/uc/${this.props.data.unit.id}/carousel`}>Carousel Builder</Link>
       }]
     if (this.props.data.unit.type === 'journal') {
       siteSettings.push({ id: "issueConfig", 

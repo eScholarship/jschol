@@ -12,12 +12,6 @@ if (!(typeof document === "undefined")) {
 
 class MarqueeComp extends React.Component {
   static propTypes = {
-    unit: PropTypes.shape({
-      id: PropTypes.string.isRequired,
-      name: PropTypes.string.isRequired,
-      type: PropTypes.string.isRequired,
-      extent: PropTypes.object
-    }).isRequired,
     marquee: PropTypes.shape({
       about: PropTypes.string,
       carousel: PropTypes.bool,

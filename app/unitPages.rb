@@ -99,8 +99,6 @@ def getPageBreadcrumb(unit, pageName, issue=nil)
     # don't add "Search" breadcrumb on Series pages
     return unit.type.include?('series') ? [] : [{ name: "Search", id: unit.id + ":" + pageName}]
   else
-    pageName == "profile" and return [{ name: "Profile", id: unit.id + ":" + pageName}]
-    pageName == "sidebar" and return [{ name: "Sidebars", id: unit.id + ":" + pageName}]
     p = Page.where(unit_id: unit.id, slug: pageName).first
     p or halt(404, "Unknown page #{pageName} in #{unit.id}")
     return [{ name: p[:name], id: unit.id + ":" + pageName, url: "/#{unit.id}/#{pageName}" }]
@@ -117,6 +115,7 @@ def getUnitHeader(unit, pageName=nil, journalIssue=nil, attrs=nil)
     :campusID => campusID,
     :campusName => $unitsHash[campusID].name,
     :ancestorID => ancestor ? ancestor.id : nil,   # Used strictly for linking series back to parent unit
+    :ancestorName => ancestor ? ancestor.name : nil,   # Ditto 
     :campuses => $activeCampuses.values.map { |c| {id: c.id, name: c.name} }.unshift({id: "", name: "eScholarship at..."}),
     :logo => (unit.type.include? 'series') ? getLogoData(JSON.parse(ancestor.attrs)['logo']) : getLogoData(attrs['logo']),
     :directSubmit => attrs['directSubmit'],
@@ -158,14 +157,13 @@ def getUnitPageContent(unit, attrs, query)
 end
 
 # TODO carouselAttrs should not = ""
-def getUnitMarquee(unit, attrs)
+def getCarousel(unit, attrs)
   carousel = Widget.where(unit_id: unit.id, region: "marquee", kind: "Carousel", ordering: 0).first
   if carousel && carousel.attrs
     carouselAttrs = JSON.parse(carousel.attrs)
   else
     carouselAttrs = ""
   end
-
   return {
     :about => attrs['about'],
     :carousel => attrs['carousel'],
@@ -345,7 +343,8 @@ def getUnitProfile(unit, attrs)
     logo: attrs['logo'],
     facebook: attrs['facebook'],
     twitter: attrs['twitter'],
-    marquee: getUnitMarquee(unit, attrs)
+    # marquee: { :about => attrs['about'], :carousel => false, :slides => nil } 
+    about: attrs['about']
   }
   
   if unit.type == 'journal'
