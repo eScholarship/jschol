@@ -2,7 +2,7 @@
 
 ###################################################################################################
 class MerrittFetcher
-  attr_reader :url, :putFileInCache, :bytesFetched, :status, :mrtFile, :waitingThreads
+  attr_reader :url, :putInFileCache, :bytesFetched, :status, :mrtFile, :waitingThreads
 
   def initialize(url, putInFileCache)
     # We have to fetch the file in a different thread, because it needs to keep the HTTP request
@@ -58,7 +58,7 @@ class MerrittFetcher
         http.request(req) do |resp|
           resp.code == "200" or raise("Response to #{@url} was HTTP #{resp.code}: #{resp.message}")
           @status = "fetching"
-          @length = resp["Expected-Content-Length"]
+          @length = resp["Expected-Content-Length"].to_i
           @queue << 0
           resp.read_body { |chunk|
             @bytesFetched += chunk.length
@@ -91,6 +91,7 @@ class MerrittCache
   def initialize
     @mutex = Mutex.new
     @fetching = {}
+    Thread.new { watch }
   end
 
   def fetch(mrtURL)
@@ -105,7 +106,7 @@ class MerrittCache
     }
 
     # Wait for the fetcher to complete (successfully or otherwise)
-    while true
+    loop do
       sleep 0.2   # yeah, polling isn't that efficient, but it is super easy and good enough.
       @mutex.synchronize {
         status = @fetching[mrtURL].status
@@ -121,6 +122,34 @@ class MerrittCache
           raise("unrecognized status #{status.inspect}")
         end
       }
+    end
+  end
+
+  private
+  def watch
+    loop do
+      sleep 2
+      begin
+        @mutex.synchronize {
+          if !@fetching.empty?
+            puts
+            fmt = "%-8s %-5s %6s %6s %10s %6s %5s %s"
+            puts sprintf(fmt, "Status", "cache", "time", "pct", "length", "rate", "thrds", "URL")
+            @fetching.each { |url, fetcher|
+              puts sprintf(fmt, fetcher.status, fetcher.putInFileCache,
+                                sprintf("%d:%02d", (fetcher.elapsed/60).to_i, fetcher.elapsed % 60),
+                                sprintf("%5.1f%%", (fetcher.bytesFetched * 100.0 / fetcher.length)),
+                                fetcher.length,
+                                sprintf("%5.1fM", fetcher.bytesFetched / (fetcher.elapsed + 0.01) / (1024*1024)),
+                                fetcher.waitingThreads.size,
+                                url.sub("express.cdlib.org/dl/ark:/13030", "..."))
+            }
+            puts
+          end
+        }
+      rescue Exception => e
+        puts "Watcher exception: #{e} #{e.backtrace}"
+      end
     end
   end
 end
