@@ -4,6 +4,11 @@
 class MerrittFetcher
   attr_reader :url, :putInFileCache, :bytesFetched, :status, :mrtFile, :waitingThreads
 
+  @@allFetchers = Set.new
+  @@newFetchers = Queue.new
+  @@doneFetchers = Queue.new
+  @@watchThread = Thread.new { self.watch }
+
   def initialize(url, putInFileCache)
     # We have to fetch the file in a different thread, because it needs to keep the HTTP request
     # open in that thread while we return the status code to Sinatra. Then the remaining data can
@@ -17,7 +22,9 @@ class MerrittFetcher
     @mrtFile = nil
     @length = nil
     @bytesFetched = 0
+    @stop = false
     @waitingThreads = Set.new   # used externally to this class, but stored here for their convenience
+    @@newFetchers << self
     Thread.new { fetchInternal() }
   end
 
@@ -36,12 +43,22 @@ class MerrittFetcher
 
   def streamTo(out)
     !@putInFileCache or raise("can't stream out if putInFileCache was set")
-    while true
-      data = @queue.pop_with_timeout(10)
-      data == 0 and next  # ignore initial status=ok message
-      data.is_a?(Exception) and raise(data)  # pass exceptions on to main thread
-      data.nil? and break
-      data.length > 0 and out << data
+    begin
+      out.respond_to?(:callback) and out.callback { @stop = true }
+      while !@stop
+        data = @queue.pop_with_timeout(10)
+        data == 0 and next  # ignore initial status=ok message
+        data.is_a?(Exception) and raise(data)  # pass exceptions on to main thread
+        data.nil? and break
+        data.length > 0 and out << data
+      end
+      out.respond_to?(:close) and out.close
+    rescue Exception => e
+      if e.to_s =~ /closed stream/
+        # already logged elsewhere
+      else
+        puts "Unexpected streamTo exception: #{e} #{e.backtrace}"
+      end
     end
   end
 
@@ -67,20 +84,59 @@ class MerrittFetcher
             else
               @queue << chunk
             end
+            @stop and http.finish
           }
         end
         @endTime = Time.now
       end
       @putInFileCache and @mrtFile = $fileCache.take(@url, mrtTmp)
+      puts "Merritt fetch complete: #{@url}"
       @status = "done"
       @queue << nil  # mark end-of-data
     rescue Exception => e
-      puts "Merritt fetch exception: #{e}"
+      if e.to_s =~ /closed stream/
+        puts "Merritt stream closed early for url #{url}."
+      else
+        puts "Merritt fetch exception: #{e} for url #{@url}. #{e.backtrace}"
+      end
       @status = e
       @queue << e
       if mrtTmp
         mrtTmp.close
         mrtTmp.unlink
+      end
+    ensure
+      @@doneFetchers << self
+    end
+  end
+
+  def self.watch
+    loop do
+      sleep 2
+      begin
+        while !@@newFetchers.empty?
+          @@allFetchers << @@newFetchers.pop
+        end
+        while !@@doneFetchers.empty?
+          @@allFetchers.delete @@doneFetchers.pop
+        end
+        if !@@allFetchers.empty?
+          puts
+          fmt = "%-8s %-5s %6s %6s %10s %6s %5s %s"
+          puts sprintf(fmt, "Status", "cache", "time", "pct", "length", "rate", "thrds", "URL")
+          @@allFetchers.each { |fetcher|
+            puts sprintf(fmt, fetcher.status, fetcher.putInFileCache,
+                              sprintf("%d:%02d", (fetcher.elapsed/60).to_i, fetcher.elapsed % 60),
+                              sprintf("%5.1f%%", (fetcher.bytesFetched * 100.0 / fetcher.length)),
+                              fetcher.length,
+                              sprintf("%5.1fM", fetcher.bytesFetched / (fetcher.elapsed + 0.01) / (1024*1024)),
+                              fetcher.waitingThreads.size,
+                              fetcher.url.sub("express.cdlib.org/dl/ark:/13030", "..."))
+          }
+          puts
+        end
+      rescue Exception => e
+        puts "Merritt watcher exception: #{e} #{e.backtrace}"
       end
     end
   end
@@ -122,34 +178,6 @@ class MerrittCache
           raise("unrecognized status #{status.inspect}")
         end
       }
-    end
-  end
-
-  private
-  def watch
-    loop do
-      sleep 2
-      begin
-        @mutex.synchronize {
-          if !@fetching.empty?
-            puts
-            fmt = "%-8s %-5s %6s %6s %10s %6s %5s %s"
-            puts sprintf(fmt, "Status", "cache", "time", "pct", "length", "rate", "thrds", "URL")
-            @fetching.each { |url, fetcher|
-              puts sprintf(fmt, fetcher.status, fetcher.putInFileCache,
-                                sprintf("%d:%02d", (fetcher.elapsed/60).to_i, fetcher.elapsed % 60),
-                                sprintf("%5.1f%%", (fetcher.bytesFetched * 100.0 / fetcher.length)),
-                                fetcher.length,
-                                sprintf("%5.1fM", fetcher.bytesFetched / (fetcher.elapsed + 0.01) / (1024*1024)),
-                                fetcher.waitingThreads.size,
-                                url.sub("express.cdlib.org/dl/ark:/13030", "..."))
-            }
-            puts
-          end
-        }
-      rescue Exception => e
-        puts "Watcher exception: #{e} #{e.backtrace}"
-      end
     end
   end
 end

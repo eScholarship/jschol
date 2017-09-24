@@ -357,7 +357,7 @@ get "/content/:fullItemID/*" do |fullItemID, path|
   # Stream supp files out directly from Merritt without local caching.
   if !mainPDF
     fetcher = MerrittFetcher.new(mrtURL, false) # false = don't cache, stream instead
-    headers "Content-Length" => fetcher.length
+    headers "Content-Length" => fetcher.length.to_s
     return stream { |out| fetcher.streamTo(out) }
   end
 
