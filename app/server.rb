@@ -177,6 +177,10 @@ end
 class ItemCount < Sequel::Model
 end
 
+class DisplayPDF < Sequel::Model
+  unrestrict_primary_key
+end
+
 ##################################################################################################
 # Thread synchronization class
 class Event
@@ -307,16 +311,57 @@ get %r{/assets/([0-9a-f]{64})} do |hash|
 end
 
 ###################################################################################################
-get "/content/:fullItemID/*" do |fullItemID, path|
+class S3Fetcher
+  class S3Passer
+    def initialize(queue)
+      @queue = queue
+    end
+    def write(chunk)
+      @queue << chunk
+    end
+    def close()
+      @queue << nil
+    end
+  end
+
+  def initialize(s3Obj)
+    @queue = QueueWithTimeout.new
+    Thread.new do
+      begin
+        s3Obj.get(response_target: S3Passer.new(@queue))
+      rescue Exception => e
+        puts "S3 fetch exception: #{e}"
+      ensure
+        @queue << nil  # mark end-of-data
+      end
+    end
+  end
+
+  def streamTo(out)
+    begin
+      while true
+        data = @queue.pop_with_timeout(10)
+        data.nil? and break
+        data.length > 0 and out << data
+      end
+    rescue Exception => e
+      puts "Warning: problem while streaming S3 content: #{e.message}"
+      raise
+    end
+  end
+end
+
+###################################################################################################
+get "/content/:fullItemID/*" do |itemID, path|
   # Prep work
-  fullItemID =~ /^qt[a-z0-9]{8}$/ or halt(404)  # protect against attacks
-  item = Item[fullItemID] or halt(404)
+  itemID =~ /^qt[a-z0-9]{8}$/ or halt(404)  # protect against attacks
+  item = Item[itemID] or halt(404)
   item.status == 'published' or halt(403)  # prevent access to embargoed and withdrawn files
   path = sanitizeFilePath(path)  # protect against attacks
 
   # Figure out the ID in Merritt. eSchol items just use the eSchol ARK; others are recorded
   # as local IDs in the attributes.
-  mrtID = "ark:/13030/#{fullItemID}"
+  mrtID = "ark:/13030/#{itemID}"
   attrs = JSON.parse(item.attrs)
   (attrs["local_ids"] || []).each { |localID|
     localID["type"] == "merritt" and mrtID = localID["id"]
@@ -327,7 +372,7 @@ get "/content/:fullItemID/*" do |fullItemID, path|
     epath = "content/#{URI::encode(path)}"
     attrs["content_merritt_path"] and epath = attrs["content_merritt_path"]
     noSplash = !(ENV['HOST'] =~ /pub-jschol/) ||
-               (params[:nosplash] && isValidContentKey(fullItemID.sub(/^qt/, ''), params[:nosplash]))
+               (params[:nosplash] && isValidContentKey(itemID.sub(/^qt/, ''), params[:nosplash]))
     mainPDF = true
   else
     # Must be a supp file.
@@ -346,11 +391,6 @@ get "/content/:fullItemID/*" do |fullItemID, path|
   # Guess the content type by path for now
   content_type MimeMagic.by_path(path)
 
-  # Sinatra, while it knows how to handle ranges, doesn't let the client know it can.
-  # So we have to explicitly tell the client. With this, pdf.js will show the first page
-  # before downloading the entire file.
-  headers "Accept-Ranges" => "bytes"
-
   # Here's the final Merritt URL
   mrtURL = "https://#{$mrtExpressConfig['host']}/dl/#{mrtID}/#{epath}"
 
@@ -361,12 +401,39 @@ get "/content/:fullItemID/*" do |fullItemID, path|
     return stream { |out| fetcher.streamTo(out) }
   end
 
-  # For main PDF, in either case (splash or not), we need to grab the whole file. Because:
-  # 1. For the splash case, the splash generator will need random access to the whole thing
-  # 2. For the non-splash case, we need to be able to serve HTTP ranges, so need the whole thing
-  # In future we can try to use mrtExpress ranges to do this in a fancier way.
-  mrtFile = $merrittCache.fetch(mrtURL)
-  return noSplash ? send_file(mrtFile) : sendSplash(fullItemID, request, mrtFile)
+  # For the main PDF, check the cache of display PDFs.
+  displayPDF = DisplayPDF[itemID]
+  displayPDF or send_file $merrittCache.fetch(mrtURL) # fallback to orig PDF if no display ver
+
+  if noSplash
+    s3Path = "#{$s3Config.prefix}/pdf_patches/linearized/#{itemID}"
+    outLen = displayPDF.linear_size
+    patchLen = displayPDF.linear_patch_size
+  else
+    s3Path = "#{$s3Config.prefix}/pdf_patches/splash/#{itemID}"
+    outLen = displayPDF.splash_size
+    patchLen = displayPDF.splash_patch_size
+  end
+
+  headers "Content-Length" => outLen.to_s
+  s3Obj = $s3Bucket.object(s3Path)
+  s3Obj.exists? or raise("missing S3 display PDF")
+  if patchLen > 0
+    puts "Fetching patch."
+    patchFile = "/apps/eschol/jschol/tmp/patch_file"  # FIXME
+    s3Obj.get(response_target: patchFile)
+    puts "Fetching original."
+    mrtFile = $merrittCache.fetch(mrtURL)
+    puts "Patching."
+    finalFile = "/apps/eschol/jschol/tmp/final_file"  # FIXME
+    system("/apps/eschol/bin/xdelta3 -d -B 33554432 -s #{mrtFile} -f #{patchFile} #{finalFile}") or raise("xdelta3 err: #{$?}")
+    puts "Sending result."
+    send_file finalFile
+  else
+    # No patch - stream entire file from S3
+    fetcher = S3Fetcher.new(s3Obj)
+    stream { |out| fetcher.streamTo(out) }
+  end
 end
 
 ###################################################################################################
