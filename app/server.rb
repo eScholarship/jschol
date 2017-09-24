@@ -101,6 +101,7 @@ require_relative 'citation'
 require_relative 'loginApi'
 require_relative 'fileCache'
 require_relative '../util/sanitize.rb'
+require_relative 'merritt'
 
 # Sinatra configuration
 configure do
@@ -125,6 +126,9 @@ $fileCache = FileCache.new("cache")
 
 TEMP_DIR = "tmp"
 FileUtils.mkdir_p(TEMP_DIR)
+
+# Special cache for Merritt that includes fetching synchronization
+$merrittCache = MerrittCache.new
 
 ###################################################################################################
 # Model classes for easy interaction with the database.
@@ -322,6 +326,9 @@ get "/content/:fullItemID/*" do |fullItemID, path|
   if path =~ /^qt\w{8}\.pdf$/
     epath = "content/#{URI::encode(path)}"
     attrs["content_merritt_path"] and epath = attrs["content_merritt_path"]
+    noSplash = !(ENV['HOST'] =~ /pub-jschol/) ||
+               (params[:nosplash] && isValidContentKey(fullItemID.sub(/^qt/, ''), params[:nosplash]))
+    mainPDF = true
   else
     # Must be a supp file.
     attrs["supp_files"] or halt(404)
@@ -332,42 +339,34 @@ get "/content/:fullItemID/*" do |fullItemID, path|
       end
     }
     epath or halt(404)
-  end
-
-  # Fetch the file from Merritt
-  mrtURL = "https://#{$mrtExpressConfig['host']}/dl/#{mrtID}/#{epath}"
-  mrtFile = $fileCache.find(mrtURL)
-  if !mrtFile
-    Tempfile.open("mrt_", TEMP_DIR) { |mrtTmp|
-      auth = { username: $mrtExpressConfig['username'],
-               password: $mrtExpressConfig['password'] }
-      response = HTTParty.get(mrtURL, stream_body: true, basic_auth: auth) do |fragment|
-        mrtTmp.write(fragment)
-      end
-      response.success? or puts("Error #{response.code} fetching #{mrtURL}: #{response.message}")
-      response.success? or halt(response.code, response.message)
-      mrtFile = $fileCache.take(mrtURL, mrtTmp)
-    }
+    noSplash = true
+    mainPDF = false
   end
 
   # Guess the content type by path for now
   content_type MimeMagic.by_path(path)
-
-  if !(request.url =~ /pub-jschol/)
-    addSplash = false
-  elsif path =~ /\.pdf$/
-    addSplash = !params[:nosplash] || !isValidContentKey(fullItemID.sub(/^qt/, ''), params[:nosplash])
-  else
-    addSplash = false
-  end
 
   # Sinatra, while it knows how to handle ranges, doesn't let the client know it can.
   # So we have to explicitly tell the client. With this, pdf.js will show the first page
   # before downloading the entire file.
   headers "Accept-Ranges" => "bytes"
 
-  # For all non-splash-page cases, we're done. Stream the result (to prevent huge files from blowing RAM)
-  return addSplash ? sendSplash(fullItemID, request, mrtFile) : send_file(mrtFile)
+  # Here's the final Merritt URL
+  mrtURL = "https://#{$mrtExpressConfig['host']}/dl/#{mrtID}/#{epath}"
+
+  # Stream supp files out directly from Merritt without local caching.
+  if !mainPDF
+    fetcher = MerrittFetcher.new(mrtURL, false) # false = don't cache, stream instead
+    headers "Content-Length" => fetcher.length
+    return stream { |out| fetcher.streamTo(out) }
+  end
+
+  # For main PDF, in either case (splash or not), we need to grab the whole file. Because:
+  # 1. For the splash case, the splash generator will need random access to the whole thing
+  # 2. For the non-splash case, we need to be able to serve HTTP ranges, so need the whole thing
+  # In future we can try to use mrtExpress ranges to do this in a fancier way.
+  mrtFile = $merrittCache.fetch(mrtURL)
+  return noSplash ? send_file(mrtFile) : sendSplash(fullItemID, request, mrtFile)
 end
 
 ###################################################################################################
@@ -398,14 +397,13 @@ get %r{.*} do
   template.sub!("main.css", "main-#{Digest::MD5.file("app/css/main.css").hexdigest[0,16]}.css")
 
   if DO_ISO
-    # We need to grab the hostname from the URL. There's probably a better way to do this.
+    # Parse out payload of the URL (i.e. not including the host name)
     request.url =~ %r{^https?://([^/:]+)(:\d+)?(.*)$} or fail
-    host = $1
     remainder = $3
 
     # Pass the full path and query string to our little Node Express app, which will run it through
     # ReactRouter and React.
-    response = Net::HTTP.new(host, 4002).start {|http| http.request(Net::HTTP::Get.new(remainder)) }
+    response = Net::HTTP.new(ENV['HOST'], 4002).start {|http| http.request(Net::HTTP::Get.new(remainder)) }
     status response.code.to_i
 
     # Read in the template file, and substitute the results from React/ReactRouter
