@@ -99,7 +99,6 @@ require_relative 'queueWithTimeout'
 require_relative 'unitPages'
 require_relative 'citation'
 require_relative 'loginApi'
-require_relative 'splash'
 require_relative 'fileCache'
 require_relative '../util/sanitize.rb'
 
