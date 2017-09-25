@@ -157,7 +157,7 @@ def getUnitPageContent(unit, attrs, query)
 end
 
 # TODO carouselAttrs should not = ""
-def getCarousel(unit, attrs)
+def getUnitMarquee(unit, attrs)
   carousel = Widget.where(unit_id: unit.id, region: "marquee", kind: "Carousel", ordering: 0).first
   if carousel && carousel.attrs
     carouselAttrs = JSON.parse(carousel.attrs)
@@ -343,8 +343,7 @@ def getUnitProfile(unit, attrs)
     logo: attrs['logo'],
     facebook: attrs['facebook'],
     twitter: attrs['twitter'],
-    # marquee: { :about => attrs['about'], :carousel => false, :slides => nil } 
-    about: attrs['about']
+    marquee: getUnitMarquee(unit, attrs)
   }
   
   if unit.type == 'journal'

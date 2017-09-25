@@ -1,8 +1,5 @@
 import React from 'react'
-import { Link } from 'react-router'
 import Form from 'react-router-form'
-import { Subscriber } from 'react-broadcast'
-
 import MarqueeComp from '../components/MarqueeComp.jsx'
 
 class UnitCarouselConfigLayout extends React.Component {
@@ -71,12 +68,12 @@ class UnitCarouselConfigLayout extends React.Component {
   }
 
   // ex: newStuff = {header: 'stuff and things'}, i=slide number
-  // calls setMarqueeData with {slides: [{header: , text: , }, {header: , text: ,}]}
+  // calls setData with {slides: [{header: , text: , }, {header: , text: ,}]}
   setSlideData = (newStuff, i) => {
     var slides = this.state.newData.slides
     slides[i] = Object.assign(_.cloneDeep(slides[i]), newStuff)
 
-    this.setMarqueeData({slides: slides})
+    this.setData({slides: slides})
   }
 
   removeImagePreview = (i) => {
@@ -85,7 +82,7 @@ class UnitCarouselConfigLayout extends React.Component {
 
     document.getElementById("slideImage").value = ""
 
-    this.setMarqueeData({slides: slides})
+    this.setData({slides: slides})
   }
 
   handleSlideImageChange = (event, i) => {
@@ -101,11 +98,6 @@ class UnitCarouselConfigLayout extends React.Component {
     reader.readAsDataURL(file)
   }
 
-  setMarqueeData = (newStuff) => {
-    var marquee = Object.assign(_.cloneDeep(this.state.newData), newStuff)
-    this.setData({marquee: marquee})
-  }
-
   addSlide = (event) => {
     event.preventDefault()
     var slides = _.cloneDeep(this.state.newData.slides) || []
@@ -114,7 +106,7 @@ class UnitCarouselConfigLayout extends React.Component {
       text: 'sample text',
       image: 'https://static.pexels.com/photos/40797/wild-flowers-flowers-plant-macro-40797.jpeg'
     })
-    this.setMarqueeData({slides: slides})
+    this.setData({slides: slides})
   }
 
   //TODO: should go ahead and save current form state before filing this delete off.
@@ -167,8 +159,6 @@ class UnitCarouselConfigLayout extends React.Component {
           <main>
             <section className="o-columnbox1">
               <Form to={`/api/unit/${this.props.unit.id}/profileContentConfig`} onSubmit={this.handleSubmit}>
-          {/* I think we don't need this flag anymore:
-              {["oru", "journal", "campus"].includes(this.props.unit.type) && */}
                 <div>
                   {!data.slides && <button onClick={ event => this.addSlide(event) }>Add an image carousel</button>}
                   {data.slides && this.renderSlideConfig() }<br/>
@@ -176,7 +166,7 @@ class UnitCarouselConfigLayout extends React.Component {
 
                   <label className="c-editable-page__label" htmlFor="displayCarousel">Publish Carousel?
                   <input name="carouselFlag" id="displayCarousel" type="checkbox" defaultChecked={data.carousel}
-                         onChange={ event => this.setMarqueeData({carousel: event.target.checked}) }/>
+                         onChange={ event => this.setData({carousel: event.target.checked}) }/>
                   </label>
                 </div>
                 <button type="submit">Save Changes</button> <button type="reset">Cancel</button>

@@ -1,6 +1,5 @@
 import React from 'react'
 import AboutComp from '../components/AboutComp.jsx'
-import { Link } from 'react-router'
 import Form from 'react-router-form'
 import { Subscriber } from 'react-broadcast'
 
@@ -129,7 +128,6 @@ class UnitProfileLayout extends React.Component {
         : data.logo
             ? "/assets/" + data.logo.asset_id
             : "http://placehold.it/400x100?text=No+logo"
-    console.log(this.state.newData)
     return (
       <Subscriber channel="cms">
       { cms => {
@@ -223,12 +221,12 @@ class UnitProfileLayout extends React.Component {
   }
 
   renderAboutConfig() {
-    var data = this.state.newData;
+    var data = this.props.data;
     return (
       <div>
         <h3 id="marquee">About Text</h3>
-      {data.about &&
-        <AboutComp about={data.about} />
+      {data.marquee.about &&
+        <AboutComp about={data.marquee.about} />
       }
         <div className="c-columns">
           <main>
@@ -236,7 +234,7 @@ class UnitProfileLayout extends React.Component {
               <Form to={`/api/unit/${this.props.unit.id}/profileContentConfig`} onSubmit={this.handleSubmit}>
                 <label className="c-editable-page__label" htmlFor="aboutText">About Text</label>
                 <p>About text will appear at the top of your site's landing page. It should be fewer than 400 characters in length.</p>
-                <textarea className="c-editable-page__input" name="about" id="aboutText" defaultValue={data.about}
+                <textarea className="c-editable-page__input" name="about" id="aboutText" defaultValue={data.marquee.about}
                           onChange={ event => this.setMarqueeData({about: event.target.value}) }/>
                 <button type="submit">Save Changes</button> <button type="reset">Cancel</button>
               </Form>
