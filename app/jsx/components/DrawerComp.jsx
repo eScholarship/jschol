@@ -197,11 +197,15 @@ class DrawerComp extends React.Component {
       { id: "profile",
         title: <Link to={`/uc/${this.props.data.unit.id}/profile`}>
                  {(this.props.data.unit.type === 'journal' && 'Journal Profile') ||
-                  (this.props.data.unit.type === 'series' && 'Series Profile') ||
+                  (this.props.data.unit.type.includes('series') && 'Series Profile') ||
                   (this.props.data.unit.type === 'campus' && 'Campus Profile') ||
                   'Unit Profile'}
                 </Link>
       }]
+    if (["oru", "journal", "campus"].includes(this.props.data.unit.type)) {
+      siteSettings.push({ id: "carousel", 
+                          title: <Link to={`/uc/${this.props.data.unit.id}/carousel`}>Carousel Builder</Link>})
+    }
     if (this.props.data.unit.type === 'journal') {
       siteSettings.push({ id: "issueConfig", 
                           title: <Link to={`/uc/${this.props.data.unit.id}/issueConfig`}>Issue Configuration</Link>})

@@ -1,9 +1,7 @@
 import React from 'react'
-import { Link } from 'react-router'
+import AboutComp from '../components/AboutComp.jsx'
 import Form from 'react-router-form'
 import { Subscriber } from 'react-broadcast'
-
-import MarqueeComp from '../components/MarqueeComp.jsx'
 
 class UnitProfileLayout extends React.Component {
   // static propTypes = {
@@ -70,57 +68,9 @@ class UnitProfileLayout extends React.Component {
     this.setState({newData: Object.assign(_.cloneDeep(this.state.newData), newStuff)})
   }
 
-  // ex: newStuff = {header: 'stuff and things'}, i=slide number
-  // calls setMarqueeData with {slides: [{header: , text: , }, {header: , text: ,}]}
-  setSlideData = (newStuff, i) => {
-    var slides = this.state.newData.marquee.slides
-    slides[i] = Object.assign(_.cloneDeep(slides[i]), newStuff)
-
-    this.setMarqueeData({slides: slides})
-  }
-
-  removeImagePreview = (i) => {
-    var slides = _.cloneDeep(this.state.newData.marquee.slides)
-    delete slides[i].imagePreviewUrl
-
-    document.getElementById("slideImage").value = ""
-
-    this.setMarqueeData({slides: slides})
-  }
-
-  handleSlideImageChange = (event, i) => {
-    event.preventDefault()
-
-    let reader = new FileReader()
-    let file = event.target.files[0]
-
-    reader.onloadend = () => {
-      this.setSlideData({imagePreviewUrl: reader.result}, i);
-    }
-
-    reader.readAsDataURL(file)
-  }
-
   setMarqueeData = (newStuff) => {
     var marquee = Object.assign(_.cloneDeep(this.state.newData.marquee), newStuff)
     this.setData({marquee: marquee})
-  }
-
-  addSlide = (event) => {
-    event.preventDefault()
-    var slides = _.cloneDeep(this.state.newData.marquee.slides) || []
-    slides.push({
-      header: 'Sample header',
-      text: 'sample text',
-      image: 'https://static.pexels.com/photos/40797/wild-flowers-flowers-plant-macro-40797.jpeg'
-    })
-    this.setMarqueeData({slides: slides})
-  }
-
-  //TODO: should go ahead and save current form state before filing this delete off.
-  removeSlide = (i) => {
-    this.props.sendApiData("DELETE",
-      "/api/unit/" + this.props.unit.id + "/removeCarouselSlide/" + i)
   }
 
   renderUnitConfig() {
@@ -222,6 +172,31 @@ class UnitProfileLayout extends React.Component {
     )
   }
 
+  renderAboutConfig() {
+    var data = this.props.data;
+    return (
+      <div>
+        <h3 id="marquee">About Text</h3>
+      {data.marquee.about &&
+        <AboutComp about={data.marquee.about} />
+      }
+        <div className="c-columns">
+          <main>
+            <section className="o-columnbox1">
+              <Form to={`/api/unit/${this.props.unit.id}/profileContentConfig`} onSubmit={this.handleSubmit}>
+                <label className="c-editable-page__label" htmlFor="aboutText">About Text</label>
+                <p>About text will appear at the top of your site's landing page. It should be fewer than 400 characters in length.</p>
+                <textarea className="c-editable-page__input" name="about" id="aboutText" defaultValue={data.marquee.about}
+                          onChange={ event => this.setMarqueeData({about: event.target.value}) }/>
+                <button type="submit">Save Changes</button> <button type="reset">Cancel</button>
+              </Form>
+            </section>
+          </main>
+        </div>
+      </div>
+    )
+  }
+
   renderDepartmentConfig() {
     let data = this.props.data
 
@@ -274,83 +249,12 @@ class UnitProfileLayout extends React.Component {
     )
   }
 
-  renderSlideConfig() {
-    var slideData = this.state.newData.marquee.slides;
-    return slideData.map((slide, i) => {
-      return (
-        <div style={{padding: "10px", border: "1px solid black"}} key={i}>
-          <label className="c-editable-page__label" htmlFor={"header-" + i}>Header:</label>
-          <input className="c-editable-page__input" id={"header-" + i} name={"header" + i} 
-                  type="text" defaultValue={slide.header}
-                  onChange={ event => this.setSlideData({header: event.target.value}, i) }/>
-
-          <label className="c-editable-page__label" htmlFor={"text-" + i}>Text:</label>
-          <textarea className="c-editable-page__input" id={"text-" + i} name={"text" + i} 
-                  defaultValue={slide.text}
-                  onChange={ event => this.setSlideData({text: event.target.value}, i) }/>
-
-                  <label className="c-editable-page__label" htmlFor={"slideImage-" + i}>Image: </label>
-          {/*not currently passing the filename back with the slide image*/}
-          {/*TODO: remove 'no file chosen' text https://stackoverflow.com/questions/21842274/cross-browser-custom-styling-for-file-upload-button/21842275#21842275 */}
-
-          <div style={{marginBottom: '20px', color: '#555', width: '100%'}}>
-            <input type="file" id={"slideImage" + i} name={"slideImage" + i}
-                  onChange={ (event) => this.handleSlideImageChange(event, i) }/>
-            {slide.imagePreviewUrl && <button onClick={ () => this.removeImagePreview(i) }>Cancel Image Upload</button>}
-          </div>
-          {/* TODO */}
-          <button>Remove File</button>
-          <button onClick={ () => this.removeSlide(i) }>Remove Slide</button>
-        </div>
-      )
-    })
-  }
-
-  renderMarqueeConfig() {
-    var data = this.state.newData;
-
-    return (
-      <div>
-        <h3 id="marquee">Marquee Configuration</h3>
-      {(data.marquee.carousel || data.marquee.about) &&
-        <MarqueeComp marquee={data.marquee} unit={this.props.unit}/>
-      }
-        <div className="c-columns">
-          <main>
-            <section className="o-columnbox1">
-              <Form to={`/api/unit/${this.props.unit.id}/profileContentConfig`} onSubmit={this.handleSubmit}>
-                <label className="c-editable-page__label" htmlFor="aboutText">About Text</label>
-                <p>About text will appear at the top of your site's landing page. It should be fewer than 400 characters in length.</p>
-                <textarea className="c-editable-page__input" name="about" id="aboutText" defaultValue={data.marquee.about}
-                          onChange={ event => this.setMarqueeData({about: event.target.value}) }/>
-              {["oru", "journal"].includes(this.props.unit.type) &&
-                <div>
-                  {!data.marquee.slides && <button onClick={ event => this.addSlide(event) }>Add an image carousel</button>}
-                  {data.marquee.slides && this.renderSlideConfig() }<br/>
-                  {data.marquee.slides && <button onClick={ (event) => this.addSlide(event) }>Add slide</button>}
-
-                  <label className="c-editable-page__label" htmlFor="displayCarousel">Publish Carousel?
-                  <input name="carouselFlag" id="displayCarousel" type="checkbox" defaultChecked={data.marquee.carousel}
-                         onChange={ event => this.setMarqueeData({carousel: event.target.checked}) }/>
-                  </label>
-                </div>
-              }
-
-                <button type="submit">Save Changes</button> <button type="reset">Cancel</button>
-              </Form>
-            </section>
-          </main>
-        </div>
-      </div>
-    )
-  }
-
   render() {
     return (
       <div>
         { this.renderUnitConfig() }
         { this.renderSocialConfig() }
-        { this.renderMarqueeConfig() }
+        { this.renderAboutConfig() }
         { this.props.unit.type == 'oru' && this.renderDepartmentConfig() }
         { this.props.unit.type == 'journal' && this.renderJournalConfig() }
       </div>

@@ -589,6 +589,9 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
       end
     elsif pageName == 'profile'
       pageData[:content] = getUnitProfile(unit, attrs)
+    elsif pageName == 'carousel' 
+      # ToDo: Cleanup this which duplicates marquee info below
+      pageData[:content] = getUnitMarquee(unit, attrs)
     elsif pageName == 'issueConfig'
       pageData[:content] = getUnitIssueConfig(unit, attrs)
     elsif pageName == 'nav'
@@ -602,8 +605,9 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
     else
       pageData[:content] = getUnitStaticPage(unit, attrs, pageName)
     end
+    # pp(pageData[:content])
     pageData[:header] = getUnitHeader(unit,
-                                      (pageName =~ /^(nav|sidebar|profile|issueConfig)/ or issueData) ? nil : pageName,
+                                      (pageName =~ /^(nav|sidebar|profile|carousel|issueConfig)/ or issueData) ? nil : pageName,
                                       issueData, attrs)
     pageData[:marquee] = getUnitMarquee(unit, attrs) if (["home", "search"].include? pageName or issueData)
   else
