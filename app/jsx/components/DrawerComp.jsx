@@ -46,7 +46,7 @@ class SortableNavList extends React.Component {
       let data = {
         id: nav.id, type: nav.type,
         title: <Link to={`/uc/${this.props.unit}${(nav.type == "home") ? "" : `/nav/${nav.id}`}`}>{nav.name}</Link>,
-        subtitle: <i>{nav.type}</i>
+        subtitle: <i>{nav.hidden && 'hidden '}{nav.type}</i>
       }
       if (nav.type == "folder") {
         data.children = this.generateData(nav.sub_nav)

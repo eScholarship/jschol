@@ -37,14 +37,14 @@ class NavComp extends React.Component {
   }
 
   render() {
-    var navList = this.props.data.map((navItem) => {
+    var navList = this.props.data.filter(navItem => !navItem.hidden).map((navItem) => {
       if (navItem.type == "folder") {
         return (
           <NavSubComp name={navItem.name}
             open={this.state.submenuActive == navItem.name}
             onSubmenuChanged={(flag)=> this.setState({submenuActive:flag ? navItem.name : null})}
             key={navItem.id}>
-            {navItem.sub_nav.map((subItem) => {
+            {navItem.sub_nav.filter(subItem => !subItem.hidden).map((subItem) => {
               return this.getNavItemJSX(subItem);
             })}
           </NavSubComp>
