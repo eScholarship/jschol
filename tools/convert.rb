@@ -72,6 +72,7 @@ STATS_DB = Sequel.connect(YAML.load_file("config/statsDb.yaml"))
 $prefilterQueue = SizedQueue.new(100)
 $indexQueue = SizedQueue.new(100)
 $batchQueue = SizedQueue.new(1)  # no use getting very far ahead of CloudSearch
+$splashQueue = Queue.new
 
 # Mode to force checking of the index digests (useful when indexing algorithm or unit structure changes)
 $rescanMode = ARGV.delete('--rescan')
@@ -2513,7 +2514,8 @@ def convertPDF(itemID)
   origSize = File.size(origFile)
 
   dbPdf = DisplayPDF[itemID]
-  if !$forceMode && dbPdf && dbPdf.orig_size == origSize
+  if !$forceMode && dbPdf && dbPdf.orig_size == origSize &&
+                    dbPdf.linear_patch_size == 0 && dbPdf.splash_patch_size == 0
     puts "Unchanged."
     return
   end
@@ -2530,46 +2532,28 @@ def convertPDF(itemID)
     code == 0 || code == 3 or raise("Error #{code} linearizing.")
     linSize = File.size(linFile.path)
 
-    # Generate a diff between the original and the linearized
-    linDiff = Tempfile.new(["linearized_#{itemID}_", ".pdf"], TEMP_DIR)
-    linDiff.close
-    system("/apps/eschol/bin/xdelta3 -e -B 33554432 " +
-           "-s #{origFile} -f #{linFile.path} #{linDiff.path}") or raise("Error diffing")
-    linDiffSize = File.size(linDiff.path)
-    linPatch = linDiffSize < linSize/2
-
     # Then generate a splash page, and linearize that as well.
     splashLinFile = Tempfile.new(["splashLin_#{itemID}_", ".pdf"], TEMP_DIR)
     splashGen(itemID, instrucs, linFile, splashLinFile.path)
     splashLinSize = File.size(splashLinFile.path)
 
-    # Generate a diff between the original and the splashed linear
-    splashLinDiff = Tempfile.new(["splashLin_#{itemID}_", ".diff"], TEMP_DIR)
-    splashLinDiff.close
-    system("/apps/eschol/bin/xdelta3 -e -B 33554432 " +
-           "-s #{origFile} -f #{splashLinFile.path} #{splashLinDiff.path}") or raise("Error diffing")
-    splashLinDiffSize = File.size(splashLinDiff.path)
-    splashPatch = splashLinDiffSize < splashLinSize/2
-
-    $s3Bucket.object("#{$s3Config.prefix}/pdf_patches/linearized/#{itemID}").
-              put(body: linPatch ? linDiff : linFile)
-    $s3Bucket.object("#{$s3Config.prefix}/pdf_patches/splash/#{itemID}").
-              put(body: splashPatch ? splashLinDiff : splashLinFile)
+    $s3Bucket.object("#{$s3Config.prefix}/pdf_patches/linearized/#{itemID}").put(body: linFile)
+    $s3Bucket.object("#{$s3Config.prefix}/pdf_patches/splash/#{itemID}").put(body: splashLinFile)
 
     DisplayPDF.where(item_id: itemID).delete
     DisplayPDF.create(item_id: itemID,
       orig_size:          origSize,
       orig_timestamp:     File.mtime(origFile),
       linear_size:        linSize,
-      linear_patch_size:  linPatch ? linDiffSize : nil,
+      linear_patch_size:  nil,
       splash_info_digest: instrucDigest,
       splash_size:        splashLinSize,
-      splash_patch_size:  splashPatch ? splashLinDiffSize : nil
+      splash_patch_size:  nil
     )
 
-    puts sprintf("Updated: lin=%d/%d = %.1f%% (patch=%s); splashLin=%d/%d = %.1f%% (patch=%s)",
-                 linDiffSize, linSize, linDiffSize*100.0/linSize, linPatch,
-                 splashLinDiffSize, splashLinSize, splashLinDiffSize*100.0/splashLinSize, splashPatch)
+    puts sprintf("Updated: lin=%d/%d = %.1f%%; splashLin=%d/%d = %.1f%%",
+                 linSize, origSize, linSize*100.0/origSize,
+                 splashLinSize, origSize, splashLinSize*100.0/origSize)
   ensure
     linFile and linFile.unlink
     linDiff and linDiff.unlink
@@ -2579,19 +2563,11 @@ def convertPDF(itemID)
 end
 
 ###################################################################################################
-# Main driver for PDF display version generation
-def convertAllPDFs(arks)
-  # Let the user know what we're doing
-  puts "Converting #{arks=="ALL" ? "all" : "selected"} PDFs."
-
-  # Grab all the arks
-  if arks == "ALL"
-    arks = Item.where(content_type: "application/pdf").order(:id).map(:id)
-    $nTotal = arks.length
-  end
-
-  # And do each one.
-  arks.each { |itemID|
+def splashFromQueue
+  loop do
+    # Grab an item from the input queue
+    itemID = $splashQueue.pop
+    itemID or break
     Thread.current[:name] = itemID  # label all stdout from this thread
     begin
       convertPDF(itemID)
@@ -2600,7 +2576,30 @@ def convertAllPDFs(arks)
       puts "Exception: #{e} #{e.backtrace}"
     end
     Thread.current[:name] = nil
-  }
+  end
+end
+
+###################################################################################################
+# Main driver for PDF display version generation
+def splashAllPDFs(arks)
+  # Let the user know what we're doing
+  puts "Splashing #{arks=="ALL" ? "all" : "selected"} PDFs."
+
+  # Start a couple worker threads to do the splash conversions.
+  nThreads = 2
+  splashThreads = nThreads.times.map { Thread.new { splashFromQueue } }
+
+  # Grab all the arks
+  if arks == "ALL"
+    Item.where(content_type: "application/pdf").order(:id).each { |item|
+      $splashQueue << item.id
+    }
+  else
+    arks.each { |item| $splashQueue << item }
+  end
+
+  nThreads.times { $splashQueue << nil } # mark end-of-queue
+  splashThreads.each { |t| t.join }
 end
 
 ###################################################################################################
@@ -2618,7 +2617,7 @@ case ARGV[0]
     indexInfo()
   when "--splash"
     arks = ARGV.select { |a| a =~ /qt\w{8}/ }
-    convertAllPDFs(arks.empty? ? "ALL" : Set.new(arks))
+    splashAllPDFs(arks.empty? ? "ALL" : Set.new(arks))
   else
     STDERR.puts "Usage: #{__FILE__} --units|--items"
     exit 1
