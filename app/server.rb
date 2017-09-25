@@ -330,12 +330,16 @@ class S3Fetcher
     end
   end
 
-  def initialize(s3Obj, fifoPath = nil)
+  def initialize(s3Obj, fifoPath = nil, range = nil)
     @queue = QueueWithTimeout.new
     Thread.new do
       begin
         passer = S3Passer.new(@queue, fifoPath)
-        s3Obj.get(response_target: passer)
+        if range
+          s3Obj.get(response_target: passer, range: range)
+        else
+          s3Obj.get(response_target: passer)
+        end
         passer.close
       rescue Exception => e
         puts "S3 fetch exception: #{e}"
@@ -347,11 +351,14 @@ class S3Fetcher
 
   def streamTo(out)
     begin
+      totalStreamed = 0
       while true
         data = @queue.pop_with_timeout(10)
         data.nil? and break
+        totalStreamed += data.length
         data.length > 0 and out << data
       end
+      return totalStreamed
     rescue Exception => e
       puts "Warning: problem while streaming S3 content: #{e.message}"
       raise
@@ -423,18 +430,16 @@ get "/content/:fullItemID/*" do |itemID, path|
     patchLen = displayPDF.splash_patch_size
   end
 
-  puts "Range: #{request.env["HTTP_RANGE"]}"
-
   mrtFile = $fileCache.find(s3Path) and return send_file(mrtFile)
 
   # So we have to explicitly tell the client. With this, pdf.js will show the first page
   # before downloading the entire file.
   headers "Accept-Ranges" => "bytes"
 
-  headers "Content-Length" => outLen.to_s
   s3Obj = $s3Bucket.object(s3Path)
   s3Obj.exists? or raise("missing S3 display PDF")
-  if patchLen > 0
+  if !patchLen.nil? && patchLen > 0
+    headers "Content-Length" => outLen.to_s
     origTmp, patchTmp, finalTmp = nil, nil, nil
     begin
       puts "Fetching original."
@@ -480,7 +485,19 @@ get "/content/:fullItemID/*" do |itemID, path|
     end
   else
     # No patch - stream entire file from S3
-    fetcher = S3Fetcher.new(s3Obj)
+    range = request.env["HTTP_RANGE"]
+    fetcher = S3Fetcher.new(s3Obj, nil, range)
+    if range
+      range =~ /^bytes=(\d+)-(\d+)/ or raise("can't parse range")
+      fromByte, toByte = $1.to_i, $2.to_i
+      puts "range #{fromByte}-#{toByte}/#{outLen}"
+      headers "Content-Range" => "bytes #{fromByte}-#{toByte}/#{outLen}"
+      outLen = toByte - fromByte + 1
+      status 206
+    end
+    headers "Content-Length" => outLen.to_s,
+            "ETag" => s3Obj.etag,
+            "Last-Modified" => s3Obj.last_modified.to_s
     stream { |out| fetcher.streamTo(out) }
   end
 end
