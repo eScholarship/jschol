@@ -68,57 +68,9 @@ class UnitProfileLayout extends React.Component {
     this.setState({newData: Object.assign(_.cloneDeep(this.state.newData), newStuff)})
   }
 
-  // ex: newStuff = {header: 'stuff and things'}, i=slide number
-  // calls setMarqueeData with {slides: [{header: , text: , }, {header: , text: ,}]}
-  setSlideData = (newStuff, i) => {
-    var slides = this.state.newData.marquee.slides
-    slides[i] = Object.assign(_.cloneDeep(slides[i]), newStuff)
-
-    this.setMarqueeData({slides: slides})
-  }
-
-  removeImagePreview = (i) => {
-    var slides = _.cloneDeep(this.state.newData.marquee.slides)
-    delete slides[i].imagePreviewUrl
-
-    document.getElementById("slideImage").value = ""
-
-    this.setMarqueeData({slides: slides})
-  }
-
-  handleSlideImageChange = (event, i) => {
-    event.preventDefault()
-
-    let reader = new FileReader()
-    let file = event.target.files[0]
-
-    reader.onloadend = () => {
-      this.setSlideData({imagePreviewUrl: reader.result}, i);
-    }
-
-    reader.readAsDataURL(file)
-  }
-
   setMarqueeData = (newStuff) => {
     var marquee = Object.assign(_.cloneDeep(this.state.newData.marquee), newStuff)
     this.setData({marquee: marquee})
-  }
-
-  addSlide = (event) => {
-    event.preventDefault()
-    var slides = _.cloneDeep(this.state.newData.marquee.slides) || []
-    slides.push({
-      header: 'Sample header',
-      text: 'sample text',
-      image: 'https://static.pexels.com/photos/40797/wild-flowers-flowers-plant-macro-40797.jpeg'
-    })
-    this.setMarqueeData({slides: slides})
-  }
-
-  //TODO: should go ahead and save current form state before filing this delete off.
-  removeSlide = (i) => {
-    this.props.sendApiData("DELETE",
-      "/api/unit/" + this.props.unit.id + "/removeCarouselSlide/" + i)
   }
 
   renderUnitConfig() {
