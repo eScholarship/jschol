@@ -389,19 +389,24 @@ def stripXMLWhitespace(node)
 end
 
 ###################################################################################################
-def convertBrandDownload(unitID, navBar, navID, linkName, linkTarget)
-  if !(linkTarget =~ %r{^/brand/([^/]+)/([^/]+)$})
+def putBrandDownload(entity, filename)
+  filePath = "/apps/eschol/erep/xtf/static/brand/#{entity}/#{filename}"
+  if !File.exist?(filePath)
+    puts "Warning: can't find brand download #{filePath}"
+    return nil
+  end
+  return putAsset(filePath, {})
+end
+
+###################################################################################################
+def convertBrandDownloadToPage(unitID, navBar, navID, linkName, linkTarget)
+  if !(linkTarget =~ %r{/brand/([^/]+)/([^/]+)$})
     puts "Warning: can't parse link to file in brand dir: #{linkTarget}"
     return
   end
   entity, filename = $1, $2
-  filePath = "/apps/eschol/erep/xtf/static/brand/#{entity}/#{filename}"
-  if !File.exist?(filePath)
-    puts "Warning: can't find brand download #{filePath}"
-    return
-  end
-
-  assetID = putAsset(filePath, {})
+  assetID = putBrandDownload(entity, filename)
+  assertID or return
 
   html = "<p>Please see <a href=\"/assets/#{assetID}\">#{filename}</a></p>"
   html = sanitizeHTML(html)
@@ -454,9 +459,9 @@ def convertPage(unitID, navBar, navID, contentDiv, slug, name)
   html.length > 0 or return
 
   # Replace old-style links
-  html.gsub!(%r{href="/uc/search\?entity=([^";]+)(;view=([^";]+))?"}) { |m|
-    entity, page = $1, $3
-    "href=\"/uc/#{entity}#{page && "/#{page}"}\""
+  html.gsub!(%r{href="([^"]+)"}) { |m|
+    link = $1
+    %{href="#{mapEntityLink(link) || link}"}
   }
 
   Page.create(unit_id: unitID,
@@ -465,6 +470,25 @@ def convertPage(unitID, navBar, navID, contentDiv, slug, name)
               title: title ? title : name,
               attrs: JSON.generate({ html: html }))
   navBar << { id: navID, type: "page", slug: slug, name: name }
+end
+
+###################################################################################################
+def mapEntityLink(linkTarget)
+  case linkTarget.sub(%r{^https?://escholarship.org}, '').sub(%r{^[/.]+}, '')
+  when %r{^uc/search\?entity=([^;]+)(;view=([^;]+))?}
+    "/uc/#{$1}#{$3 && "/#{$3}"}"
+  when %r{^uc/search\?entity=([^;]+)(;rmode=[^;]+)?$}
+    "/uc/#{$1}"
+  when %r{^uc/search\?entity=([^;]+);volume=(\d+);issue=(\d+)$}
+    "/uc/#{$1}/#{$2}/#{$3}"
+  when %r{^uc/([a-zA-Z0-9_]+)(\?rmode=[^;]+)?$}
+    "/uc/#{$1}"
+  when %r{^brand/([^/]+)/([^/]+)$}
+    entity, filename = $1, $2
+    "/uc/#{entity}/#{putBrandDownload(entity, filename)}"
+  else
+    return nil
+  end
 end
 
 ###################################################################################################
@@ -547,14 +571,10 @@ def convertNavBar(unitID, generalEl)
         linkedPagesUsed << slug
       elsif linkTarget =~ %r{^https?://}
         addTo << { id: curNavID+=1, type: "link", name: linkName, url: linkTarget }
-      elsif linkTarget =~ %r{^/uc/search\?entity=([^;]+)(;rmode=[^;]+)?$}
-        addTo << { id: curNavID+=1, type: "link", name: linkName, url: "/uc/#{$1}" }
-      elsif linkTarget =~ %r{^/uc/search\?entity=([^;]+);volume=(\d+);issue=(\d+)$}
-        addTo << { id: curNavID+=1, type: "link", name: linkName, url: "/uc/#{$1}/#{$2}/#{$3}" }
-      elsif linkTarget =~ %r{^/uc/([a-zA-Z0-9_]+)(\?rmode=[^;]+)?$}
-        addTo << { id: curNavID+=1, type: "link", name: linkName, url: "/uc/#{$1}" }
+      elsif (mapped = mapEntityLink(linkTarget))
+        addTo << { id: curNavID+=1, type: "link", name: linkName, url: mapped }
       elsif linkTarget =~ %r{/brand/}
-        convertBrandDownload(unitID, addTo, curNavID+=1, linkName, linkTarget)
+        convertBrandDownloadToPage(unitID, addTo, curNavID+=1, linkName, linkTarget)
       else
         puts "Invalid link target: #{para.inner_html}"
       end
@@ -618,7 +638,7 @@ def convertDirectSubmit(unitID, el)
   url =~ %r{/uc/search\?entity=[^;]+;view=([^;]+)$} and url = "/uc/#{unitID}/#{$1}"
 
   # All done.
-  return { directSubmitUrl: url }
+  return { directSubmitURL: url }
 end
 
 ###################################################################################################
