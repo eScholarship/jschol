@@ -532,4 +532,16 @@ As well as:
   new file:   app/jsx/objects/CustomSelectorCampusObj.jsx
 
 
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's 6ea742ac302bd4dfede8fc0364b6487c41be5891, 2017-09-25 <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+Andy added all scss changes since last.
+As well as:
+
+  modified:   app/jsx/components/SubheaderComp.jsx
+  modified:   app/jsx/components/WizardLinkComp.jsx
+
+
+
 
