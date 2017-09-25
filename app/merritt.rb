@@ -2,20 +2,20 @@
 
 ###################################################################################################
 class MerrittFetcher
-  attr_reader :url, :putInFileCache, :bytesFetched, :status, :mrtFile, :waitingThreads
+  attr_reader :url, :bytesFetched, :status, :mrtFile, :waitingThreads
 
   @@allFetchers = Set.new
   @@newFetchers = Queue.new
   @@doneFetchers = Queue.new
   @@watchThread = Thread.new { self.watch }
 
-  def initialize(url, putInFileCache)
+  def initialize(url, fifoPath = nil)
     # We have to fetch the file in a different thread, because it needs to keep the HTTP request
     # open in that thread while we return the status code to Sinatra. Then the remaining data can
     # be streamed from the thread to Sinatra.
     puts "Merritt fetch: #{url}."
     @url = url
-    @putInFileCache = putInFileCache
+    @fifoPath = fifoPath
     @queue = QueueWithTimeout.new
     @status = "starting"
     @startTime = Time.now
@@ -64,10 +64,9 @@ class MerrittFetcher
 
   private
   def fetchInternal()
-    mrtTmp = nil
     begin
-      mrtTmp = @putInFileCache ? Tempfile.open("mrt_", TEMP_DIR) : nil
       uri = URI(@url)
+      fifo = nil
       Net::HTTP.start(uri.host, uri.port, :use_ssl => (uri.scheme == 'https')) do |http|
         req = Net::HTTP::Get.new(uri.request_uri)
         req.basic_auth $mrtExpressConfig['username'], $mrtExpressConfig['password']
@@ -77,19 +76,15 @@ class MerrittFetcher
           @status = "fetching"
           @length = resp["Expected-Content-Length"].to_i
           @queue << 0
+          fifo = @fifoPath ? File.open(@fifoPath, "wb") : nil
           resp.read_body { |chunk|
-            @bytesFetched += chunk.length
-            if @putInFileCache
-              mrtTmp.write(chunk)
-            else
-              @queue << chunk
-            end
             @stop and http.finish
+            @bytesFetched += chunk.length
+            fifo ? fifo.write(chunk) : @queue.push(chunk)
           }
         end
         @endTime = Time.now
       end
-      @putInFileCache and @mrtFile = $fileCache.take(@url, mrtTmp)
       puts "Merritt fetch complete: #{@url}"
       @status = "done"
       @queue << nil  # mark end-of-data
@@ -101,12 +96,9 @@ class MerrittFetcher
       end
       @status = e
       @queue << e
-      if mrtTmp
-        mrtTmp.close
-        mrtTmp.unlink
-      end
     ensure
       @@doneFetchers << self
+      fifo and fifo.close
     end
   end
 
@@ -122,10 +114,10 @@ class MerrittFetcher
         end
         if !@@allFetchers.empty?
           puts
-          fmt = "%-8s %-5s %6s %6s %10s %6s %5s %s"
-          puts sprintf(fmt, "Status", "cache", "time", "pct", "length", "rate", "thrds", "URL")
+          fmt = "%-8s %6s %6s %10s %6s %5s %s"
+          puts sprintf(fmt, "Status", "time", "pct", "length", "rate", "thrds", "URL")
           @@allFetchers.each { |fetcher|
-            puts sprintf(fmt, fetcher.status, fetcher.putInFileCache,
+            puts sprintf(fmt, fetcher.status,
                               sprintf("%d:%02d", (fetcher.elapsed/60).to_i, fetcher.elapsed % 60),
                               sprintf("%5.1f%%", (fetcher.bytesFetched * 100.0 / fetcher.length)),
                               fetcher.length,

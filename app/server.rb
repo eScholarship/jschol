@@ -313,22 +313,30 @@ end
 ###################################################################################################
 class S3Fetcher
   class S3Passer
-    def initialize(queue)
+    def initialize(queue, fifoPath)
       @queue = queue
+      @fifoPath = fifoPath
+      @fifo = nil
     end
     def write(chunk)
-      @queue << chunk
+      if !@fifo and @fifoPath
+        @fifo = File.open(@fifoPath, "wb")
+      end
+      @fifo ? @fifo.write(chunk) : @queue.push(chunk)
     end
     def close()
       @queue << nil
+      @fifo and @fifo.close
     end
   end
 
-  def initialize(s3Obj)
+  def initialize(s3Obj, fifoPath = nil)
     @queue = QueueWithTimeout.new
     Thread.new do
       begin
-        s3Obj.get(response_target: S3Passer.new(@queue))
+        passer = S3Passer.new(@queue, fifoPath)
+        s3Obj.get(response_target: passer)
+        passer.close
       rescue Exception => e
         puts "S3 fetch exception: #{e}"
       ensure
@@ -396,7 +404,7 @@ get "/content/:fullItemID/*" do |itemID, path|
 
   # Stream supp files out directly from Merritt without local caching.
   if !mainPDF
-    fetcher = MerrittFetcher.new(mrtURL, false) # false = don't cache, stream instead
+    fetcher = MerrittFetcher.new(mrtURL)
     headers "Content-Length" => fetcher.length.to_s
     return stream { |out| fetcher.streamTo(out) }
   end
@@ -415,20 +423,61 @@ get "/content/:fullItemID/*" do |itemID, path|
     patchLen = displayPDF.splash_patch_size
   end
 
+  puts "Range: #{request.env["HTTP_RANGE"]}"
+
+  mrtFile = $fileCache.find(s3Path) and return send_file(mrtFile)
+
+  # So we have to explicitly tell the client. With this, pdf.js will show the first page
+  # before downloading the entire file.
+  headers "Accept-Ranges" => "bytes"
+
   headers "Content-Length" => outLen.to_s
   s3Obj = $s3Bucket.object(s3Path)
   s3Obj.exists? or raise("missing S3 display PDF")
   if patchLen > 0
-    puts "Fetching patch."
-    patchFile = "/apps/eschol/jschol/tmp/patch_file"  # FIXME
-    s3Obj.get(response_target: patchFile)
-    puts "Fetching original."
-    mrtFile = $merrittCache.fetch(mrtURL)
-    puts "Patching."
-    finalFile = "/apps/eschol/jschol/tmp/final_file"  # FIXME
-    system("/apps/eschol/bin/xdelta3 -d -B 33554432 -s #{mrtFile} -f #{patchFile} #{finalFile}") or raise("xdelta3 err: #{$?}")
-    puts "Sending result."
-    send_file finalFile
+    origTmp, patchTmp, finalTmp = nil, nil, nil
+    begin
+      puts "Fetching original."
+      origTmp = Tempfile.new("orig_", TEMP_DIR)
+      origPath = origTmp.path
+      origTmp.unlink
+      File.mkfifo(origPath)
+      mrtFetcher = MerrittFetcher.new(mrtURL, origPath)
+
+      puts "Fetching patch."
+      patchTmp = Tempfile.new("patch_", TEMP_DIR)
+      patchPath = patchTmp.path
+      #s3Obj.get(response_target: patchTmp)
+      patchTmp.unlink
+      File.mkfifo(patchPath)
+      s3Fetcher = S3Fetcher.new(s3Obj, patchPath)
+
+      puts "Patching."
+      finalTmp = Tempfile.new("final_", TEMP_DIR)
+      finalPath = finalTmp.path
+      finalTmp.unlink
+      File.mkfifo(finalPath)
+      system("/apps/eschol/bin/xdelta3 -d -B 33554432 -v -f -s #{origPath} #{patchPath} #{finalPath} &") or raise("xdelta3 err: #{$?}")
+      puts "Streaming result."
+      stream { |out|
+        Tempfile.open("foo_", TEMP_DIR) { |fooTmp|
+          open(finalPath, "rb") { |io|
+            while !io.eof?
+              chunk = io.read(65536)
+              out << chunk
+              fooTmp.write(chunk)
+              puts "wrote #{chunk.length}"
+            end
+          }
+          $fileCache.take(s3Path, fooTmp)
+        }
+      }
+    ensure
+      puts "FIXME FOO: unlink tmp files"
+      #origTmp and origTmp.unlink
+      #patchTmp and patchTmp.unlink
+      #finalTmp and finalTmp.unlink
+    end
   else
     # No patch - stream entire file from S3
     fetcher = S3Fetcher.new(s3Obj)

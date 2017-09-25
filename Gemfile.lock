@@ -25,6 +25,7 @@ GEM
     json (2.1.0)
     mimemagic (0.3.2)
     mini_portile2 (2.2.0)
+    mkfifo (0.1.1)
     multi_xml (0.6.0)
     mustermann (1.0.0)
     mysql2 (0.4.7)
@@ -72,6 +73,7 @@ DEPENDENCIES
   httparty
   json
   mimemagic
+  mkfifo
   mysql2
   nokogiri
   sanitize
@@ -84,4 +86,4 @@ DEPENDENCIES
   unindent
 
 BUNDLED WITH
-   1.14.4
+   1.15.4

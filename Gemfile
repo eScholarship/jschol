@@ -5,6 +5,7 @@ gem 'fastimage'           # for determining dimensions of image files
 gem 'htmlentities'        # for decoding HTML entites
 gem 'httparty'            # for fetching URLs easily
 gem 'json'                # safely and quickly parsing and generating JSON data
+gem 'mkfifo'              # create named pipes for xdelta3 decoding
 gem 'mimemagic'           # for guessing mime types during conversion
 gem 'mysql2'              # connecting to the database
 gem 'nokogiri'            # parsing and generating XML
