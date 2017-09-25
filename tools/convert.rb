@@ -554,6 +554,18 @@ def convertSocial(unitID, divs)
 end
 
 ###################################################################################################
+def convertDirectSubmit(unitID, el)
+  el && el[:url] or return {}
+
+  # Map old page URLs to new
+  url = el[:url]
+  url =~ %r{/uc/search\?entity=[^;]+;view=([^;]+)$} and url = "/uc/#{unitID}/#{$1}"
+
+  # All done.
+  return { direct_submit_url: url }
+end
+
+###################################################################################################
 def defaultNav(unitID, unitType)
   if unitType == "root"
     return [
@@ -590,6 +602,7 @@ def convertUnitBrand(unitID, unitType)
         dataOut.merge!(convertNavBar(unitID, dataIn.at("./display/generalInfo")))
       end
       dataOut.merge!(convertSocial(unitID, dataIn.xpath("./display/generalInfo/linkedPages/div")))
+      dataOut.merge!(convertDirectSubmit(unitID, dataIn.at("./directSubmitURL")))
     else
       dataOut.merge!({ nav_bar: defaultNav(unitID, unitType) })
     end
@@ -632,6 +645,7 @@ end
 def convertUnits(el, parentMap, childMap, allIds)
   id = el[:id] || el[:ref] || "root"
   allIds << id
+  Thread.current[:name] = id.ljust(20)
   #puts "name=#{el.name} id=#{id.inspect} name=#{el[:label].inspect}"
 
   # Create or update the main database record
@@ -639,38 +653,38 @@ def convertUnits(el, parentMap, childMap, allIds)
     unitType = id=="root" ? "root" : el[:type]
     # Retain CMS modifications to root and campuses
     if ['root','campus'].include?(unitType) && Unit.where(id: id).first
-      puts "Preserving #{id}."
+      #puts "Preserving #{id}."
     else
-      puts "Converting #{unitType} #{id}."
-      name = id=="root" ? "eScholarship" : el[:label]
-      Unit.update_or_replace(id,
-        type:      unitType,
-        name:      name,
-        status:    el[:directSubmit] == "moribund" ? "archived" :
-                   el[:hide] == "eschol" ? "hidden" :
-                   "active"
-      )
+      DB.transaction {
+        name = id=="root" ? "eScholarship" : el[:label]
+        Unit.update_or_replace(id,
+          type:      unitType,
+          name:      name,
+          status:    el[:directSubmit] == "moribund" ? "archived" :
+                     el[:hide] == "eschol" ? "hidden" :
+                     "active"
+        )
 
-      # We can't totally fill in the brand attributes when initially inserting the record,
-      # so do it as an update after inserting.
-      attrs = {}
-      el[:directSubmit] and attrs[:directSubmit] = el[:directSubmit]
-      el[:hide]         and attrs[:hide]         = el[:hide]
-      el[:issn]         and attrs[:issn]         = el[:issn]
-      attrs.merge!(convertUnitBrand(id, unitType))
-      nameChar = name[0].upcase
-      if unitType == "journal"
-        attrs[:magazine_layout] = nameChar > 'M'  # Names starting with M-Z are magazine layout (for now)
-      end
-      attrs[:carousel] = (nameChar >= 'F' && nameChar <= 'R')  # Names F-R have carousels (for now)
-      Unit[id].update(attrs: JSON.generate(attrs))
+        # We can't totally fill in the brand attributes when initially inserting the record,
+        # so do it as an update after inserting.
+        attrs = {}
+        el[:directSubmit] and attrs[:directSubmit] = el[:directSubmit]
+        el[:hide]         and attrs[:hide]         = el[:hide]
+        el[:issn]         and attrs[:issn]         = el[:issn]
+        attrs.merge!(convertUnitBrand(id, unitType))
+        nameChar = name[0].upcase
+        if unitType == "journal"
+          attrs[:magazine_layout] = nameChar > 'M'  # Names starting with M-Z are magazine layout (for now)
+        end
+        attrs[:carousel] = (nameChar >= 'F' && nameChar <= 'R')  # Names F-R have carousels (for now)
+        Unit[id].update(attrs: JSON.generate(attrs))
 
-      addDefaultWidgets(id, unitType)
+        addDefaultWidgets(id, unitType)
+      }
     end
   end
 
   # Now recursively process the child units
-  UnitHier.where(unit_id: id).delete
   el.children.each { |child|
     if child.name != "allStruct"
       id or raise("id-less node with children")
@@ -686,11 +700,15 @@ def convertUnits(el, parentMap, childMap, allIds)
 
   # After traversing the whole thing, it's safe to form all the hierarchy links
   if el.name == "allStruct"
-    # Delete extraneous units from prior conversions
-    deleteExtraUnits(allIds)
+    Thread.current[:name] = nil
+    DB.transaction {
+      # Delete extraneous units from prior conversions
+      deleteExtraUnits(allIds)
 
-    puts "Linking units."
-    linkUnit("root", childMap, Set.new)
+      puts "Linking units."
+      UnitHier.dataset.delete
+      linkUnit("root", childMap, Set.new)
+    }
   end
 end
 
@@ -2208,12 +2226,10 @@ def convertAllUnits
 
   # Load allStruct and traverse it. This will create Unit and Unit_hier records for all units,
   # and delete any extraneous old ones.
-  DB.transaction do
-    allStructPath = "/apps/eschol/erep/xtf/style/textIndexer/mapping/allStruct-eschol5.xml"
-    open(allStructPath, "r") { |io|
-      convertUnits(fileToXML(allStructPath).root, {}, {}, Set.new)
-    }
-  end
+  allStructPath = "/apps/eschol/erep/xtf/style/textIndexer/mapping/allStruct-eschol5.xml"
+  open(allStructPath, "r") { |io|
+    convertUnits(fileToXML(allStructPath).root, {}, {}, Set.new)
+  }
 end
 
 ###################################################################################################
