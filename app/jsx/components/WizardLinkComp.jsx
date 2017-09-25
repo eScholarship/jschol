@@ -38,7 +38,7 @@ class WizardLinkComp extends React.Component {
         </div>,
         <div key="1" className="c-wizard__message">
           <p>Faculty use the UC Publication Management system for all eScholarship deposits– including to claim and deposit publications in compliance with the <a href="http://osc.universityofcalifornia.edu/open-access-policy">UC Academic Senate faculty Open Access Policy</a>.</p>
-          <a href="https://oapolicy.universityofcalifornia.edu">Go to UC Publication Management</a>
+          <a className="c-wizard__external-link" href="https://oapolicy.universityofcalifornia.edu">Go to UC Publication Management</a>
         </div>,
         <footer key="2">
           Alternately, you may choose to wait for the system to automatically detect your new publication and send you a deposit link via email.
@@ -50,7 +50,7 @@ class WizardLinkComp extends React.Component {
         </div>,
         <div key="1" className="c-wizard__message">
           <p>{wiz.campusName} faculty, students and staff can take advantage of Dash, a specialized data publication and preservation service.</p>
-          <a href={wiz.arg}>Go to {wiz.campusName} Dash</a>
+          <a className="c-wizard__external-link" href={wiz.arg}>Go to {wiz.campusName} Dash</a>
         </div>,
         <footer key="2"></footer>]
     }

@@ -16,7 +16,21 @@
 
 }
 
-.c-subheader__banner {
+// remove after integration of new narrow and wide styles:
+
+.c-subheader__banner + .c-subheader__sidebar {
+
+  &::before {
+    margin: 0 5px;
+    padding: 5px;
+    background-color: #f00;
+    color: #fff;
+    content: 'c-subheader__banner class no longer used)';
+  }
+
+}
+
+%c-subheader__banner {
   @extend %o-textlink__black;
   display: flex;
   align-items: center;
@@ -49,11 +63,31 @@
 
   }
 
+}
+
+.c-subheader__banner--narrow {
+  @extend %c-subheader__banner;
+
   h1 + img {
     width: auto;
 
     @include bp(screen3) {
       margin-right: $spacing-sm;
+    }
+
+  }
+
+}
+
+.c-subheader__banner--wide {
+  @extend %c-subheader__banner;
+
+  h1 {
+
+    @include bp(screen3) {
+      // hide offscreen:
+      position: absolute;
+      left: -9999px;
     }
 
   }

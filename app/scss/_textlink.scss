@@ -58,22 +58,16 @@
   background-image: inline('../images/icon_pdf-teal.svg');
 }
 
-%o-textlink__external-link-button {
+%o-textlink__external-link {
+  @extend %o-textlink__secondary;
   @extend %interactive-element-size;
   display: inline-flex;
   align-items: center;
-  padding-right: 0.6em;
-  padding-left: 2.2em;
-  background: no-repeat left 0.6em center / 1.1em;
+  padding-right: 1.6em;
+  background: inline('../images/icon_external-link-teal.svg') no-repeat right center / 1.1em;
+  font-weight: bold;
 }
 
-.o-textlink__external-link-button {
-  @extend %o-textlink__external-link-button;
-  @extend %o-textlink__secondary;
-  @extend %interactive-element-size;
-  border: 2px solid $color-teal;
-  border-radius: $round-corner;
-  background-image: inline('../images/icon_external-link-teal.svg');
-  font-weight: bold;
-  box-shadow: $box-shadow2;
+.o-textlink__external-link {
+  @extend %o-textlink__external-link;
 }

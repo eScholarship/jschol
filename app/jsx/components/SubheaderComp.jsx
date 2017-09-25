@@ -40,8 +40,9 @@ class SubheaderComp extends React.Component {
 
   render() {
     let unit = this.props.unit
-    let h = this.props.header
-    let [banner_url, banner_title] = unit.type.includes('series') ? [h.ancestorID, h.ancestorName] : [unit.id, unit.name]
+    let h = this.props.header,
+        banner_class = (!h.logo || (h.logo && h.logo.width <= 225)) ? "c-subheader__banner--narrow" : "c-subheader__banner--wide",
+        [banner_url, banner_title] = unit.type.includes('series') ? [h.ancestorID, h.ancestorName] : [unit.id, unit.name]
 
    // Button Configuration based on unit type
    //   unit.type == 'journal'  -->  Submit / Manage Submissions
@@ -82,7 +83,7 @@ class SubheaderComp extends React.Component {
         <CampusSelectorComp campusID={h.campusID}
                             campusName={h.campusName}
                             campuses={h.campuses} />
-        <Link to={"/uc/"+banner_url} className="c-subheader__banner">
+        <Link to={"/uc/"+banner_url} className={banner_class}>
           <h1>{banner_title}</h1>
         {h.logo &&
           <img src={h.logo.url} width={h.logo.width} height={h.logo.height} alt={unit.name} />
