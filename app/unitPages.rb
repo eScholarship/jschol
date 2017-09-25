@@ -99,8 +99,6 @@ def getPageBreadcrumb(unit, pageName, issue=nil)
     # don't add "Search" breadcrumb on Series pages
     return unit.type.include?('series') ? [] : [{ name: "Search", id: unit.id + ":" + pageName}]
   else
-    pageName == "profile" and return [{ name: "Profile", id: unit.id + ":" + pageName}]
-    pageName == "sidebar" and return [{ name: "Sidebars", id: unit.id + ":" + pageName}]
     p = Page.where(unit_id: unit.id, slug: pageName).first
     p or halt(404, "Unknown page #{pageName} in #{unit.id}")
     return [{ name: p[:name], id: unit.id + ":" + pageName, url: "/#{unit.id}/#{pageName}" }]
@@ -117,6 +115,7 @@ def getUnitHeader(unit, pageName=nil, journalIssue=nil, attrs=nil)
     :campusID => campusID,
     :campusName => $unitsHash[campusID].name,
     :ancestorID => ancestor ? ancestor.id : nil,   # Used strictly for linking series back to parent unit
+    :ancestorName => ancestor ? ancestor.name : nil,   # Ditto 
     :campuses => $activeCampuses.values.map { |c| {id: c.id, name: c.name} }.unshift({id: "", name: "eScholarship at..."}),
     :logo => (unit.type.include? 'series') ? getLogoData(JSON.parse(ancestor.attrs)['logo']) : getLogoData(attrs['logo']),
     :directSubmit => attrs['directSubmit'],
@@ -165,7 +164,6 @@ def getUnitMarquee(unit, attrs)
   else
     carouselAttrs = ""
   end
-
   return {
     :about => attrs['about'],
     :carousel => attrs['carousel'],
@@ -457,6 +455,7 @@ put "/api/unit/:unitID/nav/:navID" do |unitID, navID|
     travNav(unitAttrs['nav_bar']) { |nav|
       next unless nav['id'].to_s == navID.to_s
       nav['name'] = params[:name]
+      params[:hidden].to_s == "true" ? nav['hidden'] = true : nav.delete('hidden')
       if nav['type'] == "page"
         page = Page.where(unit_id: unitID, slug: nav['slug']).first or halt(404, "Page not found")
 

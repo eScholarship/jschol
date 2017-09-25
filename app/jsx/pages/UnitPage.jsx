@@ -22,6 +22,7 @@ import JournalLayout from '../layouts/JournalLayout.jsx'
 import UnitSearchLayout from '../layouts/UnitSearchLayout.jsx'
 import UnitStaticPageLayout from '../layouts/UnitStaticPageLayout.jsx'
 import UnitProfileLayout from '../layouts/UnitProfileLayout.jsx'
+import UnitCarouselConfigLayout from '../layouts/UnitCarouselConfigLayout.jsx'
 import UnitIssueConfigLayout from '../layouts/UnitIssueConfigLayout.jsx'
 import UnitSidebarConfigLayout from '../layouts/UnitSidebarConfigLayout.jsx'
 import UnitNavConfigLayout from '../layouts/UnitNavConfigLayout.jsx'
@@ -45,7 +46,7 @@ class UnitPage extends PageBase
     if (pm.pageName) {
       if (pm.pageName == 'search')
         return `/api/unit/${pm.unitID}/search/${this.props.location.search}`
-      else if (['profile', 'issueConfig'].includes(pm.pageName))
+      else if (['profile', 'carousel', 'issueConfig'].includes(pm.pageName))
         return `/api/unit/${pm.unitID}/${pm.pageName}`
       else
         return `/api/unit/${pm.unitID}/${pm.pageName}/${pm.splat}`
@@ -83,6 +84,8 @@ class UnitPage extends PageBase
       contentLayout = (<SeriesLayout unit={data.unit} data={data.content} sidebar={sidebar} marquee={data.marquee}/>)
     } else if (this.props.params.pageName === 'profile') {
       contentLayout = this.cmsPage(data, <UnitProfileLayout unit={data.unit} data={data.content} sendApiData={this.sendApiData} sendBinaryFileData={this.sendBinaryFileData}/>)
+    } else if (this.props.params.pageName === 'carousel') {
+      contentLayout = this.cmsPage(data, <UnitCarouselConfigLayout unit={data.unit} data={data.content} sendApiData={this.sendApiData} sendBinaryFileData={this.sendBinaryFileData}/>)
     } else if (this.props.params.pageName === 'issueConfig') {
       contentLayout = this.cmsPage(data, <UnitIssueConfigLayout unit={data.unit} data={data.content} sendApiData={this.sendApiData}/>)
     } else if (this.props.params.pageName === 'nav') {
@@ -122,12 +125,7 @@ class UnitPage extends PageBase
     return (
       <div>
         <Header2Comp type={data.unit.type} unitID={data.unit.id} />
-        <SubheaderComp unit={data.unit} logo={data.header.logo} 
-          campusID={data.header.campusID}
-          ancestorID={data.header.ancestorID}
-          campusName={data.header.campusName}
-          directSubmit={data.header.directSubmit}
-          campuses={data.header.campuses}/>
+        <SubheaderComp unit={data.unit} header={data.header} />
         <NavBarComp 
           navBar={data.header.nav_bar} unit={data.unit} socialProps={data.header.social} />
         <BreadcrumbComp array={data.header.breadcrumb} />

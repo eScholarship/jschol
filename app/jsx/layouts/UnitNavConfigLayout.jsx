@@ -48,6 +48,9 @@ class EditableNavContentComp extends React.Component
         <p>For optimal display, use fewer than 25 characters</p>
         <input className="c-editable-page__input" id="name" type="text" defaultValue={data.name}
                onChange={ event => this.setData({ name: event.target.value }) }/>
+        <label htmlFor="hidden">Hidden: (select checkbox to omit this from the navigation bar)</label>
+        <input className="c-editable-page__input" type="checkbox" id="hidden" name="hidden" defaultChecked={data.hidden}
+               onChange={ event => this.setData({ hidden: event.target.checked }) }/>
 
         { (data.type == "page") &&
           <div>
