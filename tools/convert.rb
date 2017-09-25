@@ -324,7 +324,7 @@ def convertLogo(unitID, unitType, logoEl)
     imgPath =~ %r{LOGO_PATH|/$} and return {} # logo never configured
   end
   if !File.file?(imgPath)
-    puts "Warning: Can't find logo image: #{imgPath.inspect}"
+    #puts "Warning: Can't find logo image: #{imgPath.inspect}" # who cares
     return {}
   end
 
@@ -389,11 +389,39 @@ def stripXMLWhitespace(node)
 end
 
 ###################################################################################################
+def convertBrandDownload(unitID, navBar, navID, linkName, linkTarget)
+  if !(linkTarget =~ %r{^/brand/([^/]+)/([^/]+)$})
+    puts "Warning: can't parse link to file in brand dir: #{linkTarget}"
+    return
+  end
+  entity, filename = $1, $2
+  filePath = "/apps/eschol/erep/xtf/static/brand/#{entity}/#{filename}"
+  if !File.exist?(filePath)
+    puts "Warning: can't find brand download #{filePath}"
+    return
+  end
+
+  assetID = putAsset(filePath, {})
+
+  html = "<p>Please see <a href=\"/assets/#{assetID}\">#{filename}</a></p>"
+  html = sanitizeHTML(html)
+
+  slug = linkTarget.sub("\.[^.]+$", "").gsub(/[^\w ]/, '')
+
+  Page.create(unit_id: unitID,
+              slug: slug,
+              name: linkName,
+              title: linkName,
+              attrs: JSON.generate({ html: html }))
+  navBar << { id: navID, type: "page", slug: slug, name: linkName }
+end
+
+###################################################################################################
 def convertPage(unitID, navBar, navID, contentDiv, slug, name)
   title = nil
   stripXMLWhitespace(contentDiv)
   if contentDiv.children.empty?
-    puts "Warning: empty page content for page #{slug} #{name.inspect}"
+    #puts "Warning: empty page content for page #{slug}" # who cares
     return
   end
 
@@ -409,8 +437,12 @@ def convertPage(unitID, navBar, navID, contentDiv, slug, name)
     title = kid.inner_html
     kid.remove
   else
-    puts("Warning: no title for page #{slug} #{name.inspect}")
+    #puts("Warning: no title for page #{slug} #{name.inspect}") # who cares
   end
+
+  # If missing name, use title (or fall back to slug). And vice-versa
+  name ||= title || slug
+  title ||= name
 
   # If remaining content consists of a single <p>, strip it off.
   kid = contentDiv.children[0]
@@ -420,12 +452,18 @@ def convertPage(unitID, navBar, navID, contentDiv, slug, name)
 
   html = sanitizeHTML(contentDiv.inner_html)
   html.length > 0 or return
-  attrs = { html: html }
+
+  # Replace old-style links
+  html.gsub!(%r{href="/uc/search\?entity=([^";]+)(;view=([^";]+))?"}) { |m|
+    entity, page = $1, $3
+    "href=\"/uc/#{entity}#{page && "/#{page}"}\""
+  }
+
   Page.create(unit_id: unitID,
               slug: slug,
               name: name,
               title: title ? title : name,
-              attrs: JSON.generate(attrs))
+              attrs: JSON.generate({ html: html }))
   navBar << { id: navID, type: "page", slug: slug, name: name }
 end
 
@@ -448,19 +486,23 @@ def convertNavBar(unitID, generalEl)
       para.comment? and next
       if para.text?
         text = para.text.strip
-        if !text.empty?
+        if !text.empty? and !(para.to_s =~ /--&gt;/)
           puts "Extraneous text in linkSet: #{para}"
         end
         next
       end
-      if para.name != "p"
+
+      if para.name == "a"
+        links = [para]
+      elsif para.name != "p"
         puts "Extraneous element in linkSet: #{para}"
         next
+      else
+        links = para.xpath("./a")
       end
 
-      links = para.xpath("./a")
       if links.empty?
-        puts "Missing <a> in linkSet: #{para.inner_html}"
+        #puts "Missing <a> in linkSet: #{para.inner_html}" # happens for informational headings we strip anyhow
         next
       end
       if links.length > 1
@@ -477,15 +519,14 @@ def convertNavBar(unitID, generalEl)
       end
 
       linkTarget = link.attr('href')
-      if !linkTarget
+      if !linkTarget && link.attr('onclick') =~ /location.href='([^']+)'/
+        linkTarget = $1
+      elsif !linkTarget
         puts "Missing link target: #{para.inner_html}"
         next
       end
 
-      slug = nil
-      linkTarget =~ %r{/uc/search\?entity=[^;]+;view=([^;]+)$} and slug = $1
-
-      if slug =~ /contact|contactUs|policyStatement|policies|policiesProcedures|submitPaper|submissionGuidelines/i
+      if linkTarget =~ /view=(contact|policyStatement|policies|submitPaper|submissionGuidelines)/i
         addTo = navBar
       else
         if !aboutBar
@@ -506,8 +547,14 @@ def convertNavBar(unitID, generalEl)
         linkedPagesUsed << slug
       elsif linkTarget =~ %r{^https?://}
         addTo << { id: curNavID+=1, type: "link", name: linkName, url: linkTarget }
+      elsif linkTarget =~ %r{^/uc/search\?entity=([^;]+)(;rmode=[^;]+)?$}
+        addTo << { id: curNavID+=1, type: "link", name: linkName, url: "/uc/#{$1}" }
+      elsif linkTarget =~ %r{^/uc/search\?entity=([^;]+);volume=(\d+);issue=(\d+)$}
+        addTo << { id: curNavID+=1, type: "link", name: linkName, url: "/uc/#{$1}/#{$2}/#{$3}" }
+      elsif linkTarget =~ %r{^/uc/([a-zA-Z0-9_]+)(\?rmode=[^;]+)?$}
+        addTo << { id: curNavID+=1, type: "link", name: linkName, url: "/uc/#{$1}" }
       elsif linkTarget =~ %r{/brand/}
-        puts "TODO: convert nav files to stub pages."
+        convertBrandDownload(unitID, addTo, curNavID+=1, linkName, linkTarget)
       else
         puts "Invalid link target: #{para.inner_html}"
       end
@@ -518,9 +565,18 @@ def convertNavBar(unitID, generalEl)
   # box at the right side of the eschol UI. Database conversion TBD.
   #convertPage(unitID, navBar, generalEl.at("./contactInfo/div"), "journalInfo", BLAH)
 
-  # Note unused linked pages
+  # Convert unused pages to a hidden bar
+  hiddenBar = nil
   generalEl.xpath("./linkedPages/div").each { |page|
-    !linkedPagesUsed.include?(page.attr('id')) and puts "Unused linked page, id=#{page.attr('id').inspect}"
+    slug = page.attr('id')
+    next if slug.nil? || slug.empty?
+    next if linkedPagesUsed.include?(slug)
+    #puts "Unused linked page, id=#{slug.inspect}" # who cares about the message
+    if !hiddenBar
+      hiddenBar = { id: curNavID+=1, type: "folder", name: "other pages", hidden: true, sub_nav: [] }
+      navBar << hiddenBar
+    end
+    convertPage(unitID, hiddenBar[:sub_nav], curNavID+=1, page, slug, nil)
   }
 
   # All done.
@@ -562,7 +618,7 @@ def convertDirectSubmit(unitID, el)
   url =~ %r{/uc/search\?entity=[^;]+;view=([^;]+)$} and url = "/uc/#{unitID}/#{$1}"
 
   # All done.
-  return { direct_submit_url: url }
+  return { directSubmitUrl: url }
 end
 
 ###################################################################################################
@@ -581,7 +637,7 @@ def defaultNav(unitID, unitType)
       { id: 3, type: "link", name: "Academic Units", url: "/#{unitID}/units" }
     ]
   else
-    puts "Warning: no brand file found for unit #{unitID.inspect}"
+    #puts "Warning: no brand file found for unit #{unitID.inspect}" # who cares about msg
     return []
   end
 end
@@ -645,7 +701,7 @@ end
 def convertUnits(el, parentMap, childMap, allIds)
   id = el[:id] || el[:ref] || "root"
   allIds << id
-  Thread.current[:name] = id.ljust(20)
+  Thread.current[:name] = id.ljust(30)
   #puts "name=#{el.name} id=#{id.inspect} name=#{el[:label].inspect}"
 
   # Create or update the main database record
