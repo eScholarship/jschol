@@ -2514,9 +2514,8 @@ def convertPDF(itemID)
   origSize = File.size(origFile)
 
   dbPdf = DisplayPDF[itemID]
-  if !$forceMode && dbPdf && dbPdf.orig_size == origSize &&
-                    dbPdf.linear_patch_size == 0 && dbPdf.splash_patch_size == 0
-    puts "Unchanged."
+  if !$forceMode && dbPdf && dbPdf.orig_size == origSize
+    #puts "Unchanged."
     return
   end
   puts "Updating."
@@ -2545,10 +2544,8 @@ def convertPDF(itemID)
       orig_size:          origSize,
       orig_timestamp:     File.mtime(origFile),
       linear_size:        linSize,
-      linear_patch_size:  nil,
       splash_info_digest: instrucDigest,
-      splash_size:        splashLinSize,
-      splash_patch_size:  nil
+      splash_size:        splashLinSize
     )
 
     puts sprintf("Updated: lin=%d/%d = %.1f%%; splashLin=%d/%d = %.1f%%",
