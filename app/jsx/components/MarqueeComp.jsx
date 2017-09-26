@@ -61,9 +61,11 @@ class MarqueeComp extends React.Component {
         </CarouselComp>
       {this.props.marquee.about &&
         <aside className="c-marquee__sidebar">
+{/* ToDo: Itegrate AboutComp here, while observing necessary truncation behavior.
+    For now, any changes here should also be reflected in AboutComp */}
           <section className="o-columnbox2">
             <header>
-              <h1>About</h1>
+              <h2>About</h2>
             </header>
             <div className="c-marquee__sidebar-truncate" ref={element => this.aboutElement = element}
                  dangerouslySetInnerHTML={{__html: about_block}} />
@@ -74,11 +76,13 @@ class MarqueeComp extends React.Component {
     )
   }
 
+  // ToDo: Itegrate AboutComp here, while observing necessary truncation behavior.
+  //  For now, any changes here should also be reflected in AboutComp
   renderAbout = (about_block) => {
     return (
       <section className="o-columnbox2">
         <header>
-          <h1>About</h1>
+          <h2>About</h2>
         </header>
         <div className="o-columnbox__truncate1" ref={element => this.aboutElement = element}
                dangerouslySetInnerHTML={{__html: about_block}} />

@@ -542,6 +542,26 @@ As well as:
   modified:   app/jsx/components/SubheaderComp.jsx
   modified:   app/jsx/components/WizardLinkComp.jsx
 
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's 097a4575fd1ef9fb98fd701c0b7b2ac7c54b3634, 2017-09-26 <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
+Andy added all scss changes since last.
+As well as:
+
+  modified:   app/jsx/components/AboutComp.jsx
+  modified:   app/jsx/components/CampusSelectorComp.jsx
+  modified:   app/jsx/components/MarqueeComp.jsx
+  modified:   app/jsx/components/SubheaderComp.jsx
+  modified:   app/jsx/components/TabMainComp.jsx
+  modified:   app/jsx/layouts/DepartmentLayout.jsx
+  modified:   app/jsx/layouts/JournalLayout.jsx
+  modified:   app/jsx/layouts/SeriesLayout.jsx
+  modified:   app/jsx/objects/CustomSelectorCampusObj.jsx
+  modified:   app/jsx/objects/CustomSelectorObj.jsx
+  modified:   app/jsx/pages/BrowsePage.jsx
+  modified:   app/jsx/pages/ItemPage.jsx
+  modified:   app/jsx/pages/SearchPage.jsx
+  new file:   app/jsx/components/RelatedItemsComp.jsx
 
 

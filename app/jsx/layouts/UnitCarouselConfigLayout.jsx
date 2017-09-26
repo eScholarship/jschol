@@ -1,5 +1,6 @@
 import React from 'react'
 import Form from 'react-router-form'
+import WysiwygEditorComp from '../components/WysiwygEditorComp.jsx'
 import MarqueeComp from '../components/MarqueeComp.jsx'
 
 class UnitCarouselConfigLayout extends React.Component {
@@ -70,6 +71,7 @@ class UnitCarouselConfigLayout extends React.Component {
   // ex: newStuff = {header: 'stuff and things'}, i=slide number
   // calls setData with {slides: [{header: , text: , }, {header: , text: ,}]}
   setSlideData = (newStuff, i) => {
+    console.log(newStuff)
     var slides = this.state.newData.slides
     slides[i] = Object.assign(_.cloneDeep(slides[i]), newStuff)
 
@@ -98,15 +100,19 @@ class UnitCarouselConfigLayout extends React.Component {
     reader.readAsDataURL(file)
   }
 
-  addSlide = (event) => {
-    event.preventDefault()
+  addSlide = () => {
     var slides = _.cloneDeep(this.state.newData.slides) || []
     slides.push({
       header: 'Sample header',
-      text: 'sample text',
+      text: '<div>sample text</div>',
       image: 'https://static.pexels.com/photos/40797/wild-flowers-flowers-plant-macro-40797.jpeg'
     })
     this.setData({slides: slides})
+  }
+
+  addSlideHandler = (event) => {
+    event.preventDefault()
+    this.addSlide()
   }
 
   //TODO: should go ahead and save current form state before filing this delete off.
@@ -115,8 +121,12 @@ class UnitCarouselConfigLayout extends React.Component {
       "/api/unit/" + this.props.unit.id + "/removeCarouselSlide/" + i)
   }
 
+  componentWillMount() {
+    !this.state.newData.slides && this.addSlide()
+  }
+
   renderSlideConfig() {
-    var slideData = this.state.newData.slides;
+    var slideData = this.state.newData.slides
     return slideData.map((slide, i) => {
       return (
         <div style={{padding: "10px", border: "1px solid black"}} key={i}>
@@ -126,11 +136,14 @@ class UnitCarouselConfigLayout extends React.Component {
                   onChange={ event => this.setSlideData({header: event.target.value}, i) }/>
 
           <label className="c-editable-page__label" htmlFor={"text-" + i}>Text:</label>
-          <textarea className="c-editable-page__input" id={"text-" + i} name={"text" + i} 
-                  defaultValue={slide.text}
-                  onChange={ event => this.setSlideData({text: event.target.value}, i) }/>
 
-                  <label className="c-editable-page__label" htmlFor={"slideImage-" + i}>Image: </label>
+          <WysiwygEditorComp className="c-editable-page__input" name={"text-" + i} id={"text-" + i} 
+              html={slide.text} unit={this.props.unit.id} onChange={ newText => this.setSlideData({ text: newText }, i) }
+              buttons={[
+                        ['strong', 'em', 'underline', 'link'], 
+                       ]} />
+
+          <label className="c-editable-page__label" htmlFor={"slideImage-" + i}>Image: </label>
           {/*not currently passing the filename back with the slide image*/}
           {/*TODO: remove 'no file chosen' text https://stackoverflow.com/questions/21842274/cross-browser-custom-styling-for-file-upload-button/21842275#21842275 */}
 
@@ -159,15 +172,18 @@ class UnitCarouselConfigLayout extends React.Component {
           <main>
             <section className="o-columnbox1">
               <Form to={`/api/unit/${this.props.unit.id}/profileContentConfig`} onSubmit={this.handleSubmit}>
-                <div>
-                  {!data.slides && <button onClick={ event => this.addSlide(event) }>Add an image carousel</button>}
-                  {data.slides && this.renderSlideConfig() }<br/>
-                  {data.slides && <button onClick={ (event) => this.addSlide(event) }>Add slide</button>}
-
-                  <label className="c-editable-page__label" htmlFor="displayCarousel">Publish Carousel?
-                  <input name="carouselFlag" id="displayCarousel" type="checkbox" defaultChecked={data.carousel}
+                <div className="can-toggle can-toggle--size-small">
+                  <input id="displayCarousel" name="carouselFlag" type="checkbox" defaultChecked={data.carousel}
                          onChange={ event => this.setData({carousel: event.target.checked}) }/>
+                  <label htmlFor="displayCarousel">
+                    <div className="can-toggle__label-text">Publish Carousel</div>
+                    <div className="can-toggle__switch" data-checked="Enabled" data-unchecked="Disabled"></div>
                   </label>
+                  <br/>
+                </div>
+                <div>
+                  {this.renderSlideConfig()}<br/>
+                  {<button onClick={ (event) => this.addSlideHandler(event) }>Add slide</button>}
                 </div>
                 <button type="submit">Save Changes</button> <button type="reset">Cancel</button>
               </Form>

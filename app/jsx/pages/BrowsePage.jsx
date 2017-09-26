@@ -90,7 +90,7 @@ class AllCampuses extends React.Component {
     return (
     <section className="o-columnbox1">
       <header>
-        <h1>Campuses and Other Locations</h1>
+        <h2>Campuses and Other Locations</h2>
       </header>
       <DescriptionListComp campusesStats={this.props.campusesStats} affiliatedStats={this.props.affiliatedStats} />
     </section>
@@ -139,7 +139,7 @@ class AllJournals extends React.Component {
     return (
     <section className="o-columnbox1">
       <header>
-        <h1>Journals</h1>
+        <h2>Journals</h2>
       </header>
       <WellComp />
       <div className="o-input__inline">
@@ -172,7 +172,7 @@ class CampusUnits extends React.Component {
     return (
     <section className="o-columnbox1">
       <header>
-        <h1>{this.props.pageTitle}</h1>
+        <h2>{this.props.pageTitle}</h2>
       </header>
       <div className="c-well">
         Looking for an academic or research unit that's not listed? <NotYetLink element="a">Learn how to add yours</NotYetLink>.
@@ -196,7 +196,7 @@ class CampusJournals extends React.Component {
     return (
     <section className="o-columnbox1">
       <header>
-        <h1>{this.props.pageTitle}</h1>
+        <h2>{this.props.pageTitle}</h2>
       </header>
     {visibleJournals && 
       <ul className="o-textlist2">{visibleJournals}</ul>

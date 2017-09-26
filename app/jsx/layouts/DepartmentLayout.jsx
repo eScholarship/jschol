@@ -29,9 +29,9 @@ class SeriesComp extends React.Component {
         plural = (data.count == data.previewLimit + 1) ? '' : 's'
     return (
       <div className="c-unitpub">
-        <h3 className="c-unitpub__heading"><Link to={"/uc/"+data.unit_id}>{data.name}</Link></h3>
+        <h4 className="c-unitpub__heading"><Link to={"/uc/"+data.unit_id}>{data.name}</Link></h4>
       {data.items.map((item) =>
-        <PubComp key={item.id} result={item} h="H4" />) }
+        <PubComp key={item.id} result={item} h="H5" />) }
       {data.count > data.previewLimit &&
         <div className="c-unitpub__publications">{data.count - data.previewLimit} more work{plural} &mdash; <Link to={"/uc/"+data.unit_id}>show all</Link></div> }
       </div>
@@ -88,7 +88,7 @@ class DepartmentLayout extends React.Component {
           <main id="maincontent">
             <section className="o-columnbox1">
               <header>
-                <h1>Works by the {this.props.unit.name}</h1>
+                <h2>Works by the {this.props.unit.name}</h2>
               </header>
               <div className="c-itemactions">
                 <ShareComp type="unit" id={this.props.unit.id} />
@@ -100,26 +100,26 @@ class DepartmentLayout extends React.Component {
             }
             {seriesList.length > 0 &&
               <div>
-                <h2 className="o-heading1a">Paper Series</h2>
+                <h3 className="o-heading1a">Paper Series</h3>
                 {seriesList}
               </div>
             }
             {monographSeriesList.length > 0 &&
               <div>
-                <h2 className="o-heading1a">Monograph Series</h2>
+                <h3 className="o-heading1a">Monograph Series</h3>
                 {monographSeriesList}
               </div>
             }
             {data.journals.length > 0 && 
               <div className="c-unitlist">
-                <h2>Journals</h2>
+                <h3>Journals</h3>
                 <ul>{ data.journals.map((child) =>
                   <li key={child.unit_id}><Link to={"/uc/"+child.unit_id}>{child.name}</Link></li>) } </ul>
               </div>
             }
             {data.related_orus.length > 0 &&
               <div className="c-unitlist">
-                <h2>Related Research Centers & Groups</h2>
+                <h3>Related Research Centers & Groups</h3>
                 <ul>
                   { data.related_orus.map((child) =>
                     <li key={child.unit_id}><Link to={"/uc/"+child.unit_id}>{child.name}</Link></li>) }
