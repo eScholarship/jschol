@@ -2591,10 +2591,6 @@ end
 def convertPDF(itemID)
   item = Item[itemID]
   attrs = JSON.parse(item.attrs)
-  if !attrs["content_length"]
-    puts "Warning: missing content length"
-    return
-  end
 
   # Generate the splash instructions, for cache checking
   instrucs = splashInstrucs(itemID, item, attrs)

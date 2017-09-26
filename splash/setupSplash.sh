@@ -27,5 +27,6 @@ unzip -q ../../downloaded/apache-ant-1.10.1-bin.zip
 ln -s apache-ant-1.10.1/bin/ant .
 cd ..
 echo "Building."
+export ANT_HOME=$PWD/bin/apache-ant-1.10.1
 bin/ant
 echo "Done."
