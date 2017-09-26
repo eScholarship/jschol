@@ -49,10 +49,7 @@ class BrowsePage extends PageBase
         // Campus-specific browse page
         <div>
           <Header2Comp type="campus" unitID={data.campusID} />
-          <SubheaderComp unit={data.unit} logo={data.header.logo}
-                          campusID={data.header.campusID}
-                          campusName={data.header.campusName}
-                          campuses={data.campuses} />
+          <SubheaderComp unit={data.unit} header={data.header} />
           <div className="c-navbar">
             <NavComp data={data.header.nav_bar} />
           </div>

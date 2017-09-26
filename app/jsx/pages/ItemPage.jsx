@@ -70,10 +70,7 @@ class ItemPage extends PageBase {
         <Header2Comp type={data.unit ? data.unit.type: null}
                      unitID={(data.appearsIn && data.appearsIn.length > 0) ? data.appearsIn[0]["id"] : null } />
         {/* Some items have no parent unit, so check for empty data.header */}
-        {data.header && <SubheaderComp unit={data.unit} logo={data.header.logo}
-                                        campusID={data.header.campusID}
-                                        campusName={data.header.campusName}
-                                        campuses={data.header.campuses} />}
+        {data.header && <SubheaderComp unit={data.unit} header={data.header} />}
         {data.header && <NavBarComp navBar={data.header.nav_bar} 
                                     unit={data.unit} 
                                     socialProps={data.header.social} />}

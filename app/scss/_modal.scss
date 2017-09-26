@@ -1,31 +1,34 @@
 // ##### Modal Component ##### //
 
-$modal-header-height: 2.5em;
-$modal-footer-height: 3.5em;
-
 .c-modal {
   // no styles
 }
 
 .c-modal--open {
   position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  margin: $spacing-md;
+  top: 10vh;
+  right: 10vw;
+  bottom: 10vh;
+  left: 10vw;
   border: 1px solid $color-light-gray;
   border-radius: $round-corner;
   outline: none;
   background-color: $color-white;
   box-shadow: 5px 5px 15px $color-light-black;
+  overflow: auto;
 
   @include bp(screen1) {
-    margin: 10%;
+    top: 15vh;
+    right: 15vw;
+    bottom: 15vh;
+    left: 15vw;
   }
 
   @include bp(screen3) {
-    margin: 15%;
+    top: 20vh;
+    right: 20vw;
+    bottom: 20vh;
+    left: 20vw;
   }
 
 }
@@ -48,12 +51,10 @@ $modal-footer-height: 3.5em;
 
 .modal__header {
   display: flex;
-  position: absolute;
+  position: sticky;
   top: 0;
-  right: 0;
-  left: 0;
   align-items: center;
-  height: $modal-header-height;
+  min-height: 2.5em;
   padding: 0 $spacing-md;
   background-color: $color-light-gray;
 
@@ -66,26 +67,17 @@ $modal-footer-height: 3.5em;
 }
 
 .modal__content {
-  position: absolute;
-  top: $modal-header-height;
-  right: 0;
-  bottom: $modal-footer-height;
-  left: 0;
   padding: $spacing-md;
-  overflow: auto;
 }
 
 .c-modal__footer {
   display: flex;
-  position: absolute;
-  right: 0;
+  position: sticky;
   bottom: 0;
-  left: 0;
-  align-items: center;
   justify-content: flex-end;
-  height: $modal-footer-height;
-  padding: 0 $spacing-md;
+  padding: $spacing-sm $spacing-md;
   border-top: 1px solid $color-light-gray;
+  background-color: $color-white;
 
   button {
     
