@@ -228,26 +228,6 @@ public class SplashGen extends HttpServlet
 {
   private static final File TEMP_DIR = new File("/apps/eschol/jschol/splash/tmp");
 
-  private void reEncrypt(File combinedPdfFile, long perms, int cryptoMode)
-    throws IOException
-  {
-    File oldFile = new File(combinedPdfFile.toString() + ".old");
-    try {
-      combinedPdfFile.renameTo(oldFile);
-      PdfReader reader = new PdfReader(oldFile.toString());
-      PdfWriter writer = new PdfWriter(combinedPdfFile.toString(),
-          new WriterProperties().setStandardEncryption(
-            "".getBytes(),                           // empty user password
-            UUID.randomUUID().toString().getBytes(), // random owner password
-            (int)perms, cryptoMode));
-      new PdfDocument(reader, writer).close();
-    }
-    finally {
-      if (oldFile.exists())
-        oldFile.delete();
-    }
-  }
-
   public void doGet(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException
   {
@@ -262,8 +242,6 @@ public class SplashGen extends HttpServlet
     File combinedPdfFile = null;
     PdfDocument inputDoc = null;
     PdfDocument splashDoc = null;
-    long perms = 0;
-    int cryptoMode = 0;
 
     try
     {
@@ -274,7 +252,7 @@ public class SplashGen extends HttpServlet
       while ((b = inStream.read()) != -1)
         jsonBuf.write(b);
       JSONObject data = (JSONObject) (new JSONTokener(jsonBuf.toString("UTF-8")).nextValue());
-      System.out.println("Parsed JSON: " + data.toString());
+      //System.out.println("Parsed JSON: " + data.toString());
 
       inputPdfFile = new File(data.getString("pdfFile"));
       splashPdfFile = new File(data.getString("splashFile"));
@@ -292,8 +270,6 @@ public class SplashGen extends HttpServlet
                                        new ReaderProperties().setPassword("".getBytes()));
         inputPdfReader.setUnethicalReading(true); // we're passing files through to user; it's their decision to make.
         inputDoc = new PdfDocument(inputPdfReader, combinedPdfWriter);
-        cryptoMode = inputPdfReader.getCryptoMode();
-        perms = inputPdfReader.getPermissions();
       }
 
       // Format the splash page as a PDF
@@ -321,10 +297,6 @@ public class SplashGen extends HttpServlet
       finally {
         inputDoc = null;
       }
-
-      // If the original doc was encrypted (i.e. "protected"), preserve that.
-      if (cryptoMode != 0)
-        reEncrypt(combinedPdfFile, perms, cryptoMode);
 
       // All done.
       response.setContentType("text/plain");

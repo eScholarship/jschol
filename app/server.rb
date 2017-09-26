@@ -99,9 +99,9 @@ require_relative 'queueWithTimeout'
 require_relative 'unitPages'
 require_relative 'citation'
 require_relative 'loginApi'
-require_relative 'splash'
 require_relative 'fileCache'
 require_relative '../util/sanitize.rb'
+require_relative 'merritt'
 
 # Sinatra configuration
 configure do
@@ -126,6 +126,9 @@ $fileCache = FileCache.new("cache")
 
 TEMP_DIR = "tmp"
 FileUtils.mkdir_p(TEMP_DIR)
+
+# Special cache for Merritt that includes fetching synchronization
+$merrittCache = MerrittCache.new
 
 ###################################################################################################
 # Model classes for easy interaction with the database.
@@ -172,6 +175,10 @@ class Widget < Sequel::Model
 end
 
 class ItemCount < Sequel::Model
+end
+
+class DisplayPDF < Sequel::Model
+  unrestrict_primary_key
 end
 
 ##################################################################################################
@@ -304,16 +311,72 @@ get %r{/assets/([0-9a-f]{64})} do |hash|
 end
 
 ###################################################################################################
-get "/content/:fullItemID/*" do |fullItemID, path|
+class S3Fetcher
+  class S3Passer
+    def initialize(queue, fifoPath)
+      @queue = queue
+      @fifoPath = fifoPath
+      @fifo = nil
+    end
+    def write(chunk)
+      if !@fifo and @fifoPath
+        @fifo = File.open(@fifoPath, "wb")
+      end
+      @fifo ? @fifo.write(chunk) : @queue.push(chunk)
+    end
+    def close()
+      @queue << nil
+      @fifo and @fifo.close
+    end
+  end
+
+  def initialize(s3Obj, fifoPath = nil, range = nil)
+    @queue = QueueWithTimeout.new
+    Thread.new do
+      begin
+        passer = S3Passer.new(@queue, fifoPath)
+        if range
+          s3Obj.get(response_target: passer, range: range)
+        else
+          s3Obj.get(response_target: passer)
+        end
+        passer.close
+      rescue Exception => e
+        puts "S3 fetch exception: #{e}"
+      ensure
+        @queue << nil  # mark end-of-data
+      end
+    end
+  end
+
+  def streamTo(out)
+    begin
+      totalStreamed = 0
+      while true
+        data = @queue.pop_with_timeout(10)
+        data.nil? and break
+        totalStreamed += data.length
+        data.length > 0 and out << data
+      end
+      return totalStreamed
+    rescue Exception => e
+      puts "Warning: problem while streaming S3 content: #{e.message}"
+      raise
+    end
+  end
+end
+
+###################################################################################################
+get "/content/:fullItemID/*" do |itemID, path|
   # Prep work
-  fullItemID =~ /^qt[a-z0-9]{8}$/ or halt(404)  # protect against attacks
-  item = Item[fullItemID] or halt(404)
+  itemID =~ /^qt[a-z0-9]{8}$/ or halt(404)  # protect against attacks
+  item = Item[itemID] or halt(404)
   item.status == 'published' or halt(403)  # prevent access to embargoed and withdrawn files
   path = sanitizeFilePath(path)  # protect against attacks
 
   # Figure out the ID in Merritt. eSchol items just use the eSchol ARK; others are recorded
   # as local IDs in the attributes.
-  mrtID = "ark:/13030/#{fullItemID}"
+  mrtID = "ark:/13030/#{itemID}"
   attrs = JSON.parse(item.attrs)
   (attrs["local_ids"] || []).each { |localID|
     localID["type"] == "merritt" and mrtID = localID["id"]
@@ -323,6 +386,9 @@ get "/content/:fullItemID/*" do |fullItemID, path|
   if path =~ /^qt\w{8}\.pdf$/
     epath = "content/#{URI::encode(path)}"
     attrs["content_merritt_path"] and epath = attrs["content_merritt_path"]
+    noSplash = !(ENV['HOST'] =~ /pub-jschol/) ||
+               (params[:nosplash] && isValidContentKey(itemID.sub(/^qt/, ''), params[:nosplash]))
+    mainPDF = true
   else
     # Must be a supp file.
     attrs["supp_files"] or halt(404)
@@ -333,42 +399,56 @@ get "/content/:fullItemID/*" do |fullItemID, path|
       end
     }
     epath or halt(404)
-  end
-
-  # Fetch the file from Merritt
-  mrtURL = "https://#{$mrtExpressConfig['host']}/dl/#{mrtID}/#{epath}"
-  mrtFile = $fileCache.find(mrtURL)
-  if !mrtFile
-    Tempfile.open("mrt_", TEMP_DIR) { |mrtTmp|
-      auth = { username: $mrtExpressConfig['username'],
-               password: $mrtExpressConfig['password'] }
-      response = HTTParty.get(mrtURL, stream_body: true, basic_auth: auth) do |fragment|
-        mrtTmp.write(fragment)
-      end
-      response.success? or puts("Error #{response.code} fetching #{mrtURL}: #{response.message}")
-      response.success? or halt(response.code, response.message)
-      mrtFile = $fileCache.take(mrtURL, mrtTmp)
-    }
+    noSplash = true
+    mainPDF = false
   end
 
   # Guess the content type by path for now
   content_type MimeMagic.by_path(path)
 
-  if !(request.url =~ /pub-jschol/)
-    addSplash = false
-  elsif path =~ /\.pdf$/
-    addSplash = !params[:nosplash] || !isValidContentKey(fullItemID.sub(/^qt/, ''), params[:nosplash])
-  else
-    addSplash = false
+  # Here's the final Merritt URL
+  mrtURL = "https://#{$mrtExpressConfig['host']}/dl/#{mrtID}/#{epath}"
+
+  # Stream supp files out directly from Merritt without local caching.
+  if !mainPDF
+    fetcher = MerrittFetcher.new(mrtURL)
+    headers "Content-Length" => fetcher.length.to_s
+    return stream { |out| fetcher.streamTo(out) }
   end
 
-  # Sinatra, while it knows how to handle ranges, doesn't let the client know it can.
+  # For the main PDF, check the cache of display PDFs.
+  displayPDF = DisplayPDF[itemID]
+  displayPDF or send_file $merrittCache.fetch(mrtURL) # fallback to orig PDF if no display ver
+
+  if noSplash
+    s3Path = "#{$s3Config.prefix}/pdf_patches/linearized/#{itemID}"
+    outLen = displayPDF.linear_size
+  else
+    s3Path = "#{$s3Config.prefix}/pdf_patches/splash/#{itemID}"
+    outLen = displayPDF.splash_size
+  end
+
   # So we have to explicitly tell the client. With this, pdf.js will show the first page
   # before downloading the entire file.
   headers "Accept-Ranges" => "bytes"
 
-  # For all non-splash-page cases, we're done. Stream the result (to prevent huge files from blowing RAM)
-  return addSplash ? sendSplash(fullItemID, request, mrtFile) : send_file(mrtFile)
+  # Stream the file from S3
+  s3Obj = $s3Bucket.object(s3Path)
+  s3Obj.exists? or raise("missing S3 display PDF")
+  range = request.env["HTTP_RANGE"]
+  fetcher = S3Fetcher.new(s3Obj, nil, range)
+  if range
+    range =~ /^bytes=(\d+)-(\d+)/ or raise("can't parse range")
+    fromByte, toByte = $1.to_i, $2.to_i
+    puts "range #{fromByte}-#{toByte}/#{outLen}"
+    headers "Content-Range" => "bytes #{fromByte}-#{toByte}/#{outLen}"
+    outLen = toByte - fromByte + 1
+    status 206
+  end
+  headers "Content-Length" => outLen.to_s,
+          "ETag" => s3Obj.etag,
+          "Last-Modified" => s3Obj.last_modified.to_s
+  stream { |out| fetcher.streamTo(out) }
 end
 
 ###################################################################################################
@@ -399,14 +479,13 @@ get %r{.*} do
   template.sub!("main.css", "main-#{Digest::MD5.file("app/css/main.css").hexdigest[0,16]}.css")
 
   if DO_ISO
-    # We need to grab the hostname from the URL. There's probably a better way to do this.
+    # Parse out payload of the URL (i.e. not including the host name)
     request.url =~ %r{^https?://([^/:]+)(:\d+)?(.*)$} or fail
-    host = $1
     remainder = $3
 
     # Pass the full path and query string to our little Node Express app, which will run it through
     # ReactRouter and React.
-    response = Net::HTTP.new(host, 4002).start {|http| http.request(Net::HTTP::Get.new(remainder)) }
+    response = Net::HTTP.new(ENV['HOST'], 4002).start {|http| http.request(Net::HTTP::Get.new(remainder)) }
     status response.code.to_i
 
     # Read in the template file, and substitute the results from React/ReactRouter

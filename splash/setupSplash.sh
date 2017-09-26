@@ -17,8 +17,9 @@ cd ../WEB-INF/lib
 unzip -q ../../downloaded/itext7-7.0.4.zip '*-7.0.4.jar'
 tar xfz ../../downloaded/apache-log4j-2.9.0-bin.tar.gz --wildcards '*-2.9.0.jar'
 mv apache-log4j-2.9.0-bin/*.jar . && rm -rf apache-log4j-2.9.0-bin
+rm log4j-slf4j-impl-2.9.0.jar
 tar xfz ../../downloaded/slf4j-1.7.25.tar.gz --wildcards '*-1.7.25.jar'
-mv slf4j-1.7.25/*.jar . && rm -rf slf4j-1.7.25
+mv slf4j-1.7.25/*api*.jar . && mv slf4j-1.7.25/*simple*.jar . && rm -rf slf4j-1.7.25
 cp ../../downloaded/bcprov-jdk15on-158.jar .
 cp ../../downloaded/org.json-20161124.jar .
 cd ../bin

@@ -10,6 +10,10 @@ class QueueWithTimeout
   end
  
   def <<(x)
+    push(x)
+  end
+
+  def push(x)
     @mutex.synchronize do
       @queue << x
       @received.signal

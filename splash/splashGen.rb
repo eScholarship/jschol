@@ -4,6 +4,15 @@ require 'pathname'
 SPLASH_MAX_TEXT = 250
 SPLASH_MAX_AUTHORS = 3
 
+# Get hash of all active root level campuses/ORUs, sorted by ordering in unit_hier table
+def getActiveCampuses
+  return Unit.join(:unit_hier, :unit_id=>:id).
+           filter(:ancestor_unit=>'root', :is_direct=>1).exclude(:status=>["hidden", "archived"]).
+           order_by(:ordering).to_hash(:id)
+end
+
+$activeCampuses = getActiveCampuses
+
 ###################################################################################################
 def travAndFormat(data, out)
   if data.text?
@@ -80,15 +89,19 @@ def getDataAvail(itemAttrs)
 end
 
 ###################################################################################################
-def splashInstrucs(itemID)
-  item = Item[itemID]
-  attrs = JSON.parse(item[:attrs])
+def getCampusId(unit)
+  r = UnitHier.where(unit_id: unit.id).where(ancestor_unit: $activeCampuses.keys).first
+  return (unit.type=='campus') ? unit.id : r ? r.ancestor_unit : 'root'
+end
+
+###################################################################################################
+def splashInstrucs(itemID, item, attrs)
   instruc = []
 
   # Primary unit
   unitIDs = UnitItem.where(:item_id => itemID, :is_direct => true).order(:ordering_of_units).select_map(:unit_id)
-  unit = unitIDs ? $unitsHash[unitIDs[0]] : nil
-  campus = unit ? $unitsHash[getCampusId(unit)] : nil
+  unit = unitIDs ? Unit[unitIDs[0]] : nil
+  campus = unit ? Unit[getCampusId(unit)] : nil
   instruc << { h1: { text: campus ? campus.name : "eScholarship" } }
   unit and instruc << { h2: { text: unit.name } }
 
@@ -98,9 +111,7 @@ def splashInstrucs(itemID)
   end
 
   # Permalink
-  request.url =~ %r{^(https?://[^/:]+(:\d+)?)(.*)$} or fail
-  urlStart = $1
-  permalink = "#{urlStart}/uc/item/#{itemID.sub(/^qt/,'')}"
+  permalink = "https://escholarship.org/uc/item/#{itemID.sub(/^qt/,'')}"
   instruc << { h3: { text: "Permalink" } } << { paragraph: { link: { url: permalink, text: permalink } } }
 
   # Journal info
@@ -195,38 +206,32 @@ def getRealPath(path)
 end
 
 ###################################################################################################
-def sendSplash(itemID, request, mrtFile)
-  # Figure out the hostname so we can properly address the splash page web service.
-  request.url =~ %r{^https?://([^/:]+)(:\d+)?(.*)$} or fail
-  host = $1
+def splashGen(itemID, instrucs, origFile, targetFile)
+  splashTemp, combinedTemp, linearizedTemp = nil, nil, nil
+  begin
+    # Splash page generator is a Java servlet, since iText was the only open source library we
+    # found that has all the capabilities we need (especially preserving tagged content). So call
+    # out to it as a web service.
+    splashTemp = Tempfile.new(["splash_#{itemID}_", ".pdf"], TEMP_DIR)
+    combinedTemp = Tempfile.new(["combined_#{itemID}_", ".pdf"], TEMP_DIR)
+    data = { pdfFile: getRealPath(origFile),
+             splashFile: getRealPath(splashTemp.path),
+             combinedFile: getRealPath(combinedTemp.path),
+             instrucs: instrucs }
+    #puts "Sending splash data: #{data.to_json.encode("UTF-8")}"
+    response = HTTParty.post("http://#{ENV['HOST']}:18881/splash/splashGen", body: data.to_json.encode("UTF-8"))
+    response.success? or raise("Error #{response.code} generating splash page: #{response.message}")
 
-  # We'll need a temp file for the splash page and the combined file
-  outFile = $fileCache.find("splash_#{itemID}.pdf")
-  if !outFile
-    splashTemp = Tempfile.new(["splash_", ".pdf"], TEMP_DIR)
-    begin
-      combinedTemp = Tempfile.new(["combined_", ".pdf"], TEMP_DIR)
-      begin
-        data = { pdfFile: getRealPath(mrtFile),
-                 splashFile: getRealPath(splashTemp.path),
-                 combinedFile: getRealPath(combinedTemp.path),
-                 instrucs: splashInstrucs(itemID) }
-        puts "Sending splash data: #{data.to_json.encode("UTF-8")}"
-        response = HTTParty.post("http://#{host}:8081/splash/splashGen", body: data.to_json.encode("UTF-8"))
-        if !response.success?
-          puts("Warning: Got code #{response.code} fetching splash page: #{response.message}")
-          return send_file mrtFile
-        end
-        outFile = $fileCache.take("splash_#{itemID}.pdf", combinedTemp)
-        return send_file outFile
-      ensure
-        combinedTemp.unlink
-      end
-    ensure
-      splashTemp.unlink
-    end
+    # Linearize the result for fast display of the first page on all platforms.
+    system("/usr/bin/qpdf --linearize #{combinedTemp.path} #{targetFile}")
+    code = $?.exitstatus
+    code == 0 || code == 3 or raise("Error #{code} linearizing.")
+
+    # Return a digest of the instrucs, for later cache validation.
+    return Digest::MD5.base64digest(instrucs.to_json)
+  ensure
+    splashTemp and splashTemp.unlink
+    combinedTemp and combinedTemp.unlink
   end
-  content_type "application/pdf"
-  send_file outFile
 end
 
