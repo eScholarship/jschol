@@ -455,6 +455,7 @@ put "/api/unit/:unitID/nav/:navID" do |unitID, navID|
     travNav(unitAttrs['nav_bar']) { |nav|
       next unless nav['id'].to_s == navID.to_s
       nav['name'] = params[:name]
+      params[:hidden].to_s == "true" ? nav['hidden'] = true : nav.delete('hidden')
       if nav['type'] == "page"
         page = Page.where(unit_id: unitID, slug: nav['slug']).first or halt(404, "Page not found")
 
