@@ -423,83 +423,32 @@ get "/content/:fullItemID/*" do |itemID, path|
   if noSplash
     s3Path = "#{$s3Config.prefix}/pdf_patches/linearized/#{itemID}"
     outLen = displayPDF.linear_size
-    patchLen = displayPDF.linear_patch_size
   else
     s3Path = "#{$s3Config.prefix}/pdf_patches/splash/#{itemID}"
     outLen = displayPDF.splash_size
-    patchLen = displayPDF.splash_patch_size
   end
-
-  mrtFile = $fileCache.find(s3Path) and return send_file(mrtFile)
 
   # So we have to explicitly tell the client. With this, pdf.js will show the first page
   # before downloading the entire file.
   headers "Accept-Ranges" => "bytes"
 
+  # Stream the file from S3
   s3Obj = $s3Bucket.object(s3Path)
   s3Obj.exists? or raise("missing S3 display PDF")
-  if !patchLen.nil? && patchLen > 0
-    headers "Content-Length" => outLen.to_s
-    origTmp, patchTmp, finalTmp = nil, nil, nil
-    begin
-      puts "Fetching original."
-      origTmp = Tempfile.new("orig_", TEMP_DIR)
-      origPath = origTmp.path
-      origTmp.unlink
-      File.mkfifo(origPath)
-      mrtFetcher = MerrittFetcher.new(mrtURL, origPath)
-
-      puts "Fetching patch."
-      patchTmp = Tempfile.new("patch_", TEMP_DIR)
-      patchPath = patchTmp.path
-      #s3Obj.get(response_target: patchTmp)
-      patchTmp.unlink
-      File.mkfifo(patchPath)
-      s3Fetcher = S3Fetcher.new(s3Obj, patchPath)
-
-      puts "Patching."
-      finalTmp = Tempfile.new("final_", TEMP_DIR)
-      finalPath = finalTmp.path
-      finalTmp.unlink
-      File.mkfifo(finalPath)
-      system("/apps/eschol/bin/xdelta3 -d -B 33554432 -v -f -s #{origPath} #{patchPath} #{finalPath} &") or raise("xdelta3 err: #{$?}")
-      puts "Streaming result."
-      stream { |out|
-        Tempfile.open("foo_", TEMP_DIR) { |fooTmp|
-          open(finalPath, "rb") { |io|
-            while !io.eof?
-              chunk = io.read(65536)
-              out << chunk
-              fooTmp.write(chunk)
-              puts "wrote #{chunk.length}"
-            end
-          }
-          $fileCache.take(s3Path, fooTmp)
-        }
-      }
-    ensure
-      puts "FIXME FOO: unlink tmp files"
-      #origTmp and origTmp.unlink
-      #patchTmp and patchTmp.unlink
-      #finalTmp and finalTmp.unlink
-    end
-  else
-    # No patch - stream entire file from S3
-    range = request.env["HTTP_RANGE"]
-    fetcher = S3Fetcher.new(s3Obj, nil, range)
-    if range
-      range =~ /^bytes=(\d+)-(\d+)/ or raise("can't parse range")
-      fromByte, toByte = $1.to_i, $2.to_i
-      puts "range #{fromByte}-#{toByte}/#{outLen}"
-      headers "Content-Range" => "bytes #{fromByte}-#{toByte}/#{outLen}"
-      outLen = toByte - fromByte + 1
-      status 206
-    end
-    headers "Content-Length" => outLen.to_s,
-            "ETag" => s3Obj.etag,
-            "Last-Modified" => s3Obj.last_modified.to_s
-    stream { |out| fetcher.streamTo(out) }
+  range = request.env["HTTP_RANGE"]
+  fetcher = S3Fetcher.new(s3Obj, nil, range)
+  if range
+    range =~ /^bytes=(\d+)-(\d+)/ or raise("can't parse range")
+    fromByte, toByte = $1.to_i, $2.to_i
+    puts "range #{fromByte}-#{toByte}/#{outLen}"
+    headers "Content-Range" => "bytes #{fromByte}-#{toByte}/#{outLen}"
+    outLen = toByte - fromByte + 1
+    status 206
   end
+  headers "Content-Length" => outLen.to_s,
+          "ETag" => s3Obj.etag,
+          "Last-Modified" => s3Obj.last_modified.to_s
+  stream { |out| fetcher.streamTo(out) }
 end
 
 ###################################################################################################
