@@ -1,11 +1,10 @@
 import React from 'react'
 import Form from 'react-router-form'
+import WysiwygEditorComp from '../components/WysiwygEditorComp.jsx'
 import MarqueeComp from '../components/MarqueeComp.jsx'
+import PropTypes from 'prop-types'
 
-class UnitCarouselConfigLayout extends React.Component {
-  // static propTypes = {
-  // }
-
+class HeroCarouselLayout extends React.Component {
   state = { newData: this.props.data }
 
   handleSubmit = (event, data) => {
@@ -64,25 +63,25 @@ class UnitCarouselConfigLayout extends React.Component {
   }
 
   setData = (newStuff) => {
+    // console.log("newStuff = ", newStuff)
     this.setState({newData: Object.assign(_.cloneDeep(this.state.newData), newStuff)})
   }
 
   // ex: newStuff = {header: 'stuff and things'}, i=slide number
   // calls setData with {slides: [{header: , text: , }, {header: , text: ,}]}
   setSlideData = (newStuff, i) => {
-    var slides = this.state.newData.slides
+   //  console.log("Setting slide data = ", newStuff)
+    var slides = this.state.newData.marquee.slides
     slides[i] = Object.assign(_.cloneDeep(slides[i]), newStuff)
-
-    this.setData({slides: slides})
+    this.setMarqueeData({slides: slides})
   }
 
   removeImagePreview = (i) => {
-    var slides = _.cloneDeep(this.state.newData.slides)
+    var slides = _.cloneDeep(this.state.newData.marquee.slides)
     delete slides[i].imagePreviewUrl
 
     document.getElementById("slideImage").value = ""
-
-    this.setData({slides: slides})
+    this.setMarqueeData({slides: slides})
   }
 
   handleSlideImageChange = (event, i) => {
@@ -98,15 +97,24 @@ class UnitCarouselConfigLayout extends React.Component {
     reader.readAsDataURL(file)
   }
 
-  addSlide = (event) => {
-    event.preventDefault()
-    var slides = _.cloneDeep(this.state.newData.slides) || []
+  setMarqueeData = (newStuff) => {
+    var marquee = Object.assign(_.cloneDeep(this.state.newData.marquee), newStuff)
+    this.setData({marquee: marquee})
+  }
+
+  addSlide = () => {
+    var slides = _.cloneDeep(this.state.newData.marquee.slides) || []
     slides.push({
       header: 'Sample header',
-      text: 'sample text',
+      text: '<p>sample text</p>',
       image: 'https://static.pexels.com/photos/40797/wild-flowers-flowers-plant-macro-40797.jpeg'
     })
-    this.setData({slides: slides})
+    this.setMarqueeData({slides: slides})
+  }
+
+  addSlideHandler = (event) => {
+    event.preventDefault()
+    this.addSlide()
   }
 
   //TODO: should go ahead and save current form state before filing this delete off.
@@ -115,22 +123,28 @@ class UnitCarouselConfigLayout extends React.Component {
       "/api/unit/" + this.props.unit.id + "/removeCarouselSlide/" + i)
   }
 
-  renderSlideConfig() {
-    var slideData = this.state.newData.slides;
+  componentWillMount() {
+    !this.props.data.marquee.slides && this.addSlide()
+  }
+
+  renderSlideConfig(slideData) {
     return slideData.map((slide, i) => {
       return (
         <div style={{padding: "10px", border: "1px solid black"}} key={i}>
-          <label className="c-editable-page__label" htmlFor={"header-" + i}>Header:</label>
-          <input className="c-editable-page__input" id={"header-" + i} name={"header" + i} 
+          <label className="c-editable-page__label" htmlFor={"header" + i}>Header:</label>
+          <input className="c-editable-page__input" id={"header" + i} name={"header" + i} 
                   type="text" defaultValue={slide.header}
                   onChange={ event => this.setSlideData({header: event.target.value}, i) }/>
 
-          <label className="c-editable-page__label" htmlFor={"text-" + i}>Text:</label>
-          <textarea className="c-editable-page__input" id={"text-" + i} name={"text" + i} 
-                  defaultValue={slide.text}
-                  onChange={ event => this.setSlideData({text: event.target.value}, i) }/>
+          <label className="c-editable-page__label" htmlFor={"text" + i}>Text:</label>
 
-                  <label className="c-editable-page__label" htmlFor={"slideImage-" + i}>Image: </label>
+          <WysiwygEditorComp className="c-editable-page__input" name={"text" + i}
+              html={slide.text} unit={this.props.unit.id} onChange={ newText => this.setSlideData({ text: newText }, i) }
+              buttons={[
+                        ['strong', 'em', 'underline', 'link'], 
+                       ]} />
+
+          <label className="c-editable-page__label" htmlFor={"slideImage-" + i}>Image: </label>
           {/*not currently passing the filename back with the slide image*/}
           {/*TODO: remove 'no file chosen' text https://stackoverflow.com/questions/21842274/cross-browser-custom-styling-for-file-upload-button/21842275#21842275 */}
 
@@ -140,34 +154,38 @@ class UnitCarouselConfigLayout extends React.Component {
             {slide.imagePreviewUrl && <button onClick={ () => this.removeImagePreview(i) }>Cancel Image Upload</button>}
           </div>
           {/* TODO */}
-          <button>Remove File</button>
-          <button onClick={ () => this.removeSlide(i) }>Remove Slide</button>
+          <button>Remove File</button><br/><br/>
+          <button disabled={slideData.length == 1} onClick={ () => this.removeSlide(i) }>Remove Slide</button>
         </div>
       )
     })
   }
+
 
   render() {
     var data = this.state.newData
     return (
       <div>
         <h3 id="marquee">Landing Page Carousel</h3>
-      {(data.carousel || data.about) &&
-        <MarqueeComp marquee={data} />
-      }
+        <MarqueeComp marquee={data.marquee} forceOn={true} />
         <div className="c-columns">
           <main>
             <section className="o-columnbox1">
               <Form to={`/api/unit/${this.props.unit.id}/profileContentConfig`} onSubmit={this.handleSubmit}>
-                <div>
-                  {!data.slides && <button onClick={ event => this.addSlide(event) }>Add an image carousel</button>}
-                  {data.slides && this.renderSlideConfig() }<br/>
-                  {data.slides && <button onClick={ (event) => this.addSlide(event) }>Add slide</button>}
-
-                  <label className="c-editable-page__label" htmlFor="displayCarousel">Publish Carousel?
-                  <input name="carouselFlag" id="displayCarousel" type="checkbox" defaultChecked={data.carousel}
-                         onChange={ event => this.setData({carousel: event.target.checked}) }/>
+                <div className="can-toggle can-toggle--size-small">
+                  <input id="displayCarousel" name="carouselFlag" type="checkbox" defaultChecked={data.marquee.carousel}
+                         onChange={ event => this.setMarqueeData({carousel: event.target.checked}) }/>
+                  <label htmlFor="displayCarousel">
+                    <div className="can-toggle__label-text">Publish Carousel</div>
+                    <div className="can-toggle__switch" data-checked="Enabled" data-unchecked="Disabled"></div>
                   </label>
+                  <a href=""><img className="c-editable-help__icon" src="/images/icon_help.svg" alt="Get help on landing page carousel" /></a>
+                  <br/>
+                </div>
+                <div>
+                  {data.marquee.slides && this.renderSlideConfig(data.marquee.slides)}
+                  <br/>
+                  {<button onClick={ (event) => this.addSlideHandler(event) }>Add slide</button>}
                 </div>
                 <button type="submit">Save Changes</button> <button type="reset">Cancel</button>
               </Form>
@@ -178,6 +196,134 @@ class UnitCarouselConfigLayout extends React.Component {
     )
   }
 
+}
+
+class CampusCarouselTable extends React.Component {
+  renderUnitsDropdown() {
+    return (
+      <select name={"unit_id"+this.props.index}
+              defaultValue={this.props.contentCarousel.unit_id}>
+      { this.props.campusUnits.map((u) => {
+        return (<option key={u.id} value={u.id}>{u.name}</option>)
+      })}
+      </select>
+    )
+  }
+
+  render() {
+    let p = this.props,
+        disabledId = "disabled"+p.index,
+        journalsId = "journals"+p.index,
+        featuredUnitId = "featuredUnit"+p.index
+    return (
+      <table className="c-issueTable">
+        <tbody><tr>
+          <td>
+            <input className="c-editable-page__radio" type="radio"
+                   id={disabledId} name={"mode"+p.index} value="disabled"
+                   defaultChecked={p.contentCarousel.mode=="disabled"}/>
+            <label className="c-editable-page__radio-label" htmlFor={disabledId}>Disabled</label>
+          </td>
+          <td>
+            <input className="c-editable-page__radio" type="radio"
+                   id={journalsId} name={"mode"+p.index} value="journals"
+                   defaultChecked={p.contentCarousel.mode=="journals"}/>
+            <label className="c-editable-page__radio-label" htmlFor={journalsId}>Campus Journal Covers</label>
+          </td>
+          <td>
+            <input className="c-editable-page__radio" type="radio"
+                   id={featuredUnitId} name={"mode"+p.index} value="unit"
+                   defaultChecked={p.contentCarousel.mode=="unit"}/>
+            <label className="c-editable-page__radio-label" htmlFor={featuredUnitId}>Featured Unit</label>
+            {this.renderUnitsDropdown()}
+          </td>
+        </tr></tbody>
+      </table>
+    )
+  }
+}
+
+class ContentCarouselConfig extends React.Component {
+  handleSubmit = (event, data) => {
+    event.preventDefault()
+    this.props.sendApiData("PUT", event.target.action, {data: data})
+  }
+
+  render () {
+    let data = this.props.data
+    return (
+      <div>
+        <h3 className="c-editable-h3">Content Carousel(s)</h3>
+        <a href=""><img className="c-editable-help__icon" src="/images/icon_help.svg" alt="Get help on content carousels" /></a>
+        <div className="c-columns">
+          <main>
+            <section className="o-columnbox1">
+              <Form to={`/api/unit/${this.props.unit.id}/campusCarouselConfig`} onSubmit={this.handleSubmit}>
+                <p>Content carousels may be used to feature content collections on your campus landing pages.</p>
+                <div className="c-editable-page__label">Content Carousel 1</div>
+                <CampusCarouselTable unit={this.props.unit} contentCarousel={data.contentCar1} index={1} campusUnits={data.campusUnits} />
+                <br /><br />
+                <div className="c-editable-page__label">Content Carousel 2</div>
+                <CampusCarouselTable unit={this.props.unit} contentCarousel={data.contentCar2} index={2} campusUnits={data.campusUnits} />
+                <button type="submit">Save Changes</button> <button type="reset">Cancel</button>
+              </Form>
+            </section>
+          </main>
+        </div>
+      </div>
+    )
+  }
+}
+
+class UnitCarouselConfigLayout extends React.Component {
+  static propTypes = {
+    data:  PropTypes.shape({
+      // --- BEGIN --- properties used strictly for Campus Landing page config
+      contentCar1: PropTypes.shape({
+        mode: PropTypes.string,
+        unit_id: PropTypes.string,
+      }),
+      contentCar2: PropTypes.shape({
+        mode: PropTypes.string,
+        unit_id: PropTypes.string,
+      }),
+      campusUnits: PropTypes.arrayOf(PropTypes.shape({
+        id: PropTypes.string,
+        name: PropTypes.string,
+      })),
+      // --- END --- properties used strictly for Campus Landing page config
+
+      marquee: PropTypes.shape({
+        about: PropTypes.string,
+        carousel: PropTypes.bool,
+//      slides: PropTypes.arrayOf(PropTypes.shape({
+//        header: PropTypes.string,
+//        image: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+//        text: PropTypes.string,
+//        imagePreviewUrl: PropTypes.string
+//      }))
+      }),
+    }),
+    unit: PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      name: PropTypes.string.isRequired,
+      type: PropTypes.string,
+    }).isRequired,
+    sendApiData: PropTypes.any,
+    sendBinaryFileData: PropTypes.any,
+  }
+
+  render () {
+    let data = this.props.data
+    return (
+      <div>
+      { this.props.unit.type != 'campus' && 
+        <HeroCarouselLayout {...this.props} /> }
+      { this.props.unit.type == 'campus' && (data.contentCar1 || data.contentCar2) &&
+        <ContentCarouselConfig data={data} unit={this.props.unit} sendApiData={this.props.sendApiData} /> }
+      </div>
+    )
+  }
 }
 
 module.exports = UnitCarouselConfigLayout

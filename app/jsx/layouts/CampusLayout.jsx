@@ -10,6 +10,30 @@ import { Link } from 'react-router'
 
 class CampusLayout extends React.Component {
   static propTypes = {
+    data:  PropTypes.shape({
+      contentCar1: PropTypes.shape({
+        mode: PropTypes.string,
+        unit_id: PropTypes.string,
+      }),
+      contentCar2: PropTypes.shape({
+        mode: PropTypes.string,
+        unit_id: PropTypes.string,
+      }),
+      journal_count: PropTypes.number,
+      opened_count: PropTypes.number,
+      pub_count: PropTypes.number,
+      unit_count: PropTypes.number,
+      view_count: PropTypes.number
+    })
+  }
+
+  renderCampusCarousel(contentCarousel) {
+    if (contentCarousel.mode == 'journals') return (
+      <JournalCarouselComp campusID={this.props.unit.id} />
+    )
+    if (contentCarousel.mode == 'unit') return (
+      <UnitCarouselComp unitID={contentCarousel.unit_id} />
+    )
   }
 
   // ToDo: This URL should be an attr on the entity that's configured on the campus CMS page
@@ -28,7 +52,6 @@ class CampusLayout extends React.Component {
         unit = this.props.unit,
         dash = Object.keys(this.dashUrlList).includes(unit.id),
         dashUrl = dash ? this.dashUrlList[unit.id] : null
-
     return (
       <div>
         <HeatMapComp campusID={unit.id} />
@@ -36,8 +59,12 @@ class CampusLayout extends React.Component {
         <div className="c-columns">
           <main id="maincontent">
             <CampusSearchComp campusID={unit.id} campusName={unit.name} />
-            <UnitCarouselComp campusID={unit.id} campusName={unit.name} />
-            <JournalCarouselComp campusID={unit.id} campusName={unit.name} />
+         {data.contentCar1 && data.contentCar1.mode && data.contentCar1.mode != 'disabled' &&
+            this.renderCampusCarousel(data.contentCar1)
+         }
+         {data.contentCar2 && data.contentCar2.mode && data.contentCar2.mode != 'disabled' &&
+            this.renderCampusCarousel(data.contentCar2)
+         }
           </main>
           <aside>
             <section className="o-columnbox1">

@@ -6,7 +6,7 @@ class CustomSelectorObj extends React.Component {
   render() {
     return (
       <div className="o-customselector">
-        <h1 className="o-customselector__heading">Volume 6, Issue 2, 2016</h1>
+        <div className="o-customselector__heading">Volume 6, Issue 2, 2016</div>
         <details className="o-customselector__selector">
           <summary aria-label="Select a different item"></summary>
           <div className="o-customselector__menu">

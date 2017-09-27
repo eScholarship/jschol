@@ -11,6 +11,7 @@ import NavBarComp from '../components/NavBarComp.jsx'
 import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
 import TabsComp from '../components/TabsComp.jsx'
 import JumpComp from '../components/JumpComp.jsx'
+import RelatedItemsComp from '../components/RelatedItemsComp.jsx'
 import FooterComp from '../components/FooterComp.jsx'
 
 // Load dotdotdot in browser but not server
@@ -86,18 +87,16 @@ class ItemPage extends PageBase {
             {(data.status == "published" && data.content_type) &&
               <section className="o-columnbox1">
                 <header>
-                  <h1>Jump To</h1>
+                  <h2>Jump To</h2>
                 </header>
                 <JumpComp changeTab={this.changeTab} attrs={data.attrs} />
               </section>
             }
             <section className="o-columnbox1">
               <header>
-                <h1>Related Items</h1>
+                <h2>Related Items</h2>
               </header>
-              <p><a className="o-textlink__secondary" href="">Collaborative Film Authorship: Writing Latinas Into the Picture</a><br/>CSW update</p>
-              <p><a className="o-textlink__secondary" href="">Sporting Bodies, Displaying History: Black Embodiment</a><br/>UCLA Electronic Theses and Dissertations</p>
-              <p><a className="o-textlink__secondary" href="">United States-Based Latina Producers of Feature Films</a><br/>UCLA Electronic Theses and Dissertations</p>
+              <RelatedItemsComp />
             </section>
           </aside>
         </div>

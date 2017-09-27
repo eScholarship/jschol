@@ -100,8 +100,8 @@ class Embargoed extends React.Component {
       <details className="c-togglecontent" open>
         <summary>Main Content</summary>
         <div className="o-itemunavailable__embargoed">
-          <h1 className="o-itemunavailable__lede">This item is under embargo until
-            <strong> {eDate_formatted}</strong>.</h1>
+          <h3 className="o-itemunavailable__lede">This item is under embargo until
+            <strong> {eDate_formatted}</strong>.</h3>
         {(this.props.pub_web_loc && this.props.pub_web_loc.length > 0) &&
           [<p key="0">You may have access to the publisher's version here:</p>,
           <a key="1" href={this.props.pub_web_loc[0]} className="o-textlink__secondary">{this.props.pub_web_loc[0]}</a>,
@@ -147,7 +147,7 @@ class TabMainComp extends React.Component {
                          content_type={p.content_type}
                          supp_files={p.attrs.supp_files}
                          buy_link={p.attrs.buy_link} />
-        <h1 className="c-tabcontent__main-heading" tabIndex="-1">{p.title}</h1>
+        <h2 className="c-tabcontent__main-heading" tabIndex="-1">{p.title}</h2>
         <AuthorListComp pubdate={p.pub_date}
                         authors={p.authors}
                         changeTab={p.changeTab} />

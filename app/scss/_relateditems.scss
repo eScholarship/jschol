@@ -1,0 +1,21 @@
+// ##### Related Items Component ##### //
+
+.c-relateditems {
+  @extend %no-bullet-ul;
+
+  li {
+    line-height: $line-height1;
+
+    @include headings() {
+      margin: 0;
+      font-size: 1em;
+      font-weight: normal;
+    }
+
+    &:not(:last-child) {
+      margin-bottom: $spacing-sm;
+    }
+
+  }
+
+}
