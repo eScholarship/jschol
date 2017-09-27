@@ -123,14 +123,13 @@ def getUserPermissions(username, sessionID, unitID)
 
   # Check for permissions
   ret = {}
-  if OJS_DB[:eschol_roles].where(user_id: userID, role: 'admin', unit_id: unitID).first
-    ret[:admin] = true
-  end
   if OJS_DB[:user_settings].where(user_id: userID, setting_name: 'eschol_superuser').first
-    ret[:admin] = true
-    ret[:super] = true
+    return { admin: true, super: true }
+  elsif OJS_DB[:eschol_roles].where(user_id: userID, role: 'admin', unit_id: unitID).first
+    return { admin: true }
+  else
+    return {}
   end
-  return ret
 end
 
 ###################################################################################################

@@ -743,6 +743,14 @@ put "/api/static/:unitID/:pageName/mainText" do |unitID, pageName|
 end
 
 ###################################################################################################
+# General function that verifies the user is a super-user, and if not, halts with an informative
+# message.
+def superCheck(perms)
+  return if perms[:super]
+  halt 401, "This action is restricted. Contact eScholarship Support for further assistance."
+end
+
+###################################################################################################
 # *Put* to change unit profile properties: content configuration
 put "/api/unit/:unitID/profileContentConfig" do |unitID|
   # Check user permissions
@@ -767,11 +775,15 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
 
     if params['data']['unitName'] then unit.name = params['data']['unitName'] end
 
-    if params['data']['doajSeal'] && params['data']['doajSeal'] == 'on'
+    # Certain elements can only be changed by super user
+    if params['data']['doajSeal'] && params['data']['doajSeal'] == 'on' && !unitAttrs['doaj']
+      superCheck(perms)
       unitAttrs['doaj'] = true
-    else
+    elsif unitAttrs['doaj']
+      superCheck(perms)
       unitAttrs.delete('doaj')
-    end 
+    end
+
     if params['data']['issn'] then unitAttrs['issn'] = params['data']['issn'] end
     if params['data']['eissn'] then unitAttrs['eissn'] = params['data']['eissn'] end
     if params['data']['altmetrics_ok'] && params['data']['altmetrics_ok'] == 'on'
