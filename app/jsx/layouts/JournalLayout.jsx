@@ -104,17 +104,17 @@ class IssueComp extends React.Component {
       { this.props.display=="magazine" ?
         pi.sections.map(section =>
           <div key={section.name}>
-            <h2 className="o-heading1a">{section.name}</h2>
+            <h3 className="o-heading1a">{section.name}</h3>
             <div className="o-dividecontent2x--ruled">
-              {section.articles.map(article => <PubComp h="h3" key={article.id} result={article}/>)}
+              {section.articles.map(article => <PubComp h="h4" key={article.id} result={article}/>)}
             </div>
           </div>
         )
       :
         pi.sections.map(section =>
           <div key={section.name}>
-            <h2 className="o-heading1a">{section.name}</h2>
-            {section.articles.map(article => <PubComp h="h3" key={article.id} result={article}/>)}
+            <h3 className="o-heading1a">{section.name}</h3>
+            {section.articles.map(article => <PubComp h="h4" key={article.id} result={article}/>)}
           </div>
         )
       }

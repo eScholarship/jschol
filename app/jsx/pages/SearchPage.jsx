@@ -558,7 +558,7 @@ class SearchPage extends PageBase {
             <div>
             {(data.count != 0 ) ? 
               data.searchResults.map(result =>
-                <ScholWorksComp h="h2" key={result.id} result={result} />)
+                <ScholWorksComp h="h3" key={result.id} result={result} />)
             :
               <p><br/><br/>No results found.<br/><br/></p>
             }

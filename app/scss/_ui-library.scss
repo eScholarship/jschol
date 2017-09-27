@@ -9,34 +9,31 @@
   padding: $spacing-body;
   background-color: $color-light-gray;
   overflow: hidden;
+}
 
-  h1,
-  h2 {
-    flex: 0 0 auto;
-    margin: 0;
-    font-size: 1em;
-    font-weight: normal;
+%ui-library__elements {
+  flex: 0 0 auto;
 
-    @include bp(screen1) {
-      font-size: 1.5em;
-    }
-
-    @include bp(screen2) {
-      font-size: 2em;
-    }
-
+  @include bp(screen1) {
+    font-size: 1.5em;
   }
 
-  h1 {
-    margin: 0 1em 0 0;
+  @include bp(screen2) {
+    font-size: 2em;
+  }
+
+  a {
     color: $color-dark-blue;
-
-    a {
-      color: inherit;
-    }
-
   }
 
+}
+
+.ui-library__title {
+  @extend %ui-library__elements;
+}
+
+.ui-library__component {
+  @extend %ui-library__elements;
 }
 
 .ui-library__list {
