@@ -140,14 +140,13 @@ class PageBase extends React.Component
                 data: _.merge(_.cloneDeep(data),
                         { username: this.state.adminLogin.username, token: this.state.adminLogin.token })})
     .done(data=>{
+      this.fetchPermissions(true)
       if (data.nextURL) {
         this.setState({ fetchingData: false })
         this.props.router.push(data.nextURL)
       }
-      else {
-        this.fetchPermissions(true)
+      else
         this.fetchPageData()
-      }
     })
     .fail(data=>{
       alert("Error" + (data.responseJSON ? `:\n${data.responseJSON.message}`

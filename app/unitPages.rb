@@ -531,7 +531,7 @@ put "/api/unit/:unitID/nav/:navID" do |unitID, navID|
 
         if navPerms[oldSlug][:change_text]
           newHTML = sanitizeHTML(params[:attrs][:html])
-          newHTML.gsub(%r{</?p>}, '').strip.empty? and jsonHalt(400, "Text must be supplied.")
+          newHTML.gsub(%r{</?p>}, '').gsub(/\s|\u00a0/, '').empty? and jsonHalt(400, "Text must be supplied.")
           page.attrs = JSON.parse(page.attrs).merge({ "html" => newHTML }).to_json
         end
         page.save
