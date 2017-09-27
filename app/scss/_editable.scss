@@ -2,6 +2,10 @@
 
 $color-black-semitrans: rgba(124, 126, 127, 0.5);
 
+.c-editable-h3 {
+  display: inline-block;
+}
+
 .c-editable__working {
   position: absolute; /* Stay in place */
   top: 0;
@@ -63,6 +67,10 @@ $color-black-semitrans: rgba(124, 126, 127, 0.5);
 
 .c-editable-page__button:disabled {
   color: graytext
+}
+
+.c-editable-help__icon {
+  margin-left: 20px;
 }
 
 .trumbowyg-box, .trumbowyg-editor {
