@@ -124,7 +124,7 @@ class MarqueeComp extends React.Component {
     }
 
     if (this.props.forceOn || (marquee.carousel && marquee.slides && marquee.slides.length > 0)) return this.renderMarquee(slides, about_block)
-    if (((marquee.carousel && marquee.slides.length == 0) ||
+    if (((marquee.carousel && (!marquee.slides || marquee.slides.length == 0)) ||
          !marquee.carousel) && marquee.about) return this.renderAbout(about_block)
 
   }

@@ -148,10 +148,11 @@ class JournalLayout extends React.Component {
   
   render() {
     let data = this.props.data
+    let marquee = this.props.marquee
     return (
       <div>
-      {(this.props.marquee.carousel || this.props.marquee.about) &&
-        <MarqueeComp marquee={this.props.marquee} />
+      {((marquee.carousel && marquee.carousel.slides) || marquee.about) &&
+        <MarqueeComp marquee={marquee} />
       }
         <div className="c-columns">
           <main id="maincontent">

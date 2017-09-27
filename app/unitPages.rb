@@ -396,8 +396,18 @@ def getUnitCarouselConfig(unit, attrs)
   if unit.type == 'campus'
     cu = flattenDepts($hierByAncestor[unit.id].map(&:values).map{|x| x[:unit_id]})
     config[:campusUnits] = cu.sort_by{ |u| u["name"] }
-    config[:contentCar1] = attrs['contentCar1']
-    config[:contentCar2] = attrs['contentCar2']
+    topmostUnit = config[:campusUnits].length > 0 ? config[:campusUnits][0]['id'] : nil
+    emptyConfig = {"mode": "disabled", "unit_id": ""}
+    config[:contentCar1] = topmostUnit ? 
+        attrs['contentCar1'] ?
+          attrs['contentCar1']
+        : {"mode": "unit", "unit_id": topmostUnit}
+      : emptyConfig
+    config[:contentCar2] = topmostUnit ? 
+        attrs['contentCar2'] ?
+          attrs['contentCar2']
+        : {"mode": "journals", "unit_id": topmostUnit}
+      : emptyConfig
   end
   return config 
 end
