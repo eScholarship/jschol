@@ -360,6 +360,21 @@ def getUnitProfile(unit, attrs)
   return profile
 end
 
+def getUnitCarouselConfig(unit, attrs)
+  profile = {
+    marquee: getUnitMarquee(unit, attrs)
+  }
+  if unit.type == 'campus'
+    cu = flattenDepts($hierByAncestor[unit.id].map(&:values).map{|x| x[:unit_id]})
+    profile[:campusUnits] = cu.sort_by{ |u| u["name"] }
+    profile[:contentCar1] =  attrs['contentCar1']
+    profile[:contentCar1UnitID] =  attrs['contentCar1UnitID']
+    profile[:contentCar2] = attrs['contentCar2']
+    profile[:contentCar2UnitID] =  attrs['contentCar2UnitID']
+  end
+  return profile
+end
+
 def getItemAuthors(itemID)
   return ItemAuthors.filter(:item_id => itemID).order(:ordering).map(:attrs).collect{ |h| JSON.parse(h)}
 end

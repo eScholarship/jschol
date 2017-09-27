@@ -591,7 +591,7 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
       pageData[:content] = getUnitProfile(unit, attrs)
     elsif pageName == 'carousel' 
       # ToDo: Cleanup this which duplicates marquee info below
-      pageData[:content] = getUnitMarquee(unit, attrs)
+      pageData[:content] = getUnitCarouselConfig(unit, attrs)
     elsif pageName == 'issueConfig'
       pageData[:content] = getUnitIssueConfig(unit, attrs)
     elsif pageName == 'nav'

@@ -79,7 +79,6 @@ class DepartmentLayout extends React.Component {
     let data = this.props.data,
         seriesList = this.seriesCompListMaker(data.series),
         monographSeriesList = this.seriesCompListMaker(data.monograph_series)
-    console.log(this.props)
     return (
       <div>
       {(this.props.marquee.carousel || this.props.marquee.about) &&

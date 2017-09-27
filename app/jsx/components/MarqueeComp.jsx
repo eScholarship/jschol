@@ -13,6 +13,7 @@ if (!(typeof document === "undefined")) {
 
 class MarqueeComp extends React.Component {
   static propTypes = {
+    forceOn: PropTypes.bool,
     marquee: PropTypes.shape({
       about: PropTypes.string,
       carousel: PropTypes.bool,
@@ -97,7 +98,7 @@ class MarqueeComp extends React.Component {
        "<button class=\"c-marquee__sidebar-more\">More</button>") : null
     let marquee = this.props.marquee
     var slides = []
-    if (this.props.marquee.slides) {
+    if (marquee.slides) {
       // console.log(this.props.marquee.slides)
       slides = this.props.marquee.slides.map((slide, i) => {
         var imgUrl
@@ -122,7 +123,7 @@ class MarqueeComp extends React.Component {
       })
     }
 
-    if (marquee.carousel && marquee.slides && marquee.slides.length > 0) return this.renderMarquee(slides, about_block)
+    if (this.props.forceOn || (marquee.carousel && marquee.slides && marquee.slides.length > 0)) return this.renderMarquee(slides, about_block)
     if (((marquee.carousel && marquee.slides.length == 0) ||
          !marquee.carousel) && marquee.about) return this.renderAbout(about_block)
 
