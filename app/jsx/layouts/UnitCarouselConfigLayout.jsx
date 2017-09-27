@@ -138,7 +138,7 @@ class HeroCarouselLayout extends React.Component {
 
           <label className="c-editable-page__label" htmlFor={"text" + i}>Text:</label>
 
-          <WysiwygEditorComp className="c-editable-page__input" name={"text" + i}
+          <WysiwygEditorComp className="c-editable-page__input" name={"text" + i} id={"text"+i}
               html={slide.text} unit={this.props.unit.id} onChange={ newText => this.setSlideData({ text: newText }, i) }
               buttons={[
                         ['strong', 'em', 'underline', 'link'], 
