@@ -24,7 +24,7 @@ export default class WysiwygEditorComp extends React.Component
   }
 
   componentWillMount() {
-    this.id = "trubmo-" + (new Date().getTime())
+    this.id = this.props.id ? this.props.id : "trumbo-" + (new Date().getTime())
     this.initialHTML = this.props.html
     this.props.onChange(this.props.html) // initialize newText
   }
