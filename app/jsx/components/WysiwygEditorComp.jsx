@@ -24,6 +24,8 @@ export default class WysiwygEditorComp extends React.Component
   }
 
   componentWillMount() {
+    this.id = "trubmo-" + (new Date().getTime())
+    this.initialHTML = this.props.html
     this.props.onChange(this.props.html) // initialize newText
   }
 
@@ -33,9 +35,9 @@ export default class WysiwygEditorComp extends React.Component
     <Subscriber channel="cms">
       { cms => cms.modules &&
         <cms.modules.Trumbowyg 
-                   id={this.props.id}
+                   id={this.id}
                    buttons={buttons}
-                   data={this.props.html}
+                   data={this.initialHTML}
                    shouldInjectSvgIcons={false}
                    svgIconsPath="/bower_components/trumbowyg/dist/ui/icons.svg"
                    onChange={e => this.props.onChange(e.target.innerHTML)}
