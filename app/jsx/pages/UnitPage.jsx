@@ -85,11 +85,6 @@ class UnitPage extends PageBase
     } else if (this.props.params.pageName === 'profile') {
       contentLayout = this.cmsPage(data, <UnitProfileLayout unit={data.unit} data={data.content} sendApiData={this.sendApiData} sendBinaryFileData={this.sendBinaryFileData}/>)
     } else if (this.props.params.pageName === 'carousel') {
-      // let temporary_data = 
-//  {'about':
-//  "<p>\n\nThe Agricultural History Center, an Organized Research Unit of the University of California at Davis, was founded in 1964 to enhance knowledge of agriculture's past through publications, education, and other public services. The Center produces and oversees research on a broad range of topics in agricultural history, including studies of comparative farm policy, migration and agricultural development, the history of farm land values, the agricultural-environmental border, the causes and consequences of agricultural mechanization and other sources of productivity improvements in the nineteenth and twentieth centuries, and the impact of scientific research. It is the head office of the All-UC Group in Economic History and also performs a wide range of other public services, such as overseeing a special fellowship, producing and distributing a series of working papers, and serving as a resource for the general public. In the process, the Center has gained a national and international reputation as a thriving interdisciplinary clearinghouse for ideas and research in agricultural history. \n\n </p>",
-// 'carousel': true,
-// 'slides': [{"text": "temporary data sample text TEST", "header": "Sample header"}]}
       contentLayout = this.cmsPage(data, <UnitCarouselConfigLayout unit={data.unit} data={data.content} sendApiData={this.sendApiData} sendBinaryFileData={this.sendBinaryFileData}/>)
     } else if (this.props.params.pageName === 'issueConfig') {
       contentLayout = this.cmsPage(data, <UnitIssueConfigLayout unit={data.unit} data={data.content} sendApiData={this.sendApiData}/>)
