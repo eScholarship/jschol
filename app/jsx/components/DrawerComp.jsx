@@ -44,7 +44,9 @@ class SortableNavList extends React.Component {
       return undefined
     return navItems.map(nav => {
       let data = {
-        id: nav.id, type: nav.type,
+        id: nav.id,
+        type: nav.type,
+        slug: nav.slug,
         title: <Link to={`/uc/${this.props.unit}${(nav.type == "home") ? "" : `/nav/${nav.id}`}`}>{nav.name}</Link>,
         subtitle: <i>{nav.hidden && 'hidden '}{nav.type}</i>
       }
@@ -77,6 +79,8 @@ class SortableNavList extends React.Component {
         maxDepth={2}
         canDrag={({ node }) => {
           if (node.type == "home") // don't allow dragging unit home
+            return false
+          if (node.type != "folder" && !(this.props.cms.permissions.nav_perms[node.slug] || {}).reorder)
             return false
           return true
         }}

@@ -69,12 +69,39 @@ def getUnitAncestor(unit)
   return $hierByUnit[unit.id][0].ancestor
 end
 
+# Permissions per nav item
+def getNavPerms(unit, navItems, result)
+  navItems or return
+  navItems.each { |navItem|
+    if navItem['type'] == 'folder'
+      getNavPerms(unit, navItem['sub_nav'], result)
+    elsif (slug = navItem['slug'])
+      if unit.type == 'campus'
+        result[slug] =   { change_slug: false, change_text: false, remove: false, reorder: false }
+      else
+        case navItem['slug']
+        when /^(policyStatement|policies|policiesProcedures|journal_policies|policy)$/i
+          result[slug] = { change_slug: false, change_text: false, remove: false, reorder: true  }
+        when /^(submitPaper|submissionGuidelines|submissionprocess|howsubmit)$/i
+          result[slug] = { change_slug: false, change_text: true,  remove: false, reorder: true  }
+        when /^(contactUs)$/i
+          result[slug] = { change_slug: false, change_text: true,  remove: false, reorder: false }
+        when /^(aboutus|about)$/i
+          result[slug] = { change_slug: false, change_text: true,  remove: false, reorder: true  }
+        else
+          result[slug] = { change_slug: true,  change_text: true,  remove: true,  reorder: true  }
+        end
+      end
+    end
+  }
+end
+
 # Add a URL to each nav bar item
-def getNavBar(unit, pageName, navItems, level=1)
+def getNavBar(unit, navItems, level=1)
   if navItems
     navItems.each { |navItem|
       if navItem['type'] == 'folder'
-        navItem['sub_nav'] = getNavBar(unit, pageName, navItem['sub_nav'], level+1)
+        navItem['sub_nav'] = getNavBar(unit, navItem['sub_nav'], level+1)
       elsif navItem['slug']
         navItem['url'] = "/uc/#{unit.id}#{navItem['slug']=="" ? "" : "/"+navItem['slug']}"
       end
@@ -120,7 +147,7 @@ def getUnitHeader(unit, pageName=nil, journalIssue=nil, attrs=nil)
     :logo => (unit.type.include? 'series') ? getLogoData(JSON.parse(ancestor.attrs)['logo']) : getLogoData(attrs['logo']),
     :directSubmit => attrs['directSubmit'],
     :directSubmitURL => attrs['directSubmitURL'],
-    :nav_bar => getNavBar(unit, pageName, attrs['nav_bar']),
+    :nav_bar => getNavBar(unit, attrs['nav_bar']),
     :social => {
       :facebook => attrs['facebook'],
       :twitter => attrs['twitter'],
@@ -466,6 +493,8 @@ put "/api/unit/:unitID/nav/:navID" do |unitID, navID|
     unit = Unit[unitID] or jsonHalt(404, "Unit not found")
     unitAttrs = JSON.parse(unit.attrs)
     params[:name].empty? and jsonHalt(400, "Page name must be supplied.")
+    navPerms = {}
+    getNavPerms(unit, unitAttrs["nav_bar"], navPerms)
 
     travNav(unitAttrs['nav_bar']) { |nav|
       next unless nav['id'].to_s == navID.to_s
@@ -475,12 +504,14 @@ put "/api/unit/:unitID/nav/:navID" do |unitID, navID|
         page = Page.where(unit_id: unitID, slug: nav['slug']).first or halt(404, "Page not found")
 
         oldSlug = page.slug
-        newSlug = params[:slug]
-        newSlug.empty? and jsonHalt(400, "Slug must be supplied.")
-        newSlug =~ /^[a-zA-Z][a-zA-Z0-9_]+$/ or jsonHalt(400,
-          message: "Slug must start with a letter a-z, and consist only of letters a-z, numbers, or underscores.")
-        page.slug = newSlug
-        nav['slug'] = newSlug
+        if navPerms[oldSlug][:change_slug]
+          newSlug = params[:slug]
+          newSlug.empty? and jsonHalt(400, "Slug must be supplied.")
+          newSlug =~ /^[a-zA-Z][a-zA-Z0-9_]+$/ or jsonHalt(400,
+            message: "Slug must start with a letter a-z, and consist only of letters a-z, numbers, or underscores.")
+          page.slug = newSlug
+          nav['slug'] = newSlug
+        end
 
         page.name = params[:name]
         page.name.empty? and jsonHalt(400, "Page name must be supplied.")
@@ -488,9 +519,11 @@ put "/api/unit/:unitID/nav/:navID" do |unitID, navID|
         page.title = params[:title]
         page.title.empty? and jsonHalt(400, "Title must be supplied.")
 
-        newHTML = sanitizeHTML(params[:attrs][:html])
-        newHTML.empty? and jsonHalt(400, "Text must be supplied.")
-        page.attrs = JSON.parse(page.attrs).merge({ "html" => newHTML }).to_json
+        if navPerms[oldSlug][:change_text]
+          newHTML = sanitizeHTML(params[:attrs][:html])
+          newHTML.gsub(%r{</?p>}, '').strip.empty? and jsonHalt(400, "Text must be supplied.")
+          page.attrs = JSON.parse(page.attrs).merge({ "html" => newHTML }).to_json
+        end
         page.save
       elsif nav['type'] == "link"
         params[:url] =~ %r{^(/\w|https?://).*} or jsonHalt(400, "Invalid URL.")
@@ -686,10 +719,13 @@ delete "/api/unit/:unitID/nav/:navID" do |unitID, navID|
   # Check user permissions
   perms = getUserPermissions(params[:username], params[:token], unitID)
   perms[:admin] or halt(401)
+  unit = Unit[unitID] or halt(404, "Unit not found")
+  unitAttrs = JSON.parse(unit.attrs)
+  navPerms = {}
+  getNavPerms(unit, unitAttrs["nav_bar"], navPerms)
+  navPerms[navID].remove or jsonHalt(401, "No permission.")
 
   DB.transaction {
-    unit = Unit[unitID] or halt(404, "Unit not found")
-    unitAttrs = JSON.parse(unit.attrs)
     nav = getNavByID(unitAttrs['nav_bar'], navID)
     unitAttrs['nav_bar'] = deleteNavByID(unitAttrs['nav_bar'], navID)
     getNavByID(unitAttrs['nav_bar'], navID).nil? or raise("delete failed")
@@ -762,7 +798,7 @@ end
 # message.
 def superCheck(perms)
   return if perms[:super]
-  halt 401, "This action is restricted. Contact eScholarship Support for further assistance."
+  jsonHalt(401, "This action is restricted. Contact eScholarship Support for further assistance.")
 end
 
 ###################################################################################################
@@ -791,21 +827,21 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
     if params['data']['unitName'] then unit.name = params['data']['unitName'] end
 
     # Certain elements can only be changed by super user
-    if params['data']['doajSeal'] && params['data']['doajSeal'] == 'on' && !unitAttrs['doaj']
-      superCheck(perms)
-      unitAttrs['doaj'] = true
-    elsif unitAttrs['doaj']
-      superCheck(perms)
-      unitAttrs.delete('doaj')
+    if perms[:super]
+      if params['data']['doajSeal'] == 'on'
+        unitAttrs['doaj'] = true
+      else
+        unitAttrs.delete('doaj')
+      end
+      if params['data']['altmetrics_ok'] == 'on'
+        unitAttrs['altmetrics_ok'] = true
+      else
+        unitAttrs.delete('altmetrics_ok')
+      end
     end
 
     if params['data']['issn'] then unitAttrs['issn'] = params['data']['issn'] end
     if params['data']['eissn'] then unitAttrs['eissn'] = params['data']['eissn'] end
-    if params['data']['altmetrics_ok'] && params['data']['altmetrics_ok'] == 'on'
-      unitAttrs['altmetrics_ok'] = true
-    else
-      unitAttrs.delete('altmetrics_ok')
-    end 
 
     if params['data']['facebook'] then unitAttrs['facebook'] = params['data']['facebook'] end
     if params['data']['twitter'] then unitAttrs['twitter'] = params['data']['twitter'] end
@@ -1023,7 +1059,7 @@ def updateIssueConfig(inputAttrs, data, voliss)
 end
 
 put "/api/unit/:unitID/issueConfig" do |unitID|
-  getUserPermissions(params[:username], params[:token], unitID)[:super] or halt(401)
+  superCheck(getUserPermissions(params[:username], params[:token], unitID))
   DB.transaction {
     issueMap = Hash[Issue.where(unit_id: unitID).map { |iss| ["#{iss.volume}.#{iss.issue}", iss] }]
     params['data'].keys.select { |k| k =~ /^rights-/ }.map { |k| k.sub(/^rights-/, '') }.each { |voliss|

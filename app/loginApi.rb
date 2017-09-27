@@ -122,7 +122,7 @@ def getUserPermissions(username, sessionID, unitID)
   OJS_DB[:sessions].where(session_id: sessionID, user_id: userID).update(last_used: Time.now.to_i)
 
   # Check for permissions
-  ret = {}
+  puts "Checking for user=#{userID}, unit=#{unitID}."
   if OJS_DB[:user_settings].where(user_id: userID, setting_name: 'eschol_superuser').first
     return { admin: true, super: true }
   elsif OJS_DB[:eschol_roles].where(user_id: userID, role: 'admin', unit_id: unitID).first
@@ -136,5 +136,17 @@ end
 # Retrieve page permissions for the user's session
 get "/api/permissions/:unitID" do |unitID|
   content_type :json
-  return JSON.generate(getUserPermissions(params[:username], params[:token], unitID))
+
+  # General permissions
+  result = getUserPermissions(params[:username], params[:token], unitID)
+
+  # Per-nav-item permissions
+  unit = Unit[unitID]
+  attrs = JSON.parse(unit.attrs)
+  navPerms = {}
+  getNavPerms(Unit[unitID], attrs["nav_bar"], navPerms)
+  result[:nav_perms] = navPerms
+
+  # Return the combined info
+  return JSON.generate(result)
 end

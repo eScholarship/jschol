@@ -144,12 +144,15 @@ class PageBase extends React.Component
         this.setState({ fetchingData: false })
         this.props.router.push(data.nextURL)
       }
-      else
+      else {
+        this.fetchPermissions()
         this.fetchPageData()
+      }
     })
     .fail(data=>{
       alert("Error" + (data.responseJSON ? `:\n${data.responseJSON.message}`
                                          : ` ${data.status}:\n${data.statusText}.`))
+      this.fetchPermissions()
       this.fetchPageData()
     })
   }

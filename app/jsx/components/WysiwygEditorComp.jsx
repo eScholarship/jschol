@@ -41,6 +41,7 @@ export default class WysiwygEditorComp extends React.Component
                    shouldInjectSvgIcons={false}
                    svgIconsPath="/bower_components/trumbowyg/dist/ui/icons.svg"
                    onChange={e => this.props.onChange(e.target.innerHTML)}
+                   disabled={this.props.disabled}
                    plugins={{
                     // Add parameters to uploadImage plugin
                     uploadImage: {
