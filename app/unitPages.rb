@@ -729,14 +729,15 @@ delete "/api/unit/:unitID/nav/:navID" do |unitID, navID|
   # Check user permissions
   perms = getUserPermissions(params[:username], params[:token], unitID)
   perms[:admin] or halt(401)
-  unit = Unit[unitID] or halt(404, "Unit not found")
-  unitAttrs = JSON.parse(unit.attrs)
-  navPerms = {}
-  getNavPerms(unit, unitAttrs["nav_bar"], navPerms)
-  navPerms[navID].remove or jsonHalt(401, "No permission.")
 
   DB.transaction {
+    unit = Unit[unitID] or halt(404, "Unit not found")
+    unitAttrs = JSON.parse(unit.attrs)
+    navPerms = {}
+    getNavPerms(unit, unitAttrs["nav_bar"], navPerms)
     nav = getNavByID(unitAttrs['nav_bar'], navID)
+    navPerms[nav['slug']][:remove] or
+      jsonHalt(401, "This action is restricted. Contact eScholarship Support for further assistance.")
     unitAttrs['nav_bar'] = deleteNavByID(unitAttrs['nav_bar'], navID)
     getNavByID(unitAttrs['nav_bar'], navID).nil? or raise("delete failed")
     if nav['type'] == "folder" && !nav['sub_nav'].empty?
