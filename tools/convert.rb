@@ -51,6 +51,9 @@ MAX_TEXT_SIZE  = 950*1024
 
 DATA_DIR = "/apps/eschol/erep/data"
 
+TEMP_DIR = "/apps/eschol/eschol5/jschol/tmp"
+FileUtils.mkdir_p(TEMP_DIR)
+
 # The main database we're inserting data into
 DB = Sequel.connect(YAML.load_file("config/database.yaml"))
 $dbMutex = Mutex.new
@@ -69,6 +72,7 @@ STATS_DB = Sequel.connect(YAML.load_file("config/statsDb.yaml"))
 $prefilterQueue = SizedQueue.new(100)
 $indexQueue = SizedQueue.new(100)
 $batchQueue = SizedQueue.new(1)  # no use getting very far ahead of CloudSearch
+$splashQueue = Queue.new
 
 # Mode to force checking of the index digests (useful when indexing algorithm or unit structure changes)
 $rescanMode = ARGV.delete('--rescan')
@@ -207,6 +211,10 @@ end
 class ItemCount < Sequel::Model
 end
 
+class ItemAuthors < Sequel::Model(:item_authors)
+  unrestrict_primary_key
+end
+
 class Issue < Sequel::Model
 end
 
@@ -221,6 +229,12 @@ end
 
 class InfoIndex < Sequel::Model(:info_index)
 end
+
+class DisplayPDF < Sequel::Model
+  unrestrict_primary_key
+end
+
+require_relative '../splash/splashGen.rb'
 
 ###################################################################################################
 # Insert hierarchy links (skipping dupes) for all descendants of the given unit id.
@@ -1678,9 +1692,13 @@ def parseUCIngest(itemID, inMeta, fileType)
   contentType = contentFile && contentFile.at("./mimeType") && contentFile.at("./mimeType").text
 
   # For ETDs (all in Merritt), figure out the PDF path in the feed file
-  pdfExists = File.file?(arkToFile(itemID, "content/base.pdf"))
-  if fileType == "ETD" && pdfExists
-    addMerrittPaths(itemID, attrs)
+  pdfPath = arkToFile(itemID, "content/base.pdf")
+  pdfExists = File.file?(pdfPath)
+  if pdfExists
+    if fileType == "ETD" && pdfExists
+      addMerrittPaths(itemID, attrs)
+    end
+    attrs[:content_length] = File.size(pdfPath)
   end
 
   # Populate the Item model instance
@@ -2569,6 +2587,107 @@ def indexInfo()
 end
 
 ###################################################################################################
+# Main driver for PDF display version generation
+def convertPDF(itemID)
+  item = Item[itemID]
+  attrs = JSON.parse(item.attrs)
+
+  # Generate the splash instructions, for cache checking
+  instrucs = splashInstrucs(itemID, item, attrs)
+  instrucDigest = Digest::MD5.base64digest(instrucs.to_json)
+
+  # See if current splash page is adequate
+  origFile = arkToFile(itemID, "content/base.pdf")
+  origFile or raise("Warning: missing content file")
+  origSize = File.size(origFile)
+
+  dbPdf = DisplayPDF[itemID]
+  if !$forceMode && dbPdf && dbPdf.orig_size == origSize
+    #puts "Unchanged."
+    return
+  end
+  puts "Updating."
+
+  # Linearize the original PDF
+  linFile, linDiff, splashLinFile, splashLinDiff = nil, nil, nil, nil
+  begin
+    # First, linearize the original file. This will make the first page display quickly in our
+    # pdf.js view on the item page.
+    linFile = Tempfile.new(["linearized_#{itemID}_", ".pdf"], TEMP_DIR)
+    system("/usr/bin/qpdf --linearize #{origFile} #{linFile.path}")
+    code = $?.exitstatus
+    code == 0 || code == 3 or raise("Error #{code} linearizing.")
+    linSize = File.size(linFile.path)
+
+    # Then generate a splash page, and linearize that as well.
+    splashLinFile = Tempfile.new(["splashLin_#{itemID}_", ".pdf"], TEMP_DIR)
+    splashGen(itemID, instrucs, linFile, splashLinFile.path)
+    splashLinSize = File.size(splashLinFile.path)
+
+    $s3Bucket.object("#{$s3Config.prefix}/pdf_patches/linearized/#{itemID}").put(body: linFile)
+    $s3Bucket.object("#{$s3Config.prefix}/pdf_patches/splash/#{itemID}").put(body: splashLinFile)
+
+    DisplayPDF.where(item_id: itemID).delete
+    DisplayPDF.create(item_id: itemID,
+      orig_size:          origSize,
+      orig_timestamp:     File.mtime(origFile),
+      linear_size:        linSize,
+      splash_info_digest: instrucDigest,
+      splash_size:        splashLinSize
+    )
+
+    puts sprintf("Updated: lin=%d/%d = %.1f%%; splashLin=%d/%d = %.1f%%",
+                 linSize, origSize, linSize*100.0/origSize,
+                 splashLinSize, origSize, splashLinSize*100.0/origSize)
+  ensure
+    linFile and linFile.unlink
+    linDiff and linDiff.unlink
+    splashLinFile and splashLinFile.unlink
+    splashLinDiff and splashLinDiff.unlink
+  end
+end
+
+###################################################################################################
+def splashFromQueue
+  loop do
+    # Grab an item from the input queue
+    itemID = $splashQueue.pop
+    itemID or break
+    Thread.current[:name] = itemID  # label all stdout from this thread
+    begin
+      convertPDF(itemID)
+    rescue Exception => e
+      e.is_a?(Interrupt) || e.is_a?(SignalException) and raise
+      puts "Exception: #{e} #{e.backtrace}"
+    end
+    Thread.current[:name] = nil
+  end
+end
+
+###################################################################################################
+# Main driver for PDF display version generation
+def splashAllPDFs(arks)
+  # Let the user know what we're doing
+  puts "Splashing #{arks=="ALL" ? "all" : "selected"} PDFs."
+
+  # Start a couple worker threads to do the splash conversions.
+  nThreads = 2
+  splashThreads = nThreads.times.map { Thread.new { splashFromQueue } }
+
+  # Grab all the arks
+  if arks == "ALL"
+    Item.where(content_type: "application/pdf").order(:id).each { |item|
+      $splashQueue << item.id
+    }
+  else
+    arks.each { |item| $splashQueue << item }
+  end
+
+  nThreads.times { $splashQueue << nil } # mark end-of-queue
+  splashThreads.each { |t| t.join }
+end
+
+###################################################################################################
 # Main action begins here
 
 startTime = Time.now
@@ -2581,6 +2700,9 @@ case ARGV[0]
     convertAllItems(arks.empty? ? "ALL" : Set.new(arks))
   when "--info"
     indexInfo()
+  when "--splash"
+    arks = ARGV.select { |a| a =~ /qt\w{8}/ }
+    splashAllPDFs(arks.empty? ? "ALL" : Set.new(arks))
   else
     STDERR.puts "Usage: #{__FILE__} --units|--items"
     exit 1
