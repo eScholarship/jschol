@@ -197,6 +197,8 @@ end
 # Get data for Campus Landing Page
 def getCampusLandingPageData(unit, attrs)
   return {
+    :contentCar1 => attrs['contentCar1'],                  
+    :contentCar2 => attrs['contentCar2'],                  
     :pub_count =>     ($statsCampusPubs.keys.include? unit.id)  ? $statsCampusPubs[unit.id]     : 0,
     :view_count =>    0,
     :opened_count =>    0,
@@ -361,18 +363,16 @@ def getUnitProfile(unit, attrs)
 end
 
 def getUnitCarouselConfig(unit, attrs)
-  profile = {
+  config = {
     marquee: getUnitMarquee(unit, attrs)
   }
   if unit.type == 'campus'
     cu = flattenDepts($hierByAncestor[unit.id].map(&:values).map{|x| x[:unit_id]})
-    profile[:campusUnits] = cu.sort_by{ |u| u["name"] }
-    profile[:contentCar1] =  attrs['contentCar1']
-    profile[:contentCar1UnitID] =  attrs['contentCar1UnitID']
-    profile[:contentCar2] = attrs['contentCar2']
-    profile[:contentCar2UnitID] =  attrs['contentCar2UnitID']
+    config[:campusUnits] = cu.sort_by{ |u| u["name"] }
+    config[:contentCar1] = attrs['contentCar1']
+    config[:contentCar2] = attrs['contentCar2']
   end
-  return profile
+  return config 
 end
 
 def getItemAuthors(itemID)
@@ -825,6 +825,34 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
   content_type :json
   return { status: "ok" }.to_json
 end
+
+###################################################################################################
+# *Put* to change campus content carousel configuration
+put "/api/unit/:campusID/campusCarouselConfig" do |campusID|
+  # Check user permissions
+  perms = getUserPermissions(params[:username], params[:token], campusID)
+  perms[:admin] or halt(401)
+
+  DB.transaction {
+    unit = Unit[campusID] or jsonHalt(404, "Unit not found")
+    unit.type == 'campus' or jsonHalt(404, "This unit is not a campus. Failed.")
+    unitAttrs = JSON.parse(unit.attrs)
+
+    if params['data']['mode1'] && params['data']['unit_id1']
+      unitAttrs['contentCar1'] = {'mode': params['data']['mode1'], 'unit_id': params['data']['unit_id1']}
+    end
+    if params['data']['mode2'] && params['data']['unit_id2']
+      unitAttrs['contentCar2'] = {'mode': params['data']['mode2'], 'unit_id': params['data']['unit_id2']}
+    end
+    unit.attrs = unitAttrs.to_json
+    unit.save
+  } 
+
+  refreshUnitsHash
+  content_type :json
+  return { status: "ok" }.to_json
+end
+
 
 def carouselConfig(slides, unitID)
   carousel = Widget.where(unit_id: unitID, region: "marquee", kind: "Carousel", ordering: 0).first

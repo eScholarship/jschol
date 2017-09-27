@@ -197,8 +197,8 @@ class HeroCarouselLayout extends React.Component {
 class CampusCarouselTable extends React.Component {
   renderUnitsDropdown() {
     return (
-      <select name="units"
-              defaultValue="none">
+      <select name={"unit_id"+this.props.index}
+              defaultValue={this.props.contentCarousel.unit_id}>
       { this.props.campusUnits.map((u) => {
         return (<option key={u.id} value={u.id}>{u.name}</option>)
       })}
@@ -216,20 +216,20 @@ class CampusCarouselTable extends React.Component {
         <tbody><tr>
           <td>
             <input className="c-editable-page__radio" type="radio"
-                   id={disabledId} name="contentCar1" value="disabled"
-                   defaultChecked={p.contentCarousel=="disabled"}/>
+                   id={disabledId} name={"mode"+p.index} value="disabled"
+                   defaultChecked={p.contentCarousel.mode=="disabled"}/>
             <label className="c-editable-page__radio-label" htmlFor={disabledId}>Disabled</label>
           </td>
           <td>
             <input className="c-editable-page__radio" type="radio"
-                   id={journalsId} name="contentCar1" value="journals"
-                   defaultChecked={p.contentCarousel=="journals"}/>
+                   id={journalsId} name={"mode"+p.index} value="journals"
+                   defaultChecked={p.contentCarousel.mode=="journals"}/>
             <label className="c-editable-page__radio-label" htmlFor={journalsId}>Campus Journal Covers</label>
           </td>
           <td>
             <input className="c-editable-page__radio" type="radio"
-                   id={featuredUnitId} name="contentCar1" value="unit"
-                   defaultChecked={p.contentCarousel=="unit"}/>
+                   id={featuredUnitId} name={"mode"+p.index} value="unit"
+                   defaultChecked={p.contentCarousel.mode=="unit"}/>
             <label className="c-editable-page__radio-label" htmlFor={featuredUnitId}>Featured Unit</label>
             {this.renderUnitsDropdown()}
           </td>
@@ -274,15 +274,20 @@ class UnitCarouselConfigLayout extends React.Component {
   static propTypes = {
     data:  PropTypes.shape({
       // --- BEGIN --- properties used strictly for Campus Landing page config
-      contentCar1:      PropTypes.string,
-      contentCar1UnitID:  PropTypes.string,
-      contentCar2:      PropTypes.string,
-      contentCar2UnitID:  PropTypes.string,
+      contentCar1: PropTypes.shape({
+        mode: PropTypes.string,
+        unit_id: PropTypes.string,
+      }),
+      contentCar2: PropTypes.shape({
+        mode: PropTypes.string,
+        unit_id: PropTypes.string,
+      }),
       campusUnits: PropTypes.arrayOf(PropTypes.shape({
         id: PropTypes.string,
         name: PropTypes.string,
       })),
       // --- END --- properties used strictly for Campus Landing page config
+
       marquee: PropTypes.shape({
         about: PropTypes.string,
         carousel: PropTypes.bool,
@@ -294,17 +299,23 @@ class UnitCarouselConfigLayout extends React.Component {
 //      }))
       }),
     }),
+    unit: PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      name: PropTypes.string.isRequired,
+      type: PropTypes.string,
+    }).isRequired,
     sendApiData: PropTypes.any,
     sendBinaryFileData: PropTypes.any,
-    unit: PropTypes.any
   }
 
   render () {
-    console.log(this.props)
+    let data = this.props.data
     return (
       <div>
-        <HeroCarouselLayout {...this.props} />
-        { this.props.unit.type == 'campus' && <ContentCarouselConfig data={this.props.data} unit={this.props.unit} /> }
+      { this.props.unit.type != 'campus' && 
+        <HeroCarouselLayout {...this.props} /> }
+      { this.props.unit.type == 'campus' && (data.contentCar1 || data.contentCar2) &&
+        <ContentCarouselConfig data={data} unit={this.props.unit} sendApiData={this.props.sendApiData} /> }
       </div>
     )
   }
