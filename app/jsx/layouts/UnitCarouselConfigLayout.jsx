@@ -106,7 +106,7 @@ class HeroCarouselLayout extends React.Component {
     var slides = _.cloneDeep(this.state.newData.marquee.slides) || []
     slides.push({
       header: 'Sample header',
-      text: '<div>sample text</div>',
+      text: '<p>sample text</p>',
       image: 'https://static.pexels.com/photos/40797/wild-flowers-flowers-plant-macro-40797.jpeg'
     })
     this.setMarqueeData({slides: slides})
@@ -138,7 +138,7 @@ class HeroCarouselLayout extends React.Component {
 
           <label className="c-editable-page__label" htmlFor={"text" + i}>Text:</label>
 
-          <WysiwygEditorComp className="c-editable-page__input" name={"text" + i} id={"text" + i} 
+          <WysiwygEditorComp className="c-editable-page__input" name={"text" + i}
               html={slide.text} unit={this.props.unit.id} onChange={ newText => this.setSlideData({ text: newText }, i) }
               buttons={[
                         ['strong', 'em', 'underline', 'link'], 
