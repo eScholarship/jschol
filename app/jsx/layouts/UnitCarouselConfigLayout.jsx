@@ -70,20 +70,18 @@ class HeroCarouselLayout extends React.Component {
   // ex: newStuff = {header: 'stuff and things'}, i=slide number
   // calls setData with {slides: [{header: , text: , }, {header: , text: ,}]}
   setSlideData = (newStuff, i) => {
-    console.log("Setting slide data = ", newStuff)
-    var slides = this.state.newData.slides
+   //  console.log("Setting slide data = ", newStuff)
+    var slides = this.state.newData.marquee.slides
     slides[i] = Object.assign(_.cloneDeep(slides[i]), newStuff)
-
-    this.setData({slides: slides})
+    this.setMarqueeData({slides: slides})
   }
 
   removeImagePreview = (i) => {
-    var slides = _.cloneDeep(this.state.newData.slides)
+    var slides = _.cloneDeep(this.state.newData.marquee.slides)
     delete slides[i].imagePreviewUrl
 
     document.getElementById("slideImage").value = ""
-
-    this.setData({slides: slides})
+    this.setMarqueeData({slides: slides})
   }
 
   handleSlideImageChange = (event, i) => {
@@ -99,14 +97,19 @@ class HeroCarouselLayout extends React.Component {
     reader.readAsDataURL(file)
   }
 
+  setMarqueeData = (newStuff) => {
+    var marquee = Object.assign(_.cloneDeep(this.state.newData.marquee), newStuff)
+    this.setData({marquee: marquee})
+  }
+
   addSlide = () => {
-    var slides = _.cloneDeep(this.state.newData.slides) || []
+    var slides = _.cloneDeep(this.state.newData.marquee.slides) || []
     slides.push({
       header: 'Sample header',
       text: '<div>sample text</div>',
       image: 'https://static.pexels.com/photos/40797/wild-flowers-flowers-plant-macro-40797.jpeg'
     })
-    this.setData({slides: slides})
+    this.setMarqueeData({slides: slides})
   }
 
   addSlideHandler = (event) => {
@@ -171,7 +174,7 @@ class HeroCarouselLayout extends React.Component {
               <Form to={`/api/unit/${this.props.unit.id}/profileContentConfig`} onSubmit={this.handleSubmit}>
                 <div className="can-toggle can-toggle--size-small">
                   <input id="displayCarousel" name="carouselFlag" type="checkbox" defaultChecked={data.marquee.carousel}
-                         onChange={ event => this.setData({carousel: event.target.checked}) }/>
+                         onChange={ event => this.setMarqueeData({carousel: event.target.checked}) }/>
                   <label htmlFor="displayCarousel">
                     <div className="can-toggle__label-text">Publish Carousel</div>
                     <div className="can-toggle__switch" data-checked="Enabled" data-unchecked="Disabled"></div>
