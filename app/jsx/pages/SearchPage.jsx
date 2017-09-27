@@ -542,15 +542,15 @@ class SearchPage extends PageBase {
         {data.info_count > 0 &&
           <section className="o-columnbox1">
             <header>
-              <h1 className="o-columnbox1__heading">{"Informational Pages ("+data.info_count+" results)"}</h1>
+              <h2 className="o-columnbox1__heading">{"Informational Pages ("+data.info_count+" results)"}</h2>
             </header>
             <InfoPagesComp query={data.query} info_count={data.info_count} infoResults={data.infoResults} />
           </section>
         }
           <section className="o-columnbox1">
             <header>
-              <h1 className="o-columnbox1__heading">
-                Scholarly Works ({data.count + " results" + (data.count > 10000 ? ", showing first 10000" : "")})</h1>
+              <h2 className="o-columnbox1__heading">
+                Scholarly Works ({data.count + " results" + (data.count > 10000 ? ", showing first 10000" : "")})</h2>
             </header>
           {(data.count > 2) &&
             <SortPaginationComp formName={formName} formButton={formButton} query={data.query} count={data.count}/>

@@ -41,7 +41,7 @@ class SubheaderComp extends React.Component {
   render() {
     let unit = this.props.unit
     let h = this.props.header,
-        banner_class = (!h.logo || (h.logo && h.logo.width <= 225)) ? "c-subheader__banner--narrow" : "c-subheader__banner--wide",
+        banner_class = (h.logo && h.logo.is_banner) ? "c-subheader__banner--wide" : "c-subheader__banner--narrow",
         [banner_url, banner_title] = unit.type.includes('series') ? [h.ancestorID, h.ancestorName] : [unit.id, unit.name]
 
    // Button Configuration based on unit type

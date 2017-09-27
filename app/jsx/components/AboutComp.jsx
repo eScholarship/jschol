@@ -36,7 +36,7 @@ class AboutComp extends React.Component {
     return (
       <section className="o-columnbox2">
         <header>
-          <h1>About</h1>
+          <h2>About</h2>
         </header>
         <div className="o-columnbox__truncate1" ref={element => this.aboutElement = element}
                dangerouslySetInnerHTML={{__html: about_block}} />
