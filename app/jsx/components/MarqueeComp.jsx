@@ -3,6 +3,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import CarouselComp from '../components/CarouselComp.jsx'
+import ArbitraryHTMLComp from "../components/ArbitraryHTMLComp.jsx"
 import $ from 'jquery'
 
 // Load dotdotdot in browser but not server
@@ -94,8 +95,10 @@ class MarqueeComp extends React.Component {
     let about_block = this.props.marquee.about ?
       ("<div>" + this.props.marquee.about + "</div>" +
        "<button class=\"c-marquee__sidebar-more\">More</button>") : null
+    let marquee = this.props.marquee
     var slides = []
     if (this.props.marquee.slides) {
+      // console.log(this.props.marquee.slides)
       slides = this.props.marquee.slides.map((slide, i) => {
         var imgUrl
         if (slide.imagePreviewUrl) {
@@ -113,15 +116,15 @@ class MarqueeComp extends React.Component {
         return (
           <div key={i} className="c-marquee__carousel-cell" style={{backgroundImage: "url('" + imgUrl + "')"}}>
             <h2>{slide.header}</h2>
-            <p>{slide.text}</p>
+            {slide.text && <ArbitraryHTMLComp html={slide.text} h1Level={3}/> }
           </div>
         )
       })
     }
 
-    if (this.props.marquee.carousel && this.props.marquee.slides && this.props.marquee.about) return this.renderMarquee(slides, about_block)
-    if (((this.props.marquee.carousel && !this.props.marquee.slides) ||
-         !this.props.marquee.carousel) && this.props.marquee.about) return this.renderAbout(about_block)
+    if (marquee.carousel && marquee.slides && marquee.slides.length > 0) return this.renderMarquee(slides, about_block)
+    if (((marquee.carousel && marquee.slides.length == 0) ||
+         !marquee.carousel) && marquee.about) return this.renderAbout(about_block)
 
   }
 }

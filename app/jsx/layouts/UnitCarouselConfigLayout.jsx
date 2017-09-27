@@ -2,14 +2,27 @@ import React from 'react'
 import Form from 'react-router-form'
 import WysiwygEditorComp from '../components/WysiwygEditorComp.jsx'
 import MarqueeComp from '../components/MarqueeComp.jsx'
+import PropTypes from 'prop-types'
 
 class UnitCarouselConfigLayout extends React.Component {
-  // static propTypes = {
-  // }
+  static propTypes = {
+    campusUnits: PropTypes.shape({
+      id: PropTypes.string,
+      name: PropTypes.string,
+    })
+//      slides: PropTypes.arrayOf(PropTypes.shape({
+//        header: PropTypes.string,
+//        image: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+//        text: PropTypes.string,
+//        imagePreviewUrl: PropTypes.string
+//      }))
+
+  }
 
   state = { newData: this.props.data }
 
   handleSubmit = (event, data) => {
+    console.log(data)
     event.preventDefault()
 
     // adds input type="file" fields to FormData
@@ -65,13 +78,14 @@ class UnitCarouselConfigLayout extends React.Component {
   }
 
   setData = (newStuff) => {
+    // console.log("newStuff = ", newStuff)
     this.setState({newData: Object.assign(_.cloneDeep(this.state.newData), newStuff)})
   }
 
   // ex: newStuff = {header: 'stuff and things'}, i=slide number
   // calls setData with {slides: [{header: , text: , }, {header: , text: ,}]}
   setSlideData = (newStuff, i) => {
-    console.log(newStuff)
+    // console.log(newStuff)
     var slides = this.state.newData.slides
     slides[i] = Object.assign(_.cloneDeep(slides[i]), newStuff)
 
@@ -122,10 +136,11 @@ class UnitCarouselConfigLayout extends React.Component {
   }
 
   componentWillMount() {
-    !this.state.newData.slides && this.addSlide()
+    // !this.state.newData.slides && this.addSlide()
   }
 
   renderSlideConfig() {
+    // console.log(this.state)
     var slideData = this.state.newData.slides
     return slideData.map((slide, i) => {
       return (
@@ -138,7 +153,8 @@ class UnitCarouselConfigLayout extends React.Component {
           <label className="c-editable-page__label" htmlFor={"text-" + i}>Text:</label>
 
           <WysiwygEditorComp className="c-editable-page__input" name={"text-" + i} id={"text-" + i} 
-              html={slide.text} unit={this.props.unit.id} onChange={ newText => this.setSlideData({ text: newText }, i) }
+              id={"react-trumboiwyg" + i}
+              html="<p>sample text</p>" unit={this.props.unit.id} onChange={ newText => this.setSlideData({ text: newText }, i) }
               buttons={[
                         ['strong', 'em', 'underline', 'link'], 
                        ]} />
@@ -160,8 +176,23 @@ class UnitCarouselConfigLayout extends React.Component {
     })
   }
 
+  renderUnitsDropdown() {
+    return (
+      <select name="units"
+              value="none">
+        <option value="none">None</option>
+        <option value="xyz">The Berkeley Institute of the Environment</option>
+        <option value="aby">Bay Area International Group</option>
+        <option value="bbg">Bixby Center for Population, Health & Sustainability</option>
+        <option value="citris">Center for Information Technology Research in the Interest of Society (CITRIS)</option>
+        <option value="clcs">Center for the Study of Law and Society Jurisprudence and Social Policy Program</option>
+      </select>
+    )
+  }
+
   render() {
     var data = this.state.newData
+    // console.log(data)
     return (
       <div>
         <h3 id="marquee">Landing Page Carousel</h3>
@@ -182,7 +213,8 @@ class UnitCarouselConfigLayout extends React.Component {
                   <br/>
                 </div>
                 <div>
-                  {this.renderSlideConfig()}<br/>
+                  {data.slides && data.slides.length > 0 ? this.renderSlideConfig() : null}
+                  <br/>
                   {<button onClick={ (event) => this.addSlideHandler(event) }>Add slide</button>}
                 </div>
                 <button type="submit">Save Changes</button> <button type="reset">Cancel</button>
@@ -190,6 +222,64 @@ class UnitCarouselConfigLayout extends React.Component {
             </section>
           </main>
         </div>
+      { this.props.unit.type == 'campus' &&
+        <div>
+          <h3>Content Carousel(s)</h3>
+          <div className="c-columns">
+            <main>
+              <section className="o-columnbox1">
+                <p>Content carousels may be used to feature content collections on your campus landing pages.</p>
+                {/* <Form to={`/api/unit/${this.props.unit.id}/campusCarouselConfig`} onSubmit={this.handleSubmit}>
+                  <div className="c-editable-page__label">Content Carousel 1</div>
+                  <table className="c-issueTable"><thead></thead>
+                    <tbody><tr>
+                      <td>
+                  <input className="c-editable-page__radio" type="radio"
+                         id="cc_1_disabled" name="campus_carousel_1" value="disabled"
+                         defaultChecked={data.campus_carousel_1=="disabled"}/>
+                  <label className="c-editable-page__radio-label" htmlFor="cc_1_disabled">Disabled</label>
+                      </td>
+                      <td>
+                  <input className="c-editable-page__radio" type="radio"
+                         id="cc_1_journals" name="campus_carousel_1" value="journals"
+                         defaultChecked={data.campus_carousel_1=="journals"}/>
+                  <label className="c-editable-page__radio-label" htmlFor="cc_1_journals">Campus Journal Covers</label>
+                      </td>
+                      <td>
+                  <input className="c-editable-page__radio" type="radio"
+                         id="cc_1_unit" name="campus_carousel_1" value="unit"
+                         defaultChecked={data.campus_carousel_1=="unit"}/>
+                  <label className="c-editable-page__radio-label" htmlFor="cc_1_unit">Featured Unit</label>
+                  {this.renderUnitsDropdown()}
+                      </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <br /><br />
+
+                  <div className="c-editable-page__label">Content Carousel 2</div>
+                  <input className="c-editable-page__radio" type="radio"
+                         id="cc_2_disabled" name="campus_carousel_2" value="disabled"
+                         defaultChecked={data.campus_carousel_2=="disabled"}/>
+                  <label className="c-editable-page__radio-label" htmlFor="cc_2_disabled">Disabled</label>
+                  <input className="c-editable-page__radio" type="radio"
+                         id="cc_2_journals" name="campus_carousel_2" value="journals"
+                         defaultChecked={data.campus_carousel_2=="journals"}/>
+                  <label className="c-editable-page__radio-label" htmlFor="cc_2_journals">Campus Journal Covers</label>
+                  <input className="c-editable-page__radio" type="radio"
+                         id="cc_2_unit" name="campus_carousel_2" value="unit"
+                         defaultChecked={data.campus_carousel_2=="unit"}/>
+                  <label className="c-editable-page__radio-label" htmlFor="cc_2_unit">Featured Unit</label>
+                  {this.renderUnitsDropdown()}
+                  <br /><br />
+
+                  <button type="submit">Save Changes</button> <button type="reset">Cancel</button>
+                </Form> */}
+              </section>
+            </main>
+          </div>
+        </div>
+      }
       </div>
     )
   }

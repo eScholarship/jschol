@@ -116,7 +116,10 @@ $color-black-semitrans: rgba(124, 126, 127, 0.5);
   
   label {
     
-    .can-toggle__label-text { flex: 0 0 140px; }
+    .can-toggle__label-text {
+      margin: 0 10px 10px 0;
+      display: inline-block;
+    }
     
     .can-toggle__switch {
       transition: background-color 0.3s $can-toggle-transition;
@@ -173,7 +176,8 @@ $color-black-semitrans: rgba(124, 126, 127, 0.5);
     
     .can-toggle__switch {
       height: $can-toggle-height;
-      flex: 0 0 $can-toggle-width;
+      display: inline-block;
+      width:  $can-toggle-width;
       border-radius: $can-toggle-border-radius;
       
       &:before {
@@ -242,11 +246,12 @@ $color-black-semitrans: rgba(124, 126, 127, 0.5);
   label {
     user-select: none;
     position: relative;
-    display: flex;
+    // display: flex;
     align-items: center;
     
     .can-toggle__label-text { 
-      flex: 0 0 140px;
+      display: inline-block;
+      margin: 0 10px 10px 0;
       padding-left: 32px;
     }
     

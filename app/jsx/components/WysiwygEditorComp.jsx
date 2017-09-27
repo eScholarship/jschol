@@ -32,7 +32,8 @@ export default class WysiwygEditorComp extends React.Component
   return(
     <Subscriber channel="cms">
       { cms => cms.modules &&
-        <cms.modules.Trumbowyg id='react-trumbowyg'
+        <cms.modules.Trumbowyg 
+                   id={this.props.id}
                    buttons={buttons}
                    data={this.props.html}
                    shouldInjectSvgIcons={false}

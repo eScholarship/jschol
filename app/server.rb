@@ -605,7 +605,6 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
     else
       pageData[:content] = getUnitStaticPage(unit, attrs, pageName)
     end
-    # pp(pageData[:content])
     pageData[:header] = getUnitHeader(unit,
                                       (pageName =~ /^(nav|sidebar|profile|carousel|issueConfig)/ or issueData) ? nil : pageName,
                                       issueData, attrs)
