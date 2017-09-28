@@ -51,6 +51,11 @@ $color-black-semitrans: rgba(124, 126, 127, 0.5);
   margin-right: 5px;
 }
 
+.c-editable-page__radio-vertical {
+  margin-right: 5px;
+  float: left;
+}
+
 .c-editable-page__input {
   margin-bottom: 20px;
   padding: 6px 12px;
@@ -69,7 +74,12 @@ $color-black-semitrans: rgba(124, 126, 127, 0.5);
   color: graytext
 }
 
+.c-editable-floatright {
+  float: right; 
+}
+
 .c-editable-help__icon {
+  margin-top: 8px;
   margin-left: 20px;
 }
 

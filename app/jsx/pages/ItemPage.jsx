@@ -96,7 +96,7 @@ class ItemPage extends PageBase {
               <header>
                 <h2>Related Items</h2>
               </header>
-              <RelatedItemsComp />
+              <RelatedItemsComp data={data.relatedItems} />
             </section>
           </aside>
         </div>
