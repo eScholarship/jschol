@@ -721,6 +721,7 @@ get "/api/item/:shortArk" do |shortArk|
   attrs = JSON.parse(Item.filter(:id => id).map(:attrs)[0])
   unitIDs = UnitItem.where(:item_id => id, :is_direct => true).order(:ordering_of_units).select_map(:unit_id)
   unit = unitIDs ? Unit[unitIDs[0]] : nil
+  relatedItemIDs = nil 
 
   if !item.nil?
     authors = ItemAuthors.filter(:item_id => id).order(:ordering).
@@ -740,6 +741,7 @@ get "/api/item/:shortArk" do |shortArk|
         :content_html => getItemHtml(item.content_type, shortArk),
         :content_key => calcContentKey(shortArk),
         :attrs => attrs,
+        :relatedItems => nil,
         :appearsIn => unitIDs ? unitIDs.map { |unitID| {"id" => unitID, "name" => Unit[unitID].name} }
                               : nil,
         :unit => unit ? unit.values.reject { |k,v| k==:attrs } : nil,
