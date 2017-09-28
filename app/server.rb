@@ -78,6 +78,9 @@ puts "Connecting to OJS DB.       "
 OJS_DB = ensureConnect(ojsDbConfig)
 #OJS_DB.loggers << Logger.new('ojs.sql_log')  # Enable to debug SQL queries on OJS db
 
+# When fetching ISO pages and PDFs from the local server, we need the host name.
+$host = ENV['HOST'] || "localhost"
+
 # Need credentials for fetching content files from MrtExpress
 $mrtExpressConfig = YAML.load_file("config/mrtExpress.yaml")
 
@@ -386,7 +389,7 @@ get "/content/:fullItemID/*" do |itemID, path|
   if path =~ /^qt\w{8}\.pdf$/
     epath = "content/#{URI::encode(path)}"
     attrs["content_merritt_path"] and epath = attrs["content_merritt_path"]
-    noSplash = !(ENV['HOST'] =~ /pub-jschol/) ||
+    noSplash = !($host =~ /pub-jschol/) ||
                (params[:nosplash] && isValidContentKey(itemID.sub(/^qt/, ''), params[:nosplash]))
     mainPDF = true
   else
@@ -485,7 +488,7 @@ get %r{.*} do
 
     # Pass the full path and query string to our little Node Express app, which will run it through
     # ReactRouter and React.
-    response = Net::HTTP.new(ENV['HOST'], 4002).start {|http| http.request(Net::HTTP::Get.new(remainder)) }
+    response = Net::HTTP.new($host, 4002).start {|http| http.request(Net::HTTP::Get.new(remainder)) }
     status response.code.to_i
 
     # Read in the template file, and substitute the results from React/ReactRouter

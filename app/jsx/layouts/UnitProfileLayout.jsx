@@ -83,8 +83,8 @@ class UnitProfileLayout extends React.Component {
     return (
       <Subscriber channel="cms">
       { cms => {
-         let disableEdit = !(cms.permissions && cms.permissions.super),
-             superCheckboxInstruction = disableEdit ? "" : " (select checkbox to display)"
+         let disableEdit = !(cms.permissions && cms.permissions.super)
+         let disableLogo = this.props.unit.type == "campus" && disableEdit
          return (
          <div>
            <h3>Unit Configuration</h3>
@@ -92,38 +92,46 @@ class UnitProfileLayout extends React.Component {
              <main>
                <section className="o-columnbox1">
                  <Form to={`/api/unit/${this.props.unit.id}/profileContentConfig`} onSubmit={this.handleSubmit}>
-                   <label className="c-editable-page__label" htmlFor="unitName">Name: </label>
+                   <label className="c-editable-page__label" htmlFor="unitName">Name: {disableEdit ? "(restricted)" : ""}</label>
                    <input disabled={disableEdit} className="c-editable-page__input" id="unitName" type="text" defaultValue={data.name}
                            onChange={ event => this.setData({ name: event.target.value }) }/>
 
-                   <label className="c-editable-page__label" htmlFor="logoImage">Logo image:</label>
+                   <label className="c-editable-page__label" htmlFor="logoImage">Logo image{disableLogo ? "(restricted)" : ""}</label>
                    <img src={ logoUrl } alt="Logo"/>
-
-                   <input type="file" id="logoImage" name="logo" onChange={this.handleImageChange}/>
-                   { this.state.newData.logo && this.state.newData.logo.imagePreviewUrl && <button>Cancel</button> }
-                   {/* TODO */}
-                   <button onClick={this.removeImage} data-input="logo">Remove File</button>
+                   <br/>
+                   { !disableLogo &&
+                     <div>
+                       <input type="file" id="logoImage" name="logo" onChange={this.handleImageChange}/>
+                       { this.state.newData.logo && this.state.newData.logo.imagePreviewUrl && <button>Cancel</button> }
+                       {/* TODO */}
+                       <button onClick={this.removeImage} data-input="logo">Remove File</button>
+                     </div>
+                   }
                    <br/>
 
                    { this.props.unit.type == 'journal' &&
                      <div>
                        <br/>
-                       <label className="c-editable-page__label" htmlFor="doajSeal">DOAJ Seal{superCheckboxInstruction}: </label>
                        { disableEdit ?
-                           data.doaj ? <span>Seal displayed</span> : <span>No seal displayed</span>
-                           :
-                           <input disabled={disableEdit} type="checkbox" id="doajSeal" name="doajSeal" defaultChecked={data.doaj}/>  }
-                       <br/><br/>
+                         <div><div>DOAJ Seal (restricted):</div>
+                              <span>{data.doaj ? "Seal displayed" : "No seal displayed"}</span></div>
+                         :
+                         <div><label className="c-editable-page__label" htmlFor="doajSeal">DOAJ Seal: </label>
+                              <input disabled={disableEdit} type="checkbox" id="doajSeal" name="doajSeal" defaultChecked={data.doaj}/></div>
+                       }
+                       <br/>
                        <label className="c-editable-page__label" htmlFor="issn">ISSN: </label>
                        <input disabled={disableEdit} className="c-editable-page__input" id="issn" type="text" defaultValue={data.issn}/>
                        <label className="c-editable-page__label" htmlFor="eissn">E-ISSN: </label>
                        <input disabled={disableEdit} className="c-editable-page__input" id="eissn" type="text" defaultValue={data.eissn}/>
-                       <label className="c-editable-page__label" htmlFor="altmetrics_ok">Altmetric&#8482;  data{superCheckboxInstruction}: </label>
                        { disableEdit ?
-                           data.altmetrics_ok ? <span>Altmetric data provided in articles</span> : <span>No Altmetric data provided in articles</span>
-                           :
-                           <input disabled={disableEdit} type="checkbox" id="altmetrics_ok" name="altmetrics_ok" defaultChecked={data.altmetrics_ok}/>  }
-                       <br/><br/>
+                         <div><div>Altmetric&#8482; (restricted):</div>
+                              <span id="altmetrics_ok">{data.altmetrics_ok ? "Altmetric data provided in articles" : "No Altmetric data provided in articles"}</span></div>
+                         :
+                         <div><label className="c-editable-page__label" htmlFor="altmetrics_ok">Altmetric&#8482;: </label>
+                              <input disabled={disableEdit} type="checkbox" id="doajSeal" name="doajSeal" defaultChecked={data.doaj}/></div>
+                       }
+                       <br/>
                      </div>
                     }
 
