@@ -82,7 +82,7 @@ class DepartmentLayout extends React.Component {
     let marquee = this.props.marquee
     return (
       <div>
-      {((marquee.carousel && marquee.carousel.slides) || marquee.about) &&
+      {((marquee.carousel && marquee.slides) || marquee.about) &&
         <MarqueeComp marquee={marquee} />
       }
         <div className="c-columns">

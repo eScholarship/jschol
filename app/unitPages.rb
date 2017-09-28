@@ -207,12 +207,12 @@ def getUnitMarquee(unit, attrs)
   if carousel && carousel.attrs
     carouselAttrs = JSON.parse(carousel.attrs)
   else
-    carouselAttrs = ""
+    carouselAttrs = nil
   end
   return {
     :about => attrs['about'],
     :carousel => attrs['carousel'],
-    :slides => carouselAttrs['slides']
+    :slides => carouselAttrs['slides'] == "" ? nil : carouselAttrs['slides']
   }
 end
 
@@ -706,15 +706,19 @@ put "/api/unit/:unitID/sidebarOrder" do |unitID|
   DB.transaction {
     unit = Unit[unitID] or jsonHalt(404, "Unit not found")
     newOrder = JSON.parse(params[:order])
-    Widget.where(unit_id: unitID).count == newOrder.length or jsonHalt(400, "must reorder all at once")
+    Widget.where(unit_id: unitID, region: "sidebar").count == newOrder.length or jsonHalt(400, "must reorder all at once")
 
     # Make two passes, to absolutely avoid conflicting order in the table at any time.
-    maxOldOrder = Widget.where(unit_id: unitID).max(:ordering)
+    maxOldOrder = Widget.where(unit_id: unitID, region: "sidebar").max(:ordering)
     (1..2).each { |pass|
       offset = (pass == 1) ? maxOldOrder+1 : 1
       newOrder.each_with_index { |widgetID, idx|
         w = Widget[widgetID]
         w.unit_id == unitID or jsonHalt(400, "widget/unit mistmatch")
+        # Only super users can change order of campus contact
+        if w.ordering != idx+offset && JSON.parse(w.attrs)['title'] == "Campus Contact" && !perms[:super]
+          restrictedHalt
+        end
         w.ordering = idx + offset
         w.save
       }
@@ -852,6 +856,10 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
 
     if params['data']['unitName'] then unit.name = params['data']['unitName'] end
 
+    if unitAttrs['logo']
+      params['data']['logoIsBanner'] ? unitAttrs['logo']['is_banner'] = true : unitAttrs['logo'].delete('is_banner')
+    end
+
     # Certain elements can only be changed by super user
     if perms[:super]
       if params['data']['doajSeal'] == 'on'
@@ -939,16 +947,16 @@ def carouselConfig(slides, unitID)
     slides.each do |k,v|
       # if the slide already exists, merge new config with old config
       if k < carouselAttrs['slides'].length
-        carouselAttrs['slides'][k] = carouselAttrs['slides'][k].merge(v.to_a.collect{|x| [x[0].to_s, x[1]]}.to_h) 
+        carouselAttrs['slides'][k] = carouselAttrs['slides'][k].merge(v.to_a.collect{|x| [x[0].to_s, x[1]]}.to_h)
       elsif carouselAttrs['slides'].length > 0
         # TODO: shouldn't technically be a PUSH - if multiple new slides are added at once, new slide 6 could be before new slide 5 in slides.each; slide 6 is pushed and is now slide 5, then slide 5 comes and overwrites the data for slide 6
         carouselAttrs['slides'].push(v.to_a.collect{|x| [x[0].to_s, x[1]]}.to_h)
-      else 
+      else
         carouselAttrs['slides'] = [v.to_a.collect{|x| [x[0].to_s, x[1]]}.to_h]
       end
     end
   else
-    carouselAttrs = {slides: ''}
+    carouselAttrs = {slides: nil}
   end
   
   carousel.attrs = carouselAttrs.to_json
