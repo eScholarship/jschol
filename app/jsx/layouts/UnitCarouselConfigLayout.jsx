@@ -3,6 +3,7 @@ import Form from 'react-router-form'
 import WysiwygEditorComp from '../components/WysiwygEditorComp.jsx'
 import MarqueeComp from '../components/MarqueeComp.jsx'
 import PropTypes from 'prop-types'
+import _ from 'lodash'
 
 class HeroCarouselLayout extends React.Component {
   state = { newData: this.props.data }

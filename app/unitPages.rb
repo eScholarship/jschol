@@ -207,12 +207,12 @@ def getUnitMarquee(unit, attrs)
   if carousel && carousel.attrs
     carouselAttrs = JSON.parse(carousel.attrs)
   else
-    carouselAttrs = ""
+    carouselAttrs = nil
   end
   return {
     :about => attrs['about'],
     :carousel => attrs['carousel'],
-    :slides => carouselAttrs['slides']
+    :slides => carouselAttrs['slides'] == "" ? nil : carouselAttrs['slides']
   }
 end
 
@@ -947,16 +947,16 @@ def carouselConfig(slides, unitID)
     slides.each do |k,v|
       # if the slide already exists, merge new config with old config
       if k < carouselAttrs['slides'].length
-        carouselAttrs['slides'][k] = carouselAttrs['slides'][k].merge(v.to_a.collect{|x| [x[0].to_s, x[1]]}.to_h) 
+        carouselAttrs['slides'][k] = carouselAttrs['slides'][k].merge(v.to_a.collect{|x| [x[0].to_s, x[1]]}.to_h)
       elsif carouselAttrs['slides'].length > 0
         # TODO: shouldn't technically be a PUSH - if multiple new slides are added at once, new slide 6 could be before new slide 5 in slides.each; slide 6 is pushed and is now slide 5, then slide 5 comes and overwrites the data for slide 6
         carouselAttrs['slides'].push(v.to_a.collect{|x| [x[0].to_s, x[1]]}.to_h)
-      else 
+      else
         carouselAttrs['slides'] = [v.to_a.collect{|x| [x[0].to_s, x[1]]}.to_h]
       end
     end
   else
-    carouselAttrs = {slides: ''}
+    carouselAttrs = {slides: nil}
   end
   
   carousel.attrs = carouselAttrs.to_json
