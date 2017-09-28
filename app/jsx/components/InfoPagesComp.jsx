@@ -34,13 +34,13 @@ class ResultComp extends React.Component {
         target_path = r.isPage ? r.ancestor_id+"/"+r.target_id : r.target_id
     return (
       <div className="c-infopages__item">
-        <h2>
+        <h3>
         {r.topmost_name &&
           <b>{r.topmost_name}</b> }
         {r.ancestor_id && r.ancestor_name &&
           <Link to={"/uc/"+r.ancestor_id}>{r.ancestor_name}</Link> }
           <Link to={"/uc/"+target_path} className="c-infopages__title">{r.target_name}</Link>
-        </h2>
+        </h3>
       {r.content &&
         <div className="c-infopages__text" dangerouslySetInnerHTML={{__html: r.content}} /> }
       </div>

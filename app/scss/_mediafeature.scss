@@ -86,6 +86,7 @@
 
     video {
       max-width: 100%;
+      max-height: 50vh; // prevents video player from getting cropped if viewport is too short
     }
 
   }

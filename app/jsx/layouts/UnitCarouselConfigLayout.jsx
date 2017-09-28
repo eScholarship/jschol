@@ -151,10 +151,13 @@ class HeroCarouselLayout extends React.Component {
           <div style={{marginBottom: '20px', color: '#555', width: '100%'}}>
             <input type="file" id={"slideImage" + i} name={"slideImage" + i}
                   onChange={ (event) => this.handleSlideImageChange(event, i) }/>
-            {slide.imagePreviewUrl && <button onClick={ () => this.removeImagePreview(i) }>Cancel Image Upload</button>}
+          
+        {/* ToDo: Fix. This currently is not doing as expected, but instead actually **Saving the image**
+          slide.imagePreviewUrl &&
+            <button onClick={ () => this.removeImagePreview(i) }>Cancel Image Upload</button> */}
           </div>
-          {/* TODO */}
-          <button>Remove File</button><br/><br/>
+        {/* ToDo: Fix. This currently is not removing the image as expected
+          <button>Remove File</button><br/><br/>  */}
           <button disabled={slideData.length == 1} onClick={ () => this.removeSlide(i) }>Remove Slide</button>
         </div>
       )
@@ -179,15 +182,22 @@ class HeroCarouselLayout extends React.Component {
                     <div className="can-toggle__label-text">Publish Carousel</div>
                     <div className="can-toggle__switch" data-checked="Enabled" data-unchecked="Disabled"></div>
                   </label>
-                  <a href="http://help.escholarship.org/support/solutions/articles/9000124100-using-the-site-editing-tool"><img className="c-editable-help__icon" src="/images/icon_help.svg" alt="Get help on landing page carousel" /></a>
+                  <div className="c-editable-floatright">
+                    <a href="http://help.escholarship.org/support/solutions/articles/9000124100-using-the-site-editing-tool"><img className="c-editable-help__icon" src="/images/icon_help.svg" alt="Get help on landing page carousel" /></a></div>
                   <br/>
                 </div>
                 <div>
                   {data.marquee.slides && this.renderSlideConfig(data.marquee.slides)}
                   <br/>
                   {<button onClick={ (event) => this.addSlideHandler(event) }>Add slide</button>}
+                  <div className="c-editable-floatright">
+                    <button type="submit">Save Changes</button>
+              {/* ToDo: Turn this back on once this is fixed: 
+                  If any images were uploaded, this cancel button isn't refreshing the image back to original
+                    <button type="reset">Cancel</button>   */}
+                  </div>
                 </div>
-                <button type="submit">Save Changes</button> <button type="reset">Cancel</button>
+                <br/><br/>
               </Form>
             </section>
           </main>
@@ -198,7 +208,7 @@ class HeroCarouselLayout extends React.Component {
 
 }
 
-class CampusCarouselTable extends React.Component {
+class ConfigSettings extends React.Component {
   renderUnitsDropdown() {
     return (
       <select name={"unit_id"+this.props.index}
@@ -216,34 +226,28 @@ class CampusCarouselTable extends React.Component {
         journalsId = "journals"+p.index,
         featuredUnitId = "featuredUnit"+p.index
     return (
-      <table className="c-issueTable">
-        <tbody><tr>
-          <td>
-            <input className="c-editable-page__radio" type="radio"
+      <div>
+            <input className="c-editable-page__radio-vertical" type="radio"
                    id={disabledId} name={"mode"+p.index} value="disabled"
                    defaultChecked={p.contentCarousel.mode=="disabled"}/>
             <label className="c-editable-page__radio-label" htmlFor={disabledId}>Disabled</label>
-          </td>
-          <td>
-            <input className="c-editable-page__radio" type="radio"
+            <br/><br/>
+            <input className="c-editable-page__radio-vertical" type="radio"
                    id={journalsId} name={"mode"+p.index} value="journals"
                    defaultChecked={p.contentCarousel.mode=="journals"}/>
             <label className="c-editable-page__radio-label" htmlFor={journalsId}>Campus Journal Covers</label>
-          </td>
-          <td>
-            <input className="c-editable-page__radio" type="radio"
+            <br/><br/>
+            <input className="c-editable-page__radio-vertical" type="radio"
                    id={featuredUnitId} name={"mode"+p.index} value="unit"
                    defaultChecked={p.contentCarousel.mode=="unit"}/>
             <label className="c-editable-page__radio-label" htmlFor={featuredUnitId}>Featured Unit</label>
             {this.renderUnitsDropdown()}
-          </td>
-        </tr></tbody>
-      </table>
+      </div>
     )
   }
 }
 
-class ContentCarouselConfig extends React.Component {
+class CampusCarouselConfig extends React.Component {
   handleSubmit = (event, data) => {
     event.preventDefault()
     this.props.sendApiData("PUT", event.target.action, {data: data})
@@ -254,18 +258,23 @@ class ContentCarouselConfig extends React.Component {
     return (
       <div>
         <h3 className="c-editable-h3">Content Carousel(s)</h3>
-        <a href="http://help.escholarship.org/support/solutions/articles/9000124100-using-the-site-editing-tool"><img className="c-editable-help__icon" src="/images/icon_help.svg" alt="Get help on content carousels" /></a>
+        <div className="c-editable-floatright">
+          <a href="http://help.escholarship.org/support/solutions/articles/9000124100-using-the-site-editing-tool"><img className="c-editable-help__icon" src="/images/icon_help.svg" alt="Get help on content carousels" /></a></div>
         <div className="c-columns">
           <main>
             <section className="o-columnbox1">
               <Form to={`/api/unit/${this.props.unit.id}/campusCarouselConfig`} onSubmit={this.handleSubmit}>
                 <p>Content carousels may be used to feature content collections on your campus landing pages.</p>
                 <div className="c-editable-page__label">Content Carousel 1</div>
-                <CampusCarouselTable unit={this.props.unit} contentCarousel={data.contentCar1} index={1} campusUnits={data.campusUnits} />
+                <ConfigSettings unit={this.props.unit} contentCarousel={data.contentCar1} index={1} campusUnits={data.campusUnits} />
                 <br /><br />
                 <div className="c-editable-page__label">Content Carousel 2</div>
-                <CampusCarouselTable unit={this.props.unit} contentCarousel={data.contentCar2} index={2} campusUnits={data.campusUnits} />
-                <button type="submit">Save Changes</button> <button type="reset">Cancel</button>
+                <ConfigSettings unit={this.props.unit} contentCarousel={data.contentCar2} index={2} campusUnits={data.campusUnits} />
+                <br/><br/>
+                <button type="submit">Save Changes</button> 
+              {/* ToDo: Fix 
+                 Right now, this selects no radio buttons, which doesn't make sense
+                <button type="reset">Cancel</button>   */}
               </Form>
             </section>
           </main>
@@ -320,7 +329,7 @@ class UnitCarouselConfigLayout extends React.Component {
       { this.props.unit.type != 'campus' && 
         <HeroCarouselLayout {...this.props} /> }
       { this.props.unit.type == 'campus' && (data.contentCar1 || data.contentCar2) &&
-        <ContentCarouselConfig data={data} unit={this.props.unit} sendApiData={this.props.sendApiData} /> }
+        <CampusCarouselConfig data={data} unit={this.props.unit} sendApiData={this.props.sendApiData} /> }
       </div>
     )
   }
