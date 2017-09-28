@@ -852,6 +852,10 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
 
     if params['data']['unitName'] then unit.name = params['data']['unitName'] end
 
+    if unitAttrs['logo']
+      params['data']['logoIsBanner'] ? unitAttrs['logo']['is_banner'] = true : unitAttrs['logo'].delete('is_banner')
+    end
+
     # Certain elements can only be changed by super user
     if perms[:super]
       if params['data']['doajSeal'] == 'on'
