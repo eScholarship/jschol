@@ -69,31 +69,49 @@ def getUnitAncestor(unit)
   return $hierByUnit[unit.id][0].ancestor
 end
 
-# Permissions per nav item
-def getNavPerms(unit, navItems, result)
-  navItems or return
-  navItems.each { |navItem|
+# Get list of nav slugs by traversing the nav
+def getSlugs(navItems, slugList = nil)
+  slugs ||= Set.new
+  navItems and navItems.each { |navItem|
     if navItem['type'] == 'folder'
-      getNavPerms(unit, navItem['sub_nav'], result)
-    elsif (slug = navItem['slug'])
-      if unit.type == 'campus'
-        result[slug] =   { change_slug: false, change_text: false, remove: false, reorder: false }
+      getSlugs(navItem['sub_nav'], slugs)
+    end
+    navItem['slug'] and slugs << navItem['slug']
+  }
+  return slugs
+end
+
+# Permissions per nav item
+def getNavPerms(unit, navItems, userPerms)
+  noAccess = { change_slug: false, change_text: false, remove: false, reorder: false }
+  result = {}
+  slugs = getSlugs(navItems)
+  slugs << "link" << "folder" << "page"  # special pseudo-slugs for specials
+  slugs.each { |slug|
+    if unit.type.include?("series")
+      result[slug] =   noAccess
+    elsif userPerms[:super]
+      result[slug] =   { change_slug: true,  change_text: true,  remove: true,  reorder: true  }
+    elsif !userPerms[:admin]
+      result[slug] =   noAccess
+    elsif unit.type == 'campus'
+      result[slug] =   noAccess
+    else
+      case slug
+      when /^(policyStatement|policies|policiesProcedures|journal_policies|policy)$/i
+        result[slug] = { change_slug: false, change_text: false, remove: false, reorder: true  }
+      when /^(submitPaper|submissionGuidelines|submissionprocess|howsubmit)$/i
+        result[slug] = { change_slug: false, change_text: true,  remove: false, reorder: true  }
+      when /^(contactUs)$/i
+        result[slug] = { change_slug: false, change_text: true,  remove: false, reorder: false }
+      when /^(aboutus|about)$/i
+        result[slug] = { change_slug: false, change_text: true,  remove: false, reorder: true  }
       else
-        case navItem['slug']
-        when /^(policyStatement|policies|policiesProcedures|journal_policies|policy)$/i
-          result[slug] = { change_slug: false, change_text: false, remove: false, reorder: true  }
-        when /^(submitPaper|submissionGuidelines|submissionprocess|howsubmit)$/i
-          result[slug] = { change_slug: false, change_text: true,  remove: false, reorder: true  }
-        when /^(contactUs)$/i
-          result[slug] = { change_slug: false, change_text: true,  remove: false, reorder: false }
-        when /^(aboutus|about)$/i
-          result[slug] = { change_slug: false, change_text: true,  remove: false, reorder: true  }
-        else
-          result[slug] = { change_slug: true,  change_text: true,  remove: true,  reorder: true  }
-        end
+        result[slug] = { change_slug: true,  change_text: true,  remove: true,  reorder: true  }
       end
     end
   }
+  return result
 end
 
 # Add a URL to each nav bar item
@@ -495,16 +513,15 @@ end
 
 put "/api/unit/:unitID/nav/:navID" do |unitID, navID|
   # Check user permissions
-  perms = getUserPermissions(params[:username], params[:token], unitID)
-  perms[:admin] or halt(401)
+  userPerms = getUserPermissions(params[:username], params[:token], unitID)
+  userPerms[:admin] or halt(401)
   content_type :json
 
   DB.transaction {
     unit = Unit[unitID] or jsonHalt(404, "Unit not found")
     unitAttrs = JSON.parse(unit.attrs)
     params[:name].empty? and jsonHalt(400, "Page name must be supplied.")
-    navPerms = {}
-    getNavPerms(unit, unitAttrs["nav_bar"], navPerms)
+    navPerms = getNavPerms(unit, unitAttrs["nav_bar"], userPerms)
 
     travNav(unitAttrs['nav_bar']) { |nav|
       next unless nav['id'].to_s == navID.to_s
@@ -588,8 +605,8 @@ end
 # *Post* to add an item to a nav bar
 post "/api/unit/:unitID/nav" do |unitID|
   # Check user permissions
-  perms = getUserPermissions(params[:username], params[:token], unitID)
-  perms[:admin] or halt(401)
+  userPerms = getUserPermissions(params[:username], params[:token], unitID)
+  userPerms[:admin] or halt(401)
 
   # Grab unit data
   unit = Unit[unitID]
@@ -602,6 +619,9 @@ post "/api/unit/:unitID/nav" do |unitID|
   # Find the existing nav bar
   attrs = JSON.parse(unit.attrs)
   (navBar = attrs['nav_bar']) or raise("Unit has non-existent nav bar")
+
+  # Make sure the user has permission. "remove" permission is a good proxy for "add"
+  getNavPerms(unit, attrs["nav_bar"], userPerms).dig('page', :remove) or restrictedHalt
 
   # Invent a unique name for the new item
   slug = name = nil
@@ -727,17 +747,15 @@ end
 # *Delete* to remove a static page from a unit
 delete "/api/unit/:unitID/nav/:navID" do |unitID, navID|
   # Check user permissions
-  perms = getUserPermissions(params[:username], params[:token], unitID)
-  perms[:admin] or halt(401)
+  userPerms = getUserPermissions(params[:username], params[:token], unitID)
+  userPerms[:admin] or halt(401)
 
   DB.transaction {
     unit = Unit[unitID] or halt(404, "Unit not found")
     unitAttrs = JSON.parse(unit.attrs)
-    navPerms = {}
-    getNavPerms(unit, unitAttrs["nav_bar"], navPerms)
     nav = getNavByID(unitAttrs['nav_bar'], navID)
-    navPerms[nav['slug']][:remove] or
-      jsonHalt(401, "This action is restricted. Contact eScholarship Support for further assistance.")
+    slug = nav['type'] != 'page' ? nav['type'] : nav['slug']
+    getNavPerms(unit, unitAttrs["nav_bar"], userPerms).dig(slug, :remove) or restrictedHalt
     unitAttrs['nav_bar'] = deleteNavByID(unitAttrs['nav_bar'], navID)
     getNavByID(unitAttrs['nav_bar'], navID).nil? or raise("delete failed")
     if nav['type'] == "folder" && !nav['sub_nav'].empty?
@@ -805,10 +823,7 @@ put "/api/static/:unitID/:pageName/mainText" do |unitID, pageName|
 end
 
 ###################################################################################################
-# General function that verifies the user is a super-user, and if not, halts with an informative
-# message.
-def superCheck(perms)
-  return if perms[:super]
+def restrictedHalt
   jsonHalt(401, "This action is restricted. Contact eScholarship Support for further assistance.")
 end
 
@@ -1070,7 +1085,7 @@ def updateIssueConfig(inputAttrs, data, voliss)
 end
 
 put "/api/unit/:unitID/issueConfig" do |unitID|
-  superCheck(getUserPermissions(params[:username], params[:token], unitID))
+  getUserPermissions(params[:username], params[:token], unitID)[:super] or restrictedHalt
   DB.transaction {
     issueMap = Hash[Issue.where(unit_id: unitID).map { |iss| ["#{iss.volume}.#{iss.issue}", iss] }]
     params['data'].keys.select { |k| k =~ /^rights-/ }.map { |k| k.sub(/^rights-/, '') }.each { |voliss|

@@ -69,7 +69,7 @@ class EditableNavContentComp extends React.Component
                   :
                   <div>
                     <div className="c-editable-page__label">Hidden (restricted)</div>
-                    <span>{`Page is ${!data.hidden && "not"} hidden.`}</span>
+                    <span>{`Page is ${data.hidden ? "" : "not "}hidden.`}</span>
                   </div>
                 }
                 <br/>
