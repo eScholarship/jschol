@@ -715,6 +715,10 @@ put "/api/unit/:unitID/sidebarOrder" do |unitID|
       newOrder.each_with_index { |widgetID, idx|
         w = Widget[widgetID]
         w.unit_id == unitID or jsonHalt(400, "widget/unit mistmatch")
+        # Only super users can change order of campus contact
+        if w.ordering != idx+offset && JSON.parse(w.attrs)['title'] == "Campus Contact" && !perms[:super]
+          restrictedHalt
+        end
         w.ordering = idx + offset
         w.save
       }
