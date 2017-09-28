@@ -104,6 +104,7 @@ def getUserPermissions(username, sessionID, unitID)
   # Validate the parameters
   userID = getUserID(username) or return permFail("invalid username")
   sessionID =~ /^\w{32}$/ or return permFail("invalid session ID")
+  unit = $unitsHash[unitID] or return permFail("invalid unit ID")
 
   # Map the username to a user ID
   username =~ /\w+/ or return permFail("no username")  # at least two word chars in a row
@@ -122,7 +123,9 @@ def getUserPermissions(username, sessionID, unitID)
   OJS_DB[:sessions].where(session_id: sessionID, user_id: userID).update(last_used: Time.now.to_i)
 
   # Check for permissions
-  if OJS_DB[:user_settings].where(user_id: userID, setting_name: 'eschol_superuser').first
+  if unit.type.include?("series")
+    return {}  # disallow all actions on series until we get clone-fork in place
+  elsif OJS_DB[:user_settings].where(user_id: userID, setting_name: 'eschol_superuser').first
     return { admin: true, super: true }
   elsif OJS_DB[:eschol_roles].where(user_id: userID, role: 'admin', unit_id: unitID).first
     return { admin: true }

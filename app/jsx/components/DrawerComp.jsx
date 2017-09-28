@@ -80,7 +80,8 @@ class SortableNavList extends React.Component {
         canDrag={({ node }) => {
           if (node.type == "home") // don't allow dragging unit home
             return false
-          if (node.type != "folder" && !(this.props.cms.permissions.nav_perms[node.slug] || {}).reorder)
+          let slug = (node.type == "page") ? node.slug : node.type
+          if (!(this.props.cms.permissions.nav_perms[slug] || {}).reorder)
             return false
           return true
         }}
