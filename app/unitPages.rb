@@ -706,10 +706,10 @@ put "/api/unit/:unitID/sidebarOrder" do |unitID|
   DB.transaction {
     unit = Unit[unitID] or jsonHalt(404, "Unit not found")
     newOrder = JSON.parse(params[:order])
-    Widget.where(unit_id: unitID).count == newOrder.length or jsonHalt(400, "must reorder all at once")
+    Widget.where(unit_id: unitID, region: "sidebar").count == newOrder.length or jsonHalt(400, "must reorder all at once")
 
     # Make two passes, to absolutely avoid conflicting order in the table at any time.
-    maxOldOrder = Widget.where(unit_id: unitID).max(:ordering)
+    maxOldOrder = Widget.where(unit_id: unitID, region: "sidebar").max(:ordering)
     (1..2).each { |pass|
       offset = (pass == 1) ? maxOldOrder+1 : 1
       newOrder.each_with_index { |widgetID, idx|
