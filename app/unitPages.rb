@@ -212,7 +212,7 @@ def getUnitMarquee(unit, attrs)
   return {
     :about => attrs['about'],
     :carousel => attrs['carousel'],
-    :slides => carouselAttrs['slides'] == "" ? nil : carouselAttrs['slides']
+    :slides => (!carouselAttrs || carouselAttrs['slides'] == "") ? nil : carouselAttrs['slides']
   }
 end
 
@@ -739,6 +739,10 @@ delete "/api/unit/:unitID/sidebar/:widgetID" do |unitID, widgetID|
   DB.transaction {
     unit = Unit[unitID] or halt(404, "Unit not found")
     widget = Widget[widgetID]
+    # Only super users can delete campus contact block
+    if JSON.parse(widget.attrs)['title'] == "Campus Contact" && !perms[:super]
+      restrictedHalt
+    end
     widget.unit_id == unitID and widget.region == "sidebar" or jsonHalt(400, "invalid widget")
     widget.delete
   }
