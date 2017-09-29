@@ -201,7 +201,6 @@ def getUnitPageContent(unit, attrs, query)
   end
 end
 
-# TODO carouselAttrs should not = ""
 def getUnitMarquee(unit, attrs)
   carousel = Widget.where(unit_id: unit.id, region: "marquee", kind: "Carousel", ordering: 0).first
   if carousel && carousel.attrs
@@ -237,6 +236,12 @@ def getORULandingPageData(id)
     :journals => children ? children.select { |u| u.unit.type == 'journal' }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : [],
     :related_orus => related_orus 
   }
+end
+
+def getCampusCarouselJournals(unit, attrs)
+end
+
+def getCampusCarouselUnit(unit, attrs)
 end
 
 # Get data for Campus Landing Page
@@ -853,19 +858,7 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
   perms = getUserPermissions(params[:username], params[:token], unitID)
   perms[:admin] or halt(401)
 
-  carouselKeys = params['data'].keys.grep /(header|text)\d+/
-  carouselSlides = {}
-  if carouselKeys.length > 0
-    numSlides = carouselKeys.map! {|x| /(header|text)(\d+)/.match(x)[2].to_i}.max
-    (0..numSlides).each do |n|
-      slide = {header: params['data']["header#{n}"], text: params['data']["text#{n}"]}
-      carouselSlides[n] = slide
-    end
-  end
-
   DB.transaction {
-    carouselConfig(carouselSlides, unitID)
-
     unit = Unit[unitID] or jsonHalt(404, "Unit not found")
     unitAttrs = JSON.parse(unit.attrs)
 
@@ -896,11 +889,6 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
     if params['data']['twitter'] then unitAttrs['twitter'] = params['data']['twitter'] end
 
     if params['data']['about'] then unitAttrs['about'] = params['data']['about'] end
-    if params['data']['carouselFlag'] && params['data']['carouselFlag'] == 'on'
-      unitAttrs['carousel'] = true
-    else
-      unitAttrs.delete('carousel')
-    end
 
     if params['data']['magazine_layout'] == "on"
       unitAttrs['magazine_layout'] = true
@@ -924,26 +912,35 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
 end
 
 ###################################################################################################
-# *Put* to change campus content carousel configuration
-put "/api/unit/:campusID/campusCarouselConfig" do |campusID|
+# *Put* to change unit carousel configuration
+put "/api/unit/:unitID/carouselConfig" do |unitID|
   # Check user permissions
-  perms = getUserPermissions(params[:username], params[:token], campusID)
+  perms = getUserPermissions(params[:username], params[:token], unitID)
   perms[:admin] or halt(401)
 
-  DB.transaction {
-    unit = Unit[campusID] or jsonHalt(404, "Unit not found")
-    unit.type == 'campus' or jsonHalt(404, "This unit is not a campus. Failed.")
-    unitAttrs = JSON.parse(unit.attrs)
-
-    if params['data']['mode1'] && params['data']['unit_id1']
-      unitAttrs['contentCar1'] = {'mode': params['data']['mode1'], 'unit_id': params['data']['unit_id1']}
+  carouselKeys = params['data'].keys.grep /(header|text)\d+/
+  carouselSlides = {}
+  if carouselKeys.length > 0
+    numSlides = carouselKeys.map! {|x| /(header|text)(\d+)/.match(x)[2].to_i}.max
+    (0..numSlides).each do |n|
+      slide = {header: params['data']["header#{n}"], text: params['data']["text#{n}"]}
+      carouselSlides[n] = slide
     end
-    if params['data']['mode2'] && params['data']['unit_id2']
-      unitAttrs['contentCar2'] = {'mode': params['data']['mode2'], 'unit_id': params['data']['unit_id2']}
+  end
+
+  DB.transaction {
+    carouselConfig(carouselSlides, unitID)
+
+    unit = Unit[unitID] or jsonHalt(404, "Unit not found")
+    unitAttrs = JSON.parse(unit.attrs)
+    if params['data']['carouselFlag'] && params['data']['carouselFlag'] == 'on'
+      unitAttrs['carousel'] = true
+    else
+      unitAttrs.delete('carousel')
     end
     unit.attrs = unitAttrs.to_json
     unit.save
-  } 
+  }
 
   refreshUnitsHash
   content_type :json
@@ -1059,6 +1056,33 @@ delete "/api/unit/:unitID/removeCarouselSlide/:slideNumber" do |unitID, slideNum
     carousel.save
   }
 
+  content_type :json
+  return { status: "ok" }.to_json
+end
+
+###################################################################################################
+# *Put* to change campus content carousel configuration
+put "/api/unit/:campusID/campusCarouselConfig" do |campusID|
+  # Check user permissions
+  perms = getUserPermissions(params[:username], params[:token], campusID)
+  perms[:admin] or halt(401)
+
+  DB.transaction {
+    unit = Unit[campusID] or jsonHalt(404, "Unit not found")
+    unit.type == 'campus' or jsonHalt(404, "This unit is not a campus. Failed.")
+    unitAttrs = JSON.parse(unit.attrs)
+
+    if params['data']['mode1'] && params['data']['unit_id1']
+      unitAttrs['contentCar1'] = {'mode': params['data']['mode1'], 'unit_id': params['data']['unit_id1']}
+    end
+    if params['data']['mode2'] && params['data']['unit_id2']
+      unitAttrs['contentCar2'] = {'mode': params['data']['mode2'], 'unit_id': params['data']['unit_id2']}
+    end
+    unit.attrs = unitAttrs.to_json
+    unit.save
+  } 
+
+  refreshUnitsHash
   content_type :json
   return { status: "ok" }.to_json
 end

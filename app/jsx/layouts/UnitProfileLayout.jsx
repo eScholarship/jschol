@@ -7,7 +7,8 @@ class UnitProfileLayout extends React.Component {
   // static propTypes = {
   // }
 
-  state = { newData: this.props.data }
+  state = { newData: this.props.data,
+            banner_flag_visible: this.props.data.logo  }
 
   handleSubmit = (event, data) => {
     event.preventDefault()
@@ -46,10 +47,11 @@ class UnitProfileLayout extends React.Component {
 
     reader.onloadend = () => {
       imgObj[fieldName] = {imagePreviewUrl: reader.result}
-      this.setData(imgObj);
+      this.setData(imgObj)
     }
 
     reader.readAsDataURL(file)
+    this.setState({banner_flag_visible: true})
   }
 
   setData = (newStuff) => {
@@ -91,8 +93,10 @@ class UnitProfileLayout extends React.Component {
                      <div>
                        <input type="file" id="logoImage" name="logo" onChange={this.handleImageChange}/>
                        <br/><br/>
-                       <label className="c-editable-page__label" htmlFor="logoIsBanner">Logo is full-width banner:</label>
-                       <input type="checkbox" id="logoIsBanner" name="logoIsBanner" defaultChecked={data.logo.is_banner}/>
+                    { this.state.banner_flag_visible &&
+                      [<label key="0" className="c-editable-page__label" htmlFor="logoIsBanner">Logo is full-width banner:</label>,
+                       <input key="1" type="checkbox" id="logoIsBanner" name="logoIsBanner"
+                              defaultChecked={(data.logo && data.logo.is_banner) ? data.logo.is_banner : ""}/>] }
                        {/* Force onSubmit to submit even if nothing is present (because checkbox unchecked results in nothing) */}
                        <input type="hidden" name="logoExtra" defaultValue="off"/>
                      </div>

@@ -175,7 +175,7 @@ class HeroCarouselLayout extends React.Component {
         <div className="c-columns">
           <main>
             <section className="o-columnbox1">
-              <Form to={`/api/unit/${this.props.unit.id}/profileContentConfig`} onSubmit={this.handleSubmit}>
+              <Form to={`/api/unit/${this.props.unit.id}/carouselConfig`} onSubmit={this.handleSubmit}>
                 <div className="can-toggle can-toggle--size-small">
                   <input id="displayCarousel" name="carouselFlag" type="checkbox" defaultChecked={data.marquee.carousel}
                          onChange={ event => this.setMarqueeData({carousel: event.target.checked}) }/>
