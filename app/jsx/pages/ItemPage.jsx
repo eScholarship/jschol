@@ -11,7 +11,7 @@ import NavBarComp from '../components/NavBarComp.jsx'
 import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
 import TabsComp from '../components/TabsComp.jsx'
 import JumpComp from '../components/JumpComp.jsx'
-import RelatedItemsComp from '../components/RelatedItemsComp.jsx'
+import SidebarComp from '../components/SidebarComp.jsx'
 import FooterComp from '../components/FooterComp.jsx'
 
 // Load dotdotdot in browser but not server
@@ -92,12 +92,7 @@ class ItemPage extends PageBase {
                 <JumpComp changeTab={this.changeTab} attrs={data.attrs} />
               </section>
             }
-            <section className="o-columnbox1">
-              <header>
-                <h2>Related Items</h2>
-              </header>
-              <RelatedItemsComp data={data.relatedItems} />
-            </section>
+            <SidebarComp data={data.sidebar}/>
           </aside>
         </div>
       </div>

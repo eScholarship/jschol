@@ -19,6 +19,18 @@ class PdfViewerComp extends React.Component
 {
   initted: false
 
+  // Re-initialize when loading new item 
+  componentWillReceiveProps(nextProps) {
+    this.initted = (this.props.url == nextProps.url)
+  }
+
+  // Re-initialize on back button
+  componentDidMount() {
+    window.onpopstate = (event) => {
+      this.initted = false
+    }
+  }
+
   render() {
     return(
       <div id="pdfjs-cdl-wrapper" ref={(c) => this.initViewer(c)}>

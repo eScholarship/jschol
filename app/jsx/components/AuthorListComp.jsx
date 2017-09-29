@@ -5,7 +5,7 @@ import $ from 'jquery'
 import { Link } from 'react-router'
 
 class AuthorListComp extends React.Component {
-  componentDidMount() {
+  activateTruncation() {
     $('.c-authorlist__list').dotdotdot({watch:'window', after:'.c-authorlist__list-more-link', ellipsis:' ', wrap:'children',
       // Note: dotdotdot destroys event handlers we put on the et al. <Link>, so we have to install
       // the event handler *after* it initializes.
@@ -14,9 +14,26 @@ class AuthorListComp extends React.Component {
     setTimeout(()=> $('.c-authorlist__list').trigger("update"), 0)
   }
 
+  componentDidMount() {
+    this.activateTruncation()
+  }
+
   handleClick = (e,tab_id) => {
     e.preventDefault()
     this.props.changeTab(tab_id)
+  }
+
+  componentWillReceiveProps(nextProps) {
+    if (this.props.authors != nextProps.authors) {
+      console.log("CompWillReceiveProps")
+      this.activateTruncation()
+    }
+  }
+
+  componentWillUpdate(nextProps) {
+    console.log("CompWillUpdate")
+    console.log("new authors:")
+    console.log(nextProps.authors)
   }
 
   render() {

@@ -435,13 +435,24 @@ def getItemAuthors(itemID)
 end
 
 # Get recent items (with author info) for a unit, by most recent eschol_date
-def getRecentItems(unit)
-  items = Item.join(:unit_items, :item_id => :id).where(unit_id: unit.id)
-              .where(Sequel.lit("attrs->\"$.suppress_content\" is null"))
-              .reverse(:eschol_date).limit(5)
+# Pass an item id in if you don't want that item included in results
+def getRecentItems(unit, item_id=nil)
+  items = item_id ? Item.join(:unit_items, :item_id => :id).where(unit_id: unit.id)
+                        .where(Sequel.lit("attrs->\"$.suppress_content\" is null"))
+                        .exclude(id: item_id)
+                        .reverse(:eschol_date).limit(5)
+                  : Item.join(:unit_items, :item_id => :id).where(unit_id: unit.id)
+                        .where(Sequel.lit("attrs->\"$.suppress_content\" is null"))
+                        .reverse(:eschol_date).limit(5)
   return items.map { |item|
     { id: item.id, title: item.title, authors: getItemAuthors(item.id) }
   }
+end
+
+# Instead of related items, for now, this just grabs most recent items (very similar to getUnitSidebar)
+# For now, represents the entire sidebar component for Item Pages
+def getItemRelatedItems(unit, item_id)
+  return [{ id: 1, kind: "RecentArticles", attrs: {'items': getRecentItems(unit, item_id), 'title': 'Related Items'}}]
 end
 
 def getUnitSidebar(unit)
