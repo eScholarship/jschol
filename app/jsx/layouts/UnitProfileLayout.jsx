@@ -52,18 +52,6 @@ class UnitProfileLayout extends React.Component {
     reader.readAsDataURL(file)
   }
 
-  removeImage = (event) => {
-    event.preventDefault()
-    
-    let imgObj = {}
-    imgObj[event.target.dataset.input] = {imagePreviewUrl: "http://placehold.it/400x100?text=No+logo"}
-    this.setData(imgObj);
-
-    let binaryFormData = new FormData();
-    binaryFormData.append(event.target.dataset.input, '')
-    this.props.sendBinaryFileData("POST", "/api/unit/" + this.props.unit.id + "/upload", binaryFormData)
-  }
-
   setData = (newStuff) => {
     this.setState({newData: Object.assign(_.cloneDeep(this.state.newData), newStuff)})
   }
@@ -102,9 +90,11 @@ class UnitProfileLayout extends React.Component {
                    { !disableLogo &&
                      <div>
                        <input type="file" id="logoImage" name="logo" onChange={this.handleImageChange}/>
-                       { this.state.newData.logo && this.state.newData.logo.imagePreviewUrl && <button>Cancel</button> }
-                       {/* TODO */}
-                       <button onClick={this.removeImage} data-input="logo">Remove File</button>
+                       <br/><br/>
+                       <label className="c-editable-page__label" htmlFor="logoIsBanner">Logo is full-width banner:</label>
+                       <input type="checkbox" id="logoIsBanner" name="logoIsBanner" defaultChecked={data.logo.is_banner}/>
+                       {/* Force onSubmit to submit even if nothing is present (because checkbox unchecked results in nothing) */}
+                       <input type="hidden" name="logoExtra" defaultValue="off"/>
                      </div>
                    }
                    <br/>
@@ -129,7 +119,7 @@ class UnitProfileLayout extends React.Component {
                               <span id="altmetrics_ok">{data.altmetrics_ok ? "Altmetric data provided in articles" : "No Altmetric data provided in articles"}</span></div>
                          :
                          <div><label className="c-editable-page__label" htmlFor="altmetrics_ok">Altmetric&#8482;: </label>
-                              <input disabled={disableEdit} type="checkbox" id="doajSeal" name="doajSeal" defaultChecked={data.doaj}/></div>
+                              <input disabled={disableEdit} type="checkbox" id="altmetrics_ok" name="altmetrics_ok" defaultChecked={data.altmetrics_ok}/></div>
                        }
                        <br/>
                      </div>

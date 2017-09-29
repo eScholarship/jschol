@@ -36,22 +36,9 @@ class CampusLayout extends React.Component {
     )
   }
 
-  // ToDo: This URL should be an attr on the entity that's configured on the campus CMS page
-  dashUrlList = {
-    'ucb': 'https://dash.berkeley.edu/stash',
-    'uci': 'https://dash.lib.uci.edu/stash',
-    'ucm': 'https://dash.ucmerced.edu/stash',
-    'ucop': 'https://dash.ucop.edu/stash',
-    'ucr': 'https://dash.ucr.edu/stash',
-    'ucsc': 'https://dash.library.ucsc.edu/stash',
-    'ucsf': 'https://datashare.ucsf.edu/stash',
-  }
-
   render() {
     let data = this.props.data,
-        unit = this.props.unit,
-        dash = Object.keys(this.dashUrlList).includes(unit.id),
-        dashUrl = dash ? this.dashUrlList[unit.id] : null
+        unit = this.props.unit
     return (
       <div>
         <HeatMapComp campusID={unit.id} />
@@ -67,32 +54,6 @@ class CampusLayout extends React.Component {
          }
           </main>
           <aside>
-            <section className="o-columnbox1">
-              <header>
-                <h2>Campus Contact</h2>
-              </header>
-              <p><NotYetLink className="o-textlink__secondary" element="a">Sam Smith</NotYetLink>
-                <br/>Scholarly Communication Officer,
-                <br/>University of California
-                <br/>415 20th Street
-                <br/>Oakland, CA 94612
-                <br/>(555) 555-4444
-              </p>
-            </section>
-          {dashUrl &&
-            <section className="o-columnbox1">
-              <header>
-                <h2>{unit.name} Datasets</h2>
-              </header>
-              To publish the data that accompanies your research, <a href={dashUrl}>visit {unit.name} Dash</a>.
-            </section>
-          }
-            <section className="o-columnbox1">
-              <header>
-                <h2>Follow Us On Twitter</h2>
-              </header>
-              [content to go here]
-            </section>
             {this.props.sidebar}
           </aside>
         </div>

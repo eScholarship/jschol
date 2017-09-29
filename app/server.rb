@@ -19,6 +19,7 @@ require 'pp'
 require 'sequel'
 require 'sinatra'
 require 'tempfile'
+require 'thin'
 require 'yaml'
 require 'socksify'
 require 'socket'
@@ -260,6 +261,24 @@ Thread.new {
 $cachesFilled.wait
 
 ###################################################################################################
+# Monkey-patch Thin's post_process method, because it calls callback and errback in quick
+# succession on the response body, but callback nulls out the body so so errback cannot be called.
+module Thin
+  module ConnectionExtensions
+    def post_process(result)
+      begin
+        super(result)
+      rescue NoMethodError
+        STDOUT.write("Note: ignoring silly NoMethodError from Thin::Connection::post_process\n")
+      end
+    end
+  end
+  class Connection
+    prepend ConnectionExtensions
+  end
+end
+
+###################################################################################################
 # ISOMORPHIC JAVASCRIPT
 # =====================
 #
@@ -443,7 +462,7 @@ get "/content/:fullItemID/*" do |itemID, path|
   if range
     range =~ /^bytes=(\d+)-(\d+)/ or raise("can't parse range")
     fromByte, toByte = $1.to_i, $2.to_i
-    puts "range #{fromByte}-#{toByte}/#{outLen}"
+    #puts "range #{fromByte}-#{toByte}/#{outLen}"
     headers "Content-Range" => "bytes #{fromByte}-#{toByte}/#{outLen}"
     outLen = toByte - fromByte + 1
     status 206

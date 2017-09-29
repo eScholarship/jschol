@@ -17,13 +17,12 @@ class MarqueeComp extends React.Component {
     marquee: PropTypes.shape({
       about: PropTypes.string,
       carousel: PropTypes.bool,
-// 'slides' throws warning when an empty string. Simply gonna keep this as a comment and not worry about declaring
-//      slides: PropTypes.arrayOf(PropTypes.shape({
-//        header: PropTypes.string,
-//        image: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
-//        text: PropTypes.string,
-//        imagePreviewUrl: PropTypes.string
-//      }))
+      slides: PropTypes.arrayOf(PropTypes.shape({
+        header: PropTypes.string,
+        image: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+        text: PropTypes.string,
+        imagePreviewUrl: PropTypes.string
+      }))
     })
   }
 
