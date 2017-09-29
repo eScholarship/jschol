@@ -436,6 +436,18 @@ def convertBrandDownloadToPage(unitID, navBar, navID, linkName, linkTarget)
 end
 
 ###################################################################################################
+def convertTables(html)
+  html.gsub! %r{/<table[^>]*>}i, "<ul>"
+  html.gsub! %r{/</table>}i, "</ul>"
+
+  html.gsub! %r{/<tr[^>]*>}i, "<li>"
+  html.gsub! %r{/</tr>}i, "</li>"
+
+  html.gsub! %r{/<(td|th)[^>]*>}i, ""
+  html.gsub! %r{/</(td|th)>}i, " \u00A0 \u00A0 "  # non-breaking spaces
+end
+
+###################################################################################################
 def convertPage(unitID, navBar, navID, contentDiv, slug, name)
   title = nil
   stripXMLWhitespace(contentDiv)
@@ -469,7 +481,11 @@ def convertPage(unitID, navBar, navID, contentDiv, slug, name)
     contentDiv = kid
   end
 
-  html = sanitizeHTML(contentDiv.inner_html)
+  # Cheesy conversion of tables to lists, for now at least
+  html = contentDiv.inner_html
+  convertTables(html)
+
+  html = sanitizeHTML(html)
   html.length > 0 or return
 
   # Replace old-style links
@@ -745,6 +761,7 @@ def convertUnits(el, parentMap, childMap, allIds)
     if ['root','campus'].include?(unitType) && Unit.where(id: id).first
       #puts "Preserving #{id}."
     else
+      #puts "Converting #{id}."
       DB.transaction {
         name = id=="root" ? "eScholarship" : el[:label]
         Unit.update_or_replace(id,
@@ -2688,6 +2705,34 @@ def splashAllPDFs(arks)
 end
 
 ###################################################################################################
+# Un-hide page fix
+def fixNavs(navs)
+  navs.map { |nav|
+    if nav['type'] == 'folder'
+      nav['sub_nav'] = fixNavs(nav['sub_nav'])
+    elsif nav['type'] == 'page'
+      nav.delete('hidden')
+    end
+    nav
+  }
+end
+
+def fixHiddenPages
+  Unit.each { |unit|
+    attrs = JSON.parse(unit.attrs)
+    if attrs['nav_bar']
+      before = JSON.generate(attrs['nav_bar'])
+      attrs['nav_bar'] = fixNavs(attrs['nav_bar'])
+      if before != JSON.generate(attrs['nav_bar'])
+        puts "Fixing #{unit.id}."
+        unit.attrs = JSON.generate(attrs)
+        unit.save
+      end
+    end
+  }
+end
+
+###################################################################################################
 # Main action begins here
 
 startTime = Time.now
@@ -2703,6 +2748,8 @@ case ARGV[0]
   when "--splash"
     arks = ARGV.select { |a| a =~ /qt\w{8}/ }
     splashAllPDFs(arks.empty? ? "ALL" : Set.new(arks))
+  when "--fixHiddenPages"
+    fixHiddenPages
   else
     STDERR.puts "Usage: #{__FILE__} --units|--items"
     exit 1
