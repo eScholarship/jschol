@@ -140,6 +140,7 @@ class PageBase extends React.Component
                 data: _.merge(_.cloneDeep(data),
                         { username: this.state.adminLogin.username, token: this.state.adminLogin.token })})
     .done(data=>{
+      this.fetchPermissions(true)
       if (data.nextURL) {
         this.setState({ fetchingData: false })
         this.props.router.push(data.nextURL)
@@ -150,6 +151,7 @@ class PageBase extends React.Component
     .fail(data=>{
       alert("Error" + (data.responseJSON ? `:\n${data.responseJSON.message}`
                                          : ` ${data.status}:\n${data.statusText}.`))
+      this.fetchPermissions(true)
       this.fetchPageData()
     })
   }
@@ -251,13 +253,13 @@ class PageBase extends React.Component
       </div>)
   }
 
-  fetchPermissions() {
+  fetchPermissions(refetch) {
     const unit = this.pagePermissionsUnit()
     if (unit
         && this.state.adminLogin
         && this.state.adminLogin.loggedIn
         && !this.state.fetchingPerms
-        && !this.state.permissions) 
+        && (refetch || !this.state.permissions))
     {
       this.setState({ fetchingPerms: true })
       $.getJSON(

@@ -26,7 +26,7 @@ class VolumeSelector extends React.Component {
     let p = this.props
     return (
       <div className="o-customselector">
-        <h1 className="o-customselector__heading">{`Volume ${p.vip[1]}, Issue ${p.vip[2]}, ${p.vip[3]}`}</h1>
+        <div className="o-customselector__heading">{`Volume ${p.vip[1]}, Issue ${p.vip[2]}, ${p.vip[3]}`}</div>
         <details className="o-customselector__selector">
           <summary aria-label="Select a different issue"></summary>
           <div className="o-customselector__menu">
@@ -104,17 +104,17 @@ class IssueComp extends React.Component {
       { this.props.display=="magazine" ?
         pi.sections.map(section =>
           <div key={section.name}>
-            <h2 className="o-heading1a">{section.name}</h2>
+            <h3 className="o-heading1a">{section.name}</h3>
             <div className="o-dividecontent2x--ruled">
-              {section.articles.map(article => <PubComp h="h3" key={article.id} result={article}/>)}
+              {section.articles.map(article => <PubComp h="h4" key={article.id} result={article}/>)}
             </div>
           </div>
         )
       :
         pi.sections.map(section =>
           <div key={section.name}>
-            <h2 className="o-heading1a">{section.name}</h2>
-            {section.articles.map(article => <PubComp h="h3" key={article.id} result={article}/>)}
+            <h3 className="o-heading1a">{section.name}</h3>
+            {section.articles.map(article => <PubComp h="h4" key={article.id} result={article}/>)}
           </div>
         )
       }
@@ -148,10 +148,11 @@ class JournalLayout extends React.Component {
   
   render() {
     let data = this.props.data
+    let marquee = this.props.marquee
     return (
       <div>
-      {(this.props.marquee.carousel || this.props.marquee.about) &&
-        <MarqueeComp marquee={this.props.marquee} />
+      {((marquee.carousel && marquee.slides) || marquee.about) &&
+        <MarqueeComp marquee={marquee} />
       }
         <div className="c-columns">
           <main id="maincontent">

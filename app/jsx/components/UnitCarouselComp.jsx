@@ -1,5 +1,4 @@
 // ##### Unit Carousel Component ##### //
-
 import React from 'react'
 import $ from 'jquery'
 import PropTypes from 'prop-types'
@@ -48,6 +47,10 @@ class UnitCarouselItem extends React.Component {
 }
 
 class UnitCarouselComp extends React.Component {
+  static propTypes = {
+    unitID: PropTypes.string,
+  }
+
   componentDidMount () {
     /* jquery dotdotdot */
     $('.o-unititem__title, .o-unititem__author').dotdotdot({

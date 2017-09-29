@@ -1,6 +1,6 @@
 // ##### Journal Carousel Component ##### //
-
 import React from 'react'
+import PropTypes from 'prop-types'
 import $ from 'jquery'
 import CarouselComp from '../components/CarouselComp.jsx'
 import { Link } from 'react-router'
@@ -11,6 +11,10 @@ if (!(typeof document === "undefined")) {
 }
 
 class JournalCarouselComp extends React.Component {
+  static propTypes = {
+    campusID: PropTypes.string,
+  }
+
   componentDidMount () {
     /* jquery dotdotdot */
     $('.o-journal2 figcaption').dotdotdot({

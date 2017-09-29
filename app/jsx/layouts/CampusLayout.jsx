@@ -10,25 +10,35 @@ import { Link } from 'react-router'
 
 class CampusLayout extends React.Component {
   static propTypes = {
+    data:  PropTypes.shape({
+      contentCar1: PropTypes.shape({
+        mode: PropTypes.string,
+        unit_id: PropTypes.string,
+      }),
+      contentCar2: PropTypes.shape({
+        mode: PropTypes.string,
+        unit_id: PropTypes.string,
+      }),
+      journal_count: PropTypes.number,
+      opened_count: PropTypes.number,
+      pub_count: PropTypes.number,
+      unit_count: PropTypes.number,
+      view_count: PropTypes.number
+    })
   }
 
-  // ToDo: This URL should be an attr on the entity that's configured on the campus CMS page
-  dashUrlList = {
-    'ucb': 'https://dash.berkeley.edu/stash',
-    'uci': 'https://dash.lib.uci.edu/stash',
-    'ucm': 'https://dash.ucmerced.edu/stash',
-    'ucop': 'https://dash.ucop.edu/stash',
-    'ucr': 'https://dash.ucr.edu/stash',
-    'ucsc': 'https://dash.library.ucsc.edu/stash',
-    'ucsf': 'https://datashare.ucsf.edu/stash',
+  renderCampusCarousel(contentCarousel) {
+    if (contentCarousel.mode == 'journals') return (
+      <JournalCarouselComp campusID={this.props.unit.id} />
+    )
+    if (contentCarousel.mode == 'unit') return (
+      <UnitCarouselComp unitID={contentCarousel.unit_id} />
+    )
   }
 
   render() {
     let data = this.props.data,
-        unit = this.props.unit,
-        dash = Object.keys(this.dashUrlList).includes(unit.id),
-        dashUrl = dash ? this.dashUrlList[unit.id] : null
-
+        unit = this.props.unit
     return (
       <div>
         <HeatMapComp campusID={unit.id} />
@@ -36,36 +46,14 @@ class CampusLayout extends React.Component {
         <div className="c-columns">
           <main id="maincontent">
             <CampusSearchComp campusID={unit.id} campusName={unit.name} />
-            <UnitCarouselComp campusID={unit.id} campusName={unit.name} />
-            <JournalCarouselComp campusID={unit.id} campusName={unit.name} />
+         {data.contentCar1 && data.contentCar1.mode && data.contentCar1.mode != 'disabled' &&
+            this.renderCampusCarousel(data.contentCar1)
+         }
+         {data.contentCar2 && data.contentCar2.mode && data.contentCar2.mode != 'disabled' &&
+            this.renderCampusCarousel(data.contentCar2)
+         }
           </main>
           <aside>
-            <section className="o-columnbox1">
-              <header>
-                <h2>Campus Contact</h2>
-              </header>
-              <p><NotYetLink className="o-textlink__secondary" element="a">Sam Smith</NotYetLink>
-                <br/>Scholarly Communication Officer,
-                <br/>University of California
-                <br/>415 20th Street
-                <br/>Oakland, CA 94612
-                <br/>(555) 555-4444
-              </p>
-            </section>
-          {dashUrl &&
-            <section className="o-columnbox1">
-              <header>
-                <h2>{unit.name} Datasets</h2>
-              </header>
-              To publish the data that accompanies your research, <a href={dashUrl}>visit {unit.name} Dash</a>.
-            </section>
-          }
-            <section className="o-columnbox1">
-              <header>
-                <h2>Follow Us On Twitter</h2>
-              </header>
-              [content to go here]
-            </section>
             {this.props.sidebar}
           </aside>
         </div>

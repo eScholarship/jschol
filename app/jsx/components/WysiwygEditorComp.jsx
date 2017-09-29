@@ -19,22 +19,29 @@ export default class WysiwygEditorComp extends React.Component
 {
   static propTypes = {
     html: PropTypes.string.isRequired,
-    unit: PropTypes.string.isRequired
+    unit: PropTypes.string.isRequired,
+    buttons: PropTypes.array
   }
 
   componentWillMount() {
+    this.id = this.props.id ? this.props.id : "trumbo-" + (new Date().getTime())
+    this.initialHTML = this.props.html
     this.props.onChange(this.props.html) // initialize newText
   }
 
-  render() { return(
+  render() {
+  let buttons = this.props.buttons ? this.props.buttons : TRUMBO_BUTTONS 
+  return(
     <Subscriber channel="cms">
       { cms => cms.modules &&
-        <cms.modules.Trumbowyg id='react-trumbowyg'
-                   buttons={TRUMBO_BUTTONS}
-                   data={this.props.html}
+        <cms.modules.Trumbowyg 
+                   id={this.id}
+                   buttons={buttons}
+                   data={this.initialHTML}
                    shouldInjectSvgIcons={false}
                    svgIconsPath="/bower_components/trumbowyg/dist/ui/icons.svg"
                    onChange={e => this.props.onChange(e.target.innerHTML)}
+                   disabled={this.props.disabled}
                    plugins={{
                     // Add parameters to uploadImage plugin
                     uploadImage: {

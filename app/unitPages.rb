@@ -57,7 +57,7 @@ end
 # Generate a link to an image in the S3 bucket
 def getLogoData(data)
   data && data['asset_id'] or return nil
-  return { url: "/assets/#{data['asset_id']}", width: data['width'], height: data['height'] }
+  return { url: "/assets/#{data['asset_id']}", width: data['width'], height: data['height'], is_banner: data['is_banner'] }
 end
 
 def isTopmostUnit(unit)
@@ -69,12 +69,57 @@ def getUnitAncestor(unit)
   return $hierByUnit[unit.id][0].ancestor
 end
 
+# Get list of nav slugs by traversing the nav
+def getSlugs(navItems, slugList = nil)
+  slugs ||= Set.new
+  navItems and navItems.each { |navItem|
+    if navItem['type'] == 'folder'
+      getSlugs(navItem['sub_nav'], slugs)
+    end
+    navItem['slug'] and slugs << navItem['slug']
+  }
+  return slugs
+end
+
+# Permissions per nav item
+def getNavPerms(unit, navItems, userPerms)
+  noAccess = { change_slug: false, change_text: false, remove: false, reorder: false }
+  result = {}
+  slugs = getSlugs(navItems)
+  slugs << "link" << "folder" << "page"  # special pseudo-slugs for specials
+  slugs.each { |slug|
+    if unit.type.include?("series")
+      result[slug] =   noAccess
+    elsif userPerms[:super]
+      result[slug] =   { change_slug: true,  change_text: true,  remove: true,  reorder: true  }
+    elsif !userPerms[:admin]
+      result[slug] =   noAccess
+    elsif unit.type == 'campus'
+      result[slug] =   noAccess
+    else
+      case slug
+      when /^(policyStatement|policies|policiesProcedures|journal_policies|policy)$/i
+        result[slug] = { change_slug: false, change_text: false, remove: false, reorder: true  }
+      when /^(submitPaper|submissionGuidelines|submissionprocess|howsubmit)$/i
+        result[slug] = { change_slug: false, change_text: true,  remove: false, reorder: true  }
+      when /^(contactUs)$/i
+        result[slug] = { change_slug: false, change_text: true,  remove: false, reorder: false }
+      when /^(aboutus|about)$/i
+        result[slug] = { change_slug: false, change_text: true,  remove: false, reorder: true  }
+      else
+        result[slug] = { change_slug: true,  change_text: true,  remove: true,  reorder: true  }
+      end
+    end
+  }
+  return result
+end
+
 # Add a URL to each nav bar item
-def getNavBar(unit, pageName, navItems, level=1)
+def getNavBar(unit, navItems, level=1)
   if navItems
     navItems.each { |navItem|
       if navItem['type'] == 'folder'
-        navItem['sub_nav'] = getNavBar(unit, pageName, navItem['sub_nav'], level+1)
+        navItem['sub_nav'] = getNavBar(unit, navItem['sub_nav'], level+1)
       elsif navItem['slug']
         navItem['url'] = "/uc/#{unit.id}#{navItem['slug']=="" ? "" : "/"+navItem['slug']}"
       end
@@ -120,7 +165,7 @@ def getUnitHeader(unit, pageName=nil, journalIssue=nil, attrs=nil)
     :logo => (unit.type.include? 'series') ? getLogoData(JSON.parse(ancestor.attrs)['logo']) : getLogoData(attrs['logo']),
     :directSubmit => attrs['directSubmit'],
     :directSubmitURL => attrs['directSubmitURL'],
-    :nav_bar => getNavBar(unit, pageName, attrs['nav_bar']),
+    :nav_bar => getNavBar(unit, attrs['nav_bar']),
     :social => {
       :facebook => attrs['facebook'],
       :twitter => attrs['twitter'],
@@ -162,12 +207,12 @@ def getUnitMarquee(unit, attrs)
   if carousel && carousel.attrs
     carouselAttrs = JSON.parse(carousel.attrs)
   else
-    carouselAttrs = ""
+    carouselAttrs = nil
   end
   return {
     :about => attrs['about'],
     :carousel => attrs['carousel'],
-    :slides => carouselAttrs['slides']
+    :slides => (!carouselAttrs || carouselAttrs['slides'] == "") ? nil : carouselAttrs['slides']
   }
 end
 
@@ -197,6 +242,8 @@ end
 # Get data for Campus Landing Page
 def getCampusLandingPageData(unit, attrs)
   return {
+    :contentCar1 => attrs['contentCar1'],                  
+    :contentCar2 => attrs['contentCar2'],                  
     :pub_count =>     ($statsCampusPubs.keys.include? unit.id)  ? $statsCampusPubs[unit.id]     : 0,
     :view_count =>    0,
     :opened_count =>    0,
@@ -360,6 +407,29 @@ def getUnitProfile(unit, attrs)
   return profile
 end
 
+def getUnitCarouselConfig(unit, attrs)
+  config = {
+    marquee: getUnitMarquee(unit, attrs)
+  }
+  if unit.type == 'campus'
+    cu = flattenDepts($hierByAncestor[unit.id].map(&:values).map{|x| x[:unit_id]})
+    config[:campusUnits] = cu.sort_by{ |u| u["name"] }
+    topmostUnit = config[:campusUnits].length > 0 ? config[:campusUnits][0]['id'] : nil
+    emptyConfig = {"mode": "disabled", "unit_id": ""}
+    config[:contentCar1] = topmostUnit ? 
+        attrs['contentCar1'] ?
+          attrs['contentCar1']
+        : {"mode": "unit", "unit_id": topmostUnit}
+      : emptyConfig
+    config[:contentCar2] = topmostUnit ? 
+        attrs['contentCar2'] ?
+          attrs['contentCar2']
+        : {"mode": "journals", "unit_id": topmostUnit}
+      : emptyConfig
+  end
+  return config 
+end
+
 def getItemAuthors(itemID)
   return ItemAuthors.filter(:item_id => itemID).order(:ordering).map(:attrs).collect{ |h| JSON.parse(h)}
 end
@@ -443,14 +513,15 @@ end
 
 put "/api/unit/:unitID/nav/:navID" do |unitID, navID|
   # Check user permissions
-  perms = getUserPermissions(params[:username], params[:token], unitID)
-  perms[:admin] or halt(401)
+  userPerms = getUserPermissions(params[:username], params[:token], unitID)
+  userPerms[:admin] or halt(401)
   content_type :json
 
   DB.transaction {
     unit = Unit[unitID] or jsonHalt(404, "Unit not found")
     unitAttrs = JSON.parse(unit.attrs)
     params[:name].empty? and jsonHalt(400, "Page name must be supplied.")
+    navPerms = getNavPerms(unit, unitAttrs["nav_bar"], userPerms)
 
     travNav(unitAttrs['nav_bar']) { |nav|
       next unless nav['id'].to_s == navID.to_s
@@ -460,12 +531,14 @@ put "/api/unit/:unitID/nav/:navID" do |unitID, navID|
         page = Page.where(unit_id: unitID, slug: nav['slug']).first or halt(404, "Page not found")
 
         oldSlug = page.slug
-        newSlug = params[:slug]
-        newSlug.empty? and jsonHalt(400, "Slug must be supplied.")
-        newSlug =~ /^[a-zA-Z][a-zA-Z0-9_]+$/ or jsonHalt(400,
-          message: "Slug must start with a letter a-z, and consist only of letters a-z, numbers, or underscores.")
-        page.slug = newSlug
-        nav['slug'] = newSlug
+        if navPerms[oldSlug][:change_slug]
+          newSlug = params[:slug]
+          newSlug.empty? and jsonHalt(400, "Slug must be supplied.")
+          newSlug =~ /^[a-zA-Z][a-zA-Z0-9_]+$/ or jsonHalt(400,
+            message: "Slug must start with a letter a-z, and consist only of letters a-z, numbers, or underscores.")
+          page.slug = newSlug
+          nav['slug'] = newSlug
+        end
 
         page.name = params[:name]
         page.name.empty? and jsonHalt(400, "Page name must be supplied.")
@@ -473,9 +546,11 @@ put "/api/unit/:unitID/nav/:navID" do |unitID, navID|
         page.title = params[:title]
         page.title.empty? and jsonHalt(400, "Title must be supplied.")
 
-        newHTML = sanitizeHTML(params[:attrs][:html])
-        newHTML.empty? and jsonHalt(400, "Text must be supplied.")
-        page.attrs = JSON.parse(page.attrs).merge({ "html" => newHTML }).to_json
+        if navPerms[oldSlug][:change_text]
+          newHTML = sanitizeHTML(params[:attrs][:html])
+          newHTML.gsub(%r{</?p>}, '').gsub(/\s|\u00a0/, '').empty? and jsonHalt(400, "Text must be supplied.")
+          page.attrs = JSON.parse(page.attrs).merge({ "html" => newHTML }).to_json
+        end
         page.save
       elsif nav['type'] == "link"
         params[:url] =~ %r{^(/\w|https?://).*} or jsonHalt(400, "Invalid URL.")
@@ -530,8 +605,8 @@ end
 # *Post* to add an item to a nav bar
 post "/api/unit/:unitID/nav" do |unitID|
   # Check user permissions
-  perms = getUserPermissions(params[:username], params[:token], unitID)
-  perms[:admin] or halt(401)
+  userPerms = getUserPermissions(params[:username], params[:token], unitID)
+  userPerms[:admin] or halt(401)
 
   # Grab unit data
   unit = Unit[unitID]
@@ -544,6 +619,9 @@ post "/api/unit/:unitID/nav" do |unitID|
   # Find the existing nav bar
   attrs = JSON.parse(unit.attrs)
   (navBar = attrs['nav_bar']) or raise("Unit has non-existent nav bar")
+
+  # Make sure the user has permission. "remove" permission is a good proxy for "add"
+  getNavPerms(unit, attrs["nav_bar"], userPerms).dig('page', :remove) or restrictedHalt
 
   # Invent a unique name for the new item
   slug = name = nil
@@ -628,15 +706,19 @@ put "/api/unit/:unitID/sidebarOrder" do |unitID|
   DB.transaction {
     unit = Unit[unitID] or jsonHalt(404, "Unit not found")
     newOrder = JSON.parse(params[:order])
-    Widget.where(unit_id: unitID).count == newOrder.length or jsonHalt(400, "must reorder all at once")
+    Widget.where(unit_id: unitID, region: "sidebar").count == newOrder.length or jsonHalt(400, "must reorder all at once")
 
     # Make two passes, to absolutely avoid conflicting order in the table at any time.
-    maxOldOrder = Widget.where(unit_id: unitID).max(:ordering)
+    maxOldOrder = Widget.where(unit_id: unitID, region: "sidebar").max(:ordering)
     (1..2).each { |pass|
       offset = (pass == 1) ? maxOldOrder+1 : 1
       newOrder.each_with_index { |widgetID, idx|
         w = Widget[widgetID]
         w.unit_id == unitID or jsonHalt(400, "widget/unit mistmatch")
+        # Only super users can change order of campus contact
+        if w.ordering != idx+offset && JSON.parse(w.attrs)['title'] == "Campus Contact" && !perms[:super]
+          restrictedHalt
+        end
         w.ordering = idx + offset
         w.save
       }
@@ -657,6 +739,10 @@ delete "/api/unit/:unitID/sidebar/:widgetID" do |unitID, widgetID|
   DB.transaction {
     unit = Unit[unitID] or halt(404, "Unit not found")
     widget = Widget[widgetID]
+    # Only super users can delete campus contact block
+    if JSON.parse(widget.attrs)['title'] == "Campus Contact" && !perms[:super]
+      restrictedHalt
+    end
     widget.unit_id == unitID and widget.region == "sidebar" or jsonHalt(400, "invalid widget")
     widget.delete
   }
@@ -669,13 +755,15 @@ end
 # *Delete* to remove a static page from a unit
 delete "/api/unit/:unitID/nav/:navID" do |unitID, navID|
   # Check user permissions
-  perms = getUserPermissions(params[:username], params[:token], unitID)
-  perms[:admin] or halt(401)
+  userPerms = getUserPermissions(params[:username], params[:token], unitID)
+  userPerms[:admin] or halt(401)
 
   DB.transaction {
     unit = Unit[unitID] or halt(404, "Unit not found")
     unitAttrs = JSON.parse(unit.attrs)
     nav = getNavByID(unitAttrs['nav_bar'], navID)
+    slug = nav['type'] != 'page' ? nav['type'] : nav['slug']
+    getNavPerms(unit, unitAttrs["nav_bar"], userPerms).dig(slug, :remove) or restrictedHalt
     unitAttrs['nav_bar'] = deleteNavByID(unitAttrs['nav_bar'], navID)
     getNavByID(unitAttrs['nav_bar'], navID).nil? or raise("delete failed")
     if nav['type'] == "folder" && !nav['sub_nav'].empty?
@@ -743,6 +831,11 @@ put "/api/static/:unitID/:pageName/mainText" do |unitID, pageName|
 end
 
 ###################################################################################################
+def restrictedHalt
+  jsonHalt(401, "This action is restricted. Contact eScholarship Support for further assistance.")
+end
+
+###################################################################################################
 # *Put* to change unit profile properties: content configuration
 put "/api/unit/:unitID/profileContentConfig" do |unitID|
   # Check user permissions
@@ -767,18 +860,26 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
 
     if params['data']['unitName'] then unit.name = params['data']['unitName'] end
 
-    if params['data']['doajSeal'] && params['data']['doajSeal'] == 'on'
-      unitAttrs['doaj'] = true
-    else
-      unitAttrs.delete('doaj')
-    end 
+    if unitAttrs['logo']
+      params['data']['logoIsBanner'] ? unitAttrs['logo']['is_banner'] = true : unitAttrs['logo'].delete('is_banner')
+    end
+
+    # Certain elements can only be changed by super user
+    if perms[:super]
+      if params['data']['doajSeal'] == 'on'
+        unitAttrs['doaj'] = true
+      else
+        unitAttrs.delete('doaj')
+      end
+      if params['data']['altmetrics_ok'] == 'on'
+        unitAttrs['altmetrics_ok'] = true
+      else
+        unitAttrs.delete('altmetrics_ok')
+      end
+    end
+
     if params['data']['issn'] then unitAttrs['issn'] = params['data']['issn'] end
     if params['data']['eissn'] then unitAttrs['eissn'] = params['data']['eissn'] end
-    if params['data']['altmetrics_ok'] && params['data']['altmetrics_ok'] == 'on'
-      unitAttrs['altmetrics_ok'] = true
-    else
-      unitAttrs.delete('altmetrics_ok')
-    end 
 
     if params['data']['facebook'] then unitAttrs['facebook'] = params['data']['facebook'] end
     if params['data']['twitter'] then unitAttrs['twitter'] = params['data']['twitter'] end
@@ -811,6 +912,34 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
   return { status: "ok" }.to_json
 end
 
+###################################################################################################
+# *Put* to change campus content carousel configuration
+put "/api/unit/:campusID/campusCarouselConfig" do |campusID|
+  # Check user permissions
+  perms = getUserPermissions(params[:username], params[:token], campusID)
+  perms[:admin] or halt(401)
+
+  DB.transaction {
+    unit = Unit[campusID] or jsonHalt(404, "Unit not found")
+    unit.type == 'campus' or jsonHalt(404, "This unit is not a campus. Failed.")
+    unitAttrs = JSON.parse(unit.attrs)
+
+    if params['data']['mode1'] && params['data']['unit_id1']
+      unitAttrs['contentCar1'] = {'mode': params['data']['mode1'], 'unit_id': params['data']['unit_id1']}
+    end
+    if params['data']['mode2'] && params['data']['unit_id2']
+      unitAttrs['contentCar2'] = {'mode': params['data']['mode2'], 'unit_id': params['data']['unit_id2']}
+    end
+    unit.attrs = unitAttrs.to_json
+    unit.save
+  } 
+
+  refreshUnitsHash
+  content_type :json
+  return { status: "ok" }.to_json
+end
+
+
 def carouselConfig(slides, unitID)
   carousel = Widget.where(unit_id: unitID, region: "marquee", kind: "Carousel", ordering: 0).first
   if !carousel
@@ -822,16 +951,16 @@ def carouselConfig(slides, unitID)
     slides.each do |k,v|
       # if the slide already exists, merge new config with old config
       if k < carouselAttrs['slides'].length
-        carouselAttrs['slides'][k] = carouselAttrs['slides'][k].merge(v.to_a.collect{|x| [x[0].to_s, x[1]]}.to_h) 
+        carouselAttrs['slides'][k] = carouselAttrs['slides'][k].merge(v.to_a.collect{|x| [x[0].to_s, x[1]]}.to_h)
       elsif carouselAttrs['slides'].length > 0
         # TODO: shouldn't technically be a PUSH - if multiple new slides are added at once, new slide 6 could be before new slide 5 in slides.each; slide 6 is pushed and is now slide 5, then slide 5 comes and overwrites the data for slide 6
         carouselAttrs['slides'].push(v.to_a.collect{|x| [x[0].to_s, x[1]]}.to_h)
-      else 
+      else
         carouselAttrs['slides'] = [v.to_a.collect{|x| [x[0].to_s, x[1]]}.to_h]
       end
     end
   else
-    carouselAttrs = {slides: ''}
+    carouselAttrs = {slides: nil}
   end
   
   carousel.attrs = carouselAttrs.to_json
@@ -968,7 +1097,7 @@ def updateIssueConfig(inputAttrs, data, voliss)
 end
 
 put "/api/unit/:unitID/issueConfig" do |unitID|
-  getUserPermissions(params[:username], params[:token], unitID)[:super] or halt(401)
+  getUserPermissions(params[:username], params[:token], unitID)[:super] or restrictedHalt
   DB.transaction {
     issueMap = Hash[Issue.where(unit_id: unitID).map { |iss| ["#{iss.volume}.#{iss.issue}", iss] }]
     params['data'].keys.select { |k| k =~ /^rights-/ }.map { |k| k.sub(/^rights-/, '') }.each { |voliss|

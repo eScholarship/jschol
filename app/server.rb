@@ -19,6 +19,7 @@ require 'pp'
 require 'sequel'
 require 'sinatra'
 require 'tempfile'
+require 'thin'
 require 'yaml'
 require 'socksify'
 require 'socket'
@@ -77,6 +78,9 @@ DB = ensureConnect(escholDbConfig)
 puts "Connecting to OJS DB.       "
 OJS_DB = ensureConnect(ojsDbConfig)
 #OJS_DB.loggers << Logger.new('ojs.sql_log')  # Enable to debug SQL queries on OJS db
+
+# When fetching ISO pages and PDFs from the local server, we need the host name.
+$host = ENV['HOST'] || "localhost"
 
 # Need credentials for fetching content files from MrtExpress
 $mrtExpressConfig = YAML.load_file("config/mrtExpress.yaml")
@@ -257,6 +261,24 @@ Thread.new {
 $cachesFilled.wait
 
 ###################################################################################################
+# Monkey-patch Thin's post_process method, because it calls callback and errback in quick
+# succession on the response body, but callback nulls out the body so so errback cannot be called.
+module Thin
+  module ConnectionExtensions
+    def post_process(result)
+      begin
+        super(result)
+      rescue NoMethodError
+        STDOUT.write("Note: ignoring silly NoMethodError from Thin::Connection::post_process\n")
+      end
+    end
+  end
+  class Connection
+    prepend ConnectionExtensions
+  end
+end
+
+###################################################################################################
 # ISOMORPHIC JAVASCRIPT
 # =====================
 #
@@ -386,7 +408,7 @@ get "/content/:fullItemID/*" do |itemID, path|
   if path =~ /^qt\w{8}\.pdf$/
     epath = "content/#{URI::encode(path)}"
     attrs["content_merritt_path"] and epath = attrs["content_merritt_path"]
-    noSplash = !(ENV['HOST'] =~ /pub-jschol/) ||
+    noSplash = !($host =~ /pub-jschol/) ||
                (params[:nosplash] && isValidContentKey(itemID.sub(/^qt/, ''), params[:nosplash]))
     mainPDF = true
   else
@@ -440,7 +462,7 @@ get "/content/:fullItemID/*" do |itemID, path|
   if range
     range =~ /^bytes=(\d+)-(\d+)/ or raise("can't parse range")
     fromByte, toByte = $1.to_i, $2.to_i
-    puts "range #{fromByte}-#{toByte}/#{outLen}"
+    #puts "range #{fromByte}-#{toByte}/#{outLen}"
     headers "Content-Range" => "bytes #{fromByte}-#{toByte}/#{outLen}"
     outLen = toByte - fromByte + 1
     status 206
@@ -485,7 +507,7 @@ get %r{.*} do
 
     # Pass the full path and query string to our little Node Express app, which will run it through
     # ReactRouter and React.
-    response = Net::HTTP.new(ENV['HOST'], 4002).start {|http| http.request(Net::HTTP::Get.new(remainder)) }
+    response = Net::HTTP.new($host, 4002).start {|http| http.request(Net::HTTP::Get.new(remainder)) }
     status response.code.to_i
 
     # Read in the template file, and substitute the results from React/ReactRouter
@@ -670,7 +692,7 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
       pageData[:content] = getUnitProfile(unit, attrs)
     elsif pageName == 'carousel' 
       # ToDo: Cleanup this which duplicates marquee info below
-      pageData[:content] = getUnitMarquee(unit, attrs)
+      pageData[:content] = getUnitCarouselConfig(unit, attrs)
     elsif pageName == 'issueConfig'
       pageData[:content] = getUnitIssueConfig(unit, attrs)
     elsif pageName == 'nav'
@@ -684,7 +706,6 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
     else
       pageData[:content] = getUnitStaticPage(unit, attrs, pageName)
     end
-    # pp(pageData[:content])
     pageData[:header] = getUnitHeader(unit,
                                       (pageName =~ /^(nav|sidebar|profile|carousel|issueConfig)/ or issueData) ? nil : pageName,
                                       issueData, attrs)
@@ -722,6 +743,7 @@ get "/api/item/:shortArk" do |shortArk|
   attrs = JSON.parse(Item.filter(:id => id).map(:attrs)[0])
   unitIDs = UnitItem.where(:item_id => id, :is_direct => true).order(:ordering_of_units).select_map(:unit_id)
   unit = unitIDs ? Unit[unitIDs[0]] : nil
+  relatedItemIDs = nil 
 
   if !item.nil?
     authors = ItemAuthors.filter(:item_id => id).order(:ordering).
@@ -741,6 +763,7 @@ get "/api/item/:shortArk" do |shortArk|
         :content_html => getItemHtml(item.content_type, shortArk),
         :content_key => calcContentKey(shortArk),
         :attrs => attrs,
+        :relatedItems => nil,
         :appearsIn => unitIDs ? unitIDs.map { |unitID| {"id" => unitID, "name" => Unit[unitID].name} }
                               : nil,
         :unit => unit ? unit.values.reject { |k,v| k==:attrs } : nil,

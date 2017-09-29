@@ -83,7 +83,6 @@ class ScholWorksComp extends React.Component {
         return (<li key={i}><a href={"/search/?q="+author.name}>{author.name}</a></li>)
       })
     }
-
     return (
       <section className="c-scholworks">
         <div className="c-scholworks__main-column">
