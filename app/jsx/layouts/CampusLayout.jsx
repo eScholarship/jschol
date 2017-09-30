@@ -13,12 +13,17 @@ class CampusLayout extends React.Component {
     data:  PropTypes.shape({
       contentCar1: PropTypes.shape({
         mode: PropTypes.string,
-        unit_id: PropTypes.string,
+        data:  PropTypes.shape({
+          unit_id: PropTypes.string,
+          name: PropTypes.string,
+          cover: PropTypes.shape({
+            width: PropTypes.number,
+            height: PropTypes.number,
+            asset_id: PropTypes.string,
+          }),
+        }),
       }),
-      contentCar2: PropTypes.shape({
-        mode: PropTypes.string,
-        unit_id: PropTypes.string,
-      }),
+   // contentCar2: // Same as above
       journal_count: PropTypes.number,
       opened_count: PropTypes.number,
       pub_count: PropTypes.number,
@@ -46,10 +51,10 @@ class CampusLayout extends React.Component {
         <div className="c-columns">
           <main id="maincontent">
             <CampusSearchComp campusID={unit.id} campusName={unit.name} />
-         {data.contentCar1 && data.contentCar1.mode && data.contentCar1.mode != 'disabled' &&
+         {data.contentCar1 && data.contentCar1.mode && data.contentCar1.mode != 'disabled' && data.contentCar1.data &&
             this.renderCampusCarousel(data.contentCar1)
          }
-         {data.contentCar2 && data.contentCar2.mode && data.contentCar2.mode != 'disabled' &&
+         {data.contentCar2 && data.contentCar2.mode && data.contentCar2.mode != 'disabled' && data.contentCar2.data &&
             this.renderCampusCarousel(data.contentCar2)
          }
           </main>

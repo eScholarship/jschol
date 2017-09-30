@@ -238,17 +238,40 @@ def getORULandingPageData(id)
   }
 end
 
-def getCampusCarouselJournals(unit, attrs)
-end
-
-def getCampusCarouselUnit(unit, attrs)
+# Retrieve items from DB based on Campus Carousel configuration that has been set
+def getCampusCarousel(unit, content_attrs)
+  return nil if unit.type != 'campus' || content_attrs['mode'] == 'disabled'
+  children = $hierByAncestor[unit.id]
+  return nil if !children
+  if content_attrs['mode'] == 'journals'
+    # Populate Campus Carousel with up to 10 Journals
+    journals  = $campusJournals.select{ |j| j[:ancestor_unit].include?(unit.id) }.select{ |h| h[:status]!="archived" }
+      .map{|u| {unit_id: u[:id], name: u[:name]} }
+    latest_issues = journals.map { |u|
+      i = Issue.where(:unit_id => u[:unit_id]).order(Sequel.desc(:pub_date)).first
+      return nil if i.nil?
+      if i.values[:attrs]
+        attrs = JSON.parse(i[:attrs])
+        attrs['cover'] and u[:cover] = attrs['cover']
+      end
+      next u 
+    }
+    return latest_issues.compact.take(10)
+  elsif content_attrs['mode'] == 'unit'
+    # Populate campus carousel with 10 articles from selected unit 
+    # id
+    # title
+    # authors
+    # genre
+  else return nil
+  end
 end
 
 # Get data for Campus Landing Page
 def getCampusLandingPageData(unit, attrs)
   return {
-    :contentCar1 => attrs['contentCar1'],                  
-    :contentCar2 => attrs['contentCar2'],                  
+    :contentCar1 => {'mode': attrs['contentCar1']['mode'], 'data': getCampusCarousel(unit, attrs['contentCar1'])},
+    :contentCar2 => {'mode': attrs['contentCar2']['mode'], 'data': getCampusCarousel(unit, attrs['contentCar2'])},
     :pub_count =>     ($statsCampusPubs.keys.include? unit.id)  ? $statsCampusPubs[unit.id]     : 0,
     :view_count =>    0,
     :opened_count =>    0,
