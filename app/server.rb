@@ -105,6 +105,7 @@ require_relative 'citation'
 require_relative 'loginApi'
 require_relative 'fileCache'
 require_relative '../util/sanitize.rb'
+require_relative '../util/xmlutil.rb'
 require_relative 'merritt'
 
 # Sinatra configuration
@@ -411,6 +412,10 @@ get "/content/:fullItemID/*" do |itemID, path|
     noSplash = !($host =~ /pub-jschol/) ||
                (params[:nosplash] && isValidContentKey(itemID.sub(/^qt/, ''), params[:nosplash]))
     mainPDF = true
+  elsif path =~ %r{^inner/(.*)$}
+    epath = "content/#{URI::encode($1)}"
+    noSplash = true
+    mainPDF = false
   else
     # Must be a supp file.
     attrs["supp_files"] or halt(404)
@@ -760,7 +765,7 @@ get "/api/item/:shortArk" do |shortArk|
         :status => item.status,
         :rights => item.rights,
         :content_type => item.content_type,
-        :content_html => getItemHtml(item.content_type, shortArk),
+        :content_html => getItemHtml(item.content_type, id),
         :content_key => calcContentKey(shortArk),
         :attrs => attrs,
         :relatedItems => nil,
@@ -914,11 +919,14 @@ end
 # Properly target links in HTML blob
 def getItemHtml(content_type, id)
   return false if content_type != "text/html"
-  dir = "http://" + request.env["HTTP_HOST"] + "/content/qt" + id + "/"
-  htmlStr = open(dir + "qt" + id + ".html").read
+  mrtURL = "https://#{$mrtExpressConfig['host']}/dl/ark:/13030/#{id}/content/#{id}.html"
+  fetcher = MerrittFetcher.new(mrtURL)
+  buf = []
+  fetcher.streamTo(buf)
+  htmlStr = stringToXML(buf.join("")).to_xml
   htmlStr.gsub(/(href|src)="((?!#)[^"]+)"/) { |m|
     attrib, url = $1, $2
-    url = $2.start_with?("http", "ftp") ? $2 : dir + $2
+    url = url.start_with?("http", "ftp") ? url : "/content/#{id}/inner/#{url}"
     "#{attrib}=\"#{url}\"" + ((attrib == "src") ? "" : " target=\"new\"")
   }
 end
