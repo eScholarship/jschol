@@ -31,15 +31,14 @@ class PdfViewerComp extends React.Component
     }
   }
 
-  render() {
-    return(
-      <div id="pdfjs-cdl-wrapper" ref={(c) => this.initViewer(c)}>
-        <noscript>
-          <embed src={this.props.url} type='application/pdf' />
-        </noscript>
-        <div id="pdfjs-viewer" className="jsonly" style={{visibility: "hidden"}} dangerouslySetInnerHTML={ this.viewerHTML() }/>
-      </div>)
+  // Close out when disappearing
+  componentWillUnmount() {
+    this.initted = false
+    window.webViewerUnload()
   }
+
+  render = () =>
+    <div id="pdfjs-cdl-wrapper" ref={(c) => this.initViewer(c)} dangerouslySetInnerHTML={this.viewerHTML()}/>
 
   shouldComponentUpdate() {
     return this.initted ? false : true // never replace the HTML once created
@@ -64,6 +63,10 @@ class PdfViewerComp extends React.Component
 
   viewerHTML() {
     return { __html: `
+     <div id="pdfjs-viewer" className="jsonly">
+      <noscript>
+        <embed src=${this.props.url} type='application/pdf' />
+      </noscript>
       <div id="outerContainer">
 
         <div id="sidebarContainer">
@@ -353,6 +356,7 @@ class PdfViewerComp extends React.Component
           </div>
         </div>  <!-- overlayContainer -->
       </div> <!-- outerContainer -->
+     </div> <!-- pdfjs-viewer -->
     `}
   }
 }
