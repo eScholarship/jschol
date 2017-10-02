@@ -43,7 +43,7 @@ class JournalCarouselComp extends React.Component {
                         imagesLoaded: true,
                         percentPosition: false // px instead of % cells
                       }}>
-        {this.props.data.map( u => {
+        {this.props.data.map( u =>
           <div key={u.unit_id} className="o-itemcarousel__item">
           <Link to={"/uc/" + u.unit_id} className="o-journal2">
             <figure>
@@ -53,7 +53,7 @@ class JournalCarouselComp extends React.Component {
             </figure>
           </Link>
         </div>
-        })}
+        )}
         </CarouselComp>
         <div className="o-stat--item o-itemcarousel__stats-item">
           <Link to={"/" + this.props.campusID + "/journals"}>9,999</Link>Items
