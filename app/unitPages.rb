@@ -272,8 +272,7 @@ end
 # Get data for Campus Landing Page
 def getCampusLandingPageData(unit, attrs)
   return {
-    # :contentCar1 => {'mode': attrs['contentCar1']['mode'], 'data': getCampusCarousel(unit, attrs['contentCar1'])},
-    :contentCar1 => nil,
+    :contentCar1 => attrs['contentCar1'] ? {'mode': attrs['contentCar1']['mode'], 'data': getCampusCarousel(unit, attrs['contentCar1'])} : nil,
     :contentCar2 => attrs['contentCar2'] ? {'mode': attrs['contentCar2']['mode'], 'data': getCampusCarousel(unit, attrs['contentCar2'])} : nil,
     :pub_count =>     ($statsCampusPubs.keys.include? unit.id)  ? $statsCampusPubs[unit.id]     : 0,
     :view_count =>    0,

@@ -45,13 +45,14 @@ class JournalCarouselComp extends React.Component {
                       }}>
         {this.props.data.map( u =>
           <div key={u.unit_id} className="o-itemcarousel__item">
-          <Link to={"/uc/" + u.unit_id} className="o-journal2">
+          <a href={"/uc/" + u.unit_id} className="o-journal2">
             <figure>
-            {u.cover &&
-              <img src={"/assets/"+u.cover.asset_id+"."+u.cover.image_type} alt={u.name}/> }
+            {u.cover ?
+              <img src={"/assets/"+u.cover.asset_id} alt={u.name}/>
+            : <img src="/images/temp_article.png" alt={u.name} /> }
               <figcaption>{u.name}</figcaption>
             </figure>
-          </Link>
+          </a>
         </div>
         )}
         </CarouselComp>
