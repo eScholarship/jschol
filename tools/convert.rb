@@ -2705,34 +2705,6 @@ def splashAllPDFs(arks)
 end
 
 ###################################################################################################
-# Un-hide page fix
-def fixNavs(navs)
-  navs.map { |nav|
-    if nav['type'] == 'folder'
-      nav['sub_nav'] = fixNavs(nav['sub_nav'])
-    elsif nav['type'] == 'page'
-      nav.delete('hidden')
-    end
-    nav
-  }
-end
-
-def fixHiddenPages
-  Unit.each { |unit|
-    attrs = JSON.parse(unit.attrs)
-    if attrs['nav_bar']
-      before = JSON.generate(attrs['nav_bar'])
-      attrs['nav_bar'] = fixNavs(attrs['nav_bar'])
-      if before != JSON.generate(attrs['nav_bar'])
-        puts "Fixing #{unit.id}."
-        unit.attrs = JSON.generate(attrs)
-        unit.save
-      end
-    end
-  }
-end
-
-###################################################################################################
 # Main action begins here
 
 startTime = Time.now
@@ -2749,8 +2721,6 @@ case ARGV[0]
   when "--splash"
     arks = ARGV.select { |a| a =~ /qt\w{8}/ }
     splashAllPDFs(arks.empty? ? "ALL" : Set.new(arks))
-  when "--fixHiddenPages"
-    fixHiddenPages
   else
     STDERR.puts "Usage: #{__FILE__} --units|--items"
     exit 1
