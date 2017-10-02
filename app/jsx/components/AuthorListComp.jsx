@@ -1,6 +1,7 @@
 // ##### Author List Component ##### //
 
 import React from 'react'
+import ReactDOMServer from 'react-dom/server'
 import $ from 'jquery'
 import { Link } from 'react-router'
 
@@ -25,30 +26,27 @@ class AuthorListComp extends React.Component {
 
   componentWillReceiveProps(nextProps) {
     if (this.props.authors != nextProps.authors) {
-      console.log("CompWillReceiveProps")
       this.activateTruncation()
     }
-  }
-
-  componentWillUpdate(nextProps) {
-    console.log("CompWillUpdate")
-    console.log("new authors:")
-    console.log(nextProps.authors)
   }
 
   render() {
     let p = this.props,
         year = p.pubdate.match(/\d{4}/),
-        authorlist = p.authors.map((author, i) => { return (<li key={i}>{author.name}</li>) })
+        authorlist = p.authors.map((author, i) => { return (<li key={i+author.name}>{author.name}</li>) })
     return (
       <div className="c-authorlist">
         {year && <time className="c-authorlist__year">{year[0]}</time> }
+        {/* The 'dangerouslySetInnerHTML' rigarmarole below is to keep React from getting upset about
+            jquery.dotdotdot fiddling around with the author elements. */}
         { p.authors && 
-            <ul className="c-authorlist__list">      
+          <div dangerouslySetInnerHTML={{__html: ReactDOMServer.renderToStaticMarkup(
+            <ul className="c-authorlist__list">
               {authorlist}
               {/* Note: the <a> more-link below cannot be a <Link>, else jquery dotdotdot can't recognize it */}
               <li><a href="" className="c-authorlist__list-more-link">et al.</a></li>
             </ul>
+          )}}/>
         }
       </div>
     )
