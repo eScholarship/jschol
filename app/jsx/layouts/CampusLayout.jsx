@@ -34,10 +34,10 @@ class CampusLayout extends React.Component {
 
   renderCampusCarousel(contentCarousel) {
     if (contentCarousel.mode == 'journals') return (
-      <JournalCarouselComp campusID={this.props.unit.id} />
+      <JournalCarouselComp campusID={this.props.unit.id} campusName={this.props.unit.name} data={contentCarousel.data} />
     )
     if (contentCarousel.mode == 'unit') return (
-      <UnitCarouselComp unitID={contentCarousel.unit_id} />
+      <UnitCarouselComp data={contentCarousel.data} />
     )
   }
 

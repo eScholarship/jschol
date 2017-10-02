@@ -76,7 +76,6 @@ class IssueComp extends React.Component {
     let pi = this.props.issue,
         year = pi.pub_date.match(/\d{4}/),
         issueCurrent = [pi.unit_id, pi.volume, pi.issue, year]
-    console.log(pi.cover)
     return (
       <section className="o-columnbox1">
         <IssueActionsComp unit_id={pi.unit_id} buy_link={pi.buy_link} />

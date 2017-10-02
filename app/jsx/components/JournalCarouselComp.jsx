@@ -12,7 +12,17 @@ if (!(typeof document === "undefined")) {
 
 class JournalCarouselComp extends React.Component {
   static propTypes = {
-    campusID: PropTypes.string,
+    campusID: PropTypes.string.isRequired, 
+    campusName: PropTypes.string.isRequired, 
+    data:  PropTypes.arrayOf(PropTypes.shape({
+      unit_id: PropTypes.string.isRequired,
+      name: PropTypes.string.isRequired,
+      cover: PropTypes.shape({
+        width: PropTypes.number,
+        height: PropTypes.number,
+        asset_id: PropTypes.string,
+      }),
+    })).isRequired
   }
 
   componentDidMount () {
@@ -33,46 +43,17 @@ class JournalCarouselComp extends React.Component {
                         imagesLoaded: true,
                         percentPosition: false // px instead of % cells
                       }}>
-          <div className="o-itemcarousel__item">
-            <a href="" className="o-journal2">
-              <figure>
-                <img src="http://escholarship.org/issueCovers/jmie_sfews/15_01_cover.png" alt=""/>
-                <figcaption>The Proceedings of the UCLA Department of Spanish and Portuguese Graduate Conference</figcaption>
-              </figure>
-            </a>
-          </div>
-          <div className="o-itemcarousel__item">
-            <a href="" className="o-journal2">
-              <figure>
-                <img src="http://escholarship.org/issueCovers/ucdavislibrary_streetnotes/25_00_cover.png" alt=""/>
-                <figcaption>streetnotes</figcaption>
-              </figure>
-            </a>
-          </div>
-          <div className="o-itemcarousel__item">
-            <a href="" className="o-journal2">
-              <figure>
-                <img src="http://escholarship.org/issueCovers/ucbgse_bre/06_02_cover.png" alt=""/>
-                <figcaption>Maiores Corporis Repellendus Maxime</figcaption>
-              </figure>
-            </a>
-          </div>
-          <div className="o-itemcarousel__item">
-            <a href="" className="o-journal2">
-              <figure>
-                <img src="http://escholarship.org/issueCovers/regeneracion_tlacuilolli/02_01_cover.png" alt=""/>
-                <figcaption>The Proceedings of the UCLA Department of Spanish and Portuguese Graduate Conference</figcaption>
-              </figure>
-            </a>
-          </div>
-          <div className="o-itemcarousel__item">
-            <a href="" className="o-journal2">
-              <figure>
-                <img src="http://escholarship.org/issueCovers/jmie_sfews/15_01_cover.png" alt=""/>
-                <figcaption>The Proceedings of the UCLA Department of Spanish and Portuguese Graduate Conference</figcaption>
-              </figure>
-            </a>
-          </div>
+        {this.props.data.map( u => {
+          <div key={u.unit_id} className="o-itemcarousel__item">
+          <Link to={"/uc/" + u.unit_id} className="o-journal2">
+            <figure>
+            {u.cover &&
+              <img src={"/assets/"+u.cover.asset_id+"."+u.cover.image_type} alt={u.name}/> }
+              <figcaption>{u.name}</figcaption>
+            </figure>
+          </Link>
+        </div>
+        })}
         </CarouselComp>
         <div className="o-stat--item o-itemcarousel__stats-item">
           <Link to={"/" + this.props.campusID + "/journals"}>9,999</Link>Items
