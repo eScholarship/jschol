@@ -70,7 +70,7 @@ def getUnitAncestor(unit)
 end
 
 # Get list of nav slugs by traversing the nav
-def getSlugs(navItems, slugList = nil)
+def getSlugs(navItems, slugs = nil)
   slugs ||= Set.new
   navItems and navItems.each { |navItem|
     if navItem['type'] == 'folder'
