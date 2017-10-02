@@ -75,7 +75,8 @@ class MerrittFetcher
           resp.code == "200" or raise("Response to #{@url} was HTTP #{resp.code}: #{resp.message}")
           @status = "fetching"
           @length = resp["Expected-Content-Length"].to_i
-          @queue << 0
+          @queue << 0   # one to kick of @length
+          @queue << 0   # one for main thread
           fifo = @fifoPath ? File.open(@fifoPath, "wb") : nil
           resp.read_body { |chunk|
             @stop and http.finish
