@@ -8,6 +8,7 @@ bin/
 bower_components/
 cache/
 config/
+db_backup/
 dist
 gems/
 gomysql
