@@ -80,7 +80,7 @@ class EditableNavContentComp extends React.Component
                 <label className="c-editable-page__label" htmlFor="text">
                   Text{!navPerms.change_text && " (restricted)"}
                 </label>
-                <WysiwygEditorComp id="text" html={data.attrs.html} unit={this.props.unit.id}
+                <WysiwygEditorComp id="text" html={data.attrs.html} unit={this.props.unit.id} imageContext="content"
                   disabled={!navPerms.change_text}
                   onChange={ newText => this.setData({ attrs: { html: newText }}) }/>
               </div>

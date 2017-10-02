@@ -191,7 +191,9 @@
                                             }
                                         },
 
-                                        error: trumbowyg.o.plugins.uploadImage.error || function () {
+                                        error: trumbowyg.o.plugins.uploadImage.error || function (data) {
+                                            if (data.responseJSON.message)
+                                                alert(data.responseJSON.message);
                                             trumbowyg.addErrorOnModalField(
                                                 $('input[type=file]', $modal),
                                                 trumbowyg.lang.uploadError
