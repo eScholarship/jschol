@@ -13,14 +13,23 @@ class CampusLayout extends React.Component {
     data:  PropTypes.shape({
       contentCar1: PropTypes.shape({
         mode: PropTypes.string,
-        data:  PropTypes.shape({
-          unit_id: PropTypes.string,
-          name: PropTypes.string,
-          cover: PropTypes.shape({
-            width: PropTypes.number,
-            height: PropTypes.number,
-            asset_id: PropTypes.string,
-          }),
+        data: PropTypes.shape({
+          titleID: PropTypes.string,
+          titleName: PropTypes.string,
+          slides:  PropTypes.array,
+  // slide data for JournalCarousel:
+  //          unit_id: PropTypes.string,
+  //          name: PropTypes.string,
+  //          cover: PropTypes.shape({
+  //            width: PropTypes.number,
+  //            height: PropTypes.number,
+  //            asset_id: PropTypes.string,
+  //          }),
+  // slide data for UnitCarousel:
+  //          id: PropTypes.string,
+  //          title: PropTypes.string,
+  //          authors: PropTypes.array,
+  //          genre: PropTypes.string,
         }),
       }),
    // contentCar2: // Same as above
@@ -33,11 +42,13 @@ class CampusLayout extends React.Component {
   }
 
   renderCampusCarousel(contentCarousel) {
+    // Most recent 10 journals for this campus
     if (contentCarousel.mode == 'journals') return (
-      <JournalCarouselComp campusID={this.props.unit.id} campusName={this.props.unit.name} data={contentCarousel.data} />
+      <JournalCarouselComp {...contentCarousel.data} />
     )
+    // Most recent 10 articles for chosen unit (configured by admin)
     if (contentCarousel.mode == 'unit') return (
-      <UnitCarouselComp data={contentCarousel.data} />
+      <UnitCarouselComp {...contentCarousel.data} />
     )
   }
 

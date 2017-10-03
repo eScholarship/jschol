@@ -12,11 +12,11 @@ if (!(typeof document === "undefined")) {
 
 class UnitCarouselItem extends React.Component {
   static propTypes = {
-    result: PropTypes.shape({
-      id: PropTypes.string,
-      genre: PropTypes.string,
-      title: PropTypes.string,
+    result:  PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      title: PropTypes.string.isRequired,
       authors: PropTypes.array,
+      genre: PropTypes.string,
     }).isRequired,
     orientation: PropTypes.string.isRequired,
   }
@@ -48,7 +48,14 @@ class UnitCarouselItem extends React.Component {
 
 class UnitCarouselComp extends React.Component {
   static propTypes = {
-    unitID: PropTypes.string,
+    titleID: PropTypes.string.isRequired,    // unit ID
+    titleName: PropTypes.string.isRequired,  // unit Name
+    slides:  PropTypes.arrayOf(PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      title: PropTypes.string.isRequired,
+      authors: PropTypes.array,
+      genre: PropTypes.string,
+    })).isRequired
   }
 
   componentDidMount () {
@@ -58,17 +65,10 @@ class UnitCarouselComp extends React.Component {
     });
   }
   render() {
-    let dummyData = ([
-{"id":"qt9v77h5zm","title":"Distinct configurations of protein complexes and biochemical pathways revealed by epistatic interaction network motifs","authors":[{"name":"Peet, Alison","fname":"Alison","lname":"Peet"},{"name":"Tyroler-Cooper, Samm","fname":"Samm","lname":"Tyroler-Cooper"},{"name":"Tsang, Daniel","email":"dtsang@uci.edu","fname":"Daniel","lname":"Tsang","institution":"UC Irvine"},{"name":"Liang, Wei","fname":"Wei","lname":"Liang","institution":"University of Southern California"}],"genre":"article"},
-{"id":"qt9j48n0p8","title":"China’s contingencies and globalisation","authors":[{"name":"Nederveen Pieterse, J","email":"jnp@global.ucsb.edu","fname":"J","lname":"Nederveen Pieterse"}],"genre":"article"},
-{"id":"qt5zt6n277","title":"Japan's China Strategy","authors":[{"name":"TAKAHASHI, Sugio","fname":"Sugio","lname":"TAKAHASHI"}],"genre":"article"},
-{"id":"qt0zd563ks","title":"China’s Rise as a Global S&T Power and China–EU Cooperation","authors":[{"name":"Bräuner, Oliver","fname":"Oliver","lname":"Bräuner"}],"genre":"article"},
-{"id":"qt0dk9k1rb","title":"How (and Why) to Do Business with China","authors":[{"name":"Tsang, Daniel","email":"dtsang@uci.edu","fname":"Daniel","lname":"Tsang","institution":"UC Irvine"}],"genre":"article"}
-])
-
+    let p = this.props
     return (
       <div className="o-itemcarousel">
-        <h2 className="o-itemcarousel__heading"><Link to="/uc/crb">Center for Medieval and Renaissance Studies</Link></h2>
+        <h2 className="o-itemcarousel__heading"><Link to={"/uc/"+p.titleID}>{p.titleName}</Link></h2>
         <CarouselComp className="c-unitcarousel o-itemcarousel__carousel"
                       options={{
                         cellAlign: 'left',
@@ -76,12 +76,12 @@ class UnitCarouselComp extends React.Component {
                         pageDots: false,
                         percentPosition: false // px instead of % cells
                       }}>
-          { dummyData.map((result, i) =>
+          { p.slides.map((result, i) =>
             <UnitCarouselItem key={i} result={result} orientation={(i+1)%2 ? 'vert':'horz'} />)
           }
         </CarouselComp>
         <div className="o-stat--item o-itemcarousel__stats-item">
-          <Link to="/uc/crb">9,999</Link>Items
+          <Link to={"/uc/"+p.titleID}>9,999</Link>Items
         </div>
         <div className="o-stat--view o-itemcarousel__stats-view">
           <b>999,999</b>Views

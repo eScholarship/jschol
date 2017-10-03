@@ -12,9 +12,9 @@ if (!(typeof document === "undefined")) {
 
 class JournalCarouselComp extends React.Component {
   static propTypes = {
-    campusID: PropTypes.string.isRequired, 
-    campusName: PropTypes.string.isRequired, 
-    data:  PropTypes.arrayOf(PropTypes.shape({
+    titleID: PropTypes.string.isRequired,    // campus ID
+    titleName: PropTypes.string.isRequired,  // campus Name
+    slides:  PropTypes.arrayOf(PropTypes.shape({
       unit_id: PropTypes.string.isRequired,
       name: PropTypes.string.isRequired,
       cover: PropTypes.shape({
@@ -32,9 +32,10 @@ class JournalCarouselComp extends React.Component {
     });
   }
   render() {
+    let p = this.props
     return (
       <div className="o-itemcarousel">
-        <h2 className="o-itemcarousel__heading"><Link to={"/" + this.props.campusID + "/journals"}>{this.props.campusName} Journals</Link></h2>
+        <h2 className="o-itemcarousel__heading"><Link to={"/" + p.titleID + "/journals"}>{p.titleName} Journals</Link></h2>
         <CarouselComp className="c-journalcarousel o-itemcarousel__carousel" 
                       options={{
                         cellAlign: 'left',
@@ -43,7 +44,7 @@ class JournalCarouselComp extends React.Component {
                         imagesLoaded: true,
                         percentPosition: false // px instead of % cells
                       }}>
-        {this.props.data.map( u =>
+        {p.slides.map( u =>
           <div key={u.unit_id} className="o-itemcarousel__item">
           <a href={"/uc/" + u.unit_id} className="o-journal2">
             <figure>
@@ -57,7 +58,7 @@ class JournalCarouselComp extends React.Component {
         )}
         </CarouselComp>
         <div className="o-stat--item o-itemcarousel__stats-item">
-          <Link to={"/" + this.props.campusID + "/journals"}>9,999</Link>Items
+          <Link to={"/" + p.titleID + "/journals"}>9,999</Link>Items
         </div>
         <div className="o-stat--view o-itemcarousel__stats-view">
           <b>999,999</b>Views

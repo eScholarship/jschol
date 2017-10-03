@@ -239,12 +239,16 @@ def getORULandingPageData(id)
 end
 
 # Retrieve items from DB based on Campus Carousel configuration that has been set
-def getCampusCarousel(unit, content_attrs)
-  return nil if unit.type != 'campus' || content_attrs['mode'] == 'disabled'
+# content_attrs looks somethign like this: 
+#            {"mode": "journals", "unit_id": "arf"}  <---  unit_id not used in this case since it's a journal
+#  or this:  {"mode": "unit", "unit_id": "arf"} 
+def getCampusCarousel(campus, content_attrs)
+  r = nil
+  return nil if campus.type != 'campus' || content_attrs['mode'] == 'disabled'
 
   if content_attrs['mode'] == 'journals'
     # Populate Campus Carousel with up to 10 Journals
-    journals  = $campusJournals.select{ |j| j[:ancestor_unit].include?(unit.id) }
+    journals  = $campusJournals.select{ |j| j[:ancestor_unit].include?(campus.id) }
                   .select{ |h| h[:status]!="archived" }.map{|u| {unit_id: u[:id], name: u[:name]} }
     return nil if journals.nil?
     journals_w_issues = Issue.distinct.select(:unit_id).where(unit_id: journals.map{|u| u[:unit_id]}).map { |u| {unit_id: u.unit_id}}
@@ -258,15 +262,20 @@ def getCampusCarousel(unit, content_attrs)
       end
       next u 
     }
-    return journals_covers.compact.take(10)
+    r = {'titleID': campus.id, 'titleName': campus.name}
+    r['slides'] = journals_covers.compact.take(10)
   elsif content_attrs['mode'] == 'unit'
     # Populate campus carousel with 10 articles from selected unit 
-    # id
-    # title
-    # authors
-    # genre
-  else return nil
+    id = content_attrs['unit_id']
+    recentItems = getRecentItems(id, 10)
+    if recentItems.length > 0
+      unit = $unitsHash[id]
+      r = {'titleID': id, 'titleName': unit.name}
+      r['slides'] = recentItems
+    end
+  else r = nil
   end
+  return r
 end
 
 # Get data for Campus Landing Page
@@ -464,31 +473,31 @@ def getItemAuthors(itemID)
   return ItemAuthors.filter(:item_id => itemID).order(:ordering).map(:attrs).collect{ |h| JSON.parse(h)}
 end
 
-# Get recent items (with author info) for a unit, by most recent eschol_date
+# Get recent items (with author info) given a unit ID, by most recent eschol_date
 # Pass an item id in if you don't want that item included in results
-def getRecentItems(unit, item_id=nil)
-  items = item_id ? Item.join(:unit_items, :item_id => :id).where(unit_id: unit.id)
+def getRecentItems(unitID, limit=5, item_id=nil)
+  items = item_id ? Item.join(:unit_items, :item_id => :id).where(unit_id: unitID)
                         .where(Sequel.lit("attrs->\"$.suppress_content\" is null"))
                         .exclude(id: item_id)
-                        .reverse(:eschol_date).limit(5)
-                  : Item.join(:unit_items, :item_id => :id).where(unit_id: unit.id)
+                        .reverse(:eschol_date).limit(limit)
+                  : Item.join(:unit_items, :item_id => :id).where(unit_id: unitID)
                         .where(Sequel.lit("attrs->\"$.suppress_content\" is null"))
-                        .reverse(:eschol_date).limit(5)
+                        .reverse(:eschol_date).limit(limit)
   return items.map { |item|
-    { id: item.id, title: item.title, authors: getItemAuthors(item.id) }
+    { id: item.id, title: item.title, authors: getItemAuthors(item.id), genre: item.genre }
   }
 end
 
 # Instead of related items, for now, this just grabs most recent items (very similar to getUnitSidebar)
 # For now, represents the entire sidebar component for Item Pages
 def getItemRelatedItems(unit, item_id)
-  return [{ id: 1, kind: "RecentArticles", attrs: {'items': getRecentItems(unit, item_id), 'title': 'Related Items'}}]
+  return [{ id: 1, kind: "RecentArticles", attrs: {'items': getRecentItems(unit.id, 5, item_id), 'title': 'Related Items'}}]
 end
 
 def getUnitSidebar(unit)
   return Widget.where(unit_id: unit.id, region: "sidebar").order(:ordering).map { |widget|
     attrs =  widget[:attrs] ? JSON.parse(widget[:attrs]) : {}
-    widget[:kind] == "RecentArticles" and attrs[:items] = getRecentItems(unit)
+    widget[:kind] == "RecentArticles" and attrs[:items] = getRecentItems(unit.id, 5)
     next { id: widget[:id], kind: widget[:kind], attrs: attrs }
   }
 end
