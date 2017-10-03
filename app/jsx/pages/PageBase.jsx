@@ -216,7 +216,7 @@ class PageBase extends React.Component
     if (this.state.pageData && this.state.pageData.error) {
       return (
         <div className="body">
-          { this.stageWatermark() }
+          { this.betaWatermark() }
           {this.renderError()}
           <FooterComp/>
         </div>)
@@ -235,7 +235,7 @@ class PageBase extends React.Component
                     fetchingData={this.state.fetchingData}>
           {/* Not sure why the padding below is needed, but it is */}
           <div className="body" style={{ padding: "20px" }}>
-            { this.stageWatermark() }
+            { this.betaWatermark() }
             <SkipNavComp/>
             {this.state.pageData ? this.renderData(this.state.pageData) : this.renderLoading()}
             <FooterComp/>
@@ -246,7 +246,7 @@ class PageBase extends React.Component
     // Normal case
     return (
       <div className="body">
-        { this.stageWatermark() }
+        { this.betaWatermark() }
         <SkipNavComp/>
         {this.state.pageData ? this.renderData(this.state.pageData) : this.renderLoading()}
         <FooterComp/>
@@ -288,8 +288,8 @@ class PageBase extends React.Component
     }
   }
 
-  isStageMachine() {
-    let lookFor = /-stg/
+  isBetaMachine() {
+    let lookFor = /(pub-jschol-stg|pub-jschol-prd|beta)\.escholarship\.org/
     if (lookFor.test(this.props.location.host))
       return true
     else if (!((typeof window) === "undefined") && window.location && lookFor.test(window.location.origin))
@@ -298,8 +298,8 @@ class PageBase extends React.Component
       return false
   }
 
-  stageWatermark() {
-    if (!this.isStageMachine())
+  betaWatermark() {
+    if (!this.isBetaMachine())
       return null
     return <TestMessageComp/>
   }
