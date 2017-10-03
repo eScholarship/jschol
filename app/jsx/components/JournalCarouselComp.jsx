@@ -12,7 +12,17 @@ if (!(typeof document === "undefined")) {
 
 class JournalCarouselComp extends React.Component {
   static propTypes = {
-    campusID: PropTypes.string,
+    titleID: PropTypes.string.isRequired,    // campus ID
+    titleName: PropTypes.string.isRequired,  // campus Name
+    slides:  PropTypes.arrayOf(PropTypes.shape({
+      unit_id: PropTypes.string.isRequired,
+      name: PropTypes.string.isRequired,
+      cover: PropTypes.shape({
+        width: PropTypes.number,
+        height: PropTypes.number,
+        asset_id: PropTypes.string,
+      }),
+    })).isRequired
   }
 
   componentDidMount () {
@@ -22,9 +32,10 @@ class JournalCarouselComp extends React.Component {
     });
   }
   render() {
+    let p = this.props
     return (
       <div className="o-itemcarousel">
-        <h2 className="o-itemcarousel__heading"><Link to={"/" + this.props.campusID + "/journals"}>{this.props.campusName} Journals</Link></h2>
+        <h2 className="o-itemcarousel__heading"><Link to={"/" + p.titleID + "/journals"}>{p.titleName} Journals</Link></h2>
         <CarouselComp className="c-journalcarousel o-itemcarousel__carousel" 
                       options={{
                         cellAlign: 'left',
@@ -33,49 +44,21 @@ class JournalCarouselComp extends React.Component {
                         imagesLoaded: true,
                         percentPosition: false // px instead of % cells
                       }}>
-          <div className="o-itemcarousel__item">
-            <a href="" className="o-journal2">
-              <figure>
-                <img src="http://escholarship.org/issueCovers/jmie_sfews/15_01_cover.png" alt=""/>
-                <figcaption>The Proceedings of the UCLA Department of Spanish and Portuguese Graduate Conference</figcaption>
-              </figure>
-            </a>
-          </div>
-          <div className="o-itemcarousel__item">
-            <a href="" className="o-journal2">
-              <figure>
-                <img src="http://escholarship.org/issueCovers/ucdavislibrary_streetnotes/25_00_cover.png" alt=""/>
-                <figcaption>streetnotes</figcaption>
-              </figure>
-            </a>
-          </div>
-          <div className="o-itemcarousel__item">
-            <a href="" className="o-journal2">
-              <figure>
-                <img src="http://escholarship.org/issueCovers/ucbgse_bre/06_02_cover.png" alt=""/>
-                <figcaption>Maiores Corporis Repellendus Maxime</figcaption>
-              </figure>
-            </a>
-          </div>
-          <div className="o-itemcarousel__item">
-            <a href="" className="o-journal2">
-              <figure>
-                <img src="http://escholarship.org/issueCovers/regeneracion_tlacuilolli/02_01_cover.png" alt=""/>
-                <figcaption>The Proceedings of the UCLA Department of Spanish and Portuguese Graduate Conference</figcaption>
-              </figure>
-            </a>
-          </div>
-          <div className="o-itemcarousel__item">
-            <a href="" className="o-journal2">
-              <figure>
-                <img src="http://escholarship.org/issueCovers/jmie_sfews/15_01_cover.png" alt=""/>
-                <figcaption>The Proceedings of the UCLA Department of Spanish and Portuguese Graduate Conference</figcaption>
-              </figure>
-            </a>
-          </div>
+        {p.slides.map( u =>
+          <div key={u.unit_id} className="o-itemcarousel__item">
+          <a href={"/uc/" + u.unit_id} className="o-journal2">
+            <figure>
+            {u.cover ?
+              <img src={"/assets/"+u.cover.asset_id} alt={u.name}/>
+            : <img src="/images/temp_article.png" alt={u.name} /> }
+              <figcaption>{u.name}</figcaption>
+            </figure>
+          </a>
+        </div>
+        )}
         </CarouselComp>
         <div className="o-stat--item o-itemcarousel__stats-item">
-          <Link to={"/" + this.props.campusID + "/journals"}>9,999</Link>Items
+          <Link to={"/" + p.titleID + "/journals"}>9,999</Link>Items
         </div>
         <div className="o-stat--view o-itemcarousel__stats-view">
           <b>999,999</b>Views
