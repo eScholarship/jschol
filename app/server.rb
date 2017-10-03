@@ -409,11 +409,12 @@ get "/content/:fullItemID/*" do |itemID, path|
   if path =~ /^qt\w{8}\.pdf$/
     epath = "content/#{URI::encode(path)}"
     attrs["content_merritt_path"] and epath = attrs["content_merritt_path"]
-    noSplash = !($host =~ /pub-jschol/) ||
-               (params[:nosplash] && isValidContentKey(itemID.sub(/^qt/, ''), params[:nosplash]))
+    noSplash = params[:nosplash] && isValidContentKey(itemID.sub(/^qt/, ''), params[:nosplash])
     mainPDF = true
   elsif path =~ %r{^inner/(.*)$}
-    epath = "content/#{URI::encode($1)}"
+    filename = $1
+    halt(403) if filename =~ /^qt\w{8}\.pdf$/  # disallow bypassing main check using inner backdoor
+    epath = "content/#{URI::encode(filename)}"
     noSplash = true
     mainPDF = false
   else
@@ -428,6 +429,12 @@ get "/content/:fullItemID/*" do |itemID, path|
     epath or halt(404)
     noSplash = true
     mainPDF = false
+  end
+
+  # Some items have a date-based download restriction. In this case, we only support the
+  # no-splash version used for pdf.js rendering, and protected (lightly) by a key.
+  if attrs['disable_download'] && Date.parse(attrs['disable_download']) > Date.today && !(mainPDF && noSplash)
+    halt 403, "Download restricted until #{attrs['disable_download']}"
   end
 
   # Guess the content type by path for now
