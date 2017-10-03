@@ -13,12 +13,26 @@ class CampusLayout extends React.Component {
     data:  PropTypes.shape({
       contentCar1: PropTypes.shape({
         mode: PropTypes.string,
-        unit_id: PropTypes.string,
+        data: PropTypes.shape({
+          titleID: PropTypes.string,
+          titleName: PropTypes.string,
+          slides:  PropTypes.array,
+  // slide data for JournalCarousel:
+  //          unit_id: PropTypes.string,
+  //          name: PropTypes.string,
+  //          cover: PropTypes.shape({
+  //            width: PropTypes.number,
+  //            height: PropTypes.number,
+  //            asset_id: PropTypes.string,
+  //          }),
+  // slide data for UnitCarousel:
+  //          id: PropTypes.string,
+  //          title: PropTypes.string,
+  //          authors: PropTypes.array,
+  //          genre: PropTypes.string,
+        }),
       }),
-      contentCar2: PropTypes.shape({
-        mode: PropTypes.string,
-        unit_id: PropTypes.string,
-      }),
+   // contentCar2: // Same as above
       journal_count: PropTypes.number,
       opened_count: PropTypes.number,
       pub_count: PropTypes.number,
@@ -28,11 +42,13 @@ class CampusLayout extends React.Component {
   }
 
   renderCampusCarousel(contentCarousel) {
+    // Most recent 10 journals for this campus
     if (contentCarousel.mode == 'journals') return (
-      <JournalCarouselComp campusID={this.props.unit.id} />
+      <JournalCarouselComp {...contentCarousel.data} />
     )
+    // Most recent 10 articles for chosen unit (configured by admin)
     if (contentCarousel.mode == 'unit') return (
-      <UnitCarouselComp unitID={contentCarousel.unit_id} />
+      <UnitCarouselComp {...contentCarousel.data} />
     )
   }
 
@@ -46,10 +62,10 @@ class CampusLayout extends React.Component {
         <div className="c-columns">
           <main id="maincontent">
             <CampusSearchComp campusID={unit.id} campusName={unit.name} />
-         {data.contentCar1 && data.contentCar1.mode && data.contentCar1.mode != 'disabled' &&
+         {data.contentCar1 && data.contentCar1.mode && data.contentCar1.mode != 'disabled' && data.contentCar1.data &&
             this.renderCampusCarousel(data.contentCar1)
          }
-         {data.contentCar2 && data.contentCar2.mode && data.contentCar2.mode != 'disabled' &&
+         {data.contentCar2 && data.contentCar2.mode && data.contentCar2.mode != 'disabled' && data.contentCar2.data &&
             this.renderCampusCarousel(data.contentCar2)
          }
           </main>

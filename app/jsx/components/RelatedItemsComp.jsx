@@ -4,7 +4,6 @@ import React from 'react'
 
 class RelatedItemsComp extends React.Component {
   render() {
-    console.log(this.props.data)
     return (
       <ul className="c-relateditems">
         <li>

@@ -219,7 +219,6 @@ def getUnitPageContent(unit, attrs, query)
   end
 end
 
-# TODO carouselAttrs should not = ""
 def getUnitMarquee(unit, attrs)
   carousel = Widget.where(unit_id: unit.id, region: "marquee", kind: "Carousel", ordering: 0).first
   if carousel && carousel.attrs
@@ -257,11 +256,51 @@ def getORULandingPageData(id)
   }
 end
 
+# Retrieve items from DB based on Campus Carousel configuration that has been set
+# content_attrs looks somethign like this: 
+#            {"mode": "journals", "unit_id": "arf"}  <---  unit_id not used in this case since it's a journal
+#  or this:  {"mode": "unit", "unit_id": "arf"} 
+def getCampusCarousel(campus, content_attrs)
+  r = nil
+  return nil if campus.type != 'campus' || content_attrs['mode'] == 'disabled'
+
+  if content_attrs['mode'] == 'journals'
+    # Populate Campus Carousel with up to 10 Journals
+    journals  = $campusJournals.select{ |j| j[:ancestor_unit].include?(campus.id) }
+                  .select{ |h| h[:status]!="archived" }.map{|u| {unit_id: u[:id], name: u[:name]} }
+    return nil if journals.nil?
+    journals_w_issues = Issue.distinct.select(:unit_id).where(unit_id: journals.map{|u| u[:unit_id]}).map { |u| {unit_id: u.unit_id}}
+    return nil if journals_w_issues.nil?
+    journals.keep_if { |x| journals_w_issues.any? {|y| y[:unit_id] == x[:unit_id]} }
+    journals_covers = journals.map { |u|
+      i = Issue.where(:unit_id => u[:unit_id]).where(Sequel.lit("attrs->\"$.cover\" is not null"))
+               .order(Sequel.desc(:pub_date)).first
+      if i
+        u[:cover] = JSON.parse(i[:attrs])['cover']
+      end
+      next u 
+    }
+    r = {'titleID': campus.id, 'titleName': campus.name}
+    r['slides'] = journals_covers.compact.take(10)
+  elsif content_attrs['mode'] == 'unit'
+    # Populate campus carousel with 10 articles from selected unit 
+    id = content_attrs['unit_id']
+    recentItems = getRecentItems(id, 10)
+    if recentItems.length > 0
+      unit = $unitsHash[id]
+      r = {'titleID': id, 'titleName': unit.name}
+      r['slides'] = recentItems
+    end
+  else r = nil
+  end
+  return r
+end
+
 # Get data for Campus Landing Page
 def getCampusLandingPageData(unit, attrs)
   return {
-    :contentCar1 => attrs['contentCar1'],                  
-    :contentCar2 => attrs['contentCar2'],                  
+    :contentCar1 => attrs['contentCar1'] ? {'mode': attrs['contentCar1']['mode'], 'data': getCampusCarousel(unit, attrs['contentCar1'])} : nil,
+    :contentCar2 => attrs['contentCar2'] ? {'mode': attrs['contentCar2']['mode'], 'data': getCampusCarousel(unit, attrs['contentCar2'])} : nil,
     :pub_count =>     ($statsCampusPubs.keys.include? unit.id)  ? $statsCampusPubs[unit.id]     : 0,
     :view_count =>    0,
     :opened_count =>    0,
@@ -452,20 +491,31 @@ def getItemAuthors(itemID)
   return ItemAuthors.filter(:item_id => itemID).order(:ordering).map(:attrs).collect{ |h| JSON.parse(h)}
 end
 
-# Get recent items (with author info) for a unit, by most recent eschol_date
-def getRecentItems(unit)
-  items = Item.join(:unit_items, :item_id => :id).where(unit_id: unit.id)
-              .where(Sequel.lit("attrs->\"$.suppress_content\" is null"))
-              .reverse(:eschol_date).limit(5)
+# Get recent items (with author info) given a unit ID, by most recent eschol_date
+# Pass an item id in if you don't want that item included in results
+def getRecentItems(unitID, limit=5, item_id=nil)
+  items = item_id ? Item.join(:unit_items, :item_id => :id).where(unit_id: unitID)
+                        .where(Sequel.lit("attrs->\"$.suppress_content\" is null"))
+                        .exclude(id: item_id)
+                        .reverse(:eschol_date).limit(limit)
+                  : Item.join(:unit_items, :item_id => :id).where(unit_id: unitID)
+                        .where(Sequel.lit("attrs->\"$.suppress_content\" is null"))
+                        .reverse(:eschol_date).limit(limit)
   return items.map { |item|
-    { id: item.id, title: item.title, authors: getItemAuthors(item.id) }
+    { id: item.id, title: item.title, authors: getItemAuthors(item.id), genre: item.genre }
   }
+end
+
+# Instead of related items, for now, this just grabs most recent items (very similar to getUnitSidebar)
+# For now, represents the entire sidebar component for Item Pages
+def getItemRelatedItems(unit, item_id)
+  return [{ id: 1, kind: "RecentArticles", attrs: {'items': getRecentItems(unit.id, 5, item_id), 'title': 'Related Items'}}]
 end
 
 def getUnitSidebar(unit)
   return Widget.where(unit_id: unit.id, region: "sidebar").order(:ordering).map { |widget|
     attrs =  widget[:attrs] ? JSON.parse(widget[:attrs]) : {}
-    widget[:kind] == "RecentArticles" and attrs[:items] = getRecentItems(unit)
+    widget[:kind] == "RecentArticles" and attrs[:items] = getRecentItems(unit.id, 5)
     next { id: widget[:id], kind: widget[:kind], attrs: attrs }
   }
 end
@@ -861,19 +911,7 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
   perms = getUserPermissions(params[:username], params[:token], unitID)
   perms[:admin] or halt(401)
 
-  carouselKeys = params['data'].keys.grep /(header|text)\d+/
-  carouselSlides = {}
-  if carouselKeys.length > 0
-    numSlides = carouselKeys.map! {|x| /(header|text)(\d+)/.match(x)[2].to_i}.max
-    (0..numSlides).each do |n|
-      slide = {header: params['data']["header#{n}"], text: params['data']["text#{n}"]}
-      carouselSlides[n] = slide
-    end
-  end
-
   DB.transaction {
-    carouselConfig(carouselSlides, unitID)
-
     unit = Unit[unitID] or jsonHalt(404, "Unit not found")
     unitAttrs = JSON.parse(unit.attrs)
 
@@ -904,11 +942,6 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
     if params['data']['twitter'] then unitAttrs['twitter'] = params['data']['twitter'] end
 
     if params['data']['about'] then unitAttrs['about'] = params['data']['about'] end
-    if params['data']['carouselFlag'] && params['data']['carouselFlag'] == 'on'
-      unitAttrs['carousel'] = true
-    else
-      unitAttrs.delete('carousel')
-    end
 
     if params['data']['magazine_layout'] == "on"
       unitAttrs['magazine_layout'] = true
@@ -932,26 +965,35 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
 end
 
 ###################################################################################################
-# *Put* to change campus content carousel configuration
-put "/api/unit/:campusID/campusCarouselConfig" do |campusID|
+# *Put* to change unit carousel configuration
+put "/api/unit/:unitID/carouselConfig" do |unitID|
   # Check user permissions
-  perms = getUserPermissions(params[:username], params[:token], campusID)
+  perms = getUserPermissions(params[:username], params[:token], unitID)
   perms[:admin] or halt(401)
 
-  DB.transaction {
-    unit = Unit[campusID] or jsonHalt(404, "Unit not found")
-    unit.type == 'campus' or jsonHalt(404, "This unit is not a campus. Failed.")
-    unitAttrs = JSON.parse(unit.attrs)
-
-    if params['data']['mode1'] && params['data']['unit_id1']
-      unitAttrs['contentCar1'] = {'mode': params['data']['mode1'], 'unit_id': params['data']['unit_id1']}
+  carouselKeys = params['data'].keys.grep /(header|text)\d+/
+  carouselSlides = {}
+  if carouselKeys.length > 0
+    numSlides = carouselKeys.map! {|x| /(header|text)(\d+)/.match(x)[2].to_i}.max
+    (0..numSlides).each do |n|
+      slide = {header: params['data']["header#{n}"], text: params['data']["text#{n}"]}
+      carouselSlides[n] = slide
     end
-    if params['data']['mode2'] && params['data']['unit_id2']
-      unitAttrs['contentCar2'] = {'mode': params['data']['mode2'], 'unit_id': params['data']['unit_id2']}
+  end
+
+  DB.transaction {
+    carouselConfig(carouselSlides, unitID)
+
+    unit = Unit[unitID] or jsonHalt(404, "Unit not found")
+    unitAttrs = JSON.parse(unit.attrs)
+    if params['data']['carouselFlag'] && params['data']['carouselFlag'] == 'on'
+      unitAttrs['carousel'] = true
+    else
+      unitAttrs.delete('carousel')
     end
     unit.attrs = unitAttrs.to_json
     unit.save
-  } 
+  }
 
   refreshUnitsHash
   content_type :json
@@ -1069,6 +1111,33 @@ delete "/api/unit/:unitID/removeCarouselSlide/:slideNumber" do |unitID, slideNum
     carousel.save
   }
 
+  content_type :json
+  return { status: "ok" }.to_json
+end
+
+###################################################################################################
+# *Put* to change campus content carousel configuration
+put "/api/unit/:campusID/campusCarouselConfig" do |campusID|
+  # Check user permissions
+  perms = getUserPermissions(params[:username], params[:token], campusID)
+  perms[:admin] or halt(401)
+
+  DB.transaction {
+    unit = Unit[campusID] or jsonHalt(404, "Unit not found")
+    unit.type == 'campus' or jsonHalt(404, "This unit is not a campus. Failed.")
+    unitAttrs = JSON.parse(unit.attrs)
+
+    if params['data']['mode1'] && params['data']['unit_id1']
+      unitAttrs['contentCar1'] = {'mode': params['data']['mode1'], 'unit_id': params['data']['unit_id1']}
+    end
+    if params['data']['mode2'] && params['data']['unit_id2']
+      unitAttrs['contentCar2'] = {'mode': params['data']['mode2'], 'unit_id': params['data']['unit_id2']}
+    end
+    unit.attrs = unitAttrs.to_json
+    unit.save
+  } 
+
+  refreshUnitsHash
   content_type :json
   return { status: "ok" }.to_json
 end
