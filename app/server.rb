@@ -616,6 +616,8 @@ end
 get "/api/browse/:browse_type/:campusID" do |browse_type, campusID|
   content_type :json
   cu, cj, pageTitle = nil, nil, nil
+  unit = $unitsHash[campusID]
+  unit or halt(404, "campusID not found")
   if browse_type == 'units'
     cu = $hierByAncestor[campusID].map do |a| getChildDepts($unitsHash[a.unit_id]); end
     pageTitle = "Academic Units"
@@ -625,7 +627,6 @@ get "/api/browse/:browse_type/:campusID" do |browse_type, campusID|
     cj  = cj.select{ |h| h[:status]!="archived" }
     pageTitle = "Journals"
   end
-  unit = $unitsHash[campusID]
   body = {
     :browse_type => browse_type,
     :pageTitle => pageTitle,

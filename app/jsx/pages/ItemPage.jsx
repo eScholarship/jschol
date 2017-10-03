@@ -84,15 +84,16 @@ class ItemPage extends PageBase {
                       {...data} />
           </main>
           <aside>
-            {(data.status == "published" && data.content_type) &&
-              <section className="o-columnbox1">
-                <header>
-                  <h2>Jump To</h2>
-                </header>
-                <JumpComp changeTab={this.changeTab} attrs={data.attrs} />
-              </section>
-            }
-            <SidebarComp data={data.sidebar}/>
+          {(data.status == "published" && data.content_type) &&
+            <section className="o-columnbox1">
+              <header>
+                <h2>Jump To</h2>
+              </header>
+              <JumpComp changeTab={this.changeTab} attrs={data.attrs} />
+            </section>
+          }
+          {data.sidebar &&
+            <SidebarComp data={data.sidebar}/> }
           </aside>
         </div>
       </div>
