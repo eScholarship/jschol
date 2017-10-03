@@ -311,7 +311,8 @@ end
 
 # Preview of Series for a Department Landing Page
 def seriesPreview(u)
-  items = UnitItem.filter(:unit_id => u.unit_id, :is_direct => true)
+  items = Item.join(:unit_items, :item_id => :id).where(unit_id: u.unit_id)
+              .where(Sequel.lit("attrs->\"$.suppress_content\" is null"))
   count = items.count
   previewLimit = 3
   preview = items.limit(previewLimit).map(:item_id)
