@@ -301,6 +301,13 @@ end
 ###################################################################################################
 
 ###################################################################################################
+# IP address filtering on certain machines
+$ipFilter = File.exist?("config/allowed_ips") && Regexp.new(File.read("config/allowed_ips").strip)
+before do
+  $ipFilter && !$ipFilter.match(request.ip) and halt 403
+end
+
+###################################################################################################
 # Simple up-ness check
 get "/check" do
   return "ok"
