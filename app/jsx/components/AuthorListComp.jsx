@@ -24,10 +24,8 @@ class AuthorListComp extends React.Component {
     this.props.changeTab(tab_id)
   }
 
-  componentWillReceiveProps(nextProps) {
-    if (this.props.authors != nextProps.authors) {
-      this.activateTruncation()
-    }
+  componentDidUpdate() {
+    this.activateTruncation()
   }
 
   render() {
