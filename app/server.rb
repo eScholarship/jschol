@@ -19,7 +19,6 @@ require 'pp'
 require 'sequel'
 require 'sinatra'
 require 'tempfile'
-require 'thin'
 require 'yaml'
 require 'socksify'
 require 'socket'
@@ -110,8 +109,8 @@ require_relative 'merritt'
 
 # Sinatra configuration
 configure do
-  # Don't use Webrick, as sinatra-websocket requires 'thin', and 'thin' is better anyway.
-  set :server, 'thin'
+  # Puma is good for multiprocess *and* multithreading
+  set :server, 'puma'
   # We like to use the 'app' folder for all our static resources
   set :public_folder, Proc.new { root }
 

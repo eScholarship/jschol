@@ -54,7 +54,7 @@ class MerrittFetcher
       end
       out.respond_to?(:close) and out.close
     rescue Exception => e
-      if e.to_s =~ /closed stream/
+      if e.to_s =~ /closed stream|Socket timeout writing data/
         # already logged elsewhere
       else
         puts "Unexpected streamTo exception: #{e} #{e.backtrace}"
