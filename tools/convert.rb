@@ -1078,7 +1078,9 @@ def parseDate(str)
   text = str
   text or return nil
   begin
-    if text =~ /^\d\d\d\d$/   # handle data with no month or day
+    if text =~ /^([123]\d\d\d)([01]\d)([0123]\d)$/  # handle date missing its dashes
+      text = "#{$1}-#{$2}-#{$3}"
+    elsif text =~ /^\d\d\d\d$/   # handle data with no month or day
       text = "#{text}-01-01"
     elsif text =~ /^\d\d\d\d-\d\d$/   # handle data with no day
       text = "#{text}-01"
@@ -1593,8 +1595,8 @@ def parseUCIngest(itemID, inMeta, fileType)
                                                            sub("french", "fr").sub("spanish", "es")
 
   # Set disableDownload flag based on content file
-  tmp = inMeta.at("./context/file[@disableDownload]")
-  tmp and attrs[:disable_download] = tmp[:disableDownload]
+  tmp = inMeta.at("./content/file[@disableDownload]")
+  tmp && tmp = parseDate(tmp[:disableDownload]) and attrs[:disable_download] = tmp
 
   if inMeta[:state] == "withdrawn"
     tmp = inMeta.at("./history/stateChange[@state='withdrawn']")
