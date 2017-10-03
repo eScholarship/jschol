@@ -289,7 +289,7 @@ class PageBase extends React.Component
   }
 
   isBetaMachine() {
-    let lookFor = /(pub-jschol-stg|pub-jschol-prd|beta)\.escholarship\.org/
+    let lookFor = /(pub-jschol-stg|pub-jschol-prd(-2[ac])?|beta)\.escholarship\.org/
     if (lookFor.test(this.props.location.host))
       return true
     else if (!((typeof window) === "undefined") && window.location && lookFor.test(window.location.origin))
