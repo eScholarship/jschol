@@ -2501,7 +2501,7 @@ def indexPage(row, batch)
 
   idxItem = {
     type:          "add",   # in CloudSearch land this means "add or update"
-    id:            "page:#{unitID}:#{slug}",
+    id:            "page:#{unitID}:#{slug.gsub(%r{[^-a-zA-Z0-9\_\/\#\:\.\;\&\=\?\@\$\+\!\*'\(\)\,\%]}, '_')}",
     fields: {
       text:        text,
       is_info:     1
