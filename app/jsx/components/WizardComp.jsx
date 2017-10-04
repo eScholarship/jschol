@@ -30,6 +30,7 @@ class WizardComp extends React.Component {
             launchedFromRoot: !this.props.data.campusID || this.props.data.campusID == 'root',
             data: {wizardStep: this.props.data.unitID ? 5 : 1, // If UnitID passed in on init, go direct to WizardSeriesComp
                    wizardDir: 'fwd',
+                   campuses: this.props.campuses,
                    campusID: this.props.data.campusID,
                    campusName: this.props.data.campusName,
                    // Unit info either passed in from an ORU landing page, or to be chosen within WizardUnitComp
@@ -45,6 +46,12 @@ class WizardComp extends React.Component {
       this.setState({ showModal: nextProps.showModal })
   }
 
+  basicCampuses = (campuses) => {
+    let newlist = []
+    campuses.forEach((c) => {if (!["lbnl", "anrcs"].includes(c.id)) { newlist.push(c) } })
+    return newlist 
+  }
+
   getCampusName = (campusID) => {
     if (!campusID || campusID == 'root') return "eScholarship"
     let h = _.find(this.props.campuses, { 'id': campusID })
@@ -57,6 +64,7 @@ class WizardComp extends React.Component {
     let campusID = (h && h['campusID']) ? h['campusID'] : this.state.data.campusID
     this.setState({data: {wizardStep: step,
                       wizardDir: 'fwd',
+                      campuses: (h && /_student/.test(h['arg'])) ? this.basicCampuses(this.props.campuses) : this.props.campuses,
                       prevStep: this.state.data.wizardStep,
                       campusID: campusID,
                       campusName: this.getCampusName(campusID),
@@ -80,13 +88,14 @@ class WizardComp extends React.Component {
     // Strip campus info from state if user is starting over and didn't come originally from a campus
     let resetCampus = (wizardStep == 1 && this.state.launchedFromRoot)
     this.setState({data: {wizardStep: wizardStep,
-                                  wizardDir: 'bkw',
-                                  prevStep: null,
-                                  campusID: resetCampus ? null : this.state.data.campusID,
-                                  campusName: resetCampus ? null : this.state.data.campusName,
-                                  unitID: this.state.data.unitID,
-                                  unitName: this.state.data.unitName,
-                                  arg: this.state.data.arg}})
+                          wizardDir: 'bkw',
+                          campuses: this.state.data.campuses,
+                          prevStep: null,
+                          campusID: resetCampus ? null : this.state.data.campusID,
+                          campusName: resetCampus ? null : this.state.data.campusName,
+                          unitID: this.state.data.unitID,
+                          unitName: this.state.data.unitName,
+                          arg: this.state.data.arg}})
   }
 
   tabFocus = ()=> {
@@ -136,7 +145,7 @@ class WizardComp extends React.Component {
 
           {/* [2] Which UC Campus are you affiliated with? */}
               <WizardCampusComp goForward = {this.goForward} goBackward = {this.goBackward} closeModal={this.handleCloseModal}
-                              campuses={this.props.campuses} subi_link = {SUBI_LINK} />
+                              campuses={d.campuses} subi_link = {SUBI_LINK} />
             </div>
             <div className={d.wizardStep === 3 ? `c-wizard__current-${d.wizardDir}` : `c-wizard__standby-${d.wizardDir}`} aria-hidden={d.wizardStep === 3 ? null : true}>
 
