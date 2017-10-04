@@ -130,3 +130,58 @@ def getJournalStatsPerCampus
     map{|y| y.values}
   return Hash[array.map(&:values).map(&:flatten)]
 end
+
+##################################################################################################
+# Database caches for speed. We check every 30 seconds for changes. These tables change infrequently.
+
+$cachesFilled = Event.new
+Thread.new {
+  begin
+    prevTime = nil
+    while true
+      utime = nil
+      DB.fetch("SHOW TABLE STATUS WHERE Name in ('units', 'unit_hier')").each { |row|
+        if row[:Update_time] && (!utime || row[:Update_time] > utime)
+          utime = row[:Update_time]
+        end
+      }
+      if !utime || utime != prevTime
+        puts "Filling caches.           "
+        $unitsHash = getUnitsHash
+        $hierByUnit = getHierByUnit
+        $hierByAncestor = getHierByAncestor
+        $activeCampuses = getActiveCampuses
+        $oruAncestors = getOruAncestors
+        $campusJournals = getJournalsPerCampus    # Used for browse pages
+
+        #####################################################################
+        # STATISTICS
+        # These are dependent on instantation of $activeCampuses
+
+        # HOME PAGE statistics
+        # ToDo:
+        $statsViews = countViews
+        $statsDownloads = countDownloads
+        $statsOpenItems = countOpenItems
+        $statsOrus = countOrus
+        $statsItems =  countItems
+        $statsThesesDiss = countThesisDiss
+        $statsBooks = countBooks
+        $statsEscholJournals = countEscholJournals
+        $statsStudentJournals = countStudentJournals
+
+        # BROWSE PAGE statistics
+        $statsCampusPubs = getPubStatsPerCampus
+        $statsCampusOrus = getOruStatsPerCampus
+        $statsCampusJournals = getJournalStatsPerCampus
+        $cachesFilled.set
+        prevTime = utime
+      end
+      sleep 30
+    end
+  rescue Exception => e
+    puts "Unexpected exception in cache thread: #{e} #{e.backtrace}"
+  end
+}
+$cachesFilled.wait
+

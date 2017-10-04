@@ -45,6 +45,9 @@ class FileCache
     # Clean every 30 seconds or so
     return if !@lastClean.nil? && (Time.now - @lastClean) < 30
 
+    # Only clean in the first worker process
+    return if $workerNum > 0
+
     # Scan the cache directory for all the entries
     now = Time.now
     totalSize = 0

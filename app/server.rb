@@ -25,18 +25,18 @@ require 'socket'
 
 # Make puts thread-safe, and flush after every puts.
 $stdoutMutex = Mutex.new
+$workerNum = 0
 $workerPrefix = ""
 $nextThreadNum = 0
-def puts(*args)
+def puts(str)
   $stdoutMutex.synchronize {
-    STDOUT.print "[#{$workerPrefix}#{Thread.current[:number] ||= ($nextThreadNum += 1)}] "
-    super(*args)
+    STDOUT.puts "[#{$workerPrefix}#{Thread.current[:number] ||= ($nextThreadNum += 1)}] #{str}"
     STDOUT.flush
   }
 end
 
 # Make it clear where the new session starts in the log file.
-puts "\n\n=====================================================================================\n"
+STDOUT.write "\n=====================================================================================\n"
 
 def waitForSocks(host, port)
   first = true
@@ -96,7 +96,9 @@ $s3Client = Aws::S3::Client.new(region: $s3Config.region)
 $s3Bucket = Aws::S3::Bucket.new($s3Config.bucket, client: $s3Client)
 
 # Internal modules to implement specific pages and functionality
-require_relative 'dbCache'
+require_relative '../util/sanitize.rb'
+require_relative '../util/xmlutil.rb'
+require_relative '../util/event.rb'
 require_relative 'hierarchy'
 require_relative 'listViews'
 require_relative 'searchApi'
@@ -105,8 +107,6 @@ require_relative 'unitPages'
 require_relative 'citation'
 require_relative 'loginApi'
 require_relative 'fileCache'
-require_relative '../util/sanitize.rb'
-require_relative '../util/xmlutil.rb'
 require_relative 'merritt'
 
 class StdoutLogger
@@ -200,102 +200,8 @@ class DisplayPDF < Sequel::Model
   unrestrict_primary_key
 end
 
-##################################################################################################
-# Thread synchronization class
-class Event
-  def initialize
-    @lock = Mutex.new
-    @cond = ConditionVariable.new
-    @flag = false
-  end
-  def set
-    @lock.synchronize do
-      @flag = true
-      @cond.broadcast
-   end
-  end
-  def wait
-    @lock.synchronize do
-      if not @flag
-        @cond.wait(@lock)
-      end
-    end
-  end
-end
-
-##################################################################################################
-# Database caches for speed. We check every 30 seconds for changes. These tables change infrequently.
-
-$unitsHash, $hierByUnit, $hierByAncestor, $activeCampuses, $oruAncestors, $campusJournals,
-  $statsCampusPubs, $statsCampusOrus, $statsCampusJournals = nil, nil, nil, nil, nil, nil, nil, nil, nil
-$cachesFilled = Event.new
-Thread.new {
-  begin
-    prevTime = nil
-    while true
-      utime = nil
-      DB.fetch("SHOW TABLE STATUS WHERE Name in ('units', 'unit_hier')").each { |row|
-        if row[:Update_time] && (!utime || row[:Update_time] > utime)
-          utime = row[:Update_time]
-        end
-      }
-      if !utime || utime != prevTime
-        puts "Filling caches.           "
-        $unitsHash = getUnitsHash
-        $hierByUnit = getHierByUnit
-        $hierByAncestor = getHierByAncestor
-        $activeCampuses = getActiveCampuses
-        $oruAncestors = getOruAncestors
-        $campusJournals = getJournalsPerCampus    # Used for browse pages
-
-        #####################################################################
-        # STATISTICS
-        # These are dependent on instantation of $activeCampuses
-
-        # HOME PAGE statistics
-        # ToDo:
-        $statsViews = countViews
-        $statsDownloads = countDownloads
-        $statsOpenItems = countOpenItems
-        $statsOrus = countOrus
-        $statsItems =  countItems
-        $statsThesesDiss = countThesisDiss
-        $statsBooks = countBooks
-        $statsEscholJournals = countEscholJournals
-        $statsStudentJournals = countStudentJournals
-
-        # BROWSE PAGE statistics
-        $statsCampusPubs = getPubStatsPerCampus
-        $statsCampusOrus = getOruStatsPerCampus
-        $statsCampusJournals = getJournalStatsPerCampus
-        $cachesFilled.set
-        prevTime = utime
-      end
-      sleep 30
-    end
-  rescue Exception => e
-    puts "Unexpected exception in cache thread: #{e} #{e.backtrace}"
-  end
-}
-$cachesFilled.wait
-
-###################################################################################################
-# Monkey-patch Thin's post_process method, because it calls callback and errback in quick
-# succession on the response body, but callback nulls out the body so so errback cannot be called.
-module Thin
-  module ConnectionExtensions
-    def post_process(result)
-      begin
-        super(result)
-      rescue NoMethodError
-        STDOUT.write("Note: ignoring silly NoMethodError from Thin::Connection::post_process\n")
-      end
-    end
-  end
-  class Connection
-    prepend ConnectionExtensions
-  end
-end
+# DbCache uses the models above.
+require_relative 'dbCache'
 
 ###################################################################################################
 # ISOMORPHIC JAVASCRIPT
@@ -409,7 +315,11 @@ class S3Fetcher
       end
       return totalStreamed
     rescue Exception => e
-      puts "Warning: problem while streaming S3 content: #{e.message}"
+      if e =~ /timeout writing data/
+        # common case when client drops connection early
+      else
+        puts "Warning: problem while streaming S3 content: #{e.message}"
+      end
       raise
     end
   end
@@ -519,8 +429,6 @@ get %r{.*} do
   # The regex below ensures that /api, /content, /locale, and files with a file ext get served
   # elsewhere.
   pass if request.path_info =~ %r{api/.*|content/.*|locale/.*|.*\.\w{1,4}}
-
-  puts "Page fetch: #{request.url}"
 
   template = File.new("app/app.html").read
 
