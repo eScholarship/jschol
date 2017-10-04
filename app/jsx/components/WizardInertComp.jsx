@@ -134,7 +134,7 @@ class WizardInertComp extends React.Component {
              <MoribundComp header={this.props.header} type={type} closeModal={this.closeModal} />
             :
             // If none of the above, assume it's a journal whose directSubmit is enabled
-             <JournalSubmissionComp header={this.props.header} closeModal={this.closeModal} />
+             <JournalSubmissionComp header={this.props.header} directSubmitURL={this.props.directSubmitURL} closeModal={this.closeModal} />
           }
           </div>
         </ReactModal>

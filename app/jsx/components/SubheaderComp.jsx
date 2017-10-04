@@ -18,6 +18,7 @@ class SubheaderComp extends React.Component {
       ancestorName: PropTypes.string,    // Intended for series only
       campuses: PropTypes.array.isRequired,
       directSubmit: PropTypes.string,
+      directSubmitURL: PropTypes.string,
       logo: PropTypes.shape({
         url: PropTypes.string.isRequired,
         width: PropTypes.number, // optional for SVG
