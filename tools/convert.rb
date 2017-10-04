@@ -196,6 +196,9 @@ class UnitHier < Sequel::Model(:unit_hier)
   unrestrict_primary_key
 end
 
+class UnitCount < Sequel::Model
+end
+
 class Item < Sequel::Model
   unrestrict_primary_key
 end
@@ -436,6 +439,19 @@ def convertBrandDownloadToPage(unitID, navBar, navID, linkName, linkTarget)
 end
 
 ###################################################################################################
+def convertTables(html)
+  html.gsub! %r{<table[^>]*>}i, ""
+  html.gsub! %r{</table>}i, ""
+
+  html.gsub! %r{<tr[^>]*>}i, ""
+  html.gsub! %r{</tr>}i, "<br/>"
+
+  html.gsub! %r{</(td|th)>\s*<(td|th)[^>]*>}i, " | "
+  html.gsub! %r{</?(td|th)[^>]*>}i, ""
+  return html
+end
+
+###################################################################################################
 def convertPage(unitID, navBar, navID, contentDiv, slug, name)
   title = nil
   stripXMLWhitespace(contentDiv)
@@ -469,7 +485,11 @@ def convertPage(unitID, navBar, navID, contentDiv, slug, name)
     contentDiv = kid
   end
 
-  html = sanitizeHTML(contentDiv.inner_html)
+  # Cheesy conversion of tables to lists, for now at least
+  html = contentDiv.inner_html
+  convertTables(html)
+
+  html = sanitizeHTML(html)
   html.length > 0 or return
 
   # Replace old-style links
@@ -732,45 +752,43 @@ end
 
 ###################################################################################################
 # Convert an allStruct element, and all its child elements, into the database.
-def convertUnits(el, parentMap, childMap, allIds)
+def convertUnits(el, parentMap, childMap, allIds, selectedUnits)
   id = el[:id] || el[:ref] || "root"
   allIds << id
   Thread.current[:name] = id.ljust(30)
   #puts "name=#{el.name} id=#{id.inspect} name=#{el[:label].inspect}"
 
   # Create or update the main database record
-  if el.name != "ptr"
-    unitType = id=="root" ? "root" : el[:type]
-    # Retain CMS modifications to root and campuses
-    if ['root','campus'].include?(unitType) && Unit.where(id: id).first
-      #puts "Preserving #{id}."
-    else
-      DB.transaction {
-        name = id=="root" ? "eScholarship" : el[:label]
-        Unit.update_or_replace(id,
-          type:      unitType,
-          name:      name,
-          status:    el[:directSubmit] == "moribund" ? "archived" :
-                     el[:hide] == "eschol" ? "hidden" :
-                     "active"
-        )
+  if selectedUnits == "ALL" || selectedUnits.include?(id)
+    if el.name != "ptr"
+      unitType = id=="root" ? "root" : el[:type]
+      # Retain CMS modifications to root and campuses
+      if ['root','campus'].include?(unitType) && Unit.where(id: id).first
+        #puts "Preserving #{id}."
+      else
+        selectedUnits == "ALL" or puts "Converting."
+        DB.transaction {
+          name = id=="root" ? "eScholarship" : el[:label]
+          Unit.update_or_replace(id,
+            type:      unitType,
+            name:      name,
+            status:    el[:directSubmit] == "moribund" ? "archived" :
+                       el[:hide] == "eschol" ? "hidden" :
+                       "active"
+          )
 
-        # We can't totally fill in the brand attributes when initially inserting the record,
-        # so do it as an update after inserting.
-        attrs = {}
-        el[:directSubmit] and attrs[:directSubmit] = el[:directSubmit]
-        el[:hide]         and attrs[:hide]         = el[:hide]
-        el[:issn]         and attrs[:issn]         = el[:issn]
-        attrs.merge!(convertUnitBrand(id, unitType))
-        nameChar = name[0].upcase
-        if unitType == "journal"
-          attrs[:magazine_layout] = nameChar > 'M'  # Names starting with M-Z are magazine layout (for now)
-        end
-        attrs[:carousel] = (nameChar >= 'F' && nameChar <= 'R')  # Names F-R have carousels (for now)
-        Unit[id].update(attrs: JSON.generate(attrs))
+          # We can't totally fill in the brand attributes when initially inserting the record,
+          # so do it as an update after inserting.
+          attrs = {}
+          el[:directSubmit] and attrs[:directSubmit] = el[:directSubmit]
+          el[:hide]         and attrs[:hide]         = el[:hide]
+          el[:issn]         and attrs[:issn]         = el[:issn]
+          attrs.merge!(convertUnitBrand(id, unitType))
+          Unit[id].update(attrs: JSON.generate(attrs))
 
-        addDefaultWidgets(id, unitType)
-      }
+          addDefaultWidgets(id, unitType)
+        }
+      end
     end
   end
 
@@ -785,20 +803,22 @@ def convertUnits(el, parentMap, childMap, allIds)
       childMap[id] ||= []
       childMap[id] << childID
     end
-    convertUnits(child, parentMap, childMap, allIds)
+    convertUnits(child, parentMap, childMap, allIds, selectedUnits)
   }
 
   # After traversing the whole thing, it's safe to form all the hierarchy links
   if el.name == "allStruct"
     Thread.current[:name] = nil
-    DB.transaction {
-      # Delete extraneous units from prior conversions
-      deleteExtraUnits(allIds)
+    if selectedUnits == "ALL"
+      DB.transaction {
+        # Delete extraneous units from prior conversions
+        deleteExtraUnits(allIds)
 
-      puts "Linking units."
-      UnitHier.dataset.delete
-      linkUnit("root", childMap, Set.new)
-    }
+        puts "Linking units."
+        UnitHier.dataset.delete
+        linkUnit("root", childMap, Set.new)
+      }
+    end
   end
 end
 
@@ -1058,7 +1078,9 @@ def parseDate(str)
   text = str
   text or return nil
   begin
-    if text =~ /^\d\d\d\d$/   # handle data with no month or day
+    if text =~ /^([123]\d\d\d)([01]\d)([0123]\d)$/  # handle date missing its dashes
+      text = "#{$1}-#{$2}-#{$3}"
+    elsif text =~ /^\d\d\d\d$/   # handle data with no month or day
       text = "#{text}-01-01"
     elsif text =~ /^\d\d\d\d-\d\d$/   # handle data with no day
       text = "#{text}-01"
@@ -1573,8 +1595,8 @@ def parseUCIngest(itemID, inMeta, fileType)
                                                            sub("french", "fr").sub("spanish", "es")
 
   # Set disableDownload flag based on content file
-  tmp = inMeta.at("./context/file[@disableDownload]")
-  tmp and attrs[:disable_download] = tmp[:disableDownload]
+  tmp = inMeta.at("./content/file[@disableDownload]")
+  tmp && tmp = parseDate(tmp[:disableDownload]) and attrs[:disable_download] = tmp
 
   if inMeta[:state] == "withdrawn"
     tmp = inMeta.at("./history/stateChange[@state='withdrawn']")
@@ -2313,16 +2335,16 @@ end
 
 ###################################################################################################
 # Main driver for unit conversion.
-def convertAllUnits
+def convertAllUnits(units)
   # Let the user know what we're doing
-  puts "Converting units."
+  puts "Converting #{units=="ALL" ? "all" : "selected"} units."
   startTime = Time.now
 
   # Load allStruct and traverse it. This will create Unit and Unit_hier records for all units,
   # and delete any extraneous old ones.
   allStructPath = "/apps/eschol/erep/xtf/style/textIndexer/mapping/allStruct-eschol5.xml"
   open(allStructPath, "r") { |io|
-    convertUnits(fileToXML(allStructPath).root, {}, {}, Set.new)
+    convertUnits(fileToXML(allStructPath).root, {}, {}, Set.new, units)
   }
 end
 
@@ -2481,7 +2503,7 @@ def indexPage(row, batch)
 
   idxItem = {
     type:          "add",   # in CloudSearch land this means "add or update"
-    id:            "page:#{unitID}:#{slug}",
+    id:            "page:#{unitID}:#{slug.gsub(%r{[^-a-zA-Z0-9\_\/\#\:\.\;\&\=\?\@\$\+\!\*'\(\)\,\%]}, '_')}",
     fields: {
       text:        text,
       is_info:     1
@@ -2688,13 +2710,32 @@ def splashAllPDFs(arks)
 end
 
 ###################################################################################################
+# Update item and unit stats
+def updateUnitStats
+  puts "Updating unit stats."
+  cacheAllUnits
+  $allUnits.keys.sort.each_slice(10) { |slice|
+    slice.each { |unitID|
+      DB.transaction {
+        UnitCount.where(unit_id: unitID).delete
+        STATS_DB.fetch("SELECT * FROM unitCounts WHERE unitId = ? and direct = 0", unitID) { |row|
+          UnitCount.insert(unit_id: unitID, month: row[:month],
+                           hits: row[:hits], downloads: row[:downloads], items_posted: row[:nItemsPosted])
+        }
+      }
+    }
+  }
+end
+
+###################################################################################################
 # Main action begins here
 
 startTime = Time.now
 
 case ARGV[0]
   when "--units"
-    convertAllUnits
+    units = ARGV.select { |a| a =~ /^[^-]/ }
+    convertAllUnits(units.empty? ? "ALL" : Set.new(units))
   when "--items"
     arks = ARGV.select { |a| a =~ /qt\w{8}/ }
     convertAllItems(arks.empty? ? "ALL" : Set.new(arks))
@@ -2703,6 +2744,8 @@ case ARGV[0]
   when "--splash"
     arks = ARGV.select { |a| a =~ /qt\w{8}/ }
     splashAllPDFs(arks.empty? ? "ALL" : Set.new(arks))
+  when "--stats"
+    updateUnitStats
   else
     STDERR.puts "Usage: #{__FILE__} --units|--items"
     exit 1

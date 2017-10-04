@@ -14,7 +14,7 @@ if (!(typeof document === "undefined")) {
 class CarouselComp extends React.Component {
   componentDidMount() {
     try {
-      this.flkty = new Flickity(this.domEl.firstChild, this.props.options)
+      this.flkty = new Flickity(this.domEl, this.props.options)
     }
     catch (e) {
       console.log("Exception initializing flickity:", e)
@@ -34,7 +34,7 @@ class CarouselComp extends React.Component {
       if (this.flkty) {
         this.flkty.destroy();
       }
-      this.flkty = new Flickity(this.domEl.firstChild, this.props.options)
+      this.flkty = new Flickity(this.domEl, this.props.options)
     }
     catch (e) {
       console.log("Exception re-initializing flickity:", e)
@@ -61,7 +61,8 @@ class CarouselComp extends React.Component {
     // confused and put out warnings to the console.
     return (
       <div className={this.props.className} ref={ el => this.domEl = el }
-        dangerouslySetInnerHTML={{__html: ReactDOMServer.renderToStaticMarkup(<div>{this.props.children}</div>)}}/>
+        dangerouslySetInnerHTML={{__html: ReactDOMServer.renderToStaticMarkup(
+          <div >{this.props.children}</div>).replace(/^<div>/, '').replace(/<\/div>$/, '')}}/>
     )
   }
 }

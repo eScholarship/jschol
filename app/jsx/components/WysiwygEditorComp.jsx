@@ -20,6 +20,7 @@ export default class WysiwygEditorComp extends React.Component
   static propTypes = {
     html: PropTypes.string.isRequired,
     unit: PropTypes.string.isRequired,
+    imageContext: PropTypes.string,
     buttons: PropTypes.array
   }
 
@@ -45,7 +46,7 @@ export default class WysiwygEditorComp extends React.Component
                    plugins={{
                     // Add parameters to uploadImage plugin
                     uploadImage: {
-                        serverPath: `/api/unit/${this.props.unit}/uploadEditorImg?username=${cms.username}&token=${cms.token}`,
+                        serverPath: `/api/unit/${this.props.unit}/uploadEditorImg?username=${cms.username}&token=${cms.token}&context=${this.props.imageContext}`,
                         fileFieldName: 'image',
                         urlPropertyName: 'link'
                     },

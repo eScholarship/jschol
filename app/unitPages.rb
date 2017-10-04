@@ -27,12 +27,30 @@ def putAsset(filePath, metadata)
 end
 
 ###################################################################################################
+def checkImageSize(imgContext, dims, fileSize)
+  maxWidth, maxHeight, maxK = case imgContext
+    when 'slide';   [900,  500, 250]
+    when 'logo';    [800,   90, 250]
+    when 'sidebar'; [350,  700, 250]
+    when 'content'; [900, 1800, 250]
+    else raise("unrecognized imgContext #{imgContext.inspect}")
+  end
+  if dims[0] > maxWidth || dims[1] > maxHeight
+    jsonHalt(413, "Error: image (#{dims[0]}x#{dims[1]}) exceeds maximum (#{maxWidth}x#{maxHeight}) pixels.")
+  end
+  if fileSize > maxK*1024
+    jsonHalt(413, "Error: image file size #{(fileSize+1023)>>10}K exceeds maximum size of #{maxK}K.")
+  end
+end
+
+###################################################################################################
 # Upload an image to S3, and return hash of its attributes. If a block is supplied, it will receive
 # the dimensions first, and have a chance to raise exceptions on them.
-def putImage(imgPath, metadata={}, &block)
+def putImage(imgContext, imgPath, metadata={}, &block)
   mimeType = MimeMagic.by_magic(File.open(imgPath))
   mimeType && mimeType.mediatype == "image" or raise("Non-image file #{imgPath}")
   dims = FastImage.size(imgPath)
+  checkImageSize(imgContext, dims, File.size(imgPath))
   block and block.yield(dims)
   assetID = putAsset(imgPath, metadata.merge({
     width: dims[0].to_s,
@@ -70,7 +88,7 @@ def getUnitAncestor(unit)
 end
 
 # Get list of nav slugs by traversing the nav
-def getSlugs(navItems, slugList = nil)
+def getSlugs(navItems, slugs = nil)
   slugs ||= Set.new
   navItems and navItems.each { |navItem|
     if navItem['type'] == 'folder'
@@ -558,6 +576,7 @@ def maxNavID(navBar)
 end
 
 def jsonHalt(httpCode, message)
+  puts "jsonHalt: code=#{httpCode} messaage=#{message.inspect}"
   content_type :json
   halt(httpCode, { error: true, message: message }.to_json)
 end
@@ -694,7 +713,7 @@ post "/api/unit/:unitID/nav" do |unitID|
     newNav = case navType
     when "page"
       Page.create(slug: slug, unit_id: unitID, name: name, title: name, attrs: { html: "" }.to_json)
-      newNav = { id: nextID, type: "page", name: name, slug: slug, hidden: true }
+      newNav = { id: nextID, type: "page", name: name, slug: slug }
     when "link"
       newNav = { id: nextID, type: "link", name: name, url: "" }
     when "folder"
@@ -703,7 +722,7 @@ post "/api/unit/:unitID/nav" do |unitID|
       halt(400, "unknown navType")
     end
 
-    navBar << newNav
+    navBar.insert(0, newNav)
     attrs['nav_bar'] = navBar
     unit[:attrs] = attrs.to_json
     unit.save
@@ -991,6 +1010,7 @@ def carouselConfig(slides, unitID)
   
   if carousel.attrs
     carouselAttrs = JSON.parse(carousel.attrs)
+    carouselAttrs['slides'] ||= []
     slides.each do |k,v|
       # if the slide already exists, merge new config with old config
       if k < carouselAttrs['slides'].length
@@ -1019,13 +1039,14 @@ post "/api/unit/:unitID/upload" do |unitID|
   if slideImageKeys.length > 0
     slideImage_data = []
     for slideImageKey in slideImageKeys
-      image_data = putImage(params[slideImageKey][:tempfile].path, { original_path: params[slideImageKey][:filename] })
+      image_data = putImage("slide", params[slideImageKey][:tempfile].path, { original_path: params[slideImageKey][:filename] })
       image_data[:slideNumber] = /slideImage(\d*)/.match(slideImageKey)[1]
       slideImage_data.push(image_data)
     end
     DB.transaction {
       carousel = Widget.where(unit_id: unitID, region: "marquee", kind: "Carousel", ordering: 0).first
       carouselAttrs = JSON.parse(carousel.attrs)
+      carouselAttrs['slides'] ||= []
       for slideImage in slideImage_data
         slideNumber = slideImage[:slideNumber].to_i
         image_data = slideImage.reject{|k,v| k == :slideNumber}.to_a.collect{|x| [x[0].to_s, x[1]]}.to_h
@@ -1045,7 +1066,7 @@ post "/api/unit/:unitID/upload" do |unitID|
 
   # upload images for unit profile logo
   if params.has_key? :logo and params[:logo] != ""
-    logo_data = putImage(params[:logo][:tempfile].path, { original_path: params[:logo][:filename] })
+    logo_data = putImage("logo", params[:logo][:tempfile].path, { original_path: params[:logo][:filename] })
     DB.transaction {
       unit = Unit[unitID] or jsonHalt(404, "Unit not found")
       unitAttrs = JSON.parse(unit.attrs)
@@ -1063,7 +1084,7 @@ end
 
 post "/api/unit/:unitID/uploadEditorImg" do |unitID|
   getUserPermissions(params[:username], params[:token], unitID)[:admin] or halt(401)
-  img_data = putImage(params[:image][:tempfile].path, { original_path: params[:image][:filename] })
+  img_data = putImage(params[:context], params[:image][:tempfile].path, { original_path: params[:image][:filename] })
   content_type :json
   return { success: true, link: "/assets/#{img_data[:asset_id]}" }.to_json
 end

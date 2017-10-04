@@ -105,6 +105,7 @@ require_relative 'citation'
 require_relative 'loginApi'
 require_relative 'fileCache'
 require_relative '../util/sanitize.rb'
+require_relative '../util/xmlutil.rb'
 require_relative 'merritt'
 
 # Sinatra configuration
@@ -408,9 +409,14 @@ get "/content/:fullItemID/*" do |itemID, path|
   if path =~ /^qt\w{8}\.pdf$/
     epath = "content/#{URI::encode(path)}"
     attrs["content_merritt_path"] and epath = attrs["content_merritt_path"]
-    noSplash = !($host =~ /pub-jschol/) ||
-               (params[:nosplash] && isValidContentKey(itemID.sub(/^qt/, ''), params[:nosplash]))
+    noSplash = params[:nosplash] && isValidContentKey(itemID.sub(/^qt/, ''), params[:nosplash])
     mainPDF = true
+  elsif path =~ %r{^inner/(.*)$}
+    filename = $1
+    halt(403) if filename =~ /^qt\w{8}\.pdf$/  # disallow bypassing main check using inner backdoor
+    epath = "content/#{URI::encode(filename)}"
+    noSplash = true
+    mainPDF = false
   else
     # Must be a supp file.
     attrs["supp_files"] or halt(404)
@@ -423,6 +429,12 @@ get "/content/:fullItemID/*" do |itemID, path|
     epath or halt(404)
     noSplash = true
     mainPDF = false
+  end
+
+  # Some items have a date-based download restriction. In this case, we only support the
+  # no-splash version used for pdf.js rendering, and protected (lightly) by a key.
+  if attrs['disable_download'] && Date.parse(attrs['disable_download']) > Date.today && !(mainPDF && noSplash)
+    halt 403, "Download restricted until #{attrs['disable_download']}"
   end
 
   # Guess the content type by path for now
@@ -760,7 +772,7 @@ get "/api/item/:shortArk" do |shortArk|
         :status => item.status,
         :rights => item.rights,
         :content_type => item.content_type,
-        :content_html => getItemHtml(item.content_type, shortArk),
+        :content_html => getItemHtml(item.content_type, id),
         :content_key => calcContentKey(shortArk),
         :attrs => attrs,
         :sidebar => unit ? getItemRelatedItems(unit, id) : nil,
@@ -914,11 +926,14 @@ end
 # Properly target links in HTML blob
 def getItemHtml(content_type, id)
   return false if content_type != "text/html"
-  dir = "http://" + request.env["HTTP_HOST"] + "/content/qt" + id + "/"
-  htmlStr = open(dir + "qt" + id + ".html").read
+  mrtURL = "https://#{$mrtExpressConfig['host']}/dl/ark:/13030/#{id}/content/#{id}.html"
+  fetcher = MerrittFetcher.new(mrtURL)
+  buf = []
+  fetcher.streamTo(buf)
+  htmlStr = stringToXML(buf.join("")).to_xml
   htmlStr.gsub(/(href|src)="((?!#)[^"]+)"/) { |m|
     attrib, url = $1, $2
-    url = $2.start_with?("http", "ftp") ? $2 : dir + $2
+    url = url.start_with?("http", "ftp") ? url : "/content/#{id}/inner/#{url}"
     "#{attrib}=\"#{url}\"" + ((attrib == "src") ? "" : " target=\"new\"")
   }
 end

@@ -32,7 +32,7 @@ class UnitCarouselItem extends React.Component {
     }
     return (
       <div className="o-itemcarousel__item">
-          <Link to={itemLink} className={"o-unititem--" + this.props.orientation}>
+          <a href={itemLink} className={"o-unititem--" + this.props.orientation}>
             <div className="o-unititem__type--article">{pr.genre}</div>
             <div className="o-unititem__title">{pr.title}</div>
           {authorList &&
@@ -40,7 +40,7 @@ class UnitCarouselItem extends React.Component {
               {authorList}
             </ul>
           }
-          </Link>
+          </a>
         </div>
     )
   }
