@@ -25,9 +25,11 @@ require 'socket'
 
 # Make puts thread-safe, and flush after every puts.
 $stdoutMutex = Mutex.new
+$workerPrefix = ""
+$nextThreadNum = 0
 def puts(*args)
   $stdoutMutex.synchronize {
-    #STDOUT.print Thread.current
+    STDOUT.print "[#{$workerPrefix}#{Thread.current[:number] ||= ($nextThreadNum += 1)}] "
     super(*args)
     STDOUT.flush
   }
@@ -107,6 +109,14 @@ require_relative '../util/sanitize.rb'
 require_relative '../util/xmlutil.rb'
 require_relative 'merritt'
 
+class StdoutLogger
+  def << (str)
+    puts(str)
+  end
+end
+
+$stdoutLogger = StdoutLogger.new
+
 # Sinatra configuration
 configure do
   # Puma is good for multiprocess *and* multithreading
@@ -115,6 +125,11 @@ configure do
   set :public_folder, Proc.new { root }
 
   set :show_exceptions, false
+
+  # Replace Sinatra's normal logging with one that goes to our overridden stdout puts, so we
+  # can include the pid and thread number with each request.
+  set :logging, false
+  use Rack::CommonLogger, $stdoutLogger
 end
 
 # Compress responses
@@ -215,47 +230,51 @@ $unitsHash, $hierByUnit, $hierByAncestor, $activeCampuses, $oruAncestors, $campu
   $statsCampusPubs, $statsCampusOrus, $statsCampusJournals = nil, nil, nil, nil, nil, nil, nil, nil, nil
 $cachesFilled = Event.new
 Thread.new {
-  prevTime = nil
-  while true
-    utime = nil
-    DB.fetch("SHOW TABLE STATUS WHERE Name in ('units', 'unit_hier')").each { |row|
-      if row[:Update_time] && (!utime || row[:Update_time] > utime)
-        utime = row[:Update_time]
+  begin
+    prevTime = nil
+    while true
+      utime = nil
+      DB.fetch("SHOW TABLE STATUS WHERE Name in ('units', 'unit_hier')").each { |row|
+        if row[:Update_time] && (!utime || row[:Update_time] > utime)
+          utime = row[:Update_time]
+        end
+      }
+      if !utime || utime != prevTime
+        puts "Filling caches.           "
+        $unitsHash = getUnitsHash
+        $hierByUnit = getHierByUnit
+        $hierByAncestor = getHierByAncestor
+        $activeCampuses = getActiveCampuses
+        $oruAncestors = getOruAncestors
+        $campusJournals = getJournalsPerCampus    # Used for browse pages
+
+        #####################################################################
+        # STATISTICS
+        # These are dependent on instantation of $activeCampuses
+
+        # HOME PAGE statistics
+        # ToDo:
+        $statsViews = countViews
+        $statsDownloads = countDownloads
+        $statsOpenItems = countOpenItems
+        $statsOrus = countOrus
+        $statsItems =  countItems
+        $statsThesesDiss = countThesisDiss
+        $statsBooks = countBooks
+        $statsEscholJournals = countEscholJournals
+        $statsStudentJournals = countStudentJournals
+
+        # BROWSE PAGE statistics
+        $statsCampusPubs = getPubStatsPerCampus
+        $statsCampusOrus = getOruStatsPerCampus
+        $statsCampusJournals = getJournalStatsPerCampus
+        $cachesFilled.set
+        prevTime = utime
       end
-    }
-    if !utime || utime != prevTime
-      puts "Filling caches.           "
-      $unitsHash = getUnitsHash
-      $hierByUnit = getHierByUnit
-      $hierByAncestor = getHierByAncestor
-      $activeCampuses = getActiveCampuses
-      $oruAncestors = getOruAncestors
-      $campusJournals = getJournalsPerCampus    # Used for browse pages
-
-      #####################################################################
-      # STATISTICS
-      # These are dependent on instantation of $activeCampuses
-
-      # HOME PAGE statistics
-      # ToDo:
-      $statsViews = countViews
-      $statsDownloads = countDownloads
-      $statsOpenItems = countOpenItems
-      $statsOrus = countOrus
-      $statsItems =  countItems
-      $statsThesesDiss = countThesisDiss
-      $statsBooks = countBooks
-      $statsEscholJournals = countEscholJournals
-      $statsStudentJournals = countStudentJournals
-
-      # BROWSE PAGE statistics
-      $statsCampusPubs = getPubStatsPerCampus
-      $statsCampusOrus = getOruStatsPerCampus
-      $statsCampusJournals = getJournalStatsPerCampus
-      $cachesFilled.set
-      prevTime = utime
+      sleep 30
     end
-    sleep 30
+  rescue Exception => e
+    puts "Unexpected exception in cache thread: #{e} #{e.backtrace}"
   end
 }
 $cachesFilled.wait
@@ -304,6 +323,7 @@ end
 # IP address filtering on certain machines
 $ipFilter = File.exist?("config/allowed_ips") && Regexp.new(File.read("config/allowed_ips").strip)
 before do
+  puts "#{request.request_method} #{request.url}"
   $ipFilter && !$ipFilter.match(request.ip) and halt 403
 end
 
