@@ -213,7 +213,8 @@ end
 # Database caches for speed. We check every 30 seconds for changes. These tables change infrequently.
 
 $unitsHash, $hierByUnit, $hierByAncestor, $activeCampuses, $oruAncestors, $campusJournals,
-  $statsCampusPubs, $statsCampusOrus, $statsCampusJournals = nil, nil, nil, nil, nil, nil, nil, nil, nil
+$statsCountItems, $statsCountViews, $statsCountOpenItems, $statsCountEscholJournals, $statsCountOrus,
+$statsCountArticles, $statsCountThesesDiss, $statsCountBooks, $statsCampusPubs, $statsCampusOrus, $statsCampusJournals = nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil
 $cachesFilled = Event.new
 Thread.new {
   prevTime = nil
@@ -235,24 +236,23 @@ Thread.new {
 
       #####################################################################
       # STATISTICS
-      # These are dependent on instantation of $activeCampuses
+      # These are dependent on instantiation of $activeCampuses
 
       # HOME PAGE statistics
-      # ToDo:
-      $statsViews = countViews
-      $statsDownloads = countDownloads
-      $statsOpenItems = countOpenItems
-      $statsOrus = countOrus
-      $statsItems =  countItems
-      $statsThesesDiss = countThesisDiss
-      $statsBooks = countBooks
-      $statsEscholJournals = countEscholJournals
-      $statsStudentJournals = countStudentJournals
+      $statsCountItems =  countItems
+      $statsCountViews = countViews
+      $statsCountOpenItems = countOpenItems
+      $statsCountEscholJournals = countEscholJournals
+      $statsCountOrus = countOrus
+      $statsCountArticles = countArticles
+      $statsCountThesesDiss = countThesesDiss
+      $statsCountBooks = countBooks
 
       # BROWSE PAGE statistics
       $statsCampusPubs = getPubStatsPerCampus
-      $statsCampusOrus = getOruStatsPerCampus
+      $statsCampusViews = getViewsPerCampus
       $statsCampusJournals = getJournalStatsPerCampus
+      $statsCampusOrus = getOruStatsPerCampus
       $cachesFilled.set
       prevTime = utime
     end
@@ -534,13 +534,30 @@ end
 
 ###################################################################################################
 # Pages with no data
-get %r{/api/(home|notFound|logoutSuccess)} do
+get %r{/api/(notFound|logoutSuccess)} do
   content_type :json
   unit = $unitsHash['root']
   body = {
     :header => getGlobalHeader,
     :unit => unit.values.reject{|k,v| k==:attrs},
     :sidebar => getUnitSidebar(unit)
+  }.to_json
+end
+
+###################################################################################################
+# Home Page 
+get "/api/home" do
+  content_type :json
+  body = {
+    :header => getGlobalHeader,
+    :statsCountItems => $statsCountItems,
+    :statsCountViews => $statsCountViews,
+    :statsCountOpenItems => $statsCountOpenItems,
+    :statsCountEscholJournals => $statsCountEscholJournals,
+    :statsCountOrus => $statsCountOrus,
+    :statsCountArticles => $statsCountArticles,
+    :statsCountThesesDiss => $statsCountThesesDiss,
+    :statsCountBooks => $statsCountBooks
   }.to_json
 end
 
@@ -790,10 +807,14 @@ get "/api/item/:shortArk" do |shortArk|
         else 
           body[:altmetrics_ok] = JSON.parse(unit[:attrs])['altmetrics_ok']
           issue_id = Item.join(:sections, :id => :section).filter(Sequel.qualify("items", "id") => id).map(:issue_id)[0]
-          unit_id, volume, issue = Section.join(:issues, :id => issue_id).map([:unit_id, :volume, :issue])[0]
-          body[:header] = getUnitHeader(unit, nil, {'unit_id': unit_id, 'volume': volume, 'issue': issue})
-          body[:citation][:volume] = volume
-          body[:citation][:issue] = issue
+          if issue_id
+            unit_id, volume, issue = Section.join(:issues, :id => issue_id).map([:unit_id, :volume, :issue])[0]
+            body[:header] = getUnitHeader(unit, nil, {'unit_id': unit_id, 'volume': volume, 'issue': issue})
+            body[:citation][:volume] = volume
+            body[:citation][:issue] = issue
+          else
+            body[:header] = getUnitHeader(unit, nil, nil)
+          end
         end
       end
 

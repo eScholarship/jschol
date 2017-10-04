@@ -53,49 +53,36 @@ def getJournalsPerCampus
   return array_new
 end
 
-# ToDo
+def countItems
+  return Item.where(status: 'published').count
+end
+
 def countViews
-  return 0 
+  return UnitCount.where(unit_id: 'root').sum(:hits)
 end
 
-# ToDo
-def countDownloads
-  return 0 
-end
-
-# ToDo
 def countOpenItems
   return 0 
 end
 
-# ToDo
+def countEscholJournals
+  return 0 
+end
+
 def countOrus 
   # select count(*) from units where type = 'oru'
   return 0 
 end
 
-# ToDo
-def countItems
+def countArticles
   return 0 
 end
 
-# ToDo
 def countThesisDiss
   return 0 
 end
 
-# ToDo
 def countBooks
-  return 0 
-end
-
-# ToDo
-def countEscholJournals
-  return 0 
-end
-
-# ToDo
-def countStudentJournals
   return 0 
 end
 
@@ -109,15 +96,10 @@ def getPubStatsPerCampus
   return Hash[array.map(&:values).map(&:flatten)]
 end
 
-# Get number of ORUs per campus as one hash. ORUs must contain items in unit_items table to be counted
-# {"ucb"=>117, "ucd"=>42 ...}
-def getOruStatsPerCampus
-  orusWithContent = Unit.join(:unit_items, :unit_id=>:id).filter(type: 'oru').exclude(status: 'hidden').distinct.select(:id).map(:id)
-  activeCampusIds = $activeCampuses.map{|id, c| id }
-  array = UnitHier.join(:units, :id=>:unit_id).
-    where(:unit_id=>orusWithContent, :ancestor_unit=>activeCampusIds).group_and_count(:ancestor_unit).
-    map{|y| y.values}
-  return Hash[array.map(&:values).map(&:flatten)]
+# Get number of views per campus as one hash.
+# {"ucb"=>11000, "ucd"=>982 ...}
+def getViewsPerCampus
+  return 0
 end
 
 # Get number of journals per campus as one hash.
@@ -127,6 +109,17 @@ def getJournalStatsPerCampus
   activeCampusIds = $activeCampuses.map{|id, c| id }
   array = UnitHier.join(:units, :id=>:unit_id).
     where(:unit_id=>activeJournals, :ancestor_unit=>activeCampusIds).group_and_count(:ancestor_unit).
+    map{|y| y.values}
+  return Hash[array.map(&:values).map(&:flatten)]
+end
+
+# Get number of ORUs per campus as one hash. ORUs must contain items in unit_items table to be counted
+# {"ucb"=>117, "ucd"=>42 ...}
+def getOruStatsPerCampus
+  orusWithContent = Unit.join(:unit_items, :unit_id=>:id).filter(type: 'oru').exclude(status: 'hidden').distinct.select(:id).map(:id)
+  activeCampusIds = $activeCampuses.map{|id, c| id }
+  array = UnitHier.join(:units, :id=>:unit_id).
+    where(:unit_id=>orusWithContent, :ancestor_unit=>activeCampusIds).group_and_count(:ancestor_unit).
     map{|y| y.values}
   return Hash[array.map(&:values).map(&:flatten)]
 end
