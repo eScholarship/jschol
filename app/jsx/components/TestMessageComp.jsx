@@ -16,7 +16,7 @@ class TestMessageComp extends React.Component {
             This is a beta preview of the new eScholarship
           </strong>
           <div style={{display:"flex", flexWrap: "wrap", marginLeft: "10px"}}>
-            <a style={{color:"white"}} href="http://help.escholarship.org/support/discussions/forums/9000203294">
+            <a style={{color:"white"}} href="https://help.escholarship.org/support/discussions/9000052123">
               Send us your feedback
             </a>
             &#160;&#160;&#160;
