@@ -21,7 +21,7 @@ class FooterComp extends React.Component {
                   <Link to="/logout" onClick={()=>setTimeout(()=>cms.onLogout(), 0)}><strong>Admin Logout</strong></Link>
                 : <Link to="/login"><strong>Admin Login</strong></Link> }
           </Subscriber>
-          <a href="http://help.escholarship.org"><strong>Help</strong></a>
+          <a href="https://help.escholarship.org"><strong>Help</strong></a>
         </nav>
         <div className="c-footer__logo">
           <a href="">
