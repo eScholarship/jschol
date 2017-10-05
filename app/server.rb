@@ -143,6 +143,9 @@ $merrittCache = MerrittCache.new
 #
 # https://docs.google.com/drawings/d/1gCi8l7qteyy06nR5Ol2vCknh9Juo-0j91VGGyeWbXqI/edit
 
+class UnitCount < Sequel::Model
+end
+
 class Unit < Sequel::Model
   unrestrict_primary_key
   one_to_many :unit_hier,     :class=>:UnitHier, :key=>:unit_id
@@ -248,9 +251,11 @@ Thread.new {
       $statsCountThesesDiss = countThesesDiss
       $statsCountBooks = countBooks
 
-      # BROWSE PAGE statistics
-      $statsCampusPubs = getPubStatsPerCampus
+      # CAMPUS PAGE statistics
       $statsCampusViews = getViewsPerCampus
+
+      # BROWSE PAGE AND CAMPUS PAGE statistics
+      $statsCampusItems = getItemStatsPerCampus
       $statsCampusJournals = getJournalStatsPerCampus
       $statsCampusOrus = getOruStatsPerCampus
       $cachesFilled.set
@@ -708,7 +713,7 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
       unit: unit.values.reject{|k,v| k==:attrs}.merge(:extent => ext),
       sidebar: getUnitSidebar(unit)
     }
-    if ["home", "search"].include? pageName
+    if ["home", "search"].include? pageName  # 'home' here refers to the unit's homepage, not root home
       q = nil
       q = CGI::parse(request.query_string) if pageName == "search"
       pageData[:content] = getUnitPageContent(unit, attrs, q)

@@ -43,20 +43,20 @@ class HomePage extends PageBase
                 </ul>
               </p>
             </section>
-            <section className="o-columnbox1">
+       {/*  <section className="o-columnbox1">
               <header>
                 <h1>Statistics</h1>
               </header>
               <ul>
-                <li># of items: {data.statsCountItems.toLocaleString()}</li>
-                <li># of views: {data.statsCountViews.toLocaleString()}</li>
+                <li># of Items: {data.statsCountItems.toLocaleString()}</li>
+                <li># of Views: {data.statsCountViews.toLocaleString()}</li>
                 <li># of eSchol Journals: {data.statsCountEscholJournals.toLocaleString()}</li>
-                <li># of ORUs: {data.statsCountOrus.toLocaleString()}</li>
+                <li># of Research Units: {data.statsCountOrus.toLocaleString()}</li>
                 <li># of Articles: {data.statsCountArticles.toLocaleString()}</li>
                 <li># of Theses and Dissertations: {data.statsCountThesesDiss.toLocaleString()}</li>
                 <li># of Books: {data.statsCountBooks.toLocaleString()}</li>
               </ul>
-            </section>
+            </section>  */}
           </main>
         </div>
       </div>

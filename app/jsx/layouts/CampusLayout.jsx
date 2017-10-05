@@ -32,12 +32,23 @@ class CampusLayout extends React.Component {
   //          genre: PropTypes.string,
         }),
       }),
+
    // contentCar2: // Same as above
-      journal_count: PropTypes.number,
-      opened_count: PropTypes.number,
-      pub_count: PropTypes.number,
-      unit_count: PropTypes.number,
-      view_count: PropTypes.number
+
+      campusStats: PropTypes.shape({
+        item_count: PropTypes.number,
+        view_count: PropTypes.number,
+        // opened_count: PropTypes.number,
+        journal_count: PropTypes.number,
+        oru_count: PropTypes.number,
+      }).isRequired,
+      allStats: PropTypes.shape({
+        all_item_count: PropTypes.number,
+        all_view_count: PropTypes.number,
+        // all_opened_count: PropTypes.number,
+        all_journal_count: PropTypes.number,
+        all_oru_count: PropTypes.number,
+      }).isRequired,
     })
   }
 
@@ -58,7 +69,7 @@ class CampusLayout extends React.Component {
     return (
       <div>
         <HeatMapComp campusID={unit.id} />
-        <StatCarouselComp campusName={unit.name} />
+        <StatCarouselComp campusName={unit.name} campusID={unit.id} campusStats={data.campusStats} allStats={data.allStats} />
         <div className="c-columns">
           <main id="maincontent">
             <CampusSearchComp campusID={unit.id} campusName={unit.name} />

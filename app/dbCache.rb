@@ -53,6 +53,9 @@ def getJournalsPerCampus
   return array_new
 end
 
+######################### STATISTICS ####################################
+
+########### HOME PAGE statistics ############
 def countItems
   return Item.where(status: 'published').count
 end
@@ -66,40 +69,46 @@ def countOpenItems
 end
 
 def countEscholJournals
-  return 0 
+  return Unit.where(type: 'journal').exclude(status: 'hidden').count
 end
 
 def countOrus 
-  # select count(*) from units where type = 'oru'
-  return 0 
+  return Unit.where(type: 'oru').exclude(status: 'hidden').count
 end
 
 def countArticles
-  return 0 
+  return Item.where(genre: 'article').count
 end
 
-def countThesisDiss
-  return 0 
+def countThesesDiss
+  return Item.where(genre: 'dissertation').count
 end
 
 def countBooks
-  return 0 
+  return Item.where(genre: 'monograph').count
 end
+
+############ CAMPUS PAGE statistics ###########
+
+# Get number of views per campus as one hash.
+# {"ucb"=>11000, "ucd"=>982 ...}
+def getViewsPerCampus
+  activeCampusIds = $activeCampuses.map{|id, c| id }
+  array = UnitCount.select_group(:unit_id).where(:unit_id=>activeCampusIds).select_append{sum(:hits).as(count)}.
+    map{|y| y.values}
+  return Hash[array.map(&:values).map(&:flatten)]
+end
+
+############ BROWSE PAGE AND CAMPUS PAGE statistics ###########
 
 # Get number of publications per campus as one hash.
 # {"ucb"=>11000, "ucd"=>982 ...}
-def getPubStatsPerCampus
+def getItemStatsPerCampus
   activeCampusIds = $activeCampuses.map{|id, c| id }
   array = UnitItem.join(:items, :id=>:item_id).
     where(:unit_id=>activeCampusIds).exclude(:status=>'withdrawn').group_and_count(:unit_id).
     map{|y| y.values}
   return Hash[array.map(&:values).map(&:flatten)]
-end
-
-# Get number of views per campus as one hash.
-# {"ucb"=>11000, "ucd"=>982 ...}
-def getViewsPerCampus
-  return 0
 end
 
 # Get number of journals per campus as one hash.
