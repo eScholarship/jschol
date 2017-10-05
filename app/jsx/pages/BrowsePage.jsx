@@ -175,7 +175,7 @@ class CampusUnits extends React.Component {
         <h2>{this.props.pageTitle}</h2>
       </header>
       <div className="c-well">
-        Looking for an academic or research unit that's not listed? <NotYetLink element="a">Learn how to add yours</NotYetLink>.
+        Looking for an academic or research unit that's not listed? <a href="https://help.escholarship.org/support/solutions/articles/9000131086-request-a-new-unit">Learn how to add yours</a>.
       </div>
       <ToggleListComp depts={this.props.units} />
     </section>
