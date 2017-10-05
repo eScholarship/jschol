@@ -19,6 +19,12 @@ class QueueWithTimeout
       @received.signal
     end
   end
+
+  def empty?
+    @mutex.synchronize do
+      return @queue.empty?
+    end
+  end
  
   def pop(non_block = false)
     pop_with_timeout(non_block ? 0 : nil)

@@ -107,7 +107,7 @@ require_relative 'unitPages'
 require_relative 'citation'
 require_relative 'loginApi'
 require_relative 'fileCache'
-require_relative 'merritt'
+require_relative 'fetch'
 
 class StdoutLogger
   def << (str)
@@ -145,9 +145,6 @@ $fileCache = FileCache.new("cache")
 
 TEMP_DIR = "tmp"
 FileUtils.mkdir_p(TEMP_DIR)
-
-# Special cache for Merritt that includes fetching synchronization
-$merrittCache = MerrittCache.new
 
 ###################################################################################################
 # Model classes for easy interaction with the database.
@@ -266,66 +263,6 @@ get %r{/assets/([0-9a-f]{64})} do |hash|
 end
 
 ###################################################################################################
-class S3Fetcher
-  class S3Passer
-    def initialize(queue, fifoPath)
-      @queue = queue
-      @fifoPath = fifoPath
-      @fifo = nil
-    end
-    def write(chunk)
-      if !@fifo and @fifoPath
-        @fifo = File.open(@fifoPath, "wb")
-      end
-      @fifo ? @fifo.write(chunk) : @queue.push(chunk)
-    end
-    def close()
-      @queue << nil
-      @fifo and @fifo.close
-    end
-  end
-
-  def initialize(s3Obj, fifoPath = nil, range = nil)
-    @queue = QueueWithTimeout.new
-    Thread.new do
-      begin
-        passer = S3Passer.new(@queue, fifoPath)
-        if range
-          s3Obj.get(response_target: passer, range: range)
-        else
-          s3Obj.get(response_target: passer)
-        end
-        passer.close
-      rescue Exception => e
-        puts "S3 fetch exception: #{e}"
-      ensure
-        @queue << nil  # mark end-of-data
-      end
-    end
-  end
-
-  def streamTo(out)
-    begin
-      totalStreamed = 0
-      while true
-        data = @queue.pop_with_timeout(10)
-        data.nil? and break
-        totalStreamed += data.length
-        data.length > 0 and out << data
-      end
-      return totalStreamed
-    rescue Exception => e
-      if e =~ /timeout writing data/
-        # common case when client drops connection early
-      else
-        puts "Warning: problem while streaming S3 content: #{e.message}"
-      end
-      raise
-    end
-  end
-end
-
-###################################################################################################
 get "/content/:fullItemID/*" do |itemID, path|
   # Prep work
   itemID =~ /^qt[a-z0-9]{8}$/ or halt(404)  # protect against attacks
@@ -372,17 +309,16 @@ get "/content/:fullItemID/*" do |itemID, path|
   # Here's the final Merritt URL
   mrtURL = "https://#{$mrtExpressConfig['host']}/dl/#{mrtID}/#{epath}"
 
-  # Stream supp files out directly from Merritt without local caching.
-  if !mainPDF
+  # Stream supp files out directly from Merritt. Also, if there's no display PDF, fall back
+  # to the version in Merritt.
+  displayPDF = DisplayPDF[itemID]
+  if !mainPDF || !displayPDF
     fetcher = MerrittFetcher.new(mrtURL)
     headers "Content-Length" => fetcher.length.to_s
     return stream { |out| fetcher.streamTo(out) }
   end
 
-  # For the main PDF, check the cache of display PDFs.
-  displayPDF = DisplayPDF[itemID]
-  displayPDF or send_file $merrittCache.fetch(mrtURL) # fallback to orig PDF if no display ver
-
+  # Decide which display version to send
   if noSplash
     s3Path = "#{$s3Config.prefix}/pdf_patches/linearized/#{itemID}"
     outLen = displayPDF.linear_size
@@ -396,10 +332,10 @@ get "/content/:fullItemID/*" do |itemID, path|
   headers "Accept-Ranges" => "bytes"
 
   # Stream the file from S3
-  s3Obj = $s3Bucket.object(s3Path)
-  s3Obj.exists? or raise("missing S3 display PDF")
   range = request.env["HTTP_RANGE"]
-  fetcher = S3Fetcher.new(s3Obj, nil, range)
+  s3Obj = $s3Bucket.object(s3Path)
+  s3Obj.exists? or raise("missing display PDF")
+  fetcher = S3Fetcher.new(s3Obj, s3Path, range)
   if range
     range =~ /^bytes=(\d+)-(\d+)/ or raise("can't parse range")
     fromByte, toByte = $1.to_i, $2.to_i
