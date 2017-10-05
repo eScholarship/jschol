@@ -23,6 +23,7 @@ splash/WEB-INF/classes/
 splash/WEB-INF/lib/
 splash/test/
 test.db
+testLogs/
 tmp/
 node_modules
 .DS_Store

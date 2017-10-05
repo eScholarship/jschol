@@ -773,7 +773,7 @@ def convertUnits(el, parentMap, childMap, allIds, selectedUnits)
             type:      unitType,
             name:      name,
             status:    el[:directSubmit] == "moribund" ? "archived" :
-                       el[:hide] == "eschol" ? "hidden" :
+                       ["eschol", "all"].include?(el[:hide]) ? "hidden" :
                        "active"
           )
 
