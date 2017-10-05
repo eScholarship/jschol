@@ -94,7 +94,7 @@ class UnitProfileLayout extends React.Component {
                        <input type="file" id="logoImage" name="logo" onChange={this.handleImageChange}/>
                        <br/><br/>
                     { this.state.banner_flag_visible &&
-                      [<label key="0" className="c-editable-page__label" htmlFor="logoIsBanner">Logo is full-width banner:</label>,
+                      [<label key="0" className="c-editable-page__label" htmlFor="logoIsBanner">Suppress typeset site name next to logo: </label>,<p>Check the box below if your logo image contains the full, legible title of your site.</p>,
                        <input key="1" type="checkbox" id="logoIsBanner" name="logoIsBanner"
                               defaultChecked={(data.logo && data.logo.is_banner) ? data.logo.is_banner : ""}/>] }
                        {/* Force onSubmit to submit even if nothing is present (because checkbox unchecked results in nothing) */}

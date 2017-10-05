@@ -149,6 +149,9 @@ FileUtils.mkdir_p(TEMP_DIR)
 #
 # https://docs.google.com/drawings/d/1gCi8l7qteyy06nR5Ol2vCknh9Juo-0j91VGGyeWbXqI/edit
 
+class UnitCount < Sequel::Model
+end
+
 class Unit < Sequel::Model
   unrestrict_primary_key
   one_to_many :unit_hier,     :class=>:UnitHier, :key=>:unit_id
@@ -277,11 +280,12 @@ get "/content/:fullItemID/*" do |itemID, path|
   if path =~ /^qt\w{8}\.pdf$/
     epath = "content/#{URI::encode(path)}"
     attrs["content_merritt_path"] and epath = attrs["content_merritt_path"]
-    noSplash = !($host =~ /pub-jschol/) ||
-               (params[:nosplash] && isValidContentKey(itemID.sub(/^qt/, ''), params[:nosplash]))
+    noSplash = params[:nosplash] && isValidContentKey(itemID.sub(/^qt/, ''), params[:nosplash])
     mainPDF = true
   elsif path =~ %r{^inner/(.*)$}
-    epath = "content/#{URI::encode($1)}"
+    filename = $1
+    halt(403) if filename =~ /^qt\w{8}\.pdf$/  # disallow bypassing main check using inner backdoor
+    epath = "content/#{URI::encode(filename)}"
     noSplash = true
     mainPDF = false
   else
@@ -296,6 +300,12 @@ get "/content/:fullItemID/*" do |itemID, path|
     epath or halt(404)
     noSplash = true
     mainPDF = false
+  end
+
+  # Some items have a date-based download restriction. In this case, we only support the
+  # no-splash version used for pdf.js rendering, and protected (lightly) by a key.
+  if attrs['disable_download'] && Date.parse(attrs['disable_download']) > Date.today && !(mainPDF && noSplash)
+    halt 403, "Download restricted until #{attrs['disable_download']}"
   end
 
   # Guess the content type by path for now
@@ -392,13 +402,30 @@ end
 
 ###################################################################################################
 # Pages with no data
-get %r{/api/(home|notFound|logoutSuccess)} do
+get %r{/api/(notFound|logoutSuccess)} do
   content_type :json
   unit = $unitsHash['root']
   body = {
     :header => getGlobalHeader,
     :unit => unit.values.reject{|k,v| k==:attrs},
     :sidebar => getUnitSidebar(unit)
+  }.to_json
+end
+
+###################################################################################################
+# Home Page 
+get "/api/home" do
+  content_type :json
+  body = {
+    :header => getGlobalHeader,
+    :statsCountItems => $statsCountItems,
+    :statsCountViews => $statsCountViews,
+    :statsCountOpenItems => $statsCountOpenItems,
+    :statsCountEscholJournals => $statsCountEscholJournals,
+    :statsCountOrus => $statsCountOrus,
+    :statsCountArticles => $statsCountArticles,
+    :statsCountThesesDiss => $statsCountThesesDiss,
+    :statsCountBooks => $statsCountBooks
   }.to_json
 end
 
@@ -444,7 +471,7 @@ get "/api/browse/campuses" do
   # Build array of hashes containing campus and stats
   stats = []
   $activeCampuses.each do |k, v|
-    pub_count =     ($statsCampusPubs.keys.include? k)  ? $statsCampusPubs[k]     : 0
+    pub_count =     ($statsCampusItems.keys.include? k) ? $statsCampusItems[k]    : 0
     unit_count =    ($statsCampusOrus.keys.include? k)  ? $statsCampusOrus[k]     : 0
     journal_count = ($statsCampusJournals.keys.include? k) ? $statsCampusJournals[k] : 0
     stats.push({"id"=>k, "name"=>v.values[:name], "type"=>v.values[:type], 
@@ -486,6 +513,8 @@ end
 get "/api/browse/:browse_type/:campusID" do |browse_type, campusID|
   content_type :json
   cu, cj, pageTitle = nil, nil, nil
+  unit = $unitsHash[campusID]
+  unit or halt(404, "campusID not found")
   if browse_type == 'units'
     cu = $hierByAncestor[campusID].map do |a| getChildDepts($unitsHash[a.unit_id]); end
     pageTitle = "Academic Units"
@@ -495,7 +524,6 @@ get "/api/browse/:browse_type/:campusID" do |browse_type, campusID|
     cj  = cj.select{ |h| h[:status]!="archived" }
     pageTitle = "Journals"
   end
-  unit = $unitsHash[campusID]
   body = {
     :browse_type => browse_type,
     :pageTitle => pageTitle,
@@ -548,7 +576,7 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
       unit: unit.values.reject{|k,v| k==:attrs}.merge(:extent => ext),
       sidebar: getUnitSidebar(unit)
     }
-    if ["home", "search"].include? pageName
+    if ["home", "search"].include? pageName  # 'home' here refers to the unit's homepage, not root home
       q = nil
       q = CGI::parse(request.query_string) if pageName == "search"
       pageData[:content] = getUnitPageContent(unit, attrs, q)
@@ -647,10 +675,14 @@ get "/api/item/:shortArk" do |shortArk|
         else 
           body[:altmetrics_ok] = JSON.parse(unit[:attrs])['altmetrics_ok']
           issue_id = Item.join(:sections, :id => :section).filter(Sequel.qualify("items", "id") => id).map(:issue_id)[0]
-          unit_id, volume, issue = Section.join(:issues, :id => issue_id).map([:unit_id, :volume, :issue])[0]
-          body[:header] = getUnitHeader(unit, nil, {'unit_id': unit_id, 'volume': volume, 'issue': issue})
-          body[:citation][:volume] = volume
-          body[:citation][:issue] = issue
+          if issue_id
+            unit_id, volume, issue = Section.join(:issues, :id => issue_id).map([:unit_id, :volume, :issue])[0]
+            body[:header] = getUnitHeader(unit, nil, {'unit_id': unit_id, 'volume': volume, 'issue': issue})
+            body[:citation][:volume] = volume
+            body[:citation][:issue] = issue
+          else
+            body[:header] = getUnitHeader(unit, nil, nil)
+          end
         end
       end
 

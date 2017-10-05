@@ -301,17 +301,27 @@ def getCampusLandingPageData(unit, attrs)
   return {
     :contentCar1 => attrs['contentCar1'] ? {'mode': attrs['contentCar1']['mode'], 'data': getCampusCarousel(unit, attrs['contentCar1'])} : nil,
     :contentCar2 => attrs['contentCar2'] ? {'mode': attrs['contentCar2']['mode'], 'data': getCampusCarousel(unit, attrs['contentCar2'])} : nil,
-    :pub_count =>     ($statsCampusPubs.keys.include? unit.id)  ? $statsCampusPubs[unit.id]     : 0,
-    :view_count =>    0,
-    :opened_count =>    0,
-    :journal_count => ($statsCampusJournals.keys.include? unit.id) ? $statsCampusJournals[unit.id] : 0,
-    :unit_count =>    ($statsCampusOrus.keys.include? unit.id)  ? $statsCampusOrus[unit.id]     : 0
+    :campusStats => {
+      :item_count =>    ($statsCampusItems.keys.include? unit.id)  ? $statsCampusItems[unit.id]     : 0,
+      :view_count =>    ($statsCampusViews.keys.include? unit.id)  ? $statsCampusViews[unit.id]     : 0,
+      # :opened_count =>    0,
+      :journal_count => ($statsCampusJournals.keys.include? unit.id) ? $statsCampusJournals[unit.id] : 0,
+      :oru_count =>     ($statsCampusOrus.keys.include? unit.id)  ? $statsCampusOrus[unit.id]     : 0,
+    },
+    :allStats => {
+      :all_item_count =>   $statsCountItems,
+      :all_view_count =>   $statsCountViews,
+      # :all_opened_count => 0, 
+      :all_journal_count => $statsCountEscholJournals,
+      :all_oru_count =>    $statsCountOrus,
+    }
   }
 end
 
 # Preview of Series for a Department Landing Page
 def seriesPreview(u)
-  items = UnitItem.filter(:unit_id => u.unit_id, :is_direct => true)
+  items = Item.join(:unit_items, :item_id => :id).where(unit_id: u.unit_id)
+              .where(Sequel.lit("attrs->\"$.suppress_content\" is null"))
   count = items.count
   previewLimit = 3
   preview = items.limit(previewLimit).map(:item_id)

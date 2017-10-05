@@ -196,6 +196,9 @@ class UnitHier < Sequel::Model(:unit_hier)
   unrestrict_primary_key
 end
 
+class UnitCount < Sequel::Model
+end
+
 class Item < Sequel::Model
   unrestrict_primary_key
 end
@@ -1075,7 +1078,9 @@ def parseDate(str)
   text = str
   text or return nil
   begin
-    if text =~ /^\d\d\d\d$/   # handle data with no month or day
+    if text =~ /^([123]\d\d\d)([01]\d)([0123]\d)$/  # handle date missing its dashes
+      text = "#{$1}-#{$2}-#{$3}"
+    elsif text =~ /^\d\d\d\d$/   # handle data with no month or day
       text = "#{text}-01-01"
     elsif text =~ /^\d\d\d\d-\d\d$/   # handle data with no day
       text = "#{text}-01"
@@ -1590,8 +1595,8 @@ def parseUCIngest(itemID, inMeta, fileType)
                                                            sub("french", "fr").sub("spanish", "es")
 
   # Set disableDownload flag based on content file
-  tmp = inMeta.at("./context/file[@disableDownload]")
-  tmp and attrs[:disable_download] = tmp[:disableDownload]
+  tmp = inMeta.at("./content/file[@disableDownload]")
+  tmp && tmp = parseDate(tmp[:disableDownload]) and attrs[:disable_download] = tmp
 
   if inMeta[:state] == "withdrawn"
     tmp = inMeta.at("./history/stateChange[@state='withdrawn']")
@@ -2498,7 +2503,7 @@ def indexPage(row, batch)
 
   idxItem = {
     type:          "add",   # in CloudSearch land this means "add or update"
-    id:            "page:#{unitID}:#{slug}",
+    id:            "page:#{unitID}:#{slug.gsub(%r{[^-a-zA-Z0-9\_\/\#\:\.\;\&\=\?\@\$\+\!\*'\(\)\,\%]}, '_')}",
     fields: {
       text:        text,
       is_info:     1
@@ -2705,6 +2710,24 @@ def splashAllPDFs(arks)
 end
 
 ###################################################################################################
+# Update item and unit stats
+def updateUnitStats
+  puts "Updating unit stats."
+  cacheAllUnits
+  $allUnits.keys.sort.each_slice(10) { |slice|
+    slice.each { |unitID|
+      DB.transaction {
+        UnitCount.where(unit_id: unitID).delete
+        STATS_DB.fetch("SELECT * FROM unitCounts WHERE unitId = ? and direct = 0", unitID) { |row|
+          UnitCount.insert(unit_id: unitID, month: row[:month],
+                           hits: row[:hits], downloads: row[:downloads], items_posted: row[:nItemsPosted])
+        }
+      }
+    }
+  }
+end
+
+###################################################################################################
 # Main action begins here
 
 startTime = Time.now
@@ -2721,6 +2744,8 @@ case ARGV[0]
   when "--splash"
     arks = ARGV.select { |a| a =~ /qt\w{8}/ }
     splashAllPDFs(arks.empty? ? "ALL" : Set.new(arks))
+  when "--stats"
+    updateUnitStats
   else
     STDERR.puts "Usage: #{__FILE__} --units|--items"
     exit 1

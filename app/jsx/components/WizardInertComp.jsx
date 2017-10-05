@@ -1,8 +1,88 @@
-// ##### INERT Deposit Wizard Component Used for journals or series that are disabled/moribund ##### //
+// ##### INERT Deposit Wizard Component Used for journals       //
+//       -OR- for campuses, ORUs or series that are disabled/moribund ##### //
 
 import React from 'react'
 import PropTypes from 'prop-types'
 import ReactModal from 'react-modal'
+
+class HeaderComp extends React.Component {
+  render() {
+    return (
+      <header>
+        <h1 tabIndex="-1">{this.props.header}</h1>
+        <span>&nbsp;</span>
+        <button onClick={this.props.closeModal}><span>Close</span></button>
+      </header>
+    )
+  }
+}
+
+class ElementsComp extends React.Component {
+  render() {
+    return (
+      <div className="c-wizard__step">
+        <HeaderComp header={this.props.header} closeModal={this.props.closeModal} />
+        <div className="c-wizard__heading">
+          UC Publication Management
+        </div>
+        <div className="c-wizard__message">
+          <p>Faculty use the UC Publication Management system for all eScholarship deposits– including to claim and deposit publications in compliance with the <a href="http://osc.universityofcalifornia.edu/open-access-policy">UC Academic Senate faculty Open Access Policy</a>.</p>
+          <a className="c-wizard__external-link" href="https://oapolicy.universityofcalifornia.edu">Go to UC Publication Management</a>
+        </div>
+        <footer>
+          Alternately, you may choose to wait for the system to automatically detect your new publication and send you a deposit link via email.
+        </footer>
+      </div>
+    )
+  }
+}
+
+class DisabledComp extends React.Component {
+  render() {
+    return (
+      <div className="c-wizard__step">
+        <HeaderComp header={this.props.header} closeModal={this.props.closeModal} />
+        <div className="c-wizard__heading">We’re sorry...</div>
+          <div className="c-wizard__message">
+            <p>This {this.props.type} is <b>not currently accepting</b> new submissions.</p>
+          </div>
+          <footer>{/* (ToDo: Add unit info to this component)
+            You may find more information on the unit’s page. */}</footer>
+      </div>
+    )
+  }
+}
+
+class MoribundComp extends React.Component {
+  render() {
+    return (
+      <div className="c-wizard__step">
+        <HeaderComp header={this.props.header} closeModal={this.props.closeModal} />
+        <div className="c-wizard__heading">We’re sorry...</div>
+        <div className="c-wizard__message">
+          <p>This {this.props.type} is no longer active and is <b>not accepting</b> new submissions</p>
+        </div>
+        <footer>If you are affiliated with this {this.props.type} and interested in re-activating it, <a href="https://help.escholarship.org/support/tickets/new">contact eScholarship support</a>.</footer>
+      </div>
+    )
+  }
+}
+
+class JournalSubmissionComp extends React.Component {
+  render() {
+    return (
+      <div className="c-wizard__step">
+        <HeaderComp header={this.props.header} closeModal={this.props.closeModal} />
+        <div className="c-wizard__heading"></div>
+        <div className="c-wizard__message">
+          <p>Please review the journal's Policies and Submission Guidelines pages before continuing.</p>
+           <a className="c-wizard__external-link" href={this.props.directSubmitURL}>Submit your material</a>
+        </div>
+        <footer></footer>
+      </div>
+    )
+  }
+}
 
 class WizardInertComp extends React.Component {
   static propTypes = {
@@ -10,7 +90,8 @@ class WizardInertComp extends React.Component {
     onCancel: PropTypes.any,
     type: PropTypes.string.isRequired,
     directSubmit: PropTypes.string.isRequired,
-    campusName: PropTypes.string,
+    directSubmitURL: PropTypes.string,
+    header: PropTypes.string,
   }
 
   state = { showModal: this.props.showModal }
@@ -30,6 +111,7 @@ class WizardInertComp extends React.Component {
   }                 
 
   render() {
+    let type = (this.props.type == 'oru') ? 'unit' : this.props.type
     return (
       <div className="c-modal">
         <ReactModal 
@@ -41,28 +123,19 @@ class WizardInertComp extends React.Component {
           overlayClassName="c-modal__overlay"
         >
           <div className="c-wizard">
-            <div className="c-wizard__step">
-              <header>
-                <h1 tabIndex="-1">{this.props.campusName} Deposit</h1>
-                <span>&nbsp;</span>
-                <button onClick={this.closeModal}><span>Close</span></button>
-              </header>
-              <div className="c-wizard__heading">
-                We’re sorry...
-              </div>
-            {this.props.directSubmit == "disabled" ?
-             [<div key="0" className="c-wizard__message">
-                <p>This {this.props.type} is <b>not currently accepting</b> new submissions.</p>
-              </div>,
-              <footer key="1"></footer>]
+          {this.props.directSubmit == "disabled" ?
+             // Single use case here for lbnl
+             type == 'campus' ?
+               <ElementsComp header={this.props.header} closeModal={this.closeModal} />
             :
-             [<div key="0" className="c-wizard__message">
-                <p>This {this.props.type} is no longer active and is <b>not accepting</b> new submissions</p>
-              </div>,
-              <footer key="1">If you are affiliated with this {this.props.type} and interested in re-activating it, <a href="https://help.escholarship.org/support/tickets/new">contact eScholarship support</a>.
-</footer>]
-            }
-            </div>
+             <DisabledComp header={this.props.header} type={type} closeModal={this.closeModal} />
+           :
+           ["moribund", "hide"].includes(this.props.directSubmit) ?
+             <MoribundComp header={this.props.header} type={type} closeModal={this.closeModal} />
+            :
+            // If none of the above, assume it's a journal whose directSubmit is enabled
+             <JournalSubmissionComp header={this.props.header} directSubmitURL={this.props.directSubmitURL} closeModal={this.closeModal} />
+          }
           </div>
         </ReactModal>
       </div>

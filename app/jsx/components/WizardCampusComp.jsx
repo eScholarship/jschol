@@ -10,7 +10,7 @@ class WizardCampusComp extends React.Component {
     arg: PropTypes.string,
     goBackward: PropTypes.any.isRequired,
     goForward: PropTypes.any.isRequired,
-    campuses: PropTypes.array.isRequired
+    campuses: PropTypes.array
   }
 
   campusList(campuses, next) {
