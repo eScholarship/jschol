@@ -14,7 +14,7 @@ class Event
   end
   def wait
     @lock.synchronize do
-      if not @flag
+      while not @flag
         @cond.wait(@lock)
       end
     end

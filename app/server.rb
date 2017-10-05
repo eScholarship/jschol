@@ -106,7 +106,6 @@ require_relative 'queueWithTimeout'
 require_relative 'unitPages'
 require_relative 'citation'
 require_relative 'loginApi'
-require_relative 'fileCache'
 require_relative 'fetch'
 
 class StdoutLogger
@@ -138,10 +137,6 @@ end
 
 # For general app development, set DO_ISO to false. For real deployment, set to true
 DO_ISO = File.exist?("config/do_iso")
-
-# Cache files from Merritt, S3, and the splash generator for a short time.
-CACHE_DIR = "cache"
-$fileCache = FileCache.new("cache")
 
 TEMP_DIR = "tmp"
 FileUtils.mkdir_p(TEMP_DIR)

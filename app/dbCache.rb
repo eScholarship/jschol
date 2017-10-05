@@ -134,7 +134,6 @@ end
 ##################################################################################################
 # Database caches for speed. We check every 30 seconds for changes. These tables change infrequently.
 
-$cachesFilled = Event.new
 Thread.new {
   begin
     prevTime = nil
@@ -146,42 +145,60 @@ Thread.new {
         end
       }
       if !utime || utime != prevTime
-        puts "Filling caches.           "
-        $unitsHash = getUnitsHash
-        $hierByUnit = getHierByUnit
-        $hierByAncestor = getHierByAncestor
-        $activeCampuses = getActiveCampuses
-        $oruAncestors = getOruAncestors
-        $campusJournals = getJournalsPerCampus    # Used for browse pages
-
-        #####################################################################
-        # STATISTICS
-        # These are dependent on instantation of $activeCampuses
-
-        # HOME PAGE statistics
-        # ToDo:
-        $statsViews = countViews
-        $statsDownloads = countDownloads
-        $statsOpenItems = countOpenItems
-        $statsOrus = countOrus
-        $statsItems =  countItems
-        $statsThesesDiss = countThesisDiss
-        $statsBooks = countBooks
-        $statsEscholJournals = countEscholJournals
-        $statsStudentJournals = countStudentJournals
-
-        # BROWSE PAGE statistics
-        $statsCampusPubs = getPubStatsPerCampus
-        $statsCampusOrus = getOruStatsPerCampus
-        $statsCampusJournals = getJournalStatsPerCampus
-        $cachesFilled.set
-        prevTime = utime
+        prevTime and puts "Unit/hier changed."
+        # Signal our entire process group that they need to update their cached values.
+        Process.kill("WINCH", -Process.getpgrp)
       end
+      prevTime = utime
       sleep 30
     end
   rescue Exception => e
-    puts "Unexpected exception in cache thread: #{e} #{e.backtrace}"
+    puts "Unexpected exception in db watching thread: #{e} #{e.backtrace}"
   end
 }
-$cachesFilled.wait
 
+def fillCaches
+  begin
+    puts "Filling caches.           "
+    $unitsHash = getUnitsHash
+    $hierByUnit = getHierByUnit
+    $hierByAncestor = getHierByAncestor
+    $activeCampuses = getActiveCampuses
+    $oruAncestors = getOruAncestors
+    $campusJournals = getJournalsPerCampus    # Used for browse pages
+
+    #####################################################################
+    # STATISTICS
+    # These are dependent on instantation of $activeCampuses
+
+    # HOME PAGE statistics
+    # ToDo:
+    $statsViews = countViews
+    $statsDownloads = countDownloads
+    $statsOpenItems = countOpenItems
+    $statsOrus = countOrus
+    $statsItems =  countItems
+    $statsThesesDiss = countThesisDiss
+    $statsBooks = countBooks
+    $statsEscholJournals = countEscholJournals
+    $statsStudentJournals = countStudentJournals
+
+    # BROWSE PAGE statistics
+    $statsCampusPubs = getPubStatsPerCampus
+    $statsCampusOrus = getOruStatsPerCampus
+    $statsCampusJournals = getJournalStatsPerCampus
+    puts "...filled             "
+  rescue Exception => e
+    puts "Unexpected exception during cache filling: #{e} #{e.backtrace}"
+  end
+end
+
+# Signal from the master process that caches need to be rebuilt.
+Signal.trap("WINCH") {
+  # Ignore on non-worker process
+  if $workerPrefix != ""
+    Thread.new { fillCaches }
+  end
+}
+
+fillCaches
