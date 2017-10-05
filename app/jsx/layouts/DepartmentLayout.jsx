@@ -65,8 +65,8 @@ class DepartmentLayout extends React.Component {
     })
   }
   
-  seriesCompListMaker = (data, compList) => {
-    compList = []
+  seriesCompListMaker = (data) => {
+    let compList = []
     for (let s in data) {
       if (data[s].items.length > 0) {
         compList.push(<SeriesComp key={data[s].unit_id} data={data[s]}/>);
