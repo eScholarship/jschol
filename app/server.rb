@@ -217,7 +217,9 @@ end
 
 $unitsHash, $hierByUnit, $hierByAncestor, $activeCampuses, $oruAncestors, $campusJournals,
 $statsCountItems, $statsCountViews, $statsCountOpenItems, $statsCountEscholJournals, $statsCountOrus,
-$statsCountArticles, $statsCountThesesDiss, $statsCountBooks, $statsCampusPubs, $statsCampusOrus, $statsCampusJournals = nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil
+$statsCountArticles, $statsCountThesesDiss, $statsCountBooks, $statsCampusItems, $statsCampusOrus,
+$statsCampusJournals, $statsItemCarousel, $statsUnitCarousel =
+nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil
 $cachesFilled = Event.new
 Thread.new {
   prevTime = nil
@@ -253,6 +255,8 @@ Thread.new {
 
       # CAMPUS PAGE statistics
       $statsCampusViews = getViewsPerCampus
+      $statsUnitCarousel = getUnitCarouselStats
+      $statsJournalCarousel = getJournalCarouselStats
 
       # BROWSE PAGE AND CAMPUS PAGE statistics
       $statsCampusItems = getItemStatsPerCampus
@@ -608,7 +612,7 @@ get "/api/browse/campuses" do
   # Build array of hashes containing campus and stats
   stats = []
   $activeCampuses.each do |k, v|
-    pub_count =     ($statsCampusPubs.keys.include? k)  ? $statsCampusPubs[k]     : 0
+    pub_count =     ($statsCampusItems.keys.include? k)  ? $statsCampusItems[k]     : 0
     unit_count =    ($statsCampusOrus.keys.include? k)  ? $statsCampusOrus[k]     : 0
     journal_count = ($statsCampusJournals.keys.include? k) ? $statsCampusJournals[k] : 0
     stats.push({"id"=>k, "name"=>v.values[:name], "type"=>v.values[:type], 

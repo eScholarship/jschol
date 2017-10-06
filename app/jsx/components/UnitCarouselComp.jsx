@@ -3,7 +3,6 @@ import React from 'react'
 import $ from 'jquery'
 import PropTypes from 'prop-types'
 import CarouselComp from '../components/CarouselComp.jsx'
-import { Link } from 'react-router'
 
 // Load dotdotdot in browser but not server
 if (!(typeof document === "undefined")) {
@@ -81,7 +80,7 @@ class UnitCarouselComp extends React.Component {
           }
         </CarouselComp>
         <div className="o-stat--item o-itemcarousel__stats-item">
-          <Link to={"/uc/"+p.titleID}>9,999</Link>Items
+          <a href={"/uc/"+p.titleID}>9,999</a>Items
         </div>
         <div className="o-stat--view o-itemcarousel__stats-view">
           <b>999,999</b>Views

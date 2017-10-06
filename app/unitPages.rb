@@ -291,6 +291,8 @@ def getCampusCarousel(campus, content_attrs)
       r = {'titleID': id, 'titleName': unit.name}
       r['slides'] = recentItems
     end
+    r['item_count'] = ($statsUnitCarousel.keys.include? id)  ? $statsUnitCarousel[id][:item_count]     : 0
+    r['view_count'] = ($statsUnitCarousel.keys.include? id)  ? $statsUnitCarousel[id][:view_count]     : 0
   else r = nil
   end
   return r

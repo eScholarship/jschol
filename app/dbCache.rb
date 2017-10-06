@@ -77,15 +77,15 @@ def countOrus
 end
 
 def countArticles
-  return Item.where(genre: 'article').count
+  return Item.where(status: 'published').where(genre: 'article').count
 end
 
 def countThesesDiss
-  return Item.where(genre: 'dissertation').count
+  return Item.where(status: 'published').where(genre: 'dissertation').count
 end
 
 def countBooks
-  return Item.where(genre: 'monograph').count
+  return Item.where(status: 'published').where(genre: 'monograph').count
 end
 
 ############ CAMPUS PAGE statistics ###########
@@ -97,6 +97,32 @@ def getViewsPerCampus
   array = UnitCount.select_group(:unit_id).where(:unit_id=>activeCampusIds).select_append{sum(:hits).as(count)}.
     map{|y| y.values}
   return Hash[array.map(&:values).map(&:flatten)]
+end
+
+def unitsFromContentCarConfig(attrs)
+  units =[] 
+  for c in [attrs['contentCar1'], attrs['contentCar2']]
+    if c
+      units << c['unit_id'] if c['mode'] == 'unit' and c['unit_id'] and c['unit_id'] != ""
+    end
+  end
+  return units
+end
+
+# Compile item and view counts for all configured units. Campus may configure up to two (2) units
+# {"uclalaw"=> {item_count: 3408, view_count: 30000}, "cpcc"=>...}
+def getUnitCarouselStats
+  r = $activeCampuses.map do |id, c|
+    unit = Unit[id]
+    attrs = JSON.parse(unit.attrs)
+    # pp(attrs)
+    x = unitsFromContentCarConfig(JSON.parse(unit.attrs))
+  end
+  return 0
+end
+
+def getJournalCarouselStats
+  return 0
 end
 
 ############ BROWSE PAGE AND CAMPUS PAGE statistics ###########
