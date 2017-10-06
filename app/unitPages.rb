@@ -257,11 +257,12 @@ def getORULandingPageData(id)
 end
 
 # Retrieve items from DB based on Campus Carousel configuration that has been set
+# Return nil if empty
 # content_attrs looks somethign like this: 
 #            {"mode": "journals", "unit_id": "arf"}  <---  unit_id not used in this case since it's a journal
 #  or this:  {"mode": "unit", "unit_id": "arf"} 
 def getCampusCarousel(campus, content_attrs)
-  r = nil
+  r = nil 
   return nil if campus.type != 'campus' || content_attrs['mode'] == 'disabled'
 
   if content_attrs['mode'] == 'journals'
@@ -282,6 +283,8 @@ def getCampusCarousel(campus, content_attrs)
     }
     r = {'titleID': campus.id, 'titleName': campus.name}
     r['slides'] = journals_covers.compact.take(10)
+    r['item_count'] = ($statsJournalCarousel.keys.include? campus.id)  ? $statsJournalCarousel[campus.id][:item_count]     : 0
+    r['view_count'] = ($statsJournalCarousel.keys.include? campus.id)  ? $statsJournalCarousel[campus.id][:view_count]     : 0
   elsif content_attrs['mode'] == 'unit'
     # Populate campus carousel with 10 articles from selected unit 
     id = content_attrs['unit_id']
@@ -291,8 +294,13 @@ def getCampusCarousel(campus, content_attrs)
       r = {'titleID': id, 'titleName': unit.name}
       r['slides'] = recentItems
     end
-    r['item_count'] = ($statsUnitCarousel.keys.include? id)  ? $statsUnitCarousel[id][:item_count]     : 0
-    r['view_count'] = ($statsUnitCarousel.keys.include? id)  ? $statsUnitCarousel[id][:view_count]     : 0
+    item_count = ($statsUnitCarousel.keys.include? id)  ? $statsUnitCarousel[id][:item_count]     : 0
+    view_count = ($statsUnitCarousel.keys.include? id)  ? $statsUnitCarousel[id][:view_count]     : 0
+    # Don't even bother displaying counts if there are no slides. And also don't bother it count is zero
+    if r and item_count != 0
+        r['item_count'] = item_count
+        r['view_count'] = view_count
+    end
   else r = nil
   end
   return r

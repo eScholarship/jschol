@@ -43,6 +43,8 @@ class CampusCarouselComp extends React.Component {
     //  })
     let c = this.props.campusStats
     let a = this.props.allStats
+    let pluralJ = (c.journal_count == 1) ? '' : 's'
+    let pluralU = (c.oru_count == 1) ? '' : 's'
     return (
       <CarouselComp className="c-statcarousel" options={{
           cellAlign: 'left',
@@ -67,12 +69,12 @@ class CampusCarouselComp extends React.Component {
           </div> */}
         {c.journal_count > 0 &&
           <div className="o-stat--journals c-statcarousel__cell">
-             <a href={"/"+this.props.campusID+"/journals"}>{c.journal_count.toLocaleString()}</a> eScholarship Journals
+             <a href={"/"+this.props.campusID+"/journals"}>{c.journal_count.toLocaleString()}</a> eScholarship Journal{pluralJ}
           </div>
         }
         {c.oru_count > 0 &&
           <div className="o-stat--units c-statcarousel__cell">
-             <a href={"/"+this.props.campusID+"/units"}>{c.oru_count.toLocaleString()}</a> Research Units
+             <a href={"/"+this.props.campusID+"/units"}>{c.oru_count.toLocaleString()}</a> Research Unit{pluralU}
           </div>
         }
         </div>
