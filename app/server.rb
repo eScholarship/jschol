@@ -380,7 +380,7 @@ end
 
 ###################################################################################################
 # Handle requests from CloudFront
-get %r{/dist/(\w+)/(\w+)/(.*)} do
+get %r{/dist/(\w+)/dist/prd/(\w+)/(.*)} do
   cfKey, kind, path = params['captures']
   cfKey == $cloudFrontConfig['private-key'] or halt(403)
   if kind == "static"
