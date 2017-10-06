@@ -24,7 +24,7 @@ class ServerErrorComp extends React.Component {
           <input type="search" className="c-servererror__input" name="q" id="c-servererror__input" placeholder="Search for it!" />
           <button className="c-servererror__button" aria-label="Search"></button>
         </Form>
-        <small>If you think this is a problem with eScholarship, please <a href="http://help.escholarship.org">contact us</a>.</small>
+        <small>If you think this is a problem with eScholarship, please <a href="https://help.escholarship.org/support/tickets/new">contact us</a>.</small>
         <small>Or return to the <Link to="/">homepage</Link>.</small>
       </div>
     )

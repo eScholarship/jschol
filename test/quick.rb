@@ -87,6 +87,12 @@ class TestQuick < Test::Unit::TestCase
     assert_match /Oikos\/Anthropos: Rationality, Technology, Infrastructure/, html
   end
 
+  def test_campus
+    html = fetchAndStrip("http://localhost:4001/uc/ucla")
+    assert_match /Discover UCLA scholarship/, html
+    assert_match /UCLA Journals/, html
+  end
+
   def test_login
     html = fetchAndStrip("http://localhost:4001/login")
     assert_match /Redirecting to login page/, html

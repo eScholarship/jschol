@@ -19,23 +19,24 @@ require 'pp'
 require 'sequel'
 require 'sinatra'
 require 'tempfile'
-require 'thin'
 require 'yaml'
 require 'socksify'
 require 'socket'
 
 # Make puts thread-safe, and flush after every puts.
 $stdoutMutex = Mutex.new
-def puts(*args)
+$workerNum = 0
+$workerPrefix = ""
+$nextThreadNum = 0
+def puts(str)
   $stdoutMutex.synchronize {
-    #STDOUT.print Thread.current
-    super(*args)
+    STDOUT.puts "[#{$workerPrefix}#{Thread.current[:number] ||= ($nextThreadNum += 1)}] #{str}"
     STDOUT.flush
   }
 end
 
 # Make it clear where the new session starts in the log file.
-puts "\n\n=====================================================================================\n"
+STDOUT.write "\n=====================================================================================\n"
 
 def waitForSocks(host, port)
   first = true
@@ -95,7 +96,9 @@ $s3Client = Aws::S3::Client.new(region: $s3Config.region)
 $s3Bucket = Aws::S3::Bucket.new($s3Config.bucket, client: $s3Client)
 
 # Internal modules to implement specific pages and functionality
-require_relative 'dbCache'
+require_relative '../util/sanitize.rb'
+require_relative '../util/xmlutil.rb'
+require_relative '../util/event.rb'
 require_relative 'hierarchy'
 require_relative 'listViews'
 require_relative 'searchApi'
@@ -103,19 +106,29 @@ require_relative 'queueWithTimeout'
 require_relative 'unitPages'
 require_relative 'citation'
 require_relative 'loginApi'
-require_relative 'fileCache'
-require_relative '../util/sanitize.rb'
-require_relative '../util/xmlutil.rb'
-require_relative 'merritt'
+require_relative 'fetch'
+
+class StdoutLogger
+  def << (str)
+    puts(str)
+  end
+end
+
+$stdoutLogger = StdoutLogger.new
 
 # Sinatra configuration
 configure do
-  # Don't use Webrick, as sinatra-websocket requires 'thin', and 'thin' is better anyway.
-  set :server, 'thin'
+  # Puma is good for multiprocess *and* multithreading
+  set :server, 'puma'
   # We like to use the 'app' folder for all our static resources
   set :public_folder, Proc.new { root }
 
   set :show_exceptions, false
+
+  # Replace Sinatra's normal logging with one that goes to our overridden stdout puts, so we
+  # can include the pid and thread number with each request.
+  set :logging, false
+  use Rack::CommonLogger, $stdoutLogger
 end
 
 # Compress responses
@@ -125,15 +138,8 @@ end
 # For general app development, set DO_ISO to false. For real deployment, set to true
 DO_ISO = File.exist?("config/do_iso")
 
-# Cache files from Merritt, S3, and the splash generator for a short time.
-CACHE_DIR = "cache"
-$fileCache = FileCache.new("cache")
-
 TEMP_DIR = "tmp"
 FileUtils.mkdir_p(TEMP_DIR)
-
-# Special cache for Merritt that includes fetching synchronization
-$merrittCache = MerrittCache.new
 
 ###################################################################################################
 # Model classes for easy interaction with the database.
@@ -189,104 +195,8 @@ class DisplayPDF < Sequel::Model
   unrestrict_primary_key
 end
 
-##################################################################################################
-# Thread synchronization class
-class Event
-  def initialize
-    @lock = Mutex.new
-    @cond = ConditionVariable.new
-    @flag = false
-  end
-  def set
-    @lock.synchronize do
-      @flag = true
-      @cond.broadcast
-   end
-  end
-  def wait
-    @lock.synchronize do
-      if not @flag
-        @cond.wait(@lock)
-      end
-    end
-  end
-end
-
-##################################################################################################
-# Database caches for speed. We check every 30 seconds for changes. These tables change infrequently.
-
-$unitsHash, $hierByUnit, $hierByAncestor, $activeCampuses, $oruAncestors, $campusJournals,
-$statsCountItems, $statsCountViews, $statsCountOpenItems, $statsCountEscholJournals, $statsCountOrus,
-$statsCountArticles, $statsCountThesesDiss, $statsCountBooks, $statsCampusItems, $statsCampusOrus,
-$statsCampusJournals, $statsItemCarousel, $statsUnitCarousel =
-nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil
-$cachesFilled = Event.new
-Thread.new {
-  prevTime = nil
-  while true
-    utime = nil
-    DB.fetch("SHOW TABLE STATUS WHERE Name in ('units', 'unit_hier')").each { |row|
-      if row[:Update_time] && (!utime || row[:Update_time] > utime)
-        utime = row[:Update_time]
-      end
-    }
-    if !utime || utime != prevTime
-      puts "Filling caches.           "
-      $unitsHash = getUnitsHash
-      $hierByUnit = getHierByUnit
-      $hierByAncestor = getHierByAncestor
-      $activeCampuses = getActiveCampuses
-      $oruAncestors = getOruAncestors
-      $campusJournals = getJournalsPerCampus    # Used for browse pages
-
-      #####################################################################
-      # STATISTICS
-      # These are dependent on instantiation of $activeCampuses
-
-      # HOME PAGE statistics
-      $statsCountItems =  countItems
-      $statsCountViews = countViews
-      $statsCountOpenItems = countOpenItems
-      $statsCountEscholJournals = countEscholJournals
-      $statsCountOrus = countOrus
-      $statsCountArticles = countArticles
-      $statsCountThesesDiss = countThesesDiss
-      $statsCountBooks = countBooks
-
-      # CAMPUS PAGE statistics
-      $statsCampusViews = getViewsPerCampus
-      $statsUnitCarousel = getUnitCarouselStats
-      $statsJournalCarousel = getJournalCarouselStats
-
-      # BROWSE PAGE AND CAMPUS PAGE statistics
-      $statsCampusItems = getItemStatsPerCampus
-      $statsCampusJournals = getJournalStatsPerCampus
-      $statsCampusOrus = getOruStatsPerCampus
-      $cachesFilled.set
-      prevTime = utime
-    end
-    sleep 30
-  end
-}
-$cachesFilled.wait
-
-###################################################################################################
-# Monkey-patch Thin's post_process method, because it calls callback and errback in quick
-# succession on the response body, but callback nulls out the body so so errback cannot be called.
-module Thin
-  module ConnectionExtensions
-    def post_process(result)
-      begin
-        super(result)
-      rescue NoMethodError
-        STDOUT.write("Note: ignoring silly NoMethodError from Thin::Connection::post_process\n")
-      end
-    end
-  end
-  class Connection
-    prepend ConnectionExtensions
-  end
-end
+# DbCache uses the models above.
+require_relative 'dbCache'
 
 ###################################################################################################
 # ISOMORPHIC JAVASCRIPT
@@ -309,6 +219,14 @@ end
 # In this way, the user gets a speedy initial load and can use some of the site features without
 # javascript, and crawlers have an easy time seeing everything the users see.
 ###################################################################################################
+
+###################################################################################################
+# IP address filtering on certain machines
+$ipFilter = File.exist?("config/allowed_ips") && Regexp.new(File.read("config/allowed_ips").strip)
+before do
+  puts "#{request.request_method} #{request.url}"
+  $ipFilter && !$ipFilter.match(request.ip) and halt 403
+end
 
 ###################################################################################################
 # Simple up-ness check
@@ -340,62 +258,6 @@ get %r{/assets/([0-9a-f]{64})} do |hash|
               filename: (obj.metadata["original_path"] || "").sub(%r{.*/}, ''))
     s3Tmp.unlink
   }
-end
-
-###################################################################################################
-class S3Fetcher
-  class S3Passer
-    def initialize(queue, fifoPath)
-      @queue = queue
-      @fifoPath = fifoPath
-      @fifo = nil
-    end
-    def write(chunk)
-      if !@fifo and @fifoPath
-        @fifo = File.open(@fifoPath, "wb")
-      end
-      @fifo ? @fifo.write(chunk) : @queue.push(chunk)
-    end
-    def close()
-      @queue << nil
-      @fifo and @fifo.close
-    end
-  end
-
-  def initialize(s3Obj, fifoPath = nil, range = nil)
-    @queue = QueueWithTimeout.new
-    Thread.new do
-      begin
-        passer = S3Passer.new(@queue, fifoPath)
-        if range
-          s3Obj.get(response_target: passer, range: range)
-        else
-          s3Obj.get(response_target: passer)
-        end
-        passer.close
-      rescue Exception => e
-        puts "S3 fetch exception: #{e}"
-      ensure
-        @queue << nil  # mark end-of-data
-      end
-    end
-  end
-
-  def streamTo(out)
-    begin
-      totalStreamed = 0
-      while true
-        data = @queue.pop_with_timeout(10)
-        data.nil? and break
-        totalStreamed += data.length
-        data.length > 0 and out << data
-      end
-      return totalStreamed
-    rescue Exception => e
-      puts "Warning: problem while streaming S3 content: #{e.message}"
-      raise
-    end
-  end
 end
 
 ###################################################################################################
@@ -452,17 +314,16 @@ get "/content/:fullItemID/*" do |itemID, path|
   # Here's the final Merritt URL
   mrtURL = "https://#{$mrtExpressConfig['host']}/dl/#{mrtID}/#{epath}"
 
-  # Stream supp files out directly from Merritt without local caching.
-  if !mainPDF
+  # Stream supp files out directly from Merritt. Also, if there's no display PDF, fall back
+  # to the version in Merritt.
+  displayPDF = DisplayPDF[itemID]
+  if !mainPDF || !displayPDF
     fetcher = MerrittFetcher.new(mrtURL)
     headers "Content-Length" => fetcher.length.to_s
     return stream { |out| fetcher.streamTo(out) }
   end
 
-  # For the main PDF, check the cache of display PDFs.
-  displayPDF = DisplayPDF[itemID]
-  displayPDF or send_file $merrittCache.fetch(mrtURL) # fallback to orig PDF if no display ver
-
+  # Decide which display version to send
   if noSplash
     s3Path = "#{$s3Config.prefix}/pdf_patches/linearized/#{itemID}"
     outLen = displayPDF.linear_size
@@ -476,10 +337,10 @@ get "/content/:fullItemID/*" do |itemID, path|
   headers "Accept-Ranges" => "bytes"
 
   # Stream the file from S3
-  s3Obj = $s3Bucket.object(s3Path)
-  s3Obj.exists? or raise("missing S3 display PDF")
   range = request.env["HTTP_RANGE"]
-  fetcher = S3Fetcher.new(s3Obj, nil, range)
+  s3Obj = $s3Bucket.object(s3Path)
+  s3Obj.exists? or raise("missing display PDF")
+  fetcher = S3Fetcher.new(s3Obj, s3Path, range)
   if range
     range =~ /^bytes=(\d+)-(\d+)/ or raise("can't parse range")
     fromByte, toByte = $1.to_i, $2.to_i
@@ -509,8 +370,6 @@ get %r{.*} do
   # The regex below ensures that /api, /content, /locale, and files with a file ext get served
   # elsewhere.
   pass if request.path_info =~ %r{api/.*|content/.*|locale/.*|.*\.\w{1,4}}
-
-  puts "Page fetch: #{request.url}"
 
   template = File.new("app/app.html").read
 
@@ -612,7 +471,7 @@ get "/api/browse/campuses" do
   # Build array of hashes containing campus and stats
   stats = []
   $activeCampuses.each do |k, v|
-    pub_count =     ($statsCampusItems.keys.include? k)  ? $statsCampusItems[k]     : 0
+    pub_count =     ($statsCampusItems.keys.include? k) ? $statsCampusItems[k]    : 0
     unit_count =    ($statsCampusOrus.keys.include? k)  ? $statsCampusOrus[k]     : 0
     journal_count = ($statsCampusJournals.keys.include? k) ? $statsCampusJournals[k] : 0
     stats.push({"id"=>k, "name"=>v.values[:name], "type"=>v.values[:type], 

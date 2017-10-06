@@ -158,3 +158,78 @@ def getOruStatsPerCampus
     map{|y| y.values}
   return Hash[array.map(&:values).map(&:flatten)]
 end
+
+##################################################################################################
+# Database caches for speed. We check every 30 seconds for changes. These tables change infrequently.
+
+Thread.new {
+  begin
+    prevTime = nil
+    while true
+      utime = nil
+      DB.fetch("SHOW TABLE STATUS WHERE Name in ('units', 'unit_hier')").each { |row|
+        if row[:Update_time] && (!utime || row[:Update_time] > utime)
+          utime = row[:Update_time]
+        end
+      }
+      if !utime || utime != prevTime
+        prevTime and puts "Unit/hier changed."
+        # Signal our entire process group that they need to update their cached values.
+        Process.kill("WINCH", -Process.getpgrp)
+      end
+      prevTime = utime
+      sleep 30
+    end
+  rescue Exception => e
+    puts "Unexpected exception in db watching thread: #{e} #{e.backtrace}"
+  end
+}
+
+def fillCaches
+  begin
+    puts "Filling caches.           "
+    $unitsHash = getUnitsHash
+    $hierByUnit = getHierByUnit
+    $hierByAncestor = getHierByAncestor
+    $activeCampuses = getActiveCampuses
+    $oruAncestors = getOruAncestors
+    $campusJournals = getJournalsPerCampus    # Used for browse pages
+
+    #####################################################################
+    # STATISTICS
+    # These are dependent on instantiation of $activeCampuses
+
+    # HOME PAGE statistics
+    $statsCountItems =  countItems
+    $statsCountViews = countViews
+    $statsCountOpenItems = countOpenItems
+    $statsCountEscholJournals = countEscholJournals
+    $statsCountOrus = countOrus
+    $statsCountArticles = countArticles
+    $statsCountThesesDiss = countThesesDiss
+    $statsCountBooks = countBooks
+
+    # CAMPUS PAGE statistics
+    $statsCampusViews = getViewsPerCampus
+    $statsUnitCarousel = getUnitCarouselStats
+    $statsJournalCarousel = getJournalCarouselStats
+
+    # BROWSE PAGE AND CAMPUS PAGE statistics
+    $statsCampusItems = getItemStatsPerCampus
+    $statsCampusJournals = getJournalStatsPerCampus
+    $statsCampusOrus = getOruStatsPerCampus
+    puts "...filled             "
+  rescue Exception => e
+    puts "Unexpected exception during cache filling: #{e} #{e.backtrace}"
+  end
+end
+
+# Signal from the master process that caches need to be rebuilt.
+Signal.trap("WINCH") {
+  # Ignore on non-worker process
+  if $workerPrefix != ""
+    Thread.new { fillCaches }
+  end
+}
+
+fillCaches
