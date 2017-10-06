@@ -104,6 +104,9 @@ $s3Config = OpenStruct.new(YAML.load_file("config/s3.yaml"))
 $s3Client = Aws::S3::Client.new(region: $s3Config.region)
 $s3Bucket = Aws::S3::Bucket.new($s3Config.bucket, client: $s3Client)
 
+# CloudFront info
+$cloudFrontConfig = File.exist?("config/cloudFront.yaml") && YAML.load_file("config/cloudFront.yaml")
+
 # Internal modules to implement specific pages and functionality
 require_relative '../util/sanitize.rb'
 require_relative '../util/xmlutil.rb'
@@ -131,6 +134,7 @@ configure do
   set :server, 'puma'
   # We like to use the 'app' folder for all our static resources
   set :public_folder, Proc.new { root }
+  set :static_cache_control, [:public, :max_age => 3600]
 
   set :show_exceptions, false
 
@@ -323,6 +327,9 @@ get "/content/:fullItemID/*" do |itemID, path|
   # Here's the final Merritt URL
   mrtURL = "https://#{$mrtExpressConfig['host']}/dl/#{mrtID}/#{epath}"
 
+  # Control how long this remains in browser and especially CloudFront caches
+  cache_control :public, :max_age => 60   # FIXME: increase to at least 3600!
+
   # Stream supp files out directly from Merritt. Also, if there's no display PDF, fall back
   # to the version in Merritt.
   displayPDF = DisplayPDF[itemID]
@@ -369,6 +376,20 @@ end
 # the actual file.
 get %r{\/css\/main-[a-zA-Z0-9]{16}\.css} do
   call env.merge("PATH_INFO" => "/css/main.css")
+end
+
+###################################################################################################
+# Handle requests from CloudFront
+get %r{/dist/(\w+)/(\w+)/(.*)} do
+  cfKey, kind, path = params['captures']
+  cfKey == $cloudFrontConfig['private-key'] or halt(403)
+  if kind == "static"
+    call env.merge("PATH_INFO" => "/#{path}")
+  elsif kind == "content" || kind == "assets"
+    call env.merge("PATH_INFO" => "/#{kind}/#{path}")
+  else
+    halt(404)
+  end
 end
 
 ###################################################################################################
