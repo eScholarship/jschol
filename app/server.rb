@@ -1,4 +1,4 @@
-# Sample application foundation for eschol5 - see README.md for more info
+# Server-side application for eschol5 - see README.md for more info
 
 # Use bundler to keep dependencies local
 require 'rubygems'
@@ -30,7 +30,16 @@ $workerPrefix = ""
 $nextThreadNum = 0
 def puts(str)
   $stdoutMutex.synchronize {
-    STDOUT.puts "[#{$workerPrefix}#{Thread.current[:number] ||= ($nextThreadNum += 1)}] #{str}"
+    if !Thread.current[:number]
+      allNums = Set.new
+      Thread.list.each { |t| allNums << t[:number] }
+      num = 0
+      while allNums.include?(num)
+        num += 1
+      end
+      Thread.current[:number] = num
+    end
+    STDOUT.puts "[#{$workerPrefix}#{Thread.current[:number]}] #{str}"
     STDOUT.flush
   }
 end
@@ -387,7 +396,13 @@ get %r{.*} do
 
     # Pass the full path and query string to our little Node Express app, which will run it through
     # ReactRouter and React.
-    response = Net::HTTP.new($host, 4002).start {|http| http.request(Net::HTTP::Get.new(remainder)) }
+    begin
+      response = Net::HTTP.new($host, 4002).start {|http| http.request(Net::HTTP::Get.new(remainder)) }
+    rescue Exception => e
+      # If there's an exception (like iso is completely dead), fall back to non-iso mode.
+      puts "Warning: unexpected exception (not HTTP error) from iso: #{e} #{e.backtrace}"
+      return template
+    end
     status response.code.to_i
 
     # Read in the template file, and substitute the results from React/ReactRouter
@@ -637,7 +652,7 @@ end
 get "/api/item/:shortArk" do |shortArk|
   content_type :json
   id = "qt"+shortArk
-  item = Item[id]
+  item = Item[id] or halt(404)
   attrs = JSON.parse(Item.filter(:id => id).map(:attrs)[0])
   unitIDs = UnitItem.where(:item_id => id, :is_direct => true).order(:ordering_of_units).select_map(:unit_id)
   unit = unitIDs ? Unit[unitIDs[0]] : nil

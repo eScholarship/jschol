@@ -24,6 +24,7 @@
     "del": "^2.2.2",
     "enzyme": "^2.8.0",
     "express": "^4.15.2",
+    "express-cluster": "^0.0.5",
     "gulp": "^3.9.1",
     "gulp-autoprefixer": "^3.1.1",
     "gulp-clean-css": "^2.4.0",

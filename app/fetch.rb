@@ -118,15 +118,16 @@ class Fetcher
         @@fetcherMutex.synchronize {
           fmt = "%-8s %6s %6s %10s %6s %5s %s"
           @@allFetchers.each { |fetcher|
-            next if fetcher.elapsed < 1
-            buf.empty? and buf << sprintf(fmt, "Status", "time", "pct", "length", "rate", "thrds", "URL")
-            buf << sprintf(fmt, fetcher.status.is_a?(Exception) ? "error" : fetcher.status,
-                           sprintf("%d:%02d", (fetcher.elapsed/60).to_i, fetcher.elapsed % 60),
-                           sprintf("%5.1f%%", (fetcher.bytesFetched * 100.0 / fetcher.length)),
-                           fetcher.length,
-                           sprintf("%5.1fM", fetcher.bytesFetched / (fetcher.elapsed + 0.01) / (1024*1024)),
-                           fetcher.waitingThreads.size,
-                           fetcher.url.sub("express.cdlib.org/dl/ark:/13030", "..."))
+            if fetcher.elapsed > 1
+              buf.empty? and buf << sprintf(fmt, "Status", "time", "pct", "length", "rate", "thrds", "URL")
+              buf << sprintf(fmt, fetcher.status.is_a?(Exception) ? "error" : fetcher.status,
+                             sprintf("%d:%02d", (fetcher.elapsed/60).to_i, fetcher.elapsed % 60),
+                             sprintf("%5.1f%%", (fetcher.bytesFetched * 100.0 / fetcher.length)),
+                             fetcher.length,
+                             sprintf("%5.1fM", fetcher.bytesFetched / (fetcher.elapsed + 0.01) / (1024*1024)),
+                             fetcher.waitingThreads.size,
+                             fetcher.url.sub("express.cdlib.org/dl/ark:/13030", "..."))
+            end
             if fetcher.waitingThreads.empty? && !%w{starting fetching}.include?(fetcher.status)
               doneFetchers << fetcher
             end

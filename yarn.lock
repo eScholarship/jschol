@@ -2605,6 +2605,10 @@ expand-tilde@^1.2.1, expand-tilde@^1.2.2:
   dependencies:
     os-homedir "^1.0.1"
 
+express-cluster@^0.0.5:
+  version "0.0.5"
+  resolved "https://registry.yarnpkg.com/express-cluster/-/express-cluster-0.0.5.tgz#516c881b2a8f5d73bf2e3bbc2ea9540678aadefc"
+
 express@^4.15.2:
   version "4.15.2"
   resolved "https://registry.yarnpkg.com/express/-/express-4.15.2.tgz#af107fc148504457f2dca9a6f2571d7129b97b35"
