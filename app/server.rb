@@ -477,14 +477,15 @@ get "/api/browse/campuses" do
     stats.push({"id"=>k, "name"=>v.values[:name], "type"=>v.values[:type], 
       "publications"=>pub_count, "units"=>unit_count, "journals"=>journal_count})
   end
+  otherCampuses = ['anrcs', 'lbnl', 'ucop'] 
   unit = $unitsHash['root']
   body = {
     :header => getGlobalHeader,
     :unit => unit.values.reject{|k,v| k==:attrs},
     :sidebar => getUnitSidebar(unit),
     :browse_type => "campuses",
-    :campusesStats => stats.select { |h| h['type']=="campus" },
-    :affiliatedStats => stats.select { |h| h['type']=="oru" }
+    :campusesStats => stats.select { |h| !otherCampuses.include?(h['id']) },
+    :otherStats => stats.select { |h| otherCampuses.include?(h['id']) }
   }
   breadcrumb = [{"name" => "Campuses and Other Locations", "url" => "/campuses"},]
   return body.merge(getHeaderElements(breadcrumb, nil)).to_json
