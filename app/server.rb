@@ -274,6 +274,15 @@ get %r{/assets/([0-9a-f]{64})} do |hash|
 end
 
 ###################################################################################################
+options "/content/:fullItemID/*" do |itemID, path|
+  headers "Access-Control-Allow-Origin" => "*",
+          "Access-Control-Allow-Headers" => "Range",
+          "Access-Control-Expose-Headers" => "Accept-Ranges, Content-Encoding, Content-Length, Content-Range",
+          "Access-Control-Allow-Methods" => "GET, OPTIONS"
+  return ""
+end
+
+###################################################################################################
 get "/content/:fullItemID/*" do |itemID, path|
   # Prep work
   itemID =~ /^qt[a-z0-9]{8}$/ or halt(404)  # protect against attacks
@@ -329,6 +338,12 @@ get "/content/:fullItemID/*" do |itemID, path|
 
   # Control how long this remains in browser and CloudFront caches
   cache_control :public, :max_age => 3600   # maybe more?
+
+  # Allow cross-origin requests so that main site and CloudFront cache can co-operate
+  headers "Access-Control-Allow-Origin" => "*",
+          "Access-Control-Allow-Headers" => "Range",
+          "Access-Control-Expose-Headers" => "Accept-Ranges, Content-Encoding, Content-Length, Content-Range",
+          "Access-Control-Allow-Methods" => "GET, OPTIONS"
 
   # Stream supp files out directly from Merritt. Also, if there's no display PDF, fall back
   # to the version in Merritt.
