@@ -1,4 +1,5 @@
 workers 2
+threads 8
 
 before_fork do
   # Temporarily close SQL connections before forking workers. They'll reopen
