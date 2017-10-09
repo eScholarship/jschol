@@ -13,10 +13,13 @@ const livereload = require('gulp-livereload')
 const spawn = require('child_process').spawn
 const webpack = require('webpack');
 const ProgressPlugin = require('webpack/lib/ProgressPlugin');
+const readYaml = require('read-yaml');
 
 // Process control for Sinatra and Express
 var sinatraProc // Main app in Sinatra (Ruby)
 var expressProc // Sub-app for isomophic javascript in Express (Node/Javascript)
+
+var serverConfig = readYaml.sync('config/server.yaml');
 
 // Build javscript bundles with Webpack
 gulp.task('watch:src', (cb) => {
@@ -92,7 +95,7 @@ gulp.task('sass', function() {
 function startSinatra(afterFunc)
 {
   // The '-o 0.0.0.0' below is required for Sinatra to bind to ipv4 localhost, instead of ipv6 localhost
-  sinatraProc = spawn('ruby', ['app/server.rb', '-p', '4001', '-o', '0.0.0.0'], { stdio: 'inherit' })
+  sinatraProc = spawn('ruby', ['app/server.rb', '-p', serverConfig.mainPort, '-o', '0.0.0.0'], { stdio: 'inherit' })
   sinatraProc.on('exit', function(code) {
     sinatraProc = null
   })
@@ -104,7 +107,7 @@ function restartSinatra()
     console.log("Restarting Sinatra.")
     sinatraProc.on('exit', function(code) {
       startSinatra()
-      spawn('ruby', ['tools/waitForServer.rb', 'http://localhost:4001/check', '20'])
+      spawn('ruby', ['tools/waitForServer.rb', 'http://localhost:' + serverConfig.mainPort + '/check', '20'])
       .on('exit', function() {
         livereload.reload()
       })
@@ -125,10 +128,12 @@ gulp.task('start-sinatra', restartSinatra)
 // Support functions for starting and restarting Express, which runs the isomorphic-js sub-app.
 function startExpress()
 {
-  expressProc = spawn('node', ['app/isomorphic.js'], { stdio: 'inherit' })
-  expressProc.on('exit', function(code) {
-    expressProc = null
-  })
+  if (serverConfig.isoPort) {
+    expressProc = spawn('node', ['app/isomorphic.js'], { stdio: 'inherit' })
+    expressProc.on('exit', function(code) {
+      expressProc = null
+    })
+  }
 }
 
 function restartExpress() {

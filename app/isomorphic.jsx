@@ -1,19 +1,22 @@
 
-import express                   from 'express';
-import cluster                   from 'express-cluster';
-import url                       from 'url';
+import express                   from 'express'
+import cluster                   from 'express-cluster'
+import url                       from 'url'
 import http                      from 'http'
-import React                     from 'react';
+import React                     from 'react'
 import { renderToString }        from 'react-dom/server'
-import { Router, RouterContext, match }  from 'react-router';
-import decache                   from 'decache';
-import fs                        from 'fs';
+import { Router, RouterContext, match }  from 'react-router'
+import decache                   from 'decache'
+import fs                        from 'fs'
+import readYaml                  from 'read-yaml'
+
+let serverConfig = readYaml.sync('config/server.yaml')
 
 var lastStamp
 var routes = null
 
 cluster(worker => {
-  const app = express();
+  const app = express()
 
   app.use((req, res) =>
   {
@@ -29,8 +32,8 @@ cluster(worker => {
       console.log("ISO: Loading new app bundle.")
       lastStamp = curStamp
       if (routes)
-        decache('./jsx/App.jsx');
-      routes = require('./jsx/App.jsx');
+        decache('./jsx/App.jsx')
+      routes = require('./jsx/App.jsx')
       console.log("ISO: Bundle loaded.")
     }
 
@@ -39,10 +42,10 @@ cluster(worker => {
     console.log("ISO fetch:", refURL)
     match({ routes: routes, location: req.url }, (err, redirectLocation, renderProps) => {
       if (err) {
-        console.error(err);
-        return res.status(500).end('Internal server error');
+        console.error(err)
+        return res.status(500).end('Internal server error')
       }
-      if (!renderProps) return res.status(404).end('Not found.');
+      if (!renderProps) return res.status(404).end('Not found.')
       var rc = <RouterContext {...renderProps}/>
       rc.props.location.host = req.get('host')
       var urls = []
@@ -53,14 +56,14 @@ cluster(worker => {
       else if (urls.length == 1)
       {
         var partialURL = urls[0]
-        var finalURL = url.resolve(refURL, partialURL).replace(":4002", ":4001")
+        var finalURL = url.resolve(refURL, partialURL).replace(":"+serverConfig.isoPort, ":"+serverConfig.mainPort)
         console.log("...integrating data from:", finalURL)
 
         http.get(finalURL, function(ajaxResp) {
-          var body = '';
+          var body = ''
           ajaxResp.on('data', function(chunk) {
-            body += chunk;
-          });
+            body += chunk
+          })
           ajaxResp.on('end', function()
           {
             if (ajaxResp.statusCode != "200") {
@@ -106,20 +109,20 @@ cluster(worker => {
               console.log(e.stack)
               res.status(500).send(e)
             }
-          });
+          })
         }).on('error', function(e) {
           console.log("Got HTTP error " + e)
           res.status(500).send("Got HTTP error " + e)
-        });
+        })
       }
       else
         throw "Internal error: currently support only one url in urlsToFetch"
-    });
-  });
+    })
+  })
 
-  const PORT = 4002;
+  const PORT = serverConfig.isoPort
 
   app.listen(PORT, function () {
-    console.log('ISO server listening on port', PORT);
-  });
-}, { count: 3 })
+    console.log('ISO worker listening on port', PORT)
+  })
+}, { count: serverConfig.isoWorkers })

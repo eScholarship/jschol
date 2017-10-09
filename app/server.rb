@@ -107,6 +107,9 @@ $s3Bucket = Aws::S3::Bucket.new($s3Config.bucket, client: $s3Client)
 # CloudFront info
 $cloudFrontConfig = File.exist?("config/cloudFront.yaml") && YAML.load_file("config/cloudFront.yaml")
 
+# Info about isomorphic mode and port
+$serverConfig = YAML.load_file("config/server.yaml")
+
 # Internal modules to implement specific pages and functionality
 require_relative '../util/sanitize.rb'
 require_relative '../util/xmlutil.rb'
@@ -426,7 +429,7 @@ get %r{.*} do
   template.sub!("/js/app-bundle.js", "#{staticPrefix}/js/#{webpackManifest["app.js"]}")
   template.sub!("/css/main.css", "#{staticPrefix}/css/main-#{Digest::MD5.file("app/css/main.css").hexdigest[0,16]}.css")
 
-  if DO_ISO
+  if $serverConfig['isoPort']
     # Parse out payload of the URL (i.e. not including the host name)
     request.url =~ %r{^https?://([^/:]+)(:\d+)?(.*)$} or fail
     remainder = $3
@@ -434,7 +437,7 @@ get %r{.*} do
     # Pass the full path and query string to our little Node Express app, which will run it through
     # ReactRouter and React.
     begin
-      response = Net::HTTP.new($host, 4002).start {|http| http.request(Net::HTTP::Get.new(remainder)) }
+      response = Net::HTTP.new($host, $serverConfig['isoPort']).start {|http| http.request(Net::HTTP::Get.new(remainder)) }
     rescue Exception => e
       # If there's an exception (like iso is completely dead), fall back to non-iso mode.
       puts "Warning: unexpected exception (not HTTP error) from iso: #{e} #{e.backtrace}"
