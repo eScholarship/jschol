@@ -327,8 +327,8 @@ get "/content/:fullItemID/*" do |itemID, path|
   # Here's the final Merritt URL
   mrtURL = "https://#{$mrtExpressConfig['host']}/dl/#{mrtID}/#{epath}"
 
-  # Control how long this remains in browser and especially CloudFront caches
-  cache_control :public, :max_age => 60   # FIXME: increase to at least 3600!
+  # Control how long this remains in browser and CloudFront caches
+  cache_control :public, :max_age => 3600   # maybe more?
 
   # Stream supp files out directly from Merritt. Also, if there's no display PDF, fall back
   # to the version in Merritt.
@@ -406,9 +406,10 @@ get %r{.*} do
   # Replace startup URLs for proper cache busting
   # TODO: speed this up by caching (if it's too slow)
   webpackManifest = JSON.parse(File.read('app/js/manifest.json'))
-  template.sub!("lib-bundle.js", webpackManifest["lib.js"])
-  template.sub!("app-bundle.js", webpackManifest["app.js"])
-  template.sub!("main.css", "main-#{Digest::MD5.file("app/css/main.css").hexdigest[0,16]}.css")
+  staticPrefix = $cloudFrontConfig ? "#{$cloudFrontConfig['public-url']}/static" : ""
+  template.sub!("/js/lib-bundle.js", "#{staticPrefix}/js/#{webpackManifest["lib.js"]}")
+  template.sub!("/js/app-bundle.js", "#{staticPrefix}/js/#{webpackManifest["app.js"]}")
+  template.sub!("/css/main.css", "#{staticPrefix}/css/main-#{Digest::MD5.file("app/css/main.css").hexdigest[0,16]}.css")
 
   if DO_ISO
     # Parse out payload of the URL (i.e. not including the host name)
