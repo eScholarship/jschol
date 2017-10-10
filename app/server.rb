@@ -151,9 +151,6 @@ end
 ## NO: This fails when streaming files. Not sure why yet.
 #use Rack::Deflater
 
-# For general app development, set DO_ISO to false. For real deployment, set to true
-DO_ISO = File.exist?("config/do_iso")
-
 TEMP_DIR = "tmp"
 FileUtils.mkdir_p(TEMP_DIR)
 
@@ -240,7 +237,6 @@ require_relative 'dbCache'
 # IP address filtering on certain machines
 $ipFilter = File.exist?("config/allowed_ips") && Regexp.new(File.read("config/allowed_ips").strip)
 before do
-  puts "#{request.request_method} #{request.url}"
   $ipFilter && !$ipFilter.match(request.ip) and halt 403
 end
 
@@ -443,6 +439,10 @@ get %r{.*} do
       return template
     end
     status response.code.to_i
+    if response.code.to_i != 200
+      # For all error pages, fall back to non-ISO since we don't know how to render it here.
+      return template
+    end
 
     # Read in the template file, and substitute the results from React/ReactRouter
     lookFor = '<div id="main"></div>'
@@ -724,6 +724,10 @@ get "/api/item/:shortArk" do |shortArk|
         :altmetrics_ok => false
       }
 
+      if attrs['disable_download'] && Date.parse(attrs['disable_download']) > Date.today
+        body[:download_restricted] = Date.parse(attrs['disable_download']).iso8601
+      end
+
       if unit
         if unit.type != 'journal'
           body[:header] = getUnitHeader(unit)
@@ -875,7 +879,13 @@ def getItemHtml(content_type, id)
   fetcher = MerrittFetcher.new(mrtURL)
   buf = []
   fetcher.streamTo(buf)
-  htmlStr = stringToXML(buf.join("")).to_xml
+  buf = buf.join("")
+  # Hacks for LIMN
+  buf.gsub! %r{<head.*?</head>}im, ''
+  buf.gsub! %r{<style.*?</style>}im, ''
+  buf.gsub! %r{<iframe.*?</iframe>}im, ''
+  buf.gsub! %r{<script.*?</script>}im, ''
+  htmlStr = stringToXML(buf).to_xml
   htmlStr.gsub(/(href|src)="((?!#)[^"]+)"/) { |m|
     attrib, url = $1, $2
     url = url.start_with?("http", "ftp") ? url : "/content/#{id}/inner/#{url}"

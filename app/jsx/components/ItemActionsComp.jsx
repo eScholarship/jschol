@@ -19,7 +19,8 @@ class ItemActionsComp extends React.Component {
            <Downloadable id={p.id}
                          content_type={p.content_type}
                          supp_files={p.supp_files}
-                         buy_link={p.buy_link} />}
+                         buy_link={p.buy_link}
+                         download_restricted={p.download_restricted}/>}
       </div>
     )
   }
@@ -46,7 +47,9 @@ class Downloadable extends React.Component {
       <div className="c-itemactions">
         <div className="o-download">
           {/* ToDo: Once main multimedia content is ingested, this button should say 'Download Content' */}
-          <a href={url} className="o-download__button" download={filename}>Download {label}</a>
+          { p.download_restricted
+            ? <a href="" className="o-download__button" onClick={()=>{alert("Download restricted until " + p.download_restricted); return false}}>Download {label}</a>
+            : <a href={url} className="o-download__button" download={filename}>Download {label}</a> }
           <details className="o-download__formats">
             <summary aria-label="formats"></summary>
             <ul className="o-download__nested-menu">
@@ -55,7 +58,11 @@ class Downloadable extends React.Component {
                 Main
                 <ul>
                 {label=="PDF" && 
-                  <li><a href={url} download={filename}>PDF</a></li>
+                  <li>
+                    { p.download_restricted
+                      ? <a href="" onClick={()=>{alert("Download restricted until " + p.download_restricted); return false}}>PDF</a>
+                      : <a href={url} download={filename}>PDF</a> }
+                  </li>
                 }
                 {label=="HTML" && 
                   [<li key="0"><NotYetLink element="a">ePub</NotYetLink></li>,
