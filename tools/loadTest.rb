@@ -30,6 +30,8 @@ def calcContentKey(shortArk, date = nil)
   Digest::MD5.hexdigest("V01:#{shortArk}:#{(date || Date.today).iso8601}:#{$jscholKey}")
 end
 
+RATE = 500000
+
 ###################################################################################################
 class LoadTest
   def initialize(logFilePath)
@@ -48,17 +50,29 @@ class LoadTest
   def fetch(path)
     url = "#{$baseURL}/#{path.sub(%r{^/},'')}"
     puts "fetch #{url}"
-    body = []
-    rate = 500000
-    resp = HTTParty.get(url) do |fragment|
-      body << fragment
-      fragment.empty? or sleep(fragment.length / rate)
-    end
-    if resp.code.to_i != 200
-      puts "Warning: HTTP #{resp.code} for #{url}"
+    begin
+      body = []
+      resp = HTTParty.get(url) do |fragment|
+        body << fragment
+        RATE && !fragment.empty? and sleep(fragment.length / RATE)
+      end
+      if resp.code.to_i == 404 && url.include?("/supp/")
+        url.sub!("/supp/", "/inner/")
+        puts "  refetch #{url}"
+        resp = HTTParty.get(url) do |fragment|
+          body << fragment
+          RATE && !fragment.empty? and sleep(fragment.length / RATE)
+        end
+      end
+      if resp.code.to_i != 200
+        puts "Warning: HTTP #{resp.code} for #{url}"
+        return ""
+      end
+      return body.join("")
+    rescue Exception => e
+      puts "Exception in fetch: #{e}"
       return ""
     end
-    return body.join("")
   end
 
   def fetchPage(path)

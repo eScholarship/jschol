@@ -24,6 +24,7 @@
     "del": "^2.2.2",
     "enzyme": "^2.8.0",
     "express": "^4.15.2",
+    "express-cluster": "^0.0.5",
     "gulp": "^3.9.1",
     "gulp-autoprefixer": "^3.1.1",
     "gulp-clean-css": "^2.4.0",
@@ -53,6 +54,7 @@
     "postcss-assets": "^4.1.0",
     "progress": "^1.1.8",
     "react-addons-test-utils": "^15.5.1",
+    "read-yaml": "^1.1.0",
     "run-sequence": "^1.2.2",
     "webpack": "^2.3.3",
     "webpack-manifest-plugin": "^1.1.0"

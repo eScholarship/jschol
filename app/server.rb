@@ -1,4 +1,4 @@
-# Sample application foundation for eschol5 - see README.md for more info
+# Server-side application for eschol5 - see README.md for more info
 
 # Use bundler to keep dependencies local
 require 'rubygems'
@@ -30,7 +30,16 @@ $workerPrefix = ""
 $nextThreadNum = 0
 def puts(str)
   $stdoutMutex.synchronize {
-    STDOUT.puts "[#{$workerPrefix}#{Thread.current[:number] ||= ($nextThreadNum += 1)}] #{str}"
+    if !Thread.current[:number]
+      allNums = Set.new
+      Thread.list.each { |t| allNums << t[:number] }
+      num = 0
+      while allNums.include?(num)
+        num += 1
+      end
+      Thread.current[:number] = num
+    end
+    STDOUT.puts "[#{$workerPrefix}#{Thread.current[:number]}] #{str}"
     STDOUT.flush
   }
 end
@@ -95,6 +104,12 @@ $s3Config = OpenStruct.new(YAML.load_file("config/s3.yaml"))
 $s3Client = Aws::S3::Client.new(region: $s3Config.region)
 $s3Bucket = Aws::S3::Bucket.new($s3Config.bucket, client: $s3Client)
 
+# CloudFront info
+$cloudFrontConfig = File.exist?("config/cloudFront.yaml") && YAML.load_file("config/cloudFront.yaml")
+
+# Info about isomorphic mode and port
+$serverConfig = YAML.load_file("config/server.yaml")
+
 # Internal modules to implement specific pages and functionality
 require_relative '../util/sanitize.rb'
 require_relative '../util/xmlutil.rb'
@@ -122,6 +137,7 @@ configure do
   set :server, 'puma'
   # We like to use the 'app' folder for all our static resources
   set :public_folder, Proc.new { root }
+  set :static_cache_control, [:public, :max_age => 3600]
 
   set :show_exceptions, false
 
@@ -261,6 +277,15 @@ get %r{/assets/([0-9a-f]{64})} do |hash|
 end
 
 ###################################################################################################
+options "/content/:fullItemID/*" do |itemID, path|
+  headers "Access-Control-Allow-Origin" => "*",
+          "Access-Control-Allow-Headers" => "Range",
+          "Access-Control-Expose-Headers" => "Accept-Ranges, Content-Encoding, Content-Length, Content-Range",
+          "Access-Control-Allow-Methods" => "GET, OPTIONS"
+  return ""
+end
+
+###################################################################################################
 get "/content/:fullItemID/*" do |itemID, path|
   # Prep work
   itemID =~ /^qt[a-z0-9]{8}$/ or halt(404)  # protect against attacks
@@ -314,6 +339,15 @@ get "/content/:fullItemID/*" do |itemID, path|
   # Here's the final Merritt URL
   mrtURL = "https://#{$mrtExpressConfig['host']}/dl/#{mrtID}/#{epath}"
 
+  # Control how long this remains in browser and CloudFront caches
+  cache_control :public, :max_age => 3600   # maybe more?
+
+  # Allow cross-origin requests so that main site and CloudFront cache can co-operate
+  headers "Access-Control-Allow-Origin" => "*",
+          "Access-Control-Allow-Headers" => "Range",
+          "Access-Control-Expose-Headers" => "Accept-Ranges, Content-Encoding, Content-Length, Content-Range",
+          "Access-Control-Allow-Methods" => "GET, OPTIONS"
+
   # Stream supp files out directly from Merritt. Also, if there's no display PDF, fall back
   # to the version in Merritt.
   displayPDF = DisplayPDF[itemID]
@@ -363,6 +397,20 @@ get %r{\/css\/main-[a-zA-Z0-9]{16}\.css} do
 end
 
 ###################################################################################################
+# Handle requests from CloudFront
+get %r{/dist/(\w+)/dist/prd/(\w+)/(.*)} do
+  cfKey, kind, path = params['captures']
+  cfKey == $cloudFrontConfig['private-key'] or halt(403)
+  if kind == "static"
+    call env.merge("PATH_INFO" => "/#{path}")
+  elsif kind == "content" || kind == "assets"
+    call env.merge("PATH_INFO" => "/#{kind}/#{path}")
+  else
+    halt(404)
+  end
+end
+
+###################################################################################################
 # The outer framework of every page is essentially the same, substituting in the intial page
 # data and initial elements from React.
 get %r{.*} do
@@ -376,18 +424,25 @@ get %r{.*} do
   # Replace startup URLs for proper cache busting
   # TODO: speed this up by caching (if it's too slow)
   webpackManifest = JSON.parse(File.read('app/js/manifest.json'))
-  template.sub!("lib-bundle.js", webpackManifest["lib.js"])
-  template.sub!("app-bundle.js", webpackManifest["app.js"])
-  template.sub!("main.css", "main-#{Digest::MD5.file("app/css/main.css").hexdigest[0,16]}.css")
+  staticPrefix = $cloudFrontConfig ? "#{$cloudFrontConfig['public-url']}/static" : ""
+  template.sub!("/js/lib-bundle.js", "#{staticPrefix}/js/#{webpackManifest["lib.js"]}")
+  template.sub!("/js/app-bundle.js", "#{staticPrefix}/js/#{webpackManifest["app.js"]}")
+  template.sub!("/css/main.css", "#{staticPrefix}/css/main-#{Digest::MD5.file("app/css/main.css").hexdigest[0,16]}.css")
 
-  if DO_ISO
+  if $serverConfig['isoPort']
     # Parse out payload of the URL (i.e. not including the host name)
     request.url =~ %r{^https?://([^/:]+)(:\d+)?(.*)$} or fail
     remainder = $3
 
     # Pass the full path and query string to our little Node Express app, which will run it through
     # ReactRouter and React.
-    response = Net::HTTP.new($host, 4002).start {|http| http.request(Net::HTTP::Get.new(remainder)) }
+    begin
+      response = Net::HTTP.new($host, $serverConfig['isoPort']).start {|http| http.request(Net::HTTP::Get.new(remainder)) }
+    rescue Exception => e
+      # If there's an exception (like iso is completely dead), fall back to non-iso mode.
+      puts "Warning: unexpected exception (not HTTP error) from iso: #{e} #{e.backtrace}"
+      return template
+    end
     status response.code.to_i
 
     # Read in the template file, and substitute the results from React/ReactRouter
@@ -638,7 +693,7 @@ end
 get "/api/item/:shortArk" do |shortArk|
   content_type :json
   id = "qt"+shortArk
-  item = Item[id]
+  item = Item[id] or halt(404)
   attrs = JSON.parse(Item.filter(:id => id).map(:attrs)[0])
   unitIDs = UnitItem.where(:item_id => id, :is_direct => true).order(:ordering_of_units).select_map(:unit_id)
   unit = unitIDs ? Unit[unitIDs[0]] : nil
