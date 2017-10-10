@@ -13,7 +13,7 @@
     "normalize-scss": "^3.0.3",
     "flickity": "^2.0.5",
     "babel-polyfill": "^0.0.1",
-    "pdfjs-embed": "eScholarship/pdfjs-embed#3dbd24477c90b94451723da943f99c6b4d45ace5",
+    "pdfjs-embed": "eScholarship/pdfjs-embed#370a2b30e93001042ed60126a54c4dc011a42224",
     "trumbowyg": "^2.4.2"
   }
 }
