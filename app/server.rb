@@ -277,15 +277,6 @@ get %r{/assets/([0-9a-f]{64})} do |hash|
 end
 
 ###################################################################################################
-options "/content/:fullItemID/*" do |itemID, path|
-  headers "Access-Control-Allow-Origin" => "*",
-          "Access-Control-Allow-Headers" => "Range",
-          "Access-Control-Expose-Headers" => "Accept-Ranges, Content-Encoding, Content-Length, Content-Range",
-          "Access-Control-Allow-Methods" => "GET, OPTIONS"
-  return ""
-end
-
-###################################################################################################
 get "/content/:fullItemID/*" do |itemID, path|
   # Prep work
   itemID =~ /^qt[a-z0-9]{8}$/ or halt(404)  # protect against attacks
@@ -394,6 +385,16 @@ end
 # the actual file.
 get %r{\/css\/main-[a-zA-Z0-9]{16}\.css} do
   call env.merge("PATH_INFO" => "/css/main.css")
+end
+
+###################################################################################################
+# CORS for CloudFront
+options %r{/dist/(\w+)/dist/prd/(\w+)/(.*)} do
+  headers "Access-Control-Allow-Origin" => "*",
+          "Access-Control-Allow-Headers" => "Range",
+          "Access-Control-Expose-Headers" => "Accept-Ranges, Content-Encoding, Content-Length, Content-Range",
+          "Access-Control-Allow-Methods" => "GET, OPTIONS"
+  return ""
 end
 
 ###################################################################################################
