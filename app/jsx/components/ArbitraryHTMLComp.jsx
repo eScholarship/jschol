@@ -12,7 +12,7 @@ export default class ArbitraryHTMLComp extends React.Component
     h1Level: PropTypes.number.isRequired
   }
 
-  // Attach script necessary for opening Depoit Wizard from any links defined as: http://open-deposit-wizard.com
+  // Attach script necessary for opening Deposit Wizard from any links defined as: http://open-deposit-wizard.com
   componentWillMount() {
     if (!(typeof document === "undefined")) {
       const s = document.createElement("script")
