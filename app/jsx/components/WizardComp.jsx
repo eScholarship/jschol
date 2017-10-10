@@ -26,20 +26,25 @@ class WizardComp extends React.Component {
     })
   }
 
+  init = () => {
+    return {wizardStep: this.props.data.unitID ? 5 : 1, // If UnitID passed in on init, go direct to WizardSeriesComp
+            wizardDir: 'fwd',
+            campuses: this.props.campuses,
+            campusID: this.props.data.campusID,
+            campusName: this.props.data.campusName,
+            // Unit info either passed in from an ORU landing page, or to be chosen within WizardUnitComp
+            unitID: this.props.data.unitID, 
+            unitName: this.props.data.unitName, 
+            seriesName: null,
+            arg: null,       // An arbitary field used to passs logic between steps
+            type: null       // Used for distinguishing disabled/moribund units and series for last step
+            }
+  }
+
   state = { showModal: this.props.showModal,
             launchedFromRoot: !this.props.data.campusID || this.props.data.campusID == 'root',
-            data: {wizardStep: this.props.data.unitID ? 5 : 1, // If UnitID passed in on init, go direct to WizardSeriesComp
-                   wizardDir: 'fwd',
-                   campuses: this.props.campuses,
-                   campusID: this.props.data.campusID,
-                   campusName: this.props.data.campusName,
-                   // Unit info either passed in from an ORU landing page, or to be chosen within WizardUnitComp
-                   unitID: this.props.data.unitID, 
-                   unitName: this.props.data.unitName, 
-                   seriesName: null,
-                   arg: null,       // An arbitary field used to passs logic between steps
-                   type: null       // Used for distinguishing disabled/moribund units and series for last step
-                   }}
+            data: this.init()
+          }
 
   componentWillReceiveProps(nextProps) {
     if (!_.isEqual(this.props.showModal, nextProps.showModal))
@@ -108,7 +113,7 @@ class WizardComp extends React.Component {
   
   handleCloseModal = ()=> {
     this.setState({ showModal: false })
-    this.setState({data: { wizardStep: 1, wizardDir: 'fwd' }})
+    this.setState({data: this.init()})
     this.props.onCancel()
   }                 
 
