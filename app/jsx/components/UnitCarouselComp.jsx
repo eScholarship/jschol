@@ -55,7 +55,9 @@ class UnitCarouselComp extends React.Component {
       title: PropTypes.string.isRequired,
       authors: PropTypes.array,
       genre: PropTypes.string,
-    })).isRequired
+    })).isRequired,
+    item_count: PropTypes.number.isRequired,
+    view_count: PropTypes.number.isRequired,
   }
 
   componentDidMount () {
@@ -66,6 +68,7 @@ class UnitCarouselComp extends React.Component {
   }
   render() {
     let p = this.props
+    let pluralItems = (p.item_count == 1) ? '' : 's'
     return (
       <div className="o-itemcarousel">
         <h2 className="o-itemcarousel__heading"><Link to={"/uc/"+p.titleID}>{p.titleName}</Link></h2>
@@ -80,12 +83,14 @@ class UnitCarouselComp extends React.Component {
             <UnitCarouselItem key={i} result={result} orientation={(i+1)%2 ? 'vert':'horz'} />)
           }
         </CarouselComp>
+      {p.item_count > 0 &&
         <div className="o-stat--item o-itemcarousel__stats-item">
-          <Link to={"/uc/"+p.titleID}>9,999</Link>Items
-        </div>
+          <a href={"/uc/"+p.titleID}>{p.item_count.toLocaleString()}</a>Item{pluralItems}
+        </div> }
+      {p.view_count > 0 &&
         <div className="o-stat--view o-itemcarousel__stats-view">
-          <b>999,999</b>Views
-        </div>
+          <b>{p.view_count.toLocaleString()}</b>Views
+        </div> }
       </div>
     )
   }

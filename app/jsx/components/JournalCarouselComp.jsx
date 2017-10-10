@@ -22,7 +22,9 @@ class JournalCarouselComp extends React.Component {
         height: PropTypes.number,
         asset_id: PropTypes.string,
       }),
-    })).isRequired
+    })).isRequired,
+    item_count: PropTypes.number.isRequired,
+    view_count: PropTypes.number.isRequired,
   }
 
   componentDidMount () {
@@ -33,6 +35,7 @@ class JournalCarouselComp extends React.Component {
   }
   render() {
     let p = this.props
+    let pluralItems = (p.item_count == 1) ? '' : 's'
     return (
       <div className="o-itemcarousel">
         <h2 className="o-itemcarousel__heading"><Link to={"/" + p.titleID + "/journals"}>{p.titleName} Journals</Link></h2>
@@ -57,12 +60,14 @@ class JournalCarouselComp extends React.Component {
         </div>
         )}
         </CarouselComp>
+      {p.item_count > 0 && 
         <div className="o-stat--item o-itemcarousel__stats-item">
-          <Link to={"/" + p.titleID + "/journals"}>9,999</Link>Items
-        </div>
+          <Link to={"/" + p.titleID + "/journals"}>{p.item_count.toLocaleString()}</Link>Item{pluralItems}
+        </div> }
+      {p.view_count > 0 && 
         <div className="o-stat--view o-itemcarousel__stats-view">
-          <b>999,999</b>Views
-        </div>
+          <b>{p.view_count.toLocaleString()}</b>Views
+        </div> }
       </div>
     )
   }

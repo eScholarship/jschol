@@ -1,5 +1,6 @@
 import React from 'react'
 import AboutComp from '../components/AboutComp.jsx'
+import WysiwygEditorComp from '../components/WysiwygEditorComp.jsx'
 import Form from 'react-router-form'
 import { Subscriber } from 'react-broadcast'
 
@@ -94,8 +95,9 @@ class UnitProfileLayout extends React.Component {
                        <input type="file" id="logoImage" name="logo" onChange={this.handleImageChange}/>
                        <br/><br/>
                     { this.state.banner_flag_visible &&
-                      [<label key="0" className="c-editable-page__label" htmlFor="logoIsBanner">Suppress typeset site name next to logo: </label>,<p>Check the box below if your logo image contains the full, legible title of your site.</p>,
-                       <input key="1" type="checkbox" id="logoIsBanner" name="logoIsBanner"
+                      [<label key="0" className="c-editable-page__label" htmlFor="logoIsBanner">Suppress typeset site name next to logo: </label>,
+                       <p key="1">Check the box below if your logo image contains the full, legible title of your site.</p>,
+                       <input key="2" type="checkbox" id="logoIsBanner" name="logoIsBanner"
                               defaultChecked={(data.logo && data.logo.is_banner) ? data.logo.is_banner : ""}/>] }
                        {/* Force onSubmit to submit even if nothing is present (because checkbox unchecked results in nothing) */}
                        <input type="hidden" name="logoExtra" defaultValue="off"/>
@@ -175,11 +177,12 @@ class UnitProfileLayout extends React.Component {
   }
 
   renderAboutConfig() {
-    var data = this.props.data;
+    let data = this.state.newData
+    let aboutText = data.marquee.about ? data.marquee.about : ""
     return (
       <div>
         <h3 id="marquee">About Text</h3>
-      {data.marquee.about &&
+      {data.marquee.about && data.marquee.about!="<div></div>" &&
         <AboutComp about={data.marquee.about} />
       }
         <div className="c-columns">
@@ -188,8 +191,12 @@ class UnitProfileLayout extends React.Component {
               <Form to={`/api/unit/${this.props.unit.id}/profileContentConfig`} onSubmit={this.handleSubmit}>
                 <label className="c-editable-page__label" htmlFor="aboutText">About Text</label>
                 <p>About text will appear at the top of your site's landing page. It should be fewer than 400 characters in length.</p>
-                <textarea className="c-editable-page__input" name="about" id="aboutText" defaultValue={data.marquee.about}
-                          onChange={ event => this.setMarqueeData({about: event.target.value}) }/>
+                <WysiwygEditorComp className="c-editable-page__input" name="about" id="about"
+                    html={aboutText} unit={this.props.unit.id}
+                    onChange={ newText => this.setMarqueeData({about: newText}) }
+                    buttons={[
+                              ['strong', 'em', 'underline', 'link'], 
+                             ]} />
                 <button type="submit">Save Changes</button> <button type="reset">Cancel</button>
               </Form>
             </section>

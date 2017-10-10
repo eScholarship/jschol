@@ -68,7 +68,7 @@ class Content extends React.Component {
       <div className="c-columns">
         <main id="maincontent">
         {/* Global browse pages */}
-        { p.browse_type == "campuses" && <AllCampuses campusesStats={p.campusesStats} affiliatedStats={p.affiliatedStats}/> }
+        { p.browse_type == "campuses" && <AllCampuses campusesStats={p.campusesStats} otherStats={p.otherStats}/> }
         { p.browse_type == "all_journals" && <AllJournals journals={p.journals}
             archived={p.archived} campuses={p.campuses} /> }
         {/* Campus-specific browse pages */}
@@ -92,7 +92,7 @@ class AllCampuses extends React.Component {
       <header>
         <h2>Campuses and Other Locations</h2>
       </header>
-      <DescriptionListComp campusesStats={this.props.campusesStats} affiliatedStats={this.props.affiliatedStats} />
+      <DescriptionListComp campusesStats={this.props.campusesStats} otherStats={this.props.otherStats} />
     </section>
   )}
 }
