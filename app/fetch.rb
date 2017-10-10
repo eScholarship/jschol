@@ -91,7 +91,6 @@ class Fetcher
         @status = "fetching"
         fetchInternal()
         @endTime = Time.now
-        puts "Fetch complete: #{@url}"
         @status = "done"
         @queue << nil  # mark end-of-data
       rescue Exception => e

@@ -53,7 +53,9 @@ class MainContent extends React.Component {
           }
         } else {
           return (p.content_type == "application/pdf" ?
-                    <PdfViewComp url={p.content_prefix + "/content/qt" + p.id + "/qt" + p.id + ".pdf"} content_key={p.content_key}/>
+                    <PdfViewComp url={p.content_prefix + "/content/qt" + p.id + "/qt" + p.id + ".pdf"}
+                                 content_key={p.content_key}
+                                 download_restricted={p.download_restricted}/>
                     :
                     p.content_type == "text/html" ? this.renderHtml(p) : null)
         }
@@ -146,7 +148,8 @@ class TabMainComp extends React.Component {
                          status={p.status}
                          content_type={p.content_type}
                          supp_files={p.attrs.supp_files}
-                         buy_link={p.attrs.buy_link} />
+                         buy_link={p.attrs.buy_link}
+                         download_restricted={p.download_restricted} />
         <h2 className="c-tabcontent__main-heading" tabIndex="-1">{p.title}</h2>
         <AuthorListComp pubdate={p.pub_date}
                         authors={p.authors}
