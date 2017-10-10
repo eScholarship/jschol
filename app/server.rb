@@ -277,15 +277,6 @@ get %r{/assets/([0-9a-f]{64})} do |hash|
 end
 
 ###################################################################################################
-options "/content/:fullItemID/*" do |itemID, path|
-  headers "Access-Control-Allow-Origin" => "*",
-          "Access-Control-Allow-Headers" => "Range",
-          "Access-Control-Expose-Headers" => "Accept-Ranges, Content-Encoding, Content-Length, Content-Range",
-          "Access-Control-Allow-Methods" => "GET, OPTIONS"
-  return ""
-end
-
-###################################################################################################
 get "/content/:fullItemID/*" do |itemID, path|
   # Prep work
   itemID =~ /^qt[a-z0-9]{8}$/ or halt(404)  # protect against attacks
@@ -397,10 +388,19 @@ get %r{\/css\/main-[a-zA-Z0-9]{16}\.css} do
 end
 
 ###################################################################################################
+# CORS for CloudFront
+options %r{/dist/(\w+)/dist/prd/(\w+)/(.*)} do
+  headers "Access-Control-Allow-Origin" => "*",
+          "Access-Control-Allow-Headers" => "Range",
+          "Access-Control-Expose-Headers" => "Accept-Ranges, Content-Encoding, Content-Length, Content-Range",
+          "Access-Control-Allow-Methods" => "GET, OPTIONS"
+  return ""
+end
+
+###################################################################################################
 # Handle requests from CloudFront
 get %r{/dist/(\w+)/dist/prd/(\w+)/(.*)} do
   cfKey, kind, path = params['captures']
-  cfKey == $cloudFrontConfig['private-key'] or halt(403)
   if kind == "static"
     call env.merge("PATH_INFO" => "/#{path}")
   elsif kind == "content" || kind == "assets"
@@ -424,10 +424,9 @@ get %r{.*} do
   # Replace startup URLs for proper cache busting
   # TODO: speed this up by caching (if it's too slow)
   webpackManifest = JSON.parse(File.read('app/js/manifest.json'))
-  staticPrefix = $cloudFrontConfig ? "#{$cloudFrontConfig['public-url']}/static" : ""
-  template.sub!("/js/lib-bundle.js", "#{staticPrefix}/js/#{webpackManifest["lib.js"]}")
-  template.sub!("/js/app-bundle.js", "#{staticPrefix}/js/#{webpackManifest["app.js"]}")
-  template.sub!("/css/main.css", "#{staticPrefix}/css/main-#{Digest::MD5.file("app/css/main.css").hexdigest[0,16]}.css")
+  template.sub!("/js/lib-bundle.js", "/js/#{webpackManifest["lib.js"]}")
+  template.sub!("/js/app-bundle.js", "/js/#{webpackManifest["app.js"]}")
+  template.sub!("/css/main.css", "/css/main-#{Digest::MD5.file("app/css/main.css").hexdigest[0,16]}.css")
 
   if $serverConfig['isoPort']
     # Parse out payload of the URL (i.e. not including the host name)
@@ -715,6 +714,7 @@ get "/api/item/:shortArk" do |shortArk|
         :content_type => item.content_type,
         :content_html => getItemHtml(item.content_type, id),
         :content_key => calcContentKey(shortArk),
+        :content_prefix => $cloudFrontConfig ? $cloudFrontConfig['public-url'] : "",
         :attrs => attrs,
         :sidebar => unit ? getItemRelatedItems(unit, id) : nil,
         :appearsIn => unitIDs ? unitIDs.map { |unitID| {"id" => unitID, "name" => Unit[unitID].name} }

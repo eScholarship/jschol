@@ -12,6 +12,8 @@ db_backup/
 dist
 gems/
 gomysql
+jschol.pid
+logs/
 node_modules/
 normalized/
 prefilterDirs.txt
