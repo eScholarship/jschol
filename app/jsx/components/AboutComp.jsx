@@ -1,6 +1,7 @@
 // ##### About (standalone) Component ##### //
 
 import React from 'react'
+import ArbitraryHTMLComp from "../components/ArbitraryHTMLComp.jsx"
 import PropTypes from 'prop-types'
 import $ from 'jquery'
 
@@ -38,8 +39,9 @@ class AboutComp extends React.Component {
         <header>
           <h2>About</h2>
         </header>
-        <div className="o-columnbox__truncate1" ref={element => this.aboutElement = element}
-               dangerouslySetInnerHTML={{__html: about_block}} />
+        <div className="o-columnbox__truncate1" ref={element => this.aboutElement = element} >
+          <ArbitraryHTMLComp html={about_block} h1Level={3}/>
+        </div>
       </section>
     )
 

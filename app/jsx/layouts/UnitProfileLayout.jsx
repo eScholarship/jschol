@@ -1,5 +1,6 @@
 import React from 'react'
 import AboutComp from '../components/AboutComp.jsx'
+import WysiwygEditorComp from '../components/WysiwygEditorComp.jsx'
 import Form from 'react-router-form'
 import { Subscriber } from 'react-broadcast'
 
@@ -176,11 +177,12 @@ class UnitProfileLayout extends React.Component {
   }
 
   renderAboutConfig() {
-    var data = this.props.data;
+    let data = this.state.newData
+    let aboutText = data.marquee.about ? data.marquee.about : ""
     return (
       <div>
         <h3 id="marquee">About Text</h3>
-      {data.marquee.about &&
+      {data.marquee.about && data.marquee.about!="<div></div>" &&
         <AboutComp about={data.marquee.about} />
       }
         <div className="c-columns">
@@ -189,8 +191,12 @@ class UnitProfileLayout extends React.Component {
               <Form to={`/api/unit/${this.props.unit.id}/profileContentConfig`} onSubmit={this.handleSubmit}>
                 <label className="c-editable-page__label" htmlFor="aboutText">About Text</label>
                 <p>About text will appear at the top of your site's landing page. It should be fewer than 400 characters in length.</p>
-                <textarea className="c-editable-page__input" name="about" id="aboutText" defaultValue={data.marquee.about}
-                          onChange={ event => this.setMarqueeData({about: event.target.value}) }/>
+                <WysiwygEditorComp className="c-editable-page__input" name="about" id="about"
+                    html={aboutText} unit={this.props.unit.id}
+                    onChange={ newText => this.setMarqueeData({about: newText}) }
+                    buttons={[
+                              ['strong', 'em', 'underline', 'link'], 
+                             ]} />
                 <button type="submit">Save Changes</button> <button type="reset">Cancel</button>
               </Form>
             </section>
