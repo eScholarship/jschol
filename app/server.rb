@@ -151,9 +151,6 @@ end
 ## NO: This fails when streaming files. Not sure why yet.
 #use Rack::Deflater
 
-# For general app development, set DO_ISO to false. For real deployment, set to true
-DO_ISO = File.exist?("config/do_iso")
-
 TEMP_DIR = "tmp"
 FileUtils.mkdir_p(TEMP_DIR)
 
@@ -442,6 +439,10 @@ get %r{.*} do
       return template
     end
     status response.code.to_i
+    if response.code.to_i != 200
+      # For all error pages, fall back to non-ISO since we don't know how to render it here.
+      return template
+    end
 
     # Read in the template file, and substitute the results from React/ReactRouter
     lookFor = '<div id="main"></div>'
@@ -878,7 +879,13 @@ def getItemHtml(content_type, id)
   fetcher = MerrittFetcher.new(mrtURL)
   buf = []
   fetcher.streamTo(buf)
-  htmlStr = stringToXML(buf.join("")).to_xml
+  buf = buf.join("")
+  # Hacks for LIMN
+  buf.gsub! %r{<head.*?</head>}im, ''
+  buf.gsub! %r{<style.*?</style>}im, ''
+  buf.gsub! %r{<iframe.*?</iframe>}im, ''
+  buf.gsub! %r{<script.*?</script>}im, ''
+  htmlStr = stringToXML(buf).to_xml
   htmlStr.gsub(/(href|src)="((?!#)[^"]+)"/) { |m|
     attrib, url = $1, $2
     url = url.start_with?("http", "ftp") ? url : "/content/#{id}/inner/#{url}"
