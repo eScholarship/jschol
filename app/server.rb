@@ -240,7 +240,6 @@ require_relative 'dbCache'
 # IP address filtering on certain machines
 $ipFilter = File.exist?("config/allowed_ips") && Regexp.new(File.read("config/allowed_ips").strip)
 before do
-  puts "#{request.request_method} #{request.url}"
   $ipFilter && !$ipFilter.match(request.ip) and halt 403
 end
 
@@ -723,6 +722,10 @@ get "/api/item/:shortArk" do |shortArk|
         :usage => ItemCount.where(item_id: id).order(:month).to_hash(:month).map { |m,v| { "month"=>m, "hits"=>v.hits, "downloads"=>v.downloads }},
         :altmetrics_ok => false
       }
+
+      if attrs['disable_download'] && Date.parse(attrs['disable_download']) > Date.today
+        body[:download_restricted] = Date.parse(attrs['disable_download']).iso8601
+      end
 
       if unit
         if unit.type != 'journal'

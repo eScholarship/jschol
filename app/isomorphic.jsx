@@ -39,7 +39,7 @@ cluster(worker => {
 
     // Now route the request
     var refURL = req.protocol + '://' + req.get('host') + req.originalUrl
-    console.log("ISO fetch:", refURL)
+    //console.log("ISO fetch:", refURL)
     match({ routes: routes, location: req.url }, (err, redirectLocation, renderProps) => {
       if (err) {
         console.error(err)
@@ -57,7 +57,7 @@ cluster(worker => {
       {
         var partialURL = urls[0]
         var finalURL = url.resolve(refURL, partialURL).replace(":"+serverConfig.isoPort, ":"+serverConfig.mainPort)
-        console.log("...integrating data from:", finalURL)
+        //console.log("...integrating data from:", finalURL)
 
         http.get(finalURL, function(ajaxResp) {
           var body = ''

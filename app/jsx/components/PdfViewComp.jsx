@@ -5,7 +5,10 @@ import PdfViewerComp from '../components/PdfViewerComp.jsx'
 
 class PdfViewComp extends React.Component {
   view = () => {
-    window.location = this.props.url 
+    if (this.props.download_restricted)
+      alert("Download restricted until " + this.props.download_restricted)
+    else
+      window.location = this.props.url
   }
 
   render() {
