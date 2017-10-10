@@ -30,6 +30,8 @@ class CampusLayout extends React.Component {
   //          title: PropTypes.string,
   //          authors: PropTypes.array,
   //          genre: PropTypes.string,
+          item_count: PropTypes.number,
+          view_count: PropTypes.number,
         }),
       }),
 
