@@ -71,6 +71,11 @@ class UnitProfileLayout extends React.Component {
         : data.logo
             ? "/assets/" + data.logo.asset_id
             : "http://placehold.it/400x100?text=No+logo"
+    let heroUrl = this.state.newData.hero && this.state.newData.hero.imagePreviewUrl
+        ? this.state.newData.hero.imagePreviewUrl
+        : data.hero
+            ? "/assets/" + data.hero.asset_id
+            : "http://placehold.it/500x200?text=No+hero+image"
     return (
       <Subscriber channel="cms">
       { cms => {
@@ -101,6 +106,17 @@ class UnitProfileLayout extends React.Component {
                               defaultChecked={(data.logo && data.logo.is_banner) ? data.logo.is_banner : ""}/>] }
                        {/* Force onSubmit to submit even if nothing is present (because checkbox unchecked results in nothing) */}
                        <input type="hidden" name="logoExtra" defaultValue="off"/>
+
+                      { this.props.unit.type == 'campus' &&
+                       <div>
+                         <hr/>
+                         <br/><br/>
+                         <label className="c-editable-page__label" htmlFor="heroImage">Hero image{disableLogo ? "(restricted)" : ""}</label>
+                         <img src={ heroUrl } alt="Hero Image"/>
+                         <input type="file" id="heroImage" name="hero" onChange={this.handleImageChange}/>
+                         <br/><br/>
+                       </div>
+                      }
                      </div>
                    }
                    <br/>

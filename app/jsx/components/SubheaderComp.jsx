@@ -33,10 +33,12 @@ class SubheaderComp extends React.Component {
     }).isRequired,
   }
 
-  state = { modalOpen: false }
+  state = { depositModalOpen: false,
+            manageModalOpen: false }
 
   closeWizardModal = e => {
-    this.setState({modalOpen:false})
+    this.setState({depositModalOpen:false,
+                   manageModalOpen:false})
   }
 
   render() {
@@ -53,19 +55,22 @@ class SubheaderComp extends React.Component {
 
     let wizard = null
     let depositButton = <button id="wizardlyDeposit" className="o-button__3" onClick={(event)=>{
-                               this.setState({modalOpen:true})
+                               this.setState({depositModalOpen:true})
                                event.preventDefault()} } >{(unit.type == 'journal') ? "Submit" : "Deposit"}</button>
 
     // WizardInertComp is like WizardComp, but only one screen, no back/forward buttons,
-    //   a) used for all journals  -OR-
-    //   b) used for a campus/unit/series when its 'directSubmit' value is set to disabled/moribund. 
-    // Right now, this component also handles a directSubmitURL if one is present
-    // (Presently the directSubmitURL only exists for journals).
+    //   a) Used for 'Manage Submissions' link-out    - OR -
+    //
+    //   b) Opened by the 'Submit' or 'Deposit' button:
+    //      i) Triggered by a journal, opened by the 'Submit' button  - OR -
+    //     ii) Used for a campus/unit/series when its 'directSubmit' value is set to disabled/moribund. 
+    //     Right now, this component also handles a directSubmitURL if one is present
+    //     (Presently the directSubmitURL only exists for journals).
 
     // Note: Disabled and Moribund Units/Series are also uniquely handled when coming in
     //   at a higher level from within WizardUnitComp and WizardSeriesComp (handled by WizardComp below)
     if (unit.type == 'journal' || ["moribund", "disabled", "hide"].includes(h.directSubmit)) {
-      wizard = (<WizardInertComp showModal={this.state.modalOpen}
+      wizard = (<WizardInertComp showModal={this.state.depositModalOpen}
                       parentSelector={()=>$('#wizardModalBase')[0]}
                       onCancel={e=>this.closeWizardModal(e)}
                       header={(unit.type == 'journal') ? unit.name : h.campusName+" Deposit"}
@@ -73,13 +78,23 @@ class SubheaderComp extends React.Component {
     } else {
       // If unit is a series, pass in its parent's unitID
       let [unitIDForWiz, unitNameForWiz] = (unit.type == 'oru') ? [unit.id, unit.name] : (unit.type.includes('series')) ? [h.ancestorID, h.ancestorName] : [null, null]
-      wizard = (<WizardComp showModal={this.state.modalOpen}
+      wizard = (<WizardComp showModal={this.state.depositModalOpen}
                   parentSelector={()=>$('#wizardModalBase')[0]}
                   onCancel={e=>this.closeWizardModal(e)}
                   campuses={h.campuses}
                   data={{campusID: h.campusID, campusName: h.campusName, unitID: unitIDForWiz, unitName: unitNameForWiz}}
                 />)
     }
+
+    let manageButton = <button id="wizardlyManage" className="o-button__3" onClick={(event)=>{
+                               this.setState({manageModalOpen:true})
+                               event.preventDefault()} } >
+                                Manage<span className="c-subheader__button-fragment">Submissions</span></button>
+    let manageWizard = (<WizardInertComp showModal={this.state.manageModalOpen}
+                          parentSelector={()=>$('#wizardModalBase')[0]}
+                          onCancel={e=>this.closeWizardModal(e)}
+                          header="Manage Submissions"
+                          type={unit.type} unit_id={unit.id} />)
     return (
       <div className="c-subheader">
         <CampusSelectorComp campusID={h.campusID}
@@ -91,14 +106,7 @@ class SubheaderComp extends React.Component {
           <img src={h.logo.url} width={h.logo.width} height={h.logo.height} alt={unit.name} />
         }
         </Link>
-      {unit.type == 'journal' ?
-        <div id="wizardModalBase" className="c-subheader__sidebar">
-          {depositButton}
-          {wizard}
-          <NotYetLink className="o-button__3" element="button">Manage<span className="c-subheader__button-fragment">Submissions</span></NotYetLink>
-        </div>
-      :
-        unit.type == 'campus' ?
+      {unit.type == 'campus' ?
         <div id="wizardModalBase" className="c-subheader__sidebar">
           {depositButton}
           {wizard}
@@ -107,7 +115,8 @@ class SubheaderComp extends React.Component {
         <div id="wizardModalBase" className="c-subheader__sidebar">
           {depositButton}
           {wizard}
-          <NotYetLink className="o-button__3" element="button">Manage<span className="c-subheader__button-fragment">Submissions</span></NotYetLink>
+          {manageButton}
+          {manageWizard}
         </div>
       }
       </div>

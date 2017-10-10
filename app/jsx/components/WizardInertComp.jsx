@@ -17,6 +17,23 @@ class HeaderComp extends React.Component {
   }
 }
 
+class ManageSubmissionsComp extends React.Component {
+  render() {
+    return (
+      <div className="c-wizard__step">
+        <HeaderComp header={this.props.header} closeModal={this.props.closeModal} />
+        <div className="c-wizard__heading"></div>
+        <div className="c-wizard__message">
+          <br/><br/>
+          <a className="c-wizard__external-link" href={"https://submit.escholarship.org/subi/directAdmin?target="+this.props.unit_id}>Log in to manage your submissions</a>
+          <br/><br/>
+        </div>
+        <footer></footer>
+      </div>
+    )
+  }
+}
+
 class ElementsComp extends React.Component {
   render() {
     return (
@@ -88,10 +105,11 @@ class WizardInertComp extends React.Component {
   static propTypes = {
     showModal: PropTypes.bool.isRequired,
     onCancel: PropTypes.any,
-    type: PropTypes.string.isRequired,
-    directSubmit: PropTypes.string.isRequired,
+    type: PropTypes.string,
+    directSubmit: PropTypes.string,
     directSubmitURL: PropTypes.string,
     header: PropTypes.string,
+    unit_id: PropTypes.string,
   }
 
   state = { showModal: this.props.showModal }
@@ -123,18 +141,20 @@ class WizardInertComp extends React.Component {
           overlayClassName="c-modal__overlay"
         >
           <div className="c-wizard">
-          {this.props.directSubmit == "disabled" ?
-             // Single use case here for lbnl
-             type == 'campus' ?
-               <ElementsComp header={this.props.header} closeModal={this.closeModal} />
-            :
-             <DisabledComp header={this.props.header} type={type} closeModal={this.closeModal} />
-           :
-           ["moribund", "hide"].includes(this.props.directSubmit) ?
-             <MoribundComp header={this.props.header} type={type} closeModal={this.closeModal} />
-            :
-            // If none of the above, assume it's a journal whose directSubmit is enabled
-             <JournalSubmissionComp header={this.props.header} directSubmitURL={this.props.directSubmitURL} closeModal={this.closeModal} />
+          {this.props.header == "Manage Submissions" ?
+            <ManageSubmissionsComp header={this.props.header} unit_id={this.props.unit_id} closeModal={this.closeModal} />
+            : this.props.directSubmit == "disabled" ?
+               // Single use case here for lbnl
+               type == 'campus' ?
+                 <ElementsComp header={this.props.header} closeModal={this.closeModal} />
+              :
+               <DisabledComp header={this.props.header} type={type} closeModal={this.closeModal} />
+             :
+             ["moribund", "hide"].includes(this.props.directSubmit) ?
+               <MoribundComp header={this.props.header} type={type} closeModal={this.closeModal} />
+              :
+              // If none of the above, assume it's a journal whose directSubmit is enabled
+               <JournalSubmissionComp header={this.props.header} directSubmitURL={this.props.directSubmitURL} closeModal={this.closeModal} />
           }
           </div>
         </ReactModal>

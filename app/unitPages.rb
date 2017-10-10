@@ -31,6 +31,7 @@ def checkImageSize(imgContext, dims, fileSize)
   maxWidth, maxHeight, maxK = case imgContext
     when 'slide';   [900,  500, 250]
     when 'logo';    [800,   90, 250]
+    when 'hero';    [1000, 400, 250]
     when 'sidebar'; [350,  700, 250]
     when 'content'; [900, 1800, 250]
     else raise("unrecognized imgContext #{imgContext.inspect}")
@@ -309,8 +310,7 @@ end
 # Get data for Campus Landing Page
 def getCampusLandingPageData(unit, attrs)
   return {
-    :contentCar1 => attrs['contentCar1'] ? {'mode': attrs['contentCar1']['mode'], 'data': getCampusCarousel(unit, attrs['contentCar1'])} : nil,
-    :contentCar2 => attrs['contentCar2'] ? {'mode': attrs['contentCar2']['mode'], 'data': getCampusCarousel(unit, attrs['contentCar2'])} : nil,
+    :hero => attrs['hero'],
     :campusStats => {
       :item_count =>    ($statsCampusItems.keys.include? unit.id)  ? $statsCampusItems[unit.id]     : 0,
       :view_count =>    ($statsCampusViews.keys.include? unit.id)  ? $statsCampusViews[unit.id]     : 0,
@@ -324,7 +324,9 @@ def getCampusLandingPageData(unit, attrs)
       # :all_opened_count => 0, 
       :all_journal_count => $statsCountEscholJournals,
       :all_oru_count =>    $statsCountOrus,
-    }
+    },
+    :contentCar1 => attrs['contentCar1'] ? {'mode': attrs['contentCar1']['mode'], 'data': getCampusCarousel(unit, attrs['contentCar1'])} : nil,
+    :contentCar2 => attrs['contentCar2'] ? {'mode': attrs['contentCar2']['mode'], 'data': getCampusCarousel(unit, attrs['contentCar2'])} : nil
   }
 end
 
@@ -480,6 +482,9 @@ def getUnitProfile(unit, attrs)
   end
   if unit.type == 'oru'
     profile[:seriesSelector] = true
+  end
+  if unit.type == 'campus'
+    profile[:hero] = attrs['hero']
   end
   return profile
 end
@@ -1049,6 +1054,16 @@ def carouselConfig(slides, unitID)
   carousel.save
 end
 
+def saveImage (name, unitID, data)
+  DB.transaction {
+    unit = Unit[unitID] or jsonHalt(404, "Unit not found")
+    unitAttrs = JSON.parse(unit.attrs)
+    unitAttrs[name] = data.to_a.collect{|x| [x[0].to_s, x[1]]}.to_h
+    unit.attrs = unitAttrs.to_json
+    unit.save
+  }
+end
+
 post "/api/unit/:unitID/upload" do |unitID|
   perms = getUserPermissions(params[:username], params[:token], unitID)
   perms[:admin] or halt(401)
@@ -1086,14 +1101,16 @@ post "/api/unit/:unitID/upload" do |unitID|
   # upload images for unit profile logo
   if params.has_key? :logo and params[:logo] != ""
     logo_data = putImage("logo", params[:logo][:tempfile].path, { original_path: params[:logo][:filename] })
-    DB.transaction {
-      unit = Unit[unitID] or jsonHalt(404, "Unit not found")
-      unitAttrs = JSON.parse(unit.attrs)
-      unitAttrs['logo'] = logo_data.to_a.collect{|x| [x[0].to_s, x[1]]}.to_h
-      unit.attrs = unitAttrs.to_json
-      unit.save
-    }
+    saveImage('logo', unitID, logo_data)
   elsif params[:logo] == ""
+    #REMOVE LOGO
+  end
+
+  # upload images for campus hero
+  if params.has_key? :hero and params[:hero] != ""
+    hero_data = putImage("hero", params[:hero][:tempfile].path, { original_path: params[:hero][:filename] })
+    saveImage('hero', unitID, hero_data)
+  elsif params[:hero] == ""
     #REMOVE LOGO
   end
 
