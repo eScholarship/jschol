@@ -7,6 +7,7 @@ import $ from 'jquery'
 import { Link } from 'react-router'
 import TruncationObj from '../objects/TruncationObj.jsx'
 import MediaListComp from '../components/MediaListComp.jsx'
+import ArbitraryHTMLComp from '../components/ArbitraryHTMLComp.jsx'
 
 class DotAuthorUl extends React.Component {
   render = () =>
@@ -95,7 +96,7 @@ class ScholWorksComp extends React.Component {
           </ul>
           <heading>
             <TruncationObj element={this.props.h} className="c-scholworks__heading">
-              <Link to={itemLink}>{pr.title}</Link>
+              <Link to={itemLink}><ArbitraryHTMLComp html={pr.title}/></Link>
             </TruncationObj>
           </heading>
           {authorList && 
@@ -113,7 +114,7 @@ class ScholWorksComp extends React.Component {
           }
           {pr.abstract && 
             <TruncationObj element="div" className="c-scholworks__abstract">
-              <p>{pr.abstract}</p>
+              <ArbitraryHTMLComp html={pr.abstract} h1Level={3}/>
             </TruncationObj>
           }
           <div className="c-scholworks__media">

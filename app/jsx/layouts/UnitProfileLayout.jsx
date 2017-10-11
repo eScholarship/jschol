@@ -3,6 +3,7 @@ import AboutComp from '../components/AboutComp.jsx'
 import WysiwygEditorComp from '../components/WysiwygEditorComp.jsx'
 import Form from 'react-router-form'
 import { Subscriber } from 'react-broadcast'
+import _ from 'lodash'
 
 class UnitProfileLayout extends React.Component {
   // static propTypes = {
@@ -88,6 +89,8 @@ class UnitProfileLayout extends React.Component {
              <main>
                <section className="o-columnbox1">
                  <Form to={`/api/unit/${this.props.unit.id}/profileContentConfig`} onSubmit={this.handleSubmit}>
+                   {/* Marker so that unitPages.rb can tell which section is being submitted */}
+                   <input type="hidden" name="unitConfigSection" defaultValue="yes"/>
                    <label className="c-editable-page__label" htmlFor="unitName">Name: {disableEdit ? "(restricted)" : ""}</label>
                    <input disabled={disableEdit} className="c-editable-page__input" id="unitName" type="text" defaultValue={data.name}
                            onChange={ event => this.setData({ name: event.target.value }) }/>
@@ -103,9 +106,7 @@ class UnitProfileLayout extends React.Component {
                       [<label key="0" className="c-editable-page__label" htmlFor="logoIsBanner">Suppress typeset site name next to logo: </label>,
                        <p key="1">Check the box below if your logo image contains the full, legible title of your site.</p>,
                        <input key="2" type="checkbox" id="logoIsBanner" name="logoIsBanner"
-                              defaultChecked={(data.logo && data.logo.is_banner) ? data.logo.is_banner : ""}/>] }
-                       {/* Force onSubmit to submit even if nothing is present (because checkbox unchecked results in nothing) */}
-                       <input type="hidden" name="logoExtra" defaultValue="off"/>
+                              defaultChecked={data.logo && data.logo.is_banner}/>] }
 
                       { this.props.unit.type == 'campus' &&
                        <div>
@@ -252,6 +253,7 @@ class UnitProfileLayout extends React.Component {
           <main>
             <section className="o-columnbox1">
               <Form to={`/api/unit/${this.props.unit.id}/profileContentConfig`} onSubmit={this.handleSubmit}>
+                <input type="hidden" name="journalConfigSection" defaultValue="yes"/>
                 <label className="c-editable-page__label" htmlFor="magazine_layout">Magazine layout?</label>
                 <input type="checkbox" id="magazine_layout" name="magazine_layout" defaultChecked={data.magazine_layout}/>
                 <p>(leave this unchecked for simple layout)</p>

@@ -5,6 +5,7 @@ import PropTypes from 'prop-types'
 import { Link } from 'react-router'
 import TruncationObj from '../objects/TruncationObj.jsx'
 import MediaListComp from '../components/MediaListComp.jsx'
+import ArbitraryHTMLComp from '../components/ArbitraryHTMLComp.jsx'
 
 class DotAuthorUl extends React.Component {
   render = () =>
@@ -43,7 +44,7 @@ class PubComp extends React.Component {
     return (
       <div className="c-pub">
         <TruncationObj element={this.props.h} className="c-pub__heading">
-          <Link to={itemLink}>{pr.title}</Link>
+          <Link to={itemLink}><ArbitraryHTMLComp html={pr.title}/></Link>
         </TruncationObj>
       {authorList && 
         <div className="c-authorlist">
@@ -60,7 +61,7 @@ class PubComp extends React.Component {
       }
       {pr.abstract && 
         <TruncationObj element="div" className="c-pub__abstract">
-          <p>{pr.abstract}</p>
+          <ArbitraryHTMLComp html={pr.abstract} h1Level={3}/>
         </TruncationObj>
       }
       {pr.supp_files && 

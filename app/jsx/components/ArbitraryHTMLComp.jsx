@@ -9,7 +9,7 @@ export default class ArbitraryHTMLComp extends React.Component
 {
   static propTypes = {
     html: PropTypes.string.isRequired,
-    h1Level: PropTypes.number.isRequired
+    h1Level: PropTypes.number // defaults to 3
   }
 
   // Attach script necessary for opening Deposit Wizard from any links defined as: http://open-deposit-wizard.com
@@ -24,8 +24,9 @@ export default class ArbitraryHTMLComp extends React.Component
 
   render() {
     let origText = this.props.html
+    let h1Level = this.props.h1Level ? this.props.h1Level : 3
     let fixedText = origText.replace(/(<\/?[hH])([1-9]+)/g, 
-                      (m, p1, p2) => p1 + (parseInt(p2) + this.props.h1Level - 1))
+                      (m, p1, p2) => p1 + (parseInt(p2) + h1Level - 1))
     // Kludge for opening deposit wizard modal 
     let fixedText2 = fixedText.replace(/<a href=\"http:\/\/open-deposit-wizard\.com\">/g, 
       '<a href="" onClick="openDepositWiz();">')

@@ -29,7 +29,7 @@ class Abstract extends React.Component {
     return (
       <details className="c-togglecontent" open>
         <summary>Abstract</summary>
-        <p>{this.props.abstract}</p>
+        <ArbitraryHTMLComp html={this.props.abstract} h1Level={3}/>
         {(this.props.unit.id.match(/^.*_postprints/)) &&
           <p className="c-well">Many UC-authored scholarly publications are freely available on this site because of the
             UC Academic Senate&apos;s Open Access Policy. <NotYetLink className="" element="a">Let us know how this access is important for you.</NotYetLink>
@@ -150,7 +150,7 @@ class TabMainComp extends React.Component {
                          supp_files={p.attrs.supp_files}
                          buy_link={p.attrs.buy_link}
                          download_restricted={p.download_restricted} />
-        <h2 className="c-tabcontent__main-heading" tabIndex="-1">{p.title}</h2>
+        <h2 className="c-tabcontent__main-heading" tabIndex="-1"><ArbitraryHTMLComp html={p.title}/></h2>
         <AuthorListComp pubdate={p.pub_date}
                         authors={p.authors}
                         changeTab={p.changeTab} />
