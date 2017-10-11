@@ -424,6 +424,7 @@ get %r{.*} do
   template.sub!("/js/app-bundle.js", "/js/#{webpackManifest["app.js"]}")
   template.sub!("/css/main.css", "/css/main-#{Digest::MD5.file("app/css/main.css").hexdigest[0,16]}.css")
 
+  # Isomorphic javascript rendering on the server
   if $serverConfig['isoPort']
     # Parse out payload of the URL (i.e. not including the host name)
     request.url =~ %r{^https?://([^/:]+)(:\d+)?(.*)$} or fail
@@ -444,10 +445,17 @@ get %r{.*} do
       return template
     end
 
-    # Read in the template file, and substitute the results from React/ReactRouter
-    lookFor = '<div id="main"></div>'
-    template.include?(lookFor) or raise("can't find #{lookFor.inspect} in template")
-    return template.sub(lookFor, response.body)
+    # Extract meta tags so we can put them in <head>
+    metaTags, body = "", response.body
+    if body =~ %r{<metaTags>(.*)</metaTags>(.*)$}m
+      metaTags, body = $1, $2
+      metaTags.gsub! "><", ">\n  <"  # add some newlines to make it look nice
+    end
+
+    # In the template, substitute the results from React/ReactRouter
+    template.sub!('<metaTags></metaTags>', metaTags) or raise("missing template section")
+    template.sub!('<div id="main"></div>', body) or raise("missing template section")
+    return template
   else
     # Development mode - skip iso
     return template
