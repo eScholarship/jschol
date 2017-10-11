@@ -58,16 +58,26 @@
   background-image: inline('../images/icon_pdf-teal.svg');
 }
 
-%o-textlink__external-link {
+%o-textlink__right-icon {
   @extend %o-textlink__secondary;
-  @extend %interactive-element-size;
   display: inline-flex;
   align-items: center;
-  padding-right: 1.6em;
+  padding-right: 1.7em;
   background: inline('../images/icon_external-link-teal.svg') no-repeat right center / 1.1em;
   font-weight: bold;
+  text-align: right;
 }
 
 .o-textlink__external-link {
-  @extend %o-textlink__external-link;
+  @extend %o-textlink__right-icon;
+}
+
+%o-textlink__right-arrow {
+  @extend %o-textlink__right-icon;
+  padding-right: 1.4em;
+  background-image: inline('../images/icon_angle-right-teal.svg');
+}
+
+.o-textlink__right-arrow {
+  @extend %o-textlink__right-arrow;
 }

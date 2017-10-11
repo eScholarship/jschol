@@ -19,7 +19,10 @@ class TextlinkObj extends React.Component {
           <a href="" className="o-textlink__left-icon">Left Icon Link</a>
         </div>
         <div>
-          <a href="" className="o-textlink__external-link-button">Deposit</a>
+          <a href="" className="o-textlink__external-link">External Link</a>
+        </div>
+        <div>
+          <a href="" className="o-textlink__right-arrow">Right Arrow</a>
         </div>
       </div>
     )

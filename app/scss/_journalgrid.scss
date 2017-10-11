@@ -1,0 +1,47 @@
+// ##### Journal Grid Component ##### //
+
+.c-journalgrid {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  margin: 0 $spacing-sm;
+  padding: 1px;
+  background-color: $color-light-gray;
+  grid-gap: 1px;
+  grid-template-columns: repeat(3, 1fr);
+
+  @supports (display: grid) {
+    display: grid;
+    align-items: stretch;
+  }
+
+  img {
+    width: 33%;
+    object-fit: cover;
+
+    @supports (display: grid) {
+      width: 100%;
+    }
+
+  }
+
+}
+
+.c-journalgrid__all {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 33%;
+  background-color: $color-white;
+
+  @supports (display: grid) {
+    width: 100%;
+  }
+
+  a {
+    @extend %o-textlink__secondary;
+    padding: $spacing-sm;
+    text-align: center;
+  }
+
+}

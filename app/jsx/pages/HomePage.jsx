@@ -5,8 +5,13 @@ import React from 'react'
 import PageBase from './PageBase.jsx'
 import Header1Comp from '../components/Header1Comp.jsx'
 import NavComp from '../components/NavComp.jsx'
+import Breakpoints from '../../js/breakpoints.json'
+import HeroComp from '../components/HeroComp.jsx'
+import TeaserComp from '../components/TeaserComp.jsx'
+import HomeSection1Comp from '../components/HomeSection1Comp.jsx'
+import HomeSection2Comp from '../components/HomeSection2Comp.jsx'
+import HomeSection3Comp from '../components/HomeSection3Comp.jsx'
 import FooterComp from '../components/FooterComp.jsx'
-import SidebarComp from '../components/SidebarComp.jsx'
 
 class HomePage extends PageBase
 {
@@ -26,39 +31,38 @@ class HomePage extends PageBase
         <div className="c-navbar">
           <NavComp data={data.header.nav_bar} />
         </div>
-        <div className="c-columns">
-          <main id="maincontent">
-            <section className="o-columnbox1">
-              <header>
-                <h1>Welcome to the eScholarship Beta Preview</h1>
-              </header>
-              <p>Use the links below to explore the site and provide feedback:</p>
-              <p>
-                <ul>
-                  <li><a href="/campuses">Explore Campus Sites</a></li>
-                  <li><a href="/journals">Explore eScholarship Journals</a></li>
-                  <li><a href="http://help.escholarship.org/support/solutions/articles/9000124100-using-the-site-editing-tool">Admins: Learn How to Customize Your Site</a></li>
-                  <li><a href="http://help.escholarship.org/support/discussions/9000052123">Share Your Feedback and Ideas</a></li>
-                  <li><a href="http://escholarship.org/">Return to the Public Site</a></li>
-                </ul>
-              </p>
-            </section>
-       {/*  <section className="o-columnbox1">
-              <header>
-                <h1>Statistics</h1>
-              </header>
-              <ul>
-                <li># of Items: {data.statsCountItems.toLocaleString()}</li>
-                <li># of Views: {data.statsCountViews.toLocaleString()}</li>
-                <li># of eSchol Journals: {data.statsCountEscholJournals.toLocaleString()}</li>
-                <li># of Research Units: {data.statsCountOrus.toLocaleString()}</li>
-                <li># of Articles: {data.statsCountArticles.toLocaleString()}</li>
-                <li># of Theses and Dissertations: {data.statsCountThesesDiss.toLocaleString()}</li>
-                <li># of Books: {data.statsCountBooks.toLocaleString()}</li>
-              </ul>
-            </section>  */}
-          </main>
-        </div>
+        <HeroComp />
+        <TeaserComp />
+        <section className="c-togglesection">
+          <header className={this.state.showSection1 ? 'c-togglesection__header--open' : 'c-togglesection__header'} hidden={this.state.isOpen}>
+            <h2>
+              <button onClick={()=> this.setState({showSection1: !this.state.showSection1})}>Why Open Access?</button>
+            </h2>
+          </header>
+          <div className="c-togglesection__content" hidden={!this.state.showSection1}>
+            <HomeSection1Comp />
+          </div>
+        </section>
+        <section className="c-togglesection">
+          <header className={this.state.showSection2 ? 'c-togglesection__header--open' : 'c-togglesection__header'} hidden={this.state.isOpen}>
+            <h2>
+              <button onClick={()=> this.setState({showSection2: !this.state.showSection2})}>eScholarship Repository</button>
+            </h2>
+          </header>
+          <div className="c-togglesection__content" hidden={!this.state.showSection2}>
+            <HomeSection2Comp />
+          </div>
+        </section>
+        <section className="c-togglesection">
+          <header className={this.state.showSection3 ? 'c-togglesection__header--open' : 'c-togglesection__header'} hidden={this.state.isOpen}>
+            <h2>
+              <button onClick={()=> this.setState({showSection3: !this.state.showSection3})}>eScholarship Publishing Services</button>
+            </h2>
+          </header>
+          <div className="c-togglesection__content" hidden={!this.state.showSection3}>
+            <HomeSection3Comp />
+          </div>
+        </section>
       </div>
     )
   }

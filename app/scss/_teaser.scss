@@ -1,0 +1,74 @@
+// ##### Teaser Component ##### //
+
+.c-teaser {
+  margin-bottom: $spacing-sm;
+  background-color: $color-white;
+  box-shadow: $box-shadow1;
+
+  @include bp(screen3) {
+    display: flex;
+    margin-bottom: $spacing-md;
+  }
+
+  section {
+    display: flex;
+    flex-direction: column;
+    padding: $spacing-sm;
+    background-color: $color-light-teal;
+
+    &:first-child {
+      margin-bottom: $spacing-sm / 2;
+    }
+
+    @include bp(screen3) {
+      flex: 1 1 50%;
+      margin-top: $spacing-sm;
+      padding: $spacing-lg;
+
+      &:first-child {
+        margin-right: $spacing-sm / 2;
+        margin-bottom: 0;
+      }
+
+      &:last-child {
+        margin-left: $spacing-sm / 2;
+      }
+
+    }
+
+    @include headings() {
+      margin-top: 0;
+      margin-bottom: 0.2em;
+      color: $color-teal;
+      font-size: 1em;
+      font-weight: bold;
+
+      @include bp(screen3) {
+        margin-bottom: 0.4em;
+        font-size: 1.6em;
+        font-weight: normal;
+      }
+
+    }
+
+    p {
+
+      @include bp(screen3) {
+        font-size: 1.1em;
+      }
+
+    }
+
+    a {
+      @extend %o-textlink__right-arrow;
+      align-self: center;
+
+      @include bp(screen3) {
+        font-size: 1.2em;
+      }
+
+    }
+
+  }
+
+}
