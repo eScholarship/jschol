@@ -9,6 +9,8 @@ import { Router, RouterContext, match }  from 'react-router'
 import decache                   from 'decache'
 import fs                        from 'fs'
 import readYaml                  from 'read-yaml'
+import MetaTagsServer            from 'react-meta-tags/server';
+import {MetaTagsContext}         from 'react-meta-tags';
 
 let serverConfig = readYaml.sync('config/server.yaml')
 
@@ -50,9 +52,11 @@ cluster(worker => {
       rc.props.location.host = req.get('host')
       var urls = []
       rc.props.location.urlsToFetch = urls
-      var renderedHTML = renderToString(rc)
+      let metaTagsInstance = MetaTagsServer()
+      let renderedHTML = renderToString(<MetaTagsContext extract = {metaTagsInstance.extract}>{rc}</MetaTagsContext>)
+      let meta = metaTagsInstance.renderToString()
       if (urls.length == 0)
-        res.send("<div id=\"main\">" + renderedHTML + "</div>")
+        res.send(`<metaTags>${meta}</metaTags>\n<div id=\"main\">${renderedHTML}</div>`)
       else if (urls.length == 1)
       {
         var partialURL = urls[0]
@@ -99,8 +103,11 @@ cluster(worker => {
               rc.props.location.urlsFetched = {}
               rc.props.location.urlsFetched[partialURL] = response
 
-              renderedHTML = renderToString(rc)
+              metaTagsInstance = MetaTagsServer()
+              renderedHTML = renderToString(<MetaTagsContext extract = {metaTagsInstance.extract}>{rc}</MetaTagsContext>)
+              meta = metaTagsInstance.renderToString()
               res.status(ajaxResp.statusCode).send(
+                "<metaTags>" + meta + "</metaTags>\n" +
                 "<script>window.jscholApp_initialPageData = " + json + ";</script>\n" +
                 "<div id=\"main\">" + renderedHTML + "</div>")
             }

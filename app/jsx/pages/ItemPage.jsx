@@ -3,6 +3,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import $ from 'jquery'
+import MetaTags from 'react-meta-tags';
 
 import PageBase from './PageBase.jsx'
 import Header2Comp from '../components/Header2Comp.jsx'
@@ -68,6 +69,16 @@ class ItemPage extends PageBase {
     let currentTab = tab_anchors.includes(this.state.currentTab) ? this.state.currentTab : "main" 
     return (
       <div>
+        <MetaTags>
+          {/* Andy - meta tags go below.
+
+             Note: if/when we work on page titles, they have to be everywhere all at once, and
+             remove <title> tag from app/app.html
+          */}
+          <meta id="meta-description" name="description" content="Some description." />
+          <meta id="og-title" property="og:title" content="MyApp" />
+          <meta id="og-image" property="og:image" content="path/to/image.jpg" />
+        </MetaTags>
         <Header2Comp type={data.unit ? data.unit.type: null}
                      unitID={(data.appearsIn && data.appearsIn.length > 0) ? data.appearsIn[0]["id"] : null } />
         {/* Some items have no parent unit, so check for empty data.header */}
