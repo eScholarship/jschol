@@ -1,0 +1,117 @@
+// ##### Home Section 1 Component ##### //
+
+.c-homesection1 {
+  display: grid;
+  padding: $spacing-sm;
+  grid-template-columns: 1fr;
+  grid-gap: $spacing-sm;
+
+  @include bp(screen3) {
+    padding: $spacing-lg;
+    background: inline('../images/world-map-teal.svg') no-repeat center / contain;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto 1fr auto;
+    grid-gap: $spacing-lg;
+  }
+
+  .o-stat {
+    margin-bottom: $spacing-sm;
+
+    @include bp(screen3) {
+      margin-bottom: 0;
+      grid-column: 2;
+      grid-row: 3 / 4;
+    }
+
+  }
+
+}
+
+.c-homesection1__heading {
+  display: none;
+
+  @include bp(screen3) {
+    display: block;
+    margin: 0 0 $spacing-md;
+    font-size: 2em;
+    font-weight: normal;
+    text-align: center;
+    grid-column: 1 / 3;
+
+    @supports (display: grid) {
+      margin: 0;
+    }
+
+  }
+
+}
+
+.c-homesection1__description {
+
+  @include bp(screen3) {
+    grid-row: 2 / 4;
+  }
+
+  @include headings() {
+    margin-top: 0;
+    margin-bottom: 0.2em;
+    color: $color-teal;
+    font-size: 1em;
+    font-weight: bold;
+
+    &:not(:first-of-type) {
+      margin-top: 1em;
+    }
+
+    @include bp(screen3) {
+      margin-bottom: 0.4em;
+      font-size: 1.6em;
+      font-weight: normal;
+    }
+
+  }
+
+  p {
+
+    @include bp(screen3) {
+      font-size: 1.1em;
+    }
+
+  }
+
+}
+
+.c-homesection1__stat-heading {
+  margin: 0 0 $spacing-sm;
+  font-size: 1em;
+  font-weight: bold;
+  justify-self: center;
+
+  @include bp(screen3) {
+    margin: $spacing-md 0;
+    font-size: 1.6em;
+    font-weight: normal;
+    grid-column: 2;
+    grid-row: 2 / 3;
+    justify-self: start;
+
+    @supports (display: grid) {
+      margin: 0;
+    }
+
+  }
+
+}
+
+.c-homesection1__more {
+  @extend %o-textlink__right-arrow;
+  margin-bottom: $spacing-sm;
+  justify-self: center;
+
+  @include bp(screen3) {
+    margin-bottom: 0;
+    font-size: 1.2em;
+    grid-column: 1 / 3;
+  }
+
+}

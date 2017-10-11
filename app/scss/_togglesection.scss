@@ -1,0 +1,47 @@
+// ##### Toggle Section Component ##### //
+
+.c-togglesection {
+  margin-bottom: $spacing-sm;
+
+  @include bp(screen3) {
+    margin-bottom: $spacing-md;
+  }
+
+}
+
+%c-togglesection__header {
+  background: $color-light-gray no-repeat left $spacing-sm center / 1em;
+
+  @include headings() {
+    display: flex;
+    margin: 0;
+    font-size: 1.2em;
+    font-weight: normal;
+  }
+
+  button {
+    @extend %interactive-element-size;
+    flex: 1 0 auto;
+    padding: 0 $spacing-sm 0 2.3rem;
+    border: none;
+    background: none;
+    text-align: left;
+    user-select: none;
+  }
+
+}
+
+.c-togglesection__header {
+  @extend %c-togglesection__header;
+  background-image: inline('../images/icon_plus-black.svg');
+}
+
+.c-togglesection__header--open {
+  @extend %c-togglesection__header;
+  background-image: inline('../images/icon_minus-black.svg');
+}
+
+.c-togglesection__content {
+  background-color: $color-white;
+  box-shadow: $box-shadow1;
+}

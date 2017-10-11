@@ -214,7 +214,7 @@ $wizard-nav-icon-size: 1.5em;
 }
 
 .c-wizard__external-link {
-  @extend %o-textlink__external-link;
+  @extend %o-textlink__right-icon;
   display: inline-flex;
   align-items: center;
   margin: 0 $spacing-md;

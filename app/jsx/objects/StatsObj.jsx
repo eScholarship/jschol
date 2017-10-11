@@ -5,10 +5,7 @@ import React from 'react'
 class StatsObj extends React.Component {
   render() {
     return (
-      <div>
-
-        <h2>Statistics Objects Used within Campus Landing Page Carousels</h2>
-
+      <div className="o-stat"> {/* This parent element not used within carousels */}
         <div className="o-stat--item">
           <a href="">24,844</a> Items
         </div>
@@ -24,7 +21,6 @@ class StatsObj extends React.Component {
         <div className="o-stat--units">
           <a href="">119</a> Research Units
         </div>
-
       </div>
     )
   }

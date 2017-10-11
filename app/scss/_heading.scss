@@ -77,3 +77,15 @@
 .o-heading4 {
   @extend %o-heading4;
 }
+
+%o-heading4a {
+  @extend %o-heading;
+  margin-bottom: $spacing-sm;
+  color: $color-teal;
+  font-size: 1em;
+  font-weight: bold;
+}
+
+.o-heading4a {
+  @extend %o-heading4a;
+}

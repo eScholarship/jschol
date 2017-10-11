@@ -1,5 +1,4 @@
 import React from 'react'
-import AboutComp from '../components/AboutComp.jsx'
 import WysiwygEditorComp from '../components/WysiwygEditorComp.jsx'
 import Form from 'react-router-form'
 import { Subscriber } from 'react-broadcast'
@@ -183,7 +182,9 @@ class UnitProfileLayout extends React.Component {
                   <input className="c-editable-page__input" id="twitter" name="twitter" type="text" defaultValue={data.twitter}
                           onChange={ event => this.setData({ twitter: event.target.value }) }/>
 
-                  <button type="submit">Save Changes</button> <button type="reset">Cancel</button>
+                  <button type="submit">Save Changes</button>
+                {/* Not using this right now
+                  <button type="reset">Cancel</button>   */}
                 </Form>
               </div>
             </section>
@@ -199,9 +200,6 @@ class UnitProfileLayout extends React.Component {
     return (
       <div>
         <h3 id="marquee">About Text</h3>
-      {data.marquee.about && data.marquee.about!="<div></div>" &&
-        <AboutComp about={data.marquee.about} />
-      }
         <div className="c-columns">
           <main>
             <section className="o-columnbox1">
@@ -212,9 +210,11 @@ class UnitProfileLayout extends React.Component {
                     html={aboutText} unit={this.props.unit.id}
                     onChange={ newText => this.setMarqueeData({about: newText}) }
                     buttons={[
-                              ['strong', 'em', 'underline', 'link'], 
+                              ['strong', 'em', 'underline', 'link', 'superscript', 'subscript'], 
                              ]} />
-                <button type="submit">Save Changes</button> <button type="reset">Cancel</button>
+                <button type="submit">Save Changes</button>
+              {/* Not using this right now
+                <button type="reset">Cancel</button>  */}
               </Form>
             </section>
           </main>
@@ -267,7 +267,9 @@ class UnitProfileLayout extends React.Component {
                        defaultChecked={data.issue_rule=="secondMostRecent"}/>
                 <label className="c-editable-page__radio-label" htmlFor="issueRuleSecondMostRecent">Second-most recent issue</label>
                 <br/><br/>
-                <button>Save Changes</button> <button>Cancel</button>
+                <button>Save Changes</button>
+              {/* Not using this right now
+                <button>Cancel</button> */}
               </Form>
             </section>
           </main>

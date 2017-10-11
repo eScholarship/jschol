@@ -577,5 +577,25 @@ As well as:
   modified:   app/jsx/pages/SearchPage.jsx
   new file:   app/jsx/layouts/HomeLayout.jsx
 
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's 12960373f138dbb9109f702c563847225aabd600, 2017-10-11 <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+Andy added all scss and image changes since last.
+As well as:
+
+  modified:   app/jsx/layouts/HomeLayout.jsx
+  modified:   app/jsx/objects/HeadingObj.jsx
+  modified:   app/jsx/objects/StatsObj.jsx
+  modified:   app/jsx/objects/TextlinkObj.jsx
+
+  new file:   app/jsx/components/HeroComp.jsx
+  new file:   app/jsx/components/HomeSection1Comp.jsx
+  new file:   app/jsx/components/HomeSection2Comp.jsx
+  new file:   app/jsx/components/HomeSection3Comp.jsx
+  new file:   app/jsx/components/JournalGridComp.jsx
+  new file:   app/jsx/components/TeaserComp.jsx
+  new file:   app/jsx/components/ToggleSectionComp.jsx
+
 
 
