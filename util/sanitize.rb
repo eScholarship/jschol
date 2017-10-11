@@ -17,6 +17,9 @@ end
 # defense.
 def sanitizeHTML(htmlFragment)
 
+  # Shorten escholarship.org links to top-level relative
+  htmlFragment.gsub! %r{ (href|src)="https?://(pub-jschol[^\."]+\.|www\.)?escholarship.org/?([^"]*)"}, ' \1="/\3"'
+
   if htmlFragment =~ /&/
     # Translate all entities.
     htmlFragment = translateEntities(htmlFragment)
