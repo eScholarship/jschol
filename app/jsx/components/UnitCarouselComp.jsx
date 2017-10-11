@@ -4,6 +4,7 @@ import $ from 'jquery'
 import PropTypes from 'prop-types'
 import CarouselComp from '../components/CarouselComp.jsx'
 import { Link } from 'react-router'
+import ArbitraryHTMLComp from "../components/ArbitraryHTMLComp.jsx"
 
 // Load dotdotdot in browser but not server
 if (!(typeof document === "undefined")) {
@@ -34,7 +35,7 @@ class UnitCarouselItem extends React.Component {
       <div className="o-itemcarousel__item">
           <a href={itemLink} className={"o-unititem--" + this.props.orientation}>
             <div className="o-unititem__type--article">{pr.genre}</div>
-            <div className="o-unititem__title">{pr.title}</div>
+            <div className="o-unititem__title"><ArbitraryHTMLComp html={pr.title}/></div>
           {authorList &&
             <ul className="o-unititem__author">
               {authorList}
