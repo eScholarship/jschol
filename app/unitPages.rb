@@ -942,22 +942,23 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
 
     if params['data']['unitName'] then unit.name = params['data']['unitName'] end
 
-    if unitAttrs['logo']
-      params['data']['logoIsBanner'] ? unitAttrs['logo']['is_banner'] = true : unitAttrs['logo'].delete('is_banner')
+    # Only change unit config flags if the that section is being saved -- avoids clearing them accidentally
+    if params['data']['unitConfigSection']
+      if unitAttrs['logo']
+        unitAttrs['logo']['is_banner'] = params['data']['logoIsBanner'] == 'on'
+      end
+
+      # Certain elements can only be changed by super user
+      if perms[:super]
+        unitAttrs['doaj'] = (params['data']['doajSeal'] == 'on')
+        unitAttrs['altmetrics_ok'] = (params['data']['altmetrics_ok'] == 'on')
+      end
     end
 
-    # Certain elements can only be changed by super user
-    if perms[:super]
-      if params['data']['doajSeal'] == 'on'
-        unitAttrs['doaj'] = true
-      else
-        unitAttrs.delete('doaj')
-      end
-      if params['data']['altmetrics_ok'] == 'on'
-        unitAttrs['altmetrics_ok'] = true
-      else
-        unitAttrs.delete('altmetrics_ok')
-      end
+    # Likewise, only change journal flags if journal section is being saved
+    if params['data']['journalConfigSection']
+      unitAttrs['magazine_layout'] = (params['data']['magazine_layout'] == "on")
+      unitAttrs['issue_rule'] = (params['data']['issue_rule'] == "secondMostRecent") ? "secondMostRecent" : nil
     end
 
     if params['data']['issn'] then unitAttrs['issn'] = params['data']['issn'] end
@@ -968,18 +969,7 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
 
     if params['data']['about'] then unitAttrs['about'] = params['data']['about'] end
 
-    if params['data']['magazine_layout'] == "on"
-      unitAttrs['magazine_layout'] = true
-    else
-      unitAttrs.delete('magazine_layout')
-    end
-
-    if params['data']['issue_rule'] == "secondMostRecent"
-      unitAttrs['issue_rule'] = "secondMostRecent"
-    else
-      unitAttrs.delete('issue_rule')
-    end
-    unitAttrs.delete_if {|k,v| v.is_a? String and v.empty? }  
+    unitAttrs.delete_if {|k,v| (v.is_a? String and v.empty?) || (v == false) || v.nil? }
     unit.attrs = unitAttrs.to_json
     unit.save
   }
