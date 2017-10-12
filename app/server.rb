@@ -208,6 +208,9 @@ class DisplayPDF < Sequel::Model
   unrestrict_primary_key
 end
 
+class Redirect < Sequel::Model
+end
+
 # DbCache uses the models above.
 require_relative 'dbCache'
 
@@ -238,6 +241,18 @@ require_relative 'dbCache'
 $ipFilter = File.exist?("config/allowed_ips") && Regexp.new(File.read("config/allowed_ips").strip)
 before do
   $ipFilter && !$ipFilter.match(request.ip) and halt 403
+  if ["www.escholarship.org", "pvw.escholarship.org", "eprints.cdlib.org"].include?(request.host)
+    redirect to("#{request.scheme}://escholarship.org#{request.path}#{request.query_string.empty? ? "" : "?#{request.query_string}"}"), 301
+  elsif request.path =~ %r{/uc/item/([^/]+)}
+    itemID, remainder = $1, $2
+    if (redir = Redirect.where(kind: "item", from_path: "/uc/item/#{itemID}").first)
+      redirect to("#{request.scheme}://escholarship.org#{redir.to_path}#{remainder}"), 301
+    elsif !request.query_string.empty?
+      redirect to("#{request.scheme}://escholarship.org/uc/item/#{itemID}"), 301
+    elsif remainder =~ %r{/.*} && !request.url.include?(request.referer)
+      redirect to("#{request.scheme}://escholarship.org/uc/item/#{itemID}"), 303
+    end
+  end
 end
 
 ###################################################################################################
