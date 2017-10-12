@@ -410,15 +410,19 @@ end
 # The outer framework of every page is essentially the same, substituting in the intial page
 # data and initial elements from React.
 get %r{.*} do
-
   # The regex below ensures that /api, /content, /locale, and files with a file ext get served
   # elsewhere.
-  pass if request.path_info =~ %r{api/.*|content/.*|locale/.*|.*\.\w{1,4}}
+  if request.path_info =~ %r{api/.*|content/.*|locale/.*|.*\.\w{1,4}}
+    pass
+  else
+    generalResponse
+  end
+end
 
-  template = File.new("app/app.html").read
-
+###################################################################################################
+def generalResponse
   # Replace startup URLs for proper cache busting
-  # TODO: speed this up by caching (if it's too slow)
+  template = File.new("app/app.html").read
   webpackManifest = JSON.parse(File.read('app/js/manifest.json'))
   template.sub!("/js/lib-bundle.js", "/js/#{webpackManifest["lib.js"]}")
   template.sub!("/js/app-bundle.js", "/js/#{webpackManifest["app.js"]}")
@@ -439,7 +443,6 @@ get %r{.*} do
       puts "Warning: unexpected exception (not HTTP error) from iso: #{e} #{e.backtrace}"
       return template
     end
-    status response.code.to_i
     if response.code.to_i != 200
       # For all error pages, fall back to non-ISO since we don't know how to render it here.
       return template
@@ -452,6 +455,13 @@ get %r{.*} do
       metaTags.gsub! "><", ">\n  <"  # add some newlines to make it look nice
     end
 
+    # Put proper HTTP code on server error pages
+    if body =~ %r{<div [^>]*id="serverError"[^>]*>([^<]+)</div>}
+      status $1 =~ /Not Found/i ? 404 : 500
+    else
+      status 200
+    end
+
     # In the template, substitute the results from React/ReactRouter
     template.sub!('<metaTags></metaTags>', metaTags) or raise("missing template section")
     template.sub!('<div id="main"></div>', body) or raise("missing template section")
@@ -462,8 +472,13 @@ get %r{.*} do
   end
 end
 
+# Not found errors on /content, /api, etc.
+not_found do
+  generalResponse  # handles 404's in the same isomorphic fashion as other requests
+end
+
 ###################################################################################################
-# Pages with no data
+# Pages with no data except header/footer stuff
 get %r{/api/(notFound|logoutSuccess)} do
   content_type :json
   unit = $unitsHash['root']
