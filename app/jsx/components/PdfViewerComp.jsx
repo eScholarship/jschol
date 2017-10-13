@@ -21,13 +21,11 @@ class PdfViewerComp extends React.Component
 
   // Re-initialize when loading new item 
   componentWillReceiveProps(nextProps) {
-    console.log("willReceiveProps")
     this.initted = (this.props.url == nextProps.url)
   }
 
   // Re-initialize on back button
   componentDidMount() {
-    console.log("did mount")
     window.onpopstate = (event) => {
       this.initted = false
     }
@@ -35,9 +33,9 @@ class PdfViewerComp extends React.Component
 
   // Close out when disappearing
   componentWillUnmount() {
-    console.log("will unmount")
-    if (window.webViewerUnload)
+    if (window.webViewerUnload) {
       window.webViewerUnload()
+    }
   }
 
   render = () =>
@@ -50,7 +48,6 @@ class PdfViewerComp extends React.Component
   initViewer(compDiv) {
     if (this.initted)
       return
-    console.log("initViewer")
     this.initted = true
     var url = this.props.url;
 
