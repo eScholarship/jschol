@@ -38,10 +38,8 @@ export default class DropdownMenu extends React.Component {
                onBlur={this.onBlur}
                ref={(domNode)=> this.summary = domNode}
                onClick = {(event)=>{
-                 setTimeout(()=>{
-                   this.setState({isOpen: !this.details.open})
-                   this.summary.focus() // Firefox fails to do this by default
-                 }, 0)
+                 this.setState({isOpen: !this.details.open})
+                 this.summary.focus() // Firefox fails to do this by default
                  event.preventDefault()
                }}>
         { this.props.summarySpan &&

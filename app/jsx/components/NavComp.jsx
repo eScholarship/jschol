@@ -25,23 +25,17 @@ class NavComp extends React.Component {
       this.widthChange()
     }
   }
-  componentDidMount() {
-    this.mounted = true
-  }
-  componentWillUnmount() {
-    this.mounted = false
-  }
   widthChange = ()=> {
     this.setState({isOpen: this.mq.matches})
   }
 
-  onItemClick = () => setTimeout(()=>{ if (this.mounted) this.setState({submenuActive: null}) }, 0)
+  onNavClick = () => this.state = {submenuActive: null, isOpen: false}
 
   getNavItemJSX(navItem) {
     if (navItem.type == "link")
-      return (<a href={navItem.url} onClick={this.onItemClick} key={navItem.id}>{navItem.name}</a>)
+      return (<a href={navItem.url} onClick={this.onNavClick} key={navItem.id}>{navItem.name}</a>)
     else
-      return (<Link to={navItem.url} onClick={this.onItemClick} key={navItem.id}>{navItem.name}</Link>)
+      return (<Link to={navItem.url} onClick={this.onNavClick} key={navItem.id}>{navItem.name}</Link>)
   }
 
   render() {
