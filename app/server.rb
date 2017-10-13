@@ -241,18 +241,107 @@ require_relative 'dbCache'
 $ipFilter = File.exist?("config/allowed_ips") && Regexp.new(File.read("config/allowed_ips").strip)
 before do
   $ipFilter && !$ipFilter.match(request.ip) and halt 403
-  if ["www.escholarship.org", "pvw.escholarship.org", "eprints.cdlib.org"].include?(request.host)
-    redirect to("#{request.scheme}://escholarship.org#{request.path}#{request.query_string.empty? ? "" : "?#{request.query_string}"}"), 301
-  elsif request.path =~ %r{/uc/item/([^/]+)}
-    itemID, remainder = $1, $2
-    if (redir = Redirect.where(kind: "item", from_path: "/uc/item/#{itemID}").first)
-      redirect to("#{request.scheme}://escholarship.org#{redir.to_path}#{remainder}"), 301
-    elsif !request.query_string.empty?
-      redirect to("#{request.scheme}://escholarship.org/uc/item/#{itemID}"), 301
-    elsif remainder =~ %r{/.*} && !request.url.include?(request.referer)
-      redirect to("#{request.scheme}://escholarship.org/uc/item/#{itemID}"), 303
+  query = request.query_string.empty? ? "" : "?#{request.query_string}"
+  if request.path.include?(".php")  # We have no PHP on our site. These are almost always attacks anyhow
+    halt 404
+  elsif ["www.escholarship.org", "pvw.escholarship.org", "eprints.cdlib.org", "escholarship.cdlib.org"].include?(request.host)
+    redirect to("https://escholarship.org#{request.path}#{query}"), 301
+  elsif request.path =~ %r{^/uc/item/(\w+)(.*)}
+    return if handleItemRedirect(request, query, $1, $2)
+  elsif request.path =~ %r{^/editions/(.*)}
+    remainder = $1
+    redirect to("https://publishing.cdlib.org/ucpressebooks/#{remainder}#{query}"), 301
+  elsif request.path =~ %r{/uc/search}
+    handleSearchRedirect(request, query)
+  elsif request.path =~ %r{^/uc/([^/]+)(.*)}
+    unit, remainder = $1, $2
+    if (redir = Redirect.where(kind: "unit", from_path: "/uc/#{unit}").first)
+      redirect to("https://escholarship.org#{redir.to_path}#{remainder}"), 301
+    end
+  elsif request.host == "repositories.cdlib.org"
+    handleBepressRedirect(request, query)
+  elsif request.host =~ /dermatology(-s10)?.cdlib.org/
+    handleDojRedirect(request, query)
+  end
+end
+
+###################################################################################################
+def handleItemRedirect(request, query, itemID, remainder)
+  if (redir = Redirect.where(kind: "item", from_path: "/uc/item/#{itemID}").first)
+    redirect to("https://escholarship.org#{redir.to_path}#{remainder}"), 301
+  elsif !request.query_string.empty?
+    redirect to("https://escholarship.org/uc/item/#{itemID}"), 301
+  elsif remainder =~ %r{^/.*} && (request.referer.nil? || !request.url.include?(request.referer))
+    redirect to("https://escholarship.org/uc/item/#{itemID}"), 303
+  elsif remainder =~ %r{^\.pdf}
+    if $cloudFrontConfig
+      redirect to("#{$cloudFrontConfig['public-url']}/content/qt#{itemID}/qt#{itemID}.pdf"), 303
+    else
+      redirect to("https://escholarship.org/content/qt#{itemID}/qt#{itemID}.pdf"), 303
     end
   end
+end
+
+###################################################################################################
+def handleSearchRedirect(request, query)
+  if query =~ %r{\?entity=([\w_]+)$}
+    unit = $1
+    redirect to("https://escholarship.org/uc/#{unit}"), 301
+  elsif query =~ %r{\?entity=([\w_]+);volume=([^;]+);issue=([^;]+)$}
+    unit, vol, iss = $1, $2, $3
+    redirect to("https://escholarship.org/uc/#{unit}/#{vol}/#{iss}"), 301
+  elsif query =~ %r{keyword=([^;]+)}
+    stuff = $1
+    redirect to("https://escholarship.org/search?q=#{stuff}"), 301
+  else
+    halt 401
+  end
+end
+
+###################################################################################################
+def handleBepressRedirect(request, query)
+  # Clean up the path a bit, then add the query
+  path = (request.path.sub(%{^//},'/').sub(%r{/+$},'')) + query
+  path.sub! '&amp;', '&'
+
+  # Ordering sometimes nonstandard
+  path.sub! %r{^/cgi/viewcontent.cgi\?article=([^&]+)&context=(.*)}, '/cgi/viewcontent.cgi?context=\2&article=\1'
+  path.sub! %r{^/context/(.*)/article/(.*)/type/pdf/viewcontent}, '/cgi/viewcontent.cgi?context=\1&article=\2'
+
+  # Remove more and more of the path, looking for an article or ORU match
+  while path.length > 1
+    puts "attempt #{path}"
+    if (redir = Redirect.where(kind: "bepress", from_path: path).first)
+      redirect to("https://escholarship.org#{redir.to_path}"), 301
+      return
+    end
+    path.sub!(%r{/[^/]+$},'')
+  end
+
+  # Fallback - see if there's any context that would lead to a unit
+  if (request.path + query) =~ %r{context[=/]([^/&]=)}
+    unit = $1
+    redirect to("https://escholarship.org#{$unitsHash[unit] ? "/#{unit}" : ""}"), 301
+  else
+    redirect to("https://escholarship.org"), 301
+  end
+end
+
+###################################################################################################
+def handleDojRedirect(request, query)
+  path = request.path
+  variations = [path,
+                "#{path}/index.html",
+                "#{path}/index.htm",
+                path.sub(%r{/[^/]+$}, "/_catch_all"),
+                path.sub(%r{/[^/]+/[^/]+$}, "/_catch_all"),
+                path.sub(%r{/[^/]+/[^/]+/[^/]+$}, "/_catch_all")]
+  variations.each { |var|
+    if (redir = Redirect.where(kind: "doj", from_path: var).first)
+      redirect to("https://escholarship.org#{redir.to_path}"), 301
+    end
+  }
+  redirect to("https://escholarship.org/uc/doj"), 301
 end
 
 ###################################################################################################
@@ -344,11 +433,13 @@ get "/content/:fullItemID/*" do |itemID, path|
   # Control how long this remains in browser and CloudFront caches
   cache_control :public, :max_age => 3600   # maybe more?
 
-  # Allow cross-origin requests so that main site and CloudFront cache can co-operate
+  # Allow cross-origin requests so that main site and CloudFront cache can co-operate. Also, let
+  # crawlers know that the canonical URL is the item page.
   headers "Access-Control-Allow-Origin" => "*",
           "Access-Control-Allow-Headers" => "Range",
           "Access-Control-Expose-Headers" => "Accept-Ranges, Content-Encoding, Content-Length, Content-Range",
-          "Access-Control-Allow-Methods" => "GET, OPTIONS"
+          "Access-Control-Allow-Methods" => "GET, OPTIONS",
+          "Link" => "<https://escholarship.org/uc/item/#{itemID.sub(/^qt/,'')}>; rel=\"canonical\""
 
   # Stream supp files out directly from Merritt. Also, if there's no display PDF, fall back
   # to the version in Merritt.
