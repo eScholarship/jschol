@@ -7,25 +7,8 @@
 import React from 'react'
 import ShareComp from '../components/ShareComp.jsx'
 import NotYetLink from '../components/NotYetLink.jsx'
+import DropdownMenu from '../components/DropdownMenu.jsx'
 
-class ItemActionsComp extends React.Component {
-  render() {
-    let p = this.props
-    return (
-      <div>
-        {(["withdrawn", "embargoed"].includes(p.status) || !p.content_type) ?
-           <Undownloadable id={p.id} />
-         :
-           <Downloadable id={p.id}
-                         content_type={p.content_type}
-                         supp_files={p.supp_files}
-                         buy_link={p.buy_link}
-                         download_restricted={p.download_restricted}/>}
-      </div>
-    )
-  }
-}
-        
 class Downloadable extends React.Component {
   linkBuyPrint = () => {window.location = this.props.buy_link}
 
@@ -33,7 +16,7 @@ class Downloadable extends React.Component {
     let p = this.props,
       contentVars = content_type => {
         let v = {
-          'application/pdf': () => [ 'PDF', "/content/qt" + p.id + "/qt" + p.id + ".pdf", '.pdf' ],
+          'application/pdf': () => [ 'PDF', p.pdf_url, '.pdf' ],
           'text/html':       () => [ 'HTML', '' , '.html' ],
           'default':         () => [ 'Content', '' , '' ]
         }
@@ -50,8 +33,7 @@ class Downloadable extends React.Component {
           { p.download_restricted
             ? <a href="" className="o-download__button" onClick={()=>{alert("Download restricted until " + p.download_restricted); return false}}>Download {label}</a>
             : <a href={url} className="o-download__button" download={filename}>Download {label}</a> }
-          <details className="o-download__formats">
-            <summary aria-label="formats"></summary>
+          <DropdownMenu detailsClass="o-download__formats" ariaLabel="formats">
             <ul className="o-download__nested-menu">
             {p.content_type && ["HTML", "PDF"].includes(label) &&
               <li className="o-download__nested-list1">
@@ -74,7 +56,7 @@ class Downloadable extends React.Component {
               <li className="o-download__nested-list2">
                 Citation
                 <ul>
-          {/*     <li><NotYetLink element="a">RIS</NotYetLink></li> 
+          {/*     <li><NotYetLink element="a">RIS</NotYetLink></li>
                   <li><NotYetLink element="a">BibText</NotYetLink></li>   */}
                   <li><NotYetLink element="a">EndNote</NotYetLink></li>
           {/*     <li><NotYetLink element="a">RefWorks</NotYetLink></li>  */}
@@ -94,7 +76,7 @@ class Downloadable extends React.Component {
               </li>
           */}
             </ul>
-          </details>
+          </DropdownMenu>
         </div>
       {p.buy_link &&
         <button onClick={() => {this.linkBuyPrint()}} className="c-itemactions__button-print">Buy in Print</button>
@@ -118,4 +100,18 @@ class Undownloadable extends React.Component {
   }
 }
 
+class ItemActionsComp extends React.Component {
+  render() {
+    let p = this.props
+    return (
+      <div>
+        {(["withdrawn", "embargoed"].includes(p.status) || !p.content_type) ?
+           <Undownloadable id={p.id} />
+         :
+           <Downloadable {...p} />}
+      </div>
+    )
+  }
+}
+        
 module.exports = ItemActionsComp;

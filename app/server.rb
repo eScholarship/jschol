@@ -734,6 +734,8 @@ get "/api/item/:shortArk" do |shortArk|
   attrs = JSON.parse(Item.filter(:id => id).map(:attrs)[0])
   unitIDs = UnitItem.where(:item_id => id, :is_direct => true).order(:ordering_of_units).select_map(:unit_id)
   unit = unitIDs ? Unit[unitIDs[0]] : nil
+  content_prefix = $cloudFrontConfig ? $cloudFrontConfig['public-url'] : ""
+  pdf_url = item.content_type == "application/pdf" ? content_prefix+"/content/"+id+"/"+id+".pdf" : nil
 
   if !item.nil?
     authors = ItemAuthors.filter(:item_id => id).order(:ordering).
@@ -747,12 +749,15 @@ get "/api/item/:shortArk" do |shortArk|
         # ToDo: Normalize author attributes across all components (i.e. 'family' vs. 'lname')
         :authors => authors,
         :pub_date => item.pub_date,
+        :eschol_date => item.eschol_date,
+        :genre => item.genre,
         :status => item.status,
         :rights => item.rights,
         :content_type => item.content_type,
         :content_html => getItemHtml(item.content_type, id),
         :content_key => calcContentKey(shortArk),
-        :content_prefix => $cloudFrontConfig ? $cloudFrontConfig['public-url'] : "",
+        :content_prefix => content_prefix,
+        :pdf_url => pdf_url,
         :attrs => attrs,
         :sidebar => unit ? getItemRelatedItems(unit, id) : nil,
         :appearsIn => unitIDs ? unitIDs.map { |unitID| {"id" => unitID, "name" => Unit[unitID].name} }
@@ -783,7 +788,6 @@ get "/api/item/:shortArk" do |shortArk|
           end
         end
       end
-
       return body.to_json
     rescue Exception => e
       puts "Error in item API:"
