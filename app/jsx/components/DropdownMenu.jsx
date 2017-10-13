@@ -1,5 +1,4 @@
 import React from 'react'
-import { Broadcast, Subscriber } from 'react-broadcast'
 
 export default class DropdownMenu extends React.Component {
   state = { isOpen: false }
