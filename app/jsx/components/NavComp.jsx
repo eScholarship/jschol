@@ -29,11 +29,13 @@ class NavComp extends React.Component {
     this.setState({isOpen: this.mq.matches})
   }
 
+  onNavClick = () => this.state = {submenuActive: null, isOpen: false}
+
   getNavItemJSX(navItem) {
     if (navItem.type == "link")
-      return (<a href={navItem.url} key={navItem.id}>{navItem.name}</a>)
+      return (<a href={navItem.url} onClick={this.onNavClick} key={navItem.id}>{navItem.name}</a>)
     else
-      return (<Link to={navItem.url} key={navItem.id}>{navItem.name}</Link>)
+      return (<Link to={navItem.url} onClick={this.onNavClick} key={navItem.id}>{navItem.name}</Link>)
   }
 
   render() {
