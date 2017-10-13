@@ -20,7 +20,7 @@ class PubLocationComp extends React.Component {
           </div>
         }
         {pub_loc_block}
-        {this.props.rights && <RightsComp rights={this.props.rights} size="large" /> }
+        <RightsComp rights={this.props.rights} size="large" />
       </div>
     )
   }

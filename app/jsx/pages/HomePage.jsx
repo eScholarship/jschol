@@ -1,7 +1,7 @@
 // ##### Home ##### //
 
 import React from 'react'
-
+import PropTypes from 'prop-types'
 import PageBase from './PageBase.jsx'
 import Header1Comp from '../components/Header1Comp.jsx'
 import NavComp from '../components/NavComp.jsx'
@@ -15,6 +15,18 @@ import FooterComp from '../components/FooterComp.jsx'
 
 class HomePage extends PageBase
 {
+  static propTypes = {
+    hero_data: PropTypes.shape({
+     unit_id: PropTypes.string.isRequired,
+      unit_name: PropTypes.string.isRequired,
+      hero: PropTypes.shape({
+        url: PropTypes.string,
+        width: PropTypes.number,
+        height: PropTypes.number
+      })
+    })
+  }
+
   // PageBase will fetch the following URL for us, and place the results in this.state.pageData
   pageDataURL() {
     return "/api/home"
@@ -24,6 +36,11 @@ class HomePage extends PageBase
     return "root"
   }
 
+  getRandomHero (hero_data) {
+    let withHeroData = hero_data.filter(h => h.hero)
+    return withHeroData[Math.floor(Math.random() * withHeroData.length)]
+  }
+
   renderData(data) { 
     return(
       <div>
@@ -31,7 +48,7 @@ class HomePage extends PageBase
         <div className="c-navbar">
           <NavComp data={data.header.nav_bar} />
         </div>
-        <HeroComp />
+        <HeroComp hero_data={this.getRandomHero(data.hero_data)} />
         <TeaserComp />
         <section className="c-togglesection">
           <header className={this.state.showSection1 ? 'c-togglesection__header--open' : 'c-togglesection__header'} hidden={this.state.isOpen}>
