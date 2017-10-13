@@ -480,6 +480,7 @@ get "/api/home" do
   content_type :json
   body = {
     :header => getGlobalHeader,
+    :hero_data => getCampusHeros.compact,
     :statsCountItems => $statsCountItems,
     :statsCountViews => $statsCountViews,
     :statsCountOpenItems => $statsCountOpenItems,

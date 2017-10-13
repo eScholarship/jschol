@@ -23,8 +23,8 @@ class RightsComp extends React.Component {
         'CC BY-SA':    [`${baseURL}/licenses/by-sa/${lv}/`,    `cc-by-sa-${size}.svg`,    "Attribution-ShareAlike 4.0 International Public License"] },
           a = rightsMap[r],
           altText = "Creative Commons "
-    // Null properties renders an empty image surrounded by an empty href,
-    //  This allows sister element 'c-publocation__link' to be aligned properly to the left
+    // Null properties renders an empty image surrounded by an empty href: 'c-publocation__license' needs to be present
+    //  in order to allow sister element 'c-publocation__link' to be aligned properly to the left
     return r ?
         <a href={a[0]} className="c-publocation__license"><img src={"/images/"+a[1]} alt={altText + a[2]} className="c-scholworks__license" /></a>
       :
