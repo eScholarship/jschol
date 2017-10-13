@@ -3,7 +3,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import $ from 'jquery'
-import MetaTags from 'react-meta-tags';
+import MetaTags from 'react-meta-tags'
 
 import PageBase from './PageBase.jsx'
 import Header2Comp from '../components/Header2Comp.jsx'
@@ -59,6 +59,10 @@ class ItemPage extends PageBase {
     return (month + " " + x.getDay() + ", " + x.getFullYear())
   }
 
+  stripHtml = str => {
+    return str.replace(/<(?:.|\n)*?>/gm, '')
+  }
+
   changeTab = tabName => {
     this.setState({currentTab: this.articleHashHandler(tabName) })
     // Set hash based on what was clicked.
@@ -67,44 +71,78 @@ class ItemPage extends PageBase {
 
   renderData = data => {
     let currentTab = tab_anchors.includes(this.state.currentTab) ? this.state.currentTab : "main" 
+    let d = data
+    let a = d.attrs
+    let authors = d.authors.slice(0, 85).map(function(author, i) {
+      return <meta key={i} id="meta-author" name="citation_author" content={author.name}/>
+     })
+    let [issn, volume, issue, firstpage, lastpage] = [null, null, null, null, null]
+    if (a['ext_journal']) {
+      let extj = a['ext_journal']
+      issn = extj['issn'] && <meta id="meta-issn" name="citation_issn" content={extj['issn']}/>
+      volume = extj['volume'] && <meta id="meta-volume" name="citation_volume" content={extj['volume']}/>
+      issue = extj['issue'] && <meta id="meta-issue" name="citation_issue" content={extj['issue']}/>
+      firstpage = extj['fpage'] && <meta id="meta-firstpage" name="citation_firstpage" content={extj['fpage']}/>
+      lastpage = extj['lpage'] && <meta id="meta-lastpage" name="citation_lastpage" content={extj['lpage']}/>
+    } else if (d.citation) {
+      let c = d.citation
+      volume = c['volume'] && <meta id="meta-volume" name="citation_volume" content={c['volume']}/>
+      issue = c['issue'] && <meta id="meta-issue" name="citation_issue" content={c['issue']}/>
+    }
+    let keywords = a.disciplines ? a.disciplines.join('; ') : null
     return (
       <div>
         <MetaTags>
-          {/* Andy - meta tags go below.
-
-             Note: if/when we work on page titles, they have to be everywhere all at once, and
-             remove <title> tag from app/app.html
-          */}
-          <meta id="meta-description" name="description" content="Some description." />
-          <meta id="og-title" property="og:title" content="MyApp" />
-          <meta id="og-image" property="og:image" content="path/to/image.jpg" />
+          <meta id="meta-title" name="citation_title" content={this.stripHtml(d.title)} />
+          {authors}
+        {d.pub_date &&
+          <meta id="meta-publication_date" name="citation_publication_date" content={d.pub_date} /> }
+        {a.isbn &&
+          <meta id="meta-isbn" name="citation_isbn" content={a.isbn} /> }
+        {a.doi &&
+          <meta id="meta-doi" name="citation_doi" content={a.doi} /> }
+        {d.unit.type == 'journal' &&
+          <meta id="meta-journal_title" name="citation_journal_title" content={d.unit.name} /> }
+          {issn} {volume} {issue} {firstpage} {lastpage}
+        {d.genre == 'dissertation' && d.header &&
+          <meta id="meta-dissertation_institution" name="citation_dissertation_institution" content={d.header.breadcrumb[1]['name']} /> }
+        {d.eschol_date &&
+          <meta id="meta-online_date" name="citation_online_date" content={d.eschol_date} /> }
+        {keywords &&
+          <meta id="meta-keywords" name="citation_keywords" content={keywords} /> }
+        {!d.download_restricted && d.pdf_url &&
+          <meta id="meta-pdf_url" name="citation_pdf_url" content={"https://escholarship.org" + d.pdf_url} /> }
+        {a.abstract &&
+          <meta id="meta-description" name="description" content={this.stripHtml(a.abstract)} /> }
+          <meta id="og-title" property="og:title" content={this.stripHtml(d.title)} />
+          <meta id="og-image" property="og:image" content="https://escholarship.org/images/escholarship-facebook.png" />
         </MetaTags>
-        <Header2Comp type={data.unit ? data.unit.type: null}
-                     unitID={(data.appearsIn && data.appearsIn.length > 0) ? data.appearsIn[0]["id"] : null } />
-        {/* Some items have no parent unit, so check for empty data.header */}
-        {data.header && <SubheaderComp unit={data.unit} header={data.header} />}
-        {data.header && <NavBarComp navBar={data.header.nav_bar} 
-                                    unit={data.unit} 
-                                    socialProps={data.header.social} />}
-        <BreadcrumbComp array={data.header ? data.header.breadcrumb : null} />
+        <Header2Comp type={d.unit ? d.unit.type: null}
+                     unitID={(d.appearsIn && d.appearsIn.length > 0) ? d.appearsIn[0]["id"] : null } />
+        {/* Some items have no parent unit, so check for empty d.header */}
+        {d.header && <SubheaderComp unit={d.unit} header={d.header} />}
+        {d.header && <NavBarComp navBar={d.header.nav_bar} 
+                                    unit={d.unit} 
+                                    socialProps={d.header.social} />}
+        <BreadcrumbComp array={d.header ? d.header.breadcrumb : null} />
         <div className="c-columns--sticky-sidebar">
           <main id="maincontent">
             <TabsComp currentTab={currentTab}
                       changeTab={this.changeTab}
                       formatDate={this.formatDate}
-                      {...data} />
+                      {...d} />
           </main>
           <aside>
-          {(data.status == "published" && data.content_type) &&
+          {(d.status == "published" && d.content_type) &&
             <section className="o-columnbox1">
               <header>
                 <h2>Jump To</h2>
               </header>
-              <JumpComp changeTab={this.changeTab} attrs={data.attrs} />
+              <JumpComp changeTab={this.changeTab} attrs={d.attrs} />
             </section>
           }
-          {data.sidebar &&
-            <SidebarComp data={data.sidebar}/> }
+          {d.sidebar &&
+            <SidebarComp data={d.sidebar}/> }
           </aside>
         </div>
       </div>

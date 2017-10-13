@@ -9,24 +9,6 @@ import ShareComp from '../components/ShareComp.jsx'
 import NotYetLink from '../components/NotYetLink.jsx'
 import DropdownMenu from '../components/DropdownMenu.jsx'
 
-class ItemActionsComp extends React.Component {
-  render() {
-    let p = this.props
-    return (
-      <div>
-        {(["withdrawn", "embargoed"].includes(p.status) || !p.content_type) ?
-           <Undownloadable id={p.id} />
-         :
-           <Downloadable id={p.id}
-                         content_type={p.content_type}
-                         supp_files={p.supp_files}
-                         buy_link={p.buy_link}
-                         download_restricted={p.download_restricted}/>}
-      </div>
-    )
-  }
-}
-
 class Downloadable extends React.Component {
   linkBuyPrint = () => {window.location = this.props.buy_link}
 
@@ -34,7 +16,7 @@ class Downloadable extends React.Component {
     let p = this.props,
       contentVars = content_type => {
         let v = {
-          'application/pdf': () => [ 'PDF', "/content/qt" + p.id + "/qt" + p.id + ".pdf", '.pdf' ],
+          'application/pdf': () => [ 'PDF', p.pdf_url, '.pdf' ],
           'text/html':       () => [ 'HTML', '' , '.html' ],
           'default':         () => [ 'Content', '' , '' ]
         }
@@ -118,4 +100,18 @@ class Undownloadable extends React.Component {
   }
 }
 
+class ItemActionsComp extends React.Component {
+  render() {
+    let p = this.props
+    return (
+      <div>
+        {(["withdrawn", "embargoed"].includes(p.status) || !p.content_type) ?
+           <Undownloadable id={p.id} />
+         :
+           <Downloadable {...p} />}
+      </div>
+    )
+  }
+}
+        
 module.exports = ItemActionsComp;

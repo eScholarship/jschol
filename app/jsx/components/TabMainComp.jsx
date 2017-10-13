@@ -53,7 +53,7 @@ class MainContent extends React.Component {
           }
         } else {
           return (p.content_type == "application/pdf" ?
-                    <PdfViewComp url={p.content_prefix + "/content/qt" + p.id + "/qt" + p.id + ".pdf"}
+                    <PdfViewComp url={p.pdf_url}
                                  content_key={p.content_key}
                                  download_restricted={p.download_restricted}/>
                     :
@@ -147,6 +147,7 @@ class TabMainComp extends React.Component {
         <ItemActionsComp id={p.id}
                          status={p.status}
                          content_type={p.content_type}
+                         pdf_url={p.pdf_url}
                          supp_files={p.attrs.supp_files}
                          buy_link={p.attrs.buy_link}
                          download_restricted={p.download_restricted} />
