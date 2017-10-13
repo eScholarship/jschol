@@ -7,6 +7,7 @@
 import React from 'react'
 import ShareComp from '../components/ShareComp.jsx'
 import NotYetLink from '../components/NotYetLink.jsx'
+import DropdownMenu from '../components/DropdownMenu.jsx'
 
 class Downloadable extends React.Component {
   linkBuyPrint = () => {window.location = this.props.buy_link}
@@ -32,8 +33,7 @@ class Downloadable extends React.Component {
           { p.download_restricted
             ? <a href="" className="o-download__button" onClick={()=>{alert("Download restricted until " + p.download_restricted); return false}}>Download {label}</a>
             : <a href={url} className="o-download__button" download={filename}>Download {label}</a> }
-          <details className="o-download__formats">
-            <summary aria-label="formats"></summary>
+          <DropdownMenu detailsClass="o-download__formats" ariaLabel="formats">
             <ul className="o-download__nested-menu">
             {p.content_type && ["HTML", "PDF"].includes(label) &&
               <li className="o-download__nested-list1">
@@ -56,7 +56,7 @@ class Downloadable extends React.Component {
               <li className="o-download__nested-list2">
                 Citation
                 <ul>
-          {/*     <li><NotYetLink element="a">RIS</NotYetLink></li> 
+          {/*     <li><NotYetLink element="a">RIS</NotYetLink></li>
                   <li><NotYetLink element="a">BibText</NotYetLink></li>   */}
                   <li><NotYetLink element="a">EndNote</NotYetLink></li>
           {/*     <li><NotYetLink element="a">RefWorks</NotYetLink></li>  */}
@@ -76,7 +76,7 @@ class Downloadable extends React.Component {
               </li>
           */}
             </ul>
-          </details>
+          </DropdownMenu>
         </div>
       {p.buy_link &&
         <button onClick={() => {this.linkBuyPrint()}} className="c-itemactions__button-print">Buy in Print</button>

@@ -33,9 +33,9 @@ class PdfViewerComp extends React.Component
 
   // Close out when disappearing
   componentWillUnmount() {
-    this.initted = false
-    if (window.webViewerUnload)
+    if (window.webViewerUnload) {
       window.webViewerUnload()
+    }
   }
 
   render = () =>
