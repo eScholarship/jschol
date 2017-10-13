@@ -6,7 +6,7 @@
 
 import React from 'react'
 import ShareComp from '../components/ShareComp.jsx'
-import NotYetLink from '../components/NotYetLink.jsx'
+import { DropdownMenu, Menu_a, Menu_NotYetLink } from '../components/DropdownMenu.jsx'
 
 class ItemActionsComp extends React.Component {
   render() {
@@ -25,7 +25,7 @@ class ItemActionsComp extends React.Component {
     )
   }
 }
-        
+
 class Downloadable extends React.Component {
   linkBuyPrint = () => {window.location = this.props.buy_link}
 
@@ -50,8 +50,7 @@ class Downloadable extends React.Component {
           { p.download_restricted
             ? <a href="" className="o-download__button" onClick={()=>{alert("Download restricted until " + p.download_restricted); return false}}>Download {label}</a>
             : <a href={url} className="o-download__button" download={filename}>Download {label}</a> }
-          <details className="o-download__formats">
-            <summary aria-label="formats"></summary>
+          <DropdownMenu detailsClass="o-download__formats" ariaLabel="formats">
             <ul className="o-download__nested-menu">
             {p.content_type && ["HTML", "PDF"].includes(label) &&
               <li className="o-download__nested-list1">
@@ -60,13 +59,13 @@ class Downloadable extends React.Component {
                 {label=="PDF" && 
                   <li>
                     { p.download_restricted
-                      ? <a href="" onClick={()=>{alert("Download restricted until " + p.download_restricted); return false}}>PDF</a>
-                      : <a href={url} download={filename}>PDF</a> }
+                      ? <Menu_a href="" onClick={()=>{alert("Download restricted until " + p.download_restricted); return false}}>PDF</Menu_a>
+                      : <Menu_a href={url} download={filename}>PDF</Menu_a> }
                   </li>
                 }
                 {label=="HTML" && 
-                  [<li key="0"><NotYetLink element="a">ePub</NotYetLink></li>,
-                  <li key="1"><NotYetLink element="a">HTML</NotYetLink></li>]
+                  [<li key="0"><Menu_NotYetLink element="a">ePub</Menu_NotYetLink></li>,
+                  <li key="1"><Menu_NotYetLink element="a">HTML</Menu_NotYetLink></li>]
                 }
                 </ul>
               </li>
@@ -74,27 +73,27 @@ class Downloadable extends React.Component {
               <li className="o-download__nested-list2">
                 Citation
                 <ul>
-          {/*     <li><NotYetLink element="a">RIS</NotYetLink></li> 
-                  <li><NotYetLink element="a">BibText</NotYetLink></li>   */}
-                  <li><NotYetLink element="a">EndNote</NotYetLink></li>
-          {/*     <li><NotYetLink element="a">RefWorks</NotYetLink></li>  */}
+          {/*     <li><Menu_NotYetLink element="a">RIS</Menu_NotYetLink></li>
+                  <li><Menu_NotYetLink element="a">BibText</Menu_NotYetLink></li>   */}
+                  <li><Menu_NotYetLink element="a">EndNote</Menu_NotYetLink></li>
+          {/*     <li><Menu_NotYetLink element="a">RefWorks</Menu_NotYetLink></li>  */}
                 </ul>
               </li>
           {/* p.supp_files &&
               <li className="o-download__nested-list3">
                 Supplemental Material
                 <ul>
-                  <li><a href="">Image</a></li>
-                  <li><a href="">Audio</a></li>
-                  <li><a href="">Video</a></li>
-                  <li><a href="">Zip</a></li>
-                  <li><a href="">File</a></li>
-                  <li><a href="">All Supplemental Material</a></li>
+                  <li><Menu_a href="">Image</Menu_a></li>
+                  <li><Menu_a href="">Audio</Menu_a></li>
+                  <li><Menu_a href="">Video</Menu_a></li>
+                  <li><Menu_a href="">Zip</Menu_a></li>
+                  <li><Menu_a href="">File</Menu_a></li>
+                  <li><Menu_a href="">All Supplemental Material</Menu_a></li>
                 </ul>
               </li>
           */}
             </ul>
-          </details>
+          </DropdownMenu>
         </div>
       {p.buy_link &&
         <button onClick={() => {this.linkBuyPrint()}} className="c-itemactions__button-print">Buy in Print</button>

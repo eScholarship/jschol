@@ -23,6 +23,8 @@ class NotYetLink extends React.Component {
   }
 
   clickHandler = event =>{
+    if (this.props.onClick)
+      this.props.onClick()
     this.setState({modalOpen:true})
     event.preventDefault()
   }

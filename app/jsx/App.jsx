@@ -5,7 +5,6 @@ import React from 'react'
 import ReactDOM from 'react-dom'
 import { Router, Route, IndexRoute, Link, browserHistory, applyRouterMiddleware } from 'react-router'
 import ReactGA from 'react-ga'
-import { Broadcast } from 'react-broadcast'
 
 import HomePage from './pages/HomePage.jsx'
 import BrowsePage from './pages/BrowsePage.jsx'
