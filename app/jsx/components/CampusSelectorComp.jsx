@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { Link } from 'react-router'
-import { DropdownMenu, MenuContent } from '../components/DropdownMenu.jsx'
+import DropdownMenu from '../components/DropdownMenu.jsx'
 
 class CampusSelectorComp extends React.Component {
   campusSelector(campuses) {
@@ -19,12 +19,12 @@ class CampusSelectorComp extends React.Component {
           <Link to={"/uc/" + p.campusID}>{p.campusName ? p.campusName : "eScholarship"}</Link>
         </div>
         <DropdownMenu detailsClass="o-customselector__selector" ariaLabel="select campus">
-          <MenuContent> <div className="o-customselector__menu">
+          <div className="o-customselector__menu">
             <div className="o-customselector__sub-heading" id="c-campusselector__sub-heading">eScholarship at &hellip;</div>
             <ul className="o-customselector__items" aria-labelledby="c-campusselector__sub-heading" role="list">
               {this.campusSelector(p.campuses)}
             </ul>
-          </div> </MenuContent>
+          </div>
         </DropdownMenu>
       </div>
     )

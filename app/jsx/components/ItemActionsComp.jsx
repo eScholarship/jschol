@@ -7,7 +7,7 @@
 import React from 'react'
 import ShareComp from '../components/ShareComp.jsx'
 import NotYetLink from '../components/NotYetLink.jsx'
-import { DropdownMenu, MenuContent } from '../components/DropdownMenu.jsx'
+import DropdownMenu from '../components/DropdownMenu.jsx'
 
 class ItemActionsComp extends React.Component {
   render() {
@@ -52,7 +52,7 @@ class Downloadable extends React.Component {
             ? <a href="" className="o-download__button" onClick={()=>{alert("Download restricted until " + p.download_restricted); return false}}>Download {label}</a>
             : <a href={url} className="o-download__button" download={filename}>Download {label}</a> }
           <DropdownMenu detailsClass="o-download__formats" ariaLabel="formats">
-            <MenuContent> <ul className="o-download__nested-menu">
+            <ul className="o-download__nested-menu">
             {p.content_type && ["HTML", "PDF"].includes(label) &&
               <li className="o-download__nested-list1">
                 Main
@@ -93,7 +93,7 @@ class Downloadable extends React.Component {
                 </ul>
               </li>
           */}
-            </ul> </MenuContent>
+            </ul>
           </DropdownMenu>
         </div>
       {p.buy_link &&

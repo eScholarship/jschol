@@ -1,7 +1,7 @@
 import React from 'react'
 import { Broadcast, Subscriber } from 'react-broadcast'
 
-export class DropdownMenu extends React.Component {
+export default class DropdownMenu extends React.Component {
   state = { isOpen: false }
 
   componentDidMount() {
@@ -23,6 +23,8 @@ export class DropdownMenu extends React.Component {
 
   onBlur = () => {
     this.anyFocused = false
+    // After the cascade of blur and focus events, if we end up with nothing in the menu
+    // focused, close the menu.
     setTimeout(()=>{ if (!this.anyFocused && this.mounted) this.setState({ isOpen: false }) }, 0)
   }
 
@@ -46,19 +48,8 @@ export class DropdownMenu extends React.Component {
           <span>{this.props.summarySpan}</span>
         }
       </summary>
-      <Broadcast channel="dropdown" value={this}>
-        {this.props.children}
-      </Broadcast>
-    </details>
-}
-
-export class MenuContent extends React.Component {
-  render = () =>
-    <Subscriber channel="dropdown">
-    { menu =>
-      <div onClick={menu.onItemClicked} onFocus={this.onFocus} onBlur={this.onBlur}>
+      <div onClick={this.onItemClicked}>
         {this.props.children}
       </div>
-    }
-    </Subscriber>
+    </details>
 }
