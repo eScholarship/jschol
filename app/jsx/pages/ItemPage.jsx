@@ -74,7 +74,7 @@ class ItemPage extends PageBase {
     let d = data
     let a = d.attrs
     let authors = d.authors.slice(0, 85).map(function(author, i) {
-      return <meta key={i} id="meta-author" name="citation_author" content={author.name}/>
+      return <meta key={i} id={"meta-author"+i} name="citation_author" content={author.name}/>
      })
     let [issn, volume, issue, firstpage, lastpage] = [null, null, null, null, null]
     if (a['ext_journal']) {
@@ -108,6 +108,8 @@ class ItemPage extends PageBase {
           <meta id="meta-dissertation_institution" name="citation_dissertation_institution" content={d.header.breadcrumb[1]['name']} /> }
         {d.eschol_date &&
           <meta id="meta-online_date" name="citation_online_date" content={d.eschol_date} /> }
+        {["withdrawn", "embargoed"].includes(d.status) &&
+          <meta id="meta-robots" name="robots" content="noindex" /> }
         {keywords &&
           <meta id="meta-keywords" name="citation_keywords" content={keywords} /> }
         {!d.download_restricted && d.pdf_url &&
