@@ -2,12 +2,12 @@
 
 import React from 'react'
 import { Link } from 'react-router'
-import { DropdownMenu, Menu_Link, MenuItem } from '../components/DropdownMenu.jsx'
+import { DropdownMenu, MenuContent } from '../components/DropdownMenu.jsx'
 
 class CampusSelectorComp extends React.Component {
   campusSelector(campuses) {
     return campuses.map( c => {
-      return c['id'] != "" && <li key={c['id']}><MenuItem><Link to={"/uc/"+ c['id']}>{c['name']}</Link></MenuItem></li>
+      return c['id'] != "" && <li key={c['id']}><Link to={"/uc/"+ c['id']}>{c['name']}</Link></li>
     })
   }
 
@@ -19,12 +19,12 @@ class CampusSelectorComp extends React.Component {
           <Link to={"/uc/" + p.campusID}>{p.campusName ? p.campusName : "eScholarship"}</Link>
         </div>
         <DropdownMenu detailsClass="o-customselector__selector" ariaLabel="select campus">
-          <div className="o-customselector__menu">
+          <MenuContent> <div className="o-customselector__menu">
             <div className="o-customselector__sub-heading" id="c-campusselector__sub-heading">eScholarship at &hellip;</div>
             <ul className="o-customselector__items" aria-labelledby="c-campusselector__sub-heading" role="list">
               {this.campusSelector(p.campuses)}
             </ul>
-          </div>
+          </div> </MenuContent>
         </DropdownMenu>
       </div>
     )

@@ -6,7 +6,8 @@
 
 import React from 'react'
 import ShareComp from '../components/ShareComp.jsx'
-import { DropdownMenu, Menu_a, Menu_NotYetLink } from '../components/DropdownMenu.jsx'
+import NotYetLink from '../components/NotYetLink.jsx'
+import { DropdownMenu, MenuContent } from '../components/DropdownMenu.jsx'
 
 class ItemActionsComp extends React.Component {
   render() {
@@ -51,7 +52,7 @@ class Downloadable extends React.Component {
             ? <a href="" className="o-download__button" onClick={()=>{alert("Download restricted until " + p.download_restricted); return false}}>Download {label}</a>
             : <a href={url} className="o-download__button" download={filename}>Download {label}</a> }
           <DropdownMenu detailsClass="o-download__formats" ariaLabel="formats">
-            <ul className="o-download__nested-menu">
+            <MenuContent> <ul className="o-download__nested-menu">
             {p.content_type && ["HTML", "PDF"].includes(label) &&
               <li className="o-download__nested-list1">
                 Main
@@ -59,13 +60,13 @@ class Downloadable extends React.Component {
                 {label=="PDF" && 
                   <li>
                     { p.download_restricted
-                      ? <Menu_a href="" onClick={()=>{alert("Download restricted until " + p.download_restricted); return false}}>PDF</Menu_a>
-                      : <Menu_a href={url} download={filename}>PDF</Menu_a> }
+                      ? <a href="" onClick={()=>{alert("Download restricted until " + p.download_restricted); return false}}>PDF</a>
+                      : <a href={url} download={filename}>PDF</a> }
                   </li>
                 }
                 {label=="HTML" && 
-                  [<li key="0"><Menu_NotYetLink element="a">ePub</Menu_NotYetLink></li>,
-                  <li key="1"><Menu_NotYetLink element="a">HTML</Menu_NotYetLink></li>]
+                  [<li key="0"><NotYetLink element="a">ePub</NotYetLink></li>,
+                  <li key="1"><NotYetLink element="a">HTML</NotYetLink></li>]
                 }
                 </ul>
               </li>
@@ -73,26 +74,26 @@ class Downloadable extends React.Component {
               <li className="o-download__nested-list2">
                 Citation
                 <ul>
-          {/*     <li><Menu_NotYetLink element="a">RIS</Menu_NotYetLink></li>
-                  <li><Menu_NotYetLink element="a">BibText</Menu_NotYetLink></li>   */}
-                  <li><Menu_NotYetLink element="a">EndNote</Menu_NotYetLink></li>
-          {/*     <li><Menu_NotYetLink element="a">RefWorks</Menu_NotYetLink></li>  */}
+          {/*     <li><NotYetLink element="a">RIS</NotYetLink></li>
+                  <li><NotYetLink element="a">BibText</NotYetLink></li>   */}
+                  <li><NotYetLink element="a">EndNote</NotYetLink></li>
+          {/*     <li><NotYetLink element="a">RefWorks</NotYetLink></li>  */}
                 </ul>
               </li>
           {/* p.supp_files &&
               <li className="o-download__nested-list3">
                 Supplemental Material
                 <ul>
-                  <li><Menu_a href="">Image</Menu_a></li>
-                  <li><Menu_a href="">Audio</Menu_a></li>
-                  <li><Menu_a href="">Video</Menu_a></li>
-                  <li><Menu_a href="">Zip</Menu_a></li>
-                  <li><Menu_a href="">File</Menu_a></li>
-                  <li><Menu_a href="">All Supplemental Material</Menu_a></li>
+                  <li><a href="">Image</a></li>
+                  <li><a href="">Audio</a></li>
+                  <li><a href="">Video</a></li>
+                  <li><a href="">Zip</a></li>
+                  <li><a href="">File</a></li>
+                  <li><a href="">All Supplemental Material</a></li>
                 </ul>
               </li>
           */}
-            </ul>
+            </ul> </MenuContent>
           </DropdownMenu>
         </div>
       {p.buy_link &&
