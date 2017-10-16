@@ -8,7 +8,7 @@ $serverConfig = YAML.load_file("config/server.yaml")
 $mainPort = $serverConfig["mainPort"]
 
 $cfPrefix = File.exist?("config/cloudFront.yaml") ?
-            YAML.load_file("config/cloudFront.yaml")["public-url"] : "http://escholarship.org/"
+            YAML.load_file("config/cloudFront.yaml")["public-url"] : "http://escholarship.org"
 
 def error(msg)
   puts "Error: #{msg}"
@@ -124,11 +124,11 @@ testRedirect("http://eprints.cdlib.org/uc/item/8gj3x1dc",
 
 # Redirect eschol.cdlib
 testRedirect("http://escholarship.cdlib.org/uc/item/9ws876kn.pdf",
-             "#{$cfPrefix}content/qt9ws876kn/qt9ws876kn.pdf")
+             "#{$cfPrefix}/content/qt9ws876kn/qt9ws876kn.pdf")
 
 # Redirect old PDF links
 testRedirect("http://escholarship.org/uc/item/4590m805.pdf",
-             "#{$cfPrefix}content/qt4590m805/qt4590m805.pdf")
+             "#{$cfPrefix}/content/qt4590m805/qt4590m805.pdf")
 
 # No longer redirecting PDF links
 testRedirect("http://escholarship.org/content/qt4590m805/qt4590m805.pdf", nil)
