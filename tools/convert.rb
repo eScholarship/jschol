@@ -69,7 +69,6 @@ QUEUE_DB = Sequel.connect(YAML.load_file("config/queueDb.yaml"))
 STATS_DB = Sequel.connect(YAML.load_file("config/statsDb.yaml"))
 
 # Queues for thread coordination
-$prefilterQueue = SizedQueue.new(100)
 $indexQueue = SizedQueue.new(100)
 $batchQueue = SizedQueue.new(1)  # no use getting very far ahead of CloudSearch
 $splashQueue = Queue.new
@@ -79,9 +78,6 @@ $rescanMode = ARGV.delete('--rescan')
 
 # Mode to process a single item and just print it out (no inserting or batching)
 $testMode = ARGV.delete('--test')
-
-# Mode to test against old prefilter
-$prefilterMode = ARGV.delete("--prefilter")
 
 # Mode to override up-to-date test
 $forceMode = ARGV.delete('--force')
@@ -833,127 +829,7 @@ def arkToFile(ark, subpath, root = DATA_DIR)
 end
 
 ###################################################################################################
-def prefilterBatch(batch)
-
-  # Build a file with the relative directory names of all the items to prefilter in this batch
-  timestamps = {}
-  nAdded = 0
-  open("prefilterDirs.txt", "w") { |io|
-    batch.each { |itemID, timestamp|
-      shortArk = getShortArk(itemID)
-      metaPath = arkToFile(shortArk, "meta/base.meta.xml")
-      if !File.exists?(metaPath) || File.size(metaPath) < 50
-        puts "Warning: skipping #{shortArk} due to missing or truncated meta.xml"
-        $nSkipped += 1
-        next
-      end
-
-      statsPath = metaPath.sub("meta.xml", "stats.xml")
-      if File.exists?(statsPath) && File.size(statsPath ) < 10
-        puts "Warning: skipping #{shortArk} due to truncated stats.xml"
-        $nSkipped += 1
-        next
-      end
-
-      io.puts arkToFile(shortArk, "", "")
-      timestamps[shortArk] = timestamp
-      nAdded += 1
-    }
-  }
-
-  # If everything filtered out, go to next batch
-  nAdded==0 and return
-
-  # Run the XTF textIndexer in "prefilterOnly" mode. That way the stylesheets can do all the
-  # dirty work of normalizing the various data formats, and we can use the uniform results.
-  #puts "Running prefilter batch of #{batch.size} items."
-  cmd = ["/apps/eschol/erep/xtf/bin/textIndexer",
-         "-prefilterOnly",
-         "-force",
-         "-dirlist", "#{Dir.pwd}/prefilterDirs.txt",
-         "-index", "eschol5"]
-  Open3.popen2e(*cmd) { |stdin, stdoutAndErr, waitThread|
-    stdin.close()
-
-    # Process each line, looking for BEGIN prefiltered ... END prefiltered
-    shortArk, buf = nil, []
-    outer = []
-    xmlStarted = false
-    stdoutAndErr.each { |line|
-
-      # Filter out warning messages that get interspersed
-      eatNext = false
-      if line =~ /(.*)Warning: Unrecognized meta-data/
-        line = $1
-      elsif line =~ /(.*)WARNING: LBNL subject does not map/
-        line = $1
-      elsif line =~ /(.*)WARNING: User supplied discipline term not found in taxonomy/
-        line = $1
-      end
-
-      if line =~ /\s*<\?xml / and shortArk
-        xmlStarted = true
-      end
-
-      # Look for start and end of record
-      if line =~ %r{>>> BEGIN prefiltered.*/(qt\w{8})/}
-        shortArk = $1
-      elsif line =~ %r{>>> END prefiltered}
-        # Found a full block of prefiltered data. This item is ready for indexing.
-        timestamps.include?(shortArk) or
-          raise("Can't find timestamp for item #{shortArk.inspect} - did we not request it?")
-        $indexQueue << [shortArk, timestamps[shortArk], buf.join]
-        shortArk, buf, xmlStarted = nil, [], false
-      elsif shortArk
-        if !xmlStarted
-          #puts "Skip line before XML: #{line}"
-          outer << line
-        else
-          buf << line
-        end
-      else
-        outer << line
-      end
-    }
-    waitThread.join
-    if not waitThread.value.success?
-      puts outer.join
-      puts shortArk
-      puts buf
-      raise("Command failed with code #{waitThread.value.exitstatus}")
-    end
-    File.delete "prefilterDirs.txt"
-  }
-end
-
-###################################################################################################
-# Run the XTF index prefilters on every item in the queue, and pass the results on to the next
-# queue (indexing).
-def prefilterAllItems
-  Thread.current[:name] = "prefilter thread"  # label all stdout from this thread
-
-  # We batch up the IDs so we can prefilter a bunch at once, for efficiency.
-  batch = []
-  loop do
-    # Grab something from the queue
-    itemID, timestamp = $prefilterQueue.pop
-    itemID or break
-
-    # Add it to the batch. If we've got enough, go run the prefilters on that batch.
-    batch << [itemID, timestamp]
-    if batch.size >= 50
-      prefilterBatch(batch)
-      batch = []
-    end
-  end
-
-  # Finish any remaining at the end.
-  batch.empty? or prefilterBatch(batch)
-  $indexQueue << [nil, nil, nil] # end-of-work
-end
-
-###################################################################################################
-# Traverse the XML output from prefilters, looking for indexable text to add to the buffer.
+# Traverse XML, looking for indexable text to add to the buffer.
 def traverseText(node, buf)
   return if node['meta'] == "yes" || node['index'] == "no"
   node.text? and buf << node.to_s.strip
@@ -985,61 +861,6 @@ def emptyBatch(batch)
   batch[:idxData] = "["
   batch[:idxDataSize] = 0
   return batch
-end
-
-###################################################################################################
-# A little class to simplify grabbing metadata from prefiltered documents.
-class MetaAccess
-
-  # Parse prefiltered data into XML, and remove the namespaces.
-  def initialize(prefilteredData)
-    doc = stringToXML(prefilteredData)
-    doc.remove_namespaces!
-    @root = doc.root
-  end
-
-  # Get the text content of a metadata field which we expect only one of
-  def single(name)
-    els = @root.xpath("./meta/#{name}[@meta='yes']")
-    # known prob with multiple localIDs - fixed in new UCI code
-    # known prob with issue IDs - old had two (one tokenized, one not)
-    if els.length > 1 && name != "localID" && name != "issue"
-      puts("Warning: multiple #{name.inspect} elements found.")
-    end
-    return els[0] ? els[0].content : nil
-  end
-
-  # Get the sanitized HTML content of a metadata field which we expect only one of
-  def singleHTML(name)
-    els = @root.xpath("./meta/#{name}[@meta='yes']")
-    els.length <= 1 or puts("Warning: multiple #{name.inspect} elements found.")
-    return els[0] ? els[0].html_at(".") : nil
-  end
-
-  # Get attribute of a single metadata field
-  def singleAttr(elName, attrName, default=nil)
-    els = @root.xpath("./meta/#{elName}[@meta='yes']")
-    if els.length > 1 && elName != "localID"  # known prob with multiple localIDs - fixed in new UCI code
-      puts("Warning: multiple #{elName.inspect} elements found.")
-    end
-    return els[0] ? (els[0][attrName] || default) : default
-  end
-
-  # Get an array of the content from a metadata field which we expect zero or more of.
-  def multiple(name, limit=nil)
-    all = @root.xpath("./meta/#{name}[@meta='yes']").map { |el| el.text }
-    return limit ? all.slice(0, limit) : all
-  end
-
-  # Check if there are any metadata elements with the given name
-  def any(name)
-    return @root.xpath("./meta/#{name}[@meta='yes']").length > 0
-  end
-
-  # The root of the tree
-  def root
-    return @root
-  end
 end
 
 ###################################################################################################
@@ -1322,187 +1143,6 @@ def isEmbargoed(embargoDate)
 end
 
 ###################################################################################################
-# Extract metadata the old way, combining data from the XTF index prefilters and the raw UCIngest
-# metadata files.
-def parsePrefilteredData(itemID, existingItem, rawMeta, prefilteredData)
-
-  # Add in the namespace declaration to the individual article (since we're taking the articles
-  # out of their outer context)
-  prefilteredData.sub! "<erep-article>", "<erep-article xmlns:xtf=\"http://cdlib.org/xtf\">"
-
-  # Parse the metadata
-  pf = MetaAccess.new(prefilteredData)
-  if pf.root.nil?
-    raise("Error parsing prefiltered data as XML. First part: " +
-      (prefilteredData.size > 500 ? prefilteredData[0,500]+"..." : prefilteredData).inspect)
-  end
-
-  # Grab the stuff we're jamming into the JSON 'attrs' field
-  attrs = {}
-  pf.multiple("contentExists")[0] == "yes" or attrs[:suppress_content] = true  # yes, inverting the sense
-  pf.single("peerReview"   ) == "yes" and attrs[:is_peer_reviewed] = true
-  pf.single("undergrad "   ) == "yes" and attrs[:is_undergrad] = true
-  pf.single("language"     )          and attrs[:language] = pf.single("language").sub("english", "en")
-  pf.single("embargoed")              and attrs[:embargo_date] = pf.single("embargoed")
-  pf.single("publisher")              and attrs[:publisher] = pf.single("publisher")
-  pf.single("originalCitation")       and attrs[:orig_citation] = pf.single("originalCitation")
-  pf.single("customCitation")         and attrs[:custom_citation] = pf.single("customCitation")
-  pf.single("localID")                and attrs[:local_id] = { type: pf.singleAttr("localID", :type, "other"),
-                                                                 id: pf.single("localID") }
-  pf.multiple("publishedWebLocation") and attrs[:pub_web_loc] = pf.multiple("publishedWebLocation")
-  pf.single("buyLink")                and attrs[:buy_link] = pf.single("buyLink")
-  pf.single("doi")                    and attrs[:doi] = pf.single("doi")
-  if pf.single("withdrawn")
-    attrs[:withdrawn_date] = pf.single("withdrawn")
-    msg = rawMeta.at("/record/history/stateChange[@state='withdrawn']/comment")
-    msg and attrs[:withdrawn_message] = msg.text
-  end
-
-  # Filter out "n/a" abstracts
-  abstract = pf.singleHTML("description")
-  abstract && abstract.size > 3 and attrs[:abstract] = abstract
-
-  # Disciplines are a little extra work; we want to transform numeric IDs to plain old labels
-  if pf.any("facet-discipline")
-    attrs[:disciplines] = []
-    pf.multiple("facet-discipline").each { |discStr|
-      discID = discStr[/^\d+/] # only the numeric part
-      label = $discTbl[discID]
-      if label
-        attrs[:disciplines] << label
-      else
-        puts("Warning: unknown discipline ID #{discID.inspect}")
-        puts "pf: discStr=#{discStr}"
-        puts "pf: discTbl=#{$discTbl}" # FIXME FOO
-      end
-    }
-  end
-
-  # Supplemental files
-  supps = []
-  if rawMeta.at("/record/content")
-    supps = grabUCISupps(rawMeta)
-  else
-    # For non-UCIngest format, read supp data from the index
-    pf.multiple("supplemental-file").each { |supp|
-      pair = supp.split("::")
-      if pair.length != 2
-        puts "Warning: can't parse supp file data #{supp.inspect}"
-        next
-      end
-      supps << { file: pair[1], "description" => pair[0] }
-    }
-  end
-  attrs[:supp_files], suppSummaryTypes = summarizeSupps(itemID, supps)
-
-  # Do some translation on rights codes
-  rights = translateRights(pf.single("rights"))
-
-  # For eschol journals, populate the issue and section models.
-  issue = section = nil
-  issueNum = pf.single("issue[@tokenize='no']") # untokenized is actually from "number"
-  volNum = pf.single("volume")
-  if pf.single("pubType") == "journal" && volNum && issueNum
-    issueUnit = pf.multiple("entityOnly")[0]
-    if $allUnits.include?(issueUnit)
-      issue = Issue.new
-      issue[:unit_id] = issueUnit
-      issue[:volume]  = volNum
-      issue[:issue]   = issueNum
-      tmp = rawMeta.at("/record/context/issueDate")
-      issue[:pub_date] = (tmp && tmp.text && !tmp.text.empty? && parseDate(tmp.text)) ||
-                         parseDate(pf.single("date")) ||
-                         "1901-01-01"
-      issueAttrs = {}
-      tmp = rawMeta.at("/record/context/issueTitle")
-      (tmp && tmp.text && !tmp.text.empty?) and issueAttrs[:title] = tmp.text
-      tmp = rawMeta.at("/record/context/issueDescription")
-      (tmp && tmp.text && !tmp.text.empty?) and issueAttrs[:description] = tmp.text
-      tmp = rawMeta.at("/record/context/issueCoverCaption")
-      findIssueCover(issueUnit, volNum, issueNum,
-                     (tmp && tmp.text && !tmp.text.empty?) ? tmp : nil,
-                     issueAttrs)
-      addIssueBuyLink(issueUnit, volNum, issueNum, issueAttrs)
-      addIssueNumberingAttrs(issueUnit, volNum, issueNum, issueAttrs)
-      rights and issueAttrs[:rights] = rights
-      !issueAttrs.empty? and issue[:attrs] = issueAttrs.to_json
-
-      section = Section.new
-      section[:name]  = pf.single("sectionHeader") ? pf.single("sectionHeader") : "Articles"
-    else
-      "Warning: issue associated with unknown unit #{issueUnit.inspect}"
-    end
-  end
-
-  # Data for external journals
-  if !issue
-    issueNum = pf.single("issue") # tokenization not an issue for external journal articles
-    pf.single("journal") and (attrs[:ext_journal] ||= {})[:name]   = pf.single("journal")
-    volNum               and (attrs[:ext_journal] ||= {})[:volume] = volNum
-    issueNum             and (attrs[:ext_journal] ||= {})[:issue]  = issueNum
-    pf.single("issn")    and (attrs[:ext_journal] ||= {})[:issn]   = pf.single("issn")
-    if pf.single("coverage") =~ /^([\w.]+) - ([\w.]+)$/
-      (attrs[:ext_journal] ||= {})[:fpage] = $1
-      (attrs[:ext_journal] ||= {})[:lpage] = $2
-    end
-  end
-
-  # Detect HTML-formatted items
-  contentFile = rawMeta.at("/record/content/file")
-  contentFile && contentFile.at("./native") and contentFile = contentFile.at("./native")
-  contentPath = contentFile && contentFile[:path]
-  mimeType    = contentFile && contentFile.at("./mimeType") && contentFile.at("./mimeType").text
-
-  # Generate thumbnails (but only for non-suppressed PDF items)
-  if !attrs[:suppress_content] && pf.single("pdfExists") == "yes"
-    thumbData = generatePdfThumbnail(itemID, existingItem)
-    thumbData and attrs[:thumbnail] = thumbData
-  end
-
-  # Populate the Item model instance
-  dbItem = Item.new
-  dbItem[:id]           = itemID
-  dbItem[:source]       = pf.single("source")
-  dbItem[:status]       = attrs[:withdrawn_date] ? "withdrawn" :
-                          isEmbargoed(attrs[:embargo_date]) ? "embargoed" :
-                          (rawMeta.attr("state") || "published")
-  dbItem[:title]        = pf.single("title")
-  dbItem[:content_type] = !(pf.multiple("contentExists")[0] == "yes") ? nil :
-                          attrs[:withdrawn_date] ? nil :
-                          isEmbargoed(attrs[:embargo_date]) ? nil :
-                          pf.single("pdfExists") == "yes" ? "application/pdf" :
-                          mimeType && mimeType.strip.length > 0 ? mimeType :
-                          nil
-  dbItem[:genre]        = (!attrs[:suppress_content] &&
-                           dbItem[:content_type].nil? &&
-                           attrs[:supp_files]) ?
-                          "multimedia" : pf.single("type")
-  dbItem[:pub_date]     = parseDate(pf.single("date")) || "1901-01-01"
-  #FIXME: Think about this carefully. What's eschol_date for?
-  dbItem[:eschol_date]  = parseDate(pf.single("dateStamp")) || "1901-01-01"
-  dbItem[:attrs]        = JSON.generate(attrs)
-  dbItem[:rights]       = rights
-  dbItem[:ordering_in_sect] = pf.single("document-order")
-
-  # Populate ItemAuthor model instances
-  authors = getAuthors(pf, rawMeta)
-
-  # Make a list of all the units this item belongs to
-  units = pf.multiple("entityOnly").select { |unitID|
-    unitID =~ /^(postprints|demo-journal|test-journal|unknown|withdrawn|uciem_westjem_aip)$/ ? false :
-      !$allUnits.include?(unitID) ? (puts("Warning: unknown unit #{unitID.inspect}") && false) :
-      true
-  }
-
-  # It's actually ok for there to be no units, e.g. for old withdrawn items
-  if units.empty?
-    #do nothing
-  end
-
-  return dbItem, attrs, authors, units, issue, section, suppSummaryTypes
-end
-
-###################################################################################################
 def shouldSuppressContent(itemID, inMeta)
   # Suppress if withdrawn.
   inMeta.attr("state") == "withdrawn" and return true
@@ -1592,6 +1232,7 @@ def parseUCIngest(itemID, inMeta, fileType)
   attrs[:language] = inMeta.text_at("./context/language")
   attrs[:doi] = inMeta.text_at("./doi")
   attrs[:isbn] = inMeta.text_at("./context/isbn")
+  attrs[:bepress_id] = inMeta.text_at("./context/bpid")
 
   # Normalize language codes
   attrs[:language] and attrs[:language] = attrs[:language].sub("english", "en").sub("german", "de").
@@ -1920,7 +1561,7 @@ end
 # Extract metadata for an item, and add it to the current index batch.
 # Note that we create, but don't yet add, records to our database. We put off really inserting
 # into the database until the batch has been successfully processed by AWS.
-def indexItem(itemID, timestamp, prefilteredData, batch, nailgun)
+def indexItem(itemID, timestamp, batch, nailgun)
 
   # Grab the main metadata file
   metaPath = arkToFile(itemID, "meta/base.meta.xml")
@@ -1953,23 +1594,6 @@ def indexItem(itemID, timestamp, prefilteredData, batch, nailgun)
   else
     dbItem, attrs, authors, units, issue, section, suppSummaryTypes =
       parseUCIngest(itemID, rawMeta, "UCIngest")
-  end
-
-  # Optional: test against old XTF index prefilters
-  if prefilteredData
-    pf_dbItem, pf_attrs, pf_authors, pf_units, pf_issue, pf_section, pf_suppSummaryTypes =
-       parsePrefilteredData(itemID, existingItem, rawMeta, prefilteredData)
-    begin
-      compareAttrs(attrs, new_attrs)
-      compareAttrs(dbItem.to_hash.reject { |k,v| k == :attrs },
-                   new_dbItem.to_hash.reject { |k,v| k == :attrs })
-      compareAuthors(authors, new_authors)
-      compareUnits(units, new_units)
-      compareIssues(issue, new_issue, section, new_section)
-      compareSuppSummaries(suppSummaryTypes, new_suppSummaryTypes)
-    rescue Exception => e
-      puts "Error comparing: #{e} #{e.backtrace.join("; ")}"
-    end
   end
 
   text = grabText(itemID, dbItem.content_type)
@@ -2052,7 +1676,6 @@ def indexItem(itemID, timestamp, prefilteredData, batch, nailgun)
 
   # Single-item debug
   if $testMode
-    #puts prefilteredData
     pp dbCombined
     fooData = idxItem.clone
     fooData[:fields] and fooData[:fields][:text] and fooData[:fields].delete(:text)
@@ -2129,13 +1752,13 @@ def indexAllItems
     loop do
       # Grab an item from the input queue
       Thread.current[:name] = "index thread"  # label all stdout from this thread
-      itemID, timestamp, prefilteredData = $indexQueue.pop
+      itemID, timestamp = $indexQueue.pop
       itemID or break
 
       # Extract data and index it (in batches)
       begin
         Thread.current[:name] = "index thread: #{itemID}"  # label all stdout from this thread
-        indexItem(itemID, timestamp, prefilteredData, batch, nailgun)
+        indexItem(itemID, timestamp, batch, nailgun)
       rescue Exception => e
         puts "Error indexing item #{itemID}"
         raise
@@ -2379,9 +2002,6 @@ def convertAllItems(arks)
 
   # Fire up threads for doing the work in parallel
   Thread.abort_on_exception = true
-  if $prefilterMode
-    prefilterThread = Thread.new { prefilterAllItems }
-  end
   indexThread = Thread.new { indexAllItems }
   batchThread = Thread.new { processAllBatches }
 
@@ -2402,23 +2022,14 @@ def convertAllItems(arks)
     erepTime = Time.at(row[:time].to_i).to_time
     item = Item[shortArk]
     if !item || item.last_indexed.nil? || item.last_indexed < erepTime || $rescanMode
-      if $prefilterMode
-        $prefilterQueue << [shortArk, erepTime]
-      else
-        $indexQueue << [shortArk, erepTime]
-      end
+      $indexQueue << [shortArk, erepTime]
     else
       #puts "#{shortArk} is up to date, skipping."
       $nSkipped += 1
     end
   end
 
-  if $prefilterMode
-    $prefilterQueue << nil  # end-of-queue
-    prefilterThread.join
-  else
-    $indexQueue << nil  # end-of-queue
-  end
+  $indexQueue << nil  # end-of-queue
   indexThread.join
   batchThread.join
 
