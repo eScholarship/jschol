@@ -13,8 +13,9 @@ def checkRedirect(origURI)
       uri = nil
     elsif uri.path =~ %r{^//+(.*)}  # normalize multiple initial slashes
       uri.path = "/#{$1}"
-    elsif uri.path =~ %r{^(.+)/+$}  # get rid of terminal slash(es) on all except root page
-      uri.path = $1
+    #NO: It is not safe to get rid of these, e.g. http://escholarship.org/search?q=china
+    #elsif uri.path =~ %r{^(.+)/+$}  # get rid of terminal slash(es) on all except root page
+    #  uri.path = $1
     elsif uri.path =~ %r{^/editions/(.*)}
       remainder = $1
       uri.scheme = "https"
@@ -24,7 +25,6 @@ def checkRedirect(origURI)
       return uri, 301
     # On production only, redirect http to https
     #elsif uri.scheme != "https" && $machine =~ /^pub-jschol-prd-2[ac]$/
-    #  puts "E"
     #  uri.scheme = "https"
     #  uri.port = nil
     elsif ["www.escholarship.org", "pvw.escholarship.org", "eprints.cdlib.org", "escholarship.cdlib.org"].include?(uri.host)
