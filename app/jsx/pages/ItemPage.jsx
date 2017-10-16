@@ -86,6 +86,7 @@ class ItemPage extends PageBase {
       lastpage = extj['lpage'] && <meta id="meta-lastpage" name="citation_lastpage" content={extj['lpage']}/>
     } else if (d.citation) {
       let c = d.citation
+      issn = c['issn'] && <meta id="meta-issn" name="citation_issn" content={c['issn']}/>
       volume = c['volume'] && <meta id="meta-volume" name="citation_volume" content={c['volume']}/>
       issue = c['issue'] && <meta id="meta-issue" name="citation_issue" content={c['issue']}/>
     }

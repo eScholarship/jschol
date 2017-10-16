@@ -25,6 +25,16 @@ class HomePage extends PageBase
         width: PropTypes.number,
         height: PropTypes.number
       })
+    }),
+    stats: PropTypes.shape({
+      statsCountItems: PropTypes.number.isRequired,
+      statsCountViews: PropTypes.number.isRequired,
+      // statsCountOpenItems: PropTypes.number.isRequired,
+      statsCountEscholJournals: PropTypes.number.isRequired,
+      statsCountOrus: PropTypes.number.isRequired,
+      statsCountArticles: PropTypes.number.isRequired,
+      statsCountThesesDiss: PropTypes.number.isRequired,
+      statsCountBooks: PropTypes.number.isRequired,
     })
   }
 
@@ -63,7 +73,7 @@ class HomePage extends PageBase
             </h2>
           </header>
           <div className="c-togglesection__content" hidden={!this.state.showSection1}>
-            <HomeSection1Comp />
+            <HomeSection1Comp stats={data.stats} />
           </div>
         </section>
         <ScrollingAnchorComp name="home_repository" />
@@ -74,7 +84,7 @@ class HomePage extends PageBase
             </h2>
           </header>
           <div className="c-togglesection__content" hidden={!this.state.showSection2}>
-            <HomeSection2Comp campuses={data.header.campuses} />
+            <HomeSection2Comp stats={data.stats} campuses={data.header.campuses} />
           </div>
         </section>
         <ScrollingAnchorComp name="home_publishing" />

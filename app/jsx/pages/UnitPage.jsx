@@ -78,7 +78,7 @@ class UnitPage extends PageBase {
     if (this.state.fetchingData)
       contentLayout = (<h2 style={{ marginTop: "5em", marginBottom: "5em" }}>Loading...</h2>)
     else if (this.props.params.pageName === 'search') {
-      this.extGA(data.unit.id)  // Google Analytics ifor external trackers called from PageBase
+      this.extGA(data.unit.id)  // Google Analytics for external trackers called from PageBase
       {/* ToDo: For now, serieslayout is the only unit search that occurs, but this should be properly componentized
       contentLayout = (<UnitSearchLayout unit={data.unit} data={data.content} sidebar={sidebar}/>) */}
       contentLayout = (<SeriesLayout unit={data.unit} data={data.content} sidebar={sidebar} marquee={data.marquee}/>)
@@ -99,7 +99,7 @@ class UnitPage extends PageBase {
       {/* Temporary, for testing */}
       // data.marquee.carousel = false
       // data.content.display = 'simple'
-      this.extGA(data.unit.id)  // Google Analytics ifor external trackers called from PageBase
+      this.extGA(data.unit.id)  // Google Analytics for external trackers called from PageBase
       if (data.unit.type === 'oru') {
         contentLayout = (<DepartmentLayout unit={data.unit} data={data.content} sidebar={sidebar} marquee={data.marquee}/>)
       } else if (data.unit.type == 'campus') {

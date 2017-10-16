@@ -33,18 +33,16 @@ class HomeSection2Comp extends React.Component {
         <h3 className="c-homesection2__stat-heading">Repository Holdings</h3>
         <div className="o-stat">
           <div className="o-stat--item">
-            <a href="">99,999</a> Items
-          {/* data.statsCountItems.toLocaleString() */}
+            <a href="">{this.props.stats.statsCountArticles.toLocaleString()}</a> Articles
+          </div>
+          <div className="o-stat--item">
+            <a href="">{this.props.stats.statsCountBooks.toLocaleString()}</a> Books
           </div>
           <div className="o-stat--units">
-            <a href="">999</a> Research Units
-          {/* data.statsCountOrus.toLocaleString() */}
+            <a href="">{this.props.stats.statsCountThesesDiss.toLocaleString()}</a> Theses 
           </div>
-      {/* <div className="o-stat--passed">
-            <a href="">9,999</a> Items since UC <br/> OA Policy passed
-          </div>  */}
         </div>
-        <a href="/search/?q='hi'" className="c-homesection2__browse-all">Browse all eScholarship holdings</a>
+        <a href="/search/?q=" className="c-homesection2__browse-all">Browse all eScholarship holdings</a>
         <Link to="/uc/root/repository" className="c-homesection2__more">Learn more about the eScholarship repository</Link>
         <WizardComp showModal={this.state.modalOpen}
                   parentSelector={()=>$('#repository')[0]}
