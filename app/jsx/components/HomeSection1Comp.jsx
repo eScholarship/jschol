@@ -7,7 +7,6 @@ class HomeSection1Comp extends React.Component {
   render() {
     return (
       <div className="c-homesection1">
-        <h2 className="c-homesection1__heading">Why Open Access?</h2>
         <div className="c-homesection1__description">
           <h3>Good for Authors</h3>
           <p>Open access research is read and cited more than access-restricted scholarship, increasing the academic impact of and public engagement with your ideas.</p>
@@ -17,10 +16,10 @@ class HomeSection1Comp extends React.Component {
         <h3 className="c-homesection1__stat-heading">Metrics of Use</h3>
         <div className="o-stat">
           <div className="o-stat--item">
-            <a href="">{this.props.stats.statsCountItems.toLocaleString()}</a> Items
+            <b>{this.props.stats.statsCountItems.toLocaleString()}</b> Items
           </div>
           <div className="o-stat--units">
-            <a href="">{this.props.stats.statsCountOrus.toLocaleString()}</a> Research Units
+            <b>{this.props.stats.statsCountOrus.toLocaleString()}</b> Research Units
           </div>
       {/* <div className="o-stat--passed">
             <a href="">9,999</a> Items since UC <br/> OA Policy passed
