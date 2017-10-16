@@ -10,19 +10,7 @@ import ViewExternalComp from '../components/ViewExternalComp.jsx'
 import { Link } from 'react-router'
 import NotYetLink from '../components/NotYetLink.jsx'
 import ArbitraryHTMLComp from "../components/ArbitraryHTMLComp.jsx"
-
-class ScrollingAnchorComp extends React.Component {
-  // Used to trigger scrolling for anchors linked from JumpComp (i.e. 'article_abstract')
-  render() {
-    return (
-      <a name={this.props.name} ref={(domElement) => {
-        if (domElement &&
-              window.location.hash.toLowerCase().replace(/^#/, "") == this.props.name) {
-          setTimeout(() => domElement.scrollIntoView(), 0)
-        }}} />
-   )
- }
-}
+import ScrollingAnchorComp from "../components/ScrollingAnchorComp.jsx"
 
 class Abstract extends React.Component {
   render() {

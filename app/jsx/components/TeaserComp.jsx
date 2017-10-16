@@ -4,6 +4,11 @@ import React from 'react'
 import { Link } from 'react-router'
 
 class TeaserComp extends React.Component {
+  handleClick(e, name) {  
+    e.preventDefault()
+    this.props.changeAnchor(name)
+  }
+
   render() {
     return (
       <div className="c-teaser">
@@ -13,7 +18,7 @@ class TeaserComp extends React.Component {
           </header>
           <p>Illum officiis eos animi blanditiis dolores aliquam quia eum expedita beatae iste alias.
           </p>
-          <a href="#repository">Learn more</a>
+          <Link to="#" onClick={(e)=>this.handleClick(e, "home_repository")}>Learn More</Link>
         </section>
         <section>
           <header>
@@ -21,7 +26,7 @@ class TeaserComp extends React.Component {
           </header>
           <p>Quod dolorem, nostrum ad quas quam doloribus labore quia a modi officiis unde natus.
           </p>
-          <a href="#publishing">Learn more</a>
+          <Link to="#" onClick={(e)=>this.handleClick(e, "home_publishing")}>Learn More</Link>
         </section>
       </div>
     )
