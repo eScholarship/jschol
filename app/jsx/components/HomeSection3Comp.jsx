@@ -14,7 +14,7 @@ class HomeSection3Comp extends React.Component {
           <p>eScholarship Publishing is an open access publishing platform subsidized by the University of California, managed by the California Digital Library, and offered free of charge to UC-affiliated departments, research units, publishing programs and individual scholars.</p>
           <p>We offer publishing and production tools, including a full editorial and peer review system, as well as professional support and consulting services.</p>
         </div>
-        <a href="" className="c-homesection3__start">How to start a journal</a>
+        <a href="https://help.escholarship.org/support/solutions/articles/9000127857-starting-a-new-journal-on-escholarship" className="c-homesection3__start">How to start a journal</a>
         <div className="c-homesection3__journalgrid">
           <JournalGridComp />
         </div>
