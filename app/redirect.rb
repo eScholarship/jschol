@@ -1,18 +1,19 @@
 # Support for redirecting all old URLs to new
 
+$machine = `/bin/hostname`.strip
+
 ###################################################################################################
 def checkRedirect(origURI)
-  return nil, nil # hacking until this actually works
   uri = origURI.clone
   tried = Set.new
   while uri
-    fromURI = uri
+    fromURI = uri.clone
     tried << uri
     if uri.path.include?(".php")  # We have no PHP on our site. These are almost always attacks anyhow
       uri = nil
     elsif uri.path =~ %r{^//+(.*)}  # normalize multiple initial slashes
       uri.path = "/#{$1}"
-    elsif uri.path =~ %r{^(.*)/+$}  # get rid of terminal slash(es)
+    elsif uri.path =~ %r{^(.+)/+$}  # get rid of terminal slash(es) on all except root page
       uri.path = $1
     elsif uri.path =~ %r{^/editions/(.*)}
       remainder = $1
@@ -21,10 +22,13 @@ def checkRedirect(origURI)
       uri.port = nil
       uri.path = "/ucpressebooks/#{remainder}"
       return uri, 301
-    elsif uri.host != "localhost" && (uri.scheme != "http" || (uri.port != 443 && uri.port != 4001))
-      uri.scheme = "https"
-      uri.port = nil
+    # On production only, redirect http to https
+    #elsif uri.scheme != "https" && $machine =~ /^pub-jschol-prd-2[ac]$/
+    #  puts "E"
+    #  uri.scheme = "https"
+    #  uri.port = nil
     elsif ["www.escholarship.org", "pvw.escholarship.org", "eprints.cdlib.org", "escholarship.cdlib.org"].include?(uri.host)
+      puts "Changing host"
       uri.host = "escholarship.org"
     elsif uri.path =~ %r{^/uc/item/(\w+)(.*)}
       uri = handleItemRedirect(uri, $1, $2)
@@ -41,10 +45,8 @@ def checkRedirect(origURI)
     elsif uri.path =~ /(\.html?$)|(\.cgi)|(cgi-bin)/   # old HTML and CGI pages
       uri.path = "/"
       uri.query = nil
-    else
-      puts "no match: #{uri}"
     end
-    uri == fromURI and break
+    break if uri == fromURI
     tried.include?(uri) and raise("URI redirect loop detected involving #{uri.to_s}")
   end
 
