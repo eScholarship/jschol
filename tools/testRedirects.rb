@@ -3,7 +3,8 @@
 require 'uri'
 require 'yaml'
 
-$hostIP = `/bin/hostname --ip-address`.strip
+$hostname = `/bin/hostname`.strip
+$hostIP = $hostname =~ /^pub-jschol/ ? `/bin/hostname --ip-address`.strip : "127.0.0.1"
 $serverConfig = YAML.load_file("config/server.yaml")
 $mainPort = $serverConfig["mainPort"]
 
