@@ -237,6 +237,9 @@ class DisplayPDF < Sequel::Model
   unrestrict_primary_key
 end
 
+class Redirect < Sequel::Model
+end
+
 require_relative '../splash/splashGen.rb'
 
 ###################################################################################################
@@ -2728,6 +2731,153 @@ def updateUnitStats
 end
 
 ###################################################################################################
+def flushDbQueue(queue)
+  DB.transaction { queue.each { |func| func.call } }
+  queue.clear
+end
+
+###################################################################################################
+def convertOldStyleRedirects(kind, filename)
+  # Skip if already done.
+  !$forceMode && Redirect.where(kind: kind).count > 0 and return
+
+  puts "Converting #{kind} redirects."
+  Redirect.where(kind: kind).delete
+  queue = []
+  open("redirects/#{filename}").each_line do |line|
+    line =~ %r{<from>(http://repositories.cdlib.org/)?([^<]+)</from>.*<to>([^<]+)</to>} or raise
+    fp, tp = $2, $3
+    fp.sub! "&amp;", "&"
+    tp.sub! "&amp;", "&"
+    tp.sub! %r{^/uc/search\?entity=(.*);volume=(.*);issue=(.*)}, '/uc/\1/\2/\3'
+    queue << lambda { Redirect.create(kind: kind, from_path: "/#{fp}", to_path: tp) }
+    queue.length >= 1000 and flushDbQueue(queue)
+  end
+  flushDbQueue(queue)
+end
+
+###################################################################################################
+def convertItemRedirects
+  # Skip if already done.
+  !$forceMode && Redirect.where(kind: 'item').count > 0 and return
+
+  puts "Converting item redirects."
+  Redirect.where(kind: 'item').delete
+  fromArks = []
+  comment = nil
+  queue = []
+  didArks = {}
+  open("/apps/eschol/erep/xtf/style/dynaXML/docFormatter/pdf/objectRedirect.xsl").each_line do |line|
+    if line =~ /test="matches/
+      fromArks.empty? or raise("multiple whens with no value-of: #{line}")
+      fromArks = line.scan /\b\d\w{7}\b/
+      fromArks.empty? and raise("no fromArks found: #{line}")
+    elsif line =~ %r{<!--(.*)-->}
+      comment = $1.strip
+    elsif line =~ /xsl:value-of/
+      fromArks.empty? and raise("value-of without when: #{line}")
+      line.sub! "/980931r'", "/980931rf'"  # hack missing char in old redirect
+      toArks = line.scan /\b\d\w{7}\b/
+      toArks.length == 1 or raise("need exactly one to-ark: #{line}")
+      toArk = toArks[0]
+      fromArks.each { |fromArk|
+        if didArks.include? fromArk
+          toArk != didArks[fromArk] and puts "Duplicate from=#{fromArk} to=#{didArks[fromArk]} vs #{toArk}. Skipping."
+          next
+        end
+        queue << lambda {
+          Redirect.create(kind: 'item',
+                          from_path: "/uc/item/#{fromArk}",
+                          to_path: "/uc/item/#{toArk}",
+                          descrip: comment)
+        }
+        queue.length >= 1000 and flushDbQueue(queue)
+        didArks[fromArk] = toArk
+      }
+      comment = nil
+      fromArks.clear
+    end
+  end
+  flushDbQueue(queue)
+end
+
+###################################################################################################
+def convertUnitRedirects
+  # Skip if already done.
+  !$forceMode && Redirect.where(kind: 'unit').count > 0 and return
+  puts "Converting unit redirects."
+  Redirect.where(kind: 'unit').delete
+
+  fromUnit = nil
+  queue = []
+  open("/apps/eschol/erep/xtf/style/erepCommon/unitRedirect.xsl").each_line do |line|
+    if line =~ /entity='([a-z0-9_]+)'/
+      fromUnit.nil? or raise("multiple whens with no value-of: #{line}")
+      fromUnit = $1
+    elsif line =~ /replace\(\$http\.URL,\s*'([a-z0-9_]+)',\s*'([^']+)'/
+      fromUnit.nil? and raise("value-of without when: #{line}")
+      fromUnit == $1 or raise("value-of doesn't match when: #{line}")
+      fp = "/uc/#{fromUnit}"
+      tp = "/uc/#{$2}"
+      queue << lambda {
+        Redirect.create(kind: 'unit', from_path: fp, to_path: tp)
+      }
+      fromUnit = nil
+    end
+  end
+  flushDbQueue(queue)
+end
+
+###################################################################################################
+def fixURL(url)
+  url.sub(%r{^(https?://)([^/]+)//}, '\1\2/')
+end
+
+###################################################################################################
+def convertLogRedirects
+  # Skip if already done.
+  !$forceMode && Redirect.where(kind: 'log').count > 0 and return
+  puts "Converting log redirects."
+  Redirect.where(kind: 'log').delete
+
+  open("redirects/random_redirects").each_line do |line|
+    fromURL, toURL, code = line.split("|")
+
+    # Fix double slashes
+    fromURL = fixURL(fromURL)
+    toURL = fixURL(toURL)
+
+    # www.escholarship -> escholarship
+    next if fromURL.sub("www.escholarship.org", "escholarship.org") == toURL
+    next if fromURL.sub(".pdf", "") == toURL
+
+    # Screwing around with query params on items
+    next if fromURL.sub(%r{(/uc/item/.*)\?.*}, '$1') == toURL.sub(%r{(/uc/item/.*)\?.*}, '$1')
+
+    # Item redirects
+    if fromURL =~ %r{/uc/item/([^/]+)}
+      itemID = $1
+      itemRedir = Redirect.where(kind: "item", from_path: "/uc/item/#{itemID}").first
+      if itemRedir
+        puts "item redirect found: #{itemID} -> #{itemRedir.to_path}"
+        next
+      end
+    end
+
+    puts "#{fromURL} -> #{toURL}"
+  end
+end
+
+###################################################################################################
+def convertRedirects
+  convertOldStyleRedirects('bepress', 'bp_redirects')
+  convertOldStyleRedirects('doj', 'doj_redirects')
+  #convertItemRedirects
+  #convertUnitRedirects
+  #convertLogRedirects
+end
+
+###################################################################################################
 # Main action begins here
 
 startTime = Time.now
@@ -2746,6 +2896,8 @@ case ARGV[0]
     splashAllPDFs(arks.empty? ? "ALL" : Set.new(arks))
   when "--stats"
     updateUnitStats
+  when "--redirects"
+    convertRedirects
   else
     STDERR.puts "Usage: #{__FILE__} --units|--items"
     exit 1
