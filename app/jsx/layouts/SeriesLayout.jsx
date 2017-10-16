@@ -35,7 +35,7 @@ class SeriesSelector extends React.Component {
     let p = this.props
     return (
       <div className="o-customselector">
-        <div className="o-customselector__heading">{p.unit.name}</div>
+        <h2 className="o-customselector__heading">{p.unit.name}</h2>
         <details open={this.state.isOpen}
                  ref={domElement => this.details=domElement}
                  onClick={()=>setTimeout(()=>this.setState({isOpen: this.details.open}), 0)}
