@@ -2,12 +2,12 @@
 
 import React from 'react'
 import PropTypes from 'prop-types'
+import ReactGA from 'react-ga'
+import { Link } from 'react-router'
 import $ from 'jquery'
 import CampusSelectorComp from '../components/CampusSelectorComp.jsx'
 import WizardComp from './WizardComp.jsx'
 import WizardInertComp from './WizardInertComp.jsx'
-import { Link } from 'react-router'
-import NotYetLink from '../components/NotYetLink.jsx'
 
 class SubheaderComp extends React.Component {
   static propTypes = {

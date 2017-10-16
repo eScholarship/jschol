@@ -57,8 +57,9 @@ const routes = (
 // ReactGA.initialize('UA-26286226-1', { debug: false })
 
 let logPageView = () => {
-  ReactGA.set({ page: window.location.pathname + window.location.search });
-  ReactGA.pageview(window.location.pathname + window.location.search);
+  ReactGA.set({ page: window.location.pathname + window.location.search,
+                anonymizeIp: true })
+  ReactGA.pageview(window.location.pathname + window.location.search)
 }
 
 // When running in the browser, render with React (vs. server-side where iso runs it for us)
