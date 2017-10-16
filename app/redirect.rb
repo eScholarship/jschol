@@ -23,10 +23,10 @@ def checkRedirect(origURI)
       uri.path = "/ucpressebooks/#{remainder}"
       return uri, 301
     # On production only, redirect http to https
-    elsif uri.scheme != "https" && $machine =~ /^pub-jschol-prd-2[ac]$/
-      puts "E"
-      uri.scheme = "https"
-      uri.port = nil
+    #elsif uri.scheme != "https" && $machine =~ /^pub-jschol-prd-2[ac]$/
+    #  puts "E"
+    #  uri.scheme = "https"
+    #  uri.port = nil
     elsif ["www.escholarship.org", "pvw.escholarship.org", "eprints.cdlib.org", "escholarship.cdlib.org"].include?(uri.host)
       puts "Changing host"
       uri.host = "escholarship.org"
