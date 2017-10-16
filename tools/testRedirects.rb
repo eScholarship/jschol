@@ -31,6 +31,10 @@ def testRedirect(fromURL, toURL)
   end
 end
 
+# Convenience
+testRedirect("http://escholarship.org/uc/item/qt00f756qs",
+             "http://escholarship.org/uc/item/00f756qs")
+
 # DOJ redirects
 testRedirect("http://dermatology.cdlib.org//143/index.html",
              "https://escholarship.org/uc/doj/14/3")
@@ -40,6 +44,8 @@ testRedirect("http://dermatology.cdlib.org//search?uri=1&go=1&entity=doj&keyword
              "https://escholarship.org/uc/doj")
 
 # Bepress redirects
+testRedirect("http://escholarship.org/uc/temporary?bpid=2251892",
+             "http://escholarship.org/uc/item/00f756qs")
 testRedirect("http://repositories.cdlib.org/uctc",
              "https://escholarship.org/uc/uctc")
 testRedirect("http://repositories.cdlib.org/its/tsc",

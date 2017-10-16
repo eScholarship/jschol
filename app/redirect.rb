@@ -25,8 +25,10 @@ def checkRedirect(origURI)
       uri.host = "escholarship.org"
     elsif uri.path =~ %r{^/uc/item/(\w+)(.*)}
       uri = handleItemRedirect(uri, $1, $2)
-    elsif uri.path =~ %r{/uc/search}
+    elsif uri.path =~ %r{^/uc/search}
       uri, code = handleSearchRedirect(uri)
+    elsif uri.path =~ %r{^/uc/temporary}
+      uri, code = handleBpTempRedirect(uri)
     elsif uri.path =~ %r{^/uc/([^/]+)(.*)}
       uri, code = handleUnitRedirect(uri, $1, $2)
     elsif uri.host == "repositories.cdlib.org"
@@ -51,7 +53,9 @@ end
 ###################################################################################################
 def handleItemRedirect(uri, itemID, remainder)
   uri.query = nil  # we don't support any queries params on new items
-  if !(itemID =~ /^\w{8}$/)
+  if itemID =~ /^qt(\w{8})/
+    uri.path = "/uc/item/#{$1}#{remainder}"
+  elsif !(itemID =~ /^\w{8}$/)
     return nil  # not found
   elsif (redir = Redirect.where(kind: "item", from_path: "/uc/item/#{itemID}").first)
     uri.path = "#{redir.to_path}#{remainder}"
@@ -120,6 +124,19 @@ def handleBepressRedirect(uri)
   # Ultimate fallback - the eschol home page
   uri.path = "/"
   return uri
+end
+
+###################################################################################################
+def handleBpTempRedirect(uri)
+  if uri.query =~ /^bpid=(\d+)$/
+    bpid = $1
+    if (item = Item.where(Sequel.lit("attrs->\"$.bepress_id\" = \"#{bpid}\"")).first)
+      uri.path = "/uc/item/#{item.id.sub(/^qt/,'')}"
+      uri.query = nil
+      return uri
+    end
+  end
+  return nil # not found
 end
 
 ###################################################################################################
