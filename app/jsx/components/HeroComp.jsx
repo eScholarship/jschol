@@ -19,6 +19,7 @@ class HeroComp extends React.Component {
 
   render() {
     let h = this.props.hero_data
+    if (!h) return <div/>
     return (
       <div className="c-hero--black-text" style={{backgroundImage: "url(" + h.hero.url + ")"}}>
         <h1>Open Access Publications from the University of California</h1>
