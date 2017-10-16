@@ -2747,7 +2747,10 @@ def convertOldStyleRedirects(kind, filename)
   open("redirects/#{filename}").each_line do |line|
     line =~ %r{<from>(http://repositories.cdlib.org/)?([^<]+)</from>.*<to>([^<]+)</to>} or raise
     fp, tp = $2, $3
-    queue << lambda { Redirect.create(kind: kind, from_path: fp, to_path: tp) }
+    fp.sub! "&amp;", "&"
+    tp.sub! "&amp;", "&"
+    tp.sub! %r{^/uc/search\?entity=(.*);volume=(.*);issue=(.*)}, '/uc/\1/\2/\3'
+    queue << lambda { Redirect.create(kind: kind, from_path: "/#{fp}", to_path: tp) }
     queue.length >= 1000 and flushDbQueue(queue)
   end
   flushDbQueue(queue)
@@ -2848,17 +2851,30 @@ def convertLogRedirects
     next if fromURL.sub("www.escholarship.org", "escholarship.org") == toURL
     next if fromURL.sub(".pdf", "") == toURL
 
+    # Screwing around with query params on items
+    next if fromURL.sub(%r{(/uc/item/.*)\?.*}, '$1') == toURL.sub(%r{(/uc/item/.*)\?.*}, '$1')
+
+    # Item redirects
+    if fromURL =~ %r{/uc/item/([^/]+)}
+      itemID = $1
+      itemRedir = Redirect.where(kind: "item", from_path: "/uc/item/#{itemID}").first
+      if itemRedir
+        puts "item redirect found: #{itemID} -> #{itemRedir.to_path}"
+        next
+      end
+    end
+
     puts "#{fromURL} -> #{toURL}"
   end
 end
 
 ###################################################################################################
 def convertRedirects
-  #convertOldStyleRedirects('bepress', 'bp_redirects')
-  #convertOldStyleRedirects('doj', 'doj_redirects')
+  convertOldStyleRedirects('bepress', 'bp_redirects')
+  convertOldStyleRedirects('doj', 'doj_redirects')
   #convertItemRedirects
   #convertUnitRedirects
-  convertLogRedirects
+  #convertLogRedirects
 end
 
 ###################################################################################################
