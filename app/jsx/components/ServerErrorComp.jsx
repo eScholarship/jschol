@@ -26,6 +26,7 @@ class ServerErrorComp extends React.Component {
         </Form>
         <small>If you think this is a problem with eScholarship, please <a href="https://help.escholarship.org/support/tickets/new">contact us</a>.</small>
         <small>Or return to the <Link to="/">homepage</Link>.</small>
+        <div style={{display: "none"}} id="serverError">{this.props.error}</div> {/* signal to server.rb */}
       </div>
     )
   }

@@ -122,6 +122,7 @@ require_relative 'unitPages'
 require_relative 'citation'
 require_relative 'loginApi'
 require_relative 'fetch'
+require_relative 'redirect'
 
 class StdoutLogger
   def << (str)
@@ -208,6 +209,9 @@ class DisplayPDF < Sequel::Model
   unrestrict_primary_key
 end
 
+class Redirect < Sequel::Model
+end
+
 # DbCache uses the models above.
 require_relative 'dbCache'
 
@@ -238,6 +242,14 @@ require_relative 'dbCache'
 $ipFilter = File.exist?("config/allowed_ips") && Regexp.new(File.read("config/allowed_ips").strip)
 before do
   $ipFilter && !$ipFilter.match(request.ip) and halt 403
+  redirURI, code = checkRedirect(URI.parse(request.url))
+  if code
+    if code >= 300 && code <= 399
+      redirect to(redirURI.to_s, code), code
+    else
+      halt code
+    end
+  end
 end
 
 ###################################################################################################
@@ -329,11 +341,13 @@ get "/content/:fullItemID/*" do |itemID, path|
   # Control how long this remains in browser and CloudFront caches
   cache_control :public, :max_age => 3600   # maybe more?
 
-  # Allow cross-origin requests so that main site and CloudFront cache can co-operate
+  # Allow cross-origin requests so that main site and CloudFront cache can co-operate. Also, let
+  # crawlers know that the canonical URL is the item page.
   headers "Access-Control-Allow-Origin" => "*",
           "Access-Control-Allow-Headers" => "Range",
           "Access-Control-Expose-Headers" => "Accept-Ranges, Content-Encoding, Content-Length, Content-Range",
-          "Access-Control-Allow-Methods" => "GET, OPTIONS"
+          "Access-Control-Allow-Methods" => "GET, OPTIONS",
+          "Link" => "<https://escholarship.org/uc/item/#{itemID.sub(/^qt/,'')}>; rel=\"canonical\""
 
   # Stream supp files out directly from Merritt. Also, if there's no display PDF, fall back
   # to the version in Merritt.
@@ -410,15 +424,19 @@ end
 # The outer framework of every page is essentially the same, substituting in the intial page
 # data and initial elements from React.
 get %r{.*} do
-
   # The regex below ensures that /api, /content, /locale, and files with a file ext get served
   # elsewhere.
-  pass if request.path_info =~ %r{api/.*|content/.*|locale/.*|.*\.\w{1,4}}
+  if request.path_info =~ %r{api/.*|content/.*|locale/.*|.*\.\w{1,4}}
+    pass
+  else
+    generalResponse
+  end
+end
 
-  template = File.new("app/app.html").read
-
+###################################################################################################
+def generalResponse
   # Replace startup URLs for proper cache busting
-  # TODO: speed this up by caching (if it's too slow)
+  template = File.new("app/app.html").read
   webpackManifest = JSON.parse(File.read('app/js/manifest.json'))
   template.sub!("/js/lib-bundle.js", "/js/#{webpackManifest["lib.js"]}")
   template.sub!("/js/app-bundle.js", "/js/#{webpackManifest["app.js"]}")
@@ -439,7 +457,6 @@ get %r{.*} do
       puts "Warning: unexpected exception (not HTTP error) from iso: #{e} #{e.backtrace}"
       return template
     end
-    status response.code.to_i
     if response.code.to_i != 200
       # For all error pages, fall back to non-ISO since we don't know how to render it here.
       return template
@@ -452,6 +469,13 @@ get %r{.*} do
       metaTags.gsub! "><", ">\n  <"  # add some newlines to make it look nice
     end
 
+    # Put proper HTTP code on server error pages
+    if body =~ %r{<div [^>]*id="serverError"[^>]*>([^<]+)</div>}
+      status $1 =~ /Not Found/i ? 404 : 500
+    else
+      status 200
+    end
+
     # In the template, substitute the results from React/ReactRouter
     template.sub!('<metaTags></metaTags>', metaTags) or raise("missing template section")
     template.sub!('<div id="main"></div>', body) or raise("missing template section")
@@ -462,8 +486,13 @@ get %r{.*} do
   end
 end
 
+# Not found errors on /content, /api, etc.
+not_found do
+  generalResponse  # handles 404's in the same isomorphic fashion as other requests
+end
+
 ###################################################################################################
-# Pages with no data
+# Pages with no data except header/footer stuff
 get %r{/api/(notFound|logoutSuccess)} do
   content_type :json
   unit = $unitsHash['root']

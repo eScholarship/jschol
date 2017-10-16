@@ -19,6 +19,7 @@ normalized/
 prefilterDirs.txt
 public/css/
 public/js/
+redirects/
 splash/downloaded/
 splash/tmp/
 splash/WEB-INF/classes/
