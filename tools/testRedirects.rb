@@ -1,6 +1,14 @@
 #!/usr/bin/env ruby
 
 require 'uri'
+require 'yaml'
+
+$hostIP = `/bin/hostname --ip-address`.strip
+$serverConfig = YAML.load_file("config/server.yaml")
+$mainPort = $serverConfig["mainPort"]
+
+$cfPrefix = File.exist?("config/cloudFront.yaml") ?
+            YAML.load_file("config/cloudFront.yaml")["public-url"] : "http://escholarship.org/"
 
 def error(msg)
   puts "Error: #{msg}"
@@ -10,11 +18,11 @@ end
 def testRedirect(fromURL, toURL)
   uri = URI.parse(fromURL)
   host = uri.host
-  cmd = %{curl --silent --resolve #{host}:4001:127.0.0.1 -I "#{fromURL.sub(/:\/\/([^\/]+)/, '://\1:4001')}"}
+  cmd = %{curl --silent --resolve #{host}:#{$mainPort}:#{$hostIP} -I "#{fromURL.sub(/:\/\/([^\/]+)/, '://\1:'+$mainPort.to_s)}"}
   result = `#{cmd}`.encode!('UTF-8', 'UTF-8', :invalid => :replace)
   if result =~ %r{HTTP/1.1 (30[123]).*Location: ([^\n]+)}m
     got = $2.strip
-    if toURL != got
+    if toURL.sub(/^https/,'http') != got.sub(/^https/,'http')
       error("Incorrect redirect. #{fromURL.inspect} -> #{got.inspect} but expected #{toURL.inspect}")
     end
   elsif result =~ %r{HTTP/1.1 (\d+)}
@@ -116,11 +124,11 @@ testRedirect("http://eprints.cdlib.org/uc/item/8gj3x1dc",
 
 # Redirect eschol.cdlib
 testRedirect("http://escholarship.cdlib.org/uc/item/9ws876kn.pdf",
-             "https://cloudfront.escholarship.org/dist/prd/content/qt9ws876kn/qt9ws876kn.pdf")
+             "#{$cfPrefix}content/qt9ws876kn/qt9ws876kn.pdf")
 
 # Redirect old PDF links
 testRedirect("http://escholarship.org/uc/item/4590m805.pdf",
-             "https://cloudfront.escholarship.org/dist/prd/content/qt4590m805/qt4590m805.pdf")
+             "#{$cfPrefix}content/qt4590m805/qt4590m805.pdf")
 
 # No longer redirecting PDF links
 testRedirect("http://escholarship.org/content/qt4590m805/qt4590m805.pdf", nil)
