@@ -2,6 +2,7 @@
 import React from 'react'
 import $ from 'jquery'
 import _ from 'lodash'
+import ReactGA from 'react-ga'
 import { Broadcast, Subscriber } from 'react-broadcast'
 
 import SkipNavComp from '../components/SkipNavComp.jsx'
@@ -181,6 +182,18 @@ class PageBase extends React.Component
                                          : ` ${data.status}:\n${data.statusText}.`))
       this.fetchPageData()
     })
+  }
+
+  // External Google Analytics trackers
+  runExtGATracker = (tracker, id) => {
+    ReactGA.ga('create', id, 'auto', {'name': tracker})
+    ReactGA.ga(tracker+'.send', 'pageview', {'page': window.location.pathname})
+  }
+
+  extGA = (unit_id) => {
+    if (/jmie_sfews/.test(unit_id)) { this.runExtGATracker('sfewsTracker', 'UA-31540406-1') }
+    if (/^nanocad/.test(unit_id)) { this.runExtGATracker('nanocadTracker', 'UA-17962781-1') }
+    if (/^uciem_westjem/.test(unit_id)) { this.runExtGATracker('westjemTracker', 'UA-34762732-1') }
   }
 
   // This gets called when props change by switching to a new page.
