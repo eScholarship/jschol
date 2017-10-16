@@ -90,6 +90,7 @@ class ItemPage extends PageBase {
       issue = c['issue'] && <meta id="meta-issue" name="citation_issue" content={c['issue']}/>
     }
     let keywords = a.disciplines ? a.disciplines.join('; ') : null
+    this.extGA(d.unit.id)  // Google Analytics for external trackers called from PageBase
     return (
       <div>
         <MetaTags>
