@@ -2,6 +2,7 @@
 
 ###################################################################################################
 def checkRedirect(origURI)
+  return nil, nil # hacking until this actually works
   uri = origURI.clone
   tried = Set.new
   while uri
