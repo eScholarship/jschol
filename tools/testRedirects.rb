@@ -23,7 +23,7 @@ def testRedirect(fromURL, toURL)
   result = `#{cmd}`.encode!('UTF-8', 'UTF-8', :invalid => :replace)
   if result =~ %r{HTTP/1.1 (30[123]).*Location: ([^\n]+)}m
     got = $2.strip
-    if toURL.sub(/^https/,'http') != got.sub(/^https/,'http')
+    if toURL.nil? || toURL.sub(/^https/,'http') != got.sub(/^https/,'http')
       error("Incorrect redirect. #{fromURL.inspect} -> #{got.inspect} but expected #{toURL.inspect}")
     end
   elsif result =~ %r{HTTP/1.1 (\d+)}
@@ -40,6 +40,13 @@ def testRedirect(fromURL, toURL)
   end
 end
 
+# Things that should not redirect
+testRedirect("http://escholarship.org/uc/ucbclassics", nil)
+testRedirect("http://escholarship.org/bower_components/babel-polyfill/browser-polyfill.js", nil)
+testRedirect("http://escholarship.org/uc/item/8304n08d", nil)
+testRedirect("http://escholarship.org/search/?q=china", nil)
+testRedirect("http://escholarship.org/api/search/?q=china&searchType=eScholarship&searchUnitType=departments", nil)
+
 # Old HTML pages
 testRedirect("http://escholarship.cdlib.org/about_news_pkp_partnership.html",
              "http://escholarship.org/")
@@ -51,12 +58,6 @@ testRedirect("http://escholarship.cdlib.org/sunbbs.cgi?mode=form",
              "http://escholarship.org/")
 testRedirect("http://escholarship.cdlib.org/cgi-bin/mail.ucpress",
              "http://escholarship.org/")
-
-# Get rid of terminal slash
-testRedirect("http://escholarship.org/uc/ucsc_games_cmps80k/item/55h19976/",
-             "http://escholarship.org/uc/ucsc_games_cmps80k/item/55h19976")
-testRedirect("http://escholarship.org/uc/doj/",
-             "http://escholarship.org/uc/doj")
 
 # Convenience
 testRedirect("http://escholarship.org/uc/item/qt00f756qs",
@@ -157,8 +158,3 @@ testRedirect("http://www.escholarship.org/uc/uclta",
              "http://escholarship.org/uc/uclta")
 testRedirect("http://www.escholarship.org/uc/uclta?foo=bar",
              "http://escholarship.org/uc/uclta?foo=bar")
-
-# Things that should not redirect
-testRedirect("http://escholarship.org/uc/ucbclassics", nil)
-testRedirect("http://escholarship.org/bower_components/babel-polyfill/browser-polyfill.js", nil)
-testRedirect("http://escholarship.org/uc/item/8304n08d", nil)
