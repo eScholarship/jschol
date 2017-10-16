@@ -14,7 +14,8 @@ class FooterComp extends React.Component {
           <Link to="/campuses">Campus Sites</Link>
           <Link to="/uc/root/ucoapolicies">UC Open Access Policy</Link>
           <Link to="/uc/root/publishing">eScholarship Publishing</Link>
-          <Link to="/uc/root/privacypolicy">Privacy Policy</Link>
+          <Link to="/uc/root/privacypolicy">Privacy Statement</Link>
+          <Link to="/uc/root/policies">Policies</Link>
           <Link to="/uc/root/terms">Terms of Use</Link>
           <Subscriber channel="cms">
             { cms => cms.loggedIn ?
@@ -29,10 +30,10 @@ class FooterComp extends React.Component {
           </a>
         </div>
         <div className="c-footer__icons">
-          <a href="">
+          <a href="https://www.facebook.com/eScholarship/">
             <img src="/images/logo_facebook-circle-white.svg" alt="Facebook"/>
           </a>
-          <a href="">
+          <a href="https://twitter.com/escholarship">
             <img src="/images/logo_twitter-circle-white.svg" alt="Twitter"/>
           </a>
         </div>
