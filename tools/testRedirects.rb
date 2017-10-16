@@ -14,7 +14,9 @@ def testRedirect(fromURL, toURL)
   result = `#{cmd}`.encode!('UTF-8', 'UTF-8', :invalid => :replace)
   if result =~ %r{HTTP/1.1 (30[123]).*Location: ([^\n]+)}m
     got = $2.strip
-    toURL == got or error("Incorrect redirect. #{fromURL.inspect} -> #{got.inspect} but expected #{toURL.inspect}")
+    if toURL.sub(/^https/, "http") != got.sub(/^https/, "http")
+      error("Incorrect redirect. #{fromURL.inspect} -> #{got.inspect} but expected #{toURL.inspect}")
+    end
   elsif result =~ %r{HTTP/1.1 (\d+)}
     code = $1.to_i
     if code == 200
