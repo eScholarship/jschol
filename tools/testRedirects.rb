@@ -31,6 +31,24 @@ def testRedirect(fromURL, toURL)
   end
 end
 
+# Old HTML pages
+testRedirect("http://escholarship.cdlib.org/about_news_pkp_partnership.html",
+             "http://escholarship.org")
+testRedirect("http://escholarship.cdlib.org/rtennant/presentations/2004oregon/alice.htm",
+             "http://escholarship.org")
+
+# Old CGIs
+testRedirect("http://escholarship.cdlib.org/sunbbs.cgi?mode=form",
+             "http://escholarship.org")
+testRedirect("http://escholarship.cdlib.org/cgi-bin/mail.ucpress",
+             "http://escholarship.org")
+
+# Get rid of terminal slash
+testRedirect("http://escholarship.org/uc/ucsc_games_cmps80k/item/55h19976/",
+             "http://escholarship.org/uc/ucsc_games_cmps80k/item/55h19976")
+testRedirect("http://escholarship.org/uc/doj/",
+             "http://escholarship.org/uc/doj")
+
 # Convenience
 testRedirect("http://escholarship.org/uc/item/qt00f756qs",
              "http://escholarship.org/uc/item/00f756qs")
@@ -68,6 +86,9 @@ testRedirect("http://escholarship.org/uc/ioe",
 # Unit to landing page
 testRedirect("http://escholarship.org/uc/search?entity=uciem_westjem",
              "https://escholarship.org/uc/uciem_westjem")
+
+# Don't redirect unit subpages
+testRedirect("http://escholarship.org/uc/doj/contactus", nil)
 
 # Journal issue
 testRedirect("http://escholarship.org/uc/search?entity=uciem_westjem;volume=18;issue=6.1",
@@ -107,6 +128,8 @@ testRedirect("http://escholarship.org/content/qt4590m805/qt4590m805.pdf", nil)
 # Redirect from supp file to item
 testRedirect("http://escholarship.org/uc/item/3kq9770m/socr_pt4_20070806_v256_part_2.mpg",
              "https://escholarship.org/uc/item/3kq9770m")
+# but not new-style sub files
+testRedirect("http://escholarship.org/content/qt0zw0j0hz/inner/1.jpg", nil)
 
 # Strip query parameters from item URLs
 testRedirect("http://escholarship.org/uc/item/0nm3g51w?foo=bar",

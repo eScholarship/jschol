@@ -9,8 +9,10 @@ def checkRedirect(origURI)
     tried << uri
     if uri.path.include?(".php")  # We have no PHP on our site. These are almost always attacks anyhow
       uri = nil
-    elsif uri.path =~ %r{^//+(.*)}
+    elsif uri.path =~ %r{^//+(.*)}  # normalize multiple initial slashes
       uri.path = "/#{$1}"
+    elsif uri.path =~ %r{^(.*)/+$}  # get rid of terminal slash(es)
+      uri.path = $1
     elsif uri.path =~ %r{^/editions/(.*)}
       remainder = $1
       uri.scheme = "https"
@@ -26,15 +28,20 @@ def checkRedirect(origURI)
     elsif uri.path =~ %r{^/uc/item/(\w+)(.*)}
       uri = handleItemRedirect(uri, $1, $2)
     elsif uri.path =~ %r{^/uc/search}
-      uri, code = handleSearchRedirect(uri)
+      uri = handleSearchRedirect(uri)
     elsif uri.path =~ %r{^/uc/temporary}
-      uri, code = handleBpTempRedirect(uri)
+      uri = handleBpTempRedirect(uri)
     elsif uri.path =~ %r{^/uc/([^/]+)(.*)}
-      uri, code = handleUnitRedirect(uri, $1, $2)
+      uri = handleUnitRedirect(uri, $1, $2)
     elsif uri.host == "repositories.cdlib.org"
-      uri, code = handleBepressRedirect(uri)
+      uri = handleBepressRedirect(uri)
     elsif uri.host =~ /dermatology(-s10)?.cdlib.org/
-      uri, code = handleDojRedirect(uri)
+      uri = handleDojRedirect(uri)
+    elsif uri.path =~ /(\.html?$)|(\.cgi)|(cgi-bin)/   # old HTML and CGI pages
+      uri.path = "/"
+      uri.query = nil
+    else
+      puts "no match: #{uri}"
     end
     uri == fromURI and break
     tried.include?(uri) and raise("URI redirect loop detected involving #{uri.to_s}")
