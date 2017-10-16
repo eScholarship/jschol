@@ -510,14 +510,16 @@ get "/api/home" do
   body = {
     :header => getGlobalHeader,
     :hero_data => getCampusHeros.compact,
-    :statsCountItems => $statsCountItems,
-    :statsCountViews => $statsCountViews,
-    :statsCountOpenItems => $statsCountOpenItems,
-    :statsCountEscholJournals => $statsCountEscholJournals,
-    :statsCountOrus => $statsCountOrus,
-    :statsCountArticles => $statsCountArticles,
-    :statsCountThesesDiss => $statsCountThesesDiss,
-    :statsCountBooks => $statsCountBooks
+    :stats => {
+      :statsCountItems => $statsCountItems,
+      :statsCountViews => $statsCountViews,
+      :statsCountOpenItems => $statsCountOpenItems,
+      :statsCountEscholJournals => $statsCountEscholJournals,
+      :statsCountOrus => $statsCountOrus,
+      :statsCountArticles => $statsCountArticles,
+      :statsCountThesesDiss => $statsCountThesesDiss,
+      :statsCountBooks => $statsCountBooks
+    }
   }.to_json
 end
 
@@ -740,7 +742,7 @@ get "/api/item/:shortArk" do |shortArk|
   if !item.nil?
     authors = ItemAuthors.filter(:item_id => id).order(:ordering).
                  map(:attrs).collect{ |h| JSON.parse(h)}
-    citation = getCitation(shortArk, authors, attrs)
+    citation = getCitation(unit, shortArk, authors, attrs)
     begin
       body = {
         :id => shortArk,
@@ -772,11 +774,12 @@ get "/api/item/:shortArk" do |shortArk|
       end
 
       if unit
+        unit_attrs = JSON.parse(unit[:attrs])
         if unit.type != 'journal'
           body[:header] = getUnitHeader(unit)
           body[:altmetrics_ok] = true
         else 
-          body[:altmetrics_ok] = JSON.parse(unit[:attrs])['altmetrics_ok']
+          body[:altmetrics_ok] = unit_attrs['altmetrics_ok']
           issue_id = Item.join(:sections, :id => :section).filter(Sequel.qualify("items", "id") => id).map(:issue_id)[0]
           if issue_id
             unit_id, volume, issue = Section.join(:issues, :id => issue_id).map([:unit_id, :volume, :issue])[0]

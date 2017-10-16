@@ -6,6 +6,7 @@ import PageBase from './PageBase.jsx'
 import Header1Comp from '../components/Header1Comp.jsx'
 import NavComp from '../components/NavComp.jsx'
 import Breakpoints from '../../js/breakpoints.json'
+import ScrollingAnchorComp from "../components/ScrollingAnchorComp.jsx"
 import HeroComp from '../components/HeroComp.jsx'
 import TeaserComp from '../components/TeaserComp.jsx'
 import HomeSection1Comp from '../components/HomeSection1Comp.jsx'
@@ -24,6 +25,16 @@ class HomePage extends PageBase
         width: PropTypes.number,
         height: PropTypes.number
       })
+    }),
+    stats: PropTypes.shape({
+      statsCountItems: PropTypes.number.isRequired,
+      statsCountViews: PropTypes.number.isRequired,
+      // statsCountOpenItems: PropTypes.number.isRequired,
+      statsCountEscholJournals: PropTypes.number.isRequired,
+      statsCountOrus: PropTypes.number.isRequired,
+      statsCountArticles: PropTypes.number.isRequired,
+      statsCountThesesDiss: PropTypes.number.isRequired,
+      statsCountBooks: PropTypes.number.isRequired,
     })
   }
 
@@ -41,6 +52,11 @@ class HomePage extends PageBase
     return withHeroData[Math.floor(Math.random() * withHeroData.length)]
   }
 
+  changeAnchor = name => {
+    // Set hash based on what was clicked.
+    window.location.hash=name
+  }
+
   renderData(data) { 
     return(
       <div>
@@ -49,7 +65,7 @@ class HomePage extends PageBase
           <NavComp data={data.header.nav_bar} />
         </div>
         <HeroComp hero_data={this.getRandomHero(data.hero_data)} />
-        <TeaserComp />
+        <TeaserComp changeAnchor={this.changeAnchor} />
         <section className="c-togglesection">
           <header className={this.state.showSection1 ? 'c-togglesection__header--open' : 'c-togglesection__header'} hidden={this.state.isOpen}>
             <h2>
@@ -57,9 +73,10 @@ class HomePage extends PageBase
             </h2>
           </header>
           <div className="c-togglesection__content" hidden={!this.state.showSection1}>
-            <HomeSection1Comp />
+            <HomeSection1Comp stats={data.stats} />
           </div>
         </section>
+        <ScrollingAnchorComp name="home_repository" />
         <section className="c-togglesection">
           <header className={this.state.showSection2 ? 'c-togglesection__header--open' : 'c-togglesection__header'} hidden={this.state.isOpen}>
             <h2>
@@ -67,9 +84,10 @@ class HomePage extends PageBase
             </h2>
           </header>
           <div className="c-togglesection__content" hidden={!this.state.showSection2}>
-            <HomeSection2Comp />
+            <HomeSection2Comp stats={data.stats} campuses={data.header.campuses} />
           </div>
         </section>
+        <ScrollingAnchorComp name="home_publishing" />
         <section className="c-togglesection">
           <header className={this.state.showSection3 ? 'c-togglesection__header--open' : 'c-togglesection__header'} hidden={this.state.isOpen}>
             <h2>

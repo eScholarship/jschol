@@ -18,15 +18,18 @@ class CitationComp extends React.Component {
 
 class TabAuthorComp extends React.Component {
   render() {
-    let p = this.props,
-        authorList = p.authors.map(function(a, i) {return (
+    let issn = null
+    let p = this.props
+    let authorList = p.authors.map(function(a, i) {return (
           // ToDo: Link to author 
           [<dt key={i}><a href={"/search/?q="+a.name}>{a.name}</a></dt>,
            <dd key={i+1}>{a.institution ? a.institution : ""}
             {a.email ? <span>&nbsp;&nbsp;&nbsp;{a.email}</span> : ""}</dd>]
-        )}),
-        issn = p.attrs['ext_journal'] && p.attrs['ext_journal']['issn'],
-        peer_reviewed = p.attrs['is_peer_reviewed'] ? "True" : "False",
+        )})
+    if (p.attrs['ext_journal']) {
+      issn = p.attrs['ext_journal'] && p.attrs['ext_journal']['issn']
+    } 
+    let peer_reviewed = p.attrs['is_peer_reviewed'] ? "True" : "False",
         permalink = "http://www.escholarship.org/uc/item/" + p.id,
         ezid = "http://ezid.cdlib.org/id/ark:/13030/qt" + p.id,
         appearsIn = p.appearsIn.map(function(node, i) {

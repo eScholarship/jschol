@@ -17,17 +17,16 @@ class HomeSection1Comp extends React.Component {
         <h3 className="c-homesection1__stat-heading">Metrics of Use</h3>
         <div className="o-stat">
           <div className="o-stat--item">
-            <a href="">99,999</a> Items
+            <a href="">{this.props.stats.statsCountItems.toLocaleString()}</a> Items
           </div>
           <div className="o-stat--units">
-            <a href="">999</a> Research Units
-            {/* data.statsCountOrus.toLocaleString() */}
+            <a href="">{this.props.stats.statsCountOrus.toLocaleString()}</a> Research Units
           </div>
-          <div className="o-stat--passed">
+      {/* <div className="o-stat--passed">
             <a href="">9,999</a> Items since UC <br/> OA Policy passed
-          </div>
+          </div> */}
         </div>
-        <a href="" className="c-homesection1__more">Learn more about UC Open Access</a>
+        <Link to="/uc/root/ucoapolicies" className="c-homesection1__more">Learn more about UC Open Access</Link>
       </div>
     )
   }
