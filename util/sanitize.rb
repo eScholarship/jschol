@@ -17,6 +17,8 @@ end
 # defense.
 def sanitizeHTML(htmlFragment)
 
+  htmlFragment.nil? and return
+
   # Shorten escholarship.org links to top-level relative
   htmlFragment.gsub! %r{ (href|src)="https?://(pub-jschol[^\."]+\.|www\.|beta\.)?escholarship.org/?([^"]*)"}, ' \1="/\3"'
 
