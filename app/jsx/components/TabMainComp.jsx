@@ -8,21 +8,8 @@ import PubLocationComp from '../components/PubLocationComp.jsx'
 import PubDataComp from '../components/PubDataComp.jsx'
 import ViewExternalComp from '../components/ViewExternalComp.jsx'
 import { Link } from 'react-router'
-import NotYetLink from '../components/NotYetLink.jsx'
 import ArbitraryHTMLComp from "../components/ArbitraryHTMLComp.jsx"
-
-class ScrollingAnchorComp extends React.Component {
-  // Used to trigger scrolling for anchors linked from JumpComp (i.e. 'article_abstract')
-  render() {
-    return (
-      <a name={this.props.name} ref={(domElement) => {
-        if (domElement &&
-              window.location.hash.toLowerCase().replace(/^#/, "") == this.props.name) {
-          setTimeout(() => domElement.scrollIntoView(), 0)
-        }}} />
-   )
- }
-}
+import ScrollingAnchorComp from "../components/ScrollingAnchorComp.jsx"
 
 class Abstract extends React.Component {
   render() {
@@ -31,9 +18,7 @@ class Abstract extends React.Component {
         <summary>Abstract</summary>
         <ArbitraryHTMLComp html={this.props.abstract} h1Level={3}/>
         {(this.props.unit.id.match(/^.*_postprints/)) &&
-          <p className="c-well">Many UC-authored scholarly publications are freely available on this site because of the
-            UC Academic Senate&apos;s Open Access Policy. <NotYetLink className="" element="a">Let us know how this access is important for you.</NotYetLink>
-          </p>
+          <p className="c-well">Many UC-authored scholarly publications are freely available on this site because of the UC Academic Senate&apos;s Open Access Policy. <a href="https://help.escholarship.org/support/tickets/new">Let us know how this access is important for you.</a></p>
         }
       </details>
     )

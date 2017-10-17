@@ -18,6 +18,7 @@ class NavComp extends React.Component {
     super(props)
     this.state = {submenuActive: null, isOpen: true /* default to true for server-side */}
   }
+
   componentWillMount() {
     if (!(typeof matchMedia === "undefined")) {
       this.mq = matchMedia("(min-width:"+Breakpoints.screen3+")")
@@ -25,11 +26,12 @@ class NavComp extends React.Component {
       this.widthChange()
     }
   }
+
   widthChange = ()=> {
     this.setState({isOpen: this.mq.matches})
   }
 
-  onNavClick = () => this.state = {submenuActive: null, isOpen: false}
+  onNavClick = () => this.setState({submenuActive: null})
 
   getNavItemJSX(navItem) {
     if (navItem.type == "link")
@@ -39,7 +41,7 @@ class NavComp extends React.Component {
   }
 
   render() {
-    var navList = this.props.data.filter(navItem => !navItem.hidden).map((navItem) => {
+    let navList = this.props.data.filter(navItem => !navItem.hidden).map((navItem) => {
       if (navItem.type == "folder") {
         return (
           <NavSubComp name={navItem.name}

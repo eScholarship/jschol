@@ -21,23 +21,24 @@ def getAuthors(a)
   return a_mapped
 end
 
-def getCitation(shortArk, authors, attrs)
+def getCitation(unit, shortArk, authors, attrs)
   id = "qt"+shortArk
   item = Item[id]
 
+  unit_attrs = unit ? JSON.parse(unit[:attrs]) : nil
   c = {
     :id => id,
     # ToDo: Put item genre here, and might also need to combine with unit type (i.e. article-journal)
-    :type => "article",
+    :type => item.genre,
     :title => item.title,
-    :URL => "http://" + request.host + "/item/" + shortArk,
+    :URL => "http://" + request.host + "/uc/item/" + shortArk,
     :issued => {"raw": [getDateString(item.pub_date)]}
   }
   if attrs['publisher']
     c[:publisher] = attrs['publisher']
   end
-  # c[:DOI] = ""
-  # c[:ISSN] = ""
+  c[:doi] = attrs['doi']
+  c[:issn] = unit_attrs ? unit_attrs['issn'] : nil
   a = getAuthors(authors)
   a ?  c[:author] = a : c[:author] = nil
   return c

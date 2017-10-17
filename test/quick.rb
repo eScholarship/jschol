@@ -26,6 +26,12 @@ class TestQuick < Test::Unit::TestCase
     return html
   end
 
+  def test_home
+    pdfData = fetch("http://localhost:4001/")
+    assert_match /Open Access/, pdfData
+    assert_match /Repository Holdings/, pdfData
+  end
+
   def test_search
     html = fetchAndStrip("http://localhost:4001/search?q=china")
     assert_match /Your search:.*china/, html

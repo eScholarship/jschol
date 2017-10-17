@@ -2,7 +2,6 @@
 //
 import React from 'react'
 import { Link } from 'react-router'
-import NotYetLink from '../components/NotYetLink.jsx'
 
 class CitationComp extends React.Component {
   render() {
@@ -18,15 +17,18 @@ class CitationComp extends React.Component {
 
 class TabAuthorComp extends React.Component {
   render() {
-    let p = this.props,
-        authorList = p.authors.map(function(a, i) {return (
+    let issn = null
+    let p = this.props
+    let authorList = p.authors.map(function(a, i) {return (
           // ToDo: Link to author 
           [<dt key={i}><a href={"/search/?q="+a.name}>{a.name}</a></dt>,
            <dd key={i+1}>{a.institution ? a.institution : ""}
             {a.email ? <span>&nbsp;&nbsp;&nbsp;{a.email}</span> : ""}</dd>]
-        )}),
-        issn = p.attrs['ext_journal'] && p.attrs['ext_journal']['issn'],
-        peer_reviewed = p.attrs['is_peer_reviewed'] ? "True" : "False",
+        )})
+    if (p.attrs['ext_journal']) {
+      issn = p.attrs['ext_journal'] && p.attrs['ext_journal']['issn']
+    } 
+    let peer_reviewed = p.attrs['is_peer_reviewed'] ? "True" : "False",
         permalink = "http://www.escholarship.org/uc/item/" + p.id,
         ezid = "http://ezid.cdlib.org/id/ark:/13030/qt" + p.id,
         appearsIn = p.appearsIn.map(function(node, i) {
@@ -43,8 +45,8 @@ class TabAuthorComp extends React.Component {
       <div className="c-tabcontent">
       {!p.attrs['orig_citation'] &&
         <div className="c-itemactions">
+        {/* ToDo: Link up citation 
           <div className="o-download">
-            {/* ToDo: Link up citation */}
             <a href="" className="o-download__button" download="">Download Citation</a>
             <details className="o-download__formats">
               <summary aria-label="formats"></summary>
@@ -55,7 +57,7 @@ class TabAuthorComp extends React.Component {
                 <li><NotYetLink element="a">RefWorks</NotYetLink></li>
               </ul>
             </details>
-          </div>
+          </div> */}
         </div>
       }
         <h1 className="c-tabcontent__main-heading" tabIndex="-1">Author & Article Info</h1>
@@ -90,14 +92,14 @@ class TabAuthorComp extends React.Component {
           }
             <dt><strong>Peer-Reviewed</strong></dt>
             <dd>{peer_reviewed}</dd>
-            <dt><strong>License</strong></dt>
-            <dd>**************** TBD **************</dd>
+        {/* <dt><strong>License</strong></dt>
+            <dd>**************** TBD **************</dd>  */}
             <dt><strong>Permalink</strong></dt>
             <dd><Link to={permalink} className="o-textlink__secondary">{permalink}</Link></dd>
             <dt><strong>EZID Label Name</strong></dt>
             <dd><Link to={ezid} className="o-textlink__secondary">{ezid}</Link></dd>
-            <dt><strong>Dash Label Name</strong></dt>
-            <dd>**************** TBD **************</dd>
+        {/* <dt><strong>Dash Label Name</strong></dt>
+            <dd>**************** TBD **************</dd>  */}
             <dt><strong>Appears in</strong></dt>
             <dd>{appearsIn}</dd>
           </dl>

@@ -28,8 +28,7 @@ import UnitSidebarConfigLayout from '../layouts/UnitSidebarConfigLayout.jsx'
 import UnitNavConfigLayout from '../layouts/UnitNavConfigLayout.jsx'
 import SidebarComp from '../components/SidebarComp.jsx'
 
-class UnitPage extends PageBase
-{
+class UnitPage extends PageBase {
   // PageBase will fetch the following URL for us, and place the results in this.state.pageData
   // will likely at some point want to move these (search, home, pages) to different extensions of PageBase,
   // as all kinds of CMS-y stuff will live here, though perhaps not, to capitalize on React's
@@ -79,6 +78,7 @@ class UnitPage extends PageBase
     if (this.state.fetchingData)
       contentLayout = (<h2 style={{ marginTop: "5em", marginBottom: "5em" }}>Loading...</h2>)
     else if (this.props.params.pageName === 'search') {
+      this.extGA(data.unit.id)  // Google Analytics for external trackers called from PageBase
       {/* ToDo: For now, serieslayout is the only unit search that occurs, but this should be properly componentized
       contentLayout = (<UnitSearchLayout unit={data.unit} data={data.content} sidebar={sidebar}/>) */}
       contentLayout = (<SeriesLayout unit={data.unit} data={data.content} sidebar={sidebar} marquee={data.marquee}/>)
@@ -99,6 +99,7 @@ class UnitPage extends PageBase
       {/* Temporary, for testing */}
       // data.marquee.carousel = false
       // data.content.display = 'simple'
+      this.extGA(data.unit.id)  // Google Analytics for external trackers called from PageBase
       if (data.unit.type === 'oru') {
         contentLayout = (<DepartmentLayout unit={data.unit} data={data.content} sidebar={sidebar} marquee={data.marquee}/>)
       } else if (data.unit.type == 'campus') {

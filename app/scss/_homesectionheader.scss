@@ -1,0 +1,12 @@
+// ##### Home Section Header Component ##### //
+
+.c-homesectionheader {
+
+  header {
+    @include bp(screen3) {
+      display: none;
+    }
+
+  }
+
+}

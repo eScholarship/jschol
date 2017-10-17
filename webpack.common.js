@@ -55,6 +55,5 @@ module.exports = {
   },
   performance : {
     hints : false
-  },
-  devtool: "cheap-module-source-map" // dev only
+  }
 }

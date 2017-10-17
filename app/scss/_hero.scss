@@ -1,8 +1,9 @@
 // ##### Hero Component ##### //
 
-$hero-text-shadow: 1px 1px 1px $color-dark-gray;
+$hero-bg-color: rgba($color-teal, .7);
+$hero-text-shadow: 1px 1px 1px $color-light-black;
 
-%c-hero {
+.c-hero {
   position: relative;
   padding: $spacing-sm;
   background-color: $color-teal;
@@ -12,27 +13,11 @@ $hero-text-shadow: 1px 1px 1px $color-dark-gray;
     background-image: none !important;
   }
 
-  // BG image overlay:
-  &::after {
-    
-    @include bp(screen3) {
-      position: absolute;
-      top: 0;
-      right: 0;
-      bottom: 0;
-      left: 0;
-      background-color: $color-light-gray;
-      content: '';
-      opacity: .5;
-      z-index: -1;
-    }
-
-  }
-
   @include bp(screen3) {
     display: flex;
     align-items: center;
     height: 30vw;
+    padding: 0;
     background: no-repeat center / cover;
     // background-image property/URL is set as an inline HTML style on this element
     z-index: 0;
@@ -50,70 +35,51 @@ $hero-text-shadow: 1px 1px 1px $color-dark-gray;
     text-align: center;
 
     @include bp(screen3) {
-      width: 10em;
-      margin-left: $spacing-lg;
-      color: inherit;
+      width: 11em;
+      padding: $spacing-md $spacing-lg;
+      background: linear-gradient(to right, $hero-bg-color 85%, transparent);
       font-family: 'KievitWebLight';
-      font-size: 5vw;
+      font-size: 4vw;
       text-align: left;
       text-shadow: $hero-text-shadow;
     }
 
     @include bp(screen4) {
-      font-size: 4em;
+      font-size: 3.2em;
     }
 
   }
 
 }
 
-.c-hero--black-text {
-  @extend %c-hero;
+%c-hero__campus-text {
+  color: $color-white;
+  text-shadow: $hero-text-shadow;
 }
 
-.c-hero--white-text {
-  @extend %c-hero;
-
-  @include headings() {
-    
-    @include bp(screen3) {
-      color: $color-white;
-    }
-
-  }
-
-  .c-hero__campuses {
-    
-    @include bp(screen3) {
-      color: $color-white;
-    }
-
-  }
-
-}
-
-.c-hero__campuses {
+.c-hero__campus {
   display: none;
 
   @include bp(screen3) {
     display: block;
     position: absolute;
-    right: $spacing-lg;
-    bottom: $spacing-lg;
-    text-shadow: $hero-text-shadow;
+    right: 0;
+    bottom: 0;
+    padding: $spacing-md $spacing-md $spacing-md $spacing-lg;
+    background-image: linear-gradient(to left, $hero-bg-color 80%, transparent);
   }
 
   span {
+    @extend %c-hero__campus-text;
     display: block;
     margin-bottom: $spacing-sm;
-    color: inherit;
     font-size: 1.6em;
   }
 
   a {
+    @extend %c-hero__campus-text;
     @extend %o-textlink__right-arrow;
-    background-image: inline('../images/icon_angle-right-black.svg');
-    color: inherit;
+    background-image: inline('../images/icon_angle-right-white.svg');
     font-size: 1.2em;
   }
 

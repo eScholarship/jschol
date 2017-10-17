@@ -598,4 +598,19 @@ As well as:
   new file:   app/jsx/components/ToggleSectionComp.jsx
 
 
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's eb1039c3297752eb05e5ae3f7ebd97e7a8df9d8b, 2017-10-16 <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+Andy added all scss and image changes since last.
+As well as:
+
+  modified:   app/jsx/components/HeroComp.jsx
+  modified:   app/jsx/components/HomeSection1Comp.jsx
+  modified:   app/jsx/components/HomeSection2Comp.jsx
+  modified:   app/jsx/components/HomeSection3Comp.jsx
+  modified:   app/jsx/components/TeaserComp.jsx
+  modified:   app/jsx/pages/HomePage.jsx
+
+  new file: app/jsx/components/HomeSectionHeaderComp.jsx
 
