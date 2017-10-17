@@ -18,18 +18,18 @@ class HomeSection2Comp extends React.Component {
 
   render() {
     return (
-      <div id="repository" className="c-homesection2">
-        <div className="c-homesection2__map"></div>
-        <div className="c-homesection2__description">
+      <div id="repository" className="c-homesection__2">
+        <div className="c-homesection__2-map"></div>
+        <div className="c-homesection__2-description">
           <h3>Institutional Repository</h3>
           <p>eScholarship serves as the institutional repository for the ten University of California campuses and affiliated research centers.</p>
           <p>eScholarship Repository content includes postprints (previously published articles), as well as working papers, electronic theses and dissertations (ETDs), student capstone projects, and seminar/conference proceedings.</p>
         </div>
-        <button id="wizardlyDeposit" className="c-homesection2__deposit" onClick={(event)=>{
+        <button id="wizardlyDeposit" className="c-homesection__2-deposit" onClick={(event)=>{
                                this.setState({modalOpen:true})
                                event.preventDefault()} } >Deposit Work</button>
-        <Link to="/campuses" className="c-homesection2__browse-campuses">Browse campuses</Link>
-        <h3 className="c-homesection2__stat-heading">Repository Holdings</h3>
+        <Link to="/campuses" className="c-homesection__2-browse-campuses">Browse campuses</Link>
+        <h3 className="c-homesection__2-metrics-heading">Repository Holdings</h3>
         <div className="o-stat">
           <div className="o-stat--item">
             <a href="/search?type_of_work=article">{this.props.stats.statsCountArticles.toLocaleString()}</a> Articles
@@ -41,8 +41,8 @@ class HomeSection2Comp extends React.Component {
             <a href="/search?type_of_work=dissertation">{this.props.stats.statsCountThesesDiss.toLocaleString()}</a> Theses 
           </div>
         </div>
-        <a href="/search" className="c-homesection2__browse-all">Browse all eScholarship holdings</a>
-        <Link to="/uc/root/repository" className="c-homesection2__more">Learn more about the eScholarship repository</Link>
+        <a href="/search" className="c-homesection__2-browse-all">Browse all eScholarship holdings</a>
+        <Link to="/uc/root/repository" className="c-homesection__2-more">Learn more about the eScholarship repository</Link>
         <WizardComp showModal={this.state.modalOpen}
                   parentSelector={()=>$('#repository')[0]}
                   onCancel={e=>this.closeWizardModal(e)}
