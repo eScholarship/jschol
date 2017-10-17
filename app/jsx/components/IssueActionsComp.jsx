@@ -6,7 +6,6 @@
 
 import React from 'react'
 import ShareComp from '../components/ShareComp.jsx'
-import NotYetLink from '../components/NotYetLink.jsx'
 
 class IssueActionsComp extends React.Component {
   render() {
@@ -15,7 +14,7 @@ class IssueActionsComp extends React.Component {
       <div className="c-itemactions">
         { p.buy_link && <a className="c-itemactions__link-buy" href={p.buy_link}>Buy Issue</a> }
         <div className="o-download">
-        {/* ToDo: */}
+        {/* ToDo: 
           <NotYetLink element="a" className="o-download__button">Download Issue</NotYetLink>
           <details className="o-download__formats">
             <summary aria-label="formats"></summary>
@@ -29,14 +28,14 @@ class IssueActionsComp extends React.Component {
               <li className="o-download__nested-list2">
                 Citation
                 <ul>
-          {/*     <li><NotYetLink element="a">RIS</NotYetLink></li> 
-                  <li><NotYetLink element="a">BibText</NotYetLink></li>   */}
+                  <li><NotYetLink element="a">RIS</NotYetLink></li> 
+                  <li><NotYetLink element="a">BibText</NotYetLink></li>
                   <li><NotYetLink element="a">EndNote</NotYetLink></li>
-          {/*     <li><NotYetLink element="a">RefWorks</NotYetLink></li>  */}
+                  <li><NotYetLink element="a">RefWorks</NotYetLink></li>
                 </ul>
               </li>
             </ul>
-          </details>
+          </details> */}
         </div>
         <ShareComp type="unit" id={this.props.unit_id} />
       </div>

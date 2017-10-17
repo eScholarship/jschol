@@ -532,7 +532,7 @@ class SearchPage extends PageBase {
         <div className="c-navbar">
           <NavComp data={data.header.nav_bar} />
         </div>
-        <ExportComp />
+    {/* <ExportComp /> */}
         <div className="c-columns">
         <aside>
           <FacetForm formName={formName} formButton={formButton} data={facetFormData} info_count={data.info_count} query={data.query} />

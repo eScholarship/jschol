@@ -66,37 +66,25 @@ class HomePage extends PageBase
         </div>
         <HeroComp hero_data={this.getRandomHero(data.hero_data)} />
         <TeaserComp changeAnchor={this.changeAnchor} />
-        <section className="c-togglesection">
-          <header className={this.state.showSection1 ? 'c-togglesection__header--open' : 'c-togglesection__header'} hidden={this.state.isOpen}>
-            <h2>
-              <button onClick={()=> this.setState({showSection1: !this.state.showSection1})}>Why Open Access?</button>
-            </h2>
+        <section className="c-homesection">
+          <header>
+            <h2>Why Open Access with eScholarship?</h2>
           </header>
-          <div className="c-togglesection__content" hidden={!this.state.showSection1}>
-            <HomeSection1Comp stats={data.stats} />
-          </div>
+          <HomeSection1Comp stats={data.stats} />
         </section>
         <ScrollingAnchorComp name="home_repository" />
-        <section className="c-togglesection">
-          <header className={this.state.showSection2 ? 'c-togglesection__header--open' : 'c-togglesection__header'} hidden={this.state.isOpen}>
-            <h2>
-              <button onClick={()=> this.setState({showSection2: !this.state.showSection2})}>eScholarship Repository</button>
-            </h2>
+        <section className="c-homesection">
+          <header>
+            <h2>eScholarship is the institutional repository for the UC system</h2>
           </header>
-          <div className="c-togglesection__content" hidden={!this.state.showSection2}>
-            <HomeSection2Comp stats={data.stats} campuses={data.header.campuses} />
-          </div>
+          <HomeSection2Comp stats={data.stats} campuses={data.header.campuses} />
         </section>
         <ScrollingAnchorComp name="home_publishing" />
-        <section className="c-togglesection">
-          <header className={this.state.showSection3 ? 'c-togglesection__header--open' : 'c-togglesection__header'} hidden={this.state.isOpen}>
-            <h2>
-              <button onClick={()=> this.setState({showSection3: !this.state.showSection3})}>eScholarship Publishing Services</button>
-            </h2>
+        <section className="c-homesection">
+          <header>
+            <h2>eScholarship is also an open access publishing platform</h2>
           </header>
-          <div className="c-togglesection__content" hidden={!this.state.showSection3}>
-            <HomeSection3Comp />
-          </div>
+          <HomeSection3Comp />
         </section>
       </div>
     )

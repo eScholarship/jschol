@@ -2,43 +2,22 @@
 
 .c-homesection3 {
   display: grid;
-  padding: $spacing-sm;
   grid-template-columns: 1fr;
   grid-gap: $spacing-sm;
 
   @include bp(screen3) {
-    padding: $spacing-lg;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto auto 1fr auto;
+    grid-template-columns: 1fr 1fr 1fr;
     grid-gap: $spacing-lg;
   }
 
 }
 
-.c-homesection3__heading {
-  display: block;
-  margin: 0 0 $spacing-sm;
-  color: $color-teal;
-  font-size: 1.2em;
-  font-weight: normal;
+.c-homesection3__description {
 
   @include bp(screen3) {
-    margin: 0 0 $spacing-md;
-    color: $color-black;
-    font-size: 2em;
-    font-weight: normal;
-    text-align: center;
+    align-self: center;
     grid-column: 1 / 3;
-
-    @supports (display: grid) {
-      margin: 0;
-    }
-
   }
-
-}
-
-.c-homesection3__description {
 
   @include headings() {
     margin-top: 0;
@@ -69,8 +48,7 @@
   margin-bottom: $spacing-sm;
 
   @include bp(screen3) {
-    grid-column: 2 / 3;
-    grid-row: 2 / 4;
+    grid-column: 3 / 4;
   }
 
 }
@@ -78,31 +56,20 @@
 %c-homesection__links {
   @extend %o-textlink__right-arrow;
   margin-bottom: $spacing-sm;
-  justify-self: center;
+  justify-self: right;
 
   @include bp(screen3) {
     margin-bottom: 0;
     font-size: 1.2em;
-  }
-
-}
-
-.c-homesection3__start {
-  @extend %c-homesection__links;
-
-  @include bp(screen3) {
-    align-self: start;
-    justify-self: start;
-    grid-column: 1;
+    grid-column: 1 / 4;
   }
 
 }
 
 .c-homesection3__browse-all {
   @extend %c-homesection__links;
+}
 
-  @include bp(screen3) {
-    grid-column: 1 / 3;
-  }
-
+.c-homesection3__start {
+  @extend %c-homesection__links;
 }
