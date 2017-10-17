@@ -8,17 +8,17 @@ import { Subscriber } from 'react-broadcast'
 class RedirRow extends React.Component {
   onSave = event => {
     const id = parseInt(event.target.dataset.id)
-    this.props.sendApiData("PUT", `/api/redirect/${id}`,
-      { data: { from_path: $(`#from-${id}`)[0].value,
-                to_path:   $(`#to-${id}`)[0].value,
-                descrip:   $(`#descrip-${id}`)[0].value } })
+    this.props.sendApiData("PUT", `/api/redirect/${this.props.kind}/${id}`,
+      { from_path: $(`#from-${id}`)[0].value,
+        to_path:   $(`#to-${id}`)[0].value,
+        descrip:   $(`#descrip-${id}`)[0].value })
   }
 
   onDelete = event => {
     if (!confirm("Delete redirect?"))
       return
     const id = parseInt(event.target.dataset.id)
-    this.props.sendApiData("DELETE", `/api/redirect/${id}`, {})
+    this.props.sendApiData("DELETE", `/api/redirect/${this.props.kind}/${id}`, {})
   }
 
   render() {
@@ -50,9 +50,9 @@ export default class RedirectConfigLayout extends React.Component
   onAdd = event => {
     const id = parseInt(event.target.dataset.id)
     this.props.sendApiData("POST", `/api/redirect/${this.props.data.kind}`,
-      { data: { from_path: $('#from-new')[0].value,
-                to_path:   $('#to-new')[0].value,
-                descrip:   $('#descrip-new')[0].value } })
+      { from_path: $('#from-new')[0].value,
+        to_path:   $('#to-new')[0].value,
+        descrip:   $('#descrip-new')[0].value })
   }
 
   render() {
@@ -88,7 +88,8 @@ export default class RedirectConfigLayout extends React.Component
                 </tr>
               </thead>
               <tbody>
-                { p.data.redirects.map(row => <RedirRow key={row.id} sendApiData={p.sendApiData} {...row}/>) }
+                { p.data.redirects.map(row =>
+                  <RedirRow key={row.id} kind={p.data.kind} sendApiData={p.sendApiData} {...row}/>) }
                 <tr key="new">
                   <td><input type="text" id={`from-new`}/></td>
                   <td><input type="text" id={`to-new`}/></td>
