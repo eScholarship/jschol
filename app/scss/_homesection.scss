@@ -1,0 +1,39 @@
+// ##### Home Section Component ##### //
+
+.c-homesection {
+  margin-bottom: $spacing-sm;
+  padding: $spacing-sm;
+  background-color: $color-white;
+  box-shadow: $box-shadow1;
+
+  @include bp(screen3) {
+    margin-bottom: $spacing-md;
+    padding: $spacing-lg;
+  }
+
+  header {
+    margin: (-$spacing-sm) (-$spacing-sm) $spacing-sm (-$spacing-sm);
+    padding: $spacing-sm;
+    background-color: $color-light-gray;
+
+    @include bp(screen3) {
+      margin: 0 0 $spacing-lg;
+      padding: 0;
+      background: none;
+    }
+
+    @include headings() {
+      margin: 0;
+      font-size: 1.2em;
+      font-weight: normal;
+
+      @include bp(screen3) {
+        font-size: 2em;
+        text-align: center;
+      }
+
+    }
+
+  }
+
+}

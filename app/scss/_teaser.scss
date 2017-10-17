@@ -61,7 +61,7 @@
 
     a {
       @extend %o-textlink__right-arrow;
-      align-self: center;
+      align-self: flex-end;
 
       @include bp(screen3) {
         font-size: 1.2em;
