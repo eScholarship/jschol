@@ -8,7 +8,6 @@ import PubLocationComp from '../components/PubLocationComp.jsx'
 import PubDataComp from '../components/PubDataComp.jsx'
 import ViewExternalComp from '../components/ViewExternalComp.jsx'
 import { Link } from 'react-router'
-import NotYetLink from '../components/NotYetLink.jsx'
 import ArbitraryHTMLComp from "../components/ArbitraryHTMLComp.jsx"
 import ScrollingAnchorComp from "../components/ScrollingAnchorComp.jsx"
 
@@ -19,9 +18,7 @@ class Abstract extends React.Component {
         <summary>Abstract</summary>
         <ArbitraryHTMLComp html={this.props.abstract} h1Level={3}/>
         {(this.props.unit.id.match(/^.*_postprints/)) &&
-          <p className="c-well">Many UC-authored scholarly publications are freely available on this site because of the
-            UC Academic Senate&apos;s Open Access Policy. <NotYetLink className="" element="a">Let us know how this access is important for you.</NotYetLink>
-          </p>
+          <p className="c-well">Many UC-authored scholarly publications are freely available on this site because of the UC Academic Senate&apos;s Open Access Policy. <a href="https://help.escholarship.org/support/tickets/new">Let us know how this access is important for you.</a></p>
         }
       </details>
     )
