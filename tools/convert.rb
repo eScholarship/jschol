@@ -2348,6 +2348,18 @@ def flushDbQueue(queue)
 end
 
 ###################################################################################################
+# Need to do queueing in a function to force the paramters to be captured. Doing a plain lambda
+# inline gets references to variables which then change before lambdas get called.
+def queueRedirect(queue, kind, from_path, to_path, descrip)
+  queue << lambda {
+    Redirect.create(kind: kind,
+                    from_path: from_path,
+                    to_path: to_path,
+                    descrip: descrip)
+  }
+end
+
+###################################################################################################
 def convertOldStyleRedirects(kind, filename)
   # Skip if already done.
   !$forceMode && Redirect.where(kind: kind).count > 0 and return
@@ -2361,7 +2373,7 @@ def convertOldStyleRedirects(kind, filename)
     fp.sub! "&amp;", "&"
     tp.sub! "&amp;", "&"
     tp.sub! %r{^/uc/search\?entity=(.*);volume=(.*);issue=(.*)}, '/uc/\1/\2/\3'
-    queue << lambda { Redirect.create(kind: kind, from_path: "/#{fp}", to_path: tp) }
+    queueRedirect(queue, kind, "/#{fp}", tp, nil)
     queue.length >= 1000 and flushDbQueue(queue)
   end
   flushDbQueue(queue)
@@ -2385,6 +2397,7 @@ def convertItemRedirects
       fromArks.empty? and raise("no fromArks found: #{line}")
     elsif line =~ %r{<!--(.*)-->}
       comment = $1.strip
+      comment.empty? and comment = nil
     elsif line =~ /xsl:value-of/
       fromArks.empty? and raise("value-of without when: #{line}")
       line.sub! "/980931r'", "/980931rf'"  # hack missing char in old redirect
@@ -2396,12 +2409,7 @@ def convertItemRedirects
           toArk != didArks[fromArk] and puts "Duplicate from=#{fromArk} to=#{didArks[fromArk]} vs #{toArk}. Skipping."
           next
         end
-        queue << lambda {
-          Redirect.create(kind: 'item',
-                          from_path: "/uc/item/#{fromArk}",
-                          to_path: "/uc/item/#{toArk}",
-                          descrip: comment)
-        }
+        queueRedirect(queue, 'item', "/uc/item/#{fromArk}", "/uc/item/#{toArk}", comment)
         queue.length >= 1000 and flushDbQueue(queue)
         didArks[fromArk] = toArk
       }
@@ -2430,9 +2438,7 @@ def convertUnitRedirects
       fromUnit == $1 or raise("value-of doesn't match when: #{line}")
       fp = "/uc/#{fromUnit}"
       tp = "/uc/#{$2}"
-      queue << lambda {
-        Redirect.create(kind: 'unit', from_path: fp, to_path: tp)
-      }
+      queueRedirect(queue, 'unit', fp, tp, nil)
       fromUnit = nil
     end
   end
@@ -2483,8 +2489,8 @@ end
 def convertRedirects
   convertOldStyleRedirects('bepress', 'bp_redirects')
   convertOldStyleRedirects('doj', 'doj_redirects')
-  #convertItemRedirects
-  #convertUnitRedirects
+  convertItemRedirects
+  convertUnitRedirects
   #convertLogRedirects
 end
 
