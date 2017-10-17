@@ -146,6 +146,12 @@ configure do
   # can include the pid and thread number with each request.
   set :logging, false
   use Rack::CommonLogger, $stdoutLogger
+  use Rack::Deflater,
+    :include => %w{application/javascript text/html text/css application/json image/svg+xml},
+    :if => lambda { |env, status, headers, body|
+      # advice from https://www.itworld.com/article/2693941/cloud-computing/why-it-doesn-t-make-sense-to-gzip-all-content-from-your-web-server.html
+      return headers["Content-Length"].to_i > 1400
+    }
 end
 
 # Compress responses
