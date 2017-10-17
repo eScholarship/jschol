@@ -31,7 +31,7 @@ def checkImageSize(imgContext, dims, fileSize)
   maxWidth, maxHeight, maxK = case imgContext
     when 'slide';   [900,  500, 250]
     when 'logo';    [800,   90, 250]
-    when 'hero';    [1000, 400, 250]
+    when 'hero';    [1000, 400, 300]
     when 'sidebar'; [350,  700, 250]
     when 'content'; [900, 1800, 250]
     else raise("unrecognized imgContext #{imgContext.inspect}")
