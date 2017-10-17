@@ -56,8 +56,10 @@
     "react-addons-test-utils": "^15.5.1",
     "read-yaml": "^1.1.0",
     "run-sequence": "^1.2.2",
+    "uglifyjs-webpack-plugin": "^1.0.0-beta.3",
     "webpack": "^2.3.3",
-    "webpack-manifest-plugin": "^1.1.0"
+    "webpack-manifest-plugin": "^1.1.0",
+    "webpack-merge": "^4.1.0"
   },
   "dependencies-note": "These modules get bundled into lib-bundle.js",
   "dependencies": {
