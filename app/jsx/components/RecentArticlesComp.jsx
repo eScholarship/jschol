@@ -3,6 +3,24 @@
 import React from 'react'
 import { Link } from 'react-router'
 import ArbitraryHTMLComp from "../components/ArbitraryHTMLComp.jsx"
+import TruncationObj from '../objects/TruncationObj.jsx'
+
+class AuthorsComp extends React.Component {
+  render() {
+    let authorList = this.props.authors.map(function(author, i, a) {
+        return (<li key={i}>{author.name}</li>)
+      })
+    return (
+      <div className="c-authorlist">
+        <TruncationObj element="ul" className="c-authorlist__list"
+                    options={{watch:"window", after:'foo', ellipsis:' ', wrap:'children'}}>
+         {authorList}
+         <li className="foo">&nbsp;...</li>
+        </TruncationObj>
+      </div>
+    )
+  }
+}
 
 export default class RecentArticlesComp extends React.Component
 {
@@ -15,7 +33,9 @@ export default class RecentArticlesComp extends React.Component
             <ArbitraryHTMLComp html={item.title}/>
           </Link>
         </h3>
-        <span>{ item.authors.map((author, idx) => (idx > 0 ? "; " : "") + author.name) }</span>
+      {item.authors && item.authors.length > 0 &&
+        <AuthorsComp authors={item.authors} />
+      }
       </li>)
   }
     </ul>
