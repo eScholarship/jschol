@@ -857,7 +857,7 @@ end
 # Gather data for redirect view/edit
 def getRedirectData(kind)
   return { kind: kind,
-           redirects: Redirect.where(kind: kind).order(:id).all.map { |record| record.to_h }
+           redirects: Redirect.where(kind: kind).order(:id).all.map { |record| record.to_hash }
          }
 end
 
