@@ -11,6 +11,25 @@ import { Link } from 'react-router'
 class CampusLayout extends React.Component {
   static propTypes = {
     data:  PropTypes.shape({
+      hero: PropTypes.shape({
+        url: PropTypes.string,
+        width: PropTypes.number,
+        height: PropTypes.number
+      }),
+      campusStats: PropTypes.shape({
+        item_count: PropTypes.number,
+        view_count: PropTypes.number,
+        // opened_count: PropTypes.number,
+        journal_count: PropTypes.number,
+        oru_count: PropTypes.number,
+      }).isRequired,
+      allStats: PropTypes.shape({
+        all_item_count: PropTypes.number,
+        all_view_count: PropTypes.number,
+        // all_opened_count: PropTypes.number,
+        all_journal_count: PropTypes.number,
+        all_oru_count: PropTypes.number,
+      }).isRequired,
       contentCar1: PropTypes.shape({
         mode: PropTypes.string,
         data: PropTypes.shape({
@@ -34,23 +53,7 @@ class CampusLayout extends React.Component {
           view_count: PropTypes.number,
         }),
       }),
-
    // contentCar2: // Same as above
-
-      campusStats: PropTypes.shape({
-        item_count: PropTypes.number,
-        view_count: PropTypes.number,
-        // opened_count: PropTypes.number,
-        journal_count: PropTypes.number,
-        oru_count: PropTypes.number,
-      }).isRequired,
-      allStats: PropTypes.shape({
-        all_item_count: PropTypes.number,
-        all_view_count: PropTypes.number,
-        // all_opened_count: PropTypes.number,
-        all_journal_count: PropTypes.number,
-        all_oru_count: PropTypes.number,
-      }).isRequired,
     })
   }
 
