@@ -185,6 +185,11 @@ def getOruStatsPerCampus
   return Hash[array.map(&:values).map(&:flatten)]
 end
 
+# Get global static redirect
+def getStaticRedirects
+  Redirect.where(kind: 'static').as_hash(:from_path, :to_path)
+end
+
 ##################################################################################################
 # Database caches for speed. We check every 30 seconds for changes. These tables change infrequently.
 
@@ -193,7 +198,7 @@ Thread.new {
     prevTime = nil
     while true
       utime = nil
-      DB.fetch("SHOW TABLE STATUS WHERE Name in ('units', 'unit_hier')").each { |row|
+      DB.fetch("SHOW TABLE STATUS WHERE Name in ('units', 'unit_hier', 'redirects')").each { |row|
         if row[:Update_time] && (!utime || row[:Update_time] > utime)
           utime = row[:Update_time]
         end
@@ -202,9 +207,11 @@ Thread.new {
         prevTime and puts "Unit/hier changed."
         # Signal our entire process group that they need to update their cached values.
         Process.kill("WINCH", -Process.getpgrp)
+        sleep 30  # re-fill at most every 30 sec
+      else
+        sleep 5   # but check every 5 sec after that
       end
       prevTime = utime
-      sleep 30
     end
   rescue Exception => e
     puts "Unexpected exception in db watching thread: #{e} #{e.backtrace}"
@@ -244,6 +251,10 @@ def fillCaches
     $statsCampusItems = getItemStatsPerCampus
     $statsCampusJournals = getJournalStatsPerCampus
     $statsCampusOrus = getOruStatsPerCampus
+
+    # OTHER
+    $staticRedirects = getStaticRedirects
+
     puts "...filled             "
   rescue Exception => e
     puts "Unexpected exception during cache filling: #{e} #{e.backtrace}"
