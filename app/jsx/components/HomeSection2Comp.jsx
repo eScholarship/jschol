@@ -19,7 +19,6 @@ class HomeSection2Comp extends React.Component {
   render() {
     return (
       <div id="repository" className="c-homesection2">
-        <strong className="c-homesection2__heading">eScholarship is the institutional repository for the UC system</strong>
         <div className="c-homesection2__map"></div>
         <div className="c-homesection2__description">
           <h3>Institutional Repository</h3>
@@ -33,13 +32,13 @@ class HomeSection2Comp extends React.Component {
         <h3 className="c-homesection2__stat-heading">Repository Holdings</h3>
         <div className="o-stat">
           <div className="o-stat--item">
-            <a href="">{this.props.stats.statsCountArticles.toLocaleString()}</a> Articles
+            <a href="/search?type_of_work=article">{this.props.stats.statsCountArticles.toLocaleString()}</a> Articles
           </div>
           <div className="o-stat--item">
-            <a href="">{this.props.stats.statsCountBooks.toLocaleString()}</a> Books
+            <a href="/search?type_of_work=monograph">{this.props.stats.statsCountBooks.toLocaleString()}</a> Books
           </div>
           <div className="o-stat--units">
-            <a href="">{this.props.stats.statsCountThesesDiss.toLocaleString()}</a> Theses 
+            <a href="/search?type_of_work=dissertation">{this.props.stats.statsCountThesesDiss.toLocaleString()}</a> Theses 
           </div>
         </div>
         <a href="/search" className="c-homesection2__browse-all">Browse all eScholarship holdings</a>
