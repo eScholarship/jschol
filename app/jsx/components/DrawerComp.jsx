@@ -211,6 +211,10 @@ class DrawerComp extends React.Component {
       siteSettings.push({ id: "carousel", 
                           title: <Link to={`/uc/${this.props.data.unit.id}/carousel`}>Carousel Builder</Link>})
     }
+    if (this.props.data.unit.type == "root") {
+      siteSettings.push({ id: "redirects",
+                          title: <Link to={`/uc/root/redirects/static`}>Redirects</Link>})
+    }
     if (this.props.data.unit.type === 'journal') {
       siteSettings.push({ id: "issueConfig", 
                           title: <Link to={`/uc/${this.props.data.unit.id}/issueConfig`}>Issue Configuration</Link>})

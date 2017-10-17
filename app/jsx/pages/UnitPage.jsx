@@ -26,6 +26,7 @@ import UnitCarouselConfigLayout from '../layouts/UnitCarouselConfigLayout.jsx'
 import UnitIssueConfigLayout from '../layouts/UnitIssueConfigLayout.jsx'
 import UnitSidebarConfigLayout from '../layouts/UnitSidebarConfigLayout.jsx'
 import UnitNavConfigLayout from '../layouts/UnitNavConfigLayout.jsx'
+import RedirectConfigLayout from '../layouts/RedirectConfigLayout.jsx'
 import SidebarComp from '../components/SidebarComp.jsx'
 
 class UnitPage extends PageBase {
@@ -92,6 +93,8 @@ class UnitPage extends PageBase {
       contentLayout = this.cmsPage(data, <UnitNavConfigLayout unit={data.unit} data={data.content} sendApiData={this.sendApiData}/>)
     } else if (this.props.params.pageName === 'sidebar') {
       contentLayout = this.cmsPage(data, <UnitSidebarConfigLayout unit={data.unit} data={data.content} sendApiData={this.sendApiData}/>)
+    } else if (this.props.params.pageName === 'redirects') {
+      contentLayout = this.cmsPage(data, <RedirectConfigLayout data={data.content} sendApiData={this.sendApiData}/>)
     } else if (this.props.params.pageName && !(data.content.issue)) {
       // If there's issue data here it's a journal page, otherwise it's static content
       contentLayout = (<UnitStaticPageLayout unit={data.unit} data={data.content} sidebar={sidebar} fetchPageData={this.fetchPageData}/>)

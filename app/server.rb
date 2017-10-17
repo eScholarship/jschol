@@ -698,6 +698,8 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
       pageData[:content] = getUnitNavConfig(unit, attrs['nav_bar'], params[:subPage])
     elsif pageName == 'sidebar'
       pageData[:content] = getUnitSidebarWidget(unit, params[:subPage])
+    elsif pageName == "redirects"
+      pageData[:content] = getRedirectData(params[:subPage])
     elsif isJournalIssue?(unit.id, params[:pageName], params[:subPage])
       # A specific issue, otherwise you get journal landing (through getUnitPageContent method above)
       issueData = {'unit_id': params[:unitID], 'volume': params[:pageName], 'issue': params[:subPage]}
@@ -706,7 +708,7 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
       pageData[:content] = getUnitStaticPage(unit, attrs, pageName)
     end
     pageData[:header] = getUnitHeader(unit,
-                                      (pageName =~ /^(nav|sidebar|profile|carousel|issueConfig)/ or issueData) ? nil : pageName,
+                                      (pageName =~ /^(nav|sidebar|profile|carousel|issueConfig|redirects)/ or issueData) ? nil : pageName,
                                       issueData, attrs)
     pageData[:marquee] = getUnitMarquee(unit, attrs) if (["home", "search"].include? pageName or issueData)
   else

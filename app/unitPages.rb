@@ -854,6 +854,14 @@ delete "/api/unit/:unitID/sidebar/:widgetID" do |unitID, widgetID|
 end
 
 ###################################################################################################
+# Gather data for redirect view/edit
+def getRedirectData(kind)
+  return { kind: kind,
+           redirects: Redirect.where(kind: kind).order(:id).all.map { |record| record.to_h }
+         }
+end
+
+###################################################################################################
 # *Delete* to remove a static page from a unit
 delete "/api/unit/:unitID/nav/:navID" do |unitID, navID|
   # Check user permissions
