@@ -21,9 +21,11 @@ var expressProc // Sub-app for isomophic javascript in Express (Node/Javascript)
 
 var serverConfig = readYaml.sync('config/server.yaml');
 
+var productionMode = !!gutil.env.production
+
 // Build javscript bundles with Webpack
 gulp.task('watch:src', (cb) => {
-  const config = Object.create(require('./webpack.conf.js'));
+  const config = Object.create(require('./webpack.' + (productionMode ? 'prd' : 'dev') + '.js'));
   config.watch = true;
   config.cache = true;
   config.bail = false;
