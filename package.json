@@ -80,7 +80,7 @@
   },
   "optionalDependencies-note": "These modules are separately bundled and loaded on-demand via require.ensure",
   "optionalDependencies": {
-    "pdfjs-embed": "escholarship/pdfjs-embed#370a2b30e93001042ed60126a54c4dc011a42224",
+    "pdfjs-embed": "escholarship/pdfjs-embed#a1d73b34eef8235ced28e2f902ddb5f40172fd35",
     "react-sidebar": "^2.3.0",
     "react-sortable-tree": "^0.1.19",
     "trumbowyg": "^2.7.0"
