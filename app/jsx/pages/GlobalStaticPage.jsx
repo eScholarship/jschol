@@ -39,7 +39,7 @@ export default class GlobalStaticPage extends PageBase
     let sidebar = <SidebarComp data={data.sidebar}/>
     return(
       <div>
-        <Header1Comp/>
+        <Header1Comp campuses={data.header.campuses} />
         <NavBarComp navBar={data.header.nav_bar} unit={data.unit} socialProps={data.header.social} />
         { data.pageNotFound
           ? <NotFoundLayout/>
