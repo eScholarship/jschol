@@ -67,7 +67,7 @@ export default class RedirectConfigLayout extends React.Component
               </h1>
             </header>
             <p>Categories:
-              { ['static', 'item', 'unit', 'bepress', 'doj'].map(otherKind =>
+              { ['static', 'item', 'unit'].map(otherKind =>
                 <span key={otherKind}>
                   &#160;
                   { p.data.kind == otherKind
