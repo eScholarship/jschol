@@ -13,7 +13,7 @@ class JournalGridComp extends React.Component {
         <img src="/images/homecover_fb.png" alt="Frontiers of Biogeography Journal"/>
         <img src="/images/homecover_jcmrs.png" alt="Journal of Critical Mixed Race Studies Journal"/>
         <div className="c-journalgrid__all">
-          <Link to="/journals">View all <strong>68</strong> current journals</Link>
+          <Link to="/journals">View all current journals</Link>
         </div>
       </div>
     )
