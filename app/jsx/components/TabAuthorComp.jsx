@@ -69,6 +69,7 @@ class TabAuthorComp extends React.Component {
           </dl>
         </details>
       }
+      {/* ToDo:
         <details className="c-togglecontent" open>
           <summary>Citation</summary>
         {p.attrs['orig_citation'] ?
@@ -79,6 +80,7 @@ class TabAuthorComp extends React.Component {
           <CitationComp />
         }
         </details>
+      */}
         <details className="c-togglecontent" open>
           <summary>Other information</summary>
           <dl className="c-descriptionlist">
