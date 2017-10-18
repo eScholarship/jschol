@@ -866,13 +866,12 @@ def getRedirectData(kind)
 end
 
 ###################################################################################################
-def validateURL(url)
+def validateURL(url, allowExternal)
   url.nil? and jsonHalt(400, "Missing URL")
   url.include?("..") and jsonHalt(400, "Invalid URL")
   # Strip hostname from eschol URLs
   url.sub!(%r{https?://(pub-jschol[^\.]+\.|www\.|beta\.)?escholarship.org/?([^"]*)}, '/\2')
-  puts "after mapping: #{url.inspect}"
-  url =~ %r{^(/\w|https?://).*} or jsonHalt(400, "Invalid URL")
+  url =~ (allowExternal ? %r{^(/|https?://).*} : %r{^/}) or jsonHalt(400, "Invalid URL")
   return url
 end
 
@@ -884,11 +883,12 @@ put "/api/redirect/:kind/:redirID" do |kind, redirID|
   %w{static item unit bepress doj}.include?(kind) or halt(400)
   record = Redirect[redirID] or halt(404)
   record.kind == kind or halt(400)
-  record.from_path = validateURL(params[:from_path])
-  record.to_path = validateURL(params[:to_path])
+  record.from_path = validateURL(params[:from_path], false)  # no external
+  record.to_path = validateURL(params[:to_path], true)
   record.descrip = params[:descrip].strip
   record.descrip.empty? and record.descrip = nil
   record.save
+  refreshStaticRdirects
   return {status: "ok"}.to_json
 end
 
@@ -899,9 +899,10 @@ post "/api/redirect/:kind" do |kind|
 
   %w{static item unit bepress doj}.include?(kind) or halt(400)
   Redirect.create(kind: kind,
-                  from_path: validateURL(params[:from_path]),
-                  to_path: validateURL(params[:to_path]),
+                  from_path: validateURL(params[:from_path], false), # no external
+                  to_path: validateURL(params[:to_path], true),
                   descrip: params[:descrip].strip.empty? ? nil : params[:descrip].strip)
+  refreshStaticRdirects
   return {status: "ok"}.to_json
 end
 
@@ -913,6 +914,7 @@ delete "/api/redirect/:kind/:redirID" do |kind, redirID|
   record = Redirect[redirID] or halt(404)
   record.kind == kind or halt(400)
   record.delete
+  refreshStaticRdirects
   return {status: "ok"}.to_json
 end
 
