@@ -140,7 +140,11 @@ def getNavBar(unit, navItems, level=1)
       if navItem['type'] == 'folder'
         navItem['sub_nav'] = getNavBar(unit, navItem['sub_nav'], level+1)
       elsif navItem['slug']
-        navItem['url'] = "/uc/#{unit.id}#{navItem['slug']=="" ? "" : "/"+navItem['slug']}"
+        if unit.id == 'root'
+          navItem['url'] = "/#{navItem['slug']}"
+        else
+          navItem['url'] = "/uc/#{unit.id}#{navItem['slug']=="" ? "" : "/"+navItem['slug']}"
+        end
       end
     }
     if level==1 && !isTopmostUnit(unit)
@@ -874,6 +878,67 @@ delete "/api/unit/:unitID/sidebar/:widgetID" do |unitID, widgetID|
 
   content_type :json
   return {status: "ok", nextURL: unitID=="root" ? "/" : "/uc/#{unitID}" }.to_json
+end
+
+###################################################################################################
+# Gather data for redirect view/edit
+def getRedirectData(kind)
+  return { kind: kind,
+           redirects: Redirect.where(kind: kind).order(:id).all.map { |record| record.to_hash }
+         }
+end
+
+###################################################################################################
+def validateURL(url, allowExternal)
+  url.nil? and jsonHalt(400, "Missing URL")
+  url.include?("..") and jsonHalt(400, "Invalid URL")
+  # Strip hostname from eschol URLs
+  url.sub!(%r{https?://(pub-jschol[^\.]+\.|www\.|beta\.)?escholarship.org/?([^"]*)}, '/\2')
+  url =~ (allowExternal ? %r{^(/|https?://).*} : %r{^/}) or jsonHalt(400, "Invalid URL")
+  return url
+end
+
+###################################################################################################
+# Change redirect data
+put "/api/redirect/:kind/:redirID" do |kind, redirID|
+  getUserPermissions(params[:username], params[:token], 'root')[:super] or halt(401)
+
+  %w{static item unit bepress doj}.include?(kind) or halt(400)
+  record = Redirect[redirID] or halt(404)
+  record.kind == kind or halt(400)
+  record.from_path = validateURL(params[:from_path], false)  # no external
+  record.to_path = validateURL(params[:to_path], true)
+  record.descrip = params[:descrip].strip
+  record.descrip.empty? and record.descrip = nil
+  record.save
+  refreshStaticRdirects
+  return {status: "ok"}.to_json
+end
+
+###################################################################################################
+# Add a redirect
+post "/api/redirect/:kind" do |kind|
+  getUserPermissions(params[:username], params[:token], 'root')[:super] or halt(401)
+
+  %w{static item unit bepress doj}.include?(kind) or halt(400)
+  Redirect.create(kind: kind,
+                  from_path: validateURL(params[:from_path], false), # no external
+                  to_path: validateURL(params[:to_path], true),
+                  descrip: params[:descrip].strip.empty? ? nil : params[:descrip].strip)
+  refreshStaticRdirects
+  return {status: "ok"}.to_json
+end
+
+###################################################################################################
+# Delete a redirect
+delete "/api/redirect/:kind/:redirID" do |kind, redirID|
+  getUserPermissions(params[:username], params[:token], 'root')[:super] or halt(401)
+
+  record = Redirect[redirID] or halt(404)
+  record.kind == kind or halt(400)
+  record.delete
+  refreshStaticRdirects
+  return {status: "ok"}.to_json
 end
 
 ###################################################################################################
