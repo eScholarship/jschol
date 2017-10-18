@@ -1,11 +1,15 @@
 ##############################################################################3
 # Methods for obtaining database Caches
 
+$lastFillTime = nil
+
 def getUnitsHash
   return Unit.to_hash(:id)
 end
 
 def refreshUnitsHash
+  # Signal for all Puma workers to rebuild their hashes
+  signalDbRefill
   $unitsHash = getUnitsHash
 end
 
@@ -185,6 +189,31 @@ def getOruStatsPerCampus
   return Hash[array.map(&:values).map(&:flatten)]
 end
 
+# Get global static redirect
+def getStaticRedirects
+  Redirect.where(kind: 'static').as_hash(:from_path, :to_path)
+end
+
+def refreshStaticRdirects
+  signalDbRefill
+  $staticRedirects = getStaticRedirects
+end
+
+def signalDbRefill
+  # Signal our entire process group that they need to update their cached values.
+  Process.kill("WINCH", -Process.getpgrp)
+end
+
+def getLastTableUpdateTime
+  utime = nil
+  DB.fetch("SHOW TABLE STATUS WHERE Name in ('units', 'unit_hier', 'redirects')").each { |row|
+    if row[:Update_time] && (!utime || row[:Update_time] > utime)
+      utime = row[:Update_time]
+    end
+  }
+  return utime
+end
+
 ##################################################################################################
 # Database caches for speed. We check every 30 seconds for changes. These tables change infrequently.
 
@@ -192,19 +221,15 @@ Thread.new {
   begin
     prevTime = nil
     while true
-      utime = nil
-      DB.fetch("SHOW TABLE STATUS WHERE Name in ('units', 'unit_hier')").each { |row|
-        if row[:Update_time] && (!utime || row[:Update_time] > utime)
-          utime = row[:Update_time]
-        end
-      }
+      utime = getLastTableUpdateTime
       if !utime || utime != prevTime
         prevTime and puts "Unit/hier changed."
-        # Signal our entire process group that they need to update their cached values.
-        Process.kill("WINCH", -Process.getpgrp)
+        signalDbRefill
+        sleep 30  # re-fill at most every 30 sec
+      else
+        sleep 5   # but check every 5 sec after that
       end
       prevTime = utime
-      sleep 30
     end
   rescue Exception => e
     puts "Unexpected exception in db watching thread: #{e} #{e.backtrace}"
@@ -213,6 +238,11 @@ Thread.new {
 
 def fillCaches
   begin
+    utime = getLastTableUpdateTime
+    if utime && $lastFillTime == utime  # don't refill if nothing changed
+      return
+    end
+    $lastFillTime = utime
     puts "Filling caches.           "
     $unitsHash = getUnitsHash
     $hierByUnit = getHierByUnit
@@ -244,6 +274,10 @@ def fillCaches
     $statsCampusItems = getItemStatsPerCampus
     $statsCampusJournals = getJournalStatsPerCampus
     $statsCampusOrus = getOruStatsPerCampus
+
+    # OTHER
+    $staticRedirects = getStaticRedirects
+
     puts "...filled             "
   rescue Exception => e
     puts "Unexpected exception during cache filling: #{e} #{e.backtrace}"
@@ -254,7 +288,9 @@ end
 Signal.trap("WINCH") {
   # Ignore on non-worker process
   if $workerPrefix != ""
-    Thread.new { fillCaches }
+    Thread.new {
+      fillCaches
+    }
   end
 }
 

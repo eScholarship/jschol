@@ -11,6 +11,7 @@ import React from 'react'
 import { Link } from 'react-router'
 
 import PageBase from './PageBase.jsx'
+import Header1Comp from '../components/Header1Comp.jsx'
 import Header2Comp from '../components/Header2Comp.jsx'
 import SubheaderComp from '../components/SubheaderComp.jsx'
 import NavBarComp from '../components/NavBarComp.jsx'
@@ -26,6 +27,7 @@ import UnitCarouselConfigLayout from '../layouts/UnitCarouselConfigLayout.jsx'
 import UnitIssueConfigLayout from '../layouts/UnitIssueConfigLayout.jsx'
 import UnitSidebarConfigLayout from '../layouts/UnitSidebarConfigLayout.jsx'
 import UnitNavConfigLayout from '../layouts/UnitNavConfigLayout.jsx'
+import RedirectConfigLayout from '../layouts/RedirectConfigLayout.jsx'
 import SidebarComp from '../components/SidebarComp.jsx'
 
 class UnitPage extends PageBase {
@@ -92,6 +94,8 @@ class UnitPage extends PageBase {
       contentLayout = this.cmsPage(data, <UnitNavConfigLayout unit={data.unit} data={data.content} sendApiData={this.sendApiData}/>)
     } else if (this.props.params.pageName === 'sidebar') {
       contentLayout = this.cmsPage(data, <UnitSidebarConfigLayout unit={data.unit} data={data.content} sendApiData={this.sendApiData}/>)
+    } else if (this.props.params.pageName === 'redirects') {
+      contentLayout = this.cmsPage(data, <RedirectConfigLayout data={data.content} sendApiData={this.sendApiData}/>)
     } else if (this.props.params.pageName && !(data.content.issue)) {
       // If there's issue data here it's a journal page, otherwise it's static content
       contentLayout = (<UnitStaticPageLayout unit={data.unit} data={data.content} sidebar={sidebar} fetchPageData={this.fetchPageData}/>)
@@ -125,8 +129,11 @@ class UnitPage extends PageBase {
     }
     return (
       <div>
-        <Header2Comp type={data.unit.type} unitID={data.unit.id} />
-        <SubheaderComp unit={data.unit} header={data.header} />
+        { data.unit.type == "root"
+          ? <Header1Comp/>
+          : <Header2Comp type={data.unit.type} unitID={data.unit.id} />
+        }
+        { data.unit.type != "root" && <SubheaderComp unit={data.unit} header={data.header} /> }
         <NavBarComp 
           navBar={data.header.nav_bar} unit={data.unit} socialProps={data.header.social} />
         <BreadcrumbComp array={data.header.breadcrumb} />

@@ -29,9 +29,11 @@ export default class RecentArticlesComp extends React.Component
   { this.props.data.items.map(item =>
       <li key={item.id}>
         <h3>
-          <Link className="o-textlink__secondary" to={`/uc/item/${item.id.replace(/^qt/, '')}`}>
+          {/* Workaround for conflict between React and jquery.dotdotdot: we can't use a
+              <Link> within truncated content. So, fall back to a plain ol' <a> tag. */}
+          <a className="o-textlink__secondary" href={`/uc/item/${item.id.replace(/^qt/, '')}`}>
             <ArbitraryHTMLComp html={item.title}/>
-          </Link>
+          </a>
         </h3>
       {item.authors && item.authors.length > 0 &&
         <AuthorsComp authors={item.authors} />

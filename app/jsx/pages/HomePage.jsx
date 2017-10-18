@@ -43,10 +43,6 @@ class HomePage extends PageBase
     return "/api/home"
   }
 
-  pagePermissionsUnit() {
-    return "root"
-  }
-
   getRandomHero (hero_data) {
     let withHeroData = hero_data.filter(h => h.hero)
     return withHeroData[Math.floor(Math.random() * withHeroData.length)]

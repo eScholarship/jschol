@@ -653,6 +653,28 @@ def getChildDepts(unit)
   end
 end
 
+###################################################################################################
+# Global static pages; also, a fallback for global not-found.
+get "/api/globalStatic/*" do
+  content_type :json
+  unit = $unitsHash['root']
+  attrs = JSON.parse(unit[:attrs])
+  pageData = {
+    unit: unit.values.reject{|k,v| k==:attrs},
+    sidebar: getUnitSidebar(unit)
+  }
+
+  pageName = params['splat'].join("/")
+  if pageName =~ %r{^[a-zA-Z]([a-zA-Z_]+/)*[a-zA-Z_]+$} && Page.where(unit_id: 'root', slug: pageName).count > 0
+    pageData[:header] = getUnitHeader(unit, pageName, nil, attrs)
+    pageData[:content] = getUnitStaticPage(unit, attrs, pageName)
+  else
+    pageData[:header] = getGlobalHeader
+    pageData[:pageNotFound] = true
+  end
+
+  return pageData.to_json
+end
 
 ###################################################################################################
 # Unit page data. 
@@ -689,7 +711,7 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
       end
     elsif pageName == 'profile'
       pageData[:content] = getUnitProfile(unit, attrs)
-    elsif pageName == 'carousel' 
+    elsif pageName == 'carousel'
       # ToDo: Cleanup this which duplicates marquee info below
       pageData[:content] = getUnitCarouselConfig(unit, attrs)
     elsif pageName == 'issueConfig'
@@ -698,6 +720,8 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
       pageData[:content] = getUnitNavConfig(unit, attrs['nav_bar'], params[:subPage])
     elsif pageName == 'sidebar'
       pageData[:content] = getUnitSidebarWidget(unit, params[:subPage])
+    elsif pageName == "redirects"
+      pageData[:content] = getRedirectData(params[:subPage])
     elsif isJournalIssue?(unit.id, params[:pageName], params[:subPage])
       pageData[:content] = getJournalIssueData(unit, attrs, params[:pageName], params[:subPage])
       # A specific issue, otherwise you get journal landing (through getUnitPageContent method above)
@@ -707,7 +731,7 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
       pageData[:content] = getUnitStaticPage(unit, attrs, pageName)
     end
     pageData[:header] = getUnitHeader(unit,
-                                      (pageName =~ /^(nav|sidebar|profile|carousel|issueConfig)/ or issueData) ? nil : pageName,
+                                      (pageName =~ /^(nav|sidebar|profile|carousel|issueConfig|redirects)/ or issueData) ? nil : pageName,
                                       issueData, attrs)
     pageData[:marquee] = getUnitMarquee(unit, attrs) if (["home", "search"].include? pageName or issueData)
   else
@@ -945,40 +969,6 @@ def getItemHtml(content_type, id)
     url = url.start_with?("http", "ftp") ? url : "/content/#{id}/inner/#{url}"
     "#{attrib}=\"#{url}\"" + ((attrib == "src") ? "" : " target=\"new\"")
   }
-end
-
-###################################################################################################
-# Static page data.
-get "/api/static/:unitID/:pageName" do |unitID, pageName|
-  content_type :json
-
-  # Grab unit and page data from the database, not the cache, so they are instantly updated
-  # when adding a page.
-  unit = Unit[unitID]
-  unit or halt(404, "Unit not found")
-
-  page = Page.where(unit_id: unitID, name: pageName).first
-  page or halt(404, "Page not found")
-
-  body = {
-    header: unitID=='root' ? getGlobalHeader : getUnitHeader(unit),
-    campuses: getCampusesAsMenu,
-    page: {
-      title: page.title,
-      html: JSON.parse(page.attrs)['html']
-    },
-    sidebarWidgets: Widget.where(unit_id: unitID, region: 'sidebar').order(:ordering).map { |w|
-      attrs = w.attrs ? JSON.parse(w.attrs) : {}
-      { id: w.id,
-        kind: w.kind,
-        title: attrs['title'] ? attrs['title'] : w.kind,
-        html: attrs['html'] ? attrs['html'] :
-                "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Labore, saepe fugiat nihil molestias quam fugit harum suscipit, soluta debitis praesentium. Minus repudiandae debitis non dolore dignissimos, aliquam corporis ratione, quasi." }
-    },
-    sidebarNavLinks: [{"name" => "About eScholarship", "url" => request.path.sub("/api/", "/")},]
-  }
-  breadcrumb = [{"name" => "About eScholarship", "url" => request.path.sub("/api/", "/")},]
-  return body.merge(getHeaderElements(breadcrumb, nil)).to_json
 end
 
 ###################################################################################################

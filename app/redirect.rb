@@ -13,6 +13,9 @@ def checkRedirect(origURI)
       uri = nil
     elsif uri.path =~ %r{^//+(.*)}  # normalize multiple initial slashes
       uri.path = "/#{$1}"
+    elsif $staticRedirects[uri.path]
+      uri.path = $staticRedirects[uri.path]
+      uri.query = nil
     #NO: It is not safe to get rid of these, e.g. http://escholarship.org/search?q=china
     #elsif uri.path =~ %r{^(.+)/+$}  # get rid of terminal slash(es) on all except root page
     #  uri.path = $1
@@ -28,7 +31,6 @@ def checkRedirect(origURI)
     #  uri.scheme = "https"
     #  uri.port = nil
     elsif ["www.escholarship.org", "pvw.escholarship.org", "eprints.cdlib.org", "escholarship.cdlib.org"].include?(uri.host)
-      puts "Changing host"
       uri.host = "escholarship.org"
     elsif uri.path =~ %r{^/uc/item/(\w+)(.*)}
       uri = handleItemRedirect(uri, $1, $2)
@@ -55,7 +57,9 @@ def checkRedirect(origURI)
   elsif uri.nil?
     return nil, 404
   else
-    uri.port = nil  # if redirecting, clear localhost port
+    if uri.port == 4001 && uri.host != "localhost"
+      uri.port = nil  # if redirecting, clear localhost port
+    end
     return uri, 301
   end
 end
