@@ -677,8 +677,8 @@ get "/api/globalStatic/*" do
 end
 
 ###################################################################################################
-# Unit page data.
-# pageName may be some designated function (nav, profile), specific journal volume, or static page name
+# Unit page data. 
+# pageName may be some administrative function (nav, profile), specific journal volume, or static page name
 get "/api/unit/:unitID/:pageName/?:subPage?" do
   content_type :json
   unit = Unit[params[:unitID]]
@@ -704,10 +704,10 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
       q = CGI::parse(request.query_string) if pageName == "search"
       pageData[:content] = getUnitPageContent(unit, attrs, q)
       if unit.type == 'journal' and pageData[:content][:issue]
+        iss = pageData[:content][:issue]
         # need this information for building header breadcrumb
-        issueData = {'unit_id': params[:unitID],
-                     'volume': pageData[:content][:issue][:volume],
-                     'issue': pageData[:content][:issue][:issue]}
+        issueData = {'unit_id': params[:unitID], 'volume': iss[:volume], 'issue': iss[:issue],
+                     'numbering': iss[:numbering] }
       end
     elsif pageName == 'profile'
       pageData[:content] = getUnitProfile(unit, attrs)
@@ -723,9 +723,10 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
     elsif pageName == "redirects"
       pageData[:content] = getRedirectData(params[:subPage])
     elsif isJournalIssue?(unit.id, params[:pageName], params[:subPage])
-      # A specific issue, otherwise you get journal landing (through getUnitPageContent method above)
-      issueData = {'unit_id': params[:unitID], 'volume': params[:pageName], 'issue': params[:subPage]}
       pageData[:content] = getJournalIssueData(unit, attrs, params[:pageName], params[:subPage])
+      # A specific issue, otherwise you get journal landing (through getUnitPageContent method above)
+      issueData = {'unit_id': params[:unitID], 'volume': params[:pageName], 'issue': params[:subPage],
+                   'numbering': pageData[:content][:issue][:numbering] }
     else
       pageData[:content] = getUnitStaticPage(unit, attrs, pageName)
     end
@@ -813,7 +814,9 @@ get "/api/item/:shortArk" do |shortArk|
           issue_id = Item.join(:sections, :id => :section).filter(Sequel.qualify("items", "id") => id).map(:issue_id)[0]
           if issue_id
             unit_id, volume, issue = Section.join(:issues, :id => issue_id).map([:unit_id, :volume, :issue])[0]
-            body[:header] = getUnitHeader(unit, nil, {'unit_id': unit_id, 'volume': volume, 'issue': issue})
+            numbering = getIssueNumbering(unit.id, volume, issue)
+            body[:header] = getUnitHeader(unit, nil,
+              {'unit_id': unit_id, 'volume': volume, 'issue': issue, numbering: numbering})
             body[:citation][:volume] = volume
             body[:citation][:issue] = issue
           else
