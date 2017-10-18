@@ -42,7 +42,7 @@ class HomeSection2Comp extends React.Component {
           </div>
         </div>
         <a href="/search" className="c-homesection__2-browse-all">Browse all eScholarship holdings</a>
-        <Link to="/uc/root/repository" className="c-homesection__2-more">Learn more about the eScholarship repository</Link>
+        <Link to="/repository" className="c-homesection__2-more">Learn more about the eScholarship repository</Link>
         <WizardComp showModal={this.state.modalOpen}
                   parentSelector={()=>$('#repository')[0]}
                   onCancel={e=>this.closeWizardModal(e)}

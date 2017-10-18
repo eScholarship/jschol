@@ -9,7 +9,7 @@ class HomeSection1Comp extends React.Component {
       <div className="c-homesection__1">
         <div className="c-homesection__1-description">
           <h3>Good for Authors</h3>
-          <p>Open access research is read and cited more than access-restricted scholarship, increasing the academic impact of and public engagement with your ideas.</p>
+          <p>Open Access research is read and cited more than access-restricted scholarship, increasing the academic impact of and public engagement with your ideas.</p>
           <h3>Good for Readers</h3>
           <p>The University of California’s Open Access policies extend the University’s public mission to share broadly &mdash; throughout California, the nation, and the world &mdash; the research and knowledge produced at our campuses.</p>
         </div>
@@ -25,7 +25,7 @@ class HomeSection1Comp extends React.Component {
             <a href="">9,999</a> Items since UC <br/> OA Policy passed
           </div> */}
         </div>
-        <Link to="/uc/root/ucoapolicies" className="c-homesection__1-link">Learn more about UC Open Access</Link>
+        <Link to="/ucoapolicies" className="c-homesection__1-link">Learn more about UC Open Access</Link>
       </div>
     )
   }

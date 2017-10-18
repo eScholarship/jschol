@@ -10,13 +10,13 @@ class FooterComp extends React.Component {
       <footer className="c-footer">
         <nav className="c-footer__nav">
           <Link to="/">Home</Link>
-          <Link to="/uc/root/aboutEschol">About eScholarship</Link>
+          <Link to="/aboutEschol">About eScholarship</Link>
           <Link to="/campuses">Campus Sites</Link>
-          <Link to="/uc/root/ucoapolicies">UC Open Access Policy</Link>
-          <Link to="/uc/root/publishing">eScholarship Publishing</Link>
-          <Link to="/uc/root/privacypolicy">Privacy Statement</Link>
-          <Link to="/uc/root/policies">Policies</Link>
-          <Link to="/uc/root/terms">Terms of Use</Link>
+          <Link to="/ucoapolicies">UC Open Access Policy</Link>
+          <Link to="/publishing">eScholarship Publishing</Link>
+          <Link to="/privacypolicy">Privacy Statement</Link>
+          <Link to="/policies">Policies</Link>
+          <Link to="/terms">Terms of Use</Link>
           <Subscriber channel="cms">
             { cms => cms.loggedIn ?
                   <Link to="/logout" onClick={()=>setTimeout(()=>cms.onLogout(), 0)}><strong>Admin Logout</strong></Link>
