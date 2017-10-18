@@ -156,7 +156,16 @@ end
 def getPageBreadcrumb(unit, pageName, issue=nil)
   ((!pageName and !issue) || pageName == "home") and return []
   if issue
-   return [{name: "Volume #{issue[:volume]}, Issue #{issue[:issue]}",
+   vol = "Volume #{issue[:volume]}"
+   iss = "Issue #{issue[:issue]}"
+   if !issue[:numbering]
+     name = vol + ", " + iss 
+   elsif issue[:numbering] == "volume_only"
+     name = vol 
+   else
+     name = iss 
+   end
+   return [{name: name,
                id: issue[:unit_id] + ":" + issue[:volume] + ":" + issue[:issue],
               url: "/uc/#{issue[:unit_id]}/#{issue[:volume]}/#{issue[:issue]}"}]
   elsif pageName == "search"
@@ -370,6 +379,14 @@ def getSeriesLandingPageData(unit, q)
   return response
 end
 
+def getIssues(unit_id)
+  Issue.where(:unit_id => unit_id).order(Sequel.desc(:pub_date)).to_hash(:id).map{|id, issue|
+    h = issue.to_hash
+    h[:attrs] and h[:attrs] = JSON.parse(h[:attrs])
+    h
+  }
+end 
+
 # Landing page data does not pass arguments volume/issue. It just gets most recent journal
 def getJournalIssueData(unit, unit_attrs, volume=nil, issue=nil)
   display = unit_attrs['magazine_layout'] ? 'magazine' : 'simple'
@@ -381,11 +398,7 @@ def getJournalIssueData(unit, unit_attrs, volume=nil, issue=nil)
   return {
     display: display,
     issue: getIssue(unit.id, display, volume, issue),
-    issues: Issue.where(:unit_id => unit.id).order(Sequel.desc(:pub_date)).to_hash(:id).map{|id, issue|
-      h = issue.to_hash
-      h[:attrs] and h[:attrs] = JSON.parse(h[:attrs])
-      h
-    },
+    issues: getIssues(unit.id),
     doaj: unit_attrs['doaj'],
     issn: unit_attrs['issn'],
     eissn: unit_attrs['eissn']
@@ -396,16 +409,26 @@ def isJournalIssue?(unit_id, volume, issue)
   !!Issue.first(:unit_id => unit_id, :volume => volume, :issue => issue)
 end
 
-def getIssue(id, display, volume=nil, issue=nil)
-  if volume.nil?  # Landing page (most recent journal)
-    i = Issue.where(:unit_id => id).order(Sequel.desc(:pub_date)).first
+def getIssueNumbering(unit_id, volume, issue)
+  i = Issue.first(:unit_id => unit_id, :volume => volume, :issue => issue)
+  return nil if i.nil?
+  i = i.values
+  return nil if i[:attrs].nil?
+  attrs = JSON.parse(i[:attrs])
+  return attrs['numbering']
+end
+
+def getIssue(unit_id, display, volume=nil, issue=nil)
+  if volume.nil?  # Landing page (most recent journal) has no vol/issue entered in URL path
+    i = Issue.where(:unit_id => unit_id).order(Sequel.desc(:pub_date)).first
   else
-    i = Issue.first(:unit_id => id, :volume => volume, :issue => issue)
+    i = Issue.first(:unit_id => unit_id, :volume => volume, :issue => issue)
   end
   return nil if i.nil?
   i = i.values
   if i[:attrs]
     attrs = JSON.parse(i[:attrs])
+    attrs['numbering']   and i[:numbering] = attrs['numbering']
     attrs['title']       and i[:title] = attrs['title']
     attrs['description'] and i[:description] = attrs['description']
     attrs['cover']       and i[:cover] = attrs['cover']
