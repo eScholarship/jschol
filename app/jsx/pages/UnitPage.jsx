@@ -11,6 +11,7 @@ import React from 'react'
 import { Link } from 'react-router'
 
 import PageBase from './PageBase.jsx'
+import Header1Comp from '../components/Header1Comp.jsx'
 import Header2Comp from '../components/Header2Comp.jsx'
 import SubheaderComp from '../components/SubheaderComp.jsx'
 import NavBarComp from '../components/NavBarComp.jsx'
@@ -128,8 +129,11 @@ class UnitPage extends PageBase {
     }
     return (
       <div>
-        <Header2Comp type={data.unit.type} unitID={data.unit.id} />
-        <SubheaderComp unit={data.unit} header={data.header} />
+        { data.unit.type == "root"
+          ? <Header1Comp/>
+          : <Header2Comp type={data.unit.type} unitID={data.unit.id} />
+        }
+        { data.unit.type != "root" && <SubheaderComp unit={data.unit} header={data.header} /> }
         <NavBarComp 
           navBar={data.header.nav_bar} unit={data.unit} socialProps={data.header.social} />
         <BreadcrumbComp array={data.header.breadcrumb} />

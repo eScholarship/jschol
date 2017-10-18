@@ -11,7 +11,7 @@ import BrowsePage from './pages/BrowsePage.jsx'
 import ItemPage from './pages/ItemPage.jsx'
 import UnitPage from './pages/UnitPage.jsx'
 import { SearchPage } from './pages/SearchPage.jsx';
-import NotFoundPage from './pages/NotFoundPage.jsx'
+import GlobalStaticPage from './pages/GlobalStaticPage.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import LoginSuccessPage from './pages/LoginSuccessPage.jsx'
 import LogoutPage from './pages/LogoutPage.jsx'
@@ -49,7 +49,7 @@ const routes = (
     <Route path="/logout" component={LogoutPage} />
     <Route path="/logoutSuccess/**" component={LogoutSuccessPage} />
     <Route path="/logoutSuccess" component={LogoutSuccessPage} />
-    <Route path="*" component={NotFoundPage}/>
+    <Route path="*" component={GlobalStaticPage}/>
   </Route>
 )
 

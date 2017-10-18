@@ -140,7 +140,11 @@ def getNavBar(unit, navItems, level=1)
       if navItem['type'] == 'folder'
         navItem['sub_nav'] = getNavBar(unit, navItem['sub_nav'], level+1)
       elsif navItem['slug']
-        navItem['url'] = "/uc/#{unit.id}#{navItem['slug']=="" ? "" : "/"+navItem['slug']}"
+        if unit.id == 'root'
+          navItem['url'] = "/#{navItem['slug']}"
+        else
+          navItem['url'] = "/uc/#{unit.id}#{navItem['slug']=="" ? "" : "/"+navItem['slug']}"
+        end
       end
     }
     if level==1 && !isTopmostUnit(unit)
