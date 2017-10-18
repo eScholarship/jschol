@@ -11,6 +11,7 @@ import IssueActionsComp from '../components/IssueActionsComp.jsx'
 class VolumeSelector extends React.Component {
   static PropTypes = {
     vip: PropTypes.array.isRequired,     // [unit_id, Volume, Issue, Pub_date]
+    issue_numbering: PropTypes.string,
     issues: PropTypes.array.isRequired   // [ {:id=>3258, :volume=>"1", :issue=>"2", :pub_date=>#<Date: ...}, ... ]
   }
 
@@ -22,19 +23,32 @@ class VolumeSelector extends React.Component {
     return date.match(/\d{4}/)
   }
 
+  customVolIss = (vol, iss, numbering) => {
+    if (!numbering) {
+      return vol + ", " + iss 
+    } else if (numbering === "volume_only") {
+      return vol 
+    } else {
+      return iss 
+    }
+  }
+
   render() {
     let p = this.props
     return (
       <div className="o-customselector">
-        <h2 className="o-customselector__heading">{`Volume ${p.vip[1]}, Issue ${p.vip[2]}, ${p.vip[3]}`}</h2>
+        <h2 className="o-customselector__heading">{this.customVolIss(`Volume ${p.vip[1]}`, `Issue ${p.vip[2]}`, p.issue_numbering) + ", " + `${p.vip[3]}`}</h2>
         <details className="o-customselector__selector">
           <summary aria-label="Select a different issue"></summary>
           <div className="o-customselector__menu">
             <ul className="o-customselector__items">
-              {p.issues.map((i) => 
-                <li key={i.id}>
-                  <Link to={this.getIssuePath(i.unit_id, i.volume, i.issue)}>Volume {i.volume}, Issue {i.issue}, {this.getPubYear(i.pub_date)}</Link>
-                </li>)}
+              {p.issues.map( i => {
+                let numbering = i.attrs ? i.attrs.numbering : null
+                let name = this.customVolIss("Volume " + i.volume, "Issue " + i.issue, numbering) 
+                return (<li key={i.id}>
+                  <Link to={this.getIssuePath(i.unit_id, i.volume, i.issue)}>{name}, {this.getPubYear(i.pub_date)}</Link>
+                </li>)})
+              }
             </ul>
           </div>
         </details>
@@ -51,6 +65,7 @@ class IssueComp extends React.Component {
       unit_id: PropTypes.string,
       volume: PropTypes.string,
       issue: PropTypes.string,
+      numbering: PropTypes.string,
       pub_date: PropTypes.string,
       title: PropTypes.string,
       description: PropTypes.string,
@@ -81,7 +96,7 @@ class IssueComp extends React.Component {
         <IssueActionsComp unit_id={pi.unit_id} buy_link={pi.buy_link} />
         {/*              articles={} */}
         <div className="c-pub">
-          <VolumeSelector vip={issueCurrent} issues={this.props.issues} />
+          <VolumeSelector vip={issueCurrent} issue_numbering={pi.numbering} issues={this.props.issues} />
     {/* TITLE AND DESCRIPTION */}
           {this.props.display=="magazine" &&
             <div className="c-pubpreview">
