@@ -19,6 +19,7 @@ require 'aws-sdk'
 require 'date'
 require 'digest'
 require 'fastimage'
+require 'fileutils'
 require 'httparty'
 require 'json'
 require 'logger'
@@ -59,8 +60,8 @@ DB = Sequel.connect(YAML.load_file("config/database.yaml"))
 $dbMutex = Mutex.new
 
 # Log SQL statements, to aid debugging
-File.exists?('convert.sql_log') and File.delete('convert.sql_log')
-DB.loggers << Logger.new('convert.sql_log')
+#File.exists?('convert.sql_log') and File.delete('convert.sql_log')
+#DB.loggers << Logger.new('convert.sql_log')
 
 # The old eschol queue database, from which we can get a list of indexable ARKs
 QUEUE_DB = Sequel.connect(YAML.load_file("config/queueDb.yaml"))
@@ -2008,6 +2009,9 @@ def convertAllItems(arks)
   # Count how many total there are, for status updates
   $nTotal = QUEUE_DB.fetch("SELECT count(*) as total FROM indexStates WHERE indexName='erep'").first[:total]
 
+  # Grab the timestamps of all items, for speed
+  $allItemTimes = (arks=="ALL" ? Item : Item.where(id: arks.to_a)).to_hash(:id, :last_indexed)
+
   # Convert all the items that are indexable
   query = QUEUE_DB[:indexStates].where(indexName: 'erep').select(:itemId, :time).order(:itemId)
   $nTotal = query.count
@@ -2020,8 +2024,8 @@ def convertAllItems(arks)
     shortArk = getShortArk(row[:itemId])
     next if arks != 'ALL' && !arks.include?(shortArk)
     erepTime = Time.at(row[:time].to_i).to_time
-    item = Item[shortArk]
-    if !item || item.last_indexed.nil? || item.last_indexed < erepTime || $rescanMode
+    itemTime = $allItemTimes[shortArk]
+    if itemTime.nil? || itemTime < erepTime || $rescanMode
       $indexQueue << [shortArk, erepTime]
     else
       #puts "#{shortArk} is up to date, skipping."
@@ -2499,26 +2503,40 @@ end
 
 startTime = Time.now
 
-case ARGV[0]
-  when "--units"
-    units = ARGV.select { |a| a =~ /^[^-]/ }
-    convertAllUnits(units.empty? ? "ALL" : Set.new(units))
-  when "--items"
-    arks = ARGV.select { |a| a =~ /qt\w{8}/ }
-    convertAllItems(arks.empty? ? "ALL" : Set.new(arks))
-  when "--info"
-    indexInfo()
-  when "--splash"
-    arks = ARGV.select { |a| a =~ /qt\w{8}/ }
-    splashAllPDFs(arks.empty? ? "ALL" : Set.new(arks))
-  when "--stats"
-    updateUnitStats
-  when "--redirects"
-    convertRedirects
-  else
-    STDERR.puts "Usage: #{__FILE__} --units|--items"
-    exit 1
+# MH: Could not for the life of me get File.flock to actually do what it
+#     claims, so falling back to file existence check.
+lockFile = "/tmp/jschol_convert.lock"
+if File.exist?(lockFile)
+  puts "Another copy is already running."
+  exit 1
 end
 
-puts "Elapsed: #{Time.now - startTime} sec."
-puts "Done."
+begin
+  FileUtils.touch(lockFile)
+
+  case ARGV[0]
+    when "--units"
+      units = ARGV.select { |a| a =~ /^[^-]/ }
+      convertAllUnits(units.empty? ? "ALL" : Set.new(units))
+    when "--items"
+      arks = ARGV.select { |a| a =~ /qt\w{8}/ }
+      convertAllItems(arks.empty? ? "ALL" : Set.new(arks))
+    when "--info"
+      indexInfo()
+    when "--splash"
+      arks = ARGV.select { |a| a =~ /qt\w{8}/ }
+      splashAllPDFs(arks.empty? ? "ALL" : Set.new(arks))
+    when "--stats"
+      updateUnitStats
+    when "--redirects"
+      convertRedirects
+    else
+      STDERR.puts "Usage: #{__FILE__} --units|--items"
+      exit 1
+  end
+
+  puts "Elapsed: #{Time.now - startTime} sec."
+  puts "Done."
+ensure
+  File.delete(lockFile)
+end
