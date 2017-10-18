@@ -25,7 +25,7 @@ class HomeSection1Comp extends React.Component {
             <a href="">9,999</a> Items since UC <br/> OA Policy passed
           </div> */}
         </div>
-        <Link to="/uc/root/ucoapolicies" className="c-homesection__1-link">Learn more about UC Open Access</Link>
+        <Link to="/ucoapolicies" className="c-homesection__1-link">Learn more about UC Open Access</Link>
       </div>
     )
   }
