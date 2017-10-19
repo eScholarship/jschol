@@ -244,7 +244,7 @@ require_relative 'dbCache'
 ###################################################################################################
 
 ###################################################################################################
-# IP address filtering on certain machines
+# IP address filtering, redirect processing, etc.
 $ipFilter = File.exist?("config/allowed_ips") && Regexp.new(File.read("config/allowed_ips").strip)
 before do
   $ipFilter && !$ipFilter.match(request.ip) and halt 403
@@ -263,6 +263,31 @@ end
 get "/check" do
   return "ok"
 end
+
+###################################################################################################
+def proxyFromURL(url, overrideHostname = nil)
+  fetcher = HttpFetcher.new(url, overrideHostname)
+  if fetcher.length > 0
+    headers "Content-Length" => fetcher.length.to_s
+  end
+  if fetcher.headers.dig('content-type', 0)
+    headers "content-type" => fetcher.headers.dig('content-type', 0)
+  end
+  return stream { |out| fetcher.streamTo(out) }
+end
+
+###################################################################################################
+get %r{/uc/oai(.*)} do
+  request.url =~ %r{/uc/oai(.*)}
+  proxyFromURL("http://pub-eschol-prd-2a.escholarship.org:18880/uc/oai#{$1}", "escholarship.org")
+end
+
+###################################################################################################
+# Not working yet
+#get %r{/uc/search.*smode=(pmid|PR|postprintReport|repec|bpList|eeList|etdLinks|getDescrip|getAbstract|getFiles).*} do
+#  puts "got search url"
+#  proxyFromURL("http://pub-eschol-prd-2a.escholarship.org:18880/uc/search#{$1}", "escholarship.org")
+#end
 
 ###################################################################################################
 # Sanitize incoming filenames before applying them to the filesystem. In particular, prevent
