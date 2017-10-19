@@ -90,7 +90,7 @@ OJS_DB = ensureConnect(ojsDbConfig)
 #OJS_DB.loggers << Logger.new('ojs.sql_log')  # Enable to debug SQL queries on OJS db
 
 # When fetching ISO pages and PDFs from the local server, we need the host name.
-$host = ENV['HOST'] || "localhost"
+$host = ENV['HOST'] ? "#{ENV['HOST']}.escholarship.org" : "localhost"
 
 # Need credentials for fetching content files from MrtExpress
 $mrtExpressConfig = YAML.load_file("config/mrtExpress.yaml")
@@ -465,7 +465,7 @@ get %r{.*} do
 end
 
 ###################################################################################################
-def generalResponse
+def generalResponse(iso_ok = true)
   # Replace startup URLs for proper cache busting
   template = File.new("app/app.html").read
   webpackManifest = JSON.parse(File.read('app/js/manifest.json'))
@@ -482,14 +482,23 @@ def generalResponse
     # Pass the full path and query string to our little Node Express app, which will run it through
     # ReactRouter and React.
     begin
-      response = Net::HTTP.new($host, $serverConfig['isoPort']).start {|http| http.request(Net::HTTP::Get.new(remainder)) }
+      outerHttp = Net::HTTP.new($host, $serverConfig['isoPort'])
+      outerHttp.read_timeout = 5
+      response = outerHttp.start {|http| http.request(Net::HTTP::Get.new(remainder)) }
     rescue Exception => e
       # If there's an exception (like iso is completely dead), fall back to non-iso mode.
-      puts "Warning: unexpected exception (not HTTP error) from iso: #{e} #{e.backtrace}"
+      if e.to_s =~ /Net::ReadTimeout/
+        puts "Warning: read timeout from ISO. Falling back."
+      elsif e.to_s =~ /Connection refused/
+        puts "Warning: ISO refused connection. Falling back."
+      else
+        puts "Warning: unexpected exception (not HTTP error) from iso (falling back): #{e} #{e.backtrace}"
+      end
       return template
     end
     if response.code.to_i != 200
       # For all error pages, fall back to non-ISO since we don't know how to render it here.
+      puts "Unexpected code #{response.code} from iso; falling back to non-iso."
       return template
     end
 
@@ -519,7 +528,12 @@ end
 
 # Not found errors on /content, /api, etc.
 not_found do
-  generalResponse  # handles 404's in the same isomorphic fashion as other requests
+  status 404
+  if request.path =~ %r{\.[^/]+$}   # handle probable file paths like .jpg, .gif, etc.
+    return "Resource not found.\n"
+  else
+    generalResponse(false)  # handles 404's in the same fashion as other req's, but no iso
+  end
 end
 
 ###################################################################################################

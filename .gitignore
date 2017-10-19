@@ -12,6 +12,7 @@ db_backup/
 dist
 gems/
 gomysql
+iso.pid
 jschol.pid
 logs/
 node_modules/
