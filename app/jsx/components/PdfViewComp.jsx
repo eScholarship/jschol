@@ -1,6 +1,7 @@
 // ##### PDF View Component ##### //
 
 import React from 'react'
+import ScrollingAnchorComp from "../components/ScrollingAnchorComp.jsx"
 import PdfViewerComp from '../components/PdfViewerComp.jsx'
 
 class PdfViewComp extends React.Component {
@@ -14,6 +15,9 @@ class PdfViewComp extends React.Component {
   render() {
     return (
       <details className="c-togglecontent" open>
+        {/* ScrollingAnchor sits here and not above because c-togglecontent styling relies on
+            coming right after it's sibling of the same class name */}
+        <ScrollingAnchorComp name="article_main" />
         <summary>Main Content</summary>
         <div className="c-pdfview">
           <button onClick={() => {this.view()}} className="c-pdfview__button-download">Download PDF to View</button>
