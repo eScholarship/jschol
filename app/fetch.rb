@@ -164,6 +164,35 @@ class MerrittFetcher < Fetcher
 end
 
 ###################################################################################################
+class HttpFetcher < Fetcher
+  attr_reader :headers
+
+  def initialize(url, _overrideHostname = nil)
+    @overrideHostname = _overrideHostname
+    super(url)
+  end
+
+  def fetchInternal
+    uri = URI(@url)
+    Net::HTTP.start(uri.host, uri.port, :use_ssl => (uri.scheme == 'https')) do |http|
+      req = Net::HTTP::Get.new(uri.request_uri)
+      if @overrideHostname
+        req['Host'] = @overrideHostname
+      end
+      http.request(req) do |resp|
+        resp.code == "200" or raise("Response to #{@url} was HTTP #{resp.code}: #{resp.message}")
+        gotLength(resp["Content-Length"].to_i)
+        @headers = resp.to_hash
+        resp.read_body { |chunk|
+          @stop and http.finish
+          gotChunk(chunk)
+        }
+      end
+    end
+  end
+end
+
+###################################################################################################
 class S3Fetcher < Fetcher
   class S3Passer
     def initialize(fetcher)
