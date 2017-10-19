@@ -17,7 +17,7 @@ let serverConfig = readYaml.sync('config/server.yaml')
 var lastStamp
 var routes = null
 
-cluster(worker => {
+//cluster(worker => {
   const app = express()
 
   app.use((req, res) =>
@@ -132,4 +132,4 @@ cluster(worker => {
   app.listen(PORT, function () {
     console.log('ISO worker listening on port', PORT)
   })
-}, { count: serverConfig.isoWorkers })
+//}, { count: serverConfig.isoWorkers })
