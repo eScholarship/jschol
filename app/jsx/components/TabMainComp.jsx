@@ -36,7 +36,7 @@ class MainContent extends React.Component {
           } else {
             return (<Withdrawn message="This item is not available from eScholarship." />)
           }
-        } else {
+        } else {    // JumpComp ("Jump To" menu) only present in this case
           return (p.content_type == "application/pdf" ?
                     <PdfViewComp url={p.pdf_url}
                                  content_key={p.content_key}
@@ -55,6 +55,9 @@ class MainContent extends React.Component {
 
   renderHtml = p => { return (
       <details className="c-togglecontent" open>
+        {/* ScrollingAnchor sits here and not above because c-togglecontent styling relies on
+            coming right after it's sibling of the same class name */}
+        <ScrollingAnchorComp name="article_main" />
         <summary>Main Content</summary>
         <ArbitraryHTMLComp html={p.content_html} h1Level={2}/>
         <br/><br/>
@@ -148,7 +151,6 @@ class TabMainComp extends React.Component {
            <Abstract key="1" status={p.status}
                              abstract={p.attrs.abstract}
                              unit={p.unit} />] }
-        <ScrollingAnchorComp name="article_main" />
         <MainContent {...p} />
       </div>
     )

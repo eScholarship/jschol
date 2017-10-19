@@ -2,9 +2,8 @@
 
 import React from 'react'
 import { Link } from 'react-router'
-
-import Search1Comp from '../components/Search1Comp.jsx'
 import Breakpoints from '../../js/breakpoints.json'
+import Search1Comp from '../components/Search1Comp.jsx'
 import AdminBarComp from '../components/AdminBarComp.jsx'
 
 class HeaderComp1 extends React.Component {

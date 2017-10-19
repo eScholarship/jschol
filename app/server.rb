@@ -408,8 +408,11 @@ get "/content/:fullItemID/*" do |itemID, path|
   s3Obj.exists? or raise("missing display PDF")
   fetcher = S3Fetcher.new(s3Obj, s3Path, range)
   if range
-    range =~ /^bytes=(\d+)-(\d+)/ or raise("can't parse range")
+    range =~ /^bytes=(\d+)-(\d+)?/ or raise("can't parse range #{range.inspect}")
     fromByte, toByte = $1.to_i, $2.to_i
+    if toByte.nil? || toByte == 0
+      toByte = outLen
+    end
     #puts "range #{fromByte}-#{toByte}/#{outLen}"
     headers "Content-Range" => "bytes #{fromByte}-#{toByte}/#{outLen}"
     outLen = toByte - fromByte + 1
