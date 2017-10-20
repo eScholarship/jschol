@@ -55,6 +55,7 @@ class LoadTest
       body = []
       resp = HTTParty.get(url) do |fragment|
         body << fragment
+        ABORT_PCT && Random.rand(100) < ABORT_PCT and raise "aborting early"
         RATE && !fragment.empty? and sleep(fragment.length / RATE)
       end
       if resp.code.to_i == 404 && url.include?("/supp/")
@@ -62,8 +63,7 @@ class LoadTest
         puts "  refetch #{url}"
         resp = HTTParty.get(url) do |fragment|
           body << fragment
-          if ABORT_PCT && Random.rand(100) < ABORT_PCT
-            raise "aborting early"
+          ABORT_PCT && Random.rand(100) < ABORT_PCT and raise "aborting early"
           RATE && !fragment.empty? and sleep(fragment.length / RATE)
         end
       end
