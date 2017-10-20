@@ -23,6 +23,11 @@ if (!(typeof document === "undefined")) {
 const tab_anchors = ['main', 'supplemental', 'metrics', 'author']
 const anchors = tab_anchors.concat(['article_abstract', 'article_main', 'article_references'])
 
+const MONTHS = [ "January", "Februrary", "March",
+                 "April", "May", "June",
+                 "July", "August", "September",
+                 "October", "November", "December" ]
+
 class ItemPage extends PageBase {
   static propTypes = {
     currentTab: PropTypes.oneOf(anchors)
@@ -53,10 +58,23 @@ class ItemPage extends PageBase {
   }
 
   formatDate = d => {
-    let x = d ? new Date(d) : new Date(),
-        locale = "en-us",
-        month = x.toLocaleString(locale, { month: "long" })
-    return (month + " " + x.getDay() + ", " + x.getFullYear())
+    if (d) {
+      // The Javascript API for the Date object is incredibly horrible:
+      // 1. It assumes UTC at strange times
+      // 2. Months are numbered starting from 0. Who ever heard of 0=January?
+      // 3. getDay() returns day *of the week*. getDate() is day-of-month.
+      // It's just so crazy. So, let's just parse and format manually.
+      let m = /^(\d\d\d\d)-(\d\d)-(\d\d)$/.exec(d)
+      if (m == null)
+        return d // fall back if we can't parse it
+      let year = parseInt(m[1])
+      let month = parseInt(m[2])
+      let day = parseInt(m[3])
+      return `${MONTHS[month-1]} ${day}, ${year}`
+    }
+    else {
+      return new Date().toLocaleString("en-us", { year: "numeric", month: "long", day: "numeric" })
+    }
   }
 
   stripHtml = str => {
