@@ -2506,13 +2506,13 @@ startTime = Time.now
 # MH: Could not for the life of me get File.flock to actually do what it
 #     claims, so falling back to file existence check.
 lockFile = "/tmp/jschol_convert.lock"
-if File.exist?(lockFile)
-  puts "Another copy is already running."
-  exit 1
-end
-
+File.exist?(lockFile) or FileUtils.touch(lockFile)
+lock = File.new(lockFile)
 begin
-  FileUtils.touch(lockFile)
+  if !lock.flock(File::LOCK_EX | File::LOCK_NB)
+    puts "Another copy is already running."
+    exit 1
+  end
 
   case ARGV[0]
     when "--units"
@@ -2538,5 +2538,5 @@ begin
   puts "Elapsed: #{Time.now - startTime} sec."
   puts "Done."
 ensure
-  File.delete(lockFile)
+  lock.flock(File::LOCK_UN)
 end
