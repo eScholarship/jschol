@@ -43,17 +43,17 @@
 
 .o-stat--item {
   @extend %o-stat__type;
-  background-image: inline('../images/icon_book-light-black.svg');
+  background-image: inline('../images/icon_book-black.svg');
 }
 
 .o-stat--view {
   @extend %o-stat__type;
-  background-image: inline('../images/icon_eye-light-black.svg');
+  background-image: inline('../images/icon_eye-black.svg');
 }
 
 .o-stat--passed {
   @extend %o-stat__type;
-  background-image: inline('../images/icon_open-access-light-black.svg');
+  background-image: inline('../images/icon_open-access-black.svg');
 }
 
 .o-stat--journals { // magazine icon
@@ -63,5 +63,20 @@
 
 .o-stat--units {
   @extend %o-stat__type;
-  background-image: inline('../images/icon_university-light-black.svg');
+  background-image: inline('../images/icon_university-black.svg');
+}
+
+.o-stat--articles {
+  @extend %o-stat__type;
+  background-image: inline('../images/icon_file-text-black.svg');
+}
+
+.o-stat--books {
+  @extend %o-stat__type;
+  background-image: inline('../images/icon_book-black.svg');
+}
+
+.o-stat--theses {
+  @extend %o-stat__type;
+  background-image: inline('../images/icon_graduation-cap-black.svg');
 }

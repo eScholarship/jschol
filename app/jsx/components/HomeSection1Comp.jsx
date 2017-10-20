@@ -18,8 +18,8 @@ class HomeSection1Comp extends React.Component {
           <div className="o-stat--item">
             <b>{this.props.stats.statsCountItems.toLocaleString()}</b> Items
           </div>
-          <div className="o-stat--units">
-            <b>{this.props.stats.statsCountOrus.toLocaleString()}</b> Research Units
+          <div className="o-stat--view">
+            <b>{this.props.stats.statsCountViews.toLocaleString()}</b> Views
           </div>
       {/* <div className="o-stat--passed">
             <a href="">9,999</a> Items since UC <br/> OA Policy passed

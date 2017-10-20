@@ -32,11 +32,15 @@ class ColumnBoxObj extends React.Component {
           </header>
           Lorem ipsum dolor sit amet, consectetur adipisicing elit. Alias sed sapiente nulla debitis nobis asperiores hic est, fuga illo? Accusamus molestias pariatur nihil, libero possimus optio iusto nobis sapiente ad.
         </section>
+
+        <h3>Containing Responsive Image Content</h3>
         <section className="o-columnbox1">
           <header>
             <h2>About eScholarship</h2>
           </header>
-          Lorem ipsum dolor sit amet, consectetur adipisicing elit. Alias sed sapiente nulla debitis nobis asperiores hic est, fuga illo? Accusamus molestias pariatur nihil, libero possimus optio iusto nobis sapiente ad.
+          <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Minima, natus maiores beatae, exercitationem vel reiciendis ut repellat nostrum vero minus labore inventore ea. Asperiores a consectetur ducimus voluptatum laboriosam ullam!
+          </p>
+          <img src="http://via.placeholder.com/500x200?text=Image (max-width: 100%)" alt=""/>
         </section>
 
         <h3>Truncated to 5 lines</h3>

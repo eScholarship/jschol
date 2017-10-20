@@ -196,3 +196,12 @@ Background color with progressively-enhanced blur effect. Example:
   padding: 0;
   border: none;
 }
+
+%responsive-images {
+
+  img {
+    display: block;
+    max-width: 100%;
+  }
+
+}

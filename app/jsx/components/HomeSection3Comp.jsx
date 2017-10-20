@@ -16,7 +16,7 @@ class HomeSection3Comp extends React.Component {
         <div className="c-homesection__3-journalgrid">
           <JournalGridComp />
         </div>
-        <Link to="/publishing" className="c-homesection__3-browse-all">Learn more about eScholarship Publishing</Link>
+        <Link to="/publishing" className="c-homesection__3-link">Learn more about eScholarship Publishing</Link>
       </div>
     )
   }
