@@ -14,8 +14,12 @@ def checkRedirect(origURI)
     elsif uri.path =~ %r{^//+(.*)}  # normalize multiple initial slashes
       uri.path = "/#{$1}"
     elsif $staticRedirects[uri.path]
-      uri.path = $staticRedirects[uri.path]
-      uri.query = nil
+      if $staticRedirects[uri.path] =~ /^http/
+        uri = URI.parse($staticRedirects[uri.path])
+      else
+        uri.path = $staticRedirects[uri.path].sub(%r{/+$}, '')  # doesn't accept trailing slashes
+        uri.query = nil
+      end
     #NO: It is not safe to get rid of these, e.g. http://escholarship.org/search?q=china
     #elsif uri.path =~ %r{^(.+)/+$}  # get rid of terminal slash(es) on all except root page
     #  uri.path = $1
@@ -35,6 +39,8 @@ def checkRedirect(origURI)
     elsif uri.path =~ %r{^/uc/item/(\w+)(.*)}
       uri = handleItemRedirect(uri, $1, $2)
     elsif uri.path =~ %r{^/uc/search}
+      # not working yet:
+      #&& !(uri.query =~ %r{smode=(pmid|PR|postprintReport|repec|bpList|eeList|etdLinks|getDescrip|getAbstract|getFiles)})
       uri = handleSearchRedirect(uri)
     elsif uri.path =~ %r{^/uc/temporary}
       uri = handleBpTempRedirect(uri)
@@ -60,6 +66,7 @@ def checkRedirect(origURI)
     if uri.port == 4001 && uri.host != "localhost"
       uri.port = nil  # if redirecting, clear localhost port
     end
+    puts "Final redirect: #{origURI} -> #{uri}"
     return uri, 301
   end
 end

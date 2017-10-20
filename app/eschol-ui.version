@@ -627,3 +627,27 @@ As well as:
   modified:   app/jsx/components/HomeSection3Comp.jsx
 
 
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's 4c3f77e41510eb9a776d72aeb51f602d43a3ced1, 2017-10-18 <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+Andy added all scss and changes since last.
+As well as:
+
+  modified:   app/jsx/layouts/CampusLayout.jsx
+  new file:   app/jsx/components/CampusHeroComp.jsx
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's a8f8c5abd90a4d5def27076bf0dd0d21484f7473, 2017-10-20 <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+Martin added all scss and changes since last.
+As well as:
+
+  modified:   app/jsx/components/HomeSection1Comp.jsx
+  modified:   app/jsx/components/HomeSection2Comp.jsx
+  modified:   app/jsx/components/HomeSection3Comp.jsx
+  modified:   app/jsx/objects/ColumnBoxObj.jsx
+  modified:   app/jsx/objects/DivideContentObj.jsx
+  deleted:    app/jsx/objects/ImageContentObj.jsx
+  modified:   app/jsx/objects/StatsObj.jsx

@@ -331,7 +331,7 @@ end
 # Get data for Campus Landing Page
 def getCampusLandingPageData(unit, attrs)
   return {
-    :hero => attrs['hero'],
+    :hero => getLogoData(attrs['hero']),
     :campusStats => {
       :item_count =>    ($statsCampusItems.keys.include? unit.id)  ? $statsCampusItems[unit.id]     : 0,
       :view_count =>    ($statsCampusViews.keys.include? unit.id)  ? $statsCampusViews[unit.id]     : 0,

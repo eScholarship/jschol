@@ -16,8 +16,7 @@ class HomeSection3Comp extends React.Component {
         <div className="c-homesection__3-journalgrid">
           <JournalGridComp />
         </div>
-        <Link to="/journals" className="c-homesection__3-browse-all">Browse all eScholarship journals</Link>
-        <a href="https://help.escholarship.org/support/solutions/articles/9000127857-starting-a-new-journal-on-escholarship" className="c-homesection__3-start">How to start a journal</a>
+        <Link to="/publishing" className="c-homesection__3-link">Learn more about eScholarship Publishing</Link>
       </div>
     )
   }

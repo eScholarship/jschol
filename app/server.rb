@@ -90,7 +90,7 @@ OJS_DB = ensureConnect(ojsDbConfig)
 #OJS_DB.loggers << Logger.new('ojs.sql_log')  # Enable to debug SQL queries on OJS db
 
 # When fetching ISO pages and PDFs from the local server, we need the host name.
-$host = ENV['HOST'] || "localhost"
+$host = ENV['HOST'] ? "#{ENV['HOST']}.escholarship.org" : "localhost"
 
 # Need credentials for fetching content files from MrtExpress
 $mrtExpressConfig = YAML.load_file("config/mrtExpress.yaml")
@@ -244,7 +244,7 @@ require_relative 'dbCache'
 ###################################################################################################
 
 ###################################################################################################
-# IP address filtering on certain machines
+# IP address filtering, redirect processing, etc.
 $ipFilter = File.exist?("config/allowed_ips") && Regexp.new(File.read("config/allowed_ips").strip)
 before do
   $ipFilter && !$ipFilter.match(request.ip) and halt 403
@@ -263,6 +263,31 @@ end
 get "/check" do
   return "ok"
 end
+
+###################################################################################################
+def proxyFromURL(url, overrideHostname = nil)
+  fetcher = HttpFetcher.new(url, overrideHostname)
+  if fetcher.length > 0
+    headers "Content-Length" => fetcher.length.to_s
+  end
+  if fetcher.headers.dig('content-type', 0)
+    headers "content-type" => fetcher.headers.dig('content-type', 0)
+  end
+  return stream { |out| fetcher.streamTo(out) }
+end
+
+###################################################################################################
+get %r{/uc/oai(.*)} do
+  request.url =~ %r{/uc/oai(.*)}
+  proxyFromURL("http://pub-eschol-prd-2a.escholarship.org:18880/uc/oai#{$1}", "escholarship.org")
+end
+
+###################################################################################################
+# Not working yet
+#get %r{/uc/search.*smode=(pmid|PR|postprintReport|repec|bpList|eeList|etdLinks|getDescrip|getAbstract|getFiles).*} do
+#  puts "got search url"
+#  proxyFromURL("http://pub-eschol-prd-2a.escholarship.org:18880/uc/search#{$1}", "escholarship.org")
+#end
 
 ###################################################################################################
 # Sanitize incoming filenames before applying them to the filesystem. In particular, prevent
@@ -383,8 +408,11 @@ get "/content/:fullItemID/*" do |itemID, path|
   s3Obj.exists? or raise("missing display PDF")
   fetcher = S3Fetcher.new(s3Obj, s3Path, range)
   if range
-    range =~ /^bytes=(\d+)-(\d+)/ or raise("can't parse range")
+    range =~ /^bytes=(\d+)-(\d+)?/ or raise("can't parse range #{range.inspect}")
     fromByte, toByte = $1.to_i, $2.to_i
+    if toByte.nil? || toByte == 0
+      toByte = outLen
+    end
     #puts "range #{fromByte}-#{toByte}/#{outLen}"
     headers "Content-Range" => "bytes #{fromByte}-#{toByte}/#{outLen}"
     outLen = toByte - fromByte + 1
@@ -440,7 +468,7 @@ get %r{.*} do
 end
 
 ###################################################################################################
-def generalResponse
+def generalResponse(iso_ok = true)
   # Replace startup URLs for proper cache busting
   template = File.new("app/app.html").read
   webpackManifest = JSON.parse(File.read('app/js/manifest.json'))
@@ -457,14 +485,23 @@ def generalResponse
     # Pass the full path and query string to our little Node Express app, which will run it through
     # ReactRouter and React.
     begin
-      response = Net::HTTP.new($host, $serverConfig['isoPort']).start {|http| http.request(Net::HTTP::Get.new(remainder)) }
+      outerHttp = Net::HTTP.new($host, $serverConfig['isoPort'])
+      outerHttp.read_timeout = 5
+      response = outerHttp.start {|http| http.request(Net::HTTP::Get.new(remainder)) }
     rescue Exception => e
       # If there's an exception (like iso is completely dead), fall back to non-iso mode.
-      puts "Warning: unexpected exception (not HTTP error) from iso: #{e} #{e.backtrace}"
+      if e.to_s =~ /Net::ReadTimeout/
+        puts "Warning: read timeout from ISO. Falling back."
+      elsif e.to_s =~ /Connection refused/
+        puts "Warning: ISO refused connection. Falling back."
+      else
+        puts "Warning: unexpected exception (not HTTP error) from iso (falling back): #{e} #{e.backtrace}"
+      end
       return template
     end
     if response.code.to_i != 200
       # For all error pages, fall back to non-ISO since we don't know how to render it here.
+      puts "Unexpected code #{response.code} from iso; falling back to non-iso."
       return template
     end
 
@@ -494,7 +531,12 @@ end
 
 # Not found errors on /content, /api, etc.
 not_found do
-  generalResponse  # handles 404's in the same isomorphic fashion as other requests
+  status 404
+  if request.path =~ %r{\.[^/]+$}   # handle probable file paths like .jpg, .gif, etc.
+    return "Resource not found.\n"
+  else
+    generalResponse(false)  # handles 404's in the same fashion as other req's, but no iso
+  end
 end
 
 ###################################################################################################

@@ -16,16 +16,13 @@
 }
 
 .c-pubpreview__img {
+  display: inline-block;
+  flex: 0 0 150px;
   border: 1px solid $color-light-gray;
   box-shadow: $box-shadow2;
 
   @include bp(screen1) {
     margin-right: $spacing-md;
-  }
-
-  img {
-    display: block;
-    width: 150px;
   }
 
 }

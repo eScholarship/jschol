@@ -296,16 +296,7 @@
   // no styles
 }
 
-.c-homesection__3-browse-all {
-  @extend %c-homesection__link;
-
-  @include bp(screen3) {
-    grid-column: 1 / 4;
-  }
-
-}
-
-.c-homesection__3-start {
+.c-homesection__3-link {
   @extend %c-homesection__link;
 
   @include bp(screen3) {
