@@ -31,6 +31,7 @@ def calcContentKey(shortArk, date = nil)
 end
 
 RATE = 500000
+ABORT_PCT = 5
 
 ###################################################################################################
 class LoadTest
@@ -61,6 +62,8 @@ class LoadTest
         puts "  refetch #{url}"
         resp = HTTParty.get(url) do |fragment|
           body << fragment
+          if ABORT_PCT && Random.rand(100) < ABORT_PCT
+            raise "aborting early"
           RATE && !fragment.empty? and sleep(fragment.length / RATE)
         end
       end
@@ -70,7 +73,11 @@ class LoadTest
       end
       return body.join("")
     rescue Exception => e
-      puts "Exception in fetch: #{e}"
+      if e.to_s =~ /aborting early/
+        puts "Early abort."
+      else
+        puts "Exception in fetch: #{e}"
+      end
       return ""
     end
   end

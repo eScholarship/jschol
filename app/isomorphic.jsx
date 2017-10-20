@@ -17,31 +17,31 @@ let serverConfig = readYaml.sync('config/server.yaml')
 var lastStamp
 var routes = null
 
-cluster(worker => {
+//cluster(worker => {
   const app = express()
 
   app.use((req, res) =>
   {
+    // Cache the app code. We can base the cache on the app bundle.
+    var curStamp = new Date(fs.statSync("app/js/manifest.json").mtime)
+    if ((lastStamp - curStamp) != 0) {
+      console.log("ISO: Loading new app bundle.    ")
+      lastStamp = curStamp
+      if (routes)
+        decache('./jsx/App.jsx')
+      routes = require('./jsx/App.jsx')
+      console.log("ISO: Bundle loaded.             ")
+    }
+
     // Simple check for up-ness
     if (req.originalUrl == "/check") {
       res.send("ok")
       return
     }
 
-    // Cache the app code. We can base the cache on the app bundle.
-    var curStamp = new Date(fs.statSync("app/js/manifest.json").mtime)
-    if ((lastStamp - curStamp) != 0) {
-      console.log("ISO: Loading new app bundle.")
-      lastStamp = curStamp
-      if (routes)
-        decache('./jsx/App.jsx')
-      routes = require('./jsx/App.jsx')
-      console.log("ISO: Bundle loaded.")
-    }
-
     // Now route the request
     var refURL = req.protocol + '://' + req.get('host') + req.originalUrl
-    //console.log("ISO fetch:", refURL)
+    console.log("ISO fetch:", refURL)
     match({ routes: routes, location: req.url }, (err, redirectLocation, renderProps) => {
       if (err) {
         console.error(err)
@@ -61,7 +61,7 @@ cluster(worker => {
       {
         var partialURL = urls[0]
         var finalURL = url.resolve(refURL, partialURL).replace(":"+serverConfig.isoPort, ":"+serverConfig.mainPort)
-        //console.log("...integrating data from:", finalURL)
+        console.log("...integrating data from:", finalURL)
 
         http.get(finalURL, function(ajaxResp) {
           var body = ''
@@ -80,17 +80,17 @@ cluster(worker => {
                 response = JSON.parse(body)
               }
               catch (e) {
-                //console.log("Exception parsing JSON:", e)
+                console.log("ISO Exception parsing JSON:", e)
                 response = { error: body }
                 body = JSON.stringify(response)
               }
 
               // Transform API error format to pageData error format
               if (response.error === true && response.message) {
+                console.log("Got error response:", response.message)
                 response = { error: "Error: " + response.message }
                 body = JSON.stringify(response)
               }
-              //console.log("Got a response:", response)
 
               // Note: because this is being turned into code, we have to jump through hoops to properly
               //       escape special characters.
@@ -132,4 +132,4 @@ cluster(worker => {
   app.listen(PORT, function () {
     console.log('ISO worker listening on port', PORT)
   })
-}, { count: serverConfig.isoWorkers })
+//}, { count: serverConfig.isoWorkers })
