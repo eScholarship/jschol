@@ -31,7 +31,7 @@ def calcContentKey(shortArk, date = nil)
 end
 
 RATE = 500000
-ABORT_PCT = 10
+ABORT_PCT = 5
 
 ###################################################################################################
 class LoadTest

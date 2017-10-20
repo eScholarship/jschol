@@ -176,5 +176,9 @@ gulp.task('maybe-socks', function() {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Build everything in order, then start the servers and watch for incremental changes.
-gulp.task('default',  ['watch:src', 'watch', 'start-sinatra', 'start-express', 
-                       'maybe-socks', 'livereload', 'sass'])
+if (productionMode) {
+  gulp.task('default',  ['watch:src', 'watch', 'start-sinatra', 'sass'])
+} else {
+  gulp.task('default', ['watch:src', 'watch', 'start-sinatra', 'start-express', 
+                        'maybe-socks', 'livereload', 'sass'])
+}
