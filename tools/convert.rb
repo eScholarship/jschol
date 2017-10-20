@@ -382,8 +382,12 @@ def stripXMLWhitespace(node)
             kid.content = ls
           end
         elsif prevIsElement && nextIsElement
-          kid.remove
-          next
+          if kid.content.strip.empty?
+            kid.remove
+            next
+          else
+            kid.content = " " + kid.content.strip + " "
+          end
         else
           kid.content = " " + ls
         end
