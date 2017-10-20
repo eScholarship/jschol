@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import CampusSearchComp from '../components/CampusSearchComp.jsx'
-import HeatMapComp from '../components/HeatMapComp.jsx'
+import CampusHeroComp from '../components/CampusHeroComp.jsx'
 import StatCarouselComp from '../components/StatCarouselComp.jsx'
 import UnitCarouselComp from '../components/UnitCarouselComp.jsx'
 import JournalCarouselComp from '../components/JournalCarouselComp.jsx'
@@ -73,7 +73,7 @@ class CampusLayout extends React.Component {
         unit = this.props.unit
     return (
       <div>
-        <HeatMapComp campusID={unit.id} />
+        <CampusHeroComp hero={data.hero} campusID={unit.id} />
         <StatCarouselComp campusName={unit.name} campusID={unit.id} campusStats={data.campusStats} allStats={data.allStats} />
         <div className="c-columns">
           <main id="maincontent">
