@@ -443,7 +443,9 @@ def getIssue(unit_id, display, volume=nil, issue=nil)
 
   i[:sections].map! do |section|
     section = section.values
-    items = Item.where(:section=>section[:id]).order(:ordering_in_sect).to_hash(:id)
+    items = Item.where(:section=>section[:id]).
+                 where(Sequel.lit("attrs->\"$.suppress_content\" is null")).
+                 order(:ordering_in_sect).to_hash(:id)
     itemIds = items.keys
     authors = ItemAuthors.where(item_id: itemIds).order(:ordering).to_hash_groups(:item_id)
 
