@@ -3,6 +3,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import $ from 'jquery'
+import ReactDOMServer from 'react-dom/server'
 
 // Load dotdotdot in browser but not server
 if (!(typeof document === "undefined")) {
@@ -64,7 +65,13 @@ export default class TruncationObj extends React.Component {
   }
 
   render = () =>
-    React.createElement(this.props.element, { className: this.props.className, ref: el => this.domEl = el }, this.props.children)
+    React.createElement(this.props.element,
+      { className: this.props.className,
+        ref: el => this.domEl = el,
+        dangerouslySetInnerHTML: {__html: ReactDOMServer.renderToStaticMarkup(
+          <div >{this.props.children}</div>).replace(/^<div>/, '').replace(/<\/div>$/, '')}
+      }
+    )
 }
 
 module.exports = TruncationObj

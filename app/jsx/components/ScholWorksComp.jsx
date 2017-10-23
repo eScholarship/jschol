@@ -96,14 +96,14 @@ class ScholWorksComp extends React.Component {
           </ul>
           <heading>
             <TruncationObj element={this.props.h} className="c-scholworks__heading">
-              <Link to={itemLink}><ArbitraryHTMLComp html={pr.title}/></Link>
+              <a href={itemLink}><ArbitraryHTMLComp html={pr.title}/></a>
             </TruncationObj>
           </heading>
           {authorList && 
             <div className="c-authorlist">
               <DotAuthorUl className="c-authorlist__list">
                 {authorList}
-                <li><Link to={itemLink} className="c-authorlist__list-more-link">et al.</Link></li>
+                <li><a href={itemLink} className="c-authorlist__list-more-link">et al.</a></li>
               </DotAuthorUl>
             </div>
           }
