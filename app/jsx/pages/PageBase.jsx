@@ -13,6 +13,7 @@ import TestMessageComp from '../components/TestMessageComp.jsx'
 import ScrollToTopComp from '../components/ScrollToTopComp.jsx'
 import NavComp from '../components/NavComp.jsx'
 import ServerErrorComp from '../components/ServerErrorComp.jsx'
+import MetaTagsComp from '../components/MetaTagsComp.jsx'
 
 // Keys used to store CMS-related data in browser's session storage
 const SESSION_LOGIN_KEY = "escholLogin"
@@ -330,6 +331,7 @@ class PageBase extends React.Component
 
   renderError() { return (
     <div>
+      <MetaTagsComp title={this.state.pageData.error}/>
       <Header1Comp/>
       <div className="c-navbar">
       </div>

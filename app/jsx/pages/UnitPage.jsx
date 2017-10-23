@@ -30,6 +30,7 @@ import UnitNavConfigLayout from '../layouts/UnitNavConfigLayout.jsx'
 import RedirectConfigLayout from '../layouts/RedirectConfigLayout.jsx'
 import SidebarComp from '../components/SidebarComp.jsx'
 import MetaTagsComp from '../components/MetaTagsComp.jsx'
+import ServerErrorComp from '../components/ServerErrorComp.jsx'
 
 class UnitPage extends PageBase {
   // PageBase will fetch the following URL for us, and place the results in this.state.pageData
