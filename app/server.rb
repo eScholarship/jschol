@@ -509,7 +509,7 @@ def generalResponse(iso_ok = true)
     metaTags, body = "", response.body
     if body =~ %r{<metaTags>(.*)</metaTags>(.*)$}m
       metaTags, body = $1, $2
-      metaTags.gsub! "><", ">\n  <"  # add some newlines to make it look nice
+      metaTags.gsub! />\s*</, ">\n  <"  # add some newlines to make it look nice
     end
 
     # Put proper HTTP code on server error pages

@@ -9,6 +9,7 @@ import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
 import WizardComp from '../components/WizardComp.jsx'
 import SidebarComp from '../components/SidebarComp.jsx'
 import UnitStaticPageLayout from '../layouts/UnitStaticPageLayout.jsx'
+import MetaTagsComp from '../components/MetaTagsComp.jsx'
 
 class NotFoundLayout extends React.Component
 {
@@ -46,6 +47,7 @@ export default class GlobalStaticPage extends PageBase
       <div>
         <Header1Comp/>
         <NavBarComp navBar={data.header.nav_bar} unit={data.unit} socialProps={data.header.social} />
+        <MetaTagsComp title={data.content.title}/>
         { data.pageNotFound
           ? <NotFoundLayout/>
           : <div id="wizardModalBase">
