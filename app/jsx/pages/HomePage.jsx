@@ -59,7 +59,6 @@ class HomePage extends PageBase
       <div>
         <MetaTagsComp title="eScholarship" descrip="Open Access Publications from the University of California">
           <meta id="og-url" property="og:url" content="https://escholarship.org" />
-          <meta id="fp-app_id" property="fb:app_id" content="escholarship" />
         </MetaTagsComp>
         <Header1Comp />
         <div className="c-navbar">
