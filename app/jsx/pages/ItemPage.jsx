@@ -105,7 +105,7 @@ class ItemPage extends PageBase {
       issue = c['issue'] && <meta id="meta-issue" name="citation_issue" content={c['issue']}/>
     }
     let keywords = a.disciplines ? a.disciplines.join('; ') : null
-    this.extGA(d.unit.id)  // Google Analytics for external trackers called from PageBase
+    d.unit && this.extGA(d.unit.id)  // Google Analytics for external trackers called from PageBase
     return (
       <div>
         <MetaTagsComp title={d.title} descrip={a.abstract}>
@@ -116,7 +116,7 @@ class ItemPage extends PageBase {
           <meta id="meta-isbn" name="citation_isbn" content={a.isbn} /> }
         {a.doi &&
           <meta id="meta-doi" name="citation_doi" content={a.doi} /> }
-        {d.unit.type == 'journal' &&
+        {d.unit && d.unit.type == 'journal' &&
           <meta id="meta-journal_title" name="citation_journal_title" content={d.unit.name} /> }
           {issn} {volume} {issue} {firstpage} {lastpage}
         {d.genre == 'dissertation' && d.header &&
