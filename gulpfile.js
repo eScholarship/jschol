@@ -97,7 +97,7 @@ gulp.task('sass', function() {
 function startSinatra(afterFunc)
 {
   // The '-o 0.0.0.0' below is required for Sinatra to bind to ipv4 localhost, instead of ipv6 localhost
-  sinatraProc = spawn('ruby', ['app/server.rb', '-p', serverConfig.mainPort, '-o', '0.0.0.0'], { stdio: 'inherit' })
+  sinatraProc = spawn('bin/puma', { stdio: 'inherit' })
   sinatraProc.on('exit', function(code) {
     sinatraProc = null
   })
@@ -107,15 +107,7 @@ function restartSinatra()
 {
   if (sinatraProc) {
     console.log("Restarting Sinatra.")
-    sinatraProc.on('exit', function(code) {
-      startSinatra()
-      spawn('ruby', ['tools/waitForServer.rb', 'http://localhost:' + serverConfig.mainPort + '/check', '20'])
-      .on('exit', function() {
-        livereload.reload()
-      })
-    })
-    sinatraProc.kill()
-    sinatraProc = null
+    sinatraProc.kill('SIGUSR1')
   }
   else {
     startSinatra()
