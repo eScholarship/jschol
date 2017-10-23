@@ -1,12 +1,6 @@
-workers 2
+workers 1
 threads 8
-
-before_fork do
-  # Temporarily close SQL connections before forking workers. They'll reopen
-  # connections when they need to.
-  DB.disconnect
-  OJS_DB.disconnect
-end
+port 4001
 
 on_worker_boot do |num|
   $workerNum = num
