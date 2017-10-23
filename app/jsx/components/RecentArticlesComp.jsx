@@ -13,9 +13,9 @@ class AuthorsComp extends React.Component {
     return (
       <div className="c-authorlist">
         <TruncationObj element="ul" className="c-authorlist__list"
-                    options={{watch:"window", after:'foo', ellipsis:' ', wrap:'children'}}>
+                    options={{watch:'window', after:'.c-authorlist__list-ellipsis', ellipsis:' ', wrap:'children'}}>
          {authorList}
-         <li className="foo">&nbsp;...</li>
+         <li><span className="c-authorlist__list-ellipsis">&nbsp;...</span></li>
         </TruncationObj>
       </div>
     )

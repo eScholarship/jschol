@@ -44,13 +44,13 @@ class PubComp extends React.Component {
     return (
       <div className="c-pub">
         <TruncationObj element={this.props.h} className="c-pub__heading">
-          <Link to={itemLink}><ArbitraryHTMLComp html={pr.title}/></Link>
+          <a href={itemLink}><ArbitraryHTMLComp html={pr.title}/></a>
         </TruncationObj>
       {authorList && 
         <div className="c-authorlist">
           <DotAuthorUl className="c-authorlist__list">
             {authorList}
-            <li><Link to={itemLink} className="c-authorlist__list-more-link">et al.</Link></li>
+            <li><a href={itemLink} className="c-authorlist__list-more-link">et al.</a></li>
           </DotAuthorUl>
         </div>
       }
