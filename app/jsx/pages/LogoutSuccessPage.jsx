@@ -6,6 +6,7 @@ import Header1Comp from '../components/Header1Comp.jsx'
 import NavComp from '../components/NavComp.jsx'
 import FooterComp from '../components/FooterComp.jsx'
 import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
+import MetaTagsComp from '../components/MetaTagsComp.jsx'
 
 class LogoutSuccessPage extends PageBase
 {
@@ -19,6 +20,7 @@ class LogoutSuccessPage extends PageBase
     }
     return(
     <div>
+      <MetaTagsComp title="Logout Success"/>
       <Header1Comp/>
       <div className="c-navbar">
         <NavComp data={data.header.nav_bar} />

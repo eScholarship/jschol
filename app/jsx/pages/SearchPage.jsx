@@ -15,6 +15,7 @@ import SortPaginationComp from '../components/SortPaginationComp.jsx'
 import InfoPagesComp from '../components/InfoPagesComp.jsx'
 import PaginationComp from '../components/PaginationComp.jsx'
 import ModalComp from '../components/ModalComp.jsx'
+import MetaTagsComp from '../components/MetaTagsComp.jsx'
 
 // Load dotdotdot in browser but not server
 if (!(typeof document === "undefined")) {
@@ -528,6 +529,7 @@ class SearchPage extends PageBase {
         formButton = "facet-form-submit"
     return(
       <div className="l_search">
+        <MetaTagsComp title="Search"/>
         <Header2Comp searchComp="1" query={data.query.q} />
         <div className="c-navbar">
           <NavComp data={data.header.nav_bar} />
