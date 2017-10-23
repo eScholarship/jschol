@@ -29,6 +29,7 @@ import UnitSidebarConfigLayout from '../layouts/UnitSidebarConfigLayout.jsx'
 import UnitNavConfigLayout from '../layouts/UnitNavConfigLayout.jsx'
 import RedirectConfigLayout from '../layouts/RedirectConfigLayout.jsx'
 import SidebarComp from '../components/SidebarComp.jsx'
+import MetaTagsComp from '../components/MetaTagsComp.jsx'
 
 class UnitPage extends PageBase {
   // PageBase will fetch the following URL for us, and place the results in this.state.pageData
@@ -76,6 +77,7 @@ class UnitPage extends PageBase {
   // TODO [UNIT-CONTENT-AJAX-ISSUE]: handle the AJAX issue described above pageDataURL method definition
   renderData(data) { 
     let sidebar = <SidebarComp data={data.sidebar}/>
+    let title = data.unit.name
     let contentLayout
     if (this.state.fetchingData)
       contentLayout = (<h2 style={{ marginTop: "5em", marginBottom: "5em" }}>Loading...</h2>)
@@ -86,49 +88,45 @@ class UnitPage extends PageBase {
       contentLayout = (<SeriesLayout unit={data.unit} data={data.content} sidebar={sidebar} marquee={data.marquee}/>)
     } else if (this.props.params.pageName === 'profile') {
       contentLayout = this.cmsPage(data, <UnitProfileLayout unit={data.unit} data={data.content} sendApiData={this.sendApiData} sendBinaryFileData={this.sendBinaryFileData}/>)
+      title = `Profile: ${data.unit.name}`
     } else if (this.props.params.pageName === 'carousel') {
       contentLayout = this.cmsPage(data, <UnitCarouselConfigLayout unit={data.unit} data={data.content} sendApiData={this.sendApiData} sendBinaryFileData={this.sendBinaryFileData}/>)
+      title = `Carousel: ${data.unit.name}`
     } else if (this.props.params.pageName === 'issueConfig') {
       contentLayout = this.cmsPage(data, <UnitIssueConfigLayout unit={data.unit} data={data.content} sendApiData={this.sendApiData}/>)
+      title = `Issue config: ${data.unit.name}`
     } else if (this.props.params.pageName === 'nav') {
       contentLayout = this.cmsPage(data, <UnitNavConfigLayout unit={data.unit} data={data.content} sendApiData={this.sendApiData}/>)
+      title = `Navigation: ${data.unit.name}`
     } else if (this.props.params.pageName === 'sidebar') {
       contentLayout = this.cmsPage(data, <UnitSidebarConfigLayout unit={data.unit} data={data.content} sendApiData={this.sendApiData}/>)
+      title = `Sidebar: ${data.unit.name}`
     } else if (this.props.params.pageName === 'redirects') {
       contentLayout = this.cmsPage(data, <RedirectConfigLayout data={data.content} sendApiData={this.sendApiData}/>)
+      title = `Redirects`
     } else if (this.props.params.pageName && !(data.content.issue)) {
       // If there's issue data here it's a journal page, otherwise it's static content
       contentLayout = (<UnitStaticPageLayout unit={data.unit} data={data.content} sidebar={sidebar} fetchPageData={this.fetchPageData}/>)
+      title = data.content.title
     } else {
       {/* Temporary, for testing */}
       // data.marquee.carousel = false
       // data.content.display = 'simple'
       this.extGA(data.unit.id)  // Google Analytics for external trackers called from PageBase
-      if (data.unit.type === 'oru') {
-        contentLayout = (<DepartmentLayout unit={data.unit} data={data.content} sidebar={sidebar} marquee={data.marquee}/>)
-      } else if (data.unit.type == 'campus') {
-        contentLayout = (<CampusLayout unit={data.unit} data={data.content} sidebar={sidebar}/>)
-      } else if (data.unit.type.includes('series')) {
-        contentLayout = (<SeriesLayout unit={data.unit} data={data.content} sidebar={sidebar} marquee={data.marquee}/>)
-      } else if (data.unit.type === 'journal') {
-        contentLayout = (<JournalLayout unit={data.unit} data={data.content} sidebar={sidebar} marquee={data.marquee}/>)
-      } else {
-        contentLayout = (
-          <div>
-          <h2>Unit {data.unit.id}</h2>
-          <div>
-            Info:
-            <ul>
-              <li>Name: {data.unit.name}</li>
-              <li>Type: {data.unit.type}</li>
-            </ul>
-          </div>
-          </div>
-        )
-      }
+      if (data.unit.type === 'oru')
+        contentLayout = <DepartmentLayout unit={data.unit} data={data.content} sidebar={sidebar} marquee={data.marquee}/>
+      else if (data.unit.type == 'campus')
+        contentLayout = <CampusLayout unit={data.unit} data={data.content} sidebar={sidebar}/>
+      else if (data.unit.type.includes('series'))
+        contentLayout = <SeriesLayout unit={data.unit} data={data.content} sidebar={sidebar} marquee={data.marquee}/>
+      else if (data.unit.type === 'journal')
+        contentLayout = <JournalLayout unit={data.unit} data={data.content} sidebar={sidebar} marquee={data.marquee}/>
+      else
+        contentLayout = <ServerErrorComp error="Not Found"/>
     }
     return (
       <div>
+        <MetaTagsComp title={title}/>
         { data.unit.type == "root"
           ? <Header1Comp/>
           : <Header2Comp type={data.unit.type} unitID={data.unit.id} />

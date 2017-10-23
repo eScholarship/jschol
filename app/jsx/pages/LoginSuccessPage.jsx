@@ -7,6 +7,7 @@ import PageBase from './PageBase.jsx'
 import Header1Comp from '../components/Header1Comp.jsx'
 import NavComp from '../components/NavComp.jsx'
 import FooterComp from '../components/FooterComp.jsx'
+import MetaTagsComp from '../components/MetaTagsComp.jsx'
 
 class LoginSuccessPage extends PageBase
 {
@@ -20,6 +21,7 @@ class LoginSuccessPage extends PageBase
     // return is something like: http://localhost:4001/loginSuccess?data=fQpdFQ7Ah+UscNPkgSA9PtQ07BcPplF/ggKvNDIrjrHvIwC9gt73X7I61lGq%0APGv1w3aBBbwtcYLtt0EFfktWd/QYr6Z+6YamJyO5bDM1mzXDcPJcakuBfljg%0A8qXi
     return(
     <div>
+      <MetaTagsComp title="Login Success"/>
       <Header1Comp/>
       <div className="c-navbar">
         <NavComp data={data.header.nav_bar} />

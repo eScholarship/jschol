@@ -2,6 +2,7 @@ import React from 'react'
 import PageBase from './PageBase.jsx'
 import Header1Comp from '../components/Header1Comp.jsx'
 import NavComp from '../components/NavComp.jsx'
+import MetaTagsComp from '../components/MetaTagsComp.jsx'
 
 class LoginPage extends PageBase
 {
@@ -22,6 +23,7 @@ class LoginPage extends PageBase
     }
     return (
       <div>
+        <MetaTagsComp title="Login"/>
         <Header1Comp/>
         <div className="c-navbar">
           <NavComp data={data.header.nav_bar} />

@@ -14,6 +14,7 @@ import DescriptionListComp from '../components/DescriptionListComp.jsx'
 import ToggleListComp from '../components/ToggleListComp.jsx'
 import SidebarComp from '../components/SidebarComp.jsx'
 import NotYetLink from '../components/NotYetLink.jsx'
+import MetaTagsComp from '../components/MetaTagsComp.jsx'
 
 class BrowsePage extends PageBase
 {
@@ -72,8 +73,9 @@ class Content extends React.Component {
         { p.browse_type == "all_journals" && <AllJournals journals={p.journals}
             archived={p.archived} campuses={p.campuses} /> }
         {/* Campus-specific browse pages */}
-        { p.browse_type == "units" && <CampusUnits units={p.campusUnits} pageTitle={p.pageTitle} /> }
-        { p.browse_type == "journals" && <CampusJournals journals={p.campusJournals}
+        { p.browse_type == "units" && <CampusUnits campus={p.unit} units={p.campusUnits} pageTitle={p.pageTitle} /> }
+        { p.browse_type == "journals" && <CampusJournals campus={p.unit}
+                                                         journals={p.campusJournals}
                                                          archived={p.campusJournalsArchived}
                                                          pageTitle={p.pageTitle} /> }
         </main>
@@ -89,6 +91,7 @@ class AllCampuses extends React.Component {
   render() {
     return (
     <section className="o-columnbox1">
+      <MetaTagsComp title="Campuses"/>
       <header>
         <h2>Campuses and Other Locations</h2>
       </header>
@@ -138,6 +141,7 @@ class AllJournals extends React.Component {
       })
     return (
     <section className="o-columnbox1">
+      <MetaTagsComp title="Journals"/>
       <header>
         <h2>Journals</h2>
       </header>
@@ -171,6 +175,7 @@ class CampusUnits extends React.Component {
   render() {
     return (
     <section className="o-columnbox1">
+      <MetaTagsComp title={this.props.pageTitle + " - " + this.props.campus.name}/>
       <header>
         <h2>{this.props.pageTitle}</h2>
       </header>
@@ -195,6 +200,7 @@ class CampusJournals extends React.Component {
         visibleArchived = (p.archived.length > 0) ? this.getVisibleJournals(p.archived) : null
     return (
     <section className="o-columnbox1">
+      <MetaTagsComp title={this.props.pageTitle + " - " + this.props.campus.name}/>
       <header>
         <h2>{this.props.pageTitle}</h2>
       </header>

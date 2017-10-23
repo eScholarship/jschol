@@ -13,6 +13,7 @@ import HomeSection1Comp from '../components/HomeSection1Comp.jsx'
 import HomeSection2Comp from '../components/HomeSection2Comp.jsx'
 import HomeSection3Comp from '../components/HomeSection3Comp.jsx'
 import FooterComp from '../components/FooterComp.jsx'
+import MetaTagsComp from '../components/MetaTagsComp.jsx'
 
 class HomePage extends PageBase
 {
@@ -56,6 +57,7 @@ class HomePage extends PageBase
   renderData(data) { 
     return(
       <div>
+        <MetaTagsComp title="eScholarship"/>
         <Header1Comp />
         <div className="c-navbar">
           <NavComp data={data.header.nav_bar} />

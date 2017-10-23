@@ -3,7 +3,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import $ from 'jquery'
-import MetaTags from 'react-meta-tags'
 
 import PageBase from './PageBase.jsx'
 import Header2Comp from '../components/Header2Comp.jsx'
@@ -14,6 +13,7 @@ import TabsComp from '../components/TabsComp.jsx'
 import JumpComp from '../components/JumpComp.jsx'
 import SidebarComp from '../components/SidebarComp.jsx'
 import FooterComp from '../components/FooterComp.jsx'
+import MetaTagsComp from '../components/MetaTagsComp.jsx'
 
 // Load dotdotdot in browser but not server
 if (!(typeof document === "undefined")) {
@@ -77,10 +77,6 @@ class ItemPage extends PageBase {
     }
   }
 
-  stripHtml = str => {
-    return str.replace(/<(?:.|\n)*?>/gm, '')
-  }
-
   changeTab = tabName => {
     this.setState({currentTab: this.articleHashHandler(tabName) })
     // Set hash based on what was clicked.
@@ -112,8 +108,7 @@ class ItemPage extends PageBase {
     this.extGA(d.unit.id)  // Google Analytics for external trackers called from PageBase
     return (
       <div>
-        <MetaTags>
-          <meta id="meta-title" name="citation_title" content={this.stripHtml(d.title)} />
+        <MetaTagsComp title={d.title} descrip={a.abstract}>
           {authors}
         {d.pub_date &&
           <meta id="meta-publication_date" name="citation_publication_date" content={d.pub_date} /> }
@@ -134,11 +129,7 @@ class ItemPage extends PageBase {
           <meta id="meta-keywords" name="citation_keywords" content={keywords} /> }
         {!d.download_restricted && d.pdf_url &&
           <meta id="meta-pdf_url" name="citation_pdf_url" content={"https://escholarship.org" + d.pdf_url} /> }
-        {a.abstract &&
-          <meta id="meta-description" name="description" content={this.stripHtml(a.abstract)} /> }
-          <meta id="og-title" property="og:title" content={this.stripHtml(d.title)} />
-          <meta id="og-image" property="og:image" content="https://escholarship.org/images/escholarship-facebook.png" />
-        </MetaTags>
+        </MetaTagsComp>
         <Header2Comp type={d.unit ? d.unit.type: null}
                      unitID={(d.appearsIn && d.appearsIn.length > 0) ? d.appearsIn[0]["id"] : null } />
         {/* Some items have no parent unit, so check for empty d.header */}
