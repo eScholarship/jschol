@@ -17,7 +17,7 @@ export default class ArbitraryHTMLComp extends React.Component
     if (!(typeof document === "undefined")) {
       const s = document.createElement("script")
       s.async = true
-      s.innerHTML = "function openDepositWiz() {event.preventDefault(); document.getElementById(\'wizardlyDeposit\').click();}";
+      s.innerHTML = "function openDepositWiz(event) {event.preventDefault(); document.getElementById(\'wizardlyDeposit\').click();}";
       document.body.appendChild(s)
     }
   }
@@ -29,7 +29,7 @@ export default class ArbitraryHTMLComp extends React.Component
                       (m, p1, p2) => p1 + (parseInt(p2) + h1Level - 1))
     // Kludge for opening deposit wizard modal 
     let fixedText2 = fixedText.replace(/<a href=\"http:\/\/open-deposit-wizard\.com\">/g, 
-      '<a href="" onClick="openDepositWiz();">')
+      '<a href="" onClick="openDepositWiz(event);">')
     return <div dangerouslySetInnerHTML={{__html: fixedText2}}/>
   }
 }
