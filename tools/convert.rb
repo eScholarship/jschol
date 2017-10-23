@@ -130,7 +130,7 @@ $hostname = `/bin/hostname`.strip
 $thumbnailServer = case $hostname
   when 'pub-submit-dev'; 'http://pub-eschol-dev.escholarship.org'
   when 'pub-submit-stg-2a', 'pub-submit-stg-2c'; 'http://pub-eschol-stg.escholarship.org'
-  when 'pub-submit-prd-2a', 'pub-submit-prd-2c'; 'http://escholarship.org'
+  when 'pub-submit-prd-2a', 'pub-submit-prd-2c'; 'http://pub-eschol-prd-alb.escholarship.org'
   else raise("unrecognized host #{hostname}")
 end
 
@@ -1331,6 +1331,8 @@ def parseUCIngest(itemID, inMeta, fileType)
 
         section = Section.new
         section[:name] = inMeta.text_at("./context/sectionHeader") || "Articles"
+        ord = inMeta.text_at("./context/publicationOrder").to_i
+        section[:ordering] = ord > 0 ? ord : nil
       else
         "Warning: issue associated with unknown unit #{issueUnit.inspect}"
       end
@@ -1452,105 +1454,6 @@ def processWithNormalizer(fileType, itemID, metaPath, nailgun)
 
   # And parse the data
   return parseUCIngest(itemID, normXML.root, fileType)
-end
-
-###################################################################################################
-def compareAttrs(oldAttrs, newAttrs)
-  if newAttrs.nil?
-    puts "normDiff: newAttrs is nil"
-    return
-  end
-  if oldAttrs[:local_id]
-    oldAttrs[:local_ids] = [oldAttrs[:local_id]]
-    oldAttrs.delete(:local_id)
-  end
-
-  (oldAttrs.keys & newAttrs.keys).each { |key|
-    oldVal, newVal = oldAttrs[key], newAttrs[key]
-    next if oldVal == newVal
-    next if key == :local_ids # known differences, and unused by current front-end anyway
-    next if oldVal.instance_of?(String) && newVal.instance_of?(String) &&
-            oldVal.gsub(/\s\s+/, ' ') == newVal.gsub(/\s\s+/, ' ')  # space normalization better now
-    next if oldVal.instance_of?(String) && newVal.instance_of?(String) &&
-            sanitizeHTML(oldVal) == sanitizeHTML(newVal)   # new normalization is better
-    next if oldVal.instance_of?(Date) && newVal.instance_of?(Date) &&
-            oldVal.year == 1901    # we work harder now for dates
-    next if oldVal.instance_of?(String) && newVal.instance_of?(String) &&
-            oldVal.gsub(/\s/, "") == newVal.gsub(%r{</?[^>]+>}, "").gsub(/\s/, "")
-    next if oldVal.instance_of?(Date) && newVal.instance_of?(Date) &&
-            oldAttrs[:withdrawn_date]    # doesn't matter for withdrawn items
-    next if oldVal.instance_of?(String) && newVal.instance_of?(String) &&
-            oldVal.gsub(%r{"\s+|\s+"}, '"') == newVal
-    next if key == :content_type && oldVal.nil?   # better detection of PDFs now
-    next if key == :eschol_date   # old logic was sucky
-    next if oldVal.inspect.gsub(%r{\"\w+\"=>\"\",?\s}, "") == newVal.inspect   # better removal of unused
-    next if key == :ext_journal && oldVal.inspect == newVal.inspect.gsub(%r{, :fpage=>\"[^"]+\"}, "")  # new fpage logic better
-    next if key == :genre && oldVal == "article" && newVal == "chapter"
-    puts "normDiff: old[:#{key}]=#{oldVal.inspect.ellipsize(max:200)}"
-    puts "       vs new[:#{key}]=#{newVal.inspect.ellipsize(max:200)}"
-  }
-  (oldAttrs.keys - newAttrs.keys).each { |key|
-    oldVal = oldAttrs[key]
-    next if !oldVal
-    next if oldVal.respond_to?(:empty?) && oldVal.empty?
-    next if oldVal == "en"  # old language processing for UCI files was kludged to always be english
-    next if key == :ext_journal && (!oldVal[:issue] || oldVal[:volume])   # silly to have journal without vol/iss
-    next if key == :suppress_content && oldAttrs[:embargo_date] && newAttrs[:embargo_date] # old was incorrectly suppressing
-    next if oldVal.respond_to?(:strip) && oldVal.strip.empty?  # new stripping logic is better
-    next if key == :abstract && oldVal =~ %r{n/a|<html/>}i  # new n/a logic is better
-    next if key == :suppress_content && oldAttrs[:content_type].nil?  # better PDF detection now
-    puts "normDiff: removed old[:#{key}]=#{oldVal.inspect.ellipsize}"
-  }
-  (newAttrs.keys - oldAttrs.keys).each { |key|
-    newVal = newAttrs[key]
-    next if key == :embargo_date # old converter omits if item no longer embargoed
-    next if key == :local_ids # known differences, and unused by current front-end anyway
-    next if key == :disciplines # new code is better at identifying these
-    puts "normDiff: added new[:#{key}]=#{newVal.inspect.ellipsize}"
-  }
-end
-
-###################################################################################################
-def compareAuthors(oldAuthors, newAuthors)
-  (0..[oldAuthors.length-1, newAuthors.length-1].max).each { |idx|
-    oldAuth, newAuth = oldAuthors[idx], newAuthors[idx]
-    if oldAuth != newAuth
-      next if !oldAuth.nil? && !newAuth.nil? &&
-              !oldAuth[:name].nil? && !newAuth[:name].nil? &&
-              oldAuth[:name] == newAuth[:name]  # ignore lname, mname, etc.
-      puts "normDiff: author #{idx+1} changed: old=#{oldAuth.inspect.ellipsize(max: 200)}"
-      puts "                            new=#{newAuth.inspect.ellipsize(max: 200)}"
-    end
-  }
-end
-
-###################################################################################################
-def compareUnits(oldUnits, newUnits)
-  if oldUnits.uniq != newUnits
-    puts "normDiff: units changed: old=#{oldUnits.uniq.inspect}"
-    puts "                         new=#{newUnits.inspect}"
-  end
-end
-
-###################################################################################################
-def compareIssues(oldIss, newIss, oldSect, newSect)
-  if oldIss.inspect.gsub(/\s\s+/, " ") != newIss.inspect.gsub(/\s\s+/, " ")
-    puts "normDiff: issue changed. old=#{oldIss.inspect.ellipsize(max:200)}"
-    puts "                         new=#{newIss.inspect.ellipsize(max:200)}"
-  end
-  if oldSect.inspect.ellipsize(max:200) != newSect.inspect.ellipsize(max:200)
-    return if oldSect.inspect.gsub(%r{"\s+|\s+"}, '"') == newSect.inspect  # new space norm better
-    puts "normDiff: section changed. old=#{oldSect.inspect.ellipsize(max:200)}"
-    puts "                           new=#{newSect.inspect.ellipsize(max:200)}"
-  end
-end
-
-###################################################################################################
-def compareSuppSummaries(oldSumm, newSumm)
-  if oldSumm.inspect != newSumm.inspect
-    puts "normDiff: supp summary changed. old=#{oldSumm.inspect.ellipsize(max:200)}"
-    puts "                                new=#{newSumm.inspect.ellipsize(max:200)}"
-  end
 end
 
 ###################################################################################################
@@ -1802,10 +1705,34 @@ def updateIssueAndSection(data)
 
   found = Section.first(issue_id: iss.id, name: sec.name)
   if found
+    secChanged = false
+    if found.ordering != sec.ordering
+      found.ordering = sec.ordering
+      secChanged = true
+    end
+    begin
+      secChanged and found.save
+    rescue Exception => e
+      if e.to_s =~ /Duplicate entry/
+        puts "Warning: couldn't update section order due to ordering constraint. Ignoring."
+      else
+        raise
+      end
+    end
     sec = found
   else
     sec.issue_id = iss.id
-    sec.save
+    begin
+      sec.save
+    rescue Exception => e
+      if e.to_s =~ /Duplicate entry/
+        puts "Warning: couldn't update section order due to ordering constraint. Ignoring."
+        sec.ordering = nil
+        sec.save
+      else
+        raise
+      end
+    end
   end
   data[:dbItem][:section] = sec.id
 end
