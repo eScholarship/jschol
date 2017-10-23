@@ -501,7 +501,14 @@ def generalResponse(iso_ok = true)
     end
     if response.code.to_i != 200
       # For all error pages, fall back to non-ISO since we don't know how to render it here.
-      puts "Unexpected code #{response.code} from iso; falling back to non-iso."
+      # But 404's are common (and we haven't figured out how to do them isomorphically) so
+      # don't log those.
+      if response.code.to_i != 404
+        puts "Unexpected code #{response.code} from iso; falling back to non-iso."
+      end
+      status response.code
+      metaTags = "<title>Error - eScholarship</title>"
+      template.sub!('<metaTags></metaTags>', metaTags) or raise("missing template section")
       return template
     end
 
@@ -514,7 +521,7 @@ def generalResponse(iso_ok = true)
 
     # Put proper HTTP code on server error pages
     if body =~ %r{<div [^>]*id="serverError"[^>]*>([^<]+)</div>}
-      status $1 =~ /Not Found/i ? 404 : 500
+      status ($1 =~ /Not Found/i ? 404 : 500)
     else
       status 200
     end
@@ -534,6 +541,8 @@ not_found do
   status 404
   if request.path =~ %r{\.[^/]+$}   # handle probable file paths like .jpg, .gif, etc.
     return "Resource not found.\n"
+  elsif request.path =~ %r{/api/}
+    return "API not found.\n"
   else
     generalResponse(false)  # handles 404's in the same fashion as other req's, but no iso
   end
