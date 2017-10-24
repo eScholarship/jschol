@@ -41,6 +41,7 @@ def testRedirect(fromURL, toURL)
 end
 
 # Things that should not redirect
+testRedirect("http://escholarship.org/uc/search?smode=pmid;pubType=journal;relation-exclude=springer;subSet=0", nil)
 testRedirect("http://escholarship.org/uc/ucbclassics", nil)
 testRedirect("http://escholarship.org/bower_components/babel-polyfill/browser-polyfill.js", nil)
 testRedirect("http://escholarship.org/uc/item/8304n08d", nil)
