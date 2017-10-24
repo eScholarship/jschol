@@ -31,15 +31,18 @@ class ResultComp extends React.Component {
 
   render() {
     let r = this.props.result,
-        target_path = r.isPage ? r.ancestor_id+"/"+r.target_id : r.target_id
+        ancestor_path = r.ancestor_id=="root" ? "/" : `/uc/${r.ancestor_id}`,
+        target_path = r.isPage && r.ancestor_id == "root" ? `/${r.target_id}` :
+                      r.isPage ? `/uc/${r.ancestor_id}/${r.target_id}` :
+                      `/uc/${r.target_id}`
     return (
       <div className="c-infopages__item">
         <h3>
         {r.topmost_name &&
           <b>{r.topmost_name}</b> }
         {r.ancestor_id && r.ancestor_name &&
-          <Link to={"/uc/"+r.ancestor_id}>{r.ancestor_name}</Link> }
-          <Link to={"/uc/"+target_path} className="c-infopages__title">{r.target_name}</Link>
+          <Link to={ancestor_path}>{r.ancestor_name}</Link> }
+          <Link to={target_path} className="c-infopages__title">{r.target_name}</Link>
         </h3>
       {r.content &&
         <div className="c-infopages__text" dangerouslySetInnerHTML={{__html: r.content}} /> }

@@ -70,7 +70,8 @@ def traverseHierarchyUp(arr)
     return arr
   end
   unit = $unitsHash[$hierByUnit[arr[0][:id]][0].ancestor_unit]
-  traverseHierarchyUp(arr.unshift({name: unit.name, id: unit.id, url: "/uc/" + unit.id}))
+  traverseHierarchyUp(arr.unshift(
+    {name: unit.name, id: unit.id, url: unit.type == "root" ? "/" : "/uc/#{unit.id}"}))
 end
 
 # Generate a link to an image in the S3 bucket
@@ -178,7 +179,8 @@ def getPageBreadcrumb(unit, pageName, issue=nil)
   else
     p = Page.where(unit_id: unit.id, slug: pageName).first
     p or halt(404, "Unknown page #{pageName} in #{unit.id}")
-    return [{ name: p[:name], id: unit.id + ":" + pageName, url: "/#{unit.id}/#{pageName}" }]
+    return [{ name: p[:name], id: unit.id + ":" + pageName,
+              url: unit.type == "root" ? "/#{pageName}" : "/uc/#{unit.id}/#{pageName}" }]
   end
 end
 
@@ -204,7 +206,8 @@ def getUnitHeader(unit, pageName=nil, journalIssue=nil, attrs=nil)
       :rss => attrs['rss']
     },
     :breadcrumb => (unit.type!='campus') ?
-      traverseHierarchyUp([{name: unit.name, id: unit.id, url: "/uc/" + unit.id}]) + getPageBreadcrumb(unit, pageName, journalIssue)
+      traverseHierarchyUp([{name: unit.name, id: unit.id, url: unit.type == "root" ? "/" : "/uc/#{unit.id}"}]) +
+        getPageBreadcrumb(unit, pageName, journalIssue)
       : getPageBreadcrumb(unit, pageName)
   }
   # if this unit doesn't have a nav_bar, get the next unit up the hierarchy's nav_bar
