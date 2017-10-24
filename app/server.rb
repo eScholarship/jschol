@@ -283,11 +283,11 @@ get %r{/uc/oai(.*)} do
 end
 
 ###################################################################################################
-# Not working yet
-#get %r{/uc/search.*smode=(pmid|PR|postprintReport|repec|bpList|eeList|etdLinks|getDescrip|getAbstract|getFiles).*} do
-#  puts "got search url"
-#  proxyFromURL("http://pub-eschol-prd-2a.escholarship.org:18880/uc/search#{$1}", "escholarship.org")
-#end
+# Old XTF-style "smode" searches fall to here; all other old searches get redirected.
+get %r{/uc/search(.*)} do |stuff|
+  request.url =~ %r{/uc/search(.*)}
+  proxyFromURL("http://pub-eschol-prd-2a.escholarship.org:18880/uc/search#{$1}", "escholarship.org")
+end
 
 ###################################################################################################
 # Sanitize incoming filenames before applying them to the filesystem. In particular, prevent

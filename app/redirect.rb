@@ -38,9 +38,8 @@ def checkRedirect(origURI)
       uri.host = "escholarship.org"
     elsif uri.path =~ %r{^/uc/item/(\w+)(.*)}
       uri = handleItemRedirect(uri, $1, $2)
-    elsif uri.path =~ %r{^/uc/search}
-      # not working yet:
-      #&& !(uri.query =~ %r{smode=(pmid|PR|postprintReport|repec|bpList|eeList|etdLinks|getDescrip|getAbstract|getFiles)})
+    elsif uri.path =~ %r{^/uc/search} &&
+          !(uri.query =~ %r{smode=(pmid|PR|postprintReport|repec|bpList|eeList|etdLinks)\b})
       uri = handleSearchRedirect(uri)
     elsif uri.path =~ %r{^/uc/temporary}
       uri = handleBpTempRedirect(uri)
