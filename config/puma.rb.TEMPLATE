@@ -1,5 +1,5 @@
 workers 1
-threads 8
+threads 0,8
 port 4001
 
 on_worker_boot do |num|
