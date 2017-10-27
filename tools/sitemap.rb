@@ -54,12 +54,42 @@ makeMap('siteMapORU.xml'){|map|
   }
 }
 
-# ToDo: Build series sitemap
+# Build series sitemap
+makeMap('siteMapSeries.xml'){|map|
+  Unit.filter(:type=>'series').exclude(status: "hidden").select(:id).each { |series|
+    map.add '/uc/' + series.id, :priority => 0.7, :period => :weekly
+  }
+}
 
-# ToDo: Build monograph_series sitemap
+# Build monograph series sitemap
+makeMap('siteMapMonographSeries.xml'){|map|
+  Unit.filter(:type=>'monograph_series').exclude(status: "hidden").select(:id).each { |series|
+    map.add '/uc/' + series.id, :priority => 0.7, :period => :weekly
+  }
+}
 
-# Build static pages sitemap
+# No seminar_series sitemap, says Justin.
+
+# Build special sitemap
+makeMap('siteMapSpecial.xml'){|map|
+  Unit.filter(:type=>'special').exclude(status: "hidden").select(:id).each { |special|
+    map.add '/uc/' + special.id, :priority => 0.7, :period => :weekly
+  }
+}
+
+# Build static and browse pages sitemap
 makeMap('siteMapStatic.xml', true){|map|
+  # Home page taken care of  ^^^^ by passing 2nd argument 'true'
+  # Browse pages
+  map.add 'campuses'
+  map.add 'journals'
+  Unit.filter(:type=>'campus').exclude(:id=>['lbnl', 'anrcs']).select(:id).each { |campus|
+    map.add '/' + campus.id + '/units'
+  }
+  Unit.filter(:type=>'campus').exclude(:id=>'lbnl').select(:id).each { |campus|
+    map.add '/' + campus.id + '/journals'
+  }
+  # Static pages
   Page.each { |p|
     url = p.unit_id == 'root' ? "/" + p.slug : "/uc/#{p.unit_id}/" + p.slug
     map.add url
