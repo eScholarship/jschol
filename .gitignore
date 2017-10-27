@@ -3,6 +3,7 @@ app/css
 app/js/*bundle*.js
 app/js/manifest.json
 app/js/*.map
+app/sitemaps
 bin/
 .bundle/
 bower_components/
