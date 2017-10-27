@@ -7,13 +7,11 @@
 require 'rubygems'
 require 'bundler/setup'
 
-require 'fileutils'
 require 'sequel'
 require 'yaml'
 require 'xml-sitemap'
 
-DEST_DIR = "app/sitemaps"
-FileUtils.mkdir_p(DEST_DIR)
+DEST_DIR = "app"
 
 # eschol5 database
 DB = Sequel.connect(YAML.load_file("config/database.yaml"))
