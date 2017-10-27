@@ -23,7 +23,8 @@ def testRedirect(fromURL, toURL)
   result = `#{cmd}`.encode!('UTF-8', 'UTF-8', :invalid => :replace)
   if result =~ %r{HTTP/1.1 (30[123]).*Location: ([^\n]+)}m
     got = $2.strip
-    if toURL.nil? || toURL.sub(/^https/,'http') != got.sub(/^https/,'http')
+    if (toURL.nil? && fromURL.sub(/^http/,'https') != got) ||
+       (!toURL.nil? && toURL.sub(/^https/,'http') != got.sub(/^https/,'http'))
       error("Incorrect redirect. #{fromURL.inspect} -> #{got.inspect} but expected #{toURL.inspect}")
     end
   elsif result =~ %r{HTTP/1.1 (\d+)}
@@ -39,6 +40,10 @@ def testRedirect(fromURL, toURL)
     error "huh? #{fromURL.inspect} #{result.inspect}"
   end
 end
+
+# Journal/unit page
+testRedirect("http://escholarship.org/uc/search?entity=uciem_westjem;view=journal_policies",
+             "http://escholarship.org/uc/uciem_westjem/journal_policies")
 
 # Things that should not redirect
 testRedirect("http://escholarship.org/uc/search?smode=pmid;pubType=journal;relation-exclude=springer;subSet=0", nil)

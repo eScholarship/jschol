@@ -523,6 +523,15 @@ def generalResponse(iso_ok = true)
     if body =~ %r{<div [^>]*id="serverError"[^>]*>([^<]+)</div>}
       status ($1 =~ /Not Found/i ? 404 : 500)
     else
+      # Redirect http to https (but only on production)
+      if request.scheme == "http" && request.host == "escholarship.org"
+        uri = URI.parse(request.url)
+        uri.scheme = "https"
+        uri.port = nil
+        redirect to(uri.to_s), 301
+        return
+      end
+
       status 200
     end
 
