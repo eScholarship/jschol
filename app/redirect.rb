@@ -65,6 +65,11 @@ def checkRedirect(origURI)
     if uri.port == 4001 && uri.host != "localhost"
       uri.port = nil  # if redirecting, clear localhost port
     end
+    # If already redirecting, might as well go all the way to https
+    if uri.scheme != "https" && uri.host == "escholarship.org"
+      uri.scheme = "https"
+      uri.port = nil
+    end
     puts "Final redirect: #{origURI} -> #{uri}"
     return uri, 301
   end
@@ -100,6 +105,10 @@ def handleSearchRedirect(uri)
   elsif uri.query =~ %r{entity=([\w_]+);volume=([^;]+);issue=([^;]+)$}
     unit, vol, iss = $1, $2, $3
     uri.path = "/uc/#{unit}/#{vol}/#{iss}"
+    uri.query = nil
+  elsif uri.query =~ %r{entity=([\w_]+);view=([^;]+)$}
+    unit, page = $1, $2
+    uri.path = "/uc/#{unit}/#{page}"
     uri.query = nil
   elsif uri.query =~ %r{keyword=([^;]+)}
     kwd = $1
