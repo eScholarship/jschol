@@ -29,8 +29,8 @@ class TabAuthorComp extends React.Component {
       issn = p.attrs['ext_journal'] && p.attrs['ext_journal']['issn']
     } 
     let peer_reviewed = p.attrs['is_peer_reviewed'] ? "True" : "False",
-        permalink = "http://www.escholarship.org/uc/item/" + p.id,
-        ezid = "http://ezid.cdlib.org/id/ark:/13030/qt" + p.id,
+        permalink = "https://escholarship.org/uc/item/" + p.id,
+        ezid = "https://ezid.cdlib.org/id/ark:/13030/qt" + p.id,
         appearsIn = p.appearsIn.map(function(node, i) {
           return ( <span key={i}><Link to={"/uc/"+node.id} className="o-textlink__secondary">{node.name}</Link><br/></span> )
         }),
@@ -97,9 +97,9 @@ class TabAuthorComp extends React.Component {
         {/* <dt><strong>License</strong></dt>
             <dd>**************** TBD **************</dd>  */}
             <dt><strong>Permalink</strong></dt>
-            <dd><Link to={permalink} className="o-textlink__secondary">{permalink}</Link></dd>
+            <dd><a href={permalink} className="o-textlink__secondary">{permalink}</a></dd>
             <dt><strong>EZID Label Name</strong></dt>
-            <dd><Link to={ezid} className="o-textlink__secondary">{ezid}</Link></dd>
+            <dd><a href={ezid} className="o-textlink__secondary">{ezid}</a></dd>
         {/* <dt><strong>Dash Label Name</strong></dt>
             <dd>**************** TBD **************</dd>  */}
             <dt><strong>Appears in</strong></dt>
