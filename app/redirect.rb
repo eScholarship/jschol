@@ -84,14 +84,14 @@ def handleItemRedirect(uri, itemID, remainder)
     return nil  # not found
   elsif (redir = Redirect.where(kind: "item", from_path: "/uc/item/#{itemID}").first)
     uri.path = "#{redir.to_path}#{remainder}"
-  elsif remainder =~ %r{^/.*}
-    uri.path = "/uc/item/#{itemID}"
   elsif remainder =~ %r{^\.pdf}
     if $cloudFrontConfig
       uri = URI.parse("#{$cloudFrontConfig['public-url']}/content/qt#{itemID}/qt#{itemID}.pdf")
     else
       uri.path = "/content/qt#{itemID}/qt#{itemID}.pdf"
     end
+  elsif !remainder.empty?
+    uri.path = "/uc/item/#{itemID}"
   end
   return uri
 end
