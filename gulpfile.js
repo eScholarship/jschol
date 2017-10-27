@@ -10,6 +10,7 @@ const sourcemaps = require('gulp-sourcemaps');
 const postcss = require('gulp-postcss');
 const assets = require('postcss-assets');
 const livereload = require('gulp-livereload')
+const exec = require('child_process').exec
 const spawn = require('child_process').spawn
 const webpack = require('webpack');
 const ProgressPlugin = require('webpack/lib/ProgressPlugin');
@@ -96,11 +97,15 @@ gulp.task('sass', function() {
 // Support functions for starting and restarting Sinatra (server for the main Ruby app)
 function startSinatra(afterFunc)
 {
-  // The '-o 0.0.0.0' below is required for Sinatra to bind to ipv4 localhost, instead of ipv6 localhost
-  sinatraProc = spawn('bin/puma', { stdio: 'inherit' })
-  sinatraProc.on('exit', function(code) {
-    sinatraProc = null
-  })
+  // Sometimes Puma doesn't die even when old gulp does. Explicitly kill it off.
+  exec('pkill -9 -f ^puma', (err, stdout, stderr) => { })
+  setTimeout(()=>{
+    // Now spawn a new sinatra/puma process
+    sinatraProc = spawn('bin/puma', { stdio: 'inherit' })
+    sinatraProc.on('exit', function(code) {
+      sinatraProc = null
+    })
+  }, 500)
 }
 
 function restartSinatra()
@@ -123,10 +128,13 @@ gulp.task('start-sinatra', restartSinatra)
 function startExpress()
 {
   if (serverConfig.isoPort) {
-    expressProc = spawn('node', ['app/isomorphic.js'], { stdio: 'inherit' })
-    expressProc.on('exit', function(code) {
-      expressProc = null
-    })
+    exec('pkill -9 -f ^node.*iso', (err, stdout, stderr) => { })
+    setTimeout(()=>{
+      expressProc = spawn('node', ['app/isomorphic.js'], { stdio: 'inherit' })
+      expressProc.on('exit', function(code) {
+        expressProc = null
+      })
+    }, 500)
   }
 }
 
