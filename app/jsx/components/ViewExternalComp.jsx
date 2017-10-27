@@ -12,7 +12,7 @@ class ViewExternalComp extends React.Component {
       <div className="c-viewexternal">
         <button onClick={() => {this.view()}} className="c-viewexternal__action">View on External Site</button>
         <div className="c-viewexternal__text">Item not freely available? Link broken?</div>
-        <a href="" className="c-viewexternal__report-link">Report a problem accessing this item</a>
+        <a href="https://help.escholarship.org/support/tickets/new" className="c-viewexternal__report-link">Report a problem accessing this item</a>
       </div>
     )
   }

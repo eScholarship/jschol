@@ -37,7 +37,7 @@ class WizardTypeComp extends React.Component {
         <ul className="c-wizard__list">
           <li>
             <a href={this.props.subi_link+wiz.campusID+"_postprints"}>
-              A published (or accepted) scholarly article</a>
+              A published (or accepted) scholarly article, book or chapter</a>
           </li>
         {Object.keys(DASH_LIST).includes(wiz.campusID) &&
           <li>
@@ -51,7 +51,7 @@ class WizardTypeComp extends React.Component {
             <a onClick = {(event)=>{
             event.preventDefault()
             this.props.goForward(4)}
-          } href="">Any other material (e.g., working paper, book, multimedia)</a>
+          } href="">Any other material (e.g., working paper, multimedia)</a>
           </li>
         </ul>
         <footer>
