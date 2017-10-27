@@ -41,6 +41,12 @@ def testRedirect(fromURL, toURL)
   end
 end
 
+# Crazy item URL from google
+testRedirect("http://escholarship.org/uc/item/49n325b7%253Fimage.view%253DgenerateImage%253BimgWidth%253D600%253BpageNum%253D1",
+             "http://escholarship.org/uc/item/49n325b7")
+testRedirect("http://escholarship.org/uc/item/49n325b7?image.view=generateImage;imgWidth=600;pageNum=1",
+             "http://escholarship.org/uc/item/49n325b7")
+
 # Journal/unit page
 testRedirect("http://escholarship.org/uc/search?entity=uciem_westjem;view=journal_policies",
              "http://escholarship.org/uc/uciem_westjem/journal_policies")
