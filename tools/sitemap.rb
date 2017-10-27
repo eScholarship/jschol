@@ -68,7 +68,7 @@ makeMap('siteMapStatic.xml', true){|map|
 }
 
 # Build items sitemap
-ITEM_BUCKETS = 20
+ITEM_BUCKETS = 10
 total_items = Item.where(status: 'published').count
 batch_count = (total_items / ITEM_BUCKETS.to_f).ceil
 offset = 0
