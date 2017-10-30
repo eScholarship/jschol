@@ -956,7 +956,7 @@ get "/api/mediaLink/:type/:id/:service" do |type, id, service| # service e.g. fa
     title = $unitsHash[id].name
     path = 'uc'
   end
-  sharedLink = "http://www.escholarship.org/" + path + "/" + id 
+  sharedLink = "https://escholarship.org/" + path + "/" + id 
   case service
     when "facebook"
       url = "http://www.facebook.com/sharer.php?u=" + sharedLink
@@ -967,9 +967,9 @@ get "/api/mediaLink/:type/:id/:service" do |type, id, service| # service e.g. fa
       body = ''
       if (type == "item")
         # ToDo: Put in proper citation
-        body = (item.attrs["orig_citation"] ? item.attrs["orig_citation"] + "\n\n" : "")
+        body = (item.attrs["orig_citation"] ? item.attrs["orig_citation"] + "%0D%0A%0D%0A" : "")
       else
-        body = "View items by " + title + " published on eScholarship.\n\n" 
+        body = "View items by " + title + " published on eScholarship.%0D%0A%0D%0A" 
       end
       url = ("mailto:?subject=" + title_sm + "&body=%s" + sharedLink) % [body]
     when "mendeley"
