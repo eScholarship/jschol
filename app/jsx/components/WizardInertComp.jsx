@@ -152,7 +152,7 @@ class WizardInertComp extends React.Component {
                :
                  <DisabledComp header={this.props.header} type={type} closeModal={this.closeModal} />
              :
-             this.props.directSubmit == "hide" ?
+             this.props.directSubmit == "moribund" ?
                <MoribundComp header={this.props.header} type={type} closeModal={this.closeModal} />
                :
                // this.props.directSubmit == "enabled" ?
