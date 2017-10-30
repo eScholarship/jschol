@@ -132,4 +132,9 @@ var routes = null
   app.listen(PORT, function () {
     console.log('ISO worker listening on port', PORT)
   })
+
+  // Fire off an initial request to get the app bundle loading.
+  http.get("http://localhost:4002/check", function(ajaxResp) {
+    ajaxResp.on('end', function() { console.log("Initial check: code=", ajaxResp.statusCode) })
+  })
 //}, { count: serverConfig.isoWorkers })
