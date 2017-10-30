@@ -87,7 +87,7 @@ class ItemPage extends PageBase {
     let currentTab = tab_anchors.includes(this.state.currentTab) ? this.state.currentTab : "main" 
     let d = data
     let a = d.attrs
-    let authors = d.authors.slice(0, 85).map(function(author, i) {
+    let meta_authors = d.authors.slice(0, 85).map(function(author, i) {
       return <meta key={i} id={"meta-author"+i} name="citation_author" content={author.name}/>
      })
     let [issn, volume, issue, firstpage, lastpage] = [null, null, null, null, null]
@@ -109,7 +109,7 @@ class ItemPage extends PageBase {
     return (
       <div>
         <MetaTagsComp title={d.title} descrip={a.abstract}>
-          {authors}
+          {meta_authors}
         {d.pub_date &&
           <meta id="meta-publication_date" name="citation_publication_date" content={d.pub_date} /> }
         {a.isbn &&
