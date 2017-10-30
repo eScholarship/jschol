@@ -128,7 +128,8 @@ class ItemPage extends PageBase {
         {keywords &&
           <meta id="meta-keywords" name="citation_keywords" content={keywords} /> }
         {!d.download_restricted && d.pdf_url &&
-          <meta id="meta-pdf_url" name="citation_pdf_url" content={"https://escholarship.org" + d.pdf_url} /> }
+          <meta id="meta-pdf_url" name="citation_pdf_url"
+                content={d.pdf_url.substr(0, 4) == "http" ? d.pdf_url : "https://escholarship.org" + d.pdf_url} /> }
         </MetaTagsComp>
         <Header2Comp type={d.unit ? d.unit.type: null}
                      unitID={(d.appearsIn && d.appearsIn.length > 0) ? d.appearsIn[0]["id"] : null } />
