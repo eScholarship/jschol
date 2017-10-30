@@ -63,13 +63,14 @@ class SubheaderComp extends React.Component {
     //
     //   b) Opened by the 'Submit' or 'Deposit' button:
     //      i) Triggered by a journal, opened by the 'Submit' button  - OR -
-    //     ii) Used for a campus/unit/series when its 'directSubmit' value is set to disabled/moribund. 
+    //     ii) Used when a unit's 'directSubmitURL' value is present
+    //    iii) Used for a campus/unit/series when its 'directSubmit' value is set to disabled/moribund. 
     //     Right now, this component also handles a directSubmitURL if one is present
     //     (Presently the directSubmitURL only exists for journals).
 
     // Note: Disabled and Moribund Units/Series are also uniquely handled when coming in
     //   at a higher level from within WizardUnitComp and WizardSeriesComp (handled by WizardComp below)
-    if (unit.type == 'journal' || ["moribund", "disabled", "hide"].includes(h.directSubmit)) {
+    if (unit.type == 'journal' || h.directSubmitURL || ["moribund", "disabled", "hide"].includes(h.directSubmit)) {
       wizard = (<WizardInertComp showModal={this.state.depositModalOpen}
                       parentSelector={()=>$('#wizardModalBase')[0]}
                       onCancel={e=>this.closeWizardModal(e)}
