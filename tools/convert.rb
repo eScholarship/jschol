@@ -1294,7 +1294,7 @@ def parseUCIngest(itemID, inMeta, fileType)
   issue = section = nil
   volNum = inMeta.text_at("./context/volume")
   issueNum = inMeta.text_at("./context/issue")
-  if issueNum
+  if issueNum or volNum
     issueUnit = inMeta.xpath("./context/entity[@id]").select {
                       |ent| $allUnits[ent[:id]] && $allUnits[ent[:id]].type == "journal" }[0]
     issueUnit and issueUnit = issueUnit[:id]
