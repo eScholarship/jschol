@@ -1,18 +1,18 @@
-// ##### Unit Publication Component ##### //
+// ##### Unit Series Component ##### //
 
 import React from 'react'
 import $ from 'jquery'
 import dotdotdot from 'jquery.dotdotdot'
 
-class UnitPubComp extends React.Component {
+class UnitSeriesComp extends React.Component {
   componentDidMount() {
     $('.c-pub__heading, .c-pub__abstract').dotdotdot({watch: 'window'
     });
   }
   render() {
     return (
-      <div className="c-unitpub">
-        <h4 className="c-unitpub__heading"><a href="">Series 1 Title</a></h4>
+      <details className="c-togglecontent c-unitseries">
+        <summary><a href="">Recent Works (33)</a></summary>
         <div className="c-pub">
           <h5 className="c-pub__heading">
             <a href="">Language Ideologies and Hegemonic Factors Imposed upon Judeo-Spanish Speaking Communities</a>
@@ -67,10 +67,10 @@ class UnitPubComp extends React.Component {
             </p>
           </div>
         </div>
-        <div className="c-unitpub__publications">24 more works&mdash; <a href="">show all</a></div>
-      </div>
+        <div className="c-unitseries__publications2">24 more works&mdash; <a href="">show all</a></div>
+      </details>
     )
   }
 }
 
-module.exports = UnitPubComp;
+module.exports = UnitSeriesComp;

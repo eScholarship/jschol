@@ -28,13 +28,13 @@ class SeriesComp extends React.Component {
     let data = this.props.data,
         plural = (data.count == data.previewLimit + 1) ? '' : 's'
     return (
-      <div className="c-unitpub">
-        <h4 className="c-unitpub__heading"><Link to={"/uc/"+data.unit_id}>{data.name}</Link></h4>
+      <details className="c-togglecontent c-unitseries">
+      <summary><Link to={"/uc/"+data.unit_id}>{data.name} ({data.count})</Link></summary>
       {data.items.map((item) =>
-        <PubComp key={item.id} result={item} h="H5" />) }
+        <PubComp key={item.id} result={item} h="H3" />) }
       {data.count > data.previewLimit &&
-        <div className="c-unitpub__publications">{data.count - data.previewLimit} more work{plural} &mdash; <Link to={"/uc/"+data.unit_id}>show all</Link></div> }
-      </div>
+        <div className="c-unitseries__publications2">{data.count - data.previewLimit} more work{plural} &mdash; <Link to={"/uc/"+data.unit_id}>show all</Link></div> }
+      </details>
     )
   }
 }
@@ -95,22 +95,12 @@ class DepartmentLayout extends React.Component {
                 <ShareComp type="unit" id={this.props.unit.id} />
               </div>
             {(seriesList.length == 0 && monographSeriesList.length ==  0 && data.journals.length == 0 && data.related_orus.length == 0) ?
-              <div className="c-unitpub__publications">There are currently no publications in this collection.</div>
+              <div className="c-unitseries__publications1">There are currently no publications in this collection.</div>
              :
-              <div className="c-unitpub__publications">There are {this.props.unit.extent.count} publications in this collection, published between {this.props.unit.extent.pub_year.start} and {this.props.unit.extent.pub_year.end}.</div>
+              <div className="c-unitseries__publications1">There are {this.props.unit.extent.count} publications in this collection, published between {this.props.unit.extent.pub_year.start} and {this.props.unit.extent.pub_year.end}.</div>
             }
-            {seriesList.length > 0 &&
-              <div>
-                <h3 className="o-heading1a">Paper Series</h3>
-                {seriesList}
-              </div>
-            }
-            {monographSeriesList.length > 0 &&
-              <div>
-                <h3 className="o-heading1a">Monograph Series</h3>
-                {monographSeriesList}
-              </div>
-            }
+            {seriesList.length > 0 && seriesList}
+            {monographSeriesList.length > 0 && monographSeriesList}
             {data.journals.length > 0 && 
               <div className="c-unitlist">
                 <h3>Journals</h3>
