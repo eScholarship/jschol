@@ -1,11 +1,7 @@
 // ##### Tab Main Content Component ##### //
 
 import React from 'react'
-import ItemActionsComp from '../components/ItemActionsComp.jsx'
-import AuthorListComp from '../components/AuthorListComp.jsx'
 import PdfViewComp from '../components/PdfViewComp.jsx'
-import PubLocationComp from '../components/PubLocationComp.jsx'
-import PubDataComp from '../components/PubDataComp.jsx'
 import ViewExternalComp from '../components/ViewExternalComp.jsx'
 import { Link } from 'react-router'
 import ArbitraryHTMLComp from "../components/ArbitraryHTMLComp.jsx"
