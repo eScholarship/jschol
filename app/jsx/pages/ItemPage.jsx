@@ -141,6 +141,20 @@ class ItemPage extends PageBase {
         <BreadcrumbComp array={d.header ? d.header.breadcrumb : null} />
         <div className="c-columns--sticky-sidebar">
           <main id="maincontent">
+            <ItemActionsComp id={d.id}
+                         status={d.status}
+                         content_type={d.content_type}
+                         pdf_url={d.pdf_url}
+                         supp_files={a.supp_files}
+                         buy_link={a.buy_link}
+                         download_restricted={d.download_restricted} />
+            <h2 className="c-tabcontent__main-heading" tabIndex="-1"><ArbitraryHTMLComp html={d.title}/></h2>
+            <AuthorListComp pubdate={d.pub_date}
+                        authors={d.authors}
+                        changeTab={d.changeTab} />
+            <PubLocationComp pub_web_loc={a.pub_web_loc}
+                         rights={d.rights} />
+            <PubDataComp content_type={d.content_type} />
             <TabsComp currentTab={currentTab}
                       changeTab={this.changeTab}
                       formatDate={this.formatDate}

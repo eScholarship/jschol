@@ -15,7 +15,7 @@
   @extend %o-heading3;
   position: relative;
   margin: 0 (-$spacing-sm);
-  padding: 0 $spacing-sm;
+  padding: 0 1.8em 0 $spacing-sm;
   background: $color-light-gray;
   font-weight: normal;
   box-shadow: $box-shadow1;
@@ -27,7 +27,7 @@
     right: $spacing-sm;
     bottom: 0;
     padding: 7px;
-    background: inline('../images/icon_sort-down-black.svg') no-repeat center / 12px;
+    background: inline('../images/icon_sort-down-black.svg') no-repeat center / 0.8rem;
     content: '';
   }
 
@@ -36,6 +36,7 @@
     @extend %interactive-element-size;
     display: inline-flex;
     align-items: center;
+    padding: $spacing-base 0;
   }
 
 }
