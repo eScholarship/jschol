@@ -1648,35 +1648,41 @@ end
 ###################################################################################################
 # Index all the items in our queue
 def indexAllItems
-  Thread.current[:name] = "index thread"  # label all stdout from this thread
-  batch = emptyBatch({})
+  begin
+    Thread.current[:name] = "index thread"  # label all stdout from this thread
+    puts "in indexAllItems"
+    batch = emptyBatch({})
 
-  # The resolver and catalog stuff below is to prevent BioMed files from loading external DTDs
-  # (which is not only slow but also unreliable)
-  classPath = "/apps/eschol/erep/xtf/WEB-INF/lib/saxonb-8.9.jar:" +
-              "/apps/eschol/erep/xtf/control/xsl/jing.jar:" +
-              "/apps/eschol/erep/xtf/normalization/resolver.jar"
-  Nailgun.run(classPath, 0, "-Dxml.catalog.files=/apps/eschol/erep/xtf/normalization/catalog.xml") { |nailgun|
-    loop do
-      # Grab an item from the input queue
-      Thread.current[:name] = "index thread"  # label all stdout from this thread
-      itemID, timestamp = $indexQueue.pop
-      itemID or break
+    # The resolver and catalog stuff below is to prevent BioMed files from loading external DTDs
+    # (which is not only slow but also unreliable)
+    classPath = "/apps/eschol/erep/xtf/WEB-INF/lib/saxonb-8.9.jar:" +
+                "/apps/eschol/erep/xtf/control/xsl/jing.jar:" +
+                "/apps/eschol/erep/xtf/normalization/resolver.jar"
+    Nailgun.run(classPath, 0, "-Dxml.catalog.files=/apps/eschol/erep/xtf/normalization/catalog.xml") { |nailgun|
+      loop do
+        # Grab an item from the input queue
+        Thread.current[:name] = "index thread"  # label all stdout from this thread
+        itemID, timestamp = $indexQueue.pop
+        itemID or break
 
-      # Extract data and index it (in batches)
-      begin
-        Thread.current[:name] = "index thread: #{itemID}"  # label all stdout from this thread
-        indexItem(itemID, timestamp, batch, nailgun)
-      rescue Exception => e
-        puts "Error indexing item #{itemID}"
-        raise
+        # Extract data and index it (in batches)
+        begin
+          Thread.current[:name] = "index thread: #{itemID}"  # label all stdout from this thread
+          indexItem(itemID, timestamp, batch, nailgun)
+        rescue Exception => e
+          puts "Error indexing item #{itemID}"
+          raise
+        end
       end
-    end
-  }
+    }
 
-  # Finish off the last batch.
-  batch[:items].empty? or $batchQueue << batch
-  $batchQueue << nil   # marker for end-of-queue
+    # Finish off the last batch.
+    batch[:items].empty? or $batchQueue << batch
+  rescue Exception => e
+    puts "Exception in indexAllItems: #{e} #{e.backtrace}"
+  ensure
+    $batchQueue << nil   # marker for end-of-queue
+  end
 end
 
 ###################################################################################################
@@ -2169,7 +2175,10 @@ def convertPDF(itemID)
 
   # See if current splash page is adequate
   origFile = arkToFile(itemID, "content/base.pdf")
-  origFile or raise("Warning: missing content file")
+  if !File.exist?(origFile)
+    puts "Missing content file; skipping."
+    return
+  end
   origSize = File.size(origFile)
 
   dbPdf = DisplayPDF[itemID]
@@ -2192,18 +2201,27 @@ def convertPDF(itemID)
 
     # Then generate a splash page, and linearize that as well.
     splashLinFile = Tempfile.new(["splashLin_#{itemID}_", ".pdf"], TEMP_DIR)
-    splashGen(itemID, instrucs, linFile, splashLinFile.path)
-    splashLinSize = File.size(splashLinFile.path)
+    splashLinSize = 0
+    begin
+      splashGen(itemID, instrucs, linFile, splashLinFile.path)
+      splashLinSize = File.size(splashLinFile.path)
+    rescue Exception => e
+      if e.to_s =~ /Internal Server Error/
+        puts "Warning: splash generator failed; falling back to plain."
+      else
+        raise
+      end
+    end
 
     $s3Bucket.object("#{$s3Config.prefix}/pdf_patches/linearized/#{itemID}").put(body: linFile)
-    $s3Bucket.object("#{$s3Config.prefix}/pdf_patches/splash/#{itemID}").put(body: splashLinFile)
+    splashLinSize > 0 and $s3Bucket.object("#{$s3Config.prefix}/pdf_patches/splash/#{itemID}").put(body: splashLinFile)
 
     DisplayPDF.where(item_id: itemID).delete
     DisplayPDF.create(item_id: itemID,
       orig_size:          origSize,
       orig_timestamp:     File.mtime(origFile),
       linear_size:        linSize,
-      splash_info_digest: instrucDigest,
+      splash_info_digest: splashLinSize > 0 ? instrucDigest : nil,
       splash_size:        splashLinSize
     )
 

@@ -12,6 +12,7 @@ def getActiveCampuses
 end
 
 $activeCampuses = getActiveCampuses
+$hostname = `/bin/hostname`.strip
 
 ###################################################################################################
 def travAndFormat(data, out)
@@ -219,7 +220,8 @@ def splashGen(itemID, instrucs, origFile, targetFile)
              combinedFile: getRealPath(combinedTemp.path),
              instrucs: instrucs }
     #puts "Sending splash data: #{data.to_json.encode("UTF-8")}"
-    response = HTTParty.post("http://#{ENV['HOST']}:18881/splash/splashGen", body: data.to_json.encode("UTF-8"))
+    url = "http://#{$hostname}.escholarship.org:18881/splash/splashGen"
+    response = HTTParty.post(url, body: data.to_json.encode("UTF-8"))
     response.success? or raise("Error #{response.code} generating splash page: #{response.message}")
 
     # Linearize the result for fast display of the first page on all platforms.
