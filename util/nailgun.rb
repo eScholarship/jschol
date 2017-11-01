@@ -63,7 +63,7 @@ class Nailgun
 
   def callInternal(eatOutput, joinStderr, argStr)
     # Do the transform
-    cmd = "ng --nailgun-port #{@port} #{argStr}"
+    cmd = "/apps/eschol/bin/ng --nailgun-port #{@port} #{argStr}"
     #puts cmd
     stdout, stderr, status = Open3.capture3(cmd)
     eatOutput or joinStderr or print stderr
