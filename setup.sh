@@ -23,7 +23,7 @@ printf "\n== Uninstalling bower packages no longer used ==\n"
 node_modules/.bin/bower prune 
 
 printf "\n== Building splash page generator ==\n"
-if [[ `/bin/hostname` == *"pub-submit"* ]]; then
+if [[ `/bin/hostname` == "*pub-submit*" ]]; then
   cd splash
   ./setupSplash.sh
   cd ..
