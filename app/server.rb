@@ -390,7 +390,7 @@ get "/content/:fullItemID/*" do |itemID, path|
   end
 
   # Decide which display version to send
-  if noSplash
+  if noSplash || displayPDF.splash_size == 0
     s3Path = "#{$s3Config.prefix}/pdf_patches/linearized/#{itemID}"
     outLen = displayPDF.linear_size
   else
