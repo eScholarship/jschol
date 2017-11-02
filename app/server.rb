@@ -677,7 +677,7 @@ get "/api/browse/:browse_type/:campusID" do |browse_type, campusID|
   unit = $unitsHash[campusID]
   unit or halt(404, "campusID not found")
   if browse_type == 'units'
-    cu = $hierByAncestor[campusID].map do |a| getChildDepts($unitsHash[a.unit_id]); end
+    cu = $hierByAncestor[campusID].sort_by{ |h| $unitsHash[h[:unit_id]].name }.map do |a| getChildDepts($unitsHash[a.unit_id]); end
     pageTitle = "Academic Units"
   else   # journals
     cj  = $campusJournals.select{ |j| j[:ancestor_unit].include?(campusID) }.sort_by{ |h| h[:name].downcase }

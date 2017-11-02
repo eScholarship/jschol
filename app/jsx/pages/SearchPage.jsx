@@ -164,10 +164,10 @@ class PubYear extends React.Component {
     return this.props.data.range && this.props.data.range.pub_year_end ? this.props.data.range.pub_year_end : ''
   }
 
-  onBlur = event=>{
+  handleSubmit = event =>{
     let displayYears
-    if (this.state.pub_year_start || this.state.pub_year_end) {
-      displayYears = this.state.pub_year_start + "-" + this.state.pub_year_end
+    if (this.pub_year_start.value || this.pub_year_end.value) {
+      displayYears = this.pub_year_start.value + "-" + this.pub_year_end.value
     }
     else {
       displayYears = ""
@@ -182,25 +182,21 @@ class PubYear extends React.Component {
     $('#facet-form-submit').click()
   }
 
-  handleChange = event=>{
-    if (event.target.id == 'pub_year_start') {
-      this.setState({pub_year_start: event.target.value})
-    } else if (event.target.id = 'pub_year_end') {
-      this.setState({pub_year_end: event.target.value})
-    }
-  }
-
   render() {
+    let year = (new Date()).getFullYear()
     return (
       <div className="c-pubyear">
-        <label htmlFor="pub_year_start">From: </label>
-        <input id="pub_year_start" name="pub_year_start" type="text" maxLength="4" placeholder="YYYY"
-          defaultValue={this.state.pub_year_start}
-          onChange={ this.handleChange } onBlur={ this.onBlur }/>
-        <label htmlFor="pub_year_end">To: </label>
-        <input id="pub_year_end" name="pub_year_end" type="text" maxLength="4" placeholder="YYYY"
-          defaultValue={this.state.pub_year_end}
-          onChange={ this.handleChange } onBlur={ this.onBlur }/>
+        <div className="c-pubyear__field">
+          <label htmlFor="c-pubyear__textfield1">From:</label>
+          <input id="c-pubyear__textfield1" name="pub_year_start" type="text" maxLength="4" placeholder={year}
+            defaultValue={this.state.pub_year_start} ref={(input) => { this.pub_year_start = input }} />
+        </div>
+        <div className="c-pubyear__field">
+          <label htmlFor="c-pubyear__textfield2">To:</label>
+          <input id="c-pubyear__textfield2" name="pub_year_end" type="text" maxLength="4" placeholder={year}
+            defaultValue={this.state.pub_year_end} ref={(input) => { this.pub_year_end = input }} />
+        </div>
+        <button className="c-pubyear__button" onClick={this.handleSubmit}>Apply</button>
       </div>
     ) 
   }

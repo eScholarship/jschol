@@ -36,7 +36,7 @@
     a {
       @extend %o-textlink__secondary;
       @extend %interactive-element-size;
-      display: flex;
+      display: inline-flex;
       align-items: center;
       padding-top: 0.3em;
       padding-bottom: 0.3em;
