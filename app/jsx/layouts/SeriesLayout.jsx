@@ -38,9 +38,10 @@ class SeriesSelector extends React.Component {
         <h2 className="o-customselector__heading">{p.unit.name}</h2>
         <details open={this.state.isOpen}
                  ref={domElement => this.details=domElement}
-                 onClick={()=>setTimeout(()=>this.setState({isOpen: this.details.open}), 0)}
                  className="o-customselector__selector">
-          <summary aria-label="Select a different series"></summary>
+          <summary aria-label="Select a different series" 
+                 onClick = {(event)=>{this.setState({isOpen: !this.details.open})
+                                      event.preventDefault()}}></summary>
           <div className="o-customselector__menu">
             <ul className="o-customselector__items" role="list">
               {p.series.map((s, i) =>

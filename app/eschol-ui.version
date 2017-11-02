@@ -651,3 +651,19 @@ As well as:
   modified:   app/jsx/objects/DivideContentObj.jsx
   deleted:    app/jsx/objects/ImageContentObj.jsx
   modified:   app/jsx/objects/StatsObj.jsx
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's a033afa8e5783695c73a9583eadfa1fca6f9dd96, 2017-10-30 <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+  modified:   app/jsx/components/MediaListComp.jsx
+  modified:   app/jsx/components/PubYearComp.jsx
+  modified:   app/jsx/components/TabMainComp.jsx
+  modified:   app/jsx/components/UnitSeriesComp.jsx
+  modified:   app/jsx/layouts/DepartmentLayout.jsx
+  modified:   app/jsx/layouts/SeriesLayout.jsx
+  modified:   app/jsx/pages/ItemPage.jsx
+  modified:   app/jsx/pages/SearchPage.jsx
+
+
+

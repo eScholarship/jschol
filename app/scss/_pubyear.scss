@@ -3,31 +3,16 @@
 $pubyear-element-width: 3em;
 
 .c-pubyear {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-evenly;
   margin-bottom: $spacing-sm;
+}
 
-  @supports (display: grid) {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto auto;
-    justify-items: center;
-  }
+.c-pubyear__field {
 
   label {
-    width: $pubyear-element-width;
-    margin: 0 $spacing-base $spacing-base;
-
-    &:last-of-type {
-      margin-left: $spacing-md;
-      grid-column: 2 / 3;
-      grid-row: 1 / 2;
-
-      @supports (display: grid) {
-        margin-right: 0;
-        margin-left: 0;
-      }
-
-    }
-
+    display: block;
   }
 
   input {
@@ -35,4 +20,8 @@ $pubyear-element-width: 3em;
     width: $pubyear-element-width;
   }
 
+}
+
+.c-pubyear__button {
+  @extend %o-button__8;
 }

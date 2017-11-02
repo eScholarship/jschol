@@ -1,11 +1,7 @@
 // ##### Tab Main Content Component ##### //
 
 import React from 'react'
-import ItemActionsComp from '../components/ItemActionsComp.jsx'
-import AuthorListComp from '../components/AuthorListComp.jsx'
 import PdfViewComp from '../components/PdfViewComp.jsx'
-import PubLocationComp from '../components/PubLocationComp.jsx'
-import PubDataComp from '../components/PubDataComp.jsx'
 import ViewExternalComp from '../components/ViewExternalComp.jsx'
 import { Link } from 'react-router'
 import ArbitraryHTMLComp from "../components/ArbitraryHTMLComp.jsx"
@@ -132,25 +128,11 @@ class TabMainComp extends React.Component {
     let p = this.props
     return (
       <div className="c-tabcontent">
-        <ItemActionsComp id={p.id}
-                         status={p.status}
-                         content_type={p.content_type}
-                         pdf_url={p.pdf_url}
-                         supp_files={p.attrs.supp_files}
-                         buy_link={p.attrs.buy_link}
-                         download_restricted={p.download_restricted} />
-        <h2 className="c-tabcontent__main-heading" tabIndex="-1"><ArbitraryHTMLComp html={p.title}/></h2>
-        <AuthorListComp pubdate={p.pub_date}
-                        authors={p.authors}
-                        changeTab={p.changeTab} />
-        <PubLocationComp pub_web_loc={p.attrs.pub_web_loc}
-                         rights={p.rights} />
-        <PubDataComp content_type={p.content_type} />
-        {this.props.attrs.abstract && (this.props.status != "withdrawn") &&
-          [<ScrollingAnchorComp key="0" name="article_abstract" />,
-           <Abstract key="1" status={p.status}
-                             abstract={p.attrs.abstract}
-                             unit={p.unit} />] }
+      {this.props.attrs.abstract && (this.props.status != "withdrawn") &&
+        [<ScrollingAnchorComp key="0" name="article_abstract" />,
+         <Abstract key="1" status={p.status}
+                           abstract={p.attrs.abstract}
+                           unit={p.unit} />] }
         <MainContent {...p} />
       </div>
     )

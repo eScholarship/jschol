@@ -6,7 +6,8 @@ import _ from 'lodash'
 class FilterComp extends React.Component {
   clearAll = (event) => {
     $('[name=start]').val('0');
-    let filters = $(':checked').prop('checked', false);
+    let filters = $(':checked').prop('checked', false)
+    $(':text').val('')
   }
 
   render() {

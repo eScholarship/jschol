@@ -14,11 +14,11 @@ class MediaListComp extends React.Component {
         } else if (supp_file.type === 'pdf') {
           display = supp_file.count != 1 ? 'PDFs' : 'PDF'
         } else if (supp_file.type === 'zip') {
-          display = supp_file.count != 1 ? 'ZIPs' : 'ZIP'
+          display = (<abbr title="zips">{supp_file.count != 1 ? 'ZIPs' : 'ZIP'}</abbr>)
         } else {
           display = supp_file.count != 1 ? 'files' : 'file'
         }
-        return (<li key={supp_file+i} className={"c-medialist__" + supp_file.type}>Contains {supp_file.count} supplemental {display}</li>)   
+        return (<li key={supp_file+i} className={"c-medialist__" + supp_file.type}>{supp_file.count} supplemental {display}</li>)   
       }
     })
     return (
