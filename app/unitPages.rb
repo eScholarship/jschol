@@ -300,7 +300,7 @@ def getCampusCarousel(campus, content_attrs)
     journals.keep_if { |x| journals_w_issues.any? {|y| y[:unit_id] == x[:unit_id]} }
     journals_covers = journals.map { |u|
       i = Issue.where(:unit_id => u[:unit_id]).where(Sequel.lit("attrs->\"$.cover\" is not null"))
-               .order(Sequel.desc(:pub_date)).first
+               .order(Sequel.desc(:pub_date)).order_append(Sequel.desc(:issue)).first
       if i
         u[:cover] = JSON.parse(i[:attrs])['cover']
       end
@@ -428,7 +428,7 @@ end
 
 def getIssue(unit_id, display, volume=nil, issue=nil)
   if volume.nil?  # Landing page (most recent journal) has no vol/issue entered in URL path
-    i = Issue.where(:unit_id => unit_id).order(Sequel.desc(:pub_date)).first
+    i = Issue.where(:unit_id => unit_id).order(Sequel.desc(:pub_date)).order_append(Sequel.desc(:issue)).first
   else
     i = Issue.first(:unit_id => unit_id, :volume => volume, :issue => issue)
   end
@@ -1276,7 +1276,7 @@ end
 
 def getUnitIssueConfig(unit, unitAttrs)
   template = { "numbering" => "both", "rights" => nil, "buy_link" => nil }
-  issues = Issue.where(unit_id: unit.id).reverse(:pub_date).map { |issue|
+  issues = Issue.where(unit_id: unit.id).order(Sequel.desc(:pub_date)).order_append(Sequel.desc(:issue)).map { |issue|
     { voliss: "#{issue.volume}.#{issue.issue}" }.merge(template).
       merge(JSON.parse(issue.attrs || "{}").select { |k,v| template.key?(k) })
   }
