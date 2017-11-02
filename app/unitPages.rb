@@ -387,7 +387,7 @@ def getSeriesLandingPageData(unit, q)
 end
 
 def getIssues(unit_id)
-  Issue.where(:unit_id => unit_id).order(Sequel.desc(:pub_date)).to_hash(:id).map{|id, issue|
+  Issue.where(:unit_id => unit_id).order(Sequel.desc(:pub_date)).order_append(Sequel.desc(:issue)).to_hash(:id).map{|id, issue|
     h = issue.to_hash
     h[:attrs] and h[:attrs] = JSON.parse(h[:attrs])
     h
@@ -397,15 +397,16 @@ end
 # Landing page data does not pass arguments volume/issue. It just gets most recent journal
 def getJournalIssueData(unit, unit_attrs, volume=nil, issue=nil)
   display = unit_attrs['magazine_layout'] ? 'magazine' : 'simple'
+  issues = getIssues(unit.id)
   if unit_attrs['issue_rule'] and unit_attrs['issue_rule'] == 'secondMostRecent' and volume.nil? and issue.nil?
-    secondIssue = Issue.where(:unit_id => unit.id).order(Sequel.desc(:pub_date)).first(2)[1]
-    volume = secondIssue ? secondIssue.values[:volume] : nil
-    issue = secondIssue ? secondIssue.values[:issue] : nil
+    secondIssue = issues.first(2)[1]
+    volume = secondIssue ? secondIssue[:volume] : nil
+    issue = secondIssue ? secondIssue[:issue] : nil
   end
   return {
     display: display,
     issue: getIssue(unit.id, display, volume, issue),
-    issues: getIssues(unit.id),
+    issues: issues,
     doaj: unit_attrs['doaj'],
     issn: unit_attrs['issn'],
     eissn: unit_attrs['eissn']
