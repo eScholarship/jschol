@@ -782,6 +782,10 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
       pageData[:content] = getUnitCarouselConfig(unit, attrs)
     elsif pageName == 'issueConfig'
       pageData[:content] = getUnitIssueConfig(unit, attrs)
+    elsif pageName == 'unitBuilder'
+      # nothing for now
+    elsif pageName == 'seriesBuilder'
+      # nothing for now
     elsif pageName == 'nav'
       pageData[:content] = getUnitNavConfig(unit, attrs['nav_bar'], params[:subPage])
     elsif pageName == 'sidebar'
@@ -797,8 +801,8 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
       pageData[:content] = getUnitStaticPage(unit, attrs, pageName)
     end
     pageData[:header] = getUnitHeader(unit,
-                                      (pageName =~ /^(nav|sidebar|profile|carousel|issueConfig|redirects)/ or issueData) ? nil : pageName,
-                                      issueData, attrs)
+      (pageName =~ /^(nav|sidebar|profile|carousel|issueConfig|redirects|unitBuilder|seriesBuilder)/ or issueData) ? nil : pageName,
+      issueData, attrs)
     pageData[:marquee] = getUnitMarquee(unit, attrs) if (["home", "search"].include? pageName or issueData)
   else
     #public API data

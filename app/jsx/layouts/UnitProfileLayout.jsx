@@ -121,6 +121,18 @@ class UnitProfileLayout extends React.Component {
                    }
                    <br/>
 
+                   { cms.permissions && cms.permissions.super &&
+                     <div>
+                       <label className="c-editable-page__label" htmlFor="status">Unit status: </label>
+                       <select name="status" defaultValue={data.status}>
+                         <option value="active">Active</option>
+                         <option value="hidden">Hidden</option>
+                         <option value="moribund">Archived</option>
+                       </select>
+                       <br/><br/>
+                     </div>
+                   }
+
                    { this.props.unit.type == 'journal' &&
                      <div>
                        <br/>
@@ -223,26 +235,6 @@ class UnitProfileLayout extends React.Component {
     )
   }
 
-  renderDepartmentConfig() {
-    let data = this.props.data
-
-    return (
-      <div>
-        <h3>Main Content Configuration</h3>
-        <div className="c-columns">
-          <main id="maincontent">
-            <section className="o-columnbox1">
-              <div>
-                Here you can suppress a given series, and reorder series.
-                <br/><i>(not yet implemented)</i>
-              </div>
-            </section>
-          </main>
-        </div>
-      </div>
-    )
-  }
-
   renderJournalConfig() {
     let data = this.props.data
 
@@ -284,7 +276,6 @@ class UnitProfileLayout extends React.Component {
         { this.renderUnitConfig() }
         { this.renderSocialConfig() }
         { this.renderAboutConfig() }
-        { this.props.unit.type == 'oru' && this.renderDepartmentConfig() }
         { this.props.unit.type == 'journal' && this.renderJournalConfig() }
       </div>
     )
