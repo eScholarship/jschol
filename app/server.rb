@@ -59,7 +59,6 @@ def waitForSocks(host, port)
       puts "SOCKS proxy failed. Verify that 'ssh yourUsername@pub-jschol-dev.escholarship.org' works."
       exit 1
     else
-      puts "retry #{retries}"
       sleep 0.5
       retry
     end
