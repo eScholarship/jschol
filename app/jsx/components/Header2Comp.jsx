@@ -17,7 +17,7 @@ class HeaderComp2 extends React.Component {
     type: PropTypes.string,       // not required, at least on global search page
     unitID: PropTypes.string,     // ditto
     searchComp: PropTypes.string, // ditto
-    query: PropTypes.string
+    // query: PropTypes.string    // This is a hash of query parameters, too much stuff to detail right here right now
   }
 
   constructor(props){

@@ -49,7 +49,7 @@ def initAllFacets()
     'facetTransform' => lambda { |facetVals| facetVals.map { |facetVal| {'value' => facetVal['value'], 'count' => facetVal['count'], 'displayName' => 'Peer-reviewed only'} } }
   },
   'supp_file_types' => {
-    'displayName' => 'Included Media',
+    'displayName' => 'Supplemental Material',
     'awsFacetParam' => {buckets: ['video', 'audio', 'images', 'zip', 'other files']},
     'filterTransform' => lambda { |filterVals| filterVals.map { |filterVal| {'value' => filterVal, 'displayName' => filterVal.capitalize} } },
     'facetTransform' => lambda { |facetVals| facetVals.map { |facetVal| {'value' => facetVal['value'], 'count' => facetVal['count'], 'displayName' => facetVal['value'].capitalize } } },
@@ -61,16 +61,13 @@ def initAllFacets()
       if year_start and year_end
         return [{'value' => "#{year_start}-#{year_end}"}]
       elsif year_start
-        return [{'value' => year_start }]
+        return [{'value' => "#{year_start}-" }]
       elsif year_end
-        return [{'value' => year_end }]
+        return [{'value' => "-#{year_end}" }]
       end
     end,
     'facetTransform' => lambda { |year_start, year_end| {pub_year_start: year_start, pub_year_end: year_end} }
   },
-  # per message from Lisa 9/13/2016 regarding campus facets:
-  #   - lbnl should be lbl (unsure if it should be LBL in the display too?)
-  #   - ANR (Agriculture and Natural Resources) should be added to this list
   'campuses' => {
     'displayName' => 'Campus',
     'awsFacetParam' => {buckets: $activeCampuses.keys},

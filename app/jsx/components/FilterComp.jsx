@@ -4,10 +4,16 @@ import React from 'react'
 import _ from 'lodash'
 
 class FilterComp extends React.Component {
+  state = { isOpen: true }  // open only becomes false when user clicks it to hide (handled by CSS)
+
   clearAll = (event) => {
     $('[name=start]').val('0');
     let filters = $(':checked').prop('checked', false)
     $(':text').val('')
+  }
+
+  componentWillReceiveProps() {
+    this.setState({isOpen: true})
   }
 
   render() {
@@ -37,10 +43,9 @@ class FilterComp extends React.Component {
       <div className={activeFilters ? "c-filter--active" : "c-filter"}>
         <h1 className="c-filter__heading">{searchString}</h1>
         <input type="hidden" name="q" value={this.props.query.q} />
-        {/* ToDo: Once informational pages are impleented, rig up the proper number here*/}
         <div className="c-filter__results">{resultCount} results</div>
         <div className="c-filter__inactive-note">No filters applied</div>
-        <details className="c-filter__active">
+        <details className="c-filter__active" open={this.state.isOpen}>
           <summary><span><strong>{activeFilters && activeFilters.length}</strong> filter{!activeFilters || activeFilters.length != 1 ? "s" : ""} applied</span></summary>
           <button className="c-filter__clear-all" onClick={this.clearAll}>clear all</button>
           <ul className="c-filter__active-list">

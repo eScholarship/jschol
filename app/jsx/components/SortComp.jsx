@@ -34,6 +34,7 @@ class SortComp extends React.Component {
   }
   
   render() {
+    let rows = Math.ceil(((this.state.rows > this.props.count) ? this.props.count : this.state.rows) / 10) * 10
     return (
       <div className="c-sort">
         <div className="o-input__droplist1">
@@ -56,7 +57,7 @@ class SortComp extends React.Component {
       {(this.props.count > 10) && 
         <div className="o-input__droplist1 c-sort__page-input">
           <label htmlFor="c-sort2">Show:</label>
-          <select name="rows" id="c-sort2" form={this.props.formName} value={ this.state.rows } onChange={ this.handleChange }>
+          <select name="rows" id="c-sort2" form={this.props.formName} value={rows} onChange={ this.handleChange }>
           {/* ToDo: Make this more concise */}
           <option value="10">10</option>
           <option value="20">20</option>

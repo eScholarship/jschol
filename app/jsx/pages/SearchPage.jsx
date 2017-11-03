@@ -538,7 +538,7 @@ class SearchPage extends PageBase {
     return(
       <div className="l_search">
         <MetaTagsComp title="Search"/>
-        <Header2Comp searchComp="1" query={data.query.q} />
+        <Header2Comp searchComp="1" query={this.props.location.query} />
         <div className="c-navbar">
           <NavComp data={data.header.nav_bar} />
         </div>
