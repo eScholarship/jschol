@@ -153,6 +153,8 @@ $discTbl = {"1540" => "Life Sciences",
             "2932" => "Architecture",
             "3579" => "Education"}
 
+$issueRightsCache = {}
+
 ###################################################################################################
 # Monkey-patch to nicely ellide strings.
 class String
@@ -1222,6 +1224,41 @@ def addMerrittPaths(itemID, attrs)
 end
 
 ###################################################################################################
+# If an issue's rights have been overridden in eschol5, be sure to prefer that. Likewise, if there's
+# a default, take that instead. Failing that, use the most recent issue. If there isn't one, use
+# whatever eschol5 came up with.
+def checkRightsOverride(unitID, volNum, issNum, oldRights)
+  key = "#{unitID}|#{volNum}|#{issNum}"
+  if !$issueRightsCache.key?(key)
+    # First, check for existing issue rights
+    iss = Issue.where(unit_id: unitID, volume: volNum, issue: issNum).first
+    if iss
+      issAttrs = (iss.attrs && JSON.parse(iss.attrs)) || {}
+      rights = issAttrs["rights"]
+    else
+      # Failing that, check for a default set on the unit
+      unit = $allUnits[unitID]
+      unitAttrs = unit && unit.attrs && JSON.parse(unit.attrs) || {}
+      if unitAttrs["default_issue"]
+        rights = unitAttrs["default_issue"]
+      else
+        # Failing that, use values from the most-recent issue
+        iss = Issue.where(unit_id: unitID).order(Sequel.desc(:pub_date)).order_append(Sequel.desc(:issue)).first
+        if iss
+          issAttrs = (iss.attrs && JSON.parse(iss.attrs)) || {}
+          rights = issAttrs["rights"]
+        else
+          # Failing that, just use whatever rights eschol4 came up with.
+          rights = oldRights
+        end
+      end
+    end
+    $issueRightsCache[key] = rights
+  end
+  return $issueRightsCache[key]
+end
+
+###################################################################################################
 def parseUCIngest(itemID, inMeta, fileType)
   attrs = {}
   attrs[:suppress_content] = shouldSuppressContent(itemID, inMeta)
@@ -1302,6 +1339,9 @@ def parseUCIngest(itemID, inMeta, fileType)
       # Data for eScholarship journals
       if $allUnits.include?(issueUnit)
         volNum.nil? and raise("missing volume number on eschol journal item")
+
+        # Prefer eschol5 rights overrides to eschol4.
+        rights = checkRightsOverride(issueUnit, volNum, issueNum, rights)
 
         issue = Issue.new
         issue[:unit_id]  = issueUnit
@@ -1650,7 +1690,6 @@ end
 def indexAllItems
   begin
     Thread.current[:name] = "index thread"  # label all stdout from this thread
-    puts "in indexAllItems"
     batch = emptyBatch({})
 
     # The resolver and catalog stuff below is to prevent BioMed files from loading external DTDs
