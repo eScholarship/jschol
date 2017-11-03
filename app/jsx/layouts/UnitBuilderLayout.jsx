@@ -4,11 +4,68 @@ import Form from 'react-router-form'
 import { Link } from 'react-router'
 import { Subscriber } from 'react-broadcast'
 
+const UNIT_TYPE_TO_LABEL = { series: "paper series",
+                             monograph_series: "monograph series",
+                             oru: "ORU",
+                             journal: "journal" }
+
+class SortableUnitList extends React.Component {
+  state = this.setupState(this.props)
+
+  setupState(props) {
+    return {
+      data: this.generateData(props.subUnits)
+    }
+  }
+
+  componentWillReceiveProps(nextProps) {
+    if (!nextProps.fetchingData && !_.isEqual(this.props, nextProps))
+      this.setState(this.setupState(nextProps))
+  }
+
+  generateData(subUnits) {
+    if (!subUnits)
+      return undefined
+    return subUnits.map(unit => { return {
+      id: unit.id,
+      title: <Link to={`/uc/${unit.id}`}>{unit.name}</Link>,
+      subtitle: <span>{unit.id} <i>({UNIT_TYPE_TO_LABEL[unit.type]})</i></span> }})
+  }
+
+  travOrder(treeData) {
+    return treeData.map(item => item.id)
+  }
+
+  render() {
+    const SortableTree = this.props.cms.modules.SortableTree
+    return (
+      <SortableTree
+        treeData={this.state.data}
+        isVirtualized={false}
+        maxDepth={1}
+        onChange={treeData => this.setState({ data: treeData })}
+        onMoveNode={()=>this.props.onChangeOrder(this.travOrder(this.state.data))}/>
+    )
+  }
+}
+
 export default class UnitBuilderLayout extends React.Component
 {
   static propTypes = {
+    data: PropTypes.shape({
+      sub_units: PropTypes.arrayOf(PropTypes.shape({
+        id: PropTypes.string.isRequired,
+        name: PropTypes.string.isRequired,
+        type: PropTypes.string.isRequired,
+      }))
+    }).isRequired,
     sendApiData: PropTypes.func.isRequired,
   }
+
+  reorderUnits = (newOrder) => {
+    this.props.sendApiData('PUT', `/api/unit/${this.props.unit.id}/unitOrder`, { order: JSON.stringify(newOrder) })
+  }
+
 
   render() {
     let p = this.props
@@ -21,6 +78,18 @@ export default class UnitBuilderLayout extends React.Component
                 Unit Builder
               </h1>
             </header>
+
+            <h3>Arrange Existing Units</h3>
+            <Subscriber channel="cms">
+              { cms => cms && cms.modules &&
+                <SortableUnitList cms={cms}
+                                  unit={this.props.unit.id}
+                                  subUnits={this.props.data.sub_units}
+                                  onChangeOrder={this.reorderUnits}/>
+              }
+            </Subscriber>
+
+            <h3>Add New Unit</h3>
             <Form to={`/api/unit/${this.props.unit.id}/unitBuilder`}
                   onSubmit={ (event, data) => {
                     event.preventDefault()
@@ -37,8 +106,8 @@ export default class UnitBuilderLayout extends React.Component
 
               <label className="c-editable-page__label" htmlFor="type">Unit type: </label>
               <select name="type">
-                <option value="oru">ORU</option>
-                <option value="journal">Journal</option>
+                { ["oru", "journal", "series", "monograph_series"].map(unitType =>
+                    <option key={unitType} value={unitType}>{UNIT_TYPE_TO_LABEL[unitType]}</option>) }
               </select>
 
               <br/><br/>

@@ -258,6 +258,12 @@ def getUnitMarquee(unit, attrs)
   }
 end
 
+# Unit builder data
+def getUnitBuilderData(unit)
+  return { sub_units: UnitHier.where(ancestor_unit: unit.id, is_direct: true).order(:ordering).map { |u|
+    {id: u.unit_id, name: u.unit.name, type: u.unit.type} } }
+end
+
 # Department Landing Page
 # Grab data about: related series (children), related journals (children)
 #   and related ORUs, which include children ORUs, sibling ORUs, and parent ORU
@@ -921,16 +927,16 @@ put "/api/unit/:unitID/unitBuilder" do |parentUnitID|
   unitName.nil? || unitName.empty? and jsonHalt(400, "Invalid unit name")
 
   unitType = params[:type]
-  %w{oru journal}.include?(unitType) or jsonHalt(400, "Invalid unit type")
+  %w{oru journal series monograph_series}.include?(unitType) or jsonHalt(400, "Invalid unit type")
 
   isHidden = !!params[:hidden]
 
   attrs = {
     about: "About #{unitName}: TODO",
-    nav_bar: [
+    nav_bar: %w{oru journal}.include?(unitType) ? [
       { id: 1, name: "About", slug: "about", type: "page" },
       { id: 2, name: "Contact us", slug: "contact", type: "page" }
-    ]
+    ] : []
   }
 
   DB.transaction {
@@ -940,16 +946,18 @@ put "/api/unit/:unitID/unitBuilder" do |parentUnitID|
                 status: isHidden ? "hidden" : "active",
                 attrs: attrs.to_json)
 
-    Page.create(unit_id: newUnitID,
-                name: "About",
-                title: "About #{unitName}",
-                slug: "about",
-                attrs: { html: "" }.to_json)
-    Page.create(unit_id: newUnitID,
-                name: "Contact us",
-                title: "Contact us",
-                slug: "contact",
-                attrs: { html: "" }.to_json)
+    if %w{oru journal}.include?(unitType)
+      Page.create(unit_id: newUnitID,
+                  name: "About",
+                  title: "About #{unitName}",
+                  slug: "about",
+                  attrs: { html: "" }.to_json)
+      Page.create(unit_id: newUnitID,
+                  name: "Contact us",
+                  title: "Contact us",
+                  slug: "contact",
+                  attrs: { html: "" }.to_json)
+    end
 
     maxExisting = UnitHier.where(ancestor_unit: parentUnitID, is_direct: 1).max(:ordering)
     UnitHier.create(unit_id: newUnitID,
@@ -964,6 +972,32 @@ put "/api/unit/:unitID/unitBuilder" do |parentUnitID|
   }
   refreshUnitsHash
   return {status: "ok", nextURL: "/uc/#{newUnitID}"}.to_json
+end
+
+###################################################################################################
+# Re-order units
+put "/api/unit/:unitID/unitOrder" do |unitID|
+  # Check user permissions
+  perms = getUserPermissions(params[:username], params[:token], unitID)[:super] or restrictedHalt
+  content_type :json
+
+  DB.transaction {
+    unit = Unit[unitID] or jsonHalt(404, "Unit not found")
+    newOrder = JSON.parse(params[:order])
+    UnitHier.where(ancestor_unit: unitID, is_direct: true).count == newOrder.length or jsonHalt(400, "must reorder all at once")
+
+    # Make two passes, to absolutely avoid conflicting order in the table at any time.
+    maxOldOrder = UnitHier.where(ancestor_unit: unitID, is_direct: true).max(:ordering)
+    (1..2).each { |pass|
+      offset = (pass == 1) ? maxOldOrder+1 : 1
+      newOrder.each_with_index { |childID, idx|
+        h = UnitHier.where(ancestor_unit: unitID, unit_id: childID, is_direct: true).first
+        h.ordering = idx + offset
+        h.save
+      }
+    }
+    return {status: "ok"}.to_json
+  }
 end
 
 ###################################################################################################
