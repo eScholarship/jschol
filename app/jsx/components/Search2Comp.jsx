@@ -1,4 +1,4 @@
-// ##### Search Component - With Search Controls ##### //
+// ##### Search 2 Component - With Search Controls; Used on unit pages  ##### //
 
 import React from 'react'
 import Form from 'react-router-form'
