@@ -159,10 +159,9 @@ gulp.task('start-express', restartExpress)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Watch sass, html, and js and reload browser if any changes
 gulp.task('watch', function() {
-  gulp.watch('app/scss/**/*.scss', ['sass']);
-  gulp.watch('app/**/*.html', livereload.reload);
-  gulp.watch(['app/*.rb', 'util/*.rb'], ['restart-sinatra']);
-  gulp.watch(['app/isomorphic.js*'], ['restart-express']);
+  gulp.watch('app/scss/*.scss', {interval:500}, ['sass']);
+  gulp.watch(['app/*.rb', 'util/*.rb'], {interval:300}, ['restart-sinatra']);
+  gulp.watch(['app/isomorphic.jsx'], {interval:500}, ['restart-express']);
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

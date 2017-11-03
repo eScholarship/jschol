@@ -182,6 +182,16 @@ class PubYear extends React.Component {
     $('#facet-form-submit').click()
   }
 
+  handleKeyPress = e => {
+    // suppress Enter key - it goes to the wrong submit button
+    if ((e.keyCode || e.which || e.charCode) == 13) {
+      e.stopPropagation()
+      e.preventDefault()
+      return false
+    }
+    return true
+  }
+
   render() {
     let year = (new Date()).getFullYear()
     return (
@@ -189,12 +199,14 @@ class PubYear extends React.Component {
         <div className="c-pubyear__field">
           <label htmlFor="c-pubyear__textfield1">From:</label>
           <input id="c-pubyear__textfield1" name="pub_year_start" type="text" maxLength="4" placeholder={year}
-            defaultValue={this.state.pub_year_start} ref={(input) => { this.pub_year_start = input }} />
+            defaultValue={this.state.pub_year_start} ref={(input) => { this.pub_year_start = input }}
+            onKeyPress={this.handleKeyPress} />
         </div>
         <div className="c-pubyear__field">
           <label htmlFor="c-pubyear__textfield2">To:</label>
           <input id="c-pubyear__textfield2" name="pub_year_end" type="text" maxLength="4" placeholder={year}
-            defaultValue={this.state.pub_year_end} ref={(input) => { this.pub_year_end = input }} />
+            defaultValue={this.state.pub_year_end} ref={(input) => { this.pub_year_end = input }}
+            onKeyPress={this.handleKeyPress} />
         </div>
         <button className="c-pubyear__button" onClick={this.handleSubmit}>Apply</button>
       </div>

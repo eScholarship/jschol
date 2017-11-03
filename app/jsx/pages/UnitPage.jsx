@@ -31,6 +31,7 @@ import RedirectConfigLayout from '../layouts/RedirectConfigLayout.jsx'
 import SidebarComp from '../components/SidebarComp.jsx'
 import MetaTagsComp from '../components/MetaTagsComp.jsx'
 import ServerErrorComp from '../components/ServerErrorComp.jsx'
+import UnitBuilderLayout from '../layouts/UnitBuilderLayout.jsx'
 
 class UnitPage extends PageBase {
   // PageBase will fetch the following URL for us, and place the results in this.state.pageData
@@ -49,7 +50,7 @@ class UnitPage extends PageBase {
     if (pm.pageName) {
       if (pm.pageName == 'search')
         return `/api/unit/${pm.unitID}/search/${this.props.location.search}`
-      else if (['profile', 'carousel', 'issueConfig'].includes(pm.pageName))
+      else if (['profile', 'carousel', 'issueConfig', 'unitBuilder'].includes(pm.pageName))
         return `/api/unit/${pm.unitID}/${pm.pageName}`
       else
         return `/api/unit/${pm.unitID}/${pm.pageName}/${pm.splat}`
@@ -96,6 +97,9 @@ class UnitPage extends PageBase {
     } else if (this.props.params.pageName === 'issueConfig') {
       contentLayout = this.cmsPage(data, <UnitIssueConfigLayout unit={data.unit} data={data.content} sendApiData={this.sendApiData}/>)
       title = `Issue config: ${data.unit.name}`
+    } else if (this.props.params.pageName === 'unitBuilder') {
+      contentLayout = this.cmsPage(data, <UnitBuilderLayout unit={data.unit} data={data.content} sendApiData={this.sendApiData}/>)
+      title = `Unit builder: ${data.unit.name}`
     } else if (this.props.params.pageName === 'nav') {
       contentLayout = this.cmsPage(data, <UnitNavConfigLayout unit={data.unit} data={data.content} sendApiData={this.sendApiData}/>)
       title = `Navigation: ${data.unit.name}`

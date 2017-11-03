@@ -215,6 +215,10 @@ class DrawerComp extends React.Component {
       siteSettings.push({ id: "redirects",
                           title: <Link to={`/uc/root/redirects/static`}>Sitewide Redirects</Link>})
     }
+    if (cms.permissions.super && ["oru", "campus"].includes(this.props.data.unit.type)) {
+      siteSettings.push({ id: "unitBuilder",
+                          title: <Link to={`/uc/${this.props.data.unit.id}/unitBuilder`}>Unit Builder</Link>})
+    }
     if (this.props.data.unit.type === 'journal') {
       siteSettings.push({ id: "issueConfig", 
                           title: <Link to={`/uc/${this.props.data.unit.id}/issueConfig`}>Issue Configuration</Link>})
