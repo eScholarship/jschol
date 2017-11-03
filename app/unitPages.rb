@@ -258,17 +258,25 @@ def getUnitMarquee(unit, attrs)
   }
 end
 
+# Unit builder data
+def getUnitBuilderData(unit)
+  return { sub_units: UnitHier.where(ancestor_unit: unit.id, is_direct: true).order(:ordering).map { |u|
+    {id: u.unit_id, name: u.unit.name, type: u.unit.type} } }
+end
+
 # Department Landing Page
 # Grab data about: related series (children), related journals (children)
 #   and related ORUs, which include children ORUs, sibling ORUs, and parent ORU
 def getORULandingPageData(id)
   children = $hierByAncestor[id]
+  children and children.select! { |u| u.unit.status == 'active' }
   oru_children = children ? children.select { |u| u.unit.type == 'oru' }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : []
   oru_siblings, oru_ancestor = [], []
   oru_ancestor_id = $oruAncestors[id]
   if oru_ancestor_id
     oru_ancestor = [{unit_id: oru_ancestor_id, name: $unitsHash[oru_ancestor_id].name}]
     siblings = $hierByAncestor[oru_ancestor_id]
+    siblings and siblings.select! { |u| u.unit.status == 'active' }
     oru_siblings = siblings ? siblings.select { |u| u.unit.type == 'oru' and u.unit_id != id }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : []
   end
   related_orus = oru_children + oru_siblings + oru_ancestor
@@ -510,7 +518,8 @@ def getUnitProfile(unit, attrs)
     logo: attrs['logo'],
     facebook: attrs['facebook'],
     twitter: attrs['twitter'],
-    marquee: getUnitMarquee(unit, attrs)
+    marquee: getUnitMarquee(unit, attrs),
+    status: unit.status
   }
   
   if unit.type == 'journal'
@@ -905,6 +914,93 @@ def validateURL(url, allowExternal)
 end
 
 ###################################################################################################
+# Add a new unit
+put "/api/unit/:unitID/unitBuilder" do |parentUnitID|
+  # Only super-users allowed to add units
+  getUserPermissions(params[:username], params[:token], parentUnitID)[:super] or halt(401)
+
+  newUnitID = params[:newUnitID]
+  newUnitID =~ /^[a-z0-9_]+$/ or jsonHalt(400, "Invalid unit ID")
+  Unit[newUnitID].nil? or jsonHalt(400, "Duplicate unit ID")
+
+  unitName = params[:name]
+  unitName.nil? || unitName.empty? and jsonHalt(400, "Invalid unit name")
+
+  unitType = params[:type]
+  %w{oru journal series monograph_series}.include?(unitType) or jsonHalt(400, "Invalid unit type")
+
+  isHidden = !!params[:hidden]
+
+  attrs = {
+    about: "About #{unitName}: TODO",
+    nav_bar: %w{oru journal}.include?(unitType) ? [
+      { id: 1, name: "About", slug: "about", type: "page" },
+      { id: 2, name: "Contact us", slug: "contact", type: "page" }
+    ] : []
+  }
+
+  DB.transaction {
+    Unit.create(id: newUnitID,
+                name: unitName,
+                type: unitType,
+                status: isHidden ? "hidden" : "active",
+                attrs: attrs.to_json)
+
+    if %w{oru journal}.include?(unitType)
+      Page.create(unit_id: newUnitID,
+                  name: "About",
+                  title: "About #{unitName}",
+                  slug: "about",
+                  attrs: { html: "" }.to_json)
+      Page.create(unit_id: newUnitID,
+                  name: "Contact us",
+                  title: "Contact us",
+                  slug: "contact",
+                  attrs: { html: "" }.to_json)
+    end
+
+    maxExisting = UnitHier.where(ancestor_unit: parentUnitID, is_direct: 1).max(:ordering)
+    UnitHier.create(unit_id: newUnitID,
+                    ancestor_unit: parentUnitID,
+                    ordering: maxExisting+1,
+                    is_direct: true)
+    UnitHier.where(unit_id: parentUnitID).each { |hier|
+      UnitHier.create(unit_id: newUnitID,
+                      ancestor_unit: hier.ancestor_unit,
+                      is_direct: false)
+    }
+  }
+  refreshUnitsHash
+  return {status: "ok", nextURL: "/uc/#{newUnitID}"}.to_json
+end
+
+###################################################################################################
+# Re-order units
+put "/api/unit/:unitID/unitOrder" do |unitID|
+  # Check user permissions
+  perms = getUserPermissions(params[:username], params[:token], unitID)[:super] or restrictedHalt
+  content_type :json
+
+  DB.transaction {
+    unit = Unit[unitID] or jsonHalt(404, "Unit not found")
+    newOrder = JSON.parse(params[:order])
+    UnitHier.where(ancestor_unit: unitID, is_direct: true).count == newOrder.length or jsonHalt(400, "must reorder all at once")
+
+    # Make two passes, to absolutely avoid conflicting order in the table at any time.
+    maxOldOrder = UnitHier.where(ancestor_unit: unitID, is_direct: true).max(:ordering)
+    (1..2).each { |pass|
+      offset = (pass == 1) ? maxOldOrder+1 : 1
+      newOrder.each_with_index { |childID, idx|
+        h = UnitHier.where(ancestor_unit: unitID, unit_id: childID, is_direct: true).first
+        h.ordering = idx + offset
+        h.save
+      }
+    }
+    return {status: "ok"}.to_json
+  }
+end
+
+###################################################################################################
 # Change redirect data
 put "/api/redirect/:kind/:redirID" do |kind, redirID|
   getUserPermissions(params[:username], params[:token], 'root')[:super] or halt(401)
@@ -1054,6 +1150,8 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
       if perms[:super]
         unitAttrs['doaj'] = (params['data']['doajSeal'] == 'on')
         unitAttrs['altmetrics_ok'] = (params['data']['altmetrics_ok'] == 'on')
+        %w{active hidden moribund}.include?(params['data']['status']) or jsonHalt(400, "invalid status")
+        unit.status = params['data']['status']
       end
     end
 

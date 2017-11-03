@@ -286,12 +286,9 @@ end
 
 # Signal from the master process that caches need to be rebuilt.
 Signal.trap("WINCH") {
-  # Ignore on non-worker process
-  if $workerPrefix != ""
-    Thread.new {
-      fillCaches
-    }
-  end
+  Thread.new {
+    fillCaches
+  }
 }
 
 fillCaches

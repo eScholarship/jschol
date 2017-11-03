@@ -48,15 +48,20 @@ end
 STDOUT.write "\n=====================================================================================\n"
 
 def waitForSocks(host, port)
-  first = true
   begin
     sock = TCPSocket.new(host, port)
     sock.close
   rescue Errno::ECONNREFUSED
-    first and puts("Waiting for SOCKS proxy to start.")
-    first = false
-    sleep 0.5
-    retry
+    retries ||= 0
+    retries == 0 and puts("Waiting for SOCKS proxy to start.")
+    retries += 1
+    if retries == 60 # == 30 sec
+      puts "SOCKS proxy failed. Verify that 'ssh yourUsername@pub-jschol-dev.escholarship.org' works."
+      exit 1
+    else
+      sleep 0.5
+      retry
+    end
   end
 end
 
@@ -776,6 +781,8 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
       pageData[:content] = getUnitCarouselConfig(unit, attrs)
     elsif pageName == 'issueConfig'
       pageData[:content] = getUnitIssueConfig(unit, attrs)
+    elsif pageName == 'unitBuilder'
+      pageData[:content] = getUnitBuilderData(unit)
     elsif pageName == 'nav'
       pageData[:content] = getUnitNavConfig(unit, attrs['nav_bar'], params[:subPage])
     elsif pageName == 'sidebar'
@@ -791,8 +798,8 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
       pageData[:content] = getUnitStaticPage(unit, attrs, pageName)
     end
     pageData[:header] = getUnitHeader(unit,
-                                      (pageName =~ /^(nav|sidebar|profile|carousel|issueConfig|redirects)/ or issueData) ? nil : pageName,
-                                      issueData, attrs)
+      (pageName =~ /^(nav|sidebar|profile|carousel|issueConfig|redirects|unitBuilder)/ or issueData) ? nil : pageName,
+      issueData, attrs)
     pageData[:marquee] = getUnitMarquee(unit, attrs) if (["home", "search"].include? pageName or issueData)
   else
     #public API data

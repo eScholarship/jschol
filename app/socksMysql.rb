@@ -16,10 +16,10 @@ class SocksMysql
     @host = dbConfig['host']
     @port = dbConfig['port']
     timestamp = Time.now.to_f
-    @sockName = ".mysqlProxySock.#{@host}.#{@port}.#{timestamp}"
+    @sockName = ".mysqlpsk.#{@port}.#{timestamp}"
 
     # Blow away obsolete sockets from prior runs
-    Dir.glob(".mysqlProxySock.#{@host}.#{@port}.*").each { |fn|
+    Dir.glob(".mysqlProxySock.#{@port}.*").each { |fn|
       puts "Deleting obsolete #{fn}."
       File.delete(fn)
     }
