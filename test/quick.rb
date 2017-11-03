@@ -8,12 +8,6 @@ require 'open-uri'
 require 'sanitize'
 require 'test/unit'
 
-if !File.file?("config/do_iso")
-  puts "FATAL ERROR: Must turn iso mode on for tests to run."
-  puts "Hint: touch config/do_iso, then restart gulp."
-  exit 1
-end
-
 class TestQuick < Test::Unit::TestCase
 
   def fetch(url)
