@@ -962,7 +962,7 @@ put "/api/unit/:unitID/unitBuilder" do |parentUnitID|
     maxExisting = UnitHier.where(ancestor_unit: parentUnitID, is_direct: 1).max(:ordering)
     UnitHier.create(unit_id: newUnitID,
                     ancestor_unit: parentUnitID,
-                    ordering: maxExisting+1,
+                    ordering: maxExisting.nil? ? 1 : maxExisting+1,
                     is_direct: true)
     UnitHier.where(unit_id: parentUnitID).each { |hier|
       UnitHier.create(unit_id: newUnitID,
