@@ -1,7 +1,0 @@
-# Database connection parameters
-adapter: mysql2
-host: rds-pub-eschol-BLAHBLAHBLAH
-port: 3306
-database: eschol_test
-username: escholdba
-password: PASSWORD

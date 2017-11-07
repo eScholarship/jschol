@@ -30,7 +30,8 @@ puts "\nStarting SOCKS proxy."
 user = config['user'] ? "#{config['user']}@" : ""
 pid = spawn("ssh -N -D #{port} " +
 	          "-F /dev/null " +
-            "-o ProxyCommand='ssh -C -W %h:%p -p 18822 #{user}cdl-aws-bastion.cdlib.org' " +
+            "-o ProxyCommand='ssh -C -W %h:%p -o StrictHostKeyChecking=no -o CheckHostIP=no -p 18822 #{user}cdl-aws-bastion.cdlib.org' " +
+            "-o StrictHostKeyChecking=no " +
             "-o CheckHostIP=no " +
             "#{user}pub-jschol-dev.escholarship.org")
 Process.detach(pid)
