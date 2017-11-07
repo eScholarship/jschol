@@ -6,8 +6,8 @@ set -e
 printf "== Installing local Ruby gems ==\n"
 bundle install --path=gems --binstubs
 
-printf "\n== Uninstalling Ruby gems no longer used ==\n"
-bundle clean
+#printf "\n== Uninstalling Ruby gems no longer used ==\n"
+#bundle clean
 
 printf "\n== Installing node packages (used by gulp and iso via Node) ==\n"
 yarn install
@@ -19,11 +19,11 @@ perl -pi -e 's/didWarnPropTypesDeprecated = false/didWarnPropTypesDeprecated = t
 printf "\n== Installing bower packages (used in browser) ==\n"
 node_modules/.bin/bower install
 
-printf "\n== Uninstalling bower packages no longer used ==\n"
-node_modules/.bin/bower prune 
+#printf "\n== Uninstalling bower packages no longer used ==\n"
+#node_modules/.bin/bower prune
 
-printf "\n== Building splash page generator ==\n"
 if [[ `/bin/hostname` == "*pub-submit*" ]]; then
+  printf "\n== Building splash page generator ==\n"
   cd splash
   ./setupSplash.sh
   cd ..
