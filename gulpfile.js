@@ -2,6 +2,7 @@
 
 const _ = require('lodash');
 const del = require('del');
+const fs = require('fs');
 const gulp = require('gulp');
 const gutil = require('gulp-util');
 const sass = require('gulp-sass');
@@ -156,12 +157,23 @@ gulp.task('restart-express', restartExpress)
 
 gulp.task('start-express', restartExpress)
 
+gulp.task('rsync', function() {
+  exec('rsync -a --exclude js --exclude css --exclude bower_components /outer_jschol/app/ /home/jschol/inner_jschol/app/',
+    (err, stdout, stderr) => {
+      console.log(stderr)
+    }
+  )
+});
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Watch sass, html, and js and reload browser if any changes
 gulp.task('watch', function() {
-  gulp.watch('app/scss/*.scss', {interval:500}, ['sass']);
-  gulp.watch(['app/*.rb', 'util/*.rb'], {interval:300}, ['restart-sinatra']);
-  gulp.watch(['app/isomorphic.jsx'], {interval:500}, ['restart-express']);
+  gulp.watch('app/scss/*.scss', ['sass']);
+  gulp.watch(['app/*.rb', 'util/*.rb'], ['restart-sinatra']);
+  gulp.watch(['app/isomorphic.jsx'], ['restart-express']);
+
+  if (fs.existsSync('/outer_jschol/app/jsx/App.jsx'))
+    gulp.watch(['/outer_jschol/app/jsx/*.jsx', '/outer_jschol/app/*.rb', '/outer_jschol/util/*.rb'], {interval:500}, ['rsync']);
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

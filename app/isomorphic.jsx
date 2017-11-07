@@ -23,14 +23,16 @@ var routes = null
   app.use((req, res) =>
   {
     // Cache the app code. We can base the cache on the app bundle.
-    var curStamp = new Date(fs.statSync("app/js/manifest.json").mtime)
-    if ((lastStamp - curStamp) != 0) {
-      console.log("ISO: Loading new app bundle.    ")
-      lastStamp = curStamp
-      if (routes)
-        decache('./jsx/App.jsx')
-      routes = require('./jsx/App.jsx')
-      console.log("ISO: Bundle loaded.             ")
+    if (fs.existsSync("app/js/manifest.json")) {
+      var curStamp = new Date(fs.statSync("app/js/manifest.json").mtime)
+      if ((lastStamp - curStamp) != 0) {
+        console.log("ISO: Loading new app bundle.    ")
+        lastStamp = curStamp
+        if (routes)
+          decache('./jsx/App.jsx')
+        routes = require('./jsx/App.jsx')
+        console.log("ISO: Bundle loaded.             ")
+      }
     }
 
     // Simple check for up-ness

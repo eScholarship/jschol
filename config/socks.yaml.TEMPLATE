@@ -1,4 +1,0 @@
-# If socks.yaml is present, our Ruby server will send all traffic
-# through a SOCKS proxy on the given port.
-port: 1080
-#user: alternateUsername   # optionally override username when logging in to bastion
