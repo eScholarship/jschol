@@ -465,7 +465,7 @@ end
 get %r{.*} do
   # The regex below ensures that /api, /content, /locale, and files with a file ext get served
   # elsewhere.
-  if request.path_info =~ %r{api/.*|content/.*|locale/.*|.*\.\w{1,4}}
+  if request.path_info =~ %r{api/.*|content/.*|locale/.*|.*\.[a-zA-Z]\w{0,3}}
     pass
   else
     generalResponse
