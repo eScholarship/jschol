@@ -41,6 +41,10 @@ def testRedirect(fromURL, toURL)
   end
 end
 
+# Old stats reports
+testRedirect("http://escholarship.org/uc/stats/author/edu/ucsd/lrichmond/richmond_lawana_nicole.html",
+             "https://help.escholarship.org/support/discussions/topics/9000037605")
+
 # Crazy item URL from google
 testRedirect("http://escholarship.org/uc/item/49n325b7%253Fimage.view%253DgenerateImage%253BimgWidth%253D600%253BpageNum%253D1",
              "http://escholarship.org/uc/item/49n325b7")
