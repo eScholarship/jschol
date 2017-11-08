@@ -26,6 +26,8 @@ def testRedirect(fromURL, toURL)
     if (toURL.nil? && fromURL.sub(/^http/,'https') != got) ||
        (!toURL.nil? && toURL.sub(/^https/,'http') != got.sub(/^https/,'http'))
       error("Incorrect redirect. #{fromURL.inspect} -> #{got.inspect} but expected #{toURL.inspect}")
+    else
+      print "."
     end
   elsif result =~ %r{HTTP/1.1 (\d+)}
     code = $1.to_i
@@ -40,6 +42,22 @@ def testRedirect(fromURL, toURL)
     error "huh? #{fromURL.inspect} #{result.inspect}"
   end
 end
+
+# Browse URLs
+testRedirect("http://escholarship.org//uc/search?smode=browse;browse-department=ucla/",
+             "http://escholarship.org/ucla/units")
+testRedirect("http://escholarship.org//uc/search?smode=browse;browse-department=yes",
+             "http://escholarship.org/campuses")
+testRedirect("http://escholarship.org//uc/search?smode=browse;browse-journal=aa",
+             "http://escholarship.org/journals")
+testRedirect("http://escholarship.org//uc/search?smode=browse;browse-journal=yes",
+             "http://escholarship.org/journals")
+testRedirect("http://escholarship.org/uc/search?smode=browse;browse-creator=oo",
+             "http://escholarship.org/campuses")
+
+# Old stats reports
+testRedirect("http://escholarship.org/uc/stats/author/edu/ucsd/lrichmond/richmond_lawana_nicole.html",
+             "https://help.escholarship.org/support/discussions/topics/9000037605")
 
 # Crazy item URL from google
 testRedirect("http://escholarship.org/uc/item/49n325b7%253Fimage.view%253DgenerateImage%253BimgWidth%253D600%253BpageNum%253D1",
@@ -170,3 +188,5 @@ testRedirect("http://www.escholarship.org/uc/uclta",
              "http://escholarship.org/uc/uclta")
 testRedirect("http://www.escholarship.org/uc/uclta?foo=bar",
              "http://escholarship.org/uc/uclta?foo=bar")
+
+puts "\nDone."
