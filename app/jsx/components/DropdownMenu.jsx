@@ -24,7 +24,7 @@ export default class DropdownMenu extends React.Component {
     this.anyFocused = false
     // After the cascade of blur and focus events, if we end up with nothing in the menu
     // focused, close the menu.
-    setTimeout(()=>{ if (!this.anyFocused && this.mounted) this.setState({ isOpen: false }) }, 0)
+    setTimeout(()=>{ if (!this.anyFocused && this.mounted) this.setState({ isOpen: false }) }, 500)
   }
 
   render = () =>
@@ -37,9 +37,10 @@ export default class DropdownMenu extends React.Component {
                onBlur={this.onBlur}
                ref={(domNode)=> this.summary = domNode}
                onClick = {(event)=>{
-                 this.setState({isOpen: !this.details.open})
-                 this.summary.focus() // Firefox fails to do this by default
-                 event.preventDefault()
+                 setTimeout(()=>{
+                   this.setState({isOpen: this.details.open})
+                   this.summary.focus() // Firefox fails to do this by default
+                 }, 0)
                }}>
         { this.props.summarySpan &&
           <span>{this.props.summarySpan}</span>
