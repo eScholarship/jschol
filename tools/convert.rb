@@ -1425,6 +1425,7 @@ def parseUCIngest(itemID, inMeta, fileType)
   dbItem[:content_type] = attrs[:suppress_content] ? nil :
                           attrs[:withdrawn_date] ? nil :
                           isEmbargoed(attrs[:embargo_date]) ? nil :
+                          inMeta[:type] == "non-textual" ? nil :
                           pdfExists ? "application/pdf" :
                           contentType && contentType.strip.length > 0 ? contentType :
                           nil
@@ -2504,6 +2505,9 @@ begin
 
   case ARGV[0]
     when "--units"
+      puts "Unit conversion is now really dangerous. If you really want to do this, use --units-real"
+      exit 1
+    when "--units-real"
       units = ARGV.select { |a| a =~ /^[^-]/ }
       convertAllUnits(units.empty? ? "ALL" : Set.new(units))
     when "--items"
