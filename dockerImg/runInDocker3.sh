@@ -4,7 +4,7 @@ set -e
 
 rsync -a --exclude run.sh --exclude .git --exclude bin --exclude config --exclude gems --exclude node_modules --exclude app/js --exclude app/css --exclude app/bower_components /outer_jschol/ ./
 
-source config/config.env
+source config/env.sh
 
 mkdir -p ~/.ssh
 pushd ~/.ssh
@@ -57,7 +57,7 @@ EOF
 
 cat > config/puma.rb <<EOF
 workers $PUMA_WORKERS
-port $JSCHOL_MAIN_PORT
+port $PUMA_PORT
 on_worker_boot do |num|
   \$workerNum = num
   \$workerPrefix = num.to_s + "."
@@ -66,14 +66,17 @@ end
 EOF
 
 cat > config/server.yaml <<EOF
-mainPort: $JSCHOL_MAIN_PORT
-isoPort: $JSCHOL_ISO_PORT
+mainPort: $PUMA_PORT
+isoPort: $ISO_PORT
 isoWorkers: $ISO_WORKERS
 EOF
 
 [[ -n "$SOCKS_PORT" ]] && cat > config/socks.yaml <<EOF
 port: $SOCKS_PORT
 user: $SOCKS_USER
+target: $SOCKS_TARGET
+bastion: $SOCKS_BASTION
+bastionPort: $SOCKS_BASTION_PORT
 EOF
 
 [[ -n "$CLOUDFRONT_PUBLIC_URL" ]] && cat > config/cloudFront.yaml <<EOF

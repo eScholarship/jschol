@@ -173,7 +173,10 @@ gulp.task('watch', function() {
   gulp.watch(['app/isomorphic.jsx'], ['restart-express']);
 
   if (fs.existsSync('/outer_jschol/app/jsx/App.jsx'))
-    gulp.watch(['/outer_jschol/app/jsx/*.jsx', '/outer_jschol/app/*.rb', '/outer_jschol/util/*.rb'], {interval:500}, ['rsync']);
+    gulp.watch(['/outer_jschol/app/scss/*.scss',
+                '/outer_jschol/app/jsx/**/*.jsx',
+                '/outer_jschol/app/*.rb', '/outer_jschol/util/*.rb'],
+               {interval:2000}, ['rsync']);
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

@@ -25,13 +25,20 @@ rescue
   # ok, good, we can't connect
 end
 
+targetMachine = config['target']
+
+bastion = config['bastion']
+bastionPort = config['bastionPort']
+
 # Fire up a proxy, optionally overriding username
 puts "\nStarting SOCKS proxy."
 user = config['user'] ? "#{config['user']}@" : ""
-pid = spawn("ssh -N -D #{port} " +
-	          "-F /dev/null " +
-            "-o ProxyCommand='ssh -C -W %h:%p -o StrictHostKeyChecking=no -o CheckHostIP=no -p 18822 #{user}cdl-aws-bastion.cdlib.org' " +
-            "-o StrictHostKeyChecking=no " +
-            "-o CheckHostIP=no " +
-            "#{user}pub-jschol-dev.escholarship.org")
+cmd = "ssh -N -D #{port} " +
+      "-F /dev/null " +
+      "#{bastion ? "-o ProxyCommand='ssh -C -W %h:%p -o StrictHostKeyChecking=no -o CheckHostIP=no #{bastionPort ? "-p #{bastionPort}" : ""} #{user}cdl-aws-bastion.cdlib.org' " : ""}" +
+      "-o StrictHostKeyChecking=no " +
+      "-o CheckHostIP=no " +
+      "#{user}#{targetMachine}"
+puts cmd
+pid = spawn(cmd)
 Process.detach(pid)
