@@ -12,8 +12,12 @@
   position: relative;
 }
 
-.c-drawer__list-item, .c-drawer__list-item-subnav {
+.c-drawer__row {
   padding: 15px 20px 15px 45px;
+}
+
+.c-drawer__list-item, .c-drawer__list-item-subnav {
+  @extend .c-drawer__row;
   border-bottom: 1px solid $color-black;
   
   background-image: url("../images/th-list.svg");

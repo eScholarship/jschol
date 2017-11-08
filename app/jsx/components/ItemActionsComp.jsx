@@ -5,6 +5,7 @@
 // Styles that extend .o-button button object styles (like for applying custom button icons) should be placed in _itemactions.scss, as with the c-itemactions__button-[name] examples below:
 
 import React from 'react'
+import PropTypes from 'prop-types'
 import ShareComp from '../components/ShareComp.jsx'
 import NotYetLink from '../components/NotYetLink.jsx'
 import DropdownMenu from '../components/DropdownMenu.jsx'
@@ -91,9 +92,11 @@ class Downloadable extends React.Component {
 
 class Undownloadable extends React.Component {
   render() {
+    let msg = this.props.withdrawn_message ?  this.props.withdrawn_message
+              : "This item is not available for download from eScholarship"
     return (
       <div className="c-itemactions">
-        <div className="o-alert1" role="alert">This item is not available for download from eScholarship</div>
+        <div className="o-alert1" role="alert">{msg}</div>
         <ShareComp type="item" id={this.props.id} />
       </div>
     )
@@ -101,12 +104,23 @@ class Undownloadable extends React.Component {
 }
 
 class ItemActionsComp extends React.Component {
+  static propTypes = {
+    id: PropTypes.string.isRequired,
+    status: PropTypes.string.isRequired,
+    content_type: PropTypes.string,
+    pdf_url: PropTypes.string,
+    supp_files: PropTypes.array,
+    buy_link: PropTypes.string,
+    withdrawn_message: PropTypes.string,
+    download_restricted: PropTypes.bool 
+  }
+
   render() {
     let p = this.props
     return (
       <div>
         {(["withdrawn", "embargoed"].includes(p.status) || !p.content_type) ?
-           <Undownloadable id={p.id} />
+           <Undownloadable id={p.id} status={p.status} withdrawn_message={p.withdrawn_message} />
          :
            <Downloadable {...p} />}
       </div>

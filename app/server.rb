@@ -762,7 +762,7 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
     end
     pageData = {
       unit: unit.values.reject{|k,v| k==:attrs}.merge(:extent => ext),
-      sidebar: getUnitSidebar(unit)
+      sidebar: getUnitSidebar(unit.type.include?('series') ? getUnitAncestor(unit) : unit)
     }
     if ["home", "search"].include? pageName  # 'home' here refers to the unit's homepage, not root home
       q = nil
