@@ -153,6 +153,7 @@ class ItemPage extends PageBase {
                          pdf_url={d.pdf_url}
                          supp_files={a.supp_files}
                          buy_link={a.buy_link}
+                         withdrawn_message={a.withdrawn_message}
                          download_restricted={d.download_restricted} />
             <h2 className="c-tabcontent__main-heading" tabIndex="-1"><ArbitraryHTMLComp html={d.title}/></h2>
             <AuthorListComp pubdate={d.pub_date}

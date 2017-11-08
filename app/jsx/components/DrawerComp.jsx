@@ -231,32 +231,44 @@ class DrawerComp extends React.Component {
 
         <div className="c-drawer__heading">
           Navigation Items
+        {!this.props.data.unit.type.includes('series') &&
           <AddWidgetMenu title="Add Nav Item">
             <a href="" key="page"   onClick={e=>this.addNavItem(e, 'page')  }>Page</a>
             <a href="" key="url"    onClick={e=>this.addNavItem(e, 'link')  }>External Link</a>
             <a href="" key="folder" onClick={e=>this.addNavItem(e, 'folder')}>Dropdown Menu</a>
           </AddWidgetMenu>
+        }
         </div>
 
+      {!this.props.data.unit.type.includes('series') ?
         <SortableNavList cms={cms}
                          unit={this.props.data.unit.id}
                          navItems={this.props.data.header.nav_bar}
                          fetchingData={this.props.fetchingData}
                          onChangeOrder={this.reorderNav}/>
+      :
+        <div className="c-drawer__row">To make changes to navigation items, navigate to your unit’s homepage</div>
+      }
 
         <div className="c-drawer__heading">
           Sidebar Widgets
+        {!this.props.data.unit.type.includes('series') &&
           <AddWidgetMenu title="Add Widget">
             <a href="" key="RecentArticles" onClick={e=>this.addSidebarWidget(e, 'RecentArticles')  }>Recent Articles</a>
             <a href="" key="Text" onClick={e=>this.addSidebarWidget(e, 'Text')  }>Text</a>
           </AddWidgetMenu>
+        }
         </div>
 
+      {!this.props.data.unit.type.includes('series') ?
         <SortableSidebarList cms={cms}
                              unit={this.props.data.unit.id}
                              sidebarWidgets={this.props.data.sidebar}
                              fetchingData={this.props.fetchingData}
                              onChangeOrder={this.reorderSidebar}/>
+      :
+        <div className="c-drawer__row">To make changes to sidebar widgets, navigate to your unit’s homepage</div>
+      }
       </div>
     )
   }
