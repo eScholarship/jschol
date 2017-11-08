@@ -491,7 +491,7 @@ def generalResponse(iso_ok = true)
     # ReactRouter and React.
     begin
       outerHttp = Net::HTTP.new($host, $serverConfig['isoPort'])
-      outerHttp.read_timeout = 5
+      outerHttp.read_timeout = ($host == "localhost") ? 20 : 5  # need extra time on local dev machines
       response = outerHttp.start {|http| http.request(Net::HTTP::Get.new(remainder)) }
     rescue Exception => e
       # If there's an exception (like iso is completely dead), fall back to non-iso mode.
