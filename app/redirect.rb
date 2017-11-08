@@ -117,6 +117,16 @@ def handleSearchRedirect(uri)
     kwd = $1
     uri.path = "/search"
     uri.query = "q=#{kwd}"
+  elsif uri.query =~ %r{smode=browse}
+    if uri.query =~ %r{browse-journal=}
+      uri.path = "/journals"
+    elsif uri.query =~ %r{browse-department=([\w_]+)}
+      campus = $1
+      uri.path = $unitsHash[campus] && $unitsHash[campus].type == "campus" ? "/#{campus}/units" : "/campuses"
+    else
+      uri.path = "/campuses"
+    end
+    uri.query = nil
   else
     return nil
   end
