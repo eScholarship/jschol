@@ -65,7 +65,7 @@ class PaginationComp extends React.Component {
       $('#'+this.props.formButton).click()
     }
   }
-  
+
   renderPagination() {
     let p = this.props
     let [rows, start, start_type] = p.is_info ? [12, p.query.info_start, "info_start"] : [p.query.rows, p.query.start, "start"]

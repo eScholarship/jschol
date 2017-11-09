@@ -124,3 +124,19 @@
   @extend %o-button__9;
   background-image: inline('../images/icon_magnify.svg');
 }
+
+// thin border, no background:
+%o-button__10 {
+  @extend %o-button;
+  border: 1px solid $color-dark-gray;
+
+  &[disabled] {
+    border: 1px solid darken($color-light-gray, 20%);
+    color: $color-dark-gray;
+  }
+
+}
+
+.o-button__10 {
+  @extend %o-button__10;
+}
