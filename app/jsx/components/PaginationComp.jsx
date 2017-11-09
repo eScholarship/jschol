@@ -66,88 +66,112 @@ class PaginationComp extends React.Component {
     }
   }
 
+  getPaging(page, first, last) { 
+    let r = []
+    for (let i=first; i<=last; i++) {
+      r.push({num: i,
+                           className: i == page ? "c-pagination__item--current" : "c-pagination__item",
+                           label: i == page ? "you are on result set "+i : "go to result set "+i})
+    }
+    return r
+  }
+
   renderPagination() {
     let p = this.props
     let [rows, start, start_type] = p.is_info ? [12, p.query.info_start, "info_start"] : [p.query.rows, p.query.start, "start"]
     let page = Math.ceil(start / rows) + 1
     let pages = Math.ceil(this.clampedCount() / rows)
-    let displayedPages = []
 
     if (pages <= 2) {
-      for (let i=1; i<=pages; i++) {
-        displayedPages.push({num: i, className: i == page ? "c-pagination__item--active" : "c-pagination__item"});
-      }
+      let displayedPages = this.getPaging(page, 1, pages)
       return (
-      <div className="c-pagination">
-        <a href="" className="c-pagination__prevnext" onClick={ event => this.previous(event, rows, start, start_type) }>Previous</a>
+      <ul>
+        <li>
+        {page == 1 ?
+          <span aria-label="go to previous result set" className="c-pagination__prevnext">Previous</span>
+        :
+          <a href="" aria-label="go to previous result set" className="c-pagination__prevnext" onClick={ event => this.previous(event, rows, start, start_type) }>Previous</a>
+        }
+        </li>
         { displayedPages.map(page => {
-          return (<a href="" key={page.num} className={page.className} onClick={ event => this.page(event, rows, start, start_type) }>{page.num}</a>)
+          return (<li key={page.num}><a href="" aria-label={page.label} className={page.className} onClick={ event => this.page(event, rows, start, start_type) }>{page.num}</a></li>)
         }) }
-        <a href="" className="c-pagination__prevnext" onClick={ event => this.next(event, rows, start, start_type) }>Next</a>
-      </div>
+        <li><a href="" aria-label="go to next result set" className="c-pagination__prevnext" onClick={ event => this.next(event, rows, start, start_type) }>Next</a></li>
+      </ul>
       )
     }
 
     if (page <= 2) {
-      for (let i=1; i<=3; i++) {
-        displayedPages.push({num: i, className: i == page ? "c-pagination__item--active" : "c-pagination__item"});
-      }
+      let displayedPages = this.getPaging(page, 1, 3)
       return (
-        <div className="c-pagination">
-          <a href="" className="c-pagination__prevnext" onClick={ event => this.previous(event, rows, start, start_type) }>Previous</a>
+        <ul>
+          <li>
+          {page == 1 ?
+            <span aria-label="go to previous result set" className="c-pagination__prevnext">Previous</span>
+          :
+            <a href="" aria-label="go to previous result set" className="c-pagination__prevnext" onClick={ event => this.previous(event, rows, start, start_type) }>Previous</a>
+          }
+          </li>
           { displayedPages.map(page => {
-            return (<a href="" key={page.num} className={page.className} onClick={ event => this.page(event, rows, start, start_type) }>{page.num}</a>)
+            return (<li key={page.num}><a href="" aria-label={page.label} className={page.className} onClick={ event => this.page(event, rows, start, start_type) }>{page.num}</a></li>)
           }) }
           { (pages > 3) && 
-            [<span key="0" className="c-pagination__ellipses">&hellip;</span>,
-             <a key="1" href="" className="c-pagination__item" onClick={ event => this.last(event, rows, start, start_type) }>{pages}</a>]
+             <li><a href="" aria-label={"go to result set "+pages} className="c-pagination__item" onClick={ event => this.last(event, rows, start, start_type) }>{pages}</a></li>
           }
-          <a href="" className="c-pagination__prevnext" onClick={ event => this.next(event, rows, start, start_type) }>Next</a>
-        </div>
+          <li><a href="" aria-label="go to next result set" className="c-pagination__prevnext" onClick={ event => this.next(event, rows, start, start_type) }>Next</a></li>
+        </ul>
       )
     }
     else if (page > pages-2) {
-      for (let i=pages-2; i<=pages; i++) {
-        displayedPages.push({num: i, className: i == page ? "c-pagination__item--active" : "c-pagination__item"});
-      }
+      let displayedPages = this.getPaging(page, pages-2, pages)
       return (
-        <div className="c-pagination">
-          <a href="" className="c-pagination__prevnext" onClick={ event => this.previous(event, rows, start, start_type) }>Previous</a>
+        <ul>
+          <li>
+          {page == 1 ?
+            <span aria-label="go to previous result set" className="c-pagination__prevnext">Previous</span>
+          :
+            <a href="" aria-label="go to previous result set" className="c-pagination__prevnext" onClick={ event => this.previous(event, rows, start, start_type) }>Previous</a>
+          }
+          </li>
           { (pages > 3) && 
-            [<a key="0" href="" className="c-pagination__item" onClick={ event => this.first(event, start, start_type) }>1</a>,
-             <span key="1" className="c-pagination__ellipses">&hellip;</span>]
+            <li><a href="" aria-label="go to result set 1" className="c-pagination__item" onClick={ event => this.first(event, start, start_type) }>1</a></li>
           }
           { displayedPages.map(page => {
-            return (<a href="" key={page.num} className={page.className} onClick={ event => this.page(event, rows, start, start_type) }>{page.num}</a>)
+            return (<li key={page.num}><a href="" aria-label={page.label} className={page.className} onClick={ event => this.page(event, rows, start, start_type) }>{page.num}</a></li>)
           }) }
-          <a href="" className="c-pagination__prevnext" onClick={ event => this.next(event, rows, start, start_type) }>Next</a>
-        </div>
+          <li><a href="" aria-label="go to next result set" className="c-pagination__prevnext" onClick={ event => this.next(event, rows, start, start_type) }>Next</a></li>
+        </ul>
       )
     }
     else {
       return (
-        <div className="c-pagination">
-          <a href="" className="c-pagination__prevnext" onClick={ event => this.previous(event, rows, start, start_type) }>Previous</a>
-          <a href="" className="c-pagination__item" onClick={ event => this.first(event, start, start_type) }>1</a>
-          { (page > 3) ? <span className="c-pagination__ellipses">&hellip;</span> : null }
-          <a href="" className="c-pagination__item" onClick={ event => this.previous(event, rows, start, start_type) }>{page - 1}</a>
-          <a href="" className="c-pagination__item c-pagination__item--active" onClick={ event => this.page(event, rows, start, start_type) }>{page}</a>
-          <a href="" className="c-pagination__item" onClick={ event => this.next(event, rows, start, start_type) }>{page + 1}</a>
-          { (page < pages-2) ? <span className="c-pagination__ellipses">&hellip;</span> : null }
-          <a href="" className="c-pagination__item" onClick={ event => this.last(event, rows, start, start_type) }>{pages}</a>
-          <a href="" className="c-pagination__prevnext" onClick={ event => this.next(event, rows, start, start_type) }>Next</a>
-        </div>
+        <ul>
+          <li>
+          {page == 1 ?
+            <span aria-label="go to previous result set" className="c-pagination__prevnext">Previous</span>
+          :
+            <a href="" aria-label="go to previous result set" className="c-pagination__prevnext" onClick={ event => this.previous(event, rows, start, start_type) }>Previous</a>
+          }
+          </li>
+          <li><a href="" aria-label="go to result set 1" className="c-pagination__item" onClick={ event => this.first(event, start, start_type) }>1</a></li>
+          <li><a href="" aria-label={"go to result set "+(page - 1)} className="c-pagination__item" onClick={ event => this.previous(event, rows, start, start_type) }>{page - 1}</a></li>
+          <li><a href="" aria-label={"you are on result set "+page} className="c-pagination__item c-pagination__item--current" onClick={ event => this.page(event, rows, start, start_type) }>{page}</a></li>
+          <li><a href="" aria-label={"go to result set "+(page + 1)} className="c-pagination__item" onClick={ event => this.next(event, rows, start, start_type) }>{page + 1}</a></li>
+          <li><a href="" aria-label={"go to result set "+pages} className="c-pagination__item" onClick={ event => this.last(event, rows, start, start_type) }>{pages}</a></li>
+          <li><a href="" aria-label="go to next result set" className="c-pagination__prevnext" onClick={ event => this.next(event, rows, start, start_type) }>Next</a></li>
+        </ul>
       )
     }
   }
 
   render() {
     return (
-      <div>
+      <nav className="c-pagination">
       {this.props.is_info &&
-        <input type="hidden" name="info_start" form={this.props.formName} value={this.props.query.info_start} /> }
+        <input type="hidden" name="info_start" form={this.props.formName} value={this.props.query.info_start} />
+      }
         {this.renderPagination()}
-      </div>
+      </nav>
     )
   }
 

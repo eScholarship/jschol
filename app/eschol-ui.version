@@ -665,5 +665,17 @@ As well as:
   modified:   app/jsx/pages/ItemPage.jsx
   modified:   app/jsx/pages/SearchPage.jsx
 
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's 250c8737fa208dbaef56930cfd9df61f9c08a19c, 2017-11-09 <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
+  deleted:    app/jsx/components/SidebarNavComp.jsx
+  deleted:    app/scss/_sidebarnav.scss
+  modified:   app/jsx/components/BreadcrumbComp.jsx
+  modified:   app/jsx/components/ItemActionsComp.jsx
+  modified:   app/jsx/components/JumpComp.jsx
+  modified:   app/jsx/components/PaginationComp.jsx
+  modified:   app/jsx/components/ScholWorksComp.jsx
+  modified:   app/jsx/objects/ButtonObj.jsx
+  modified:   app/jsx/pages/ItemPage.jsx
 
