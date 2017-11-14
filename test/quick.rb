@@ -69,11 +69,22 @@ class TestQuick < Test::Unit::TestCase
     assert_match /pdfjs-cdl-wrapper/, html
   end
 
+  def test_itemNoParent
+    html = fetchAndStrip("http://localhost:4001/uc/item/7sg6571h")
+    assert_match /Lignin depletion enhances/, html
+    assert_match /pdfjs-cdl-wrapper/, html
+  end
+
+  def test_itemEmbargo
+    html = fetchAndStrip("http://localhost:4001/uc/item/1r38x195")
+    assert_match /under embargo until/, html
+    assert_no_match(/pdfjs-cdl-wrapper/, html)
+  end
+
   def test_dept
     html = fetchAndStrip("http://localhost:4001/uc/uclalaw")
     assert_match /UCLA School of Law/, html
-    assert /There are (\d+) publications/ =~ html
-    assert $1.to_i > 10, "At least 10 docs should be in uclalaw"
+    assert_match /There are (\d\d+) publications/, html
   end
 
   def test_journal
