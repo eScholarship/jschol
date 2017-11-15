@@ -161,7 +161,7 @@ class ItemPage extends PageBase {
                         changeTab={d.changeTab} />
             <PubLocationComp pub_web_loc={a.pub_web_loc}
                          rights={d.rights} />
-            <PubDataComp content_type={d.content_type} />
+            <PubDataComp content_type={d.content_type} data_avail_stmnt={d.attrs.data_avail_stmnt} />
             <TabsComp currentTab={currentTab}
                       changeTab={this.changeTab}
                       formatDate={this.formatDate}

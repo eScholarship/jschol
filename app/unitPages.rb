@@ -396,7 +396,7 @@ def getSeriesLandingPageData(unit, q)
 end
 
 def getIssues(unit_id)
-  Issue.where(:unit_id => unit_id).order(Sequel.desc(:pub_date)).order_append(Sequel.desc(:issue)).to_hash(:id).map{|id, issue|
+  Issue.where(:unit_id => unit_id).order(Sequel.desc(:pub_date)).order_append(Sequel.desc(Sequel[:issue].cast_numeric)).to_hash(:id).map{|id, issue|
     h = issue.to_hash
     h[:attrs] and h[:attrs] = JSON.parse(h[:attrs])
     h
