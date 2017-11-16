@@ -665,5 +665,33 @@ As well as:
   modified:   app/jsx/pages/ItemPage.jsx
   modified:   app/jsx/pages/SearchPage.jsx
 
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's 250c8737fa208dbaef56930cfd9df61f9c08a19c, 2017-11-09 <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
+Andy added all scss and changes since last.
+As well as:
+
+  deleted:    app/jsx/components/SidebarNavComp.jsx
+  deleted:    app/scss/_sidebarnav.scss
+  modified:   app/jsx/components/BreadcrumbComp.jsx
+  modified:   app/jsx/components/ItemActionsComp.jsx
+  modified:   app/jsx/components/JumpComp.jsx
+  modified:   app/jsx/components/PaginationComp.jsx
+  modified:   app/jsx/components/ScholWorksComp.jsx
+  modified:   app/jsx/objects/ButtonObj.jsx
+  modified:   app/jsx/pages/ItemPage.jsx
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's 3736a0f14ca9e97e3bfad75f206644a98ba9650d, 2017-11-14 <<<
+>>  Partial migration...Holding on implementing 'clientmarkup' CSS <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+scss and changes since last, except for 'clientmarkup' CSS
+As well as:
+
+  modified:   app/jsx/components/NavComp.jsx
+  modified:   app/jsx/components/NavSubComp.jsx
+  modified:   app/jsx/components/SubheaderComp.jsx
+  modified:   app/jsx/components/WizardInertComp.jsx
 

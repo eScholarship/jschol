@@ -161,7 +161,7 @@ class ItemPage extends PageBase {
                         changeTab={d.changeTab} />
             <PubLocationComp pub_web_loc={a.pub_web_loc}
                          rights={d.rights} />
-            <PubDataComp content_type={d.content_type} />
+            <PubDataComp content_type={d.content_type} data_avail_stmnt={d.attrs.data_avail_stmnt} />
             <TabsComp currentTab={currentTab}
                       changeTab={this.changeTab}
                       formatDate={this.formatDate}
@@ -169,12 +169,7 @@ class ItemPage extends PageBase {
           </main>
           <aside>
           {(d.status == "published" && d.content_type) &&
-            <section className="o-columnbox1">
-              <header>
-                <h2>Jump To</h2>
-              </header>
-              <JumpComp changeTab={this.changeTab} attrs={d.attrs} />
-            </section>
+            <JumpComp changeTab={this.changeTab} attrs={d.attrs} />
           }
           {d.sidebar &&
             <SidebarComp data={d.sidebar}/> }

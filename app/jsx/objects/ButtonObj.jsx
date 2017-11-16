@@ -25,6 +25,12 @@ class InputObj extends React.Component {
 
         <button className="o-button__9" aria-label="search"></button>
 
+        <button className="o-button__10">Previous</button>
+
+        <h2>Same Buttons Above but with Disabled State</h2>
+
+        <button disabled className="o-button__10">Previous</button>
+
       </div>
     )
   }
