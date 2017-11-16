@@ -43,6 +43,10 @@ def testRedirect(fromURL, toURL)
   end
 end
 
+# OA policy images
+testRedirect("http://escholarship.org/oa_harvester/ucsc/ucsc_email_header.png",
+             "http://escholarship.org/images/oa_harvester/ucsc/ucsc_email_header.png")
+
 # Browse URLs
 testRedirect("http://escholarship.org//uc/search?smode=browse;browse-department=ucla/",
              "http://escholarship.org/ucla/units")
