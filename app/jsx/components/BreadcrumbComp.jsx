@@ -13,7 +13,7 @@ class BreadcrumbComp extends React.Component {
         lastN = this.props.array ? this.props.array.length - 1 : 0,
         nodes = this.props.array ? this.props.array.map(function(node, i) {
           return (
-            <Link className={(i==lastN) ? "c-breadcrumb-link--active": null} to={node.url} key={i}>{node.name}</Link>
+            <li key={i}><Link className={(i==lastN) ? "c-breadcrumb-link--active": null} to={node.url}>{node.name}</Link></li>
           )
         })
         : 
@@ -22,7 +22,7 @@ class BreadcrumbComp extends React.Component {
 
     return (
       <nav className="c-breadcrumb" style={missingNavStyle}>
-        {nodes}
+        <ul>{nodes}</ul>
       </nav>
     )
   }

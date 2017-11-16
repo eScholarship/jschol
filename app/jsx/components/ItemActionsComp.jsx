@@ -97,7 +97,11 @@ class Undownloadable extends React.Component {
     return (
       <div className="c-itemactions">
         <div className="o-alert1" role="alert">{msg}</div>
+      {this.props.status != "withdrawn" ?
         <ShareComp type="item" id={this.props.id} />
+      :
+        <div className="c-share">{/* Keep this div here to allow sister element 'o-alert1' to be aligned properly to the left */}</div>
+      }
       </div>
     )
   }
