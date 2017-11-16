@@ -27,6 +27,17 @@
         color: lighten($color-dark-gray, 20%);
       }
 
+      // Ellipsis after the 2nd last pagination list item:
+
+      &:nth-last-child(2) {
+
+        &::before {
+          margin-right: $spacing-base;
+          content: '\2026';
+        }
+
+      }
+
     }
 
   }

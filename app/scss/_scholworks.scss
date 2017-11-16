@@ -105,17 +105,17 @@ $scholworks-tag-height: 1.4em;
 }
 
 .c-scholworks__thumbnail {
-  flex: 0 0 auto;
-  align-self: flex-end;
-  
-  margin-bottom: $spacing-sm;
-  border: 1px solid $color-light-gray;
-  box-shadow: $box-shadow2;
+  display: none;
 
   @include bp(screen1) {
+    display: block;
+    flex: 0 0 auto;
     align-self: flex-start;
     margin-top: calc(#{$scholworks-tag-height} + #{$spacing-md});
+    margin-bottom: $spacing-sm;
     margin-left: $spacing-md;
+    border: 1px solid $color-light-gray;
+    box-shadow: $box-shadow2;
   }
 
   img {

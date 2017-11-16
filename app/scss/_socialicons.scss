@@ -4,12 +4,14 @@
   margin-right: $spacing-sm;
 
   a {
+    display: inline-block;
 
     &:not(:first-child) {
       margin-left: $spacing-sm;
     }
 
     img {
+      display: block;
       height: $element-height;
     }
 

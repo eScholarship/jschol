@@ -1,6 +1,10 @@
-// ##### INERT Deposit Wizard Component Used for journals                   //
-//       -OR- for units with directSubmitURL assigned                       //
-//       -OR- for campuses, ORUs or series that are disabled/moribund ##### //
+// ##### INERT Wizard Component (not wizard-like, just a basic modal)         //
+//       To direct user to Manage Submissions                                 //
+//      -OR-                                                                  //
+//        Used for DEPOSITING                                                 //
+//        - from journals                                                     //
+//        - OR for units with directSubmitURL assigned                        //
+//        - OR for campuses, ORUs or series that are disabled/moribund #####  //
 
 import React from 'react'
 import PropTypes from 'prop-types'

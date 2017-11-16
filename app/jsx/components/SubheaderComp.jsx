@@ -49,11 +49,11 @@ class SubheaderComp extends React.Component {
     let directSubmitURL = h.directSubmitURL ? h.directSubmitURL : "https://submit.escholarship.org/subi/directSubmit?target="+unit.id
 
    // Button Configuration based on unit type
-   //   unit.type == 'journal'  -->  Submit / Manage Submissions
-   //   unit.type == 'campus'  -->  Deposit
+   //   unit.type == 'journal'  -->        Submit  / Manage Submissions
+   //   unit.type == 'campus'  -->         Deposit / Manage Submissions
    //   unit.type == '%series | oru'  -->  Deposit / Manage Submissions  */}
 
-    let wizard = null
+    let depositWizard = null
     let depositButton = <button id="wizardlyDeposit" className="o-button__3" onClick={(event)=>{
                                this.setState({depositModalOpen:true})
                                event.preventDefault()} } >{(unit.type == 'journal') ? "Submit" : "Deposit"}</button>
@@ -71,7 +71,7 @@ class SubheaderComp extends React.Component {
     // Note: Disabled and Moribund Units/Series are also uniquely handled when coming in
     //   at a higher level from within WizardUnitComp and WizardSeriesComp (handled by WizardComp below)
     if (unit.type == 'journal' || h.directSubmitURL || ["moribund", "disabled", "hide"].includes(h.directSubmit)) {
-      wizard = (<WizardInertComp showModal={this.state.depositModalOpen}
+      depositWizard = (<WizardInertComp showModal={this.state.depositModalOpen}
                       parentSelector={()=>$('#wizardModalBase')[0]}
                       onCancel={e=>this.closeWizardModal(e)}
                       header={(unit.type == 'journal') ? unit.name : h.campusName+" Deposit"}
@@ -79,7 +79,7 @@ class SubheaderComp extends React.Component {
     } else {
       // If unit is a series, pass in its parent's unitID
       let [unitIDForWiz, unitNameForWiz] = (unit.type == 'oru') ? [unit.id, unit.name] : (unit.type.includes('series')) ? [h.ancestorID, h.ancestorName] : [null, null]
-      wizard = (<WizardComp showModal={this.state.depositModalOpen}
+      depositWizard = (<WizardComp showModal={this.state.depositModalOpen}
                   parentSelector={()=>$('#wizardModalBase')[0]}
                   onCancel={e=>this.closeWizardModal(e)}
                   campuses={h.campuses}
@@ -107,19 +107,12 @@ class SubheaderComp extends React.Component {
           <img src={h.logo.url} width={h.logo.width} height={h.logo.height} alt={unit.name} />
         }
         </Link>
-      {unit.type == 'campus' ?
         <div id="wizardModalBase" className="c-subheader__sidebar">
           {depositButton}
-          {wizard}
-        </div>
-      :
-        <div id="wizardModalBase" className="c-subheader__sidebar">
-          {depositButton}
-          {wizard}
+          {depositWizard}
           {manageButton}
           {manageWizard}
         </div>
-      }
       </div>
     )
   }
