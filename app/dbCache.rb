@@ -74,7 +74,7 @@ def countOpenItems
 end
 
 def countEscholJournals
-  return Unit.where(type: 'journal').exclude(status: 'hidden').count
+  return Unit.where(type: 'journal', status: 'active').count
 end
 
 def countOrus 

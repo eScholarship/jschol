@@ -1239,8 +1239,8 @@ def checkRightsOverride(unitID, volNum, issNum, oldRights)
       # Failing that, check for a default set on the unit
       unit = $allUnits[unitID]
       unitAttrs = unit && unit.attrs && JSON.parse(unit.attrs) || {}
-      if unitAttrs["default_issue"]
-        rights = unitAttrs["default_issue"]
+      if unitAttrs["default_issue"] && unitAttrs["default_issue"]["rights"]
+        rights = unitAttrs["default_issue"]["rights"]
       else
         # Failing that, use values from the most-recent issue
         iss = Issue.where(unit_id: unitID).order(Sequel.desc(:pub_date)).order_append(Sequel.desc(:issue)).first
