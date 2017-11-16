@@ -52,6 +52,9 @@ def checkRedirect(origURI)
       uri = handleBepressRedirect(uri)
     elsif uri.host =~ /dermatology(-s10)?.cdlib.org/
       uri = handleDojRedirect(uri)
+    elsif uri.path =~ %r{^/oa_harvester/}
+      uri.path = "/images#{uri.path}"
+      break
     elsif uri.path =~ /(\.html?$)|(\.cgi)|(cgi-bin)/   # old HTML and CGI pages
       uri.path = "/"
       uri.query = nil
