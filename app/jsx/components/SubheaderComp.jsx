@@ -103,8 +103,9 @@ class SubheaderComp extends React.Component {
                             campuses={h.campuses} />
         <Link to={"/uc/"+banner_url} className={banner_class}>
           <h1>{banner_title}</h1>
+        {/* h.logo.width and h.logo.height not necessary here says Joel the CSS wiz */}
         {h.logo &&
-          <img src={h.logo.url} width={h.logo.width} height={h.logo.height} alt={unit.name} />
+          <img src={h.logo.url} alt={unit.name} />
         }
         </Link>
         <div id="wizardModalBase" className="c-subheader__sidebar">
