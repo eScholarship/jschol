@@ -12,6 +12,7 @@ class VolumeSelector extends React.Component {
   static PropTypes = {
     vip: PropTypes.array.isRequired,     // [unit_id, Volume, Issue, Pub_date]
     issue_numbering: PropTypes.string,
+    title: PropTypes.string,
     issues: PropTypes.array.isRequired   // [ {:id=>3258, :volume=>"1", :issue=>"2", :pub_date=>#<Date: ...}, ... ]
   }
 
@@ -23,31 +24,38 @@ class VolumeSelector extends React.Component {
     return date.match(/\d{4}/)
   }
 
-  customVolIss = (vol, iss, numbering) => {
-    if (!numbering) {
-      return vol + ", " + iss 
-    } else if (numbering === "volume_only") {
-      return vol 
-    } else {
-      return iss 
+  issueTitle = (vol, iss, numbering, title, year) => {
+    if (vol == "0" && iss == "0") {
+      return title 
+    }
+    else {
+      let voliss
+      if (!numbering) {
+        voliss = "Volume " + vol + ", Issue " + iss 
+      } else if (numbering === "volume_only") {
+        voliss = "Volume " + vol 
+      } else {
+        voliss = "Issue " + iss 
+      }
+      return voliss + ", " + year 
     }
   }
 
   render() {
     let p = this.props
+    let this_issue_title = this.issueTitle(p.vip[1], p.vip[2], p.issue_numbering, p.title, p.vip[3])
     return (
       <div className="o-customselector">
-        <h2 className="o-customselector__heading">{this.customVolIss(`Volume ${p.vip[1]}`, `Issue ${p.vip[2]}`, p.issue_numbering) + ", " + `${p.vip[3]}`}</h2>
+        <h2 className="o-customselector__heading">{this_issue_title}</h2>
         <details className="o-customselector__selector">
           <summary aria-label="Select a different issue"></summary>
           <div className="o-customselector__menu">
             <ul className="o-customselector__items">
               {p.issues.map( i => {
                 let numbering = i.attrs ? i.attrs.numbering : null
-                let name = this.customVolIss("Volume " + i.volume, "Issue " + i.issue, numbering) 
-                return (<li key={i.id}>
-                  <Link to={this.getIssuePath(i.unit_id, i.volume, i.issue)}>{name}, {this.getPubYear(i.pub_date)}</Link>
-                </li>)})
+                let title = i.attrs ? i.attrs.title : null
+                let name = this.issueTitle(i.volume, i.issue, numbering, title, this.getPubYear(i.pub_date)) 
+                return (<li key={i.id}><Link to={this.getIssuePath(i.unit_id, i.volume, i.issue)}>{name}</Link></li>)})
               }
             </ul>
           </div>
@@ -96,7 +104,7 @@ class IssueComp extends React.Component {
         <IssueActionsComp unit_id={pi.unit_id} buy_link={pi.buy_link} />
         {/*              articles={} */}
         <div className="c-pub">
-          <VolumeSelector vip={issueCurrent} issue_numbering={pi.numbering} issues={this.props.issues} />
+          <VolumeSelector vip={issueCurrent} issue_numbering={pi.numbering} title={pi.title} issues={this.props.issues} />
     {/* TITLE AND DESCRIPTION */}
           {this.props.display=="magazine" &&
             <div className="c-pubpreview">
