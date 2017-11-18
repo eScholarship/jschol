@@ -712,8 +712,10 @@ def getChildDepts(unit)
     return nil
   else
     node = {"id" => unit.id, "name" => unit.name}
-    child = $hierByAncestor[unit.id].map { |c| getChildDepts($unitsHash[c.unit_id]) }.compact
-    if child[0] then node["children"] = child end
+    if $hierByAncestor[unit.id]
+      child = $hierByAncestor[unit.id].map { |c| getChildDepts($unitsHash[c.unit_id]) }.compact
+      if child[0] then node["children"] = child end
+    end
     return node
   end
 end
