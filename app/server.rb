@@ -411,7 +411,6 @@ get "/content/:fullItemID/*" do |itemID, path|
   range = request.env["HTTP_RANGE"]
   s3Obj = $s3Bucket.object(s3Path)
   s3Obj.exists? or raise("missing display PDF")
-  fetcher = S3Fetcher.new(s3Obj, s3Path, range)
   if range
     range =~ /^bytes=(\d+)-(\d+)?/ or raise("can't parse range #{range.inspect}")
     fromByte, toByte = $1.to_i, $2.to_i
@@ -426,6 +425,7 @@ get "/content/:fullItemID/*" do |itemID, path|
   headers "Content-Length" => outLen.to_s,
           "ETag" => s3Obj.etag,
           "Last-Modified" => s3Obj.last_modified.to_s
+  fetcher = S3Fetcher.new(s3Obj, s3Path, range)
   stream { |out| fetcher.streamTo(out) }
 end
 
