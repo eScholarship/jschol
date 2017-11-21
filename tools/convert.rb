@@ -1261,20 +1261,21 @@ end
 ###################################################################################################
 def parseUCIngest(itemID, inMeta, fileType)
   attrs = {}
-  attrs[:suppress_content] = shouldSuppressContent(itemID, inMeta)
+  attrs[:addl_info] = inMeta.html_at("./comments") and sanitizeHTML(inMeta.html_at("./comments"))
+  attrs[:bepress_id] = inMeta.text_at("./context/bpid")
+  attrs[:buy_link] = inMeta.text_at("./context/buyLink")
+  attrs[:custom_citation] = inMeta.text_at("./customCitation")
+  attrs[:doi] = inMeta.text_at("./doi")
+  attrs[:embargo_date] = parseDate(inMeta[:embargoDate])
   attrs[:is_peer_reviewed] = inMeta[:peerReview] == "yes"
   attrs[:is_undergrad] = inMeta[:underGrad] == "yes"
-  attrs[:embargo_date] = parseDate(inMeta[:embargoDate])
-  attrs[:publisher] = inMeta.text_at("./publisher")
-  attrs[:orig_citation] = inMeta.text_at("./originalCitation")
-  attrs[:custom_citation] = inMeta.text_at("./customCitation")
-  attrs[:local_ids] = inMeta.xpath("./context/localID").map { |el| { type: el[:type], id: el.text } }
-  attrs[:pub_web_loc] = inMeta.xpath("./context/publishedWebLocation").map { |el| el.text.strip }
-  attrs[:buy_link] = inMeta.text_at("./context/buyLink")
-  attrs[:language] = inMeta.text_at("./context/language")
-  attrs[:doi] = inMeta.text_at("./doi")
   attrs[:isbn] = inMeta.text_at("./context/isbn")
-  attrs[:bepress_id] = inMeta.text_at("./context/bpid")
+  attrs[:language] = inMeta.text_at("./context/language")
+  attrs[:local_ids] = inMeta.xpath("./context/localID").map { |el| { type: el[:type], id: el.text } }
+  attrs[:orig_citation] = inMeta.text_at("./originalCitation")
+  attrs[:pub_web_loc] = inMeta.xpath("./context/publishedWebLocation").map { |el| el.text.strip }
+  attrs[:publisher] = inMeta.text_at("./publisher")
+  attrs[:suppress_content] = shouldSuppressContent(itemID, inMeta)
 
   # Normalize language codes
   attrs[:language] and attrs[:language] = attrs[:language].sub("english", "en").sub("german", "de").
