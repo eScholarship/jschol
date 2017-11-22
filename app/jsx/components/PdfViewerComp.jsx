@@ -2,20 +2,9 @@
 
 import React from 'react'
 import $ from 'jquery'
+import Breakpoints from '../../js/breakpoints.json'
 
-// Total hack to force rescale when window is resized
-if (!(typeof window === "undefined")) {
-  window.addEventListener('resize', function() {
-    if (!(typeof window.forcePdfViewerResize) === "undefined") {
-      // First, make it small so outer components actually can collapse down
-      $(".textLayer, .canvasWrapper, .page").css("width", "50px")
-      // Then pick up the new container size and rescale pdf.js
-      window.forcePdfViewerResize()
-    }
-  })
-}
-
-class PdfViewerComp extends React.Component
+export default class PdfViewerComp extends React.Component
 {
   initted: false
 
@@ -49,16 +38,25 @@ class PdfViewerComp extends React.Component
     if (this.initted)
       return
     this.initted = true
-    var url = this.props.url;
+
+    // Override the default URL in pdf.js
+    window.DEFAULT_URL = this.props.url
+
+    // Override the normal width calculation in pdf.js (it assumes it's in the whole window, and we're embedding it)
+    window.get_pdfjs_width = () => {
+      let totalWidth = $(window).width()
+      return (totalWidth >= parseInt(Breakpoints.screen2))
+             ? (totalWidth * (1.0 - 0.28)) - 120 // sidebar occupies 28% in this mode
+             : totalWidth - 21                   // no sidebar in this mode
+    }
 
     // The following hijinks are a signal to webpack to split the pdf.js code into a separate
     // bundle, which will be loaded only when needed.
     require.ensure(['pdfjs-embed'], function(require) {
-      window.DEFAULT_URL = url;
-      require('pdfjs-embed');
+      require('pdfjs-embed')
        // we show it only after init, to avoid wonky display
-      $("#pdfjs-viewer").css("visibility", "visible");
-    }, 'pdfjs');
+      $("#pdfjs-viewer").css("visibility", "visible")
+    }, 'pdfjs')
   }
 
   viewerHTML() {
@@ -382,5 +380,3 @@ class PdfViewerComp extends React.Component
     `}
   }
 }
-
-module.exports = PdfViewerComp;
