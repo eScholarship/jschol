@@ -158,7 +158,7 @@ class ItemPage extends PageBase {
             <h2 className="c-tabcontent__main-heading" tabIndex="-1"><ArbitraryHTMLComp html={d.title}/></h2>
             <AuthorListComp pubdate={d.pub_date}
                         authors={d.authors}
-                        changeTab={d.changeTab} />
+                        changeTab={this.changeTab} />
             <PubLocationComp pub_web_loc={a.pub_web_loc}
                          rights={d.rights} />
             <PubDataComp content_type={d.content_type} data_avail_stmnt={d.attrs.data_avail_stmnt} />
