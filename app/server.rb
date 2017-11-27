@@ -888,6 +888,7 @@ get "/api/item/:shortArk" do |shortArk|
             numbering, title = getIssueNumberingTitle(unit.id, volume, issue)
             body[:header] = getUnitHeader(unit, nil,
               {'unit_id': unit_id, 'volume': volume, 'issue': issue, 'title': title, 'numbering': numbering})
+            body[:numbering] = numbering 
             body[:citation][:volume] = volume
             body[:citation][:issue] = issue
           else
@@ -895,6 +896,7 @@ get "/api/item/:shortArk" do |shortArk|
           end
         end
       end
+      # pp(body)
       return body.to_json
     rescue Exception => e
       puts "Error in item API:"

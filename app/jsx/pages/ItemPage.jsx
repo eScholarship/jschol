@@ -29,10 +29,8 @@ if (!(typeof document === "undefined")) {
 const tab_anchors = ['main', 'supplemental', 'metrics', 'author']
 const anchors = tab_anchors.concat(['article_abstract', 'article_main', 'article_references'])
 
-const MONTHS = [ "January", "Februrary", "March",
-                 "April", "May", "June",
-                 "July", "August", "September",
-                 "October", "November", "December" ]
+const MONTHS = [ "January", "February", "March", "April", "May", "June",
+                 "July", "August", "September", "October", "November", "December" ]
 
 class ItemPage extends PageBase {
   static propTypes = {
@@ -157,11 +155,13 @@ class ItemPage extends PageBase {
                          download_restricted={d.download_restricted} />
             <h2 className="c-tabcontent__main-heading" tabIndex="-1"><ArbitraryHTMLComp html={d.title}/></h2>
             <AuthorListComp pubdate={d.pub_date}
-                        authors={d.authors}
-                        changeTab={d.changeTab} />
-            <PubLocationComp pub_web_loc={a.pub_web_loc}
-                         rights={d.rights} />
-            <PubDataComp content_type={d.content_type} data_avail_stmnt={d.attrs.data_avail_stmnt} />
+                            authors={d.authors}
+                            changeTab={this.changeTab} />
+            <PubLocationComp doi={a.doi}
+                             pub_web_loc={a.pub_web_loc}
+                             rights={d.rights} />
+            <PubDataComp content_type={d.content_type}
+                         data_avail_stmnt={d.attrs.data_avail_stmnt} />
             <TabsComp currentTab={currentTab}
                       changeTab={this.changeTab}
                       formatDate={this.formatDate}
