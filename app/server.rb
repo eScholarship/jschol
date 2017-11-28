@@ -556,7 +556,7 @@ not_found do
   if request.path =~ %r{\.[^/]+$}   # handle probable file paths like .jpg, .gif, etc.
     return "Resource not found.\n"
   elsif request.path =~ %r{/api/}
-    return "API not found.\n"
+    return jsonHalt(404, "API not found")
   else
     generalResponse(false)  # handles 404's in the same fashion as other req's, but no iso
   end
