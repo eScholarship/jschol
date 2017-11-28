@@ -354,7 +354,7 @@ get "/content/:fullItemID/*" do |itemID, path|
     epath = nil
     attrs["supp_files"].each { |supp|
       if path == "supp/#{supp["file"]}"
-        epath = supp["merritt_path"] || "content/#{URI::encode(path)}"
+        epath = URI::encode(supp["merritt_path"]) || "content/#{URI::encode(path)}"
       end
     }
     epath or halt(404)
@@ -556,7 +556,7 @@ not_found do
   if request.path =~ %r{\.[^/]+$}   # handle probable file paths like .jpg, .gif, etc.
     return "Resource not found.\n"
   elsif request.path =~ %r{/api/}
-    return "API not found.\n"
+    return jsonHalt(404, "API not found")
   else
     generalResponse(false)  # handles 404's in the same fashion as other req's, but no iso
   end
@@ -743,6 +743,11 @@ get "/api/globalStatic/*" do
   return pageData.to_json
 end
 
+def parseIssueHeaderData(unit_id, vol, iss, issue)
+  title = issue[:attrs] ? JSON.parse(issue[:attrs])["title"] : nil
+  return {'unit_id': unit_id, 'volume': vol, 'issue': iss, 'title': title, 'numbering': issue[:numbering]}
+end
+
 ###################################################################################################
 # Unit page data. 
 # pageName may be some administrative function (nav, profile), specific journal volume, or static page name
@@ -753,7 +758,7 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
 
   attrs = JSON.parse(unit[:attrs])
   pageName = params[:pageName]
-  issueData = nil
+  issueHeaderData = nil
   if pageName
     ext = nil
     begin
@@ -771,10 +776,8 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
       q = CGI::parse(request.query_string) if pageName == "search"
       pageData[:content] = getUnitPageContent(unit, attrs, q)
       if unit.type == 'journal' and pageData[:content][:issue]
-        iss = pageData[:content][:issue]
-        # need this information for building header breadcrumb
-        issueData = {'unit_id': params[:unitID], 'volume': iss[:volume], 'issue': iss[:issue],
-                     'numbering': iss[:numbering] }
+        issue = pageData[:content][:issue]
+        issueHeaderData = parseIssueHeaderData(params[:unitID], issue[:volume], issue[:issue], issue)
       end
     elsif pageName == 'profile'
       pageData[:content] = getUnitProfile(unit, attrs)
@@ -794,15 +797,14 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
     elsif isJournalIssue?(unit.id, params[:pageName], params[:subPage])
       pageData[:content] = getJournalIssueData(unit, attrs, params[:pageName], params[:subPage])
       # A specific issue, otherwise you get journal landing (through getUnitPageContent method above)
-      issueData = {'unit_id': params[:unitID], 'volume': params[:pageName], 'issue': params[:subPage],
-                   'numbering': pageData[:content][:issue][:numbering] }
+      issueHeaderData = parseIssueHeaderData(params[:unitID], params[:pageName], params[:subPage], pageData[:content][:issue])
     else
       pageData[:content] = getUnitStaticPage(unit, attrs, pageName)
     end
     pageData[:header] = getUnitHeader(unit,
-      (pageName =~ /^(nav|sidebar|profile|carousel|issueConfig|redirects|unitBuilder)/ or issueData) ? nil : pageName,
-      issueData, attrs)
-    pageData[:marquee] = getUnitMarquee(unit, attrs) if (["home", "search"].include? pageName or issueData)
+      (pageName =~ /^(nav|sidebar|profile|carousel|issueConfig|redirects|unitBuilder)/ or issueHeaderData) ? nil : pageName,
+      issueHeaderData, attrs)
+    pageData[:marquee] = getUnitMarquee(unit, attrs) if (["home", "search"].include? pageName or issueHeaderData)
   else
     #public API data
     pageData = {
@@ -883,9 +885,10 @@ get "/api/item/:shortArk" do |shortArk|
           issue_id = Item.join(:sections, :id => :section).filter(Sequel.qualify("items", "id") => id).map(:issue_id)[0]
           if issue_id
             unit_id, volume, issue = Section.join(:issues, :id => issue_id).map([:unit_id, :volume, :issue])[0]
-            numbering = getIssueNumbering(unit.id, volume, issue)
+            numbering, title = getIssueNumberingTitle(unit.id, volume, issue)
             body[:header] = getUnitHeader(unit, nil,
-              {'unit_id': unit_id, 'volume': volume, 'issue': issue, numbering: numbering})
+              {'unit_id': unit_id, 'volume': volume, 'issue': issue, 'title': title, 'numbering': numbering})
+            body[:numbering] = numbering 
             body[:citation][:volume] = volume
             body[:citation][:issue] = issue
           else
@@ -893,6 +896,7 @@ get "/api/item/:shortArk" do |shortArk|
           end
         end
       end
+      # pp(body)
       return body.to_json
     rescue Exception => e
       puts "Error in item API:"

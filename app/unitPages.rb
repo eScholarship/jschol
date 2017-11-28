@@ -163,7 +163,9 @@ def getPageBreadcrumb(unit, pageName, issue=nil)
   if issue
    vol = "Volume #{issue[:volume]}"
    iss = "Issue #{issue[:issue]}"
-   if !issue[:numbering]
+   if issue[:volume] == "0" and issue[:issue] == "0"
+     name = issue[:title] 
+   elsif !issue[:numbering]
      name = vol + ", " + iss 
    elsif issue[:numbering] == "volume_only"
      name = vol 
@@ -396,11 +398,18 @@ def getSeriesLandingPageData(unit, q)
 end
 
 def getIssues(unit_id)
-  Issue.where(:unit_id => unit_id).order(Sequel.desc(:pub_date)).order_append(Sequel.desc(Sequel[:issue].cast_numeric)).to_hash(:id).map{|id, issue|
+  r = Issue.where(:unit_id => unit_id).exclude(:volume => '0', :issue => '0').order(Sequel.desc(:pub_date)).order_append(Sequel.desc(Sequel[:issue].cast_numeric)).to_hash(:id).map{|id, issue|
     h = issue.to_hash
     h[:attrs] and h[:attrs] = JSON.parse(h[:attrs])
     h
   }
+  articlesInPress = Issue.where(:unit_id => unit_id, :volume => '0', :issue => '0').to_hash(:id).map{|id, issue|
+    h = issue.to_hash
+    h[:attrs] and h[:attrs] = JSON.parse(h[:attrs])
+    h
+  }
+  r.unshift(articlesInPress[0]) if articlesInPress[0]
+  return r 
 end 
 
 # Landing page data does not pass arguments volume/issue. It just gets most recent journal
@@ -426,13 +435,14 @@ def isJournalIssue?(unit_id, volume, issue)
   !!Issue.first(:unit_id => unit_id, :volume => volume, :issue => issue)
 end
 
-def getIssueNumbering(unit_id, volume, issue)
+# Returns pair: 'numbering' setting and title for custom breadcrumb on item pages
+def getIssueNumberingTitle(unit_id, volume, issue)
   i = Issue.first(:unit_id => unit_id, :volume => volume, :issue => issue)
-  return nil if i.nil?
+  return nil, nil if i.nil?
   i = i.values
-  return nil if i[:attrs].nil?
+  return nil, nil if i[:attrs].nil?
   attrs = JSON.parse(i[:attrs])
-  return attrs['numbering']
+  return attrs['numbering'], attrs['title']
 end
 
 def getIssue(unit_id, display, volume=nil, issue=nil)
