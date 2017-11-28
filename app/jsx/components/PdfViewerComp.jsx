@@ -52,8 +52,8 @@ export default class PdfViewerComp extends React.Component
 
     // The following hijinks are a signal to webpack to split the pdf.js code into a separate
     // bundle, which will be loaded only when needed.
-    require.ensure(['pdfjs-embed'], function(require) {
-      require('pdfjs-embed')
+    require.ensure(['pdfjs-embed2'], function(require) {
+      require('pdfjs-embed2')
        // we show it only after init, to avoid wonky display
       $("#pdfjs-viewer").css("visibility", "visible")
     }, 'pdfjs')

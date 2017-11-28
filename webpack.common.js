@@ -37,7 +37,7 @@ module.exports = {
   ],
   resolve: {
     alias: {
-      'pdfjs-lib': __dirname + '/node_modules/pdfjs-embed/src/pdf.js',
+      'pdfjs-lib': __dirname + '/node_modules/pdfjs-embed2/src/pdf.js'
     },
   },
   module: {
