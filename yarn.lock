@@ -5750,9 +5750,9 @@ pbkdf2@^3.0.3:
   dependencies:
     create-hmac "^1.1.2"
 
-pdfjs-embed2@escholarship/pdfjs-embed2#c7b2343f6d9154d880b7fb255f6bde39ee1f362d:
+pdfjs-embed2@escholarship/pdfjs-embed2#ae781f595adbb80e8db64af01ce1d8a403c5e775:
   version v1.10.88_CDL1
-  resolved "https://codeload.github.com/escholarship/pdfjs-embed2/tar.gz/c7b2343f6d9154d880b7fb255f6bde39ee1f362d"
+  resolved "https://codeload.github.com/escholarship/pdfjs-embed2/tar.gz/ae781f595adbb80e8db64af01ce1d8a403c5e775"
 
 pend@~1.2.0:
   version "1.2.0"

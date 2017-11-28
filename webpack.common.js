@@ -47,6 +47,11 @@ module.exports = {
       loader: 'babel-loader'
     },
     {
+      test: /node_modules.pdfjs-embed2.*\.js$/,
+      exclude: /src\/core\/(glyphlist|unicode)/,
+      loader: 'babel-loader'
+    },
+    {
       test: /\.json$/,
       loader: 'json-loader'
     }]
