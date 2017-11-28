@@ -205,3 +205,11 @@ Background color with progressively-enhanced blur effect. Example:
   }
 
 }
+
+%u-thumbnail {
+  display: block;
+  width: 150px;
+  height: auto;
+  border: 1px solid $color-light-gray;
+  box-shadow: $box-shadow2;
+}

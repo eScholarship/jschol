@@ -695,3 +695,13 @@ As well as:
   modified:   app/jsx/components/SubheaderComp.jsx
   modified:   app/jsx/components/WizardInertComp.jsx
 
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's f84a44ebd0b718ef0b29637d6346f9b941847365, 2017-11-27 <<<
+>>  Implemented 'clientmarkup' CSS                              <<<
+>>  Partial migration...Holding on implementing IssueComp       <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+  modified:   app/jsx/components/ArbitraryHTMLComp.jsx
+  modified:   app/jsx/components/PaginationComp.jsx
+  modified:   app/jsx/components/TabAuthorComp.jsx
+
