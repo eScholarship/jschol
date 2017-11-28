@@ -35,10 +35,20 @@ module.exports = {
     // Generates manifest.json so app can know the exact names of files for cache-busting
     new ManifestPlugin()
   ],
+  resolve: {
+    alias: {
+      'pdfjs-lib': __dirname + '/node_modules/pdfjs-embed2/src/pdf.js'
+    },
+  },
   module: {
     loaders: [{
       test: /\.jsx$/,
       exclude: /node_modules/,
+      loader: 'babel-loader'
+    },
+    {
+      test: /node_modules.pdfjs-embed2.*\.js$/,
+      exclude: /src\/core\/(glyphlist|unicode)/,
       loader: 'babel-loader'
     },
     {
