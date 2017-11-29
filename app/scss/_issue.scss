@@ -1,0 +1,108 @@
+// ##### Issue Component ##### //
+
+.c-issue {
+  margin-bottom: $spacing-md;
+
+  @include bp(screen1) {
+    display: flex;
+    position: relative;
+
+    // Detecting 'display: contents' alone is causing a false positive in Safari, so adding 'display: flow-root':
+    @supports (display: contents) and (display: flow-root) {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      grid-template-rows: auto 1fr auto;
+    }
+
+  }
+
+  @include headings() {
+    @extend %o-heading3a;
+    margin-bottom: $spacing-sm;
+
+    @include bp(screen1) {
+      position: absolute;
+      right: 0;
+      left: 0;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
+      grid-column: 2;
+      grid-row: 1;
+
+      @supports (display: contents) and (display: flow-root) {
+        position: static;
+        margin-bottom: $spacing-sm;
+        white-space: normal;
+        overflow: visible;
+      }
+
+    }
+
+  }
+
+}
+
+.c-issue__thumbnail {
+  margin: 0 0 $spacing-sm;
+
+  @include bp(screen1) {
+    display: contents;
+    flex: 0 0 auto;
+    margin: $spacing-lg 0 0;
+  }
+
+  img {
+    @extend %u-thumbnail;
+    margin-bottom: $spacing-base;
+
+    @include bp(screen1) {
+      margin: 0 $spacing-md 0 0;
+      grid-row: 1 / 4;
+    }
+
+  }
+
+  figcaption {
+    
+    @include bp(screen1) {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      left: 150px;
+      align-self: end;
+      margin-left: $spacing-md;
+      font-size: 0.9em;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
+      grid-column: 2;
+      grid-row: 3;
+
+      @supports (display: contents) and (display: flow-root) {
+        position: static;
+        margin-left: 0;
+      }
+
+    }
+
+  }
+
+}
+
+.c-issue__description {
+
+  @include bp(screen1) {
+    margin-top: $spacing-lg;
+    padding-bottom: $spacing-md;
+    grid-column: 2;
+    grid-row: 2;
+
+    @supports (display: contents) and (display: flow-root) {
+      margin: 0;
+      padding: 0;
+    }
+
+  }
+
+}

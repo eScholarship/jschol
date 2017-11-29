@@ -102,7 +102,7 @@ class TabAuthorComp extends React.Component {
         'repec':        "RePEc ID: ",
         'default':      ""
       }
-      return type ? v[type] : v["default"]
+      return v[type] ? v[type] : v["default"]
     }
     let local_ids
     if (p.attrs['local_ids']) {
@@ -204,7 +204,7 @@ class TabAuthorComp extends React.Component {
           }
 
           {p.attrs['addl_info'] &&
-            [<dt key="0"><strong>Additional Info</strong></dt>,
+            [<dt key="0"><strong>Additional Info:</strong></dt>,
              <dd key="1"><ArbitraryHTMLComp html={p.attrs['addl_info']} h1Level={2}/></dd>]
           }
 
