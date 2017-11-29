@@ -122,7 +122,7 @@ class ScholWorksComp extends React.Component {
             {pr.rights && <RightsComp rights={pr.rights} size="small" />}
           </div>
         </div>
-        {pr.thumbnail && <Link to={itemLink} className="c-scholworks__thumbnail"><img src={"/assets/"+pr.thumbnail.asset_id} width={pr.thumbnail.width} height={pr.thumbnail.height} alt={`Cover page: ${pr.title}`} /></Link>}
+        {pr.thumbnail && <Link to={itemLink} className="c-scholworks__thumbnail"><img src={"/assets/"+pr.thumbnail.asset_id} alt={`Cover page: ${pr.title}`} /></Link>}
       </section>
     )
   }
