@@ -14,7 +14,6 @@ const livereload = require('gulp-livereload')
 const exec = require('child_process').exec
 const spawn = require('child_process').spawn
 const webpack = require('webpack');
-const ProgressPlugin = require('webpack/lib/ProgressPlugin');
 const readYaml = require('read-yaml');
 
 // Process control for Sinatra and Express
@@ -28,13 +27,6 @@ var productionMode = !!gutil.env.production
 // Build javscript bundles with Webpack
 gulp.task('watch:src', (cb) => {
   const config = Object.create(require('./webpack.' + (productionMode ? 'prd' : 'dev') + '.js'));
-  config.watch = true;
-  config.cache = true;
-  config.bail = false;
-  config.plugins.push(new ProgressPlugin( (percent, message) => 
-    process.stdout.write(" [" + Math.round(percent*100) + "%] " + message + "                                \r")
-  ))
-
   webpack(config, function(error, stats) {
     if (error) {
       gutil.log('[webpack]', error);
@@ -168,9 +160,9 @@ gulp.task('rsync', function() {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Watch sass, html, and js and reload browser if any changes
 gulp.task('watch', function() {
-  gulp.watch('app/scss/*.scss', ['sass']);
-  gulp.watch(['app/*.rb', 'util/*.rb'], ['restart-sinatra']);
-  gulp.watch(['app/isomorphic.jsx'], ['restart-express']);
+  gulp.watch('app/scss/*.scss', {interval:500}, ['sass']);
+  gulp.watch(['app/*.rb', 'util/*.rb'], {interval:500}, ['restart-sinatra']);
+  gulp.watch(['app/isomorphic.jsx'], {interval:800}, ['restart-express']);
 
   if (fs.existsSync('/outer_jschol/app/jsx/App.jsx'))
     gulp.watch(['/outer_jschol/app/scss/*.scss',
