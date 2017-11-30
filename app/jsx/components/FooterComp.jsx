@@ -15,7 +15,7 @@ class FooterComp extends React.Component {
           <Link to="/ucoapolicies">UC Open Access Policy</Link>
           <Link to="/publishing">eScholarship Publishing</Link>
           <Link to="/privacypolicy">Privacy Statement</Link>
-          <Link to="/policies">Policies</Link>
+          <Link to="/policies">Site Policies</Link>
           <Link to="/terms">Terms of Use</Link>
           <Subscriber channel="cms">
             { cms => cms.loggedIn ?
