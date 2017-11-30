@@ -1,6 +1,7 @@
 const webpack = require("webpack");
 const _ = require('lodash');
 const ManifestPlugin = require('webpack-manifest-plugin');
+const ProgressPlugin = require('webpack/lib/ProgressPlugin');
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // read package.json and get dependencies' package ids
@@ -15,6 +16,9 @@ function getNPMPackageIds() {
 }
 
 module.exports = {
+  watch: true,
+  cache: true,
+  bail: false,
   entry: {
     app: './app/jsx/App.jsx',
     lib: getNPMPackageIds()
@@ -33,7 +37,10 @@ module.exports = {
       jQuery: "jquery"
     }),
     // Generates manifest.json so app can know the exact names of files for cache-busting
-    new ManifestPlugin()
+    new ManifestPlugin(),
+    new ProgressPlugin( (percent, message) =>
+      process.stdout.write(" [" + Math.round(percent*100) + "%] " + message + "                                \r")
+    )
   ],
   resolve: {
     alias: {

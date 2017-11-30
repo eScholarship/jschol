@@ -54,6 +54,7 @@ export default class PdfViewerComp extends React.Component
     // bundle, which will be loaded only when needed.
     require.ensure(['pdfjs-embed2'], function(require) {
       require('pdfjs-embed2')
+      window.webViewerLoad()
        // we show it only after init, to avoid wonky display
       $("#pdfjs-viewer").css("visibility", "visible")
     }, 'pdfjs')

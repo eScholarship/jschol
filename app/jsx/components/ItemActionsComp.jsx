@@ -9,6 +9,7 @@ import PropTypes from 'prop-types'
 import ShareComp from '../components/ShareComp.jsx'
 import NotYetLink from '../components/NotYetLink.jsx'
 import DropdownMenu from '../components/DropdownMenu.jsx'
+import { Link } from 'react-router'
 
 class Downloadable extends React.Component {
   linkBuyPrint = () => {window.location = this.props.buy_link}
@@ -91,14 +92,27 @@ class Downloadable extends React.Component {
 }
 
 class Undownloadable extends React.Component {
+  handleClick(e, tabName) {
+    e.preventDefault()
+    this.props.changeTab(tabName)
+  }
+
   render() {
-    let msg = this.props.withdrawn_message ?  this.props.withdrawn_message
-              : "This item is not available for download from eScholarship"
+    let p = this.props
+    let msg = (!p.content_type && p.supp_files && p.supp_files.length > 0) ?
+                <div className="o-alert1" role="alert">All content for this item is under the <Link to="#" onClick={(e)=>this.handleClick(e, "supplemental")} className="o-textlink__secondary">Supplemental Material</Link> tab.</div>
+              :
+                <div className="o-alert1" role="alert">
+                  {p.withdrawn_message ?
+                    p.withdrawn_message
+                  : "This item is not available for download from eScholarship"
+                  }
+                </div>
     return (
       <div className="c-itemactions">
-        <div className="o-alert1" role="alert">{msg}</div>
-      {this.props.status != "withdrawn" ?
-        <ShareComp type="item" id={this.props.id} />
+        {msg}
+      {p.status != "withdrawn" ?
+        <ShareComp type="item" id={p.id} />
       :
         <div className="c-share">{/* Keep this div here to allow sister element 'o-alert1' to be aligned properly to the left */}</div>
       }
@@ -116,7 +130,8 @@ class ItemActionsComp extends React.Component {
     supp_files: PropTypes.array,
     buy_link: PropTypes.string,
     withdrawn_message: PropTypes.string,
-    download_restricted: PropTypes.bool 
+    download_restricted: PropTypes.bool,
+    changeTab: PropTypes.any
   }
 
   render() {
@@ -124,7 +139,7 @@ class ItemActionsComp extends React.Component {
     return (
       <div>
         {(["withdrawn", "embargoed"].includes(p.status) || !p.content_type) ?
-           <Undownloadable id={p.id} status={p.status} withdrawn_message={p.withdrawn_message} />
+           <Undownloadable {...p} />
          :
            <Downloadable {...p} />}
       </div>

@@ -30,6 +30,6 @@ export default class ArbitraryHTMLComp extends React.Component
     // Kludge for opening deposit wizard modal 
     let fixedText2 = fixedText.replace(/<a href=\"http:\/\/open-deposit-wizard\.com\">/g, 
       '<a href="" onClick="openDepositWiz(event);">')
-    return <div dangerouslySetInnerHTML={{__html: fixedText2}}/>
+    return <div className="c-clientmarkup" dangerouslySetInnerHTML={{__html: fixedText2}}/>
   }
 }
