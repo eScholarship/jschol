@@ -2,8 +2,7 @@
 
 // scss-lint:disable IdSelector
 #pdfjs-cdl-wrapper {
-  @import '../bower_components/pdfjs-embed/scss/_viewer.scss';
-  /*display: none;*/
+  @import '../node_modules/pdfjs-embed2/dist/viewer'; // Note! ".css" in path disables wrapping. Avoid.
 
   @include bp(screen1) {
     display: block;
