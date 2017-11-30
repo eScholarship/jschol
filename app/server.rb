@@ -354,7 +354,7 @@ get "/content/:fullItemID/*" do |itemID, path|
     epath = nil
     attrs["supp_files"].each { |supp|
       if path == "supp/#{supp["file"]}"
-        epath = URI::encode(supp["merritt_path"]) || "content/#{URI::encode(path)}"
+        epath = supp["merritt_path"] ? URI::encode(supp["merritt_path"]) : "content/#{URI::encode(path)}"
       end
     }
     epath or halt(404)
