@@ -363,8 +363,10 @@ get "/content/:fullItemID/*" do |itemID, path|
   end
 
   # Some items have a date-based download restriction. In this case, we only support the
-  # no-splash version used for pdf.js rendering, and protected (lightly) by a key.
-  if attrs['disable_download'] && Date.parse(attrs['disable_download']) > Date.today && !(mainPDF && noSplash)
+  # no-splash version used for pdf.js rendering, and protected (lightly) by a key. Note that
+  # supp files are explicitly allowed, e.g. for the Greek Satyr Play. See
+  # https://www.pivotaltracker.com/story/show/152981894
+  if attrs['disable_download'] && Date.parse(attrs['disable_download']) > Date.today && mainPDF && !noSplash
     halt 403, "Download restricted until #{attrs['disable_download']}"
   end
 
