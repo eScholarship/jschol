@@ -171,8 +171,8 @@ class AccessLogger
       status.to_s[0..3],
       length,
       Rack::Utils.clock_time - began_at,
-      extract_referer(header),  # added
-      extract_trace(header) ]   # added
+      extract_referer(env, header),  # added
+      extract_trace(env, header) ]   # added
 
     logger = @logger || env[Rack::RACK_ERRORS]
     # Standard library logger doesn't support write but it supports << which actually
@@ -189,13 +189,13 @@ class AccessLogger
     value.to_s == '0' ? '-' : value
   end
 
-  def extract_referer(headers)
-    value = headers['REFERER'] or return '-'
+  def extract_referer(env, headers)
+    value = env['HTTP_REFERER'] || headers['REFERER'] or return '-'
     return quote(value)
   end
 
-  def extract_trace(headers)
-    value = headers['X-AMZN-TRACE-ID'] or return '-'
+  def extract_trace(env, headers)
+    value = env['HTTP_X_AMZN_TRACE_ID'] || headers['X-AMZN-TRACE-ID'] or return '-'
     return quote(value)
   end
 
