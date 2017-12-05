@@ -9,7 +9,7 @@ class PdfViewComp extends React.Component {
     if (this.props.download_restricted)
       alert("Download restricted until " + this.props.download_restricted)
     else
-      window.location = this.props.url
+      window.location = this.props.url + ";v=lg"
   }
 
   render() {
