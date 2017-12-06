@@ -6,7 +6,7 @@ class IssueComp extends React.Component {
   render() {
     let p = this.props
     let caption
-    if (p.cover && p.cover.caption && p.cover.caption.length > 58) {
+    if (p.cover && p.cover.caption) {
       caption = p.cover.caption.substring(0, 58)
       caption = (p.cover.caption.length > 58) ? caption + "..." : caption
     }
