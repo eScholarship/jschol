@@ -7,6 +7,7 @@ gem 'htmlentities'        # for decoding HTML entites
 gem 'httparty'            # for fetching URLs easily
 gem 'json'                # safely and quickly parsing and generating JSON data
 gem 'mimemagic'           # for guessing mime types during conversion
+gem 'mini_magick'         # cover thumbnail - image size reduction
 gem 'mysql2'              # connecting to the database
 gem 'nokogiri'            # parsing and generating XML
 gem 'puma'
