@@ -2,24 +2,24 @@ Sequel.migration do
   change do
 
     create_table(:referrers) do
-      Integer    :id, primary_key: true
-      String     :domain, null: false
+      primary_key :id
+      String      :domain, index: true, null: false
     end
 
     create_table(:locations) do
-      Integer    :id, primary_key: true
-      Float      :latitude, null: false
-      Float      :longitude, null: false
-      String     :city
-      String     :country
+      primary_key :id
+      BigDecimal  :lat, size: [7,4], null: false
+      BigDecimal  :long, size: [7,4], null: false
+      String      :city
+      String      :country
+      index [:lat, :long]
     end
 
     create_table(:item_events) do
       foreign_key :item_id,  :items, type: String, size: 10, fixed: true, null: false
       Date        :date,     null: false
-      Time        :time,     only_time: true
+      Integer     :time
       foreign_key :location, :locations, type: Integer
-      foreign_key :referrer, :referrers, type: Integer
       String      :attrs,    type: 'JSON'
       index [:date, :item_id]
     end
@@ -27,8 +27,8 @@ Sequel.migration do
     create_table(:item_stats) do
       foreign_key :item_id,  :items, type: String, size: 10, fixed: true, null: false
       Integer     :month,    null: false
-      String      :events,   type: 'JSON', null: false
-      TrueClass   :is_dirty, null: false
+      String      :events,   type: 'JSON'
+      TrueClass   :is_dirty, null: false, default: true
       index [:month, :item_id]
     end
 
