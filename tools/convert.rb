@@ -25,6 +25,7 @@ require 'json'
 require 'logger'
 require 'mimemagic'
 require 'mimemagic/overlay' # for Office 2007+ formats
+require 'mini_magick'
 require 'nokogiri'
 require 'open3'
 require 'pp'
@@ -994,42 +995,77 @@ def mimeTypeToSummaryType(mimeType)
 end
 
 ###################################################################################################
-def generatePdfThumbnail(itemID, existingItem)
+def closeTempFile(file)
+  begin
+    file.close
+    rescue Exception => e
+    # ignore
+  end
+  file.unlink
+end
+
+###################################################################################################
+def generatePdfThumbnail(itemID, inMeta, existingItem)
   begin
     pdfPath = arkToFile(itemID, "content/base.pdf")
     File.exist?(pdfPath) or return nil
     pdfTimestamp = File.mtime(pdfPath).to_i
-    existingThumb = existingItem ? JSON.parse(existingItem.attrs)["thumbnail"] : nil
-    if existingThumb && existingThumb["timestamp"] == pdfTimestamp
-      # Rebuilding to keep order of fields consistent
-      return { asset_id:   existingThumb["asset_id"],
-               image_type: existingThumb["image_type"],
-               width:      existingThumb["width"].to_i,
-               height:     existingThumb["height"].to_i,
-               timestamp:  existingThumb["timestamp"].to_i
-              }
-    end
-
-    url = "#{$thumbnailServer}/uc/item/#{itemID.sub(/^qt/, '')}?image.view=generateImage;imgWidth=121;pageNum=1"
-    response = HTTParty.get(url)
-    response.code.to_i == 200 or raise("Error generating thumbnail: HTTP #{response.code}: #{response.message}")
-    tempFile = Tempfile.new("thumbnail")
-    begin
-      tempFile.write(response.body)
-      tempFile.close
-      data = putImage(tempFile.path) { |dims|
-        dims[0] == 121 or raise("Got thumbnail width #{dims[0]}, wanted 121")
-        dims[1] < 300 or raise("Got thumbnail height #{dims[1]}, wanted less than 300")
-      }
-      data[:timestamp] = pdfTimestamp
-      return data
-    ensure
-      begin
-        tempFile.close
-      rescue Exception => e
-        # ignore
+    cover = inMeta.at("./content/cover/file[@path]")
+    cover and coverPath = arkToFile(itemID, cover[:path])
+    if (coverPath and File.exist?(coverPath))
+      tempFile0 = Tempfile.new("thumbnail")
+      # perform appropriate 90 degree rotation on the image to orient the image for correct viewing 
+      MiniMagick::Tool::Convert.new do |convert|
+        convert << coverPath 
+        convert.auto_orient
+        convert << tempFile0.path
       end
-      tempFile.unlink
+      temp1 = MiniMagick::Image.open(tempFile0.path)
+      # Resize to 150 pixels wide if bigger than that 
+      if (temp1.width > 150)
+        temp1.resize (((150.0/temp1.width.to_i).round(4) * 100).to_s + "%")
+        tempFile1 = Tempfile.new("thumbnail")
+        begin
+          temp1.write(tempFile1) 
+          data = putImage(tempFile1.path)
+        ensure
+          closeTempFile(tempFile1)
+        end
+      else
+        data = putImage(coverPath)
+      end
+      closeTempFile(tempFile0)
+      data[:timestamp] = pdfTimestamp
+      data[:is_cover] = true
+      return data
+    else
+      existingThumb = existingItem ? JSON.parse(existingItem.attrs)["thumbnail"] : nil
+      if existingThumb && existingThumb["timestamp"] == pdfTimestamp
+        # Rebuilding to keep order of fields consistent
+        return { asset_id:   existingThumb["asset_id"],
+                 image_type: existingThumb["image_type"],
+                 width:      existingThumb["width"].to_i,
+                 height:     existingThumb["height"].to_i,
+                 timestamp:  existingThumb["timestamp"].to_i
+                }
+      end
+      # Rip 1st page
+      url = "#{$thumbnailServer}/uc/item/#{itemID.sub(/^qt/, '')}?image.view=generateImage;imgWidth=121;pageNum=1"
+      response = HTTParty.get(url)
+      response.code.to_i == 200 or raise("Error generating thumbnail: HTTP #{response.code}: #{response.message}")
+      tempFile2 = Tempfile.new("thumbnail")
+      begin
+        tempFile2.write(response.body)
+        tempFile2.close
+        data = putImage(tempFile.path) { |dims|
+          dims[0] == 121 or raise("Got thumbnail width #{dims[0]}, wanted 121")
+          dims[1] < 300 or raise("Got thumbnail height #{dims[1]}, wanted less than 300")
+        }
+        data[:timestamp] = pdfTimestamp
+        return data
+      ensure
+        closeTempFile(tempFile2)
+      end
     end
   rescue Exception => e
     puts "Warning: error generating thumbnail: #{e}: #{e.backtrace.join("; ")}"
@@ -1393,7 +1429,7 @@ def parseUCIngest(itemID, inMeta, fileType)
 
   # Generate thumbnails (but only for non-suppressed PDF items)
   if !attrs[:suppress_content] && File.exist?(arkToFile(itemID, "content/base.pdf"))
-    attrs[:thumbnail] = generatePdfThumbnail(itemID, Item[itemID])
+    attrs[:thumbnail] = generatePdfThumbnail(itemID, inMeta, Item[itemID])
   end
 
   # Remove empty attrs
