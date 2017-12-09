@@ -51,5 +51,12 @@ Sequel.migration do
       String      :events,   type: 'JSON', null: false
       index [:month, :unit_id]
     end
+
+    create_table(:genre_stats) do
+      String      :stats_genre, primary_key: true
+      Integer     :month,    null: false
+      String      :events,   type: 'JSON', null: false
+      index [:month, :stats_genre]
+    end
   end
 end
