@@ -60,3 +60,27 @@ Sequel.migration do
     end
   end
 end
+
+# To drop:
+%{
+drop table referrers;
+drop table locations;
+drop table item_events;
+drop table item_stats;
+drop table item_hier_cache;
+drop table person_stats;
+drop table unit_stats;
+drop table genre_stats;
+}
+
+# To re-add:
+%{
+create table referrers (id int);
+create table locations (id int);
+create table item_events (id int);
+create table item_stats (id int);
+create table item_hier_cache (id int);
+create table person_stats (id int);
+create table unit_stats (id int);
+create table genre_stats (id int);
+}

@@ -14,6 +14,7 @@ require 'date'
 require 'digest'
 require 'fileutils'
 require 'json'
+require 'logger'
 require 'pp'
 require 'sequel'
 require 'set'
@@ -25,6 +26,10 @@ STDOUT.sync = true
 
 # The main database we're inserting data into
 DB = Sequel.connect(YAML.load_file("config/database.yaml"))
+
+# Log for debugging
+#File.exists?('convert.sql_log') and File.delete('convert.sql_log')
+#DB.loggers << Logger.new('convert.sql_log')
 
 $dirtyMarked = Set.new
 $referrers = {}
@@ -60,6 +65,8 @@ end
 
 ###################################################################################################
 def lookupReferrer(ref)
+  ref.length > 100 and return nil # Skip ridiculously long (likely spoofed) referrers
+  # Translate shortcuts from old stats generator, e.g. "G" => "Google"
   if $referrerShortcuts.key?(ref)
     ref = $referrerShortcuts[ref]
   end
@@ -68,6 +75,7 @@ def lookupReferrer(ref)
     if !record
       Referrer.create(domain: ref)
       record = Referrer.where(domain: ref).first
+      record or raise("Failed to insert referrer for domain=#{ref.inspect}")
     end
     $referrers[ref] = record.id
   end
@@ -104,12 +112,21 @@ def getItemInfo(ark)
       data = {}
       attrs['withdrawn_date'] and data[:withdrawn_date] = parseDate(attrs['withdrawn_date'])
       attrs['embargo_date']   and data[:embargo_date]   = parseDate(attrs['embargo_date'])
+      redir = Redirect.where(kind: "item", from_path: "/uc/item/#{ark.sub(/^qt/,'')}").first
+      redir && redir.to_path =~ %r{^/uc/item/(\w{8})$} and data[:redirect] = "qt"+$1
     else
       data = nil
     end
     $itemInfoCache[ark] = data
   end
   $itemInfoCache[ark]
+end
+
+###################################################################################################
+def mergeHitData(att1, att2)
+  return !att2 ? att1 : !att1 ? att2 : att1.merge(att2) { |key, a, b|
+    a.is_a?(Fixnum) ? a+b : a.is_a?(Hash) ? mergeHitData(a, b) : raise("can't merge #{a}")
+  }
 end
 
 ###################################################################################################
@@ -128,7 +145,7 @@ def correlate(files, date)
                        (?<referrers>[^\|]*) \|
                       $}x
     if !m; puts "Unparseable: #{line.inspect}"; next; end
-    ark = "qt#{m[:ark]}"
+    ark = getFinalItem("qt#{m[:ark]}")
     itemInfo = getItemInfo(ark)
     if !itemInfo
       #puts "Warning: invalid compiled item #{ark.inspect}"
@@ -152,17 +169,19 @@ def correlate(files, date)
       next
     end
 
-    compiledInfo[ark] = { hit: m[:hit].to_i, dl: m[:dl].to_i, bag: m[:bag].to_i,
-                          referrers: Hash.new { |h,k| h[k] = {} }
-                        }
+    data = { hit: m[:hit].to_i, dl: m[:dl].to_i, bag: m[:bag].to_i,
+             referrers: Hash.new { |h,k| h[k] = {} }
+           }
     totalRefs = 0
     m[:referrers].split(",").each { |refEq|
       ref, ct = refEq.split("=")
       ref && ct or raise("can't parse referrers: #{m[:referrers]}")
-      compiledInfo[ark][:referrers][ref] = ct.to_i
+      data[:referrers][ref] = ct.to_i
       totalRefs += ct.to_i
     }
     totalRefs <= m[:hit].to_i or raise("too many refs: #{line.inspect}")
+
+    compiledInfo[ark] = mergeHitData(compiledInfo[ark], data)
   }
 
   # Read the extract which has time and location
@@ -170,22 +189,25 @@ def correlate(files, date)
   if files[date][:extract]
     open(files[date][:extract]).each_line { |line|
       # eg: "24/Aug/2013:17:27:57 -0700|42.3314|-83.0457|ark:/13030/qt04t8f8bp|view+dnld|ncbi.nlm.nih.gov"
-      m = line.match %r{^(?<day>\d+)       /
-                         (?<month>\w{3})   /
-                         (?<year>\d\d\d\d) :
-                         (?<hour>\d\d)     :
-                         (?<min>\d\d)      :
-                         (?<sec>\d\d)      \s
-                         (?<tz>[-0-9]+)    \|
-                         (?<lat>[-.0-9]*)   \|
-                         (?<long>[-.0-9]*)  \|
+      m = line.match %r{^(?<day>   \d+            ) /
+                         (?<month> \w{3}          ) /
+                         (?<year>  \d\d\d\d       ) :
+                         (?<hour>  \d\d           ) :
+                         (?<min>   \d\d           ) :
+                         (?<sec>   \d\d           ) \s
+                         (?<tz>    [-0-9]+        ) \|
+                         (?<lat>   [-.0-9]*       ) \|
+                         (?<long>  [-.0-9]*       ) \|
                          ark:/13030/(?<ark>qt\w{8}) \|
                          (?<action>view|view\+dnld) \|
-                         (?<referrer>[^\|]*)
+                         (?<referrer>[^\|]*       )
                         \n$}x
       if !m; puts "Unparseable: #{line.inspect}"; next; end
-      ark = m[:ark]
-      if !isValidItem(ark); puts "Warning: invalid extract item #{ark.inspect}"; next; end
+      ark = getFinalItem(m[:ark])
+      if !getItemInfo(ark)
+        puts "Warning: invalid extract item #{ark.inspect}"
+        next
+      end
       if !compiledInfo[ark]
         puts("Warning: extract has excess ark #{ark.inspect}")
         next
@@ -223,7 +245,7 @@ def correlate(files, date)
       records.each { |record|
         attrs = { hit: record[:hit] }
         record[:dl] and attrs[:dl] = 1
-        record[:referrer] and attrs[:ref] = { lookupReferrer(record[:referrer]) => 1 }
+        record[:referrer] && lookupReferrer(record[:referrer]) and attrs[:ref] = { lookupReferrer(record[:referrer]) => 1 }
         ItemEvent.create(
           item_id: ark,
           date: date,
@@ -242,7 +264,7 @@ def correlate(files, date)
       if record[:referrers].values.any? { |n| n > 0 }
         attrs[:ref] = {}
         record[:referrers].each { |k,v|
-          v > 0 and attrs[:ref][lookupReferrer(k)] = v
+          v > 0 && lookupReferrer(k) and attrs[:ref][lookupReferrer(k)] = v
         }
       end
       ItemEvent.create(
@@ -255,6 +277,16 @@ def correlate(files, date)
 end
 
 ###################################################################################################
+def getFinalItem(itemID)
+  20.times {
+    info = getItemInfo(itemID) or return(itemID)
+    info[:redirect] or return(itemID)
+    itemID = info[:redirect]
+  }
+  raise("redirect loop involving #{itemID}")
+end
+
+###################################################################################################
 def applyItemRedirects
 
   # We need to auto-migrate stats from redirected items
@@ -262,8 +294,8 @@ def applyItemRedirects
     Redirect.where(kind: "item").each { |redir|
       redir.from_path =~ %r{^/uc/item/(\w{8})$} or raise("can't parse item redirect #{redir.inspect}")
       fromItem = "qt"+$1
-      redir.to_path =~ %r{^/uc/item/(\w{8})$} or raise("can't parse item redirect #{redir.inspect}")
-      toItem = "qt"+$1
+      toItem = getFinalItem(fromItem)
+      toItem or raise("problem following redirect")
       ItemEvent.where(item_id: fromItem).update(item_id: toItem)
     }
   }
@@ -273,7 +305,8 @@ end
 files = gatherFiles
 
 files.keys.sort.each { |date|
-  #next unless date.year == 2005 && date.month == 11  # testing
+  next if ItemEvent.where(date: date).count > 0 # skip already-processed.
+  next unless date.year == 2005 && date.month == 11
   correlate(files, date)
 }
 
