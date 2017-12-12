@@ -42,10 +42,6 @@ class ItemEvent < Sequel::Model
   unrestrict_primary_key
 end
 
-class ItemHierCache < Sequel::Model(:item_hier_cache)
-  unrestrict_primary_key
-end
-
 class ItemStat < Sequel::Model
   unrestrict_primary_key
 end
@@ -76,7 +72,7 @@ end
 class Section < Sequel::Model
 end
 
-class StatsRecalc < Sequel::Model(:stats_recalc)
+class StatsMonth < Sequel::Model
   unrestrict_primary_key
 end
 

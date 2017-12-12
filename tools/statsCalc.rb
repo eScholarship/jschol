@@ -49,61 +49,14 @@ end
 
 ###################################################################################################
 # Convert a digest (e.g. MD5, SHA1) to a 63-bit number for memory efficiency
-def getIntDigest(digester)
+def calcIntDigest(digester)
   return digester.hexdigest.to_i(16) % BIG_PRIME
 end
 
 ###################################################################################################
-# Calculate the hash of units for each item
-def calcUnitDigests(result)
-  prevItem, digester = nil, nil
-  UnitItem.select_order_map([:item_id, :unit_id]).each { |item, unit|
-    if prevItem != item
-      prevItem.nil? or result[prevItem].unitsDigest = getIntDigest(digester)
-      prevItem, digester = item, Digest::MD5.new
-    end
-    digester << unit
-  }
-  prevItem.nil? or result[prevItem].unitsDigest = getIntDigest(digester)
-  return result
-end
-
-###################################################################################################
-# Calculate the hash of units for each item
-def calcPeopleDigests(result)
-  prevItem, digester = nil, nil
-  ItemAuthor.where(Sequel.~(person_id: nil)).select_order_map([:item_id, :person_id]).each { |item, person|
-    if prevItem != item
-      prevItem.nil? or result[prevItem].peopleDigest = getIntDigest(digester)
-      prevItem, digester = item, Digest::MD5.new
-    end
-    digester << person
-  }
-  prevItem.nil? or result[prevItem].peopleDigest = getIntDigest(digester)
-  return result
-end
-
-###################################################################################################
-# Get minimum effective month for every item
-def calcMinMonths(result)
-  # Start with the submission date for each item
-  Item.where(Sequel.lit("attrs->'$.submission_date' is not null")).select_map([:id, :attrs]).each { |item, attrStr|
-    subDate = parseDate(JSON.parse(attrStr)["submission_date"])
-    subDate.year >= 1995 or raise("invalid pre-1995 submission date #{subDate.iso8601} for item #{item}")
-    result[item].minMonth = subDate.year*100 + subDate.month
-  }
-
-  minSym = "min(`date`)".to_sym
-  ItemEvent.select_group(:item_id).select_append{min(:date)}.each { |record|
-    item = record[:item_id]
-    minDate = record[minSym]
-    minMonth = minDate.year*100 + minDate.month
-    if result[item].minMonth.nil?
-      result[item].minMonth = minMonth
-    else
-      result[item].minMonth = [minMonth, result[item].minMonth].min
-    end
-  }
+# Convert a digest (e.g. MD5, SHA1) to a short base-64 digest, without trailing '='
+def calcBase64Digest(digester)
+  return digester.base64digest.sub(/=+$/,'')
 end
 
 ###################################################################################################
@@ -152,6 +105,96 @@ def connectAuthors
 end
 
 ###################################################################################################
+# Calculate the hash of units for each item
+def calcUnitDigests(result)
+  prevItem, digester = nil, nil
+  UnitItem.select_order_map([:item_id, :unit_id]).each { |item, unit|
+    if prevItem != item
+      prevItem.nil? or result[prevItem].unitsDigest = calcIntDigest(digester)
+      prevItem, digester = item, Digest::MD5.new
+    end
+    digester << unit
+  }
+  prevItem.nil? or result[prevItem].unitsDigest = calcIntDigest(digester)
+  return result
+end
+
+###################################################################################################
+# Calculate the hash of units for each item
+def calcPeopleDigests(result)
+  prevItem, digester = nil, nil
+  ItemAuthor.where(Sequel.~(person_id: nil)).select_order_map([:item_id, :person_id]).each { |item, person|
+    if prevItem != item
+      prevItem.nil? or result[prevItem].peopleDigest = calcIntDigest(digester)
+      prevItem, digester = item, Digest::MD5.new
+    end
+    digester << person
+  }
+  prevItem.nil? or result[prevItem].peopleDigest = calcIntDigest(digester)
+  return result
+end
+
+###################################################################################################
+# Get minimum effective month for every item
+def calcMinMonths(result)
+  # Start with the submission date for each item
+  Item.where(Sequel.lit("attrs->'$.submission_date' is not null")).select_map([:id, :attrs]).each { |item, attrStr|
+    subDate = parseDate(JSON.parse(attrStr)["submission_date"])
+    subDate.year >= 1995 or raise("invalid pre-1995 submission date #{subDate.iso8601} for item #{item}")
+    result[item].minMonth = subDate.year*100 + subDate.month
+  }
+
+  minSym = "min(`date`)".to_sym
+  ItemEvent.select_group(:item_id).select_append{min(:date)}.each { |record|
+    item = record[:item_id]
+    minDate = record[minSym]
+    minMonth = minDate.year*100 + minDate.month
+    if result[item].minMonth.nil?
+      result[item].minMonth = minMonth
+    else
+      result[item].minMonth = [minMonth, result[item].minMonth].min
+    end
+  }
+end
+
+###################################################################################################
+# Calculate a digest of items and people for each month of stats.
+def calcStatsMonths(itemSummaries)
+
+  # Figure out the grand summation digest for each month, by iterating the items in ascending
+  # month order and adding all their stuff to a rolling MD5 digester.
+  monthDigests = {}
+  prevMonth, digester = nil, nil
+  itemSummaries.keys.sort { |a,b|
+    (itemSummaries[a].minMonth || 0) <=> (itemSummaries[b].minMonth || 0)
+  }.each { |itemID|
+    summ = itemSummaries[itemID]
+    summ.minMonth.nil? and next
+    if prevMonth != summ.minMonth
+      prevMonth.nil? or monthDigests[prevMonth] = calcBase64Digest(digester)
+      prevMonth, digester = summ.minMonth, Digest::MD5.new
+    end
+    digester << itemID << summ.unitsDigest.inspect << summ.peopleDigest.inspect
+  }
+  prevMonth.nil? or monthDigests[prevMonth] = calcBase64Digest(digester)
+
+  # Update the month digests in the database.
+  DB.transaction {
+    monthDigests.each { |month, digest|
+      existing = StatsMonth[month]
+      if existing
+        if existing.cur_digest != digest
+          existing.cur_digest = digest
+          existing.save
+        end
+      else
+        StatsMonth.create(month: month, cur_digest: digest)
+      end
+    }
+  }
+end
+
+###################################################################################################
 # The main routine
 puts "connectAuthors"
 connectAuthors
@@ -159,13 +202,10 @@ puts 'RAM USAGE: ' + `pmap #{Process.pid} | tail -1`[10,40].strip
 itemSummaries = Hash.new { |h,k| h[k] = ItemSummary.new }
 puts "calcUnitDigests"
 calcUnitDigests(itemSummaries)
-puts "calcMinMonths"
-calcMinMonths(itemSummaries)
 puts "calcPeopleDigests"
 calcPeopleDigests(itemSummaries)
-open("foo.summaries", "w") { |io|
-  itemSummaries.each { |item, summ|
-    io.puts "item=#{item} minMonth=#{summ.minMonth} unitsDigest=#{summ.unitsDigest} peopleDigest=#{summ.peopleDigest}"
-  }
-}
+puts "calcMinMonths"
+calcMinMonths(itemSummaries)
+puts "calcStatsMonths"
+calcStatsMonths(itemSummaries)
 puts 'RAM USAGE: ' + `pmap #{Process.pid} | tail -1`[10,40].strip

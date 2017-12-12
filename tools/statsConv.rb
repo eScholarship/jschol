@@ -241,7 +241,11 @@ def correlate(files, date)
 
     # Mark that stats for this month need to be repropagated
     month = date.year*100 + date.month
-    StatsRecalc[month] or StatsRecalc.create(month: month)
+    sm = StatsMonth[month]
+    if sm && !sm.old_digest.nil?
+      sm.old_digest = nil
+      sm.save
+    end
 
     # Insert location-specific data from the extracts
     extractInfo.each { |ark, records|
