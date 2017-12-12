@@ -22,20 +22,14 @@ Sequel.migration do
       foreign_key :location, :locations, type: Integer
       String      :attrs,    type: 'JSON'
       index [:date, :item_id]
+      index [:item_id, :date]
     end
 
     create_table(:item_stats) do
       foreign_key :item_id,  :items, type: String, size: 10, fixed: true, null: false
       Integer     :month,    null: false
       String      :events,   type: 'JSON'
-      TrueClass   :is_dirty, null: false, default: true
       index [:month, :item_id]
-    end
-
-    create_table(:item_hier_cache) do
-      foreign_key :item_id,  :items, type: String, size: 10, fixed: true, null: false
-      String      :old_hier
-      String      :cur_hier, null: false
     end
 
     create_table(:person_stats) do
@@ -58,6 +52,12 @@ Sequel.migration do
       String      :events,   type: 'JSON', null: false
       index [:month, :stats_genre]
     end
+
+    create_table(:stats_months) do
+      Integer     :month, primary_key: true
+      String      :old_digest
+      String      :cur_digest, null: false
+    end
   end
 end
 
@@ -67,20 +67,20 @@ drop table referrers;
 drop table locations;
 drop table item_events;
 drop table item_stats;
-drop table item_hier_cache;
 drop table person_stats;
 drop table unit_stats;
 drop table genre_stats;
+drop table stats_months;
 }
 
-# To re-add:
+# To re-add placeholders:
 %{
 create table referrers (id int);
 create table locations (id int);
 create table item_events (id int);
 create table item_stats (id int);
-create table item_hier_cache (id int);
 create table person_stats (id int);
 create table unit_stats (id int);
 create table genre_stats (id int);
+create table stats_months (id int);
 }

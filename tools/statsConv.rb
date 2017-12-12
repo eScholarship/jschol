@@ -28,10 +28,9 @@ STDOUT.sync = true
 DB = Sequel.connect(YAML.load_file("config/database.yaml"))
 
 # Log for debugging
-#File.exists?('convert.sql_log') and File.delete('convert.sql_log')
-#DB.loggers << Logger.new('convert.sql_log')
+#File.exists?('statsConv.sql_log') and File.delete('statsConv.sql_log')
+#DB.loggers << Logger.new('statsConv.sql_log')
 
-$dirtyMarked = Set.new
 $referrers = {}
 $locations = {}
 $itemInfoCache = {}
@@ -240,6 +239,10 @@ def correlate(files, date)
     # Delete existing data
     ItemEvent.where(date: date).delete
 
+    # Mark that stats for this month need to be repropagated
+    month = date.year*100 + date.month
+    StatsRecalc[month] or StatsRecalc.create(month: month)
+
     # Insert location-specific data from the extracts
     extractInfo.each { |ark, records|
       records.each { |record|
@@ -306,7 +309,7 @@ files = gatherFiles
 
 files.keys.sort.each { |date|
   next if ItemEvent.where(date: date).count > 0 # skip already-processed.
-  next unless date.year == 2005 && date.month == 11
+  next unless date < Date.new(2017, 10, 19)     # skip post-eschol5 transition
   correlate(files, date)
 }
 
