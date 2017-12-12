@@ -1,7 +1,7 @@
 ###################################################################################################
 # Monkey-patch to add update_or_replace functionality, which is strangely absent in the Sequel gem.
 class Sequel::Model
-  def self.update_or_replace(id, **data)
+  def self.create_or_update(id, **data)
     record = self[id]
     if record
       record.update(**data)

@@ -158,11 +158,41 @@ def calcMinMonths(result)
 end
 
 ###################################################################################################
+# Get minimum effective month for every item
+def calcMonthCounts()
+  result = Hash.new { |h,k| h[k] = 0 }
+  ItemEvent.group_and_count(:date).each { |record|
+    result[record.date.year*100 + record.date.month] += record[:count]
+  }
+  return result
+end
+
+###################################################################################################
 # Calculate a digest of items and people for each month of stats.
-def calcStatsMonths(itemSummaries)
+def calcStatsMonths()
+
+  puts "Estimating work."
+  # Make sure all authors are connected to people
+  connectAuthors
+
+  # Determine the size of each month, for time estimation during processing
+  puts "  Calculating month counts."
+  monthCounts = calcMonthCounts()
+  itemSummaries = Hash.new { |h,k| h[k] = ItemSummary.new }
+
+  # Create the mega-digest that summarizes all the items and units and people for each month.
+  puts "  Calculating unit digests."
+  calcUnitDigests(itemSummaries)
+
+  puts "  Calculating people digests."
+  calcPeopleDigests(itemSummaries)
+
+  puts "  Calculating min month for each item."
+  calcMinMonths(itemSummaries)
 
   # Figure out the grand summation digest for each month, by iterating the items in ascending
   # month order and adding all their stuff to a rolling MD5 digester.
+  puts "  Grouping by month."
   monthDigests = {}
   prevMonth, digester = nil, nil
   itemSummaries.keys.sort { |a,b|
@@ -181,31 +211,11 @@ def calcStatsMonths(itemSummaries)
   # Update the month digests in the database.
   DB.transaction {
     monthDigests.each { |month, digest|
-      existing = StatsMonth[month]
-      if existing
-        if existing.cur_digest != digest
-          existing.cur_digest = digest
-          existing.save
-        end
-      else
-        StatsMonth.create(month: month, cur_digest: digest)
-      end
+      StatsMonth.create_or_update(month, cur_digest: digest, cur_count: monthCounts[month])
     }
   }
 end
 
 ###################################################################################################
 # The main routine
-puts "connectAuthors"
-connectAuthors
-puts 'RAM USAGE: ' + `pmap #{Process.pid} | tail -1`[10,40].strip
-itemSummaries = Hash.new { |h,k| h[k] = ItemSummary.new }
-puts "calcUnitDigests"
-calcUnitDigests(itemSummaries)
-puts "calcPeopleDigests"
-calcPeopleDigests(itemSummaries)
-puts "calcMinMonths"
-calcMinMonths(itemSummaries)
-puts "calcStatsMonths"
-calcStatsMonths(itemSummaries)
-puts 'RAM USAGE: ' + `pmap #{Process.pid} | tail -1`[10,40].strip
+calcStatsMonths

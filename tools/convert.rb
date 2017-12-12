@@ -710,7 +710,7 @@ def convertUnits(el, parentMap, childMap, allIds, selectedUnits)
         selectedUnits == "ALL" or puts "Converting."
         DB.transaction {
           name = id=="root" ? "eScholarship" : el[:label]
-          Unit.update_or_replace(id,
+          Unit.create_or_update(id,
             type:      unitType,
             name:      name,
             status:    el[:directSubmit] == "moribund" ? "archived" :
