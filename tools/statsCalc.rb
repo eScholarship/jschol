@@ -37,8 +37,126 @@ require_relative './models.rb'
 
 BIG_PRIME = 9223372036854775783 # 2**63 - 25 is prime. Kudos https://primes.utm.edu/lists/2small/0bit.html
 
+# Cache some database values
+$googleRefID = Referrer.where(domain: "google.com").first.id.to_s
+$itemUnits = UnitItem.select_hash_groups(:item_id, :unit_id)
+
+MAX_REFS = 30
+
 ###################################################################################################
-ItemSummary = Struct.new(:unitsDigest, :peopleDigest, :minMonth)
+# Data classes (much more efficient in both memory and space than hashes)
+class ItemSummary
+  attr_accessor :unitsDigest, :peopleDigest, :minMonth
+end
+
+class RefAccum
+  attr_accessor :refs, :other
+
+  def initialize(h)
+    @other = 0
+    if !h.nil?
+      @refs = h.dup
+      clamp
+    end
+  end
+
+  def initialize_copy(b)
+    @other = b.other
+    @refs = b.refs.dup
+  end
+
+  def add(b)
+    @refs.merge!(b.refs) { |k,x,y| x+y }
+    @other += b.other
+    clamp
+  end
+
+  def clamp
+    # Keep only the top refs
+    while @refs.size > MAX_REFS
+      min_val = min_key = nil
+      @refs.each { |k,v|
+        if min_val.nil? || v < min_val
+          min_val = v
+          min_key = k
+        end
+      }
+      @other += min_val
+      @refs.delete(min_key)
+    end
+  end
+
+  def to_h
+    result = @refs.dup
+    @other > 0 and result[:other] = @other
+    return result
+  end
+end
+
+class EventAccum
+  attr_accessor :hit, :dl, :google, :counts, :ref
+
+  def initialize(h = nil)
+    @hit = @dl = @google = 0
+    h.nil? and return
+    h.each { |k,v|
+      if k == 'hit'
+        @hit = v
+      elsif k == 'dl'
+        @dl = v
+      elsif k == 'ref'
+        if h.size == 1 && h.keys[0] == $googleRefID
+          @google = h[$googleRefID]
+        else
+          tmp = h[k].dup
+          if tmp[$googleRefID]
+            @google = tmp[$googleRefID]
+            tmp.delete($googleRefID)
+          end
+          @ref = RefAccum.new(tmp)
+        end
+      else
+        @counts ||= {}
+        @counts[k] = v
+      end
+    }
+  end
+
+  def add(b)
+    # Inline the most common properties for speed and memory efficiency
+    @hit    += b.hit
+    @dl     += b.dl
+    @google += b.google
+
+    # Hash for less common counts
+    if @counts.nil?
+      b.counts.nil? or @counts = b.counts.clone
+    elsif !b.counts.nil?
+      @counts.merge!(b.counts) { |k,x,y| x+y }
+    end
+
+    # Hash for less common refs
+    if @ref.nil?
+      b.ref.nil? or @ref = b.ref.clone
+    elsif !b.ref.nil?
+      @ref.add(b.ref)
+    end
+  end
+
+  def to_h
+    result = {}
+    @hit > 0 and result[:hit] = @hit
+    @dl > 0 and result[:dl] = @dl
+    @other.nil? or result.merge!(@other)
+    if @google > 0
+      result[:ref] = { $googleRefID => @google }
+      @ref.nil? or result[:ref].merge!(@ref.to_h)
+    elsif !@ref.nil?
+      result[:ref] = @ref.to_h
+    end
+    return result
+  end
+end
 
 ###################################################################################################
 def parseDate(dateStr)
@@ -217,5 +335,46 @@ def calcStatsMonths()
 end
 
 ###################################################################################################
+def calcNextMonth(month)
+  my = month / 100
+  mm = month % 100
+  mm += 1
+  if mm > 12
+    mm = 1
+    my += 1
+  end
+  return my*100 + mm
+end
+
+###################################################################################################
+# Calculate a digest of items and people for each month of stats.
+def propagateItemMonth(month)
+  startDate = Date.new(month/100, month%100, 1)
+  endDate   = startDate >> 1  # cool obscure operator that adds one month to a date
+  itemStats   = Hash.new { |h,k| h[k] = EventAccum.new }
+  unitStats   = Hash.new { |h,k| h[k] = EventAccum.new }
+  personStats = Hash.new { |h,k| h[k] = EventAccum.new }
+  ItemEvent.where{date >= startDate}.where{date < endDate}.each { |event|
+    accum = EventAccum.new(JSON.parse(event.attrs))
+    item = event.item_id
+    itemStats[item].add(accum)
+    $itemUnits[item] or $itemUnits[item] = [ 'root' ]  # handle unit-less items this way for now
+    $itemUnits[item].each { |unit| unitStats[unit].add(accum) }
+  }
+  DB.transaction {
+    ItemStat.where(month: month).delete
+    itemStats.each { |item, accum|
+      ItemStat.create(item_id: item, month: month, events: accum.to_h.to_json)
+    }
+
+    UnitStat.where(month: month).delete
+    unitStats.each { |unit, accum|
+      UnitStat.create(unit_id: unit, month: month, events: accum.to_h.to_json)
+    }
+  }
+end
+
+###################################################################################################
 # The main routine
-calcStatsMonths
+#calcStatsMonths
+propagateItemMonth(201702)
