@@ -53,7 +53,6 @@
   }
 
   img {
-    @extend %u-thumbnail;
     margin-bottom: $spacing-base;
 
     @include bp(screen1) {
@@ -70,7 +69,6 @@
       right: 0;
       bottom: 0;
       left: 150px;
-      align-self: end;
       margin-left: $spacing-md;
       font-size: 0.9em;
       text-overflow: ellipsis;
@@ -80,7 +78,7 @@
       grid-row: 3;
 
       @supports (display: contents) and (display: flow-root) {
-        position: static;
+        left: 0;
         margin-left: 0;
       }
 
@@ -100,7 +98,6 @@
 
     @supports (display: contents) and (display: flow-root) {
       margin: 0;
-      padding: 0;
     }
 
   }

@@ -24,6 +24,7 @@
   align-items: center;
   justify-content: center;
   order: 1;
+  max-height: 50vh; // prevents player from getting cropped if viewport is too short
   margin-bottom: $spacing-md;
   background-color: $color-light-gray;
 }
@@ -37,7 +38,7 @@
 
   .o-mediafeature__item {
     @extend %o-mediafeature__item;
-    height: 50vw;
+    padding: $spacing-sm;
   }
 
 }
@@ -47,8 +48,7 @@
 
   .o-mediafeature__item {
     @extend %o-mediafeature__item;
-    height: 50vw;
-    padding: 0 $spacing-sm;
+    padding: $spacing-sm;
 
     strong {
       margin-bottom: $spacing-md;
@@ -86,7 +86,6 @@
 
     video {
       max-width: 100%;
-      max-height: 50vh; // prevents video player from getting cropped if viewport is too short
     }
 
   }

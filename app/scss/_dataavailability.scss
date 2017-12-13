@@ -1,0 +1,60 @@
+// ##### Data Availability Component ##### //
+
+.c-dataavailability {
+  @extend %clearfix;
+  margin-bottom: $spacing-md;
+  
+  @include bp(screen1) {
+    display: grid;
+    grid-template-columns: 1fr auto;
+  }
+
+}
+
+.c-dataavailability__statement {
+  margin-bottom: $spacing-sm;
+
+  @include bp(screen1) {
+    grid-column: 1 / 3;
+    grid-row: 1;
+  }
+
+}
+
+.c-dataavailability__link {
+  @extend %o-textlink__secondary;
+  display: block;
+  margin-bottom: $spacing-sm;
+  // one-line truncation:
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+
+  @include bp(screen1) {
+    margin-bottom: 0;
+    // undo one-line truncation:
+    white-space: normal;
+    // wrap long url string:
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-all;
+    hyphens: auto;
+    grid-row: 2 / 3;
+  }
+  
+}
+
+.c-dataavailability__license {
+  display: inline-block;
+  margin-left: $spacing-md;
+  float: right;
+
+  @include bp(screen1) {
+    grid-row: 1 / 3;
+  }
+
+  img {
+    display: block;
+  }
+
+}

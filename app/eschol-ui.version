@@ -708,3 +708,18 @@ As well as:
 >>> Integration of IssueComp completed 2017-11-28 <<<
 
 
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's 9fa9c5dfe5a57ec4d81998d0eea085e311e4ce1e, 2017-12-06 <<<
+>>  Partial migration...                                        <<<
+>>  Holding on implementing DataAvailabilityComp                <<<
+>>  SearchPage (RefineComp) needs a tweak before PR'ing this    <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+  modified:   package.json
+  modified:   app/jsx/components/IssueComp.jsx
+  modified:   app/jsx/components/NavComp.jsx
+  modified:   app/jsx/components/NavSubComp.jsx
+  modified:   app/jsx/components/PubPreviewComp.jsx
+  modified:   app/jsx/components/StatCarouselComp.jsx
+  modified:   app/jsx/pages/SearchPage.jsx
+

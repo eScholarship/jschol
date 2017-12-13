@@ -69,6 +69,19 @@ Selector pattern using above media query mixin:
 
 }
 
+// Enlarge a <summary> element's height if there's a touch screen. Height should match element height of %interactive-element-size utility above:
+
+%interactive-summary-size { 
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
+
+  @media (any-pointer: coarse) {
+    padding-top: 0.9em;
+    padding-bottom: 0.9em;
+  }
+
+}
+
 /*
 
 Set an interactive element's styles if there's a touchscreen (coarse) or mouse-only screen (fine). Example:
@@ -204,12 +217,4 @@ Background color with progressively-enhanced blur effect. Example:
     max-width: 100%;
   }
 
-}
-
-%u-thumbnail {
-  display: block;
-  width: 150px;
-  height: auto;
-  border: 1px solid $color-light-gray;
-  box-shadow: $box-shadow2;
 }

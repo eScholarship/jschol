@@ -1,0 +1,16 @@
+// ##### Thumbnail Component ##### //
+
+.c-thumbnail {
+  display: block;
+  width: 150px;
+  height: auto;
+  transition: opacity, 1s;
+  border: 1px solid $color-light-gray;
+  box-shadow: $box-shadow2;
+  opacity: 0;
+
+  &[data-loaded='true'] {
+    opacity: 1;
+  }
+
+}

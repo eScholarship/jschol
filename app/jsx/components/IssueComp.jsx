@@ -1,6 +1,7 @@
 // ##### Issue Component ##### //
 
 import React from 'react'
+import ThumbnailComp from '../components/ThumbnailComp.jsx'
 
 class IssueComp extends React.Component {
   render() {
@@ -17,7 +18,7 @@ class IssueComp extends React.Component {
       }
       {p.cover &&
         <figure className="c-issue__thumbnail">
-          <img src={"/assets/"+p.cover.asset_id} alt="Issue cover" />
+          <ThumbnailComp src={"/assets/"+p.cover.asset_id} alt="Issue cover" />
         {caption &&
           <figcaption><i>Cover Caption:</i> {caption}</figcaption>
         }
