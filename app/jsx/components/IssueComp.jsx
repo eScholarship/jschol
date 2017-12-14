@@ -6,11 +6,6 @@ import LazyImageComp from '../components/LazyImageComp.jsx'
 class IssueComp extends React.Component {
   render() {
     let p = this.props
-    let caption
-    if (p.cover && p.cover.caption) {
-      caption = p.cover.caption.substring(0, 58)
-      caption = (p.cover.caption.length > 58) ? caption + "..." : caption
-    }
     return (
       <div className="c-issue">
       {p.title &&
@@ -19,8 +14,8 @@ class IssueComp extends React.Component {
       {p.cover &&
         <figure className="c-issue__thumbnail">
           <LazyImageComp src={"/assets/"+p.cover.asset_id} alt="Issue cover" />
-        {caption &&
-          <figcaption><i>Cover Caption:</i> {caption}</figcaption>
+        {p.cover.caption &&
+          <figcaption><i>Cover Caption:</i> {p.cover.caption}</figcaption>
         }
         </figure>
       }
