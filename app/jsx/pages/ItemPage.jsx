@@ -13,8 +13,7 @@ import ItemActionsComp from '../components/ItemActionsComp.jsx'
 import ArbitraryHTMLComp from "../components/ArbitraryHTMLComp.jsx"
 import AuthorListComp from '../components/AuthorListComp.jsx'
 import PdfViewComp from '../components/PdfViewComp.jsx'
-import PubLocationComp from '../components/PubLocationComp.jsx'
-import PubDataComp from '../components/PubDataComp.jsx'
+import PubInfoComp from '../components/PubInfoComp.jsx'
 import TabsComp from '../components/TabsComp.jsx'
 import JumpComp from '../components/JumpComp.jsx'
 import SidebarComp from '../components/SidebarComp.jsx'
@@ -158,15 +157,11 @@ class ItemPage extends PageBase {
             <AuthorListComp pubdate={d.pub_date}
                             authors={d.authors}
                             changeTab={this.changeTab} />
-          {(a.doi || a.pub_web_loc || d.rights) &&
-            <PubLocationComp doi={a.doi}
-                             pub_web_loc={a.pub_web_loc}
-                             rights={d.rights} />
-          }
-          {(!d.content_type || d.attrs.data_avail_stmnt) &&
-            <PubDataComp content_type={d.content_type}
-                         data_avail_stmnt={d.attrs.data_avail_stmnt} />
-          }
+            <PubInfoComp doi={a.doi}
+                                  pub_web_loc={a.pub_web_loc}
+                                  content_type={d.content_type}
+                                  data_avail_stmnt={d.attrs.data_avail_stmnt}
+                                  rights={d.rights} />
             <TabsComp currentTab={currentTab}
                       changeTab={this.changeTab}
                       formatDate={this.formatDate}
