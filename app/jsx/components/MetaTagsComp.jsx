@@ -19,8 +19,6 @@ export default class MetaTagsComp extends React.Component
   render() {
     let finalTitle = this.props.title ? this.stripHtml(this.props.title) : "eScholarship"
     let descrip = this.props.descrip ? this.stripHtml(this.props.descrip) : ''
-    if (finalTitle.indexOf("eScholarship") < 0)
-      finalTitle = finalTitle + " - eScholarship"
     return (
       <MetaTags>
         <title>{finalTitle}</title>
