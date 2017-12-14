@@ -53,7 +53,11 @@
   }
 
   img {
+    width: $thumbnail-width;
+    height: auto;
     margin-bottom: $spacing-base;
+    border: 1px solid $color-light-gray;
+    box-shadow: $box-shadow2;
 
     @include bp(screen1) {
       margin: 0 $spacing-md 0 0;
@@ -68,7 +72,7 @@
       position: absolute;
       right: 0;
       bottom: 0;
-      left: 150px;
+      left: $thumbnail-width;
       margin-left: $spacing-md;
       font-size: 0.9em;
       text-overflow: ellipsis;

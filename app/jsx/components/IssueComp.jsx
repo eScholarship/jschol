@@ -1,7 +1,7 @@
 // ##### Issue Component ##### //
 
 import React from 'react'
-import ThumbnailComp from '../components/ThumbnailComp.jsx'
+import LazyImageComp from '../components/LazyImageComp.jsx'
 
 class IssueComp extends React.Component {
   render() {
@@ -18,7 +18,7 @@ class IssueComp extends React.Component {
       }
       {p.cover &&
         <figure className="c-issue__thumbnail">
-          <ThumbnailComp src={"/assets/"+p.cover.asset_id} alt="Issue cover" />
+          <LazyImageComp src={"/assets/"+p.cover.asset_id} alt="Issue cover" />
         {caption &&
           <figcaption><i>Cover Caption:</i> {caption}</figcaption>
         }

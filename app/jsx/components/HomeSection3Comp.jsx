@@ -14,7 +14,7 @@ class HomeSection3Comp extends React.Component {
           <p>We offer publishing and production tools, including a full editorial and peer review system, as well as professional support and consulting services.</p>
         </div>
         <div className="c-homesection__3-journalgrid">
-          <JournalGridComp />
+          <JournalGridComp count_journals={this.props.count_journals} />
         </div>
         <Link to="/publishing" className="c-homesection__3-link">Learn more about eScholarship Publishing</Link>
       </div>
