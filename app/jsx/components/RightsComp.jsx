@@ -6,7 +6,8 @@ import PropTypes from 'prop-types'
 class RightsComp extends React.Component {
   static PropTypes = {
     rights: PropTypes.string,
-    size: PropTypes.oneOf(['small', 'large'])
+    size: PropTypes.oneOf(['small', 'large']),
+    classname: PropTypes.string
   }
 
   render() {
@@ -23,14 +24,13 @@ class RightsComp extends React.Component {
         'CC BY-SA':    [`${baseURL}/licenses/by-sa/${lv}/`,    `cc-by-sa-${size}.svg`,    "Attribution-ShareAlike 4.0 International Public License"] },
           a = rightsMap[r],
           altText = "Creative Commons "
-    // Null properties renders an empty image surrounded by an empty href: 'c-publocation__license' needs to be present
+    // ToDo: Figure out whether this still needs to be thrown in when there's no rights info
+    // <a href="" className="c-publocation__license"><img src="" alt="" className="c-scholworks__license" /></a>
     //  in order to allow sister element 'c-publocation__link' to be aligned properly to the left
-    return r ?
-        <a href={a[0]} className="c-publocation__license"><img src={"/images/"+a[1]} alt={altText + a[2]} className="c-scholworks__license" /></a>
-      :
-        <a href="" className="c-publocation__license"><img src="" alt="" className="c-scholworks__license" /></a>
+    return (
+      <a href={a[0]} className={this.props.classname ? this.props.classname : "c-publocation__license"}><img src={"/images/"+a[1]} alt={altText + a[2]} className="c-scholworks__license" /></a>
+    )
   }
-
 }
 
 module.exports = RightsComp;

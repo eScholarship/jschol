@@ -354,7 +354,6 @@ class FacetFieldset extends React.Component {
   render() {
     let data = this.props.data
     let facets, facetItemNodes
-    console.log(this.props.modal)
     if (data.facets) {
       facets = this.state.modalOpen ? [] :
                (this.props.modal && data.facets.length > 5) ? this.sliceFacets(data.facets) :

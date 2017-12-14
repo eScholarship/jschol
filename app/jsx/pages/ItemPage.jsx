@@ -157,11 +157,13 @@ class ItemPage extends PageBase {
             <AuthorListComp pubdate={d.pub_date}
                             authors={d.authors}
                             changeTab={this.changeTab} />
+          {(a.doi || a.pub_web_loc || d.rights || d.attrs.data_avail_stmnt || !d.content_type) &&
             <PubInfoComp doi={a.doi}
-                                  pub_web_loc={a.pub_web_loc}
-                                  content_type={d.content_type}
-                                  data_avail_stmnt={d.attrs.data_avail_stmnt}
-                                  rights={d.rights} />
+                         pub_web_loc={a.pub_web_loc}
+                         content_type={d.content_type}
+                         data_avail_stmnt={d.attrs.data_avail_stmnt}
+                         rights={d.rights} />
+          }
             <TabsComp currentTab={currentTab}
                       changeTab={this.changeTab}
                       formatDate={this.formatDate}

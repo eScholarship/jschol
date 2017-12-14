@@ -723,3 +723,13 @@ As well as:
   modified:   app/jsx/components/StatCarouselComp.jsx
   modified:   app/jsx/pages/SearchPage.jsx
 
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's 98cf8d43c5bd22c4e4d9285f7d5635fa3c3a6939, 2017-12-14 <<<
+>>   **  EXCEPT I didn't wrap LazyImageComp into RightsComp      <<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+  modified:   app/jsx/components/PubInfoComp.jsx
+  modified:   app/jsx/components/RightsComp.jsx
+  modified:   app/jsx/pages/ItemPage.jsx
+
+
+
