@@ -39,8 +39,9 @@ BIG_PRIME = 9223372036854775783 # 2**63 - 25 is prime. Kudos https://primes.utm.
 
 # Cache some database values
 $googleRefID = Referrer.where(domain: "google.com").first.id.to_s
-$itemUnits = UnitItem.select_hash_groups(:item_id, :unit_id)
 
+# It's silly and wasteful to propagate every single little referrer up the chain, so we retain
+# a certain number and lump the rest as "other".
 MAX_REFS = 30
 
 ###################################################################################################
@@ -94,16 +95,18 @@ class RefAccum
 end
 
 class EventAccum
-  attr_accessor :hit, :dl, :google, :counts, :ref
+  attr_accessor :hit, :dl, :post, :google, :counts, :ref
 
   def initialize(h = nil)
-    @hit = @dl = @google = 0
+    @hit = @dl = @google = @post = 0
     h.nil? and return
     h.each { |k,v|
       if k == 'hit'
         @hit = v
       elsif k == 'dl'
         @dl = v
+      elsif k == 'post'
+        @post = v
       elsif k == 'ref'
         if h.size == 1 && h.keys[0] == $googleRefID
           @google = h[$googleRefID]
@@ -122,10 +125,15 @@ class EventAccum
     }
   end
 
+  def incPost
+    @post += 1
+  end
+
   def add(b)
     # Inline the most common properties for speed and memory efficiency
     @hit    += b.hit
     @dl     += b.dl
+    @post   += b.post
     @google += b.google
 
     # Hash for less common counts
@@ -147,6 +155,7 @@ class EventAccum
     result = {}
     @hit > 0 and result[:hit] = @hit
     @dl > 0 and result[:dl] = @dl
+    @post > 0 and result[:post] = @post
     @other.nil? or result.merge!(@other)
     if @google > 0
       result[:ref] = { $googleRefID => @google }
@@ -348,18 +357,22 @@ end
 
 ###################################################################################################
 # Calculate a digest of items and people for each month of stats.
-def propagateItemMonth(month)
+def propagateItemMonth(itemUnits, monthPosts, month)
+  puts "Propagating month #{month}."
   startDate = Date.new(month/100, month%100, 1)
   endDate   = startDate >> 1  # cool obscure operator that adds one month to a date
   itemStats   = Hash.new { |h,k| h[k] = EventAccum.new }
   unitStats   = Hash.new { |h,k| h[k] = EventAccum.new }
   personStats = Hash.new { |h,k| h[k] = EventAccum.new }
+  (monthPosts || []).each { |item|
+    itemStats[item].incPost
+    itemUnits[item].each { |unit| unitStats[unit].incPost }
+  }
   ItemEvent.where{date >= startDate}.where{date < endDate}.each { |event|
     accum = EventAccum.new(JSON.parse(event.attrs))
     item = event.item_id
     itemStats[item].add(accum)
-    $itemUnits[item] or $itemUnits[item] = [ 'root' ]  # handle unit-less items this way for now
-    $itemUnits[item].each { |unit| unitStats[unit].add(accum) }
+    itemUnits[item].each { |unit| unitStats[unit].add(accum) }
   }
   DB.transaction {
     ItemStat.where(month: month).delete
@@ -377,4 +390,26 @@ end
 ###################################################################################################
 # The main routine
 #calcStatsMonths
-propagateItemMonth(201702)
+
+puts "Gathering item-unit associations."
+itemUnits = UnitItem.select_hash_groups(:item_id, :unit_id)
+# Attribute all items without a unit directly to root
+DB.fetch("SELECT id FROM items WHERE id NOT IN (SELECT item_id FROM unit_items)").each { |row|
+  itemUnits[row[:id]] = [ 'root' ]
+}
+
+puts "Gathering item posting dates."
+monthPosts = Hash.new { |h,k| h[k] = [] }
+# Omit non-published and suppress-content items from posting counts
+Item.where(status: 'published').
+     where(Sequel.lit("attrs->'$.suppress_content' is null")).
+     select_map([:id, :attrs]).each { |item, attrStr|
+  attrStr.nil? and raise("item #{item} has null attrs")
+  sdate = JSON.parse(attrStr)["submission_date"]
+  sdate.nil? and raise("item #{item} missing submission_date")
+  sdate = parseDate(sdate)
+  monthPosts[sdate.year*100 + sdate.month] << item
+}
+
+month = 201702
+propagateItemMonth(itemUnits, monthPosts[month], month)
