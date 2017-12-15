@@ -23,6 +23,7 @@
 }
 
 .c-nav__main-button {
+  @extend %interactive-summary-size;
   display: inline-block;
   position: relative;
   padding-right: 2em;
@@ -43,13 +44,6 @@
     padding: 7px;
     background: inline('../images/icon_arrow-down.svg') no-repeat center / 13px;
     content: '';
-  }
-
-  // <summary> isn't responding to flexbox values in Safari, so need to use <span> child with those values:
-  span {
-    @extend %interactive-element-size;
-    display: inline-flex;
-    align-items: center;
   }
 
 }
@@ -78,10 +72,11 @@
 
   a,
   button {
-    @extend %interactive-element-size;
+    @extend %interactive-summary-size;
     display: flex;
     align-items: center;
-    padding: $spacing-base $spacing-sm;
+    padding-right: $spacing-sm;
+    padding-left: $spacing-sm;
     color: $color-dark-gray;
     font-size: 1.1em;
     text-decoration: none;
@@ -104,6 +99,7 @@
   @include bp(screen3) {
     display: flex;
     position: static;
+    align-items: center;
     justify-content: space-around;
     margin-top: 0 !important;
   }
@@ -166,8 +162,10 @@
 }
 
 .c-nav__sub-button {
+  @extend %interactive-summary-size;
   position: relative;
-  padding: 0 $spacing-sm;
+  padding-right: 2.1em;
+  padding-left: $spacing-sm;
   border: none;
   color: $color-dark-gray;
   font-size: 1.1em;
@@ -179,18 +177,6 @@
 
   @include bp(screen3) {
     border: none;
-  }
-
-  // <summary> isn't responding to flexbox values in Safari, so need to use <span> child with those values:
-  span {
-    @extend %interactive-element-size;
-    display: inline-flex;
-    align-items: center;
-
-    @include bp(screen3) {
-      padding-right: 1.5em;
-    }
-
   }
 
   &::after {
