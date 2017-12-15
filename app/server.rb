@@ -364,6 +364,13 @@ get %r{/uc/search(.*)} do |stuff|
 end
 
 ###################################################################################################
+# Directory used by RePec to crawl our site
+get %r{/repec(.*)} do
+  request.url =~ %r{/repec(.*)}
+  proxyFromURL("http://pub-eschol-prd-2a.escholarship.org:18880/repec#{$1}", "escholarship.org")
+end
+
+###################################################################################################
 # Sanitize incoming filenames before applying them to the filesystem. In particular, prevent
 # attacks using "../" as part of the path.
 def sanitizeFilePath(path)
