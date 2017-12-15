@@ -14,6 +14,7 @@ import ExportComp from '../components/ExportComp.jsx'
 import SortPaginationComp from '../components/SortPaginationComp.jsx'
 import InfoPagesComp from '../components/InfoPagesComp.jsx'
 import PaginationComp from '../components/PaginationComp.jsx'
+import Breakpoints from '../../js/breakpoints.json'
 import ModalComp from '../components/ModalComp.jsx'
 import MetaTagsComp from '../components/MetaTagsComp.jsx'
 
@@ -368,6 +369,7 @@ class FacetFieldset extends React.Component {
     }
     return (
       <details className="c-facetbox" open={this.props.open}>
+        {/* Each facetbox needs a distinct <span id> and <fieldset aria-labelledby> matching value */}
         <summary className="c-facetbox__summary"><span id={this.props.index}>{data.display}</span></summary>
           <fieldset aria-labelledby={this.props.index}>
             {facetItemNodes}
@@ -430,8 +432,20 @@ class FacetFieldset extends React.Component {
 //   }
 // }
 class FacetForm extends React.Component {
-  state = {
-    query: this.props.query,
+  state={ query: this.props.query,
+          refineActive: false,
+          drawerOpen: false }
+
+  widthChange = ()=> {
+    this.setState({refineActive: this.mq.matches, drawerOpen: this.mq.matches})
+  }
+
+  componentWillMount() {
+    if (!(typeof matchMedia === "undefined")) {
+      this.mq = matchMedia("(min-width:"+Breakpoints.screen1+")")
+      this.mq.addListener(this.widthChange)
+      this.widthChange()
+    }
   }
 
   // Called by FacetFieldset's handleChange function
@@ -493,7 +507,13 @@ class FacetForm extends React.Component {
       <Form id={p.formName} to='/search' method="GET" onSubmit={this.handleSubmit}>
         {/* Top-aligned box with title "Your search: "Teletubbies"" and active filters */}
         <FilterComp query={this.state.query} count={p.data.count} info_count={p.info_count} handler={this.removeFilters}/>
-        {facetForm}
+        <div className={this.state.refineActive ? "c-refine--no-drawer" : "c-refine--has-drawer"}>
+          <button className="c-refine__button--open" onClick={()=> this.setState({drawerOpen: true})} hidden={this.state.drawerOpen}>Refine Results</button>
+          <button className="c-refine__button--close" onClick={()=> this.setState({drawerOpen: false})} hidden={!this.state.drawerOpen}>Back to Results</button>
+          <div className={this.state.drawerOpen ? "c-refine__drawer--opened" : "c-refine__drawer--closed"}>
+            {facetForm}
+          </div>
+        </div>
         {/* Submit button needs to be present so our logic can "press" it at certain times.
             But hide it with display:none so user doesn't see it. */}
         <button type="submit" id={p.formButton} style={{display: "none"}}>Search</button>
@@ -547,8 +567,9 @@ class SearchPage extends PageBase {
         <aside>
           <FacetForm formName={formName} formButton={formButton} data={facetFormData} info_count={data.info_count} query={data.query} />
         </aside>
-        <main id="maincontent" style={{position: "relative"}}>
-          { this.state.fetchingData ? <div className="c-search-extra__loading-overlay"/> : null }
+        <main id="maincontent">
+          {/* temporarily removing this as it doesn't align properly with new mobile drawer
+              this.state.fetchingData ? <div className="c-search-extra__loading-overlay"/> : null */}
         {data.info_count > 0 &&
           <section className="o-columnbox1">
             <header>

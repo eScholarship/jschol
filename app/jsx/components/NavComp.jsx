@@ -66,7 +66,7 @@ class NavComp extends React.Component {
           <summary className="c-nav__main-button" onClick = {(event)=>{
             this.setState({isOpen: !this.details.open})
             event.preventDefault()
-          }}><span>Menu</span>
+          }}>Menu
           </summary>
           <ul className={this.state.submenuActive ? "c-nav__main-items--submenu-active" : "c-nav__main-items"}>
             {navList}
