@@ -732,4 +732,13 @@ As well as:
   modified:   app/jsx/pages/ItemPage.jsx
 
 
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's cd5f2957df3d005d0da76010a6c9a087d73f73c0, 2017-12-18 <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+  modified:   app/jsx/components/FooterComp.jsx
+  modified:   app/jsx/components/JournalGridComp.jsx
+  modified:   app/jsx/components/ScrollToTopComp.jsx
+  modified:   app/jsx/objects/ColumnBoxObj.jsx
+  modified:   app/jsx/pages/SearchPage.jsx
+
 

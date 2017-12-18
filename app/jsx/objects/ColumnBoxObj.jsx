@@ -9,6 +9,8 @@ if (!(typeof document === "undefined")) {
 }
 
 class ColumnBoxObj extends React.Component {
+  state={loadingData: false}
+
   componentDidMount() {
     $(this.element).dotdotdot({
       watch: 'window',
@@ -25,12 +27,25 @@ class ColumnBoxObj extends React.Component {
     return (
       <div>
         
-        <h2>Column Boxes 1</h2>
+        <h2>Column Box 1</h2>
+
+        <h3>Standard Styling</h3>
         <section className="o-columnbox1">
           <header>
             <h2>About eScholarship</h2>
           </header>
-          Lorem ipsum dolor sit amet, consectetur adipisicing elit. Alias sed sapiente nulla debitis nobis asperiores hic est, fuga illo? Accusamus molestias pariatur nihil, libero possimus optio iusto nobis sapiente ad.
+          <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Culpa vitae totam beatae, quod placeat in nemo sunt laboriosam inventore dicta, iste! Expedita non ab quos! Autem laudantium, maiores et culpa.
+          </p>
+        </section>
+
+        <h3>Includes Overlay Class with Simulation for Loading Search Results: <button onClick={()=> this.setState({loadingData: true})}>Start Loading</button><button onClick={()=> this.setState({loadingData: false})}>End Loading</button></h3>
+
+        {/* For integration, replace simulation logic below with back-end logic that toggles the class 'is-loading-data' upon ajax request */}
+        <section className={this.state.loadingData ? "o-columnbox1 is-loading-data" : "o-columnbox1"}>
+          <header>
+            <h2>About eScholarship</h2>
+          </header>
+          Lorem ipsum dolor sit amet, consectetur <a href="">adipisicing</a> elit. Alias sed sapiente nulla debitis nobis asperiores hic est, fuga illo? Accusamus molestias pariatur nihil, libero possimus optio iusto nobis sapiente ad.
         </section>
 
         <h3>Containing Responsive Image Content</h3>
