@@ -356,33 +356,111 @@ def calcNextMonth(month)
 end
 
 ###################################################################################################
+# For stats, we define 'category': a complicated melange of unit type + hierarchy, and item source.
+def gatherItemCategories
+
+  # There's an order to things. The first category for an item wins (hence the use of "||=" when
+  # adding things to this hash).
+  itemCategory = {}
+
+  # Springer and Biomed are easy to identify
+  Item.where(source: 'springer').select_map(:id).each { |item| itemCategory[item.to_s] ||= "postprints:Springer" }
+  Item.where(source: 'biomed').select_map(:id).each { |item| itemCategory[item.to_s] ||= "postprints:BioMed" }
+
+  # All items from LBNL are considered postprints
+  UnitItem.where(unit_id: 'lbnl').distinct.select_map(:item_id).each { |item|
+    itemCategory[item] ||= "postprints:LBNL"
+  }
+
+  # Campus postprint series are units that have "_postprints" in their name.
+  UnitItem.where(Sequel.like(:unit_id, '%_postprints')).distinct.select_map(:item_id).each { |item|
+    itemCategory[item] ||= "postprints:campus"
+  }
+
+  # Everything in an ETD series is an ETD
+  UnitItem.where(Sequel.like(:unit_id, '%_etd')).distinct.select_map(:item_id).each { |item|
+    itemCategory[item] ||= "ETDs"
+  }
+
+  # Take unit type into consideration
+  unitType = {}
+  Unit.select_map([:id, :type]).each { |unit, type|
+    next if unit == "root"
+    unitType[unit] = case type
+      when 'campus', 'oru';    "ORU / campus"
+      when 'journal';          "journals"
+      when 'monograph_series'; "monographic series"
+      when 'series';           "series"
+      when 'seminar_series';   "seminar series"
+      else                     raise("unknown unit type mapping: #{type}")
+    end
+  }
+
+  UnitItem.where(is_direct: true).order(:ordering_of_units).select_map([:unit_id, :item_id]).each { |unit, item|
+    unitType[unit] and itemCategory[item] ||= unitType[unit]
+  }
+
+  # Filter out unpublished and no-content items
+  ## Unnecessary
+  #DB["SELECT id FROM items WHERE status != 'published' OR attrs->'$.suppress_content' is not null"].each { |row|
+  #  itemCategory.delete(row[:id])
+  #}
+
+  # All done.
+  return itemCategory
+end
+
+###################################################################################################
 # Calculate a digest of items and people for each month of stats.
-def propagateItemMonth(itemUnits, monthPosts, month)
+def propagateItemMonth(itemUnits, itemPeople, itemCategory, monthPosts, month)
   puts "Propagating month #{month}."
-  startDate = Date.new(month/100, month%100, 1)
-  endDate   = startDate >> 1  # cool obscure operator that adds one month to a date
-  itemStats   = Hash.new { |h,k| h[k] = EventAccum.new }
-  unitStats   = Hash.new { |h,k| h[k] = EventAccum.new }
-  personStats = Hash.new { |h,k| h[k] = EventAccum.new }
+
+  # We will accumulate data into these hashes
+  itemStats     = Hash.new { |h,k| h[k] = EventAccum.new }
+  unitStats     = Hash.new { |h,k| h[k] = EventAccum.new }
+  personStats   = Hash.new { |h,k| h[k] = EventAccum.new }
+  categoryStats = Hash.new { |h,k| h[k] = EventAccum.new }
+
+  # First handle item postings for this month
   (monthPosts || []).each { |item|
     itemStats[item].incPost
     itemUnits[item].each { |unit| unitStats[unit].incPost }
+    itemPeople[item] and itemPeople[item].each { |pp| personStats[pp].incPost }
+    categoryStats[itemCategory[item] || 'unknown'].incPost
   }
+
+  # Next accumulate events for each items accessed this month
+  startDate = Date.new(month/100, month%100, 1)
+  endDate   = startDate >> 1  # cool obscure operator that adds one month to a date
   ItemEvent.where{date >= startDate}.where{date < endDate}.each { |event|
     accum = EventAccum.new(JSON.parse(event.attrs))
     item = event.item_id
     itemStats[item].add(accum)
     itemUnits[item].each { |unit| unitStats[unit].add(accum) }
+    itemPeople[item] and itemPeople[item].each { |pp| personStats[pp].add(accum) }
+    categoryStats[itemCategory[item] || 'unknown'].add(accum)
   }
+
+  # Write out all the stats
   DB.transaction {
     ItemStat.where(month: month).delete
     itemStats.each { |item, accum|
-      ItemStat.create(item_id: item, month: month, events: accum.to_h.to_json)
+      ItemStat.create(item_id: item, month: month, attrs: accum.to_h.to_json)
     }
 
     UnitStat.where(month: month).delete
     unitStats.each { |unit, accum|
-      UnitStat.create(unit_id: unit, month: month, events: accum.to_h.to_json)
+      UnitStat.create(unit_id: unit, month: month, attrs: accum.to_h.to_json)
+    }
+
+    PersonStat.where(month: month).delete
+    personStats.each { |person, accum|
+      PersonStat.create(person_id: person, month: month, attrs: accum.to_h.to_json)
+    }
+
+    CategoryStat.where(month: month).delete
+    categoryStats.each { |category, accum|
+      CategoryStat.create(category: category, month: month, attrs: accum.to_h.to_json)
     }
   }
 end
@@ -390,6 +468,12 @@ end
 ###################################################################################################
 # The main routine
 #calcStatsMonths
+
+puts "Gathering item categories."
+itemCategory = gatherItemCategories
+
+puts "Gathering item-person associations."
+itemPeople = ItemAuthor.where(Sequel.~(person_id: nil)).select_hash_groups(:item_id, :person_id)
 
 puts "Gathering item-unit associations."
 itemUnits = UnitItem.select_hash_groups(:item_id, :unit_id)
@@ -400,7 +484,10 @@ DB.fetch("SELECT id FROM items WHERE id NOT IN (SELECT item_id FROM unit_items)"
 
 puts "Gathering item posting dates."
 monthPosts = Hash.new { |h,k| h[k] = [] }
-# Omit non-published and suppress-content items from posting counts
+# Omit non-published and suppress-content items from posting counts.
+# NOTE: These numbers differ slightly from old (eschol4) stats because our new code converter
+#       (based on normalization stylesheets) has better date calulation for ETDs (using the
+#       history.xml file instead of timestamp on meta).
 Item.where(status: 'published').
      where(Sequel.lit("attrs->'$.suppress_content' is null")).
      select_map([:id, :attrs]).each { |item, attrStr|
@@ -411,5 +498,5 @@ Item.where(status: 'published').
   monthPosts[sdate.year*100 + sdate.month] << item
 }
 
-month = 201702
-propagateItemMonth(itemUnits, monthPosts[month], month)
+month = 200511
+propagateItemMonth(itemUnits, itemPeople, itemCategory, monthPosts[month], month)

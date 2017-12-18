@@ -20,6 +20,10 @@ class DisplayPDF < Sequel::Model
   unrestrict_primary_key
 end
 
+class CategoryStat < Sequel::Model
+  unrestrict_primary_key
+end
+
 class InfoIndex < Sequel::Model(:info_index)
 end
 

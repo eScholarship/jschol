@@ -4,6 +4,7 @@ app/js/*bundle*.js
 app/js/manifest.json
 app/js/*.map
 app/siteMap*.xml
+awsLogs/
 bin/
 .bundle/
 bower_components/
