@@ -462,6 +462,10 @@ def propagateItemMonth(itemUnits, itemPeople, itemCategory, monthPosts, month)
     categoryStats.each { |category, accum|
       CategoryStat.create(category: category, month: month, attrs: accum.to_h.to_json)
     }
+
+    # And mark this month complete.
+    sm = StatsMonth.where(month: month)
+    sm.update(old_digest: sm.first.cur_digest)
   }
 end
 
@@ -498,5 +502,23 @@ Item.where(status: 'published').
   monthPosts[sdate.year*100 + sdate.month] << item
 }
 
-month = 200511
-propagateItemMonth(itemUnits, itemPeople, itemCategory, monthPosts[month], month)
+# Propagate all months that need it
+startTime = Time.now
+months = StatsMonth.order(:month).all.select { |sm| sm.cur_digest != sm.old_digest }
+totalCount = doneCount = 0
+months.each { |sm| totalCount += sm.cur_count }
+months.each { |sm|
+  propagateItemMonth(itemUnits, itemPeople, itemCategory, monthPosts[sm.month], sm.month)
+  doneCount += sm.cur_count
+  if doneCount > 0
+    elapsed = Time.now - startTime
+    rate = doneCount / elapsed
+    estRemaining = (totalCount - doneCount) / rate
+    printf("%d/%d done (%.1f%%), est remaining: %d:%02d:%02d\n",
+      doneCount, totalCount,
+      doneCount * 100.0 / totalCount,
+      estRemaining / 3600, (estRemaining % 3600) / 60, (estRemaining % 3600) % 60)
+  end
+}
+
+puts "Done."
