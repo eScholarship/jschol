@@ -343,12 +343,12 @@ class FacetFieldset extends React.Component {
     let out = []
     for (let facet of facets) {
       if (facet.value in checked)
-        out.push(facet)
-      else if (out.length < 5)
+        out.unshift(facet)
+      else 
         out.push(facet)
     }
 
-    return out
+    return out.slice(0, 5)
   }
 
   render() {

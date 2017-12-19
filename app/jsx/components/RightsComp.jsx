@@ -1,6 +1,7 @@
 // ##### Rights Component ##### //
 
 import React from 'react'
+import LazyImageComp from '../components/LazyImageComp.jsx'
 import PropTypes from 'prop-types'
 
 class RightsComp extends React.Component {
@@ -28,7 +29,7 @@ class RightsComp extends React.Component {
     // <a href="" className="c-publocation__license"><img src="" alt="" className="c-scholworks__license" /></a>
     //  in order to allow sister element 'c-publocation__link' to be aligned properly to the left
     return (
-      <a href={a[0]} className={this.props.classname ? this.props.classname : "c-publocation__license"}><img src={"/images/"+a[1]} alt={altText + a[2]} className="c-scholworks__license" /></a>
+      <a href={a[0]} className={this.props.classname ? this.props.classname : "c-publocation__license"}><LazyImageComp src={"/images/"+a[1]} alt={altText + a[2]} /></a>
     )
   }
 }
