@@ -8,7 +8,7 @@
   background-color: $color-white;
 
   @include bp(screen2) {
-    position: static;
+    position: absolute;
     left: auto;
     width: 22em;
   }

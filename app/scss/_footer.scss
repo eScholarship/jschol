@@ -1,5 +1,7 @@
 // ##### Footer Component ##### //
 
+$footer-logo-width: 200px;
+
 .c-footer {
   @extend %page-bleed;
   display: flex;
@@ -8,78 +10,74 @@
   padding: $spacing-md;
   background-color: $color-light-black;
 
-  @supports (display: grid) {
-    display: grid;
-    justify-items: center;
-  }
-
   @include bp(screen2) {
-    position: relative;
-    align-items: flex-start;
-
-    @supports (display: grid) {
-      grid-template-columns: auto 1fr;
-      justify-items: stretch;
-    }
-
+    display: grid;
+    grid-template-columns: auto 1fr 50%;
   }
 
 }
 
 .c-footer__nav {
-  columns: 2;
-  column-gap: $spacing-lg;
+  margin-bottom: $spacing-sm;
 
-  @include bp(screen2) {
-    position: absolute;
-    top: 0;
-    right: 0;
-    left: 55%;
-    margin: $spacing-md 0 0;
+  ul {
+    @extend %no-bullet-ul;
+    columns: 2;
+    column-gap: $spacing-lg;
 
-    @supports (display: grid) {
-      position: static;
-      margin-left: 35%;
-      grid-column: 2;
-      grid-row: 1 / 4;
+    li {
+      margin-bottom: $spacing-md;
+      break-inside: avoid;
+
+      a {
+        display: block;
+        color: $color-white;
+        text-decoration: none;
+      }
+
     }
 
   }
 
-  a {
-    display: block;
-    margin-bottom: 15px;
-    color: $color-white;
-    text-decoration: none;
+  @include bp(screen2) {
+    margin-bottom: 0;
+    grid-column: 3;
+    grid-row: 1 / 4;
   }
 
 }
 
 .c-footer__logo {
-  margin: 0 0 $spacing-sm;
+  margin-bottom: $spacing-md;
   color: $color-white;
 
   img {
-    width: 200px;
+    width: $footer-logo-width;
   }
 
 }
 
 .c-footer__icons {
-  margin-bottom: $spacing-sm;
+  display: flex;
+  justify-content: space-evenly;
+  width: $footer-logo-width;
+  height: auto;
+  margin-bottom: $spacing-md;
 
-  @supports (display: grid) {
-    justify-self: center;
+  @include bp(screen2) {
+    justify-self: stretch;
+    grid-column: 1;
+
+    @supports (display: grid) {
+      width: auto;
+    }
+
   }
 
   a {
 
-    &:not(:first-child) {
-      margin-left: $spacing-lg;
-    }
-
     img {
-      height: $element-height;
+      @extend %interactive-element-size;
     }
 
   }
@@ -90,6 +88,10 @@
   color: $color-light-gray;
   font-size: 0.8em;
   line-height: $line-height1;
+
+  @include bp(screen2) {
+    grid-column: 1;
+  }
 
   a {
     color: $color-white;
