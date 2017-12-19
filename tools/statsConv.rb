@@ -24,6 +24,9 @@ require 'yaml'
 # Make puts synchronous (e.g. auto-flush)
 STDOUT.sync = true
 
+# Always use the right directory (the parent of the tools dir)
+Dir.chdir(File.dirname(File.expand_path(File.dirname(__FILE__))))
+
 # The main database we're inserting data into
 DB = Sequel.connect(YAML.load_file("config/database.yaml"))
 

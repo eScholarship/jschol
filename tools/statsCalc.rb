@@ -21,9 +21,15 @@ require 'sequel'
 require 'set'
 require 'time'
 require 'yaml'
+require 'zlib'
+
+require_relative './subprocess.rb'
 
 # Make puts synchronous (e.g. auto-flush)
 STDOUT.sync = true
+
+# Always use the right directory (the parent of the tools dir)
+Dir.chdir(File.dirname(File.expand_path(File.dirname(__FILE__))))
 
 # The main database we're inserting data into
 DB = Sequel.connect(YAML.load_file("config/database.yaml"))
@@ -164,6 +170,205 @@ class EventAccum
       result[:ref] = @ref.to_h
     end
     return result
+  end
+end
+
+###################################################################################################
+def openLog(path)
+  if path =~ /\.gz$/
+    Zlib::GzipReader.open(path) { |io| yield io }
+  else
+    File.open(path, "r") { |io| yield io }
+  end
+end
+
+###################################################################################################
+class LogEventSource
+  attr_reader :path, :date
+  def eachEvent; raise("must implement"); end
+end
+
+class LogEvent
+  attr_reader :ip, :method, :path, :status, :referrer, :agent, :trace
+
+  def initialize(ip, methd, path, status, referrer, agent, trace)
+    @ip = ip
+    @method = methd
+    @path = path
+    @status = status
+    @referrer = referrer
+    @agent = agent
+    @trace = trace
+  end
+
+  def to_s
+    puts "LogEvent: ip=#{@ip.inspect} method=#{@method.inspect} path=#{@path.inspect} status=#{@status.inspect} " +
+         "referrer=#{@referrer.inspect} agent=#{@agent.inspect} trace=#{@trace.inspect}"
+  end
+end
+
+class CloudFrontLogEventSource < LogEventSource
+  def initialize(path)
+    @path = path
+    m = path.match(%r{\. (?<year>  2\d\d\d ) -
+                         (?<month> \d\d    ) -
+                         (?<day>   \d\d    ) -
+                         (?<hour>  \d\d    ) \.
+                     }x)or raise("can't parse CF filename #{path.inspect}")
+    @date = Time.utc(m[:year].to_i, m[:month].to_i, m[:day].to_i, m[:hour].to_i).localtime.to_date
+  end
+
+  def eachEvent
+    openLog(@path) { |io|
+      line = io.readline
+      line =~ /Version: 1\.0/ or raise("expecting v 1.0 CloudFront log in #{path.inspect}")
+      line = io.readline
+      fieldSpec = line.split()[1,999]
+      o_ip       = fieldSpec.index('c-ip') or raise
+      o_method   = fieldSpec.index('cs-method') or raise
+      o_uriStem  = fieldSpec.index('cs-uri-stem') or raise
+      o_status   = fieldSpec.index('sc-status') or raise
+      o_referrer = fieldSpec.index('cs(Referer)') or raise
+      o_agent    = fieldSpec.index('cs(User-Agent)') or raise
+      o_query    = fieldSpec.index('cs-uri-query') or raise
+      io.each_line { |line|
+        values = line.split
+        yield LogEvent.new(values[o_ip],
+                           values[o_method],
+                           values[o_query] == '-' ? values[o_uriStem] : values[o_uriStem]+'?'+values[o_query],
+                           values[o_status].to_i,
+                           values[o_referrer] == '-' ? nil : URI.unescape(URI.unescape(values[o_referrer])),
+                           values[o_agent] == '-' ? nil : URI.unescape(URI.unescape(values[o_agent])),
+                           nil)  # no trace ID
+      }
+    }
+  end
+end
+
+class ALBLogEventSource < LogEventSource
+  def initialize(path)
+    @path = path
+    m = path.match(%r{_ (?<year>   2\d\d\d )
+                        (?<month>  \d\d    )
+                        (?<day>    \d\d    ) T
+                        (?<hour>   \d\d    )
+                        (?<minute> \d\d    ) Z
+                     }x)or raise("can't parse ALB filename #{path.inspect}")
+    @date = Time.utc(m[:year].to_i, m[:month].to_i, m[:day].to_i, m[:hour].to_i, m[:minute]).localtime.to_date
+  end
+
+  def eachEvent
+    # e.g. http 2017-10-20T08:45:42.008160Z app/pub-jschol-prd-alb/683d40c2feb7aa9f 103.74.214.12:48333 172.30.5.176:18880
+    #      0.000 0.001 0.000 200 200 593 6659 "GET http://escholarship.org:80/images/temp_article.png HTTP/1.1"
+    #      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML) Chrome/61.0.3163.100 Safari/537.36"
+    #      - - arn:aws:elasticloadbalancing:us-west-2:451826914157:targetgroup/pub-jschol-prd-tg/a1d8bd825b060349
+    #      "Root=1-59e9b7b6-3d8e3a1e37b49d7a150d6901" "-" "-"
+    # See http://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-access-logs.html
+    linePat = %r{^   (?<type>                     [^ ]+      ) \s
+                     (?<timestamp>                [-\dT:.Z]+ ) \s
+                     (?<elb>                      [^ ]+      ) \s
+                     (?<client_port>              [^ ]+      ) \s
+                     (?<target_port>              [^ ]+      ) \s
+                     (?<request_processing_time>  [^ ]+      ) \s
+                     (?<target_processing_time>   [^ ]+      ) \s
+                     (?<response_processing_time> [^ ]+      ) \s
+                     (?<elb_status_code>          [-\d]+     ) \s
+                     (?<target_status_code>       [-\d]+     ) \s
+                     (?<received_bytes>           [^ ]+      ) \s
+                     (?<sent_bytes>               [^ ]+      ) \s
+                   " (?<request>                  [^"]+      ) " \s
+                   " (?<user_agent>               [^"]*      ) " \s
+                     (?<ssl_cipher>               [^ ]+      ) \s
+                     (?<ssl_protocol>             [^ ]+      ) \s
+                     (?<target_group_arn>         [^ ]+      ) \s
+                   " (?<trace_id>                 [^ ]+      ) " \s
+                     (?<domain_name>              [^ ]+      ) \s
+                     (?<chosen_cert_arn>          [^ ]+      )
+                $}x
+
+    portPat = %r{^ (?<ip>   \d+\.\d+\.\d+\.\d+) :
+                   (?<port> \d+)
+                $}x
+
+    reqPat = %r{^ (?<method>   [-A-Z]+) \s
+                  (?<protocol> [^/]+) ://
+                  (?<host>     [^/:]+)
+                  (: (?<port>  \d+))?
+                  (?<path>     .*) \s
+                  (?<proto2>   [A-Z]+/[\d.]+)
+              $}x
+    openLog(@path) { |io|
+      io.each_line { |line|
+        m1 = line.match(linePat) or raise("can't parse ALB line #{line.inspect}")
+        m2 = m1[:client_port].match(portPat) or raise
+        next if m1[:request] =~ /:\d+-/  # e.g. weird things like: "- http://pub-jschol-prd-alb-blah.amazonaws.com:80- "
+        m3 = m1[:request].match(reqPat) or raise("can't match request #{m1[:request].inspect}")
+        yield LogEvent.new(m2[:ip],
+                           m3[:method],
+                           m3[:path],
+                           m1[:elb_status_code].to_i,
+                           nil,   # unfortunately, have to use trace to link referrer from jschol logs
+                           m1[:user_agent] == '-' ? nil : m1[:user_agent],
+                           m1[:trace_id])
+      }
+    }
+  end
+end
+
+class JscholLogEventSource < LogEventSource
+  def initialize(path)
+    @path = path
+    m = path.match(%r{jschol\. (?<year>   2\d\d\d ) \.
+                               (?<month>  \d\d    ) \.
+                               (?<day>    \d\d    )
+                     }x) or raise("can't parse jschol log filename #{path.inspect}")
+    @date = Date.new(m[:year].to_i, m[:month].to_i, m[:day].to_i)
+  end
+
+  def eachEvent
+    # e.g. [4] 157.55.39.165 - - [18/Dec/2017:00:00:02 -0800] "GET /search/?q=Kabeer,%20Naila HTTP/1.1"
+    #      200 - 0.7414 - "Root=1-5a377581-76cf406644dc717f3fd2ecbb"
+    linePat = %r{\[ (?<thread>    \d+       ) \] \s
+                    (?<ips>       [\w.:, ]+ ) \s
+                    (?<skip1>     -         ) \s
+                    (?<skip2>     -         ) \s
+                 \[ (?<timestamp> [^\]]+    ) \] \s
+                 "  (?<request>   [^"]+     ) " \s
+                    (?<status>    \d+       ) \s
+                    (?<size>      -|[-\d]+  ) \s
+                    (?<elapsed>   -|[\d.]+  )
+                    (\s (- | ("(?<referrer> [^"]*)"))
+                     \s (- | (" (?<trace_id> [^"]*) ")))?
+                $}x
+    reqPat = %r{^ (?<method>   [A-Z]+ ) \s
+                  (?<path>     .*     ) \s
+                  (?<proto2>   [A-Z]+/[\d.]+)
+              $}x
+    openLog(@path) { |io|
+      io.each_line { |line|
+        line.encode!('UTF-8', 'binary', invalid: :replace, undef: :replace, replace: '').strip!
+        m1 = line.match(linePat)
+        if !m1
+          if line =~ /\[\d+\] \d+\.\d+\.\d+\.\d+/
+            puts "Warning: skipping #{line.inspect}"
+          end
+          next  # lots of other kinds of lines come out of jschol; ignore them
+        end
+        m2 = m1[:request].match(reqPat) or raise("can't match request #{m1[:request].inspect}")
+        ip = nil
+        m1[:ips].split(/, ?/).each { |addr|
+          addr =~ /^\d+\.\d+\.\d+\.\d+$/ and ip ||= addr
+        }
+        ip or raise("can't find ip in #{m1[:ips].inspect}")
+        yield LogEvent.new(m1[:ips].sub(/,.*/, ''),  # just the first IP (second is often CloudFront)
+                           m2[:method],
+                           m2[:path],
+                           m1[:status].to_i,
+                           m1[:referrer] && !m1[:referrer].empty? ? m1[:referrer] : nil,
+                           nil,
+                           m1[:trace_id] && !m1[:trace_id].empty? ? m1[:trace_id] : nil)
+      }
+    }
   end
 end
 
@@ -469,56 +674,109 @@ def propagateItemMonth(itemUnits, itemPeople, itemCategory, monthPosts, month)
   }
 end
 
+def calcStats
+  calcStatsMonths
+
+  puts "Gathering item categories."
+  itemCategory = gatherItemCategories
+
+  puts "Gathering item-person associations."
+  itemPeople = ItemAuthor.where(Sequel.~(person_id: nil)).select_hash_groups(:item_id, :person_id)
+
+  puts "Gathering item-unit associations."
+  itemUnits = UnitItem.select_hash_groups(:item_id, :unit_id)
+  # Attribute all items without a unit directly to root
+  DB.fetch("SELECT id FROM items WHERE id NOT IN (SELECT item_id FROM unit_items)").each { |row|
+    itemUnits[row[:id]] = [ 'root' ]
+  }
+
+  puts "Gathering item posting dates."
+  monthPosts = Hash.new { |h,k| h[k] = [] }
+  # Omit non-published and suppress-content items from posting counts.
+  # NOTE: These numbers differ slightly from old (eschol4) stats because our new code converter
+  #       (based on normalization stylesheets) has better date calulation for ETDs (using the
+  #       history.xml file instead of timestamp on meta).
+  Item.where(status: 'published').
+       where(Sequel.lit("attrs->'$.suppress_content' is null")).
+       select_map([:id, :attrs]).each { |item, attrStr|
+    attrStr.nil? and raise("item #{item} has null attrs")
+    sdate = JSON.parse(attrStr)["submission_date"]
+    sdate.nil? and raise("item #{item} missing submission_date")
+    sdate = parseDate(sdate)
+    monthPosts[sdate.year*100 + sdate.month] << item
+  }
+
+  # Propagate all months that need it
+  startTime = Time.now
+  months = StatsMonth.order(:month).all.select { |sm| sm.cur_digest != sm.old_digest }
+  totalCount = doneCount = 0
+  months.each { |sm| totalCount += sm.cur_count }
+  months.each { |sm|
+    propagateItemMonth(itemUnits, itemPeople, itemCategory, monthPosts[sm.month], sm.month)
+    doneCount += sm.cur_count
+    if doneCount > 0
+      elapsed = Time.now - startTime
+      rate = doneCount / elapsed
+      estRemaining = (totalCount - doneCount) / rate
+      printf("%d/%d done (%.1f%%), est remaining: %d:%02d:%02d\n",
+        doneCount, totalCount,
+        doneCount * 100.0 / totalCount,
+        estRemaining / 3600, (estRemaining % 3600) / 60, (estRemaining % 3600) % 60)
+    end
+  }
+
+  puts "Done."
+end
+
+###################################################################################################
+# Grab logs from their various places and put them into our 'awsLogs' directory
+def grabLogs
+  puts "Grabbing AppLoadBalancer logs."
+  FileUtils.mkdir_p("./awsLogs/alb-logs")
+  checkCall("aws s3 sync s3://pub-s3-prd/jschol/alb-logs/ ./awsLogs/alb-logs/")
+  puts "Grabbing CloudFront logs."
+  FileUtils.mkdir_p("./awsLogs/cf-logs")
+  checkCall("aws s3 sync s3://pub-s3-prd/jschol/cf-logs/ ./awsLogs/cf-logs/")
+  puts "Grabbing jschol logs."
+  FileUtils.mkdir_p("./awsLogs/jschol-logs/2a")
+  checkCall("rsync -av pub-jschol-prd-2a.escholarship.org:/apps/eschol/jschol/logs ./awsLogs/jschol-logs/2a/")
+  FileUtils.mkdir_p("./awsLogs/jschol-logs/2c")
+  checkCall("rsync -av pub-jschol-prd-2c.escholarship.org:/apps/eschol/jschol/logs ./awsLogs/jschol-logs/2c/")
+end
+
+###################################################################################################
+# Figure out which logs need to be parsed.
+def parseLogs
+  logsByDate = Hash.new { |h,k| h[k] = [] }
+
+  # CloudFront logs
+  Dir.glob("./awsLogs/cf-logs/**/*").each { |fn|
+    src = CloudFrontLogEventSource.new(fn)
+    logsByDate[src.date] << src
+  }
+
+  # Application Load Balancer (ALB) logs
+  Dir.glob("./awsLogs/alb-logs/**/*").each { |fn|
+    next unless File.file?(fn)
+    next if fn =~ /ELBAccessLogTestFile/
+    src = ALBLogEventSource.new(fn)
+  }
+
+  # jschol logs (needed to link referrers to ALB logs)
+  Dir.glob("./awsLogs/jschol-logs/**/*").each { |fn|
+    next unless File.file?(fn)
+    next if fn =~ %r{/iso\.}  # we only want the jschol logs, not iso logs
+    puts fn
+    src = JscholLogEventSource.new(fn)
+    logsByDate[src.date] << src
+    src.eachEvent { |evt|
+      #evt.trace && evt.referrer and print("#{evt.referrer[0,80]}\r")
+    }
+  }
+end
+
 ###################################################################################################
 # The main routine
-#calcStatsMonths
-
-puts "Gathering item categories."
-itemCategory = gatherItemCategories
-
-puts "Gathering item-person associations."
-itemPeople = ItemAuthor.where(Sequel.~(person_id: nil)).select_hash_groups(:item_id, :person_id)
-
-puts "Gathering item-unit associations."
-itemUnits = UnitItem.select_hash_groups(:item_id, :unit_id)
-# Attribute all items without a unit directly to root
-DB.fetch("SELECT id FROM items WHERE id NOT IN (SELECT item_id FROM unit_items)").each { |row|
-  itemUnits[row[:id]] = [ 'root' ]
-}
-
-puts "Gathering item posting dates."
-monthPosts = Hash.new { |h,k| h[k] = [] }
-# Omit non-published and suppress-content items from posting counts.
-# NOTE: These numbers differ slightly from old (eschol4) stats because our new code converter
-#       (based on normalization stylesheets) has better date calulation for ETDs (using the
-#       history.xml file instead of timestamp on meta).
-Item.where(status: 'published').
-     where(Sequel.lit("attrs->'$.suppress_content' is null")).
-     select_map([:id, :attrs]).each { |item, attrStr|
-  attrStr.nil? and raise("item #{item} has null attrs")
-  sdate = JSON.parse(attrStr)["submission_date"]
-  sdate.nil? and raise("item #{item} missing submission_date")
-  sdate = parseDate(sdate)
-  monthPosts[sdate.year*100 + sdate.month] << item
-}
-
-# Propagate all months that need it
-startTime = Time.now
-months = StatsMonth.order(:month).all.select { |sm| sm.cur_digest != sm.old_digest }
-totalCount = doneCount = 0
-months.each { |sm| totalCount += sm.cur_count }
-months.each { |sm|
-  propagateItemMonth(itemUnits, itemPeople, itemCategory, monthPosts[sm.month], sm.month)
-  doneCount += sm.cur_count
-  if doneCount > 0
-    elapsed = Time.now - startTime
-    rate = doneCount / elapsed
-    estRemaining = (totalCount - doneCount) / rate
-    printf("%d/%d done (%.1f%%), est remaining: %d:%02d:%02d\n",
-      doneCount, totalCount,
-      doneCount * 100.0 / totalCount,
-      estRemaining / 3600, (estRemaining % 3600) / 60, (estRemaining % 3600) % 60)
-  end
-}
-
-puts "Done."
+#grabLogs
+parseLogs
+#calcStats
