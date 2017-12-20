@@ -331,24 +331,76 @@ class FacetFieldset extends React.Component {
       }
     </ul>
 
-  sliceFacets(facets)
-  {
-    if (!this.props.query.filters)
-      return facets.slice(0, 5)
+  getLength = ({ descendents }) => {
+    let i = 0 
+    if (descendents)
+      return descendents.length + Math.max(...descendents.map(this.getLength))
+    return 1 + i
+  }
 
-    let checked = {}
-    for (let filter of this.props.query.filters)
-      checked[filter.value] = true
-
-    let out = []
-    for (let facet of facets) {
-      if (facet.value in checked)
-        out.unshift(facet)
-      else 
-        out.push(facet)
+  /* Display prescribed maximum (rows of) facets.
+     With the caveat: For any given facet: all of its descendents should be displayed,
+                      so slice can extend past maximum in that case */
+  facetsSliced = (facets, maxLength)  => {
+    let i = 0, r = []
+    for (let facet of facets){
+      r.push(facet)
+      i += this.getLength(facet) 
+      if (i >= maxLength) break
     }
+    return r
+  }
 
-    return out.slice(0, 5)
+  traverse = (facets, func) => {
+    for (let i of facets){
+      func.apply(this, [i])
+      if (i.descendents) {
+        this.traverse(i.descendents, func)
+      }
+    }
+  }
+
+  /* Gather all IDS of facets (converts tree to flat hash) */
+  getFacetVals = facets =>{
+    let hash = {}
+    this.traverse(facets, function(node){
+      if (!hash[node.value])
+        hash[node.value] = true
+    })
+    return hash
+  }
+
+  sliceArrangeFacets(facets)
+  {
+    /* Get first set of 6 facets, undiscerning: some may be checked, some may not */
+    let slicedFromTop = this.facetsSliced(facets, 6)
+    if (!this.props.query.filters)
+      return slicedFromTop
+
+    /* Get their values. When we shift/prioritize checked facets to the top of the list,
+       we want to make sure they're not already present in this set of initial sliced */
+    let slicedIds = this.getFacetVals(slicedFromTop)
+
+    /* Gather values of checked facets */
+    let checkedHash = {}
+    for (let filter of this.props.query.filters)
+      checkedHash[filter.value] = true
+    let checked_count = Object.keys(checkedHash).length
+
+    let checked = []
+    /* Can't use Generator function here since it's not supported by IE */
+    let collectChecked = facets => {
+      for (let facet of facets) {
+        if ((facet.value in checkedHash) && (!(facet.value in slicedIds))) {
+          checked.unshift(facet)
+        }
+        if (facet.descendents)
+          collectChecked(facet.descendents)
+      }
+    }
+    collectChecked(facets)
+    let out = checked.concat(slicedFromTop)
+    return this.facetsSliced(out, Math.max(6, checked_count))
   }
 
   render() {
@@ -356,7 +408,7 @@ class FacetFieldset extends React.Component {
     let facets, facetItemNodes
     if (data.facets) {
       facets = this.state.modalOpen ? [] :
-               (this.props.modal && data.facets.length > 5) ? this.sliceFacets(data.facets) :
+               (this.props.modal && data.facets.length > 5) ? this.sliceArrangeFacets(data.facets) :
                data.facets
       facetItemNodes = this.getFacetNodes(facets)
     } else if (data.fieldName == "pub_year") {
@@ -382,17 +434,12 @@ class FacetFieldset extends React.Component {
                               }>
                 Show more
               </button>
-              {/* style: maxHeight and overflowY hack below makes scrolling modal,
-                  until Joel propagates the change to the scss where it really belongs.
-              */}
               <ModalComp isOpen={this.state.modalOpen}
                 parentSelector={()=>$(`#facetModalBase-${data.fieldName}`)[0]}
                 header={"Refine By " + data.display}
                 onOK={e=>this.closeModal(e, data.fieldName)} okLabel="Done"
                 onCancel={e=>this.closeModal(e, data.fieldName)}
-                content={ <div style={{ maxHeight: "45vh", overflowY: "auto" }}>
-                            { this.getFacetNodes(data.facets) }
-                          </div> }
+                content={ <div>{ this.getFacetNodes(data.facets) }</div> }
               />
             </div>
           }
