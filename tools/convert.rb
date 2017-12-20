@@ -1298,6 +1298,7 @@ end
 def parseUCIngest(itemID, inMeta, fileType)
   attrs = {}
   attrs[:addl_info] = inMeta.html_at("./comments") and sanitizeHTML(inMeta.html_at("./comments"))
+  attrs[:author_hide] = !!inMeta.at("./authors[@hideAuthor]")   # Only journal items can have this attribute
   attrs[:bepress_id] = inMeta.text_at("./context/bpid")
   attrs[:buy_link] = inMeta.text_at("./context/buyLink")
   attrs[:custom_citation] = inMeta.text_at("./customCitation")
@@ -1312,6 +1313,7 @@ def parseUCIngest(itemID, inMeta, fileType)
   attrs[:pub_web_loc] = inMeta.xpath("./context/publishedWebLocation").map { |el| el.text.strip }
   attrs[:publisher] = inMeta.text_at("./publisher")
   attrs[:suppress_content] = shouldSuppressContent(itemID, inMeta)
+
 
   # Normalize language codes
   attrs[:language] and attrs[:language] = attrs[:language].sub("english", "en").sub("german", "de").
