@@ -24,6 +24,10 @@ class CategoryStat < Sequel::Model
   unrestrict_primary_key
 end
 
+class EventLog < Sequel::Model
+  unrestrict_primary_key
+end
+
 class InfoIndex < Sequel::Model(:info_index)
 end
 

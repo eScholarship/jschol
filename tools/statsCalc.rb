@@ -43,12 +43,22 @@ require_relative './models.rb'
 
 BIG_PRIME = 9223372036854775783 # 2**63 - 25 is prime. Kudos https://primes.utm.edu/lists/2small/0bit.html
 
+ESCHOL5_RELEASE_DATE = Date.new(2017, 10, 19)  # we released on October 19, 2017.
+
 # Cache some database values
 $googleRefID = Referrer.where(domain: "google.com").first.id.to_s
 
 # It's silly and wasteful to propagate every single little referrer up the chain, so we retain
 # a certain number and lump the rest as "other".
 MAX_REFS = 30
+
+# Use COUNTER's list of robots, as it seems pretty complete and might be up-to-date
+ROBOT_PATTERNS = JSON.parse(
+  File.read("lib/COUNTER-Robots/COUNTER_Robots_list.json")).map { |h|
+    h['pattern'].sub("\\[en]", "\\[en\\]")   # bug fix for one of their patterns
+  }.map { |str| Regexp.new(str, Regexp::IGNORECASE) }
+
+$robotChecked = {}
 
 ###################################################################################################
 # Data classes (much more efficient in both memory and space than hashes)
@@ -107,13 +117,13 @@ class EventAccum
     @hit = @dl = @google = @post = 0
     h.nil? and return
     h.each { |k,v|
-      if k == 'hit'
+      if k == 'hit' || k == :hit
         @hit = v
-      elsif k == 'dl'
+      elsif k == 'dl' || k == :dl
         @dl = v
-      elsif k == 'post'
+      elsif k == 'post' || k == :post
         @post = v
-      elsif k == 'ref'
+      elsif k == 'ref' || k == :ref
         if h.size == 1 && h.keys[0] == $googleRefID
           @google = h[$googleRefID]
         else
@@ -125,8 +135,9 @@ class EventAccum
           @ref = RefAccum.new(tmp)
         end
       else
-        @counts ||= {}
-        @counts[k] = v
+        @other ||= {}
+        puts "excess count: k=#{k.inspect} v=#{v.inspect}"
+        @other[k] = v
       end
     }
   end
@@ -174,17 +185,31 @@ class EventAccum
 end
 
 ###################################################################################################
-def openLog(path)
+def eachLogLine(path)
   if path =~ /\.gz$/
-    Zlib::GzipReader.open(path) { |io| yield io }
+    # WARNING! Ruby's GZipReader silently terminates before reading entire file. Proven with an
+    #          AWS log file which I've checked in in case we want to prove again.
+    #          `Zlib::GzipReader.open("rubyBad.gz").read.length` gives 12,696 instead of 15,285,64
+    #          Appears to be this bug: https://bugs.ruby-lang.org/issues/9790
+    #
+    ##Zlib::GzipReader.open(path) { |io| yield io }
+    # So instead, we punt to unix's gzip command.
+    checkOutput("/bin/gunzip -c #{path}", false).split("\n").each { |line|
+      yield line
+    }
   else
-    File.open(path, "r") { |io| yield io }
+    File.open(path, "r") { |io|
+      io.each_line { |line|
+        yield line
+      }
+    }
   end
 end
 
 ###################################################################################################
 class LogEventSource
   attr_reader :path, :date
+  def srcName; raise("must implement"); end
   def eachEvent; raise("must implement"); end
 end
 
@@ -202,8 +227,8 @@ class LogEvent
   end
 
   def to_s
-    puts "LogEvent: ip=#{@ip.inspect} method=#{@method.inspect} path=#{@path.inspect} status=#{@status.inspect} " +
-         "referrer=#{@referrer.inspect} agent=#{@agent.inspect} trace=#{@trace.inspect}"
+    "LogEvent: ip=#{@ip.inspect} method=#{@method.inspect} path=#{@path.inspect} status=#{@status.inspect} " +
+    "referrer=#{@referrer.inspect} agent=#{@agent.inspect} trace=#{@trace.inspect}"
   end
 end
 
@@ -218,20 +243,34 @@ class CloudFrontLogEventSource < LogEventSource
     @date = Time.utc(m[:year].to_i, m[:month].to_i, m[:day].to_i, m[:hour].to_i).localtime.to_date
   end
 
+  def srcName
+    "CloudFront"
+  end
+
   def eachEvent
-    openLog(@path) { |io|
-      line = io.readline
-      line =~ /Version: 1\.0/ or raise("expecting v 1.0 CloudFront log in #{path.inspect}")
-      line = io.readline
-      fieldSpec = line.split()[1,999]
-      o_ip       = fieldSpec.index('c-ip') or raise
-      o_method   = fieldSpec.index('cs-method') or raise
-      o_uriStem  = fieldSpec.index('cs-uri-stem') or raise
-      o_status   = fieldSpec.index('sc-status') or raise
-      o_referrer = fieldSpec.index('cs(Referer)') or raise
-      o_agent    = fieldSpec.index('cs(User-Agent)') or raise
-      o_query    = fieldSpec.index('cs-uri-query') or raise
-      io.each_line { |line|
+    # Fieldspec for CloudFront logs v 1.0:
+    # #Fields: date time x-edge-location sc-bytes c-ip cs-method cs(Host) cs-uri-stem sc-status cs(Referer)
+    #          cs(User-Agent) cs-uri-query cs(Cookie) x-edge-result-type x-edge-request-id x-host-header
+    #          cs-protocol cs-bytes time-taken x-forwarded-for ssl-protocol ssl-cipher x-edge-response-result-type
+    #          cs-protocol-version
+    o_ip       = 4
+    o_method   = 5
+    o_uriStem  = 7
+    o_status   = 8
+    o_referrer = 9
+    o_agent    = 10
+    o_query    = 11
+
+    nLines = 0
+    eachLogLine(@path) { |line|
+      nLines += 1
+      if nLines == 1
+        line =~ /Version: 1\.0/ or raise("expecting v 1.0 CloudFront log in #{path.inspect}")
+        next
+      elsif nLines == 2
+        fieldSpec = line.split()[1,999]
+        fieldSpec.length == 24 or raise("unexpected fieldspec for v 1.0 CloudFront log")
+      else
         values = line.split
         yield LogEvent.new(values[o_ip],
                            values[o_method],
@@ -240,7 +279,7 @@ class CloudFrontLogEventSource < LogEventSource
                            values[o_referrer] == '-' ? nil : URI.unescape(URI.unescape(values[o_referrer])),
                            values[o_agent] == '-' ? nil : URI.unescape(URI.unescape(values[o_agent])),
                            nil)  # no trace ID
-      }
+      end
     }
   end
 end
@@ -255,6 +294,10 @@ class ALBLogEventSource < LogEventSource
                         (?<minute> \d\d    ) Z
                      }x)or raise("can't parse ALB filename #{path.inspect}")
     @date = Time.utc(m[:year].to_i, m[:month].to_i, m[:day].to_i, m[:hour].to_i, m[:minute]).localtime.to_date
+  end
+
+  def srcName
+    "ALB"
   end
 
   def eachEvent
@@ -297,20 +340,18 @@ class ALBLogEventSource < LogEventSource
                   (?<path>     .*) \s
                   (?<proto2>   [A-Z]+/[\d.]+)
               $}x
-    openLog(@path) { |io|
-      io.each_line { |line|
-        m1 = line.match(linePat) or raise("can't parse ALB line #{line.inspect}")
-        m2 = m1[:client_port].match(portPat) or raise
-        next if m1[:request] =~ /:\d+-/  # e.g. weird things like: "- http://pub-jschol-prd-alb-blah.amazonaws.com:80- "
-        m3 = m1[:request].match(reqPat) or raise("can't match request #{m1[:request].inspect}")
-        yield LogEvent.new(m2[:ip],
-                           m3[:method],
-                           m3[:path],
-                           m1[:elb_status_code].to_i,
-                           nil,   # unfortunately, have to use trace to link referrer from jschol logs
-                           m1[:user_agent] == '-' ? nil : m1[:user_agent],
-                           m1[:trace_id])
-      }
+    eachLogLine(@path) { |line|
+      m1 = line.match(linePat) or raise("can't parse ALB line #{line.inspect}")
+      m2 = m1[:client_port].match(portPat) or raise
+      next if m1[:request] =~ /:\d+-/  # e.g. weird things like: "- http://pub-jschol-prd-alb-blah.amazonaws.com:80- "
+      m3 = m1[:request].match(reqPat) or raise("can't match request #{m1[:request].inspect}")
+      yield LogEvent.new(m2[:ip],
+                         m3[:method],
+                         m3[:path],
+                         m1[:elb_status_code].to_i,
+                         nil,   # unfortunately, have to use trace to link referrer from jschol logs
+                         m1[:user_agent] == '-' ? nil : m1[:user_agent],
+                         m1[:trace_id])
     }
   end
 end
@@ -323,6 +364,10 @@ class JscholLogEventSource < LogEventSource
                                (?<day>    \d\d    )
                      }x) or raise("can't parse jschol log filename #{path.inspect}")
     @date = Date.new(m[:year].to_i, m[:month].to_i, m[:day].to_i)
+  end
+
+  def srcName
+    "jschol"
   end
 
   def eachEvent
@@ -338,36 +383,35 @@ class JscholLogEventSource < LogEventSource
                     (?<size>      -|[-\d]+  ) \s
                     (?<elapsed>   -|[\d.]+  )
                     (\s (- | ("(?<referrer> [^"]*)"))
-                     \s (- | (" (?<trace_id> [^"]*) ")))?
+                     \s (- | ("(?<trace_id> [^"]*)")))?
                 $}x
     reqPat = %r{^ (?<method>   [A-Z]+ ) \s
                   (?<path>     .*     ) \s
                   (?<proto2>   [A-Z]+/[\d.]+)
               $}x
-    openLog(@path) { |io|
-      io.each_line { |line|
-        line.encode!('UTF-8', 'binary', invalid: :replace, undef: :replace, replace: '').strip!
-        m1 = line.match(linePat)
-        if !m1
-          if line =~ /\[\d+\] \d+\.\d+\.\d+\.\d+/
-            puts "Warning: skipping #{line.inspect}"
-          end
-          next  # lots of other kinds of lines come out of jschol; ignore them
+    eachLogLine(@path) { |line|
+      # Deal with crazy encodings
+      line.encode!('UTF-8', 'binary', invalid: :replace, undef: :replace, replace: '').strip!
+      m1 = line.match(linePat)
+      if !m1
+        if line =~ /\[\d+\] \d+\.\d+\.\d+\.\d+/
+          puts "Warning: skipping #{line.inspect}"
         end
-        m2 = m1[:request].match(reqPat) or raise("can't match request #{m1[:request].inspect}")
-        ip = nil
-        m1[:ips].split(/, ?/).each { |addr|
-          addr =~ /^\d+\.\d+\.\d+\.\d+$/ and ip ||= addr
-        }
-        ip or raise("can't find ip in #{m1[:ips].inspect}")
-        yield LogEvent.new(m1[:ips].sub(/,.*/, ''),  # just the first IP (second is often CloudFront)
-                           m2[:method],
-                           m2[:path],
-                           m1[:status].to_i,
-                           m1[:referrer] && !m1[:referrer].empty? ? m1[:referrer] : nil,
-                           nil,
-                           m1[:trace_id] && !m1[:trace_id].empty? ? m1[:trace_id] : nil)
+        next  # lots of other kinds of lines come out of jschol; ignore them
+      end
+      m2 = m1[:request].match(reqPat) or raise("can't match request #{m1[:request].inspect}")
+      ip = nil
+      m1[:ips].split(/, ?/).each { |addr|
+        addr =~ /^\d+\.\d+\.\d+\.\d+$/ and ip ||= addr
       }
+      ip or raise("can't find ip in #{m1[:ips].inspect}")
+      yield LogEvent.new(m1[:ips].sub(/,.*/, ''),  # just the first IP (second is often CloudFront)
+                         m2[:method],
+                         m2[:path],
+                         m1[:status].to_i,
+                         m1[:referrer] && !m1[:referrer].empty? ? m1[:referrer] : nil,
+                         nil,
+                         m1[:trace_id] && !m1[:trace_id].empty? ? m1[:trace_id] : nil)
     }
   end
 end
@@ -386,7 +430,7 @@ def calcIntDigest(digester)
 end
 
 ###################################################################################################
-# Convert a digest (e.g. MD5, SHA1) to a short base-64 digest, without trailing '='
+# Convert a digest (e.g. MD5, SHA1) to a short base-64 digest, without trailing '=' chars
 def calcBase64Digest(digester)
   return digester.base64digest.sub(/=+$/,'')
 end
@@ -745,38 +789,272 @@ def grabLogs
 end
 
 ###################################################################################################
+def isRobot(agent)
+  # Keep the check cache small
+  #$robotChecked.size > 1000 and $robotChecked = Hash[$robotChecked.to_a[500,500]]
+  $robotChecked.key?(agent) and return $robotChecked[agent]
+
+  # It appears most of the "nil" referers aren't people with privacy settings, but rather are
+  # unidentified bots in EC2 and Asia. Hard to know for sure, but log counts are suggestive.
+  if agent.nil?
+    return $robotChecked[agent] = true
+  end
+
+  # First check counter's list
+  found = ROBOT_PATTERNS.find { |pat| pat =~ agent }
+  if found
+    return $robotChecked[agent] = found
+  end
+
+  # Real user-agents have lots of spaces in them
+  if agent.split(" ").length < 6
+    return $robotChecked[agent] = "suspiciously few words"
+  end
+
+  # Agents that need a URL or advertise a .com service are clearly robots
+  if agent.include?(".com") || agent.include?("http")
+    return $robotChecked[agent] = "link or .com in agent"
+  end
+
+  # Okay, we guess it's not a robot.
+  return $robotChecked[agent] = false
+end
+
+###################################################################################################
+def identifyEvent(srcName, event)
+
+  # Don't consider OPTIONS or HEAD to be full requests
+  event.method == "GET" or return "noget"
+
+  # Consider 2xx and 304 (not modified) to be success
+  (event.status >= 200 && event.status <= 299) || event.status == 304 or return "req-fail"
+
+  # Examine the path to figure out if it's a hit we're interested in
+  ark = attrs = nil
+  if event.path =~ %r{^(/dist/prd)?/content/(qt\w{8})/(qt\w{8}).pdf(.*)}
+    # PDF downloads (they'll be /dist/prd/content on CloudFront, /content on ALB or jschol)
+    cf, ark, ark2, after = $1, $2, $3, $4
+    if ark == ark2
+      attrs = after.include?("v=lg")     ? { hit: 1, dl: 1, vlg: 1 } :
+              after.include?("nosplash") ? { hit: 1 } :  # this is the pdf.js viewer
+                                           { hit: 1, dl: 1 }
+    end
+  elsif event.path =~ %r{(/dist/prd)?/content/(qt\w{8})/supp/(.+)}
+    # Supp file downloads
+    cf, ark, after = $1, $2, $3
+    attrs = { hit: 1, supp: 1 }
+  elsif event.path =~ %r{/uc/item/(\w{8})(.*)}
+    # Normal item views
+    miniArk, after = $1, $2
+    ark = "qt#{miniArk}"
+    attrs = { hit: 1 }
+  end
+
+  if ark
+    # For robot ID, jschol doesn't have agent strings, and is only used for linking anyway.
+    return ark, attrs, srcName != "jschol" && isRobot(event.agent)
+  else
+    return "no-match"
+  end
+end
+
+###################################################################################################
+def extractReferrer(item, event)
+  ref = event.referrer.downcase.strip
+
+  # Skip self-refs from an eschol item to itself
+  ref =~ /escholarship\.org/ && ref.include?(item.sub(/^qt/,'')) and return nil
+
+  return case ref
+  when /google\./;            "google.com"
+  when /yahoo\./;             "yahoo.com"
+  when /escholarship\.org/;   "escholarship.org"
+  when /bing\./;              "bing.com"
+  when /wikipedia\./;         "wikipedia.org"
+  when /repec\./;             "repec.org"
+  when /bepress\./;           "bepress.com"
+  when %r{^https?://([^/]+)}; $1.sub(/^www\./, '')
+  else;                       nil
+  end
+end
+
+###################################################################################################
+def parseDateLogs(date, sources)
+  puts "Parsing logs from #{date.iso8601}."
+
+  albLinks = {}
+  sessionCounts = Hash.new { |h,k| h[k] = 0 }
+  itemSessions  = Hash.new { |h,k| h[k] = {} }
+
+  totalReq = 0
+  robotReq = 0
+  linkedRef = 0
+
+  sources.each { |source|
+    puts "Source: #{source.path}"
+    source.eachEvent { |event|
+      item, attrs, isRobot = identifyEvent(source.srcName, event)
+      if !attrs
+        #puts "  skip: #{source.srcName} #{item} #{event}"
+        #puts
+        next
+      end
+
+      totalReq += 1
+      if isRobot
+        #puts "robot: #{event}"
+        robotReq += 1
+        next
+      end
+
+      #puts "#{attrs}: #{source.srcName} #{event}"
+      #puts
+
+      # We use jschol events *only* to connect referrers to ALB events
+      if source.srcName == "jschol"
+        if event.trace && event.referrer
+          ref = extractReferrer(item, event)
+          if ref && albLinks[event.trace]
+            #puts "Found matching ALB for trace #{event.trace}, copying referrer #{event.referrer.inspect} to #{albLinks[event.trace]}"
+            linkedRef += 1
+            albLinks[event.trace][:ref] = { extractReferrer(item, event) => 1 }
+          else
+            #puts "No match for trace #{event.trace}"  # usually because event was identified as 'robot'
+          end
+        end
+        next
+      end
+
+      session = [event.ip, event.agent]
+      if itemSessions[item].key?(session)
+        itemSessions[item][session].merge!(attrs)  # plain Ruby merge: replaces dupe values
+      else
+        itemSessions[item][session] = attrs
+        sessionCounts[session] += 1
+      end
+
+      # This has to come after we've recorded the session attrs
+      if source.srcName == "ALB" && event.trace
+        albLinks[event.trace] = itemSessions[item][session]
+      end
+    }
+  }
+
+  # Identify aberrant sessions, using a very simple heuristic. See, real users just don't
+  # access 50 papers a day. Or, only a few do, which we will mistakenly remove, but we're
+  # undoubtedly also mistakenly letting through some stealth robots, so hopefully it
+  # balances out.
+  aberrantSessions = Set.new
+  sessionCounts.each { |session, count|
+    count > 50 and aberrantSessions << session
+  }
+
+  puts
+  puts "Robot req: #{robotReq}/#{totalReq} (#{sprintf("%.1f", robotReq * 100.0 / totalReq)}%)"
+  puts "Linked refs: #{linkedRef}"
+
+  puts "Writing robotsFound.out."
+  open("robotsFound.out", "w") { |io|
+    $robotChecked.each { |agent, value|
+      value and io.puts("#{value} #{agent}")
+    }
+  }
+
+  puts "Writing ipCounts.out."
+  open("ipCounts.out", "w") { |io|
+    sessionCounts.sort_by{ |a,b| b }.reverse.each { |session, count|
+      io.puts "#{count} #{session}"
+    }
+  }
+
+  puts "Writing uniqCounts.out."
+  open("uniqCounts.out", "w") { |io|
+    itemSessions.each { |item, sessions|
+      sessions.each { |session, attrs|
+        io.puts "#{item}|#{session}|#{attrs}"
+      }
+    }
+  }
+
+  puts "Writing finalCounts.out"
+  open("finalCounts.out", "w") { |io|
+    totalHits = 0
+    aberFiltered = 0
+    itemSessions.keys.sort.each { |item|
+      accum = nil
+      itemSessions[item].each { |session, attrs|
+        totalHits += attrs[:hit]
+        if aberrantSessions.include?(session)
+          aberFiltered += attrs[:hit]
+        elsif accum.nil?
+          accum = EventAccum.new(attrs)
+        else
+          accum.add(EventAccum.new(attrs))
+        end
+      }
+      accum.nil? or io.puts("#{item}|#{accum.to_h.to_s}")
+    }
+    puts "Aber filtered: #{aberFiltered}/#{totalHits}"
+  }
+end
+
+###################################################################################################
 # Figure out which logs need to be parsed.
 def parseLogs
   logsByDate = Hash.new { |h,k| h[k] = [] }
 
   # CloudFront logs
-  Dir.glob("./awsLogs/cf-logs/**/*").each { |fn|
+  Dir.glob("./awsLogs/cf-logs/**/*").sort.each { |fn|
     src = CloudFrontLogEventSource.new(fn)
     logsByDate[src.date] << src
   }
 
   # Application Load Balancer (ALB) logs
-  Dir.glob("./awsLogs/alb-logs/**/*").each { |fn|
+  Dir.glob("./awsLogs/alb-logs/**/*").sort.each { |fn|
     next unless File.file?(fn)
     next if fn =~ /ELBAccessLogTestFile/
     src = ALBLogEventSource.new(fn)
+    logsByDate[src.date] << src
   }
 
   # jschol logs (needed to link referrers to ALB logs)
-  Dir.glob("./awsLogs/jschol-logs/**/*").each { |fn|
+  Dir.glob("./awsLogs/jschol-logs/**/*").sort.each { |fn|
     next unless File.file?(fn)
     next if fn =~ %r{/iso\.}  # we only want the jschol logs, not iso logs
-    puts fn
     src = JscholLogEventSource.new(fn)
     logsByDate[src.date] << src
-    src.eachEvent { |evt|
-      #evt.trace && evt.referrer and print("#{evt.referrer[0,80]}\r")
-    }
+  }
+
+  # Form a digest for each date, so we can detect differences.
+  dateDigests = Hash[logsByDate.map { |date, sources|
+    [date, calcBase64Digest(sources.reduce(Digest::MD5.new) { |digester, src|
+      digester << src.path << File.size(src.path).to_s
+    })]
+  }]
+
+  # Now work our way back from the end, checking for differences. Stop at the first date that
+  # has the same digest as previously processed. This logic is to prevent recalculating dates
+  # long-past because they logs get expired and deleted.
+  todo = []
+  dateDigests.sort.reverse.each { |date, digest|
+    existing = EventLog[date]
+    break if existing and existing.digest == digest
+    break if date <  ESCHOL5_RELEASE_DATE # ignore activity before release
+    todo.unshift [date, digest]   # unshift so we end up in forward date order
+  }
+
+  # And process each one
+  todo.each { |date, digest|
+    next unless date.month == 12 && date.day == 15 # for testing
+    parseDateLogs(date, logsByDate[date])
+    #EventLog.create_or_update(date, digest: digest)  # Record digest to avoid reprocessing tomorrow
   }
 end
 
 ###################################################################################################
 # The main routine
+
 #grabLogs
 parseLogs
 #calcStats
+puts "Done."

@@ -3,7 +3,7 @@ Sequel.migration do
 
     # Table to track all the log files that go into the events for a given day
     create_table(:event_logs) do
-      Date   :date, null: false
+      Date   :date, primary_key: true, null: false
       String :digest, null: false
     end
 
