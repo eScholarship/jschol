@@ -90,7 +90,7 @@ class ItemPage extends PageBase {
     let currentTab = tab_anchors.includes(this.state.currentTab) ? this.state.currentTab : "main" 
     let d = data
     let a = d.attrs
-    let meta_authors = d.authors.slice(0, 85).map(function(author, i) {
+    let meta_authors = a.author_hide ? null : d.authors.slice(0, 85).map(function(author, i) {
       return <meta key={i} id={"meta-author"+i} name="citation_author" content={author.name}/>
      })
     let [issn, volume, issue, firstpage, lastpage] = [null, null, null, null, null]
@@ -155,6 +155,7 @@ class ItemPage extends PageBase {
                          changeTab={this.changeTab} />
             <h2 className="c-tabcontent__main-heading" tabIndex="-1"><ArbitraryHTMLComp html={d.title}/></h2>
             <AuthorListComp pubdate={d.pub_date}
+                            author_hide={a.author_hide}
                             authors={d.authors}
                             changeTab={this.changeTab} />
           {(a.doi || a.pub_web_loc || d.rights || d.attrs.data_avail_stmnt || !d.content_type) &&

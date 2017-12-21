@@ -37,7 +37,7 @@ class TabAuthorComp extends React.Component {
 
   render() {
     let p = this.props
-    let authorList = p.authors.map(function(a, i) {return (
+    let authorList = p.attrs['author_hide'] ? null : p.authors.map(function(a, i) {return (
           // ToDo: Link to author 
           [<dt key={i}><a href={"/search/?q="+a.name}>{a.name}</a></dt>,
            <dd key={i+1}>{a.institution ? a.institution : ""}</dd>]
@@ -136,14 +136,12 @@ class TabAuthorComp extends React.Component {
       }
         <h1 className="c-tabcontent__main-heading" tabIndex="-1">Author & Article Info</h1>
 
-      {p.authors.length > 0 &&
         <details className="c-togglecontent" open>
           <summary>Author(s)</summary>
           <dl className="c-descriptionlist">
-            {authorList}
+            {(p.attrs['author_hide'] || p.authors.length == 0) ? "No author information available." : {authorList}}
           </dl>
         </details>
-      }
 
       {/* ToDo:
         <details className="c-togglecontent" open>

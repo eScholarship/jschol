@@ -22,7 +22,7 @@ class AuthorListComp extends React.Component {
         {year && <time className="c-authorlist__year">{year[0]}</time> }
         {/* The 'dangerouslySetInnerHTML' rigarmarole below is to keep React from getting upset about
             jquery.dotdotdot fiddling around with the author elements. */}
-        { p.authors &&
+        { !p.author_hide && p.authors &&
           <TruncationObj element="ul" className="c-authorlist__list"
                          options={{watch:'window', after:'.c-authorlist__list-more-link', ellipsis:' ', wrap:'children',
                                    callback: () => $('.c-authorlist__list-more-link').click((e)=>this.handleClick(e, 'author'))}}>
