@@ -109,11 +109,16 @@ puts "Connecting to S3.           "
 # It's so verbose that it even dumps binary data; to keep the log size at all
 # reasonable, omit that part.
 class S3Logger < Logger
+  @prevWasOmitted = false
   def << (msg)
-    if msg =~ /\\r\\n/
-      puts "s3: #{msg.sub(%r{\\x.*"}, "[binary data omitted]\"")}"
+    if msg =~ /\\r\\n/ && !(msg =~ /\\x/)
+      puts "s3: #{msg}"
+      @prevWasOmitted = false
     else
-      puts "s3: [data omitted]"
+      if !@prevWasOmitted
+        puts "s3: [data omitted]"
+      end
+      @prevWasOmitted = true
     end
   end
 end
