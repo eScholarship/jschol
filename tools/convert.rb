@@ -1057,7 +1057,7 @@ def generatePdfThumbnail(itemID, inMeta, existingItem)
       begin
         tempFile2.write(response.body)
         tempFile2.close
-        data = putImage(tempFile.path) { |dims|
+        data = putImage(tempFile2.path) { |dims|
           dims[0] == 121 or raise("Got thumbnail width #{dims[0]}, wanted 121")
           dims[1] < 300 or raise("Got thumbnail height #{dims[1]}, wanted less than 300")
         }
@@ -1311,6 +1311,8 @@ def parseUCIngest(itemID, inMeta, fileType)
   attrs[:orig_citation] = inMeta.text_at("./originalCitation")
   attrs[:pub_web_loc] = inMeta.xpath("./context/publishedWebLocation").map { |el| el.text.strip }
   attrs[:publisher] = inMeta.text_at("./publisher")
+  attrs[:submission_date] = parseDate(inMeta.text_at("./history/submissionDate")) ||
+                            parseDate(inMeta[:dateStamp])
   attrs[:suppress_content] = shouldSuppressContent(itemID, inMeta)
 
   # Normalize language codes
