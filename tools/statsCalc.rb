@@ -136,7 +136,6 @@ class EventAccum
         end
       else
         @other ||= {}
-        puts "excess count: k=#{k.inspect} v=#{v.inspect}"
         @other[k] = v
       end
     }
@@ -863,18 +862,22 @@ def extractReferrer(item, event)
   ref = event.referrer.downcase.strip
 
   # Skip self-refs from an eschol item to itself
-  ref =~ /escholarship\.org/ && ref.include?(item.sub(/^qt/,'')) and return nil
+  if ref =~ /escholarship\.org|repositories\.cdlib\.org/
+    ref.include?(item.sub(/^qt/,'')) || ref.include?("pdfjs") and return nil
+    puts "#{item}|#{ref} -> eschol"
+    return "escholarship.org"
+  end
 
   return case ref
-  when /google\./;            "google.com"
-  when /yahoo\./;             "yahoo.com"
-  when /escholarship\.org/;   "escholarship.org"
-  when /bing\./;              "bing.com"
-  when /wikipedia\./;         "wikipedia.org"
-  when /repec\./;             "repec.org"
-  when /bepress\./;           "bepress.com"
-  when %r{^https?://([^/]+)}; $1.sub(/^www\./, '')
-  else;                       nil
+  when /google\./;             "google.com"
+  when /yahoo\./;              "yahoo.com"
+  when /bing\./;               "bing.com"
+  when /wikipedia\./;          "wikipedia.org"
+  when /repec\./;              "repec.org"
+  when /bepress\./;            "bepress.com"
+  when /facebook\./;           "facebook.com"
+  when %r{^https?://([^/:]+)}; $1.sub(/^www\./, '')
+  else;                        nil
   end
 end
 
