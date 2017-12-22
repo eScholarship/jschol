@@ -105,8 +105,26 @@ $jscholKey = open("config/jscholKey.dat").read.strip
 
 # S3 API client
 puts "Connecting to S3.           "
+# Temporary wire logging while we diagnose S3 timeouts with the AWS folks.
+# It's so verbose that it even dumps binary data; to keep the log size at all
+# reasonable, omit that part.
+class S3Logger < Logger
+  @prevWasOmitted = false
+  def << (msg)
+    if msg =~ /\\r\\n/ && !(msg =~ /\\x/)
+      puts "s3: #{msg}"
+      @prevWasOmitted = false
+    else
+      if !@prevWasOmitted
+        puts "s3: [data omitted]"
+      end
+      @prevWasOmitted = true
+    end
+  end
+end
+s3Logger = S3Logger.new(STDOUT)
 $s3Config = OpenStruct.new(YAML.load_file("config/s3.yaml"))
-$s3Client = Aws::S3::Client.new(region: $s3Config.region)
+$s3Client = Aws::S3::Client.new(region: $s3Config.region, :logger => s3Logger, :http_wire_trace => true)
 $s3Bucket = Aws::S3::Bucket.new($s3Config.bucket, client: $s3Client)
 
 # CloudFront info
@@ -361,6 +379,13 @@ end
 get %r{/uc/search(.*)} do |stuff|
   request.url =~ %r{/uc/search(.*)}
   proxyFromURL("http://pub-eschol-prd-2a.escholarship.org:18880/uc/search#{$1}", "escholarship.org")
+end
+
+###################################################################################################
+# Directory used by RePec to crawl our site
+get %r{/repec(.*)} do
+  request.url =~ %r{/repec(.*)}
+  proxyFromURL("http://pub-eschol-prd-2a.escholarship.org:18880/repec#{$1}", "escholarship.org")
 end
 
 ###################################################################################################

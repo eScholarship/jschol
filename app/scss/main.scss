@@ -19,7 +19,6 @@
 @import 'eschol_pdf_viewer';
 @import 'issueConfig';
 @import 'redirectConfig';
-@import 'searchExtra';
 @import 'widgetselector';
 
 // ***** Objects ***** //
@@ -65,6 +64,7 @@
 @import 'journalinfo';
 @import 'jump';
 @import 'language';
+@import 'lazyimage';
 @import 'marquee';
 @import 'mediafeature';
 @import 'mediafile';
@@ -77,9 +77,11 @@
 @import 'pdfview';
 @import 'pub';
 @import 'pubdata';
+@import 'pubinfo';
 @import 'publocation';
 @import 'pubpreview';
 @import 'pubyear';
+@import 'refine';
 @import 'relateditems';
 @import 'scholworks';
 @import 'search1';

@@ -78,7 +78,7 @@ class ScholWorksComp extends React.Component {
     }
 
     let authorList
-    if (pr.authors) {
+    if (!pr.author_hide && pr.authors) {
       // Joel's CSS handles inserting semicolons here.
       authorList = pr.authors.map(function(author, i, a) {
         return (<li key={i}><a href={"/search/?q="+author.name}>{author.name}</a></li>)

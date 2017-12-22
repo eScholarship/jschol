@@ -53,8 +53,11 @@
   }
 
   img {
-    @extend %u-thumbnail;
+    width: $thumbnail-width;
+    height: auto;
     margin-bottom: $spacing-base;
+    border: 1px solid $color-light-gray;
+    box-shadow: $box-shadow2;
 
     @include bp(screen1) {
       margin: 0 $spacing-md 0 0;
@@ -69,8 +72,7 @@
       position: absolute;
       right: 0;
       bottom: 0;
-      left: 150px;
-      align-self: end;
+      left: $thumbnail-width;
       margin-left: $spacing-md;
       font-size: 0.9em;
       text-overflow: ellipsis;
@@ -80,7 +82,7 @@
       grid-row: 3;
 
       @supports (display: contents) and (display: flow-root) {
-        position: static;
+        left: 0;
         margin-left: 0;
       }
 
@@ -100,7 +102,6 @@
 
     @supports (display: contents) and (display: flow-root) {
       margin: 0;
-      padding: 0;
     }
 
   }

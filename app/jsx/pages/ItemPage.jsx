@@ -13,8 +13,7 @@ import ItemActionsComp from '../components/ItemActionsComp.jsx'
 import ArbitraryHTMLComp from "../components/ArbitraryHTMLComp.jsx"
 import AuthorListComp from '../components/AuthorListComp.jsx'
 import PdfViewComp from '../components/PdfViewComp.jsx'
-import PubLocationComp from '../components/PubLocationComp.jsx'
-import PubDataComp from '../components/PubDataComp.jsx'
+import PubInfoComp from '../components/PubInfoComp.jsx'
 import TabsComp from '../components/TabsComp.jsx'
 import JumpComp from '../components/JumpComp.jsx'
 import SidebarComp from '../components/SidebarComp.jsx'
@@ -91,7 +90,7 @@ class ItemPage extends PageBase {
     let currentTab = tab_anchors.includes(this.state.currentTab) ? this.state.currentTab : "main" 
     let d = data
     let a = d.attrs
-    let meta_authors = d.authors.slice(0, 85).map(function(author, i) {
+    let meta_authors = a.author_hide ? null : d.authors.slice(0, 85).map(function(author, i) {
       return <meta key={i} id={"meta-author"+i} name="citation_author" content={author.name}/>
      })
     let [issn, volume, issue, firstpage, lastpage] = [null, null, null, null, null]
@@ -156,16 +155,15 @@ class ItemPage extends PageBase {
                          changeTab={this.changeTab} />
             <h2 className="c-tabcontent__main-heading" tabIndex="-1"><ArbitraryHTMLComp html={d.title}/></h2>
             <AuthorListComp pubdate={d.pub_date}
+                            author_hide={a.author_hide}
                             authors={d.authors}
                             changeTab={this.changeTab} />
-          {(a.doi || a.pub_web_loc || d.rights) &&
-            <PubLocationComp doi={a.doi}
-                             pub_web_loc={a.pub_web_loc}
-                             rights={d.rights} />
-          }
-          {(!d.content_type || d.attrs.data_avail_stmnt) &&
-            <PubDataComp content_type={d.content_type}
-                         data_avail_stmnt={d.attrs.data_avail_stmnt} />
+          {(a.doi || a.pub_web_loc || d.rights || d.attrs.data_avail_stmnt || !d.content_type) &&
+            <PubInfoComp doi={a.doi}
+                         pub_web_loc={a.pub_web_loc}
+                         content_type={d.content_type}
+                         data_avail_stmnt={d.attrs.data_avail_stmnt}
+                         rights={d.rights} />
           }
             <TabsComp currentTab={currentTab}
                       changeTab={this.changeTab}

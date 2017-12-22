@@ -23,7 +23,7 @@
 
   }
 
-  .c-pagination {
+  [class^='c-pagination'] {
     margin: 0 $spacing-sm $spacing-base;
 
     @include bp(screen2) {

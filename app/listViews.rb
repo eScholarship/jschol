@@ -21,6 +21,7 @@ def itemResultData(itemIds, itemData, fields=[])
         :title => item.title,
         :abstract => attrs['abstract'],
         :content_type => item.content_type,
+        :author_hide => attrs['author_hide'],
       }
       itemListItem[:authors] = itemData[:authors][itemID].map { |author| JSON.parse(author.attrs) } if itemData.dig(:authors, itemID)
 

@@ -1,0 +1,76 @@
+// ##### Publication Information Component ##### //
+
+.c-pubinfo {
+  @extend %clearfix;
+  margin-bottom: $spacing-md;
+
+  > *:not(.c-pubinfo__license) {
+    margin-bottom: $spacing-sm;
+  }
+
+  @include bp(screen1) {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-gap: $spacing-sm $spacing-md;
+
+    > *:not(.c-pubinfo__license) {
+      margin-bottom: $spacing-sm;
+
+      @supports (display: grid) {
+        margin-bottom: 0;
+      }
+
+    }
+
+  }
+
+}
+
+.c-pubinfo__location-heading {
+  margin-top: 0;
+  font-size: 1em;
+}
+
+.c-pubinfo__link {
+  @extend %o-textlink__secondary;
+  @include one-line-truncation(active);
+
+  @include bp(screen1) {
+    @include one-line-truncation(inactive);
+    // wrap long url string:
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-all;
+    hyphens: auto;
+    grid-column: 1;
+  }
+
+}
+
+.c-pubinfo__statement {
+
+  @include bp(screen1) {
+    grid-column: 1;
+  }
+
+}
+
+.c-pubinfo__license {
+  display: inline-block;
+  margin-left: $spacing-md;
+  float: right;
+
+  @supports (display: grid) {
+    margin-left: 0;
+  }
+
+  @include bp(screen1) {
+    grid-column: 2;
+    grid-row: 1 / 4;
+  }
+
+  img {
+    display: block;
+  }
+
+}

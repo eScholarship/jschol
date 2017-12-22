@@ -708,3 +708,38 @@ As well as:
 >>> Integration of IssueComp completed 2017-11-28 <<<
 
 
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's 9fa9c5dfe5a57ec4d81998d0eea085e311e4ce1e, 2017-12-06 <<<
+>>  Partial migration...                                        <<<
+>>  Holding on implementing DataAvailabilityComp                <<<
+>>  SearchPage (RefineComp) needs a tweak before PR'ing this    <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+  modified:   package.json
+  modified:   app/jsx/components/IssueComp.jsx
+  modified:   app/jsx/components/NavComp.jsx
+  modified:   app/jsx/components/NavSubComp.jsx
+  modified:   app/jsx/components/PubPreviewComp.jsx
+  modified:   app/jsx/components/StatCarouselComp.jsx
+  modified:   app/jsx/pages/SearchPage.jsx
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's 98cf8d43c5bd22c4e4d9285f7d5635fa3c3a6939, 2017-12-14 <<<
+>>   **  EXCEPT I didn't wrap LazyImageComp into RightsComp      <<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+  modified:   app/jsx/components/PubInfoComp.jsx
+  modified:   app/jsx/components/RightsComp.jsx
+  modified:   app/jsx/pages/ItemPage.jsx
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's f1c1778b500dd85d27066aad4d79544341ca5ff6, 2017-12-18 <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+  modified:   app/jsx/components/FooterComp.jsx
+  modified:   app/jsx/components/JournalGridComp.jsx
+  modified:   app/jsx/components/ScrollToTopComp.jsx
+  modified:   app/jsx/components/RightsComp.jsx
+  modified:   app/jsx/objects/ColumnBoxObj.jsx
+  modified:   app/jsx/pages/SearchPage.jsx
+
+

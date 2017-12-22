@@ -130,9 +130,9 @@ $scholworks-tag-height: 1.4em;
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
-}
 
-.c-scholworks__license {
-  margin-bottom: $spacing-sm;
-  margin-left: auto;
+  img {
+    margin-bottom: $spacing-sm;
+    margin-left: auto;
+  }
 }

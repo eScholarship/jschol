@@ -74,6 +74,8 @@ testRedirect("http://escholarship.org/uc/search?entity=uciem_westjem;view=journa
              "http://escholarship.org/uc/uciem_westjem/journal_policies")
 
 # Things that should not redirect
+testRedirect("http://escholarship.org/repec/", nil)
+testRedirect("http://escholarship.org/repec/cdlseri.rdf", nil)
 testRedirect("http://escholarship.org/uc/search?smode=pmid;pubType=journal;relation-exclude=springer;subSet=0", nil)
 testRedirect("http://escholarship.org/uc/ucbclassics", nil)
 testRedirect("http://escholarship.org/bower_components/babel-polyfill/browser-polyfill.js", nil)

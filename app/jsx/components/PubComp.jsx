@@ -23,6 +23,7 @@ class PubComp extends React.Component {
       title: PropTypes.string,
       genre: PropTypes.string,
       peerReviewed: PropTypes.bool,
+      author_hide: PropTypes.bool,
       authors: PropTypes.array,
       supp_files: PropTypes.array,
       pub_year: PropTypes.number,
@@ -35,7 +36,7 @@ class PubComp extends React.Component {
     let pr = this.props.result
     let itemLink = "/uc/item/"+pr.id.replace(/^qt/, "")
     let authorList
-    if (pr.authors) {
+    if (!pr.author_hide && pr.authors) {
       // Joel's CSS handles inserting semicolons here.
       authorList = pr.authors.map(function(author, i, a) {
         return (<li key={i}><a href={"/search/?q="+author.name}>{author.name}</a></li>)

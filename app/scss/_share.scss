@@ -6,9 +6,11 @@
   box-shadow: $box-shadow2;
 
   summary {
+    @extend %interactive-summary-size;
     display: inline-block;
     position: relative;
-    padding: 0 40px;
+    padding-right: 40px;
+    padding-left: 40px;
     border-radius: $round-corner;
     background: $color-teal inline('../images/icon_share-square-o-white.svg') no-repeat left $spacing-sm center / 16px;
     color: $color-white;
@@ -22,13 +24,6 @@
       padding: 0 7px;
       background: inline('../images/icon_arrow-down-white.svg') no-repeat center / 13px;
       content: '';
-    }
-
-    // <summary> isn't responding to flexbox values in Safari, so need to use <span> child with those values:
-    span {
-      @extend %interactive-element-size;
-      display: inline-flex;
-      align-items: center;
     }
 
   }

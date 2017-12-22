@@ -14,6 +14,7 @@ import ExportComp from '../components/ExportComp.jsx'
 import SortPaginationComp from '../components/SortPaginationComp.jsx'
 import InfoPagesComp from '../components/InfoPagesComp.jsx'
 import PaginationComp from '../components/PaginationComp.jsx'
+import Breakpoints from '../../js/breakpoints.json'
 import ModalComp from '../components/ModalComp.jsx'
 import MetaTagsComp from '../components/MetaTagsComp.jsx'
 
@@ -330,24 +331,76 @@ class FacetFieldset extends React.Component {
       }
     </ul>
 
-  sliceFacets(facets)
-  {
-    if (!this.props.query.filters)
-      return facets.slice(0, 5)
+  getLength = ({ descendents }) => {
+    let i = 0 
+    if (descendents)
+      return descendents.length + Math.max(...descendents.map(this.getLength))
+    return 1 + i
+  }
 
-    let checked = {}
-    for (let filter of this.props.query.filters)
-      checked[filter.value] = true
-
-    let out = []
-    for (let facet of facets) {
-      if (facet.value in checked)
-        out.push(facet)
-      else if (out.length < 5)
-        out.push(facet)
+  /* Display prescribed maximum (rows of) facets.
+     With the caveat: For any given facet: all of its descendents should be displayed,
+                      so slice can extend past maximum in that case */
+  facetsSliced = (facets, maxLength)  => {
+    let i = 0, r = []
+    for (let facet of facets){
+      r.push(facet)
+      i += this.getLength(facet) 
+      if (i >= maxLength) break
     }
+    return r
+  }
 
-    return out
+  traverse = (facets, func) => {
+    for (let i of facets){
+      func.apply(this, [i])
+      if (i.descendents) {
+        this.traverse(i.descendents, func)
+      }
+    }
+  }
+
+  /* Gather all IDS of facets (converts tree to flat hash) */
+  getFacetVals = facets =>{
+    let hash = {}
+    this.traverse(facets, function(node){
+      if (!hash[node.value])
+        hash[node.value] = true
+    })
+    return hash
+  }
+
+  sliceArrangeFacets(facets)
+  {
+    /* Get first set of 6 facets, undiscerning: some may be checked, some may not */
+    let slicedFromTop = this.facetsSliced(facets, 6)
+    if (!this.props.query.filters)
+      return slicedFromTop
+
+    /* Get their values. When we shift/prioritize checked facets to the top of the list,
+       we want to make sure they're not already present in this set of initial sliced */
+    let slicedIds = this.getFacetVals(slicedFromTop)
+
+    /* Gather values of checked facets */
+    let checkedHash = {}
+    for (let filter of this.props.query.filters)
+      checkedHash[filter.value] = true
+    let checked_count = Object.keys(checkedHash).length
+
+    let checked = []
+    /* Can't use Generator function here since it's not supported by IE */
+    let collectChecked = facets => {
+      for (let facet of facets) {
+        if ((facet.value in checkedHash) && (!(facet.value in slicedIds))) {
+          checked.unshift(facet)
+        }
+        if (facet.descendents)
+          collectChecked(facet.descendents)
+      }
+    }
+    collectChecked(facets)
+    let out = checked.concat(slicedFromTop)
+    return this.facetsSliced(out, Math.max(6, checked_count))
   }
 
   render() {
@@ -355,7 +408,7 @@ class FacetFieldset extends React.Component {
     let facets, facetItemNodes
     if (data.facets) {
       facets = this.state.modalOpen ? [] :
-               (this.props.modal && data.facets.length > 5) ? this.sliceFacets(data.facets) :
+               (this.props.modal && data.facets.length > 5) ? this.sliceArrangeFacets(data.facets) :
                data.facets
       facetItemNodes = this.getFacetNodes(facets)
     } else if (data.fieldName == "pub_year") {
@@ -368,6 +421,7 @@ class FacetFieldset extends React.Component {
     }
     return (
       <details className="c-facetbox" open={this.props.open}>
+        {/* Each facetbox needs a distinct <span id> and <fieldset aria-labelledby> matching value */}
         <summary className="c-facetbox__summary"><span id={this.props.index}>{data.display}</span></summary>
           <fieldset aria-labelledby={this.props.index}>
             {facetItemNodes}
@@ -380,17 +434,12 @@ class FacetFieldset extends React.Component {
                               }>
                 Show more
               </button>
-              {/* style: maxHeight and overflowY hack below makes scrolling modal,
-                  until Joel propagates the change to the scss where it really belongs.
-              */}
               <ModalComp isOpen={this.state.modalOpen}
                 parentSelector={()=>$(`#facetModalBase-${data.fieldName}`)[0]}
                 header={"Refine By " + data.display}
                 onOK={e=>this.closeModal(e, data.fieldName)} okLabel="Done"
                 onCancel={e=>this.closeModal(e, data.fieldName)}
-                content={ <div style={{ maxHeight: "45vh", overflowY: "auto" }}>
-                            { this.getFacetNodes(data.facets) }
-                          </div> }
+                content={ <div>{ this.getFacetNodes(data.facets) }</div> }
               />
             </div>
           }
@@ -430,8 +479,20 @@ class FacetFieldset extends React.Component {
 //   }
 // }
 class FacetForm extends React.Component {
-  state = {
-    query: this.props.query,
+  state={ query: this.props.query,
+          refineActive: false,
+          drawerOpen: false }
+
+  widthChange = ()=> {
+    this.setState({refineActive: this.mq.matches, drawerOpen: this.mq.matches})
+  }
+
+  componentWillMount() {
+    if (!(typeof matchMedia === "undefined")) {
+      this.mq = matchMedia("(min-width:"+Breakpoints.screen1+")")
+      this.mq.addListener(this.widthChange)
+      this.widthChange()
+    }
   }
 
   // Called by FacetFieldset's handleChange function
@@ -493,7 +554,13 @@ class FacetForm extends React.Component {
       <Form id={p.formName} to='/search' method="GET" onSubmit={this.handleSubmit}>
         {/* Top-aligned box with title "Your search: "Teletubbies"" and active filters */}
         <FilterComp query={this.state.query} count={p.data.count} info_count={p.info_count} handler={this.removeFilters}/>
-        {facetForm}
+        <div className={this.state.refineActive ? "c-refine--no-drawer" : "c-refine--has-drawer"}>
+          <button className="c-refine__button--open" onClick={()=> this.setState({drawerOpen: true})} hidden={this.state.drawerOpen}>Refine Results</button>
+          <button className="c-refine__button--close" onClick={()=> this.setState({drawerOpen: false})} hidden={!this.state.drawerOpen}>Back to Results</button>
+          <div className={this.state.drawerOpen ? "c-refine__drawer--opened" : "c-refine__drawer--closed"}>
+            {facetForm}
+          </div>
+        </div>
         {/* Submit button needs to be present so our logic can "press" it at certain times.
             But hide it with display:none so user doesn't see it. */}
         <button type="submit" id={p.formButton} style={{display: "none"}}>Search</button>
@@ -547,17 +614,16 @@ class SearchPage extends PageBase {
         <aside>
           <FacetForm formName={formName} formButton={formButton} data={facetFormData} info_count={data.info_count} query={data.query} />
         </aside>
-        <main id="maincontent" style={{position: "relative"}}>
-          { this.state.fetchingData ? <div className="c-search-extra__loading-overlay"/> : null }
+        <main id="maincontent">
         {data.info_count > 0 &&
-          <section className="o-columnbox1">
+          <section className={this.state.fetchingData ? "o-columnbox1 is-loading-data" : "o-columnbox1"}>
             <header>
               <h2 className="o-columnbox1__heading">{"Informational Pages ("+data.info_count+" results)"}</h2>
             </header>
             <InfoPagesComp query={data.query} info_count={data.info_count} infoResults={data.infoResults} />
           </section>
         }
-          <section className="o-columnbox1">
+          <section className={this.state.fetchingData ? "o-columnbox1 is-loading-data" : "o-columnbox1"}>
             <header>
               <h2 className="o-columnbox1__heading">
                 Scholarly Works ({data.count + " results" + (data.count > 10000 ? ", showing first 10000" : "")})</h2>
