@@ -588,7 +588,8 @@ def getRecentItems(unitID, limit=5, item_id=nil)
                         .where(Sequel.lit("attrs->\"$.suppress_content\" is null"))
                         .reverse(:eschol_date).limit(limit)
   return items.map { |item|
-    { id: item.id, title: item.title, authors: getItemAuthors(item.id), genre: item.genre }
+    { id: item.id, title: item.title, authors: getItemAuthors(item.id), genre: item.genre, 
+      author_hide: JSON.parse(item.attrs)["author_hide"] }
   }
 end
 
