@@ -110,7 +110,11 @@ puts "Connecting to S3.           "
 # reasonable, omit that part.
 class S3Logger < Logger
   def << (msg)
-    puts "s3: #{msg.sub(%r{\\x.*"}, "[binary data omitted]\"")}"
+    if msg =~ /\\r\\n/
+      puts "s3: #{msg.sub(%r{\\x.*"}, "[binary data omitted]\"")}"
+    else
+      puts "s3: [data omitted]"
+    end
   end
 end
 s3Logger = S3Logger.new(STDOUT)
