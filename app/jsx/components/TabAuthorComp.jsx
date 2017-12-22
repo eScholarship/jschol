@@ -39,10 +39,9 @@ class TabAuthorComp extends React.Component {
     let p = this.props
     let authorList = p.attrs['author_hide'] ? null : p.authors.map(function(a, i) {return (
           // ToDo: Link to author 
-          [<dt key={i}><a href={"/search/?q="+a.name}>{a.name}</a></dt>,
-           <dd key={i+1}>{a.institution ? a.institution : ""}</dd>]
+        [<dt key={i}><a href={"/search/?q="+a.name}>{a.name}</a></dt>,
+         <dd key={i+1}>{a.institution ? a.institution : ""}</dd>]
         )})
-
     // Journal info
     // Uhh, borrowing from header > breadcrumb data object here even though we're not in the header
     let lastCrumb = (p.header && p.header.breadcrumb) ? p.header.breadcrumb[p.header.breadcrumb.length-1] : null
@@ -138,10 +137,10 @@ class TabAuthorComp extends React.Component {
 
         <details className="c-togglecontent" open>
           <summary>Author(s)</summary>
-          <dl className="c-descriptionlist">
-            {(p.attrs['author_hide'] || p.authors.length == 0) ? "No author information available." : {authorList}}
-          </dl>
-        </details>
+          {(p.attrs['author_hide'] || p.authors.length == 0) ?
+            <dl className="c-descriptionlist">No author information available</dl>
+          : <dl className="c-descriptionlist">{authorList}</dl> }
+        </details> 
 
       {/* ToDo:
         <details className="c-togglecontent" open>
