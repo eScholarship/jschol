@@ -105,8 +105,17 @@ $jscholKey = open("config/jscholKey.dat").read.strip
 
 # S3 API client
 puts "Connecting to S3.           "
+# Temporary wire logging while we diagnose S3 timeouts with the AWS folks.
+# It's so verbose that it even dumps binary data; to keep the log size at all
+# reasonable, omit that part.
+class S3Logger < Logger
+  def << (msg)
+    puts "s3: #{msg.sub(%r{\\x.*"}, "[binary data omitted]\"")}"
+  end
+end
+s3Logger = S3Logger.new(STDOUT)
 $s3Config = OpenStruct.new(YAML.load_file("config/s3.yaml"))
-$s3Client = Aws::S3::Client.new(region: $s3Config.region)
+$s3Client = Aws::S3::Client.new(region: $s3Config.region, :logger => s3Logger, :http_wire_trace => true)
 $s3Bucket = Aws::S3::Bucket.new($s3Config.bucket, client: $s3Client)
 
 # CloudFront info
