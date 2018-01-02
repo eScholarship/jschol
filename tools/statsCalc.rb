@@ -864,7 +864,7 @@ def extractReferrer(item, event)
   # Skip self-refs from an eschol item to itself
   if ref =~ /escholarship\.org|repositories\.cdlib\.org/
     ref.include?(item.sub(/^qt/,'')) || ref.include?("pdfjs") and return nil
-    puts "#{item}|#{ref} -> eschol"
+    #puts "#{item}|#{ref} -> eschol"
     return "escholarship.org"
   end
 
@@ -894,7 +894,7 @@ def parseDateLogs(date, sources)
   linkedRef = 0
 
   sources.each { |source|
-    puts "Source: #{source.path}"
+    #puts "Source: #{source.path}"
     source.eachEvent { |event|
       item, attrs, isRobot = identifyEvent(source.srcName, event)
       if !attrs
@@ -918,7 +918,8 @@ def parseDateLogs(date, sources)
         if event.trace && event.referrer
           ref = extractReferrer(item, event)
           if ref && albLinks[event.trace]
-            #puts "Found matching ALB for trace #{event.trace}, copying referrer #{event.referrer.inspect} to #{albLinks[event.trace]}"
+            #puts "Found matching ALB for trace #{event.trace}, " +
+            #     "copying referrer #{event.referrer.inspect} to #{albLinks[event.trace]}"
             linkedRef += 1
             albLinks[event.trace][:ref] = { extractReferrer(item, event) => 1 }
           else
