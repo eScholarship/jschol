@@ -79,30 +79,31 @@ def parseTime(date, timeStr, isGmt)
 end
 
 ###################################################################################################
-def getItemInfo(ark)
-  if !$itemInfoCache
-    puts "Loading itemInfoCache."
-    $itemInfoCache = {}
-    Item.select(:id, :attrs).each { |item|
-      attrs = JSON.parse(item.attrs)
-      data = {}
-      attrs['withdrawn_date'] and data[:withdrawn_date] = parseDate(attrs['withdrawn_date'])
-      attrs['embargo_date']   and data[:embargo_date]   = parseDate(attrs['embargo_date'])
-      $itemInfoCache[item.id] = data
-    }
-    Redirect.where(kind: "item").each { |redir|
-      next unless redir.from_path =~ %r{^/uc/item/(\w{8})$}
-      fromArk = "qt#{$1}"
-      next unless redir.to_path =~ %r{^/uc/item/(\w{8})$}
-      toArk = "qt#{$1}"
-      if !$itemInfoCache[fromArk] || !$itemInfoCache[toArk]
-        #puts "Warning: invalid redirect from #{fromArk} to #{toArk}"
-        next
-      end
-      $itemInfoCache[fromArk][:redirect] = toArk
-    }
-  end
+def loadItemInfoCache
+  puts "Loading item info cache."
+  $itemInfoCache = {}
+  Item.select(:id, :attrs).each { |item|
+    attrs = JSON.parse(item.attrs)
+    data = {}
+    attrs['withdrawn_date'] and data[:withdrawn_date] = parseDate(attrs['withdrawn_date'])
+    attrs['embargo_date']   and data[:embargo_date]   = parseDate(attrs['embargo_date'])
+    $itemInfoCache[item.id] = data
+  }
+  Redirect.where(kind: "item").each { |redir|
+    next unless redir.from_path =~ %r{^/uc/item/(\w{8})$}
+    fromArk = "qt#{$1}"
+    next unless redir.to_path =~ %r{^/uc/item/(\w{8})$}
+    toArk = "qt#{$1}"
+    if !$itemInfoCache[fromArk] || !$itemInfoCache[toArk]
+      #puts "Warning: invalid redirect from #{fromArk} to #{toArk}"
+      next
+    end
+    $itemInfoCache[fromArk][:redirect] = toArk
+  }
+end
 
+###################################################################################################
+def getItemInfo(ark)
   return $itemInfoCache[ark]
 end
 

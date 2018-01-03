@@ -1081,7 +1081,10 @@ def parseLogs
   logsByDate = Hash.new { |h,k| h[k] = [] }
 
   # CloudFront logs
+  prev = ""
   Dir.glob("./awsLogs/cf-logs/**/*").sort.each { |fn|
+    next if fn == prev+".gz"  # skip dupe gz of non-gz file
+    prev = fn
     src = CloudFrontLogEventSource.new(fn)
     logsByDate[src.date] << src
   }
@@ -1090,6 +1093,8 @@ def parseLogs
   Dir.glob("./awsLogs/alb-logs/**/*").sort.each { |fn|
     next unless File.file?(fn)
     next if fn =~ /ELBAccessLogTestFile/
+    next if fn == prev+".gz"  # skip dupe gz of non-gz file
+    prev = fn
     src = ALBLogEventSource.new(fn)
     logsByDate[src.date] << src
   }
@@ -1098,6 +1103,8 @@ def parseLogs
   Dir.glob("./awsLogs/jschol-logs/**/*").sort.each { |fn|
     next unless File.file?(fn)
     next if fn =~ %r{/iso\.}  # we only want the jschol logs, not iso logs
+    next if fn == prev+".gz"  # skip dupe gz of non-gz file
+    prev = fn
     src = JscholLogEventSource.new(fn)
     logsByDate[src.date] << src
   }
@@ -1123,7 +1130,7 @@ def parseLogs
   # And process each one
   todo.each { |date, digest|
     next if date < ESCHOL5_RELEASE_DATE
-    next unless date.month == 12 && date.day == 1 # for testing
+    #next unless date.month == 12 && date.day == 1 # for testing
     parseDateLogs(date, logsByDate[date])
     EventLog.create_or_update(date, digest: digest)  # Record digest to avoid reprocessing tomorrow
   }
@@ -1133,6 +1140,7 @@ end
 # The main routine
 
 #grabLogs
+loadItemInfoCache
 parseLogs
 #calcStats
 puts "Done."
