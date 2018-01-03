@@ -7,7 +7,7 @@ class Sequel::Model
       record.update(**data)
     else
       data[@primary_key] = id
-      Unit.create(**data)
+      self.create(**data)
     end
   end
 end

@@ -6,6 +6,7 @@ gem 'fastimage'           # for determining dimensions of image files
 gem 'htmlentities'        # for decoding HTML entites
 gem 'httparty'            # for fetching URLs easily
 gem 'json'                # safely and quickly parsing and generating JSON data
+gem 'maxminddb-geolite2-city'  # for translating IP to city; note: updates stop in April
 gem 'mimemagic'           # for guessing mime types during conversion
 gem 'mysql2'              # connecting to the database
 gem 'nokogiri'            # parsing and generating XML

@@ -41,6 +41,9 @@ DB.loggers << Logger.new('statsCalc.sql_log')
 # Model class for each table
 require_relative './models.rb'
 
+# Utilities
+require_relative './statsUtil.rb'
+
 BIG_PRIME = 9223372036854775783 # 2**63 - 25 is prime. Kudos https://primes.utm.edu/lists/2small/0bit.html
 
 ESCHOL5_RELEASE_DATE = Date.new(2017, 10, 19)  # we released on October 19, 2017.
@@ -213,10 +216,11 @@ class LogEventSource
 end
 
 class LogEvent
-  attr_reader :ip, :method, :path, :status, :referrer, :agent, :trace
+  attr_reader :ip, :time, :method, :path, :status, :referrer, :agent, :trace
 
-  def initialize(ip, methd, path, status, referrer, agent, trace)
+  def initialize(ip, time, methd, path, status, referrer, agent, trace)
     @ip = ip
+    @time = time
     @method = methd
     @path = path
     @status = status
@@ -226,8 +230,8 @@ class LogEvent
   end
 
   def to_s
-    "LogEvent: ip=#{@ip.inspect} method=#{@method.inspect} path=#{@path.inspect} status=#{@status.inspect} " +
-    "referrer=#{@referrer.inspect} agent=#{@agent.inspect} trace=#{@trace.inspect}"
+    "LogEvent: ip=#{@ip.inspect} time=#{@time.inspect} method=#{@method.inspect} path=#{@path.inspect} " +
+    "status=#{@status.inspect} referrer=#{@referrer.inspect} agent=#{@agent.inspect} trace=#{@trace.inspect}"
   end
 end
 
@@ -252,6 +256,7 @@ class CloudFrontLogEventSource < LogEventSource
     #          cs(User-Agent) cs-uri-query cs(Cookie) x-edge-result-type x-edge-request-id x-host-header
     #          cs-protocol cs-bytes time-taken x-forwarded-for ssl-protocol ssl-cipher x-edge-response-result-type
     #          cs-protocol-version
+    o_time     = 1
     o_ip       = 4
     o_method   = 5
     o_uriStem  = 7
@@ -270,8 +275,10 @@ class CloudFrontLogEventSource < LogEventSource
         fieldSpec = line.split()[1,999]
         fieldSpec.length == 24 or raise("unexpected fieldspec for v 1.0 CloudFront log")
       else
+        next unless line.include?("GET") && (line.include?("uc/item") || line.include?("content"))
         values = line.split
         yield LogEvent.new(values[o_ip],
+                           parseTime(@date, values[o_time], true), # isGmt: true
                            values[o_method],
                            values[o_query] == '-' ? values[o_uriStem] : values[o_uriStem]+'?'+values[o_query],
                            values[o_status].to_i,
@@ -340,11 +347,13 @@ class ALBLogEventSource < LogEventSource
                   (?<proto2>   [A-Z]+/[\d.]+)
               $}x
     eachLogLine(@path) { |line|
+      next unless line.include?("GET") && (line.include?("uc/item/") || line.include?("content/"))
       m1 = line.match(linePat) or raise("can't parse ALB line #{line.inspect}")
       m2 = m1[:client_port].match(portPat) or raise
       next if m1[:request] =~ /:\d+-/  # e.g. weird things like: "- http://pub-jschol-prd-alb-blah.amazonaws.com:80- "
       m3 = m1[:request].match(reqPat) or raise("can't match request #{m1[:request].inspect}")
       yield LogEvent.new(m2[:ip],
+                         Time.parse(m1[:timestamp]).localtime,
                          m3[:method],
                          m3[:path],
                          m1[:elb_status_code].to_i,
@@ -389,6 +398,7 @@ class JscholLogEventSource < LogEventSource
                   (?<proto2>   [A-Z]+/[\d.]+)
               $}x
     eachLogLine(@path) { |line|
+      next unless line.include?("GET") && (line.include?("uc/item/") || line.include?("content/"))
       # Deal with crazy encodings
       line.encode!('UTF-8', 'binary', invalid: :replace, undef: :replace, replace: '').strip!
       m1 = line.match(linePat)
@@ -404,7 +414,10 @@ class JscholLogEventSource < LogEventSource
         addr =~ /^\d+\.\d+\.\d+\.\d+$/ and ip ||= addr
       }
       ip or raise("can't find ip in #{m1[:ips].inspect}")
+      m3 = m1[:timestamp].match(%r{[^:]+:(?<time>[\d:]+)})
+      m3 or raise("can't parse time in #{m1[:timestamp]}")
       yield LogEvent.new(m1[:ips].sub(/,.*/, ''),  # just the first IP (second is often CloudFront)
+                         parseTime(@date, m3[:time], false), # false = local time
                          m2[:method],
                          m2[:path],
                          m1[:status].to_i,
@@ -850,6 +863,7 @@ def identifyEvent(srcName, event)
   end
 
   if ark
+    attrs && event.time and attrs[:time] = (event.time.hour * 100) + event.time.min
     # For robot ID, jschol doesn't have agent strings, and is only used for linking anyway.
     return ark, attrs, srcName != "jschol" && isRobot(event.agent)
   else
@@ -884,6 +898,7 @@ end
 ###################################################################################################
 def parseDateLogs(date, sources)
   puts "Parsing logs from #{date.iso8601}."
+  startTime = Time.now
 
   albLinks = {}
   sessionCounts = Hash.new { |h,k| h[k] = 0 }
@@ -893,8 +908,12 @@ def parseDateLogs(date, sources)
   robotReq = 0
   linkedRef = 0
 
+  prevSrc = nil
   sources.each { |source|
-    #puts "Source: #{source.path}"
+    if source.srcName != prevSrc
+      puts "Source: #{source.srcName}"
+      prevSrc = source.srcName
+    end
     source.eachEvent { |event|
       item, attrs, isRobot = identifyEvent(source.srcName, event)
       if !attrs
@@ -903,6 +922,7 @@ def parseDateLogs(date, sources)
         next
       end
 
+      # Count em up
       totalReq += 1
       if isRobot
         #puts "robot: #{event}"
@@ -913,20 +933,40 @@ def parseDateLogs(date, sources)
       #puts "#{attrs}: #{source.srcName} #{event}"
       #puts
 
+      # Ascribe requests for redirected items to their target
+      item = getFinalItem(item)
+
+      # Ignore requests for an item after it is withdrawn
+      itemInfo = getItemInfo(item)
+      if !itemInfo
+        #puts "Skipping event for invalid item #{item}."
+        next
+      end
+      wdlDate = itemInfo[:withdrawn_date]
+      if wdlDate && date > wdlDate
+        #puts "Skipping post-withdrawal event for item #{item} withdrawn on #{wdlDate}."
+        next
+      end
+
+      # Ignore requests for embargoed items before the embargo expires.
+      embDate = itemInfo[:embargo_date]
+      if embDate && date < embDate
+        #puts "Skipping pre-embargo event for item #{item}, embargoed until #{embDate}."
+        next
+      end
+
       # We use jschol events *only* to connect referrers to ALB events
       if source.srcName == "jschol"
-        if event.trace && event.referrer
+        if event.trace && albLinks[event.trace] && event.referrer
           ref = extractReferrer(item, event)
-          if ref && albLinks[event.trace]
+          if ref
             #puts "Found matching ALB for trace #{event.trace}, " +
             #     "copying referrer #{event.referrer.inspect} to #{albLinks[event.trace]}"
             linkedRef += 1
-            albLinks[event.trace][:ref] = { extractReferrer(item, event) => 1 }
-          else
-            #puts "No match for trace #{event.trace}"  # usually because event was identified as 'robot'
+            albLinks[event.trace][:ref] = { lookupReferrer(extractReferrer(item, event)) => 1 }
           end
         end
-        next
+        next # only use for link, not for hit counting
       end
 
       session = [event.ip, event.agent]
@@ -953,7 +993,6 @@ def parseDateLogs(date, sources)
     count > 50 and aberrantSessions << session
   }
 
-  puts
   puts "Robot req: #{robotReq}/#{totalReq} (#{sprintf("%.1f", robotReq * 100.0 / totalReq)}%)"
   puts "Linked refs: #{linkedRef}"
 
@@ -967,6 +1006,7 @@ def parseDateLogs(date, sources)
   puts "Writing ipCounts.out."
   open("ipCounts.out", "w") { |io|
     sessionCounts.sort_by{ |a,b| b }.reverse.each { |session, count|
+      next if aberrantSessions.include?(session)
       io.puts "#{count} #{session}"
     }
   }
@@ -980,26 +1020,59 @@ def parseDateLogs(date, sources)
     }
   }
 
+  # Clump hits by common item/time/location
+  puts "Geolocating."
+  totalHits = 0
+  aberFiltered = 0
+  finalAccum = {}
+  itemSessions.keys.sort.each { |item|
+    itemSessions[item].each { |session, attrs|
+      totalHits += attrs[:hit]
+      if aberrantSessions.include?(session)
+        aberFiltered += attrs[:hit]
+        next
+      end
+
+      loc = lookupGeoIp(session[0])
+      time = attrs[:time]
+      attrs.delete(:time)
+      key = [item, time, loc]
+      if !finalAccum.key?(key)
+        finalAccum[key] = EventAccum.new(attrs)
+      else
+        finalAccum[key].add(EventAccum.new(attrs))
+      end
+    }
+  }
+
   puts "Writing finalCounts.out"
   open("finalCounts.out", "w") { |io|
-    totalHits = 0
-    aberFiltered = 0
-    itemSessions.keys.sort.each { |item|
-      accum = nil
-      itemSessions[item].each { |session, attrs|
-        totalHits += attrs[:hit]
-        if aberrantSessions.include?(session)
-          aberFiltered += attrs[:hit]
-        elsif accum.nil?
-          accum = EventAccum.new(attrs)
-        else
-          accum.add(EventAccum.new(attrs))
-        end
-      }
-      accum.nil? or io.puts("#{item}|#{accum.to_h.to_s}")
+    finalAccum.each { |key, accum|
+      item, time, loc = key
+      io.puts("#{item}|#{sprintf("%06d",time)}|#{sprintf("%-6s",loc)}|#{accum.to_h.to_s}")
     }
     puts "Aber filtered: #{aberFiltered}/#{totalHits}"
   }
+
+  # Write the events for this date to the database
+  puts "Writing events to database."
+  DB.transaction {
+    ItemEvent.where(date: date).delete
+    finalAccum.each { |key, accum|
+      item, time, loc = key
+      ItemEvent.create(item_id: item,
+                       date: date,
+                       time: time,
+                       location: loc,
+                       attrs: accum.to_h.to_json)
+    }
+
+    # Clear the digest for propagated stats for this month, so they'll get re-propagated.
+    StatsMonth.where(month: date.month*100 + date.day).update(old_digest: nil)
+  }
+
+  puts "Elapsed time to process this day's logs: #{(Time.now - startTime).round(1)} sec."
+  puts
 end
 
 ###################################################################################################
@@ -1049,9 +1122,10 @@ def parseLogs
 
   # And process each one
   todo.each { |date, digest|
-    next unless date.month == 12 && date.day == 15 # for testing
+    next if date < ESCHOL5_RELEASE_DATE
+    next unless date.month == 12 && date.day == 1 # for testing
     parseDateLogs(date, logsByDate[date])
-    #EventLog.create_or_update(date, digest: digest)  # Record digest to avoid reprocessing tomorrow
+    EventLog.create_or_update(date, digest: digest)  # Record digest to avoid reprocessing tomorrow
   }
 end
 

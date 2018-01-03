@@ -16,5 +16,9 @@ Sequel.migration do
     # Let's use "category" so we don't have two kinds of "genre" in the database
     rename_table :genre_stats, :category_stats
     rename_column :category_stats, :stats_genre, :category
+
+    # Easier to write SQL if we don't use "long" (a reserved word) as a column name
+    rename_column :locations, :long, :longitude
+    rename_column :locations, :lat, :latitude
   end
 end

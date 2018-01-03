@@ -34,12 +34,11 @@ DB = Sequel.connect(YAML.load_file("config/database.yaml"))
 #File.exists?('statsConv.sql_log') and File.delete('statsConv.sql_log')
 #DB.loggers << Logger.new('statsConv.sql_log')
 
-$referrers = {}
-$locations = {}
-$itemInfoCache = {}
-
 # Model class for each table
 require_relative './models.rb'
+
+# Utilities
+require_relative './statsUtil.rb'
 
 $referrerShortcuts = {
   'G' => 'google.com',
@@ -66,62 +65,9 @@ def gatherFiles
 end
 
 ###################################################################################################
-def lookupReferrer(ref)
-  ref.length > 100 and return nil # Skip ridiculously long (likely spoofed) referrers
+def lookupReferrerWithShortcuts(ref)
   # Translate shortcuts from old stats generator, e.g. "G" => "Google"
-  if $referrerShortcuts.key?(ref)
-    ref = $referrerShortcuts[ref]
-  end
-  if !$referrers.key?(ref)
-    record = Referrer.where(domain: ref).first
-    if !record
-      Referrer.create(domain: ref)
-      record = Referrer.where(domain: ref).first
-      record or raise("Failed to insert referrer for domain=#{ref.inspect}")
-    end
-    $referrers[ref] = record.id
-  end
-  $referrers[ref]
-end
-
-###################################################################################################
-def lookupLocation(lat, long)
-  key = "#{lat}:#{long}"
-  if !$locations.key?(key)
-    record = Location.where(lat: lat, long: long).first
-    if !record
-      Location.create(lat: lat, long: long)
-      record = Location.where(lat: lat, long: long).first
-    end
-    $locations[key] = record.id
-  end
-  $locations[key]
-end
-
-###################################################################################################
-def parseDate(dateStr)
-  ret = Date.strptime(dateStr, "%Y-%m-%d")
-  ret.year > 1000 && ret.year < 4000 or raise("can't parse date #{dateStr}")
-  return ret
-end
-
-###################################################################################################
-def getItemInfo(ark)
-  if !$itemInfoCache.key?(ark)
-    item = Item[ark]
-    if item
-      attrs = JSON.parse(item.attrs)
-      data = {}
-      attrs['withdrawn_date'] and data[:withdrawn_date] = parseDate(attrs['withdrawn_date'])
-      attrs['embargo_date']   and data[:embargo_date]   = parseDate(attrs['embargo_date'])
-      redir = Redirect.where(kind: "item", from_path: "/uc/item/#{ark.sub(/^qt/,'')}").first
-      redir && redir.to_path =~ %r{^/uc/item/(\w{8})$} and data[:redirect] = "qt"+$1
-    else
-      data = nil
-    end
-    $itemInfoCache[ark] = data
-  end
-  $itemInfoCache[ark]
+  return lookupReferrer($referrerShortcuts.key?(ref) ? $referrerShortcuts[ref] : ref)
 end
 
 ###################################################################################################
@@ -231,7 +177,7 @@ def correlate(files, date)
 
       # And record this info
       extractInfo[m[:ark]] << { hit: 1, dl: isDownload,
-                                time: (m[:hour].to_i * 10000) + (m[:min].to_i * 100) + (m[:sec].to_i),
+                                time: (m[:hour].to_i * 100) + m[:min].to_i,
                                 lat: m[:lat].to_f.round(4), long: m[:long].to_f.round(4),
                                 referrer: ref }
     }
@@ -255,7 +201,9 @@ def correlate(files, date)
       records.each { |record|
         attrs = { hit: record[:hit] }
         record[:dl] and attrs[:dl] = 1
-        record[:referrer] && lookupReferrer(record[:referrer]) and attrs[:ref] = { lookupReferrer(record[:referrer]) => 1 }
+        if record[:referrer] && lookupReferrerWithShortcuts(record[:referrer])
+          attrs[:ref] = { lookupReferrerWithShortcuts(record[:referrer]) => 1 }
+        end
         ItemEvent.create(
           item_id: ark,
           date: date,
@@ -274,7 +222,7 @@ def correlate(files, date)
       if record[:referrers].values.any? { |n| n > 0 }
         attrs[:ref] = {}
         record[:referrers].each { |k,v|
-          v > 0 && lookupReferrer(k) and attrs[:ref][lookupReferrer(k)] = v
+          v > 0 && lookupReferrerWithShortcuts(k) and attrs[:ref][lookupReferrerWithShortcuts(k)] = v
         }
       end
       ItemEvent.create(
@@ -282,31 +230,6 @@ def correlate(files, date)
           date: date,
           attrs: attrs.to_json
       )
-    }
-  }
-end
-
-###################################################################################################
-def getFinalItem(itemID)
-  20.times {
-    info = getItemInfo(itemID) or return(itemID)
-    info[:redirect] or return(itemID)
-    itemID = info[:redirect]
-  }
-  raise("redirect loop involving #{itemID}")
-end
-
-###################################################################################################
-def applyItemRedirects
-
-  # We need to auto-migrate stats from redirected items
-  DB.transaction {
-    Redirect.where(kind: "item").each { |redir|
-      redir.from_path =~ %r{^/uc/item/(\w{8})$} or raise("can't parse item redirect #{redir.inspect}")
-      fromItem = "qt"+$1
-      toItem = getFinalItem(fromItem)
-      toItem or raise("problem following redirect")
-      ItemEvent.where(item_id: fromItem).update(item_id: toItem)
     }
   }
 end

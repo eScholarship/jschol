@@ -24,6 +24,9 @@ GEM
       multi_xml (>= 0.5.2)
     jmespath (1.3.1)
     json (2.1.0)
+    maxminddb (0.1.15)
+    maxminddb-geolite2-city (1.6.0)
+      maxminddb (>= 0.1.11)
     mimemagic (0.3.2)
     mini_portile2 (2.2.0)
     multi_xml (0.6.0)
@@ -75,6 +78,7 @@ DEPENDENCIES
   htmlentities
   httparty
   json
+  maxminddb-geolite2-city
   mimemagic
   mysql2
   nokogiri
@@ -93,4 +97,4 @@ RUBY VERSION
    ruby 2.3.4p301
 
 BUNDLED WITH
-   1.15.4
+   1.16.0
