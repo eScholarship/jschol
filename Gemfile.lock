@@ -18,7 +18,10 @@ GEM
       addressable (>= 2.1.1)
       eventmachine (>= 0.12.9)
     eventmachine (1.2.3)
+    ezid-client (1.7.1)
+      hashie (~> 3.4, >= 3.4.3)
     fastimage (2.1.0)
+    hashie (3.5.7)
     htmlentities (4.3.4)
     httparty (0.15.5)
       multi_xml (>= 0.5.2)
@@ -32,6 +35,7 @@ GEM
     multi_xml (0.6.0)
     mustermann (1.0.0)
     mysql2 (0.4.7)
+    netrc (0.11.0)
     nokogiri (1.8.0)
       mini_portile2 (~> 2.2.0)
     nokogumbo (1.4.13)
@@ -74,6 +78,7 @@ PLATFORMS
 
 DEPENDENCIES
   aws-sdk
+  ezid-client
   fastimage
   htmlentities
   httparty
@@ -81,6 +86,7 @@ DEPENDENCIES
   maxminddb-geolite2-city
   mimemagic
   mysql2
+  netrc
   nokogiri
   puma
   sanitize

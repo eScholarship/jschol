@@ -13,9 +13,11 @@ Dir.chdir(File.dirname(File.expand_path(File.dirname(__FILE__))))
 # Remainder are the requirements for this program
 require 'date'
 require 'digest'
+require 'ezid-client'
 require 'fileutils'
 require 'json'
 require 'logger'
+require 'netrc'
 require 'pp'
 require 'sequel'
 require 'set'
@@ -46,6 +48,8 @@ require_relative './statsUtil.rb'
 
 BIG_PRIME = 9223372036854775783 # 2**63 - 25 is prime. Kudos https://primes.utm.edu/lists/2small/0bit.html
 
+$hostname = `/bin/hostname`.strip
+
 ESCHOL5_RELEASE_DATE = Date.new(2017, 10, 19)  # we released on October 19, 2017.
 
 # Cache some database values
@@ -62,6 +66,21 @@ ROBOT_PATTERNS = JSON.parse(
   }.map { |str| Regexp.new(str, Regexp::IGNORECASE) }
 
 $robotChecked = {}
+
+
+###################################################################################################
+# Configure EZID API for minting arks for people
+Ezid::Client.configure do |config|
+  (ezidCred = Netrc.read['ezid.cdlib.org']) or raise("Need credentials for ezid.cdlib.org in ~/.netrc")
+  config.user = ezidCred[0]
+  config.password = ezidCred[1]
+  config.default_shoulder = case $hostname
+    when 'pub-submit-stg-2a', 'pub-submit-stg-2c'; 'ark:/99999/fk4'
+    when 'pub-submit-prd-2a', 'pub-submit-prd-2c'; 'ark:/99166/p3'
+    else raise "Unrecognized hostname for shoulder determination."
+  end
+end
+
 
 ###################################################################################################
 # Data classes (much more efficient in both memory and space than hashes)
@@ -331,8 +350,8 @@ class ALBLogEventSource < LogEventSource
                      (?<ssl_protocol>             [^ ]+      ) \s
                      (?<target_group_arn>         [^ ]+      ) \s
                    " (?<trace_id>                 [^ ]+      ) " \s
-                     (?<domain_name>              [^ ]+      ) \s
-                     (?<chosen_cert_arn>          [^ ]+      )
+                     (?<domain_name>              [^ "]+|"[^"]+" ) \s
+                     (?<chosen_cert_arn>          [^ "]+|"[^"]+" )
                 $}x
 
     portPat = %r{^ (?<ip>   \d+\.\d+\.\d+\.\d+) :
@@ -448,10 +467,16 @@ def calcBase64Digest(digester)
 end
 
 ###################################################################################################
-$fooRand = Random.new
-def createPersonArk
-  # FIXME: generate arks when we our shoulder has been granted
-  return "foo:#{$fooRand.rand(BIG_PRIME)}"
+def createPersonArk(name, email)
+  # Determine the EZID metadata
+  who = email ? "#{name} <#{email}>" : name
+  meta = { 'erc.what' => normalizeERC("Internal eScholarship agent ID"),
+           'erc.who'  => "#{normalizeERC(name)} <#{normalizeERC(email)}>",
+           'erc.when' => DateTime.now.iso8601 }
+
+  # Mint it the new ID
+  resp = Ezid::Identifier.mint(nil, meta)
+  return resp.id
 end
 
 ###################################################################################################
@@ -477,11 +502,12 @@ def connectAuthors
   nDone = 0
   DB.transaction {
     unconnectedAuthors.each { |auth|
-      email = JSON.parse(auth.attrs)["email"].downcase
+      authAttrs = JSON.parse(auth.attrs)
+      email = authAttrs["email"].downcase
       person = emailToPerson[email]
       (nDone % 1000) == 0 and puts "Connecting authors: #{nDone} / #{nTodo}"
       if !person
-        person = createPersonArk()
+        person = createPersonArk(authAttrs["name"] || "unknown", email)
         Person.create(id: person, attrs: { email: email }.to_json)
         emailToPerson[email] = person
       end
@@ -789,15 +815,15 @@ end
 def grabLogs
   puts "Grabbing AppLoadBalancer logs."
   FileUtils.mkdir_p("./awsLogs/alb-logs")
-  checkCall("aws s3 sync s3://pub-s3-prd/jschol/alb-logs/ ./awsLogs/alb-logs/")
+  checkCall("aws s3 sync --delete s3://pub-s3-prd/jschol/alb-logs/ ./awsLogs/alb-logs/")
   puts "Grabbing CloudFront logs."
   FileUtils.mkdir_p("./awsLogs/cf-logs")
-  checkCall("aws s3 sync s3://pub-s3-prd/jschol/cf-logs/ ./awsLogs/cf-logs/")
+  checkCall("aws s3 sync --delete s3://pub-s3-prd/jschol/cf-logs/ ./awsLogs/cf-logs/")
   puts "Grabbing jschol logs."
   FileUtils.mkdir_p("./awsLogs/jschol-logs/2a")
-  checkCall("rsync -av pub-jschol-prd-2a.escholarship.org:/apps/eschol/jschol/logs ./awsLogs/jschol-logs/2a/")
+  checkCall("rsync -av --delete pub-jschol-prd-2a.escholarship.org:/apps/eschol/jschol/logs ./awsLogs/jschol-logs/2a/")
   FileUtils.mkdir_p("./awsLogs/jschol-logs/2c")
-  checkCall("rsync -av pub-jschol-prd-2c.escholarship.org:/apps/eschol/jschol/logs ./awsLogs/jschol-logs/2c/")
+  checkCall("rsync -av --delete pub-jschol-prd-2c.escholarship.org:/apps/eschol/jschol/logs ./awsLogs/jschol-logs/2c/")
 end
 
 ###################################################################################################
@@ -1140,7 +1166,7 @@ end
 # The main routine
 
 #grabLogs
-loadItemInfoCache
-parseLogs
+#loadItemInfoCache
+#parseLogs
 #calcStats
 puts "Done."
