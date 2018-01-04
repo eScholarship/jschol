@@ -1165,8 +1165,8 @@ end
 ###################################################################################################
 # The main routine
 
-#grabLogs
-#loadItemInfoCache
-#parseLogs
-#calcStats
+grabLogs
+loadItemInfoCache
+parseLogs
+calcStats
 puts "Done."
