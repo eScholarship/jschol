@@ -14,6 +14,9 @@
 require 'rubygems'
 require 'bundler/setup'
 
+# Run from the right directory (the parent of the tools dir)
+Dir.chdir(File.dirname(File.expand_path(File.dirname(__FILE__))))
+
 # Remainder are the requirements for this program
 require 'aws-sdk'
 require 'date'
@@ -171,75 +174,7 @@ class String
   end unless defined? ellipsize
 end
 
-###################################################################################################
-# Monkey-patch to add update_or_replace functionality, which is strangely absent in the Sequel gem.
-class Sequel::Model
-  def self.update_or_replace(id, **data)
-    record = self[id]
-    if record
-      record.update(**data)
-    else
-      data[@primary_key] = id
-      Unit.create(**data)
-    end
-  end
-end
-
-###################################################################################################
-# Model classes for easy object-relational mapping in the database
-
-class Unit < Sequel::Model
-  unrestrict_primary_key
-end
-
-class UnitHier < Sequel::Model(:unit_hier)
-  unrestrict_primary_key
-end
-
-class UnitCount < Sequel::Model
-end
-
-class Item < Sequel::Model
-  unrestrict_primary_key
-end
-
-class UnitItem < Sequel::Model
-  unrestrict_primary_key
-end
-
-class ItemAuthor < Sequel::Model
-  unrestrict_primary_key
-end
-
-class ItemCount < Sequel::Model
-end
-
-class ItemAuthors < Sequel::Model(:item_authors)
-  unrestrict_primary_key
-end
-
-class Issue < Sequel::Model
-end
-
-class Section < Sequel::Model
-end
-
-class Widget < Sequel::Model
-end
-
-class Page < Sequel::Model
-end
-
-class InfoIndex < Sequel::Model(:info_index)
-end
-
-class DisplayPDF < Sequel::Model
-  unrestrict_primary_key
-end
-
-class Redirect < Sequel::Model
-end
-
+require_relative './models.rb'
 require_relative '../splash/splashGen.rb'
 
 ###################################################################################################
@@ -776,7 +711,7 @@ def convertUnits(el, parentMap, childMap, allIds, selectedUnits)
         selectedUnits == "ALL" or puts "Converting."
         DB.transaction {
           name = id=="root" ? "eScholarship" : el[:label]
-          Unit.update_or_replace(id,
+          Unit.create_or_update(id,
             type:      unitType,
             name:      name,
             status:    el[:directSubmit] == "moribund" ? "archived" :
