@@ -4,12 +4,6 @@ set -e
 
 cd `dirname $0`
 
-cat > s3.yaml <<EOF
-region: $S3_REGION
-bucket: $S3_BUCKET
-prefix: $S3_PREFIX
-EOF
-
 cat > cloudSearch.yaml <<EOF
 domain: $CLOUDSEARCH_DOMAIN
 searchEndpoint: $CLOUDSEARCH_SEARCH_ENDPOINT

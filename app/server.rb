@@ -124,9 +124,9 @@ class S3Logger < Logger
   end
 end
 s3Logger = S3Logger.new(STDOUT)
-$s3Config = OpenStruct.new(YAML.load_file("config/s3.yaml"))
-$s3Client = Aws::S3::Client.new(region: $s3Config.region, :logger => s3Logger, :http_wire_trace => true)
-$s3Bucket = Aws::S3::Bucket.new($s3Config.bucket, client: $s3Client)
+$s3Client = Aws::S3::Client.new(region: ENV['S3_REGION'] || raise("missing env S3_REGION"),
+                                :logger => s3Logger, :http_wire_trace => true)
+$s3Bucket = Aws::S3::Bucket.new(ENV['S3_BUCKET'] || raise("missing env S3_BUCKET"), client: $s3Client)
 
 # Info about isomorphic mode and port
 $serverConfig = YAML.load_file("config/server.yaml")
@@ -397,7 +397,7 @@ end
 
 ###################################################################################################
 get %r{/assets/([0-9a-f]{64})} do |hash|
-  s3Path = "#{$s3Config.prefix}/binaries/#{hash[0,2]}/#{hash[2,2]}/#{hash}"
+  s3Path = "#{ENV['S3_PREFIX'] || raise("missing env S3_PREFIX")}/binaries/#{hash[0,2]}/#{hash[2,2]}/#{hash}"
   obj = $s3Bucket.object(s3Path)
   obj.exists? or halt(404)
   Tempfile.open("s3_", TEMP_DIR) { |s3Tmp|
@@ -490,10 +490,10 @@ get "/content/:fullItemID/*" do |itemID, path|
 
   # Decide which display version to send
   if noSplash || displayPDF.splash_size == 0
-    s3Path = "#{$s3Config.prefix}/pdf_patches/linearized/#{itemID}"
+    s3Path = "#{ENV['S3_PREFIX'] || raise("missing env S3_PREFIX")}/pdf_patches/linearized/#{itemID}"
     outLen = displayPDF.linear_size
   else
-    s3Path = "#{$s3Config.prefix}/pdf_patches/splash/#{itemID}"
+    s3Path = "#{ENV['S3_PREFIX'] || raise("missing env S3_PREFIX")}/pdf_patches/splash/#{itemID}"
     outLen = displayPDF.splash_size
   end
 
