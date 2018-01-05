@@ -37,8 +37,8 @@ Dir.chdir(File.dirname(File.expand_path(File.dirname(__FILE__))))
 DB = Sequel.connect(YAML.load_file("config/database.yaml"))
 
 # Log for debugging
-File.exists?('statsCalc.sql_log') and File.delete('statsCalc.sql_log')
-DB.loggers << Logger.new('statsCalc.sql_log')
+#File.exists?('statsCalc.sql_log') and File.delete('statsCalc.sql_log')
+#DB.loggers << Logger.new('statsCalc.sql_log')
 
 # Model class for each table
 require_relative './models.rb'
@@ -215,7 +215,11 @@ def eachLogLine(path)
     #
     ##Zlib::GzipReader.open(path) { |io| yield io }
     # So instead, we punt to unix's gzip command.
-    checkOutput("/bin/gunzip -c #{path}", false).split("\n").each { |line|
+    text = checkOutput("/bin/gunzip -c #{path}", false)
+    # Deal with crazy encodings
+    text.encode!('UTF-8', 'binary', invalid: :replace, undef: :replace, replace: '')
+    # Process line by line
+    text.split("\n").each { |line|
       yield line
     }
   else
@@ -418,8 +422,6 @@ class JscholLogEventSource < LogEventSource
               $}x
     eachLogLine(@path) { |line|
       next unless line.include?("GET") && (line.include?("uc/item/") || line.include?("content/"))
-      # Deal with crazy encodings
-      line.encode!('UTF-8', 'binary', invalid: :replace, undef: :replace, replace: '').strip!
       m1 = line.match(linePat)
       if !m1
         if line =~ /\[\d+\] \d+\.\d+\.\d+\.\d+/
@@ -500,8 +502,8 @@ def connectAuthors
 
   # Then connect all unconnected authors to people
   nDone = 0
-  DB.transaction {
-    unconnectedAuthors.each { |auth|
+  unconnectedAuthors.each { |auth|
+    DB.transaction {
       authAttrs = JSON.parse(auth.attrs)
       email = authAttrs["email"].downcase
       person = emailToPerson[email]
@@ -723,9 +725,12 @@ def propagateItemMonth(itemUnits, itemPeople, itemCategory, monthPosts, month)
     accum = EventAccum.new(JSON.parse(event.attrs))
     item = event.item_id
     itemStats[item].add(accum)
-    itemUnits[item].each { |unit| unitStats[unit].add(accum) }
+    cat = itemCategory[item] || 'unknown'
+    itemUnits[item].each { |unit|
+      unitStats[unit].add(accum)
+      categoryStats[[unit, cat]].add(accum)
+    }
     itemPeople[item] and itemPeople[item].each { |pp| personStats[pp].add(accum) }
-    categoryStats[itemCategory[item] || 'unknown'].add(accum)
   }
 
   # Write out all the stats
@@ -746,8 +751,9 @@ def propagateItemMonth(itemUnits, itemPeople, itemCategory, monthPosts, month)
     }
 
     CategoryStat.where(month: month).delete
-    categoryStats.each { |category, accum|
-      CategoryStat.create(category: category, month: month, attrs: accum.to_h.to_json)
+    categoryStats.each { |unitCat, accum|
+      unit, category = unitCat
+      CategoryStat.create(unit_id: unit, category: category, month: month, attrs: accum.to_h.to_json)
     }
 
     # And mark this month complete.
@@ -815,15 +821,18 @@ end
 def grabLogs
   puts "Grabbing AppLoadBalancer logs."
   FileUtils.mkdir_p("./awsLogs/alb-logs")
-  checkCall("aws s3 sync --delete s3://pub-s3-prd/jschol/alb-logs/ ./awsLogs/alb-logs/")
+  # Note: on production there's an old ~/.aws/config file that points to different AWS credentials.
+  #       We use an explicit "instance" profile (also defined in that file) to get back to plain
+  #       default instance credentials.
+  checkCall("aws s3 sync --profile instance --quiet --delete s3://pub-s3-prd/jschol/alb-logs/ ./awsLogs/alb-logs/")
   puts "Grabbing CloudFront logs."
   FileUtils.mkdir_p("./awsLogs/cf-logs")
-  checkCall("aws s3 sync --delete s3://pub-s3-prd/jschol/cf-logs/ ./awsLogs/cf-logs/")
+  checkCall("aws s3 sync --profile instance --quiet --delete s3://pub-s3-prd/jschol/cf-logs/ ./awsLogs/cf-logs/")
   puts "Grabbing jschol logs."
   FileUtils.mkdir_p("./awsLogs/jschol-logs/2a")
-  checkCall("rsync -av --delete pub-jschol-prd-2a.escholarship.org:/apps/eschol/jschol/logs ./awsLogs/jschol-logs/2a/")
+  checkCall("rsync -a --delete pub-jschol-prd-2a.escholarship.org:/apps/eschol/jschol/logs ./awsLogs/jschol-logs/2a/")
   FileUtils.mkdir_p("./awsLogs/jschol-logs/2c")
-  checkCall("rsync -av --delete pub-jschol-prd-2c.escholarship.org:/apps/eschol/jschol/logs ./awsLogs/jschol-logs/2c/")
+  checkCall("rsync -a --delete pub-jschol-prd-2c.escholarship.org:/apps/eschol/jschol/logs ./awsLogs/jschol-logs/2c/")
 end
 
 ###################################################################################################
@@ -1165,8 +1174,8 @@ end
 ###################################################################################################
 # The main routine
 
-grabLogs
+#grabLogs
 loadItemInfoCache
 parseLogs
-calcStats
+#calcStats
 puts "Done."
