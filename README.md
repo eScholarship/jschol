@@ -32,7 +32,7 @@ Description of files
 * `app/server.rb`: Main app driver with code to generate the page outline, supply database data, cache bust, etc.
 * `bin/`: Gets populated by 'bundler' with driver scripts for gems it installs. Don't modify directly.
 * `bower.json`: List of Javascript packages used in the front-end. Used by 'node' to download and install them locally.
-* `config`: A place to keep database connection parameters. Will probably be replaced by an environment variable setup.
+* `config`: A place to keep environment variables such as database and S3 connection parameters.
 * `convert.rb`: Script to populate the new eschol5 database with units, item, etc. from the old eScholarship.
 * `gems`: Gets populated by 'bundler' with driver scripts for gems it installs. Don't modify directly.
 * `gulp`: Symbolic link to node_modules/.bin/gulp, so you can just run "./gulp" from the top-level directory.
@@ -48,68 +48,15 @@ Steps to get the app running on your local machine
 
 1. Install gems and packages: `./setup.sh` (Note: for neatness they get installed to the local directory, not system-wide)
 
-2. Start SOCKS proxy connection through bastion: `ssh -C -N -D 1080 -p 18822 cdl-aws-bastion.cdlib.org`
+2. Configure environment. Get somebody else's config/env.sh and modify to your needs.
 
-3. Configure SOCKS port: `cp config/socks.yaml.TEMPLATE config/socks.yaml`
+3. `source config/env.sh`
 
-4. Configure database connection parameters: `cp config/database.yaml.TEMPLATE config/database.yaml`, then fill in the values in `database.yaml`:
-  * host: rds-BLAH.amazonaws.com
-  * port: 3306
-  * database: eschol_test
-  * username: SECRET
-  * password: SECRET
+4. Run `./gulp`. Be on the lookout for errors.
 
-5. Configure CloudSearch connection parameters: `cp config/cloudSearch.yaml.TEMPLATE config/cloudSearch.yaml`, then fill in the values in `cloudSearch.yaml`:
-  * domain: the-domain (e.g. cs-pub-jschol-dev)
-  * searchEndpoint: https://search-domain-BLAH.amazonaws.com
-  * docEndpoint: https://doc-domain-BLAH.amazonaws.com
+5. Browse to `http://localhost:4001/unit/root`, or `http://localhost:4001/item/08s7w2fd`, or `http://localhost:4001/search`
 
-6. Configure S3 connection parameters: `cp config/s3.yaml.TEMPLATE config/s3.yaml`, then fill in the values in `s3.yaml`:
-  * region: the region, typically "us-west-2"
-  * bucket: bucket name, e.g. "pub-s3-dev"
-  * prefix: top-level path within the bucket, typically "jschol"
+Migrating to a new database version
+-----------------------------------
 
-7. Configure OJS database connection parameters: `cp config/ojsDb.yaml.TEMPLATE config/ojsDb.yaml`, then fill in the values in `ojsDb.yaml`:
-  * adapter: mysql2
-  * host: rds-BLAH.amazonaws.com
-  * port: 3306
-  * database: ojs
-  * username: SECRET
-  * password: SECRET
-
-8. Configure Merritt Express connection parameters: `cp config/mrtExpress.yaml.TEMPLATE config/mrtExpress.yaml`, then fill in the values in `mrtExpress.yaml`:
-  * host: host name (e.g. mrtexpress.cdlib.org)
-  * username: SECRET
-  * password: SECRET
-
-9. Create a jscholKey.dat file
-
-10. Run `./gulp`. Be on the lookout for errors.
-
-11. Browse to `http://localhost:4001/unit/root`, or `http://localhost:4001/item/08s7w2fd`, or `http://localhost:4001/search`
-
-Steps to set up a new database and index
-----------------------------------------
-
-Configure:
-* `config/database.yaml`
-* `config/cloudSearch.yaml`
-* `config/queueDb.yaml`
-
-Test AWS connectivity:
-* `aws cloudsearch list-domain-names --region us-west-2`
-
-Create database tables:
-* `bin/sequel -m migrations/ config/database.yaml`
-* `bin/sequel config/database.yaml`, then enter `DB.tables`: should see list of tables
-
-Import units:
-* `tools/convert.rb --units`
-
-Import items:
-* `tools/updIndex.rb`
-* `tools/idxStatus.rb` ... repeat until "Processing" becomes "Active"
-* `mkdir /apps/eschol/erep/xtf/eschol5-index`
-* `(tools/convert.rb --items 2>&1 > convert.log &)`
-* tail -f convert.log
-
+* `tools/migrate.rb`
