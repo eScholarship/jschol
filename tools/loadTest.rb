@@ -21,7 +21,7 @@ def puts(*args)
 end
 
 # Need a key for encrypting login credentials and URL keys
-$jscholKey = open("config/jscholKey.dat").read.strip
+$jscholKey = ENV['JSCHOL_KEY'] or raise("missing env JSCHOL_KEY")
 
 $nextThreadNum = 0
 

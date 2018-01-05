@@ -4,10 +4,6 @@ set -e
 
 cd `dirname $0`
 
-cat > jscholKey.dat <<EOF
-$JSCHOL_KEY
-EOF
-
 cat > mrtExpress.yaml <<EOF
 host: $MRTEXPRESS_HOST
 username: $MRTEXPRESS_USERNAME

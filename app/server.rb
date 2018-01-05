@@ -105,7 +105,7 @@ $host = ENV['HOST'] ? "#{ENV['HOST']}.escholarship.org" : "localhost"
 $mrtExpressConfig = YAML.load_file("config/mrtExpress.yaml")
 
 # Need a key for encrypting login credentials and URL keys
-$jscholKey = open("config/jscholKey.dat").read.strip
+$jscholKey = ENV['JSCHOL_KEY'] or raise("missing env JSCHOL_KEY")
 
 # S3 API client
 puts "Connecting to S3.           "
