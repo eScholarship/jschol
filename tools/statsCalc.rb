@@ -34,7 +34,13 @@ STDOUT.sync = true
 Dir.chdir(File.dirname(File.expand_path(File.dirname(__FILE__))))
 
 # The main database we're inserting data into
-DB = Sequel.connect(YAML.load_file("config/database.yaml"))
+DB = Sequel.connect({
+  "adapter"  => "mysql2",
+  "host"     => ENV["ESCHOL_DB_HOST"] || raise("missing env ESCHOL_DB_HOST"),
+  "port"     => ENV["ESCHOL_DB_PORT"] || raise("missing env ESCHOL_DB_PORT").to_i,
+  "database" => ENV["ESCHOL_DB_DATABASE"] || raise("missing env ESCHOL_DB_DATABASE"),
+  "username" => ENV["ESCHOL_DB_USERNAME"] || raise("missing env ESCHOL_DB_USERNAME"),
+  "password" => ENV["ESCHOL_DB_PASSWORD"] || raise("missing env ESCHOL_DB_HOST") })
 
 # Log for debugging
 #File.exists?('statsCalc.sql_log') and File.delete('statsCalc.sql_log')

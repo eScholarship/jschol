@@ -65,7 +65,13 @@ def waitForSocks(host, port)
   end
 end
 
-def ensureConnect(dbConfig)
+def ensureConnect(envPrefix)
+  dbConfig = { "adapter"  => "mysql2",
+               "host"     => ENV["#{envPrefix}_HOST"] || raise("missing env #{envPrefix}_HOST"),
+               "port"     => ENV["#{envPrefix}_PORT"] || raise("missing env #{envPrefix}_PORT").to_i,
+               "database" => ENV["#{envPrefix}_DATABASE"] || raise("missing env #{envPrefix}_DATABASE"),
+               "username" => ENV["#{envPrefix}_USERNAME"] || raise("missing env #{envPrefix}_USERNAME"),
+               "password" => ENV["#{envPrefix}_PASSWORD"] || raise("missing env #{envPrefix}_HOST") }
   if TCPSocket::socks_port
     SocksMysql.new(dbConfig)
   end
@@ -77,8 +83,6 @@ end
 
 # Use the Sequel gem to get object-relational mapping, connection pooling, thread safety, etc.
 # If specified, use SOCKS proxy for all connections (including database).
-escholDbConfig = YAML.load_file("config/database.yaml")
-ojsDbConfig = YAML.load_file("config/ojsDb.yaml")
 if File.exist? "config/socks.yaml"
   # Configure socksify for all TCP connections. Jump through hoops for MySQL to use it too.
   socksPort = YAML.load_file("config/socks.yaml")['port']
@@ -88,10 +92,10 @@ if File.exist? "config/socks.yaml"
   require_relative 'socksMysql'
 end
 puts "Connecting to eschol DB.    "
-DB = ensureConnect(escholDbConfig)
+DB = ensureConnect("ESCHOL_DB")
 #DB.loggers << Logger.new('server.sql_log')  # Enable to debug SQL queries on main db
 puts "Connecting to OJS DB.       "
-OJS_DB = ensureConnect(ojsDbConfig)
+OJS_DB = ensureConnect("OJS_DB")
 #OJS_DB.loggers << Logger.new('ojs.sql_log')  # Enable to debug SQL queries on OJS db
 
 # When fetching ISO pages and PDFs from the local server, we need the host name.
