@@ -96,14 +96,14 @@ def correlate(files, date)
     ark = getFinalItem("qt#{m[:ark]}")
     itemInfo = getItemInfo(ark)
     if !itemInfo
-      #puts "Warning: invalid compiled item #{ark.inspect}"
+      puts "Warning: invalid compiled item #{ark.inspect}"
       next
     end
 
     # To match old stats generator, exclude hits after the *month* an item was withdrawn
     w = itemInfo[:withdrawn_date]
     if w && Date.new(date.year, date.month) > Date.new(w.year, w.month)
-      #puts "Skipping post-withdrawal event for item #{ark} withdrawn on #{w}"
+      puts "Skipping post-withdrawal event for item #{ark} withdrawn on #{w}"
       next
     end
 
@@ -113,13 +113,11 @@ def correlate(files, date)
     # We'll obey that weird policy for old stats, but not carry it over to new stats.
     e = itemInfo[:embargo_date]
     if e && e > Date.new(2017, 12, 5)
-      #puts "Skipping pre-embargo event for item #{ark}, embargoed until #{e} (after cutoff for old stats)"
+      puts "Skipping pre-embargo event for item #{ark}, embargoed until #{e} (after cutoff for old stats)"
       next
     end
 
-    data = { hit: m[:hit].to_i, dl: m[:dl].to_i, bag: m[:bag].to_i,
-             referrers: Hash.new { |h,k| h[k] = {} }
-           }
+    data = { hit: m[:hit].to_i, dl: m[:dl].to_i, bag: m[:bag].to_i, referrers: {} }
     totalRefs = 0
     m[:referrers].split(",").each { |refEq|
       ref, ct = refEq.split("=")
@@ -128,7 +126,6 @@ def correlate(files, date)
       totalRefs += ct.to_i
     }
     totalRefs <= m[:hit].to_i or raise("too many refs: #{line.inspect}")
-
     compiledInfo[ark] = mergeHitData(compiledInfo[ark], data)
   }
 
@@ -156,24 +153,40 @@ def correlate(files, date)
         puts "Warning: invalid extract item #{ark.inspect}"
         next
       end
-      if !compiledInfo[ark]
-        puts("Warning: extract has excess ark #{ark.inspect}")
+      ci = compiledInfo[ark]
+      if !ci
+        # This happens a lot: extracts can have unvalidated hits
+        #puts("Warning: extract has excess ark #{ark.inspect}")
         next
       end
       isDownload = (m[:action] == "view+dnld")
       ref = m[:referrer].empty? ? nil : m[:referrer]
       date.day == m[:day].to_i && date.year == m[:year].to_i or raise("date mismatch")
 
-      # Make sure there's a matching hit
-      (compiledInfo[ark][:hit] >= 1 &&
-       (!isDownload || compiledInfo[ark][:dl] >= 1) &&
-       (!ref || compiledInfo.dig(ark, :referrers, ref) >= 1)
-      ) or raise("can't match extract: #{line.inspect}")
+      # Make sure there's a matching hit. Note that this happens quite frequently, because
+      # extracts are more extensive than final matched hits.
+      if (ci[:hit]||0) < 1
+        #puts "Note: can't match extract to hit: #{line.inspect} vs #{ci}"
+        next
+      end
+      if isDownload && (ci[:dl]||0) < 1
+        #puts "Note: can't match extract to download: #{line.inspect} vs #{ci}"
+        next
+      end
+      if ref && (ci.dig(:referrers, ref)||0) < 1
+        #puts "Note: can't match extract to ref: #{line.inspect} vs #{ci}"
+        next
+      end
 
       # Decrease the general compiled hit, since we have more specific info
-      compiledInfo[ark][:hit] -= 1
-      isDownload and compiledInfo[ark][:dl] -= 1
-      ref and compiledInfo[ark][:referrers][ref] -= 1
+      ci[:hit] -= 1
+      isDownload and ci[:dl] -= 1
+      if ref
+        ci[:referrers][ref] -= 1
+        if ci[:referrers][ref] == 0
+          ci[:referrers].delete(ref)
+        end
+      end
 
       # And record this info
       extractInfo[m[:ark]] << { hit: 1, dl: isDownload,
@@ -189,12 +202,7 @@ def correlate(files, date)
     ItemEvent.where(date: date).delete
 
     # Mark that stats for this month need to be repropagated
-    month = date.year*100 + date.month
-    sm = StatsMonth[month]
-    if sm && !sm.old_digest.nil?
-      sm.old_digest = nil
-      sm.save
-    end
+    StatsMonth.where(month: date.year*100 + date.month).update(old_digest: nil)
 
     # Insert location-specific data from the extracts
     extractInfo.each { |ark, records|
@@ -235,6 +243,7 @@ def correlate(files, date)
 end
 
 ###################################################################################################
+loadItemInfoCache
 files = gatherFiles
 
 files.keys.sort.each { |date|
