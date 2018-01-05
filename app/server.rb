@@ -101,9 +101,6 @@ OJS_DB = ensureConnect("OJS_DB")
 # When fetching ISO pages and PDFs from the local server, we need the host name.
 $host = ENV['HOST'] ? "#{ENV['HOST']}.escholarship.org" : "localhost"
 
-# Need credentials for fetching content files from MrtExpress
-$mrtExpressConfig = YAML.load_file("config/mrtExpress.yaml")
-
 # Need a key for encrypting login credentials and URL keys
 $jscholKey = ENV['JSCHOL_KEY'] or raise("missing env JSCHOL_KEY")
 
@@ -130,9 +127,6 @@ s3Logger = S3Logger.new(STDOUT)
 $s3Config = OpenStruct.new(YAML.load_file("config/s3.yaml"))
 $s3Client = Aws::S3::Client.new(region: $s3Config.region, :logger => s3Logger, :http_wire_trace => true)
 $s3Bucket = Aws::S3::Bucket.new($s3Config.bucket, client: $s3Client)
-
-# CloudFront info
-$cloudFrontConfig = File.exist?("config/cloudFront.yaml") && YAML.load_file("config/cloudFront.yaml")
 
 # Info about isomorphic mode and port
 $serverConfig = YAML.load_file("config/server.yaml")
@@ -472,7 +466,7 @@ get "/content/:fullItemID/*" do |itemID, path|
   content_type MimeMagic.by_path(path)
 
   # Here's the final Merritt URL
-  mrtURL = "https://#{$mrtExpressConfig['host']}/dl/#{mrtID}/#{epath}"
+  mrtURL = "https://#{ENV['MRTEXPRESS_HOST'] || raise("missing env MRTEXPRESS_HOST")}/dl/#{mrtID}/#{epath}"
 
   # Control how long this remains in browser and CloudFront caches
   cache_control :public, :max_age => 3600   # maybe more?
@@ -938,7 +932,7 @@ get "/api/item/:shortArk" do |shortArk|
   attrs = JSON.parse(Item.filter(:id => id).map(:attrs)[0])
   unitIDs = UnitItem.where(:item_id => id, :is_direct => true).order(:ordering_of_units).select_map(:unit_id)
   unit = unitIDs ? Unit[unitIDs[0]] : nil
-  content_prefix = $cloudFrontConfig ? $cloudFrontConfig['public-url'] : ""
+  content_prefix = ENV['CLOUDFRONT_CLOUDFRONT_PUBLIC_URL'] || ""
   pdf_url = item.content_type == "application/pdf" ? content_prefix+"/content/"+id+"/"+id+".pdf" : nil
 
   if !item.nil?
@@ -1126,7 +1120,7 @@ end
 # Properly target links in HTML blob
 def getItemHtml(content_type, id)
   return false if content_type != "text/html"
-  mrtURL = "https://#{$mrtExpressConfig['host']}/dl/ark:/13030/#{id}/content/#{id}.html"
+  mrtURL = "https://#{ENV['MRTEXPRESS_HOST'] || raise("missing env MRTEXPRESS_HOST")}/dl/ark:/13030/#{id}/content/#{id}.html"
   fetcher = MerrittFetcher.new(mrtURL)
   buf = []
   fetcher.streamTo(buf)

@@ -4,12 +4,6 @@ set -e
 
 cd `dirname $0`
 
-cat > mrtExpress.yaml <<EOF
-host: $MRTEXPRESS_HOST
-username: $MRTEXPRESS_USERNAME
-password: $MRTEXPRESS_PASSWORD
-EOF
-
 cat > s3.yaml <<EOF
 region: $S3_REGION
 bucket: $S3_BUCKET
