@@ -9,7 +9,8 @@ def putAsset(filePath, metadata)
   # Calculate the sha256 hash, and use it to form the s3 path
   md5sum    = Digest::MD5.file(filePath).hexdigest
   sha256Sum = Digest::SHA256.file(filePath).hexdigest
-  s3Path = "#{$s3Config.prefix}/binaries/#{sha256Sum[0,2]}/#{sha256Sum[2,2]}/#{sha256Sum}"
+  pfx = ENV['S3_PREFIX'] || raise("missing env S3_PREFIX")
+  s3Path = "#{pfx}/binaries/#{sha256Sum[0,2]}/#{sha256Sum[2,2]}/#{sha256Sum}"
 
   # If the S3 file is already correct, don't re-upload it.
   obj = $s3Bucket.object(s3Path)

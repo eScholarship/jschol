@@ -60,7 +60,13 @@ TEMP_DIR = "/apps/eschol/eschol5/jschol/tmp"
 FileUtils.mkdir_p(TEMP_DIR)
 
 # The main database we're inserting data into
-DB = Sequel.connect(YAML.load_file("config/database.yaml"))
+DB = Sequel.connect({
+  "adapter"  => "mysql2",
+  "host"     => ENV["ESCHOL_DB_HOST"] || raise("missing env ESCHOL_DB_HOST"),
+  "port"     => ENV["ESCHOL_DB_PORT"] || raise("missing env ESCHOL_DB_PORT").to_i,
+  "database" => ENV["ESCHOL_DB_DATABASE"] || raise("missing env ESCHOL_DB_DATABASE"),
+  "username" => ENV["ESCHOL_DB_USERNAME"] || raise("missing env ESCHOL_DB_USERNAME"),
+  "password" => ENV["ESCHOL_DB_PASSWORD"] || raise("missing env ESCHOL_DB_HOST") })
 $dbMutex = Mutex.new
 
 # Log SQL statements, to aid debugging
@@ -104,9 +110,11 @@ $csClient = Aws::CloudSearchDomain::Client.new(credentials: Aws::InstanceProfile
   endpoint: YAML.load_file("config/cloudSearch.yaml")["docEndpoint"])
 
 # S3 API client
-$s3Config = OpenStruct.new(YAML.load_file("config/s3.yaml"))
-$s3Client = Aws::S3::Client.new(credentials: Aws::InstanceProfileCredentials.new, region: $s3Config.region)
-$s3Bucket = Aws::S3::Bucket.new($s3Config.bucket, client: $s3Client)
+# Note: we use InstanceProfileCredentials here to avoid picking up ancient
+#       credentials file pub-submit-prd:~/.aws/config
+$s3Client = Aws::S3::Client.new(credentials: Aws::InstanceProfileCredentials.new,
+                                region: ENV['S3_REGION'] || raise("missing env S3_REGION"))
+$s3Bucket = Aws::S3::Bucket.new(ENV['S3_BUCKET'] || raise("missing env S3_BUCKET"), client: $s3Client)
 
 # Caches for speed
 $allUnits = nil
@@ -225,7 +233,7 @@ def putAsset(filePath, metadata)
   # Calculate the sha256 hash, and use it to form the s3 path
   md5sum    = Digest::MD5.file(filePath).hexdigest
   sha256Sum = Digest::SHA256.file(filePath).hexdigest
-  s3Path = "#{$s3Config.prefix}/binaries/#{sha256Sum[0,2]}/#{sha256Sum[2,2]}/#{sha256Sum}"
+  s3Path = "#{ENV['S3_PREFIX'] || raise("missing env S3_PREFIX")}/binaries/#{sha256Sum[0,2]}/#{sha256Sum[2,2]}/#{sha256Sum}"
 
   # If the S3 file is already correct, don't re-upload it.
   obj = $s3Bucket.object(s3Path)
@@ -2229,8 +2237,9 @@ def convertPDF(itemID)
       end
     end
 
-    $s3Bucket.object("#{$s3Config.prefix}/pdf_patches/linearized/#{itemID}").put(body: linFile)
-    splashLinSize > 0 and $s3Bucket.object("#{$s3Config.prefix}/pdf_patches/splash/#{itemID}").put(body: splashLinFile)
+    pfx = ENV['S3_PREFIX'] || raise("missing env S3_PREFIX")
+    $s3Bucket.object("#{pfx}/pdf_patches/linearized/#{itemID}").put(body: linFile)
+    splashLinSize > 0 and $s3Bucket.object("#{pfx}/pdf_patches/splash/#{itemID}").put(body: splashLinFile)
 
     DisplayPDF.where(item_id: itemID).delete
     DisplayPDF.create(item_id: itemID,

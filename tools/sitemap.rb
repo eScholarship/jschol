@@ -14,7 +14,13 @@ require 'xml-sitemap'
 DEST_DIR = "app"
 
 # eschol5 database
-DB = Sequel.connect(YAML.load_file("config/database.yaml"))
+DB = Sequel.connect({
+  "adapter"  => "mysql2",
+  "host"     => ENV["ESCHOL_DB_HOST"] || raise("missing env ESCHOL_DB_HOST"),
+  "port"     => ENV["ESCHOL_DB_PORT"] || raise("missing env ESCHOL_DB_PORT").to_i,
+  "database" => ENV["ESCHOL_DB_DATABASE"] || raise("missing env ESCHOL_DB_DATABASE"),
+  "username" => ENV["ESCHOL_DB_USERNAME"] || raise("missing env ESCHOL_DB_USERNAME"),
+  "password" => ENV["ESCHOL_DB_PASSWORD"] || raise("missing env ESCHOL_DB_HOST") })
 
 Sequel::Model.db = DB
 class Page < Sequel::Model

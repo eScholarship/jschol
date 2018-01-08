@@ -65,7 +65,13 @@ def waitForSocks(host, port)
   end
 end
 
-def ensureConnect(dbConfig)
+def ensureConnect(envPrefix)
+  dbConfig = { "adapter"  => "mysql2",
+               "host"     => ENV["#{envPrefix}_HOST"] || raise("missing env #{envPrefix}_HOST"),
+               "port"     => ENV["#{envPrefix}_PORT"] || raise("missing env #{envPrefix}_PORT").to_i,
+               "database" => ENV["#{envPrefix}_DATABASE"] || raise("missing env #{envPrefix}_DATABASE"),
+               "username" => ENV["#{envPrefix}_USERNAME"] || raise("missing env #{envPrefix}_USERNAME"),
+               "password" => ENV["#{envPrefix}_PASSWORD"] || raise("missing env #{envPrefix}_HOST") }
   if TCPSocket::socks_port
     SocksMysql.new(dbConfig)
   end
@@ -77,8 +83,6 @@ end
 
 # Use the Sequel gem to get object-relational mapping, connection pooling, thread safety, etc.
 # If specified, use SOCKS proxy for all connections (including database).
-escholDbConfig = YAML.load_file("config/database.yaml")
-ojsDbConfig = YAML.load_file("config/ojsDb.yaml")
 if File.exist? "config/socks.yaml"
   # Configure socksify for all TCP connections. Jump through hoops for MySQL to use it too.
   socksPort = YAML.load_file("config/socks.yaml")['port']
@@ -88,20 +92,17 @@ if File.exist? "config/socks.yaml"
   require_relative 'socksMysql'
 end
 puts "Connecting to eschol DB.    "
-DB = ensureConnect(escholDbConfig)
+DB = ensureConnect("ESCHOL_DB")
 #DB.loggers << Logger.new('server.sql_log')  # Enable to debug SQL queries on main db
 puts "Connecting to OJS DB.       "
-OJS_DB = ensureConnect(ojsDbConfig)
+OJS_DB = ensureConnect("OJS_DB")
 #OJS_DB.loggers << Logger.new('ojs.sql_log')  # Enable to debug SQL queries on OJS db
 
 # When fetching ISO pages and PDFs from the local server, we need the host name.
 $host = ENV['HOST'] ? "#{ENV['HOST']}.escholarship.org" : "localhost"
 
-# Need credentials for fetching content files from MrtExpress
-$mrtExpressConfig = YAML.load_file("config/mrtExpress.yaml")
-
 # Need a key for encrypting login credentials and URL keys
-$jscholKey = open("config/jscholKey.dat").read.strip
+$jscholKey = ENV['JSCHOL_KEY'] or raise("missing env JSCHOL_KEY")
 
 # S3 API client
 puts "Connecting to S3.           "
@@ -123,12 +124,9 @@ class S3Logger < Logger
   end
 end
 s3Logger = S3Logger.new(STDOUT)
-$s3Config = OpenStruct.new(YAML.load_file("config/s3.yaml"))
-$s3Client = Aws::S3::Client.new(region: $s3Config.region, :logger => s3Logger, :http_wire_trace => true)
-$s3Bucket = Aws::S3::Bucket.new($s3Config.bucket, client: $s3Client)
-
-# CloudFront info
-$cloudFrontConfig = File.exist?("config/cloudFront.yaml") && YAML.load_file("config/cloudFront.yaml")
+$s3Client = Aws::S3::Client.new(region: ENV['S3_REGION'] || raise("missing env S3_REGION"),
+                                :logger => s3Logger, :http_wire_trace => true)
+$s3Bucket = Aws::S3::Bucket.new(ENV['S3_BUCKET'] || raise("missing env S3_BUCKET"), client: $s3Client)
 
 # Info about isomorphic mode and port
 $serverConfig = YAML.load_file("config/server.yaml")
@@ -399,7 +397,7 @@ end
 
 ###################################################################################################
 get %r{/assets/([0-9a-f]{64})} do |hash|
-  s3Path = "#{$s3Config.prefix}/binaries/#{hash[0,2]}/#{hash[2,2]}/#{hash}"
+  s3Path = "#{ENV['S3_PREFIX'] || raise("missing env S3_PREFIX")}/binaries/#{hash[0,2]}/#{hash[2,2]}/#{hash}"
   obj = $s3Bucket.object(s3Path)
   obj.exists? or halt(404)
   Tempfile.open("s3_", TEMP_DIR) { |s3Tmp|
@@ -468,7 +466,7 @@ get "/content/:fullItemID/*" do |itemID, path|
   content_type MimeMagic.by_path(path)
 
   # Here's the final Merritt URL
-  mrtURL = "https://#{$mrtExpressConfig['host']}/dl/#{mrtID}/#{epath}"
+  mrtURL = "https://#{ENV['MRTEXPRESS_HOST'] || raise("missing env MRTEXPRESS_HOST")}/dl/#{mrtID}/#{epath}"
 
   # Control how long this remains in browser and CloudFront caches
   cache_control :public, :max_age => 3600   # maybe more?
@@ -492,10 +490,10 @@ get "/content/:fullItemID/*" do |itemID, path|
 
   # Decide which display version to send
   if noSplash || displayPDF.splash_size == 0
-    s3Path = "#{$s3Config.prefix}/pdf_patches/linearized/#{itemID}"
+    s3Path = "#{ENV['S3_PREFIX'] || raise("missing env S3_PREFIX")}/pdf_patches/linearized/#{itemID}"
     outLen = displayPDF.linear_size
   else
-    s3Path = "#{$s3Config.prefix}/pdf_patches/splash/#{itemID}"
+    s3Path = "#{ENV['S3_PREFIX'] || raise("missing env S3_PREFIX")}/pdf_patches/splash/#{itemID}"
     outLen = displayPDF.splash_size
   end
 
@@ -934,7 +932,7 @@ get "/api/item/:shortArk" do |shortArk|
   attrs = JSON.parse(Item.filter(:id => id).map(:attrs)[0])
   unitIDs = UnitItem.where(:item_id => id, :is_direct => true).order(:ordering_of_units).select_map(:unit_id)
   unit = unitIDs ? Unit[unitIDs[0]] : nil
-  content_prefix = $cloudFrontConfig ? $cloudFrontConfig['public-url'] : ""
+  content_prefix = ENV['CLOUDFRONT_CLOUDFRONT_PUBLIC_URL'] || ""
   pdf_url = item.content_type == "application/pdf" ? content_prefix+"/content/"+id+"/"+id+".pdf" : nil
 
   if !item.nil?
@@ -1122,7 +1120,7 @@ end
 # Properly target links in HTML blob
 def getItemHtml(content_type, id)
   return false if content_type != "text/html"
-  mrtURL = "https://#{$mrtExpressConfig['host']}/dl/ark:/13030/#{id}/content/#{id}.html"
+  mrtURL = "https://#{ENV['MRTEXPRESS_HOST'] || raise("missing env MRTEXPRESS_HOST")}/dl/ark:/13030/#{id}/content/#{id}.html"
   fetcher = MerrittFetcher.new(mrtURL)
   buf = []
   fetcher.streamTo(buf)

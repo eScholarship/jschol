@@ -15,10 +15,22 @@ require 'time'
 require 'yaml'
 
 # The OJS database, where permissions are stored
-DB = Sequel.connect(YAML.load_file("config/ojsDb.yaml"))
+DB = Sequel.connect({
+  "adapter"  => "mysql2",
+  "host"     => ENV["OJS_DB_HOST"] || raise("missing env OJS_DB_HOST"),
+  "port"     => ENV["OJS_DB_PORT"] || raise("missing env OJS_DB_PORT").to_i,
+  "database" => ENV["OJS_DB_DATABASE"] || raise("missing env OJS_DB_DATABASE"),
+  "username" => ENV["OJS_DB_USERNAME"] || raise("missing env OJS_DB_USERNAME"),
+  "password" => ENV["OJS_DB_PASSWORD"] || raise("missing env OJS_DB_HOST") })
 
 # eschol5 database used for grabbing unit hierarchy info
-ESCHOL_DB = Sequel.connect(YAML.load_file("config/database.yaml"))
+ESCHOL_DB = Sequel.connect({
+  "adapter"  => "mysql2",
+  "host"     => ENV["ESCHOL_DB_HOST"] || raise("missing env ESCHOL_DB_HOST"),
+  "port"     => ENV["ESCHOL_DB_PORT"] || raise("missing env ESCHOL_DB_PORT").to_i,
+  "database" => ENV["ESCHOL_DB_DATABASE"] || raise("missing env ESCHOL_DB_DATABASE"),
+  "username" => ENV["ESCHOL_DB_USERNAME"] || raise("missing env ESCHOL_DB_USERNAME"),
+  "password" => ENV["ESCHOL_DB_PASSWORD"] || raise("missing env ESCHOL_DB_HOST") })
 
 # Mode to print out but don't execute
 $testMode = ARGV.delete('--test')

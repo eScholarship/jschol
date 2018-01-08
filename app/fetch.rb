@@ -150,7 +150,7 @@ class MerrittFetcher < Fetcher
     uri = URI(@url)
     Net::HTTP.start(uri.host, uri.port, :use_ssl => (uri.scheme == 'https')) do |http|
       req = Net::HTTP::Get.new(uri.request_uri)
-      req.basic_auth $mrtExpressConfig['username'], $mrtExpressConfig['password']
+      req.basic_auth ENV['MRTEXPRESS_USERNAME'], ENV['MRTEXPRESS_PASSWORD']
       http.request(req) do |resp|
         resp.code == "200" or raise("Response to #{@url} was HTTP #{resp.code}: #{resp.message}")
         gotLength(resp["Expected-Content-Length"].to_i)
