@@ -96,14 +96,14 @@ def correlate(files, date)
     ark = getFinalItem("qt#{m[:ark]}")
     itemInfo = getItemInfo(ark)
     if !itemInfo
-      puts "Warning: invalid compiled item #{ark.inspect}"
+      #puts "Warning: invalid compiled item #{ark.inspect}"
       next
     end
 
     # To match old stats generator, exclude hits after the *month* an item was withdrawn
     w = itemInfo[:withdrawn_date]
     if w && Date.new(date.year, date.month) > Date.new(w.year, w.month)
-      puts "Skipping post-withdrawal event for item #{ark} withdrawn on #{w}"
+      #puts "Skipping post-withdrawal event for item #{ark} withdrawn on #{w}"
       next
     end
 
@@ -113,7 +113,7 @@ def correlate(files, date)
     # We'll obey that weird policy for old stats, but not carry it over to new stats.
     e = itemInfo[:embargo_date]
     if e && e > Date.new(2017, 12, 5)
-      puts "Skipping pre-embargo event for item #{ark}, embargoed until #{e} (after cutoff for old stats)"
+      #puts "Skipping pre-embargo event for item #{ark}, embargoed until #{e} (after cutoff for old stats)"
       next
     end
 
@@ -132,6 +132,7 @@ def correlate(files, date)
   # Read the extract which has time and location
   extractInfo = Hash.new { |h,k| h[k] = [] }
   if files[date][:extract]
+    puts "  extract: #{files[date][:extract]}"
     open(files[date][:extract]).each_line { |line|
       # eg: "24/Aug/2013:17:27:57 -0700|42.3314|-83.0457|ark:/13030/qt04t8f8bp|view+dnld|ncbi.nlm.nih.gov"
       m = line.match %r{^(?<day>   \d+            ) /
@@ -150,7 +151,7 @@ def correlate(files, date)
       if !m; puts "Unparseable: #{line.inspect}"; next; end
       ark = getFinalItem(m[:ark])
       if !getItemInfo(ark)
-        puts "Warning: invalid extract item #{ark.inspect}"
+        #puts "Warning: invalid extract item #{ark.inspect}"
         next
       end
       ci = compiledInfo[ark]
@@ -161,7 +162,8 @@ def correlate(files, date)
       end
       isDownload = (m[:action] == "view+dnld")
       ref = m[:referrer].empty? ? nil : m[:referrer]
-      date.day == m[:day].to_i && date.year == m[:year].to_i or raise("date mismatch")
+      date.year == m[:year].to_i or puts "Warning: year mismatch: #{date.year} vs #{m[:year]}"
+      date.day == m[:day].to_i or puts "Warning: day mismatch: #{date.day} vs #{m[:day]}"
 
       # Make sure there's a matching hit. Note that this happens quite frequently, because
       # extracts are more extensive than final matched hits.

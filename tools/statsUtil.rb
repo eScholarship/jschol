@@ -59,6 +59,10 @@ def lookupLocation(lat, long, city = nil, country = nil)
   #puts "lookupLocation: lat=#{lat} long=#{long} city=#{city} country=#{country}"
   lat = lat.round(4)
   long = long.round(4)
+  if lat < -90 || lat > 90 || long < -180 || long > 180
+    #puts "Warning: invalid lat/long #{lat}/#{long}"  # certain old extract have this a lot.
+    return nil
+  end
   key = "#{lat}:#{long}"
   if !$locations.key?(key)
     record = Location.where(latitude: lat, longitude: long).first

@@ -206,6 +206,12 @@ class EventAccum
 end
 
 ###################################################################################################
+# Deal with crazy encodings
+def fixUtfEncoding(str)
+  return str.encode('UTF-8', 'binary', invalid: :replace, undef: :replace, replace: '')
+end
+
+###################################################################################################
 def eachLogLine(path)
   if path =~ /\.gz$/
     # WARNING! Ruby's GZipReader silently terminates before reading entire file. Proven with an
@@ -217,7 +223,7 @@ def eachLogLine(path)
     # So instead, we punt to unix's gzip command.
     text = checkOutput("/bin/gunzip -c #{path}", false)
     # Deal with crazy encodings
-    text.encode!('UTF-8', 'binary', invalid: :replace, undef: :replace, replace: '')
+    text = fixUtfEncoding(text)
     # Process line by line
     text.split("\n").each { |line|
       yield line
@@ -225,7 +231,7 @@ def eachLogLine(path)
   else
     File.open(path, "r") { |io|
       io.each_line { |line|
-        yield line
+        yield fixUtfEncoding(line)
       }
     }
   end
@@ -305,8 +311,8 @@ class CloudFrontLogEventSource < LogEventSource
                            values[o_method],
                            values[o_query] == '-' ? values[o_uriStem] : values[o_uriStem]+'?'+values[o_query],
                            values[o_status].to_i,
-                           values[o_referrer] == '-' ? nil : URI.unescape(URI.unescape(values[o_referrer])),
-                           values[o_agent] == '-' ? nil : URI.unescape(URI.unescape(values[o_agent])),
+                           values[o_referrer] == '-' ? nil : fixUtfEncoding(URI.unescape(URI.unescape(values[o_referrer]))),
+                           values[o_agent] == '-' ? nil : fixUtfEncoding(URI.unescape(URI.unescape(values[o_agent]))),
                            nil)  # no trace ID
       end
     }
@@ -536,7 +542,7 @@ def calcUnitDigests(result)
 end
 
 ###################################################################################################
-# Calculate the hash of units for each item
+# Calculate the hash of people for each item
 def calcPeopleDigests(result)
   prevItem, digester = nil, nil
   ItemAuthor.where(Sequel.~(person_id: nil)).select_order_map([:item_id, :person_id]).each { |item, person|
@@ -713,9 +719,11 @@ def propagateItemMonth(itemUnits, itemPeople, itemCategory, monthPosts, month)
   # First handle item postings for this month
   (monthPosts || []).each { |item|
     itemStats[item].incPost
-    itemUnits[item].each { |unit| unitStats[unit].incPost }
+    itemUnits[item].each { |unit|
+      unitStats[unit].incPost
+      categoryStats[[unit, itemCategory[item] || 'unknown']].incPost
+    }
     itemPeople[item] and itemPeople[item].each { |pp| personStats[pp].incPost }
-    categoryStats[itemCategory[item] || 'unknown'].incPost
   }
 
   # Next accumulate events for each items accessed this month
@@ -725,10 +733,9 @@ def propagateItemMonth(itemUnits, itemPeople, itemCategory, monthPosts, month)
     accum = EventAccum.new(JSON.parse(event.attrs))
     item = event.item_id
     itemStats[item].add(accum)
-    cat = itemCategory[item] || 'unknown'
     itemUnits[item].each { |unit|
       unitStats[unit].add(accum)
-      categoryStats[[unit, cat]].add(accum)
+      categoryStats[[unit, itemCategory[item] || 'unknown']].add(accum)
     }
     itemPeople[item] and itemPeople[item].each { |pp| personStats[pp].add(accum) }
   }
@@ -762,9 +769,8 @@ def propagateItemMonth(itemUnits, itemPeople, itemCategory, monthPosts, month)
   }
 end
 
+###################################################################################################
 def calcStats
-  calcStatsMonths
-
   puts "Gathering item categories."
   itemCategory = gatherItemCategories
 
@@ -849,9 +855,7 @@ def isRobot(agent)
 
   # First check counter's list
   found = ROBOT_PATTERNS.find { |pat| pat =~ agent }
-  if found
-    return $robotChecked[agent] = found
-  end
+  found and return $robotChecked[agent] = found
 
   # Real user-agents have lots of spaces in them
   if agent.split(" ").length < 6
@@ -1175,7 +1179,8 @@ end
 # The main routine
 
 #grabLogs
-loadItemInfoCache
-parseLogs
-#calcStats
+#loadItemInfoCache
+#parseLogs
+#calcStatsMonths
+calcStats
 puts "Done."
