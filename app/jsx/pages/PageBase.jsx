@@ -257,6 +257,15 @@ class PageBase extends React.Component
         </DrawerComp>)
     }
 
+    // Stats case - no header or footer
+    if (this.props.params && this.props.params.pageName == "stats") {
+      return (
+        <div className="body">
+          {this.state.pageData ? this.renderData(this.state.pageData) : this.renderLoading()}
+        </div>
+      )
+    }
+
     // Normal case
     return (
       <div className="body">

@@ -888,6 +888,9 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
       pageData[:content] = getUnitSidebarWidget(unit, params[:subPage])
     elsif pageName == "redirects"
       pageData[:content] = getRedirectData(params[:subPage])
+    elsif pageName == "stats"
+      pageData[:content] = { todo: true }
+      return pageData.to_json
     elsif isJournalIssue?(unit.id, params[:pageName], params[:subPage])
       pageData[:content] = getJournalIssueData(unit, attrs, params[:pageName], params[:subPage])
       # A specific issue, otherwise you get journal landing (through getUnitPageContent method above)
@@ -932,8 +935,15 @@ get "/api/item/:shortArk" do |shortArk|
   attrs = JSON.parse(Item.filter(:id => id).map(:attrs)[0])
   unitIDs = UnitItem.where(:item_id => id, :is_direct => true).order(:ordering_of_units).select_map(:unit_id)
   unit = unitIDs ? Unit[unitIDs[0]] : nil
-  content_prefix = ENV['CLOUDFRONT_CLOUDFRONT_PUBLIC_URL'] || ""
-  pdf_url = item.content_type == "application/pdf" ? content_prefix+"/content/"+id+"/"+id+".pdf" : nil
+  content_prefix = ENV['CLOUDFRONT_PUBLIC_URL'] || ""
+  pdf_url = nil
+  if item.content_type == "application/pdf" && item.status == "published"
+    pdf_url = content_prefix+"/content/"+id+"/"+id+".pdf"
+    displayPDF = DisplayPDF[id]
+    if displayPDF && displayPDF.orig_timestamp
+      pdf_url += "?t=#{displayPDF.orig_timestamp.to_i.to_s(36)}"
+    end
+  end
 
   if !item.nil?
     authors = ItemAuthors.filter(:item_id => id).order(:ordering).

@@ -33,8 +33,3 @@ target: $SOCKS_TARGET
 bastion: $SOCKS_BASTION
 bastionPort: $SOCKS_BASTION_PORT
 EOF
-
-[[ -n "$CLOUDFRONT_PUBLIC_URL" ]] && cat > cloudFront.yaml <<EOF
-public-url: $CLOUDFRONT_PUBLIC_URL
-private-key: $CLOUDFRONT_PRIVATE_KEY
-EOF

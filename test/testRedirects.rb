@@ -8,8 +8,7 @@ $hostIP = $hostname =~ /^pub-jschol/ ? `/bin/hostname --ip-address`.strip : "127
 $serverConfig = YAML.load_file("config/server.yaml")
 $mainPort = $serverConfig["mainPort"]
 
-$cfPrefix = File.exist?("config/cloudFront.yaml") ?
-            YAML.load_file("config/cloudFront.yaml")["public-url"] : "http://escholarship.org"
+$cfPrefix = ENV['CLOUDFRONT_PUBLIC_URL'] || "http://escholarship.org"
 
 def error(msg)
   puts "Error: #{msg}"
