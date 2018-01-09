@@ -20,12 +20,6 @@ on_worker_boot do |num|
 end
 EOF
 
-cat > server.yaml <<EOF
-mainPort: $PUMA_PORT
-isoPort: $ISO_PORT
-isoWorkers: $ISO_WORKERS
-EOF
-
 [[ -n "$SOCKS_PORT" ]] && cat > socks.yaml <<EOF
 port: $SOCKS_PORT
 user: $SOCKS_USER

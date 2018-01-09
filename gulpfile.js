@@ -20,8 +20,6 @@ const readYaml = require('read-yaml');
 var sinatraProc // Main app in Sinatra (Ruby)
 var expressProc // Sub-app for isomophic javascript in Express (Node/Javascript)
 
-var serverConfig = readYaml.sync('config/server.yaml');
-
 var productionMode = !!gutil.env.production
 
 // Build javscript bundles with Webpack
@@ -120,7 +118,7 @@ gulp.task('start-sinatra', restartSinatra)
 // Support functions for starting and restarting Express, which runs the isomorphic-js sub-app.
 function startExpress()
 {
-  if (serverConfig.isoPort) {
+  if (process.env.ISO_PORT) {
     exec('pkill -9 -f ^node.*iso', (err, stdout, stderr) => { })
     setTimeout(()=>{
       expressProc = spawn('node', ['app/isomorphic.js'], { stdio: 'inherit' })

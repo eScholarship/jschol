@@ -5,8 +5,7 @@ require 'yaml'
 
 $hostname = `/bin/hostname`.strip
 $hostIP = $hostname =~ /^pub-jschol/ ? `/bin/hostname --ip-address`.strip : "127.0.0.1"
-$serverConfig = YAML.load_file("config/server.yaml")
-$mainPort = $serverConfig["mainPort"]
+$mainPort = ENV['PUMA_PORT'] or raise("missing env PUMA_PORT")
 
 $cfPrefix = ENV['CLOUDFRONT_PUBLIC_URL'] || "http://escholarship.org"
 

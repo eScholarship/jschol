@@ -128,9 +128,6 @@ $s3Client = Aws::S3::Client.new(region: ENV['S3_REGION'] || raise("missing env S
                                 :logger => s3Logger, :http_wire_trace => true)
 $s3Bucket = Aws::S3::Bucket.new(ENV['S3_BUCKET'] || raise("missing env S3_BUCKET"), client: $s3Client)
 
-# Info about isomorphic mode and port
-$serverConfig = YAML.load_file("config/server.yaml")
-
 # Internal modules to implement specific pages and functionality
 require_relative '../util/sanitize.rb'
 require_relative '../util/xmlutil.rb'
@@ -576,7 +573,7 @@ def generalResponse(iso_ok = true)
   template.sub!("/css/main.css", "/css/main-#{Digest::MD5.file("app/css/main.css").hexdigest[0,16]}.css")
 
   # Isomorphic javascript rendering on the server
-  if $serverConfig['isoPort']
+  if ENV['ISO_PORT']
     # Parse out payload of the URL (i.e. not including the host name)
     request.url =~ %r{^https?://([^/:]+)(:\d+)?(.*)$} or fail
     remainder = $3
@@ -584,7 +581,7 @@ def generalResponse(iso_ok = true)
     # Pass the full path and query string to our little Node Express app, which will run it through
     # ReactRouter and React.
     begin
-      outerHttp = Net::HTTP.new($host, $serverConfig['isoPort'])
+      outerHttp = Net::HTTP.new($host, ENV['ISO_PORT'])
       outerHttp.read_timeout = ($host == "localhost") ? 20 : 5  # need extra time on local dev machines
       response = outerHttp.start {|http| http.request(Net::HTTP::Get.new(remainder)) }
     rescue Exception => e
