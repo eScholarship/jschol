@@ -107,7 +107,7 @@ end
 
 # CloudSearch API client
 $csClient = Aws::CloudSearchDomain::Client.new(credentials: Aws::InstanceProfileCredentials.new,
-  endpoint: YAML.load_file("config/cloudSearch.yaml")["docEndpoint"])
+  endpoint: ENV['CLOUDSEARCH_DOC_ENDPOINT'])
 
 # S3 API client
 # Note: we use InstanceProfileCredentials here to avoid picking up ancient

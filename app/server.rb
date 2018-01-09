@@ -83,9 +83,9 @@ end
 
 # Use the Sequel gem to get object-relational mapping, connection pooling, thread safety, etc.
 # If specified, use SOCKS proxy for all connections (including database).
-if File.exist? "config/socks.yaml"
+if ENV['SOCKS_PORT']
   # Configure socksify for all TCP connections. Jump through hoops for MySQL to use it too.
-  socksPort = YAML.load_file("config/socks.yaml")['port']
+  socksPort = ENV['SOCKS_PORT']
   waitForSocks("127.0.0.1", socksPort)
   TCPSocket::socks_server = "127.0.0.1"
   TCPSocket::socks_port = socksPort
@@ -127,9 +127,6 @@ s3Logger = S3Logger.new(STDOUT)
 $s3Client = Aws::S3::Client.new(region: ENV['S3_REGION'] || raise("missing env S3_REGION"),
                                 :logger => s3Logger, :http_wire_trace => true)
 $s3Bucket = Aws::S3::Bucket.new(ENV['S3_BUCKET'] || raise("missing env S3_BUCKET"), client: $s3Client)
-
-# Info about isomorphic mode and port
-$serverConfig = YAML.load_file("config/server.yaml")
 
 # Internal modules to implement specific pages and functionality
 require_relative '../util/sanitize.rb'
@@ -576,7 +573,7 @@ def generalResponse(iso_ok = true)
   template.sub!("/css/main.css", "/css/main-#{Digest::MD5.file("app/css/main.css").hexdigest[0,16]}.css")
 
   # Isomorphic javascript rendering on the server
-  if $serverConfig['isoPort']
+  if ENV['ISO_PORT']
     # Parse out payload of the URL (i.e. not including the host name)
     request.url =~ %r{^https?://([^/:]+)(:\d+)?(.*)$} or fail
     remainder = $3
@@ -584,7 +581,7 @@ def generalResponse(iso_ok = true)
     # Pass the full path and query string to our little Node Express app, which will run it through
     # ReactRouter and React.
     begin
-      outerHttp = Net::HTTP.new($host, $serverConfig['isoPort'])
+      outerHttp = Net::HTTP.new($host, ENV['ISO_PORT'])
       outerHttp.read_timeout = ($host == "localhost") ? 20 : 5  # need extra time on local dev machines
       response = outerHttp.start {|http| http.request(Net::HTTP::Get.new(remainder)) }
     rescue Exception => e
@@ -888,6 +885,9 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
       pageData[:content] = getUnitSidebarWidget(unit, params[:subPage])
     elsif pageName == "redirects"
       pageData[:content] = getRedirectData(params[:subPage])
+    elsif pageName == "stats"
+      pageData[:content] = { todo: true }
+      return pageData.to_json
     elsif isJournalIssue?(unit.id, params[:pageName], params[:subPage])
       pageData[:content] = getJournalIssueData(unit, attrs, params[:pageName], params[:subPage])
       # A specific issue, otherwise you get journal landing (through getUnitPageContent method above)
@@ -932,8 +932,15 @@ get "/api/item/:shortArk" do |shortArk|
   attrs = JSON.parse(Item.filter(:id => id).map(:attrs)[0])
   unitIDs = UnitItem.where(:item_id => id, :is_direct => true).order(:ordering_of_units).select_map(:unit_id)
   unit = unitIDs ? Unit[unitIDs[0]] : nil
-  content_prefix = ENV['CLOUDFRONT_CLOUDFRONT_PUBLIC_URL'] || ""
-  pdf_url = item.content_type == "application/pdf" ? content_prefix+"/content/"+id+"/"+id+".pdf" : nil
+  content_prefix = ENV['CLOUDFRONT_PUBLIC_URL'] || ""
+  pdf_url = nil
+  if item.content_type == "application/pdf" && item.status == "published"
+    pdf_url = content_prefix+"/content/"+id+"/"+id+".pdf"
+    displayPDF = DisplayPDF[id]
+    if displayPDF && displayPDF.orig_timestamp
+      pdf_url += "?t=#{displayPDF.orig_timestamp.to_i.to_s(36)}"
+    end
+  end
 
   if !item.nil?
     authors = ItemAuthors.filter(:item_id => id).order(:ordering).

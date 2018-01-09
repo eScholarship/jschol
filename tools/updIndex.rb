@@ -9,7 +9,6 @@ require 'bundler/setup'
 # Remainder are the requirements for this program
 require 'aws-sdk'
 require 'pp'
-require 'yaml'
 
 # Run from the right directory (the parent of the tools dir)
 Dir.chdir(File.dirname(File.expand_path(File.dirname(__FILE__))))
@@ -130,7 +129,7 @@ end
 # The main action begins here
 
 # Connect to CloudSearch
-csDomain = YAML.load_file("config/cloudSearch.yaml")["domain"]
+csDomain = ENV['CLOUDSEARCH_DOMAIN'] || raise("missing env CLOUDSEARCH_DOMAIN")
 cloudSearch = Aws::CloudSearch::Client.new(credentials: Aws::InstanceProfileCredentials.new,
   #http_wire_trace: true,
   region: "us-west-2")

@@ -8,11 +8,14 @@ class PdfViewComp extends React.Component {
   view = () => {
     if (this.props.download_restricted)
       alert("Download restricted until " + this.props.download_restricted)
-    else
-      window.location = this.props.url + ";v=lg"
+    else {
+      let separator = this.props.url.indexOf("?") >= 0 ? "&" : "?"
+      window.location = this.props.url + separator + "v=lg"
+    }
   }
 
   render() {
+    let separator = this.props.url.indexOf("?") >= 0 ? "&" : "?"
     return (
       <details className="c-togglecontent" open>
         {/* ScrollingAnchor sits here and not above because c-togglecontent styling relies on
@@ -24,7 +27,7 @@ class PdfViewComp extends React.Component {
           <button onClick={() => {this.view()}} className="c-pdfview__button-view">View Larger</button>
         </div>
         <div className="c-pdfview__viewer">
-          <PdfViewerComp url={this.props.url + "?nosplash=" + this.props.content_key}/>
+          <PdfViewerComp url={this.props.url + separator + "nosplash=" + this.props.content_key}/>
         </div>
       </details>
     )

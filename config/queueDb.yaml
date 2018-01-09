@@ -1,4 +1,0 @@
-adapter: sqlite
-database: /apps/eschol/erep/xtf/control/db/queues.db
-readonly: true
-timeout: 30000
