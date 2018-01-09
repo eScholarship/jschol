@@ -5,7 +5,7 @@ require 'pp'
 
 # API to connect to AWS CloudSearch
 $csClient = Aws::CloudSearchDomain::Client.new(
-  endpoint: YAML.load_file("config/cloudSearch.yaml")["searchEndpoint"])
+  endpoint: ENV['CLOUDSEARCH_SEARCH_ENDPOINT'] || raise("missing env CLOUDSEARCH_SEARCH_ENDPOINT"))
 
 # key is escholarship UI/aws field value in all instances except pub_year (aws field value)
 # value is a hash {displayName, awsFacetParam, filterTransform, facetTransform}

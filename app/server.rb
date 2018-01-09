@@ -83,9 +83,9 @@ end
 
 # Use the Sequel gem to get object-relational mapping, connection pooling, thread safety, etc.
 # If specified, use SOCKS proxy for all connections (including database).
-if File.exist? "config/socks.yaml"
+if ENV['SOCKS_PORT']
   # Configure socksify for all TCP connections. Jump through hoops for MySQL to use it too.
-  socksPort = YAML.load_file("config/socks.yaml")['port']
+  socksPort = ENV['SOCKS_PORT']
   waitForSocks("127.0.0.1", socksPort)
   TCPSocket::socks_server = "127.0.0.1"
   TCPSocket::socks_port = socksPort
