@@ -70,8 +70,8 @@ DB = Sequel.connect({
 $dbMutex = Mutex.new
 
 # Log SQL statements, to aid debugging
-#File.exists?('convert.sql_log') and File.delete('convert.sql_log')
-#DB.loggers << Logger.new('convert.sql_log')
+File.exists?('convert.sql_log') and File.delete('convert.sql_log')
+DB.loggers << Logger.new('convert.sql_log')
 
 # The old eschol queue database, from which we can get a list of indexable ARKs
 QUEUE_DB = Sequel.connect(YAML.load_file("config/queueDb.yaml"))
@@ -1617,13 +1617,6 @@ def indexItem(itemID, timestamp, batch, nailgun)
   end
 
   # If nothing has changed, skip the work of updating this record.
-
-  # Bootstrapping the addition of data digest (temporary)
-  # FIXME: Remove this soon
-  if existingItem && existingItem[:data_digest].nil?
-    existingItem[:index_digest] = idxDigest
-  end
-
   if existingItem && !$forceMode && existingItem[:index_digest] == idxDigest
 
     # If only the database portion changed, we can safely skip the CloudSearch re-indxing
@@ -1634,6 +1627,8 @@ def indexItem(itemID, timestamp, batch, nailgun)
           updateDbItem(dbDataBlock)
         end
       }
+      # Check/update the splash page now that this item has a real record
+      $splashQueue << itemID
       $nProcessed += 1
       return
     end
@@ -1780,22 +1775,23 @@ end
 def updateDbItem(data)
   itemID = data[:dbItem][:id]
 
-  # Delete any existing data related to this item
+  # Delete any existing data related to this item, except the item record itself (which is used
+  # as a foreign key in stats tables).
   ItemAuthor.where(item_id: itemID).delete
   UnitItem.where(item_id: itemID).delete
-  ItemCount.where(item_id: itemID).delete
+  ItemCount.where(item_id: itemID).delete  # soon to be obsolete
 
   # Insert (or update) the issue and section
   updateIssueAndSection(data)
 
-  # Now insert the item and its authors
-  Item.where(id: itemID).delete
-  data[:dbItem].save()
+  # Now create/insert the item, and insert its authors
+  data[:dbItem].create_or_update()
   data[:dbAuthors].each { |dbAuth|
     dbAuth.save()
   }
 
   # Copy item counts from the old stats database
+  # Note: soon to be obsolete
   STATS_DB.fetch("SELECT * FROM itemCounts WHERE itemId = ?", itemID.sub(/^qt/, "")) { |row|
     ItemCount.insert(item_id: itemID, month: row[:month], hits: row[:hits], downloads: row[:downloads])
   }
@@ -1861,6 +1857,9 @@ def processBatch(batch)
     DB.transaction do
       batch[:items].each { |data| updateDbItem(data) }
     end
+
+    # Process splash pages now that all the DB records exist
+    batch[:items].each { |data| $splashQueue << data[:dbItem][:id] }
   }
 
   # Periodically scrub out orphaned sections and issues
@@ -1888,6 +1887,7 @@ def processAllBatches
     # And process it
     processBatch(batch)
   end
+  $splashQueue << nil # mark no more coming
 end
 
 ###################################################################################################
@@ -1966,6 +1966,7 @@ def convertAllItems(arks)
   Thread.abort_on_exception = true
   indexThread = Thread.new { indexAllItems }
   batchThread = Thread.new { processAllBatches }
+  splashThread = Thread.new { splashFromQueue }
 
   # Count how many total there are, for status updates
   $nTotal = QUEUE_DB.fetch("SELECT count(*) as total FROM indexStates WHERE indexName='erep'").first[:total]
@@ -1997,6 +1998,7 @@ def convertAllItems(arks)
   $indexQueue << nil  # end-of-queue
   indexThread.join
   batchThread.join
+  splashThread.join
 
   scrubSectionsAndIssues() # one final scrub
 end
@@ -2191,26 +2193,35 @@ end
 # Main driver for PDF display version generation
 def convertPDF(itemID)
   item = Item[itemID]
-  attrs = JSON.parse(item.attrs)
+
+  # Skip non-published items (e.g. embargoed, withdrawn)
+  if item.status != "published"
+    puts "Not generating splash for #{item.status} item."
+    return
+  end
 
   # Generate the splash instructions, for cache checking
+  attrs = JSON.parse(item.attrs)
   instrucs = splashInstrucs(itemID, item, attrs)
   instrucDigest = Digest::MD5.base64digest(instrucs.to_json)
 
   # See if current splash page is adequate
   origFile = arkToFile(itemID, "content/base.pdf")
   if !File.exist?(origFile)
-    puts "Missing content file; skipping."
+    puts "Missing content file; skipping splash."
     return
   end
   origSize = File.size(origFile)
+  origTimestamp = File.mtime(origFile)
 
   dbPdf = DisplayPDF[itemID]
-  if !$forceMode && dbPdf && dbPdf.orig_size == origSize
-    #puts "Unchanged."
+  if !$forceMode && dbPdf && dbPdf.orig_size == origSize && dbPdf.orig_timestamp == origTimestamp
+    if !ARGV.include?("--splash")  # only print unchanged in indexing mode, not splash-only mode
+      puts "Splash unchanged."
+    end
     return
   end
-  puts "Updating."
+  puts "Updating splash."
 
   # Linearize the original PDF
   linFile, linDiff, splashLinFile, splashLinDiff = nil, nil, nil, nil
@@ -2250,7 +2261,7 @@ def convertPDF(itemID)
       splash_size:        splashLinSize
     )
 
-    puts sprintf("Updated: lin=%d/%d = %.1f%%; splashLin=%d/%d = %.1f%%",
+    puts sprintf("Splash updated: lin=%d/%d = %.1f%%; splashLin=%d/%d = %.1f%%",
                  linSize, origSize, linSize*100.0/origSize,
                  splashLinSize, origSize, splashLinSize*100.0/origSize)
   ensure
@@ -2263,18 +2274,19 @@ end
 
 ###################################################################################################
 def splashFromQueue
+  Thread.current[:name] = "splash thread"
   loop do
     # Grab an item from the input queue
     itemID = $splashQueue.pop
     itemID or break
-    Thread.current[:name] = itemID  # label all stdout from this thread
+    Thread.current[:name] = "splash thread: #{itemID}"  # label all stdout from this thread
     begin
       convertPDF(itemID)
     rescue Exception => e
       e.is_a?(Interrupt) || e.is_a?(SignalException) and raise
       puts "Exception: #{e} #{e.backtrace}"
     end
-    Thread.current[:name] = nil
+    Thread.current[:name] = "splash thread"
   end
 end
 
@@ -2285,8 +2297,7 @@ def splashAllPDFs(arks)
   puts "Splashing #{arks=="ALL" ? "all" : "selected"} PDFs."
 
   # Start a couple worker threads to do the splash conversions.
-  nThreads = 2
-  splashThreads = nThreads.times.map { Thread.new { splashFromQueue } }
+  splashThread = Thread.new { splashFromQueue }
 
   # Grab all the arks
   if arks == "ALL"
@@ -2297,8 +2308,8 @@ def splashAllPDFs(arks)
     arks.each { |item| $splashQueue << item }
   end
 
-  nThreads.times { $splashQueue << nil } # mark end-of-queue
-  splashThreads.each { |t| t.join }
+  $splashQueue << nil # mark end-of-queue
+  splashThread.join
 end
 
 ###################################################################################################

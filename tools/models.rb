@@ -1,5 +1,5 @@
 ###################################################################################################
-# Monkey-patch to add update_or_replace functionality, which is strangely absent in the Sequel gem.
+# Monkey-patch to add create_or_update functionality, which is strangely absent in the Sequel gem.
 class Sequel::Model
   def self.create_or_update(id, **data)
     record = self[id]
@@ -8,6 +8,17 @@ class Sequel::Model
     else
       data[@primary_key] = id
       self.create(**data)
+    end
+  end
+
+  def create_or_update
+    record = self.class[pk]
+    if record
+      data = {}
+      keys.each { |k| k == self.class.primary_key or data[k] = self[k] }
+      record.update(**data)
+    else
+      save
     end
   end
 end
