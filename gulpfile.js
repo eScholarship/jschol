@@ -14,7 +14,6 @@ const livereload = require('gulp-livereload')
 const exec = require('child_process').exec
 const spawn = require('child_process').spawn
 const webpack = require('webpack');
-const readYaml = require('read-yaml');
 
 // Process control for Sinatra and Express
 var sinatraProc // Main app in Sinatra (Ruby)

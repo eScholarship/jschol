@@ -1,7 +1,6 @@
 #!/usr/bin/env ruby
 
 require 'socket'
-require 'yaml'
 
 verbose = ARGV.delete('-v') || ARGV.delete('--verbose')
 

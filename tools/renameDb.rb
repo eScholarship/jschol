@@ -9,7 +9,6 @@ require 'bundler/setup'
 
 # Remainder are the requirements for this program
 require 'sequel'
-require 'yaml'
 
 # Parse command line
 if ARGV.length != 2

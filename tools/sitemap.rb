@@ -8,7 +8,6 @@ require 'rubygems'
 require 'bundler/setup'
 
 require 'sequel'
-require 'yaml'
 require 'xml-sitemap'
 
 DEST_DIR = "app"

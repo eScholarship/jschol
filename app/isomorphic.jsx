@@ -7,7 +7,6 @@ import { renderToString }        from 'react-dom/server'
 import { Router, RouterContext, match }  from 'react-router'
 import decache                   from 'decache'
 import fs                        from 'fs'
-import readYaml                  from 'read-yaml'
 import MetaTagsServer            from 'react-meta-tags/server';
 import {MetaTagsContext}         from 'react-meta-tags';
 
