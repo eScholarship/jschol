@@ -19,7 +19,6 @@ require 'pp'
 require 'sequel'
 require 'sinatra'
 require 'tempfile'
-require 'yaml'
 require 'socksify'
 require 'socket'
 

@@ -12,7 +12,6 @@ require 'bundler/setup'
 require 'pp'
 require 'sequel'
 require 'time'
-require 'yaml'
 
 # The OJS database, where permissions are stored
 DB = Sequel.connect({

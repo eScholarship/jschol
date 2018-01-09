@@ -1,7 +1,6 @@
 #!/usr/bin/env ruby
 
 require 'uri'
-require 'yaml'
 
 $hostname = `/bin/hostname`.strip
 $hostIP = $hostname =~ /^pub-jschol/ ? `/bin/hostname --ip-address`.strip : "127.0.0.1"

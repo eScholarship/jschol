@@ -19,7 +19,6 @@ require 'pp'
 require 'sequel'
 require 'set'
 require 'time'
-require 'yaml'
 
 # Make puts synchronous (e.g. auto-flush)
 STDOUT.sync = true

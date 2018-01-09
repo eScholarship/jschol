@@ -22,7 +22,6 @@ require 'pp'
 require 'sequel'
 require 'set'
 require 'time'
-require 'yaml'
 require 'zlib'
 
 require_relative './subprocess.rb'

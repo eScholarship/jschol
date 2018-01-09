@@ -10,7 +10,6 @@ require 'bundler/setup'
 
 # Remainder are the requirements for this program
 require 'sequel'
-require 'yaml'
 require 'pp'
 
 # Parse command line
