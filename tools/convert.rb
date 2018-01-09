@@ -36,7 +36,6 @@ require 'rack'
 require 'sequel'
 require 'ostruct'
 require 'time'
-require 'yaml'
 require_relative '../util/nailgun.rb'
 require_relative '../util/sanitize.rb'
 require_relative '../util/xmlutil.rb'
@@ -74,10 +73,16 @@ File.exists?('convert.sql_log') and File.delete('convert.sql_log')
 DB.loggers << Logger.new('convert.sql_log')
 
 # The old eschol queue database, from which we can get a list of indexable ARKs
-QUEUE_DB = Sequel.connect(YAML.load_file("config/queueDb.yaml"))
+QUEUE_DB = Sequel.connect({ adapter: "sqlite",
+                            database: "/apps/eschol/erep/xtf/control/db/queues.db",
+                            readonly: true,
+                            timeout: 30000 })
 
 # The old stats database, from which we can copy item counts
-STATS_DB = Sequel.connect(YAML.load_file("config/statsDb.yaml"))
+STATS_DB = Sequel.connect({ adapter: "sqlite",
+                            database: "/apps/eschol/erep/xtf/stats/stats.db",
+                            readonly: true,
+                            timeout: 600000 })
 
 # Queues for thread coordination
 $indexQueue = SizedQueue.new(100)

@@ -18,7 +18,7 @@ if ARGV.length > 1
   STDERR.puts "Usage: #{__FILE__} [migrationVersion]"
   exit 1
 end
-migrate_ver = ARGV[0].to_i
+migrate_ver = ARGV[0] ? ARGV[0].to_i : nil
 
 # Connect to the database server
 DB = Sequel.connect({
