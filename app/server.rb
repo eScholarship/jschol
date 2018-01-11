@@ -331,9 +331,11 @@ require_relative 'dbCache'
 
 ###################################################################################################
 # IP address filtering, redirect processing, etc.
-$ipFilter = File.exist?("config/allowed_ips") && Regexp.new(File.read("config/allowed_ips").strip)
+$ipInclude = File.exist?("config/allowed_ips") && Regexp.new(File.read("config/allowed_ips").strip)
+$ipExclude = File.exist?("config/blocked_ips") && Regexp.new(File.read("config/blocked_ips").strip)
 before do
-  $ipFilter && !$ipFilter.match(request.ip) and halt 403
+  $ipInclude && !$ipInclude.match(request.ip) and halt 403
+  $ipExclude && $ipExclude.match(request.ip) and halt 403
   redirURI, code = checkRedirect(URI.parse(request.url))
   if code
     if code >= 300 && code <= 399
