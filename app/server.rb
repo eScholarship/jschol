@@ -851,7 +851,7 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
 
   attrs = JSON.parse(unit[:attrs])
   pageName = params[:pageName]
-  pageName == "stats" and return statsData(:subPage)
+  pageName == "stats" and return statsData(params[:subPage])
   issueHeaderData = nil
   if pageName
     ext = nil
