@@ -9,6 +9,7 @@ import ReactGA from 'react-ga'
 import HomePage from './pages/HomePage.jsx'
 import BrowsePage from './pages/BrowsePage.jsx'
 import ItemPage from './pages/ItemPage.jsx'
+import StatsPage from './pages/StatsPage.jsx'
 import UnitPage from './pages/UnitPage.jsx'
 import { SearchPage } from './pages/SearchPage.jsx';
 import GlobalStaticPage from './pages/GlobalStaticPage.jsx'
@@ -39,6 +40,8 @@ const routes = (
     <Route path="/:campusID/units" component={BrowsePage} />
     <Route path="/:campusID/journals" component={BrowsePage} />
     <Route path="/uc/item/:itemID" component={ItemPage} />
+    <Route path="/uc/:unitID/stats" component={StatsPage} />
+    <Route path="/uc/:unitID/stats/:pageName" component={StatsPage} />
     <Route path="/uc/:unitID" component={UnitPage} />
     <Route path="/uc/:unitID/:pageName" component={UnitPage} />
     <Route path="/uc/:unitID/:pageName/**" component={UnitPage} />

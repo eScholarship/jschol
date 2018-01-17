@@ -135,6 +135,7 @@ require_relative 'hierarchy'
 require_relative 'listViews'
 require_relative 'searchApi'
 require_relative 'queueWithTimeout'
+require_relative 'statsPages'
 require_relative 'unitPages'
 require_relative 'citation'
 require_relative 'loginApi'
@@ -850,6 +851,7 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
 
   attrs = JSON.parse(unit[:attrs])
   pageName = params[:pageName]
+  pageName == "stats" and return statsData(:subPage)
   issueHeaderData = nil
   if pageName
     ext = nil
@@ -886,9 +888,6 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
       pageData[:content] = getUnitSidebarWidget(unit, params[:subPage])
     elsif pageName == "redirects"
       pageData[:content] = getRedirectData(params[:subPage])
-    elsif pageName == "stats"
-      pageData[:content] = { todo: true }
-      return pageData.to_json
     elsif isJournalIssue?(unit.id, params[:pageName], params[:subPage])
       pageData[:content] = getJournalIssueData(unit, attrs, params[:pageName], params[:subPage])
       # A specific issue, otherwise you get journal landing (through getUnitPageContent method above)
