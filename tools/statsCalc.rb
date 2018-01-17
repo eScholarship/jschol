@@ -26,6 +26,12 @@ require 'zlib'
 
 require_relative './subprocess.rb'
 
+# Use "--test YYYY-MM-DD" to test log parsing for a certain date
+if (pos = ARGV.index("--test"))
+  ARGV.delete_at(pos)
+  $testDate = Date.parse(ARGV.delete_at(pos))
+end
+
 # Make puts synchronous (e.g. auto-flush)
 STDOUT.sync = true
 
@@ -830,6 +836,14 @@ end
 ###################################################################################################
 # Grab logs from their various places and put them into our 'awsLogs' directory
 def grabLogs
+  # If logs are fresh as of 8 hours ago, skip.
+  latest = Dir.glob("./awsLogs/alb-logs/**/*").inject(0) { |memo, path| [memo, File.mtime(path).to_i].max }
+  age = ((Time.now.to_i - latest) / 60 / 60.0).round(1)
+  if age <= 8
+    puts "Logs grabbed #{age} hours ago; skipping grab."
+    return
+  end
+
   puts "Grabbing AppLoadBalancer logs."
   FileUtils.mkdir_p("./awsLogs/alb-logs")
   # Note: on production there's an old ~/.aws/config file that points to different AWS credentials.
@@ -892,18 +906,18 @@ def identifyEvent(srcName, event)
     cf, ark, ark2, after = $1, $2, $3, $4
     if ark == ark2
       attrs = after.include?("v=lg")     ? { hit: 1, dl: 1, vlg: 1 } :
-              after.include?("nosplash") ? { hit: 1 } :  # this is the pdf.js viewer
+              after.include?("nosplash") ? { hit: 1, vpdf: 1 } :  # this is the pdf.js viewer
                                            { hit: 1, dl: 1 }
     end
   elsif event.path =~ %r{(/dist/prd)?/content/(qt\w{8})/supp/(.+)}
     # Supp file downloads
     cf, ark, after = $1, $2, $3
     attrs = { hit: 1, supp: 1 }
-  elsif event.path =~ %r{/uc/item/(\w{8})(.*)}
+  elsif event.path =~ %r{/(uc|api)/item/(\w{8})(.*)}
     # Normal item views
-    miniArk, after = $1, $2
+    pageOrApi, miniArk, after = $1, $2, $3
     ark = "qt#{miniArk}"
-    attrs = { hit: 1 }
+    attrs = { hit: 1, vpg: 1 }
   end
 
   if ark
@@ -922,9 +936,12 @@ def extractReferrer(item, event)
   # Skip self-refs from an eschol item to itself
   if ref =~ /escholarship\.org|repositories\.cdlib\.org/
     ref.include?(item.sub(/^qt/,'')) || ref.include?("pdfjs") and return nil
+    (item.include?("0023k3x0") && ref.include?("uc/item/0023k3x0")) and raise("huh: ref=#{ref.inspect} item=#{item.inspect}")
     #puts "#{item}|#{ref} -> eschol"
     return "escholarship.org"
   end
+
+  ref.include?("escholarship.org") and raise("what: #{ref.inspect}")
 
   return case ref
   when /google\./;             "google.com"
@@ -940,6 +957,70 @@ def extractReferrer(item, event)
 end
 
 ###################################################################################################
+def quoteStr(str)
+  str.nil? and return %{""}
+  return %{"#{str.sub('"', '&quot;')}"}
+end
+
+###################################################################################################
+def describeAttrs(attrs)
+  attrs.nil? and return ""
+  desc = []
+  attrs[:vpg] and desc << "loaded item"
+  attrs[:vpdf] and desc << "saw inline pdf"
+  if attrs[:dl]
+    if attrs[:vlg]
+      desc << "viewed larger"
+    else
+      desc << "downloaded PDF"
+    end
+  end
+  attrs[:supp] and desc << "downloaded supp"
+  desc.empty? and raise("can't describe #{attrs}")
+  return desc.join(", ")
+end
+
+###################################################################################################
+def decodeMinutes(codedTime)
+  # We encode times for ease of human reading, i.e. 1230 is 12:30
+  return ((codedTime / 100) * 60) + (codedTime % 100)
+end
+
+###################################################################################################
+# We fairly often get a view-page from one IP, then a PDF download from another IP, but
+# they're linked in time and user agent or IP.
+#
+# Sometimes this happens because ALB is IPv4 whereas CloudFront supports IPv6.
+# Other times it's due to a mobile device switching from one app to another.
+#
+# The following logic is intended to identify and collapse these.
+def dedupeSessions(sessions, sessionCounts)
+  out = []
+  prevSession = nil
+  prevAttrs = nil
+  sessions.sort{ |a,b| a[1][:time].to_i <=> b[1][:time].to_i }.each { |session, attrs|
+    if prevSession
+      # Consider pairs that are at most a minute apart in time.
+      if (decodeMinutes(attrs[:time]) - decodeMinutes(prevAttrs[:time])) <= 1
+        prevIP, prevAgent = prevSession
+        thisIP, thisAgent = session
+        # Combine pairs that share a user-agent or an IP addr (minus the port in IPv6)
+        if prevAgent == thisAgent || prevIP.sub(/::.*$/, '') == thisIP.sub(/::.*$/, '')
+          #puts "... combine!"
+          prevAttrs.merge! attrs
+          sessionCounts[session] -= 1
+          next
+        end
+      end
+    end
+    out << [session, attrs]
+    prevSession = session
+    prevAttrs = attrs
+  }
+  return Hash[out]
+end
+
+###################################################################################################
 def parseDateLogs(date, sources)
   puts "Parsing logs from #{date.iso8601}."
   startTime = Time.now
@@ -947,18 +1028,24 @@ def parseDateLogs(date, sources)
   albLinks = {}
   sessionCounts = Hash.new { |h,k| h[k] = 0 }
   itemSessions  = Hash.new { |h,k| h[k] = {} }
+  $testDate and testEvents = Hash.new { |h,k| h[k] = [] }
 
   totalReq = 0
   robotReq = 0
   linkedRef = 0
+  fooCount = nil  # TODO: remove fooCount after this logic is fully tested
 
   prevSrc = nil
   sources.each { |source|
     if source.srcName != prevSrc
       puts "Source: #{source.srcName}"
       prevSrc = source.srcName
+      fooCount = 2**64
     end
+    fooCount < 0 and next
     source.eachEvent { |event|
+      fooCount -= 1
+      fooCount < 0 and break
       item, attrs, isRobot = identifyEvent(source.srcName, event)
       if !attrs
         #puts "  skip: #{source.srcName} #{item} #{event}"
@@ -966,42 +1053,12 @@ def parseDateLogs(date, sources)
         next
       end
 
-      # Count em up
-      totalReq += 1
-      if isRobot
-        #puts "robot: #{event}"
-        robotReq += 1
-        next
-      end
-
-      #puts "#{attrs}: #{source.srcName} #{event}"
-      #puts
-
       # Ascribe requests for redirected items to their target
       item = getFinalItem(item)
 
-      # Ignore requests for an item after it is withdrawn
-      itemInfo = getItemInfo(item)
-      if !itemInfo
-        #puts "Skipping event for invalid item #{item}."
-        next
-      end
-      wdlDate = itemInfo[:withdrawn_date]
-      if wdlDate && date > wdlDate
-        #puts "Skipping post-withdrawal event for item #{item} withdrawn on #{wdlDate}."
-        next
-      end
-
-      # Ignore requests for embargoed items before the embargo expires.
-      embDate = itemInfo[:embargo_date]
-      if embDate && date < embDate
-        #puts "Skipping pre-embargo event for item #{item}, embargoed until #{embDate}."
-        next
-      end
-
       # We use jschol events *only* to connect referrers to ALB events
       if source.srcName == "jschol"
-        if event.trace && albLinks[event.trace] && event.referrer
+        if event.trace && albLinks[event.trace] && !albLinks[event.trace][:ref] && event.referrer
           ref = extractReferrer(item, event)
           if ref
             #puts "Found matching ALB for trace #{event.trace}, " +
@@ -1013,7 +1070,41 @@ def parseDateLogs(date, sources)
         next # only use for link, not for hit counting
       end
 
+      # Exclude known and suspected robots
       session = [event.ip, event.agent]
+      totalReq += 1
+      if isRobot
+        #puts "robot: #{event}"
+        $testDate and testEvents[[item,session]] << ["skip: robot", event]
+        robotReq += 1
+        next
+      end
+
+      #puts "#{attrs}: #{source.srcName} #{event}"
+      #puts
+
+      # Ignore requests for an item after it is withdrawn
+      itemInfo = getItemInfo(item)
+      if !itemInfo
+        $testDate and testEvents[[item,session]] << ["skip: invalid item", event]
+        #puts "Skipping event for invalid item #{item}."
+        next
+      end
+      wdlDate = itemInfo[:withdrawn_date]
+      if wdlDate && date > wdlDate
+        $testDate and testEvents[[item,session]] << ["skip: post-withdrawal hit", event]
+        #puts "Skipping post-withdrawal event for item #{item} withdrawn on #{wdlDate}."
+        next
+      end
+
+      # Ignore requests for embargoed items before the embargo expires.
+      embDate = itemInfo[:embargo_date]
+      if embDate && date < embDate
+        $testDate and testEvents[[item,session]] << ["skip: pre-embargo hit", event]
+        #puts "Skipping pre-embargo event for item #{item}, embargoed until #{embDate}."
+        next
+      end
+
       if itemSessions[item].key?(session)
         itemSessions[item][session].merge!(attrs)  # plain Ruby merge: replaces dupe values
       else
@@ -1025,7 +1116,14 @@ def parseDateLogs(date, sources)
       if source.srcName == "ALB" && event.trace
         albLinks[event.trace] = itemSessions[item][session]
       end
+
+      $testDate and testEvents[[item,session]] << ["count", event]
     }
+  }
+
+  # Collapse view on one IP and download on a different IP, at basically the same time
+  itemSessions.keys.each { |item|
+    itemSessions[item] = dedupeSessions(itemSessions[item], sessionCounts)
   }
 
   # Identify aberrant sessions, using a very simple heuristic. See, real users just don't
@@ -1037,32 +1135,45 @@ def parseDateLogs(date, sources)
     count > 50 and aberrantSessions << session
   }
 
+  if $testDate
+    testEvents.each { |k,v|
+      item, session = k
+      next unless aberrantSessions.include?(session)
+      v.each { |arr|
+        next unless arr[0] == "count"
+        arr[0] = "filter out: #{sessionCounts[session]} hits > 50"
+      }
+    }
+  end
+
   puts "Robot req: #{robotReq}/#{totalReq} (#{sprintf("%.1f", robotReq * 100.0 / totalReq)}%)"
   puts "Linked refs: #{linkedRef}"
 
-  puts "Writing robotsFound.out."
-  open("robotsFound.out", "w") { |io|
-    $robotChecked.each { |agent, value|
-      value and io.puts("#{value} #{agent}")
-    }
-  }
-
-  puts "Writing ipCounts.out."
-  open("ipCounts.out", "w") { |io|
-    sessionCounts.sort_by{ |a,b| b }.reverse.each { |session, count|
-      next if aberrantSessions.include?(session)
-      io.puts "#{count} #{session}"
-    }
-  }
-
-  puts "Writing uniqCounts.out."
-  open("uniqCounts.out", "w") { |io|
-    itemSessions.each { |item, sessions|
-      sessions.each { |session, attrs|
-        io.puts "#{item}|#{session}|#{attrs}"
+  if $testDate
+    puts "Writing robotsFound.out."
+    open("robotsFound.out", "w") { |io|
+      $robotChecked.each { |agent, value|
+        value and io.puts("#{value} #{agent}")
       }
     }
-  }
+
+    puts "Writing ipCounts.out."
+    open("ipCounts.out", "w") { |io|
+      sessionCounts.sort_by{ |a,b| b }.reverse.each { |session, count|
+        next if aberrantSessions.include?(session)
+        io.puts "#{count} #{session}"
+      }
+    }
+
+    puts "Writing uniqCounts.out."
+    open("uniqCounts.out", "w") { |io|
+      itemSessions.each { |item, sessions|
+        sessions.each { |session, attrs|
+          io.puts "#{item}|#{session}|#{attrs}"
+        }
+      }
+    }
+  end
 
   # Clump hits by common item/time/location
   puts "Geolocating."
@@ -1089,14 +1200,41 @@ def parseDateLogs(date, sources)
     }
   }
 
-  puts "Writing finalCounts.out"
-  open("finalCounts.out", "w") { |io|
-    finalAccum.each { |key, accum|
-      item, time, loc = key
-      io.puts("#{item}|#{sprintf("%06d",time)}|#{sprintf("%-6s",loc)}|#{accum.to_h.to_s}")
+  if $testDate
+    puts "Writing finalCounts.out"
+    open("finalCounts.out", "w") { |io|
+      finalAccum.each { |key, accum|
+        item, time, loc = key
+        io.puts("#{item}|#{sprintf("%06d",time)}|#{sprintf("%-6s",loc)}|#{accum.to_h.to_s}")
+      }
+      puts "Aber filtered: #{aberFiltered}/#{totalHits}"
     }
-    puts "Aber filtered: #{aberFiltered}/#{totalHits}"
-  }
+
+    # Note: the session deduping above isn't reflected in this report.
+    puts "Writing testCounts.csv"
+    open("testCounts.csv", "w") { |io|
+      io.puts %{"Item","Hit","Actions","IP addr","User-agent","Time","URL","Referrer"}
+      testEvents.keys.sort{|a,b| a.to_s <=> b.to_s}.each { |k|
+        item, session = k
+        prevEvent = nil
+        testEvents[k].sort{ |a,b| a[1].time <=> b[1].time }.each_with_index { |pair, idx|
+          action, event = pair
+          if idx == 0
+            attrs = itemSessions[item][session]
+            aberrantSessions.include?(session) and attrs = nil
+            io.print "#{quoteStr(item)},#{quoteStr(describeAttrs(attrs))},"
+          elsif prevEvent.path == event.path && (prevEvent.time - event.time).abs < 300
+            next  # skip dupe requests for ranges of the PDF file
+          else
+            io.print ",,"
+          end
+          io.print "#{quoteStr(action)},#{quoteStr(event.ip)},#{quoteStr(event.agent)},#{event.time.strftime("%H:%M:%S")},"
+          io.puts "#{quoteStr(event.path)},#{quoteStr(event.referrer)}"
+          prevEvent = event
+        }
+      }
+    }
+  end
 
   # Write the events for this date to the database
   puts "Writing events to database."
@@ -1153,6 +1291,11 @@ def parseLogs
     logsByDate[src.date] << src
   }
 
+  # Test mode - just run a certain date
+  if $testDate
+    return parseDateLogs($testDate, logsByDate[$testDate])
+  end
+
   # Form a digest for each date, so we can detect differences.
   dateDigests = Hash[logsByDate.map { |date, sources|
     [date, calcBase64Digest(sources.reduce(Digest::MD5.new) { |digester, src|
@@ -1184,8 +1327,9 @@ end
 # The main routine
 
 #grabLogs
-#loadItemInfoCache
-#parseLogs
-#calcStatsMonths
+loadItemInfoCache
+parseLogs
+$testDate and exit 0
+calcStatsMonths
 calcStats
 puts "Done."
