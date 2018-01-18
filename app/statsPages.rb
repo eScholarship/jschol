@@ -4,10 +4,14 @@ require 'date'
 require 'set'
 require 'unindent'
 
+$topUnitItems = %{
+}
+
 ###################################################################################################
 def statsData(pageName)
   case pageName
   when 'history_by_item'; unitStats_historyByItem(params[:unitID])
+  when 'breakdown_by_item'; unitStats_breakdownByItem(params[:unitID])
   else raise("unknown stats page #{pageName.inspect}")
   end
 end
@@ -85,6 +89,57 @@ def unitStats_historyByItem(unitID)
           limit:         limit,
           report_months: monthRange(startYear*100 + startMonth, endYear*100 + endMonth),
           report_data:   itemData }
-  #pp out
+  return out.to_json
+end
+
+###################################################################################################
+def unitStats_breakdownByItem(unitID)
+  defaultStart = Date.today << 1
+  defaultEnd   = Date.today << 1
+  startYear  = clamp(1995,      Date.today.year, (params[:st_yr] || defaultStart.year).to_i)
+  startMonth = clamp(1,         12,              (params[:st_mo] || defaultStart.month).to_i)
+  endYear    = clamp(startYear, Date.today.year, (params[:en_yr] || defaultEnd.year).to_i)
+  endMonth   = clamp(1,         12,              (params[:en_mo] || defaultEnd .month).to_i)
+  limit      = clamp(1,         500,             (params[:limit] || 50).to_i)
+  if startYear == endYear
+    endMonth = [startMonth, endMonth].max
+  end
+  queryParams = { unitID:    unitID,
+                  startYrMo: startYear*100 + startMonth,
+                  endYrMo:   endYear*100 + endMonth,
+                  limit:     limit }
+
+  # Get all the stats and stick them in a big hash
+  query = Sequel::SQL::PlaceholderLiteralString.new(%{
+    select id, title, total_hit, total_dl from items
+    inner join
+      (select item_id, sum(attrs->"$.hit") total_hit, sum(attrs->"$.dl") total_dl
+       from item_stats
+       where month >= :startYrMo and month <= :endYrMo
+       and item_id in (select item_id from unit_items where unit_id = :unitID)
+       group by item_id order by sum(attrs->"$.hit") desc limit :limit) th
+      on th.item_id = items.id
+    order by total_hit desc, id;
+  }.unindent, { unitID:    unitID,
+                startYrMo: startYear*100 + startMonth,
+                endYrMo:   endYear*100 + endMonth,
+                limit:     limit })
+  itemData = {}
+  DB.fetch(query).each { |row|
+    itemData[row[:id]] = { title: sanitizeHTML(row[:title]),
+                           total_hits: row[:total_hit].to_i,
+                           total_downloads: row[:total_dl].to_i }
+  }
+
+  # Form the final data structure with everything needed to render the form and report
+  out = { unit_name:     $unitsHash[unitID].name,
+          year_range:    (1995 .. Date.today.year).to_a,
+          st_yr:         startYear,
+          st_mo:         startMonth,
+          en_yr:         endYear,
+          en_mo:         endMonth,
+          limit:         limit,
+          report_months: monthRange(startYear*100 + startMonth, endYear*100 + endMonth),
+          report_data:   itemData }
   return out.to_json
 end

@@ -1,4 +1,4 @@
-// ##### adminbar Component ##### //
+// ##### stats reports styles ##### //
 
 .c-statsReport h1 {
   font-size: 1.5em;
@@ -26,6 +26,10 @@
 
 .c-statsReport button {
   margin-left: 0.5em;
+}
+
+.c-statsReport .c-datatable {
+  max-height: 100vh; /* normally 75 */
 }
 
 .c-statsReport-id {
