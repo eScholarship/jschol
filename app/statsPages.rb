@@ -23,18 +23,6 @@ def incMonth(yrmo)
 end
 
 ###################################################################################################
-def fillMissingMonths(monthSet)
-  firstMonth = monthSet.sort[0]
-  lastMonth = monthSet.sort[-1]
-  mo = incMonth(firstMonth)
-  while mo < lastMonth
-    monthSet << mo
-    mo = incMonth(mo)
-  end
-  return monthSet.sort
-end
-
-###################################################################################################
 def monthRange(startYm, endYm)
   ym = startYm
   out = [ym]
@@ -89,10 +77,10 @@ def unitStats_historyByItem(unitID)
 
   # Form the final data structure with everything needed to render the form and report
   out = { year_range:    (1995 .. Date.today.year).to_a,
-          start_year:    startYear,
-          start_month:   startMonth,
-          end_year:      endYear,
-          end_month:     endMonth,
+          st_yr:         startYear,
+          st_mo:         startMonth,
+          en_yr:         endYear,
+          en_mo:         endMonth,
           limit:         limit,
           report_months: monthRange(startYear*100 + startMonth, endYear*100 + endMonth),
           report_data:   itemData }

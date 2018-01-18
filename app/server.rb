@@ -295,7 +295,8 @@ end
 class Widget < Sequel::Model
 end
 
-class ItemCount < Sequel::Model
+class ItemStat < Sequel::Model
+  unrestrict_primary_key
 end
 
 class DisplayPDF < Sequel::Model
@@ -927,6 +928,14 @@ def isValidContentKey(shortArk, key)
 end
 
 ###################################################################################################
+def getItemUsage(itemID)
+  ItemStat.where(item_id: itemID).order(:month).to_hash(:month).map { |m,v|
+    attrs = JSON.parse(v.attrs)
+    { month: "#{m.to_s[0..3]}-#{m.to_s[4..5]}", hits: attrs['hit'] || 0, downloads: attrs['dl'] || 0 }
+  }
+end
+
+###################################################################################################
 # Item view page data.
 get "/api/item/:shortArk" do |shortArk|
   content_type :json
@@ -971,7 +980,7 @@ get "/api/item/:shortArk" do |shortArk|
         :appearsIn => unitIDs ? unitIDs.map { |unitID| {"id" => unitID, "name" => Unit[unitID].name} }
                               : nil,
         :unit => unit ? unit.values.reject { |k,v| k==:attrs } : nil,
-        :usage => ItemCount.where(item_id: id).order(:month).to_hash(:month).map { |m,v| { "month"=>m, "hits"=>v.hits, "downloads"=>v.downloads }},
+        :usage => getItemUsage(id),
         :altmetrics_ok => false
       }
 

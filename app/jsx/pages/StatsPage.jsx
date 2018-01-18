@@ -27,90 +27,78 @@ export default class StatsPage extends PageBase
   }
 
   renderData(data) {
-    return(
-      <div>
-        <MetaTagsComp title="Stats"/>
-        <h1>Historical data by item</h1>
-        <Form to={this.props.location.pathname} method="GET">
-          <label htmlFor="st_yr"> Start year: </label>
-          <select id="st_yr" name="st_yr" defaultValue={data.start_year}>
-            {data.year_range.map(yr =>
-              <option key={yr} value={yr}>{yr}</option>
-            )}
-          </select>
+    const pageName = this.props.params.pageName || "summary"
+    if (pageName == "history_by_item")
+      return this.historyByItem(data)
+  }
 
-          <label htmlFor="st_mo"> month: </label>
-          <select id="st_mo" name="st_mo" defaultValue={data.start_month}>
-            {_.range(1,13).map(mo =>
-              <option key={mo} value={mo}>{mo}</option>
-            )}
-          </select>
+  renderForm = (data, names) =>
+    <Form to={this.props.location.pathname} method="GET">
+      {names.map(name =>
+        (name == "st_yr" || name == "st_mo" || name == "en_yr" || name == "en_mo") ?
+          <span key={name}>
+            <label htmlFor="st_yr">{name.replace("st_", "Start ").
+                                         replace("en_", "End ").
+                                         replace("yr", "year").
+                                         replace("mo", "month")}</label>
+            <select id={name} name={name} defaultValue={data[name]}>
+              {((name == "st_yr" || name == "en_yr") ? data.year_range : _.range(1,13)).map(val =>
+                <option key={val} value={val}>{val}</option>
+              )}
+            </select>
+          </span> :
+        (name == "limit") ?
+          <span key={name}>
+            <label htmlFor="limit">Max items:</label>
+            <select id="limit" name="limit" defaultValue={data.limit}>
+              <option key={50} value={50}>50</option>
+              <option key={100} value={100}>100</option>
+              <option key={200} value={200}>200</option>
+              <option key={500} value={500}>500</option>
+            </select>
+          </span>
+        :
+          <button type="submit" key="submit">Update</button>
+      )}
+    </Form>
 
-          &#160;&#160;
-
-          <label htmlFor="en_yr"> End year: </label>
-          <select id="en_yr" name="en_yr" defaultValue={data.end_year}>
-            {data.year_range.map(yr =>
-              <option key={yr} value={yr}>{yr}</option>
-            )}
-          </select>
-
-          <label htmlFor="en_mo"> month: </label>
-          <select id="en_mo" name="en_mo" defaultValue={data.end_month}>
-            {_.range(1,13).map(mo =>
-              <option key={mo} value={mo}>{mo}</option>
-            )}
-          </select>
-
-          &#160;&#160;
-
-          <label htmlFor="limit"> Max items: </label>
-          <select id="limit" name="limit" defaultValue={data.limit}>
-            <option key={50} value={50}>50</option>
-            <option key={100} value={100}>100</option>
-            <option key={200} value={200}>200</option>
-            <option key={500} value={500}>500</option>
-          </select>
-
-          &#160;&#160;
-
-          <button type="submit">Update</button>
-
-          <br/><br/>
-        </Form>
-        <div className="c-datatable">
-          <table>
-            <thead>
-              <tr>
-                <th scope="col" key="id">ID</th>
-                <th scope="col" key="item" className="c-statsReport-title">Item</th>
+  historyByItem = data =>
+    <div className="c-statsReport">
+      <MetaTagsComp title="History by Item"/>
+      <h1>Historical Data by Item</h1>
+      {this.renderForm(data, ["st_yr", "st_mo", "en_yr", "en_mo", "limit"])}
+      <div className="c-datatable">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col" key="id">ID</th>
+              <th scope="col" key="item" className="c-statsReport-title">Item</th>
+              {data.report_months.length > 1 &&
+                <th scope="col" key="total">Total requests</th>}
+              {data.report_months.map(ym =>
+                <th scope="col" key={ym}>{ym.toString().substr(0,4)}-{ym.toString().substr(4,2)}</th>
+              )}
+            </tr>
+          </thead>
+          <tbody>
+            {_.map(data.report_data, (md, item) =>
+              <tr key={item}>
+                <th scope="row" key="id" className="c-statsReport-id">
+                  <Link to={`/uc/item/${item.replace(/^qt/, '')}`}>{item.replace(/^qt/, '')}</Link>
+                </th>
+                <th key="item" className="c-statsReport-title">
+                  <ArbitraryHTMLComp html={md.title} h1Level={2}/>
+                </th>
                 {data.report_months.length > 1 &&
-                  <th scope="col" key="total">Total requests</th>}
+                  <td key="total">{md.total_hits}</td>}
                 {data.report_months.map(ym =>
-                  <th scope="col" key={ym}>{ym.toString().substr(0,4)}-{ym.toString().substr(4,2)}</th>
+                  <td key={ym}>{md.by_month[ym] > 0 ? md.by_month[ym] : null}</td>
                 )}
               </tr>
-            </thead>
-            <tbody>
-              {_.map(data.report_data, (md, item) =>
-                <tr key={item}>
-                  <th scope="row" key="id">
-                    <Link to={`/uc/item/${item.replace(/^qt/, '')}`}>{item.replace(/^qt/, '')}</Link>
-                  </th>
-                  <th key="item" className="c-statsReport-title">
-                    <ArbitraryHTMLComp html={md.title} h1Level={2}/>
-                  </th>
-                  {data.report_months.length > 1 &&
-                    <td key="total">{md.total_hits}</td>}
-                  {data.report_months.map(ym =>
-                    <td key={ym}>{md.by_month[ym] > 0 ? md.by_month[ym] : null}</td>
-                  )}
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+            )}
+          </tbody>
+        </table>
       </div>
-    )
-  }
+    </div>
+
 }
