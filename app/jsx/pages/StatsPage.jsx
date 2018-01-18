@@ -65,7 +65,8 @@ export default class StatsPage extends PageBase
   historyByItem = data =>
     <div className="c-statsReport">
       <MetaTagsComp title="History by Item"/>
-      <h1>Historical Data by Item</h1>
+      <h1>Stats for {data.unit_name}:</h1>
+      <h2>Historical Data by Item</h2>
       {this.renderForm(data, ["st_yr", "st_mo", "en_yr", "en_mo", "limit"])}
       <div className="c-datatable">
         <table>

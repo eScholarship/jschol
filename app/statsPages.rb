@@ -76,7 +76,8 @@ def unitStats_historyByItem(unitID)
   }
 
   # Form the final data structure with everything needed to render the form and report
-  out = { year_range:    (1995 .. Date.today.year).to_a,
+  out = { unit_name:     $unitsHash[unitID].name,
+          year_range:    (1995 .. Date.today.year).to_a,
           st_yr:         startYear,
           st_mo:         startMonth,
           en_yr:         endYear,
