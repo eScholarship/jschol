@@ -83,7 +83,7 @@ export default class StatsPage extends PageBase
             <thead>
               <tr>
                 <th scope="col" key="id">ID</th>
-                <th scope="col" key="item">Item</th>
+                <th scope="col" key="item" className="c-statsReport-title">Item</th>
                 {data.report_months.length > 1 &&
                   <th scope="col" key="total">Total requests</th>}
                 {data.report_months.map(ym =>
@@ -95,9 +95,9 @@ export default class StatsPage extends PageBase
               {_.map(data.report_data, (md, item) =>
                 <tr key={item}>
                   <th scope="row" key="id">
-                    <a href={`/uc/item/${item}`}>{item.replace(/^qt/, '')}</a>
+                    <Link to={`/uc/item/${item.replace(/^qt/, '')}`}>{item.replace(/^qt/, '')}</Link>
                   </th>
-                  <th key="item" style={{minWidth: "400px"}}>
+                  <th key="item" className="c-statsReport-title">
                     <ArbitraryHTMLComp html={md.title} h1Level={2}/>
                   </th>
                   {data.report_months.length > 1 &&
