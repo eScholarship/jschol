@@ -3,7 +3,7 @@
 $table-border-size: 1px;
 
 .c-datatable {
-  max-height: 75vh;
+  max-height: 100vh;
   overflow: auto;
 
   table {
@@ -65,6 +65,12 @@ $table-border-size: 1px;
           left: 0;
           border-right: 1px solid $color-white;
           content: '';
+          pointer-events: none;
+        }
+
+        a {
+          @extend %o-textlink__white;
+          text-decoration: underline;
         }
 
       }
@@ -104,7 +110,13 @@ $table-border-size: 1px;
           bottom: -1px;
           left: 0;
           border: 1px solid $color-teal;
-          /*content: ''; MH - this defeats links in table cells; I've asked Joel whatup */
+          content: '';
+          pointer-events: none;
+        }
+
+        a {
+          @extend %o-textlink__secondary;
+          text-decoration: underline;
         }
 
       }
