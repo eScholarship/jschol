@@ -86,6 +86,50 @@ class UnitStats_HistoryByItem extends React.Component {
   }
 }
 
+class UnitStats_HistoryByIssue extends React.Component {
+  render() {
+    let data = this.props.data
+    return(
+      <div className="c-statsReport">
+        <MetaTagsComp title={`History by Issue: ${data.unit_name}`}/>
+        <h1>{data.unit_name}: Stats</h1>
+        <h2>Historical Data by Issue</h2>
+        <StatsForm location={this.props.location} data={data} names={["st_yr", "st_mo", "en_yr", "en_mo"]}/>
+        <div className="c-datatable">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col" key="id">Vol/Iss</th>
+                {data.report_months.length > 1 &&
+                  <th scope="col" key="total">Total requests</th>}
+                {data.report_months.map(ym =>
+                  <th scope="col" key={ym}>{ym.toString().substr(0,4)}-{ym.toString().substr(4,2)}</th>
+                )}
+              </tr>
+            </thead>
+            <tbody>
+              {_.map(data.report_data, issueData => {
+                let issue = issueData[0]
+                let md = issueData[1]
+                return(
+                  <tr key={issue}>
+                    <th scope="row" key="id">{issue}</th>
+                    {data.report_months.length > 1 &&
+                      <td key="total">{md.total_hits}</td>}
+                    {data.report_months.map(ym =>
+                      <td key={ym}>{md.by_month[ym] > 0 ? md.by_month[ym] : null}</td>
+                    )}
+                  </tr>
+                )}
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    )
+  }
+}
+
 class UnitStats_BreakdownByItem extends React.Component {
   render() {
     let data = this.props.data
@@ -150,6 +194,8 @@ export default class StatsPage extends PageBase
     const pageName = this.props.params.pageName || "summary"
     if (pageName == "history_by_item")
       return <UnitStats_HistoryByItem location={this.props.location} data={data}/>
+    else if (pageName == "history_by_issue")
+      return <UnitStats_HistoryByIssue location={this.props.location} data={data}/>
     else if (pageName == "breakdown_by_item")
       return <UnitStats_BreakdownByItem location={this.props.location} data={data}/>
   }
