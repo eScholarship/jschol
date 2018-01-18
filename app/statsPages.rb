@@ -42,7 +42,7 @@ def monthRange(startYm, endYm)
     ym = incMonth(ym)
     out << ym
   end
-  return out
+  return out.reverse  # show months latest first
 end
 
 ###################################################################################################
@@ -53,7 +53,7 @@ def unitStats_historyByItem(unitID)
   startMonth = clamp(1,         12,              (params[:st_mo] || defaultStart.month).to_i)
   endYear    = clamp(startYear, Date.today.year, (params[:en_yr] || defaultEnd.year).to_i)
   endMonth   = clamp(1,         12,              (params[:en_mo] || defaultEnd .month).to_i)
-  limit      = clamp(1,         500,             (params[:size] || 50).to_i)
+  limit      = clamp(1,         500,             (params[:limit] || 50).to_i)
   if startYear == endYear
     endMonth = [startMonth, endMonth].max
   end

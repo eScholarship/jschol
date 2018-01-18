@@ -560,6 +560,9 @@ get %r{.*} do
   # elsewhere.
   if request.path_info =~ %r{api/.*|content/.*|locale/.*|.*\.[a-zA-Z]\w{0,3}}
     pass
+  elsif request.path_info =~ %r{/stats/}
+    # Don't do iso on stats reports
+    generalResponse(false)
   else
     generalResponse
   end
@@ -575,7 +578,7 @@ def generalResponse(iso_ok = true)
   template.sub!("/css/main.css", "/css/main-#{Digest::MD5.file("app/css/main.css").hexdigest[0,16]}.css")
 
   # Isomorphic javascript rendering on the server
-  if ENV['ISO_PORT']
+  if ENV['ISO_PORT'] && iso_ok
     # Parse out payload of the URL (i.e. not including the host name)
     request.url =~ %r{^https?://([^/:]+)(:\d+)?(.*)$} or fail
     remainder = $3
