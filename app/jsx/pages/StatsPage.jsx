@@ -113,7 +113,9 @@ class UnitStats_HistoryByIssue extends React.Component {
                 let md = issueData[1]
                 return(
                   <tr key={issue}>
-                    <th scope="row" key="id">{issue}</th>
+                    <th scope="row" key="id">
+                      <Link to={`/uc/${this.props.params.unitID}/${md.vol_num}/${md.iss_num}`}>{issue}</Link>
+                    </th>
                     {data.report_months.length > 1 &&
                       <td key="total">{md.total_hits}</td>}
                     {data.report_months.map(ym =>
@@ -172,6 +174,48 @@ class UnitStats_BreakdownByItem extends React.Component {
   }
 }
 
+class UnitStats_BreakdownByIssue extends React.Component {
+  render() {
+    let data = this.props.data
+    return(
+      <div className="c-statsReport">
+        <MetaTagsComp title={`Breakdown by Issue: ${data.unit_name}`}/>
+        <h1>{data.unit_name}: Stats</h1>
+        <h2>Breakdown by Issue</h2>
+        <StatsForm location={this.props.location} data={data} names={["st_yr", "st_mo", "en_yr", "en_mo"]}/>
+        <div className="c-datatable">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Vol/Iss</th>
+                <th scope="col">Total requests</th>
+                <th scope="col">Download</th>
+                <th scope="col">View-only</th>
+              </tr>
+            </thead>
+            <tbody>
+              {_.map(data.report_data, issueData => {
+                let issue = issueData[0]
+                let md = issueData[1]
+                return(
+                  <tr key={issue}>
+                    <th scope="row">
+                      <Link to={`/uc/${this.props.params.unitID}/${md.vol_num}/${md.iss_num}`}>{issue}</Link>
+                    </th>
+                    <td>{md.total_hits}</td>
+                    <td>{md.total_downloads}</td>
+                    <td>{md.total_hits - md.total_downloads}</td>
+                  </tr>
+                )}
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    )
+  }
+}
+
 export default class StatsPage extends PageBase
 {
   pageDataURL() {
@@ -193,10 +237,12 @@ export default class StatsPage extends PageBase
   renderData(data) {
     const pageName = this.props.params.pageName || "summary"
     if (pageName == "history_by_item")
-      return <UnitStats_HistoryByItem location={this.props.location} data={data}/>
+      return <UnitStats_HistoryByItem data={data} {...this.props}/>
     else if (pageName == "history_by_issue")
-      return <UnitStats_HistoryByIssue location={this.props.location} data={data}/>
+      return <UnitStats_HistoryByIssue data={data} {...this.props}/>
     else if (pageName == "breakdown_by_item")
-      return <UnitStats_BreakdownByItem location={this.props.location} data={data}/>
+      return <UnitStats_BreakdownByItem data={data} {...this.props}/>
+    else if (pageName == "breakdown_by_issue")
+      return <UnitStats_BreakdownByIssue data={data} {...this.props}/>
   }
 }

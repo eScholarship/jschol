@@ -13,6 +13,7 @@ def statsData(pageName)
   when 'history_by_item'; unitStats_historyByItem(params[:unitID])
   when 'history_by_issue'; unitStats_historyByIssue(params[:unitID])
   when 'breakdown_by_item'; unitStats_breakdownByItem(params[:unitID])
+  when 'breakdown_by_issue'; unitStats_breakdownByIssue(params[:unitID])
   else raise("unknown stats page #{pageName.inspect}")
   end
 end
@@ -116,6 +117,8 @@ def unitStats_historyByIssue(unitID)
              row[:numbering] == "issue_only" ? row[:issue] :
              "#{row[:volume]}/#{row[:issue]}"
     issueData[voliss] or issueData[voliss] = { total_hits: 0,
+                                               vol_num: row[:volume],
+                                               iss_num: row[:issue],
                                                by_month: {} }
     hits = row[:hits].to_i
     issueData[voliss][:total_hits] += hits
@@ -127,6 +130,39 @@ def unitStats_historyByIssue(unitID)
 
   # Form the final data structure with everything needed to render the form and report
   out[:report_data] = issueData
+  return out.to_json
+end
+
+###################################################################################################
+def unitStats_breakdownByIssue(unitID)
+  # Get all the stats and stick them in a big hash
+  out, queryParams = getStatsParams(unitID, 4)
+  query = Sequel::SQL::PlaceholderLiteralString.new(%{
+    select volume, issue, issues.attrs->"$.numbering",
+           sum(item_stats.attrs->"$.hit") total_hit, sum(item_stats.attrs->"$.dl") total_dl
+    from issues
+    inner join sections on sections.issue_id = issues.id
+    inner join items on items.section = sections.id
+    inner join item_stats on item_stats.item_id = items.id
+    where unit_id = :unitID
+    and month >= :startYrMo and month <= :endYrMo
+    group by volume, issue
+    order by sum(item_stats.attrs->"$.hit") desc;
+  }.unindent, queryParams)
+
+  issueData = {}
+  DB.fetch(query).each { |row|
+    voliss = row[:numbering] == "volume_only" ? row[:volume] :
+             row[:numbering] == "issue_only" ? row[:issue] :
+             "#{row[:volume]}/#{row[:issue]}"
+    issueData[voliss] or issueData[voliss] = { vol_num: row[:volume],
+                                               iss_num: row[:issue],
+                                               total_hits: row[:total_hit],
+                                               total_downloads: row[:total_dl] }
+  }
+
+  # Form the final data structure with everything needed to render the form and report
+  out[:report_data] = issueData.to_a
   return out.to_json
 end
 
