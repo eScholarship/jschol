@@ -35,6 +35,17 @@ def fillMissingMonths(monthSet)
 end
 
 ###################################################################################################
+def monthRange(startYm, endYm)
+  ym = startYm
+  out = [ym]
+  while ym < endYm
+    ym = incMonth(ym)
+    out << ym
+  end
+  return out
+end
+
+###################################################################################################
 def unitStats_historyByItem(unitID)
   defaultStart = Date.today << 4
   defaultEnd   = Date.today << 1
@@ -68,18 +79,23 @@ def unitStats_historyByItem(unitID)
                 endYrMo:   endYear*100 + endMonth,
                 limit:     limit })
   itemData = {}
-  monthSet = Set.new
   DB.fetch(query).each { |row|
     itemID = row[:id]
-    itemData[itemID] or itemData[itemID] = { title: row[:title], totalHits: row[:total_hits], hitsByMonth: {} }
-    monthSet << row[:month]
-    itemData[itemID][:hitsByMonth][row[:month]] = row[:hits].to_i
+    itemData[itemID] or itemData[itemID] = { title: sanitizeHTML(row[:title]),
+                                             total_hits: row[:total_hits].to_i,
+                                             by_month: {} }
+    itemData[itemID][:by_month][row[:month]] = row[:hits].to_i
   }
 
-  # Flesh out the months with any that are missing
-  months = fillMissingMonths(monthSet)
-
-  pp itemData
-  puts "months=#{months}"
-  return {ok:true}.to_json
+  # Form the final data structure with everything needed to render the form and report
+  out = { year_range:    (1995 .. Date.today.year).to_a,
+          start_year:    startYear,
+          start_month:   startMonth,
+          end_year:      endYear,
+          end_month:     endMonth,
+          limit:         limit,
+          report_months: monthRange(startYear*100 + startMonth, endYear*100 + endMonth),
+          report_data:   itemData }
+  #pp out
+  return out.to_json
 end

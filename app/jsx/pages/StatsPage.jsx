@@ -1,7 +1,9 @@
 
 import React from 'react'
 import { Link } from 'react-router'
+import _ from 'lodash'
 
+import ArbitraryHTMLComp from "../components/ArbitraryHTMLComp.jsx"
 import MetaTagsComp from '../components/MetaTagsComp.jsx'
 import PageBase from './PageBase.jsx'
 
@@ -16,42 +18,38 @@ export default class StatsPage extends PageBase
 
   renderData(data) {
     return(
-      <div className="c-stats">
+      <div>
         <MetaTagsComp title="Stats"/>
-        <style dangerouslySetInnerHTML={{__html: `
-          .foo { border-collapse: collapse; }
-        `}} />
+        <h1>Historical data by item</h1>
         <div className="c-datatable">
           <table>
-            <caption>Stats by foo</caption>
             <thead>
               <tr>
-                <th scope="col">Column 1</th>
-                <th scope="col">Column 2</th>
-                <th scope="col">Column 3</th>
+                <th scope="col" key="id">ID</th>
+                <th scope="col" key="item">Item</th>
+                {data.report_months.length > 1 &&
+                  <th scope="col" key="total">Total requests</th>}
+                {data.report_months.map(ym =>
+                  <th scope="col" key={ym}>{ym.toString().substr(0,4)}-{ym.toString().substr(4,2)}</th>
+                )}
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <th scope="row">data1a</th>
-                <td>data1b</td>
-                <td>data1c</td>
-              </tr>
-              <tr>
-                <th scope="row">data2a</th>
-                <td>data2b</td>
-                <td>data2c</td>
-              </tr>
-              <tr>
-                <th scope="row">data3a</th>
-                <td>data3b</td>
-                <td>data3c</td>
-              </tr>
-              <tr>
-                <th scope="row">data4a</th>
-                <td>data4b</td>
-                <td>data4c</td>
-              </tr>
+              {_.map(data.report_data, (md, item) =>
+                <tr key={item}>
+                  <th scope="row" key="id">
+                    <a href={`/uc/item/${item}`}>{item.replace(/^qt/, '')}</a>
+                  </th>
+                  <th key="item">
+                    <ArbitraryHTMLComp html={md.title} h1Level={2}/>
+                  </th>
+                  {data.report_months.length > 1 &&
+                    <td key="total">{md.total_hits}</td>}
+                  {data.report_months.map(ym =>
+                    <td key={ym}>{parseInt(md.by_month[ym])}</td>
+                  )}
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
