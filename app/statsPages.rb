@@ -62,7 +62,21 @@ def getStatsParams(unitID, nMonths)
          { unitID:    unitID,
            startYrMo: startYear*100 + startMonth,
            endYrMo:   endYear*100 + endMonth,
-            limit:    limit }
+           limit:    limit }
+end
+
+###################################################################################################
+def unitStats_summary(unitID)
+  # This is so much easier than the other reports.
+  date = Date.today << 1
+  st = UnitStat.where(unit_id: unitID, month: date.year*100 + date.month).first
+  attrs = JSON.parse(st.attrs)
+  return {
+    unit_name: $unitsHash[unitID].name,
+    total_hits: attrs[:hit],
+    total_downloads: attrs[:dl],
+    top_referrals: TODO TODO TODO
+  }.to_json
 end
 
 ###################################################################################################
