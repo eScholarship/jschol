@@ -9,11 +9,14 @@ $topUnitItems = %{
 
 ###################################################################################################
 def statsData(pageName)
+  unitID = params[:unitID]
   case pageName
-  when 'history_by_item'; unitStats_historyByItem(params[:unitID])
-  when 'history_by_issue'; unitStats_historyByIssue(params[:unitID])
-  when 'breakdown_by_item'; unitStats_breakdownByItem(params[:unitID])
-  when 'breakdown_by_issue'; unitStats_breakdownByIssue(params[:unitID])
+  when 'summary';            unitStats_summary(unitID)
+  when 'history_by_item';    unitStats_historyByItem(unitID)
+  when 'history_by_issue';   unitStats_historyByIssue(unitID)
+  when 'breakdown_by_item';  unitStats_breakdownByItem(unitID)
+  when 'breakdown_by_issue'; unitStats_breakdownByIssue(unitID)
+  when 'breakdown_by_month'; unitStats_breakdownByMonth(unitID)
   else raise("unknown stats page #{pageName.inspect}")
   end
 end
@@ -66,16 +69,52 @@ def getStatsParams(unitID, nMonths)
 end
 
 ###################################################################################################
+def translateRefs(refsHash)
+  refsHash.nil? and return {}
+  counts = Hash.new { |h,k| h[k] = 0 }
+  Referrer.where(id: refsHash.keys).each { |ref|
+    # Just grab the last part of the URL
+    next if ref.domain == "localhost" # these really shouldn't have gotten in
+    domain = ref.domain[%r{[^\.]+\.[^\.]+$}] || ref.domain
+    domain = domain.sub("google.com", "Google").
+                    sub("bing.com", "Bing").
+                    sub("escholarship.org", "eScholarship").
+                    sub("facebook.com", "Facebook").
+                    sub("yahoo.com", "Yahoo")
+    counts[domain] += refsHash[ref.id.to_s].to_i
+  }
+  return counts.sort { |a,b| -(a[1] <=> b[1]) }
+end
+
+###################################################################################################
 def unitStats_summary(unitID)
-  # This is so much easier than the other reports.
-  date = Date.today << 1
-  st = UnitStat.where(unit_id: unitID, month: date.year*100 + date.month).first
-  attrs = JSON.parse(st.attrs)
+  # Summary data for the current month is so easy
+  startDate = Date.today << 4  # 4 mos ago
+  endDate = Date.today << 1  # last month
+  startYrmo = startDate.year*100 + startDate.month
+  endYrmo = endDate.year*100 + endDate.month
+  st = UnitStat.where(unit_id: unitID, month: endDate.year*100 + endDate.month).first
+  attrs = st && st.attrs ? JSON.parse(st.attrs) : {}
   return {
     unit_name: $unitsHash[unitID].name,
-    total_hits: attrs[:hit],
-    total_downloads: attrs[:dl],
-    top_referrals: TODO TODO TODO
+    unit_type: $unitsHash[unitID].type,
+    dateStr: "#{Date::MONTHNAMES[endDate.month]} #{endDate.year}",
+    posts: attrs['post'].to_i,
+    hits: attrs['hit'].to_i,
+    downloads: attrs['dl'].to_i,
+    recent_hist: UnitStat.where(unit_id: unitID, month: startYrmo..endYrmo).order(Sequel.desc(:month)).map{ |mst|
+      [mst.month, JSON.parse(mst.attrs)['hit'].to_i] },
+    referrals: translateRefs(attrs['ref'])[0..4],
+  }.to_json
+end
+
+###################################################################################################
+def unitStats_breakdownByMonth(unitID)
+  return {
+    unit_name: $unitsHash[unitID].name,
+    report_data: UnitStat.where(unit_id: unitID).order(Sequel.desc(:month)).map{ |st|
+      attrs = JSON.parse(st.attrs)
+      [st.month, attrs['post'].to_i, attrs['hit'].to_i, attrs['dl'].to_i] }
   }.to_json
 end
 

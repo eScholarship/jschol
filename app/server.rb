@@ -236,60 +236,7 @@ FileUtils.mkdir_p(TEMP_DIR)
 # graphical version, see:
 #
 # https://docs.google.com/drawings/d/1gCi8l7qteyy06nR5Ol2vCknh9Juo-0j91VGGyeWbXqI/edit
-
-class UnitCount < Sequel::Model
-end
-
-class Unit < Sequel::Model
-  unrestrict_primary_key
-  one_to_many :unit_hier,     :class=>:UnitHier, :key=>:unit_id
-  one_to_many :ancestor_hier, :class=>:UnitHier, :key=>:ancestor_unit
-end
-
-class UnitHier < Sequel::Model(:unit_hier)
-  unrestrict_primary_key
-  many_to_one :unit,          :class=>:Unit
-  many_to_one :ancestor,      :class=>:Unit, :key=>:ancestor_unit
-end
-
-class UnitItem < Sequel::Model
-  unrestrict_primary_key
-end
-
-class Item < Sequel::Model
-  unrestrict_primary_key
-end
-
-class ItemAuthors < Sequel::Model(:item_authors)
-  unrestrict_primary_key
-end
-
-class Issue < Sequel::Model
-end
-
-class Section < Sequel::Model
-end
-
-class Page < Sequel::Model
-end
-
-class Widget < Sequel::Model
-end
-
-class ItemStat < Sequel::Model
-  unrestrict_primary_key
-end
-
-class UnitStat < Sequel::Model
-  unrestrict_primary_key
-end
-
-class DisplayPDF < Sequel::Model
-  unrestrict_primary_key
-end
-
-class Redirect < Sequel::Model
-end
+require_relative '../tools/models.rb'
 
 # DbCache uses the models above.
 require_relative 'dbCache'
@@ -546,7 +493,7 @@ get %r{.*} do
   # elsewhere.
   if request.path_info =~ %r{api/.*|content/.*|locale/.*|.*\.[a-zA-Z]\w{0,3}}
     pass
-  elsif request.path_info =~ %r{/stats/}
+  elsif request.path_info =~ %r{/stats($|/)}
     # Don't do iso on stats reports
     generalResponse(false)
   else

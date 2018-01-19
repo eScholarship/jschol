@@ -8,6 +8,9 @@ import ArbitraryHTMLComp from "../components/ArbitraryHTMLComp.jsx"
 import MetaTagsComp from '../components/MetaTagsComp.jsx'
 import PageBase from './PageBase.jsx'
 
+const ymToString = ym =>
+  ym.toString().substr(0,4) + "-" + ym.toString().substr(4,2)
+
 class StatsForm extends React.Component {
   render = () =>
     <Form to={this.props.location.pathname} method="GET">
@@ -40,14 +43,78 @@ class StatsForm extends React.Component {
     </Form>
 }
 
+class UnitStats_Summary extends React.Component {
+  render() {
+    let data = this.props.data
+    return(
+      <div className="c-statsReport">
+        <MetaTagsComp title={`Summary: ${data.unit_name}`}/>
+        <h1>{data.unit_name}</h1>
+        <h2>Summary for {data.dateStr}</h2>
+        <div className="c-datatable">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Deposits</th>
+                <th scope="col">Total requests</th>
+                <th scope="col">Download</th>
+                <th scope="col">View-only</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>{data.posts}</td>
+                <td>{data.hits}</td>
+                <td>{data.downloads}</td>
+                <td>{data.hits - data.downloads}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2>Top Referrers</h2>
+        <div className="c-datatable">
+          <table>
+            <thead>
+              <tr>
+                {_.map(data.referrals, rd =>
+                  <th scope="col" key={rd[0]}>{rd[0]}</th>
+                )}
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                {_.map(data.referrals, rd =>
+                  <td key={rd[0]}>{rd[1]}</td>
+                )}
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2>Available Reports</h2>
+        <ul>
+          <li><Link to={`/uc/${this.props.params.unitID}/stats/breakdown_by_month`}>Breakdown by Month</Link></li>
+          {data.unit_type == "journal" &&
+            <li><Link to={`/uc/${this.props.params.unitID}/stats/breakdown_by_issue`}>Breakdown by Issue</Link></li>}
+          {data.unit_type == "journal" &&
+            <li><Link to={`/uc/${this.props.params.unitID}/stats/history_by_issue`}>History by Issue</Link></li>}
+          <li><Link to={`/uc/${this.props.params.unitID}/stats/breakdown_by_item`}>Breakdown by Item</Link></li>
+          <li><Link to={`/uc/${this.props.params.unitID}/stats/history_by_item`}>History by Item</Link></li>
+        </ul>
+      </div>
+    )
+  }
+}
+
 class UnitStats_HistoryByItem extends React.Component {
   render() {
     let data = this.props.data
     return(
       <div className="c-statsReport">
-        <MetaTagsComp title={`History by Item: ${data.unit_name}`}/>
-        <h1>{data.unit_name}: Stats</h1>
-        <h2>Historical Data by Item</h2>
+        <MetaTagsComp title={`Stats: History by Item: ${data.unit_name}`}/>
+        <h1><Link to={`/uc/${this.props.params.unitID}/stats`}>{data.unit_name}</Link></h1>
+        <h2>Stats: Historical Data by Item</h2>
         <StatsForm location={this.props.location} data={data} names={["st_yr", "st_mo", "en_yr", "en_mo", "limit"]}/>
         <div className="c-datatable">
           <table>
@@ -58,7 +125,7 @@ class UnitStats_HistoryByItem extends React.Component {
                 {data.report_months.length > 1 &&
                   <th scope="col" key="total">Total requests</th>}
                 {data.report_months.map(ym =>
-                  <th scope="col" key={ym}>{ym.toString().substr(0,4)}-{ym.toString().substr(4,2)}</th>
+                  <th scope="col" key={ym}>{ymToString(ym)}</th>
                 )}
               </tr>
             </thead>
@@ -91,9 +158,9 @@ class UnitStats_HistoryByIssue extends React.Component {
     let data = this.props.data
     return(
       <div className="c-statsReport">
-        <MetaTagsComp title={`History by Issue: ${data.unit_name}`}/>
-        <h1>{data.unit_name}: Stats</h1>
-        <h2>Historical Data by Issue</h2>
+        <MetaTagsComp title={`Stats: History by Issue: ${data.unit_name}`}/>
+        <h1><Link to={`/uc/${this.props.params.unitID}/stats`}>{data.unit_name}</Link></h1>
+        <h2>Stats: Historical Data by Issue</h2>
         <StatsForm location={this.props.location} data={data} names={["st_yr", "st_mo", "en_yr", "en_mo"]}/>
         <div className="c-datatable">
           <table>
@@ -103,7 +170,7 @@ class UnitStats_HistoryByIssue extends React.Component {
                 {data.report_months.length > 1 &&
                   <th scope="col" key="total">Total requests</th>}
                 {data.report_months.map(ym =>
-                  <th scope="col" key={ym}>{ym.toString().substr(0,4)}-{ym.toString().substr(4,2)}</th>
+                  <th scope="col" key={ym}>{ymToString(ym)}</th>
                 )}
               </tr>
             </thead>
@@ -137,9 +204,9 @@ class UnitStats_BreakdownByItem extends React.Component {
     let data = this.props.data
     return(
       <div className="c-statsReport">
-        <MetaTagsComp title={`Breakdown by Item: ${data.unit_name}`}/>
-        <h1>{data.unit_name}: Stats</h1>
-        <h2>Breakdown by Item</h2>
+        <MetaTagsComp title={`Stats: Breakdown by Item: ${data.unit_name}`}/>
+        <h1><Link to={`/uc/${this.props.params.unitID}/stats`}>{data.unit_name}</Link></h1>
+        <h2>Stats: Breakdown by Item</h2>
         <StatsForm location={this.props.location} data={data} names={["st_yr", "st_mo", "en_yr", "en_mo", "limit"]}/>
         <div className="c-datatable">
           <table>
@@ -179,9 +246,9 @@ class UnitStats_BreakdownByIssue extends React.Component {
     let data = this.props.data
     return(
       <div className="c-statsReport">
-        <MetaTagsComp title={`Breakdown by Issue: ${data.unit_name}`}/>
-        <h1>{data.unit_name}: Stats</h1>
-        <h2>Breakdown by Issue</h2>
+        <MetaTagsComp title={`Stats: Breakdown by Issue: ${data.unit_name}`}/>
+        <h1><Link to={`/uc/${this.props.params.unitID}/stats`}>{data.unit_name}</Link></h1>
+        <h2>Stats: Breakdown by Issue</h2>
         <StatsForm location={this.props.location} data={data} names={["st_yr", "st_mo", "en_yr", "en_mo"]}/>
         <div className="c-datatable">
           <table>
@@ -216,6 +283,43 @@ class UnitStats_BreakdownByIssue extends React.Component {
   }
 }
 
+class UnitStats_BreakdownByMonth extends React.Component {
+  render() {
+    let data = this.props.data
+    return(
+      <div className="c-statsReport">
+        <MetaTagsComp title={`Stats: Breakdown by Month: ${data.unit_name}`}/>
+        <h1><Link to={`/uc/${this.props.params.unitID}/stats`}>{data.unit_name}</Link></h1>
+        <h2>Stats: Breakdown by Month</h2>
+        <div className="c-datatable">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Month</th>
+                <th scope="col">Deposits</th>
+                <th scope="col">Total requests</th>
+                <th scope="col">Download</th>
+                <th scope="col">View-only</th>
+              </tr>
+            </thead>
+            <tbody>
+              {_.map(data.report_data, md =>
+                <tr key={md[0]}>
+                  <td>{ymToString(md[0])}</td>
+                  <td>{md[1]}</td>
+                  <td>{md[2]}</td>
+                  <td>{md[3]}</td>
+                  <td>{md[2] - md[3]}</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    )
+  }
+}
+
 export default class StatsPage extends PageBase
 {
   pageDataURL() {
@@ -236,7 +340,9 @@ export default class StatsPage extends PageBase
 
   renderData(data) {
     const pageName = this.props.params.pageName || "summary"
-    if (pageName == "history_by_item")
+    if (pageName == "summary")
+      return <UnitStats_Summary data={data} {...this.props}/>
+    else if (pageName == "history_by_item")
       return <UnitStats_HistoryByItem data={data} {...this.props}/>
     else if (pageName == "history_by_issue")
       return <UnitStats_HistoryByIssue data={data} {...this.props}/>
@@ -244,5 +350,7 @@ export default class StatsPage extends PageBase
       return <UnitStats_BreakdownByItem data={data} {...this.props}/>
     else if (pageName == "breakdown_by_issue")
       return <UnitStats_BreakdownByIssue data={data} {...this.props}/>
+    else if (pageName == "breakdown_by_month")
+      return <UnitStats_BreakdownByMonth data={data} {...this.props}/>
   }
 }
