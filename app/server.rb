@@ -299,6 +299,10 @@ class ItemStat < Sequel::Model
   unrestrict_primary_key
 end
 
+class UnitStat < Sequel::Model
+  unrestrict_primary_key
+end
+
 class DisplayPDF < Sequel::Model
   unrestrict_primary_key
 end
