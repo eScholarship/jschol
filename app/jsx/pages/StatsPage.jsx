@@ -101,6 +101,7 @@ class UnitStats_Summary extends React.Component {
             <li><Link to={`/uc/${this.props.params.unitID}/stats/history_by_issue`}>History by Issue</Link></li>}
           <li><Link to={`/uc/${this.props.params.unitID}/stats/breakdown_by_item`}>Breakdown by Item</Link></li>
           <li><Link to={`/uc/${this.props.params.unitID}/stats/history_by_item`}>History by Item</Link></li>
+          <li><Link to={`/uc/${this.props.params.unitID}/stats/referrals`}>Referrals</Link></li>
         </ul>
       </div>
     )
@@ -112,7 +113,7 @@ class UnitStats_HistoryByItem extends React.Component {
     let data = this.props.data
     return(
       <div className="c-statsReport">
-        <MetaTagsComp title={`Stats: History by Item: ${data.unit_name}`}/>
+        <MetaTagsComp title={`History by Item: ${data.unit_name}`}/>
         <h1><Link to={`/uc/${this.props.params.unitID}/stats`}>{data.unit_name}</Link></h1>
         <h2>Stats: Historical Data by Item</h2>
         <StatsForm location={this.props.location} data={data} names={["st_yr", "st_mo", "en_yr", "en_mo", "limit"]}/>
@@ -158,7 +159,7 @@ class UnitStats_HistoryByIssue extends React.Component {
     let data = this.props.data
     return(
       <div className="c-statsReport">
-        <MetaTagsComp title={`Stats: History by Issue: ${data.unit_name}`}/>
+        <MetaTagsComp title={`History by Issue: ${data.unit_name}`}/>
         <h1><Link to={`/uc/${this.props.params.unitID}/stats`}>{data.unit_name}</Link></h1>
         <h2>Stats: Historical Data by Issue</h2>
         <StatsForm location={this.props.location} data={data} names={["st_yr", "st_mo", "en_yr", "en_mo"]}/>
@@ -199,12 +200,59 @@ class UnitStats_HistoryByIssue extends React.Component {
   }
 }
 
+class UnitStats_Referrals extends React.Component {
+  render() {
+    let data = this.props.data
+    let months = data.report_months
+    let fmonths = months.filter(val => val != 201711) // we have no referral data for this month (see note below)
+    return(
+      <div className="c-statsReport">
+        <MetaTagsComp title={`Referrals: ${data.unit_name}`}/>
+        <h1><Link to={`/uc/${this.props.params.unitID}/stats`}>{data.unit_name}</Link></h1>
+        <h2>Stats: Referrals</h2>
+        <StatsForm location={this.props.location} data={data} names={["st_yr", "st_mo", "en_yr", "en_mo"]}/>
+
+        {/* Let the user know there was a gap in referral data */}
+        {(months.indexOf(201710) >= 0 || months.indexOf(201711) >= 0 || months.indexOf(201712) >= 0) &&
+          <p>Note: Referral data was not collected from Oct 19 to Dec 4, 2017.</p>}
+
+        <div className="c-datatable">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col" key="ref">Referrer</th>
+                {fmonths.length > 1 &&
+                  <th scope="col" key="total">Total referrals</th>}
+                {fmonths.map(ym =>
+                  <th scope="col" key={ym}>{ymToString(ym)}</th>
+                )}
+              </tr>
+            </thead>
+            <tbody>
+              {_.map(data.report_data, md =>
+                <tr key={md.referrer}>
+                  <th scope="row" key="id">{md.referrer}</th>
+                  {fmonths.length > 1 &&
+                    <td key="total">{md.total_referrals}</td>}
+                  {fmonths.map(ym =>
+                    <td key={ym}>{md.by_month[ym] > 0 ? md.by_month[ym] : null}</td>
+                  )}
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    )
+  }
+}
+
 class UnitStats_BreakdownByItem extends React.Component {
   render() {
     let data = this.props.data
     return(
       <div className="c-statsReport">
-        <MetaTagsComp title={`Stats: Breakdown by Item: ${data.unit_name}`}/>
+        <MetaTagsComp title={`Breakdown by Item: ${data.unit_name}`}/>
         <h1><Link to={`/uc/${this.props.params.unitID}/stats`}>{data.unit_name}</Link></h1>
         <h2>Stats: Breakdown by Item</h2>
         <StatsForm location={this.props.location} data={data} names={["st_yr", "st_mo", "en_yr", "en_mo", "limit"]}/>
@@ -246,7 +294,7 @@ class UnitStats_BreakdownByIssue extends React.Component {
     let data = this.props.data
     return(
       <div className="c-statsReport">
-        <MetaTagsComp title={`Stats: Breakdown by Issue: ${data.unit_name}`}/>
+        <MetaTagsComp title={`Breakdown by Issue: ${data.unit_name}`}/>
         <h1><Link to={`/uc/${this.props.params.unitID}/stats`}>{data.unit_name}</Link></h1>
         <h2>Stats: Breakdown by Issue</h2>
         <StatsForm location={this.props.location} data={data} names={["st_yr", "st_mo", "en_yr", "en_mo"]}/>
@@ -288,7 +336,7 @@ class UnitStats_BreakdownByMonth extends React.Component {
     let data = this.props.data
     return(
       <div className="c-statsReport">
-        <MetaTagsComp title={`Stats: Breakdown by Month: ${data.unit_name}`}/>
+        <MetaTagsComp title={`Breakdown by Month: ${data.unit_name}`}/>
         <h1><Link to={`/uc/${this.props.params.unitID}/stats`}>{data.unit_name}</Link></h1>
         <h2>Stats: Breakdown by Month</h2>
         <div className="c-datatable">
@@ -352,5 +400,7 @@ export default class StatsPage extends PageBase
       return <UnitStats_BreakdownByIssue data={data} {...this.props}/>
     else if (pageName == "breakdown_by_month")
       return <UnitStats_BreakdownByMonth data={data} {...this.props}/>
+    else if (pageName == "referrals")
+      return <UnitStats_Referrals data={data} {...this.props}/>
   }
 }

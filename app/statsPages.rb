@@ -17,6 +17,7 @@ def statsData(pageName)
   when 'breakdown_by_item';  unitStats_breakdownByItem(unitID)
   when 'breakdown_by_issue'; unitStats_breakdownByIssue(unitID)
   when 'breakdown_by_month'; unitStats_breakdownByMonth(unitID)
+  when 'referrals';          unitStats_referrals(unitID)
   else raise("unknown stats page #{pageName.inspect}")
   end
 end
@@ -69,19 +70,30 @@ def getStatsParams(unitID, nMonths)
 end
 
 ###################################################################################################
+def translateRefDomain(domain)
+  domain == "localhost" and return nil # these really shouldn't have gotten in
+
+  # Just grab the last part of the URL
+  domain = domain[%r{[^\.]+\.[^\.]+$}] || domain
+
+  # Translate some biggies to plain text
+  return domain.sub("google.com", "Google").
+                sub("bing.com", "Bing").
+                sub("escholarship.org", "eScholarship").
+                sub("facebook.com", "Facebook").
+                sub("yahoo.com", "Yahoo").
+                sub("t.co", "Twitter").
+                sub("wikipedia.org", "Wikipedia")
+end
+
+###################################################################################################
 def translateRefs(refsHash)
   refsHash.nil? and return {}
   counts = Hash.new { |h,k| h[k] = 0 }
   Referrer.where(id: refsHash.keys).each { |ref|
     # Just grab the last part of the URL
-    next if ref.domain == "localhost" # these really shouldn't have gotten in
-    domain = ref.domain[%r{[^\.]+\.[^\.]+$}] || ref.domain
-    domain = domain.sub("google.com", "Google").
-                    sub("bing.com", "Bing").
-                    sub("escholarship.org", "eScholarship").
-                    sub("facebook.com", "Facebook").
-                    sub("yahoo.com", "Yahoo")
-    counts[domain] += refsHash[ref.id.to_s].to_i
+    domain = translateRefDomain(ref.domain)
+    domain and counts[domain] += refsHash[ref.id.to_s].to_i
   }
   return counts.sort { |a,b| -(a[1] <=> b[1]) }
 end
@@ -244,5 +256,50 @@ def unitStats_breakdownByItem(unitID)
 
   # Form the final data structure with everything needed to render the form and report
   out[:report_data] = itemData
+  return out.to_json
+end
+
+###################################################################################################
+def unitStats_referrals(unitID)
+  # Get the raw referral stats and stick them into hashes
+  out, queryParams = getStatsParams(unitID, 4)
+  totalsByID = Hash.new { |h,k| h[k] = 0 }
+  monthsByID = Hash.new { |h,k| h[k] = {} }
+  UnitStat.where(unit_id: unitID, month: queryParams[:startYrMo]..queryParams[:endYrMo]).each { |st|
+    (JSON.parse(st.attrs)['ref'] || {}).each { |refID, ct|
+      refID != "other" and totalsByID[refID] += ct
+      monthsByID[st.month][refID] = ct
+    }
+  }
+
+  # Translate the IDs to strings (e.g. "Google", or "nih.gov")
+  idToStr = Hash[Referrer.where(id: totalsByID.keys).map{ |ref| [ref[:id], translateRefDomain(ref[:domain])] }]
+  totalsByStr = Hash.new { |h,k| h[k] = 0 }
+  totalsByID.each { |id, count| totalsByStr[idToStr[id.to_i]] += count }
+
+  # Pick the top 25 and sum the final data
+  top25 = Hash[totalsByStr.sort { |a,b| -(a[1] <=> b[1]) }[0..24]]
+  monthsByStr = Hash.new { |h,k| h[k] = Hash.new { |h2,k2| h2[k2] = 0 } }
+  totalOther = 0
+  monthsByID.each { |month, refs|
+    refs.each { |refID, ct|
+      refStr = idToStr[refID.to_i]
+      if refID != "other" && top25.key?(refStr)
+        monthsByStr[refStr][month] += ct
+      else
+        monthsByStr["other"][month] += ct
+        totalOther += ct
+      end
+    }
+  }
+  totalOther > 0 and top25["other"] = totalOther
+
+  # Form the final data structure with everything needed to render the form and report
+  out[:report_data] = top25.map { |refStr, total|
+    { referrer: refStr,
+      total_referrals: total,
+      by_month: monthsByStr[refStr] || {}
+    }
+  }
   return out.to_json
 end
