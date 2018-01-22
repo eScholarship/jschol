@@ -107,6 +107,8 @@ class UnitStats_Summary extends React.Component {
           <li><Link to={`/uc/${this.props.params.unitID}/stats/referrals`}>Referrals</Link></li>
           {data.num_categories > 1 &&
             <li><Link to={`/uc/${this.props.params.unitID}/stats/deposits_by_category`}>Deposits by Category</Link></li>}
+          {data.has_children &&
+            <li><Link to={`/uc/${this.props.params.unitID}/stats/deposits_by_unit`}>Deposits by Unit</Link></li>}
         </ul>
       </div>
     )
@@ -413,6 +415,58 @@ class UnitStats_DepositsByCategory extends React.Component {
   }
 }
 
+class UnitStats_DepositsByUnit extends React.Component {
+  render() {
+    let data = this.props.data
+    return(
+      <div className="c-statsReport">
+        <MetaTagsComp title={`Deposits by Unit: ${data.unit_name}`}/>
+        <h1><Link to={`/uc/${this.props.params.unitID}/stats`}>{data.unit_name}</Link></h1>
+        <h2>Stats: Deposits by Unit</h2>
+        <StatsForm location={this.props.location} data={data} names={["st_yr", "st_mo", "en_yr", "en_mo"]}/>
+        <div className="c-datatable">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col" key="id">Unit</th>
+                {data.any_drill_down &&
+                  <th scope="col" key="dd">Drill down</th>}
+                {data.report_months.length > 1 &&
+                  <th scope="col" key="total">Total deposits</th>}
+                {data.report_months.map(ym =>
+                  <th scope="col" key={ym}>{ymToString(ym)}</th>
+                )}
+              </tr>
+            </thead>
+            <tbody>
+              {_.map(data.report_data, cd =>
+                <tr key={cd.unit_name}>
+                  <th scope="row" key="id">
+                    {cd.unit_name != "Overall" ?
+                      <Link to={`/uc/${cd.unit_id}/stats`}>{cd.unit_name}</Link> :
+                      cd.unit_name }
+                  </th>
+                  {data.any_drill_down &&
+                    <th key="dd">
+                      {cd.num_children > 0 &&
+                        <Link to={`/uc/${cd.unit_id}/stats/deposits_by_unit${this.props.location.search}`}>{cd.num_children} unit{cd.num_children != 1 ? "s" : ""}</Link>}
+                    </th>
+                  }
+                  {data.report_months.length > 1 &&
+                    <td key="total">{formatNum(cd.total_deposits)}</td>}
+                  {data.report_months.map(ym =>
+                    <td key={ym}>{formatNum(cd.by_month[ym] > 0 ? cd.by_month[ym] : null)}</td>
+                  )}
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    )
+  }
+}
+
 export default class StatsPage extends PageBase
 {
   pageDataURL() {
@@ -449,5 +503,7 @@ export default class StatsPage extends PageBase
       return <UnitStats_Referrals data={data} {...this.props}/>
     else if (pageName == "deposits_by_category")
       return <UnitStats_DepositsByCategory data={data} {...this.props}/>
+    else if (pageName == "deposits_by_unit")
+      return <UnitStats_DepositsByUnit data={data} {...this.props}/>
   }
 }
