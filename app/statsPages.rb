@@ -11,13 +11,14 @@ $topUnitItems = %{
 def statsData(pageName)
   unitID = params[:unitID]
   case pageName
-  when 'summary';            unitStats_summary(unitID)
-  when 'history_by_item';    unitStats_historyByItem(unitID)
-  when 'history_by_issue';   unitStats_historyByIssue(unitID)
-  when 'breakdown_by_item';  unitStats_breakdownByItem(unitID)
-  when 'breakdown_by_issue'; unitStats_breakdownByIssue(unitID)
-  when 'breakdown_by_month'; unitStats_breakdownByMonth(unitID)
-  when 'referrals';          unitStats_referrals(unitID)
+  when 'summary';              unitStats_summary(unitID)
+  when 'history_by_item';      unitStats_historyByItem(unitID)
+  when 'history_by_issue';     unitStats_historyByIssue(unitID)
+  when 'breakdown_by_item';    unitStats_breakdownByItem(unitID)
+  when 'breakdown_by_issue';   unitStats_breakdownByIssue(unitID)
+  when 'breakdown_by_month';   unitStats_breakdownByMonth(unitID)
+  when 'referrals';            unitStats_referrals(unitID)
+  when 'deposits_by_category'; unitStats_depositsByCategory(unitID)
   else raise("unknown stats page #{pageName.inspect}")
   end
 end
@@ -117,6 +118,7 @@ def unitStats_summary(unitID)
     recent_hist: UnitStat.where(unit_id: unitID, month: startYrmo..endYrmo).order(Sequel.desc(:month)).map{ |mst|
       [mst.month, JSON.parse(mst.attrs)['hit'].to_i] },
     referrals: translateRefs(attrs['ref'])[0..4],
+    num_categories: CategoryStat.select(:category).distinct.where(unit_id: unitID).count
   }.to_json
 end
 
@@ -299,6 +301,35 @@ def unitStats_referrals(unitID)
     { referrer: refStr,
       total_referrals: total,
       by_month: monthsByStr[refStr] || {}
+    }
+  }
+  return out.to_json
+end
+
+###################################################################################################
+def unitStats_depositsByCategory(unitID)
+  # Splat the raw stats into a hash
+  out, queryParams = getStatsParams(unitID, 4)
+  overall = Hash.new { |h,k| h[k] = 0 }
+  posts = Hash.new { |h,k| h[k] = Hash.new { |h2,k2| h2[k2] = 0 } }
+  CategoryStat.where(unit_id: unitID, month: queryParams[:startYrMo]..queryParams[:endYrMo]).each { |st|
+    attrs = JSON.parse(st.attrs)
+    nPosts = attrs['post'].to_i
+    next if nPosts == 0
+    st.category =~ /^postprints:/ and posts['postprints'][st.month] += nPosts
+    posts[st.category][st.month] += nPosts
+    overall[st.month] += nPosts
+  }
+
+  # Form the final data structure with everything needed to render the form and report
+  out[:report_data] = [ {
+    category: "Overall",
+    total_deposits: overall.values.inject{|s,n| s+n},
+    by_month: overall
+  } ] + posts.sort.map { |cat, byMonth|
+    { category: cat,
+      total_deposits: byMonth.values.inject{|s,n| s+n},
+      by_month: byMonth
     }
   }
   return out.to_json

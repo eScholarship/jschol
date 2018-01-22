@@ -11,6 +11,9 @@ import PageBase from './PageBase.jsx'
 const ymToString = ym =>
   ym.toString().substr(0,4) + "-" + ym.toString().substr(4,2)
 
+const formatNum = n =>
+  n && n.toLocaleString()
+
 class StatsForm extends React.Component {
   render = () =>
     <Form to={this.props.location.pathname} method="GET">
@@ -63,10 +66,10 @@ class UnitStats_Summary extends React.Component {
             </thead>
             <tbody>
               <tr>
-                <td>{data.posts}</td>
-                <td>{data.hits}</td>
-                <td>{data.downloads}</td>
-                <td>{data.hits - data.downloads}</td>
+                <td>{formatNum(data.posts)}</td>
+                <td>{formatNum(data.hits)}</td>
+                <td>{formatNum(data.downloads)}</td>
+                <td>{formatNum(data.hits - data.downloads)}</td>
               </tr>
             </tbody>
           </table>
@@ -85,7 +88,7 @@ class UnitStats_Summary extends React.Component {
             <tbody>
               <tr>
                 {_.map(data.referrals, rd =>
-                  <td key={rd[0]}>{rd[1]}</td>
+                  <td key={rd[0]}>{formatNum(rd[1])}</td>
                 )}
               </tr>
             </tbody>
@@ -102,6 +105,8 @@ class UnitStats_Summary extends React.Component {
           <li><Link to={`/uc/${this.props.params.unitID}/stats/breakdown_by_item`}>Breakdown by Item</Link></li>
           <li><Link to={`/uc/${this.props.params.unitID}/stats/history_by_item`}>History by Item</Link></li>
           <li><Link to={`/uc/${this.props.params.unitID}/stats/referrals`}>Referrals</Link></li>
+          {data.num_categories > 1 &&
+            <li><Link to={`/uc/${this.props.params.unitID}/stats/deposits_by_category`}>Deposits by Category</Link></li>}
         </ul>
       </div>
     )
@@ -140,9 +145,9 @@ class UnitStats_HistoryByItem extends React.Component {
                     <ArbitraryHTMLComp html={md.title} h1Level={2}/>
                   </td>
                   {data.report_months.length > 1 &&
-                    <td key="total">{md.total_hits}</td>}
+                    <td key="total">{formatNum(md.total_hits)}</td>}
                   {data.report_months.map(ym =>
-                    <td key={ym}>{md.by_month[ym] > 0 ? md.by_month[ym] : null}</td>
+                    <td key={ym}>{md.by_month[ym] > 0 ? formatNum(md.by_month[ym]) : null}</td>
                   )}
                 </tr>
               )}
@@ -185,9 +190,9 @@ class UnitStats_HistoryByIssue extends React.Component {
                       <Link to={`/uc/${this.props.params.unitID}/${md.vol_num}/${md.iss_num}`}>{issue}</Link>
                     </th>
                     {data.report_months.length > 1 &&
-                      <td key="total">{md.total_hits}</td>}
+                      <td key="total">{formatNum(md.total_hits)}</td>}
                     {data.report_months.map(ym =>
-                      <td key={ym}>{md.by_month[ym] > 0 ? md.by_month[ym] : null}</td>
+                      <td key={ym}>{md.by_month[ym] > 0 ? formatNum(md.by_month[ym]) : null}</td>
                     )}
                   </tr>
                 )}
@@ -233,9 +238,9 @@ class UnitStats_Referrals extends React.Component {
                 <tr key={md.referrer}>
                   <th scope="row" key="id">{md.referrer}</th>
                   {fmonths.length > 1 &&
-                    <td key="total">{md.total_referrals}</td>}
+                    <td key="total">{formatNum(md.total_referrals)}</td>}
                   {fmonths.map(ym =>
-                    <td key={ym}>{md.by_month[ym] > 0 ? md.by_month[ym] : null}</td>
+                    <td key={ym}>{md.by_month[ym] > 0 ? formatNum(md.by_month[ym]) : null}</td>
                   )}
                 </tr>
               )}
@@ -276,9 +281,9 @@ class UnitStats_BreakdownByItem extends React.Component {
                   <th className="c-statsReport-title">
                     <ArbitraryHTMLComp html={md.title} h1Level={2}/>
                   </th>
-                  <td>{md.total_hits}</td>
-                  <td>{md.total_downloads}</td>
-                  <td>{md.total_hits - md.total_downloads}</td>
+                  <td>{formatNum(md.total_hits)}</td>
+                  <td>{formatNum(md.total_downloads)}</td>
+                  <td>{formatNum(md.total_hits - md.total_downloads)}</td>
                 </tr>
               )}
             </tbody>
@@ -317,9 +322,9 @@ class UnitStats_BreakdownByIssue extends React.Component {
                     <th scope="row">
                       <Link to={`/uc/${this.props.params.unitID}/${md.vol_num}/${md.iss_num}`}>{issue}</Link>
                     </th>
-                    <td>{md.total_hits}</td>
-                    <td>{md.total_downloads}</td>
-                    <td>{md.total_hits - md.total_downloads}</td>
+                    <td>{formatNum(md.total_hits)}</td>
+                    <td>{formatNum(md.total_downloads)}</td>
+                    <td>{formatNum(md.total_hits - md.total_downloads)}</td>
                   </tr>
                 )}
               )}
@@ -354,10 +359,50 @@ class UnitStats_BreakdownByMonth extends React.Component {
               {_.map(data.report_data, md =>
                 <tr key={md[0]}>
                   <td>{ymToString(md[0])}</td>
-                  <td>{md[1]}</td>
-                  <td>{md[2]}</td>
-                  <td>{md[3]}</td>
-                  <td>{md[2] - md[3]}</td>
+                  <td>{formatNum(md[1])}</td>
+                  <td>{formatNum(md[2])}</td>
+                  <td>{formatNum(md[3])}</td>
+                  <td>{formatNum(md[2] - md[3])}</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    )
+  }
+}
+
+class UnitStats_DepositsByCategory extends React.Component {
+  render() {
+    let data = this.props.data
+    return(
+      <div className="c-statsReport">
+        <MetaTagsComp title={`Deposits by Category: ${data.unit_name}`}/>
+        <h1><Link to={`/uc/${this.props.params.unitID}/stats`}>{data.unit_name}</Link></h1>
+        <h2>Stats: Deposits by Category</h2>
+        <StatsForm location={this.props.location} data={data} names={["st_yr", "st_mo", "en_yr", "en_mo"]}/>
+        <div className="c-datatable">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col" key="id">Category</th>
+                {data.report_months.length > 1 &&
+                  <th scope="col" key="total">Total deposits</th>}
+                {data.report_months.map(ym =>
+                  <th scope="col" key={ym}>{ymToString(ym)}</th>
+                )}
+              </tr>
+            </thead>
+            <tbody>
+              {_.map(data.report_data, cd =>
+                <tr key={cd.category}>
+                  <th scope="row" key="id">{cd.category.replace(/^postprints:/, "\xa0\xa0\xa0\xa0")}</th>
+                  {data.report_months.length > 1 &&
+                    <td key="total">{formatNum(cd.total_deposits)}</td>}
+                  {data.report_months.map(ym =>
+                    <td key={ym}>{formatNum(cd.by_month[ym] > 0 ? cd.by_month[ym] : null)}</td>
+                  )}
                 </tr>
               )}
             </tbody>
@@ -402,5 +447,7 @@ export default class StatsPage extends PageBase
       return <UnitStats_BreakdownByMonth data={data} {...this.props}/>
     else if (pageName == "referrals")
       return <UnitStats_Referrals data={data} {...this.props}/>
+    else if (pageName == "deposits_by_category")
+      return <UnitStats_DepositsByCategory data={data} {...this.props}/>
   }
 }
