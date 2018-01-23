@@ -123,21 +123,36 @@ class UnitStats_Summary extends React.Component {
         </div>
 
         <h2>Available Reports</h2>
-        <ul>
-          <li><Link to={`/uc/${this.props.params.unitID}/stats/breakdown_by_month`}>Breakdown by Month</Link></li>
-          {data.unit_type == "journal" &&
-            <li><Link to={`/uc/${this.props.params.unitID}/stats/breakdown_by_issue`}>Breakdown by Issue</Link></li>}
-          {data.unit_type == "journal" &&
-            <li><Link to={`/uc/${this.props.params.unitID}/stats/history_by_issue`}>History by Issue</Link></li>}
-          <li><Link to={`/uc/${this.props.params.unitID}/stats/breakdown_by_item`}>Breakdown by Item</Link></li>
-          <li><Link to={`/uc/${this.props.params.unitID}/stats/history_by_item`}>History by Item</Link></li>
-          <li><Link to={`/uc/${this.props.params.unitID}/stats/referrals`}>Referrals</Link></li>
-          {data.num_categories > 1 &&
-            <li><Link to={`/uc/${this.props.params.unitID}/stats/deposits_by_category`}>Deposits by Category</Link></li>}
-          {data.has_children &&
-            <li><Link to={`/uc/${this.props.params.unitID}/stats/deposits_by_unit`}>Deposits by Unit</Link></li>}
-          {data.has_children &&
-            <li><Link to={`/uc/${this.props.params.unitID}/stats/req_total_by_unit`}>Request Total by Unit</Link></li>}
+        <ul className="c-reportList">
+          <li>
+            History by:
+            {data.unit_type == "journal" &&
+              <Link to={`/uc/${this.props.params.unitID}/stats/history_by_issue`}>Issue</Link>}
+            <Link to={`/uc/${this.props.params.unitID}/stats/history_by_item`}>Item</Link>
+            {data.has_children &&
+              <Link to={`/uc/${this.props.params.unitID}/stats/history_by_unit`}>Unit</Link> }
+          </li>
+          <li>
+            Breakdown by:
+            <Link to={`/uc/${this.props.params.unitID}/stats/breakdown_by_month`}>Month</Link>
+            {data.unit_type == "journal" &&
+              <Link to={`/uc/${this.props.params.unitID}/stats/breakdown_by_issue`}>Issue</Link>}
+            <Link to={`/uc/${this.props.params.unitID}/stats/breakdown_by_item`}>Item</Link>
+            {data.has_children &&
+              <Link to={`/uc/${this.props.params.unitID}/stats/breakdown_by_unit`}>Unit</Link> }
+          </li>
+          <li>
+            Referrals by: <Link to={`/uc/${this.props.params.unitID}/stats/referrals`}>Month</Link>
+          </li>
+          {(data.num_categories > 1 || data.has_children) &&
+            <li>
+              Deposits by:
+              {data.num_categories > 1 &&
+                <Link to={`/uc/${this.props.params.unitID}/stats/deposits_by_category`}>Category</Link>}
+              {data.has_children &&
+                <Link to={`/uc/${this.props.params.unitID}/stats/deposits_by_unit`}>Unit</Link>}
+            </li>
+          }
         </ul>
       </div>
     )
@@ -379,7 +394,7 @@ class UnitStats_BreakdownByMonth extends React.Component {
             <tbody>
               {_.map(data.report_data, md =>
                 <tr key={md[0]}>
-                  <td>{ymToString(md[0])}</td>
+                  <th scope="row">{ymToString(md[0])}</th>
                   <td>{formatNum(md[1])}</td>
                   <td>{formatNum(md[2])}</td>
                   <td>{formatNum(md[3])}</td>
@@ -462,10 +477,10 @@ class UnitStats_DepositsByUnit extends React.Component {
                       cd.unit_name }
                   </th>
                   {data.any_drill_down &&
-                    <th key="dd">
+                    <td key="dd">
                       {cd.child_types &&
                         <Link to={`/uc/${cd.unit_id}/stats/deposits_by_unit${this.props.location.search}`}>{describeChildren(cd.child_types)}</Link>}
-                    </th>
+                    </td>
                   }
                   {data.report_months.length > 1 &&
                     <td key="total">{formatNum(cd.total_deposits)}</td>}
@@ -482,12 +497,12 @@ class UnitStats_DepositsByUnit extends React.Component {
   }
 }
 
-class UnitStats_ReqTotalByUnit extends React.Component {
+class UnitStats_HistoryByUnit extends React.Component {
   render() {
     let p = this.props
     return(
       <div className="c-statsReport">
-        <StatsHeader title="Request Total by Unit" {...p}/>
+        <StatsHeader title="History by Unit" {...p}/>
         <StatsForm names={["st_yr", "st_mo", "en_yr", "en_mo"]} {...p}/>
         <div className="c-datatable">
           <table>
@@ -512,16 +527,62 @@ class UnitStats_ReqTotalByUnit extends React.Component {
                       cd.unit_name }
                   </th>
                   {p.data.any_drill_down &&
+                    <td key="dd">
+                      {cd.child_types &&
+                        <Link to={`/uc/${cd.unit_id}/stats/${p.params.pageName}${p.location.search}`}>{describeChildren(cd.child_types)}</Link>}
+                    </td>
+                  }
+                  {p.data.report_months.length > 1 &&
+                    <td key="total">{formatNum(cd.total_requests)}</td>}
+                  {p.data.report_months.map(ym =>
+                    <td key={ym}>{formatNum(cd.by_month[ym] > 0 ? cd.by_month[ym] : null)}</td>
+                  )}
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    )
+  }
+}
+
+class UnitStats_BreakdownByUnit extends React.Component {
+  render() {
+    let p = this.props
+    return(
+      <div className="c-statsReport">
+        <StatsHeader title="History by Unit" {...p}/>
+        <StatsForm names={["st_yr", "st_mo", "en_yr", "en_mo"]} {...p}/>
+        <div className="c-datatable">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col" key="id">Unit</th>
+                {p.data.any_drill_down &&
+                  <th scope="col" key="dd">Drill down</th>}
+                <th scope="col" key="total">Total requests</th>
+                <th scope="col">Download</th>
+                <th scope="col">View-only</th>
+              </tr>
+            </thead>
+            <tbody>
+              {_.map(p.data.report_data, cd =>
+                <tr key={cd.unit_name}>
+                  <th scope="row" key="id">
+                    {cd.unit_name != "Overall" ?
+                      <Link to={`/uc/${cd.unit_id}/stats`}>{cd.unit_name}</Link> :
+                      cd.unit_name }
+                  </th>
+                  {p.data.any_drill_down &&
                     <th key="dd">
                       {cd.child_types &&
                         <Link to={`/uc/${cd.unit_id}/stats/${p.params.pageName}${p.location.search}`}>{describeChildren(cd.child_types)}</Link>}
                     </th>
                   }
-                  {p.data.report_months.length > 1 &&
-                    <td key="total">{formatNum(cd.total_deposits)}</td>}
-                  {p.data.report_months.map(ym =>
-                    <td key={ym}>{formatNum(cd.by_month[ym] > 0 ? cd.by_month[ym] : null)}</td>
-                  )}
+                  <td>{formatNum(cd.total_requests)}</td>
+                  <td>{formatNum(cd.total_downloads)}</td>
+                  <td>{formatNum(cd.total_requests - cd.total_downloads)}</td>
                 </tr>
               )}
             </tbody>
@@ -570,7 +631,9 @@ export default class StatsPage extends PageBase
       return <UnitStats_DepositsByCategory data={data} {...this.props}/>
     else if (pageName == "deposits_by_unit")
       return <UnitStats_DepositsByUnit data={data} {...this.props}/>
-    else if (pageName == "req_total_by_unit")
-      return <UnitStats_ReqTotalByUnit data={data} {...this.props}/>
+    else if (pageName == "history_by_unit")
+      return <UnitStats_HistoryByUnit data={data} {...this.props}/>
+    else if (pageName == "breakdown_by_unit")
+      return <UnitStats_BreakdownByUnit data={data} {...this.props}/>
   }
 }

@@ -20,7 +20,8 @@ def statsData(pageName)
   when 'referrals';            unitStats_referrals(unitID)
   when 'deposits_by_category'; unitStats_depositsByCategory(unitID)
   when 'deposits_by_unit';     unitStats_depositsByUnit(unitID)
-  when 'req_total_by_unit';    unitStats_reqTotalByUnit(unitID)
+  when 'history_by_unit';      unitStats_historyByUnit(unitID)
+  when 'breakdown_by_unit';    unitStats_breakdownByUnit(unitID)
   else raise("unknown stats page #{pageName.inspect}")
   end
 end
@@ -371,12 +372,10 @@ def unitStats_depositsByUnit(unitID)
       posts[st.unit_id][st.month] += nPosts
     end
   }
-
-  (Set.new(childUnitIDs) - childrenFound).each { |missing|
-    posts[missing] = {}
-  }
-
   totalByUnit = Hash[posts.map { |unitID, byMonth| [unitID, byMonth.values.inject{|s,n| s+n}] }]
+
+  # Make sure even units with no data are represented.
+  childUnitIDs.each { |id| posts[id] ||= {} }
 
   # Form the final data structure with everything needed to render the form and report
   out[:any_drill_down] = childUnitIDs.any? { |childID| !!$hierByAncestor[childID] }
@@ -400,7 +399,7 @@ def unitStats_depositsByUnit(unitID)
 end
 
 ###################################################################################################
-def unitStats_reqTotalByUnit(unitID)
+def unitStats_historyByUnit(unitID)
   # Splat the raw stats into a hash
   out, queryParams = getStatsParams(unitID, 4)
   childUnitIDs = ($hierByAncestor[unitID] || []).map{|u| u.unit_id}
@@ -429,14 +428,59 @@ def unitStats_reqTotalByUnit(unitID)
   }
   out[:report_data] = [ {
     unit_name: "Overall",
-    total_deposits: overall.values.inject{|s,n| s+n},
+    total_requests: overall.values.inject{|s,n| s+n},
     by_month: overall
   } ] + data.map { |unitID, byMonth|
     { unit_id: unitID,
       unit_name: $unitsHash[unitID].name,
       child_types: getChildTypes(unitID),
-      total_deposits: totalByUnit[unitID],
+      total_requests: totalByUnit[unitID],
       by_month: byMonth
+    }
+  }
+  return out.to_json
+end
+
+###################################################################################################
+def unitStats_breakdownByUnit(unitID)
+  # Splat the raw stats into a hash
+  out, queryParams = getStatsParams(unitID, 4)
+  childUnitIDs = ($hierByAncestor[unitID] || []).map{|u| u.unit_id}
+  overall = Hash.new { |h,k| h[k] = 0 }
+  data = Hash.new { |h,k| h[k] = Hash.new { |h2,k2| h2[k2] = 0 } }
+  UnitStat.where(unit_id: [unitID]+childUnitIDs, month: queryParams[:startYrMo]..queryParams[:endYrMo]).each { |st|
+    attrs = JSON.parse(st.attrs)
+    hits = attrs['hit'].to_i
+    downloads = attrs['dl'].to_i
+    next if hits == 0
+    if st.unit_id == unitID
+      overall[:hits] += hits
+      overall[:downloads] += downloads
+    else
+      data[st.unit_id][:hits] += hits
+      data[st.unit_id][:downloads] += downloads
+    end
+  }
+
+  # Make sure even units with no data are represented.
+  childUnitIDs.each { |id| data[id] ||= {} }
+
+  # Form the final data structure with everything needed to render the form and report
+  out[:any_drill_down] = childUnitIDs.any? { |childID| !!$hierByAncestor[childID] }
+  data = data.sort { |a,b|
+    n = -((a[1][:hits]||0) <=> (b[1][:hits]||0))
+    n != 0 ? n : $unitsHash[a[0]].name <=> $unitsHash[b[0]].name
+  }
+  out[:report_data] = [ {
+    unit_name: "Overall",
+    total_requests: overall[:hits],
+    total_downloads: overall[:downloads]
+  } ] + data.map { |unitID, rd|
+    { unit_id: unitID,
+      unit_name: $unitsHash[unitID].name,
+      child_types: getChildTypes(unitID),
+      total_requests: rd[:hits],
+      total_downloads: rd[:downloads]
     }
   }
   return out.to_json
