@@ -635,6 +635,44 @@ class UnitStats_AvgByUnit extends React.Component {
   }
 }
 
+class UnitStats_AvgByCategory extends React.Component {
+  render() {
+    let data = this.props.data
+    return(
+      <div className="c-statsReport">
+        <StatsHeader title="Average Requests per Item by Category" {...this.props}/>
+        <StatsForm location={this.props.location} data={data} names={["st_yr", "st_mo", "en_yr", "en_mo"]}/>
+        <div className="c-datatable">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col" key="id">Category</th>
+                {data.report_months.length > 1 &&
+                  <th scope="col" key="total">Avg req/item</th>}
+                {data.report_months.map(ym =>
+                  <th scope="col" key={ym}>{ymToString(ym)}</th>
+                )}
+              </tr>
+            </thead>
+            <tbody>
+              {_.map(data.report_data, cd =>
+                <tr key={cd.category}>
+                  <th scope="row" key="id">{cd.category.replace(/^postprints:/, "\xa0\xa0\xa0\xa0")}</th>
+                  {data.report_months.length > 1 &&
+                    <td key="total">{cd.total_avg}</td>}
+                  {data.report_months.map(ym =>
+                    <td key={ym}>{cd.by_month[ym] > 0 ? cd.by_month[ym] : null}</td>
+                  )}
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    )
+  }
+}
+
 class UnitStats_BreakdownByUnit extends React.Component {
   render() {
     let p = this.props
@@ -730,5 +768,7 @@ export default class StatsPage extends PageBase
       return <UnitStats_BreakdownByUnit data={data} {...this.props}/>
     else if (pageName == "avg_by_unit")
       return <UnitStats_AvgByUnit data={data} {...this.props}/>
+    else if (pageName == "avg_by_category")
+      return <UnitStats_AvgByCategory data={data} {...this.props}/>
   }
 }
