@@ -48,22 +48,46 @@ def monthRange(startYm, endYm)
 end
 
 ###################################################################################################
-def getStatsParams(unitID, nMonths)
-  defaultStart = Date.today << nMonths
-  defaultEnd   = Date.today << 1
-  startYear  = clamp(1995,      Date.today.year, (params[:st_yr] || defaultStart.year).to_i)
-  startMonth = clamp(1,         12,              (params[:st_mo] || defaultStart.month).to_i)
-  endYear    = clamp(startYear, Date.today.year, (params[:en_yr] || defaultEnd.year).to_i)
-  endMonth   = clamp(1,         12,              (params[:en_mo] || defaultEnd .month).to_i)
-  limit      = clamp(1,         500,             (params[:limit] || 50).to_i)
-  if startYear == endYear
-    endMonth = [startMonth, endMonth].max
+def getStatsParams(unitID, includeNoHitYears = false)
+  defaultEnd = Date.today << 1
+  s = Sequel.lit("attrs->'$.#{includeNoHitYears ? 'post' : 'hit'}' is not null")
+  minYrmo = UnitStat.where(unit_id: unitID).where(s).min(:month)
+  minYear = minYrmo / 100
+  range = params[:range] || "4mo"
+  if params[:range] == "custom"
+    defaultStart = Date.today << nMonths
+    startYear  = clamp(minYear,   Date.today.year, (params[:st_yr] || defaultStart.year).to_i)
+    startMonth = clamp(1,         12,              (params[:st_mo] || defaultStart.month).to_i)
+    endYear    = clamp(startYear, Date.today.year, (params[:en_yr] || defaultEnd.year).to_i)
+    endMonth   = clamp(1,         12,              (params[:en_mo] || defaultEnd .month).to_i)
+    if startYear == endYear
+      endMonth = [startMonth, endMonth].max
+    end
+    if startYear == minYear
+      startMonth = [startMonth, minYrmo % 100].max
+    end
+    if endYear == Date.today.year
+      endMonth = [endMonth, Date.today.month].min
+    end
+  else
+    start = range == "all" ? Date.new(minYear, minYrmo%100, 1) :
+            range.include?("yr") ? Date.today << (range.to_i*12) :
+            Date.today << range.to_i
+    startYear = start.year; startMonth = start.month
+    endYear = defaultEnd.year; endMonth = defaultEnd.month
   end
+  limit      = clamp(1, 500, (params[:limit] || 50).to_i)
   parentUnit = $hierByUnit[unitID] && $hierByUnit[unitID][0].ancestor_unit
   return { unit_name:     $unitsHash[unitID].name,
-           parent_unit_id: parentUnit,
-           parent_unit_name: parentUnit && $unitsHash[parentUnit].name,
-           year_range:    (1995 .. Date.today.year).to_a,
+           parent_id:     parentUnit,
+           parent_name:   parentUnit && $unitsHash[parentUnit].name,
+           all_years:     (minYear .. Date.today.year).to_a,
+           range:         range,
+           date_str:      (startYear==endYear && startMonth==endMonth) ?
+                             "#{Date::MONTHNAMES[startMonth]}, #{startYear}" :
+                          (startYear==endYear) ?
+                             "#{Date::MONTHNAMES[startMonth]} to #{Date::MONTHNAMES[endMonth]}, #{startYear}" :
+                          "#{Date::MONTHNAMES[startMonth]}, #{startYear} to #{Date::MONTHNAMES[endMonth]}, #{endYear}",
            st_yr:         startYear,
            st_mo:         startMonth,
            en_yr:         endYear,
@@ -108,24 +132,20 @@ end
 ###################################################################################################
 def unitStats_summary(unitID)
   # Summary data for the current month is so easy
-  startDate = Date.today << 4  # 4 mos ago
   endDate = Date.today << 1  # last month
-  startYrmo = startDate.year*100 + startDate.month
   endYrmo = endDate.year*100 + endDate.month
-  st = UnitStat.where(unit_id: unitID, month: endDate.year*100 + endDate.month).first
+  st = UnitStat.where(unit_id: unitID, month: endYrmo).first
   attrs = st && st.attrs ? JSON.parse(st.attrs) : {}
   parentUnit = $hierByUnit[unitID] && $hierByUnit[unitID][0].ancestor_unit
   return {
     unit_name: $unitsHash[unitID].name,
     unit_type: $unitsHash[unitID].type,
-    parent_unit_id: parentUnit,
-    parent_unit_name: parentUnit && $unitsHash[parentUnit].name,
+    parent_id: parentUnit,
+    parent_name: parentUnit && $unitsHash[parentUnit].name,
     dateStr: "#{Date::MONTHNAMES[endDate.month]} #{endDate.year}",
     posts: attrs['post'].to_i,
     hits: attrs['hit'].to_i,
     downloads: attrs['dl'].to_i,
-    recent_hist: UnitStat.where(unit_id: unitID, month: startYrmo..endYrmo).order(Sequel.desc(:month)).map{ |mst|
-      [mst.month, JSON.parse(mst.attrs)['hit'].to_i] },
     referrals: translateRefs(attrs['ref'])[0..4],
     num_categories: CategoryStat.select(:category).distinct.where(unit_id: unitID).count,
     has_children: !!$hierByAncestor[unitID]
@@ -134,18 +154,17 @@ end
 
 ###################################################################################################
 def unitStats_breakdownByMonth(unitID)
-  return {
-    unit_name: $unitsHash[unitID].name,
-    report_data: UnitStat.where(unit_id: unitID).order(Sequel.desc(:month)).map{ |st|
-      attrs = JSON.parse(st.attrs)
-      [st.month, attrs['post'].to_i, attrs['hit'].to_i, attrs['dl'].to_i] }
-  }.to_json
+  out, queryParams = getStatsParams(unitID, true)  # include post months
+  out[:report_data] = UnitStat.where(unit_id: unitID).order(Sequel.desc(:month)).map{ |st|
+    attrs = JSON.parse(st.attrs)
+    [st.month, attrs['post'].to_i, attrs['hit'].to_i, attrs['dl'].to_i] }
+  return out.to_json
 end
 
 ###################################################################################################
 def unitStats_historyByItem(unitID)
   # Get all the stats and stick them in a big hash
-  out, queryParams = getStatsParams(unitID, 4)
+  out, queryParams = getStatsParams(unitID)
   query = Sequel::SQL::PlaceholderLiteralString.new(%{
     select item_stats.attrs->"$.hit" hits, month, id, title, total_hits from item_stats
     inner join items on item_stats.item_id = items.id
@@ -176,7 +195,7 @@ end
 ###################################################################################################
 def unitStats_historyByIssue(unitID)
   # Get all the stats and stick them in a big hash
-  out, queryParams = getStatsParams(unitID, 4)
+  out, queryParams = getStatsParams(unitID)
   query = Sequel::SQL::PlaceholderLiteralString.new(%{
     select volume, issue, issues.attrs->"$.numbering", month, sum(item_stats.attrs->"$.hit") hits
     from issues
@@ -213,7 +232,7 @@ end
 ###################################################################################################
 def unitStats_breakdownByIssue(unitID)
   # Get all the stats and stick them in a big hash
-  out, queryParams = getStatsParams(unitID, 4)
+  out, queryParams = getStatsParams(unitID)
   query = Sequel::SQL::PlaceholderLiteralString.new(%{
     select volume, issue, issues.attrs->"$.numbering",
            sum(item_stats.attrs->"$.hit") total_hit, sum(item_stats.attrs->"$.dl") total_dl
@@ -246,7 +265,7 @@ end
 ###################################################################################################
 def unitStats_breakdownByItem(unitID)
   # Get all the stats and stick them in a big hash
-  out, queryParams = getStatsParams(unitID, 1)
+  out, queryParams = getStatsParams(unitID)
   query = Sequel::SQL::PlaceholderLiteralString.new(%{
     select id, title, total_hit, total_dl from items
     inner join
@@ -274,7 +293,7 @@ end
 ###################################################################################################
 def unitStats_referrals(unitID)
   # Get the raw referral stats and stick them into hashes
-  out, queryParams = getStatsParams(unitID, 4)
+  out, queryParams = getStatsParams(unitID)
   totalsByID = Hash.new { |h,k| h[k] = 0 }
   monthsByID = Hash.new { |h,k| h[k] = {} }
   UnitStat.where(unit_id: unitID, month: queryParams[:startYrMo]..queryParams[:endYrMo]).each { |st|
@@ -319,7 +338,7 @@ end
 ###################################################################################################
 def unitStats_depositsByCategory(unitID)
   # Splat the raw stats into a hash
-  out, queryParams = getStatsParams(unitID, 4)
+  out, queryParams = getStatsParams(unitID, true) # true to include really old years
   overall = Hash.new { |h,k| h[k] = 0 }
   posts = Hash.new { |h,k| h[k] = Hash.new { |h2,k2| h2[k2] = 0 } }
   CategoryStat.where(unit_id: unitID, month: queryParams[:startYrMo]..queryParams[:endYrMo]).each { |st|
@@ -356,7 +375,7 @@ end
 ###################################################################################################
 def unitStats_depositsByUnit(unitID)
   # Splat the raw stats into a hash
-  out, queryParams = getStatsParams(unitID, 4)
+  out, queryParams = getStatsParams(unitID, true) # true to include really old years
   childUnitIDs = ($hierByAncestor[unitID] || []).map{|u| u.unit_id}
   overall = Hash.new { |h,k| h[k] = 0 }
   posts = Hash.new { |h,k| h[k] = Hash.new { |h2,k2| h2[k2] = 0 } }
@@ -401,7 +420,7 @@ end
 ###################################################################################################
 def unitStats_historyByUnit(unitID)
   # Splat the raw stats into a hash
-  out, queryParams = getStatsParams(unitID, 4)
+  out, queryParams = getStatsParams(unitID)
   childUnitIDs = ($hierByAncestor[unitID] || []).map{|u| u.unit_id}
   overall = Hash.new { |h,k| h[k] = 0 }
   data = Hash.new { |h,k| h[k] = Hash.new { |h2,k2| h2[k2] = 0 } }
@@ -444,7 +463,7 @@ end
 ###################################################################################################
 def unitStats_breakdownByUnit(unitID)
   # Splat the raw stats into a hash
-  out, queryParams = getStatsParams(unitID, 4)
+  out, queryParams = getStatsParams(unitID)
   childUnitIDs = ($hierByAncestor[unitID] || []).map{|u| u.unit_id}
   overall = Hash.new { |h,k| h[k] = 0 }
   data = Hash.new { |h,k| h[k] = Hash.new { |h2,k2| h2[k2] = 0 } }
@@ -452,11 +471,14 @@ def unitStats_breakdownByUnit(unitID)
     attrs = JSON.parse(st.attrs)
     hits = attrs['hit'].to_i
     downloads = attrs['dl'].to_i
+    deposits = attrs['post'].to_i
     next if hits == 0
     if st.unit_id == unitID
+      overall[:deposits] += deposits
       overall[:hits] += hits
       overall[:downloads] += downloads
     else
+      data[st.unit_id][:deposits] += deposits
       data[st.unit_id][:hits] += hits
       data[st.unit_id][:downloads] += downloads
     end
@@ -473,12 +495,14 @@ def unitStats_breakdownByUnit(unitID)
   }
   out[:report_data] = [ {
     unit_name: "Overall",
+    total_deposits: overall[:deposits],
     total_requests: overall[:hits],
     total_downloads: overall[:downloads]
   } ] + data.map { |unitID, rd|
     { unit_id: unitID,
       unit_name: $unitsHash[unitID].name,
       child_types: getChildTypes(unitID),
+      total_deposits: rd[:deposits],
       total_requests: rd[:hits],
       total_downloads: rd[:downloads]
     }

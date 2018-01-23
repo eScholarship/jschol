@@ -21,21 +21,25 @@ const describeChildren = childTypes => {
   return out.join(", ")
 }
 
+const statsLink = (unit, pageName, search) =>
+  `/uc/${unit}/stats${pageName ? "/"+pageName : ""}${search}`
+
 class StatsHeader extends React.Component {
   render() {
     let p = this.props
+    let isIssuePage = p.params.pageName && p.params.pageName.indexOf("issue")>=0
     return(
       <div>
         <MetaTagsComp title={`${p.title}: ${p.data.unit_name}`}/>
         <h1><Link to={`/uc/${p.params.unitID}/stats`}>{p.data.unit_name}</Link></h1>
-        { p.data.parent_unit_id &&
+        { p.data.parent_id && !isIssuePage &&
           <p>
-            Parent: <Link to={`/uc/${p.data.parent_unit_id}/stats/${p.params.pageName}${p.location.search}`}>
-              {p.data.parent_unit_name}
-            </Link>
+            Parent: <Link to={statsLink(p.data.parent_id, p.params.pageName, p.location.search)}>
+                      {p.data.parent_name}
+                    </Link>
           </p>
         }
-        <h2>Stats: {p.title}</h2>
+        <h2>Stats: {p.title} for {p.data.date_str}</h2>
       </div>
     )
   }
@@ -46,60 +50,60 @@ class StatsForm extends React.Component
   componentWillMount() { this.setState({customDates: this.props.data.range == "custom"}) }
   componentWillReceiveProps(nextProps) { this.setState({customDates: nextProps.data.range == "custom"}) }
 
-  onChangeRange = e => {
-    let custom = e.target.value == "custom"
-    this.setState({customDates: custom})
-    if (!custom)
-      setTimeout(()=>this.submitButton.click(), 300)
+  onChangeRange = e =>
+    this.setState({customDates: e.target.value == "custom"})
+
+  render() {
+    let p = this.props
+    return (
+      <Form to={p.location.pathname} method="GET">
+        <label htmlFor="range">Date range</label>
+        <select id="range" name="range" defaultValue={p.data.range} onChange={this.onChangeRange}>
+          <option value="1mo">1 month</option>
+          <option value="4mo">4 months</option>
+          <option value="12mo">12 months</option>
+          <option value="5yr">5 years</option>
+          <option value="all">All time</option>
+          <option value="custom">Custom</option>
+        </select>
+        {this.state.customDates &&
+          <span>
+            <label htmlFor="st_yr">Start year</label>
+            <select id="st_yr" name="st_yr" defaultValue={p.data.st_yr}>
+              {p.data.all_years.map(val => <option key={val} value={val}>{val}</option>)}
+            </select>
+
+            <label htmlFor="st_mo">Start month</label>
+            <select id="st_mo" name="st_mo" defaultValue={p.data.st_mo}>
+              {_.range(1,13).map(val => <option key={val} value={val}>{val}</option>)}
+            </select>
+
+            <label htmlFor="en_yr">End year</label>
+            <select id="en_yr" name="en_yr" defaultValue={p.data.en_yr}>
+              {p.data.all_years.map(val => <option key={val} value={val}>{val}</option>)}
+            </select>
+
+            <label htmlFor="en_mo">End month</label>
+            <select id="en_mo" name="en_mo" defaultValue={p.data.en_mo}>
+              {_.range(1,13).map(val => <option key={val} value={val}>{val}</option>)}
+            </select>
+          </span>
+        }
+        {p.names.indexOf("limit") >= 0 &&
+          <span key={name}>
+            <label htmlFor="limit">Max items:</label>
+            <select id="limit" name="limit" defaultValue={p.data.limit}>
+              <option key={50} value={50}>50</option>
+              <option key={100} value={100}>100</option>
+              <option key={200} value={200}>200</option>
+              <option key={500} value={500}>500</option>
+            </select>
+          </span>
+        }
+        <button type="submit" key="submit">Update</button>
+      </Form>
+    )
   }
-
-  render = () =>
-    <Form to={this.props.location.pathname} method="GET">
-      <label htmlFor="range">Date range</label>
-      <select id="range" name="range" defaultValue={this.props.data.range} onChange={this.onChangeRange}>
-        <option value="1mo">1 month</option>
-        <option value="4mo">4 months</option>
-        <option value="12mo">12 months</option>
-        <option value="5yr">5 years</option>
-        <option value="all">All time</option>
-        <option value="custom">Custom</option>
-      </select>
-      { this.state.customDates &&
-        <span>
-          <label htmlFor="st_yr">Start year</label>
-          <select id="st_yr" name="st_yr" defaultValue={this.props.data.st_yr}>
-            {this.props.data.year_range.map(val => <option key={val} value={val}>{val}</option>)}
-          </select>
-
-          <label htmlFor="st_mo">Start month</label>
-          <select id="st_mo" name="st_mo" defaultValue={this.props.data.st_mo}>
-            {this.props.data.year_range.map(val => <option key={val} value={val}>{val}</option>)}
-          </select>
-
-          <label htmlFor="en_yr">End year</label>
-          <select id="en_yr" name="en_yr" defaultValue={this.props.data.en_yr}>
-            {this.props.data.year_range.map(val => <option key={val} value={val}>{val}</option>)}
-          </select>
-
-          <label htmlFor="en_mo">End month</label>
-          <select id="en_mo" name="en_mo" defaultValue={this.props.data.en_mo}>
-            {this.props.data.year_range.map(val => <option key={val} value={val}>{val}</option>)}
-          </select>
-        </span>
-      }
-      {this.props.names.indexOf("limit") >= 0 &&
-        <span key={name}>
-          <label htmlFor="limit">Max items:</label>
-          <select id="limit" name="limit" defaultValue={this.props.data.limit}>
-            <option key={50} value={50}>50</option>
-            <option key={100} value={100}>100</option>
-            <option key={200} value={200}>200</option>
-            <option key={500} value={500}>500</option>
-          </select>
-        </span>
-      }
-      <button type="submit" key="submit" hidden={!this.state.customDates} ref={e => this.submitButton=e}>Update</button>
-    </Form>
 }
 
 class UnitStats_Summary extends React.Component {
@@ -107,9 +111,7 @@ class UnitStats_Summary extends React.Component {
     let data = this.props.data
     return(
       <div className="c-statsReport">
-        <MetaTagsComp title={`Summary: ${data.unit_name}`}/>
-        <h1>{data.unit_name}</h1>
-        <h2>Summary for {data.dateStr}</h2>
+        <StatsHeader title="Summary" {...this.props}/>
         <div className="c-datatable">
           <table>
             <thead>
@@ -281,12 +283,8 @@ class UnitStats_Referrals extends React.Component {
     let fmonths = months.filter(val => val != 201711) // we have no referral data for this month (see note below)
     return(
       <div className="c-statsReport">
-        <StatsHeader title="Referrals" {...this.props}/>
+        <StatsHeader title="History by Referrer" {...this.props}/>
         <StatsForm location={this.props.location} data={data} names={["st_yr", "st_mo", "en_yr", "en_mo"]}/>
-
-        {/* Let the user know there was a gap in referral data */}
-        {(months.indexOf(201710) >= 0 || months.indexOf(201711) >= 0 || months.indexOf(201712) >= 0) &&
-          <p>Note: Referral data was not collected from Oct 19 to Dec 4, 2017.</p>}
 
         <div className="c-datatable">
           <table>
@@ -314,6 +312,9 @@ class UnitStats_Referrals extends React.Component {
             </tbody>
           </table>
         </div>
+        {/* Let the user know there was a gap in referral data */}
+        {(months.indexOf(201710) >= 0 || months.indexOf(201711) >= 0 || months.indexOf(201712) >= 0) &&
+          <p>Note: Referral data was not collected from Oct 19 to Dec 4, 2017.</p>}
       </div>
     )
   }
@@ -404,9 +405,7 @@ class UnitStats_BreakdownByMonth extends React.Component {
     let data = this.props.data
     return(
       <div className="c-statsReport">
-        <MetaTagsComp title={`Breakdown by Month: ${data.unit_name}`}/>
-        <h1><Link to={`/uc/${this.props.params.unitID}/stats`}>{data.unit_name}</Link></h1>
-        <h2>Stats: Breakdown by Month</h2>
+        <StatsHeader title={`Breakdown by Month`} {...this.props}/>
         <div className="c-datatable">
           <table>
             <thead>
@@ -506,7 +505,9 @@ class UnitStats_DepositsByUnit extends React.Component {
                   {data.any_drill_down &&
                     <td key="dd">
                       {cd.child_types &&
-                        <Link to={`/uc/${cd.unit_id}/stats/deposits_by_unit${this.props.location.search}`}>{describeChildren(cd.child_types)}</Link>}
+                        <Link to={`/uc/${cd.unit_id}/stats/deposits_by_unit${this.props.location.search}`}>
+                          {describeChildren(cd.child_types)}
+                        </Link>}
                     </td>
                   }
                   {data.report_months.length > 1 &&
@@ -556,7 +557,9 @@ class UnitStats_HistoryByUnit extends React.Component {
                   {p.data.any_drill_down &&
                     <td key="dd">
                       {cd.child_types &&
-                        <Link to={`/uc/${cd.unit_id}/stats/${p.params.pageName}${p.location.search}`}>{describeChildren(cd.child_types)}</Link>}
+                        <Link to={statsLink(cd.unit_id, p.params.pageName, p.location.search)}>
+                          {describeChildren(cd.child_types)}
+                        </Link>}
                     </td>
                   }
                   {p.data.report_months.length > 1 &&
@@ -579,16 +582,17 @@ class UnitStats_BreakdownByUnit extends React.Component {
     let p = this.props
     return(
       <div className="c-statsReport">
-        <StatsHeader title="History by Unit" {...p}/>
+        <StatsHeader title="Breakdown by Unit" {...p}/>
         <StatsForm names={["st_yr", "st_mo", "en_yr", "en_mo"]} {...p}/>
         <div className="c-datatable">
           <table>
             <thead>
               <tr>
-                <th scope="col" key="id">Unit</th>
+                <th scope="col">Unit</th>
                 {p.data.any_drill_down &&
-                  <th scope="col" key="dd">Drill down</th>}
-                <th scope="col" key="total">Total requests</th>
+                  <th scope="col">Drill down</th>}
+                <th scope="col">Deposits</th>
+                <th scope="col">Total requests</th>
                 <th scope="col">Download</th>
                 <th scope="col">View-only</th>
               </tr>
@@ -604,9 +608,13 @@ class UnitStats_BreakdownByUnit extends React.Component {
                   {p.data.any_drill_down &&
                     <th key="dd">
                       {cd.child_types &&
-                        <Link to={`/uc/${cd.unit_id}/stats/${p.params.pageName}${p.location.search}`}>{describeChildren(cd.child_types)}</Link>}
+                        <Link to={statsLink(cd.unit_id, p.params.pageName, p.location.search)}>
+                          {describeChildren(cd.child_types)}
+                        </Link>
+                      }
                     </th>
                   }
+                  <td>{formatNum(cd.total_deposits)}</td>
                   <td>{formatNum(cd.total_requests)}</td>
                   <td>{formatNum(cd.total_downloads)}</td>
                   <td>{formatNum(cd.total_requests - cd.total_downloads)}</td>
