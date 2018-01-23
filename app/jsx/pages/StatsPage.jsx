@@ -14,6 +14,33 @@ const ymToString = ym =>
 const formatNum = n =>
   n && n.toLocaleString()
 
+const describeChildren = childTypes => {
+  let out = []
+  _.each(childTypes, (count, type) =>
+    out.push(count.toString() + " " + type + (count==1 || type.endsWith("ies") ? "" : type.endsWith("s") ? "es" : "s")))
+  return out.join(", ")
+}
+
+class StatsHeader extends React.Component {
+  render() {
+    let p = this.props
+    return(
+      <div>
+        <MetaTagsComp title={`${p.title}: ${p.data.unit_name}`}/>
+        <h1><Link to={`/uc/${p.params.unitID}/stats`}>{p.data.unit_name}</Link></h1>
+        { p.data.parent_unit_id &&
+          <p>
+            Parent: <Link to={`/uc/${p.data.parent_unit_id}/stats/${p.params.pageName}${p.location.search}`}>
+              {p.data.parent_unit_name}
+            </Link>
+          </p>
+        }
+        <h2>Stats: {p.title}</h2>
+      </div>
+    )
+  }
+}
+
 class StatsForm extends React.Component {
   render = () =>
     <Form to={this.props.location.pathname} method="GET">
@@ -109,6 +136,8 @@ class UnitStats_Summary extends React.Component {
             <li><Link to={`/uc/${this.props.params.unitID}/stats/deposits_by_category`}>Deposits by Category</Link></li>}
           {data.has_children &&
             <li><Link to={`/uc/${this.props.params.unitID}/stats/deposits_by_unit`}>Deposits by Unit</Link></li>}
+          {data.has_children &&
+            <li><Link to={`/uc/${this.props.params.unitID}/stats/req_total_by_unit`}>Request Total by Unit</Link></li>}
         </ul>
       </div>
     )
@@ -120,9 +149,7 @@ class UnitStats_HistoryByItem extends React.Component {
     let data = this.props.data
     return(
       <div className="c-statsReport">
-        <MetaTagsComp title={`History by Item: ${data.unit_name}`}/>
-        <h1><Link to={`/uc/${this.props.params.unitID}/stats`}>{data.unit_name}</Link></h1>
-        <h2>Stats: Historical Data by Item</h2>
+        <StatsHeader title="History by Item" {...this.props}/>
         <StatsForm location={this.props.location} data={data} names={["st_yr", "st_mo", "en_yr", "en_mo", "limit"]}/>
         <div className="c-datatable">
           <table>
@@ -166,9 +193,7 @@ class UnitStats_HistoryByIssue extends React.Component {
     let data = this.props.data
     return(
       <div className="c-statsReport">
-        <MetaTagsComp title={`History by Issue: ${data.unit_name}`}/>
-        <h1><Link to={`/uc/${this.props.params.unitID}/stats`}>{data.unit_name}</Link></h1>
-        <h2>Stats: Historical Data by Issue</h2>
+        <StatsHeader title="History by Issue" {...this.props}/>
         <StatsForm location={this.props.location} data={data} names={["st_yr", "st_mo", "en_yr", "en_mo"]}/>
         <div className="c-datatable">
           <table>
@@ -214,9 +239,7 @@ class UnitStats_Referrals extends React.Component {
     let fmonths = months.filter(val => val != 201711) // we have no referral data for this month (see note below)
     return(
       <div className="c-statsReport">
-        <MetaTagsComp title={`Referrals: ${data.unit_name}`}/>
-        <h1><Link to={`/uc/${this.props.params.unitID}/stats`}>{data.unit_name}</Link></h1>
-        <h2>Stats: Referrals</h2>
+        <StatsHeader title="Referrals" {...this.props}/>
         <StatsForm location={this.props.location} data={data} names={["st_yr", "st_mo", "en_yr", "en_mo"]}/>
 
         {/* Let the user know there was a gap in referral data */}
@@ -259,9 +282,7 @@ class UnitStats_BreakdownByItem extends React.Component {
     let data = this.props.data
     return(
       <div className="c-statsReport">
-        <MetaTagsComp title={`Breakdown by Item: ${data.unit_name}`}/>
-        <h1><Link to={`/uc/${this.props.params.unitID}/stats`}>{data.unit_name}</Link></h1>
-        <h2>Stats: Breakdown by Item</h2>
+        <StatsHeader title="Breakdown by Item" {...this.props}/>
         <StatsForm location={this.props.location} data={data} names={["st_yr", "st_mo", "en_yr", "en_mo", "limit"]}/>
         <div className="c-datatable">
           <table>
@@ -301,9 +322,7 @@ class UnitStats_BreakdownByIssue extends React.Component {
     let data = this.props.data
     return(
       <div className="c-statsReport">
-        <MetaTagsComp title={`Breakdown by Issue: ${data.unit_name}`}/>
-        <h1><Link to={`/uc/${this.props.params.unitID}/stats`}>{data.unit_name}</Link></h1>
-        <h2>Stats: Breakdown by Issue</h2>
+        <StatsHeader title="Breakdown by Issue" {...this.props}/>
         <StatsForm location={this.props.location} data={data} names={["st_yr", "st_mo", "en_yr", "en_mo"]}/>
         <div className="c-datatable">
           <table>
@@ -380,9 +399,7 @@ class UnitStats_DepositsByCategory extends React.Component {
     let data = this.props.data
     return(
       <div className="c-statsReport">
-        <MetaTagsComp title={`Deposits by Category: ${data.unit_name}`}/>
-        <h1><Link to={`/uc/${this.props.params.unitID}/stats`}>{data.unit_name}</Link></h1>
-        <h2>Stats: Deposits by Category</h2>
+        <StatsHeader title="Deposits by Category" {...this.props}/>
         <StatsForm location={this.props.location} data={data} names={["st_yr", "st_mo", "en_yr", "en_mo"]}/>
         <div className="c-datatable">
           <table>
@@ -420,9 +437,7 @@ class UnitStats_DepositsByUnit extends React.Component {
     let data = this.props.data
     return(
       <div className="c-statsReport">
-        <MetaTagsComp title={`Deposits by Unit: ${data.unit_name}`}/>
-        <h1><Link to={`/uc/${this.props.params.unitID}/stats`}>{data.unit_name}</Link></h1>
-        <h2>Stats: Deposits by Unit</h2>
+        <StatsHeader title="Deposits by Unit" {...this.props}/>
         <StatsForm location={this.props.location} data={data} names={["st_yr", "st_mo", "en_yr", "en_mo"]}/>
         <div className="c-datatable">
           <table>
@@ -448,13 +463,63 @@ class UnitStats_DepositsByUnit extends React.Component {
                   </th>
                   {data.any_drill_down &&
                     <th key="dd">
-                      {cd.num_children > 0 &&
-                        <Link to={`/uc/${cd.unit_id}/stats/deposits_by_unit${this.props.location.search}`}>{cd.num_children} unit{cd.num_children != 1 ? "s" : ""}</Link>}
+                      {cd.child_types &&
+                        <Link to={`/uc/${cd.unit_id}/stats/deposits_by_unit${this.props.location.search}`}>{describeChildren(cd.child_types)}</Link>}
                     </th>
                   }
                   {data.report_months.length > 1 &&
                     <td key="total">{formatNum(cd.total_deposits)}</td>}
                   {data.report_months.map(ym =>
+                    <td key={ym}>{formatNum(cd.by_month[ym] > 0 ? cd.by_month[ym] : null)}</td>
+                  )}
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    )
+  }
+}
+
+class UnitStats_ReqTotalByUnit extends React.Component {
+  render() {
+    let p = this.props
+    return(
+      <div className="c-statsReport">
+        <StatsHeader title="Request Total by Unit" {...p}/>
+        <StatsForm names={["st_yr", "st_mo", "en_yr", "en_mo"]} {...p}/>
+        <div className="c-datatable">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col" key="id">Unit</th>
+                {p.data.any_drill_down &&
+                  <th scope="col" key="dd">Drill down</th>}
+                {p.data.report_months.length > 1 &&
+                  <th scope="col" key="total">Total requests</th>}
+                {p.data.report_months.map(ym =>
+                  <th scope="col" key={ym}>{ymToString(ym)}</th>
+                )}
+              </tr>
+            </thead>
+            <tbody>
+              {_.map(p.data.report_data, cd =>
+                <tr key={cd.unit_name}>
+                  <th scope="row" key="id">
+                    {cd.unit_name != "Overall" ?
+                      <Link to={`/uc/${cd.unit_id}/stats`}>{cd.unit_name}</Link> :
+                      cd.unit_name }
+                  </th>
+                  {p.data.any_drill_down &&
+                    <th key="dd">
+                      {cd.child_types &&
+                        <Link to={`/uc/${cd.unit_id}/stats/${p.params.pageName}${p.location.search}`}>{describeChildren(cd.child_types)}</Link>}
+                    </th>
+                  }
+                  {p.data.report_months.length > 1 &&
+                    <td key="total">{formatNum(cd.total_deposits)}</td>}
+                  {p.data.report_months.map(ym =>
                     <td key={ym}>{formatNum(cd.by_month[ym] > 0 ? cd.by_month[ym] : null)}</td>
                   )}
                 </tr>
@@ -505,5 +570,7 @@ export default class StatsPage extends PageBase
       return <UnitStats_DepositsByCategory data={data} {...this.props}/>
     else if (pageName == "deposits_by_unit")
       return <UnitStats_DepositsByUnit data={data} {...this.props}/>
+    else if (pageName == "req_total_by_unit")
+      return <UnitStats_ReqTotalByUnit data={data} {...this.props}/>
   }
 }

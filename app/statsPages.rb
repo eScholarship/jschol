@@ -20,6 +20,7 @@ def statsData(pageName)
   when 'referrals';            unitStats_referrals(unitID)
   when 'deposits_by_category'; unitStats_depositsByCategory(unitID)
   when 'deposits_by_unit';     unitStats_depositsByUnit(unitID)
+  when 'req_total_by_unit';    unitStats_reqTotalByUnit(unitID)
   else raise("unknown stats page #{pageName.inspect}")
   end
 end
@@ -57,7 +58,10 @@ def getStatsParams(unitID, nMonths)
   if startYear == endYear
     endMonth = [startMonth, endMonth].max
   end
+  parentUnit = $hierByUnit[unitID] && $hierByUnit[unitID][0].ancestor_unit
   return { unit_name:     $unitsHash[unitID].name,
+           parent_unit_id: parentUnit,
+           parent_unit_name: parentUnit && $unitsHash[parentUnit].name,
            year_range:    (1995 .. Date.today.year).to_a,
            st_yr:         startYear,
            st_mo:         startMonth,
@@ -109,9 +113,12 @@ def unitStats_summary(unitID)
   endYrmo = endDate.year*100 + endDate.month
   st = UnitStat.where(unit_id: unitID, month: endDate.year*100 + endDate.month).first
   attrs = st && st.attrs ? JSON.parse(st.attrs) : {}
+  parentUnit = $hierByUnit[unitID] && $hierByUnit[unitID][0].ancestor_unit
   return {
     unit_name: $unitsHash[unitID].name,
     unit_type: $unitsHash[unitID].type,
+    parent_unit_id: parentUnit,
+    parent_unit_name: parentUnit && $unitsHash[parentUnit].name,
     dateStr: "#{Date::MONTHNAMES[endDate.month]} #{endDate.year}",
     posts: attrs['post'].to_i,
     hits: attrs['hit'].to_i,
@@ -338,6 +345,14 @@ def unitStats_depositsByCategory(unitID)
 end
 
 ###################################################################################################
+def getChildTypes(unitID)
+  $hierByAncestor[unitID] or return nil
+  types = Hash.new { |h,k| h[k] = 0 }
+  $hierByAncestor[unitID].each { |uh| types[$unitsHash[uh.unit_id].type] += 1 }
+  return types
+end
+
+###################################################################################################
 def unitStats_depositsByUnit(unitID)
   # Splat the raw stats into a hash
   out, queryParams = getStatsParams(unitID, 4)
@@ -345,13 +360,16 @@ def unitStats_depositsByUnit(unitID)
   overall = Hash.new { |h,k| h[k] = 0 }
   posts = Hash.new { |h,k| h[k] = Hash.new { |h2,k2| h2[k2] = 0 } }
   childrenFound = Set.new
-  UnitStat.where(unit_id: childUnitIDs, month: queryParams[:startYrMo]..queryParams[:endYrMo]).each { |st|
+  UnitStat.where(unit_id: [unitID]+childUnitIDs, month: queryParams[:startYrMo]..queryParams[:endYrMo]).each { |st|
     attrs = JSON.parse(st.attrs)
     nPosts = attrs['post'].to_i
     next if nPosts == 0
-    childrenFound << st.unit_id
-    posts[st.unit_id][st.month] += nPosts
-    overall[st.month] += nPosts
+    if st.unit_id == unitID
+      overall[st.month] += nPosts
+    else
+      childrenFound << st.unit_id
+      posts[st.unit_id][st.month] += nPosts
+    end
   }
 
   (Set.new(childUnitIDs) - childrenFound).each { |missing|
@@ -373,7 +391,50 @@ def unitStats_depositsByUnit(unitID)
   } ] + posts.map { |unitID, byMonth|
     { unit_id: unitID,
       unit_name: $unitsHash[unitID].name,
-      num_children: ($hierByAncestor[unitID] || []).length,
+      child_types: getChildTypes(unitID),
+      total_deposits: totalByUnit[unitID],
+      by_month: byMonth
+    }
+  }
+  return out.to_json
+end
+
+###################################################################################################
+def unitStats_reqTotalByUnit(unitID)
+  # Splat the raw stats into a hash
+  out, queryParams = getStatsParams(unitID, 4)
+  childUnitIDs = ($hierByAncestor[unitID] || []).map{|u| u.unit_id}
+  overall = Hash.new { |h,k| h[k] = 0 }
+  data = Hash.new { |h,k| h[k] = Hash.new { |h2,k2| h2[k2] = 0 } }
+  UnitStat.where(unit_id: [unitID]+childUnitIDs, month: queryParams[:startYrMo]..queryParams[:endYrMo]).each { |st|
+    attrs = JSON.parse(st.attrs)
+    hits = attrs['hit'].to_i
+    next if hits == 0
+    if st.unit_id == unitID
+      overall[st.month] += hits
+    else
+      data[st.unit_id][st.month] += hits
+    end
+  }
+  totalByUnit = Hash[data.map { |unitID, byMonth| [unitID, byMonth.values.inject{|s,n| s+n}] }]
+
+  # Make sure even units with no data are represented.
+  childUnitIDs.each { |id| data[id] ||= {} }
+
+  # Form the final data structure with everything needed to render the form and report
+  out[:any_drill_down] = childUnitIDs.any? { |childID| !!$hierByAncestor[childID] }
+  data = data.sort { |a,b|
+    n = -((totalByUnit[a[0]]||0) <=> (totalByUnit[b[0]]||0))
+    n != 0 ? n : $unitsHash[a[0]].name <=> $unitsHash[b[0]].name
+  }
+  out[:report_data] = [ {
+    unit_name: "Overall",
+    total_deposits: overall.values.inject{|s,n| s+n},
+    by_month: overall
+  } ] + data.map { |unitID, byMonth|
+    { unit_id: unitID,
+      unit_name: $unitsHash[unitID].name,
+      child_types: getChildTypes(unitID),
       total_deposits: totalByUnit[unitID],
       by_month: byMonth
     }
