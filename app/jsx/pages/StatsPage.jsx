@@ -59,10 +59,10 @@ class StatsForm extends React.Component
       <Form to={p.location.pathname} method="GET">
         <label htmlFor="range">Date range</label>
         <select id="range" name="range" defaultValue={p.data.range} onChange={this.onChangeRange}>
-          <option value="1mo">1 month</option>
-          <option value="4mo">4 months</option>
-          <option value="12mo">12 months</option>
-          <option value="5yr">5 years</option>
+          <option value="1mo">Last month</option>
+          <option value="4mo">Last 4 months</option>
+          <option value="12mo">Last 12 months</option>
+          <option value="5yr">Last 5 years</option>
           <option value="all">All time</option>
           <option value="custom">Custom</option>
         </select>
@@ -182,6 +182,12 @@ class UnitStats_Summary extends React.Component {
                 <Link to={`/uc/${this.props.params.unitID}/stats/deposits_by_category`}>Category</Link>}
             </li>
           }
+          <li>
+            Average requests per item by:
+            <Link to={`/uc/${this.props.params.unitID}/stats/avg_by_unit`}>Unit</Link>
+            {data.num_categories > 1 &&
+              <Link to={`/uc/${this.props.params.unitID}/stats/avg_by_category`}>Category</Link>}
+          </li>
         </ul>
       </div>
     )
@@ -577,6 +583,58 @@ class UnitStats_HistoryByUnit extends React.Component {
   }
 }
 
+class UnitStats_AvgByUnit extends React.Component {
+  render() {
+    let p = this.props
+    return(
+      <div className="c-statsReport">
+        <StatsHeader title="Average Requests per Item by Unit" {...p}/>
+        <StatsForm names={["st_yr", "st_mo", "en_yr", "en_mo"]} {...p}/>
+        <div className="c-datatable">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col" key="id">Unit</th>
+                {p.data.any_drill_down &&
+                  <th scope="col" key="dd">Drill down</th>}
+                {p.data.report_months.length > 1 &&
+                  <th scope="col" key="total">Avg req/item</th>}
+                {p.data.report_months.map(ym =>
+                  <th scope="col" key={ym}>{ymToString(ym)}</th>
+                )}
+              </tr>
+            </thead>
+            <tbody>
+              {_.map(p.data.report_data, cd =>
+                <tr key={cd.unit_name}>
+                  <th scope="row" key="id">
+                    {cd.unit_name != "Overall" ?
+                      <Link to={`/uc/${cd.unit_id}/stats`}>{cd.unit_name}</Link> :
+                      cd.unit_name }
+                  </th>
+                  {p.data.any_drill_down &&
+                    <td key="dd">
+                      {cd.child_types &&
+                        <Link to={statsLink(cd.unit_id, p.params.pageName, p.location.search)}>
+                          {describeChildren(cd.child_types)}
+                        </Link>}
+                    </td>
+                  }
+                  {p.data.report_months.length > 1 &&
+                    <td key="total">{formatNum(cd.total_avg)}</td>}
+                  {p.data.report_months.map(ym =>
+                    <td key={ym}>{formatNum(cd.by_month[ym] > 0 ? cd.by_month[ym] : null)}</td>
+                  )}
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    )
+  }
+}
+
 class UnitStats_BreakdownByUnit extends React.Component {
   render() {
     let p = this.props
@@ -670,5 +728,7 @@ export default class StatsPage extends PageBase
       return <UnitStats_HistoryByUnit data={data} {...this.props}/>
     else if (pageName == "breakdown_by_unit")
       return <UnitStats_BreakdownByUnit data={data} {...this.props}/>
+    else if (pageName == "avg_by_unit")
+      return <UnitStats_AvgByUnit data={data} {...this.props}/>
   }
 }

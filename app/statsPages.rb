@@ -22,6 +22,7 @@ def statsData(pageName)
   when 'deposits_by_unit';     unitStats_depositsByUnit(unitID)
   when 'history_by_unit';      unitStats_historyByUnit(unitID)
   when 'breakdown_by_unit';    unitStats_breakdownByUnit(unitID)
+  when 'avg_by_unit';          unitStats_avgByUnit(unitID)
   else raise("unknown stats page #{pageName.inspect}")
   end
 end
@@ -55,7 +56,7 @@ def getStatsParams(unitID, includeNoHitYears = false)
   minYear = minYrmo / 100
   range = params[:range] || "4mo"
   if params[:range] == "custom"
-    defaultStart = Date.today << nMonths
+    defaultStart = Date.today << 4
     startYear  = clamp(minYear,   Date.today.year, (params[:st_yr] || defaultStart.year).to_i)
     startMonth = clamp(1,         12,              (params[:st_mo] || defaultStart.month).to_i)
     endYear    = clamp(startYear, Date.today.year, (params[:en_yr] || defaultEnd.year).to_i)
@@ -142,7 +143,7 @@ def unitStats_summary(unitID)
     unit_type: $unitsHash[unitID].type,
     parent_id: parentUnit,
     parent_name: parentUnit && $unitsHash[parentUnit].name,
-    dateStr: "#{Date::MONTHNAMES[endDate.month]} #{endDate.year}",
+    date_str: "#{Date::MONTHNAMES[endDate.month]} #{endDate.year}",
     posts: attrs['post'].to_i,
     hits: attrs['hit'].to_i,
     downloads: attrs['dl'].to_i,
@@ -455,6 +456,77 @@ def unitStats_historyByUnit(unitID)
       child_types: getChildTypes(unitID),
       total_requests: totalByUnit[unitID],
       by_month: byMonth
+    }
+  }
+  return out.to_json
+end
+
+###################################################################################################
+def unitStats_avgByUnit(unitID)
+  # Splat the raw stats into a hash
+  out, queryParams = getStatsParams(unitID, true)
+  childUnitIDs = ($hierByAncestor[unitID] || []).map{|u| u.unit_id}
+  overall = Hash.new { |h,k| h[k] = 0 }
+  totalHits = 0
+  data = Hash.new { |h,k| h[k] = Hash.new { |h2,k2| h2[k2] = 0 } }
+  posts = Hash.new { |h,k| h[k] = Hash.new { |h2,k2| h2[k2] = 0 } }
+  UnitStat.where(unit_id: [unitID]+childUnitIDs, month: 0..queryParams[:endYrMo]).each { |st|
+    attrs = JSON.parse(st.attrs)
+
+    # Attribute post to its first month and every month thereafter
+    nPosts = attrs['post'].to_i
+    if nPosts > 0
+      mo = st.month
+      while mo <= queryParams[:endYrMo]
+        posts[st.unit_id][mo] += nPosts
+        mo = incMonth(mo)
+      end
+    end
+
+    # Record hits only for selected months
+    hits = attrs['hit'].to_i
+    next if hits == 0
+    if st.month >= queryParams[:startYrMo]
+      if st.unit_id == unitID
+        overall[st.month] += hits
+        totalHits += hits
+      else
+        data[st.unit_id][st.month] += hits
+      end
+    end
+  }
+
+  totalHitsByUnit = Hash[data.map { |u, byMonth|
+    [u, byMonth.values.inject{|s,n| s+n}] }]
+  avgByUnit = Hash[totalHitsByUnit.map { |u, hits|
+    [u, (hits+1.0) / (posts[u][queryParams[:endYrMo]]+1.0) / out[:report_months].length] }]
+
+  puts "\nposts:"
+  pp posts
+  puts "\ntotalHitsByUnit:"
+  pp totalHitsByUnit
+  puts "\navgByUnit:"
+  pp avgByUnit
+
+  # Make sure even units with no data are represented.
+  childUnitIDs.each { |id| data[id] ||= {} }
+
+  # Form the final data structure with everything needed to render the form and report
+  out[:any_drill_down] = childUnitIDs.any? { |childID| !!$hierByAncestor[childID] }
+  data = data.sort { |a,b|
+    n = -((avgByUnit[a[0]]||0) <=> (avgByUnit[b[0]]||0))
+    n != 0 ? n : $unitsHash[a[0]].name <=> $unitsHash[b[0]].name
+  }
+  out[:report_data] = [ {
+    unit_name: "Overall",
+    total_avg: sprintf("%.2f", (totalHits+1.0) / (posts[unitID][queryParams[:endYrMo]]+1.0) / out[:report_months].length),
+    by_month: Hash[overall.map{ |mo, hits| [mo, sprintf("%.2f", (hits+1.0) / (posts[unitID][mo]+1.0))] }]
+  } ] + data.map { |u, byMonth|
+    { unit_id: u,
+      unit_name: $unitsHash[u].name,
+      child_types: getChildTypes(u),
+      total_avg: avgByUnit[u] ? sprintf("%.2f", avgByUnit[u]) : nil,
+      by_month: Hash[byMonth.map{ |mo, hits| [mo, sprintf("%.2f", (hits+1.0) / (posts[u][mo]+1.0))] }]
     }
   }
   return out.to_json
