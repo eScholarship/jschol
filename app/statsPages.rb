@@ -354,7 +354,7 @@ def unitStats_depositsByCategory(unitID)
 
   # Form the final data structure with everything needed to render the form and report
   out[:report_data] = [ {
-    category: "Overall",
+    category: "overall",
     total_deposits: overall.values.inject{|s,n| s+n},
     by_month: overall
   } ] + posts.sort.map { |cat, byMonth|

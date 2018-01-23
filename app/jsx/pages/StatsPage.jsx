@@ -24,10 +24,18 @@ const describeChildren = childTypes => {
 const statsLink = (unit, pageName, search) =>
   `/uc/${unit}/stats${pageName ? "/"+pageName : ""}${search}`
 
+const capitalize = str =>
+  str.charAt(0).toUpperCase() + str.slice(1)
+
+const mungeCategory = cat =>
+  cat.indexOf("postprints:") >= 0 ? "\xa0\xa0\xa0\xa0"+capitalize(cat.replace("postprints:", "")) : capitalize(cat)
+
 class StatsHeader extends React.Component {
   render() {
     let p = this.props
-    let isIssuePage = p.params.pageName && p.params.pageName.indexOf("issue")>=0
+    let pageName = p.params.pageName || "summary"
+    let isIssuePage = pageName.indexOf("issue") >= 0
+    let isByMonthPage = pageName.indexOf("by_month") >= 0
     return(
       <div>
         <MetaTagsComp title={`${p.title}: ${p.data.unit_name}`}/>
@@ -39,7 +47,7 @@ class StatsHeader extends React.Component {
                     </Link>
           </p>
         }
-        <h2>Stats: {p.title} for {p.data.date_str}</h2>
+        <h2>Stats: {p.title}{isByMonthPage ? "" : ` for ${p.data.date_str}`}</h2>
       </div>
     )
   }
@@ -89,7 +97,7 @@ class StatsForm extends React.Component
             </select>
           </span>
         }
-        {p.names.indexOf("limit") >= 0 &&
+        {p.showLimit &&
           <span key={name}>
             <label htmlFor="limit">Max items:</label>
             <select id="limit" name="limit" defaultValue={p.data.limit}>
@@ -200,7 +208,7 @@ class UnitStats_HistoryByItem extends React.Component {
     return(
       <div className="c-statsReport">
         <StatsHeader title="History by Item" {...this.props}/>
-        <StatsForm location={this.props.location} data={data} names={["st_yr", "st_mo", "en_yr", "en_mo", "limit"]}/>
+        <StatsForm location={this.props.location} data={data} showLimit={true}/>
         <div className="c-datatable">
           <table>
             <thead>
@@ -244,7 +252,7 @@ class UnitStats_HistoryByIssue extends React.Component {
     return(
       <div className="c-statsReport">
         <StatsHeader title="History by Issue" {...this.props}/>
-        <StatsForm location={this.props.location} data={data} names={["st_yr", "st_mo", "en_yr", "en_mo"]}/>
+        <StatsForm location={this.props.location} data={data}/>
         <div className="c-datatable">
           <table>
             <thead>
@@ -290,7 +298,7 @@ class UnitStats_Referrals extends React.Component {
     return(
       <div className="c-statsReport">
         <StatsHeader title="History by Referrer" {...this.props}/>
-        <StatsForm location={this.props.location} data={data} names={["st_yr", "st_mo", "en_yr", "en_mo"]}/>
+        <StatsForm location={this.props.location} data={data}/>
 
         <div className="c-datatable">
           <table>
@@ -332,7 +340,7 @@ class UnitStats_BreakdownByItem extends React.Component {
     return(
       <div className="c-statsReport">
         <StatsHeader title="Breakdown by Item" {...this.props}/>
-        <StatsForm location={this.props.location} data={data} names={["st_yr", "st_mo", "en_yr", "en_mo", "limit"]}/>
+        <StatsForm location={this.props.location} data={data} showLimit={true}/>
         <div className="c-datatable">
           <table>
             <thead>
@@ -372,7 +380,7 @@ class UnitStats_BreakdownByIssue extends React.Component {
     return(
       <div className="c-statsReport">
         <StatsHeader title="Breakdown by Issue" {...this.props}/>
-        <StatsForm location={this.props.location} data={data} names={["st_yr", "st_mo", "en_yr", "en_mo"]}/>
+        <StatsForm location={this.props.location} data={data}/>
         <div className="c-datatable">
           <table>
             <thead>
@@ -447,7 +455,7 @@ class UnitStats_DepositsByCategory extends React.Component {
     return(
       <div className="c-statsReport">
         <StatsHeader title="Deposits by Category" {...this.props}/>
-        <StatsForm location={this.props.location} data={data} names={["st_yr", "st_mo", "en_yr", "en_mo"]}/>
+        <StatsForm location={this.props.location} data={data}/>
         <div className="c-datatable">
           <table>
             <thead>
@@ -463,7 +471,7 @@ class UnitStats_DepositsByCategory extends React.Component {
             <tbody>
               {_.map(data.report_data, cd =>
                 <tr key={cd.category}>
-                  <th scope="row" key="id">{cd.category.replace(/^postprints:/, "\xa0\xa0\xa0\xa0")}</th>
+                  <th scope="row" key="id">{mungeCategory(cd.category)}</th>
                   {data.report_months.length > 1 &&
                     <td key="total">{formatNum(cd.total_deposits)}</td>}
                   {data.report_months.map(ym =>
@@ -485,7 +493,7 @@ class UnitStats_DepositsByUnit extends React.Component {
     return(
       <div className="c-statsReport">
         <StatsHeader title="Deposits by Unit" {...this.props}/>
-        <StatsForm location={this.props.location} data={data} names={["st_yr", "st_mo", "en_yr", "en_mo"]}/>
+        <StatsForm location={this.props.location} data={data}/>
         <div className="c-datatable">
           <table>
             <thead>
@@ -537,7 +545,7 @@ class UnitStats_HistoryByUnit extends React.Component {
     return(
       <div className="c-statsReport">
         <StatsHeader title="History by Unit" {...p}/>
-        <StatsForm names={["st_yr", "st_mo", "en_yr", "en_mo"]} {...p}/>
+        <StatsForm {...p}/>
         <div className="c-datatable">
           <table>
             <thead>
@@ -589,7 +597,7 @@ class UnitStats_AvgByUnit extends React.Component {
     return(
       <div className="c-statsReport">
         <StatsHeader title="Average Requests per Item by Unit" {...p}/>
-        <StatsForm names={["st_yr", "st_mo", "en_yr", "en_mo"]} {...p}/>
+        <StatsForm {...p}/>
         <div className="c-datatable">
           <table>
             <thead>
@@ -641,7 +649,7 @@ class UnitStats_AvgByCategory extends React.Component {
     return(
       <div className="c-statsReport">
         <StatsHeader title="Average Requests per Item by Category" {...this.props}/>
-        <StatsForm location={this.props.location} data={data} names={["st_yr", "st_mo", "en_yr", "en_mo"]}/>
+        <StatsForm location={this.props.location} data={data}/>
         <div className="c-datatable">
           <table>
             <thead>
@@ -657,7 +665,7 @@ class UnitStats_AvgByCategory extends React.Component {
             <tbody>
               {_.map(data.report_data, cd =>
                 <tr key={cd.category}>
-                  <th scope="row" key="id">{cd.category.replace(/^postprints:/, "\xa0\xa0\xa0\xa0")}</th>
+                  <th scope="row" key="id">{mungeCategory(cd.category)}</th>
                   {data.report_months.length > 1 &&
                     <td key="total">{cd.total_avg}</td>}
                   {data.report_months.map(ym =>
@@ -679,7 +687,7 @@ class UnitStats_BreakdownByUnit extends React.Component {
     return(
       <div className="c-statsReport">
         <StatsHeader title="Breakdown by Unit" {...p}/>
-        <StatsForm names={["st_yr", "st_mo", "en_yr", "en_mo"]} {...p}/>
+        <StatsForm {...p}/>
         <div className="c-datatable">
           <table>
             <thead>
