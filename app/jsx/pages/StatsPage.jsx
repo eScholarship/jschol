@@ -41,35 +41,64 @@ class StatsHeader extends React.Component {
   }
 }
 
-class StatsForm extends React.Component {
+class StatsForm extends React.Component
+{
+  componentWillMount() { this.setState({customDates: this.props.data.range == "custom"}) }
+  componentWillReceiveProps(nextProps) { this.setState({customDates: nextProps.data.range == "custom"}) }
+
+  onChangeRange = e => {
+    let custom = e.target.value == "custom"
+    this.setState({customDates: custom})
+    if (!custom)
+      setTimeout(()=>this.submitButton.click(), 300)
+  }
+
   render = () =>
     <Form to={this.props.location.pathname} method="GET">
-      {this.props.names.map(name =>
-        (name == "st_yr" || name == "st_mo" || name == "en_yr" || name == "en_mo") ?
-          <span key={name}>
-            <label htmlFor="st_yr">{name.replace("st_", "Start ").
-                                         replace("en_", "End ").
-                                         replace("yr", "year").
-                                         replace("mo", "month")}</label>
-            <select id={name} name={name} defaultValue={this.props.data[name]}>
-              {((name == "st_yr" || name == "en_yr") ? this.props.data.year_range : _.range(1,13)).map(val =>
-                <option key={val} value={val}>{val}</option>
-              )}
-            </select>
-          </span> :
-        (name == "limit") ?
-          <span key={name}>
-            <label htmlFor="limit">Max items:</label>
-            <select id="limit" name="limit" defaultValue={this.props.data.limit}>
-              <option key={50} value={50}>50</option>
-              <option key={100} value={100}>100</option>
-              <option key={200} value={200}>200</option>
-              <option key={500} value={500}>500</option>
-            </select>
-          </span>
-        : null
-      )}
-      <button type="submit" key="submit">Update</button>
+      <label htmlFor="range">Date range</label>
+      <select id="range" name="range" defaultValue={this.props.data.range} onChange={this.onChangeRange}>
+        <option value="1mo">1 month</option>
+        <option value="4mo">4 months</option>
+        <option value="12mo">12 months</option>
+        <option value="5yr">5 years</option>
+        <option value="all">All time</option>
+        <option value="custom">Custom</option>
+      </select>
+      { this.state.customDates &&
+        <span>
+          <label htmlFor="st_yr">Start year</label>
+          <select id="st_yr" name="st_yr" defaultValue={this.props.data.st_yr}>
+            {this.props.data.year_range.map(val => <option key={val} value={val}>{val}</option>)}
+          </select>
+
+          <label htmlFor="st_mo">Start month</label>
+          <select id="st_mo" name="st_mo" defaultValue={this.props.data.st_mo}>
+            {this.props.data.year_range.map(val => <option key={val} value={val}>{val}</option>)}
+          </select>
+
+          <label htmlFor="en_yr">End year</label>
+          <select id="en_yr" name="en_yr" defaultValue={this.props.data.en_yr}>
+            {this.props.data.year_range.map(val => <option key={val} value={val}>{val}</option>)}
+          </select>
+
+          <label htmlFor="en_mo">End month</label>
+          <select id="en_mo" name="en_mo" defaultValue={this.props.data.en_mo}>
+            {this.props.data.year_range.map(val => <option key={val} value={val}>{val}</option>)}
+          </select>
+        </span>
+      }
+      {this.props.names.indexOf("limit") >= 0 &&
+        <span key={name}>
+          <label htmlFor="limit">Max items:</label>
+          <select id="limit" name="limit" defaultValue={this.props.data.limit}>
+            <option key={50} value={50}>50</option>
+            <option key={100} value={100}>100</option>
+            <option key={200} value={200}>200</option>
+            <option key={500} value={500}>500</option>
+          </select>
+        </span>
+      }
+      <button type="submit" key="submit" hidden={!this.state.customDates} ref={e => this.submitButton=e}>Update</button>
     </Form>
 }
 
@@ -131,6 +160,7 @@ class UnitStats_Summary extends React.Component {
             <Link to={`/uc/${this.props.params.unitID}/stats/history_by_item`}>Item</Link>
             {data.has_children &&
               <Link to={`/uc/${this.props.params.unitID}/stats/history_by_unit`}>Unit</Link> }
+            <Link to={`/uc/${this.props.params.unitID}/stats/referrals`}>Referrer</Link>
           </li>
           <li>
             Breakdown by:
@@ -141,16 +171,13 @@ class UnitStats_Summary extends React.Component {
             {data.has_children &&
               <Link to={`/uc/${this.props.params.unitID}/stats/breakdown_by_unit`}>Unit</Link> }
           </li>
-          <li>
-            Referrals by: <Link to={`/uc/${this.props.params.unitID}/stats/referrals`}>Month</Link>
-          </li>
           {(data.num_categories > 1 || data.has_children) &&
             <li>
               Deposits by:
-              {data.num_categories > 1 &&
-                <Link to={`/uc/${this.props.params.unitID}/stats/deposits_by_category`}>Category</Link>}
               {data.has_children &&
                 <Link to={`/uc/${this.props.params.unitID}/stats/deposits_by_unit`}>Unit</Link>}
+              {data.num_categories > 1 &&
+                <Link to={`/uc/${this.props.params.unitID}/stats/deposits_by_category`}>Category</Link>}
             </li>
           }
         </ul>
