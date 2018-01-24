@@ -73,41 +73,6 @@ class UnitPage extends PageBase {
       return page
   }
 
-  statsPage() {
-    return(
-      <div className="c-stats">
-        <h1>Stats</h1>
-        <style dangerouslySetInnerHTML={{__html: `
-          .c-stats table {
-              border-collapse: collapse;
-          }
-
-          .c-stats table, th, td {
-              border: 1px solid black;
-          }
-          .c-stats th, td {
-              padding: 5px;
-              text-align: left;
-          }
-        `}} />
-        <table>
-          <thead>
-            <tr>
-              <th>Column 1</th>
-              <th>Column 2</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>data1</td>
-              <td>data2</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    )
-  }
-
   // [********** AMY NOTES 3/15/17 **********]
   // TODO: each of the content layouts currently include the sidebars, 
   // but this should get stripped out and handled here in UnitPage
@@ -144,8 +109,6 @@ class UnitPage extends PageBase {
     } else if (this.props.params.pageName === 'redirects') {
       contentLayout = this.cmsPage(data, <RedirectConfigLayout data={data.content} sendApiData={this.sendApiData}/>)
       title = `Redirects`
-    } else if (this.props.params.pageName === 'stats') {
-      return this.statsPage()
     } else if (this.props.params.pageName && !(data.content.issue)) {
       // If there's issue data here it's a journal page, otherwise it's static content
       contentLayout = (<UnitStaticPageLayout unit={data.unit} data={data.content} sidebar={sidebar} fetchPageData={this.fetchPageData}/>)

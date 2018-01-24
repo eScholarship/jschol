@@ -97,13 +97,17 @@ end
 
 class Unit < Sequel::Model
   unrestrict_primary_key
-end
-
-class UnitCount < Sequel::Model
+  one_to_many :unit_hier,     :class=>:UnitHier, :key=>:unit_id
+  one_to_many :ancestor_hier, :class=>:UnitHier, :key=>:ancestor_unit
 end
 
 class UnitHier < Sequel::Model(:unit_hier)
   unrestrict_primary_key
+  many_to_one :unit,          :class=>:Unit
+  many_to_one :ancestor,      :class=>:Unit, :key=>:ancestor_unit
+end
+
+class UnitCount < Sequel::Model
 end
 
 class UnitItem < Sequel::Model

@@ -26,28 +26,30 @@ class TotalUsage extends React.Component {
         downloadsTotal_str = downloadsTotal.toLocaleString(),
         downloadsAvg = this.props.usage.length > 0 ? Math.round(downloadsTotal / this.props.usage.length).toLocaleString() : 0
     return (
-      <table className="c-datatable">
-        <caption>Total Usage</caption>
-        <thead>
-          <tr>
-            <th scope="col">Actions</th>
-            <th scope="col">Total</th>
-            <th scope="col">Monthly Average</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <th scope="row">Hits</th>
-            <td>{hitsTotal_str}</td>
-            <td>{hitsAvg}</td>
-          </tr>
-          <tr>
-            <th scope="row">Downloads</th>
-            <td>{downloadsTotal_str}</td>
-            <td>{downloadsAvg}</td>
-          </tr>
-        </tbody>
-      </table>
+      <div className="c-datatable">
+        <table>
+          <caption>Total Usage</caption>
+          <thead>
+            <tr>
+              <th scope="col">Actions</th>
+              <th scope="col">Total</th>
+              <th scope="col">Monthly Average</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Hits</th>
+              <td>{hitsTotal_str}</td>
+              <td>{hitsAvg}</td>
+            </tr>
+            <tr>
+              <th scope="row">Downloads</th>
+              <td>{downloadsTotal_str}</td>
+              <td>{downloadsAvg}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     )
   }
 }
@@ -112,18 +114,20 @@ class MonthlyUsage extends React.Component {
             </select>
           </div>
         </div>
-        <table className="c-datatable">
-          <thead>
-            <tr> 
-              <th scope="col">Monthly</th>
-              <th scope="col">Hits</th>
-              <th scope="col">Downloads</th>
-            </tr>
-          </thead>
-          <tbody>
-            {selectedUsage}
-          </tbody>
-        </table>
+        <div className="c-datatable">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Month</th>
+                <th scope="col">Hits</th>
+                <th scope="col">Downloads</th>
+              </tr>
+            </thead>
+            <tbody>
+              {selectedUsage}
+            </tbody>
+          </table>
+        </div>
       </div>
     )
   }

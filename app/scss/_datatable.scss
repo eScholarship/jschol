@@ -3,47 +3,122 @@
 $table-border-size: 1px;
 
 .c-datatable {
-  margin-bottom: $spacing-md;
-  border: $table-border-size solid $color-teal;
+  max-height: 100vh;
+  overflow: auto;
 
-  caption {
-    @extend %o-heading3;
-    text-align: left;
-  }
+  table {
+    margin-bottom: $spacing-md;
+    border-collapse: collapse;
 
-  th,
-  td {
-    padding: $spacing-sm;
-  }
+    caption {
+      @extend %o-heading3;
+      position: sticky;
+      top: 0;
+      margin: 0;
+      padding: $spacing-sm;
+      background-color: $color-white;
+      text-align: left;
+      z-index: 2;
+    }
 
-  th {
-    text-align: left;
-  }
+    th,
+    td {
+      padding: $spacing-sm;
+      text-align: left;
+    }
 
-  // ***** Table Borders ***** //
+    th {
+      text-align: left;
+    }
 
-  thead {
+    td {
+      text-align: right;
+    }
 
-    th[scope='col'] {
-      background-color: $color-teal;
-      color: $color-white;
-      font-weight: normal;
+    // ***** Table Borders, Background, and Sticky Behavior ***** //
 
-      &:not(:first-child) {
-        border-left: $table-border-size solid $color-white;
+    thead {
+
+      th[scope='col'] {
+        position: sticky;
+        top: -1px;
+        background-color: $color-teal;
+        color: $color-white;
+        font-weight: normal;
+        z-index: 2;
+
+        &:first-child {
+          left: -1px;
+          z-index: 3;
+        }
+
+        &:not(:first-child) {
+          border-left: $table-border-size solid $color-white;
+        }
+
+        // keeps a right border on cells when sticky:
+        &::after {
+          position: absolute;
+          top: 0;
+          right: -1px;
+          bottom: 0;
+          left: 0;
+          border-right: 1px solid $color-white;
+          content: '';
+          pointer-events: none;
+        }
+
+        a {
+          @extend %o-textlink__white;
+          text-decoration: underline;
+        }
+
       }
 
     }
 
-  }
+    tbody {
 
-  tbody {
+      tr {
 
-    tr {
-      border-bottom: $table-border-size solid $color-teal;
+        th,
+        td {
+          border: $table-border-size solid $color-teal;
+          background-color: $color-white;
+        }
 
-      td {
-        border-left: $table-border-size solid $color-teal;
+        &:nth-child(even) {
+
+          th,
+          td {
+            background-color: lighten($color-light-gray, 15%);
+          }
+
+        }
+
+      }
+
+      th[scope='row'] {
+        position: sticky;
+        left: -1px;
+
+        // keeps borders on cells when sticky:
+        &::after {
+          position: absolute;
+          top: -1px;
+          right: -1px;
+          bottom: -1px;
+          left: 0;
+          border: 1px solid $color-teal;
+          content: '';
+          pointer-events: none;
+        }
+
+        a {
+          @extend %o-textlink__secondary;
+          text-decoration: underline;
+        }
+
       }
 
     }

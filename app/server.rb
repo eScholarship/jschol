@@ -116,6 +116,7 @@ require_relative 'hierarchy'
 require_relative 'listViews'
 require_relative 'searchApi'
 require_relative 'queueWithTimeout'
+require_relative 'statsPages'
 require_relative 'unitPages'
 require_relative 'citation'
 require_relative 'loginApi'
@@ -235,55 +236,7 @@ FileUtils.mkdir_p(TEMP_DIR)
 # graphical version, see:
 #
 # https://docs.google.com/drawings/d/1gCi8l7qteyy06nR5Ol2vCknh9Juo-0j91VGGyeWbXqI/edit
-
-class UnitCount < Sequel::Model
-end
-
-class Unit < Sequel::Model
-  unrestrict_primary_key
-  one_to_many :unit_hier,     :class=>:UnitHier, :key=>:unit_id
-  one_to_many :ancestor_hier, :class=>:UnitHier, :key=>:ancestor_unit
-end
-
-class UnitHier < Sequel::Model(:unit_hier)
-  unrestrict_primary_key
-  many_to_one :unit,          :class=>:Unit
-  many_to_one :ancestor,      :class=>:Unit, :key=>:ancestor_unit
-end
-
-class UnitItem < Sequel::Model
-  unrestrict_primary_key
-end
-
-class Item < Sequel::Model
-  unrestrict_primary_key
-end
-
-class ItemAuthors < Sequel::Model(:item_authors)
-  unrestrict_primary_key
-end
-
-class Issue < Sequel::Model
-end
-
-class Section < Sequel::Model
-end
-
-class Page < Sequel::Model
-end
-
-class Widget < Sequel::Model
-end
-
-class ItemCount < Sequel::Model
-end
-
-class DisplayPDF < Sequel::Model
-  unrestrict_primary_key
-end
-
-class Redirect < Sequel::Model
-end
+require_relative '../tools/models.rb'
 
 # DbCache uses the models above.
 require_relative 'dbCache'
@@ -540,6 +493,9 @@ get %r{.*} do
   # elsewhere.
   if request.path_info =~ %r{api/.*|content/.*|locale/.*|.*\.[a-zA-Z]\w{0,3}}
     pass
+  elsif request.path_info =~ %r{/stats($|/)}
+    # Don't do iso on stats reports
+    generalResponse(false)
   else
     generalResponse
   end
@@ -555,7 +511,7 @@ def generalResponse(iso_ok = true)
   template.sub!("/css/main.css", "/css/main-#{Digest::MD5.file("app/css/main.css").hexdigest[0,16]}.css")
 
   # Isomorphic javascript rendering on the server
-  if ENV['ISO_PORT']
+  if ENV['ISO_PORT'] && iso_ok
     # Parse out payload of the URL (i.e. not including the host name)
     request.url =~ %r{^https?://([^/:]+)(:\d+)?(.*)$} or fail
     remainder = $3
@@ -831,6 +787,7 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
 
   attrs = JSON.parse(unit[:attrs])
   pageName = params[:pageName]
+  pageName == "stats" and return statsData(params[:subPage])
   issueHeaderData = nil
   if pageName
     ext = nil
@@ -867,9 +824,6 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
       pageData[:content] = getUnitSidebarWidget(unit, params[:subPage])
     elsif pageName == "redirects"
       pageData[:content] = getRedirectData(params[:subPage])
-    elsif pageName == "stats"
-      pageData[:content] = { todo: true }
-      return pageData.to_json
     elsif isJournalIssue?(unit.id, params[:pageName], params[:subPage])
       pageData[:content] = getJournalIssueData(unit, attrs, params[:pageName], params[:subPage])
       # A specific issue, otherwise you get journal landing (through getUnitPageContent method above)
@@ -903,6 +857,14 @@ def isValidContentKey(shortArk, key)
     end
   }
   return false
+end
+
+###################################################################################################
+def getItemUsage(itemID)
+  ItemStat.where(item_id: itemID).order(:month).to_hash(:month).map { |m,v|
+    attrs = JSON.parse(v.attrs)
+    { month: "#{m.to_s[0..3]}-#{m.to_s[4..5]}", hits: attrs['hit'] || 0, downloads: attrs['dl'] || 0 }
+  }
 end
 
 ###################################################################################################
@@ -953,7 +915,7 @@ get "/api/item/:shortArk" do |shortArk|
         :appearsIn => unitIDs ? unitIDs.map { |unitID| {"id" => unitID, "name" => Unit[unitID].name} }
                               : nil,
         :unit => unit ? unit.values.reject { |k,v| k==:attrs } : nil,
-        :usage => ItemCount.where(item_id: id).order(:month).to_hash(:month).map { |m,v| { "month"=>m, "hits"=>v.hits, "downloads"=>v.downloads }},
+        :usage => getItemUsage(id),
         :altmetrics_ok => false
       }
 

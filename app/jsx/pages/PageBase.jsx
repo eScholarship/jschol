@@ -227,13 +227,18 @@ class PageBase extends React.Component
     throw "Derived class must override renderData method"
   }
 
+  // Most pages want header and footer (automatically)
+  needHeaderFooter() {
+    return true
+  }
+
   renderContent() {
     // Error case
     if (this.state.pageData && this.state.pageData.error) {
       return (
         <div className="body">
           {this.renderError()}
-          <FooterComp/>
+          {this.needHeaderFooter() && <FooterComp/>}
         </div>)
     }
 
@@ -250,28 +255,19 @@ class PageBase extends React.Component
                     fetchingData={this.state.fetchingData}>
           {/* Not sure why the padding below is needed, but it is */}
           <div className="body" style={{ padding: "20px" }}>
-            <SkipNavComp/>
+            {this.needHeaderFooter() && <SkipNavComp/>}
             {this.state.pageData ? this.renderData(this.state.pageData) : this.renderLoading()}
-            <FooterComp/>
+            {this.needHeaderFooter() && <FooterComp/>}
           </div>
         </DrawerComp>)
-    }
-
-    // Stats case - no header or footer
-    if (this.props.params && this.props.params.pageName == "stats") {
-      return (
-        <div className="body">
-          {this.state.pageData ? this.renderData(this.state.pageData) : this.renderLoading()}
-        </div>
-      )
     }
 
     // Normal case
     return (
       <div className="body">
-        <SkipNavComp/>
+        {this.needHeaderFooter() && <SkipNavComp/>}
         {this.state.pageData ? this.renderData(this.state.pageData) : this.renderLoading()}
-        <FooterComp/>
+        {this.needHeaderFooter() && <FooterComp/>}
       </div>)
   }
 
@@ -333,7 +329,7 @@ class PageBase extends React.Component
 
   renderLoading() { return(
     <div>
-      <Header1Comp/>
+      {this.needHeaderFooter() && <Header1Comp/>}
       <h2 style={{ marginTop: "5em", marginBottom: "5em" }}>Loading...</h2>
     </div>
   )}
@@ -341,7 +337,7 @@ class PageBase extends React.Component
   renderError() { return (
     <div>
       <MetaTagsComp title={this.state.pageData.error}/>
-      <Header1Comp/>
+      {this.needHeaderFooter() && <Header1Comp/>}
       <div className="c-navbar">
       </div>
       <div className="c-columns">

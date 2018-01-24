@@ -742,4 +742,14 @@ As well as:
   modified:   app/jsx/objects/ColumnBoxObj.jsx
   modified:   app/jsx/pages/SearchPage.jsx
 
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's a30bb50c88223efa93cbd790e8b53841df5e8c2c, 2018-01-17 <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
+Integrated *only* DataTableComp and its scss.
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's b96b9719d367bd17e7f79ad3b0c38f8f877b2633, 2018-01-18 <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+Integrated *only* _datatable.scss
