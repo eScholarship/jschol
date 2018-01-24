@@ -190,12 +190,15 @@ class UnitStats_Summary extends React.Component {
                 <Link to={`/uc/${this.props.params.unitID}/stats/deposits_by_category`}>Category</Link>}
             </li>
           }
-          <li>
-            Average requests per item by:
-            <Link to={`/uc/${this.props.params.unitID}/stats/avg_by_unit`}>Unit</Link>
-            {data.num_categories > 1 &&
-              <Link to={`/uc/${this.props.params.unitID}/stats/avg_by_category`}>Category</Link>}
-          </li>
+          {(data.num_categories > 1 || data.has_children) &&
+            <li>
+              Average requests per item by:
+              {data.has_children &&
+                <Link to={`/uc/${this.props.params.unitID}/stats/avg_by_unit`}>Unit</Link>}
+              {data.num_categories > 1 &&
+                <Link to={`/uc/${this.props.params.unitID}/stats/avg_by_category`}>Category</Link>}
+            </li>
+          }
         </ul>
       </div>
     )
