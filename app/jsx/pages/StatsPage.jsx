@@ -350,6 +350,7 @@ class UnitStats_BreakdownByItem extends React.Component {
                 <th scope="col">Total requests</th>
                 <th scope="col">Download</th>
                 <th scope="col">View-only</th>
+                <th scope="col">%Dnld</th>
               </tr>
             </thead>
             <tbody>
@@ -364,6 +365,7 @@ class UnitStats_BreakdownByItem extends React.Component {
                   <td>{formatNum(md.total_hits)}</td>
                   <td>{formatNum(md.total_downloads)}</td>
                   <td>{formatNum(md.total_hits - md.total_downloads)}</td>
+                  <td>{(md.total_downloads * 100.0 / md.total_hits).toFixed(1)}%</td>
                 </tr>
               )}
             </tbody>
@@ -389,6 +391,7 @@ class UnitStats_BreakdownByIssue extends React.Component {
                 <th scope="col">Total requests</th>
                 <th scope="col">Download</th>
                 <th scope="col">View-only</th>
+                <th scope="col">%Dnld</th>
               </tr>
             </thead>
             <tbody>
@@ -403,6 +406,7 @@ class UnitStats_BreakdownByIssue extends React.Component {
                     <td>{formatNum(md.total_hits)}</td>
                     <td>{formatNum(md.total_downloads)}</td>
                     <td>{formatNum(md.total_hits - md.total_downloads)}</td>
+                    <td>{(md.total_downloads * 100.0 / md.total_hits).toFixed(1)}%</td>
                   </tr>
                 )}
               )}
@@ -429,6 +433,7 @@ class UnitStats_BreakdownByMonth extends React.Component {
                 <th scope="col">Total requests</th>
                 <th scope="col">Download</th>
                 <th scope="col">View-only</th>
+                <th scope="col">%Dnld</th>
               </tr>
             </thead>
             <tbody>
@@ -439,6 +444,7 @@ class UnitStats_BreakdownByMonth extends React.Component {
                   <td>{formatNum(md[2])}</td>
                   <td>{formatNum(md[3])}</td>
                   <td>{formatNum(md[2] - md[3])}</td>
+                  <td>{(md[3] * 100.0 / md[2]).toFixed(1)}%</td>
                 </tr>
               )}
             </tbody>

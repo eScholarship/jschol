@@ -156,8 +156,9 @@ end
 
 ###################################################################################################
 def unitStats_breakdownByMonth(unitID)
-  out, queryParams = getStatsParams(unitID, true)  # include post months
-  out[:report_data] = UnitStat.where(unit_id: unitID).order(Sequel.desc(:month)).map{ |st|
+  out, queryParams = getStatsParams(unitID, true)  # include posting-only early years
+  out[:report_data] = UnitStat.where(unit_id: unitID, month: 0..queryParams[:endYrMo]).
+                               order(Sequel.desc(:month)).map{ |st|
     attrs = JSON.parse(st.attrs)
     [st.month, attrs['post'].to_i, attrs['hit'].to_i, attrs['dl'].to_i] }
   return out.to_json
