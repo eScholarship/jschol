@@ -41,9 +41,9 @@ const downloadCSV = (table, params) =>
         let val = td.children[0] ? td.children[0].innerHTML : td.innerHTML
         val = val.replace(/<!--[^>]+-->/g, '').replace(/%$/, '').replace(/&nbsp;/g, ' ')
         if (/^[0-9,]+$/.test(val))
-          rd.push(parseInt(val.replace(',', '')))
+          rd.push(parseInt(val.replace(/,/g, '')))
         else if (/^[0-9,.]+$/.test(val))
-          rd.push(parseFloat(val.replace(',', '')))
+          rd.push(parseFloat(val.replace(/,/g, '')))
         else
           rd.push('"' + val.toString().replace('"', "'") + '"')
       })
