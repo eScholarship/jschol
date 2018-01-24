@@ -30,6 +30,32 @@ const capitalize = str =>
 const mungeCategory = cat =>
   cat.indexOf("postprints:") >= 0 ? "\xa0\xa0\xa0\xa0"+capitalize(cat.replace("postprints:", "")) : capitalize(cat)
 
+const downloadCSV = (table, params) =>
+{
+  // Since we've got the data in a table already, just re-format it as CSV.
+  let rows = []
+  _.each(table.children, tsect => {
+    _.each(tsect.children, tr => {
+      let rd = []
+      _.each(tr.children, td => {
+        let val = td.children[0] ? td.children[0].innerHTML : td.innerHTML
+        val = val.replace(/<!--[^>]+-->/g, '').replace(/%$/, '').replace(/&nbsp;/g, ' ')
+        if (/^[0-9,]+$/.test(val))
+          rd.push(parseInt(val.replace(',', '')))
+        else if (/^[0-9,.]+$/.test(val))
+          rd.push(parseFloat(val.replace(',', '')))
+        else
+          rd.push('"' + val.toString().replace('"', "'") + '"')
+      })
+      rows.push(rd.join(","))
+    })
+  })
+  require.ensure(['downloadjs'], function(require) {
+    let filename = params.unitID.replace(/^root$/, 'eschol') + "_" + params.pageName + ".csv"
+    require('downloadjs')(rows.join("\n"), filename, "text/csv")
+  }, 'downloadjs')
+}
+
 class StatsHeader extends React.Component {
   render() {
     let p = this.props
@@ -213,7 +239,7 @@ class UnitStats_HistoryByItem extends React.Component {
         <StatsHeader title="History by Item" {...this.props}/>
         <StatsForm location={this.props.location} data={data} showLimit={true}/>
         <div className="c-datatable">
-          <table>
+          <table ref={el => this.table=el}>
             <thead>
               <tr>
                 <th scope="col" key="id">Item</th>
@@ -244,6 +270,7 @@ class UnitStats_HistoryByItem extends React.Component {
             </tbody>
           </table>
         </div>
+        <button onClick={e=>downloadCSV(this.table, this.props.params)}>Download CSV</button>
       </div>
     )
   }
@@ -257,7 +284,7 @@ class UnitStats_HistoryByIssue extends React.Component {
         <StatsHeader title="History by Issue" {...this.props}/>
         <StatsForm location={this.props.location} data={data}/>
         <div className="c-datatable">
-          <table>
+          <table ref={el => this.table=el}>
             <thead>
               <tr>
                 <th scope="col" key="id">Vol/Iss</th>
@@ -288,6 +315,7 @@ class UnitStats_HistoryByIssue extends React.Component {
             </tbody>
           </table>
         </div>
+        <button onClick={e=>downloadCSV(this.table, this.props.params)}>Download CSV</button>
       </div>
     )
   }
@@ -304,7 +332,7 @@ class UnitStats_Referrals extends React.Component {
         <StatsForm location={this.props.location} data={data}/>
 
         <div className="c-datatable">
-          <table>
+          <table ref={el => this.table=el}>
             <thead>
               <tr>
                 <th scope="col" key="ref">Referrer</th>
@@ -332,6 +360,7 @@ class UnitStats_Referrals extends React.Component {
         {/* Let the user know there was a gap in referral data */}
         {(months.indexOf(201710) >= 0 || months.indexOf(201711) >= 0 || months.indexOf(201712) >= 0) &&
           <p>Note: Referral data was not collected from Oct 19 to Dec 4, 2017.</p>}
+        <button onClick={e=>downloadCSV(this.table, this.props.params)}>Download CSV</button>
       </div>
     )
   }
@@ -345,7 +374,7 @@ class UnitStats_BreakdownByItem extends React.Component {
         <StatsHeader title="Breakdown by Item" {...this.props}/>
         <StatsForm location={this.props.location} data={data} showLimit={true}/>
         <div className="c-datatable">
-          <table>
+          <table ref={el => this.table=el}>
             <thead>
               <tr>
                 <th scope="col">Item</th>
@@ -367,13 +396,14 @@ class UnitStats_BreakdownByItem extends React.Component {
                   </th>
                   <td>{formatNum(md.total_hits)}</td>
                   <td>{formatNum(md.total_downloads)}</td>
-                  <td>{formatNum(md.total_hits - md.total_downloads)}</td>
-                  <td>{(md.total_downloads * 100.0 / md.total_hits).toFixed(1)}%</td>
+                  <td>{md.total_hits > 0 && formatNum(md.total_hits - md.total_downloads)}</td>
+                  <td>{md.total_hits > 0 && ((md.total_downloads * 100.0 / md.total_hits).toFixed(1)+"%")}</td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
+        <button onClick={e=>downloadCSV(this.table, this.props.params)}>Download CSV</button>
       </div>
     )
   }
@@ -387,7 +417,7 @@ class UnitStats_BreakdownByIssue extends React.Component {
         <StatsHeader title="Breakdown by Issue" {...this.props}/>
         <StatsForm location={this.props.location} data={data}/>
         <div className="c-datatable">
-          <table>
+          <table ref={el => this.table=el}>
             <thead>
               <tr>
                 <th scope="col">Vol/Iss</th>
@@ -408,14 +438,15 @@ class UnitStats_BreakdownByIssue extends React.Component {
                     </th>
                     <td>{formatNum(md.total_hits)}</td>
                     <td>{formatNum(md.total_downloads)}</td>
-                    <td>{formatNum(md.total_hits - md.total_downloads)}</td>
-                    <td>{(md.total_downloads * 100.0 / md.total_hits).toFixed(1)}%</td>
+                    <td>{md.total_hits > 0 && formatNum(md.total_hits - md.total_downloads)}</td>
+                    <td>{md.total_hits > 0 && ((md.total_downloads * 100.0 / md.total_hits).toFixed(1)+"%")}</td>
                   </tr>
                 )}
               )}
             </tbody>
           </table>
         </div>
+        <button onClick={e=>downloadCSV(this.table, this.props.params)}>Download CSV</button>
       </div>
     )
   }
@@ -428,7 +459,7 @@ class UnitStats_BreakdownByMonth extends React.Component {
       <div className="c-statsReport">
         <StatsHeader title={`Breakdown by Month`} {...this.props}/>
         <div className="c-datatable">
-          <table>
+          <table ref={el => this.table=el}>
             <thead>
               <tr>
                 <th scope="col">Month</th>
@@ -446,13 +477,14 @@ class UnitStats_BreakdownByMonth extends React.Component {
                   <td>{formatNum(md[1])}</td>
                   <td>{formatNum(md[2])}</td>
                   <td>{formatNum(md[3])}</td>
-                  <td>{formatNum(md[2] - md[3])}</td>
-                  <td>{(md[3] * 100.0 / md[2]).toFixed(1)}%</td>
+                  <td>{md[2] > 0 && formatNum(md[2] - md[3])}</td>
+                  <td>{md[2] > 0 && ((md[3] * 100.0 / md[2]).toFixed(1)+"%")}</td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
+        <button onClick={e=>downloadCSV(this.table, this.props.params)}>Download CSV</button>
       </div>
     )
   }
@@ -466,7 +498,7 @@ class UnitStats_DepositsByCategory extends React.Component {
         <StatsHeader title="Deposits by Category" {...this.props}/>
         <StatsForm location={this.props.location} data={data}/>
         <div className="c-datatable">
-          <table>
+          <table ref={el => this.table=el}>
             <thead>
               <tr>
                 <th scope="col" key="id">Category</th>
@@ -491,6 +523,7 @@ class UnitStats_DepositsByCategory extends React.Component {
             </tbody>
           </table>
         </div>
+        <button onClick={e=>downloadCSV(this.table, this.props.params)}>Download CSV</button>
       </div>
     )
   }
@@ -504,7 +537,7 @@ class UnitStats_DepositsByUnit extends React.Component {
         <StatsHeader title="Deposits by Unit" {...this.props}/>
         <StatsForm location={this.props.location} data={data}/>
         <div className="c-datatable">
-          <table>
+          <table ref={el => this.table=el}>
             <thead>
               <tr>
                 <th scope="col" key="id">Unit</th>
@@ -543,6 +576,7 @@ class UnitStats_DepositsByUnit extends React.Component {
             </tbody>
           </table>
         </div>
+        <button onClick={e=>downloadCSV(this.table, this.props.params)}>Download CSV</button>
       </div>
     )
   }
@@ -556,7 +590,7 @@ class UnitStats_HistoryByUnit extends React.Component {
         <StatsHeader title="History by Unit" {...p}/>
         <StatsForm {...p}/>
         <div className="c-datatable">
-          <table>
+          <table ref={el => this.table=el}>
             <thead>
               <tr>
                 <th scope="col" key="id">Unit</th>
@@ -595,6 +629,7 @@ class UnitStats_HistoryByUnit extends React.Component {
             </tbody>
           </table>
         </div>
+        <button onClick={e=>downloadCSV(this.table, this.props.params)}>Download CSV</button>
       </div>
     )
   }
@@ -608,7 +643,7 @@ class UnitStats_AvgByUnit extends React.Component {
         <StatsHeader title="Average Requests per Item by Unit" {...p}/>
         <StatsForm {...p}/>
         <div className="c-datatable">
-          <table>
+          <table ref={el => this.table=el}>
             <thead>
               <tr>
                 <th scope="col" key="id">Unit</th>
@@ -647,6 +682,7 @@ class UnitStats_AvgByUnit extends React.Component {
             </tbody>
           </table>
         </div>
+        <button onClick={e=>downloadCSV(this.table, this.props.params)}>Download CSV</button>
       </div>
     )
   }
@@ -660,7 +696,7 @@ class UnitStats_AvgByCategory extends React.Component {
         <StatsHeader title="Average Requests per Item by Category" {...this.props}/>
         <StatsForm location={this.props.location} data={data}/>
         <div className="c-datatable">
-          <table>
+          <table ref={el => this.table=el}>
             <thead>
               <tr>
                 <th scope="col" key="id">Category</th>
@@ -685,6 +721,7 @@ class UnitStats_AvgByCategory extends React.Component {
             </tbody>
           </table>
         </div>
+        <button onClick={e=>downloadCSV(this.table, this.props.params)}>Download CSV</button>
       </div>
     )
   }
@@ -698,7 +735,7 @@ class UnitStats_BreakdownByUnit extends React.Component {
         <StatsHeader title="Breakdown by Unit" {...p}/>
         <StatsForm {...p}/>
         <div className="c-datatable">
-          <table>
+          <table ref={el => this.table=el}>
             <thead>
               <tr>
                 <th scope="col">Unit</th>
@@ -708,6 +745,7 @@ class UnitStats_BreakdownByUnit extends React.Component {
                 <th scope="col">Total requests</th>
                 <th scope="col">Download</th>
                 <th scope="col">View-only</th>
+                <th scope="col">%Dnld</th>
               </tr>
             </thead>
             <tbody>
@@ -730,12 +768,14 @@ class UnitStats_BreakdownByUnit extends React.Component {
                   <td>{formatNum(cd.total_deposits)}</td>
                   <td>{formatNum(cd.total_requests)}</td>
                   <td>{formatNum(cd.total_downloads)}</td>
-                  <td>{formatNum(cd.total_requests - cd.total_downloads)}</td>
+                  <td>{cd.total_requests > 0 && formatNum(cd.total_requests - cd.total_downloads)}</td>
+                  <td>{cd.total_requests > 0 && ((cd.total_downloads * 100.0 / cd.total_requests).toFixed(1)+"%")}</td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
+        <button onClick={e=>downloadCSV(this.table, this.props.params)}>Download CSV</button>
       </div>
     )
   }

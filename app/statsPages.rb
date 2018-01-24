@@ -160,7 +160,7 @@ def unitStats_breakdownByMonth(unitID)
   out[:report_data] = UnitStat.where(unit_id: unitID, month: 0..queryParams[:endYrMo]).
                                order(Sequel.desc(:month)).map{ |st|
     attrs = JSON.parse(st.attrs)
-    [st.month, attrs['post'].to_i, attrs['hit'].to_i, attrs['dl'].to_i] }
+    [st.month, attrs['post'] && attrs['post'].to_i, attrs['hit'] && attrs['hit'].to_i, attrs['dl'] && attrs['dl'].to_i] }
   return out.to_json
 end
 
@@ -200,7 +200,8 @@ def unitStats_historyByIssue(unitID)
   # Get all the stats and stick them in a big hash
   out, queryParams = getStatsParams(unitID)
   query = Sequel::SQL::PlaceholderLiteralString.new(%{
-    select volume, issue, issues.attrs->"$.numbering", month, sum(item_stats.attrs->"$.hit") hits
+    select volume, issue, JSON_UNQUOTE(issues.attrs->"$.numbering") numbering,
+           month, sum(item_stats.attrs->"$.hit") hits
     from issues
     inner join sections on sections.issue_id = issues.id
     inner join items on items.section = sections.id
@@ -214,7 +215,7 @@ def unitStats_historyByIssue(unitID)
   DB.fetch(query).each { |row|
     voliss = row[:numbering] == "volume_only" ? row[:volume] :
              row[:numbering] == "issue_only" ? row[:issue] :
-             "#{row[:volume]}/#{row[:issue]}"
+             "#{row[:volume]}(#{row[:issue]})"
     issueData[voliss] or issueData[voliss] = { total_hits: 0,
                                                vol_num: row[:volume],
                                                iss_num: row[:issue],
@@ -237,7 +238,7 @@ def unitStats_breakdownByIssue(unitID)
   # Get all the stats and stick them in a big hash
   out, queryParams = getStatsParams(unitID)
   query = Sequel::SQL::PlaceholderLiteralString.new(%{
-    select volume, issue, issues.attrs->"$.numbering",
+    select volume, issue, JSON_UNQUOTE(issues.attrs->"$.numbering") numbering,
            sum(item_stats.attrs->"$.hit") total_hit, sum(item_stats.attrs->"$.dl") total_dl
     from issues
     inner join sections on sections.issue_id = issues.id
@@ -253,7 +254,7 @@ def unitStats_breakdownByIssue(unitID)
   DB.fetch(query).each { |row|
     voliss = row[:numbering] == "volume_only" ? row[:volume] :
              row[:numbering] == "issue_only" ? row[:issue] :
-             "#{row[:volume]}/#{row[:issue]}"
+             "#{row[:volume]}(#{row[:issue]})"
     issueData[voliss] or issueData[voliss] = { vol_num: row[:volume],
                                                iss_num: row[:issue],
                                                total_hits: row[:total_hit],
@@ -592,17 +593,18 @@ def unitStats_breakdownByUnit(unitID)
     hits = attrs['hit'].to_i
     downloads = attrs['dl'].to_i
     deposits = attrs['post'].to_i
-    next if hits == 0
     if st.unit_id == unitID
-      overall[:deposits] += deposits
-      overall[:hits] += hits
+      overall[:deposits]  += deposits
+      overall[:hits]      += hits
       overall[:downloads] += downloads
     else
-      data[st.unit_id][:deposits] += deposits
-      data[st.unit_id][:hits] += hits
+      data[st.unit_id][:deposits]  += deposits
+      data[st.unit_id][:hits]      += hits
       data[st.unit_id][:downloads] += downloads
     end
   }
+
+  pp data
 
   # Make sure even units with no data are represented.
   childUnitIDs.each { |id| data[id] ||= {} }
@@ -613,6 +615,8 @@ def unitStats_breakdownByUnit(unitID)
     n = -((a[1][:hits]||0) <=> (b[1][:hits]||0))
     n != 0 ? n : $unitsHash[a[0]].name <=> $unitsHash[b[0]].name
   }
+  puts "data after:"
+  pp data
   out[:report_data] = [ {
     unit_name: "Overall",
     total_deposits: overall[:deposits],
@@ -622,9 +626,9 @@ def unitStats_breakdownByUnit(unitID)
     { unit_id: unitID,
       unit_name: $unitsHash[unitID].name,
       child_types: getChildTypes(unitID),
-      total_deposits: rd[:deposits],
-      total_requests: rd[:hits],
-      total_downloads: rd[:downloads]
+      total_deposits: rd[:deposits]>0 && rd[:deposits],
+      total_requests: rd[:hits]>0 && rd[:hits],
+      total_downloads: rd[:downloads]>0 && rd[:downloads]
     }
   }
   return out.to_json
