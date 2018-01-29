@@ -129,24 +129,73 @@ def processBounces
 end
 
 ###################################################################################################
+def fetchEscholAdmins(callback)
+  # List all users with eschol 'admin' or 'stats' roles
+  OJS_DB.fetch(%{
+    select email, unit_id from users
+    inner join eschol_roles on eschol_roles.user_id = users.user_id
+    where users.user_id > 1
+    and users.user_id not in (
+      select user_id from user_settings
+      where setting_name in ('eschol_bouncing_email', 'eschol_opt_out')
+        and setting_value = 'yes'
+    )
+    and role = 'admin' or role = 'stats'
+  }).each { |row| callback.call(row[:email].downcase, row[:unit_id]) }
+end
+
+###################################################################################################
+def fetchJournalManagers(callback)
+  # Yield all OJS journal managers.
+  # For reference, here are the OJS roles IDs (taken from: classes/security/Role.inc.php)
+  #         1: journalAdmin
+  #        16: journalManager
+  #       256: journalEditor
+  #       512: journalSectionEditor
+  #       768: journalLayoutEditor
+  #      4096: journalReviewer
+  #      8192: journalCopyEditor
+  #     12288: journalProofReader
+  #     65536: journalAuthor
+  #   1048576: journalReader
+  #   2097152: journalSubscriptionManager
+  OJS_DB.fetch(%{
+    select email, path from journals
+    inner join roles on roles.journal_id = journals.journal_id
+    inner join users on users.user_id = roles.user_id
+    where role_id = 16
+    and users.user_id > 1
+    and users.user_id not in (
+      select user_id from user_settings
+      where setting_name in ('eschol_bouncing_email', 'eschol_opt_out')
+        and setting_value = 'yes'
+    )
+  }).each { |row| callback.call(row[:email].downcase, row[:path]) }
+end
+
+###################################################################################################
 def buildUsers(group, filter)
-  result = Hash.new { |h,k| h[k] = Hash.new { |h2,k2| h2[k2] = [] } }
-  if group == "eschol-admins"
-    unitsWithHits = Set.new(UnitStat.where(month: (Date.today<<1).year*100 + (Date.today<<1).month).
-      where(Sequel.lit(%{attrs->"$.hit" is not null})).select_map(:unit_id))
-    OJS_DB.fetch(%{
-      select email, unit_id from users
-      inner join eschol_roles on eschol_roles.user_id = users.user_id
-      where users.user_id not in (
-        select user_id from user_settings
-        where setting_name = 'eschol_bouncing_email' and setting_value = 'yes'
-      )
-      and role = 'admin' or role = 'stats'
-      order by email
-    }).each { |row|
-      filter == "recent-hits" && !unitsWithHits.include?(row[:unit_id]) and next
-      result[row[:email].downcase][:units] << row[:unit_id]
+  # We want to exclude everybody that is bouncing or opted out of emails
+  omitEmails = Set.new
+  OJS_DB.fetch(%{
+    select distinct email from users
+    inner join user_settings on user_settings.user_id = users.user_id
+    where setting_name in ('eschol_bouncing_email', 'eschol_opt_out')
+    and setting_value = 'yes'
+  }.unindent).each { |row| omitEmails << row[:email].downcase }
+
+  # Now build the result set
+  result = Hash.new { |h,k| h[k] = Hash.new { |h2,k2| h2[k2] = Set.new } }
+  if group == "stats-admins"
+    omitUnits = Set.new(
+      filter == "recent-hits" ? UnitStat.where(month: (Date.today<<1).year*100 + (Date.today<<1).month).
+                                         where(Sequel.lit(%{attrs->"$.hit" is null})).select_map(:unit_id) :
+      [])
+    filterFunc = lambda { |email, unit|
+      !omitEmails.include?(email) && !omitUnits.include?(unit) and result[email][:units] << unit
     }
+    fetchEscholAdmins(filterFunc)
+    fetchJournalManagers(filterFunc)
   elsif group == "authors"
     raise("not yet implemented")
   else
@@ -158,7 +207,7 @@ end
 ###################################################################################################
 def usage
   puts "Usage: massEmail.rb group filter template mode"
-  puts "  where 'group' is one of: eschol-admins, authors"
+  puts "  where 'group' is one of: stats-admins, authors"
   puts "        'filter' is one of: recent-hits, all"
   puts "        'template' is the filename of an erb email template"
   puts "        'mode' is one of: preview, go4it"
@@ -171,7 +220,7 @@ end
 # Parse args
 ARGV.length == 4 or usage
 group, filter, template, mode = ARGV
-%w{eschol-admins authors}.include?(group) or usage
+%w{stats-admins authors}.include?(group) or usage
 %w{recent-hits all}.include?(filter) or usage
 %w{preview go4it}.include?(mode) or usage
 File.file?(template) or usage
@@ -179,6 +228,7 @@ File.file?(template) or usage
 # Build the list of users
 puts "Building list of users."
 users = buildUsers(group, filter)
+puts "Emails to: #{users.length} users."
 
 # Update bounce records
 processBounces
