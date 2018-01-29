@@ -27,6 +27,10 @@ end
 # Model classes for easy object-relational mapping in the database.
 # We try to keep this list in alpha order, to avoid dupes and make things easy to find.
 
+class Bounce < Sequel::Model
+  unrestrict_primary_key
+end
+
 class DisplayPDF < Sequel::Model
   unrestrict_primary_key
 end
