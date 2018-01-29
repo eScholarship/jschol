@@ -15,10 +15,12 @@ require 'date'
 require 'digest'
 require 'fileutils'
 require 'json'
+require 'logger'
 require 'pp'
 require 'sequel'
 require 'set'
 require 'time'
+require 'unindent'
 
 require_relative './subprocess.rb'
 
@@ -37,6 +39,10 @@ DB = Sequel.connect({
   "username" => ENV["ESCHOL_DB_USERNAME"] || raise("missing env ESCHOL_DB_USERNAME"),
   "password" => ENV["ESCHOL_DB_PASSWORD"] || raise("missing env ESCHOL_DB_HOST") })
 
+# Log for debugging
+#File.exists?('massEmail.sql_log') and File.delete('massEmail.sql_log')
+#DB.loggers << Logger.new('massEmail.sql_log')
+
 # Model class for each table
 require_relative './models.rb'
 
@@ -50,7 +56,7 @@ OJS_DB = Sequel.connect({
 
 ###################################################################################################
 # Grab SES email logs and put them into our 'awsLogs' directory
-def grabLogs
+def grabBounceLogs
   # If logs are fresh, skip.
   latest = Dir.glob("./awsLogs/ses-logs/**/*").inject(0) { |memo, path| [memo, File.mtime(path).to_i].max }
   age = ((Time.now.to_i - latest) / 60 / 60.0).round(1)
@@ -74,6 +80,8 @@ end
 ###################################################################################################
 # Process any new bounce notifications
 def processBounces
+  grabBounceLogs
+
   puts "Processing bounces."
   Dir.glob("./awsLogs/ses-logs/**/*").sort.each { |fn|
     next unless File.file?(fn)
@@ -121,7 +129,60 @@ def processBounces
 end
 
 ###################################################################################################
+def buildUsers(group, filter)
+  result = Hash.new { |h,k| h[k] = Hash.new { |h2,k2| h2[k2] = [] } }
+  if group == "eschol-admins"
+    unitsWithHits = Set.new(UnitStat.where(month: (Date.today<<1).year*100 + (Date.today<<1).month).
+      where(Sequel.lit(%{attrs->"$.hit" is not null})).select_map(:unit_id))
+    OJS_DB.fetch(%{
+      select email, unit_id from users
+      inner join eschol_roles on eschol_roles.user_id = users.user_id
+      where users.user_id not in (
+        select user_id from user_settings
+        where setting_name = 'eschol_bouncing_email' and setting_value = 'yes'
+      )
+      and role = 'admin' or role = 'stats'
+      order by email
+    }).each { |row|
+      filter == "recent-hits" && !unitsWithHits.include?(row[:unit_id]) and next
+      result[row[:email].downcase][:units] << row[:unit_id]
+    }
+  elsif group == "authors"
+    raise("not yet implemented")
+  else
+    raise
+  end
+  return result
+end
+
+###################################################################################################
+def usage
+  puts "Usage: massEmail.rb group filter template mode"
+  puts "  where 'group' is one of: eschol-admins, authors"
+  puts "        'filter' is one of: recent-hits, all"
+  puts "        'template' is the filename of an erb email template"
+  puts "        'mode' is one of: preview, go4it"
+  exit 1
+end
+
+###################################################################################################
 # The main routine
-grabLogs
+
+# Parse args
+ARGV.length == 4 or usage
+group, filter, template, mode = ARGV
+%w{eschol-admins authors}.include?(group) or usage
+%w{recent-hits all}.include?(filter) or usage
+%w{preview go4it}.include?(mode) or usage
+File.file?(template) or usage
+
+# Build the list of users
+puts "Building list of users."
+users = buildUsers(group, filter)
+
+# Update bounce records
 processBounces
+
+# Generate all the emails
+
 puts "Done."
