@@ -144,16 +144,20 @@ class RefAccum
 end
 
 class EventAccum
-  attr_accessor :hit, :dl, :post, :google, :counts, :ref
+  attr_accessor :hit, :dl, :vpdf, :vpg, :post, :google, :counts, :ref
 
   def initialize(h = nil)
-    @hit = @dl = @google = @post = 0
+    @hit = @dl = @vpdf = @vpg = @google = @post = 0
     h.nil? and return
     h.each { |k,v|
       if k == 'hit' || k == :hit
         @hit = v
       elsif k == 'dl' || k == :dl
         @dl = v
+      elsif k == 'vpdf' || k == :vpdf
+        @vpdf = v
+      elsif k == 'vpg' || k == :vpg
+        @vpg = v
       elsif k == 'post' || k == :post
         @post = v
       elsif k == 'ref' || k == :ref
@@ -182,6 +186,8 @@ class EventAccum
     # Inline the most common properties for speed and memory efficiency
     @hit    += b.hit
     @dl     += b.dl
+    @vpdf   += b.vpdf
+    @vpg    += b.vpg
     @post   += b.post
     @google += b.google
 
@@ -204,6 +210,8 @@ class EventAccum
     result = {}
     @hit > 0 and result[:hit] = @hit
     @dl > 0 and result[:dl] = @dl
+    @vpdf > 0 and result[:vpdf] = @vpdf
+    @vpg > 0 and result[:vpg] = @vpg
     @post > 0 and result[:post] = @post
     @other.nil? or result.merge!(@other)
     if @google > 0
@@ -313,9 +321,16 @@ class CloudFrontLogEventSource < LogEventSource
         next
       elsif nLines == 2
         fieldSpec = line.split()[1,999]
-        fieldSpec.length == 24 or raise("unexpected fieldspec for v 1.0 CloudFront log")
+        fieldSpec.index("time")           == o_time &&
+        fieldSpec.index("c-ip")           == o_ip &&
+        fieldSpec.index("cs-method")      == o_method &&
+        fieldSpec.index("cs-uri-stem")    == o_uriStem &&
+        fieldSpec.index("sc-status")      == o_status &&
+        fieldSpec.index("cs(Referer)")    == o_referrer &&
+        fieldSpec.index("cs(User-Agent)") == o_agent &&
+        fieldSpec.index("cs-uri-query")   == o_query or raise("unexpected fieldspec for v 1.0 CloudFront log: #{line.inspect}")
       else
-        next unless line.include?("GET") && (line.include?("uc/item") || line.include?("content"))
+        next unless line.include?("GET") && (line.include?("/item") || line.include?("content"))
         values = line.split
         yield LogEvent.new(values[o_ip],
                            parseTime(@date, values[o_time], true), # isGmt: true
@@ -387,7 +402,7 @@ class ALBLogEventSource < LogEventSource
                   (?<proto2>   [A-Z]+/[\d.]+)
               $}x
     eachLogLine(@path) { |line|
-      next unless line.include?("GET") && (line.include?("uc/item/") || line.include?("content/"))
+      next unless line.include?("GET") && (line.include?("/item/") || line.include?("content/"))
       m1 = line.match(linePat) or raise("can't parse ALB line #{line.inspect}")
       m2 = m1[:client_port].match(portPat) or raise
       next if m1[:request] =~ /:\d+-/  # e.g. weird things like: "- http://pub-jschol-prd-alb-blah.amazonaws.com:80- "
@@ -438,7 +453,7 @@ class JscholLogEventSource < LogEventSource
                   (?<proto2>   [A-Z]+/[\d.]+)
               $}x
     eachLogLine(@path) { |line|
-      next unless line.include?("GET") && (line.include?("uc/item/") || line.include?("content/"))
+      next unless line.include?("GET") && (line.include?("/item/") || line.include?("content/"))
       m1 = line.match(linePat)
       if !m1
         if line =~ /\[\d+\] \d+\.\d+\.\d+\.\d+/
@@ -836,10 +851,10 @@ end
 ###################################################################################################
 # Grab logs from their various places and put them into our 'awsLogs' directory
 def grabLogs
-  # If logs are fresh as of 8 hours ago, skip.
+  # If logs are fresh, skip.
   latest = Dir.glob("./awsLogs/alb-logs/**/*").inject(0) { |memo, path| [memo, File.mtime(path).to_i].max }
   age = ((Time.now.to_i - latest) / 60 / 60.0).round(1)
-  if age <= 8
+  if age <= 18
     puts "Logs grabbed #{age} hours ago; skipping grab."
     return
   end
@@ -936,7 +951,6 @@ def extractReferrer(item, event)
   # Skip self-refs from an eschol item to itself
   if ref =~ /escholarship\.org|repositories\.cdlib\.org/
     ref.include?(item.sub(/^qt/,'')) || ref.include?("pdfjs") and return nil
-    (item.include?("0023k3x0") && ref.include?("uc/item/0023k3x0")) and raise("huh: ref=#{ref.inspect} item=#{item.inspect}")
     #puts "#{item}|#{ref} -> eschol"
     return "escholarship.org"
   end
@@ -1326,7 +1340,7 @@ end
 ###################################################################################################
 # The main routine
 
-#grabLogs
+grabLogs
 loadItemInfoCache
 parseLogs
 $testDate and exit 0
