@@ -75,6 +75,10 @@ end
 class Location < Sequel::Model
 end
 
+class MassEmail < Sequel::Model
+  unrestrict_primary_key
+end
+
 class Page < Sequel::Model
 end
 

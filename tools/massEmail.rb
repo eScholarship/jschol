@@ -63,14 +63,13 @@ $testMode = ARGV.delete("--test")
 # Grab SES email logs and put them into our 'awsLogs' directory
 def grabBounceLogs
   # If logs are fresh, skip.
-  latest = Dir.glob("./awsLogs/ses-logs/**/*").inject(0) { |memo, path| [memo, File.mtime(path).to_i].max }
-  age = ((Time.now.to_i - latest) / 60 / 60.0).round(1)
+  age = ((Time.now.to_i - File.mtime("./awsLogs/ses-logs").to_i) / 60 / 60.0).round(1)
   if age <= 18
-    puts "SES logs grabbed #{age} hours ago; skipping grab."
+    STDERR.puts "SES logs checked #{age} hours ago; skipping grab."
     return
   end
 
-  puts "Grabbing SES logs."
+  STDERR.puts "Grabbing SES logs."
   # Note: on production there's an old ~/.aws/config file that points to different AWS credentials.
   #       We use an explicit "instance" profile (also defined in that file) to get back to plain
   #       default instance credentials.
@@ -80,6 +79,7 @@ def grabBounceLogs
     FileUtils.mkdir_p("./awsLogs/ses-logs/#{dir}")
     checkCall("aws s3 sync --profile instance --quiet --delete s3://cdl-shared-logs/ses/#{dir}/ ./awsLogs/ses-logs/#{dir}/")
   }
+  FileUtils.touch("./awsLogs/ses-logs")
 end
 
 ###################################################################################################
@@ -87,7 +87,7 @@ end
 def processBounces
   grabBounceLogs
 
-  puts "Processing bounces."
+  STDERR.puts "Processing bounces."
   Dir.glob("./awsLogs/ses-logs/**/*").sort.each { |fn|
     next unless File.file?(fn)
     fn =~ %r{Bounce/(\d\d\d\d)-(\d\d)-(\d\d)} or raise("Warning: unexpected SES file #{fn}")
@@ -103,7 +103,7 @@ def processBounces
       prev = Bounce.where(email: email).order(Sequel::desc(:date)).first
       if prev && (Date.today - prev.date) < 90 && (Date.today - bounceDate) < 90
         # We got two bounces within 90 days of today; mark the user as 'bouncing'
-        puts "Email #{email} bounced twice (#{prev.date} and #{bounceDate}); will mark."
+        STDERR.puts "Email #{email} bounced twice (#{prev.date} and #{bounceDate}); will mark."
 
         # Add a user to the OJS users table if not already there
         user = OJS_DB[:users].where(email: email).first
@@ -119,7 +119,7 @@ def processBounces
           user = OJS_DB[:users].where(email: email).first
         end
         if OJS_DB[:user_settings].where(user_id: user[:user_id], setting_name: 'eschol_bouncing_email').first
-          puts "...was already marked as bouncing."
+          STDERR.puts "...was already marked as bouncing."
         else
           OJS_DB[:user_settings].insert(user_id: user[:user_id],
                                         locale: "en_US",
@@ -227,7 +227,26 @@ def generateEmails(tplFile, users, mode)
   allUnits = Unit.to_hash(:id)
   allHier = UnitHier.filter(is_direct: true).to_hash_groups(:unit_id)
   tpl = ERB.new(File.read(tplFile))
+
+  nTodo = users.length
+  nDone = 0
+  nSkipped = 0
+
   users.each { |email, vars|
+    # Give feedback once in a while.
+    if (nDone % 100) == 0
+      STDERR.puts "Processed #{nDone}/#{nTodo}#{nSkipped>0 ? " (#{nSkipped} skipped - sent previously)" : ""}"
+    end
+
+    # Restartability: avoid sending the same email to the same person unless 3 wks have passed
+    prevEmailed = MassEmail.where(email: email, template: File.basename(tplFile)).first
+    if prevEmailed and (Date.today - prevEmailed.date) < 21
+      #STDERR.puts "Skipping #{email} (already sent on #{prevEmailed.date})"
+      nSkipped += 1
+      nDone += 1
+      next
+    end
+
     body = generateEmail(tpl, email, vars, allUnits, allHier)
     body = body.split("\n")
     body.shift =~ /^From: (.*)$/ or raise("Template must have From: as first line")
@@ -236,7 +255,7 @@ def generateEmails(tplFile, users, mode)
     subject = $1
     toAddr = email
     if $testMode
-      toAddr = "lisa.schiff@ucop.edu, justin.gonder@ucop.edu, monica.westin@ucop.edu, martin.haye@ucop.edu"
+      toAddr = "martin.haye@gmail.com"
     end
 
     mail = Mail.new do
@@ -253,28 +272,39 @@ def generateEmails(tplFile, users, mode)
       end
     end
     if mode == "go4it"
-      toAddr.include?("haye") or raise  # safety check, temporary for testing
+      # Okay, go forth and send the email
       mail.delivery_method :sendmail
       mail.deliver
+
+      # Mark this as sent, in case we're interrupted and need to resume where we left off.
+      MassEmail.where(email: email, template: File.basename(tplFile)).delete
+      MassEmail.create(email: email, template: File.basename(tplFile), date: Date.today)
+
       sleep 0.5  # CDL-wide we have a 20 emails per second limit; hold this process to 2 per sec
     else
-      puts "\n========================================================================================================="
+      STDERR.puts "\n========================================================================================================="
       puts mail
+      STDOUT.flush
     end
     if $testMode
-      puts "Exiting early (test mode)."
+      STDERR.puts "Exiting early (test mode)."
       exit 1
     end
+
+    nDone += 1
   }
+  STDERR.puts "Processed #{nDone}/#{nTodo}#{nSkipped>0 ? " (#{nSkipped} skipped - sent previously)" : ""}."
 end
 
 ###################################################################################################
 def usage
-  puts "Usage: massEmail.rb group filter template mode"
-  puts "  where 'group' is one of: stats-admins, authors"
-  puts "        'filter' is one of: recent-hits, all"
-  puts "        'template' is the filename of an erb email template"
-  puts "        'mode' is one of: preview, go4it"
+  STDERR.puts %{
+    Usage: massEmail.rb group filter template mode
+      where 'group' is one of: stats-admins, authors
+            'filter' is one of: recent-hits, all
+            'template' is the filename of an erb email template
+            'mode' is one of: preview, go4it
+  }.unindent.strip
   exit 1
 end
 
@@ -290,14 +320,14 @@ group, filter, template, mode = ARGV
 File.file?(template) or raise("File not found: #{template}")
 
 # Build the list of users
-puts "Building list of users."
+STDERR.puts "Building list of users."
 users = buildUsers(group, filter)
-puts "Emails to: #{users.length} users."
 
 # Update bounce records
 processBounces
 
 # Generate all the emails
+STDERR.puts "Generating emails to #{users.length} users."
 generateEmails(template, users, mode)
 
 puts "Done."
