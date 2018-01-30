@@ -13,9 +13,12 @@ Dir.chdir(File.dirname(File.expand_path(File.dirname(__FILE__))))
 # Remainder are the requirements for this program
 require 'date'
 require 'digest'
+require 'erb'
 require 'fileutils'
 require 'json'
 require 'logger'
+require 'mail'
+require 'ostruct'
 require 'pp'
 require 'sequel'
 require 'set'
@@ -53,6 +56,8 @@ OJS_DB = Sequel.connect({
   "database" => ENV["OJS_DB_DATABASE"] || raise("missing env OJS_DB_DATABASE"),
   "username" => ENV["OJS_DB_USERNAME"] || raise("missing env OJS_DB_USERNAME"),
   "password" => ENV["OJS_DB_PASSWORD"] || raise("missing env OJS_DB_HOST") })
+
+$testMode = ARGV.delete("--test")
 
 ###################################################################################################
 # Grab SES email logs and put them into our 'awsLogs' directory
@@ -205,6 +210,65 @@ def buildUsers(group, filter)
 end
 
 ###################################################################################################
+def generateEmail(tpl, email, vars, allUnits, allHier)
+  units = vars[:units].to_a
+  units.delete_if { |id| !allHier[id] }
+  units = units.map{ |id| allUnits[id]||{} }.map { |u|
+    parents = allHier[u[:id]]
+    parent = parents && allUnits[parents[0][:ancestor_unit]]
+    OpenStruct.new(id: u[:id], name: (parent ? parent[:name]+": " : "") + u[:name], type: u[:type],
+                   url: "https://escholarship.org/uc/#{u[:id]}")
+  }.sort { |a,b| a[:name] <=> b[:name] }
+  return tpl.result(binding)
+end
+
+###################################################################################################
+def generateEmails(tplFile, users, mode)
+  allUnits = Unit.to_hash(:id)
+  allHier = UnitHier.filter(is_direct: true).to_hash_groups(:unit_id)
+  tpl = ERB.new(File.read(tplFile))
+  users.each { |email, vars|
+    body = generateEmail(tpl, email, vars, allUnits, allHier)
+    body = body.split("\n")
+    body.shift =~ /^From: (.*)$/ or raise("Template must have From: as first line")
+    fromAddr = $1
+    body.shift =~ /^Subject: (.*)$/ or raise("Template must have Subject: as second line")
+    subject = $1
+    toAddr = email
+    if $testMode
+      toAddr = "lisa.schiff@ucop.edu, justin.gonder@ucop.edu, monica.westin@ucop.edu, martin.haye@ucop.edu"
+    end
+
+    mail = Mail.new do
+      from     fromAddr
+      to       toAddr
+      subject  subject
+      text_part do
+        content_type 'text/plain; charset=UTF-8'
+        body   body.join("\n").gsub(%r{<a href="([^"]+)">}, '\1: ').gsub(/<[^>]+>/, '')
+      end
+      html_part do
+        content_type 'text/html; charset=UTF-8'
+        body   body.join("\n")
+      end
+    end
+    if mode == "go4it"
+      toAddr.include?("haye") or raise  # safety check, temporary for testing
+      mail.delivery_method :sendmail
+      mail.deliver
+      sleep 0.5  # CDL-wide we have a 20 emails per second limit; hold this process to 2 per sec
+    else
+      puts "\n========================================================================================================="
+      puts mail
+    end
+    if $testMode
+      puts "Exiting early (test mode)."
+      exit 1
+    end
+  }
+end
+
+###################################################################################################
 def usage
   puts "Usage: massEmail.rb group filter template mode"
   puts "  where 'group' is one of: stats-admins, authors"
@@ -223,7 +287,7 @@ group, filter, template, mode = ARGV
 %w{stats-admins authors}.include?(group) or usage
 %w{recent-hits all}.include?(filter) or usage
 %w{preview go4it}.include?(mode) or usage
-File.file?(template) or usage
+File.file?(template) or raise("File not found: #{template}")
 
 # Build the list of users
 puts "Building list of users."
@@ -234,5 +298,6 @@ puts "Emails to: #{users.length} users."
 processBounces
 
 # Generate all the emails
+generateEmails(template, users, mode)
 
 puts "Done."
