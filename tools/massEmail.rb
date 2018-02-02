@@ -277,12 +277,14 @@ def generateEmails(tplFile, users, mode)
       mail.deliver
 
       # Mark this as sent, in case we're interrupted and need to resume where we left off.
-      MassEmail.where(email: email, template: File.basename(tplFile)).delete
-      MassEmail.create(email: email, template: File.basename(tplFile), date: Date.today)
+      if !$testMode
+        MassEmail.where(email: email, template: File.basename(tplFile)).delete
+        MassEmail.create(email: email, template: File.basename(tplFile), date: Date.today)
+      end
 
       sleep 0.5  # CDL-wide we have a 20 emails per second limit; hold this process to 2 per sec
     else
-      STDERR.puts "\n========================================================================================================="
+      puts "\n========================================================================================================="
       puts mail
       STDOUT.flush
     end
@@ -330,4 +332,4 @@ processBounces
 STDERR.puts "Generating emails to #{users.length} users."
 generateEmails(template, users, mode)
 
-puts "Done."
+STDERR.puts "Done."
