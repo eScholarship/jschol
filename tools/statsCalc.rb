@@ -57,6 +57,16 @@ require_relative './models.rb'
 # Utilities
 require_relative './statsUtil.rb'
 
+# We'll need some email forwarding info from the OJS database.
+OJS_DB = Sequel.connect({
+  "adapter"  => "mysql2",
+  "host"     => ENV["OJS_DB_HOST"] || raise("missing env OJS_DB_HOST"),
+  "port"     => ENV["OJS_DB_PORT"] || raise("missing env OJS_DB_PORT").to_i,
+  "database" => ENV["OJS_DB_DATABASE"] || raise("missing env OJS_DB_DATABASE"),
+  "username" => ENV["OJS_DB_USERNAME"] || raise("missing env OJS_DB_USERNAME"),
+  "password" => ENV["OJS_DB_PASSWORD"] || raise("missing env OJS_DB_HOST") })
+
+# Big prime used for making smallish (63-bit) digests out of big MD5 digests.
 BIG_PRIME = 9223372036854775783 # 2**63 - 25 is prime. Kudos https://primes.utm.edu/lists/2small/0bit.html
 
 $hostname = `/bin/hostname`.strip
@@ -523,13 +533,17 @@ def connectAuthors
   nTodo > 0 or return
 
   # First, record existing email -> person correlations
+  puts "Connecting items/authors to people."
   emailToPerson = {}
   Person.where(Sequel.lit("attrs->'$.email' is not null")).each { |person|
-    email = JSON.parse(person.attrs)["email"].downcase
-    if emailToPerson.key?(email) && emailToPerson[email] != person.id
-      puts "Warning: multiple matching people for email #{email.inspect}"
-    end
-    emailToPerson[email] = person.id
+    attrs = JSON.parse(person.attrs)
+    next if attrs['forwarded_to']
+    Set.new([attrs['email']] + (attrs['prev_emails'] || [])).each { |email|
+      if emailToPerson.key?(email) && emailToPerson[email] != person.id
+        puts "Warning: multiple matching people for email #{email.inspect}"
+      end
+      emailToPerson[email] = person.id
+    }
   }
 
   # Then connect all unconnected authors to people
@@ -539,7 +553,7 @@ def connectAuthors
       authAttrs = JSON.parse(auth.attrs)
       email = authAttrs["email"].downcase
       person = emailToPerson[email]
-      (nDone % 1000) == 0 and puts "Connecting authors: #{nDone} / #{nTodo}"
+      (nDone % 1000) == 0 and puts "Connecting items/authors to people: #{nDone} / #{nTodo}"
       if !person
         person = createPersonArk(authAttrs["name"] || "unknown", email)
         Person.create(id: person, attrs: { email: email }.to_json)
@@ -549,7 +563,7 @@ def connectAuthors
       nDone += 1
     }
   }
-  puts "Connecting authors: #{nDone} / #{nTodo}"
+  puts "Connecting items/authors to people: #{nDone} / #{nTodo}"
 end
 
 ###################################################################################################
@@ -618,10 +632,6 @@ end
 ###################################################################################################
 # Calculate a digest of items and people for each month of stats.
 def calcStatsMonths()
-
-  puts "Estimating work."
-  # Make sure all authors are connected to people
-  connectAuthors
 
   # Determine the size of each month, for time estimation during processing
   puts "  Calculating month counts."
@@ -1338,12 +1348,107 @@ def parseLogs
 end
 
 ###################################################################################################
-# The main routine
+# Email forwards are recorded in the OJS database. Apply these to forward/combine Person records.
+def applyForwards
+  # Grab the forwards from the OJS db and put them in a hash. This takes care of dupes (by
+  # picking the last one in email order).
+  puts "Applying email forwards to people."
+  forwards = {}
+  OJS_DB.fetch(%{
+    select eschol_prev_email.email prev_email, users.email cur_email
+    from eschol_prev_email
+    inner join users on users.user_id = eschol_prev_email.user_id
+    order by eschol_prev_email.user_id, eschol_prev_email.email
+  }).each{ |row|
+    prev = row[:prev_email].downcase.strip
+    cur  = row[:cur_email].downcase.strip
+    prev != cur and forwards[prev] = cur
+  }
 
-grabLogs
-loadItemInfoCache
-parseLogs
-$testDate and exit 0
-calcStatsMonths
-calcStats
+  # Gather the set of people emails that haven't yet gotten any forwarding.
+  allPeopleEmails = Set.new(DB.fetch(%{
+    select JSON_UNQUOTE(attrs->'$.email') email from people
+  }).map { |r| r[:email] })
+
+  # Check them against the people table
+  forwards.keys.sort.each { |prevEmail|
+    curEmail = prevEmail
+    (0..10).each {
+      forwards[curEmail] and curEmail = forwards[curEmail]
+    }
+    forwards[curEmail] and raise("forwarding loop detected involving #{curEmail}")
+    next unless allPeopleEmails.include?(prevEmail)
+    prevPerson = Person.where(Sequel.lit("attrs->'$.email' = ?", prevEmail)).first
+    next unless prevPerson  # skip forwards that don't involve our authors
+    curPerson = Person.where(Sequel.lit("attrs->'$.email' = ?", curEmail)).first
+    prevAttrs = JSON.parse(prevPerson[:attrs])
+
+    # Skip if already forwarded
+    next if prevAttrs['forwarded_to'] == curPerson[:id]
+
+    # Print out what we're doing.
+    puts "\n  #{prevEmail} -> #{curEmail}"
+
+    if curPerson.nil?
+      # There's only one record, on which we can just change the email addr.
+      prevAttrs['prev_emails'] ||= []
+      prevAttrs['prev_emails'] << prevEmail
+      prevAttrs['prev_emails'].uniq!
+      prevAttrs['email'] = curEmail
+      puts "    Plain switch: #{prevAttrs}"
+      prevPerson.attrs = prevAttrs.to_json
+      #prevPerson.save  # FIXME
+    else
+      # There are two records, prev and cur. We need to redirect prev to cur.
+      curAttrs = JSON.parse(curPerson[:attrs])
+      DB.transaction {
+        curAttrs['prev_emails'] ||= []
+        curAttrs['prev_emails'] << prevEmail
+        if prevAttrs['prev_emails']
+          curAttrs['prev_emails'] += prevAttrs['prev_emails']
+          prevAttrs.delete('prev_emails')
+        end
+        curAttrs['prev_emails'].uniq!
+
+        curAttrs['forwarded_from'] ||= []
+        curAttrs['forwarded_from'] << prevPerson[:id]
+        if prevAttrs['forwarded_from']
+          raise("complex todo")
+          # This case hasn't arisen yet. Do something like the following?
+          #prevAttrs['forwarded_from'].each { ...fetch record, point to new record, also do items... }
+          #curAttrs['forwarded_from'] += prevAttrs['forwarded_from']
+          #prevAttrs.delete('forwarded_from')
+        end
+        curAttrs['forwarded_from'].uniq!
+
+        prevAttrs['forwarded_to'] = curPerson[:id]
+
+        puts "    Combining: #{prevAttrs}"
+        puts "           to: #{curAttrs}"
+
+        curPerson.attrs = curAttrs.to_json
+        curPerson.save
+
+        prevPerson.attrs = prevAttrs.to_json
+        prevPerson.save
+
+        # Switch all the item author records from old to new
+        nItems = ItemAuthor.where(person_id: prevPerson[:id]).update(person_id: curPerson[:id])
+        puts "    Updated #{nItems} item(s)."
+        nItems > 0 or raise("person without items?")
+      }
+    end
+  }
+end
+
+###################################################################################################
+# The main routine
+#grabLogs
+#loadItemInfoCache
+#parseLogs
+#$testDate and exit 0
+#applyForwards
+connectAuthors
+#calcStatsMonths
+#calcStats
 puts "Done."
