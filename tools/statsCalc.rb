@@ -634,6 +634,7 @@ end
 def calcStatsMonths()
 
   # Determine the size of each month, for time estimation during processing
+  puts "Estimating work to be done."
   puts "  Calculating month counts."
   monthCounts = calcMonthCounts()
   itemSummaries = Hash.new { |h,k| h[k] = ItemSummary.new }
@@ -743,13 +744,12 @@ end
 
 ###################################################################################################
 # Calculate a digest of items and people for each month of stats.
-def propagateItemMonth(itemUnits, itemPeople, itemCategory, monthPosts, month)
+def propagateItemMonth(itemUnits, itemCategory, monthPosts, month)
   puts "Propagating month #{month}."
 
   # We will accumulate data into these hashes
   itemStats     = Hash.new { |h,k| h[k] = EventAccum.new }
   unitStats     = Hash.new { |h,k| h[k] = EventAccum.new }
-  personStats   = Hash.new { |h,k| h[k] = EventAccum.new }
   categoryStats = Hash.new { |h,k| h[k] = EventAccum.new }
 
   # First handle item postings for this month
@@ -759,7 +759,6 @@ def propagateItemMonth(itemUnits, itemPeople, itemCategory, monthPosts, month)
       unitStats[unit].incPost
       categoryStats[[unit, itemCategory[item] || 'unknown']].incPost
     }
-    itemPeople[item] and itemPeople[item].each { |pp| personStats[pp].incPost }
   }
 
   # Next accumulate events for each items accessed this month
@@ -773,7 +772,6 @@ def propagateItemMonth(itemUnits, itemPeople, itemCategory, monthPosts, month)
       unitStats[unit].add(accum)
       categoryStats[[unit, itemCategory[item] || 'unknown']].add(accum)
     }
-    itemPeople[item] and itemPeople[item].each { |pp| personStats[pp].add(accum) }
   }
 
   # Write out all the stats
@@ -786,11 +784,6 @@ def propagateItemMonth(itemUnits, itemPeople, itemCategory, monthPosts, month)
     UnitStat.where(month: month).delete
     unitStats.each { |unit, accum|
       UnitStat.create(unit_id: unit, month: month, attrs: accum.to_h.to_json)
-    }
-
-    PersonStat.where(month: month).delete
-    personStats.each { |person, accum|
-      PersonStat.create(person_id: person, month: month, attrs: accum.to_h.to_json)
     }
 
     CategoryStat.where(month: month).delete
@@ -809,9 +802,6 @@ end
 def calcStats
   puts "Gathering item categories."
   itemCategory = gatherItemCategories
-
-  puts "Gathering item-person associations."
-  itemPeople = ItemAuthor.where(Sequel.~(person_id: nil)).select_hash_groups(:item_id, :person_id)
 
   puts "Gathering item-unit associations."
   itemUnits = UnitItem.select_hash_groups(:item_id, :unit_id)
@@ -842,7 +832,7 @@ def calcStats
   totalCount = doneCount = 0
   months.each { |sm| totalCount += sm.cur_count }
   months.each { |sm|
-    propagateItemMonth(itemUnits, itemPeople, itemCategory, monthPosts[sm.month], sm.month)
+    propagateItemMonth(itemUnits, itemCategory, monthPosts[sm.month], sm.month)
     doneCount += sm.cur_count
     if doneCount > 0
       elapsed = Time.now - startTime
@@ -1443,12 +1433,23 @@ end
 
 ###################################################################################################
 # The main routine
-#grabLogs
-#loadItemInfoCache
-#parseLogs
-#$testDate and exit 0
-#applyForwards
-connectAuthors
-#calcStatsMonths
-#calcStats
-puts "Done."
+lockFile = "/tmp/jschol_statsCalc.lock"
+File.exist?(lockFile) or FileUtils.touch(lockFile)
+lock = File.new(lockFile)
+begin
+  if !lock.flock(File::LOCK_EX | File::LOCK_NB)
+    puts "Another copy is already running."
+    exit 1
+  end
+  grabLogs
+  loadItemInfoCache
+  parseLogs
+  $testDate and exit 0
+  applyForwards
+  connectAuthors
+  calcStatsMonths
+  calcStats
+  puts "Done."
+ensure
+  lock.flock(File::LOCK_UN)
+end

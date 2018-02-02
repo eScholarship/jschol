@@ -86,10 +86,6 @@ class Person < Sequel::Model(:people)
   unrestrict_primary_key
 end
 
-class PersonStat < Sequel::Model
-  unrestrict_primary_key
-end
-
 class Redirect < Sequel::Model
 end
 
