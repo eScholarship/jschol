@@ -92,7 +92,8 @@ if ENV['SOCKS_PORT']
 end
 puts "Connecting to eschol DB.    "
 DB = ensureConnect("ESCHOL_DB")
-#DB.loggers << Logger.new('server.sql_log')  # Enable to debug SQL queries on main db
+DB.loggers << Logger.new('server.sql_log')  # Enable to debug SQL queries on main db
+puts "\n\nFOO log is on\n\n"
 puts "Connecting to OJS DB.       "
 OJS_DB = ensureConnect("OJS_DB")
 #OJS_DB.loggers << Logger.new('ojs.sql_log')  # Enable to debug SQL queries on OJS db
@@ -778,6 +779,15 @@ def parseIssueHeaderData(unit_id, vol, iss, issue)
 end
 
 ###################################################################################################
+# Person stats
+get "/api/author/:personID/stats/?:pageName?" do
+  content_type :json
+  personID = "ark:/99166/#{params[:personID]}"
+  Person[personID] or jsonHalt(404, "Author not found")
+  return authorStatsData(personID, params[:pageName])
+end
+
+###################################################################################################
 # Unit page data. 
 # pageName may be some administrative function (nav, profile), specific journal volume, or static page name
 get "/api/unit/:unitID/:pageName/?:subPage?" do
@@ -787,7 +797,7 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
 
   attrs = JSON.parse(unit[:attrs])
   pageName = params[:pageName]
-  pageName == "stats" and return statsData(params[:subPage])
+  pageName == "stats" and return unitStatsData(params[:unitID], params[:subPage])
   issueHeaderData = nil
   if pageName
     ext = nil

@@ -64,8 +64,13 @@ class StatsHeader extends React.Component {
     let isByMonthPage = pageName.indexOf("by_month") >= 0
     return(
       <div>
-        <MetaTagsComp title={`${p.title}: ${p.data.unit_name}`}/>
-        <h1><Link to={`/uc/${p.params.unitID}/stats`}>{p.data.unit_name}</Link></h1>
+        <MetaTagsComp title={`${p.title}: ${p.data.unit_name || p.data.author_name}`}/>
+        <h1>
+          { p.params.unitID ?
+              <Link to={`/uc/${p.params.unitID}/stats`}>{p.data.unit_name}</Link> :
+              <Link to={`/uc/author/${p.params.personID}/stats`}>{p.data.author_name}</Link>
+          }
+        </h1>
         { p.data.parent_id && !isIssuePage &&
           <p>
             Parent: <Link to={statsLink(p.data.parent_id, p.params.pageName, p.location.search)}>
@@ -241,7 +246,7 @@ class UnitStats_Summary extends React.Component {
   }
 }
 
-class UnitStats_HistoryByItem extends React.Component {
+class EitherStats_HistoryByItem extends React.Component {
   render() {
     let data = this.props.data
     return(
@@ -379,7 +384,7 @@ class UnitStats_Referrals extends React.Component {
   }
 }
 
-class UnitStats_BreakdownByItem extends React.Component {
+class EitherStats_BreakdownByItem extends React.Component {
   render() {
     let data = this.props.data
     return(
@@ -803,7 +808,11 @@ class UnitStats_BreakdownByUnit extends React.Component {
   }
 }
 
-export default class StatsPage extends PageBase
+class AuthorStats_Summary extends React.Component {
+  render = () => null
+}
+
+export class UnitStatsPage extends PageBase
 {
   pageDataURL() {
     const pm = this.props.params
@@ -826,11 +835,11 @@ export default class StatsPage extends PageBase
     if (pageName == "summary")
       return <UnitStats_Summary data={data} {...this.props}/>
     else if (pageName == "history_by_item")
-      return <UnitStats_HistoryByItem data={data} {...this.props}/>
+      return <EitherStats_HistoryByItem data={data} {...this.props}/>
     else if (pageName == "history_by_issue")
       return <UnitStats_HistoryByIssue data={data} {...this.props}/>
     else if (pageName == "breakdown_by_item")
-      return <UnitStats_BreakdownByItem data={data} {...this.props}/>
+      return <EitherStats_BreakdownByItem data={data} {...this.props}/>
     else if (pageName == "breakdown_by_issue")
       return <UnitStats_BreakdownByIssue data={data} {...this.props}/>
     else if (pageName == "breakdown_by_month")
@@ -849,5 +858,34 @@ export default class StatsPage extends PageBase
       return <UnitStats_AvgByUnit data={data} {...this.props}/>
     else if (pageName == "avg_by_category")
       return <UnitStats_AvgByCategory data={data} {...this.props}/>
+  }
+}
+
+export class AuthorStatsPage extends PageBase
+{
+  pageDataURL() {
+    const pm = this.props.params
+    return `/api/author/${pm.personID}/stats/${pm.pageName || "summary"}${this.props.location.search}`
+  }
+
+  needHeaderFooter() { return false } //  disable standard header and footer
+
+  renderContent() {
+    // Error case
+    if (this.state.pageData && this.state.pageData.error)
+      return this.renderError()
+
+    // Normal case -- a little different from PageBase in that we also render as loading when fetching data.
+    return (this.state.pageData && !this.state.fetchingData) ? this.renderData(this.state.pageData) : this.renderLoading()
+  }
+
+  renderData(data) {
+    const pageName = this.props.params.pageName || "summary"
+    if (pageName == "summary")
+      return <AuthorStats_Summary data={data} {...this.props}/>
+    else if (pageName == "history_by_item")
+      return <EitherStats_HistoryByItem data={data} {...this.props}/>
+    else if (pageName == "breakdown_by_item")
+      return <EitherStats_BreakdownByItem data={data} {...this.props}/>
   }
 }
