@@ -30,6 +30,7 @@ def authorStatsData(authorID, pageName)
   when 'summary';              authorStats_summary(authorID)
   when 'history_by_item';      authorStats_historyByItem(authorID)
   when 'breakdown_by_item';    authorStats_breakdownByItem(authorID)
+  when 'breakdown_by_month';   authorStats_breakdownByMonth(authorID)
   else raise("unknown author stats page #{pageName.inspect}")
   end
 end
@@ -87,9 +88,19 @@ def getStatsRange(minYrmo)
 end
 
 ###################################################################################################
+def humanDateRange(startYear, startMonth, endYear, endMonth)
+   return (startYear==endYear && startMonth==endMonth) ?
+             "#{Date::MONTHNAMES[startMonth]}, #{startYear}" :
+          (startYear==endYear) ?
+             "#{Date::MONTHNAMES[startMonth]} to #{Date::MONTHNAMES[endMonth]}, #{startYear}" :
+          "#{Date::MONTHNAMES[startMonth]}, #{startYear} to #{Date::MONTHNAMES[endMonth]}, #{endYear}"
+end
+
+###################################################################################################
 def getUnitStatsParams(unitID, includeNoHitYears = false)
-  s = Sequel.lit("attrs->'$.#{includeNoHitYears ? 'post' : 'hit'}' is not null")
-  minYrmo = UnitStat.where(unit_id: unitID).where(s).min(:month)
+  minYrmo = UnitStat.where(unit_id: unitID).
+                     where(Sequel.lit("attrs->'$.#{includeNoHitYears ? 'post' : 'hit'}' is not null")).
+                     min(:month)
   minYear = minYrmo / 100
   range, startYear, startMonth, endYear, endMonth, limit = getStatsRange(minYrmo)
   parentUnit = $hierByUnit[unitID] && $hierByUnit[unitID][0].ancestor_unit
@@ -98,11 +109,7 @@ def getUnitStatsParams(unitID, includeNoHitYears = false)
            parent_name:   parentUnit && $unitsHash[parentUnit].name,
            all_years:     (minYear .. Date.today.year).to_a,
            range:         range,
-           date_str:      (startYear==endYear && startMonth==endMonth) ?
-                             "#{Date::MONTHNAMES[startMonth]}, #{startYear}" :
-                          (startYear==endYear) ?
-                             "#{Date::MONTHNAMES[startMonth]} to #{Date::MONTHNAMES[endMonth]}, #{startYear}" :
-                          "#{Date::MONTHNAMES[startMonth]}, #{startYear} to #{Date::MONTHNAMES[endMonth]}, #{endYear}",
+           date_str:      humanDateRange(startYear, startMonth, endYear, endMonth),
            st_yr:         startYear,
            st_mo:         startMonth,
            en_yr:         endYear,
@@ -112,31 +119,42 @@ def getUnitStatsParams(unitID, includeNoHitYears = false)
          { unitID:    unitID,
            startYrMo: startYear*100 + startMonth,
            endYrMo:   endYear*100 + endMonth,
-           limit:    limit }
+           limit:     limit }
 end
 
 ###################################################################################################
-def getAuthorStatsParams(personID)
-  minYrmo = ItemStat.join(:item_authors, item_id: :item_id).
-                     where(person_id: personID).
-                     where(Sequel.lit("item_stats.attrs->'$.hit' is not null")).
-                     min(:month) || ((Date.today<<1).year*100 + (Date.today<<1).month)
-  minYear = minYrmo / 100
-  range, startYear, startMonth, endYear, endMonth, limit = getStatsRange(minYrmo)
+def getAuthorName(personID)
+  # If there are multple last names, there isn't really a "best".
+  DB.fetch(Sequel::SQL::PlaceholderLiteralString.new(%{
+    select count(distinct attrs->'$.lname') num
+    from item_authors
+    where person_id = :personID
+  }, { personID: personID })).each { |row| # actually there's only one
+    row[:num] > 1 and return "[multiple author names]"
+  }
+
+  # Otherwise, pick the most recent variant as the "best"
   mostRecent = ItemAuthor.join(:items, id: :item_id).
                           where(person_id: personID).
                           select_append(Sequel.qualify("item_authors", "attrs")).
                           order(Sequel.desc(:eschol_date)).first
   attrs = JSON.parse(mostRecent ? mostRecent.attrs : Person[personID].attrs)
+  return mostRecent ? attrs['name'] : attrs['email']
+end
+
+###################################################################################################
+def getAuthorStatsParams(personID, includeNoHitYears = false)
+  minYrmo = ItemStat.join(:item_authors, item_id: :item_id).
+                     where(person_id: personID).
+                     where(Sequel.lit("item_stats.attrs->'$.#{includeNoHitYears ? 'post' : 'hit'}' is not null")).
+                     min(:month) || ((Date.today<<1).year*100 + (Date.today<<1).month)
+  minYear = minYrmo / 100
+  range, startYear, startMonth, endYear, endMonth, limit = getStatsRange(minYrmo)
   return { person_id:     personID,
-           author_name:   "#{attrs['name']} <#{attrs['email']}>",
+           author_name:   getAuthorName(personID),
            all_years:     (minYear .. Date.today.year).to_a,
            range:         range,
-           date_str:      (startYear==endYear && startMonth==endMonth) ?
-                             "#{Date::MONTHNAMES[startMonth]}, #{startYear}" :
-                          (startYear==endYear) ?
-                             "#{Date::MONTHNAMES[startMonth]} to #{Date::MONTHNAMES[endMonth]}, #{startYear}" :
-                          "#{Date::MONTHNAMES[startMonth]}, #{startYear} to #{Date::MONTHNAMES[endMonth]}, #{endYear}",
+           date_str:      humanDateRange(startYear, startMonth, endYear, endMonth),
            st_yr:         startYear,
            st_mo:         startMonth,
            en_yr:         endYear,
@@ -662,8 +680,6 @@ def unitStats_breakdownByUnit(unitID)
     n = -((a[1][:hits]||0) <=> (b[1][:hits]||0))
     n != 0 ? n : $unitsHash[a[0]].name <=> $unitsHash[b[0]].name
   }
-  puts "data after:"
-  pp data
   out[:report_data] = [ {
     unit_name: "Overall",
     total_deposits: overall[:deposits],
@@ -679,6 +695,41 @@ def unitStats_breakdownByUnit(unitID)
     }
   }
   return out.to_json
+end
+
+###################################################################################################
+def authorStats_summary(personID)
+
+  # Determine name variations
+  nameVariations = Set.new
+  authSet = ItemAuthor.join(:items, id: :item_id).
+                       where(person_id: personID).
+                       select_append(Sequel.qualify("item_authors", "attrs"))
+  authSet.each { |auth|
+    attrs = JSON.parse(auth[:attrs])
+    nameVariations << [attrs['name'], attrs['email']]
+  }
+
+  # Sum up the stats
+  endDate = Date.today << 1  # last month
+  endYrmo = endDate.year*100 + endDate.month
+  stats = DB.fetch(Sequel::SQL::PlaceholderLiteralString.new(%{
+    select sum(attrs->"$.post") total_posts,
+           sum(attrs->"$.hit") total_hits,
+           sum(attrs->"$.dl") total_downloads
+           from item_stats
+    where item_id in (select item_id from item_authors where person_id = :personID)
+    and   month = :endYrmo
+  }.unindent, { personID: personID, endYrmo: endYrmo })).first
+  return {
+    person_id:   personID,
+    author_name: getAuthorName(personID),
+    variations:  nameVariations.to_a.sort,
+    date_str:    "#{Date::MONTHNAMES[endDate.month]} #{endDate.year}",
+    posts:       stats[:total_posts].to_i,
+    hits:        stats[:total_hits].to_i,
+    downloads:   stats[:total_downloads].to_i
+  }.to_json
 end
 
 ###################################################################################################
@@ -737,5 +788,26 @@ def authorStats_breakdownByItem(personID)
 
   # Form the final data structure with everything needed to render the form and report
   out[:report_data] = itemData
+  return out.to_json
+end
+
+###################################################################################################
+def authorStats_breakdownByMonth(personID)
+  out, queryParams = getAuthorStatsParams(personID, true)  # include posting-only early years
+  query = Sequel::SQL::PlaceholderLiteralString.new(%{
+    select month,
+           sum(attrs->"$.post") posts,
+           sum(attrs->"$.hit") hits,
+           sum(attrs->"$.dl") downloads
+    from item_stats
+    where item_id in (select item_id from item_authors where person_id = :personID)
+    group by month
+    order by month desc
+  }.unindent, queryParams)
+
+  out[:report_data] = DB.fetch(query).map { |row|
+    [row[:month], row[:posts], row[:hits], row[:downloads]]
+  }
+
   return out.to_json
 end

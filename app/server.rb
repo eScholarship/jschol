@@ -92,8 +92,7 @@ if ENV['SOCKS_PORT']
 end
 puts "Connecting to eschol DB.    "
 DB = ensureConnect("ESCHOL_DB")
-DB.loggers << Logger.new('server.sql_log')  # Enable to debug SQL queries on main db
-puts "\n\nFOO log is on\n\n"
+#DB.loggers << Logger.new('server.sql_log')  # Enable to debug SQL queries on main db
 puts "Connecting to OJS DB.       "
 OJS_DB = ensureConnect("OJS_DB")
 #OJS_DB.loggers << Logger.new('ojs.sql_log')  # Enable to debug SQL queries on OJS db

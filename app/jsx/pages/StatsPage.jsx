@@ -51,7 +51,11 @@ const downloadCSV = (table, params) =>
     })
   })
   require.ensure(['downloadjs'], function(require) {
-    let filename = params.unitID.replace(/^root$/, 'eschol') + "_" + params.pageName + ".csv"
+    let filename
+    if (params.unitID)
+      filename = params.unitID.replace(/^root$/, 'eschol') + "_" + params.pageName + ".csv"
+    else
+      filename = "author_" + params.pageName + ".csv"
     require('downloadjs')(rows.join("\n"), filename, "text/csv")
   }, 'downloadjs')
 }
@@ -62,14 +66,13 @@ class StatsHeader extends React.Component {
     let pageName = p.params.pageName || "summary"
     let isIssuePage = pageName.indexOf("issue") >= 0
     let isByMonthPage = pageName.indexOf("by_month") >= 0
+    let thisLink = p.params.unitID ? `/uc/${p.params.unitID}/stats` : `/uc/author/${p.params.personID}/stats`
+    let thisLabel = p.params.unitID ? p.data.unit_name : p.data.author_name
     return(
       <div>
         <MetaTagsComp title={`${p.title}: ${p.data.unit_name || p.data.author_name}`}/>
         <h1>
-          { p.params.unitID ?
-              <Link to={`/uc/${p.params.unitID}/stats`}>{p.data.unit_name}</Link> :
-              <Link to={`/uc/author/${p.params.personID}/stats`}>{p.data.author_name}</Link>
-          }
+          { pageName == "summary" ? thisLabel : <Link to={thisLink}>{thisLabel}</Link> }
         </h1>
         { p.data.parent_id && !isIssuePage &&
           <p>
@@ -78,7 +81,7 @@ class StatsHeader extends React.Component {
                     </Link>
           </p>
         }
-        <h2>Stats: {p.title}{isByMonthPage ? "" : ` for ${p.data.date_str}`}</h2>
+        <h2>eScholarship stats: {p.title}{isByMonthPage ? "" : ` for ${p.data.date_str}`}</h2>
       </div>
     )
   }
@@ -472,7 +475,7 @@ class UnitStats_BreakdownByIssue extends React.Component {
   }
 }
 
-class UnitStats_BreakdownByMonth extends React.Component {
+class EitherStats_BreakdownByMonth extends React.Component {
   render() {
     let data = this.props.data
     return(
@@ -809,7 +812,61 @@ class UnitStats_BreakdownByUnit extends React.Component {
 }
 
 class AuthorStats_Summary extends React.Component {
-  render = () => null
+  render() {
+    let data = this.props.data
+    return(
+      <div className="c-statsReport">
+        <StatsHeader title="Summary" {...this.props}/>
+        { data.variations.length > 1 &&
+          <p>(* see below for name/email variations)</p>
+        }
+        <div className="c-datatable">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Deposits</th>
+                <th scope="col">Total requests</th>
+                <th scope="col">Download</th>
+                <th scope="col">View-only</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>{formatNum(data.posts)}</td>
+                <td>{formatNum(data.hits)}</td>
+                <td>{formatNum(data.downloads)}</td>
+                <td>{formatNum(data.hits - data.downloads)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2>Available Reports</h2>
+        <ul className="c-reportList">
+          <li>
+            History by:
+            <Link to={`/uc/author/${this.props.params.personID}/stats/history_by_item`}>Item</Link>
+          </li>
+          <li>
+            Breakdown by:
+            <Link to={`/uc/author/${this.props.params.personID}/stats/breakdown_by_item`}>Item</Link>
+            <Link to={`/uc/author/${this.props.params.personID}/stats/breakdown_by_month`}>Month</Link>
+          </li>
+        </ul>
+        { data.variations.length > 1 &&
+          <div>
+            * Author name/email variations included in these reports:
+            <ul>
+              { _.map(data.variations, nv =>
+                <li key={nv[0]+nv[1]}>{nv[0]} &lt;{nv[1]}&gt;</li>
+              )}
+            </ul>
+          </div>
+        }
+        <StatsFooter/>
+      </div>
+    )
+  }
 }
 
 export class UnitStatsPage extends PageBase
@@ -843,7 +900,7 @@ export class UnitStatsPage extends PageBase
     else if (pageName == "breakdown_by_issue")
       return <UnitStats_BreakdownByIssue data={data} {...this.props}/>
     else if (pageName == "breakdown_by_month")
-      return <UnitStats_BreakdownByMonth data={data} {...this.props}/>
+      return <EitherStats_BreakdownByMonth data={data} {...this.props}/>
     else if (pageName == "referrals")
       return <UnitStats_Referrals data={data} {...this.props}/>
     else if (pageName == "deposits_by_category")
@@ -887,5 +944,7 @@ export class AuthorStatsPage extends PageBase
       return <EitherStats_HistoryByItem data={data} {...this.props}/>
     else if (pageName == "breakdown_by_item")
       return <EitherStats_BreakdownByItem data={data} {...this.props}/>
+    else if (pageName == "breakdown_by_month")
+      return <EitherStats_BreakdownByMonth data={data} {...this.props}/>
   }
 }
