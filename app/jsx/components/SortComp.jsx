@@ -51,7 +51,7 @@ class SortComp extends React.Component {
             <option value="a-author">A-Z By Author</option>
             <option value="z-author">Z-A By Author</option>
             <option value="asc">Date Ascending</option>
-            <option value="dsc">Date Decending</option>
+            <option value="dsc">Date Descending</option>
           </select>
         </div>
       {(this.props.count > 10) && 
