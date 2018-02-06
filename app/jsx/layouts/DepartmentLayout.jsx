@@ -89,7 +89,7 @@ class DepartmentLayout extends React.Component {
           <main id="maincontent">
             <section className="o-columnbox1">
               <header>
-                <h2>Works by {this.props.unit.name}</h2>
+                <h2>{this.props.unit.name} Works</h2>
               </header>
               <div className="c-itemactions">
                 <ShareComp type="unit" id={this.props.unit.id} />
