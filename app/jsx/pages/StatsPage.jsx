@@ -28,7 +28,9 @@ const capitalize = str =>
   str.charAt(0).toUpperCase() + str.slice(1)
 
 const mungeCategory = cat =>
-  cat.indexOf("postprints:") >= 0 ? "\xa0\xa0\xa0\xa0"+capitalize(cat.replace("postprints:", "")) : capitalize(cat)
+  cat.indexOf("postprints:") >= 0 ? "\xa0\xa0\xa0\xa0"+capitalize(cat.replace("postprints:", "")) :
+  cat == "unknown" ? cat :
+  capitalize(cat)
 
 const downloadCSV = (table, params) =>
 {
@@ -223,6 +225,8 @@ class UnitStats_Summary extends React.Component {
             <Link to={`/uc/${this.props.params.unitID}/stats/breakdown_by_item`}>Item</Link>
             {data.has_children &&
               <Link to={`/uc/${this.props.params.unitID}/stats/breakdown_by_unit`}>Unit</Link> }
+            {data.num_categories > 1 &&
+              <Link to={`/uc/${this.props.params.unitID}/stats/breakdown_by_category`}>Category</Link>}
           </li>
           {(data.num_categories > 1 || data.has_children) &&
             <li>
@@ -502,6 +506,46 @@ class EitherStats_BreakdownByMonth extends React.Component {
                   <td>{formatNum(md[3])}</td>
                   <td>{md[2] > 0 && formatNum(md[2] - md[3])}</td>
                   <td>{md[2] > 0 && ((md[3] * 100.0 / md[2]).toFixed(1)+"%")}</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+        <button onClick={e=>downloadCSV(this.table, this.props.params)}>Download CSV</button>
+        <StatsFooter/>
+      </div>
+    )
+  }
+}
+
+class UnitStats_BreakdownByCategory extends React.Component {
+  render() {
+    let data = this.props.data
+    return(
+      <div className="c-statsReport">
+        <StatsHeader title="Breakdown by Category" {...this.props}/>
+        <StatsForm location={this.props.location} data={data}/>
+        <div className="c-datatable">
+          <table ref={el => this.table=el}>
+            <thead>
+              <tr>
+                <th scope="col">Category</th>
+                <th scope="col">Deposits</th>
+                <th scope="col">Total requests</th>
+                <th scope="col">Download</th>
+                <th scope="col">View-only</th>
+                <th scope="col">%Dnld</th>
+              </tr>
+            </thead>
+            <tbody>
+              {_.map(data.report_data, cd =>
+                <tr key={cd.category}>
+                  <th scope="row">{mungeCategory(cd.category)}</th>
+                  <td>{formatNum(cd.total_deposits)}</td>
+                  <td>{formatNum(cd.total_requests)}</td>
+                  <td>{formatNum(cd.total_downloads)}</td>
+                  <td>{cd.total_requests > 0 && formatNum(cd.total_requests - cd.total_downloads)}</td>
+                  <td>{cd.total_requests > 0 && ((cd.total_downloads * 100.0 / cd.total_requests).toFixed(1)+"%")}</td>
                 </tr>
               )}
             </tbody>
@@ -911,6 +955,8 @@ export class UnitStatsPage extends PageBase
       return <UnitStats_HistoryByUnit data={data} {...this.props}/>
     else if (pageName == "breakdown_by_unit")
       return <UnitStats_BreakdownByUnit data={data} {...this.props}/>
+    else if (pageName == "breakdown_by_category")
+      return <UnitStats_BreakdownByCategory data={data} {...this.props}/>
     else if (pageName == "avg_by_unit")
       return <UnitStats_AvgByUnit data={data} {...this.props}/>
     else if (pageName == "avg_by_category")
