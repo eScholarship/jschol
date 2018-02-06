@@ -1,9 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Link } from 'react-router'
-import _ from 'lodash'
 import $ from 'jquery'
-import { Subscriber } from 'react-broadcast'
 
 class RedirRow extends React.Component {
   onSave = event => {
