@@ -13,6 +13,7 @@ def unitStatsData(unitID, pageName)
   when 'breakdown_by_item';    unitStats_breakdownByItem(unitID)
   when 'breakdown_by_issue';   unitStats_breakdownByIssue(unitID)
   when 'breakdown_by_month';   unitStats_breakdownByMonth(unitID)
+  when 'breakdown_by_category';unitStats_breakdownByCategory(unitID)
   when 'referrals';            unitStats_referrals(unitID)
   when 'deposits_by_category'; unitStats_depositsByCategory(unitID)
   when 'deposits_by_unit';     unitStats_depositsByUnit(unitID)
@@ -488,6 +489,41 @@ def unitStats_avgByCategory(unitID)
 end
 
 ###################################################################################################
+def unitStats_breakdownByCategory(unitID)
+  # Splat the raw stats into a hash
+  out, queryParams = getUnitStatsParams(unitID)
+  data = Hash.new { |h,k| h[k] = Hash.new { |h2,k2| h2[k2] = 0 } }
+  CategoryStat.where(unit_id: unitID, month: queryParams[:startYrMo]..queryParams[:endYrMo]).each { |st|
+    attrs = JSON.parse(st.attrs)
+    hits = attrs['hit'].to_i
+    downloads = attrs['dl'].to_i
+    deposits = attrs['post'].to_i
+    data[st.category][:deposits]  += deposits
+    data[st.category][:hits]      += hits
+    data[st.category][:downloads] += downloads
+    data['overall'][:deposits]  += deposits
+    data['overall'][:hits]      += hits
+    data['overall'][:downloads] += downloads
+    if st.category =~ /^postprints:/
+      data['postprints'][:deposits]  += deposits
+      data['postprints'][:hits]      += hits
+      data['postprints'][:downloads] += downloads
+    end
+  }
+
+  # Form the final data structure with everything needed to render the form and report
+  data = data.sort { |a,b| a[0] == "overall" ? -1 : b[0] == "overall" ? 1 : a[0] <=> b[0] }
+  out[:report_data] = data.map { |cat, rd|
+    { category: cat,
+      total_deposits: rd[:deposits]>0 && rd[:deposits],
+      total_requests: rd[:hits]>0 && rd[:hits],
+      total_downloads: rd[:downloads]>0 && rd[:downloads]
+    }
+  }
+  return out.to_json
+end
+
+###################################################################################################
 def getChildTypes(unitID)
   $hierByAncestor[unitID] or return nil
   types = Hash.new { |h,k| h[k] = 0 }
@@ -667,8 +703,6 @@ def unitStats_breakdownByUnit(unitID)
       data[st.unit_id][:downloads] += downloads
     end
   }
-
-  pp data
 
   # Make sure even units with no data are represented.
   childUnitIDs.each { |id| data[id] ||= {} }
