@@ -437,14 +437,12 @@ end
 def unitStats_avgByCategory(unitID)
   # Splat the raw stats into a hash
   out, queryParams = getUnitStatsParams(unitID) # don't include really old years with no hits
-  overall = Hash.new { |h,k| h[k] = 0 }
-  totalHits = 0
   data = Hash.new { |h,k| h[k] = Hash.new { |h2,k2| h2[k2] = 0 } }
   posts = Hash.new { |h,k| h[k] = Hash.new { |h2,k2| h2[k2] = 0 } }
   CategoryStat.where(unit_id: unitID, month: 0..queryParams[:endYrMo]).each { |st|
     attrs = JSON.parse(st.attrs)
 
-    # Attribute post to its first month and every month thereafter
+    # Attribute each post event to its first month and every month thereafter
     nPosts = attrs['post'].to_i
     if nPosts > 0
       mo = st.month
@@ -456,31 +454,34 @@ def unitStats_avgByCategory(unitID)
       end
     end
 
-    # Record hits only for selected months
+    # Record hits (as opposed to posts) only for selected months
     hits = attrs['hit'].to_i
     if hits > 0 && st.month >= queryParams[:startYrMo]
       data[st.category][st.month] += hits
-      overall[st.month] += hits
-      totalHits += hits
+      data['overall'][st.month] += hits
       st.category =~ /^postprints:/ and data['postprints'][st.month] += hits
     end
   }
 
-  totalHitsByCat = Hash[data.map { |cat, byMonth|
-    [cat, byMonth.values.inject{|s,n| s+n}] }]
-  avgByCat = Hash[totalHitsByCat.map { |cat, hits|
-    [cat, (hits+1.0) / (posts[cat][queryParams[:endYrMo]]+1.0) / out[:report_months].length] }]
+  avgByCat = Hash[posts.map { |cat, byMonth|
+    sum = 0
+    n = 0
+    byMonth.each { |mo, nPosts|
+      if mo >= queryParams[:startYrMo]
+        sum += data[cat][mo].to_f / nPosts
+        n += 1
+      end
+    }
+    [cat, n > 0 ? sum.to_f / n : nil]
+  }]
 
   # Form the final data structure with everything needed to render the form and report
-  data = data.sort { |a,b| a[0] <=> b[0] }
-  out[:report_data] = [ {
-    category: "overall",
-    total_avg: sprintf("%.2f", (totalHits+1.0) / (posts['overall'][queryParams[:endYrMo]]+1.0) / out[:report_months].length),
-    by_month: Hash[overall.map{ |mo, hits| [mo, sprintf("%.2f", (hits+1.0) / (posts['overall'][mo]+1.0))] }]
-  } ] + data.map { |cat, byMonth|
+  data = data.sort { |a,b| a[0] == "overall" ? -1 : b[0] == "overall" ? 1 : a[0] <=> b[0] }
+  out[:report_data] = data.map { |cat, byMonth|
     { category: cat,
       total_avg: avgByCat[cat] ? sprintf("%.2f", avgByCat[cat]) : nil,
-      by_month: Hash[byMonth.map{ |mo, hits| [mo, sprintf("%.2f", (hits+1.0) / (posts[cat][mo]+1.0))] }]
+      by_month: Hash[byMonth.map{ |mo, hits|
+        [mo, posts[cat][mo] ? sprintf("%.2f", hits.to_f / posts[cat][mo]) : nil] }]
     }
   }
   return out.to_json
@@ -588,7 +589,6 @@ def unitStats_avgByUnit(unitID)
   out, queryParams = getUnitStatsParams(unitID)
   childUnitIDs = ($hierByAncestor[unitID] || []).map{|u| u.unit_id}
   overall = Hash.new { |h,k| h[k] = 0 }
-  totalHits = 0
   data = Hash.new { |h,k| h[k] = Hash.new { |h2,k2| h2[k2] = 0 } }
   posts = Hash.new { |h,k| h[k] = Hash.new { |h2,k2| h2[k2] = 0 } }
   UnitStat.where(unit_id: [unitID]+childUnitIDs, month: 0..queryParams[:endYrMo]).each { |st|
@@ -608,19 +608,21 @@ def unitStats_avgByUnit(unitID)
     hits = attrs['hit'].to_i
     next if hits == 0
     if st.month >= queryParams[:startYrMo]
-      if st.unit_id == unitID
-        overall[st.month] += hits
-        totalHits += hits
-      else
-        data[st.unit_id][st.month] += hits
-      end
+      data[st.unit_id][st.month] += hits
     end
   }
 
-  totalHitsByUnit = Hash[data.map { |u, byMonth|
-    [u, byMonth.values.inject{|s,n| s+n}] }]
-  avgByUnit = Hash[totalHitsByUnit.map { |u, hits|
-    [u, (hits+1.0) / (posts[u][queryParams[:endYrMo]]+1.0) / out[:report_months].length] }]
+  avgByUnit = Hash[posts.map { |u, byMonth|
+    sum = 0
+    n = 0
+    byMonth.each { |mo, nPosts|
+      if mo >= queryParams[:startYrMo]
+        sum += data[u][mo].to_f / nPosts
+        n += 1
+      end
+    }
+    [u, n > 0 ? sum.to_f / n : nil]
+  }]
 
   # Make sure even units with no data are represented.
   childUnitIDs.each { |id| data[id] ||= {} }
@@ -629,18 +631,15 @@ def unitStats_avgByUnit(unitID)
   out[:any_drill_down] = childUnitIDs.any? { |childID| !!$hierByAncestor[childID] }
   data = data.sort { |a,b|
     n = -((avgByUnit[a[0]]||0) <=> (avgByUnit[b[0]]||0))
-    n != 0 ? n : $unitsHash[a[0]].name <=> $unitsHash[b[0]].name
+    a[0] == unitID ? -1 : b[0] == unitID ? 1 :
+      n != 0 ? n : $unitsHash[a[0]].name <=> $unitsHash[b[0]].name
   }
-  out[:report_data] = [ {
-    unit_name: "Overall",
-    total_avg: sprintf("%.2f", (totalHits+1.0) / (posts[unitID][queryParams[:endYrMo]]+1.0) / out[:report_months].length),
-    by_month: Hash[overall.map{ |mo, hits| [mo, sprintf("%.2f", (hits+1.0) / (posts[unitID][mo]+1.0))] }]
-  } ] + data.map { |u, byMonth|
+  out[:report_data] = data.map { |u, byMonth|
     { unit_id: u,
-      unit_name: $unitsHash[u].name,
-      child_types: getChildTypes(u),
+      unit_name: u == unitID ? "Overall" : $unitsHash[u].name,
+      child_types: u == unitID ? nil : getChildTypes(u),
       total_avg: avgByUnit[u] ? sprintf("%.2f", avgByUnit[u]) : nil,
-      by_month: Hash[byMonth.map{ |mo, hits| [mo, sprintf("%.2f", (hits+1.0) / (posts[u][mo]+1.0))] }]
+      by_month: Hash[byMonth.map{ |mo, hits| [mo, posts[u][mo] > 0 ? sprintf("%.2f", hits.to_f / posts[u][mo]) : nil] }]
     }
   }
   return out.to_json
