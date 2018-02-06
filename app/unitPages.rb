@@ -1455,3 +1455,39 @@ put "/api/unit/:unitID/issueConfig" do |unitID|
   content_type :json
   return { success: true }.to_json
 end
+
+def getAuthorSearchData
+  str = params['q']
+  str && str.length > 1 or return { authors: [] }
+
+  # Query for all variations of email or name that contain the partial string
+  personMap = Hash.new { |h,k| h[k] = Set.new }
+  query = Sequel::SQL::PlaceholderLiteralString.new(%{
+    select distinct
+      person_id,
+      JSON_UNQUOTE(item_authors.attrs->"$.name") name,
+      JSON_UNQUOTE(item_authors.attrs->"$.email") auth_email,
+      JSON_UNQUOTE(people.attrs->"$.email") person_email
+    from item_authors
+    inner join people on people.id = item_authors.person_id
+    where lower(item_authors.attrs->"$.email") like :matchStr
+       or lower(item_authors.attrs->"$.name") like :matchStr
+       or lower(people.attrs->"$.email") like :matchStr
+    limit 200
+  }.unindent, { matchStr: "%#{str.downcase}%" })
+  DB.fetch(query).each { |row|
+    personMap[row[:person_id]] << [row[:auth_email], row[:person_email], row[:name]]
+  }
+
+  # Sum them all up into unique sets by person ID
+  authors = personMap.sort.map { |personID, variations|
+    emails = Set.new
+    names = Set.new
+    variations.each { |authEmail, personEmail, name|
+      emails << authEmail << personEmail
+      names << name
+    }
+    { person_id: personID.sub(%r{^ark:/99166/},''), emails: emails.to_a.sort, names: names.to_a.sort }
+  }
+  return { search_str: str, authors: authors }
+end

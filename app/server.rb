@@ -833,6 +833,8 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
       pageData[:content] = getUnitSidebarWidget(unit, params[:subPage])
     elsif pageName == "redirects"
       pageData[:content] = getRedirectData(params[:subPage])
+    elsif pageName == "authorSearch"
+      pageData[:content] = getAuthorSearchData
     elsif isJournalIssue?(unit.id, params[:pageName], params[:subPage])
       pageData[:content] = getJournalIssueData(unit, attrs, params[:pageName], params[:subPage])
       # A specific issue, otherwise you get journal landing (through getUnitPageContent method above)
@@ -841,7 +843,8 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
       pageData[:content] = getUnitStaticPage(unit, attrs, pageName)
     end
     pageData[:header] = getUnitHeader(unit,
-      (pageName =~ /^(nav|sidebar|profile|carousel|issueConfig|redirects|unitBuilder)/ or issueHeaderData) ? nil : pageName,
+      (pageName =~ /^(nav|sidebar|profile|carousel|issueConfig|redirects|unitBuilder|authorSearch)/ or issueHeaderData) ?
+        nil : pageName,
       issueHeaderData, attrs)
     pageData[:marquee] = getUnitMarquee(unit, attrs) if (["home", "search"].include? pageName or issueHeaderData)
   else

@@ -83,6 +83,10 @@ $color-black-semitrans: rgba(124, 126, 127, 0.5);
   margin-left: 20px;
 }
 
+.c-editable-tableCell {
+  text-align: left !important;
+}
+
 .trumbowyg-box, .trumbowyg-editor {
   min-height: 100px;
 }
