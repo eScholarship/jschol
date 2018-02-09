@@ -123,7 +123,7 @@ def getNavPerms(unit, navItems, userPerms)
         result[slug] = { change_slug: false, change_text: false, remove: false, reorder: true  }
       when /^(submitPaper|submissionGuidelines|submissionprocess|howsubmit)$/i
         result[slug] = { change_slug: false, change_text: true,  remove: false, reorder: true  }
-      when /^(contactUs)$/i
+      when /^(contactUs|contact)$/i
         result[slug] = { change_slug: false, change_text: true,  remove: false, reorder: false }
       when /^(aboutus|about)$/i
         result[slug] = { change_slug: false, change_text: true,  remove: false, reorder: true  }
