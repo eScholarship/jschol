@@ -58,9 +58,6 @@ class ItemAuthors < Sequel::Model(:item_authors)
   unrestrict_primary_key
 end
 
-class ItemCount < Sequel::Model
-end
-
 class ItemEvent < Sequel::Model
   unrestrict_primary_key
 end
@@ -109,9 +106,6 @@ class UnitHier < Sequel::Model(:unit_hier)
   unrestrict_primary_key
   many_to_one :unit,          :class=>:Unit
   many_to_one :ancestor,      :class=>:Unit, :key=>:ancestor_unit
-end
-
-class UnitCount < Sequel::Model
 end
 
 class UnitItem < Sequel::Model
