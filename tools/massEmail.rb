@@ -11,6 +11,7 @@ require 'bundler/setup'
 Dir.chdir(File.dirname(File.expand_path(File.dirname(__FILE__))))
 
 # Remainder are the requirements for this program
+require 'cgi'
 require 'date'
 require 'digest'
 require 'erb'
@@ -58,6 +59,9 @@ OJS_DB = Sequel.connect({
   "password" => ENV["OJS_DB_PASSWORD"] || raise("missing env OJS_DB_HOST") })
 
 $testMode = ARGV.delete("--test")
+
+# Read secret Subi keys (so we can form valid unsubscribe links)
+$subiSecrets = JSON.parse(File.read("/apps/eschol/.passwords/subiSecrets.json"))
 
 ###################################################################################################
 # Grab SES email logs and put them into our 'awsLogs' directory
@@ -179,15 +183,36 @@ def fetchJournalManagers(callback)
 end
 
 ###################################################################################################
+def fetchPeople(callback, recentHitsOnly)
+  if recentHitsOnly
+    DB.fetch(%{
+      select distinct
+        people.id,
+        JSON_UNQUOTE(people.attrs->'$.email') email
+      from people
+      join item_authors on item_authors.person_id = people.id
+      join item_stats on item_stats.item_id = item_authors.item_id
+      where month = ?
+      and item_stats.attrs->"$.hit" is not null
+    }, (Date.today<<1).year*100 + (Date.today<<1).month).map { |row|
+      callback.call(row[:email].downcase, row[:id])
+    }
+  else
+    Person.each { |person|
+      callback.call(JSON.parse(person.attrs)['email'].downcase, person.id)
+    }
+  end
+end
+
+###################################################################################################
 def buildUsers(group, filter)
   # We want to exclude everybody that is bouncing or opted out of emails
-  omitEmails = Set.new
-  OJS_DB.fetch(%{
+  omitEmails = Set.new(OJS_DB.fetch(%{
     select distinct email from users
     inner join user_settings on user_settings.user_id = users.user_id
     where setting_name in ('eschol_bouncing_email', 'eschol_opt_out')
     and setting_value = 'yes'
-  }.unindent).each { |row| omitEmails << row[:email].downcase }
+  }.unindent).map { |row| row[:email].downcase })
 
   # Now build the result set
   result = Hash.new { |h,k| h[k] = Hash.new { |h2,k2| h2[k2] = Set.new } }
@@ -202,7 +227,10 @@ def buildUsers(group, filter)
     fetchEscholAdmins(filterFunc)
     fetchJournalManagers(filterFunc)
   elsif group == "authors"
-    raise("not yet implemented")
+    filterFunc = lambda { |email, person|
+      !omitEmails.include?(email) and result[email][:people] << person
+    }
+    fetchPeople(filterFunc, filter == "recent-hits")
   else
     raise
   end
@@ -219,6 +247,14 @@ def generateEmail(tpl, email, vars, allUnits, allHier)
     OpenStruct.new(id: u[:id], name: (parent ? parent[:name]+": " : "") + u[:name], type: u[:type],
                    url: "https://escholarship.org/uc/#{u[:id]}")
   }.sort { |a,b| a[:name] <=> b[:name] }
+
+  escapedEmail = CGI.escape(email)
+  optoutKey = Digest::SHA1.hexdigest($subiSecrets['optoutSecret'] + email)[0,10]
+  unsubscribeLink = "https://submit.escholarship.org/subi/optout?e=#{escapedEmail}&k=#{optoutKey}"
+
+  !vars[:people] || vars[:people].length == 1 or raise("multiple people for email #{email}")
+  person = vars[:people] && vars[:people].to_a[0].sub(%r{^ark:/99166/}, '')
+
   return tpl.result(binding)
 end
 
@@ -233,6 +269,7 @@ def generateEmails(tplFile, users, mode)
   nSkipped = 0
 
   users.each { |email, vars|
+
     # Give feedback once in a while.
     if (nDone % 100) == 0
       STDERR.puts "Processed #{nDone}/#{nTodo}#{nSkipped>0 ? " (#{nSkipped} skipped - sent previously)" : ""}"
@@ -240,7 +277,7 @@ def generateEmails(tplFile, users, mode)
 
     # Restartability: avoid sending the same email to the same person unless 3 wks have passed
     prevEmailed = MassEmail.where(email: email, template: File.basename(tplFile)).first
-    if prevEmailed and (Date.today - prevEmailed.date) < 21
+    if prevEmailed && (Date.today - prevEmailed.date) < 21
       #STDERR.puts "Skipping #{email} (already sent on #{prevEmailed.date})"
       nSkipped += 1
       nDone += 1
@@ -258,17 +295,20 @@ def generateEmails(tplFile, users, mode)
       toAddr = "martin.haye@gmail.com"
     end
 
+    htmlBody = body.join("\n")
+    textBody = htmlBody.gsub(%r{<a href="([^"]+)">}, '\1 : ').gsub(/<[^>]+>/, '').gsub("’", "'")
+
     mail = Mail.new do
       from     fromAddr
       to       toAddr
       subject  subject
       text_part do
         content_type 'text/plain; charset=UTF-8'
-        body   body.join("\n").gsub(%r{<a href="([^"]+)">}, '\1: ').gsub(/<[^>]+>/, '')
+        body         textBody
       end
       html_part do
         content_type 'text/html; charset=UTF-8'
-        body   body.join("\n")
+        body         htmlBody
       end
     end
     if mode == "go4it"

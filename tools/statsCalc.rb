@@ -844,8 +844,6 @@ def calcStats
         estRemaining / 3600, (estRemaining % 3600) / 60, (estRemaining % 3600) % 60)
     end
   }
-
-  puts "Done."
 end
 
 ###################################################################################################
@@ -1441,6 +1439,7 @@ begin
     puts "Another copy is already running."
     exit 1
   end
+
   grabLogs
   loadItemInfoCache
   parseLogs
@@ -1449,6 +1448,7 @@ begin
   connectAuthors
   calcStatsMonths
   calcStats
+
   puts "Done."
 ensure
   lock.flock(File::LOCK_UN)
