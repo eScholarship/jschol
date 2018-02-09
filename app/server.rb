@@ -105,7 +105,26 @@ $jscholKey = ENV['JSCHOL_KEY'] or raise("missing env JSCHOL_KEY")
 
 # S3 API client
 puts "Connecting to S3.           "
-$s3Client = Aws::S3::Client.new(region: ENV['S3_REGION'] || raise("missing env S3_REGION"))
+# Temporary wire logging while we diagnose S3 timeouts with the AWS folks.
+# It's so verbose that it even dumps binary data; to keep the log size at all
+# reasonable, omit that part.
+class S3Logger < Logger
+  @prevWasOmitted = false
+  def << (msg)
+    if msg =~ /\\r\\n/ && !(msg =~ /\\x/)
+      puts "s3: #{msg}"
+      @prevWasOmitted = false
+    else
+      if !@prevWasOmitted
+        puts "s3: [data omitted]"
+      end
+      @prevWasOmitted = true
+    end
+  end
+end
+s3Logger = S3Logger.new(STDOUT)
+$s3Client = Aws::S3::Client.new(region: ENV['S3_REGION'] || raise("missing env S3_REGION"),
+                                :logger => s3Logger, :http_wire_trace => true)
 $s3Bucket = Aws::S3::Bucket.new(ENV['S3_BUCKET'] || raise("missing env S3_BUCKET"), client: $s3Client)
 
 # Internal modules to implement specific pages and functionality

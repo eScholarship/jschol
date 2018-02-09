@@ -93,8 +93,8 @@ def humanDateRange(startYear, startMonth, endYear, endMonth)
    return (startYear==endYear && startMonth==endMonth) ?
              "#{Date::MONTHNAMES[startMonth]}, #{startYear}" :
           (startYear==endYear) ?
-             "#{Date::MONTHNAMES[startMonth]} to #{Date::MONTHNAMES[endMonth]}, #{startYear}" :
-          "#{Date::MONTHNAMES[startMonth]}, #{startYear} to #{Date::MONTHNAMES[endMonth]}, #{endYear}"
+             "#{Date::MONTHNAMES[startMonth]} through #{Date::MONTHNAMES[endMonth]}, #{startYear}" :
+          "#{Date::MONTHNAMES[startMonth]}, #{startYear} through #{Date::MONTHNAMES[endMonth]}, #{endYear}"
 end
 
 ###################################################################################################
@@ -491,7 +491,7 @@ end
 ###################################################################################################
 def unitStats_breakdownByCategory(unitID)
   # Splat the raw stats into a hash
-  out, queryParams = getUnitStatsParams(unitID)
+  out, queryParams = getUnitStatsParams(unitID, true)  # include posting-only early years
   data = Hash.new { |h,k| h[k] = Hash.new { |h2,k2| h2[k2] = 0 } }
   CategoryStat.where(unit_id: unitID, month: queryParams[:startYrMo]..queryParams[:endYrMo]).each { |st|
     attrs = JSON.parse(st.attrs)
@@ -684,7 +684,7 @@ end
 ###################################################################################################
 def unitStats_breakdownByUnit(unitID)
   # Splat the raw stats into a hash
-  out, queryParams = getUnitStatsParams(unitID)
+  out, queryParams = getUnitStatsParams(unitID, true)  # include posting-only early years
   childUnitIDs = ($hierByAncestor[unitID] || []).map{|u| u.unit_id}
   overall = Hash.new { |h,k| h[k] = 0 }
   data = Hash.new { |h,k| h[k] = Hash.new { |h2,k2| h2[k2] = 0 } }
