@@ -253,7 +253,7 @@ def generateEmail(tpl, email, vars, allUnits, allHier)
   unsubscribeLink = "https://submit.escholarship.org/subi/optout?e=#{escapedEmail}&k=#{optoutKey}"
 
   !vars[:people] || vars[:people].length == 1 or raise("multiple people for email #{email}")
-  person = vars[:people] && vars[:people].to_a[0].delete("ark:/99166")
+  person = vars[:people] && vars[:people].to_a[0].sub(%r{^ark:/99166/}, '')
 
   return tpl.result(binding)
 end
@@ -269,6 +269,7 @@ def generateEmails(tplFile, users, mode)
   nSkipped = 0
 
   users.each { |email, vars|
+
     # Give feedback once in a while.
     if (nDone % 100) == 0
       STDERR.puts "Processed #{nDone}/#{nTodo}#{nSkipped>0 ? " (#{nSkipped} skipped - sent previously)" : ""}"
@@ -276,7 +277,7 @@ def generateEmails(tplFile, users, mode)
 
     # Restartability: avoid sending the same email to the same person unless 3 wks have passed
     prevEmailed = MassEmail.where(email: email, template: File.basename(tplFile)).first
-    if prevEmailed and (Date.today - prevEmailed.date) < 21
+    if prevEmailed && (Date.today - prevEmailed.date) < 21
       #STDERR.puts "Skipping #{email} (already sent on #{prevEmailed.date})"
       nSkipped += 1
       nDone += 1
