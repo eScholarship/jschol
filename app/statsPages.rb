@@ -81,8 +81,10 @@ def getStatsRange(minYrmo)
     start = range == "all" ? Date.new(minYear, minYrmo%100, 1) :
             range.include?("yr") ? Date.today << (range.to_i*12) :
             Date.today << range.to_i
-    startYear = start.year; startMonth = start.month
-    endYear = defaultEnd.year; endMonth = defaultEnd.month
+    startYear  = start.year
+    startMonth = start.month
+    endYear    = range == "all" ? Date.today.year : defaultEnd.year
+    endMonth   = range == "all" ? Date.today.month : defaultEnd.month
   end
   limit      = clamp(1, 500, (params[:limit] || 50).to_i)
   return range, startYear, startMonth, endYear, endMonth, limit
