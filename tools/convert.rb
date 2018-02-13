@@ -1784,7 +1784,6 @@ def updateDbItem(data)
   # as a foreign key in stats tables).
   ItemAuthor.where(item_id: itemID).delete
   UnitItem.where(item_id: itemID).delete
-  ItemCount.where(item_id: itemID).delete  # soon to be obsolete
 
   # Insert (or update) the issue and section
   updateIssueAndSection(data)
@@ -1793,12 +1792,6 @@ def updateDbItem(data)
   data[:dbItem].create_or_update()
   data[:dbAuthors].each { |dbAuth|
     dbAuth.save()
-  }
-
-  # Copy item counts from the old stats database
-  # Note: soon to be obsolete
-  STATS_DB.fetch("SELECT * FROM itemCounts WHERE itemId = ?", itemID.sub(/^qt/, "")) { |row|
-    ItemCount.insert(item_id: itemID, month: row[:month], hits: row[:hits], downloads: row[:downloads])
   }
 
   # Link the item to its units
@@ -2318,24 +2311,6 @@ def splashAllPDFs(arks)
 end
 
 ###################################################################################################
-# Update item and unit stats
-def updateUnitStats
-  puts "Updating unit stats."
-  cacheAllUnits
-  $allUnits.keys.sort.each_slice(10) { |slice|
-    slice.each { |unitID|
-      DB.transaction {
-        UnitCount.where(unit_id: unitID).delete
-        STATS_DB.fetch("SELECT * FROM unitCounts WHERE unitId = ? and direct = 0", unitID) { |row|
-          UnitCount.insert(unit_id: unitID, month: row[:month],
-                           hits: row[:hits], downloads: row[:downloads], items_posted: row[:nItemsPosted])
-        }
-      }
-    }
-  }
-end
-
-###################################################################################################
 def flushDbQueue(queue)
   DB.transaction { queue.each { |func| func.call } }
   queue.clear
@@ -2519,8 +2494,6 @@ begin
     when "--splash"
       arks = ARGV.select { |a| a =~ /qt\w{8}/ }
       splashAllPDFs(arks.empty? ? "ALL" : Set.new(arks))
-    when "--stats"
-      updateUnitStats
     when "--redirects"
       convertRedirects
     else
