@@ -907,13 +907,7 @@ end
 
 ###################################################################################################
 # Try to get fine-grained author info from UCIngest metadata; if not avail, fall back to index data.
-def getAuthors(indexMeta, rawMeta)
-  # If not UC-Ingest formatted, fall back on index info
-  if !rawMeta.at("//authors") && indexMeta
-    return indexMeta.multiple("creator").map { |name| {name: name} }
-  end
-
-  # For UC-Ingest, we can provide more detailed author info
+def getAuthors(rawMeta)
   rawMeta.xpath("//authors/*").map { |el|
     if el.name == "organization"
       { name: el.text, organization: el.text }
@@ -1248,6 +1242,7 @@ def parseUCIngest(itemID, inMeta, fileType)
   attrs[:addl_info] = inMeta.html_at("./comments") and sanitizeHTML(inMeta.html_at("./comments"))
   attrs[:author_hide] = !!inMeta.at("./authors[@hideAuthor]")   # Only journal items can have this attribute
   attrs[:bepress_id] = inMeta.text_at("./context/bpid")
+  attrs[:book_title] = inMeta.text_at("./context/bookTitle")
   attrs[:buy_link] = inMeta.text_at("./context/buyLink")
   attrs[:custom_citation] = inMeta.text_at("./customCitation")
   attrs[:doi] = inMeta.text_at("./doi")
@@ -1433,7 +1428,7 @@ def parseUCIngest(itemID, inMeta, fileType)
   dbItem[:ordering_in_sect] = inMeta.text_at("./context/publicationOrder")
 
   # Populate ItemAuthor model instances
-  authors = getAuthors(nil, inMeta)
+  authors = getAuthors(inMeta)
 
   # Make a list of all the units this item belongs to
   units = inMeta.xpath("./context/entity[@id]").map { |ent| ent[:id] }.select { |unitID|
