@@ -144,12 +144,17 @@ class TabAuthorComp extends React.Component {
         out = this.addDot(out)
       }
       else if (props.header.campusName && props.genre != "monograph" && props.genre != "journal") {
-        out += props.header.campusName
+        // General series
+        out += "<em>" + props.header.campusName
         if (props.unit && props.unit.name) {
           let dept = props.unit.type == "oru" ? props.unit.name : props.header.ancestorName
-          if (dept != props.header.campusName)
-            out += ": " + dept.replace(props.header.campusName, "").trim()
+          if (dept != props.header.campusName) {
+            if (dept.startsWith(props.header.campusName))
+              dept = dept.substr(props.header.campusName.length)
+            out += ": " + dept.trim()
+          }
         }
+        out += "</em>"
         out = this.addDot(out)
       }
 
@@ -270,7 +275,7 @@ class TabAuthorComp extends React.Component {
                <dd key="dd-custom">{p.attrs['custom_citation']}</dd>]
           }
 
-          <dt key="dt-apa">APA:</dt>
+          <dt key="dt-apa">Suggested:</dt>
           <dd key="dd-apa">
             <ArbitraryHTMLComp html={this.formatCitation(p)}/>
           </dd>
