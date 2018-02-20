@@ -130,6 +130,13 @@ class UnitProfileLayout extends React.Component {
                          <option value="moribund">Archived</option>
                        </select>
                        <br/><br/>
+                       <label className="c-editable-page__label" htmlFor="directSubmit">Direct submit: </label>
+                       <select name="directSubmit" defaultValue={data.directSubmit}>
+                         <option value="enabled">Enabled</option>
+                         <option value="disabled">Disabled</option>
+                         <option value="moribund">Archived</option>
+                       </select>
+                       <br/><br/>
                      </div>
                    }
 

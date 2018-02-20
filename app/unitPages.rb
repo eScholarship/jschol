@@ -541,6 +541,7 @@ def getUnitProfile(unit, attrs)
     profile[:altmetrics_ok] = attrs['altmetrics_ok']
     profile[:magazine_layout] = attrs['magazine_layout']
     profile[:issue_rule] = attrs['issue_rule']
+    profile[:directSubmit] = attrs['directSubmit']
   end
   if unit.type == 'oru'
     profile[:seriesSelector] = true
@@ -1165,6 +1166,12 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
         unitAttrs['altmetrics_ok'] = (params['data']['altmetrics_ok'] == 'on')
         %w{active hidden moribund}.include?(params['data']['status']) or jsonHalt(400, "invalid status")
         unit.status = params['data']['status']
+        %w{enabled disabled moribund}.include?(params['data']['directSubmit']) or jsonHalt(400, "invalid directSubmit")
+        if params['data']['directSubmit'] == "enabled"
+          unitAttrs.delete('directSubmit')
+        else
+          unitAttrs['directSubmit'] = params['data']['directSubmit']
+        end
       end
     end
 
