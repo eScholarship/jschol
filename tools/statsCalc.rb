@@ -600,8 +600,7 @@ end
 # Get minimum effective month for every item
 def calcMinMonths(result)
   # Start with the submission date for each item
-  Item.where(Sequel.lit("attrs->'$.submission_date' is not null")).select_map([:id, :attrs]).each { |item, attrStr|
-    subDate = parseDate(JSON.parse(attrStr)["submission_date"])
+  Item.where(Sequel.lit("submitted is not null")).select_map([:id, :submitted]).each { |item, subDate|
     subDate.year >= 1995 or raise("invalid pre-1995 submission date #{subDate.iso8601} for item #{item}")
     result[item].minMonth = subDate.year*100 + subDate.month
   }
@@ -812,16 +811,13 @@ def calcStats
 
   puts "Gathering item posting dates."
   monthPosts = Hash.new { |h,k| h[k] = [] }
-  # Omit non-published and suppress-content items from posting counts.
+  # Omit non-published items from posting counts.
   # NOTE: These numbers differ slightly from old (eschol4) stats because our new code converter
   #       (based on normalization stylesheets) has better date calulation for ETDs (using the
   #       history.xml file instead of timestamp on meta).
   Item.where(status: 'published').
-       where(Sequel.lit("attrs->'$.suppress_content' is null")).
-       select_map([:id, :attrs]).each { |item, attrStr|
-    attrStr.nil? and raise("item #{item} has null attrs")
-    sdate = JSON.parse(attrStr)["submission_date"]
-    sdate.nil? and raise("item #{item} missing submission_date")
+       select_map([:id, :submitted]).each { |item, sdate|
+    sdate.nil? and raise("item #{item} missing 'submitted' date")
     sdate = parseDate(sdate)
     monthPosts[sdate.year*100 + sdate.month] << item
   }

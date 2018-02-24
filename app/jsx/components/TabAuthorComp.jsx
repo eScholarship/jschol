@@ -91,7 +91,7 @@ class TabAuthorComp extends React.Component {
       }
 
       // Next comes the publication year in parens, followed by a dot.
-      let match = /^(\d\d\d\d)/.exec(props.pub_date)
+      let match = /^(\d\d\d\d)/.exec(props.published)
       if (match)
         out += "(" + match[1] + "). "
 
@@ -303,9 +303,9 @@ class TabAuthorComp extends React.Component {
              <dd key="1">{issn}</dd>]
           }
 
-          {p.pub_date && 
+          {p.published &&
             [<dt key="0"><strong>Publication Date:</strong></dt>,
-             <dd key="1">{p.pub_date}</dd>]
+             <dd key="1">{p.published}</dd>]
           }
  
           {unit_type &&
