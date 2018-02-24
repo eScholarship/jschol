@@ -1221,7 +1221,7 @@ def checkRightsOverride(unitID, volNum, issNum, oldRights)
         rights = unitAttrs["default_issue"]["rights"]
       else
         # Failing that, use values from the most-recent issue
-        iss = Issue.where(unit_id: unitID).order(Sequel.desc(:pub_date)).order_append(Sequel.desc(:issue)).first
+        iss = Issue.where(unit_id: unitID).order(Sequel.desc(:published)).order_append(Sequel.desc(:issue)).first
         if iss
           issAttrs = (iss.attrs && JSON.parse(iss.attrs)) || {}
           rights = issAttrs["rights"]
@@ -1255,10 +1255,7 @@ def parseUCIngest(itemID, inMeta, fileType)
   attrs[:orig_citation] = inMeta.text_at("./originalCitation")
   attrs[:pub_web_loc] = inMeta.xpath("./context/publishedWebLocation").map { |el| el.text.strip }
   attrs[:publisher] = inMeta.text_at("./publisher")
-  attrs[:submission_date] = parseDate(inMeta.text_at("./history/submissionDate")) ||
-                            parseDate(inMeta[:dateStamp])
   attrs[:suppress_content] = shouldSuppressContent(itemID, inMeta)
-
 
   # Normalize language codes
   attrs[:language] and attrs[:language] = attrs[:language].sub("english", "en").sub("german", "de").
@@ -1279,6 +1276,19 @@ def parseUCIngest(itemID, inMeta, fileType)
     msg and attrs[:withdrawn_message] = msg
   end
 
+  # Everything needs a submission date
+  submissionDate = parseDate(inMeta.text_at("./history/submissionDate")) ||
+                   parseDate(inMeta[:dateStamp])
+
+  # Also we need the date it was added to eScholarship. For sanity, clamp dates before
+  # it was even submitted.
+  escholDate = parseDate(inMeta.text_at("./history/escholPublicationDate"))
+  addDate = (escholDate && escholDate > submissionDate) ? escholDate : submissionDate
+
+  # Similar for update date
+  stateDate = parseDate(inMeta[:stateDate])
+  updateDate = (stateDate && stateDate > addDate) ? stateDate : addDate
+
   # Filter out "n/a" abstracts
   abstract = inMeta.html_at("./abstract")
   abstract and abstract = sanitizeHTML(abstract)
@@ -1294,11 +1304,7 @@ def parseUCIngest(itemID, inMeta, fileType)
       discID and discID.sub!(/^disc/, "")
       label = $discTbl[discID]
     end
-    if !label
-      puts("Warning: unknown discipline ID #{discID.inspect}")
-      puts "uci: discEl=#{discEl}"
-      puts "uci: discTbl=#{$discTbl}" # FIXME FOO
-    end
+    label or puts("Warning: unknown discipline #{discEl}")
     label
   }.select { |v| v }
 
@@ -1332,14 +1338,14 @@ def parseUCIngest(itemID, inMeta, fileType)
         issue[:volume]   = volNum
         issue[:issue]    = issueNum
         if inMeta.text_at("./context/issueDate") == "0"  # hack for westjem AIP
-          issue[:pub_date] = parseDate(inMeta.text_at("./history/originalPublicationDate") ||
-                                       inMeta.text_at("./history/escholPublicationDate") ||
-                                       inMeta[:dateStamp])
+          issue[:published] = parseDate(inMeta.text_at("./history/originalPublicationDate") ||
+                                        inMeta.text_at("./history/escholPublicationDate") ||
+                                        submissionDate)
         else
-          issue[:pub_date] = parseDate(inMeta.text_at("./context/issueDate") ||
-                                       inMeta.text_at("./history/originalPublicationDate") ||
-                                       inMeta.text_at("./history/escholPublicationDate") ||
-                                       inMeta[:dateStamp])
+          issue[:published] = parseDate(inMeta.text_at("./context/issueDate") ||
+                                        inMeta.text_at("./history/originalPublicationDate") ||
+                                        inMeta.text_at("./history/escholPublicationDate") ||
+                                        submissionDate)
         end
         issueAttrs = {}
         tmp = inMeta.text_at("/record/context/issueTitle")
@@ -1404,6 +1410,7 @@ def parseUCIngest(itemID, inMeta, fileType)
   dbItem[:source]       = inMeta.text_at("./source") or raise("no source found")
   dbItem[:status]       = attrs[:withdrawn_date] ? "withdrawn" :
                           isEmbargoed(attrs[:embargo_date]) ? "embargoed" :
+                          (attrs[:suppress_content] && inMeta[:state] == "published") ? "empty" :
                           (inMeta[:state] || raise("no state in record"))
   dbItem[:title]        = sanitizeHTML(inMeta.html_at("./title"))
   dbItem[:content_type] = attrs[:suppress_content] ? nil :
@@ -1419,10 +1426,12 @@ def parseUCIngest(itemID, inMeta, fileType)
                           fileType == "ETD" ? "dissertation" :
                           inMeta[:type] ? inMeta[:type].sub("paper", "article") :
                           "article"
-  dbItem[:eschol_date]  = parseDate(inMeta.text_at("./history/escholPublicationDate")) ||
-                          parseDate(inMeta[:dateStamp])
-  dbItem[:pub_date]     = parseDate(inMeta.text_at("./history/originalPublicationDate")) ||
-                          dbItem[:eschol_date]
+  dbItem[:submitted]    = submissionDate
+  dbItem[:added]        = addDate
+  dbItem[:published]    = parseDate(inMeta.text_at("./history/originalPublicationDate")) ||
+                          parseDate(inMeta.text_at("./history/escholPublicationDate")) ||
+                          submissionDate
+  dbItem[:updated]      = updateDate
   dbItem[:attrs]        = JSON.generate(attrs)
   dbItem[:rights]       = rights
   dbItem[:ordering_in_sect] = inMeta.text_at("./context/publicationOrder")
@@ -1542,8 +1551,8 @@ def indexItem(itemID, timestamp, batch, nailgun)
       type_of_work:  dbItem[:genre],
       disciplines:   attrs[:disciplines] ? attrs[:disciplines] : [""], # only the numeric parts
       peer_reviewed: attrs[:is_peer_reviewed] ? 1 : 0,
-      pub_date:      dbItem[:pub_date].to_date.iso8601 + "T00:00:00Z",
-      pub_year:      dbItem[:pub_date].year,
+      pub_date:      dbItem[:published].to_date.iso8601 + "T00:00:00Z",
+      pub_year:      dbItem[:published].year,
       rights:        dbItem[:rights] || "",
       sort_author:   (authors[0] || {name:""})[:name].gsub(/[^\w ]/, '').downcase,
       is_info:       0
@@ -1712,9 +1721,9 @@ def updateIssueAndSection(data)
   found = Issue.first(unit_id: iss.unit_id, volume: iss.volume, issue: iss.issue)
   if found
     issueChanged = false
-    if found.pub_date != iss.pub_date
-      #puts "issue #{iss.unit_id} #{iss.volume}/#{iss.issue} pub date changed from #{found.pub_date.inspect} to #{iss.pub_date.inspect}."
-      found.pub_date = iss.pub_date
+    if found.published != iss.published
+      #puts "issue #{iss.unit_id} #{iss.volume}/#{iss.issue} pub date changed from #{found.published.inspect} to #{iss.published.inspect}."
+      found.published = iss.published
       issueChanged = true
     end
     if found.attrs != iss.attrs

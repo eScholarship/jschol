@@ -58,8 +58,8 @@ def itemResultData(itemIds, itemData, fields=[])
 
       #conditional data included as needed as specified by 'fields' parameter
       itemListItem[:thumbnail] = attrs['thumbnail'] if fields.include? 'thumbnail'
-      itemListItem[:pub_date] = item.pub_date if fields.include? 'pub_date'
-      itemListItem[:pub_year] = item.pub_date.year if fields.include? 'pub_year'
+      itemListItem[:published] = item.published if fields.include? 'published'
+      itemListItem[:pub_year] = item.published.year if fields.include? 'pub_year'
       itemListItem[:genre] = item.genre if fields.include? 'type_of_work'
       itemListItem[:rights] = item.rights if fields.include? 'rights'
       itemListItem[:peerReviewed] = attrs['is_peer_reviewed'] if fields.include? 'peer_reviewed'
