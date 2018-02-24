@@ -160,7 +160,7 @@ def splashInstrucs(itemID, item, attrs)
   end
 
   # Publication date
-  instruc << { h3: { text: "Publication Date" } } << { paragraph: { text: item.pub_date } }
+  instruc << { h3: { text: "Publication Date" } } << { paragraph: { text: item.published } }
 
   # DOI
   attrs["doi"] and instruc << { h3: { text: "DOI" } } << { paragraph: { text: attrs["doi"] } }
