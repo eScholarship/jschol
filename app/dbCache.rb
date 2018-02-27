@@ -83,7 +83,6 @@ end
 
 def countGenres
   genreCounts = Item.where(status: 'published').
-                     where(Sequel.lit("attrs->'$.suppress_content' is null")).
                      group_and_count(:genre).as_hash(:genre, :count)
   return genreCounts['article'], genreCounts['dissertation'], genreCounts['monograph']
 end
