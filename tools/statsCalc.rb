@@ -1368,7 +1368,7 @@ def applyForwards
     prevAttrs = JSON.parse(prevPerson[:attrs])
 
     # Skip if already forwarded
-    next if prevAttrs['forwarded_to'] == curPerson[:id]
+    next if curPerson && prevAttrs['forwarded_to'] == curPerson[:id]
 
     # Print out what we're doing.
     puts "\n  #{prevEmail} -> #{curEmail}"
