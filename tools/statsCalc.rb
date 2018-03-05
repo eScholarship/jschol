@@ -1374,8 +1374,7 @@ def applyForwards
     # Skip if already forwarded
     next if curPerson && prevAttrs['forwarded_to'] == curPerson[:id]
 
-    # Print out what we're doing.
-    puts "\n  #{prevEmail} -> #{curEmail}"
+    #puts "\n  #{prevEmail} -> #{curEmail}"
 
     if curPerson.nil?
       # There's only one record, on which we can just change the email addr.
@@ -1383,7 +1382,7 @@ def applyForwards
       prevAttrs['prev_emails'] << prevEmail
       prevAttrs['prev_emails'].uniq!
       prevAttrs['email'] = curEmail
-      puts "    Plain switch: #{prevAttrs}"
+      #puts "    Plain switch: #{prevAttrs}"
       prevPerson.attrs = prevAttrs.to_json
       #prevPerson.save  # FIXME
     else
