@@ -90,6 +90,7 @@ $batchQueue = SizedQueue.new(1)  # no use getting very far ahead of CloudSearch
 $splashQueue = Queue.new
 
 # Mode to force checking of the index digests (useful when indexing algorithm or unit structure changes)
+RESCAN_SET_SIZE = 1000
 $rescanMode = ARGV.delete('--rescan')
 
 # Mode to process a single item and just print it out (no inserting or batching)
@@ -1987,45 +1988,64 @@ def convertAllItems(arks)
 
   cacheAllUnits()
 
-  # Fire up threads for doing the work in parallel
-  Thread.abort_on_exception = true
-  indexThread = Thread.new { indexAllItems }
-  batchThread = Thread.new { processAllBatches }
-  splashThread = Thread.new { splashFromQueue }
+  # Normally loop runs once, but in rescan mode it's multiple times.
+  rescanBase = ""
+  while true
 
-  # Count how many total there are, for status updates
-  $nTotal = QUEUE_DB.fetch("SELECT count(*) as total FROM indexStates WHERE indexName='erep'").first[:total]
+    # Fire up threads for doing the work in parallel
+    Thread.abort_on_exception = true
+    indexThread = Thread.new { indexAllItems }
+    batchThread = Thread.new { processAllBatches }
+    splashThread = Thread.new { splashFromQueue }
 
-  # Grab the timestamps of all items, for speed
-  $allItemTimes = (arks=="ALL" ? Item : Item.where(id: arks.to_a)).to_hash(:id, :last_indexed)
+    # Count how many total there are, for status updates
+    $nTotal = QUEUE_DB.fetch("SELECT count(*) as total FROM indexStates WHERE indexName='erep'").first[:total]
 
-  # Convert all the items that are indexable
-  query = QUEUE_DB[:indexStates].where(indexName: 'erep').select(:itemId, :time).order(:itemId)
-  $nTotal = query.count
-  if $skipTo
-    puts "Skipping all up to #{$skipTo}..."
-    query = query.where{ itemId >= "ark:13030/#{$skipTo}" }
-    $nSkipped = $nTotal - query.count
-  end
-  query.all.each do |row|   # all so we don't keep db locked
-    shortArk = getShortArk(row[:itemId])
-    next if arks != 'ALL' && !arks.include?(shortArk)
-    erepTime = Time.at(row[:time].to_i).to_time
-    itemTime = $allItemTimes[shortArk]
-    if itemTime.nil? || itemTime < erepTime || $rescanMode
-      $indexQueue << [shortArk, erepTime]
-    else
-      #puts "#{shortArk} is up to date, skipping."
-      $nSkipped += 1
+    # Grab the timestamps of all items, for speed
+    $allItemTimes = (arks=="ALL" ? Item : Item.where(id: arks.to_a)).to_hash(:id, :last_indexed)
+
+    # Convert all the items that are indexable
+    if $rescanMode && arks == 'ALL'
+      redoSet = Item.where{ id > rescanBase }.limit(RESCAN_SET_SIZE)
+      $skipTo and redoSet = redoSet.where{ id >= $skipTo }
+      $skipTo = nil
+      redoSet.update(:last_indexed => nil)
+      rescanBase = redoSet.map(:id).max
+      puts "Rescan reset, nextbase=#{rescanBase.inspect}."
+    end
+    query = QUEUE_DB[:indexStates].where(indexName: 'erep').select(:itemId, :time).order(:itemId)
+    $nTotal = query.count
+    if $skipTo
+      puts "Skipping all up to #{$skipTo}..."
+      query = query.where{ itemId >= "ark:13030/#{$skipTo}" }
+      $nSkipped = $nTotal - query.count
+    end
+    query.all.each do |row|   # all so we don't keep db locked
+      shortArk = getShortArk(row[:itemId])
+      next if arks != 'ALL' && !arks.include?(shortArk)
+      erepTime = Time.at(row[:time].to_i).to_time
+      itemTime = $allItemTimes[shortArk]
+      if itemTime.nil? || itemTime < erepTime || ($rescanMode && arks != 'ALL')
+        $indexQueue << [shortArk, erepTime]
+      else
+        #puts "#{shortArk} is up to date, skipping."
+        $nSkipped += 1
+      end
+    end
+
+    $indexQueue << nil  # end-of-queue
+    indexThread.join
+    batchThread.join
+    splashThread.join
+
+    if $rescanMode && rescanBase.nil?
+      break
+    elsif !$rescanMode
+      break
     end
   end
 
-  $indexQueue << nil  # end-of-queue
-  indexThread.join
-  batchThread.join
-  splashThread.join
-
-  scrubSectionsAndIssues() # one final scrub
+  $nTotal > 0 and scrubSectionsAndIssues() # one final scrub
 end
 
 ###################################################################################################
