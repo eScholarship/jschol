@@ -69,8 +69,8 @@ DB = Sequel.connect({
 $dbMutex = Mutex.new
 
 # Log SQL statements, to aid debugging
-File.exists?('convert.sql_log') and File.delete('convert.sql_log')
-DB.loggers << Logger.new('convert.sql_log')
+#File.exists?('convert.sql_log') and File.delete('convert.sql_log')
+#DB.loggers << Logger.new('convert.sql_log')
 
 # The old eschol queue database, from which we can get a list of indexable ARKs
 QUEUE_DB = Sequel.connect({ adapter: "sqlite",
