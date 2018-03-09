@@ -10,10 +10,10 @@ import IssueActionsComp from '../components/IssueActionsComp.jsx'
 
 class VolumeSelector extends React.Component {
   static PropTypes = {
-    vip: PropTypes.array.isRequired,     // [unit_id, Volume, Issue, Pub_date]
+    vip: PropTypes.array.isRequired,     // [unit_id, Volume, Issue, published]
     issue_numbering: PropTypes.string,
     title: PropTypes.string,
-    issues: PropTypes.array.isRequired   // [ {:id=>3258, :volume=>"1", :issue=>"2", :pub_date=>#<Date: ...}, ... ]
+    issues: PropTypes.array.isRequired   // [ {:id=>3258, :volume=>"1", :issue=>"2", :published=>#<Date: ...}, ... ]
   }
 
   getIssuePath = (unit_id, v,i) => {
@@ -54,7 +54,7 @@ class VolumeSelector extends React.Component {
               {p.issues.map( i => {
                 let numbering = i.attrs ? i.attrs.numbering : null
                 let title = i.attrs ? i.attrs.title : null
-                let name = this.issueTitle(i.volume, i.issue, numbering, title, this.getPubYear(i.pub_date)) 
+                let name = this.issueTitle(i.volume, i.issue, numbering, title, this.getPubYear(i.published))
                 return (<li key={i.id}><Link to={this.getIssuePath(i.unit_id, i.volume, i.issue)}>{name}</Link></li>)})
               }
             </ul>
@@ -74,7 +74,7 @@ class IssueWrapperComp extends React.Component {
       volume: PropTypes.string,
       issue: PropTypes.string,
       numbering: PropTypes.string,
-      pub_date: PropTypes.string,
+      published: PropTypes.string,
       title: PropTypes.string,
       description: PropTypes.string,
       cover: PropTypes.shape({
@@ -97,7 +97,7 @@ class IssueWrapperComp extends React.Component {
   
   render() {
     let pi = this.props.issue,
-        year = pi.pub_date.match(/\d{4}/),
+        year = pi.published.match(/\d{4}/),
         issueCurrent = [pi.unit_id, pi.volume, pi.issue, year]
     return (
       <section className="o-columnbox1">

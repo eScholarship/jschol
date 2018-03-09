@@ -921,7 +921,7 @@ get "/api/item/:shortArk" do |shortArk|
     authors = ItemAuthors.filter(:item_id => id).order(:ordering).
                  map(:attrs).collect{ |h| JSON.parse(h)}
     citation = getCitation(unit, shortArk, authors, attrs)
-    pubDate = item.pub_date
+    pubDate = item.published
     # Unfortunately with ProQuest ETDs, only the year is actually significant
     (item.genre == "dissertation" && pubDate) and pubDate = pubDate.to_s.sub(/-01-01$/, '')
     begin
@@ -931,8 +931,8 @@ get "/api/item/:shortArk" do |shortArk|
         :title => citation[:title],
         # ToDo: Normalize author attributes across all components (i.e. 'family' vs. 'lname')
         :authors => authors,
-        :pub_date => pubDate,
-        :eschol_date => item.eschol_date,
+        :published => pubDate,
+        :added => item.added,
         :genre => item.genre,
         :status => item.status,
         :rights => item.rights,
