@@ -21,6 +21,7 @@ Dir.chdir(File.dirname(File.expand_path(File.dirname(__FILE__))))
 require 'aws-sdk'
 require 'date'
 require 'digest'
+require 'ezid-client'
 require 'fastimage'
 require 'fileutils'
 require 'httparty'
@@ -29,6 +30,7 @@ require 'logger'
 require 'mimemagic'
 require 'mimemagic/overlay' # for Office 2007+ formats
 require 'mini_magick'
+require 'netrc'
 require 'nokogiri'
 require 'open3'
 require 'pp'
@@ -37,6 +39,7 @@ require 'sequel'
 require 'ostruct'
 require 'time'
 require_relative '../util/nailgun.rb'
+require_relative '../util/normalize.rb'
 require_relative '../util/sanitize.rb'
 require_relative '../util/xmlutil.rb'
 
@@ -90,7 +93,7 @@ $batchQueue = SizedQueue.new(1)  # no use getting very far ahead of CloudSearch
 $splashQueue = Queue.new
 
 # Mode to force checking of the index digests (useful when indexing algorithm or unit structure changes)
-RESCAN_SET_SIZE = 1000
+RESCAN_SET_SIZE = 100
 $rescanMode = ARGV.delete('--rescan')
 
 # Mode to process a single item and just print it out (no inserting or batching)
@@ -172,6 +175,19 @@ $discTbl = {"1540" => "Life Sciences",
             "3579" => "Education"}
 
 $issueRightsCache = {}
+
+###################################################################################################
+# Configure EZID API for minting arks for people
+Ezid::Client.configure do |config|
+  (ezidCred = Netrc.read['ezid.cdlib.org']) or raise("Need credentials for ezid.cdlib.org in ~/.netrc")
+  config.user = ezidCred[0]
+  config.password = ezidCred[1]
+  config.default_shoulder = case $hostname
+    when 'pub-submit-stg-2a', 'pub-submit-stg-2c'; 'ark:/99999/fk4'
+    when 'pub-submit-prd-2a', 'pub-submit-prd-2c'; 'ark:/99166/p3'
+    else raise "Unrecognized hostname for shoulder determination."
+  end
+end
 
 ###################################################################################################
 # Monkey-patch to nicely ellide strings.
@@ -805,7 +821,7 @@ def grabText(itemID, contentType)
   elsif contentType.nil?
     return ""
   else
-    puts "Warning: no text found"
+    #puts "Warning: no text found"
     return ""
   end
   return translateEntities(buf.join("\n"))
@@ -1142,7 +1158,7 @@ def shouldSuppressContent(itemID, inMeta)
     return false
   end
 
-  puts "Warning: content-free item"
+  #puts "Warning: content-free item"
   return true
 end
 
@@ -1326,7 +1342,7 @@ def parseUCIngest(itemID, inMeta, fileType)
       discID and discID.sub!(/^disc/, "")
       label = $discTbl[discID]
     end
-    label or puts("Warning: unknown discipline #{discEl}")
+    #label or puts("Warning: unknown discipline #{discEl}")
     label
   }.select { |v| v }
 
@@ -1532,7 +1548,7 @@ def indexItem(itemID, timestamp, batch, nailgun)
   # Grab the main metadata file
   metaPath = arkToFile(itemID, "meta/base.meta.xml")
   if !File.exists?(metaPath) || File.size(metaPath) < 50
-    puts "Warning: skipping #{itemID} due to missing or truncated meta.xml"
+    #puts "Warning: skipping #{itemID} due to missing or truncated meta.xml"
     $nSkipped += 1
     return
   end
@@ -1601,7 +1617,7 @@ def indexItem(itemID, timestamp, batch, nailgun)
       JSON.generate({text: text[0, text.size - cut]}).bytesize + baseSize < MAX_TEXT_SIZE
     }
     (toCut==0 || toCut.nil?) and raise("Internal error: have to cut something, but toCut=#{toCut.inspect}")
-    puts "Note: Keeping only #{text.size - toCut} of #{text.size} text chars."
+    #puts "Note: Keeping only #{text.size - toCut} of #{text.size} text chars."
     idxItem[:fields][:text] = text[0, text.size - toCut]
   end
 
@@ -1981,6 +1997,62 @@ def cacheAllUnits()
 end
 
 ###################################################################################################
+def createPersonArk(name, email)
+  # Determine the EZID metadata
+  who = email ? "#{name} <#{email}>" : name
+  meta = { 'erc.what' => normalizeERC("Internal eScholarship agent ID"),
+           'erc.who'  => "#{normalizeERC(name)} <#{normalizeERC(email)}>",
+           'erc.when' => DateTime.now.iso8601 }
+
+  # Mint it the new ID
+  resp = Ezid::Identifier.mint(nil, meta)
+  return resp.id
+end
+
+###################################################################################################
+# Connect people to authors
+def connectAuthors
+
+  # Skip if all authors were already connected
+  unconnectedAuthors = ItemAuthor.where(Sequel.lit("attrs->'$.email' is not null and person_id is null"))
+  nTodo = unconnectedAuthors.count
+  nTodo > 0 or return
+
+  # First, record existing email -> person correlations
+  puts "Connecting items/authors to people."
+  emailToPerson = {}
+  Person.where(Sequel.lit("attrs->'$.email' is not null")).each { |person|
+    attrs = JSON.parse(person.attrs)
+    next if attrs['forwarded_to']
+    Set.new([attrs['email']] + (attrs['prev_emails'] || [])).each { |email|
+      if emailToPerson.key?(email) && emailToPerson[email] != person.id
+        puts "Warning: multiple matching people for email #{email.inspect}"
+      end
+      emailToPerson[email] = person.id
+    }
+  }
+
+  # Then connect all unconnected authors to people
+  nDone = 0
+  unconnectedAuthors.each { |auth|
+    DB.transaction {
+      authAttrs = JSON.parse(auth.attrs)
+      email = authAttrs["email"].downcase
+      person = emailToPerson[email]
+      (nDone % 1000) == 0 and puts "Connecting items/authors to people: #{nDone} / #{nTodo}"
+      if !person
+        person = createPersonArk(authAttrs["name"] || "unknown", email)
+        Person.create(id: person, attrs: { email: email }.to_json)
+        emailToPerson[email] = person
+      end
+      ItemAuthor.where(item_id: auth.item_id, ordering: auth.ordering).update(person_id: person)
+      nDone += 1
+    }
+  }
+  puts "Connecting items/authors to people: #{nDone} / #{nTodo}"
+end
+
+###################################################################################################
 # Main driver for item conversion
 def convertAllItems(arks)
   # Let the user know what we're doing
@@ -2005,13 +2077,17 @@ def convertAllItems(arks)
     $allItemTimes = (arks=="ALL" ? Item : Item.where(id: arks.to_a)).to_hash(:id, :last_indexed)
 
     # Convert all the items that are indexable
-    if $rescanMode && arks == 'ALL'
-      redoSet = Item.where{ id > rescanBase }.limit(RESCAN_SET_SIZE)
-      $skipTo and redoSet = redoSet.where{ id >= $skipTo }
-      $skipTo = nil
-      redoSet.update(:last_indexed => nil)
-      rescanBase = redoSet.map(:id).max
-      puts "Rescan reset, nextbase=#{rescanBase.inspect}."
+    if $rescanMode
+      if arks == 'ALL'
+        redoSet = Item.where{ id > rescanBase }.limit(RESCAN_SET_SIZE)
+        $skipTo and redoSet = redoSet.where{ id >= $skipTo }
+        $skipTo = nil
+        redoSet.update(:last_indexed => nil)
+        rescanBase = redoSet.map(:id).max
+        puts "Rescan reset, nextbase=#{rescanBase.inspect}."
+      else
+        rescanBase = nil
+      end
     end
     query = QUEUE_DB[:indexStates].where(indexName: 'erep').select(:itemId, :time).order(:itemId)
     $nTotal = query.count
@@ -2035,6 +2111,7 @@ def convertAllItems(arks)
 
     $indexQueue << nil  # end-of-queue
     indexThread.join
+    connectAuthors  # make sure all newly converted (or reconvered) items have author->people links
     batchThread.join
     splashThread.join
 
@@ -2241,7 +2318,7 @@ def convertPDF(itemID)
 
   # Skip non-published items (e.g. embargoed, withdrawn)
   if item.status != "published"
-    puts "Not generating splash for #{item.status} item."
+    #puts "Not generating splash for #{item.status} item."
     return
   end
 
@@ -2253,17 +2330,16 @@ def convertPDF(itemID)
   # See if current splash page is adequate
   origFile = arkToFile(itemID, "content/base.pdf")
   if !File.exist?(origFile)
-    puts "Missing content file; skipping splash."
+    #puts "Missing content file; skipping splash."
     return
   end
   origSize = File.size(origFile)
   origTimestamp = File.mtime(origFile)
 
   dbPdf = DisplayPDF[itemID]
-  if !$forceMode && dbPdf && dbPdf.orig_size == origSize && dbPdf.orig_timestamp == origTimestamp
-    if !ARGV.include?("--splash")  # only print unchanged in indexing mode, not splash-only mode
-      puts "Splash unchanged."
-    end
+  # It's odd, but comparing timestamps by value isn't reliable. Converting them to strings is though.
+  if !$forceMode && dbPdf && dbPdf.orig_size == origSize && dbPdf.orig_timestamp.to_s == origTimestamp.to_s
+    #puts "Splash unchanged."
     return
   end
   puts "Updating splash."
@@ -2300,7 +2376,7 @@ def convertPDF(itemID)
     DisplayPDF.where(item_id: itemID).delete
     DisplayPDF.create(item_id: itemID,
       orig_size:          origSize,
-      orig_timestamp:     File.mtime(origFile),
+      orig_timestamp:     origTimestamp,
       linear_size:        linSize,
       splash_info_digest: splashLinSize > 0 ? instrucDigest : nil,
       splash_size:        splashLinSize

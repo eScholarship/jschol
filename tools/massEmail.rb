@@ -63,6 +63,19 @@ $testMode = ARGV.delete("--test")
 # Read secret Subi keys (so we can form valid unsubscribe links)
 $subiSecrets = JSON.parse(File.read("/apps/eschol/.passwords/subiSecrets.json"))
 
+# Secrets for sending mail through Amazon SES
+$mail_options = { :address              => ENV['SES_SMTP_HOST'],
+                  :port                 => 587,
+                  :domain               => "submit.escholarship.org",
+                  :user_name            => ENV['SES_SMTP_USERNAME'],
+                  :password             => ENV['SES_SMTP_PASSWORD'],
+                  :authentication       => "plain",
+                  :enable_starttls_auto => true  }
+
+# This one is from https://www.regular-expressions.info/email.html
+#  NOTE: the one from http://emailregex.com/ hangs forever on some inputs, so don't use.
+VALID_EMAIL_PATTERN = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i
+
 ###################################################################################################
 # Grab SES email logs and put them into our 'awsLogs' directory
 def grabBounceLogs
@@ -78,7 +91,7 @@ def grabBounceLogs
   #       We use an explicit "instance" profile (also defined in that file) to get back to plain
   #       default instance credentials.
   checkOutput("aws s3 ls --profile instance s3://cdl-shared-logs/ses/").split("\n").each { |line|
-    next unless line =~ %r{(eschol@[^/]*)}
+    next unless line =~ %r{PRE ([^ ]+@[^ ]*escholarship\.org)/}
     dir = $1
     FileUtils.mkdir_p("./awsLogs/ses-logs/#{dir}")
     checkCall("aws s3 sync --profile instance --quiet --delete s3://cdl-shared-logs/ses/#{dir}/ ./awsLogs/ses-logs/#{dir}/")
@@ -87,54 +100,198 @@ def grabBounceLogs
 end
 
 ###################################################################################################
+def processBounce(email, bounceDate, bounceKind)
+
+  if bounceKind == "permanent"
+
+    # Permanent on a date replaces temporary on that same date
+    Bounce.where(email: email, date: bounceDate, kind: "temporary").delete
+
+    # Avoid duplicates
+    return unless Bounce.where(email: email, date: bounceDate, kind: bounceKind).empty?
+
+    # We consider a single permanent bounce enough to stop sending.
+    needMark = (Date.today - bounceDate) < 90
+
+  else # temporary
+
+    # Avoid duplicates
+    return unless Bounce.where(email: email, date: bounceDate).empty?
+
+    # If we get two temporary bounces within 90 days, that's enough to stop sending.
+    prev = Bounce.where(email: email).order(Sequel::desc(:date)).first
+    needMark = prev && ((Date.today - prev.date) < 90 && (Date.today - bounceDate) < 90)
+
+  end
+
+  # If we need to mark them as bouncing, there's work to do.
+  if needMark
+
+    # We got a permanent bounce, or two bounces within 90 days of today; mark the user as 'bouncing'
+    if bounceKind == "permanent"
+      STDERR.puts "Email #{email} got permanent bounce; will mark."
+    else
+      STDERR.puts "Email #{email} bounced twice (#{prev.date} and #{bounceDate}); will mark."
+    end
+
+    # Add a user to the OJS users table if not already there
+    user = OJS_DB[:users].where(email: email).first
+    if !user
+      OJS_DB[:users].insert(username: email,
+                            password: '',
+                            first_name: '',
+                            last_name: '',
+                            email: email,
+                            date_registered: Date.today,
+                            date_last_login: Date.today,
+                            disabled: false)
+      user = OJS_DB[:users].where(email: email).first
+    end
+    if OJS_DB[:user_settings].where(user_id: user[:user_id], setting_name: 'eschol_bouncing_email').first
+      STDERR.puts "...was already marked as bouncing."
+    else
+      OJS_DB[:user_settings].insert(user_id: user[:user_id],
+                                    locale: "en_US",
+                                    setting_name: "eschol_bouncing_email",
+                                    setting_value: "yes",
+                                    setting_type: "string")
+    end
+  end
+
+  # Record that we've processed this one, to avoid future repetition.
+  Bounce.create(email: email, date: bounceDate, kind: bounceKind)
+end
+
+###################################################################################################
 # Process any new bounce notifications
 def processBounces
   grabBounceLogs
 
-  STDERR.puts "Processing bounces."
+  STDERR.puts "Processing SES bounces."
   Dir.glob("./awsLogs/ses-logs/**/*").sort.each { |fn|
     next unless File.file?(fn)
     fn =~ %r{Bounce/(\d\d\d\d)-(\d\d)-(\d\d)} or raise("Warning: unexpected SES file #{fn}")
     bounceDate = Date.new($1.to_i, $2.to_i, $3.to_i)
+
     stuff = JSON.parse(File.read(fn))
+    bounceKind = stuff.dig('bounce', 'bounceKind') || stuff.dig('bounce', 'bounceType') or
+      raise("Can't find bounceKind in #{fn}")
+    %w{Permanent Transient Undetermined}.include?(bounceKind) or raise("Unrecognized bounceKind #{bounceKind.inspect}")
+    next if bounceKind == "Undetermined" # not sure what these are, but they're hard to process
+    bounceKind.downcase!
+
     recips = stuff.dig('bounce', 'bouncedRecipients') or raise("Can't parse bounce in #{fn}")
     recips.each { |recip|
       email = recip['emailAddress'] or raise("Can't parse bounce in #{fn}")
       email = email.strip.downcase
-      email =~ /.*@.*\..*/ or raise("Strange email #{email.inspect} in #{fn}")
-      next if Bounce.where(email: email, date: bounceDate).count > 0
-
-      prev = Bounce.where(email: email).order(Sequel::desc(:date)).first
-      if prev && (Date.today - prev.date) < 90 && (Date.today - bounceDate) < 90
-        # We got two bounces within 90 days of today; mark the user as 'bouncing'
-        STDERR.puts "Email #{email} bounced twice (#{prev.date} and #{bounceDate}); will mark."
-
-        # Add a user to the OJS users table if not already there
-        user = OJS_DB[:users].where(email: email).first
-        if !user
-          OJS_DB[:users].insert(username: email,
-                                password: '',
-                                first_name: '',
-                                last_name: '',
-                                email: email,
-                                date_registered: Date.today,
-                                date_last_login: Date.today,
-                                disabled: false)
-          user = OJS_DB[:users].where(email: email).first
-        end
-        if OJS_DB[:user_settings].where(user_id: user[:user_id], setting_name: 'eschol_bouncing_email').first
-          STDERR.puts "...was already marked as bouncing."
-        else
-          OJS_DB[:user_settings].insert(user_id: user[:user_id],
-                                        locale: "en_US",
-                                        setting_name: "eschol_bouncing_email",
-                                        setting_value: "yes",
-                                        setting_type: "string")
-        end
-      end
-      Bounce.create(email: email, date: bounceDate)
+      email =~ /.+@.+/ or raise("Strange email #{email.inspect} in #{fn}")
+      processBounce(email, bounceDate, bounceKind)
     }
   }
+end
+
+###################################################################################################
+# Temporary processing of old-style mail logs before we moved to SES
+def processMaillog
+  STDERR.puts "Processing /var/log/maillog* bounces (temporary)."
+
+  authorEmails = Set.new
+  Person.all { |person|
+    next unless person.attrs
+    attrs = JSON.parse(person.attrs)
+    attrs['email'] and authorEmails << attrs['email']
+    (attrs['prev_emails'] || []).each { |email| authorEmails << email }
+  }
+  ItemAuthor.all { |auth|
+    next unless auth.attrs
+    attrs = JSON.parse(auth.attrs)
+    attrs['email'] and authorEmails << attrs['email']
+  }
+
+  permanentReasons = Hash.new { |h,k| h[k] = 0 }
+  temporaryReasons = Hash.new { |h,k| h[k] = 0 }
+  bounces = Hash.new { |h,k| h[k] = Set.new }
+
+  Dir.glob("/var/log/maillog*").sort.each { |fn|
+    next unless File.file?(fn)
+    fileDate = File.ctime(fn)
+    File.readlines(fn).each { |line|
+      if !(line =~ /^(\w+)\s+(\d+).*to=<([^>]+)>.*status=(bounced|expired|deferred)[\s,:]*(.*)/)
+        if line =~ /to=.*status=/ && !(line =~ /status=sent/)
+          raise "Should have recognized line #{line.inspect}"
+        end
+        next
+      end
+      monthName, day, email, status, reason = $1, $2, $3, $4, $5
+
+      email = email.strip.downcase
+      if !authorEmails.include?(email)
+        #puts "Skipping non-author: #{email}"
+        next
+      end
+
+      month = Date::ABBR_MONTHNAMES.index(monthName) or raise("can't parse month name #{monthName.inspect}")
+      bounceDate = Date.new(fileDate.year, month, day.to_i)
+
+      # Shorten the reason text to make it easier to combine
+      reason.gsub! %r{[-\w_.]+@[-\w_.]+}, 'EMAIL'
+      reason.gsub! %r{http[^ ]+}, 'URL'
+      reason.gsub! %r{Learn more at.*}, 'LEARNMORE'
+      reason.gsub! %r{\(in reply to [^)]+\)}, ''
+      reason.gsub! %r{\w+\d[\w\d._-]{3,99}}, 'IDSTR'
+
+      if status == "bounced" || status == "expired"
+        # OJS sent a bunch via SES before we realized it's not authorized. Skip these.
+        next if reason =~ /Message rejected: Email address is not verified/
+
+        # SPF policy violations and other temporary things that will, hopefully, be cleared up
+        # by moving to SES.
+        if reason =~ /SPF|Sender Policy Framework|detected as spam|DMARC|access denied|policy|temporar/i ||
+           reason =~ /Invalid IP|spam filter|not allowed to send mail|Sender address/i ||
+           reason =~ /Sender is not authorized|Sender spoofing|content denied/i
+          bounceKind = "temporary"
+        else
+          bounceKind = "permanent"
+        end
+      else  # status=deferred
+        bounceKind = "temporary"
+      end
+
+      if bounceKind == "temporary"
+        temporaryReasons[reason] += 1
+      else
+        permanentReasons[reason] += 1
+      end
+
+      bounces[email] << [bounceKind, bounceDate]
+    }
+  }
+
+  #puts "Permanent reasons:"
+  #pp permanentReasons.sort{ |a,b| b[1] <=> a[1] }
+  #puts "\nTemporary reasons:"
+  #pp temporaryReasons.sort{ |a,b| b[1] <=> a[1] }
+
+  nTemp = 0
+  nPerm = 0
+  bounces.each { |email, events|
+    permDate = tempDate = nil
+    events.sort.each { |event|
+      if event[0] == "temporary" && (tempDate.nil? or tempDate < event[1])
+        tempDate = event[1]
+      elsif event[0] == "permanent" && (permDate.nil? or permDate < event[1])
+        permDate = event[1]
+      end
+    }
+    if permDate
+      nPerm += 1
+      processBounce(email, permDate, "permanent")
+    else
+      nTemp += 1
+      processBounce(email, tempDate, "temporary")
+    end
+  }
+  puts "nPerm=#{nPerm} nTemp=#{nTemp} nTotal=#{nPerm + nTemp}"
 end
 
 ###################################################################################################
@@ -150,7 +307,12 @@ def fetchEscholAdmins(callback)
         and setting_value = 'yes'
     )
     and role = 'admin' or role = 'stats'
-  }).each { |row| callback.call(row[:email].downcase, row[:unit_id]) }
+  }).each { |row|
+    email = row[:email].downcase.strip
+    if email =~ VALID_EMAIL_PATTERN
+      callback.call(email, row[:unit_id])
+    end
+  }
 end
 
 ###################################################################################################
@@ -179,7 +341,12 @@ def fetchJournalManagers(callback)
       where setting_name in ('eschol_bouncing_email', 'eschol_opt_out')
         and setting_value = 'yes'
     )
-  }).each { |row| callback.call(row[:email].downcase, row[:path]) }
+  }).each { |row|
+    email = row[:email].downcase.strip
+    if email =~ VALID_EMAIL_PATTERN
+      callback.call(email, row[:path])
+    end
+  }
 end
 
 ###################################################################################################
@@ -195,11 +362,17 @@ def fetchPeople(callback, recentHitsOnly)
       where month = ?
       and item_stats.attrs->"$.hit" is not null
     }, (Date.today<<1).year*100 + (Date.today<<1).month).map { |row|
-      callback.call(row[:email].downcase, row[:id])
+      email = row[:email].downcase.strip
+      if email =~ VALID_EMAIL_PATTERN
+        callback.call(email, row[:id])
+      end
     }
   else
     Person.each { |person|
-      callback.call(JSON.parse(person.attrs)['email'].downcase, person.id)
+      email = JSON.parse(person.attrs)['email'].downcase.strip
+      if email =~ VALID_EMAIL_PATTERN
+        callback.call(email, person.id)
+      end
     }
   end
 end
@@ -228,7 +401,12 @@ def buildUsers(group, filter)
     fetchJournalManagers(filterFunc)
   elsif group == "authors"
     filterFunc = lambda { |email, person|
-      !omitEmails.include?(email) and result[email][:people] << person
+      if email =~ /@anderson\.ucla/
+        # In the admin mail-out, every single xxx@anderson.ucla.edu bounced. So let's leave them out.
+        STDERR.puts "Temporary: skipping all @anderson.ucla.edu addresses, e.g. #{email.inspect}"
+      else
+        !omitEmails.include?(email) and result[email][:people] << person
+      end
     }
     fetchPeople(filterFunc, filter == "recent-hits")
   else
@@ -252,8 +430,8 @@ def generateEmail(tpl, email, vars, allUnits, allHier)
   optoutKey = Digest::SHA1.hexdigest($subiSecrets['optoutSecret'] + email)[0,10]
   unsubscribeLink = "https://submit.escholarship.org/subi/optout?e=#{escapedEmail}&k=#{optoutKey}"
 
-  !vars[:people] || vars[:people].length == 1 or raise("multiple people for email #{email}")
-  person = vars[:people] && vars[:people].to_a[0].sub(%r{^ark:/99166/}, '')
+  !vars[:people] || vars[:people].length <= 1 or raise("multiple people for email #{email}: #{vars[:people].inspect}")
+  person = vars[:people] && !vars[:people].empty? && vars[:people].to_a[0].sub(%r{^ark:/99166/}, '')
 
   return tpl.result(binding)
 end
@@ -292,7 +470,7 @@ def generateEmails(tplFile, users, mode)
     subject = $1
     toAddr = email
     if $testMode
-      toAddr = "martin.haye@gmail.com"
+      toAddr = "martin.haye@gmail.com, justin.gonder@ucop.edu, monica.westin@ucop.edu"
     end
 
     htmlBody = body.join("\n")
@@ -313,8 +491,13 @@ def generateEmails(tplFile, users, mode)
     end
     if mode == "go4it"
       # Okay, go forth and send the email
-      mail.delivery_method :sendmail
-      mail.deliver
+      mail.delivery_method :smtp, $mail_options
+      begin
+        mail.deliver
+      rescue
+        puts "Error processing email to: #{toAddr.inspect}"
+        raise
+      end
 
       # Mark this as sent, in case we're interrupted and need to resume where we left off.
       if !$testMode
@@ -361,12 +544,13 @@ group, filter, template, mode = ARGV
 %w{preview go4it}.include?(mode) or usage
 File.file?(template) or raise("File not found: #{template}")
 
-# Build the list of users
-STDERR.puts "Building list of users."
-users = buildUsers(group, filter)
-
 # Update bounce records
 processBounces
+#processMaillog
+
+# Build the list of users (uses the bounce records built above)
+STDERR.puts "Building list of users."
+users = buildUsers(group, filter)
 
 # Generate all the emails
 STDERR.puts "Generating emails to #{users.length} users."
