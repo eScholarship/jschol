@@ -483,6 +483,8 @@ end
 
 ###################################################################################################
 def parseDate(dateStr)
+  dateStr.instance_of?(Date) and return dateStr
+  dateStr.instance_of?(DateTime) and return dateStr.to_date
   ret = Date.strptime(dateStr, "%Y-%m-%d")
   ret.year > 1000 && ret.year < 4000 or raise("can't parse date #{dateStr}")
   return ret
