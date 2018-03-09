@@ -13,11 +13,9 @@ Dir.chdir(File.dirname(File.expand_path(File.dirname(__FILE__))))
 # Remainder are the requirements for this program
 require 'date'
 require 'digest'
-require 'ezid-client'
 require 'fileutils'
 require 'json'
 require 'logger'
-require 'netrc'
 require 'pp'
 require 'sequel'
 require 'set'
@@ -25,6 +23,7 @@ require 'time'
 require 'zlib'
 
 require_relative './subprocess.rb'
+require_relative '../util/normalize.rb'
 
 # Use "--test YYYY-MM-DD" to test log parsing for a certain date
 if (pos = ARGV.index("--test"))
@@ -87,21 +86,6 @@ ROBOT_PATTERNS = JSON.parse(
   }.map { |str| Regexp.new(str, Regexp::IGNORECASE) }
 
 $robotChecked = {}
-
-
-###################################################################################################
-# Configure EZID API for minting arks for people
-Ezid::Client.configure do |config|
-  (ezidCred = Netrc.read['ezid.cdlib.org']) or raise("Need credentials for ezid.cdlib.org in ~/.netrc")
-  config.user = ezidCred[0]
-  config.password = ezidCred[1]
-  config.default_shoulder = case $hostname
-    when 'pub-submit-stg-2a', 'pub-submit-stg-2c'; 'ark:/99999/fk4'
-    when 'pub-submit-prd-2a', 'pub-submit-prd-2c'; 'ark:/99166/p3'
-    else raise "Unrecognized hostname for shoulder determination."
-  end
-end
-
 
 ###################################################################################################
 # Data classes (much more efficient in both memory and space than hashes)
@@ -293,6 +277,20 @@ class LogEvent
   end
 end
 
+# Fieldspec for CloudFront logs v 1.0:
+# #Fields: date time x-edge-location sc-bytes c-ip cs-method cs(Host) cs-uri-stem sc-status cs(Referer)
+#          cs(User-Agent) cs-uri-query cs(Cookie) x-edge-result-type x-edge-request-id x-host-header
+#          cs-protocol cs-bytes time-taken x-forwarded-for ssl-protocol ssl-cipher x-edge-response-result-type
+#          cs-protocol-version
+O_CF_time     = 1
+O_CF_ip       = 4
+O_CF_method   = 5
+O_CF_uriStem  = 7
+O_CF_status   = 8
+O_CF_referrer = 9
+O_CF_agent    = 10
+O_CF_query    = 11
+
 class CloudFrontLogEventSource < LogEventSource
   def initialize(path)
     @path = path
@@ -309,20 +307,6 @@ class CloudFrontLogEventSource < LogEventSource
   end
 
   def eachEvent
-    # Fieldspec for CloudFront logs v 1.0:
-    # #Fields: date time x-edge-location sc-bytes c-ip cs-method cs(Host) cs-uri-stem sc-status cs(Referer)
-    #          cs(User-Agent) cs-uri-query cs(Cookie) x-edge-result-type x-edge-request-id x-host-header
-    #          cs-protocol cs-bytes time-taken x-forwarded-for ssl-protocol ssl-cipher x-edge-response-result-type
-    #          cs-protocol-version
-    o_time     = 1
-    o_ip       = 4
-    o_method   = 5
-    o_uriStem  = 7
-    o_status   = 8
-    o_referrer = 9
-    o_agent    = 10
-    o_query    = 11
-
     nLines = 0
     eachLogLine(@path) { |line|
       nLines += 1
@@ -331,29 +315,70 @@ class CloudFrontLogEventSource < LogEventSource
         next
       elsif nLines == 2
         fieldSpec = line.split()[1,999]
-        fieldSpec.index("time")           == o_time &&
-        fieldSpec.index("c-ip")           == o_ip &&
-        fieldSpec.index("cs-method")      == o_method &&
-        fieldSpec.index("cs-uri-stem")    == o_uriStem &&
-        fieldSpec.index("sc-status")      == o_status &&
-        fieldSpec.index("cs(Referer)")    == o_referrer &&
-        fieldSpec.index("cs(User-Agent)") == o_agent &&
-        fieldSpec.index("cs-uri-query")   == o_query or raise("unexpected fieldspec for v 1.0 CloudFront log: #{line.inspect}")
+        fieldSpec.index("time")           == O_CF_time &&
+        fieldSpec.index("c-ip")           == O_CF_ip &&
+        fieldSpec.index("cs-method")      == O_CF_method &&
+        fieldSpec.index("cs-uri-stem")    == O_CF_uriStem &&
+        fieldSpec.index("sc-status")      == O_CF_status &&
+        fieldSpec.index("cs(Referer)")    == O_CF_referrer &&
+        fieldSpec.index("cs(User-Agent)") == O_CF_agent &&
+        fieldSpec.index("cs-uri-query")   == O_CF_query or raise("unexpected fieldspec for v 1.0 CloudFront log: #{line.inspect}")
       else
         next unless line.include?("GET") && (line.include?("/item") || line.include?("content"))
         values = line.split
-        yield LogEvent.new(values[o_ip],
-                           parseTime(@date, values[o_time], true), # isGmt: true
-                           values[o_method],
-                           values[o_query] == '-' ? values[o_uriStem] : values[o_uriStem]+'?'+values[o_query],
-                           values[o_status].to_i,
-                           values[o_referrer] == '-' ? nil : fixUtfEncoding(URI.unescape(URI.unescape(values[o_referrer]))),
-                           values[o_agent] == '-' ? nil : fixUtfEncoding(URI.unescape(URI.unescape(values[o_agent]))),
+        yield LogEvent.new(values[O_CF_ip],
+                           parseTime(@date, values[O_CF_time], true), # isGmt: true
+                           values[O_CF_method],
+                           values[O_CF_query] == '-' ? values[O_CF_uriStem] : values[O_CF_uriStem]+'?'+values[O_CF_query],
+                           values[O_CF_status].to_i,
+                           values[O_CF_referrer] == '-' ? nil : fixUtfEncoding(URI.unescape(URI.unescape(values[O_CF_referrer]))),
+                           values[O_CF_agent] == '-' ? nil : fixUtfEncoding(URI.unescape(URI.unescape(values[O_CF_agent]))),
                            nil)  # no trace ID
       end
     }
   end
 end
+
+# Fieldspec for ALB logs
+# e.g. https 2018-03-03T05:43:14.641341Z app/pub-jschol-prd-alb/683d40c2feb7aa9f 157.55.39.138:4121 172.30.35.180:18880
+#      0.000 0.157 0.000 500 500 301 475
+#      "GET https://escholarship.org:443/search/?q=Dur\xC3\x83\xC2\xA1n,%20Mercedes HTTP/1.1"
+#      "Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)" ECDHE-RSA-AES128-GCM-SHA256 TLSv1.2
+#      arn:aws:elasticloadbalancing:us-west-2:451826914157:targetgroup/pub-jschol-prd-tg/a1d8bd825b060349
+#      "Root=1-5a9a35f2-d2421d2484bafe92b1e358c8" "escholarship.org" "session-reused" 0
+# See http://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-access-logs.html
+O_ALB_type = 0
+O_ALB_timestamp = 1
+O_ALB_elb = 2
+O_ALB_client_port = 3
+O_ALB_target_port = 4
+O_ALB_request_processing_time = 5
+O_ALB_target_processing_time = 6
+O_ALB_response_processing_time = 7
+O_ALB_elb_status_code = 8
+O_ALB_target_status_code = 9
+O_ALB_received_bytes = 10
+O_ALB_sent_bytes = 11
+O_ALB_request = 12
+O_ALB_user_agent = 13
+O_ALB_ssl_cipher = 14
+O_ALB_ssl_protocol = 15
+O_ALB_target_group_arn = 16
+O_ALB_trace_id = 17
+O_ALB_domain_name = 18
+O_ALB_chosen_cert_arn = 19
+
+ALB_PORT_PAT = %r{^ (?<ip>   \d+\.\d+\.\d+\.\d+) :
+                  (?<port> \d+)
+               $}x
+
+ALB_REQ_PAT = %r{^ (?<method>   [-A-Z]+) \s
+                  (?<protocol> [^/]+) ://
+                  (?<host>     [^/:]+)
+                  (: (?<port>  \d+))?
+                  (?<path>     .*) \s
+                  (?<proto2>   [A-Z]+/[\d.]+)
+              $}x
 
 class ALBLogEventSource < LogEventSource
   def initialize(path)
@@ -372,62 +397,45 @@ class ALBLogEventSource < LogEventSource
   end
 
   def eachEvent
-    # e.g. http 2017-10-20T08:45:42.008160Z app/pub-jschol-prd-alb/683d40c2feb7aa9f 103.74.214.12:48333 172.30.5.176:18880
-    #      0.000 0.001 0.000 200 200 593 6659 "GET http://escholarship.org:80/images/temp_article.png HTTP/1.1"
-    #      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML) Chrome/61.0.3163.100 Safari/537.36"
-    #      - - arn:aws:elasticloadbalancing:us-west-2:451826914157:targetgroup/pub-jschol-prd-tg/a1d8bd825b060349
-    #      "Root=1-59e9b7b6-3d8e3a1e37b49d7a150d6901" "-" "-"
-    # See http://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-access-logs.html
-    linePat = %r{^   (?<type>                     [^ ]+      ) \s
-                     (?<timestamp>                [-\dT:.Z]+ ) \s
-                     (?<elb>                      [^ ]+      ) \s
-                     (?<client_port>              [^ ]+      ) \s
-                     (?<target_port>              [^ ]+      ) \s
-                     (?<request_processing_time>  [^ ]+      ) \s
-                     (?<target_processing_time>   [^ ]+      ) \s
-                     (?<response_processing_time> [^ ]+      ) \s
-                     (?<elb_status_code>          [-\d]+     ) \s
-                     (?<target_status_code>       [-\d]+     ) \s
-                     (?<received_bytes>           [^ ]+      ) \s
-                     (?<sent_bytes>               [^ ]+      ) \s
-                   " (?<request>                  [^"]+      ) " \s
-                   " (?<user_agent>               [^"]*      ) " \s
-                     (?<ssl_cipher>               [^ ]+      ) \s
-                     (?<ssl_protocol>             [^ ]+      ) \s
-                     (?<target_group_arn>         [^ ]+      ) \s
-                   " (?<trace_id>                 [^ ]+      ) " \s
-                     (?<domain_name>              [^ "]+|"[^"]+" ) \s
-                     (?<chosen_cert_arn>          [^ "]+|"[^"]+" )
-                $}x
-
-    portPat = %r{^ (?<ip>   \d+\.\d+\.\d+\.\d+) :
-                   (?<port> \d+)
-                $}x
-
-    reqPat = %r{^ (?<method>   [-A-Z]+) \s
-                  (?<protocol> [^/]+) ://
-                  (?<host>     [^/:]+)
-                  (: (?<port>  \d+))?
-                  (?<path>     .*) \s
-                  (?<proto2>   [A-Z]+/[\d.]+)
-              $}x
     eachLogLine(@path) { |line|
       next unless line.include?("GET") && (line.include?("/item/") || line.include?("content/"))
-      m1 = line.match(linePat) or raise("can't parse ALB line #{line.inspect}")
-      m2 = m1[:client_port].match(portPat) or raise
-      next if m1[:request] =~ /:\d+-/  # e.g. weird things like: "- http://pub-jschol-prd-alb-blah.amazonaws.com:80- "
-      m3 = m1[:request].match(reqPat) or raise("can't match request #{m1[:request].inspect}")
+      m1 = line.scan(/"[^"]*"|\S+/).map { |s| s.gsub('"', '') }
+      m1.length >= O_ALB_chosen_cert_arn or raise("can't parse ALB line #{line.inspect}")
+      m1[O_ALB_target_group_arn] =~ /^(-$|arn:aws)/ or raise("bad parse of ALB line #{line.inspect}")
+      m2 = m1[O_ALB_client_port].match(ALB_PORT_PAT) or raise
+      next if m1[O_ALB_request] =~ /:\d+-/  # e.g. weird things like: "- http://pub-jschol-prd-alb-blah.amazonaws.com:80- "
+      m3 = m1[O_ALB_request].match(ALB_REQ_PAT) or raise("can't match request #{m1[O_ALB_request].inspect}")
       yield LogEvent.new(m2[:ip],
-                         Time.parse(m1[:timestamp]).localtime,
+                         Time.parse(m1[O_ALB_timestamp]).localtime,
                          m3[:method],
                          m3[:path],
-                         m1[:elb_status_code].to_i,
+                         m1[O_ALB_elb_status_code].to_i,
                          nil,   # unfortunately, have to use trace to link referrer from jschol logs
-                         m1[:user_agent] == '-' ? nil : m1[:user_agent],
-                         m1[:trace_id])
+                         m1[O_ALB_user_agent] == '-' ? nil : m1[O_ALB_user_agent],
+                         m1[O_ALB_trace_id])
     }
   end
 end
+
+# Jschol log line patterns
+# e.g. [4] 157.55.39.165 - - [18/Dec/2017:00:00:02 -0800] "GET /search/?q=Kabeer,%20Naila HTTP/1.1"
+#      200 - 0.7414 - "Root=1-5a377581-76cf406644dc717f3fd2ecbb"
+JSCHOL_LINE_PAT = %r{\[ (?<thread>    \d+       ) \] \s
+                        (?<ips>       [\w.:, ]+ ) \s
+                        (?<skip1>     -         ) \s
+                        (?<skip2>     -         ) \s
+                     \[ (?<timestamp> [^\]]+    ) \] \s
+                     "  (?<request>   [^"]+     ) " \s
+                        (?<status>    \d+       ) \s
+                        (?<size>      -|[-\d]+  ) \s
+                        (?<elapsed>   -|[\d.]+  )
+                        (\s (- | ("(?<referrer> [^"]*)"))
+                         \s (- | ("(?<trace_id> [^"]*)")))?
+                    $}x
+JSCHOL_REQ_PAT = %r{^ (?<method>   [A-Z]+ ) \s
+                      (?<path>     .*     ) \s
+                      (?<proto2>   [A-Z]+/[\d.]+)
+                  $}x
 
 class JscholLogEventSource < LogEventSource
   def initialize(path)
@@ -444,34 +452,16 @@ class JscholLogEventSource < LogEventSource
   end
 
   def eachEvent
-    # e.g. [4] 157.55.39.165 - - [18/Dec/2017:00:00:02 -0800] "GET /search/?q=Kabeer,%20Naila HTTP/1.1"
-    #      200 - 0.7414 - "Root=1-5a377581-76cf406644dc717f3fd2ecbb"
-    linePat = %r{\[ (?<thread>    \d+       ) \] \s
-                    (?<ips>       [\w.:, ]+ ) \s
-                    (?<skip1>     -         ) \s
-                    (?<skip2>     -         ) \s
-                 \[ (?<timestamp> [^\]]+    ) \] \s
-                 "  (?<request>   [^"]+     ) " \s
-                    (?<status>    \d+       ) \s
-                    (?<size>      -|[-\d]+  ) \s
-                    (?<elapsed>   -|[\d.]+  )
-                    (\s (- | ("(?<referrer> [^"]*)"))
-                     \s (- | ("(?<trace_id> [^"]*)")))?
-                $}x
-    reqPat = %r{^ (?<method>   [A-Z]+ ) \s
-                  (?<path>     .*     ) \s
-                  (?<proto2>   [A-Z]+/[\d.]+)
-              $}x
     eachLogLine(@path) { |line|
       next unless line.include?("GET") && (line.include?("/item/") || line.include?("content/"))
-      m1 = line.match(linePat)
+      m1 = line.match(JSCHOL_LINE_PAT)
       if !m1
         if line =~ /\[\d+\] \d+\.\d+\.\d+\.\d+/
           puts "Warning: skipping #{line.inspect}"
         end
         next  # lots of other kinds of lines come out of jschol; ignore them
       end
-      m2 = m1[:request].match(reqPat) or raise("can't match request #{m1[:request].inspect}")
+      m2 = m1[:request].match(JSCHOL_REQ_PAT) or raise("can't match request #{m1[:request].inspect}")
       ip = nil
       m1[:ips].split(/, ?/).each { |addr|
         addr =~ /^\d+\.\d+\.\d+\.\d+$/ and ip ||= addr
@@ -508,62 +498,6 @@ end
 # Convert a digest (e.g. MD5, SHA1) to a short base-64 digest, without trailing '=' chars
 def calcBase64Digest(digester)
   return digester.base64digest.sub(/=+$/,'')
-end
-
-###################################################################################################
-def createPersonArk(name, email)
-  # Determine the EZID metadata
-  who = email ? "#{name} <#{email}>" : name
-  meta = { 'erc.what' => normalizeERC("Internal eScholarship agent ID"),
-           'erc.who'  => "#{normalizeERC(name)} <#{normalizeERC(email)}>",
-           'erc.when' => DateTime.now.iso8601 }
-
-  # Mint it the new ID
-  resp = Ezid::Identifier.mint(nil, meta)
-  return resp.id
-end
-
-###################################################################################################
-# Connect people to authors
-def connectAuthors
-
-  # Skip if all authors were already connected
-  unconnectedAuthors = ItemAuthor.where(Sequel.lit("attrs->'$.email' is not null and person_id is null"))
-  nTodo = unconnectedAuthors.count
-  nTodo > 0 or return
-
-  # First, record existing email -> person correlations
-  puts "Connecting items/authors to people."
-  emailToPerson = {}
-  Person.where(Sequel.lit("attrs->'$.email' is not null")).each { |person|
-    attrs = JSON.parse(person.attrs)
-    next if attrs['forwarded_to']
-    Set.new([attrs['email']] + (attrs['prev_emails'] || [])).each { |email|
-      if emailToPerson.key?(email) && emailToPerson[email] != person.id
-        puts "Warning: multiple matching people for email #{email.inspect}"
-      end
-      emailToPerson[email] = person.id
-    }
-  }
-
-  # Then connect all unconnected authors to people
-  nDone = 0
-  unconnectedAuthors.each { |auth|
-    DB.transaction {
-      authAttrs = JSON.parse(auth.attrs)
-      email = authAttrs["email"].downcase
-      person = emailToPerson[email]
-      (nDone % 1000) == 0 and puts "Connecting items/authors to people: #{nDone} / #{nTodo}"
-      if !person
-        person = createPersonArk(authAttrs["name"] || "unknown", email)
-        Person.create(id: person, attrs: { email: email }.to_json)
-        emailToPerson[email] = person
-      end
-      ItemAuthor.where(item_id: auth.item_id, ordering: auth.ordering).update(person_id: person)
-      nDone += 1
-    }
-  }
-  puts "Connecting items/authors to people: #{nDone} / #{nTodo}"
 end
 
 ###################################################################################################
@@ -1440,7 +1374,6 @@ begin
   parseLogs
   $testDate and exit 0
   applyForwards
-  connectAuthors
   calcStatsMonths
   calcStats
 
