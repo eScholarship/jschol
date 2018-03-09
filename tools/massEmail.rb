@@ -67,10 +67,14 @@ $subiSecrets = JSON.parse(File.read("/apps/eschol/.passwords/subiSecrets.json"))
 $mail_options = { :address              => ENV['SES_SMTP_HOST'],
                   :port                 => 587,
                   :domain               => "submit.escholarship.org",
-                  :user_name            => ENV['SES_SMTP_PASSWORD'],
-                  :password             => ENV['SES_SMTP_USERNAME'],
+                  :user_name            => ENV['SES_SMTP_USERNAME'],
+                  :password             => ENV['SES_SMTP_PASSWORD'],
                   :authentication       => "plain",
                   :enable_starttls_auto => true  }
+
+# This one is from https://www.regular-expressions.info/email.html
+#  NOTE: the one from http://emailregex.com/ hangs forever on some inputs, so don't use.
+VALID_EMAIL_PATTERN = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i
 
 ###################################################################################################
 # Grab SES email logs and put them into our 'awsLogs' directory
@@ -172,14 +176,15 @@ def processBounces
     stuff = JSON.parse(File.read(fn))
     bounceKind = stuff.dig('bounce', 'bounceKind') || stuff.dig('bounce', 'bounceType') or
       raise("Can't find bounceKind in #{fn}")
-    %w{Permanent Transient}.include?(bounceKind) or raise("Unrecognized bounceKind #{bounceKind.inspect}")
+    %w{Permanent Transient Undetermined}.include?(bounceKind) or raise("Unrecognized bounceKind #{bounceKind.inspect}")
+    next if bounceKind == "Undetermined" # not sure what these are, but they're hard to process
     bounceKind.downcase!
 
     recips = stuff.dig('bounce', 'bouncedRecipients') or raise("Can't parse bounce in #{fn}")
     recips.each { |recip|
       email = recip['emailAddress'] or raise("Can't parse bounce in #{fn}")
       email = email.strip.downcase
-      email =~ /.*@.*\..*/ or raise("Strange email #{email.inspect} in #{fn}")
+      email =~ /.+@.+/ or raise("Strange email #{email.inspect} in #{fn}")
       processBounce(email, bounceDate, bounceKind)
     }
   }
@@ -302,7 +307,12 @@ def fetchEscholAdmins(callback)
         and setting_value = 'yes'
     )
     and role = 'admin' or role = 'stats'
-  }).each { |row| callback.call(row[:email].downcase, row[:unit_id]) }
+  }).each { |row|
+    email = row[:email].downcase.strip
+    if email =~ VALID_EMAIL_PATTERN
+      callback.call(email, row[:unit_id])
+    end
+  }
 end
 
 ###################################################################################################
@@ -331,7 +341,12 @@ def fetchJournalManagers(callback)
       where setting_name in ('eschol_bouncing_email', 'eschol_opt_out')
         and setting_value = 'yes'
     )
-  }).each { |row| callback.call(row[:email].downcase, row[:path]) }
+  }).each { |row|
+    email = row[:email].downcase.strip
+    if email =~ VALID_EMAIL_PATTERN
+      callback.call(email, row[:path])
+    end
+  }
 end
 
 ###################################################################################################
@@ -347,11 +362,17 @@ def fetchPeople(callback, recentHitsOnly)
       where month = ?
       and item_stats.attrs->"$.hit" is not null
     }, (Date.today<<1).year*100 + (Date.today<<1).month).map { |row|
-      callback.call(row[:email].downcase, row[:id])
+      email = row[:email].downcase.strip
+      if email =~ VALID_EMAIL_PATTERN
+        callback.call(email, row[:id])
+      end
     }
   else
     Person.each { |person|
-      callback.call(JSON.parse(person.attrs)['email'].downcase, person.id)
+      email = JSON.parse(person.attrs)['email'].downcase.strip
+      if email =~ VALID_EMAIL_PATTERN
+        callback.call(email, person.id)
+      end
     }
   end
 end
@@ -380,7 +401,12 @@ def buildUsers(group, filter)
     fetchJournalManagers(filterFunc)
   elsif group == "authors"
     filterFunc = lambda { |email, person|
-      !omitEmails.include?(email) and result[email][:people] << person
+      if email =~ /@anderson\.ucla/
+        # In the admin mail-out, every single xxx@anderson.ucla.edu bounced. So let's leave them out.
+        STDERR.puts "Temporary: skipping all @anderson.ucla.edu addresses, e.g. #{email.inspect}"
+      else
+        !omitEmails.include?(email) and result[email][:people] << person
+      end
     }
     fetchPeople(filterFunc, filter == "recent-hits")
   else
@@ -444,7 +470,7 @@ def generateEmails(tplFile, users, mode)
     subject = $1
     toAddr = email
     if $testMode
-      toAddr = "martin.haye@gmail.com"
+      toAddr = "martin.haye@gmail.com, justin.gonder@ucop.edu, monica.westin@ucop.edu"
     end
 
     htmlBody = body.join("\n")
@@ -466,7 +492,12 @@ def generateEmails(tplFile, users, mode)
     if mode == "go4it"
       # Okay, go forth and send the email
       mail.delivery_method :smtp, $mail_options
-      mail.deliver
+      begin
+        mail.deliver
+      rescue
+        puts "Error processing email to: #{toAddr.inspect}"
+        raise
+      end
 
       # Mark this as sent, in case we're interrupted and need to resume where we left off.
       if !$testMode
