@@ -312,7 +312,7 @@ def getCampusCarousel(campus, content_attrs)
     journals.keep_if { |x| journals_w_issues.any? {|y| y[:unit_id] == x[:unit_id]} }
     journals_covers = journals.map { |u|
       i = Issue.where(:unit_id => u[:unit_id]).where(Sequel.lit("attrs->\"$.cover\" is not null"))
-               .order(Sequel.desc(:pub_date)).order_append(Sequel.desc(Sequel[:issue].cast_numeric)).first
+               .order(Sequel.desc(:published)).order_append(Sequel.desc(Sequel[:issue].cast_numeric)).first
       if i
         u[:cover] = JSON.parse(i[:attrs])['cover']
       end
@@ -368,8 +368,7 @@ end
 
 # Preview of Series for a Department Landing Page
 def seriesPreview(u)
-  items = Item.join(:unit_items, :item_id => :id).where(unit_id: u.unit_id)
-              .where(Sequel.lit("attrs->\"$.suppress_content\" is null"))
+  items = Item.join(:unit_items, :item_id => :id).where(unit_id: u.unit_id).where(status: 'published')
   count = items.count
   previewLimit = 3
   preview = items.limit(previewLimit).map(:item_id)
@@ -399,7 +398,7 @@ def getSeriesLandingPageData(unit, q)
 end
 
 def getIssues(unit_id)
-  r = Issue.where(:unit_id => unit_id).exclude(:volume => '0', :issue => '0').order(Sequel.desc(:pub_date)).order_append(Sequel.desc(Sequel[:issue].cast_numeric)).to_hash(:id).map{|id, issue|
+  r = Issue.where(:unit_id => unit_id).exclude(:volume => '0', :issue => '0').order(Sequel.desc(:published)).order_append(Sequel.desc(Sequel[:issue].cast_numeric)).to_hash(:id).map{|id, issue|
     h = issue.to_hash
     h[:attrs] and h[:attrs] = JSON.parse(h[:attrs])
     h
@@ -448,7 +447,7 @@ end
 
 def getIssue(unit_id, display, volume=nil, issue=nil)
   if volume.nil?  # Landing page (most recent journal) has no vol/issue entered in URL path
-    i = Issue.where(:unit_id => unit_id).order(Sequel.desc(:pub_date)).order_append(Sequel.desc(Sequel[:issue].cast_numeric)).first
+    i = Issue.where(:unit_id => unit_id).order(Sequel.desc(:published)).order_append(Sequel.desc(Sequel[:issue].cast_numeric)).first
   else
     i = Issue.first(:unit_id => unit_id, :volume => volume, :issue => issue)
   end
@@ -468,7 +467,7 @@ def getIssue(unit_id, display, volume=nil, issue=nil)
   i[:sections].map! do |section|
     section = section.values
     items = Item.where(:section=>section[:id]).
-                 where(Sequel.lit("attrs->\"$.suppress_content\" is null")).
+                 where(status: 'published').
                  order(:ordering_in_sect).to_hash(:id)
     itemIds = items.keys
     authors = ItemAuthors.where(item_id: itemIds).order(:ordering).to_hash_groups(:item_id)
@@ -541,6 +540,7 @@ def getUnitProfile(unit, attrs)
     profile[:altmetrics_ok] = attrs['altmetrics_ok']
     profile[:magazine_layout] = attrs['magazine_layout']
     profile[:issue_rule] = attrs['issue_rule']
+    profile[:directSubmit] = attrs['directSubmit']
   end
   if unit.type == 'oru'
     profile[:seriesSelector] = true
@@ -578,16 +578,16 @@ def getItemAuthors(itemID)
   return ItemAuthors.filter(:item_id => itemID).order(:ordering).map(:attrs).collect{ |h| JSON.parse(h)}
 end
 
-# Get recent items (with author info) given a unit ID, by most recent eschol_date
+# Get recent items (with author info) given a unit ID, by most recent added date
 # Pass an item id in if you don't want that item included in results
 def getRecentItems(unitID, limit=5, item_id=nil)
   items = item_id ? Item.join(:unit_items, :item_id => :id).where(unit_id: unitID)
-                        .where(Sequel.lit("attrs->\"$.suppress_content\" is null"))
+                        .where(status: 'published')
                         .exclude(id: item_id)
-                        .reverse(:eschol_date).limit(limit)
+                        .reverse(:added).limit(limit)
                   : Item.join(:unit_items, :item_id => :id).where(unit_id: unitID)
-                        .where(Sequel.lit("attrs->\"$.suppress_content\" is null"))
-                        .reverse(:eschol_date).limit(limit)
+                        .where(status: 'published')
+                        .reverse(:added).limit(limit)
   return items.map { |item|
     { id: item.id, title: item.title, authors: getItemAuthors(item.id), genre: item.genre, 
       author_hide: JSON.parse(item.attrs)["author_hide"] }
@@ -1165,6 +1165,12 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
         unitAttrs['altmetrics_ok'] = (params['data']['altmetrics_ok'] == 'on')
         %w{active hidden moribund}.include?(params['data']['status']) or jsonHalt(400, "invalid status")
         unit.status = params['data']['status']
+        %w{enabled disabled moribund}.include?(params['data']['directSubmit']) or jsonHalt(400, "invalid directSubmit")
+        if params['data']['directSubmit'] == "enabled"
+          unitAttrs.delete('directSubmit')
+        else
+          unitAttrs['directSubmit'] = params['data']['directSubmit']
+        end
       end
     end
 
@@ -1387,7 +1393,7 @@ end
 
 def getUnitIssueConfig(unit, unitAttrs)
   template = { "numbering" => "both", "rights" => nil, "buy_link" => nil }
-  issues = Issue.where(unit_id: unit.id).order(Sequel.desc(:pub_date)).order_append(Sequel.desc(Sequel[:issue].cast_numeric)).map { |issue|
+  issues = Issue.where(unit_id: unit.id).order(Sequel.desc(:published)).order_append(Sequel.desc(Sequel[:issue].cast_numeric)).map { |issue|
     { voliss: "#{issue.volume}.#{issue.issue}" }.merge(template).
       merge(JSON.parse(issue.attrs || "{}").select { |k,v| template.key?(k) })
   }

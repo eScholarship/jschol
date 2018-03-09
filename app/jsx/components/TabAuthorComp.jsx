@@ -4,18 +4,6 @@ import React from 'react'
 import ArbitraryHTMLComp from "../components/ArbitraryHTMLComp.jsx"
 import { Link } from 'react-router'
 
-class CitationComp extends React.Component {
-  render() {
-    return (
-      <dl className="c-descriptionlist">
-        {/* ToDo: Bring in all citations styles */}
-        <dt><strong>APA</strong></dt>
-        <dd>Citation here</dd>
-      </dl>
-    )
-  }
-}
-
 class TabAuthorComp extends React.Component {
   // ToDo: Maybe componentize this as similar logic is also being used in JournalLayout
   customIssueTitle = (vol, iss, numbering, issue_title) => {
@@ -33,6 +21,165 @@ class TabAuthorComp extends React.Component {
       }
       return voliss 
     }
+  }
+
+  addDot(str) {
+    str = str.trim()
+    return /[.?]$/.test(str) ? str + " " : str + ". "
+  }
+
+  localIdLabel(type) {
+    let v = {
+      'arXiv':        "arXiv ID: ",
+      'lbnl':         "LBNL Report #: ",
+      'merritt':      "Merritt ID: ",
+      'oa_harvester': "UCPMS ID: ",
+      'other':        "",
+      'pmid':         "Pubmed ID: ",
+      'pmcid':        "PubMed Central ID: ",
+      'proquest':     "ProQuest ID: ",
+      'repec':        "RePEc ID: ",
+      'default':      ""
+    }
+    return v[type] ? v[type] : v["default"]
+  }
+
+  formatAuth(auth) {
+    let out
+    if (auth.lname) {
+      out = auth.lname
+      if (auth.fname) {
+        if (/^[A-Z]{2,3}/.test(auth.fname)) // already a set of initials
+          out += ", " + auth.fname
+        else {
+          out += ", " + auth.fname.substr(0,1).toLocaleUpperCase() + "."
+          if (auth.mname)
+            out += " " + auth.mname.substr(0,1).toLocaleUpperCase()
+        }
+      }
+    }
+    else if (auth.organization)
+      out = auth.organization
+    else
+      out = auth.name
+    return out
+  }
+
+  formatDoi(doi) {
+    if (/^10\./.test(doi))
+      return "http://dx.doi.org/" + doi
+    else
+      return "doi:" + doi
+  }
+
+  formatCitation(props) {
+    let out = ""
+    try {
+      // First comes the list of authors. According to APA spec, if there 8 or more
+      // we list the first 6 and then "et al."
+      let auths = props.authors
+      if (auths && auths.length > 0) {
+        if (auths.length == 1)
+          out += this.formatAuth(auths[0])
+        else if (auths.length < 8) {
+          out += _.map(auths.slice(0, auths.length-1), this.formatAuth).join(", ")
+          out += ", & " + this.formatAuth(auths[auths.length-1])
+        }
+        else
+          out += _.map(auths.slice(0,6), this.formatAuth).join(", ") + ", et al."
+        out = this.addDot(out)
+      }
+
+      // Next comes the publication year in parens, followed by a dot.
+      let match = /^(\d\d\d\d)/.exec(props.published)
+      if (match)
+        out += "(" + match[1] + "). "
+
+      // Next comes the title, followed by a dot. APA says to italicize book titles only.
+      out += props.genre == "monograph" ? "<em>"+props.title+"</em>" : props.title
+      out = this.addDot(out)
+
+      // If it's a book chapter, note the book it's in. Likewise, if it's a monograph
+      // in a monograph series.
+      if (props.attrs.book_title) {
+        out = this.addDot(out + "In <em>" + props.attrs.book_title + "</em>")
+        if (props.attrs.publisher)
+          out = this.addDot(out + "Location: " + props.attrs.publisher)
+      }
+      else if (props.unit && props.unit.type == "monograph_series" && props.attrs.publisher)
+        out = this.addDot(out + "Location: " + props.attrs.publisher)
+
+      // Include journal info
+      let ext = props.attrs.ext_journal
+      if (ext && ext.name) {
+        // External journals
+        out += "<em>" + ext.name + "</em>, "
+        if (ext.volume) {
+          out += ext.volume
+          if (ext.issue)
+            out += "(" + ext.issue + ")"
+        }
+        else if (ext.issue)
+          out += ext.issue
+        if (ext.fpage) {
+          out += ", " + ext.fpage
+          if (ext.lpage)
+            out += "-" + ext.lpage
+        }
+        out = this.addDot(out)
+      }
+      else if (props.unit.type == "journal" && props.citation) {
+        // Internal (escholarship) journals
+        out += "<em>" + props.unit.name + "</em>"
+        let voliss = ""
+        if (props.numbering == "issue_only")
+          voliss += props.citation.issue
+        else if (props.citation.volume && props.citation.volume != "0") { // skip articles-in-press
+          voliss += props.citation.volume
+          if (props.numbering != "volume_only" && props.citation.issue && props.citation.issue != "0")
+            voliss += "(" + props.citation.issue + ")"
+        }
+        if (voliss != "")
+          out += ", " + voliss
+        out = this.addDot(out)
+      }
+      else if (props.header.campusName && props.genre != "monograph" && props.genre != "journal") {
+        // General series
+        out += "<em>" + props.header.campusName
+        if (props.unit && props.unit.name) {
+          let dept = props.unit.type == "oru" ? props.unit.name : props.header.ancestorName
+          if (dept != props.header.campusName) {
+            if (dept.startsWith(props.header.campusName))
+              dept = dept.substr(props.header.campusName.length)
+            out += ": " + dept.trim()
+          }
+        }
+        out += "</em>"
+        out = this.addDot(out)
+      }
+
+      // Include certain local IDs
+      if (props.attrs['local_ids']) {
+        _.each(props.attrs['local_ids'], node => {
+          let label = this.localIdLabel(node.type)
+          if (label != "" && node.type != "oa_harvester")
+            out = this.addDot(out + label + node.id)
+        })
+      }
+
+      // If there's a DOI, include it in canonical format.
+      if (props.attrs.doi)
+        out += this.formatDoi(props.attrs.doi) + " "
+
+      // Last is the URL
+      let url = window.location.href.split('#')[0]
+      out += "Retrieved from " + url
+    }
+    catch (err) {
+      console.log("Warning: Exception occurred in citation processing:", err)
+      return ""
+    }
+    return out
   }
 
   render() {
@@ -78,35 +225,12 @@ class TabAuthorComp extends React.Component {
     let doi
     if (p.attrs['doi']) { doi = p.attrs['doi'].startsWith("http") ? p.attrs['doi'] : "https://doi.org/" + p.attrs['doi'] }
 
-    let retrieved_suffix = ''
-    if (p.attrs['orig_citation']) {
-      let url = window.location.href.split('#')[0],
-          date = p.formatDate(),
-          r = "Retrieved " + date + ", from " 
-      retrieved_suffix = <span>{r}<Link to="url">{url}</Link></span>
-    }
-
     // Local ID looks something like this:
     //   [{"id": "Southern_ucsc_0036E_11162", "type": "proquest"}, {"id": "http://dissertations.umi.com/ucsc:11162", "type": "other"}, {"id": "ark:/13030/m5dn8t2h", "type": "merritt"}] 
-    let localIdLabel = type => {
-      let v = {
-        'arXiv':        "arXiv ID: ",
-        'lbnl':         "LBNL Report #: ",
-        'merritt':      "Merritt ID: ",
-        'oa_harvester': "UCPMS ID: ",
-        'other':        "",
-        'pmid':         "Pubmed ID: ",
-        'pmcid':        "PubMed Central ID: ",
-        'proquest':     "ProQuest ID: ",
-        'repec':        "RePEc ID: ",
-        'default':      ""
-      }
-      return v[type] ? v[type] : v["default"]
-    }
     let local_ids
     if (p.attrs['local_ids']) {
-      local_ids = p.attrs['local_ids'].map(function(node, i) {
-        let label = localIdLabel(node.type)
+      local_ids = p.attrs['local_ids'].map((node, i) => {
+        let label = this.localIdLabel(node.type)
         if (node.id.startsWith("http")) {
           return ( <span key={i}><a href={node.id} className="o-textlink__secondary">{label}{node.id}</a><br/></span> )
         } else {
@@ -142,18 +266,26 @@ class TabAuthorComp extends React.Component {
           : <dl className="c-descriptionlist">{authorList}</dl> }
         </details> 
 
-      {/* ToDo:
-        <details className="c-togglecontent" open>
-          <summary>Citation</summary>
-        {p.attrs['orig_citation'] ?
-          <dl className="c-descriptionlist">
-            <dt></dt><dd>{p.attrs['orig_citation']}&nbsp;&nbsp;{retrieved_suffix}</dd>
-          </dl>
-          :
-          <CitationComp />
-        }
-        </details>
-      */}
+      <details className="c-togglecontent" open>
+        <summary>Citation</summary>
+
+        <dl className="c-descriptionlist">
+          {p.attrs['custom_citation'] &&
+              [<dt key="dt-custom">Preferred:</dt>,
+               <dd key="dd-custom">{p.attrs['custom_citation']}</dd>]
+          }
+
+          <dt key="dt-apa">Suggested:</dt>
+          <dd key="dd-apa">
+            <ArbitraryHTMLComp html={this.formatCitation(p)}/>
+          </dd>
+
+          {p.attrs['orig_citation'] &&
+              [<dt key="dt-orig">Original:</dt>,
+               <dd key="dd-orig">{p.attrs['orig_citation']}</dd>]
+          }
+        </dl>
+      </details>
 
         <details className="c-togglecontent" open>
           <summary>Other information</summary>
@@ -171,9 +303,9 @@ class TabAuthorComp extends React.Component {
              <dd key="1">{issn}</dd>]
           }
 
-          {p.pub_date && 
+          {p.published &&
             [<dt key="0"><strong>Publication Date:</strong></dt>,
-             <dd key="1">{p.pub_date}</dd>]
+             <dd key="1">{p.published}</dd>]
           }
  
           {unit_type &&
