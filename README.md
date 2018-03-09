@@ -45,16 +45,21 @@ Description of files
 
 Steps to get the app running on your local machine
 --------------------------------------------------
+1. Make sure these are installed:
+ * bundler
+ * ruby
+ * mysql
+ * yarn
 
-1. Install gems and packages: `./setup.sh` (Note: for neatness they get installed to the local directory, not system-wide)
+2. Install gems and packages: `./setup.sh` (Note: for neatness they get installed to the local directory, not system-wide)
 
-2. Configure environment. Get somebody else's config/env.sh and modify to your needs.
+3. Configure environment. Get somebody else's config/env.sh and modify to your needs.
 
-3. `source config/env.sh`
+4. `source config/env.sh`
 
-4. Run `./gulp`. Be on the lookout for errors.
+5. Run `./gulp`. Be on the lookout for errors.
 
-5. Browse to `http://localhost:4001/unit/root`, or `http://localhost:4001/item/08s7w2fd`, or `http://localhost:4001/search`
+6. Browse to `http://localhost:4001/unit/root`, or `http://localhost:4001/item/08s7w2fd`, or `http://localhost:4001/search`
 
 Migrating to a new database version
 -----------------------------------
