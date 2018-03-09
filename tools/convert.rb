@@ -69,8 +69,8 @@ DB = Sequel.connect({
 $dbMutex = Mutex.new
 
 # Log SQL statements, to aid debugging
-File.exists?('convert.sql_log') and File.delete('convert.sql_log')
-DB.loggers << Logger.new('convert.sql_log')
+#File.exists?('convert.sql_log') and File.delete('convert.sql_log')
+#DB.loggers << Logger.new('convert.sql_log')
 
 # The old eschol queue database, from which we can get a list of indexable ARKs
 QUEUE_DB = Sequel.connect({ adapter: "sqlite",
@@ -90,6 +90,7 @@ $batchQueue = SizedQueue.new(1)  # no use getting very far ahead of CloudSearch
 $splashQueue = Queue.new
 
 # Mode to force checking of the index digests (useful when indexing algorithm or unit structure changes)
+RESCAN_SET_SIZE = 1000
 $rescanMode = ARGV.delete('--rescan')
 
 # Mode to process a single item and just print it out (no inserting or batching)
@@ -1277,17 +1278,38 @@ def parseUCIngest(itemID, inMeta, fileType)
   end
 
   # Everything needs a submission date
-  submissionDate = parseDate(inMeta.text_at("./history/submissionDate")) ||
-                   parseDate(inMeta[:dateStamp])
+  parseDate(inMeta[:dateStamp]).nil? and raise("missing datestamp")
+  submissionDate = parseDate(inMeta.text_at("./history/submissionDate"))
+  if submissionDate.nil? || submissionDate > parseDate(inMeta[:dateStamp])
+    submissionDate = parseDate(inMeta[:dateStamp])
+  end
+
+  # Figure out the published date as well
+  publishedDate = parseDate(inMeta.text_at("./history/originalPublicationDate")) ||
+                  parseDate(inMeta.text_at("./history/escholPublicationDate")) ||
+                  submissionDate
 
   # Also we need the date it was added to eScholarship. For sanity, clamp dates before
   # it was even submitted.
   escholDate = parseDate(inMeta.text_at("./history/escholPublicationDate"))
   addDate = (escholDate && escholDate > submissionDate) ? escholDate : submissionDate
+  if addDate.nil? || addDate < submissionDate
+    addDate = submissionDate
+  elsif addDate > parseDate(inMeta[:dateStamp])  # rare crazy dates
+    addDate = parseDate(inMeta[:dateStamp])
+  end
 
   # Similar for update date
-  stateDate = parseDate(inMeta[:stateDate])
-  updateDate = (stateDate && stateDate > addDate) ? stateDate : addDate
+  begin
+    updateTime = DateTime.parse(inMeta[:dateStamp]) || DateTime.now
+  rescue
+    updateTime = DateTime.now
+  end
+  if updateTime.to_date.iso8601 < submissionDate
+    updateTime = Date.parse(submissionDate).to_datetime  # sanity
+  elsif updateTime > DateTime.now
+    updateTime = DateTime.now  # sanity
+  end
 
   # Filter out "n/a" abstracts
   abstract = inMeta.html_at("./abstract")
@@ -1307,6 +1329,10 @@ def parseUCIngest(itemID, inMeta, fileType)
     label or puts("Warning: unknown discipline #{discEl}")
     label
   }.select { |v| v }
+
+  # Subjects and keywords come directly across
+  attrs[:subjects] = inMeta.xpath("./subjects/subject").map { |el| el.text.strip }
+  attrs[:keywords] = inMeta.xpath("./keywords/keyword").map { |el| el.text.strip }
 
   # Supplemental files
   attrs[:supp_files], suppSummaryTypes = summarizeSupps(itemID, grabUCISupps(inMeta))
@@ -1428,10 +1454,8 @@ def parseUCIngest(itemID, inMeta, fileType)
                           "article"
   dbItem[:submitted]    = submissionDate
   dbItem[:added]        = addDate
-  dbItem[:published]    = parseDate(inMeta.text_at("./history/originalPublicationDate")) ||
-                          parseDate(inMeta.text_at("./history/escholPublicationDate")) ||
-                          submissionDate
-  dbItem[:updated]      = updateDate
+  dbItem[:published]    = publishedDate
+  dbItem[:updated]      = updateTime
   dbItem[:attrs]        = JSON.generate(attrs)
   dbItem[:rights]       = rights
   dbItem[:ordering_in_sect] = inMeta.text_at("./context/publicationOrder")
@@ -1964,45 +1988,64 @@ def convertAllItems(arks)
 
   cacheAllUnits()
 
-  # Fire up threads for doing the work in parallel
-  Thread.abort_on_exception = true
-  indexThread = Thread.new { indexAllItems }
-  batchThread = Thread.new { processAllBatches }
-  splashThread = Thread.new { splashFromQueue }
+  # Normally loop runs once, but in rescan mode it's multiple times.
+  rescanBase = ""
+  while true
 
-  # Count how many total there are, for status updates
-  $nTotal = QUEUE_DB.fetch("SELECT count(*) as total FROM indexStates WHERE indexName='erep'").first[:total]
+    # Fire up threads for doing the work in parallel
+    Thread.abort_on_exception = true
+    indexThread = Thread.new { indexAllItems }
+    batchThread = Thread.new { processAllBatches }
+    splashThread = Thread.new { splashFromQueue }
 
-  # Grab the timestamps of all items, for speed
-  $allItemTimes = (arks=="ALL" ? Item : Item.where(id: arks.to_a)).to_hash(:id, :last_indexed)
+    # Count how many total there are, for status updates
+    $nTotal = QUEUE_DB.fetch("SELECT count(*) as total FROM indexStates WHERE indexName='erep'").first[:total]
 
-  # Convert all the items that are indexable
-  query = QUEUE_DB[:indexStates].where(indexName: 'erep').select(:itemId, :time).order(:itemId)
-  $nTotal = query.count
-  if $skipTo
-    puts "Skipping all up to #{$skipTo}..."
-    query = query.where{ itemId >= "ark:13030/#{$skipTo}" }
-    $nSkipped = $nTotal - query.count
-  end
-  query.all.each do |row|   # all so we don't keep db locked
-    shortArk = getShortArk(row[:itemId])
-    next if arks != 'ALL' && !arks.include?(shortArk)
-    erepTime = Time.at(row[:time].to_i).to_time
-    itemTime = $allItemTimes[shortArk]
-    if itemTime.nil? || itemTime < erepTime || $rescanMode
-      $indexQueue << [shortArk, erepTime]
-    else
-      #puts "#{shortArk} is up to date, skipping."
-      $nSkipped += 1
+    # Grab the timestamps of all items, for speed
+    $allItemTimes = (arks=="ALL" ? Item : Item.where(id: arks.to_a)).to_hash(:id, :last_indexed)
+
+    # Convert all the items that are indexable
+    if $rescanMode && arks == 'ALL'
+      redoSet = Item.where{ id > rescanBase }.limit(RESCAN_SET_SIZE)
+      $skipTo and redoSet = redoSet.where{ id >= $skipTo }
+      $skipTo = nil
+      redoSet.update(:last_indexed => nil)
+      rescanBase = redoSet.map(:id).max
+      puts "Rescan reset, nextbase=#{rescanBase.inspect}."
+    end
+    query = QUEUE_DB[:indexStates].where(indexName: 'erep').select(:itemId, :time).order(:itemId)
+    $nTotal = query.count
+    if $skipTo
+      puts "Skipping all up to #{$skipTo}..."
+      query = query.where{ itemId >= "ark:13030/#{$skipTo}" }
+      $nSkipped = $nTotal - query.count
+    end
+    query.all.each do |row|   # all so we don't keep db locked
+      shortArk = getShortArk(row[:itemId])
+      next if arks != 'ALL' && !arks.include?(shortArk)
+      erepTime = Time.at(row[:time].to_i).to_time
+      itemTime = $allItemTimes[shortArk]
+      if itemTime.nil? || itemTime < erepTime || ($rescanMode && arks != 'ALL')
+        $indexQueue << [shortArk, erepTime]
+      else
+        #puts "#{shortArk} is up to date, skipping."
+        $nSkipped += 1
+      end
+    end
+
+    $indexQueue << nil  # end-of-queue
+    indexThread.join
+    batchThread.join
+    splashThread.join
+
+    if $rescanMode && rescanBase.nil?
+      break
+    elsif !$rescanMode
+      break
     end
   end
 
-  $indexQueue << nil  # end-of-queue
-  indexThread.join
-  batchThread.join
-  splashThread.join
-
-  scrubSectionsAndIssues() # one final scrub
+  $nTotal > 0 and scrubSectionsAndIssues() # one final scrub
 end
 
 ###################################################################################################
