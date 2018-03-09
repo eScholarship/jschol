@@ -140,7 +140,7 @@ def getAuthorName(personID)
   mostRecent = ItemAuthor.join(:items, id: :item_id).
                           where(person_id: personID).
                           select_append(Sequel.qualify("item_authors", "attrs")).
-                          order(Sequel.desc(:eschol_date)).first
+                          order(Sequel.desc(:added)).first
   attrs = JSON.parse(mostRecent ? mostRecent.attrs : Person[personID].attrs)
   return mostRecent ? attrs['name'] : attrs['email']
 end

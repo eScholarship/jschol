@@ -113,8 +113,8 @@ class ItemPage extends PageBase {
       <div>
         <MetaTagsComp title={d.title} descrip={a.abstract}>
           {meta_authors}
-        {d.pub_date &&
-          <meta id="meta-publication_date" name="citation_publication_date" content={d.pub_date} /> }
+        {d.published &&
+          <meta id="meta-publication_date" name="citation_publication_date" content={d.published} /> }
         {a.isbn &&
           <meta id="meta-isbn" name="citation_isbn" content={a.isbn} /> }
         {a.doi &&
@@ -124,8 +124,8 @@ class ItemPage extends PageBase {
           {issn} {volume} {issue} {firstpage} {lastpage}
         {d.genre == 'dissertation' && d.header &&
           <meta id="meta-dissertation_institution" name="citation_dissertation_institution" content={d.header.breadcrumb[1]['name']} /> }
-        {d.eschol_date &&
-          <meta id="meta-online_date" name="citation_online_date" content={d.eschol_date} /> }
+        {d.added &&
+          <meta id="meta-online_date" name="citation_online_date" content={d.added} /> }
         {["withdrawn", "embargoed"].includes(d.status) &&
           <meta id="meta-robots" name="robots" content="noindex" /> }
         {keywords &&
@@ -154,7 +154,7 @@ class ItemPage extends PageBase {
                          download_restricted={d.download_restricted}
                          changeTab={this.changeTab} />
             <h2 className="c-tabcontent__main-heading" tabIndex="-1"><ArbitraryHTMLComp html={d.title}/></h2>
-            <AuthorListComp pubdate={d.pub_date}
+            <AuthorListComp pubdate={d.published}
                             author_hide={a.author_hide}
                             authors={d.authors}
                             changeTab={this.changeTab} />
