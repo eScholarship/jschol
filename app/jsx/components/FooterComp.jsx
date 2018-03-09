@@ -40,9 +40,9 @@ class FooterComp extends React.Component {
         </div>
         <div className="c-footer__copyright">
           Powered by the<br/>
-          <a href="http://www.cdlib.org">California Digital Library</a>.<br/>
+          <a href="http://www.cdlib.org">California Digital Library</a><br/>
           Copyright &copy; 2017<br/>
-          The Regents of the University of California.
+          The Regents of the University of California
         </div>
       </footer>
     )
