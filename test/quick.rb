@@ -95,7 +95,6 @@ class TestQuick < Test::Unit::TestCase
   def test_series
     html = fetchAndStrip("http://localhost:4001/uc/anthropology_ucb_postprints")
     assert_match /Founded in September 1901/, html
-    assert_match /Oikos\/Anthropos: Rationality, Technology, Infrastructure/, html
   end
 
   def test_campus
