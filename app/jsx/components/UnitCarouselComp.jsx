@@ -104,7 +104,7 @@ class UnitCarouselComp extends React.Component {
         <div className="c-campuscarouselframe__stats">
           {p.item_count > 0 &&
             <div className="o-stat--item">
-              <Link to={"/" + p.titleID + "/journals"}>{p.item_count.toLocaleString()}</Link>Item{pluralItems}
+              <Link to={"/uc/" + p.titleID}>{p.item_count.toLocaleString()}</Link>Item{pluralItems}
             </div>
           }
           {p.view_count > 0 &&
