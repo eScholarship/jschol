@@ -4,11 +4,7 @@
 
 @import 'breakpoints';
 @import 'variables';
-@import 'mixins';
-
-// ***** Vendor Libraries ***** //
-
-@import '../bower_components/normalize-scss/_normalize.scss';
+@import 'utilities';
 
 // ***** Added to jschol (not in eschol-ui) ***** //
 @import '../bower_components/flickity/dist/flickity.css';
@@ -38,13 +34,14 @@
 
 @import 'authorlist';
 @import 'breadcrumb';
+@import 'campuscarouselframe';
 @import 'campushero';
 @import 'campussearch';
-@import 'campusselector';
 @import 'checkbox';
 @import 'clientmarkup';
 @import 'columns';
 @import 'datatable';
+@import 'daterange';
 @import 'descriptionlist';
 @import 'download';
 @import 'export';
@@ -52,15 +49,14 @@
 @import 'filter';
 @import 'footer';
 @import 'header';
-@import 'heatmap';
 @import 'hero';
 @import 'homesection';
 @import 'infopages';
 @import 'issue';
 @import 'itemactions';
-@import 'itemcarousel';
 @import 'itemunavailable';
 @import 'journal';
+@import 'journalcarousel';
 @import 'journalgrid';
 @import 'journalinfo';
 @import 'jump';
@@ -71,6 +67,7 @@
 @import 'mediafile';
 @import 'mediafilegrid';
 @import 'medialist';
+@import 'mediaviewer';
 @import 'modal';
 @import 'nav';
 @import 'navbar';
@@ -103,7 +100,8 @@
 @import 'togglecontent';
 @import 'togglelist';
 @import 'togglesection';
-@import 'unititem';
+@import 'toplink';
+@import 'unitcarousel';
 @import 'unitlist';
 @import 'unitseries';
 @import 'viewexternal';
@@ -120,7 +118,7 @@ body {
   margin: 0 auto;
   padding: $spacing-sm $spacing-sm 0;
   background-color: lighten($color-light-gray, 15%);
-  font-family: 'KievitWeb';
+  font-family: 'KievitWeb', 'Arial', 'Helvetica', sans-serif;
   overflow-x: hidden;
 
   @include bp (screen2) {

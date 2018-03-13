@@ -8,7 +8,7 @@
     border: none;
   }
 
-  &:last-of-type { // compensate for interactive-element-size
+  &:last-of-type { // compensate for u-interactive-element-size
     margin-bottom: $spacing-sm;
   }
 
@@ -16,7 +16,7 @@
 
     a {
       @extend %o-textlink__secondary;
-      @extend %interactive-element-size;
+      @extend %u-interactive-element-size;
       display: inline-flex;
       align-items: center;
       font-size: 1.3rem;

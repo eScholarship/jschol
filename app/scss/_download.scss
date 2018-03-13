@@ -27,7 +27,7 @@
 .o-download__formats {
 
   summary {
-    @extend %interactive-element-size; // sets the height for .o-download
+    @extend %u-interactive-element-size; // sets the height for .o-download
     position: relative;
     border-radius: 0 $round-corner $round-corner 0;
     background-color: $color-teal;
@@ -59,7 +59,7 @@
 // ***** Menu and Menu Items ***** //
 
 %o-download__menu {
-  @extend %no-bullet-ul;
+  @extend %u-reset-list-styles;
   position: absolute; // to c-itemactions
   right: 0;
   left: 0;
@@ -138,7 +138,7 @@
   color: $color-white;
 
   ul {
-    @extend %no-bullet-ul;
+    @extend %u-reset-list-styles;
     margin-top: $spacing-sm;
 
     li {

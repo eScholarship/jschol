@@ -268,7 +268,14 @@ class PageBase extends React.Component
       <div className="body">
         {this.needHeaderFooter() && <SkipNavComp/>}
         {this.state.pageData ? this.renderData(this.state.pageData) : this.renderLoading()}
-        {this.needHeaderFooter() && <FooterComp/>}
+        {this.needHeaderFooter() &&
+          <div>
+            <div className="c-toplink">
+              <a href="#top">Top</a>
+            </div>
+            <FooterComp/>
+          </div>
+        }
       </div>)
   }
 

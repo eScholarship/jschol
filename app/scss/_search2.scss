@@ -15,10 +15,10 @@
 
   // Reset default fieldset styles; hide legend:
   fieldset {
-    @extend %clear-fieldset-styles;
+    @extend %u-reset-fieldset-styles;
 
     legend {
-      @extend %hide;
+      @extend %u-hide;
     }
 
   }
@@ -40,11 +40,11 @@
 }
 
 .c-search2__label {
-  @extend %hide;
+  @extend %u-hide;
 }
 
 .c-search2__field {
-  @extend %interactive-element-size;
+  @extend %u-interactive-element-size;
   flex: 1 0 auto;
   padding: 0 0 0 30px;
   border: none;
@@ -58,7 +58,7 @@
 }
 
 .c-search2__submit-button {
-  @extend %hide;
+  @extend %u-hide;
   @extend %o-button__9;
   background-image: inline('../images/icon_magnify.svg');
 
@@ -81,7 +81,7 @@
 }
 
 %c-search2__refine {
-  @extend %interactive-element-size;
+  @extend %u-interactive-element-size;
   display: flex;
   align-items: center;
   padding: 0 8px;
@@ -104,7 +104,7 @@
 
   [type='radio'] {
     // hide default radio button:
-    @extend %hide;
+    @extend %u-hide;
 
     // unchecked style:
     + label:before {
@@ -138,7 +138,7 @@
   @extend %c-search2__refine;
   margin-top: (-$pointer-size-fine);
 
-  @include interactive-element-pointer(coarse) {
+  @include u-interactive-element-pointer(coarse) {
     margin-top: (-$pointer-size-coarse);
   }
 

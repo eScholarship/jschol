@@ -6,9 +6,9 @@
 }
 
 %o-stat__number {
+  @extend %u-kievitweblight-font-stack;
   display: block;
   margin-bottom: $spacing-base;
-  font-family: 'KievitWebLight';
   font-size: 1.3em;
   font-weight: bold;
 

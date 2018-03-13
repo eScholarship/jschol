@@ -1,7 +1,7 @@
 // ##### Filter Component ##### //
 
 %c-filter {
-  @extend %clearfix;
+  @extend %u-clearfix;
   margin-bottom: $spacing-md;
   padding: $spacing-sm;
   background: $color-white;
@@ -50,7 +50,7 @@
     user-select: none;
 
     span {
-      @extend %interactive-element-size;
+      @extend %u-interactive-element-size;
       display: flex;
       align-items: center;
       color: $color-teal;
@@ -87,7 +87,7 @@
 }
 
 .c-filter__active-list {
-  @extend %no-bullet-ul;
+  @extend %u-reset-list-styles;
   clear: left;
 
   button {
@@ -107,7 +107,7 @@
 }
 
 .c-filter__clear-all {
-  @extend %interactive-element-size;
+  @extend %u-interactive-element-size;
   padding: 0 1.3em 0 0;
   float: right;
   border: none;

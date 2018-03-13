@@ -17,7 +17,7 @@
 }
 
 .c-authorlist__list {
-  @extend %no-bullet-ul;
+  @extend %u-reset-list-styles;
   max-height: 3.2em; // truncate beyond 3 lines per jquery.dotdotdot
   overflow: hidden; // hide text beyond max-height
 
