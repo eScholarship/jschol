@@ -95,7 +95,7 @@ class UnitCarouselComp extends React.Component {
             <button className="c-unitcarousel__button-up" onClick={this.scrollUp} aria-label="Scroll Up"></button>
             <div className="c-unitcarousel__scrollbox" ref={el => this.scrollBox = el} tabIndex="-1">
               { p.slides.map((result, i) =>
-                <UnitCarouselItem key={i} result={result} orientation="horz" />)
+                <UnitCarouselItem key={i} result={result} />)
               }
             </div>
             <button className="c-unitcarousel__button-down" onClick={this.scrollDown} aria-label="Scroll Down"></button>
