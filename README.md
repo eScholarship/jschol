@@ -65,3 +65,8 @@ Migrating to a new database version
 -----------------------------------
 
 * `tools/migrate.rb`
+
+Merging everything from master to prd branch
+--------------------------------------------
+
+* `git checkout master && git pull origin master && git checkout prd && git pull origin prd && git merge master && git push origin prd && git checkout master`
