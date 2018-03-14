@@ -2,6 +2,7 @@
 
 import React from 'react'
 import LazyImageComp from '../components/LazyImageComp.jsx'
+import ArbitraryHTMLComp from "../components/ArbitraryHTMLComp.jsx"
 
 class IssueComp extends React.Component {
   render() {
@@ -20,7 +21,7 @@ class IssueComp extends React.Component {
         </figure>
       }
         <div className="c-issue__description">
-          <p>{p.description}</p>
+          <ArbitraryHTMLComp html={p.description} h1Level={3}/>
         </div>
       </div>
     )
