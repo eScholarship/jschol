@@ -25,6 +25,10 @@ class MainContent extends React.Component {
   render() {
     let p = this.props
     switch(p.status) {
+      // Empty items are published but with no content: no published web loc, no supp files.
+      // Could use the <Withdrawn> class here but using <NoContent> for semantic reasons
+      case "empty":
+        return (<NoContent/>)
       case "published":
         if (!p.content_type) {
           if ((p.attrs.pub_web_loc && p.attrs.pub_web_loc.length > 0) || (p.attrs.supp_files && p.attrs.supp_files.length > 0)) {
@@ -113,6 +117,12 @@ class NoContent extends React.Component {
         <div style={{paddingLeft: '25px'}}>
           <br/><br/>
           All content for this item is under the <Link to="#" onClick={(e)=>this.handleClick(e, "supplemental")} className="o-textlink__secondary">Supplemental Material</Link> tab.
+        </div>
+      }
+      {!this.props.pub_web_loc && !this.props.supp_files &&
+        <div style={{paddingLeft: '25px'}}>
+          <br/><br/>
+          The text for this item is currently unavailable.
         </div>
       }
       <p>&nbsp;</p>
