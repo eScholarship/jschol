@@ -25,7 +25,12 @@
   margin-left: 0.3em;
 }
 
-.c-statsReport .c-disclaimer {
+.c-statsReport .c-statsReport-disclaimer {
   font-size: 90%;
   font-style: italic;
+}
+
+.c-statsReport-bottomButtons {
+  display: flex;
+  justify-content: space-between;
 }
