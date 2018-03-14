@@ -27,7 +27,7 @@ class TabsComp extends React.Component {
     return (
       <div className="c-tabs">
         <div className={this.state.moreTabs ? "c-tabs__tabs--show-all" : "c-tabs__tabs"}>
-      { this.props.status == 'published' &&
+      { ["published", "empty"].includes(this.props.status) &&
           <button className="c-tabs__button-more" onClick = {()=> this.setState({moreTabs: !this.state.moreTabs})} aria-label="Show all tabs">...</button>
       }
           <button className={this.props.currentTab == "main" ? "c-tabs__button--active" : "c-tabs__button"}
