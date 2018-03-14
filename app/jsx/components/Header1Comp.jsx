@@ -5,6 +5,7 @@ import { Link } from 'react-router'
 import Breakpoints from '../../js/breakpoints.json'
 import Search1Comp from '../components/Search1Comp.jsx'
 import AdminBarComp from '../components/AdminBarComp.jsx'
+import MEDIA_PATH from '../../js/MediaPath.js'
 
 class HeaderComp1 extends React.Component {
   state = {searchActive: false}
@@ -12,11 +13,11 @@ class HeaderComp1 extends React.Component {
     return (
     <div>
       <AdminBarComp/>
-      <header className="c-header">
+      <header id="#top" className="c-header">
         <Link className="c-header__logo1" to="/">
           <picture>
-            <source srcSet="/images/logo_escholarship.svg" media={"(min-width: "+Breakpoints.screen3+")"}/>
-            <img src="/images/logo_eschol-mobile.svg" alt="eScholarship"/>
+            <source srcSet={MEDIA_PATH + 'logo_escholarship.svg'} media={"(min-width: "+Breakpoints.screen3+")"}/>
+            <img src={MEDIA_PATH + 'logo_eschol-mobile.svg'} alt="eScholarship"/>
           </picture>
         </Link>
         <div className={this.state.searchActive ? "c-header__search--active" : "c-header__search"}>

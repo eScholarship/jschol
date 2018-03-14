@@ -2,6 +2,7 @@
 // this.props = {facebook: '', twitter: '', rss: ''}
 
 import React from 'react'
+import MEDIA_PATH from '../../js/MediaPath.js'
 
 class SocialIconsComp extends React.Component {
   render() {
@@ -9,17 +10,17 @@ class SocialIconsComp extends React.Component {
       <div className="c-socialicons">
         {this.props.facebook && 
           <a href={"http://www.facebook.com/" + this.props.facebook}>
-            <img src="/images/logo_facebook-circle-black.svg" alt="Facebook"/>
+            <img src={MEDIA_PATH + 'logo_facebook-circle-black.svg'} alt="Facebook"/>
           </a>
         }
         {this.props.twitter && 
           <a href={"http://www.twitter.com/" + this.props.twitter}>
-            <img src="/images/logo_twitter-circle-black.svg" alt="Twitter"/>
+            <img src={MEDIA_PATH + 'logo_twitter-circle-black.svg'} alt="Twitter"/>
           </a>
         }
         {this.props.rss && 
           <a href={this.props.rss}>
-            <img src="/images/logo_rss-circle-black.svg" alt="RSS"/>
+            <img src={MEDIA_PATH + 'logo_rss-circle-black.svg'} alt="RSS"/>
           </a>
         }
       </div>

@@ -4,6 +4,7 @@ import PropTypes from 'prop-types'
 import $ from 'jquery'
 import CarouselComp from '../components/CarouselComp.jsx'
 import { Link } from 'react-router'
+import MEDIA_PATH from '../../js/MediaPath.js'
 
 // Load dotdotdot in browser but not server
 if (!(typeof document === "undefined")) {
@@ -54,7 +55,7 @@ class JournalCarouselComp extends React.Component {
                   <figure>
                   {u.cover ?
                     <img src={"/assets/"+u.cover.asset_id} alt={u.name}/>
-                  : <img src="/images/temp_article.png" alt={u.name} /> }
+                  : <img src="{MEDIA_PATH + ''}/temp_article.png" alt={u.name} /> }
                     <figcaption>{u.name}</figcaption>
                   </figure>
                 </a>

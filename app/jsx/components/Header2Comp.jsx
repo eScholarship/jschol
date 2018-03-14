@@ -11,6 +11,7 @@ import Search1Comp from '../components/Search1Comp.jsx'
 import Search2Comp from '../components/Search2Comp.jsx'
 import Breakpoints from '../../js/breakpoints.json'
 import AdminBarComp from '../components/AdminBarComp.jsx'
+import MEDIA_PATH from '../../js/MediaPath.js'
 
 class HeaderComp2 extends React.Component {
   static propTypes = {
@@ -28,11 +29,11 @@ class HeaderComp2 extends React.Component {
     return (
       <div>
         <AdminBarComp/>
-        <header className="c-header">
+        <header id="#top" className="c-header">
           <Link className="c-header__logo2" to="/">
             <picture>
-              <source srcSet="/images/logo_eschol-small.svg" media={"(min-width: "+Breakpoints.screen3+")"}/>
-              <img src="/images/logo_eschol-mobile.svg" alt="eScholarship"/>
+              <source srcSet={MEDIA_PATH + 'logo_eschol-small.svg'} media={"(min-width: "+Breakpoints.screen3+")"}/>
+              <img src={MEDIA_PATH + 'logo_eschol-mobile.svg'} alt="eScholarship"/>
             </picture>
             <div className="c-header__logo2-tagline">
               Open Access Publications from the University of California
