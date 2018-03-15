@@ -2,6 +2,7 @@
 
 import React from 'react'
 import PdfViewComp from '../components/PdfViewComp.jsx'
+import MediaViewerComp from '../components/MediaViewerComp.jsx'
 import ViewExternalComp from '../components/ViewExternalComp.jsx'
 import { Link } from 'react-router'
 import ArbitraryHTMLComp from "../components/ArbitraryHTMLComp.jsx"
@@ -25,10 +26,21 @@ class MainContent extends React.Component {
   render() {
     let p = this.props
     switch(p.status) {
+      // Empty items are published but with no content: no published web loc, no supp files.
+      // Could use the <Withdrawn> class here but using <NoContent> for semantic reasons
+      case "empty":
+        return (<NoContent/>)
       case "published":
         if (!p.content_type) {
-          if ((p.attrs.pub_web_loc && p.attrs.pub_web_loc.length > 0) || (p.attrs.supp_files && p.attrs.supp_files.length > 0)) {
+          if (p.attrs.pub_web_loc && p.attrs.pub_web_loc.length > 0) {
             return (<NoContent pub_web_loc={p.attrs.pub_web_loc} supp_files={p.attrs.supp_files} changeTab={p.changeTab} />)
+          } else if (p.attrs.supp_files && p.attrs.supp_files.length > 0) {
+            return (
+              <details className="c-togglecontent" open>
+                <summary>Main Content</summary>
+                <MediaViewerComp id={this.props.id} supp_files={this.props.attrs.supp_files} content_prefix={this.props.content_prefix}/>
+              </details>
+            )
           } else {
             return (<Withdrawn message="This item is not available from eScholarship." />)
           }
@@ -113,6 +125,12 @@ class NoContent extends React.Component {
         <div style={{paddingLeft: '25px'}}>
           <br/><br/>
           All content for this item is under the <Link to="#" onClick={(e)=>this.handleClick(e, "supplemental")} className="o-textlink__secondary">Supplemental Material</Link> tab.
+        </div>
+      }
+      {!this.props.pub_web_loc && !this.props.supp_files &&
+        <div style={{paddingLeft: '25px'}}>
+          <br/><br/>
+          The text for this item is currently unavailable.
         </div>
       }
       <p>&nbsp;</p>
