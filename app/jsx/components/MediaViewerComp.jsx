@@ -6,20 +6,24 @@ import MediaFeatureObj from '../objects/MediaFeatureObj.jsx'
 import MediaViewerObj from '../objects/MediaViewerObj.jsx'
 
 class MediaViewerComp extends React.Component {
-  state= { mediaFeature: null,
-           filterType: ""     }
+  state= { filterType: "", mediaFeature: null,
+           featureFile: "", featureUrl: "", featureMimesimple: "", featureTitle: "", featureDescription: "" }
 
   changeType = event => {
     this.setState({filterType: event.target.value})
   }
 
-  openViewer = (featureNumber)=> {
-    this.setState({mediaFeature: featureNumber})
+  openViewer = (featureNumber, featureFile, featureUrl, featureMimesimple, featureTitle, featureDescription)=> {
+    this.setState({mediaFeature: featureNumber,
+                   featureFile: featureFile, featureUrl: featureUrl,
+                   featureMimesimple: featureMimesimple, featureTitle: featureTitle,
+                   featureDescription: featureDescription })
     this.mediaViewerFeature.focus()
     this.mediaViewerFeature.scrollIntoView({ behavior: 'smooth' })
   }
 
   getVisibleFiles(files, filterType) {
+    // TODO: De-duplicate this code, currently shared with MediaFileGridComp
     let foundOne = false
     let r = files.map((f, i) => {
       let title = f.title,
@@ -32,17 +36,26 @@ class MediaViewerComp extends React.Component {
           title = f.file 
         }
       }
-      let type = { "audio": 1, "data": 2, "image": 3, "video": 4 }
-      let c = (f['mimeSimple'].includes(filterType) || filterType =="") &&
-          <MediaViewerObj key={i}
-                      id={this.props.id}
-                      mimeSimple={f.mimeSimple}
-                      title={title}
-                      file={f.file}
-                      description={description} 
-                      content_prefix={this.props.content_prefix} 
-                      isSelected={this.state.mediaFeature == type[f.mimeSimple]}
-                      openViewer={()=> this.openViewer(type[f.mimeSimple])} />
+      let type = { "audio": 1, "data": 2, "image": 3, "video": 4 },
+          // mimeSimple is being used within user dropdown filter (MediaRefineComp),
+          // which uses a slightly more granular list of mimetypes: It includes 'doc'
+          // (for things like PDF and Word).  But for the comeponent definition 
+          // we are only wortking with 'audio', 'data', 'imag', and 'video'
+          // ..so in this case 'doc' gets lumped into 'data'
+          mimeSimple = (f['mimeSimple']=="doc") ? "data" : f['mimeSimple'],
+          c
+      if (f['mimeSimple'].includes(filterType) || filterType =="") {
+        let url=this.props.content_prefix + "/content/qt" + this.props.id + "/supp/" + f.file
+        c = <MediaViewerObj key={i}
+              mimeSimple={mimeSimple}
+              title={title}
+              file={f.file}
+              description={description}
+              url={url}
+              isSelected={this.state.mediaFeature == type[mimeSimple]}
+              openViewer={()=> this.openViewer(
+                type[mimeSimple], f.file, url, mimeSimple, title, description)} />
+      }
       if (c) {foundOne = true}
       return c
     })
@@ -50,11 +63,12 @@ class MediaViewerComp extends React.Component {
   }
 
   render() {
+    // TODO: De-duplicate this code, currently shared with TabSupplementalComp
     let p = this.props,
         supp_files_orig = p.supp_files,
         supp_files = [],
         mimeTypes = [] 
-    if (supp_files_orig) {  
+    if (supp_files_orig) {
       // mimeSimple = Normalized mimeType value to make filtering files easier
       for (let f of supp_files_orig) {
         let mimeSimple = "data"
@@ -72,43 +86,34 @@ class MediaViewerComp extends React.Component {
           else { mimeSimple = "data" }
         }
         f['mimeSimple'] = mimeSimple
-        supp_files.push(f) 
+        supp_files.push(f)
       }
       mimeTypes = [...new Set(supp_files.map(f => f.mimeSimple))];
     }
-    console.log("content prefix = ", this.props.content_prefix)
-    console.log("orig supp files = ", this.props.supp_files)
-    console.log("supp files = ", supp_files)
-    let visibleFiles = this.getVisibleFiles(supp_files, this.props.filterType)
+    let visibleFiles = this.getVisibleFiles(supp_files, this.state.filterType)
     return (
       <div className="c-mediaviewer">
         <div className="c-mediaviewer__feature" ref={el => this.mediaViewerFeature = el} tabIndex="-1">
-          <MediaFeatureObj file={p.file} url={url} type={mimeSimple} title={p.title} description={p.description} />
-          {/* this.state.mediaFeature == 1 ? <MediaFeatureAudioObj /> : null}
-          {this.state.mediaFeature == 2 ? <MediaFeatureDataObj /> : null}
-          {this.state.mediaFeature == 3 ? <MediaFeatureImageObj /> : null}
-          {this.state.mediaFeature == 4 ? <MediaFeatureVideoObj /> : null */}
+          {this.state.mediaFeature && this.state.mediaFeature != "" ?
+            <MediaFeatureObj
+                file = {this.state.featureFile}
+                url = {this.state.featureUrl}
+                type = {this.state.featureMimesimple}
+                title = {this.state.featureTitle}
+                description = {this.state.featureDescription} />
+            : null
+          }
         </div>
+
         {/* ItemActions Component */}
         {supp_files && (supp_files.length > 1) &&
           <MediaRefineComp mimeTypes={mimeTypes} filterType={this.state.filterType} changeType={this.changeType} />
         }
+
         {/* MediaFileGrid Component */}
       {supp_files ?
         <div className="c-mediafilegrid">
           {visibleFiles ? visibleFiles : <p>No files found matching that mime type.<br/><br/><br/></p>}
-          {/* <MediaViewerAudioObj
-            isSelected={this.state.mediaFeature == 1}
-            openViewer={()=> this.openViewer(1)} />
-          <MediaViewerDataObj
-            isSelected={this.state.mediaFeature == 2}
-            openViewer={()=> this.openViewer(2)} />
-          <MediaViewerImageObj
-            isSelected={this.state.mediaFeature == 3}
-            openViewer={()=> this.openViewer(3)} />
-          <MediaViewerVideoObj
-            isSelected={this.state.mediaFeature == 4}
-            openViewer={()=> this.openViewer(4)} /> */}
         </div>
         : <div className="c-mediafilegrid">No supplemental material included with this item</div>
       }
