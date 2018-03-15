@@ -91,10 +91,20 @@ class StatsHeader extends React.Component {
 
 class StatsFooter extends React.Component {
   render = () =>
-    <div className="c-disclaimer">
-      <hr/>
-      Disclaimer: due to the evolving nature of the web traffic we receive and the methods we use to collate it,
-      the data presented here should be considered approximate and subject to revision.
+    <div>
+      {this.props.onDownload &&
+        <div className="c-statsReport-bottomButtons">
+          <button className="o-button__8" onClick={this.props.onDownload}>Download CSV</button>
+          <div className="c-toplink">
+            <a href="javascript:window.scrollTo(0, 0)">Top</a>
+          </div>
+        </div>
+      }
+      <div className="c-statsReport-disclaimer">
+        <hr/>
+        Disclaimer: due to the evolving nature of the web traffic we receive and the methods we use to collate it,
+        the data presented here should be considered approximate and subject to revision.
+      </div>
     </div>
 }
 
@@ -258,7 +268,7 @@ class UnitStats_Summary extends React.Component {
             </li>
           }
         </ul>
-        <StatsFooter/>
+        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.params)}/>
       </div>
     )
   }
@@ -303,8 +313,7 @@ class EitherStats_HistoryByItem extends React.Component {
             </tbody>
           </table>
         </div>
-        <button onClick={e=>downloadCSV(this.table, this.props.params)}>Download CSV</button>
-        <StatsFooter/>
+        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.params)}/>
       </div>
     )
   }
@@ -349,8 +358,7 @@ class UnitStats_HistoryByIssue extends React.Component {
             </tbody>
           </table>
         </div>
-        <button onClick={e=>downloadCSV(this.table, this.props.params)}>Download CSV</button>
-        <StatsFooter/>
+        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.params)}/>
       </div>
     )
   }
@@ -395,8 +403,7 @@ class UnitStats_Referrals extends React.Component {
         {/* Let the user know there was a gap in referral data */}
         {(months.indexOf(201710) >= 0 || months.indexOf(201711) >= 0 || months.indexOf(201712) >= 0) &&
           <p>Note: Referral data was not collected from Oct 19 to Dec 4, 2017.</p>}
-        <button onClick={e=>downloadCSV(this.table, this.props.params)}>Download CSV</button>
-        <StatsFooter/>
+        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.params)}/>
       </div>
     )
   }
@@ -439,8 +446,7 @@ class EitherStats_BreakdownByItem extends React.Component {
             </tbody>
           </table>
         </div>
-        <button onClick={e=>downloadCSV(this.table, this.props.params)}>Download CSV</button>
-        <StatsFooter/>
+        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.params)}/>
       </div>
     )
   }
@@ -483,8 +489,7 @@ class UnitStats_BreakdownByIssue extends React.Component {
             </tbody>
           </table>
         </div>
-        <button onClick={e=>downloadCSV(this.table, this.props.params)}>Download CSV</button>
-        <StatsFooter/>
+        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.params)}/>
       </div>
     )
   }
@@ -522,8 +527,7 @@ class EitherStats_BreakdownByMonth extends React.Component {
             </tbody>
           </table>
         </div>
-        <button onClick={e=>downloadCSV(this.table, this.props.params)}>Download CSV</button>
-        <StatsFooter/>
+        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.params)}/>
       </div>
     )
   }
@@ -562,8 +566,7 @@ class UnitStats_BreakdownByCategory extends React.Component {
             </tbody>
           </table>
         </div>
-        <button onClick={e=>downloadCSV(this.table, this.props.params)}>Download CSV</button>
-        <StatsFooter/>
+        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.params)}/>
       </div>
     )
   }
@@ -602,8 +605,7 @@ class UnitStats_DepositsByCategory extends React.Component {
             </tbody>
           </table>
         </div>
-        <button onClick={e=>downloadCSV(this.table, this.props.params)}>Download CSV</button>
-        <StatsFooter/>
+        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.params)}/>
       </div>
     )
   }
@@ -656,8 +658,7 @@ class UnitStats_DepositsByUnit extends React.Component {
             </tbody>
           </table>
         </div>
-        <button onClick={e=>downloadCSV(this.table, this.props.params)}>Download CSV</button>
-        <StatsFooter/>
+        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.params)}/>
       </div>
     )
   }
@@ -710,8 +711,7 @@ class UnitStats_HistoryByUnit extends React.Component {
             </tbody>
           </table>
         </div>
-        <button onClick={e=>downloadCSV(this.table, this.props.params)}>Download CSV</button>
-        <StatsFooter/>
+        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.params)}/>
       </div>
     )
   }
@@ -764,8 +764,7 @@ class UnitStats_AvgByUnit extends React.Component {
             </tbody>
           </table>
         </div>
-        <button onClick={e=>downloadCSV(this.table, this.props.params)}>Download CSV</button>
-        <StatsFooter/>
+        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.params)}/>
       </div>
     )
   }
@@ -804,8 +803,7 @@ class UnitStats_AvgByCategory extends React.Component {
             </tbody>
           </table>
         </div>
-        <button onClick={e=>downloadCSV(this.table, this.props.params)}>Download CSV</button>
-        <StatsFooter/>
+        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.params)}/>
       </div>
     )
   }
@@ -859,8 +857,7 @@ class UnitStats_BreakdownByUnit extends React.Component {
             </tbody>
           </table>
         </div>
-        <button onClick={e=>downloadCSV(this.table, this.props.params)}>Download CSV</button>
-        <StatsFooter/>
+        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.params)}/>
       </div>
     )
   }
