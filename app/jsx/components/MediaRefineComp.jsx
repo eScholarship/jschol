@@ -16,8 +16,11 @@ class MediaRefineComp extends React.Component {
           })}
           </select>
         </div>
-      {/*
         <div className="o-download">
+      {/*
+        ToDo: Implement this functionality.
+        But for the time being, this div does need to stay here. CSS has been styled to expect it.
+
         {(this.props.mimeTypes.length > 1) ? 
           [<a key="0" href="" className="o-download__button" download="">Download All Files</a>,
            <details key="1" className="o-download__formats">
@@ -33,8 +36,8 @@ class MediaRefineComp extends React.Component {
          :
            <button className="o-button__8">Download All Files</button>
         }
-        </div>
       */}
+        </div>
       </div>
     ) 
   }
