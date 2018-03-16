@@ -1392,7 +1392,7 @@ def parseUCIngest(itemID, inMeta, fileType)
         issueAttrs = {}
         tmp = inMeta.text_at("/record/context/issueTitle")
         tmp and issueAttrs[:title] = tmp
-        tmp = inMeta.text_at("/record/context/issueDescription")
+        tmp = sanitizeHTML(inMeta.html_at("/record/context/issueDescription"))
         tmp and issueAttrs[:description] = tmp
         tmp = inMeta.text_at("/record/context/issueCoverCaption")
         findIssueCover(issueUnit, volNum, issueNum, tmp, issueAttrs)
