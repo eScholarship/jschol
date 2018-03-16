@@ -40,7 +40,7 @@ class TabSupplementalComp extends React.Component {
     return (
       <div className="c-tabcontent">
         <h1 className="c-tabcontent__main-heading" tabIndex="-1">Supplemental Material</h1>
-        {supp_files && (supp_files.length > 1) &&
+        {supp_files && (supp_files.length > 1) && (mimeTypes.length > 1) &&
           <MediaRefineComp mimeTypes={mimeTypes} filterType={this.state.filterType} changeType={this.changeType} />
         }
         {supp_files ?

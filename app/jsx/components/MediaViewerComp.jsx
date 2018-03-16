@@ -106,7 +106,7 @@ class MediaViewerComp extends React.Component {
         </div>
 
         {/* ItemActions Component */}
-        {supp_files && (supp_files.length > 1) &&
+        {supp_files && (supp_files.length > 1) && (mimeTypes.length > 1) &&
           <MediaRefineComp mimeTypes={mimeTypes} filterType={this.state.filterType} changeType={this.changeType} />
         }
 

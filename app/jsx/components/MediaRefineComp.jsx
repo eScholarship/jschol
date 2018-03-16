@@ -7,7 +7,6 @@ class MediaRefineComp extends React.Component {
     let mimeSimpleLabel = { 'audio':'Audio', 'data':'Others', 'doc':'Documents', 'image':'Images', 'video':'Videos' }
     return (
       <div className="c-itemactions">
-      {(this.props.mimeTypes.length > 1) && 
         <div className="o-input__droplist2">
           <label htmlFor="o-input__droplist-label2">Refine media type by:</label>
           <select name="filterType" id="o-input__droplist-label2" onChange={this.props.changeType} value={this.props.filterType}>
@@ -17,9 +16,8 @@ class MediaRefineComp extends React.Component {
           })}
           </select>
         </div>
-      }
-        <div className="o-download">
       {/*
+        <div className="o-download">
         {(this.props.mimeTypes.length > 1) ? 
           [<a key="0" href="" className="o-download__button" download="">Download All Files</a>,
            <details key="1" className="o-download__formats">
@@ -35,8 +33,8 @@ class MediaRefineComp extends React.Component {
          :
            <button className="o-button__8">Download All Files</button>
         }
-      */}
         </div>
+      */}
       </div>
     ) 
   }
