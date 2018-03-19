@@ -55,7 +55,7 @@ class JournalCarouselComp extends React.Component {
                   <figure>
                   {u.cover ?
                     <img src={"/assets/"+u.cover.asset_id} alt={u.name}/>
-                  : <img src="{MEDIA_PATH + ''}/temp_article.png" alt={u.name} /> }
+                  : <img src={MEDIA_PATH + '/temp_article.png'} alt={u.name} /> }
                     <figcaption>{u.name}</figcaption>
                   </figure>
                 </a>
