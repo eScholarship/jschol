@@ -3,6 +3,7 @@
 // #  that were created by Joel: (Audio, Data, Image, Video)         //
 
 import React from 'react'
+import MEDIA_PATH from '../../js/MediaPath.js'
 
 class MediaFeatureObj extends React.Component {
   render() {
@@ -17,7 +18,7 @@ class MediaFeatureObj extends React.Component {
                </div>
       case "video":
         return <div className="o-mediafeature__item">
-                 <video src={this.props.url} controls poster="/images/logo_eschol-media-thumbnail.png"></video> 
+                 <video src={this.props.url} controls poster={MEDIA_PATH + 'logo_eschol-media-thumbnail.png'}></video>
                </div>
       case "audio":
         return <div className="o-mediafeature__item">

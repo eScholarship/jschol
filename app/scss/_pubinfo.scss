@@ -1,7 +1,7 @@
 // ##### Publication Information Component ##### //
 
 .c-pubinfo {
-  @extend %clearfix;
+  @extend %u-clearfix;
   margin-bottom: $spacing-md;
 
   > *:not(.c-pubinfo__license) {
@@ -33,16 +33,11 @@
 
 .c-pubinfo__link {
   @extend %o-textlink__secondary;
-  @include one-line-truncation(active);
+  @include u-one-line-truncation(active);
 
   @include bp(screen1) {
-    @include one-line-truncation(inactive);
-    // wrap long url string:
-    overflow-wrap: break-word;
-    word-wrap: break-word;
-    word-break: break-all;
-    hyphens: auto;
-    grid-column: 1;
+    @include u-one-line-truncation(inactive);
+    @include u-overflow-wrap();
   }
 
 }

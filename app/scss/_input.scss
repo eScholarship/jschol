@@ -20,7 +20,7 @@
 }
 
 .o-input__label--hidden {
-  @extend %hide;
+  @extend %u-hide;
 }
 
 // ***** Dropdown Lists ***** //
@@ -28,7 +28,7 @@
 %o-input__droplist {
 
   select {
-    @extend %interactive-element-size;
+    @extend %u-interactive-element-size;
     // text isn't centering in FF with 'min-height' within above placeholder, so need to use 'height' here:
     height: $pointer-size-fine;
     padding: 0 2em 0 $spacing-sm;

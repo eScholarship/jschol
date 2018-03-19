@@ -1,7 +1,7 @@
 // ##### Media File Grid Component ##### //
 
 .c-mediafilegrid {
-  @extend %clearfix;
+  @extend %u-clearfix;
 
   @include bp(screen2) {
     display: grid;

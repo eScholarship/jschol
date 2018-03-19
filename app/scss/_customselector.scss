@@ -60,10 +60,10 @@
 }
 
 .o-customselector__selector {
-  @extend %interactive-element-size;
+  @extend %u-interactive-element-size;
 
   summary {
-    @extend %interactive-element-size;
+    @extend %u-interactive-element-size;
     position: relative;
 
     @include bp(screen3) {
@@ -117,7 +117,7 @@
 }
 
 .o-customselector__items {
-  @extend %no-bullet-ul;
+  @extend %u-reset-list-styles;
 
   li {
 

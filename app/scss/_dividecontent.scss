@@ -1,7 +1,7 @@
 // ##### Divide Content Objects ##### //
 
 %o-dividecontent {
-  @extend %responsive-images;
+  @extend %u-responsive-images;
 
   @include bp(screen1) {
     column-gap: $spacing-lg;

@@ -4,6 +4,7 @@ import React from 'react'
 import LazyImageComp from '../components/LazyImageComp.jsx'
 import { Link } from 'react-router'
 import { Subscriber } from 'react-broadcast'
+import MEDIA_PATH from '../../js/MediaPath.js'
 
 class FooterComp extends React.Component {
   render() {
@@ -28,14 +29,14 @@ class FooterComp extends React.Component {
           </ul>
         </nav>
         <div className="c-footer__logo">
-          <Link to="/"><LazyImageComp src="/images/logo_footer-eschol.svg" alt="eScholarship, University of California" /></Link>
+          <Link to="/"><LazyImageComp src={MEDIA_PATH + 'logo_footer-eschol.svg'} alt="eScholarship, University of California" /></Link>
         </div>
         <div className="c-footer__icons">
           <a href="https://www.facebook.com/eScholarship/">
-            <LazyImageComp src="/images/logo_facebook-circle-white.svg" alt="Facebook"/>
+            <LazyImageComp src={MEDIA_PATH + 'logo_facebook-circle-white.svg'} alt="Facebook"/>
           </a>
           <a href="https://twitter.com/escholarship">
-            <LazyImageComp src="/images/logo_twitter-circle-white.svg" alt="Twitter"/>
+            <LazyImageComp src={MEDIA_PATH + 'logo_twitter-circle-white.svg'} alt="Twitter"/>
           </a>
         </div>
         <div className="c-footer__copyright">

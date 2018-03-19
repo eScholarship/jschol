@@ -12,7 +12,7 @@ $jump-list-spacing: 0.5em;
 }
 
 .c-jump__tree {
-  @extend %no-bullet-ul;
+  @extend %u-reset-list-styles;
   margin: $jump-list-spacing 0;
 
   li {
@@ -32,7 +32,7 @@ $jump-list-spacing: 0.5em;
 }
 
 .c-jump__siblings {
-  @extend %no-bullet-ul;
+  @extend %u-reset-list-styles;
 
   li {
 

@@ -1,12 +1,12 @@
 // ##### Checkbox Component ##### //
 
 %c-checkbox {
-  @extend %no-bullet-ul;
+  @extend %u-reset-list-styles;
 
   ul {
     padding-left: 2em;
 
-    @include interactive-element-pointer(coarse) {
+    @include u-interactive-element-pointer(coarse) {
       padding-left: 2.4em;
     }
 
@@ -37,14 +37,14 @@
 %c-checkbox__icon {
   background: no-repeat left top 0.3em / 1.3em;
 
-  @include interactive-element-pointer(coarse) {
+  @include u-interactive-element-pointer(coarse) {
     background: no-repeat left top 0.5em / 1.8em; 
   }
 
 }
 
 .c-checkbox__input {
-  @extend %hide;
+  @extend %u-hide;
 
   &:checked + .c-checkbox__label {
     @extend %c-checkbox__icon;
@@ -66,7 +66,7 @@
     background-image: inline('../images/icon_checkbox-unchecked-orange.svg');
   }
 
-  @include interactive-element-pointer(coarse) {
+  @include u-interactive-element-pointer(coarse) {
     padding: 0.8em 0 0.8em 2.4em;
   }
 
@@ -77,14 +77,14 @@
 %c-checkbox__attrib {
   background: no-repeat left 2em top 0.3em / 6.4em;
 
-  @include interactive-element-pointer(coarse) {
+  @include u-interactive-element-pointer(coarse) {
     background: no-repeat left 2.4em top 0.5em / 9em;
   }
 
   .c-checkbox__label {
     padding-top: 1.7em;
 
-    @include interactive-element-pointer(coarse) {
+    @include u-interactive-element-pointer(coarse) {
       padding-top: 2.3em;
     }
 
@@ -94,35 +94,35 @@
 
 .c-checkbox__attrib-cc-by-nc-nd {
   @extend %c-checkbox__attrib;
-  background-image: inline('../images/cc-by-nc-nd-small.svg');
+  background-image: url('#{$media-path}cc-by-nc-nd-small.svg');
 }
 
 .c-checkbox__attrib-cc-by-nc-sa {
   @extend %c-checkbox__attrib;
-  background-image: inline('../images/cc-by-nc-sa-small.svg');
+  background-image: url('#{$media-path}cc-by-nc-sa-small.svg');
 }
 
 .c-checkbox__attrib-cc-by-nc {
   @extend %c-checkbox__attrib;
-  background-image: inline('../images/cc-by-nc-small.svg');
+  background-image: url('#{$media-path}cc-by-nc-small.svg');
 }
 
 .c-checkbox__attrib-cc-by-nd {
   @extend %c-checkbox__attrib;
-  background-image: inline('../images/cc-by-nd-small.svg');
+  background-image: url('#{$media-path}cc-by-nd-small.svg');
 }
 
 .c-checkbox__attrib-cc-by-sa {
   @extend %c-checkbox__attrib;
-  background-image: inline('../images/cc-by-sa-small.svg');
+  background-image: url('#{$media-path}cc-by-sa-small.svg');
 }
 
 .c-checkbox__attrib-cc-by {
   @extend %c-checkbox__attrib;
-  background-image: inline('../images/cc-by-small.svg');
+  background-image: url('#{$media-path}cc-by-small.svg');
 }
 
 .c-checkbox__attrib-cc-zero {
   @extend %c-checkbox__attrib;
-  background-image: inline('../images/cc-zero-small.svg');
+  background-image: url('#{$media-path}cc-zero-small.svg');
 }

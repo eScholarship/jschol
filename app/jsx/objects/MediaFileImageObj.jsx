@@ -4,6 +4,7 @@ import React from 'react'
 import $ from 'jquery'
 import MediaModalComp from '../components/MediaModalComp.jsx'
 import MediaFeatureImageObj from '../objects/MediaFeatureImageObj.jsx'
+import MEDIA_PATH from '../../js/MediaPath.js'
 
 class MediaFileImageObj extends React.Component {
   state={showModal: false}
@@ -22,7 +23,7 @@ class MediaFileImageObj extends React.Component {
           New Horizons Full Trajectory - Side View
         </h2>
         <div className="o-mediafile__preview" href="images/temp_new-horizons-data.png" onClick={this.handleOpenModal}>
-          <img src="images/temp_new-horizons-data.png" alt="New horizons data" />
+          <img src={MEDIA_PATH + 'temp_new-horizons-data.png'} alt="New horizons data" />
         </div>
         <div className="o-mediafile__description">
           Esse nulla ad veritatis dolorum, vitae maxime tenetur nemo. Quod eius corrupti provident nisi ullam, repellendus molestias, aliquam neque nulla dolorem, magnam commodi ratione enim ex, suscipit labore veniam deserunt nam exercitationem!

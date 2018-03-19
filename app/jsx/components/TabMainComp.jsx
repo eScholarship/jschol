@@ -2,6 +2,7 @@
 
 import React from 'react'
 import PdfViewComp from '../components/PdfViewComp.jsx'
+import MediaViewerComp from '../components/MediaViewerComp.jsx'
 import ViewExternalComp from '../components/ViewExternalComp.jsx'
 import { Link } from 'react-router'
 import ArbitraryHTMLComp from "../components/ArbitraryHTMLComp.jsx"
@@ -31,8 +32,15 @@ class MainContent extends React.Component {
         return (<NoContent/>)
       case "published":
         if (!p.content_type) {
-          if ((p.attrs.pub_web_loc && p.attrs.pub_web_loc.length > 0) || (p.attrs.supp_files && p.attrs.supp_files.length > 0)) {
+          if (p.attrs.pub_web_loc && p.attrs.pub_web_loc.length > 0) {
             return (<NoContent pub_web_loc={p.attrs.pub_web_loc} supp_files={p.attrs.supp_files} changeTab={p.changeTab} />)
+          } else if (p.attrs.supp_files && p.attrs.supp_files.length > 0) {
+            return (
+              <details className="c-togglecontent" open>
+                <summary>Main Content</summary>
+                <MediaViewerComp id={this.props.id} supp_files={this.props.attrs.supp_files} content_prefix={this.props.content_prefix}/>
+              </details>
+            )
           } else {
             return (<Withdrawn message="This item is not available from eScholarship." />)
           }

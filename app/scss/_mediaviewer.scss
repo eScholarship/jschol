@@ -1,0 +1,27 @@
+// ##### Media Viewer Component ##### //
+
+.c-mediaviewer {
+
+  [class^='o-mediafeature--'] {
+    padding-bottom: $spacing-md;
+    border-bottom: 1px solid $color-light-gray;
+    animation: reveal 1s;
+  }
+
+}
+
+@keyframes reveal {
+
+  0% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+
+}
+
+.c-mediaviewer__feature {
+  margin-bottom: $spacing-md;
+}

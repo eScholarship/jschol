@@ -1,12 +1,12 @@
 // ##### Facet Box Component ##### //
 
 .c-facetbox {
-  @extend %clearfix;
+  @extend %u-clearfix;
   margin-bottom: $spacing-sm;
   padding: 0 $spacing-sm;
 
   fieldset {
-    @extend %clear-fieldset-styles;
+    @extend %u-reset-fieldset-styles;
   }
 
 }
@@ -33,7 +33,7 @@
 
   // <summary> isn't responding to flexbox values in Safari, so need to use <span> child with those values:
   span {
-    @extend %interactive-element-size;
+    @extend %u-interactive-element-size;
     display: inline-flex;
     align-items: center;
     padding: $spacing-base 0;
@@ -58,7 +58,7 @@
 }
 
 .c-facetbox__show-more {
-  @extend %interactive-element-size;
+  @extend %u-interactive-element-size;
   padding: 0 1em 0 0;
   float: right;
   border: none;

@@ -12,7 +12,7 @@ class DataTableComp extends React.Component {
             <tr>
               <th scope="col">Country</th>
               <th scope="col">Apples</th>
-              <th scope="col">Oranges</th>
+              <th scope="col"><a href="">Oranges</a></th>
               <th scope="col">Bananas</th>
               <th scope="col">Grapes</th>
               <th scope="col">Strawberries</th>
@@ -68,7 +68,7 @@ class DataTableComp extends React.Component {
               <td>4,864,049</td>
             </tr>
             <tr>
-              <th scope="row">Denmark</th>
+              <th scope="row"><a href="">Denmark</a></th>
               <td>48,420</td>
               <td>58</td>
               <td>94</td>
