@@ -38,7 +38,7 @@ class TabsComp extends React.Component {
           <button className={p.currentTab == "main" ? "c-tabs__button--active" : "c-tabs__button"}
                   onClick = {()=> this.tabFocus("main")}>
             Main Content</button>
-      { p.status == 'published' && !multimediaItem &&
+      { p.status == 'published' && p.attrs.supp_files && !multimediaItem &&
           <button className={p.currentTab == "supplemental" ? "c-tabs__button--active" : "c-tabs__button"}
                   onClick = {()=> this.tabFocus("supplemental")}>
             Supplemental Material</button>
