@@ -398,7 +398,7 @@ def getSeriesLandingPageData(unit, q)
 end
 
 def getIssues(unit_id)
-  query = Sequel::SQL::PlaceholderLiteralString.new('SELECT * FROM issues WHERE ((unit_id = ?) AND ((volume != "0") OR (issue != "0"))) ORDER BY CAST(volume AS SIGNED) DESC, CAST(issue AS Decimal(4,2)) DESC', [unit_id])
+  query = Sequel::SQL::PlaceholderLiteralString.new('SELECT * FROM issues WHERE ((unit_id = ?) AND ((volume != "0") OR (issue != "0"))) ORDER BY CAST(volume AS SIGNED) DESC, CAST(issue AS Decimal(6,2)) DESC', [unit_id])
   r = DB.fetch(query).to_hash(:id).map{|id, issue|
     h = issue.to_hash
     h[:attrs] and h[:attrs] = JSON.parse(h[:attrs])
