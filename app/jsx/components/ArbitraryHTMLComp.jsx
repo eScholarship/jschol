@@ -8,7 +8,7 @@ import PropTypes from 'prop-types'
 export default class ArbitraryHTMLComp extends React.Component
 {
   static propTypes = {
-    html: PropTypes.string.isRequired,
+    html: PropTypes.string,
     h1Level: PropTypes.number // defaults to 3
   }
 
