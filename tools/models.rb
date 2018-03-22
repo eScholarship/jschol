@@ -58,6 +58,10 @@ class ItemAuthors < Sequel::Model(:item_authors)
   unrestrict_primary_key
 end
 
+class ItemContribs < Sequel::Model(:item_contribs)
+  unrestrict_primary_key
+end
+
 class ItemEvent < Sequel::Model
   unrestrict_primary_key
 end

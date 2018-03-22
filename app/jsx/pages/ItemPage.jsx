@@ -154,6 +154,8 @@ class ItemPage extends PageBase {
             <AuthorListComp pubdate={d.published}
                             author_hide={a.author_hide}
                             authors={d.authors}
+                            editors={d.editors}
+                            advisors={d.advisors}
                             changeTab={this.changeTab} />
           {(a.doi || a.pub_web_loc || d.rights || d.attrs.data_avail_stmnt || !d.content_type) &&
             <PubInfoComp doi={a.doi}
