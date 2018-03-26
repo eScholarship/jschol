@@ -17,7 +17,6 @@
   align-items: center;
   justify-content: center;
   order: 1;
-  max-height: 50vh; // prevents player from getting cropped if viewport is too short
   margin-bottom: $spacing-md;
   background-color: $color-light-gray;
 }
