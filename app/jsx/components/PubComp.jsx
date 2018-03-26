@@ -32,6 +32,13 @@ class PubComp extends React.Component {
     }).isRequired,
   }
 
+  getTotal = (rows, v) => {
+    if (rows.length == 0) return 0
+    return rows.reduce(function (a, b) {
+      return b[v] == null ? a : (a + b[v])
+    }, 0)
+  }
+
   render() {
     let pr = this.props.result
     let itemLink = "/uc/item/"+pr.id.replace(/^qt/, "")
@@ -42,6 +49,7 @@ class PubComp extends React.Component {
         return (<li key={i}><a href={"/search/?q="+author.name}>{author.name}</a></li>)
       })
     }
+    let totalSuppFiles = this.getTotal(pr.supp_files, "count")
     return (
       <div className="c-pub">
         <TruncationObj element={this.props.h} className="c-pub__heading">
@@ -65,7 +73,7 @@ class PubComp extends React.Component {
           <ArbitraryHTMLComp html={pr.abstract} h1Level={3}/>
         </TruncationObj>
       }
-      {pr.supp_files && 
+      {totalSuppFiles > 0 && 
         <MediaListComp supp_files={pr.supp_files} />
       }
       </div>
