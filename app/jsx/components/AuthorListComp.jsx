@@ -13,13 +13,22 @@ class AuthorListComp extends React.Component {
     this.props.changeTab(tab_id)
   }
 
+  // Expects an array containing hashes with a 'name' attribute [{name: "Stone, Elizabeth C.", }]
+  // Returns array of just names, with first name prepended with a title
+  titledNames = (title, array) => {
+    return array.map((x, i) => {
+      return (i==0) ? `${title}(s): ` + x.name : x.name })
+  }
+
   render() {
     let p = this.props,
         year = p.pubdate.match(/\d{4}/),
+        t_authornames = p.authors ? this.titledNames("Author", p.authors) : "",
+        t_editornames = p.editors ? this.titledNames("Editor", p.editors) : "",
+        t_advisornames = p.advisors ? this.titledNames("Advisor", p.advisors) : "",
+        combined = t_authornames.concat(t_editornames).concat(t_advisornames).filter(e => typeof e === 'string' && e !== ''),
         authorlist = p.authors.map((author, i) => { return (<li key={i+author.name}>{author.name}</li>) }),
         editorlist = p.editors.map((editor, i) => { return (<li key={i+editor.name}>{editor.name}</li>) })
-    console.log(p.editors)
-    console.log(p.advisors)
     return (
       <div className="c-authorlist">
         {year && <time className="c-authorlist__year">{year[0]}</time> }
