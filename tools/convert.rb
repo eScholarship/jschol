@@ -33,10 +33,11 @@ require 'mini_magick'
 require 'netrc'
 require 'nokogiri'
 require 'open3'
+require 'ostruct'
 require 'pp'
 require 'rack'
+require 'sanitize'
 require 'sequel'
-require 'ostruct'
 require 'time'
 require_relative '../util/nailgun.rb'
 require_relative '../util/normalize.rb'
@@ -1535,6 +1536,16 @@ def processWithNormalizer(fileType, itemID, metaPath, nailgun)
 end
 
 ###################################################################################################
+# Clean title, to help w/sorting
+# Remove first character if it's not alphanumeric
+# Remove beginning 'The' pronouns 
+def cleanTitle(str)
+  r = Sanitize.clean(str)
+  r = (r[0].match /[^a-zA-Z\d]/) ? r[1..-1] : r
+  r.sub(/^The /i, '')
+end
+
+###################################################################################################
 def addIdxUnits(idxItem, units)
   campuses, departments, journals, series = traceUnits(units)
   campuses.empty?    or idxItem[:fields][:campuses] = campuses
@@ -1589,7 +1600,7 @@ def indexItem(itemID, timestamp, batch, nailgun)
     type:          "add",   # in CloudSearch land this means "add or update"
     id:            itemID,
     fields: {
-      title:         dbItem[:title] || "",
+      title:         dbItem[:title] ? cleanTitle(dbItem[:title]) : "",
       authors:       (authors.length > 1000 ? authors[0,1000] : authors).map { |auth| auth[:name] },
       abstract:      attrs[:abstract] || "",
       type_of_work:  dbItem[:genre],
