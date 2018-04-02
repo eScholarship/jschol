@@ -1595,8 +1595,6 @@ def indexItem(itemID, timestamp, batch, nailgun)
 
   text = grabText(itemID, dbItem.content_type)
 
-  puts "*****TITLE:", dbItem[:title]
-
   # Create JSON for the full text index
   idxItem = {
     type:          "add",   # in CloudSearch land this means "add or update"
@@ -1615,8 +1613,6 @@ def indexItem(itemID, timestamp, batch, nailgun)
       is_info:       0
     }
   }
-
-  puts "*****INDEXED:", idxItem[:fields][:title]
 
   # Determine campus(es), department(s), and journal(s) by tracing the unit connnections.
   addIdxUnits(idxItem, units)
