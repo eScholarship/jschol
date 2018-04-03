@@ -1,7 +1,7 @@
 
 // ##### Top-level React Router App ##### //
 if (!(typeof document === "undefined")) {
-  //require('babel-polyfill')   // do we need this?
+  require('babel-polyfill')   // do we need this?
   require('details-polyfill')
   require('intersection-observer')
   require('smoothscroll-polyfill').polyfill();

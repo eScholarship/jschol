@@ -66,7 +66,6 @@
   "dependencies": {
     "array-includes": "^3.0.3",
     "details-polyfill": "^1.0.2",
-    "faker": "^4.1.0",
     "flickity": "^2.0.5",
     "flickity-imagesloaded": "^2.0.0",
     "intersection-observer": "^0.4.3",

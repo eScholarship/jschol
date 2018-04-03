@@ -925,8 +925,8 @@ end
 
 ###################################################################################################
 # Try to get fine-grained author info from UCIngest metadata
-def getAuthors(rawMeta, role)
-  result = rawMeta.xpath("//authors/*").map { |el|
+def getAuthors(metaEls, role)
+  result = metaEls.map { |el|
     if el.name == "organization"
       { name: el.text, organization: el.text }
     elsif %w{author editor advisor}.include?(el.name)
