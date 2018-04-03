@@ -21,7 +21,7 @@ export default class MetaTagsComp extends React.Component
     let p = this.props
     let finalTitle = p.title ? this.stripHtml(p.title) : "eScholarship"
     let [descrip_on, abstract, descrip] = [1, '', p.contribs]
-    if ((!p.contribs || p.contribs == '') && (!p.abstract || p.abstract == '')) { descrip_on = 0 }
+    if ((!p.contribs || p.contribs == '') && (!p.abstract || p.abstract == '')) { descrip_on = null }
     if (p.abstract && p.abstract != '') {
       abstract = this.stripHtml(p.abstract)
       descrip = descrip + " | Abstract: " + abstract
