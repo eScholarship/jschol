@@ -920,9 +920,9 @@ get "/api/item/:shortArk" do |shortArk|
   if !item.nil?
     authors = ItemAuthors.filter(:item_id => id).order(:ordering).
                  map(:attrs).collect{ |h| JSON.parse(h)}
-    editors = ItemContribs.filter(:item_id => id, :role => 'editor').order(:ordering).
+    editors = ItemContrib.filter(:item_id => id, :role => 'editor').order(:ordering).
                  map(:attrs).collect{ |h| JSON.parse(h)}
-    advisors = ItemContribs.filter(:item_id => id, :role => 'advisor').order(:ordering).
+    advisors = ItemContrib.filter(:item_id => id, :role => 'advisor').order(:ordering).
                  map(:attrs).collect{ |h| JSON.parse(h)}
     citation = getCitation(unit, shortArk, authors, attrs)
     pubDate = item.published
