@@ -920,6 +920,10 @@ get "/api/item/:shortArk" do |shortArk|
   if !item.nil?
     authors = ItemAuthors.filter(:item_id => id).order(:ordering).
                  map(:attrs).collect{ |h| JSON.parse(h)}
+    editors = ItemContribs.filter(:item_id => id, :role => 'editor').order(:ordering).
+                 map(:attrs).collect{ |h| JSON.parse(h)}
+    advisors = ItemContribs.filter(:item_id => id, :role => 'advisor').order(:ordering).
+                 map(:attrs).collect{ |h| JSON.parse(h)}
     citation = getCitation(unit, shortArk, authors, attrs)
     pubDate = item.published
     # Unfortunately with ProQuest ETDs, only the year is actually significant
@@ -931,6 +935,8 @@ get "/api/item/:shortArk" do |shortArk|
         :title => citation[:title],
         # ToDo: Normalize author attributes across all components (i.e. 'family' vs. 'lname')
         :authors => authors,
+        :editors => editors.any? ? editors : nil,
+        :advisors => advisors.any? ? advisors : nil,
         :published => pubDate,
         :added => item.added,
         :genre => item.genre,
