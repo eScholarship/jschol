@@ -130,9 +130,6 @@ $s3Bucket = Aws::S3::Bucket.new(ENV['S3_BUCKET'] || raise("missing env S3_BUCKET
 $allUnits = nil
 $unitAncestors = nil
 $issueCoverCache = {}
-$issueBuyLinks = Hash[*File.readlines("/apps/eschol/erep/xtf/style/textIndexer/mapping/buyLinks.txt").map { |line|
-  line =~ %r{^.*entity=(.*);volume=(.*);issue=(.*)\|(.*?)\s*$} ? ["#{$1}:#{$2}:#{$3}", $4] : [nil, line]
-}.flatten]
 $issueNumberingCache = {}
 
 # Make puts thread-safe, and prepend each line with the thread it's coming from. While we're at it,
@@ -207,6 +204,15 @@ end
 
 require_relative './models.rb'
 require_relative '../splash/splashGen.rb'
+
+###################################################################################################
+$issueBuyLinks = Hash[*File.readlines("/apps/eschol/erep/xtf/style/textIndexer/mapping/buyLinks.txt").map { |line|
+  line =~ %r{^.*entity=(.*);volume=(.*);issue=(.*)\|(.*?)\s*$} ? ["#{$1}:#{$2}:#{$3}", $4] : [nil, line]
+}.flatten]
+# Retain buy-link overrides in eschol5
+Issue.where(Sequel.lit("attrs->'$.buy_link' is not null")).each { |record|
+  $issueBuyLinks["#{record.unit_id}:#{record.volume}:#{record.issue}"] = JSON.parse(record.attrs)['buy_link']
+}
 
 ###################################################################################################
 # Insert hierarchy links (skipping dupes) for all descendants of the given unit id.
@@ -1062,33 +1068,34 @@ end
 
 ###################################################################################################
 def addIssueNumberingAttrs(issueUnit, volNum, issueNum, issueAttrs)
-  data = $issueNumberingCache[issueUnit]
-  if !data
-    data = {}
-    bfPath = "/apps/eschol/erep/xtf/static/brand/#{issueUnit}/#{issueUnit}.xml"
-    if File.exist?(bfPath)
-      dataIn = fileToXML(bfPath).root
-      el = dataIn.at(".//singleIssue")
-      if el && el.text == "yes"
-        data[:singleIssue] = true
-        data[:startVolume] = dataIn.at("./singleIssue").attr("startVolume")
-      end
-      el = dataIn.at(".//singleVolume")
-      if el && el.text == "yes"
-        data[:singleVolume] = true
+  key = "#{issueUnit}:#{volNum}:#{issueNum}"
+  if !$issueNumberingCache.key?(key)
+    numbering = nil
+    # First, check for existing issue numbering
+    iss = Issue.where(unit_id: issueUnit, volume: volNum, issue: issueNum).first
+    if iss
+      issAttrs = (iss.attrs && JSON.parse(iss.attrs)) || {}
+      numbering = issAttrs["numbering"]
+    else
+      # Failing that, check for a default set on the unit
+      unit = $allUnits[issueUnit]
+      unitAttrs = unit && unit.attrs && JSON.parse(unit.attrs) || {}
+      if unitAttrs["default_issue"] && unitAttrs["default_issue"]["numbering"]
+        numbering = unitAttrs["default_issue"]["numbering"]
+      else
+        # Failing that, use values from the most-recent issue
+        iss = Issue.where(unit_id: issueUnit).order(Sequel.desc(:published)).order_append(Sequel.desc(:issue)).first
+        if iss
+          issAttrs = (iss.attrs && JSON.parse(iss.attrs)) || {}
+          numbering = issAttrs["numbering"]
+        end
       end
     end
-    $issueNumberingCache[issueUnit] = data
+    $issueNumberingCache[key] = numbering
   end
 
-  if data[:singleIssue]
-    if data[:startVolume].nil? or volNum.to_i >= data[:startVolume].to_i
-      issueAttrs[:numbering] = "volume_only"
-    end
-  elsif data[:singleVolume]
-    issueAttrs[:numbering] = "issue_only"
-  end
-
+  # Finally, stuff the cached value into the output attrs for this issue
+  $issueNumberingCache[key] and issueAttrs[:numbering] = $issueNumberingCache[key]
 end
 
 ###################################################################################################
@@ -1540,9 +1547,9 @@ end
 # Remove first character if it's not alphanumeric
 # Remove beginning 'The' pronouns 
 def cleanTitle(str)
-  r = Sanitize.clean(str)
-  r = (r[0].match /[^a-zA-Z\d]/) ? r[1..-1] : r
-  r.sub(/^The /i, '')
+  r = Sanitize.clean(str).strip
+  r = (r[0].match /[^\w]/) ? r[1..-1].strip : r
+  r.sub(/^(The|A|An) /i, '')
 end
 
 ###################################################################################################
@@ -2101,10 +2108,7 @@ def convertAllItems(arks)
     # Count how many total there are, for status updates
     $nTotal = QUEUE_DB.fetch("SELECT count(*) as total FROM indexStates WHERE indexName='erep'").first[:total]
 
-    # Grab the timestamps of all items, for speed
-    $allItemTimes = (arks=="ALL" ? Item : Item.where(id: arks.to_a)).to_hash(:id, :last_indexed)
-
-    # Convert all the items that are indexable
+    # If we've been asked to rescan everything, do so in batches.
     if $rescanMode
       if arks == 'ALL'
         redoSet = Item.where{ id > rescanBase }.limit(RESCAN_SET_SIZE)
@@ -2117,6 +2121,11 @@ def convertAllItems(arks)
         rescanBase = nil
       end
     end
+
+    # Grab the timestamps of all items, for speed
+    $allItemTimes = (arks=="ALL" ? Item : Item.where(id: arks.to_a)).to_hash(:id, :last_indexed)
+
+    # Convert all the items that are indexable
     query = QUEUE_DB[:indexStates].where(indexName: 'erep').select(:itemId, :time).order(:itemId)
     $nTotal = query.count
     if $skipTo
@@ -2129,7 +2138,7 @@ def convertAllItems(arks)
       next if arks != 'ALL' && !arks.include?(shortArk)
       erepTime = Time.at(row[:time].to_i).to_time
       itemTime = $allItemTimes[shortArk]
-      if itemTime.nil? || itemTime < erepTime || $rescanMode
+      if itemTime.nil? || itemTime < erepTime || ($rescanMode && arks.include?(shortArk))
         $indexQueue << [shortArk, erepTime]
       else
         #puts "#{shortArk} is up to date, skipping."
