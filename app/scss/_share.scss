@@ -6,7 +6,7 @@
   box-shadow: $box-shadow2;
 
   summary {
-    @extend %interactive-summary-size;
+    @extend %u-interactive-summary-size;
     display: inline-block;
     position: relative;
     padding-right: 40px;
@@ -81,10 +81,10 @@
 
 .c-share__facebook {
   @extend %c-share__link;
-  background-image: inline('../images/logo_facebook-white.svg');
+  background-image: inline('../images/icon_facebook-white.svg');
 }
 
 .c-share__twitter {
   @extend %c-share__link;
-  background-image: inline('../images/logo_twitter-white.svg');
+  background-image: inline('../images/icon_twitter-white.svg');
 }

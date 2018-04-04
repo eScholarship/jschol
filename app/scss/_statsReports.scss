@@ -12,22 +12,6 @@
   margin-bottom: 0.5em;
 }
 
-.c-statsReport form {
-  margin-bottom: 1em;
-}
-
-.c-statsReport label {
-  margin-right: 0.2em;
-}
-
-.c-statsReport select {
-  margin-right: 0.6em;
-}
-
-.c-statsReport button {
-  margin-left: 0.5em;
-}
-
 .c-statsReport-id {
   font-family: "Lucida Console", Monaco, monospace;
   font-size: 90%;
@@ -41,7 +25,12 @@
   margin-left: 0.3em;
 }
 
-.c-statsReport .c-disclaimer {
+.c-statsReport .c-statsReport-disclaimer {
   font-size: 90%;
   font-style: italic;
+}
+
+.c-statsReport-bottomButtons {
+  display: flex;
+  justify-content: space-between;
 }

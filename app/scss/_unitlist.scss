@@ -2,12 +2,12 @@
 
 .c-unitlist {
 
-  @include headings() {
+  @include u-heading() {
     @extend %o-heading1a;
   }
 
   ul {
-    @extend %no-bullet-ul;
+    @extend %u-reset-list-styles;
   }
 
   li {

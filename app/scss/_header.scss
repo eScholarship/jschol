@@ -1,7 +1,7 @@
 // ##### Header 1 & 2 Component Styles ##### //
 
 .c-header {
-  @extend %page-bleed;
+  @extend %u-page-bleed;
   display: flex;
   justify-content: space-between;
   margin-top: (-$spacing-sm);
@@ -19,7 +19,7 @@
 .c-header__logo1 {
 
   img {
-    @extend %interactive-element-size;
+    @extend %u-interactive-element-size;
   }
 
 }
@@ -35,7 +35,7 @@
   }
 
   img {
-    @extend %interactive-element-size;
+    @extend %u-interactive-element-size;
   }
 
 }

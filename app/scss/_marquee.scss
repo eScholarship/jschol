@@ -58,7 +58,7 @@ $marquee-overlay-size: 50%;
   z-index: -1;
 
   &::after {
-    @include background-filter($color-black);
+    @include u-background-filter($color-black);
     position: absolute;
     top: 0;
     right: 0;
@@ -78,7 +78,7 @@ $marquee-overlay-size: 50%;
 
   }
 
-  @include headings() {
+  @include u-heading() {
     @extend %o-heading1;
     color: $color-white;
   }

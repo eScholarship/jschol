@@ -1,7 +1,7 @@
 // ##### Test Message Component ##### //
 
 %c-testmessage {
-  @extend %page-bleed;
+  @extend %u-page-bleed;
   display: grid;
   align-items: center;
   margin-top: (-$spacing-sm);

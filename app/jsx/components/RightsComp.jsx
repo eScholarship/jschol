@@ -3,6 +3,7 @@
 import React from 'react'
 import LazyImageComp from '../components/LazyImageComp.jsx'
 import PropTypes from 'prop-types'
+import MEDIA_PATH from '../../js/MediaPath.js'
 
 class RightsComp extends React.Component {
   static PropTypes = {
@@ -26,7 +27,7 @@ class RightsComp extends React.Component {
           a = rightsMap[r],
           altText = "Creative Commons "
     return (
-      <a href={a[0]} className={this.props.classname ? this.props.classname : "c-publocation__license"}><LazyImageComp src={"/images/"+a[1]} alt={altText + a[2]} /></a>
+      <a href={a[0]} className={this.props.classname ? this.props.classname : "c-publocation__license"}><LazyImageComp src={MEDIA_PATH+a[1]} alt={altText + a[2]} /></a>
     )
   }
 }

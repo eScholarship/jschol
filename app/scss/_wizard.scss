@@ -26,7 +26,7 @@ $wizard-nav-icon-size: 1.5em;
 }
 
 .c-wizard__standby-fwd {
-  @extend %hide;
+  @extend %u-hide;
   width: 400px;
   z-index: 1;
   animation: standby-fwd 1s;
@@ -68,7 +68,7 @@ $wizard-nav-icon-size: 1.5em;
 }
 
 .c-wizard__standby-bkw {
-  @extend %hide;
+  @extend %u-hide;
   width: 400px;
   z-index: 1;
   animation: standby-bkw 1s;
@@ -120,7 +120,7 @@ $wizard-nav-icon-size: 1.5em;
     border-top-left-radius: $round-corner;
     border-top-right-radius: $round-corner;
     background-color: $color-light-black;
-    overflow-x: hidden; // prevents <a> and <button> %hide horizontal scrolling
+    overflow-x: hidden; // prevents <a> and <button> %u-hide horizontal scrolling
 
     h1 {
       order: 2;
@@ -132,14 +132,14 @@ $wizard-nav-icon-size: 1.5em;
     }
 
     a {
-      @extend %interactive-element-size;
+      @extend %u-interactive-element-size;
       order: 1;
       margin-left: (-$spacing-sm);
       transform: scaleX(-1);
       background: inline('../images/icon_caret-right-white.svg') no-repeat center / #{$wizard-nav-icon-size};
 
       span {
-        @extend %hide;
+        @extend %u-hide;
       }
 
     }
@@ -151,7 +151,7 @@ $wizard-nav-icon-size: 1.5em;
       background-size: 0.9em;
 
       span {
-        @extend %hide;
+        @extend %u-hide;
       }
 
     }
@@ -175,7 +175,7 @@ $wizard-nav-icon-size: 1.5em;
 }
 
 .c-wizard__list {
-  @extend %no-bullet-ul;
+  @extend %u-reset-list-styles;
   margin-bottom: $spacing-md;
 
   li {
@@ -185,7 +185,7 @@ $wizard-nav-icon-size: 1.5em;
     }
 
     a {
-      @extend %interactive-element-size;
+      @extend %u-interactive-element-size;
       display: flex;
       align-items: center;
       padding: $spacing-base 2.5em $spacing-base $spacing-sm;

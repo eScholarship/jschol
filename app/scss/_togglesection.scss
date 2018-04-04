@@ -12,7 +12,7 @@
 %c-togglesection__header {
   background: $color-light-gray no-repeat left $spacing-sm center / 1em;
 
-  @include headings() {
+  @include u-heading() {
     display: flex;
     margin: 0;
     font-size: 1.2em;
@@ -20,7 +20,7 @@
   }
 
   button {
-    @extend %interactive-element-size;
+    @extend %u-interactive-element-size;
     flex: 1 0 auto;
     padding: 0 $spacing-sm 0 2.3rem;
     border: none;

@@ -1,6 +1,7 @@
 // ##### Toggle Section Component ##### //
 
 import React from 'react'
+import faker from 'faker/locale/en'
 
 class ToggleSectionComp extends React.Component {
   state={showContent: true}
@@ -14,7 +15,9 @@ class ToggleSectionComp extends React.Component {
         </h2>
         </header>
         <div className="c-togglesection__content" hidden={!this.state.showContent}>
-          Toggle Section Content. Lorem ipsum dolor sit amet, consectetur adipisicing elit. Repellendus temporibus expedita laudantium fugiat, ipsam, repellat labore, adipisci itaque est id optio corrupti. Quas <a href="">link</a> laudantium nobis magnam dignissimos, autem incidunt optio?
+          {faker.fake("{{lorem.paragraph}}") + ' '}
+          <a href="">{faker.fake("{{lorem.sentence}}") + ' '}</a>
+          {faker.fake("{{lorem.paragraph}}")}
         </div>
       </section>
     )

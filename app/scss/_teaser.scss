@@ -36,7 +36,7 @@
 
     }
 
-    @include headings() {
+    @include u-heading() {
       margin-top: 0;
       margin-bottom: 0.2em;
       color: $color-teal;

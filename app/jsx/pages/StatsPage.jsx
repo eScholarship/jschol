@@ -91,10 +91,20 @@ class StatsHeader extends React.Component {
 
 class StatsFooter extends React.Component {
   render = () =>
-    <div className="c-disclaimer">
-      <hr/>
-      Disclaimer: due to the evolving nature of the web traffic we receive and the methods we use to collate it,
-      the data presented here should be considered approximate and subject to revision.
+    <div>
+      {this.props.onDownload &&
+        <div className="c-statsReport-bottomButtons">
+          <button className="o-button__8" onClick={this.props.onDownload}>Download CSV</button>
+          <div className="c-toplink">
+            <a href="javascript:window.scrollTo(0, 0)">Top</a>
+          </div>
+        </div>
+      }
+      <div className="c-statsReport-disclaimer">
+        <hr/>
+        Disclaimer: due to the evolving nature of the web traffic we receive and the methods we use to collate it,
+        the data presented here should be considered approximate and subject to revision.
+      </div>
     </div>
 }
 
@@ -110,50 +120,61 @@ class StatsForm extends React.Component
     let p = this.props
     return (
       <Form to={p.location.pathname} method="GET">
-        <label htmlFor="range">Date range</label>
-        <select id="range" name="range" defaultValue={p.data.range} onChange={this.onChangeRange}>
-          <option value="1mo">Last month</option>
-          <option value="4mo">Last 4 months</option>
-          <option value="12mo">Last 12 months</option>
-          <option value="5yr">Last 5 years</option>
-          <option value="all">All time</option>
-          <option value="custom">Custom</option>
-        </select>
-        {this.state.customDates &&
-          <span>
-            <label htmlFor="st_yr">Start year</label>
-            <select id="st_yr" name="st_yr" defaultValue={p.data.st_yr}>
-              {p.data.all_years.map(val => <option key={val} value={val}>{val}</option>)}
-            </select>
-
-            <label htmlFor="st_mo">Start month</label>
-            <select id="st_mo" name="st_mo" defaultValue={p.data.st_mo}>
-              {_.range(1,13).map(val => <option key={val} value={val}>{val}</option>)}
-            </select>
-
-            <label htmlFor="en_yr">End year</label>
-            <select id="en_yr" name="en_yr" defaultValue={p.data.en_yr}>
-              {p.data.all_years.map(val => <option key={val} value={val}>{val}</option>)}
-            </select>
-
-            <label htmlFor="en_mo">End month</label>
-            <select id="en_mo" name="en_mo" defaultValue={p.data.en_mo}>
-              {_.range(1,13).map(val => <option key={val} value={val}>{val}</option>)}
-            </select>
-          </span>
-        }
-        {p.showLimit &&
-          <span key={name}>
-            <label htmlFor="limit">Max items:</label>
-            <select id="limit" name="limit" defaultValue={p.data.limit}>
-              <option key={50} value={50}>50</option>
-              <option key={100} value={100}>100</option>
-              <option key={200} value={200}>200</option>
-              <option key={500} value={500}>500</option>
-            </select>
-          </span>
-        }
-        <button type="submit" key="submit">Update</button>
+        <div className="c-daterange">
+          <div className="o-input__inline">
+            <div className="o-input__droplist1">
+              <label htmlFor="range">Date range</label>
+              <select id="range" name="range" defaultValue={p.data.range} onChange={this.onChangeRange}>
+                <option value="1mo">Last month</option>
+                <option value="4mo">Last 4 months</option>
+                <option value="12mo">Last 12 months</option>
+                <option value="5yr">Last 5 years</option>
+                <option value="all">All time</option>
+                <option value="custom">Custom</option>
+              </select>
+            </div>
+            {this.state.customDates &&
+              [
+                <div className="o-input__droplist1">
+                  <label htmlFor="st_yr">Start year</label>
+                  <select id="st_yr" name="st_yr" defaultValue={p.data.st_yr}>
+                    {p.data.all_years.map(val => <option key={val} value={val}>{val}</option>)}
+                  </select>
+                </div>,
+                <div className="o-input__droplist1">
+                  <label htmlFor="st_mo">Start month</label>
+                  <select id="st_mo" name="st_mo" defaultValue={p.data.st_mo}>
+                    {_.range(1,13).map(val => <option key={val} value={val}>{val}</option>)}
+                  </select>
+                </div>,
+                <div className="o-input__droplist1">
+                  <label htmlFor="en_yr">End year</label>
+                  <select id="en_yr" name="en_yr" defaultValue={p.data.en_yr}>
+                    {p.data.all_years.map(val => <option key={val} value={val}>{val}</option>)}
+                  </select>
+                </div>,
+                <div className="o-input__droplist1">
+                  <label htmlFor="en_mo">End month</label>
+                  <select id="en_mo" name="en_mo" defaultValue={p.data.en_mo}>
+                    {_.range(1,13).map(val => <option key={val} value={val}>{val}</option>)}
+                  </select>
+                </div>
+              ]
+            }
+            {p.showLimit &&
+              <div className="o-input__droplist1">
+                <label htmlFor="limit">Max items:</label>
+                <select id="limit" name="limit" defaultValue={p.data.limit}>
+                  <option key={50} value={50}>50</option>
+                  <option key={100} value={100}>100</option>
+                  <option key={200} value={200}>200</option>
+                  <option key={500} value={500}>500</option>
+                </select>
+              </div>
+            }
+          </div>
+          <button type="submit" key="submit">Update</button>
+        </div>
       </Form>
     )
   }
@@ -247,7 +268,7 @@ class UnitStats_Summary extends React.Component {
             </li>
           }
         </ul>
-        <StatsFooter/>
+        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.params)}/>
       </div>
     )
   }
@@ -292,8 +313,7 @@ class EitherStats_HistoryByItem extends React.Component {
             </tbody>
           </table>
         </div>
-        <button onClick={e=>downloadCSV(this.table, this.props.params)}>Download CSV</button>
-        <StatsFooter/>
+        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.params)}/>
       </div>
     )
   }
@@ -338,8 +358,7 @@ class UnitStats_HistoryByIssue extends React.Component {
             </tbody>
           </table>
         </div>
-        <button onClick={e=>downloadCSV(this.table, this.props.params)}>Download CSV</button>
-        <StatsFooter/>
+        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.params)}/>
       </div>
     )
   }
@@ -384,8 +403,7 @@ class UnitStats_Referrals extends React.Component {
         {/* Let the user know there was a gap in referral data */}
         {(months.indexOf(201710) >= 0 || months.indexOf(201711) >= 0 || months.indexOf(201712) >= 0) &&
           <p>Note: Referral data was not collected from Oct 19 to Dec 4, 2017.</p>}
-        <button onClick={e=>downloadCSV(this.table, this.props.params)}>Download CSV</button>
-        <StatsFooter/>
+        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.params)}/>
       </div>
     )
   }
@@ -428,8 +446,7 @@ class EitherStats_BreakdownByItem extends React.Component {
             </tbody>
           </table>
         </div>
-        <button onClick={e=>downloadCSV(this.table, this.props.params)}>Download CSV</button>
-        <StatsFooter/>
+        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.params)}/>
       </div>
     )
   }
@@ -472,8 +489,7 @@ class UnitStats_BreakdownByIssue extends React.Component {
             </tbody>
           </table>
         </div>
-        <button onClick={e=>downloadCSV(this.table, this.props.params)}>Download CSV</button>
-        <StatsFooter/>
+        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.params)}/>
       </div>
     )
   }
@@ -511,8 +527,7 @@ class EitherStats_BreakdownByMonth extends React.Component {
             </tbody>
           </table>
         </div>
-        <button onClick={e=>downloadCSV(this.table, this.props.params)}>Download CSV</button>
-        <StatsFooter/>
+        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.params)}/>
       </div>
     )
   }
@@ -551,8 +566,7 @@ class UnitStats_BreakdownByCategory extends React.Component {
             </tbody>
           </table>
         </div>
-        <button onClick={e=>downloadCSV(this.table, this.props.params)}>Download CSV</button>
-        <StatsFooter/>
+        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.params)}/>
       </div>
     )
   }
@@ -591,8 +605,7 @@ class UnitStats_DepositsByCategory extends React.Component {
             </tbody>
           </table>
         </div>
-        <button onClick={e=>downloadCSV(this.table, this.props.params)}>Download CSV</button>
-        <StatsFooter/>
+        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.params)}/>
       </div>
     )
   }
@@ -645,8 +658,7 @@ class UnitStats_DepositsByUnit extends React.Component {
             </tbody>
           </table>
         </div>
-        <button onClick={e=>downloadCSV(this.table, this.props.params)}>Download CSV</button>
-        <StatsFooter/>
+        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.params)}/>
       </div>
     )
   }
@@ -699,8 +711,7 @@ class UnitStats_HistoryByUnit extends React.Component {
             </tbody>
           </table>
         </div>
-        <button onClick={e=>downloadCSV(this.table, this.props.params)}>Download CSV</button>
-        <StatsFooter/>
+        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.params)}/>
       </div>
     )
   }
@@ -753,8 +764,7 @@ class UnitStats_AvgByUnit extends React.Component {
             </tbody>
           </table>
         </div>
-        <button onClick={e=>downloadCSV(this.table, this.props.params)}>Download CSV</button>
-        <StatsFooter/>
+        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.params)}/>
       </div>
     )
   }
@@ -793,8 +803,7 @@ class UnitStats_AvgByCategory extends React.Component {
             </tbody>
           </table>
         </div>
-        <button onClick={e=>downloadCSV(this.table, this.props.params)}>Download CSV</button>
-        <StatsFooter/>
+        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.params)}/>
       </div>
     )
   }
@@ -848,8 +857,7 @@ class UnitStats_BreakdownByUnit extends React.Component {
             </tbody>
           </table>
         </div>
-        <button onClick={e=>downloadCSV(this.table, this.props.params)}>Download CSV</button>
-        <StatsFooter/>
+        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.params)}/>
       </div>
     )
   }

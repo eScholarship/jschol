@@ -16,11 +16,11 @@
 }
 
 .c-search1__label {
-  @extend %hide;
+  @extend %u-hide;
 }
 
 .c-search1__field {
-  @extend %interactive-element-size;
+  @extend %u-interactive-element-size;
   flex: 1 0 auto;
   padding: 0 0 0 2em;
   border: 1px solid $color-light-gray;
@@ -35,7 +35,7 @@
 }
 
 .c-search1__submit-button {
-  @extend %hide;
+  @extend %u-hide;
   @extend %o-button__9;
   background-image: inline('../images/icon_magnify.svg');
 

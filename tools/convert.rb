@@ -33,10 +33,11 @@ require 'mini_magick'
 require 'netrc'
 require 'nokogiri'
 require 'open3'
+require 'ostruct'
 require 'pp'
 require 'rack'
+require 'sanitize'
 require 'sequel'
-require 'ostruct'
 require 'time'
 require_relative '../util/nailgun.rb'
 require_relative '../util/normalize.rb'
@@ -93,7 +94,7 @@ $batchQueue = SizedQueue.new(1)  # no use getting very far ahead of CloudSearch
 $splashQueue = Queue.new
 
 # Mode to force checking of the index digests (useful when indexing algorithm or unit structure changes)
-RESCAN_SET_SIZE = 100
+RESCAN_SET_SIZE = 2000
 $rescanMode = ARGV.delete('--rescan')
 
 # Mode to process a single item and just print it out (no inserting or batching)
@@ -129,9 +130,6 @@ $s3Bucket = Aws::S3::Bucket.new(ENV['S3_BUCKET'] || raise("missing env S3_BUCKET
 $allUnits = nil
 $unitAncestors = nil
 $issueCoverCache = {}
-$issueBuyLinks = Hash[*File.readlines("/apps/eschol/erep/xtf/style/textIndexer/mapping/buyLinks.txt").map { |line|
-  line =~ %r{^.*entity=(.*);volume=(.*);issue=(.*)\|(.*?)\s*$} ? ["#{$1}:#{$2}:#{$3}", $4] : [nil, line]
-}.flatten]
 $issueNumberingCache = {}
 
 # Make puts thread-safe, and prepend each line with the thread it's coming from. While we're at it,
@@ -183,7 +181,7 @@ Ezid::Client.configure do |config|
   config.user = ezidCred[0]
   config.password = ezidCred[1]
   config.default_shoulder = case $hostname
-    when 'pub-submit-stg-2a', 'pub-submit-stg-2c'; 'ark:/99999/fk4'
+    when 'pub-submit-stg-2a', 'pub-submit-stg-2c', 'pub-submit-dev'; 'ark:/99999/fk4'
     when 'pub-submit-prd-2a', 'pub-submit-prd-2c'; 'ark:/99166/p3'
     else raise "Unrecognized hostname for shoulder determination."
   end
@@ -206,6 +204,15 @@ end
 
 require_relative './models.rb'
 require_relative '../splash/splashGen.rb'
+
+###################################################################################################
+$issueBuyLinks = Hash[*File.readlines("/apps/eschol/erep/xtf/style/textIndexer/mapping/buyLinks.txt").map { |line|
+  line =~ %r{^.*entity=(.*);volume=(.*);issue=(.*)\|(.*?)\s*$} ? ["#{$1}:#{$2}:#{$3}", $4] : [nil, line]
+}.flatten]
+# Retain buy-link overrides in eschol5
+Issue.where(Sequel.lit("attrs->'$.buy_link' is not null")).each { |record|
+  $issueBuyLinks["#{record.unit_id}:#{record.volume}:#{record.issue}"] = JSON.parse(record.attrs)['buy_link']
+}
 
 ###################################################################################################
 # Insert hierarchy links (skipping dupes) for all descendants of the given unit id.
@@ -923,12 +930,12 @@ def formatAuthName(auth)
 end
 
 ###################################################################################################
-# Try to get fine-grained author info from UCIngest metadata; if not avail, fall back to index data.
-def getAuthors(rawMeta)
-  rawMeta.xpath("//authors/*").map { |el|
+# Try to get fine-grained author info from UCIngest metadata
+def getAuthors(metaEls, role)
+  result = metaEls.map { |el|
     if el.name == "organization"
       { name: el.text, organization: el.text }
-    elsif el.name == "author"
+    elsif %w{author editor advisor}.include?(el.name)
       data = { name: formatAuthName(el) }
       el.children.each { |sub|
         text = sub.text.strip
@@ -940,6 +947,8 @@ def getAuthors(rawMeta)
       raise("Unknown element #{el.name.inspect} within UCIngest authors")
     end
   }.select{ |v| v }
+  role != "author" and result.each { |data| data[:role] = role }
+  return result
 end
 
 ###################################################################################################
@@ -1059,33 +1068,34 @@ end
 
 ###################################################################################################
 def addIssueNumberingAttrs(issueUnit, volNum, issueNum, issueAttrs)
-  data = $issueNumberingCache[issueUnit]
-  if !data
-    data = {}
-    bfPath = "/apps/eschol/erep/xtf/static/brand/#{issueUnit}/#{issueUnit}.xml"
-    if File.exist?(bfPath)
-      dataIn = fileToXML(bfPath).root
-      el = dataIn.at(".//singleIssue")
-      if el && el.text == "yes"
-        data[:singleIssue] = true
-        data[:startVolume] = dataIn.at("./singleIssue").attr("startVolume")
-      end
-      el = dataIn.at(".//singleVolume")
-      if el && el.text == "yes"
-        data[:singleVolume] = true
+  key = "#{issueUnit}:#{volNum}:#{issueNum}"
+  if !$issueNumberingCache.key?(key)
+    numbering = nil
+    # First, check for existing issue numbering
+    iss = Issue.where(unit_id: issueUnit, volume: volNum, issue: issueNum).first
+    if iss
+      issAttrs = (iss.attrs && JSON.parse(iss.attrs)) || {}
+      numbering = issAttrs["numbering"]
+    else
+      # Failing that, check for a default set on the unit
+      unit = $allUnits[issueUnit]
+      unitAttrs = unit && unit.attrs && JSON.parse(unit.attrs) || {}
+      if unitAttrs["default_issue"] && unitAttrs["default_issue"]["numbering"]
+        numbering = unitAttrs["default_issue"]["numbering"]
+      else
+        # Failing that, use values from the most-recent issue
+        iss = Issue.where(unit_id: issueUnit).order(Sequel.desc(:published)).order_append(Sequel.desc(:issue)).first
+        if iss
+          issAttrs = (iss.attrs && JSON.parse(iss.attrs)) || {}
+          numbering = issAttrs["numbering"]
+        end
       end
     end
-    $issueNumberingCache[issueUnit] = data
+    $issueNumberingCache[key] = numbering
   end
 
-  if data[:singleIssue]
-    if data[:startVolume].nil? or volNum.to_i >= data[:startVolume].to_i
-      issueAttrs[:numbering] = "volume_only"
-    end
-  elsif data[:singleVolume]
-    issueAttrs[:numbering] = "issue_only"
-  end
-
+  # Finally, stuff the cached value into the output attrs for this issue
+  $issueNumberingCache[key] and issueAttrs[:numbering] = $issueNumberingCache[key]
 end
 
 ###################################################################################################
@@ -1270,6 +1280,7 @@ def parseUCIngest(itemID, inMeta, fileType)
   attrs[:language] = inMeta.text_at("./context/language")
   attrs[:local_ids] = inMeta.xpath("./context/localID").map { |el| { type: el[:type], id: el.text } }
   attrs[:orig_citation] = inMeta.text_at("./originalCitation")
+  attrs[:pub_status] = inMeta[:pubStatus]
   attrs[:pub_web_loc] = inMeta.xpath("./context/publishedWebLocation").map { |el| el.text.strip }
   attrs[:publisher] = inMeta.text_at("./publisher")
   attrs[:suppress_content] = shouldSuppressContent(itemID, inMeta)
@@ -1477,7 +1488,9 @@ def parseUCIngest(itemID, inMeta, fileType)
   dbItem[:ordering_in_sect] = inMeta.text_at("./context/publicationOrder")
 
   # Populate ItemAuthor model instances
-  authors = getAuthors(inMeta)
+  authors = getAuthors(inMeta.xpath("//authors/*"), "author")
+  contribs = getAuthors(inMeta.xpath("//editors/*"), "editor") +
+             getAuthors(inMeta.xpath("//advisors/*"), "advisor")
 
   # Make a list of all the units this item belongs to
   units = inMeta.xpath("./context/entity[@id]").map { |ent| ent[:id] }.select { |unitID|
@@ -1486,7 +1499,7 @@ def parseUCIngest(itemID, inMeta, fileType)
       true
   }
 
-  return dbItem, attrs, authors, units, issue, section, suppSummaryTypes
+  return dbItem, attrs, authors, contribs, units, issue, section, suppSummaryTypes
 end
 
 ###################################################################################################
@@ -1531,6 +1544,16 @@ def processWithNormalizer(fileType, itemID, metaPath, nailgun)
 end
 
 ###################################################################################################
+# Clean title, to help w/sorting
+# Remove first character if it's not alphanumeric
+# Remove beginning 'The' pronouns 
+def cleanTitle(str)
+  r = Sanitize.clean(str).strip
+  r = (r[0].match /[^\w]/) ? r[1..-1].strip : r
+  r.sub(/^(The|A|An) /i, '')
+end
+
+###################################################################################################
 def addIdxUnits(idxItem, units)
   campuses, departments, journals, series = traceUnits(units)
   campuses.empty?    or idxItem[:fields][:campuses] = campuses
@@ -1571,10 +1594,10 @@ def indexItem(itemID, timestamp, batch, nailgun)
   Thread.current[:name] = "index thread: #{itemID} #{sprintf("%-8s", normalize ? normalize : "UCIngest")}"
 
   if normalize
-    dbItem, attrs, authors, units, issue, section, suppSummaryTypes =
+    dbItem, attrs, authors, contribs, units, issue, section, suppSummaryTypes =
       processWithNormalizer(normalize, itemID, metaPath, nailgun)
   else
-    dbItem, attrs, authors, units, issue, section, suppSummaryTypes =
+    dbItem, attrs, authors, contribs, units, issue, section, suppSummaryTypes =
       parseUCIngest(itemID, rawMeta, "UCIngest")
   end
 
@@ -1585,7 +1608,7 @@ def indexItem(itemID, timestamp, batch, nailgun)
     type:          "add",   # in CloudSearch land this means "add or update"
     id:            itemID,
     fields: {
-      title:         dbItem[:title] || "",
+      title:         dbItem[:title] ? cleanTitle(dbItem[:title]) : "",
       authors:       (authors.length > 1000 ? authors[0,1000] : authors).map { |auth| auth[:name] },
       abstract:      attrs[:abstract] || "",
       type_of_work:  dbItem[:genre],
@@ -1637,6 +1660,17 @@ def indexItem(itemID, timestamp, batch, nailgun)
     }
   }
 
+  roleCounts = Hash.new { |h,k| h[k] = 0 }
+  dbContribs = contribs.each_with_index.map { |data, idx|
+    ItemContrib.new { |contrib|
+      contrib[:item_id] = itemID
+      contrib[:role] = data[:role]
+      data.delete(:role)
+      contrib[:attrs] = JSON.generate(data)
+      contrib[:ordering] = (roleCounts[contrib[:role]] += 1)
+    }
+  }
+
   # Calculate digests of the index data and database records
   idxData = JSON.generate(idxItem)
   idxDigest = Digest::MD5.base64digest(idxData)
@@ -1647,6 +1681,7 @@ def indexItem(itemID, timestamp, batch, nailgun)
     dbSection: section ? section.to_hash : nil,
     units: units
   }
+  dbContribs.empty? or dbCombined[:dbContribs] = dbContribs.map { |record| record.to_hash }
   dataDigest = Digest::MD5.base64digest(JSON.generate(dbCombined))
 
   # Add time-varying things into the database item now that we've generated a stable digest.
@@ -1654,7 +1689,8 @@ def indexItem(itemID, timestamp, batch, nailgun)
   dbItem[:index_digest] = idxDigest
   dbItem[:data_digest] = dataDigest
 
-  dbDataBlock = { dbItem: dbItem, dbAuthors: dbAuthors, dbIssue: issue, dbSection: section, units: units }
+  dbDataBlock = { dbItem: dbItem, dbAuthors: dbAuthors, dbContribs: dbContribs,
+                  dbIssue: issue, dbSection: section, units: units }
 
   # Single-item debug
   if $testMode
@@ -1827,16 +1863,16 @@ def updateDbItem(data)
   # Delete any existing data related to this item, except the item record itself (which is used
   # as a foreign key in stats tables).
   ItemAuthor.where(item_id: itemID).delete
+  ItemContrib.where(item_id: itemID).delete
   UnitItem.where(item_id: itemID).delete
 
   # Insert (or update) the issue and section
   updateIssueAndSection(data)
 
-  # Now create/insert the item, and insert its authors
+  # Now create/insert the item, and insert its authors (and other contributors if any)
   data[:dbItem].create_or_update()
-  data[:dbAuthors].each { |dbAuth|
-    dbAuth.save()
-  }
+  data[:dbAuthors].each { |record| record.save() }
+  data[:dbContribs] and data[:dbContribs].each { |record| record.save }
 
   # Link the item to its units
   done = Set.new
@@ -2073,10 +2109,7 @@ def convertAllItems(arks)
     # Count how many total there are, for status updates
     $nTotal = QUEUE_DB.fetch("SELECT count(*) as total FROM indexStates WHERE indexName='erep'").first[:total]
 
-    # Grab the timestamps of all items, for speed
-    $allItemTimes = (arks=="ALL" ? Item : Item.where(id: arks.to_a)).to_hash(:id, :last_indexed)
-
-    # Convert all the items that are indexable
+    # If we've been asked to rescan everything, do so in batches.
     if $rescanMode
       if arks == 'ALL'
         redoSet = Item.where{ id > rescanBase }.limit(RESCAN_SET_SIZE)
@@ -2089,6 +2122,11 @@ def convertAllItems(arks)
         rescanBase = nil
       end
     end
+
+    # Grab the timestamps of all items, for speed
+    $allItemTimes = (arks=="ALL" ? Item : Item.where(id: arks.to_a)).to_hash(:id, :last_indexed)
+
+    # Convert all the items that are indexable
     query = QUEUE_DB[:indexStates].where(indexName: 'erep').select(:itemId, :time).order(:itemId)
     $nTotal = query.count
     if $skipTo
@@ -2101,7 +2139,7 @@ def convertAllItems(arks)
       next if arks != 'ALL' && !arks.include?(shortArk)
       erepTime = Time.at(row[:time].to_i).to_time
       itemTime = $allItemTimes[shortArk]
-      if itemTime.nil? || itemTime < erepTime || ($rescanMode && arks != 'ALL')
+      if itemTime.nil? || itemTime < erepTime || ($rescanMode && arks.include?(shortArk))
         $indexQueue << [shortArk, erepTime]
       else
         #puts "#{shortArk} is up to date, skipping."
@@ -2111,7 +2149,9 @@ def convertAllItems(arks)
 
     $indexQueue << nil  # end-of-queue
     indexThread.join
-    connectAuthors  # make sure all newly converted (or reconvered) items have author->people links
+    if !$testMode && !($hostname =~ /-dev|-stg/)
+      connectAuthors  # make sure all newly converted (or reconvered) items have author->people links
+    end
     batchThread.join
     splashThread.join
 

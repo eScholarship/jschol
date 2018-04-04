@@ -1,14 +1,15 @@
 // ##### Toggle List Component ##### //
 
+/* in HTML but not styled:
 .c-togglelist {
-  // no styles
 }
+*/
 
 .c-togglelist__buttons {
   margin-bottom: $spacing-sm;
   margin-left: $pointer-size-fine;
 
-  @include interactive-element-pointer(coarse) {
+  @include u-interactive-element-pointer(coarse) {
     margin-left: $pointer-size-coarse;
   }
 
@@ -23,10 +24,10 @@
 }
 
 .c-togglelist__mainlist {
-  @extend %no-bullet-ul;
+  @extend %u-reset-list-styles;
   margin-left: $pointer-size-fine;
 
-  @include interactive-element-pointer(coarse) {
+  @include u-interactive-element-pointer(coarse) {
     margin-left: $pointer-size-coarse;
   }
 
@@ -35,7 +36,7 @@
 
     a {
       @extend %o-textlink__secondary;
-      @extend %interactive-element-size;
+      @extend %u-interactive-element-size;
       display: inline-flex;
       align-items: center;
       padding-top: 0.3em;
@@ -53,14 +54,14 @@
     user-select: none;
 
     &::after { // ::before can't be used; see resets.scss
-      @extend %interactive-element-size;
+      @extend %u-interactive-element-size;
       position: absolute;
       top: 0;
       left: (-$pointer-size-fine);
       background: inline('../images/icon_plus-black.svg') no-repeat center / 1.1em;
       content: '';
 
-      @include interactive-element-pointer(coarse) {
+      @include u-interactive-element-pointer(coarse) {
         left: (-$pointer-size-coarse);
       }
 
@@ -81,10 +82,10 @@
   }
 
   ul {
-    @extend %no-bullet-ul;
+    @extend %u-reset-list-styles;
     margin-left: $pointer-size-fine;
 
-    @include interactive-element-pointer(coarse) {
+    @include u-interactive-element-pointer(coarse) {
       margin-left: $pointer-size-coarse;
     }
 

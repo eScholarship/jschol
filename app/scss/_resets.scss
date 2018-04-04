@@ -20,9 +20,18 @@ abbr {
   cursor: default;
 
   &[title] {
-    border: none; // override normalize.scss
+    border: none;
   }
 
+}
+
+// Set fonts to properties used within previous normalize.scss:
+button,
+input,
+optgroup,
+select,
+textarea {
+  font: inherit;
 }
 
 // Make hidden attribute work on any element:
@@ -30,17 +39,11 @@ abbr {
   display: none;
 }
 
-// Remove rounded corners from WebKit search fields on iOS:
-
-input[type='search'] {
-  border-radius: 0 !important;
-  appearance: none !important;
-}
-
 summary {
+  display: block; // Removes details arrow icon from moz browsers
   cursor: pointer;
 
-  // Remove details arrow icon from webkit browsers:
+  // Removes details arrow icon from webkit browsers:
   // sass-lint:disable no-vendor-prefixes
   &::-webkit-details-marker {
     display: none;

@@ -3,8 +3,8 @@
 $medialist-item-length: 11em;
 
 .c-medialist {
-  @extend %no-bullet-ul;
-  @extend %clearfix;
+  @extend %u-reset-list-styles;
+  @extend %u-clearfix;
   flex: 1 0 auto; // to c-scholworks__media flexbox
   margin-right: $spacing-md;
 

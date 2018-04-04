@@ -2,6 +2,7 @@
 
 import React from 'react'
 import $ from 'jquery'
+import faker from 'faker/locale/en'
 
 // Load dotdotdot in browser but not server:
 if (!(typeof document === "undefined")) {
@@ -34,7 +35,8 @@ class ColumnBoxObj extends React.Component {
           <header>
             <h2>About eScholarship</h2>
           </header>
-          <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Culpa vitae totam beatae, quod placeat in nemo sunt laboriosam inventore dicta, iste! Expedita non ab quos! Autem laudantium, maiores et culpa.
+          <p>
+            {faker.fake("{{lorem.paragraphs}}")}
           </p>
         </section>
 
@@ -45,7 +47,9 @@ class ColumnBoxObj extends React.Component {
           <header>
             <h2>About eScholarship</h2>
           </header>
-          Lorem ipsum dolor sit amet, consectetur <a href="">adipisicing</a> elit. Alias sed sapiente nulla debitis nobis asperiores hic est, fuga illo? Accusamus molestias pariatur nihil, libero possimus optio iusto nobis sapiente ad.
+          {faker.fake("{{lorem.paragraph}}") + ' '}
+            <a href="">{faker.fake("{{lorem.sentence}}")}</a>
+          {' ' + faker.fake("{{lorem.paragraph}}")}
         </section>
 
         <h3>Containing Responsive Image Content</h3>
@@ -53,7 +57,8 @@ class ColumnBoxObj extends React.Component {
           <header>
             <h2>About eScholarship</h2>
           </header>
-          <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Minima, natus maiores beatae, exercitationem vel reiciendis ut repellat nostrum vero minus labore inventore ea. Asperiores a consectetur ducimus voluptatum laboriosam ullam!
+          <p>
+            {faker.fake("{{lorem.paragraphs}}")}
           </p>
           <img src="http://via.placeholder.com/500x200?text=Image (max-width: 100%)" alt=""/>
         </section>
@@ -65,7 +70,8 @@ class ColumnBoxObj extends React.Component {
           </header>
           <div className="o-columnbox__truncate1" ref={element => this.element = element}>
             <div> {/* this element (or any child) required so that 'more' link goes away at less than truncation threshold */}
-              Harum, esse, magni. Repudiandae fugiat ab earum dignissimos veniam quae enim nesciunt deleniti deserunt. Numquam commodi sunt autem dolore repellendus, minus quae modi natus dignissimos. Repellendus, expedita quos doloremque neque asperiores voluptates atque? Aliquam vel quae hic nostrum sint illum, alias soluta rerum at consectetur, eaque nemo nulla sed officia labore illo magni nisi suscipit libero reiciendis. Illo esse a commodi aperiam sequi voluptatibus doloremque eaque cum id. Harum excepturi, fuga molestiae, sunt aperiam recusandae odit! Laborum, voluptas quos. Corporis mollitia itaque perspiciatis, nulla odio incidunt ex maxime, delectus repellat illo nisi eos quas quam doloribus aliquid nesciunt, fugit totam minima neque? Iure, necessitatibus maxime porro, non cum iusto. <button className="o-columnbox__truncate-more">More</button>
+              {faker.fake("{{lorem.paragraphs}}")}
+              <button className="o-columnbox__truncate-more">More</button>
             </div>
           </div>
         </section>
@@ -76,25 +82,25 @@ class ColumnBoxObj extends React.Component {
             <header>
               <h2>About eScholarship</h2>
             </header>
-            Lorem ipsum dolor sit amet, consectetur adipisicing elit. Alias sed sapiente nulla debitis nobis asperiores hic est, fuga illo? Accusamus molestias pariatur nihil, libero possimus optio iusto nobis sapiente ad.
+            {faker.fake("{{lorem.paragraphs}}")}
           </section>
           <section className="o-columnbox1">
             <header>
               <h2>About eScholarship</h2>
             </header>
-            Lorem ipsum dolor sit amet, consectetur adipisicing elit. Alias sed sapiente nulla debitis nobis asperiores hic est, fuga illo? Accusamus molestias pariatur nihil, libero possimus optio iusto nobis sapiente ad.
+            {faker.fake("{{lorem.paragraphs}}")}
           </section>
         </aside>
 
         <h2>Column Box 1 Without Section Header</h2>
         <section className="o-columnbox1">
-          Lorem ipsum dolor sit amet, consectetur adipisicing elit. Alias sed sapiente nulla debitis nobis asperiores hic est, fuga illo? Accusamus molestias pariatur nihil, libero possimus optio iusto nobis sapiente ad.
+          {faker.fake("{{lorem.paragraphs}}")}
         </section>
 
         <h3>When Placed Within Sidebar</h3>
         <aside>
           <section className="o-columnbox1">
-            Lorem ipsum dolor sit amet, consectetur adipisicing elit. Alias sed sapiente nulla debitis nobis asperiores hic est, fuga illo? Accusamus molestias pariatur nihil, libero possimus optio iusto nobis sapiente ad.
+            {faker.fake("{{lorem.paragraphs}}")}
           </section>
         </aside>
 
@@ -103,7 +109,7 @@ class ColumnBoxObj extends React.Component {
           <header>
             <h2>About eScholarship</h2>
           </header>
-          Lorem ipsum dolor sit amet, consectetur adipisicing elit. Alias sed sapiente nulla debitis nobis asperiores hic est, fuga illo? Accusamus molestias pariatur nihil, libero possimus optio iusto nobis sapiente ad.
+          {faker.fake("{{lorem.paragraphs}}")}
         </section>
 
         <h3>When Placed Within Sidebar</h3>
@@ -112,7 +118,7 @@ class ColumnBoxObj extends React.Component {
             <header>
               <h2>About eScholarship</h2>
             </header>
-            Lorem ipsum dolor sit amet, consectetur adipisicing elit. Alias sed sapiente nulla debitis nobis asperiores hic est, fuga illo? Accusamus molestias pariatur nihil, libero possimus optio iusto nobis sapiente ad.
+            {faker.fake("{{lorem.paragraphs}}")}
           </section>
         </aside>
 

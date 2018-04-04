@@ -4,6 +4,7 @@ import $ from 'jquery'
 import _ from 'lodash'
 import ReactGA from 'react-ga'
 import { Broadcast, Subscriber } from 'react-broadcast'
+import { Link } from 'react-router'
 
 import SkipNavComp from '../components/SkipNavComp.jsx'
 import Header1Comp from '../components/Header1Comp.jsx'
@@ -268,7 +269,14 @@ class PageBase extends React.Component
       <div className="body">
         {this.needHeaderFooter() && <SkipNavComp/>}
         {this.state.pageData ? this.renderData(this.state.pageData) : this.renderLoading()}
-        {this.needHeaderFooter() && <FooterComp/>}
+        {this.needHeaderFooter() &&
+          <div>
+            <div className="c-toplink">
+              <a href="javascript:window.scrollTo(0, 0)">Top</a>
+            </div>
+            <FooterComp/>
+          </div>
+        }
       </div>)
   }
 

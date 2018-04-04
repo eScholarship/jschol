@@ -12,7 +12,7 @@ import DropdownMenu from '../components/DropdownMenu.jsx'
 import { Link } from 'react-router'
 
 class Downloadable extends React.Component {
-  linkBuyPrint = () => {window.location = this.props.buy_link}
+  linkBuyPrint = () => {window.location = this.props.attrs.buy_link}
 
   render() {
     let p = this.props,
@@ -64,7 +64,7 @@ class Downloadable extends React.Component {
           {/*     <li><NotYetLink element="a">RefWorks</NotYetLink></li>  */}
                 </ul>
               </li>
-          {/* p.supp_files &&
+          {/* p.attrs.supp_files &&
               <li className="o-download__nested-list3">
                 Supplemental Material
                 <ul>
@@ -80,7 +80,7 @@ class Downloadable extends React.Component {
             </ul>
           </DropdownMenu>
         </div>
-      {p.buy_link &&
+      {p.attrs.buy_link &&
         <button onClick={() => {this.linkBuyPrint()}} className="c-itemactions__button-print">Buy in Print</button>
         // ToDo: Hook this up when we get eBook links
         // <button className="c-itemactions__button-buy">Buy e-Book</button>
@@ -91,23 +91,23 @@ class Downloadable extends React.Component {
   }
 }
 
+// For withdrawn, embargoed, or items with no content_type,
+// with one exception: "multimedia item", which is a published item with no content type
+// and no published web location, but with supplemental media.
 class Undownloadable extends React.Component {
-  handleClick(e, tabName) {
-    e.preventDefault()
-    this.props.changeTab(tabName)
-  }
-
   render() {
     let p = this.props
-    let msg = (!p.content_type && p.supp_files && p.supp_files.length > 0) ?
-                <div className="o-alert1" role="alert">All content for this item is under the <Link to="#" onClick={(e)=>this.handleClick(e, "supplemental")} className="o-textlink__secondary">Supplemental Material</Link> tab.</div>
-              :
+    let multimediaItem = p.status=='published' && !p.content_type && !p.attrs.pub_web_loc && p.attrs.supp_files && p.attrs.supp_files.length > 0
+    // ToDo: For multimedia content, add functionality to zip up supp files for download, and put button here (like Downloadable class above) that says 'Download Content' */}
+    let msg = !multimediaItem ?
                 <div className="o-alert1" role="alert">
-                  {p.withdrawn_message ?
-                    p.withdrawn_message
+                  {p.attrs.withdrawn_message ?
+                    p.attrs.withdrawn_message
                   : "This item is not available for download from eScholarship"
                   }
                 </div>
+              :
+                null
     return (
       <div className="c-itemactions">
         {msg}
@@ -127,11 +127,8 @@ class ItemActionsComp extends React.Component {
     status: PropTypes.string.isRequired,
     content_type: PropTypes.string,
     pdf_url: PropTypes.string,
-    supp_files: PropTypes.array,
-    buy_link: PropTypes.string,
-    withdrawn_message: PropTypes.string,
+    attrs: PropTypes.any,
     download_restricted: PropTypes.bool,
-    changeTab: PropTypes.any
   }
 
   render() {

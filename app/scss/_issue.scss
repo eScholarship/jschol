@@ -16,7 +16,7 @@
 
   }
 
-  @include headings() {
+  @include u-heading() {
     @extend %o-heading3a;
     margin-bottom: $spacing-sm;
 

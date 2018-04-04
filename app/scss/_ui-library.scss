@@ -1,7 +1,7 @@
 // ##### UI Library ##### //
 
 .ui-library__header {
-  @extend %page-bleed;
+  @extend %u-page-bleed;
   display: flex;
   justify-content: space-between;
   margin-top: (-$spacing-body);

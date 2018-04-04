@@ -1,0 +1,35 @@
+// ##### Journal Carousel Component ##### //
+
+.c-journalcarousel {
+  padding: 0 $campuscarouselframe-spacing;
+  
+  // ***** Flickity Customizations ***** //
+
+  .flickity-prev-next-button {
+    width: 5em;
+    height: 5em;
+    background: transparent;
+
+    &:hover {
+      background: transparent;
+    }
+
+    &.previous {
+      left: -1.3em;
+    }
+
+    &.next {
+      right: -1.3em;
+    }
+
+    .arrow {
+      fill: $color-dark-gray;
+    }
+
+  }
+
+}
+
+.c-journalcarousel__item {
+  margin-left: $spacing-md;
+}

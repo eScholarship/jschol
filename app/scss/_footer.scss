@@ -3,7 +3,7 @@
 $footer-logo-width: 200px;
 
 .c-footer {
-  @extend %page-bleed;
+  @extend %u-page-bleed;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -12,7 +12,7 @@ $footer-logo-width: 200px;
 
   @include bp(screen2) {
     display: grid;
-    grid-template-columns: auto 1fr 50%;
+    grid-template-columns: 1fr 1fr;
   }
 
 }
@@ -21,7 +21,7 @@ $footer-logo-width: 200px;
   margin-bottom: $spacing-sm;
 
   ul {
-    @extend %no-bullet-ul;
+    @extend %u-reset-list-styles;
     columns: 2;
     column-gap: $spacing-lg;
 
@@ -41,7 +41,7 @@ $footer-logo-width: 200px;
 
   @include bp(screen2) {
     margin-bottom: 0;
-    grid-column: 3;
+    grid-column: 2;
     grid-row: 1 / 4;
   }
 
@@ -53,31 +53,31 @@ $footer-logo-width: 200px;
 
   img {
     width: $footer-logo-width;
+    height: 100%; // for IE 11
   }
 
 }
 
 .c-footer__icons {
   display: flex;
-  justify-content: space-evenly;
+  justify-content: space-around;
   width: $footer-logo-width;
   height: auto;
   margin-bottom: $spacing-md;
 
+  @supports (display: grid) {
+    justify-content: space-evenly;
+  }
+
   @include bp(screen2) {
     justify-self: stretch;
     grid-column: 1;
-
-    @supports (display: grid) {
-      width: auto;
-    }
-
   }
 
   a {
 
     img {
-      @extend %interactive-element-size;
+      @extend %u-interactive-element-size;
     }
 
   }

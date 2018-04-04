@@ -1,7 +1,7 @@
 // ##### Subheader Component ##### //
 
 .c-subheader {
-  @extend %page-bleed;
+  @extend %u-page-bleed;
   display: flex;
   position: relative; // to absolute positioned nav component
   align-items: center;

@@ -18,7 +18,7 @@
 
 .c-publocation__heading {
 
-  @include headings() {
+  @include u-heading() {
     @extend %o-heading4;
     margin-bottom: $spacing-sm;
   }
@@ -27,7 +27,7 @@
 
 .c-publocation__link {
   @extend %o-textlink__secondary;
-  @extend %overflow-wrap;
+  @include u-overflow-wrap();
   display: block;
   margin-bottom: $spacing-sm;
 
