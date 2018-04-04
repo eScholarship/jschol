@@ -1,7 +1,7 @@
 // ##### Skip Navigation Component ##### //
 
 .c-skipnav {
-  @extend %hide;
+  @extend %u-hide;
   display: inline-block;
   padding: $spacing-sm;
   transition: opacity 0.5s;

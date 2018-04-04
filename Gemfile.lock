@@ -12,7 +12,7 @@ GEM
       aws-sdk-core (= 2.10.7)
     aws-sigv4 (1.0.0)
     builder (3.2.3)
-    crass (1.0.2)
+    crass (1.0.3)
     daemons (1.2.4)
     em-websocket (0.3.8)
       addressable (>= 2.1.1)
@@ -40,9 +40,9 @@ GEM
     mustermann (1.0.2)
     mysql2 (0.4.7)
     netrc (0.11.0)
-    nokogiri (1.8.1)
+    nokogiri (1.8.2)
       mini_portile2 (~> 2.3.0)
-    nokogumbo (1.4.13)
+    nokogumbo (1.5.0)
       nokogiri
     power_assert (1.0.2)
     public_suffix (2.0.5)
@@ -50,10 +50,10 @@ GEM
     rack (2.0.4)
     rack-protection (2.0.1)
       rack
-    sanitize (4.5.0)
+    sanitize (4.6.4)
       crass (~> 1.0.2)
       nokogiri (>= 1.4.4)
-      nokogumbo (~> 1.4.1)
+      nokogumbo (~> 1.4)
     sequel (4.48.0)
     sinatra (2.0.1)
       mustermann (~> 1.0)
@@ -109,4 +109,4 @@ RUBY VERSION
    ruby 2.3.4p301
 
 BUNDLED WITH
-   1.16.0
+   1.16.1

@@ -27,7 +27,7 @@ $scholworks-tag-height: 1.4em;
 }
 
 .c-scholworks__tag-list {
-  @extend %no-bullet-ul;
+  @extend %u-reset-list-styles;
 }
 
 %c-scholworks__tag {
@@ -38,6 +38,7 @@ $scholworks-tag-height: 1.4em;
   padding: 0 $spacing-sm 0 $spacing-lg;
   border-radius: $round-corner;
   background: $color-light-gray no-repeat left $spacing-sm center / 1em;
+  text-transform: capitalize;
 }
 
 .c-scholworks__tag-article {
@@ -135,4 +136,5 @@ $scholworks-tag-height: 1.4em;
     margin-bottom: $spacing-sm;
     margin-left: auto;
   }
+
 }

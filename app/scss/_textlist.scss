@@ -28,5 +28,5 @@
 
 .o-textlist2 {
   @extend %o-textlist;
-  @extend %no-bullet-ul;
+  @extend %u-reset-list-styles;
 }

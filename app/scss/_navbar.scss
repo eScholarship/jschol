@@ -1,7 +1,7 @@
 // ##### Nav Bar Component ##### //
 
 .c-navbar {
-  @extend %page-bleed;
+  @extend %u-page-bleed;
   display: flex;
   align-items: center;
   margin-bottom: $spacing-sm;

@@ -4,6 +4,7 @@ import WysiwygEditorComp from '../components/WysiwygEditorComp.jsx'
 import MarqueeComp from '../components/MarqueeComp.jsx'
 import PropTypes from 'prop-types'
 import _ from 'lodash'
+import MEDIA_PATH from '../../js/MediaPath.js'
 
 class HeroCarouselLayout extends React.Component {
   state = { newData: this.props.data }
@@ -184,7 +185,7 @@ class HeroCarouselLayout extends React.Component {
                     <div className="can-toggle__switch" data-checked="Enabled" data-unchecked="Disabled"></div>
                   </label>
                   <div className="c-editable-floatright">
-                    <a href="https://help.escholarship.org/support/solutions/articles/9000124100-using-the-site-editing-tool"><img className="c-editable-help__icon" src="/images/icon_help.svg" alt="Get help on landing page carousel" /></a></div>
+                    <a href="https://help.escholarship.org/support/solutions/articles/9000124100-using-the-site-editing-tool"><img className="c-editable-help__icon" src={MEDIA_PATH + 'icon_help.svg'} alt="Get help on landing page carousel" /></a></div>
                   <br/>
                 </div>
                 <div>
@@ -260,7 +261,7 @@ class CampusCarouselConfig extends React.Component {
       <div>
         <h3 className="c-editable-h3">Content Carousel(s)</h3>
         <div className="c-editable-floatright">
-          <a href="https://help.escholarship.org/support/solutions/articles/9000124100-using-the-site-editing-tool"><img className="c-editable-help__icon" src="/images/icon_help.svg" alt="Get help on content carousels" /></a></div>
+          <a href="https://help.escholarship.org/support/solutions/articles/9000124100-using-the-site-editing-tool"><img className="c-editable-help__icon" src={MEDIA_PATH + 'icon_help.svg'} alt="Get help on content carousels" /></a></div>
         <div className="c-columns">
           <main>
             <section className="o-columnbox1">

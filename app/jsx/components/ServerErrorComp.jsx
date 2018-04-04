@@ -4,6 +4,7 @@ import React from 'react'
 import Form from 'react-router-form'
 import { Link } from 'react-router'
 import PropTypes from 'prop-types'
+import MEDIA_PATH from '../../js/MediaPath.js'
 
 class ServerErrorComp extends React.Component {
   static propTypes = {
@@ -18,7 +19,7 @@ class ServerErrorComp extends React.Component {
            this.props.error ? this.props.error :
            "Error."}
         </h1>
-        <img className="c-servererror__image" src="/images/squirrel.jpg" alt="squirrel"/>
+        <img className="c-servererror__image" src={MEDIA_PATH + 'squirrel.jpg'} alt="squirrel"/>
         <Form to='/search' method="GET" className="c-servererror__search">
           <label htmlFor="c-servererror__input" className="c-servererror__label">Search for it!</label>
           <input type="search" className="c-servererror__input" name="q" id="c-servererror__input" placeholder="Search for it!" />

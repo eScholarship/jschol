@@ -7,7 +7,7 @@
   margin-bottom: $spacing-md;
 
   ul {
-    @extend %no-bullet-ul;
+    @extend %u-reset-list-styles;
     display: flex;
     flex-wrap: wrap;
 
@@ -105,7 +105,7 @@
 }
 
 %c-pagination__items {
-  @extend %interactive-element-size;
+  @extend %u-interactive-element-size;
   display: inline-flex;
   align-items: center;
   justify-content: center;

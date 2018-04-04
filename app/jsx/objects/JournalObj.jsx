@@ -17,7 +17,7 @@ class JournalObj extends React.Component {
         <h2>Featured Journal</h2>
         <a href="" className="o-journal1">
           <figure>
-            <img src="http://escholarship.org/issueCovers/uclalaw_cllr/34_01_cover.png" alt=""/>
+            <img src="http://via.placeholder.com/300x300?text=Image" alt=""/>
             <figcaption>Chicana-Latina Law Review</figcaption>
           </figure>
         </a>
@@ -25,7 +25,7 @@ class JournalObj extends React.Component {
         <h2>Journal Item</h2>
         <a href="" className="o-journal2">
           <figure>
-            <img src="http://escholarship.org/issueCovers/jmie_sfews/15_01_cover.png" alt=""/>
+            <img src="http://via.placeholder.com/300x300?text=Image" alt=""/>
             <figcaption>The Proceedings of the UCLA Department of Spanish and Portuguese Graduate Conference</figcaption>
           </figure>
         </a>

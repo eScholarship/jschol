@@ -20,9 +20,11 @@ class IssueComp extends React.Component {
         }
         </figure>
       }
+      {p.description &&
         <div className="c-issue__description">
           <ArbitraryHTMLComp html={p.description} h1Level={3}/>
         </div>
+      }
       </div>
     )
   }

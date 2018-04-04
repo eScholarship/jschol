@@ -8,7 +8,7 @@ import PropTypes from 'prop-types'
 export default class ArbitraryHTMLComp extends React.Component
 {
   static propTypes = {
-    html: PropTypes.string.isRequired,
+    html: PropTypes.string,
     h1Level: PropTypes.number // defaults to 3
   }
 
@@ -24,12 +24,14 @@ export default class ArbitraryHTMLComp extends React.Component
 
   render() {
     let origText = this.props.html
-    let h1Level = this.props.h1Level ? this.props.h1Level : 3
-    let fixedText = origText.replace(/(<\/?[hH])([1-9]+)/g, 
-                      (m, p1, p2) => p1 + (parseInt(p2) + h1Level - 1))
-    // Kludge for opening deposit wizard modal 
-    let fixedText2 = fixedText.replace(/<a href=\"http:\/\/open-deposit-wizard\.com\">/g, 
-      '<a href="" onClick="openDepositWiz(event);">')
-    return <div className="c-clientmarkup" dangerouslySetInnerHTML={{__html: fixedText2}}/>
+    if (origText) {
+      let h1Level = this.props.h1Level ? this.props.h1Level : 3
+      let fixedText = origText.replace(/(<\/?[hH])([1-9]+)/g, 
+                        (m, p1, p2) => p1 + (parseInt(p2) + h1Level - 1))
+      // Kludge for opening deposit wizard modal 
+      let fixedText2 = fixedText.replace(/<a href=\"http:\/\/open-deposit-wizard\.com\">/g, 
+        '<a href="" onClick="openDepositWiz(event);">')
+      return <div className="c-clientmarkup" dangerouslySetInnerHTML={{__html: fixedText2}}/>
+    } else { return null }
   }
 }

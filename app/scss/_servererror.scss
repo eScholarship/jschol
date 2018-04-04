@@ -39,11 +39,11 @@ $servererror-element-width: 18.8em;
   margin-bottom: $spacing-lg;
 
   label {
-    @extend %hide;
+    @extend %u-hide;
   }
 
   input[type='search'] {
-    @extend %interactive-element-size;
+    @extend %u-interactive-element-size;
     flex: 1 1 auto;
     padding: 0 $spacing-sm;
     border: 1px solid $color-light-gray;

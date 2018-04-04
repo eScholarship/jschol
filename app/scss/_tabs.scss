@@ -2,12 +2,13 @@
 
 $tab-height: $element-height;
 
+/* in HTML but not styled:
 .c-tabs {
-  // not used
 }
+*/
 
 %c-tabs__buttons {
-  @extend %interactive-element-size;
+  @extend %u-interactive-element-size;
   padding: 5px $spacing-sm;
   border: none;
   background-color: $color-light-gray;
