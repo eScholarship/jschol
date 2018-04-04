@@ -1280,6 +1280,7 @@ def parseUCIngest(itemID, inMeta, fileType)
   attrs[:language] = inMeta.text_at("./context/language")
   attrs[:local_ids] = inMeta.xpath("./context/localID").map { |el| { type: el[:type], id: el.text } }
   attrs[:orig_citation] = inMeta.text_at("./originalCitation")
+  attrs[:pub_status] = inMeta[:pubStatus]
   attrs[:pub_web_loc] = inMeta.xpath("./context/publishedWebLocation").map { |el| el.text.strip }
   attrs[:publisher] = inMeta.text_at("./publisher")
   attrs[:suppress_content] = shouldSuppressContent(itemID, inMeta)
