@@ -267,6 +267,12 @@ class UnitStats_Summary extends React.Component {
                 <Link to={`/uc/${this.props.params.unitID}/stats/avg_by_category`}>Category</Link>}
             </li>
           }
+          {this.props.params.unitID == "root" &&
+            <li>
+              Other:
+              <Link to={`/uc/${this.props.params.unitID}/stats/accountability`}>Accountability Report</Link>
+            </li>
+          }
         </ul>
         <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.params)}/>
       </div>
@@ -599,6 +605,45 @@ class UnitStats_DepositsByCategory extends React.Component {
                     <td key="total">{formatNum(cd.total_deposits)}</td>}
                   {data.report_months.map(ym =>
                     <td key={ym}>{formatNum(cd.by_month[ym] > 0 ? cd.by_month[ym] : null)}</td>
+                  )}
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.params)}/>
+      </div>
+    )
+  }
+}
+
+class UnitStats_Accountability extends React.Component {
+  render() {
+    let data = this.props.data
+    return(
+      <div className="c-statsReport">
+        <StatsHeader title="Accountability Report" {...this.props}/>
+        <StatsForm location={this.props.location} data={data}/>
+        <div className="c-datatable">
+          <table ref={el => this.table=el}>
+            <thead>
+              <tr>
+                <th scope="col" key="id">Category</th>
+                {data.report_years.length > 1 &&
+                  <th scope="col" key="total">Total deposits</th>}
+                {data.report_years.map(yr =>
+                  <th scope="col" key={yr}>{yr}</th>
+                )}
+              </tr>
+            </thead>
+            <tbody>
+              {_.map(data.report_data, cd =>
+                <tr key={cd.category}>
+                  <th scope="row" key="id">{mungeCategory(cd.category)}</th>
+                  {data.report_years.length > 1 &&
+                    <td key="total">{formatNum(cd.total_deposits)}</td>}
+                  {data.report_years.map(yr =>
+                    <td key={yr}>{formatNum(cd.by_year[yr] > 0 ? cd.by_year[yr] : null)}</td>
                   )}
                 </tr>
               )}
@@ -969,6 +1014,8 @@ export class UnitStatsPage extends PageBase
       return <UnitStats_AvgByUnit data={data} {...this.props}/>
     else if (pageName == "avg_by_category")
       return <UnitStats_AvgByCategory data={data} {...this.props}/>
+    else if (pageName == "accountability")
+      return <UnitStats_Accountability data={data} {...this.props}/>
   }
 }
 
