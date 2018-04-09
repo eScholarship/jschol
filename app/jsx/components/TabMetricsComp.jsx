@@ -14,7 +14,7 @@ class TotalUsage extends React.Component {
     let hitsTotal = Utils.sumValueTotals(this.props.usage, "hits"),
         hitsTotal_str = hitsTotal.toLocaleString(),
         hitsAvg = this.props.usage.length > 0 ? Math.round(hitsTotal / this.props.usage.length).toLocaleString() : 0,
-        downloadsTotal = this.getTotal(this.props.usage, "downloads"),
+        downloadsTotal = Utils.sumValueTotals(this.props.usage, "downloads"),
         downloadsTotal_str = downloadsTotal.toLocaleString(),
         downloadsAvg = this.props.usage.length > 0 ? Math.round(downloadsTotal / this.props.usage.length).toLocaleString() : 0
     return (
@@ -149,7 +149,6 @@ class TabMetricsComp extends React.Component {
   }
 
   render() {
-    console.log(this.props.usage)
     return (
       <div className="c-tabcontent">
         <h1 className="c-tabcontent__main-heading" tabIndex="-1">Metrics</h1>

@@ -1,13 +1,17 @@
-// utils.jsx
+// ##### Utilities Component ##### //
+// A collection of methods shared across components 
 
 export default class {
 
-  /* Takes an array of hashes containing integer values */
-  /* Returns sum                                        */
-  static sumValueTotals(rows, v) {
+  /**
+   * Takes an array of hashes containing integer values
+   * i.e.  [{type: "pdf", count: 3}, {type: image, count: 2}]
+   * Returns sum total from specified value, i.e. count
+   */
+  static sumValueTotals(rows, value) {
     if (rows.length == 0) return 0
     return rows.reduce(function (a, b) {
-      return b[v] == null ? a : (a + b[v])
+      return b[value] == null ? a : (a + b[value])
     }, 0)
   }
 
