@@ -6,20 +6,12 @@
 //    {month: '2016-03', hits: 2221, downloads: 29} ... ]
 
 import React from 'react'
+import Utils from '../utils.jsx'
 import PropTypes from 'prop-types'
 
 class TotalUsage extends React.Component {
-
-  getTotal = (rows, v) => {
-    if (rows.length == 0) return 0
-    return rows.reduce(function (a, b) {
-      return b[v] == null ? a : (a + b[v])
-    }, 0)
-  }
-
-
   render() {
-    let hitsTotal = this.getTotal(this.props.usage, "hits"),
+    let hitsTotal = Utils.sumValueTotals(this.props.usage, "hits"),
         hitsTotal_str = hitsTotal.toLocaleString(),
         hitsAvg = this.props.usage.length > 0 ? Math.round(hitsTotal / this.props.usage.length).toLocaleString() : 0,
         downloadsTotal = this.getTotal(this.props.usage, "downloads"),
@@ -157,6 +149,7 @@ class TabMetricsComp extends React.Component {
   }
 
   render() {
+    console.log(this.props.usage)
     return (
       <div className="c-tabcontent">
         <h1 className="c-tabcontent__main-heading" tabIndex="-1">Metrics</h1>
