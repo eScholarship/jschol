@@ -90,9 +90,13 @@ class ItemPage extends PageBase {
     let currentTab = tab_anchors.includes(this.state.currentTab) ? this.state.currentTab : "main" 
     let d = data
     let a = d.attrs
-    let meta_authors = a.author_hide ? null : d.authors.slice(0, 85).map(function(author, i) {
+    let meta_authors = a.author_hide ? null : d.authors.slice(0, 85).map((author, i) => {
       return <meta key={i} id={"meta-author"+i} name="citation_author" content={author.name}/>
      })
+    let descr_authors = a.author_hide ? "" : (d.authors.length > 0) ? "Author(s): " + d.authors.slice(0, 85).map((author) => { return author.name }).join('; ') : ""
+    let descr_editors = d.editors ? "Editor(s): " + d.editors.slice(0, 85).map((editor) => { return editor.name }).join('; ') : ""
+    let descr_advisors = d.advisors ? "Advisor(s): " + d.advisors.slice(0, 85).map((advisor) => { return advisor.name }).join('; ') : ""
+    let contribs = [descr_authors, descr_editors, descr_advisors].filter(e => e !== '').join(' | ')
     let [issn, volume, issue, firstpage, lastpage] = [null, null, null, null, null]
     if (a['ext_journal']) {
       let extj = a['ext_journal']
@@ -111,7 +115,7 @@ class ItemPage extends PageBase {
     d.unit && this.extGA(d.unit.id)  // Google Analytics for external trackers called from PageBase
     return (
       <div>
-        <MetaTagsComp title={d.title} descrip={a.abstract}>
+        <MetaTagsComp title={d.title} contribs={contribs} abstract={a.abstract}>
           {meta_authors}
         {d.published &&
           <meta id="meta-publication_date" name="citation_publication_date" content={d.published} /> }
@@ -154,6 +158,8 @@ class ItemPage extends PageBase {
             <AuthorListComp pubdate={d.published}
                             author_hide={a.author_hide}
                             authors={d.authors}
+                            editors={d.editors}
+                            advisors={d.advisors}
                             changeTab={this.changeTab} />
           {(a.doi || a.pub_web_loc || d.rights || d.attrs.data_avail_stmnt || !d.content_type) &&
             <PubInfoComp doi={a.doi}
