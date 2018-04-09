@@ -127,7 +127,7 @@ class UnitProfileLayout extends React.Component {
                        <select name="status" defaultValue={data.status}>
                          <option value="active">Active</option>
                          <option value="hidden">Hidden</option>
-                         <option value="moribund">Archived</option>
+                         <option value="archived">Archived</option>
                        </select>
                        <br/><br/>
                        <label className="c-editable-page__label" htmlFor="directSubmit">Direct submit: </label>
