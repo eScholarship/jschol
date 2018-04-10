@@ -102,7 +102,7 @@ end
 ###################################################################################################
 def processBounce(email, bounceDate, bounceKind)
 
-  if bounceKind == "permanent"
+  if bounceKind == "permanent" || bounceKind == "complaint"
 
     # Permanent on a date replaces temporary on that same date
     Bounce.where(email: email, date: bounceDate, kind: "temporary").delete
@@ -127,9 +127,11 @@ def processBounce(email, bounceDate, bounceKind)
   # If we need to mark them as bouncing, there's work to do.
   if needMark
 
-    # We got a permanent bounce, or two bounces within 90 days of today; mark the user as 'bouncing'
-    if bounceKind == "permanent"
-      STDERR.puts "Email #{email} got permanent bounce; will mark."
+    # We got a complaint or permanent bounce, or two bounces within 90 days of today; mark the user as 'bouncing'
+    if bounceKind == "complaint"
+      STDERR.puts "Email #{email} complained on #{bounceDate}; will mark."
+    elsif bounceKind == "permanent"
+      STDERR.puts "Email #{email} got permanent bounce on #{bounceDate}; will mark."
     else
       STDERR.puts "Email #{email} bounced twice (#{prev.date} and #{bounceDate}); will mark."
     end
@@ -170,17 +172,23 @@ def processBounces
   STDERR.puts "Processing SES bounces."
   Dir.glob("./awsLogs/ses-logs/**/*").sort.each { |fn|
     next unless File.file?(fn)
-    fn =~ %r{Bounce/(\d\d\d\d)-(\d\d)-(\d\d)} or raise("Warning: unexpected SES file #{fn}")
-    bounceDate = Date.new($1.to_i, $2.to_i, $3.to_i)
+    fn =~ %r{(Bounce|Complaint)/(\d\d\d\d)-(\d\d)-(\d\d)} or raise("Warning: unexpected SES file #{fn}")
+    bounceDate = Date.new($2.to_i, $3.to_i, $4.to_i)
 
     stuff = JSON.parse(File.read(fn))
-    bounceKind = stuff.dig('bounce', 'bounceKind') || stuff.dig('bounce', 'bounceType') or
-      raise("Can't find bounceKind in #{fn}")
-    %w{Permanent Transient Undetermined}.include?(bounceKind) or raise("Unrecognized bounceKind #{bounceKind.inspect}")
-    next if bounceKind == "Undetermined" # not sure what these are, but they're hard to process
-    bounceKind.downcase!
+    if fn =~ /Complaint/
+      bounceKind = "complaint"
+      recips = stuff.dig('complaint', 'complainedRecipients') or raise("Can't parse complaint in #{fn}")
+    else
+      bounceKind = stuff.dig('bounce', 'bounceKind') || stuff.dig('bounce', 'bounceType') or
+        raise("Can't find bounceKind in #{fn}")
+      %w{Permanent Transient Undetermined}.include?(bounceKind) or raise("Unrecognized bounceKind #{bounceKind.inspect}")
+      next if bounceKind == "Undetermined" # not sure what these are, but they're hard to process
+      bounceKind.downcase!
+      bounceKind == "transient" and bounceKind = "temporary"
+      recips = stuff.dig('bounce', 'bouncedRecipients') or raise("Can't parse bounce in #{fn}")
+    end
 
-    recips = stuff.dig('bounce', 'bouncedRecipients') or raise("Can't parse bounce in #{fn}")
     recips.each { |recip|
       email = recip['emailAddress'] or raise("Can't parse bounce in #{fn}")
       email = email.strip.downcase

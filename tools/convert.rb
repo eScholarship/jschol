@@ -39,6 +39,7 @@ require 'rack'
 require 'sanitize'
 require 'sequel'
 require 'time'
+require 'unindent'
 require_relative '../util/nailgun.rb'
 require_relative '../util/normalize.rb'
 require_relative '../util/sanitize.rb'
@@ -73,7 +74,7 @@ DB = Sequel.connect({
 $dbMutex = Mutex.new
 
 # Log SQL statements, to aid debugging
-#File.exists?('convert.sql_log') and File.delete('convert.sql_log')
+File.exists?('convert.sql_log') and File.delete('convert.sql_log')
 #DB.loggers << Logger.new('convert.sql_log')
 
 # The old eschol queue database, from which we can get a list of indexable ARKs
@@ -173,6 +174,12 @@ $discTbl = {"1540" => "Life Sciences",
             "3579" => "Education"}
 
 $issueRightsCache = {}
+
+$oaPolicyDate = { lbnl:    "2015-10-01",
+                  ucsf:    "2012-05-21",
+                  ucop:    nil,  # not included for now; maybe will be: 2015-10-23
+                  anrcs:   nil,  # not included for now
+                  default: "2013-07-24" }
 
 ###################################################################################################
 # Configure EZID API for minting arks for people
@@ -846,6 +853,7 @@ end
 ###################################################################################################
 # Given a list of units, figure out which campus(es), department(s), and journal(s) are responsible.
 def traceUnits(units)
+  firstCampus = nil
   campuses    = Set.new
   departments = Set.new
   journals    = Set.new
@@ -864,6 +872,7 @@ def traceUnits(units)
       if unit.type == "journal"
         journals << unitID
       elsif unit.type == "campus"
+        firstCampus ||= unitID
         campuses << unitID
       elsif unit.type == "oru"
         departments << unitID
@@ -874,7 +883,7 @@ def traceUnits(units)
     end
   end
 
-  return [campuses.to_a, departments.to_a, journals.to_a, series.to_a]
+  return [firstCampus, campuses.to_a, departments.to_a, journals.to_a, series.to_a]
 end
 
 ###################################################################################################
@@ -1557,11 +1566,55 @@ end
 
 ###################################################################################################
 def addIdxUnits(idxItem, units)
-  campuses, departments, journals, series = traceUnits(units)
+  firstCampus, campuses, departments, journals, series = traceUnits(units)
   campuses.empty?    or idxItem[:fields][:campuses] = campuses
   departments.empty? or idxItem[:fields][:departments] = departments
   journals.empty?    or idxItem[:fields][:journals] = journals
   series.empty?      or idxItem[:fields][:series] = series
+  return firstCampus
+end
+
+###################################################################################################
+def oaPolicyAssoc(campus, units, dbItem, pubStatus)
+  campus or return nil
+  policyDate = $oaPolicyDate.key?(campus.to_sym) ? $oaPolicyDate[campus.to_sym] : $oaPolicyDate[:default]
+
+  #old
+  # To try and match old 2017 Accountability Report numbers, filter out items submitted since then
+  #isCovered = dbItem[:submitted].iso8601 <= "2017-04-28" &&
+  #            !policyDate.nil? &&
+  #            ['externalAccept', 'externalPub'].include?(pubStatus) &&
+  #            ['article', 'multimedia', 'chapter', 'non-textual'].include?(dbItem[:genre]) &&
+  #            dbItem[:published].iso8601.sub(/-01-01$/, '-12-31') >= policyDate
+
+  #new-ish
+  #isCovered = dbItem[:submitted].iso8601 <= "2017-04-28" &&
+  #            !policyDate.nil? &&
+  #            (campus == 'lbnl' || units.include?("#{campus}_postprints")) &&
+  #            %w{published withdrawn embargoed}.include?(dbItem[:status]) &&
+  #            [nil, 'externalAccept', 'externalPub'].include?(pubStatus) &&
+  #            %w{article chapter}.include?(dbItem[:genre]) &&
+  #            dbItem[:published].iso8601.sub(/-01-01$/, '-12-31') >= policyDate &&
+  #            dbItem[:submitted].iso8601 >= policyDate
+
+  # Current
+  isCovered = !policyDate.nil? &&
+              (campus == 'lbnl' || units.include?("#{campus}_postprints")) &&
+              %w{published}.include?(dbItem[:status]) &&
+              [nil, 'externalAccept', 'externalPub'].include?(pubStatus) &&
+              ['article', 'chapter'].include?(dbItem[:genre]) &&
+              dbItem[:published].iso8601.sub(/-01-01$/, '-12-31') >= policyDate &&
+              dbItem[:submitted].iso8601 >= policyDate
+
+  if $testMode
+    puts "id=#{dbItem[:id]} published=#{dbItem[:published].iso8601} submitted=#{dbItem[:submitted].iso8601} campus=#{campus} policyDate=#{policyDate} status=#{dbItem[:status]} source=#{dbItem[:source]} pubstatus=#{pubStatus} isCovered=#{isCovered}"
+    puts "1=#{dbItem[:submitted].iso8601 <= "2017-04-28"}"
+    puts "2=#{!policyDate.nil?}"
+    puts "3=#{['externalAccept', 'externalPub'].include?(pubStatus)}"
+    puts "4=#{dbItem[:genre] == "article"}"
+    puts "5=#{dbItem[:published].iso8601.sub(/-01-01$/, '-12-31') >= policyDate}"
+  end
+  return isCovered ? campus : nil
 end
 
 ###################################################################################################
@@ -1625,7 +1678,10 @@ def indexItem(itemID, timestamp, batch, nailgun)
   }
 
   # Determine campus(es), department(s), and journal(s) by tracing the unit connnections.
-  addIdxUnits(idxItem, units)
+  firstCampus = addIdxUnits(idxItem, units)
+
+  # Use the first campus and various other attributes to make an OA policy association
+  dbItem[:oa_policy] = oaPolicyAssoc(firstCampus, units, dbItem, attrs[:pub_status])
 
   # Summary of supplemental file types
   suppSummaryTypes.empty? or idxItem[:fields][:supp_file_types] = suppSummaryTypes.to_a
@@ -2629,6 +2685,36 @@ def convertRedirects
 end
 
 ###################################################################################################
+def recalcOA
+  puts "Reading units and item links."
+  cacheAllUnits
+  itemUnits = Hash.new { |h,k| h[k] = [] }
+  UnitItem.where(is_direct: 1).order(:ordering_of_units).each { |link|
+    itemUnits[link.item_id] << link.unit_id
+  }
+  puts "Processing items."
+  toUpdate = []
+  Item.each { |item|
+    units = itemUnits[item.id]
+    units or next
+    firstCampus, campuses, departments, journals, series = traceUnits(units)
+    firstCampus or next
+    attrs = item.attrs.nil? ? {} : JSON.parse(item.attrs)
+    newPol = oaPolicyAssoc(firstCampus, units, item, attrs['pub_status'])
+    if !(newPol == item.oa_policy)
+      puts "item=#{item.id} submitted=#{item.submitted} oa_policy: #{item.oa_policy.inspect} -> #{newPol.inspect}"
+      toUpdate << [item.id, newPol]
+    end
+  }
+  puts "Updating #{toUpdate.length} item records."
+  DB.transaction {
+    toUpdate.each { |itemID, newPol|
+      Item.where(id: itemID).update(oa_policy: newPol)
+    }
+  }
+end
+
+###################################################################################################
 # Main action begins here
 
 startTime = Time.now
@@ -2661,6 +2747,8 @@ begin
       splashAllPDFs(arks.empty? ? "ALL" : Set.new(arks))
     when "--redirects"
       convertRedirects
+    when "--oa"
+      recalcOA
     else
       STDERR.puts "Usage: #{__FILE__} --units|--items"
       exit 1

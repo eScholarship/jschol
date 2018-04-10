@@ -1,4 +1,6 @@
 // ##### Media List Component ##### //
+// Takes an array of hashes listing file types and counts of each:
+// [{type: "pdf", count: 1}, {type: "image", count: 3}, etc
 
 import React from 'react'
 
