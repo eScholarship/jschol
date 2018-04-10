@@ -1575,23 +1575,46 @@ def addIdxUnits(idxItem, units)
 end
 
 ###################################################################################################
-def oaPolicyAssoc(campus, units, dbItem, attrs)
+def oaPolicyAssoc(campus, units, dbItem, pubStatus)
+  campus or return nil
   policyDate = $oaPolicyDate.key?(campus.to_sym) ? $oaPolicyDate[campus.to_sym] : $oaPolicyDate[:default]
+
+  #old
+  # To try and match old 2017 Accountability Report numbers, filter out items submitted since then
+  #isCovered = dbItem[:submitted].iso8601 <= "2017-04-28" &&
+  #            !policyDate.nil? &&
+  #            ['externalAccept', 'externalPub'].include?(pubStatus) &&
+  #            ['article', 'multimedia', 'chapter', 'non-textual'].include?(dbItem[:genre]) &&
+  #            dbItem[:published].iso8601.sub(/-01-01$/, '-12-31') >= policyDate
+
+  #new-ish
+  #isCovered = dbItem[:submitted].iso8601 <= "2017-04-28" &&
+  #            !policyDate.nil? &&
+  #            (campus == 'lbnl' || units.include?("#{campus}_postprints")) &&
+  #            %w{published withdrawn embargoed}.include?(dbItem[:status]) &&
+  #            [nil, 'externalAccept', 'externalPub'].include?(pubStatus) &&
+  #            %w{article chapter}.include?(dbItem[:genre]) &&
+  #            dbItem[:published].iso8601.sub(/-01-01$/, '-12-31') >= policyDate &&
+  #            dbItem[:submitted].iso8601 >= policyDate
+
+  # Current
+  isCovered = !policyDate.nil? &&
+              (campus == 'lbnl' || units.include?("#{campus}_postprints")) &&
+              %w{published}.include?(dbItem[:status]) &&
+              [nil, 'externalAccept', 'externalPub'].include?(pubStatus) &&
+              ['article', 'chapter'].include?(dbItem[:genre]) &&
+              dbItem[:published].iso8601.sub(/-01-01$/, '-12-31') >= policyDate &&
+              dbItem[:submitted].iso8601 >= policyDate
+
   if $testMode
-    puts "campus=#{campus} policyDate=#{policyDate} status=#{dbItem[:status]} source=#{dbItem[:source]} pubstatus=#{attrs[:pubStatus]}"
-    puts "1=#{!policyDate.nil?}"
-    puts "2=#{(campus == 'lbnl' || units.include?("#{campus}_postprints"))}"
-    puts "3=#{%w{published withdrawn embargoed}.include?(dbItem[:status])}"
-    puts "4=#{[nil, 'externalAccept', 'externalPub'].include?(attrs[:pubStatus])}"
+    puts "id=#{dbItem[:id]} published=#{dbItem[:published].iso8601} submitted=#{dbItem[:submitted].iso8601} campus=#{campus} policyDate=#{policyDate} status=#{dbItem[:status]} source=#{dbItem[:source]} pubstatus=#{pubStatus} isCovered=#{isCovered}"
+    puts "1=#{dbItem[:submitted].iso8601 <= "2017-04-28"}"
+    puts "2=#{!policyDate.nil?}"
+    puts "3=#{['externalAccept', 'externalPub'].include?(pubStatus)}"
+    puts "4=#{dbItem[:genre] == "article"}"
     puts "5=#{dbItem[:published].iso8601.sub(/-01-01$/, '-12-31') >= policyDate}"
-    puts "6=#{dbItem[:submitted].iso8601 >= policyDate}"
   end
-  return (!policyDate.nil? &&
-          (campus == 'lbnl' || units.include?("#{campus}_postprints")) &&
-          %w{published withdrawn embargoed}.include?(dbItem[:status]) &&
-          [nil, 'externalAccept', 'externalPub'].include?(attrs[:pubStatus]) &&
-          dbItem[:published].iso8601.sub(/-01-01$/, '-12-31') >= policyDate &&
-          dbItem[:submitted].iso8601 >= policyDate) ? campus : nil
+  return isCovered ? campus : nil
 end
 
 ###################################################################################################
@@ -1658,7 +1681,7 @@ def indexItem(itemID, timestamp, batch, nailgun)
   firstCampus = addIdxUnits(idxItem, units)
 
   # Use the first campus and various other attributes to make an OA policy association
-  dbItem[:oa_policy] = oaPolicyAssoc(firstCampus, units, dbItem, attrs)
+  dbItem[:oa_policy] = oaPolicyAssoc(firstCampus, units, dbItem, attrs[:pub_status])
 
   # Summary of supplemental file types
   suppSummaryTypes.empty? or idxItem[:fields][:supp_file_types] = suppSummaryTypes.to_a
@@ -2663,9 +2686,8 @@ end
 
 ###################################################################################################
 def recalcOA
-  puts "Reading units."
+  puts "Reading units and item links."
   cacheAllUnits
-  puts "Reading item links."
   itemUnits = Hash.new { |h,k| h[k] = [] }
   UnitItem.where(is_direct: 1).order(:ordering_of_units).each { |link|
     itemUnits[link.item_id] << link.unit_id
@@ -2678,7 +2700,7 @@ def recalcOA
     firstCampus, campuses, departments, journals, series = traceUnits(units)
     firstCampus or next
     attrs = item.attrs.nil? ? {} : JSON.parse(item.attrs)
-    newPol = oaPolicyAssoc(firstCampus, units, item, attrs)
+    newPol = oaPolicyAssoc(firstCampus, units, item, attrs['pub_status'])
     if !(newPol == item.oa_policy)
       puts "item=#{item.id} submitted=#{item.submitted} oa_policy: #{item.oa_policy.inspect} -> #{newPol.inspect}"
       toUpdate << [item.id, newPol]
@@ -2687,7 +2709,7 @@ def recalcOA
   puts "Updating #{toUpdate.length} item records."
   DB.transaction {
     toUpdate.each { |itemID, newPol|
-      Items.where(id: itemID).update(oa_policy: newPol)
+      Item.where(id: itemID).update(oa_policy: newPol)
     }
   }
 end
