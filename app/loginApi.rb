@@ -125,8 +125,6 @@ def getUserPermissions(username, sessionID, unitID)
   # Check for permissions
   if OJS_DB[:user_settings].where(user_id: userID, setting_name: 'eschol_superuser').first
     return { admin: true, super: true }
-  elsif unit.type.include?("series")
-    return {}  # disallow all actions on series until we get clone-fork in place
   elsif OJS_DB[:eschol_roles].where(user_id: userID, role: 'admin', unit_id: unitID).first
     return { admin: true }
   else
