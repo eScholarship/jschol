@@ -199,7 +199,7 @@ class PubYear extends React.Component {
       <div className="c-pubyear">
         <div className="c-pubyear__field">
           <label htmlFor="c-pubyear__textfield1">From:</label>
-          <input id="c-pubyear__textfield1" name="pub_year_start" type="text" maxLength="4" placeholder={year}
+          <input id="c-pubyear__textfield1" name="pub_year_start" type="text" maxLength="4" placeholder="1900"
             defaultValue={this.state.pub_year_start} ref={(input) => { this.pub_year_start = input }}
             onKeyPress={this.handleKeyPress} />
         </div>
