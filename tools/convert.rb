@@ -1835,6 +1835,9 @@ def indexAllItems
           puts "Error indexing item #{itemID}"
           raise
         end
+
+        # To avoid Saxon's Java process from growing gigantic, restart it once in a while.
+        nailgun.callCount == 1000 and nailgun.restart
       end
     }
 
