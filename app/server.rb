@@ -995,28 +995,6 @@ get "/api/item/:shortArk" do |shortArk|
 end
 
 ###################################################################################################
-# Item Metrics 
-get "/api/item/metrics" do |shortArk|
-  content_type :json
-  id = "qt"+shortArk
-  item = Item[id]
-  # ItemCounts 
-
-  # Example python code from EZID:
-  # all_months = _computeMonths(table)
-  # if len(all_months) > 0:
-  #  d["totals"] = _computeTotals(table)
-  #  month_earliest = table[0][0]
-  #  month_latest = "%s-%s" % (datetime.now().year, datetime.now().month)
-  #  d['months_all'] = [m[0] for m in table]
-  #  default_table = table[-12:]
-  #  d["month_from"] = REQUEST["month_from"] if "month_from" in REQUEST else default_table[0][0]
-  #  d["month_to"] = REQUEST["month_to"] if "month_to" in REQUEST else default_table[-1][0]
-  #  d["totals_by_month"] = _computeMonths(_getScopedRange(table, d['month_from'], d['month_to']))
-  return {} 
-end
-
-###################################################################################################
 # Search page data
 get "/api/search/" do
   content_type :json
@@ -1028,6 +1006,11 @@ get "/api/search/" do
                'campuses', 'departments', 'journals', 'disciplines', 'rights']
   params = CGI::parse(request.query_string)
   searchType = params["searchType"][0]
+  # If only param is q and it's empty, return all results (all type of work)
+  if params.length == 1 and params["q"] and params["q"][0] and params["q"][0].gsub(/\s+/, "").empty?
+    params.delete("q")
+    params["type_of_work"] = TYPE_OF_WORK.keys
+  end
   # Perform global search when searchType is assigned 'eScholarship'
   # otherwise: 'searchType' will be assigned the unit ID - and then 'searchUnitType' specifies type of unit.
   if searchType and searchType != "eScholarship"

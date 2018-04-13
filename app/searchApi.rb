@@ -38,7 +38,7 @@ def initAllFacets()
   },
   'type_of_work' => {
     'displayName' => 'Type of Work',
-    'awsFacetParam' => {buckets: ['article', 'monograph', 'dissertation', 'multimedia']},
+    'awsFacetParam' => {buckets: TYPE_OF_WORK.keys},
     'filterTransform' => lambda { |filterVals| filterVals.map { |filterVal| {'value' => filterVal, 'displayName' => TYPE_OF_WORK[filterVal]} } },
     'facetTransform' => lambda { |facetVals| facetVals.map { |facetVal| {'value' => facetVal['value'], 'count' => facetVal['count'], 'displayName' => TYPE_OF_WORK[facetVal['value']]} } }
   },
