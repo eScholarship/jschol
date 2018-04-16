@@ -9,7 +9,7 @@ export default class MetaTagsComp extends React.Component
 {
   static propTypes = {
     title: PropTypes.string.isRequired,
-    contribs: PropTypes.string.isRequired,
+    contribs: PropTypes.string,
     abstract: PropTypes.string
   }
 
