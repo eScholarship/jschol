@@ -80,7 +80,8 @@ class UnitProfileLayout extends React.Component {
       <Subscriber channel="cms">
       { cms => {
          let disableEdit = !(cms.permissions && cms.permissions.super)
-         let disableLogo = this.props.unit.type == "campus" && disableEdit
+         let disableLogo = (this.props.unit.type.indexOf("series") >= 0) ||
+                           (this.props.unit.type == "campus" && disableEdit)
          return (
          <div>
            <h3>Unit Configuration</h3>
