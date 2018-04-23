@@ -514,7 +514,10 @@ get %r{.*} do
     pass
   elsif request.path_info =~ %r{/stats($|/)}
     # Don't do iso on stats reports
-    generalResponse(false)
+    resp = generalResponse(false)
+
+    # Prevent stats pages from getting into Google/Bing/etc.
+    resp.sub!('<metaTags></metaTags>', '<metaTags><meta name="robots" content="noindex"></metaTags>')
   else
     generalResponse
   end
