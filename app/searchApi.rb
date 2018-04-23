@@ -199,7 +199,7 @@ def get_query_display(params)
   end
 
   display_params = {
-    'q' => params['q'] ? params['q'].join(" ") : '',
+    'q' => isQueryEmpty(params) ? 'All items' : params['q'] ? params['q'].join(" ") : '',
     'sort' => params.dig('sort', 0) ? params['sort'][0] : 'rel',
     'rows' => params.dig('rows', 0) ? params['rows'][0] : '10',
     'info_start' => params.dig('info_start', 0) ? params['info_start'][0] : '0',
@@ -275,6 +275,10 @@ def normalizeResponse(response)
   end
 end
 
+def isQueryEmpty(params)
+  return params.empty? || (params && !(params.keys.include?("q"))) || (params["q"] && params["q"][0] && params["q"][0].gsub(/\s+/, "").empty?)
+end
+
 # Get search results for 'items' or 'infopages'. 'Infopages' means the units and pages
 #   (and freshdesk, when it's added) indexed in CloudSearch
 #
@@ -298,6 +302,7 @@ end
 #  "info_count"=>12,        <-- different
 #  "infoResults"=> ...      <-- different
 def searchByType(params, facetTypes=$allFacets.keys, search_type)
+  params.delete("q") if isQueryEmpty(params)
   aws_params = aws_encode(params, facetTypes, search_type)
   response = normalizeResponse($csClient.search(return: '_no_fields', **aws_params))
 

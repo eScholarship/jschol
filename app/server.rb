@@ -1006,11 +1006,6 @@ get "/api/search/" do
                'campuses', 'departments', 'journals', 'disciplines', 'rights']
   params = CGI::parse(request.query_string)
   searchType = params["searchType"][0]
-  # If only param is q and it's empty, return all results (all type of work)
-  if params.length == 1 and params["q"] and params["q"][0] and params["q"][0].gsub(/\s+/, "").empty?
-    params.delete("q")
-    params["type_of_work"] = TYPE_OF_WORK.keys
-  end
   # Perform global search when searchType is assigned 'eScholarship'
   # otherwise: 'searchType' will be assigned the unit ID - and then 'searchUnitType' specifies type of unit.
   if searchType and searchType != "eScholarship"
