@@ -631,15 +631,12 @@ class SearchPage extends PageBase {
           {(data.count > 2) &&
             <SortPaginationComp formName={formName} formButton={formButton} query={data.query} count={data.count}/>
           }
-            <div>
-            {(data.count != 0 ) ? 
-              data.searchResults.map(result =>
-                <ScholWorksComp h="h3" key={result.id} result={result} />)
-            :
-              <p><br/><br/>No results found.<br/><br/></p>
-            }
-            </div>
-            <p><br/></p>
+          {(data.count != 0 ) ? 
+            data.searchResults.map(result =>
+              <ScholWorksComp h="h3" key={result.id} result={result} />)
+          :
+            <div className="o-well-large">No results found.</div>
+          }
           {(data.count > data.query.rows) &&
             <PaginationComp formName={formName} formButton={formButton} query={data.query} count={data.count}/>
           }
