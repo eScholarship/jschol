@@ -9,7 +9,6 @@ import Header2Comp from '../components/Header2Comp.jsx'
 import SubheaderComp from '../components/SubheaderComp.jsx'
 import NavComp from '../components/NavComp.jsx'
 import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
-import WellComp from '../components/WellComp.jsx'
 import DescriptionListComp from '../components/DescriptionListComp.jsx'
 import ToggleListComp from '../components/ToggleListComp.jsx'
 import SidebarComp from '../components/SidebarComp.jsx'
@@ -145,7 +144,9 @@ class AllJournals extends React.Component {
       <header>
         <h2>Journals</h2>
       </header>
-      <WellComp />
+      <div className="o-well-colored">
+        Are you a UC-affiliated faculty member, researcher, or student interested in publishing a journal on eScholarship? <a href="https://help.escholarship.org/support/solutions/articles/9000127857-starting-a-new-journal-on-escholarship">Learn more about the journal proposal process</a>.
+      </div>
       <div className="o-input__inline">
         <div className="o-input__droplist1">
           <label className="o-input__label--hidden" htmlFor="o-input__droplist-label2">Campus</label>
@@ -179,7 +180,7 @@ class CampusUnits extends React.Component {
       <header>
         <h2>{this.props.pageTitle}</h2>
       </header>
-      <div className="c-well">
+      <div className="o-well-colored">
         Looking for an academic or research unit that's not listed? <a href="https://help.escholarship.org/support/solutions/articles/9000131086-request-a-new-unit">Learn how to add yours</a>.
       </div>
       <ToggleListComp depts={this.props.units} />

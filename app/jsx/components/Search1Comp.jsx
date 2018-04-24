@@ -31,7 +31,7 @@ class SearchComp1 extends React.Component {
         <input type="search" id="c-search1__field" name="q" className="c-search1__field" placeholder="Search for articles, books, theses, and more" defaultValue={q} />
         {filters}
         <button type="submit" className="c-search1__submit-button" aria-label="submit search"></button>
-        <button className="c-search1__search-close-button" aria-label="close search field" onClick = {()=>this.props.onClose()}></button>
+        <button type="button" className="c-search1__search-close-button" aria-label="close search field" onClick = {()=>this.props.onClose()}></button>
       </Form>
     )
   }
