@@ -71,7 +71,7 @@ class SearchComp2 extends React.Component {
                               searchUnitType={searchUnitType} />
             </div>
             <button type="submit" className="c-search2__submit-button" aria-label="search"></button>
-            <button className="c-search2__search-close-button" aria-label="close search field" onClick = {()=>this.props.onClose()}></button>
+            <button type="button" className="c-search2__search-close-button" aria-label="close search field" onClick = {()=>this.props.onClose()}></button>
           </div>
         </Form>
     )

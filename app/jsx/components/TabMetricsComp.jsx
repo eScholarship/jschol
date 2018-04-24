@@ -153,7 +153,7 @@ class TabMetricsComp extends React.Component {
       <div className="c-tabcontent">
         <h1 className="c-tabcontent__main-heading" tabIndex="-1">Metrics</h1>
       {!this.props.altmetrics_ok && (!this.props.usage || (this.props.usage && this.props.usage.length == 0)) ?
-        <div className="c-well">
+        <div className="o-well-colored">
           No usage data currently found for this item.
         </div>
       :
@@ -165,7 +165,7 @@ class TabMetricsComp extends React.Component {
           </div>
         :
           <div className="c-tabcontent__divide2x-child">
-            <div className="c-well">
+            <div className="o-well-colored">
               No usage data currently found for this item.
             </div>
           </div>

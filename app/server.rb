@@ -998,28 +998,6 @@ get "/api/item/:shortArk" do |shortArk|
 end
 
 ###################################################################################################
-# Item Metrics 
-get "/api/item/metrics" do |shortArk|
-  content_type :json
-  id = "qt"+shortArk
-  item = Item[id]
-  # ItemCounts 
-
-  # Example python code from EZID:
-  # all_months = _computeMonths(table)
-  # if len(all_months) > 0:
-  #  d["totals"] = _computeTotals(table)
-  #  month_earliest = table[0][0]
-  #  month_latest = "%s-%s" % (datetime.now().year, datetime.now().month)
-  #  d['months_all'] = [m[0] for m in table]
-  #  default_table = table[-12:]
-  #  d["month_from"] = REQUEST["month_from"] if "month_from" in REQUEST else default_table[0][0]
-  #  d["month_to"] = REQUEST["month_to"] if "month_to" in REQUEST else default_table[-1][0]
-  #  d["totals_by_month"] = _computeMonths(_getScopedRange(table, d['month_from'], d['month_to']))
-  return {} 
-end
-
-###################################################################################################
 # Search page data
 get "/api/search/" do
   content_type :json
