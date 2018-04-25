@@ -31,7 +31,7 @@ class NavComp extends React.Component {
     this.setState({isOpen: this.mq.matches})
   }
 
-  onNavClick = () => this.setState({submenuActive: null})
+  onNavClick = () => this.setState({submenuActive: null, isOpen: (this.mq.matches ? true : false)})
 
   getNavItemJSX(navItem) {
     if (navItem.type == "link")
