@@ -128,7 +128,11 @@ class PageBase extends React.Component
         if (this.pagePermissionsUnit() != this.state.permissionsUnit)
           this.fetchPermissions()
       }).fail((jqxhr, textStatus, err)=> {
-        this.setState({ pageData: { error: textStatus=="error" ? err : textStatus }, fetchingData: false })
+        let message = (jqxhr.responseJSON && jqxhr.responseJSON.message) ? jqxhr.responseJSON.message :
+                      (textStatus=="error" && err) ? err :
+                      textStatus ? textStatus :
+                      "error"
+        this.setState({ pageData: { error: message }, fetchingData: false })
       })
     }
     else {
@@ -236,7 +240,7 @@ class PageBase extends React.Component
 
   renderContent() {
     // Error case
-    if (this.state.pageData && this.state.pageData.error) {
+    if (this.state.pageData && this.state.pageData.error !== undefined) {
       return (
         <div className="body">
           {this.renderError()}
