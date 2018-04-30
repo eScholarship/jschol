@@ -105,28 +105,6 @@ $scholworks-tag-height: 1.4em;
 
 }
 
-.c-scholworks__thumbnail {
-  display: none;
-
-  @include bp(screen1) {
-    display: block;
-    flex: 0 0 auto;
-    align-self: flex-start;
-    margin-top: calc(#{$scholworks-tag-height} + #{$spacing-md});
-    margin-bottom: $spacing-sm;
-    margin-left: $spacing-md;
-    border: 1px solid $color-light-gray;
-    box-shadow: $box-shadow2;
-  }
-
-  img {
-    display: block;
-    width: 8em;
-    height: auto;
-  }
-
-}
-
 .c-scholworks__media {
   display: flex;
   flex-wrap: wrap;
@@ -137,4 +115,38 @@ $scholworks-tag-height: 1.4em;
     margin-left: auto;
   }
 
+}
+
+.c-scholworks__ancillary {
+  flex: 0 0 auto;
+  align-self: flex-start;
+  width: 9.4em;
+}
+
+.c-scholworks__thumbnail {
+  display: none;
+
+  @include bp(screen1) {
+    display: block;
+    margin-top: calc(#{$scholworks-tag-height} + #{$spacing-md});
+    margin-bottom: $spacing-sm;
+    margin-left: $spacing-md;
+    border: 1px solid $color-light-gray;
+    box-shadow: $box-shadow2;
+  }
+
+  img {
+    display: block;
+    width: 128px;
+    height: auto;
+  }
+
+}
+
+.c-scholworks__license {
+  display: block;
+
+  @include bp(screen1) {
+    margin-left: $spacing-md;    
+  }
 }

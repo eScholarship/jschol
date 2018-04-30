@@ -6,18 +6,22 @@
 
   > h1 {
     @extend %o-heading1;
+    margin-top: $spacing-md;
   }
 
   > h2 {
     @extend %o-heading2;
+    margin-top: $spacing-md;
   }
 
   > h3 {
     @extend %o-heading3;
+    margin-top: $spacing-md;
   }
 
   > h4 {
     @extend %o-heading4;
+    margin-top: $spacing-md;
   }
 
   // ***** Links ***** //
@@ -61,3 +65,4 @@
   }
 
 }
+

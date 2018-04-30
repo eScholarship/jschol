@@ -780,7 +780,7 @@ Lots of stuff modified.
 
 
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
->>> 76aac26ab3b1a15b3a52c99f0bd80a6f055b134f, 2018-04-16.       <<<
+>>> 76aac26ab3b1a15b3a52c99f0bd80a6f055b134f, 2018-04-16        <<<
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
   deleted:    app/jsx/components/WellComp.jsx
@@ -791,5 +791,15 @@ Lots of stuff modified.
   modified:   app/scss/_variables.scss
   modified:   app/scss/_well.scss
   modified:   app/scss/main.scss
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> e08364e1b02ac7a9127b0bdbb7eee503ba4b322e, 2018-04-30        <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+  modified:   app/jsx/components/ScholWorksComp.jsx
+  modified:   app/scss/_clientmarkup.scss
+  modified:   app/scss/_heading.scss
+  modified:   app/scss/_marquee.scss
+  modified:   app/scss/_scholworks.scss
 
 
