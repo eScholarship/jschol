@@ -324,6 +324,12 @@ get %r{/uc/oai(.*)} do
 end
 
 ###################################################################################################
+get %r{/graphql(.*)} do
+  request.url =~ %r{/graphql(.*)}
+  proxyFromURL("http://#{$host}:18900/graphql#{$1}", "escholarship.org")
+end
+
+###################################################################################################
 # Old XTF-style "smode" searches fall to here; all other old searches get redirected.
 get %r{/uc/search(.*)} do |stuff|
   request.url =~ %r{/uc/search(.*)}
