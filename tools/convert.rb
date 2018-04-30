@@ -1370,6 +1370,11 @@ def parseUCIngest(itemID, inMeta, fileType)
   attrs[:subjects] = inMeta.xpath("./subjects/subject").map { |el| el.text.strip }
   attrs[:keywords] = inMeta.xpath("./keywords/keyword").map { |el| el.text.strip }
 
+  # Grab grant data and other stuff for OSTI reporting
+  attrs[:grants] = inMeta.xpath("./funding/grant").map { |el| el.to_h }
+  attrs[:uc_pms_pub_type] = inMeta.text_at("./context/ucpmsPubType")
+  attrs[:proceedings] = inMeta.text_at("./context/proceedings")
+
   # Supplemental files
   attrs[:supp_files], suppSummaryTypes = summarizeSupps(itemID, grabUCISupps(inMeta))
 
@@ -1835,6 +1840,9 @@ def indexAllItems
           puts "Error indexing item #{itemID}"
           raise
         end
+
+        # To avoid Saxon's Java process from growing gigantic, restart it once in a while.
+        nailgun.callCount == 1000 and nailgun.restart
       end
     }
 
