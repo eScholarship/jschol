@@ -21,6 +21,7 @@ require 'sinatra'
 require 'tempfile'
 require 'socksify'
 require 'socket'
+require 'uri'
 
 # Make puts thread-safe, and flush after every puts.
 $stdoutMutex = Mutex.new
@@ -321,6 +322,30 @@ end
 get %r{/uc/oai(.*)} do
   request.url =~ %r{/uc/oai(.*)}
   proxyFromURL("http://pub-eschol-prd-2a.escholarship.org:18880/uc/oai#{$1}", "escholarship.org")
+end
+
+###################################################################################################
+get %r{/graphql} do
+  if request.query_string.empty?
+    redirect(to('/graphql/iql'))
+  else
+    response = HTTParty.get("http://#{$host}:18900/graphql?#{URI.escape(request.query_string)}")
+    response.headers['content-type'] and content_type response.headers['content-type']
+    [response.code, response.body]
+  end
+end
+
+###################################################################################################
+get %r{/graphql(.*)} do
+  proxyFromURL("http://#{$host}:18900/graphql#{params['captures'][0]}", "escholarship.org")
+end
+
+###################################################################################################
+post %r{/graphql(.*)} do
+  response = HTTParty.post("http://#{$host}:18900/graphql#{params['captures'][0]}",
+                           body: request.body.read)
+  response.headers['content-type'] and content_type response.headers['content-type']
+  [response.code, response.body]
 end
 
 ###################################################################################################
