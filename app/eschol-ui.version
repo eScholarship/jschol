@@ -772,4 +772,24 @@ Lots of stuff modified.
 
   modified: app/scss/_mediafeature.scss  (Andy)
 
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> 94f4c1f258474dc4f2806f0669ca6ae12eb9daac, 2018-04-04        <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+  modified: app/scss/_authorlist.scss  (Andy)
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> 76aac26ab3b1a15b3a52c99f0bd80a6f055b134f, 2018-04-16.       <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+  deleted:    app/jsx/components/WellComp.jsx
+  modified:   app/jsx/components/TabMainComp.jsx
+  modified:   app/jsx/components/TabMetricsComp.jsx
+  modified:   app/jsx/pages/BrowsePage.jsx
+  modified:   app/jsx/pages/SearchPage.jsx
+  modified:   app/scss/_variables.scss
+  modified:   app/scss/_well.scss
+  modified:   app/scss/main.scss
+
 

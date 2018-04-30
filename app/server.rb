@@ -324,6 +324,12 @@ get %r{/uc/oai(.*)} do
 end
 
 ###################################################################################################
+get %r{/graphql(.*)} do
+  request.url =~ %r{/graphql(.*)}
+  proxyFromURL("http://#{$host}:18900/graphql#{$1}", "escholarship.org")
+end
+
+###################################################################################################
 # Old XTF-style "smode" searches fall to here; all other old searches get redirected.
 get %r{/uc/search(.*)} do |stuff|
   request.url =~ %r{/uc/search(.*)}
@@ -514,7 +520,10 @@ get %r{.*} do
     pass
   elsif request.path_info =~ %r{/stats($|/)}
     # Don't do iso on stats reports
-    generalResponse(false)
+    resp = generalResponse(false)
+
+    # Prevent stats pages from getting into Google/Bing/etc.
+    resp.sub!('<metaTags></metaTags>', '<metaTags><meta name="robots" content="noindex"></metaTags>')
   else
     generalResponse
   end
@@ -604,7 +613,7 @@ not_found do
   if request.path =~ %r{\.[^/]+$}   # handle probable file paths like .jpg, .gif, etc.
     return "Resource not found.\n"
   elsif request.path =~ %r{/api/}
-    return jsonHalt(404, "API not found")
+    return jsonHalt(404, "Not Found")
   else
     generalResponse(false)  # handles 404's in the same fashion as other req's, but no iso
   end
@@ -920,6 +929,10 @@ get "/api/item/:shortArk" do |shortArk|
   if !item.nil?
     authors = ItemAuthors.filter(:item_id => id).order(:ordering).
                  map(:attrs).collect{ |h| JSON.parse(h)}
+    editors = ItemContrib.filter(:item_id => id, :role => 'editor').order(:ordering).
+                 map(:attrs).collect{ |h| JSON.parse(h)}
+    advisors = ItemContrib.filter(:item_id => id, :role => 'advisor').order(:ordering).
+                 map(:attrs).collect{ |h| JSON.parse(h)}
     citation = getCitation(unit, shortArk, authors, attrs)
     pubDate = item.published
     # Unfortunately with ProQuest ETDs, only the year is actually significant
@@ -931,6 +944,8 @@ get "/api/item/:shortArk" do |shortArk|
         :title => citation[:title],
         # ToDo: Normalize author attributes across all components (i.e. 'family' vs. 'lname')
         :authors => authors,
+        :editors => editors.any? ? editors : nil,
+        :advisors => advisors.any? ? advisors : nil,
         :published => pubDate,
         :added => item.added,
         :genre => item.genre,
@@ -986,28 +1001,6 @@ get "/api/item/:shortArk" do |shortArk|
     puts "Item not found!"
     halt 404, "Item not found"
   end
-end
-
-###################################################################################################
-# Item Metrics 
-get "/api/item/metrics" do |shortArk|
-  content_type :json
-  id = "qt"+shortArk
-  item = Item[id]
-  # ItemCounts 
-
-  # Example python code from EZID:
-  # all_months = _computeMonths(table)
-  # if len(all_months) > 0:
-  #  d["totals"] = _computeTotals(table)
-  #  month_earliest = table[0][0]
-  #  month_latest = "%s-%s" % (datetime.now().year, datetime.now().month)
-  #  d['months_all'] = [m[0] for m in table]
-  #  default_table = table[-12:]
-  #  d["month_from"] = REQUEST["month_from"] if "month_from" in REQUEST else default_table[0][0]
-  #  d["month_to"] = REQUEST["month_to"] if "month_to" in REQUEST else default_table[-1][0]
-  #  d["totals_by_month"] = _computeMonths(_getScopedRange(table, d['month_from'], d['month_to']))
-  return {} 
 end
 
 ###################################################################################################

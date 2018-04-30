@@ -182,13 +182,19 @@ class TabAuthorComp extends React.Component {
     return out
   }
 
+  contribList(contribs) {
+    return contribs.map((a, i) => {return (
+    // ToDo: Link to contrib
+        [<dt key={i}><a href={"/search/?q="+a.name}>{a.name}</a></dt>,
+         <dd key={i+1}>{a.institution ? a.institution : a.department ? a.department : ""}</dd>]
+    )})
+  }
+
   render() {
     let p = this.props
-    let authorList = p.attrs['author_hide'] ? null : p.authors.map(function(a, i) {return (
-          // ToDo: Link to author 
-        [<dt key={i}><a href={"/search/?q="+a.name}>{a.name}</a></dt>,
-         <dd key={i+1}>{a.institution ? a.institution : ""}</dd>]
-        )})
+    let authorList = p.attrs['author_hide'] ? null : this.contribList(p.authors)
+    let editorList = p.editors ? this.contribList(p.editors) : null
+    let advisorList = p.advisors ? this.contribList(p.advisors) : null
     // Journal info
     // Uhh, borrowing from header > breadcrumb data object here even though we're not in the header
     let lastCrumb = (p.header && p.header.breadcrumb) ? p.header.breadcrumb[p.header.breadcrumb.length-1] : null
@@ -266,26 +272,40 @@ class TabAuthorComp extends React.Component {
           : <dl className="c-descriptionlist">{authorList}</dl> }
         </details> 
 
-      <details className="c-togglecontent" open>
-        <summary>Citation</summary>
+      {editorList &&
+        <details className="c-togglecontent" open>
+          <summary>Editor(s)</summary>
+          <dl className="c-descriptionlist">{editorList}</dl>
+        </details>
+      }
 
-        <dl className="c-descriptionlist">
-          {p.attrs['custom_citation'] &&
-              [<dt key="dt-custom">Preferred:</dt>,
-               <dd key="dd-custom">{p.attrs['custom_citation']}</dd>]
-          }
+      {advisorList &&
+        <details className="c-togglecontent" open>
+          <summary>Advisor(s)</summary>
+          <dl className="c-descriptionlist">{advisorList}</dl>
+        </details>
+      }
 
-          <dt key="dt-apa">Suggested:</dt>
-          <dd key="dd-apa">
-            <ArbitraryHTMLComp html={this.formatCitation(p)}/>
-          </dd>
+        <details className="c-togglecontent" open>
+          <summary>Citation</summary>
 
-          {p.attrs['orig_citation'] &&
-              [<dt key="dt-orig">Original:</dt>,
-               <dd key="dd-orig">{p.attrs['orig_citation']}</dd>]
-          }
-        </dl>
-      </details>
+          <dl className="c-descriptionlist">
+            {p.attrs['custom_citation'] &&
+                [<dt key="dt-custom">Preferred:</dt>,
+                 <dd key="dd-custom">{p.attrs['custom_citation']}</dd>]
+            }
+
+            <dt key="dt-apa">Suggested:</dt>
+            <dd key="dd-apa">
+              <ArbitraryHTMLComp html={this.formatCitation(p)}/>
+            </dd>
+
+            {p.attrs['orig_citation'] &&
+                [<dt key="dt-orig">Original:</dt>,
+                 <dd key="dd-orig">{p.attrs['orig_citation']}</dd>]
+            }
+          </dl>
+        </details>
 
         <details className="c-togglecontent" open>
           <summary>Other information</summary>

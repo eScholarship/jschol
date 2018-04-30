@@ -199,7 +199,7 @@ class PubYear extends React.Component {
       <div className="c-pubyear">
         <div className="c-pubyear__field">
           <label htmlFor="c-pubyear__textfield1">From:</label>
-          <input id="c-pubyear__textfield1" name="pub_year_start" type="text" maxLength="4" placeholder={year}
+          <input id="c-pubyear__textfield1" name="pub_year_start" type="text" maxLength="4" placeholder="1900"
             defaultValue={this.state.pub_year_start} ref={(input) => { this.pub_year_start = input }}
             onKeyPress={this.handleKeyPress} />
         </div>
@@ -631,15 +631,12 @@ class SearchPage extends PageBase {
           {(data.count > 2) &&
             <SortPaginationComp formName={formName} formButton={formButton} query={data.query} count={data.count}/>
           }
-            <div>
-            {(data.count != 0 ) ? 
-              data.searchResults.map(result =>
-                <ScholWorksComp h="h3" key={result.id} result={result} />)
-            :
-              <p><br/><br/>No results found.<br/><br/></p>
-            }
-            </div>
-            <p><br/></p>
+          {(data.count != 0 ) ? 
+            data.searchResults.map(result =>
+              <ScholWorksComp h="h3" key={result.id} result={result} />)
+          :
+            <div className="o-well-large">No results found.</div>
+          }
           {(data.count > data.query.rows) &&
             <PaginationComp formName={formName} formButton={formButton} query={data.query} count={data.count}/>
           }

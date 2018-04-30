@@ -1,6 +1,7 @@
 // ##### Publication Component ##### //
 
 import React from 'react'
+import Utils from '../utils.jsx'
 import PropTypes from 'prop-types'
 import { Link } from 'react-router'
 import TruncationObj from '../objects/TruncationObj.jsx'
@@ -42,6 +43,7 @@ class PubComp extends React.Component {
         return (<li key={i}><a href={"/search/?q="+author.name}>{author.name}</a></li>)
       })
     }
+    let totalSuppFiles = Utils.sumValueTotals(pr.supp_files, "count")
     return (
       <div className="c-pub">
         <TruncationObj element={this.props.h} className="c-pub__heading">
@@ -65,7 +67,7 @@ class PubComp extends React.Component {
           <ArbitraryHTMLComp html={pr.abstract} h1Level={3}/>
         </TruncationObj>
       }
-      {pr.supp_files && 
+      {totalSuppFiles > 0 && 
         <MediaListComp supp_files={pr.supp_files} />
       }
       </div>
