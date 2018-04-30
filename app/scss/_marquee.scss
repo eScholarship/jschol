@@ -90,9 +90,9 @@ $marquee-overlay-size: 50%;
   }
 
   a {
-    @extend %o-textlink__primary;
+    @extend %o-textlink__white;
     display: inline-block;
-    font-size: 1.1em;
+    text-decoration: underline;
   }
 
 }
