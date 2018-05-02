@@ -21,6 +21,7 @@ def unitStatsData(unitID, pageName)
   when 'breakdown_by_unit';    unitStats_breakdownByUnit(unitID)
   when 'avg_by_unit';          unitStats_avgByUnit(unitID)
   when 'avg_by_category';      unitStats_avgByCategory(unitID)
+  when 'accountability';       unitStats_accountability(unitID)
   else raise("unknown unit stats page #{pageName.inspect}")
   end
 end
@@ -44,6 +45,11 @@ end
 ###################################################################################################
 def incMonth(yrmo)
   (yrmo % 100) == 12 ? yrmo + 100 - 11 : yrmo + 1
+end
+
+###################################################################################################
+def yrmoToStr(yrmo)
+  "%d-%02d" % [yrmo/100, yrmo%100]
 end
 
 ###################################################################################################
@@ -727,6 +733,59 @@ def unitStats_breakdownByUnit(unitID)
       total_deposits: rd[:deposits]>0 && rd[:deposits],
       total_requests: rd[:hits]>0 && rd[:hits],
       total_downloads: rd[:downloads]>0 && rd[:downloads]
+    }
+  }
+  return out.to_json
+end
+
+###################################################################################################
+def unitStats_accountability(unitID)
+  unitID == 'root' or halt(404)  # this report only valid at the root level
+
+  # Splat the raw stats into a hash
+  out, queryParams = getUnitStatsParams(unitID, true) # true to include really old years
+  overall = Hash.new { |h,k| h[k] = 0 }
+  posts = Hash.new { |h,k| h[k] = Hash.new { |h2,k2| h2[k2] = 0 } }
+  years = Set.new
+  CategoryStat.where(unit_id: unitID, month: queryParams[:startYrMo]..queryParams[:endYrMo]).each { |st|
+    attrs = JSON.parse(st.attrs)
+    nPosts = attrs['post'].to_i
+    next if nPosts == 0
+    year = st.month / 100
+    years << year
+    cat = (st.category == "journals") ? "journals" : "other"
+    posts[cat][year] += nPosts
+    overall[year] += nPosts
+  }
+
+  # Add in the OA data using a specialized query
+  queryParams[:startYrMoStr] = yrmoToStr(queryParams[:startYrMo])
+  queryParams[:endYrMoStr]   = yrmoToStr(queryParams[:endYrMo]) + "-31"
+  puts "params=#{queryParams}"
+  query = Sequel::SQL::PlaceholderLiteralString.new(%{
+    select count(*) ct, year(submitted) yr from items
+    where status = 'published'
+    and oa_policy is not null
+    and id in (select item_id from item_stats)
+    and submitted >= :startYrMoStr
+    and submitted <= :endYrMoStr
+    group by year(submitted)
+  }.unindent, queryParams)
+  DB.fetch(query).each { |row|
+    posts['OA related'][row[:yr]] += row[:ct]
+    posts['other'][row[:yr]] -= row[:ct]
+  }
+
+  # Form the final data structure with everything needed to render the form and report
+  out[:report_years] = years.to_a.sort.reverse
+  out[:report_data] = [ {
+    category: "overall",
+    total_deposits: overall.values.inject{|s,n| s+n},
+    by_year: overall
+  } ] + posts.sort.map { |cat, byYear|
+    { category: cat,
+      total_deposits: byYear.values.inject{|s,n| s+n},
+      by_year: byYear
     }
   }
   return out.to_json
