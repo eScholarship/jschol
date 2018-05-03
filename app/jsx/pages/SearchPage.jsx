@@ -24,7 +24,7 @@ if (!(typeof document === "undefined")) {
 }
 
 
-// FacetItem  
+// FacetItem
 // props = {
 //   data: { facetType: 'departments',
 //     ancestorChecked: true|false                     //Optional, only specified if facet has ancestors (departments)
@@ -215,7 +215,9 @@ class PubYear extends React.Component {
   }
 }
 
-// FacetFieldset basically differentiates between Publication Year, and all the other 'normal' facets
+// A FacetFieldset is a single grouping of facet items.
+// A facetFieldset with many facets is expandable: can be expanded into a modal to show all facet items
+// Note: Differentiates between Publication Year, and all the other 'normal' facets
 // FacetFieldset props: 
 // props = {
 //   data: { fieldName: 'departments',
@@ -370,6 +372,11 @@ class FacetFieldset extends React.Component {
     return hash
   }
 
+  sortByCount = facets => {
+    console.log("SORT")
+    return facets
+  }
+
   sliceArrangeFacets(facets)
   {
     /* Get first set of 6 facets, undiscerning: some may be checked, some may not */
@@ -405,26 +412,36 @@ class FacetFieldset extends React.Component {
 
   render() {
     let data = this.props.data
-    let facets, facetItemNodes
+    let facets, facetSidebarNodes, modal
     if (data.facets) {
-      facets = this.state.modalOpen ? [] :
-               (this.props.modal && data.facets.length > 5) ? this.sliceArrangeFacets(data.facets) :
-               data.facets
-      facetItemNodes = this.getFacetNodes(facets)
+      let expandable = ["departments", "journals"].includes(data.fieldName)
+      modal = expandable && (data.facets.length > 6)
+      console.log(data.fieldName + ": " + modal)
+      if (this.state.modalOpen) {
+        facets = []
+      } else if (expandable) {
+    /* Most facets come in alphabetized. For 'expandable' facets (ilke departments and journals)
+       the 'show more' modal should keep the alpha order, but in the sidebar
+       they should be sorted by count.    */
+        facets = this.sortByCount(data.facets)
+        facets = (modal && data.facets.length > 5) ? this.sliceArrangeFacets(facets) : facets
+      } else {
+        facets = data.facets
+      }
+      facetSidebarNodes = this.getFacetNodes(facets)
     } else if (data.fieldName == "pub_year") {
-      facetItemNodes = (
+      facetSidebarNodes = (
         <PubYear data={data} query={this.props.query} handler={this.pubDateChange} />
       )
-    }
-    else {
-      facetItemNodes = []
+    } else {
+      facetSidebarNodes = []
     }
     return (
       <details className="c-facetbox" open={this.props.open}>
         {/* Each facetbox needs a distinct <span id> and <fieldset aria-labelledby> matching value */}
         <summary className="c-facetbox__summary"><span id={this.props.index}>{data.display}</span></summary>
           <fieldset aria-labelledby={this.props.index}>
-            {facetItemNodes}
+            {facetSidebarNodes}
           {this.props.modal &&
             <div id={`facetModalBase-${data.fieldName}`}>
               <button className="c-facetbox__show-more"
@@ -449,10 +466,11 @@ class FacetFieldset extends React.Component {
   }
 }
 
-// FacetForm manages the state for FacetItems and FilterComp 
-// all interactions with faceting search parameters get propagated up to FacetForm
+// FacetForm manages the state for FacetItems and FilterComp in the sidebar.
+// FacetItems are grouped by the FacetFieldset component.
+// All interactions with faceting search parameters get propagated up to FacetForm
 // and then down to their respective components before issuing the search query
-// to update the scholarly works list
+// to update the scholarly works list (main column of search results)
 // FacetForm props:
 // props = {
 //   data: {
@@ -542,11 +560,10 @@ class FacetForm extends React.Component {
       let filters = this.state.query.filters && this.state.query.filters[fieldName] ? this.state.query.filters[fieldName] : {}
       let facets = fieldset.facets
       return (
-        <FacetFieldset key={fieldName} index={"facetbox" + i} data={fieldset} query={filters} handler={this.changeFacet}
+        <FacetFieldset key={fieldName} index={"facetbox" + i} data={fieldset} query={filters}
+                       handler={this.changeFacet}
                        // Have first two open by default
-                       open={[0,1].includes(i)}
-                       modal={((["departments", "journals"].includes(fieldName)) &&
-                              (facets) && (facets.length > 6))} />
+                       open={[0,1].includes(i)} />
       )
     })
 
