@@ -218,6 +218,20 @@ class AccessLogger
   end
 end
 
+###################################################################################################
+# Model classes for easy interaction with the database.
+#
+# For more info on the database schema, see contents of migrations/ directory, and for a more
+# graphical version, see:
+#
+# https://docs.google.com/drawings/d/1gCi8l7qteyy06nR5Ol2vCknh9Juo-0j91VGGyeWbXqI/edit
+puts "Populating db models."
+require_relative '../tools/models.rb'
+
+# DbCache uses the models above.
+require_relative 'dbCache'
+fillCaches
+
 # Sinatra configuration
 configure do
   # Puma is good for multiprocess *and* multithreading
@@ -242,24 +256,8 @@ configure do
     }
 end
 
-# Compress responses
-## NO: This fails when streaming files. Not sure why yet.
-#use Rack::Deflater
-
 TEMP_DIR = "tmp"
 FileUtils.mkdir_p(TEMP_DIR)
-
-###################################################################################################
-# Model classes for easy interaction with the database.
-#
-# For more info on the database schema, see contents of migrations/ directory, and for a more
-# graphical version, see:
-#
-# https://docs.google.com/drawings/d/1gCi8l7qteyy06nR5Ol2vCknh9Juo-0j91VGGyeWbXqI/edit
-require_relative '../tools/models.rb'
-
-# DbCache uses the models above.
-require_relative 'dbCache'
 
 ###################################################################################################
 # ISOMORPHIC JAVASCRIPT

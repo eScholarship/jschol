@@ -286,5 +286,3 @@ Signal.trap("WINCH") {
     fillCaches
   }
 }
-
-fillCaches

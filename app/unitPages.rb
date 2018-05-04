@@ -1015,6 +1015,84 @@ put "/api/unit/:unitID/unitOrder" do |unitID|
 end
 
 ###################################################################################################
+# Rebuild the indirect hierarchy links for the unit and its items. Recursively processes sub-units
+# as well.
+def rebuildIndirectLinks(unitID, hier = nil)
+  # Cache the direct hierarchy
+  hier ||= UnitHier.filter(is_direct: true).to_hash_groups(:unit_id, :ancestor_unit)
+
+  # Reconstruct indirect unit links. Handle possible multiple parents.
+  done = Set.new
+  UnitHier.where(unit_id: unitID, is_direct: false).delete
+  queue = UnitHier.where(unit_id: unitID, is_direct: true).select_map(:ancestor_unit).map{ |p| hier[p] }.flatten
+  while !queue.empty?
+    p = queue.shift
+    next if done.include?(p)
+    UnitHier.create(unit_id: unitID, ancestor_unit: p, is_direct: false)
+    done << p
+    hier[p] and queue += hier[p]
+  end
+
+  # Rebuild indirect item links in similar fashion.
+  UnitItem.where(unit_id: unitID, is_direct: true).select_map(:item_id).each { |itemID|
+    done = Set.new
+    UnitItem.where(item_id: itemID, is_direct: false).delete
+    queue = UnitItem.where(item_id: itemID, is_direct: true).select_map(:unit_id).map{ |p| hier[p] }.flatten
+    lastOrder = 10000
+    while !queue.empty?
+      p = queue.shift
+      next if done.include?(p)
+      UnitItem.create(item_id: itemID, unit_id: p, ordering_of_units: lastOrder+1, is_direct: false)
+      lastOrder += 1
+      done << p
+      hier[p] and queue += hier[p]
+    end
+  }
+
+  # Recursively process sub-units
+  UnitHier.where(ancestor_unit: unitID, is_direct: true).select_map(:unit_id).each { |kid|
+    rebuildIndirectLinks(kid, hier)
+  }
+end
+
+###################################################################################################
+# Switch unit to a new parent
+put "/api/unit/:unitID/moveUnit" do |unitID|
+  # Only super-users allowed to move units
+  getUserPermissions(params[:username], params[:token], unitID)[:super] or halt(401)
+  %w{campus root}.include?($unitsHash[unitID].type) and jsonHalt(400, "Cannot move top-level units.")
+
+  targetUnitID = params[:targetUnitID]
+  targetUnit = $unitsHash[targetUnitID] or jsonHalt(400, "Unrecognized target unit")
+  targetUnit.type =~ /series|journal/ and jsonHalt(400, "Destination parent unit cannot be a series or journal")
+
+  # Get the max ordering of the new parent's existing children.
+  lastOrder = UnitHier.where(ancestor_unit: targetUnitID, is_direct: true).max(:ordering)
+  puts "last order of new parent: #{lastOrder}"
+
+  DB.transaction {
+    # Change the primary direct link
+    oldParent = UnitHier.where(unit_id: unitID, is_direct: true).order(:ordering).last[:ancestor_unit]
+    puts "old parent: #{oldParent}"
+    UnitHier.where(unit_id: unitID, ancestor_unit: oldParent, is_direct: true).
+             update(ancestor_unit: targetUnitID, ordering: lastOrder+1)
+
+    # And rebuild all the indirect links
+    #puts "Unit hier before:\n#{UnitHier.where(unit_id: unitID).all.map { |h| "  #{h.to_hash.to_s}" }.sort.join("\n")}"
+    #puts "Item hier before:\n#{UnitItem.where(item_id: UnitItem.where(unit_id: unitID).order(:item_id).
+    #  select_map(:item_id)).all.map { |h| "  #{h.to_hash.to_s}" }.join("\n")}"
+    rebuildIndirectLinks(unitID)
+    #puts "Unit hier after:\n#{UnitHier.where(unit_id: unitID).all.map { |h| "  #{h.to_hash.to_s}" }.sort.join("\n")}"
+    #puts "Item hier after:\n#{UnitItem.where(item_id: UnitItem.where(unit_id: unitID).order(:item_id).
+    #  select_map(:item_id)).all.map { |h| "  #{h.to_hash.to_s}" }.join("\n")}"
+
+    #raise Sequel::Rollback  # for testing only
+  }
+  refreshUnitsHash
+  return {status: "ok"}.to_json
+end
+
+###################################################################################################
 # Change redirect data
 put "/api/redirect/:kind/:redirID" do |kind, redirID|
   getUserPermissions(params[:username], params[:token], 'root')[:super] or halt(401)
