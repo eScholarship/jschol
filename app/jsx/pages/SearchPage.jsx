@@ -342,14 +342,17 @@ class FacetFieldset extends React.Component {
   }
 
   /* Display prescribed maximum (rows of) facets.
-     With the caveat: For any given facet: all of its descendents should be displayed,
-                      so slice can extend past maximum in that case */
-  facetsSliced = (facets, maxLength)  => {
+     Optional filter for just returning facets included in provided hash
+     Note: For any given facet: all of its descendents should be displayed,
+           so slice will extend past maximum in some cases */
+  facetsSliced = (facets, maxLength, checkHashFilter=false, checkedHash=null)  => {
     let i = 0, r = []
     for (let facet of facets){
-      r.push(facet)
-      i += this.getLength(facet) 
-      if (i >= maxLength) break
+      if (!checkHashFilter || (facet.value in checkedHash === false)) {
+        r.push(facet)
+        i += this.getLength(facet) 
+        if (i >= maxLength) break
+      }
     }
     return r
   }
@@ -363,16 +366,17 @@ class FacetFieldset extends React.Component {
     }
   }
 
-  /* Gather all IDS of facets (converts tree to flat hash) */
-  getFacetVals = facets =>{
+  /* Gather all IDS of facets already in checkedHash (converts tree to flat hash) */
+  checkedFacetsFromTree = (facets, checkedHash) =>{
     let hash = {}
     this.traverse(facets, function(node){
-      if (!hash[node.value])
+      if (node.value in checkedHash)
         hash[node.value] = true
     })
     return hash
   }
 
+  /* Checked items will percolate to top */
   sliceArrangeFacets(facets)
   {
     if (!this.props.query.filters)
@@ -384,7 +388,8 @@ class FacetFieldset extends React.Component {
       checkedHash[filter.value] = true
 
     let checked = []
-    /* Can't use Generator function here since it's not supported by IE */
+    /* Collect checked facets into variable 'checked' (recursive)
+     * Can't use Generator function here since it's not supported by IE */
     let collectChecked = facets => {
       for (let facet of facets) {
         if (facet.value in checkedHash) {
@@ -397,18 +402,16 @@ class FacetFieldset extends React.Component {
     collectChecked(facets)
 
     let remaining_count = MAX_SET_SIZE - Object.keys(checked).length
+
+    /* Add unchecked facets to this sidebar facet set if there's room */
     if (remaining_count > 0) {
-      // Fill in unchecked facets
-      // This is basically a copy of facetsSliced function (above) but with a filter included
-      let i = 0, r = []
-      for (let facet of facets) {
-        if (facet.value in checkedHash === false) {
-          r.push(facet)
-          i += this.getLength(facet) 
-          if (i >= remaining_count) break
-        }
+      let uncheckedParents = this.facetsSliced(facets, remaining_count, true, checkedHash)
+      /* Retroactively remove any checked that may be children of this uncheckedParents */
+      let checkedIds = this.checkedFacetsFromTree(uncheckedParents, checkedHash)
+      if (checkedIds) {
+        checked = checked.filter(facet => (facet.value in checkedIds === false))
       }
-      return checked.concat(r)
+      return checked.concat(uncheckedParents)
     } else {
       return this.facetsSliced(checked, Math.max(MAX_SET_SIZE, Object.keys(checkedHash).length))
     }
