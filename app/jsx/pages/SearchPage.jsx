@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import $ from 'jquery'
-import _ from 'lodash'   // mainly for _.isEmtpy() which also works server-side (unlike $.isEmptyObject)
+import _ from 'lodash'
 import { Link } from 'react-router'
 import Form from 'react-router-form'
 
@@ -23,6 +23,7 @@ if (!(typeof document === "undefined")) {
   const dotdotdot = require('jquery.dotdotdot')
 }
 
+let MAX_SET_SIZE = 6
 
 // FacetItem
 // props = {
@@ -372,33 +373,21 @@ class FacetFieldset extends React.Component {
     return hash
   }
 
-  sortByCount = facets => {
-    console.log("SORT")
-    return facets
-  }
-
   sliceArrangeFacets(facets)
   {
-    /* Get first set of 6 facets, undiscerning: some may be checked, some may not */
-    let slicedFromTop = this.facetsSliced(facets, 6)
     if (!this.props.query.filters)
-      return slicedFromTop
-
-    /* Get their values. When we shift/prioritize checked facets to the top of the list,
-       we want to make sure they're not already present in this set of initial sliced */
-    let slicedIds = this.getFacetVals(slicedFromTop)
+      return this.facetsSliced(facets, MAX_SET_SIZE)     /* Just return first set of 6 facets */
 
     /* Gather values of checked facets */
     let checkedHash = {}
     for (let filter of this.props.query.filters)
       checkedHash[filter.value] = true
-    let checked_count = Object.keys(checkedHash).length
 
     let checked = []
     /* Can't use Generator function here since it's not supported by IE */
     let collectChecked = facets => {
       for (let facet of facets) {
-        if ((facet.value in checkedHash) && (!(facet.value in slicedIds))) {
+        if (facet.value in checkedHash) {
           checked.unshift(facet)
         }
         if (facet.descendents)
@@ -406,25 +395,41 @@ class FacetFieldset extends React.Component {
       }
     }
     collectChecked(facets)
-    let out = checked.concat(slicedFromTop)
-    return this.facetsSliced(out, Math.max(6, checked_count))
+
+    let remaining_count = MAX_SET_SIZE - Object.keys(checked).length
+    if (remaining_count > 0) {
+      // Fill in unchecked facets
+      // This is basically a copy of facetsSliced function (above) but with a filter included
+      let i = 0, r = []
+      for (let facet of facets) {
+        if (facet.value in checkedHash === false) {
+          r.push(facet)
+          i += this.getLength(facet) 
+          if (i >= remaining_count) break
+        }
+      }
+      return checked.concat(r)
+    } else {
+      return this.facetsSliced(checked, Math.max(MAX_SET_SIZE, Object.keys(checkedHash).length))
+    }
   }
 
   render() {
     let data = this.props.data
     let facets, facetSidebarNodes, modal
+    // Sidebar logic for facet placement/sorting
     if (data.facets) {
       let expandable = ["departments", "journals"].includes(data.fieldName)
-      modal = expandable && (data.facets.length > 6)
-      console.log(data.fieldName + ": " + modal)
+      modal = expandable && (data.facets.length > MAX_SET_SIZE)
       if (this.state.modalOpen) {
         facets = []
       } else if (expandable) {
-    /* Most facets come in alphabetized. For 'expandable' facets (ilke departments and journals)
-       the 'show more' modal should keep the alpha order, but in the sidebar
-       they should be sorted by count.    */
-        facets = this.sortByCount(data.facets)
-        facets = (modal && data.facets.length > 5) ? this.sliceArrangeFacets(facets) : facets
+      /* Most facets come in alphabetized. For 'expandable' facets (like departments and journals)
+         the modal (exposed from the 'Show more' link) should keep the alpha order, but in the 
+         sidebar they should be sorted by count.    */
+        facets = _.orderBy(data.facets, ['count'], ['desc'])
+      /* But facets that are checked should have highest priority (visible in sidebar) */
+        facets = (modal && data.facets.length > (MAX_SET_SIZE - 1)) ? this.sliceArrangeFacets(facets) : facets
       } else {
         facets = data.facets
       }
@@ -442,7 +447,7 @@ class FacetFieldset extends React.Component {
         <summary className="c-facetbox__summary"><span id={this.props.index}>{data.display}</span></summary>
           <fieldset aria-labelledby={this.props.index}>
             {facetSidebarNodes}
-          {this.props.modal &&
+          {modal &&
             <div id={`facetModalBase-${data.fieldName}`}>
               <button className="c-facetbox__show-more"
                       onClick={(event)=>{
