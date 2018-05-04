@@ -1,15 +1,18 @@
 import React from 'react'
+import Utils from '../utils.jsx'
 import PropTypes from 'prop-types'
 
 /**
  * Adds arbitrary HTML to the page (usually supplied earlier by the user and stored in the database).
  * Re-maps <h1>, <h2> etc in the HTML to the specified level to improve accessibility.
+ * Option to wrap HTML with surrounding <p> if needed
  */
 export default class ArbitraryHTMLComp extends React.Component
 {
   static propTypes = {
     html: PropTypes.string,
-    h1Level: PropTypes.number // defaults to 3
+    h1Level: PropTypes.number, // defaults to 3
+    p_wrap: PropTypes.bool
   }
 
   // Attach script necessary for opening Deposit Wizard from any links defined as: http://open-deposit-wizard.com
@@ -31,6 +34,7 @@ export default class ArbitraryHTMLComp extends React.Component
       // Kludge for opening deposit wizard modal 
       let fixedText2 = fixedText.replace(/<a href=\"http:\/\/open-deposit-wizard\.com\">/g, 
         '<a href="" onClick="openDepositWiz(event);">')
+      this.props.p_wrap && (fixedText2 = Utils.p_wrap(fixedText2))
       return <div className="c-clientmarkup" dangerouslySetInnerHTML={{__html: fixedText2}}/>
     } else { return null }
   }

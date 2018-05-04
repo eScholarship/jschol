@@ -88,7 +88,7 @@ gulp.task('sass', function() {
 function startSinatra(afterFunc)
 {
   // Sometimes Puma doesn't die even when old gulp does. Explicitly kill it off.
-  exec('pkill -9 -f ^puma', (err, stdout, stderr) => { })
+  exec('pkill -9 -f ^puma.*'+process.env.PUMA_PORT, (err, stdout, stderr) => { })
   setTimeout(()=>{
     // Now spawn a new sinatra/puma process
     sinatraProc = spawn('bin/puma', { stdio: 'inherit' })
@@ -118,7 +118,7 @@ gulp.task('start-sinatra', restartSinatra)
 function startExpress()
 {
   if (process.env.ISO_PORT) {
-    exec('pkill -9 -f ^node.*iso', (err, stdout, stderr) => { })
+    exec('pkill -9 -f ^node.*iso.*'+process.env.ISO_PORT, (err, stdout, stderr) => { })
     setTimeout(()=>{
       expressProc = spawn('node', ['app/isomorphic.js'], { stdio: 'inherit' })
       expressProc.on('exit', function(code) {
