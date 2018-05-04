@@ -2,6 +2,7 @@
 # Methods for obtaining database Caches
 
 $lastFillTime = nil
+$cacheFillMutex = Mutex.new
 
 def getUnitsHash
   return Unit.to_hash(:id)
@@ -10,7 +11,9 @@ end
 def refreshUnitsHash
   # Signal for all Puma workers to rebuild their hashes
   signalDbRefill
-  $unitsHash = getUnitsHash
+  $cacheFillMutex.synchronize {
+    $unitsHash = getUnitsHash
+  }
 end
 
 def getHierByUnit
@@ -235,49 +238,51 @@ Thread.new {
 }
 
 def fillCaches
-  begin
-    utime = getLastTableUpdateTime
-    if utime && $lastFillTime == utime  # don't refill if nothing changed
-      return
+  $cacheFillMutex.synchronize {
+    begin
+      utime = getLastTableUpdateTime
+      if utime && $lastFillTime == utime  # don't refill if nothing changed
+        return
+      end
+      $lastFillTime = utime
+      puts "Filling caches.           "
+      $unitsHash = getUnitsHash
+      $hierByUnit = getHierByUnit
+      $hierByAncestor = getHierByAncestor
+      $activeCampuses = getActiveCampuses
+      $oruAncestors = getOruAncestors
+      $campusJournals = getJournalsPerCampus    # Used for browse pages
+
+      #####################################################################
+      # STATISTICS
+      # These are dependent on instantiation of $activeCampuses
+
+      # HOME PAGE statistics
+      $statsCountItems =  countItems
+      $statsCountViews = countViews
+      $statsCountOpenItems = countOpenItems
+      $statsCountEscholJournals = countEscholJournals
+      $statsCountOrus = countOrus
+      $statsCountArticles, $statsCountThesesDiss, $statsCountBooks = countGenres
+
+      # CAMPUS PAGE statistics
+      $statsCampusViews = getViewsPerCampus
+      $statsUnitCarousel = getUnitCarouselStats
+      $statsJournalCarousel = getJournalCarouselStats
+
+      # BROWSE PAGE AND CAMPUS PAGE statistics
+      $statsCampusItems = getItemStatsPerCampus
+      $statsCampusJournals = getJournalStatsPerCampus
+      $statsCampusOrus = getOruStatsPerCampus
+
+      # OTHER
+      $staticRedirects = getStaticRedirects
+
+      puts "...filled             "
+    rescue Exception => e
+      puts "Unexpected exception during cache filling: #{e} #{e.backtrace}"
     end
-    $lastFillTime = utime
-    puts "Filling caches.           "
-    $unitsHash = getUnitsHash
-    $hierByUnit = getHierByUnit
-    $hierByAncestor = getHierByAncestor
-    $activeCampuses = getActiveCampuses
-    $oruAncestors = getOruAncestors
-    $campusJournals = getJournalsPerCampus    # Used for browse pages
-
-    #####################################################################
-    # STATISTICS
-    # These are dependent on instantiation of $activeCampuses
-
-    # HOME PAGE statistics
-    $statsCountItems =  countItems
-    $statsCountViews = countViews
-    $statsCountOpenItems = countOpenItems
-    $statsCountEscholJournals = countEscholJournals
-    $statsCountOrus = countOrus
-    $statsCountArticles, $statsCountThesesDiss, $statsCountBooks = countGenres
-
-    # CAMPUS PAGE statistics
-    $statsCampusViews = getViewsPerCampus
-    $statsUnitCarousel = getUnitCarouselStats
-    $statsJournalCarousel = getJournalCarouselStats
-
-    # BROWSE PAGE AND CAMPUS PAGE statistics
-    $statsCampusItems = getItemStatsPerCampus
-    $statsCampusJournals = getJournalStatsPerCampus
-    $statsCampusOrus = getOruStatsPerCampus
-
-    # OTHER
-    $staticRedirects = getStaticRedirects
-
-    puts "...filled             "
-  rescue Exception => e
-    puts "Unexpected exception during cache filling: #{e} #{e.backtrace}"
-  end
+  }
 end
 
 # Signal from the master process that caches need to be rebuilt.

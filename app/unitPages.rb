@@ -105,6 +105,7 @@ end
 # Permissions per nav item
 def getNavPerms(unit, navItems, userPerms)
   noAccess = { change_slug: false, change_text: false, remove: false, reorder: false }
+  unit.nil? and return noAccess
   result = {}
   slugs = getSlugs(navItems)
   slugs << "link" << "folder" << "page"  # special pseudo-slugs for specials
@@ -1060,8 +1061,9 @@ end
 put "/api/unit/:unitID/moveUnit" do |unitID|
   # Only super-users allowed to move units
   getUserPermissions(params[:username], params[:token], unitID)[:super] or halt(401)
-  %w{campus root}.include?($unitsHash[unitID].type) and jsonHalt(400, "Cannot move top-level units.")
 
+  # Sanity checks
+  %w{campus root}.include?($unitsHash[unitID].type) and jsonHalt(400, "Cannot move top-level units.")
   targetUnitID = params[:targetUnitID]
   targetUnit = $unitsHash[targetUnitID] or jsonHalt(400, "Unrecognized target unit")
   targetUnit.type =~ /series|journal/ and jsonHalt(400, "Destination parent unit cannot be a series or journal")
@@ -1090,6 +1092,26 @@ put "/api/unit/:unitID/moveUnit" do |unitID|
   }
   refreshUnitsHash
   return {status: "ok"}.to_json
+end
+
+###################################################################################################
+# Switch unit to a new parent
+put "/api/unit/:unitID/deleteUnit" do |unitID|
+  # Only super-users allowed to move units
+  getUserPermissions(params[:username], params[:token], unitID)[:super] or halt(401)
+
+  # Sanity checks
+  UnitHier.where(ancestor_unit: unitID).count > 0 and jsonHalt(400, "Cannot delete unit having sub-units.")
+  UnitItem.where(unit_id: unitID).count > 0 and jsonHalt(400, "Cannot delete unit containing items.")
+
+  DB.transaction {
+    UnitHier.where(unit_id: unitID).delete
+    Page.where(unit_id: unitID).delete
+    UnitStat.where(unit_id: unitID).delete
+    Unit.where(id: unitID).delete
+  }
+  refreshUnitsHash
+  return {status: "ok", nextURL: "/uc/#{$hierByUnit[unitID][0].ancestor_unit}"}.to_json
 end
 
 ###################################################################################################

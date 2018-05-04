@@ -142,7 +142,7 @@ get "/api/permissions/:unitID" do |unitID|
 
   # Per-nav-item permissions
   unit = Unit[unitID]
-  attrs = JSON.parse(unit.attrs)
+  attrs = unit ? JSON.parse(unit.attrs) : {}
   navPerms = {}
   result[:nav_perms] = getNavPerms(Unit[unitID], attrs["nav_bar"], result)
 
