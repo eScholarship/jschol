@@ -29,8 +29,11 @@ export default class ArbitraryHTMLComp extends React.Component
     let origText = this.props.html
     if (origText) {
       let h1Level = this.props.h1Level ? this.props.h1Level : 3
+      let minLevel = 9
+      origText.replace(/(<\/?[hH])([1-9]+)/g,
+                        (m, p1, p2) => minLevel = Math.min(minLevel, parseInt(p2)))
       let fixedText = origText.replace(/(<\/?[hH])([1-9]+)/g, 
-                        (m, p1, p2) => p1 + (parseInt(p2) + h1Level - 1))
+                        (m, p1, p2) => p1 + (parseInt(p2) + h1Level - minLevel))
       // Kludge for opening deposit wizard modal 
       let fixedText2 = fixedText.replace(/<a href=\"http:\/\/open-deposit-wizard\.com\">/g, 
         '<a href="" onClick="openDepositWiz(event);">')

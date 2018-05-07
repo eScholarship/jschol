@@ -67,7 +67,7 @@ class MainContent extends React.Component {
             coming right after it's sibling of the same class name */}
         <ScrollingAnchorComp name="article_main" />
         <summary>Main Content</summary>
-        <ArbitraryHTMLComp html={p.content_html} h1Level={2}/>
+        <ArbitraryHTMLComp html={p.content_html} h1Level={3}/>
         <br/><br/>
       </details>
   )}
