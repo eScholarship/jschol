@@ -79,50 +79,83 @@ export default class UnitBuilderLayout extends React.Component
               </h1>
             </header>
 
-            <h3>Arrange Existing Units</h3>
-            <Subscriber channel="cms">
-              { cms => cms && cms.modules &&
-                <SortableUnitList cms={cms}
-                                  unit={this.props.unit.id}
-                                  subUnits={this.props.data.sub_units}
-                                  onChangeOrder={this.reorderUnits}/>
-              }
-            </Subscriber>
+            {this.props.data.sub_units.length > 0 &&
+              <details className="c-togglecontent" open>
+                <summary>Arrange sub-units</summary>
+                <Subscriber channel="cms">
+                  { cms => cms && cms.modules &&
+                    <SortableUnitList cms={cms}
+                                      unit={this.props.unit.id}
+                                      subUnits={this.props.data.sub_units}
+                                      onChangeOrder={this.reorderUnits}/>
+                  }
+                </Subscriber>
+              </details>
+            }
 
-            <h3>Add New Unit</h3>
-            <Form to={`/api/unit/${this.props.unit.id}/unitBuilder`}
-                  onSubmit={ (event, data) => {
-                    event.preventDefault()
-                    this.props.sendApiData("PUT", event.target.action, data)
-                  }}>
-              <p><i>Make sure you are accessing this page from the desired parent unit.</i></p>
+            {/oru|campus/.test(this.props.unit.type) &&
+              <details className="c-togglecontent" open>
+                <summary>Add new sub-unit</summary>
+                <Form to={`/api/unit/${this.props.unit.id}/unitBuilder`}
+                      onSubmit={ (event, data) => {
+                        event.preventDefault()
+                        this.props.sendApiData("PUT", event.target.action, data)
+                      }}>
+                  <p><i>Make sure you are accessing this page from the desired parent unit.</i></p>
 
-              <label className="c-editable-page__label" htmlFor="newUnitID">Unit URL: </label>
-              <p>Must consist of lower-case numbers/letters or underscores only. No spaces.</p>
-              <input className="c-editable-page__input" id="newUnitID" name="newUnitID" type="text"/>
+                  <label className="c-editable-page__label" htmlFor="newUnitID">Unit URL: </label>
+                  <p>Must consist of lower-case numbers/letters or underscores only. No spaces.</p>
+                  <input className="c-editable-page__input" id="newUnitID" name="newUnitID" type="text"/>
 
-              <label className="c-editable-page__label" htmlFor="name">Name: </label>
-              <input className="c-editable-page__input" id="name" name="name" type="text"/>
+                  <label className="c-editable-page__label" htmlFor="name">Name: </label>
+                  <input className="c-editable-page__input" id="name" name="name" type="text"/>
 
-              <label className="c-editable-page__label" htmlFor="type">Unit type: </label>
-              <select name="type">
-                { ["oru", "journal", "series", "monograph_series"].map(unitType =>
-                    <option key={unitType} value={unitType}>{UNIT_TYPE_TO_LABEL[unitType]}</option>) }
-              </select>
+                  <label className="c-editable-page__label" htmlFor="type">Unit type: </label>
+                  <select name="type">
+                    { ["oru", "journal", "series", "monograph_series"].map(unitType =>
+                        <option key={unitType} value={unitType}>{UNIT_TYPE_TO_LABEL[unitType]}</option>) }
+                  </select>
 
-              <br/><br/>
-              <label className="c-editable-page__label" htmlFor="hidden">Hidden: </label>
-              <input type="checkbox" id="hidden" name="hidden" defaultChecked={true} />
+                  <br/><br/>
+                  <label className="c-editable-page__label" htmlFor="hidden">Hidden: </label>
+                  <input type="checkbox" id="hidden" name="hidden" defaultChecked={true} />
 
-              <br/><br/>
-              <p><i>Important:</i> before selecting 'Create Unit' below, ensure that this unit
-                 has been added to both:</p>
-              <ul>
-                <li>pub-eschol-xtf/style/textIndexer/mapping/allStruct.xml</li>
-                <li>pub-eschol-xtf/style/textIndexer/mapping/allStruct-eschol5.xml</li>
-              </ul>
-              <button type="submit">Create Unit</button>
-            </Form>
+                  <br/><br/>
+                  <p><i>Important:</i> before selecting 'Create Unit' below, ensure that this unit
+                     has been added to both allStruct.xml and allStruct-eschol5.xml</p>
+                  <button type="submit">Create Unit</button>
+                </Form>
+              </details>
+            }
+
+            <details className="c-togglecontent">
+              <summary>Move this unit</summary>
+              <Form to={`/api/unit/${this.props.unit.id}/moveUnit`}
+                    onSubmit={ (event, data) => {
+                      event.preventDefault()
+                      this.props.sendApiData("PUT", event.target.action, data)
+                    }}>
+                <label className="c-editable-page__label" htmlFor="targetUnitID">Destination parent unit: </label>
+                <input className="c-editable-page__input" id="targetUnitID" name="targetUnitID" type="text"/>
+                <button type="submit">Move Unit '{this.props.unit.id}'</button>
+                <br/><br/>
+                <p><i>Important:</i> after this operation, update allStruct.xml and allStruct-eschol5.xml</p>
+              </Form>
+            </details>
+
+            <details className="c-togglecontent">
+              <summary>Delete this unit</summary>
+              <Form to={`/api/unit/${this.props.unit.id}/deleteUnit`}
+                    onSubmit={ (event, data) => {
+                      event.preventDefault()
+                      this.props.sendApiData("PUT", event.target.action, data)
+                    }}>
+                <p><i>Note:</i> This will fail (harmlessly) if the unit has any items or sub-units.</p>
+                <button type="submit" className="o-button__3">Delete unit '{this.props.unit.id}'</button>
+                <br/><br/>
+                <p><i>Important:</i> after this operation, update allStruct.xml and allStruct-eschol5.xml</p>
+              </Form>
+            </details>
           </section>
         </main>
       </div>
