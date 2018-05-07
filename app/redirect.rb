@@ -55,7 +55,7 @@ def checkRedirect(origURI)
     elsif uri.path =~ %r{^/oa_harvester/}
       uri.path = "/images#{uri.path}"
       break
-    elsif uri.path =~ /(\.html?$)|(\.cgi)|(cgi-bin)/   # old HTML and CGI pages
+    elsif uri.path =~ /(\.html?$)|(\.cgi)|(cgi-bin)/ && !uri.path =~ %r{/inner/}  # old HTML and CGI pages
       uri.path = "/"
       uri.query = nil
     end

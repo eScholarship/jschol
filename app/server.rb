@@ -1131,11 +1131,17 @@ def getItemHtml(content_type, id)
   buf.gsub! %r{<iframe.*?</iframe>}im, ''
   buf.gsub! %r{<script.*?</script>}im, ''
   htmlStr = stringToXML(buf).to_xml
-  htmlStr.gsub(/(href|src)="((?!#)[^"]+)"/) { |m|
+  htmlStr.gsub!(/(href|src)="((?!#)[^"]+)"/) { |m|
     attrib, url = $1, $2
     url = url.start_with?("http", "ftp") ? url : "/content/#{id}/inner/#{url}"
     "#{attrib}=\"#{url}\"" + ((attrib == "src") ? "" : " target=\"new\"")
   }
+
+  # Browsers don't seem to like <a name="foo"/>. Instead they want <a name="foo"></a>
+  htmlStr.gsub!(%r{<a name="([^"]+)"/>}, '<a name="\1"></a>')
+
+  # DOJ articles often specify target="new" on links, but that's no longer best practice.
+  htmlStr.gsub!(%r{<a([^>]*) target="[^"]*"([^>]*)>}, '<a\1\2>')
 end
 
 ###################################################################################################
