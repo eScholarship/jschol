@@ -106,27 +106,32 @@ $jscholKey = ENV['JSCHOL_KEY'] or raise("missing env JSCHOL_KEY")
 
 # S3 API client
 puts "Connecting to S3.           "
-# Temporary wire logging while we diagnose S3 timeouts with the AWS folks.
-# It's so verbose that it even dumps binary data; to keep the log size at all
-# reasonable, omit that part.
-class S3Logger < Logger
-  @prevWasOmitted = false
-  def << (msg)
-    if msg =~ /\\r\\n/ && !(msg =~ /\\x/)
-      puts "s3: #{msg}"
-      @prevWasOmitted = false
-    else
-      if !@prevWasOmitted
-        puts "s3: [data omitted]"
+S3_LOGGING = false
+if S3_LOGGING
+  # Temporary wire logging while we diagnose S3 timeouts with the AWS folks.
+  # It's so verbose that it even dumps binary data; to keep the log size at all
+  # reasonable, omit that part.
+  class S3Logger < Logger
+    @prevWasOmitted = false
+    def << (msg)
+      if msg =~ /\\r\\n/ && !(msg =~ /\\x/)
+        puts "s3: #{msg}"
+        @prevWasOmitted = false
+      else
+        if !@prevWasOmitted
+          puts "s3: [data omitted]"
+        end
+        @prevWasOmitted = true
       end
-      @prevWasOmitted = true
     end
   end
+  s3Logger = S3Logger.new(STDOUT)
+  $s3Client = Aws::S3::Client.new(region: ENV['S3_REGION'] || raise("missing env S3_REGION"),
+                                  :logger => s3Logger, :http_wire_trace => true)
+else
+  $s3Client = Aws::S3::Client.new(region: ENV['S3_REGION'] || raise("missing env S3_REGION"))
+  $s3Bucket = Aws::S3::Bucket.new(ENV['S3_BUCKET'] || raise("missing env S3_BUCKET"), client: $s3Client)
 end
-s3Logger = S3Logger.new(STDOUT)
-$s3Client = Aws::S3::Client.new(region: ENV['S3_REGION'] || raise("missing env S3_REGION"),
-                                :logger => s3Logger, :http_wire_trace => true)
-$s3Bucket = Aws::S3::Bucket.new(ENV['S3_BUCKET'] || raise("missing env S3_BUCKET"), client: $s3Client)
 
 # Internal modules to implement specific pages and functionality
 require_relative '../util/sanitize.rb'
@@ -218,6 +223,20 @@ class AccessLogger
   end
 end
 
+###################################################################################################
+# Model classes for easy interaction with the database.
+#
+# For more info on the database schema, see contents of migrations/ directory, and for a more
+# graphical version, see:
+#
+# https://docs.google.com/drawings/d/1gCi8l7qteyy06nR5Ol2vCknh9Juo-0j91VGGyeWbXqI/edit
+puts "Populating db models."
+require_relative '../tools/models.rb'
+
+# DbCache uses the models above.
+require_relative 'dbCache'
+fillCaches
+
 # Sinatra configuration
 configure do
   # Puma is good for multiprocess *and* multithreading
@@ -242,24 +261,8 @@ configure do
     }
 end
 
-# Compress responses
-## NO: This fails when streaming files. Not sure why yet.
-#use Rack::Deflater
-
 TEMP_DIR = "tmp"
 FileUtils.mkdir_p(TEMP_DIR)
-
-###################################################################################################
-# Model classes for easy interaction with the database.
-#
-# For more info on the database schema, see contents of migrations/ directory, and for a more
-# graphical version, see:
-#
-# https://docs.google.com/drawings/d/1gCi8l7qteyy06nR5Ol2vCknh9Juo-0j91VGGyeWbXqI/edit
-require_relative '../tools/models.rb'
-
-# DbCache uses the models above.
-require_relative 'dbCache'
 
 ###################################################################################################
 # ISOMORPHIC JAVASCRIPT

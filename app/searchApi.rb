@@ -84,7 +84,7 @@ def initAllFacets()
     'displayName' => 'Journal',
     'awsFacetParam' => {sort: 'count', size: 100},
     'filterTransform' => lambda { |filterVals| filterVals.map { |filterVal| {'value' => filterVal, 'displayName' => get_unit_display_name(filterVal)} } },
-    'facetTransform' => lambda { |facetVals| facetVals.map { |facetVal| {'value' => facetVal['value'], 'count' => facetVal['count'], 'displayName' => get_unit_display_name(facetVal['value'])} } }
+    'facetTransform' => lambda { |facetVals| facetVals.map { |facetVal| {'value' => facetVal['value'], 'count' => facetVal['count'], 'displayName' => get_unit_display_name(facetVal['value'])} }.sort_by{ |f| f['displayName'].downcase} }
   },
   'disciplines' => {
     'displayName' => 'Discipline',
@@ -145,6 +145,13 @@ def get_unit_display_name(unitID)
   unit ? unit.name : "null"
 end
 
+# Recursive sort of nested facet array 
+def sortFacetTree(fa)  
+  fa = fa.sort_by{|f| [ f['displayName'].downcase ]} 
+  fa.each{ |f| f['descendents'] = sortFacetTree(f['descendents']) if (f['descendents'].nil? ? [] : f['descendents']).size > 0 }  
+  fa 
+end
+
 # takes list of facets in [{value: , count: }] form where value is the value that escholarship UI/AWS uses.
 # returns a nested hierarchy list: [{value, count, displayName, (optionally) descendents: []}, ...]
 def get_unit_hierarchy(unitFacets)
@@ -173,7 +180,7 @@ def get_unit_hierarchy(unitFacets)
     end
   end
 
-  return unitFacets.select { |unitFacet| !unitFacet['ancestor_in_list'] }
+  return sortFacetTree(unitFacets.select { |unitFacet| !unitFacet['ancestor_in_list'] })
 end
 
 def get_query_display(params)
