@@ -118,7 +118,7 @@ body {
   margin: 0 auto;
   padding: $spacing-sm $spacing-sm 0;
   background-color: lighten($color-light-gray, 15%);
-  font-family: 'KievitWeb', 'Arial', 'Helvetica', sans-serif;
+  font-family: 'SourceSansPro', 'Arial', 'Helvetica', sans-serif;
   overflow-x: hidden;
 
   @include bp (screen2) {

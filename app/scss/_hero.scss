@@ -28,7 +28,7 @@ $hero-text-shadow: 1px 1px 1px $color-light-black;
   }
 
   @include u-heading() {
-    @extend %u-kievitweblight-font-stack;
+    @extend %u-sourcesansprolight-font-stack;
     margin: 0;
     color: $color-white;
     font-size: 1.3em;

@@ -43,7 +43,7 @@ $campushero-text-shadow: 1px 1px 1px $color-light-black;
 }
 
 .c-campushero__lede {
-  @extend %u-kievitweblight-font-stack;
+  @extend %u-sourcesansprolight-font-stack;
   @extend %c-campushero__text-bg;
   margin: (-$spacing-sm) (-$spacing-sm) $spacing-sm;
   padding: $spacing-sm;

@@ -1,6 +1,8 @@
 // ##### Content Well Object ##### //
 
 %o-well {
+  padding: $spacing-sm;
+
   @include bp(screen2) {
     padding: $spacing-md;
   }
@@ -26,7 +28,7 @@
 .o-well-large {
   @extend %o-well;
 
-  padding: $spacing-xl 0;
+  padding: $spacing-xl $spacing-sm;
 
   @include bp(screen2) {
     padding: $spacing-xl $spacing-md;
