@@ -42,7 +42,7 @@ class FilterComp extends React.Component {
     return (
       <div className={activeFilters ? "c-filter--active" : "c-filter"}>
         <h1 className="c-filter__heading">{searchString}</h1>
-        <input type="hidden" name="q" value={this.props.query.q} />
+        <input type="hidden" name="q" value={this.props.query.q == "All items" ? "" : this.props.query.q} />
         <div className="c-filter__results">{resultCount} results</div>
         <div className="c-filter__inactive-note">No filters applied</div>
         <details className="c-filter__active" open={this.state.isOpen}>
