@@ -133,7 +133,7 @@ def getUnitCarouselStats
 end
 
 def sumArrayCounts(array)
-  return array.inject(0) {|sum, h| sum + h[:count]}
+  return array.inject(0) {|sum, h| sum + (h[:count] || 0)}
 end
 
 # Journal Carousel: Compile item and view counts for all journals, segmented by campus.
