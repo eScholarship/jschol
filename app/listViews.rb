@@ -116,6 +116,7 @@ def infoResultData(infoIds)
 
     unit_id = nodes[1]
     unit = $unitsHash[unit_id]
+    next if unit.nil?  # filter out info pages in search index from deleted unit
 
     case nodes[0]
     when "unit"
