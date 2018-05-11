@@ -386,7 +386,7 @@ end
 # Query on items. Then, if faceting on anything other than Campus, Department, or Journal, DON'T query for info pages
 def search(params, facetTypes=$allFacets.keys)
   r = searchByType(params, facetTypes, "items")
-  if (params.keys & ITEM_SPECIFIC).size == 0
+  if (params.keys & ITEM_SPECIFIC).size == 0 && !isQueryEmpty(params)
     info_r = searchByType(params, facetTypes, "infopages")
     r['info_count'] = info_r['info_count']
     r['infoResults'] = info_r['infoResults']
