@@ -2,10 +2,6 @@
 
 # This script converts data from old eScholarship into the new eschol5 database.
 #
-# The "--units" mode converts the contents of allStruct-eschol5.xml and the
-# various brand files into the unit/unitHier/etc tables. It is
-# built to be fully incremental.
-#
 # The "--items" mode converts combined an XTF index dump with the contents of
 # UCI metadata files into the items/sections/issues/etc. tables. It is also
 # built to be fully incremental.
@@ -130,6 +126,7 @@ $s3Bucket = Aws::S3::Bucket.new(ENV['S3_BUCKET'] || raise("missing env S3_BUCKET
 # Caches for speed
 $allUnits = nil
 $unitAncestors = nil
+$unitChildren = nil
 $issueCoverCache = {}
 $issueNumberingCache = {}
 
@@ -222,46 +219,6 @@ Issue.where(Sequel.lit("attrs->'$.buy_link' is not null")).each { |record|
 }
 
 ###################################################################################################
-# Insert hierarchy links (skipping dupes) for all descendants of the given unit id.
-def linkUnit(id, childMap, done)
-  childMap[id].each_with_index { |child, idx|
-    if !done.include?([id, child])
-      UnitHier.create(
-        :ancestor_unit => id,
-        :unit_id => child,
-        :ordering => idx,
-        :is_direct => true
-      )
-      done << [id, child]
-    end
-    if childMap.include?(child)
-      linkUnit(child, childMap, done)
-      linkDescendants(id, child, childMap, done)
-    end
-  }
-end
-
-###################################################################################################
-# Helper function for linkUnit
-def linkDescendants(id, child, childMap, done)
-  childMap[child].each { |child2|
-    if !done.include?([id, child2])
-      #puts "linkDescendants: id=#{id} child2=#{child2}"
-      UnitHier.create(
-        :ancestor_unit => id,
-        :unit_id => child2,
-        :ordering => nil,
-        :is_direct => false
-      )
-      done << [id, child2]
-    end
-    if childMap.include?(child2)
-      linkDescendants(id, child2, childMap, done)
-    end
-  }
-end
-
-###################################################################################################
 # Upload an asset file to S3 (if not already there), and return the asset ID. Attaches a hash of
 # metadata to it.
 def putAsset(filePath, metadata)
@@ -305,506 +262,6 @@ def putImage(imgPath, &block)
              width: dims[0],
              height: dims[1]
            }
-  end
-end
-
-###################################################################################################
-def convertLogo(unitID, unitType, logoEl)
-  # Locate the image reference
-  logoImgEl = logoEl && logoEl.at("./div[@id='logoDiv']/img[@src]")
-  if !logoImgEl
-    if unitType != "campus"
-      return {}
-    end
-    # Default logo for campus
-    imgPath = "app/images/logo_#{unitID}.svg"
-  else
-    imgPath = logoImgEl && "/apps/eschol/erep/xtf/static/#{logoImgEl[:src]}"
-    imgPath =~ %r{LOGO_PATH|/$} and return {} # logo never configured
-  end
-  if !File.file?(imgPath)
-    #puts "Warning: Can't find logo image: #{imgPath.inspect}" # who cares
-    return {}
-  end
-
-  data = putImage(imgPath)
-  (logoEl && logoEl.attr('banner') == "single") and data[:is_banner] = true
-  return { logo: data }
-end
-
-###################################################################################################
-def convertBlurb(unitID, blurbEl)
-  # Make sure there's a div
-  divEl = blurbEl && blurbEl.at("./div")
-  divEl or return {}
-
-  # Make sure the HTML conforms to our specs
-  html = sanitizeHTML(divEl.inner_html)
-  html.length > 0 or return {}
-  return { about: html }
-end
-
-###################################################################################################
-def stripXMLWhitespace(node)
-  node.children.each_with_index { |kid, idx|
-    if kid.comment?
-      kid.remove
-    elsif kid.element?
-      stripXMLWhitespace(kid)
-    elsif kid.text?
-      prevIsElement = node.children[idx-1] && node.children[idx-1].element?
-      nextIsElement = node.children[idx+1] && node.children[idx+1].element?
-      ls = kid.content.lstrip
-      if ls != kid.content
-        if idx == 0
-          if ls.empty?
-            kid.remove
-            next
-          else
-            kid.content = ls
-          end
-        elsif prevIsElement && nextIsElement
-          if kid.content.strip.empty?
-            kid.remove
-            next
-          else
-            kid.content = " " + kid.content.strip + " "
-          end
-        else
-          kid.content = " " + ls
-        end
-      end
-      rs = kid.content.rstrip
-      if rs != kid.content
-        if idx == node.children.length - 1
-          if rs.empty?
-            kid.remove
-            next
-          else
-            kid.content = rs
-          end
-        else
-          kid.content = rs + " "
-        end
-      end
-    end
-  }
-end
-
-###################################################################################################
-def putBrandDownload(entity, filename)
-  filePath = "/apps/eschol/erep/xtf/static/brand/#{entity}/#{filename}"
-  if !File.exist?(filePath)
-    puts "Warning: can't find brand download #{filePath}"
-    return nil
-  end
-  return putAsset(filePath, {})
-end
-
-###################################################################################################
-def convertBrandDownloadToPage(unitID, navBar, navID, linkName, linkTarget)
-  if !(linkTarget =~ %r{/brand/([^/]+)/([^/]+)$})
-    puts "Warning: can't parse link to file in brand dir: #{linkTarget}"
-    return
-  end
-  entity, filename = $1, $2
-  assetID = putBrandDownload(entity, filename)
-  assertID or return
-
-  html = "<p>Please see <a href=\"/assets/#{assetID}\">#{filename}</a></p>"
-  html = sanitizeHTML(html)
-
-  slug = linkTarget.sub("\.[^.]+$", "").gsub(/[^\w ]/, '')
-
-  Page.create(unit_id: unitID,
-              slug: slug,
-              name: linkName,
-              title: linkName,
-              attrs: JSON.generate({ html: html }))
-  navBar << { id: navID, type: "page", slug: slug, name: linkName }
-end
-
-###################################################################################################
-def convertTables(html)
-  html.gsub! %r{<table[^>]*>}i, ""
-  html.gsub! %r{</table>}i, ""
-
-  html.gsub! %r{<tr[^>]*>}i, ""
-  html.gsub! %r{</tr>}i, "<br/>"
-
-  html.gsub! %r{</(td|th)>\s*<(td|th)[^>]*>}i, " | "
-  html.gsub! %r{</?(td|th)[^>]*>}i, ""
-  return html
-end
-
-###################################################################################################
-def convertPage(unitID, navBar, navID, contentDiv, slug, name)
-  title = nil
-  stripXMLWhitespace(contentDiv)
-  if contentDiv.children.empty?
-    #puts "Warning: empty page content for page #{slug}" # who cares
-    return
-  end
-
-  # If content consists of a single <p>, strip it off.
-  kid = contentDiv.children[0]
-  if contentDiv.children.length == 1 && kid.name =~ /^[pP]$/
-    contentDiv = kid
-  end
-
-  # If it starts with a heading, grab that.
-  kid = contentDiv.children[0]
-  if kid.name =~ /^h1|h2|h3|H1|H2|H3$/
-    title = kid.inner_html
-    kid.remove
-  else
-    #puts("Warning: no title for page #{slug} #{name.inspect}") # who cares
-  end
-
-  # If missing name, use title (or fall back to slug). And vice-versa
-  name ||= title || slug
-  title ||= name
-
-  # If remaining content consists of a single <p>, strip it off.
-  kid = contentDiv.children[0]
-  if contentDiv.children.length == 1 && kid.name =~ /^[pP]$/
-    contentDiv = kid
-  end
-
-  # Cheesy conversion of tables to lists, for now at least
-  html = contentDiv.inner_html
-  convertTables(html)
-
-  html = sanitizeHTML(html)
-  html.length > 0 or return
-
-  # Replace old-style links
-  html.gsub!(%r{href="([^"]+)"}) { |m|
-    link = $1
-    %{href="#{mapEntityLink(link) || link}"}
-  }
-
-  Page.create(unit_id: unitID,
-              slug: slug,
-              name: name,
-              title: title ? title : name,
-              attrs: JSON.generate({ html: html }))
-  navBar << { id: navID, type: "page", slug: slug, name: name }
-end
-
-###################################################################################################
-def mapEntityLink(linkTarget)
-  case linkTarget.sub(%r{^https?://escholarship.org}, '').sub(%r{^[/.]+}, '')
-  when %r{^uc/search\?entity=([^;]+)(;view=([^;]+))?}
-    "/uc/#{$1}#{$3 && "/#{$3}"}"
-  when %r{^uc/search\?entity=([^;]+)(;rmode=[^;]+)?$}
-    "/uc/#{$1}"
-  when %r{^uc/search\?entity=([^;]+);volume=(\d+);issue=(\d+)$}
-    "/uc/#{$1}/#{$2}/#{$3}"
-  when %r{^uc/([a-zA-Z0-9_]+)(\?rmode=[^;]+)?$}
-    "/uc/#{$1}"
-  when %r{^brand/([^/]+)/([^/]+)$}
-    entity, filename = $1, $2
-    "/uc/#{entity}/#{putBrandDownload(entity, filename)}"
-  else
-    return nil
-  end
-end
-
-###################################################################################################
-def convertNavBar(unitID, generalEl)
-  # Blow away existing database pages for this unit
-  Page.where(unit_id: unitID).delete
-
-  navBar = []
-  generalEl or return { nav_bar: navBar }
-
-  # Convert each link in linkset
-  linkedPagesUsed = Set.new
-  aboutBar = nil
-  curNavID = 0
-  generalEl.xpath("./linkSet/div").each { |linkDiv|
-    linkDiv.children.each { |para|
-      # First, a bunch of validation checks. We're expecting this kind of thing:
-      # <p><a href="http://blah">Link name</a></p>
-      para.comment? and next
-      if para.text?
-        text = para.text.strip
-        if !text.empty? and !(para.to_s =~ /--&gt;/)
-          puts "Extraneous text in linkSet: #{para}"
-        end
-        next
-      end
-
-      if para.name == "a"
-        links = [para]
-      elsif para.name != "p"
-        puts "Extraneous element in linkSet: #{para}"
-        next
-      else
-        links = para.xpath("./a")
-      end
-
-      if links.empty?
-        #puts "Missing <a> in linkSet: #{para.inner_html}" # happens for informational headings we strip anyhow
-        next
-      end
-      if links.length > 1
-        puts "Too many <a> in linkSet: #{para.inner_html}"
-        next
-      end
-
-      link = links[0]
-      linkName = link.text
-      linkName and linkName.strip!
-      if !linkName || linkName.empty?
-        puts "Missing link text: #{para.inner_html}"
-        next
-      end
-
-      linkTarget = link.attr('href')
-      if !linkTarget && link.attr('onclick') =~ /location.href='([^']+)'/
-        linkTarget = $1
-      elsif !linkTarget
-        puts "Missing link target: #{para.inner_html}"
-        next
-      end
-
-      if linkTarget =~ /view=(contact|policyStatement|policies|submitPaper|submissionGuidelines)/i
-        addTo = navBar
-      else
-        if !aboutBar
-          aboutBar = { id: curNavID+=1, type: "folder", name: "About", sub_nav: [] }
-          navBar << aboutBar
-        end
-        addTo = aboutBar[:sub_nav]
-      end
-
-      if linkTarget =~ %r{/uc/search\?entity=[^;]+;view=([^;]+)$}
-        slug = $1
-        linkedPage = generalEl.at("./linkedPages/div[@id='#{slug}']")
-        if !linkedPage
-          puts "Can't find linked page #{slug.inspect}"
-          next
-        end
-        convertPage(unitID, addTo, curNavID+=1, linkedPage, slug, linkName)
-        linkedPagesUsed << slug
-      elsif linkTarget =~ %r{^https?://}
-        addTo << { id: curNavID+=1, type: "link", name: linkName, url: linkTarget }
-      elsif (mapped = mapEntityLink(linkTarget))
-        addTo << { id: curNavID+=1, type: "link", name: linkName, url: mapped }
-      elsif linkTarget =~ %r{/brand/}
-        convertBrandDownloadToPage(unitID, addTo, curNavID+=1, linkName, linkTarget)
-      else
-        puts "Invalid link target: #{para.inner_html}"
-      end
-    }
-  }
-
-  # TODO: The "contactInfo" part of the brand file is supposed to end up in the "Journal Information"
-  # box at the right side of the eschol UI. Database conversion TBD.
-  #convertPage(unitID, navBar, generalEl.at("./contactInfo/div"), "journalInfo", BLAH)
-
-  # Convert unused pages to a hidden bar
-  hiddenBar = nil
-  generalEl.xpath("./linkedPages/div").each { |page|
-    slug = page.attr('id')
-    next if slug.nil? || slug.empty?
-    next if linkedPagesUsed.include?(slug)
-    #puts "Unused linked page, id=#{slug.inspect}" # who cares about the message
-    if !hiddenBar
-      hiddenBar = { id: curNavID+=1, type: "folder", name: "other pages", hidden: true, sub_nav: [] }
-      navBar << hiddenBar
-    end
-    convertPage(unitID, hiddenBar[:sub_nav], curNavID+=1, page, slug, nil)
-  }
-
-  # All done.
-  return { nav_bar: navBar }
-end
-
-###################################################################################################
-def convertSocial(unitID, divs)
-  # Hack in some social media for now
-  if unitID == "ucla"
-    return { twitter: "UCLA", facebook: "uclabruins" }
-  elsif unitID == "uclalaw"
-   return { twitter: "UCLA_Law", facebook: "pages/UCLA-School-of-Law-Official/148867995080" }
-  end
-
-  dataOut = {}
-  divs.each { |div|
-    next unless div.attr('id') =~ /^(contact|contactUs)$/
-
-    # See if we can find twitter or facebook info
-    div.xpath(".//a[@href]").each { |el|
-      href = el.attr('href')
-      if href =~ %r{^http.*twitter.com/(.*)}
-        dataOut[:twitter] = $1
-      elsif href =~ %r{^http.*facebook.com/(.*)}
-        dataOut[:facebook] = $1
-      end
-    }
-  }
-  return dataOut
-end
-
-###################################################################################################
-def convertDirectSubmit(unitID, el)
-  el && el[:url] or return {}
-
-  # Map old page URLs to new
-  url = el[:url]
-  url =~ %r{/uc/search\?entity=[^;]+;view=([^;]+)$} and url = "/uc/#{unitID}/#{$1}"
-
-  # All done.
-  return { directSubmitURL: url }
-end
-
-###################################################################################################
-def defaultNav(unitID, unitType)
-  if unitType == "root"
-    return [
-      { id: 1, type: "folder", name: "About", sub_nav: [] },
-      { id: 2, type: "folder", name: "Campus Sites", sub_nav: [] },
-      { id: 3, type: "folder", name: "UC Open Access", sub_nav: [] },
-      { id: 4, type: "link", name: "eScholarship Publishing", url: "#" }
-    ]
-  elsif unitType == "campus"
-    return [
-      { id: 1, type: "link", name: "Open Access Policies", url: "#" },
-      { id: 2, type: "link", name: "Journals", url: "/#{unitID}/journals" },
-      { id: 3, type: "link", name: "Academic Units", url: "/#{unitID}/units" }
-    ]
-  else
-    #puts "Warning: no brand file found for unit #{unitID.inspect}" # who cares about msg
-    return []
-  end
-end
-
-###################################################################################################
-def convertUnitBrand(unitID, unitType)
-  begin
-    dataOut = {}
-
-    bfPath = "/apps/eschol/erep/xtf/static/brand/#{unitID}/#{unitID}.xml"
-    if File.exist?(bfPath)
-      dataIn = fileToXML(bfPath).root
-      dataOut.merge!(convertLogo(unitID, unitType, dataIn.at("./display/mainFrame/logo")))
-      dataOut.merge!(convertBlurb(unitID, dataIn.at("./display/mainFrame/blurb")))
-      if unitType == "campus"
-        dataOut.merge!({ nav_bar: defaultNav(unitID, unitType) })
-      else
-        dataOut.merge!(convertNavBar(unitID, dataIn.at("./display/generalInfo")))
-      end
-      dataOut.merge!(convertSocial(unitID, dataIn.xpath("./display/generalInfo/linkedPages/div")))
-      dataOut.merge!(convertDirectSubmit(unitID, dataIn.at("./directSubmitURL")))
-    else
-      dataOut.merge!({ nav_bar: defaultNav(unitID, unitType) })
-    end
-
-    return dataOut
-  rescue
-    puts "Error converting brand data for #{unitID.inspect}:"
-    raise
-  end
-end
-
-###################################################################################################
-def addDefaultWidgets(unitID, unitType)
-  # Blow away existing widgets for this unit
-  Widget.where(unit_id: unitID).delete
-
-  widgets = []
-  # The following are from the wireframes, but we haven't implemented the widgets yet
-  #case unitType
-  #  when "root"
-  #    widgets << { kind: "FeaturedArticles", region: "sidebar", attrs: nil }
-  #    widgets << { kind: "NewJournalIssues", region: "sidebar", attrs: nil }
-  #    widgets << { kind: "Tweets", region: "sidebar", attrs: nil }
-  #  when "campus"
-  #    widgets << { kind: "FeaturedJournals", region: "sidebar", attrs: nil }
-  #    widgets << { kind: "Tweets", region: "sidebar", attrs: nil }
-  #  else
-  #    widgets << { kind: "FeaturedArticles", region: "sidebar", attrs: nil }
-  #end
-  # So for now, just put RecentArticles on everything.
-  widgets << { kind: "RecentArticles", region: "sidebar", attrs: {}.to_json }
-
-  widgets.each_with_index { |widgetInfo, idx|
-    Widget.create(unit_id: unitID, ordering: idx+1, **widgetInfo)
-  }
-end
-
-###################################################################################################
-# Convert an allStruct element, and all its child elements, into the database.
-def convertUnits(el, parentMap, childMap, allIds, selectedUnits)
-  id = el[:id] || el[:ref] || "root"
-  allIds << id
-  Thread.current[:name] = id.ljust(30)
-  #puts "name=#{el.name} id=#{id.inspect} name=#{el[:label].inspect}"
-
-  # Create or update the main database record
-  if selectedUnits == "ALL" || selectedUnits.include?(id)
-    if el.name != "ptr"
-      unitType = id=="root" ? "root" : el[:type]
-      # Retain CMS modifications to root and campuses
-      if ['root','campus'].include?(unitType) && Unit.where(id: id).first
-        #puts "Preserving #{id}."
-      else
-        selectedUnits == "ALL" or puts "Converting."
-        DB.transaction {
-          name = id=="root" ? "eScholarship" : el[:label]
-          Unit.create_or_update(id,
-            type:      unitType,
-            name:      name,
-            status:    el[:directSubmit] == "moribund" ? "archived" :
-                       ["eschol", "all"].include?(el[:hide]) ? "hidden" :
-                       "active"
-          )
-
-          # We can't totally fill in the brand attributes when initially inserting the record,
-          # so do it as an update after inserting.
-          attrs = {}
-          el[:directSubmit] and attrs[:directSubmit] = el[:directSubmit]
-          el[:hide]         and attrs[:hide]         = el[:hide]
-          el[:issn]         and attrs[:issn]         = el[:issn]
-          attrs.merge!(convertUnitBrand(id, unitType))
-          Unit[id].update(attrs: JSON.generate(attrs))
-
-          addDefaultWidgets(id, unitType)
-        }
-      end
-    end
-  end
-
-  # Now recursively process the child units
-  el.children.each { |child|
-    if child.name != "allStruct"
-      id or raise("id-less node with children")
-      childID = child[:id] || child[:ref]
-      childID or raise("id-less child node")
-      parentMap[childID] ||= []
-      parentMap[childID] << id
-      childMap[id] ||= []
-      childMap[id] << childID
-    end
-    convertUnits(child, parentMap, childMap, allIds, selectedUnits)
-  }
-
-  # After traversing the whole thing, it's safe to form all the hierarchy links
-  if el.name == "allStruct"
-    Thread.current[:name] = nil
-    if selectedUnits == "ALL"
-      DB.transaction {
-        # Delete extraneous units from prior conversions
-        deleteExtraUnits(allIds)
-
-        puts "Linking units."
-        UnitHier.dataset.delete
-        linkUnit("root", childMap, Set.new)
-      }
-    end
   end
 end
 
@@ -1610,15 +1067,6 @@ def oaPolicyAssoc(campus, units, dbItem, pubStatus)
               ['article', 'chapter'].include?(dbItem[:genre]) &&
               dbItem[:published].iso8601.sub(/-01-01$/, '-12-31') >= policyDate &&
               dbItem[:submitted].iso8601 >= policyDate
-
-  if $testMode
-    puts "id=#{dbItem[:id]} published=#{dbItem[:published].iso8601} submitted=#{dbItem[:submitted].iso8601} campus=#{campus} policyDate=#{policyDate} status=#{dbItem[:status]} source=#{dbItem[:source]} pubstatus=#{pubStatus} isCovered=#{isCovered}"
-    puts "1=#{dbItem[:submitted].iso8601 <= "2017-04-28"}"
-    puts "2=#{!policyDate.nil?}"
-    puts "3=#{['externalAccept', 'externalPub'].include?(pubStatus)}"
-    puts "4=#{dbItem[:genre] == "article"}"
-    puts "5=#{dbItem[:published].iso8601.sub(/-01-01$/, '-12-31') >= policyDate}"
-  end
   return isCovered ? campus : nil
 end
 
@@ -1864,12 +1312,14 @@ def updateIssueAndSection(data)
   if found
     issueChanged = false
     if found.published != iss.published
-      #puts "issue #{iss.unit_id} #{iss.volume}/#{iss.issue} pub date changed from #{found.published.inspect} to #{iss.published.inspect}."
+      #puts "issue #{iss.unit_id} #{iss.volume}/#{iss.issue} pub date " +
+      #changed from #{found.published.inspect} to #{iss.published.inspect}."
       found.published = iss.published
       issueChanged = true
     end
     if found.attrs != iss.attrs
-      #puts "issue #{iss.unit_id} #{iss.volume}/#{iss.issue} attrs changed from #{found.attrs.inspect} to #{iss.attrs.inspect}."
+      #puts "issue #{iss.unit_id} #{iss.volume}/#{iss.issue} attrs " +
+      #"changed from #{found.attrs.inspect} to #{iss.attrs.inspect}."
       found.attrs = iss.attrs
       issueChanged = true
     end
@@ -2066,21 +1516,6 @@ def deleteExtraUnits(allIds)
 end
 
 ###################################################################################################
-# Main driver for unit conversion.
-def convertAllUnits(units)
-  # Let the user know what we're doing
-  puts "Converting #{units=="ALL" ? "all" : "selected"} units."
-  startTime = Time.now
-
-  # Load allStruct and traverse it. This will create Unit and Unit_hier records for all units,
-  # and delete any extraneous old ones.
-  allStructPath = "/apps/eschol/erep/xtf/style/textIndexer/mapping/allStruct-eschol5.xml"
-  open(allStructPath, "r") { |io|
-    convertUnits(fileToXML(allStructPath).root, {}, {}, Set.new, units)
-  }
-end
-
-###################################################################################################
 def getShortArk(arkStr)
   arkStr =~ %r{^ark:/?13030/(qt\w{8})$} and return $1
   arkStr =~ /^(qt\w{8})$/ and return arkStr
@@ -2093,9 +1528,13 @@ def cacheAllUnits()
   # Build a list of all valid units
   $allUnits = Unit.map { |unit| [unit.id, unit] }.to_h
 
-  # Build a cache of unit ancestors
+  # Build a cache of unit ancestors and children
   $unitAncestors = Hash.new { |h,k| h[k] = [] }
-  UnitHier.each { |hier| $unitAncestors[hier.unit_id] << hier.ancestor_unit }
+  $unitChildren = Hash.new { |h,k| h[k] = [] }
+  UnitHier.order(:ordering).each { |hier|
+    $unitAncestors[hier.unit_id] << hier.ancestor_unit
+    hier.is_direct and $unitChildren[hier.ancestor_unit] << hier.unit_id
+  }
 end
 
 ###################################################################################################
@@ -2190,7 +1629,7 @@ def convertAllItems(arks)
     end
 
     # Grab the timestamps of all items, for speed
-    $allItemTimes = (arks=="ALL" ? Item : Item.where(id: arks.to_a)).to_hash(:id, :last_indexed)
+    allItemTimes = (arks=="ALL" ? Item : Item.where(id: arks.to_a)).to_hash(:id, :last_indexed)
 
     # Convert all the items that are indexable
     query = QUEUE_DB[:indexStates].where(indexName: 'erep').select(:itemId, :time).order(:itemId)
@@ -2204,7 +1643,7 @@ def convertAllItems(arks)
       shortArk = getShortArk(row[:itemId])
       next if arks != 'ALL' && !arks.include?(shortArk)
       erepTime = Time.at(row[:time].to_i).to_time
-      itemTime = $allItemTimes[shortArk]
+      itemTime = allItemTimes[shortArk]
       if itemTime.nil? || itemTime < erepTime || ($rescanMode && arks.include?(shortArk))
         $indexQueue << [shortArk, erepTime]
       else
@@ -2546,153 +1985,6 @@ def flushDbQueue(queue)
 end
 
 ###################################################################################################
-# Need to do queueing in a function to force the paramters to be captured. Doing a plain lambda
-# inline gets references to variables which then change before lambdas get called.
-def queueRedirect(queue, kind, from_path, to_path, descrip)
-  queue << lambda {
-    Redirect.create(kind: kind,
-                    from_path: from_path,
-                    to_path: to_path,
-                    descrip: descrip)
-  }
-end
-
-###################################################################################################
-def convertOldStyleRedirects(kind, filename)
-  # Skip if already done.
-  !$forceMode && Redirect.where(kind: kind).count > 0 and return
-
-  puts "Converting #{kind} redirects."
-  Redirect.where(kind: kind).delete
-  queue = []
-  open("redirects/#{filename}").each_line do |line|
-    line =~ %r{<from>(http://repositories.cdlib.org/)?([^<]+)</from>.*<to>([^<]+)</to>} or raise
-    fp, tp = $2, $3
-    fp.sub! "&amp;", "&"
-    tp.sub! "&amp;", "&"
-    tp.sub! %r{^/uc/search\?entity=(.*);volume=(.*);issue=(.*)}, '/uc/\1/\2/\3'
-    queueRedirect(queue, kind, "/#{fp}", tp, nil)
-    queue.length >= 1000 and flushDbQueue(queue)
-  end
-  flushDbQueue(queue)
-end
-
-###################################################################################################
-def convertItemRedirects
-  # Skip if already done.
-  !$forceMode && Redirect.where(kind: 'item').count > 0 and return
-
-  puts "Converting item redirects."
-  Redirect.where(kind: 'item').delete
-  fromArks = []
-  comment = nil
-  queue = []
-  didArks = {}
-  open("/apps/eschol/erep/xtf/style/dynaXML/docFormatter/pdf/objectRedirect.xsl").each_line do |line|
-    if line =~ /test="matches/
-      fromArks.empty? or raise("multiple whens with no value-of: #{line}")
-      fromArks = line.scan /\b\d\w{7}\b/
-      fromArks.empty? and raise("no fromArks found: #{line}")
-    elsif line =~ %r{<!--(.*)-->}
-      comment = $1.strip
-      comment.empty? and comment = nil
-    elsif line =~ /xsl:value-of/
-      fromArks.empty? and raise("value-of without when: #{line}")
-      line.sub! "/980931r'", "/980931rf'"  # hack missing char in old redirect
-      toArks = line.scan /\b\d\w{7}\b/
-      toArks.length == 1 or raise("need exactly one to-ark: #{line}")
-      toArk = toArks[0]
-      fromArks.each { |fromArk|
-        if didArks.include? fromArk
-          toArk != didArks[fromArk] and puts "Duplicate from=#{fromArk} to=#{didArks[fromArk]} vs #{toArk}. Skipping."
-          next
-        end
-        queueRedirect(queue, 'item', "/uc/item/#{fromArk}", "/uc/item/#{toArk}", comment)
-        queue.length >= 1000 and flushDbQueue(queue)
-        didArks[fromArk] = toArk
-      }
-      comment = nil
-      fromArks.clear
-    end
-  end
-  flushDbQueue(queue)
-end
-
-###################################################################################################
-def convertUnitRedirects
-  # Skip if already done.
-  !$forceMode && Redirect.where(kind: 'unit').count > 0 and return
-  puts "Converting unit redirects."
-  Redirect.where(kind: 'unit').delete
-
-  fromUnit = nil
-  queue = []
-  open("/apps/eschol/erep/xtf/style/erepCommon/unitRedirect.xsl").each_line do |line|
-    if line =~ /entity='([a-z0-9_]+)'/
-      fromUnit.nil? or raise("multiple whens with no value-of: #{line}")
-      fromUnit = $1
-    elsif line =~ /replace\(\$http\.URL,\s*'([a-z0-9_]+)',\s*'([^']+)'/
-      fromUnit.nil? and raise("value-of without when: #{line}")
-      fromUnit == $1 or raise("value-of doesn't match when: #{line}")
-      fp = "/uc/#{fromUnit}"
-      tp = "/uc/#{$2}"
-      queueRedirect(queue, 'unit', fp, tp, nil)
-      fromUnit = nil
-    end
-  end
-  flushDbQueue(queue)
-end
-
-###################################################################################################
-def fixURL(url)
-  url.sub(%r{^(https?://)([^/]+)//}, '\1\2/')
-end
-
-###################################################################################################
-def convertLogRedirects
-  # Skip if already done.
-  !$forceMode && Redirect.where(kind: 'log').count > 0 and return
-  puts "Converting log redirects."
-  Redirect.where(kind: 'log').delete
-
-  open("redirects/random_redirects").each_line do |line|
-    fromURL, toURL, code = line.split("|")
-
-    # Fix double slashes
-    fromURL = fixURL(fromURL)
-    toURL = fixURL(toURL)
-
-    # www.escholarship -> escholarship
-    next if fromURL.sub("www.escholarship.org", "escholarship.org") == toURL
-    next if fromURL.sub(".pdf", "") == toURL
-
-    # Screwing around with query params on items
-    next if fromURL.sub(%r{(/uc/item/.*)\?.*}, '$1') == toURL.sub(%r{(/uc/item/.*)\?.*}, '$1')
-
-    # Item redirects
-    if fromURL =~ %r{/uc/item/([^/]+)}
-      itemID = $1
-      itemRedir = Redirect.where(kind: "item", from_path: "/uc/item/#{itemID}").first
-      if itemRedir
-        puts "item redirect found: #{itemID} -> #{itemRedir.to_path}"
-        next
-      end
-    end
-
-    puts "#{fromURL} -> #{toURL}"
-  end
-end
-
-###################################################################################################
-def convertRedirects
-  convertOldStyleRedirects('bepress', 'bp_redirects')
-  convertOldStyleRedirects('doj', 'doj_redirects')
-  convertItemRedirects
-  convertUnitRedirects
-  #convertLogRedirects
-end
-
-###################################################################################################
 def recalcOA
   puts "Reading units and item links."
   cacheAllUnits
@@ -2723,6 +2015,117 @@ def recalcOA
 end
 
 ###################################################################################################
+def genDivChildren(xml, parentID, generatedDivs)
+  $unitChildren[parentID].each { |unitID|
+    if generatedDivs.include?(unitID)
+      xml.ptr(ref: unitID)
+    else
+      unit = $allUnits[unitID]
+      unitAttrs = JSON.parse(unit.attrs)
+      divAttrs = {id: unitID, label: unit.name, type: unit.type}
+      unitAttrs['directSubmit'] and divAttrs[:directSubmit] = unitAttrs['directSubmit']
+      unitAttrs['hide'] and divAttrs[:hide] = unitAttrs['hide']
+      if unitAttrs['eissn']
+        divAttrs[:issn] = unitAttrs['eissn']
+      elsif unitAttrs['issn']
+        divAttrs[:issn] = unitAttrs['issn']
+      end
+      unitAttrs['elements_id'] and divAttrs[:elementsID] = unitAttrs['elements_id']
+      unitAttrs['is_undergrad'] and divAttrs[:undergrad] = unitAttrs['is_undergrad']
+      unitAttrs['submit_datasets'] and divAttrs[:dataSet] = unitAttrs['submit_datasets']
+      xml.div(divAttrs) {
+        genDivChildren(xml, unitID, generatedDivs)
+      }
+      generatedDivs << unitID
+    end
+  }
+end
+
+###################################################################################################
+# Regenerate the old allStruct.xml file that Subi and eschol4 controller depend upon
+def genAllStruct
+  puts "Rebuilding allStruct.xml."
+
+  cacheAllUnits
+  builder = Nokogiri::XML::Builder.new { |xml|
+    xml.allStruct {
+      genDivChildren(xml, "root", Set.new)
+    }
+  }
+
+  File.open("/apps/eschol/erep/xtf/style/textIndexer/mapping/allStruct-new.xml", "w") { |io|
+    io.write(builder.to_xml)
+  }
+
+  DB.transaction {
+    checkAllStruct
+  }
+end
+
+def extractDivsInner(el, addTo)
+  el.elements.each { |sub|
+    if sub.name == "div"
+      addTo.key?(sub[:id]) and puts("Warning: dupe #{sub}")
+      addTo[sub[:id]] = sub.clone
+    end
+    extractDivsInner(sub, addTo)
+  }
+end
+
+def extractDivs(path)
+  xml = fileToXML(path)
+  addTo = {}
+  extractDivsInner(xml, addTo)
+  return addTo
+end
+
+def fixUnitAttr(unitID, attrName, newVal)
+  puts "    Fixing unit #{unitID} attr #{attrName}=#{newVal.inspect}"
+  unit = Unit[unitID]
+  attrs = JSON.parse(unit.attrs)
+  attrs[attrName] = newVal
+  unit.attrs = attrs.to_json
+  unit.save
+end
+
+def checkAllStruct
+  puts "Checking."
+  oldDivs = extractDivs("/apps/eschol/erep/xtf/style/textIndexer/mapping/allStruct.xml")
+  newDivs = extractDivs("/apps/eschol/erep/xtf/style/textIndexer/mapping/allStruct-new.xml")
+  (Set.new(oldDivs.keys) + Set.new(newDivs.keys)).each { |id|
+    oldDiv = oldDivs[id]
+    newDiv = newDivs[id]
+    if !oldDiv
+      puts "  Excess new div for id=#{id}"
+    elsif !newDiv
+      puts "  Missing new div for id=#{id}"
+    else
+      (Set.new(oldDiv.attributes.keys) + Set.new(newDiv.attributes.keys)).each { |attrName|
+        next if attrName =~ /^(customFields|seriesBrandFile|label)$/
+        next if oldDiv[attrName] == newDiv[attrName]
+        if !oldDiv[attrName]
+          puts "  Extra attr #{attrName}=#{newDiv[attrName].inspect} for unit #{id}"
+        else
+          if !newDiv[attrName]
+            next if attrName == "directSubmit" && oldDiv[attrName] == "enabled"  # enabled same as nil default
+            puts "  Missing attr #{attrName}=#{oldDiv[attrName].inspect} for unit #{id}"
+          else
+            puts "  Attr diff: old #{attrName}=#{oldDiv[attrName].inspect} vs new #{newDiv[attrName].inspect} for unit #{id}"
+          end
+          if attrName == "elementsID"
+            fixUnitAttr(id, "elements_id", oldDiv[attrName])
+          elsif attrName == "undergrad"
+            fixUnitAttr(id, "is_undergrad", oldDiv[attrName])
+          elsif attrName == "dataSet"
+            fixUnitAttr(id, "submit_datasets", oldDiv[attrName])
+          end
+        end
+      }
+    end
+  }
+end
+
+###################################################################################################
 # Main action begins here
 
 startTime = Time.now
@@ -2739,12 +2142,6 @@ begin
   end
 
   case ARGV[0]
-    when "--units"
-      puts "Unit conversion is now really dangerous. If you really want to do this, use --units-real"
-      exit 1
-    when "--units-real"
-      units = ARGV.select { |a| a =~ /^[^-]/ }
-      convertAllUnits(units.empty? ? "ALL" : Set.new(units))
     when "--items"
       arks = ARGV.select { |a| a =~ /qt\w{8}/ }
       convertAllItems(arks.empty? ? "ALL" : Set.new(arks))
@@ -2753,10 +2150,10 @@ begin
     when "--splash"
       arks = ARGV.select { |a| a =~ /qt\w{8}/ }
       splashAllPDFs(arks.empty? ? "ALL" : Set.new(arks))
-    when "--redirects"
-      convertRedirects
     when "--oa"
       recalcOA
+    when "--allStruct"
+      genAllStruct
     else
       STDERR.puts "Usage: #{__FILE__} --units|--items"
       exit 1
