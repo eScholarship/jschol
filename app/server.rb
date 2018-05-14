@@ -101,6 +101,22 @@ OJS_DB = ensureConnect("OJS_DB")
 # When fetching ISO pages and PDFs from the local server, we need the host name.
 $host = ENV['HOST'] ? "#{ENV['HOST']}.escholarship.org" : "localhost"
 
+# Temporary for memory leak debugging
+if $host =~ /pub-jschol-stg|pub-jschol-prd-2a/
+  puts "Will trace object allocations; send signal USR1 to write heap.dump.gz"
+  require 'objspace'
+  ObjectSpace.trace_object_allocations_start
+  Signal.trap("USR1") {
+    Thread.new {
+      puts "Dumping heap to 'heap.dump'."
+      File.open('heap.dump', "w") { |io|
+        ObjectSpace.dump_all(output: io)
+      }
+      puts "Heap dump complete."
+    }
+  }
+end
+
 # Need a key for encrypting login credentials and URL keys
 $jscholKey = ENV['JSCHOL_KEY'] or raise("missing env JSCHOL_KEY")
 
