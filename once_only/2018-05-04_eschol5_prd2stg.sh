@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-MACHINES="pub-submit-stg-2a pub-submit-stg-2c"
+MACHINES="pub-submit-dev pub-submit-stg-2a pub-submit-stg-2c"
 NOTIFY="r.c.martin.haye@ucop.edu"
 THIS_MACHINE=`hostname`
 if [[ " $MACHINES " =~ " $THIS_MACHINE " ]]; then
