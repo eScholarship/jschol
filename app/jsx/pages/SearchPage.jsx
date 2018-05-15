@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import $ from 'jquery'
-import _ from 'lodash'   // mainly for _.isEmtpy() which also works server-side (unlike $.isEmptyObject)
+import _ from 'lodash'
 import { Link } from 'react-router'
 import Form from 'react-router-form'
 
@@ -23,8 +23,9 @@ if (!(typeof document === "undefined")) {
   const dotdotdot = require('jquery.dotdotdot')
 }
 
+let MAX_SET_SIZE = 6
 
-// FacetItem  
+// FacetItem
 // props = {
 //   data: { facetType: 'departments',
 //     ancestorChecked: true|false                     //Optional, only specified if facet has ancestors (departments)
@@ -215,7 +216,9 @@ class PubYear extends React.Component {
   }
 }
 
-// FacetFieldset basically differentiates between Publication Year, and all the other 'normal' facets
+// A FacetFieldset is a single grouping of facet items.
+// A facetFieldset with many facets is expandable: can be expanded into a modal to show all facet items
+// Note: Differentiates between Publication Year, and all the other 'normal' facets
 // FacetFieldset props: 
 // props = {
 //   data: { fieldName: 'departments',
@@ -339,14 +342,17 @@ class FacetFieldset extends React.Component {
   }
 
   /* Display prescribed maximum (rows of) facets.
-     With the caveat: For any given facet: all of its descendents should be displayed,
-                      so slice can extend past maximum in that case */
-  facetsSliced = (facets, maxLength)  => {
+     Optional filter for just returning facets included in provided hash
+     Note: For any given facet: all of its descendents should be displayed,
+           so slice will extend past maximum in some cases */
+  facetsSliced = (facets, maxLength, checkHashFilter=false, checkedHash=null)  => {
     let i = 0, r = []
     for (let facet of facets){
-      r.push(facet)
-      i += this.getLength(facet) 
-      if (i >= maxLength) break
+      if (!checkHashFilter || (facet.value in checkedHash === false)) {
+        r.push(facet)
+        i += this.getLength(facet) 
+        if (i >= maxLength) break
+      }
     }
     return r
   }
@@ -360,38 +366,33 @@ class FacetFieldset extends React.Component {
     }
   }
 
-  /* Gather all IDS of facets (converts tree to flat hash) */
-  getFacetVals = facets =>{
+  /* Gather all IDS of facets already in checkedHash (converts tree to flat hash) */
+  checkedFacetsFromTree = (facets, checkedHash) =>{
     let hash = {}
     this.traverse(facets, function(node){
-      if (!hash[node.value])
+      if (node.value in checkedHash)
         hash[node.value] = true
     })
     return hash
   }
 
+  /* Checked items will percolate to top */
   sliceArrangeFacets(facets)
   {
-    /* Get first set of 6 facets, undiscerning: some may be checked, some may not */
-    let slicedFromTop = this.facetsSliced(facets, 6)
     if (!this.props.query.filters)
-      return slicedFromTop
-
-    /* Get their values. When we shift/prioritize checked facets to the top of the list,
-       we want to make sure they're not already present in this set of initial sliced */
-    let slicedIds = this.getFacetVals(slicedFromTop)
+      return this.facetsSliced(facets, MAX_SET_SIZE)     /* Just return first set of 6 facets */
 
     /* Gather values of checked facets */
     let checkedHash = {}
     for (let filter of this.props.query.filters)
       checkedHash[filter.value] = true
-    let checked_count = Object.keys(checkedHash).length
 
     let checked = []
-    /* Can't use Generator function here since it's not supported by IE */
+    /* Collect checked facets into variable 'checked' (recursive)
+     * Can't use Generator function here since it's not supported by IE */
     let collectChecked = facets => {
       for (let facet of facets) {
-        if ((facet.value in checkedHash) && (!(facet.value in slicedIds))) {
+        if (facet.value in checkedHash) {
           checked.unshift(facet)
         }
         if (facet.descendents)
@@ -399,33 +400,57 @@ class FacetFieldset extends React.Component {
       }
     }
     collectChecked(facets)
-    let out = checked.concat(slicedFromTop)
-    return this.facetsSliced(out, Math.max(6, checked_count))
+
+    let remaining_count = MAX_SET_SIZE - Object.keys(checked).length
+
+    /* Add unchecked facets to this sidebar facet set if there's room */
+    if (remaining_count > 0) {
+      let uncheckedParents = this.facetsSliced(facets, remaining_count, true, checkedHash)
+      /* Retroactively remove any checked that may be children of this uncheckedParents */
+      let checkedIds = this.checkedFacetsFromTree(uncheckedParents, checkedHash)
+      if (checkedIds) {
+        checked = checked.filter(facet => (facet.value in checkedIds === false))
+      }
+      return checked.concat(uncheckedParents)
+    } else {
+      return this.facetsSliced(checked, Math.max(MAX_SET_SIZE, Object.keys(checkedHash).length))
+    }
   }
 
   render() {
     let data = this.props.data
-    let facets, facetItemNodes
+    let facets, facetSidebarNodes, modal
+    // Sidebar logic for facet placement/sorting
     if (data.facets) {
-      facets = this.state.modalOpen ? [] :
-               (this.props.modal && data.facets.length > 5) ? this.sliceArrangeFacets(data.facets) :
-               data.facets
-      facetItemNodes = this.getFacetNodes(facets)
+      let expandable = ["departments", "journals"].includes(data.fieldName)
+      modal = expandable && (data.facets.length > MAX_SET_SIZE)
+      if (this.state.modalOpen) {
+        facets = []
+      } else if (expandable) {
+      /* Most facets come in alphabetized. For 'expandable' facets (like departments and journals)
+         the modal (exposed from the 'Show more' link) should keep the alpha order, but in the 
+         sidebar they should be sorted by count.    */
+        facets = _.orderBy(data.facets, ['count'], ['desc'])
+      /* But facets that are checked should have highest priority (visible in sidebar) */
+        facets = (modal && data.facets.length > (MAX_SET_SIZE - 1)) ? this.sliceArrangeFacets(facets) : facets
+      } else {
+        facets = data.facets
+      }
+      facetSidebarNodes = this.getFacetNodes(facets)
     } else if (data.fieldName == "pub_year") {
-      facetItemNodes = (
+      facetSidebarNodes = (
         <PubYear data={data} query={this.props.query} handler={this.pubDateChange} />
       )
-    }
-    else {
-      facetItemNodes = []
+    } else {
+      facetSidebarNodes = []
     }
     return (
       <details className="c-facetbox" open={this.props.open}>
         {/* Each facetbox needs a distinct <span id> and <fieldset aria-labelledby> matching value */}
         <summary className="c-facetbox__summary"><span id={this.props.index}>{data.display}</span></summary>
           <fieldset aria-labelledby={this.props.index}>
-            {facetItemNodes}
-          {this.props.modal &&
+            {facetSidebarNodes}
+          {modal &&
             <div id={`facetModalBase-${data.fieldName}`}>
               <button className="c-facetbox__show-more"
                       onClick={(event)=>{
@@ -449,10 +474,11 @@ class FacetFieldset extends React.Component {
   }
 }
 
-// FacetForm manages the state for FacetItems and FilterComp 
-// all interactions with faceting search parameters get propagated up to FacetForm
+// FacetForm manages the state for FacetItems and FilterComp in the sidebar.
+// FacetItems are grouped by the FacetFieldset component.
+// All interactions with faceting search parameters get propagated up to FacetForm
 // and then down to their respective components before issuing the search query
-// to update the scholarly works list
+// to update the scholarly works list (main column of search results)
 // FacetForm props:
 // props = {
 //   data: {
@@ -542,11 +568,10 @@ class FacetForm extends React.Component {
       let filters = this.state.query.filters && this.state.query.filters[fieldName] ? this.state.query.filters[fieldName] : {}
       let facets = fieldset.facets
       return (
-        <FacetFieldset key={fieldName} index={"facetbox" + i} data={fieldset} query={filters} handler={this.changeFacet}
+        <FacetFieldset key={fieldName} index={"facetbox" + i} data={fieldset} query={filters}
+                       handler={this.changeFacet}
                        // Have first two open by default
-                       open={[0,1].includes(i)}
-                       modal={((["departments", "journals"].includes(fieldName)) &&
-                              (facets) && (facets.length > 6))} />
+                       open={[0,1].includes(i)} />
       )
     })
 

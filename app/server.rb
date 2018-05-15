@@ -101,32 +101,53 @@ OJS_DB = ensureConnect("OJS_DB")
 # When fetching ISO pages and PDFs from the local server, we need the host name.
 $host = ENV['HOST'] ? "#{ENV['HOST']}.escholarship.org" : "localhost"
 
+# Temporary for memory leak debugging
+if $host =~ /pub-jschol-stg|pub-jschol-prd-2a/
+  puts "Will trace object allocations; send signal USR1 to write heap.dump.gz"
+  require 'objspace'
+  ObjectSpace.trace_object_allocations_start
+  Signal.trap("USR1") {
+    Thread.new {
+      puts "Dumping heap to 'heap.dump'."
+      File.open('heap.dump', "w") { |io|
+        ObjectSpace.dump_all(output: io)
+      }
+      puts "Heap dump complete."
+    }
+  }
+end
+
 # Need a key for encrypting login credentials and URL keys
 $jscholKey = ENV['JSCHOL_KEY'] or raise("missing env JSCHOL_KEY")
 
 # S3 API client
 puts "Connecting to S3.           "
-# Temporary wire logging while we diagnose S3 timeouts with the AWS folks.
-# It's so verbose that it even dumps binary data; to keep the log size at all
-# reasonable, omit that part.
-class S3Logger < Logger
-  @prevWasOmitted = false
-  def << (msg)
-    if msg =~ /\\r\\n/ && !(msg =~ /\\x/)
-      puts "s3: #{msg}"
-      @prevWasOmitted = false
-    else
-      if !@prevWasOmitted
-        puts "s3: [data omitted]"
+S3_LOGGING = false
+if S3_LOGGING
+  # Temporary wire logging while we diagnose S3 timeouts with the AWS folks.
+  # It's so verbose that it even dumps binary data; to keep the log size at all
+  # reasonable, omit that part.
+  class S3Logger < Logger
+    @prevWasOmitted = false
+    def << (msg)
+      if msg =~ /\\r\\n/ && !(msg =~ /\\x/)
+        puts "s3: #{msg}"
+        @prevWasOmitted = false
+      else
+        if !@prevWasOmitted
+          puts "s3: [data omitted]"
+        end
+        @prevWasOmitted = true
       end
-      @prevWasOmitted = true
     end
   end
+  s3Logger = S3Logger.new(STDOUT)
+  $s3Client = Aws::S3::Client.new(region: ENV['S3_REGION'] || raise("missing env S3_REGION"),
+                                  :logger => s3Logger, :http_wire_trace => true)
+else
+  $s3Client = Aws::S3::Client.new(region: ENV['S3_REGION'] || raise("missing env S3_REGION"))
+  $s3Bucket = Aws::S3::Bucket.new(ENV['S3_BUCKET'] || raise("missing env S3_BUCKET"), client: $s3Client)
 end
-s3Logger = S3Logger.new(STDOUT)
-$s3Client = Aws::S3::Client.new(region: ENV['S3_REGION'] || raise("missing env S3_REGION"),
-                                :logger => s3Logger, :http_wire_trace => true)
-$s3Bucket = Aws::S3::Bucket.new(ENV['S3_BUCKET'] || raise("missing env S3_BUCKET"), client: $s3Client)
 
 # Internal modules to implement specific pages and functionality
 require_relative '../util/sanitize.rb'
@@ -218,6 +239,20 @@ class AccessLogger
   end
 end
 
+###################################################################################################
+# Model classes for easy interaction with the database.
+#
+# For more info on the database schema, see contents of migrations/ directory, and for a more
+# graphical version, see:
+#
+# https://docs.google.com/drawings/d/1gCi8l7qteyy06nR5Ol2vCknh9Juo-0j91VGGyeWbXqI/edit
+puts "Populating db models."
+require_relative '../tools/models.rb'
+
+# DbCache uses the models above.
+require_relative 'dbCache'
+fillCaches
+
 # Sinatra configuration
 configure do
   # Puma is good for multiprocess *and* multithreading
@@ -242,24 +277,8 @@ configure do
     }
 end
 
-# Compress responses
-## NO: This fails when streaming files. Not sure why yet.
-#use Rack::Deflater
-
 TEMP_DIR = "tmp"
 FileUtils.mkdir_p(TEMP_DIR)
-
-###################################################################################################
-# Model classes for easy interaction with the database.
-#
-# For more info on the database schema, see contents of migrations/ directory, and for a more
-# graphical version, see:
-#
-# https://docs.google.com/drawings/d/1gCi8l7qteyy06nR5Ol2vCknh9Juo-0j91VGGyeWbXqI/edit
-require_relative '../tools/models.rb'
-
-# DbCache uses the models above.
-require_relative 'dbCache'
 
 ###################################################################################################
 # ISOMORPHIC JAVASCRIPT
@@ -1128,11 +1147,17 @@ def getItemHtml(content_type, id)
   buf.gsub! %r{<iframe.*?</iframe>}im, ''
   buf.gsub! %r{<script.*?</script>}im, ''
   htmlStr = stringToXML(buf).to_xml
-  htmlStr.gsub(/(href|src)="((?!#)[^"]+)"/) { |m|
+  htmlStr.gsub!(/(href|src)="((?!#)[^"]+)"/) { |m|
     attrib, url = $1, $2
     url = url.start_with?("http", "ftp") ? url : "/content/#{id}/inner/#{url}"
     "#{attrib}=\"#{url}\"" + ((attrib == "src") ? "" : " target=\"new\"")
   }
+
+  # Browsers don't seem to like <a name="foo"/>. Instead they want <a name="foo"></a>
+  htmlStr.gsub!(%r{<a name="([^"]+)"/>}, '<a name="\1"></a>')
+
+  # DOJ articles often specify target="new" on links, but that's no longer best practice.
+  htmlStr.gsub!(%r{<a([^>]*) target="[^"]*"([^>]*)>}, '<a\1\2>')
 end
 
 ###################################################################################################

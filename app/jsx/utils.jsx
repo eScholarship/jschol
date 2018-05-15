@@ -15,4 +15,12 @@ export default class {
     }, 0)
   }
 
+  /**
+   * Wraps HTML with p tag if not present
+   */
+  static p_wrap(html) {
+    if (html.match(/^<p>.*<\/p>$/)) return html
+    return '<p>'+ html +'</p>'
+  }
+
 }

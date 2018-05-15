@@ -84,7 +84,7 @@ def initAllFacets()
     'displayName' => 'Journal',
     'awsFacetParam' => {sort: 'count', size: 100},
     'filterTransform' => lambda { |filterVals| filterVals.map { |filterVal| {'value' => filterVal, 'displayName' => get_unit_display_name(filterVal)} } },
-    'facetTransform' => lambda { |facetVals| facetVals.map { |facetVal| {'value' => facetVal['value'], 'count' => facetVal['count'], 'displayName' => get_unit_display_name(facetVal['value'])} } }
+    'facetTransform' => lambda { |facetVals| facetVals.map { |facetVal| {'value' => facetVal['value'], 'count' => facetVal['count'], 'displayName' => get_unit_display_name(facetVal['value'])} }.sort_by{ |f| f['displayName'].downcase} }
   },
   'disciplines' => {
     'displayName' => 'Discipline',
@@ -145,6 +145,13 @@ def get_unit_display_name(unitID)
   unit ? unit.name : "null"
 end
 
+# Recursive sort of nested facet array 
+def sortFacetTree(fa)  
+  fa = fa.sort_by{|f| [ f['displayName'].downcase ]} 
+  fa.each{ |f| f['descendents'] = sortFacetTree(f['descendents']) if (f['descendents'].nil? ? [] : f['descendents']).size > 0 }  
+  fa 
+end
+
 # takes list of facets in [{value: , count: }] form where value is the value that escholarship UI/AWS uses.
 # returns a nested hierarchy list: [{value, count, displayName, (optionally) descendents: []}, ...]
 def get_unit_hierarchy(unitFacets)
@@ -173,7 +180,7 @@ def get_unit_hierarchy(unitFacets)
     end
   end
 
-  return unitFacets.select { |unitFacet| !unitFacet['ancestor_in_list'] }
+  return sortFacetTree(unitFacets.select { |unitFacet| !unitFacet['ancestor_in_list'] })
 end
 
 def get_query_display(params)
@@ -379,7 +386,7 @@ end
 # Query on items. Then, if faceting on anything other than Campus, Department, or Journal, DON'T query for info pages
 def search(params, facetTypes=$allFacets.keys)
   r = searchByType(params, facetTypes, "items")
-  if (params.keys & ITEM_SPECIFIC).size == 0
+  if (params.keys & ITEM_SPECIFIC).size == 0 && !isQueryEmpty(params)
     info_r = searchByType(params, facetTypes, "infopages")
     r['info_count'] = info_r['info_count']
     r['infoResults'] = info_r['infoResults']

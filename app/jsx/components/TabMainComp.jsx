@@ -13,7 +13,7 @@ class Abstract extends React.Component {
     return (
       <details className="c-togglecontent" open>
         <summary>Abstract</summary>
-        <ArbitraryHTMLComp html={this.props.abstract} h1Level={3}/>
+        <ArbitraryHTMLComp html={this.props.abstract} p_wrap={true} h1Level={3}/>
         {(this.props.unit && this.props.unit.id.match(/^.*_postprints/)) &&
           <p className="o-well-colored">Many UC-authored scholarly publications are freely available on this site because of the UC Academic Senate&apos;s Open Access Policy. <a href="https://help.escholarship.org/support/tickets/new">Let us know how this access is important for you.</a></p>
         }
@@ -67,7 +67,7 @@ class MainContent extends React.Component {
             coming right after it's sibling of the same class name */}
         <ScrollingAnchorComp name="article_main" />
         <summary>Main Content</summary>
-        <ArbitraryHTMLComp html={p.content_html} h1Level={2}/>
+        <ArbitraryHTMLComp html={p.content_html} h1Level={3}/>
         <br/><br/>
       </details>
   )}
