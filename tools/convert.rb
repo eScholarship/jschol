@@ -145,7 +145,7 @@ end
 # Determine the old front-end server to use for thumbnailing
 $hostname = `/bin/hostname`.strip
 $thumbnailServer = case $hostname
-  when 'pub-submit-dev'; 'http://pub-eschol-dev.escholarship.org'
+  when 'pub-submit-dev'; 'http://pub-submit-dev.escholarship.org'
   when 'pub-submit-stg-2a', 'pub-submit-stg-2c'; 'http://pub-eschol-stg.escholarship.org'
   when 'pub-submit-prd-2a', 'pub-submit-prd-2c'; 'http://pub-eschol-prd-alb.escholarship.org'
   else raise("unrecognized host #{hostname}")
@@ -1600,6 +1600,7 @@ def convertAllItems(arks)
   puts "Converting #{arks=="ALL" ? "all" : "selected"} items."
 
   cacheAllUnits()
+  genAllStruct()
 
   # Normally loop runs once, but in rescan mode it's multiple times.
   rescanBase = ""
@@ -2044,8 +2045,6 @@ end
 ###################################################################################################
 # Regenerate the old allStruct.xml file that Subi and eschol4 controller depend upon
 def genAllStruct
-  puts "Rebuilding allStruct.xml."
-
   cacheAllUnits
   builder = Nokogiri::XML::Builder.new { |xml|
     xml.allStruct {
@@ -2053,15 +2052,15 @@ def genAllStruct
     }
   }
 
-  File.open("/apps/eschol/erep/xtf/style/textIndexer/mapping/allStruct-new.xml", "w") { |io|
+  allStructDir = "/apps/eschol/erep/xtf/style/textIndexer/mapping"
+  File.open("#{allStructDir}/allStruct-new.xml", "w") { |io|
     io.write(builder.to_xml)
   }
-
-  DB.transaction {
-    checkAllStruct
-  }
+  File.rename("#{allStructDir}/allStruct-new.xml", "#{allStructDir}/allStruct.xml")
 end
 
+###################################################################################################
+# Allstruct checking (temporary during transition from hand-edited to auto-generated allStruct)
 def extractDivsInner(el, addTo)
   el.elements.each { |sub|
     if sub.name == "div"
@@ -2090,8 +2089,8 @@ end
 
 def checkAllStruct
   puts "Checking."
-  oldDivs = extractDivs("/apps/eschol/erep/xtf/style/textIndexer/mapping/allStruct.xml")
-  newDivs = extractDivs("/apps/eschol/erep/xtf/style/textIndexer/mapping/allStruct-new.xml")
+  oldDivs = extractDivs("/apps/eschol/erep/xtf/style/textIndexer/mapping/allStruct.xml.orig")
+  newDivs = extractDivs("/apps/eschol/erep/xtf/style/textIndexer/mapping/allStruct.xml")
   (Set.new(oldDivs.keys) + Set.new(newDivs.keys)).each { |id|
     oldDiv = oldDivs[id]
     newDiv = newDivs[id]
@@ -2152,8 +2151,8 @@ begin
       splashAllPDFs(arks.empty? ? "ALL" : Set.new(arks))
     when "--oa"
       recalcOA
-    when "--allStruct"
-      genAllStruct
+    when "--checkAllStruct"
+      checkAllStruct
     else
       STDERR.puts "Usage: #{__FILE__} --units|--items"
       exit 1
