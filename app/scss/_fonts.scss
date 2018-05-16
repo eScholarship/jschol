@@ -1,17 +1,17 @@
 // ##### Custom Fonts ##### //
 
 @font-face {
-  font-family: 'KievitWeb';
+  font-family: 'SourceSansPro';
   src:
-    url('../fonts/KievitWeb.woff2') format('woff2'),
-    url('../fonts/KievitWeb.woff') format('woff');
+    url('../fonts/SourceSansPro-Regular.ttf.woff2') format('woff2'),
+    url('../fonts/SourceSansPro-Regular.ttf.woff') format('woff');
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'KievitWebLight';
+  font-family: 'SourceSansProLight';
   src:
-    url('../fonts/KievitWeb-Light.woff2') format('woff2'),
-    url('../fonts/KievitWeb-Light.woff') format('woff');
+    url('../fonts/SourceSansPro-Light.ttf.woff2') format('woff2'),
+    url('../fonts/SourceSansPro-Light.ttf.woff') format('woff');
   font-display: swap;
 }

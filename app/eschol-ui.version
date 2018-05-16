@@ -803,3 +803,24 @@ Lots of stuff modified.
   modified:   app/scss/_scholworks.scss
 
 
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> f093fe1a0b6297dd52755541741200d5f7047bd4, 2018-05-07        <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+ NEW FONT:
+  deleted:    app/fonts/KievitWeb-Light.woff
+  deleted:    app/fonts/KievitWeb-Light.woff2
+  deleted:    app/fonts/KievitWeb.woff
+  deleted:    app/fonts/KievitWeb.woff2
+  modified:   app/scss/_campushero.scss
+  modified:   app/scss/_fonts.scss
+  modified:   app/scss/_hero.scss
+  modified:   app/scss/_stat.scss
+  modified:   app/scss/_utilities.scss
+  modified:   app/scss/_well.scss
+  modified:   app/scss/main.scss
+  app/fonts/SourceSansPro-Light.ttf.woff
+  app/fonts/SourceSansPro-Light.ttf.woff2
+  app/fonts/SourceSansPro-Regular.ttf.woff
+  app/fonts/SourceSansPro-Regular.ttf.woff2
+
