@@ -215,6 +215,16 @@ def get_query_display(params)
   }
 end
 
+# In progress
+def q_structured(q)
+  require_relative 'searchParser'
+  #
+  #    Do stuff here
+  #
+  # testing     return "(and 'schiff' (or 'melvyl' 'twain'))"
+  return false, q     # Will return false whenever parser fails.
+end
+
 def aws_encode(params, facetTypes, search_type)
   initAllFacets()
 
@@ -228,6 +238,11 @@ def aws_encode(params, facetTypes, search_type)
   aws_params[:start] = (search_type == "items") ?
         params.dig('start', 0) ? params['start'][0] : 0
      :  params.dig('info_start', 0) ? params['info_start'][0] : 0
+  if aws_params[:query] =~ %r{\b(AND|OR|NOT)\b|\b(title:|keyword:|keywords:|author:)}
+    is_structured, aws_params[:query] = q_structured(aws_params[:query])
+    aws_params[:query_parser] = "structured" if is_structured
+  end
+  # print "QUERY = ", aws_params[:query], "\n"
   if aws_params[:query] == 'matchall' then aws_params[:query_parser] = "structured" end
 
   # create facet query, only create facet query for fields specified in facetTypes

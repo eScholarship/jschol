@@ -14,6 +14,7 @@ gem 'mini_magick'         # cover thumbnail - image size reduction
 gem 'mysql2'              # connecting to the database
 gem 'netrc'               # used to read EZID credentials
 gem 'nokogiri'            # parsing and generating XML
+gem 'parslet'             # parser to transform search into Cloudsearch compound query
 gem 'puma'                # Rack web service layer
 gem 'sanitize'            # parse and sanitize user-supplied HTML fragments
 gem 'sequel'              # object-relational mapper (including migrations)
