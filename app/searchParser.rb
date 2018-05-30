@@ -7,8 +7,9 @@ require "pp"
 # Based on https://github.com/kschiess/parslet/blob/master/example/boolean_algebra.rb
 # DOES NOT handle booleans within a field definition
 #   i.e. "author:schiff AND title:(twain OR melvyl)". <-- This breaks the parser
-
-string1 = "author:schiff AND (title:twain OR title:melvyl)"
+string1 = 'author:"Schiff, Lisa R" AND NOT title:melvyl'
+# string1 = '(author:"Schiff, Lisa R" AND (title:"twain harte" OR title:melvyl))'
+# string1 = "author:schiff AND (title:twain OR title:melvyl)"
 # Will translate to this: 
 #   (and (term field='authors' 'schiff')
 #        (or (term field='title' 'melvyl') (term field='title' 'twain')))
@@ -22,19 +23,18 @@ class QueryParser < Parslet::Parser
 
   rule(:and_operator) { str("AND") >> space? }
   rule(:or_operator)  { str("OR")  >> space? }
+  rule(:not_operator)  { str("NOT")  >> space? }
+  rule(:op) { and_operator | or_operator | not_operator }
 
-  rule(:op) { str('AND') | str('OR') | str('NOT') }
-
-  # rule(:var) { str("var") >> match["0-9"].repeat(1).as(:var) >> space? }
-  #rule(:var) { match('[^()]').repeat(1).as(:var) >> space? }
-  rule(:var) { op.absent? >> match('[^()\s]').repeat(1).as(:var) >> space?  }
-
-
-  # rule(:var) { space? >> match('(foo|bar|boo)') >> space? }
-  # rule(:var) { match('(AND|OR)').absent?.as(:var) }
+  rule(:qstr) { op.absent? >> match('[^()\s]').repeat(1) >> space? }
+  rule(:phrase) { qstr.repeat(1).as(:phrase) }
+  rule(:title) { str("title") >> str(":") >> phrase.as(:title) }
+  rule(:author) { str("author") >> str(":") >> phrase.as(:author) }
+  rule(:incl) { phrase | title | author }
+  rule(:excl) { (not_operator >> incl).as(:excl) }
 
   # The primary rule deals with parentheses.
-  rule(:primary) { lparen >> or_operation >> rparen | var }
+  rule(:primary) { lparen >> or_operation >> rparen | incl | excl }
 
   # Note that following rules are both right-recursive.
   rule(:and_operation) { 
@@ -47,22 +47,17 @@ class QueryParser < Parslet::Parser
   root(:or_operation)
 end
 
-class Transformer < Parslet::Transform
-  rule(:var => simple(:var)) { [[String(var)]] }
-
-  rule(:or => { :left => subtree(:left), :right => subtree(:right) }) do
-    (left + right)
-  end
-
-  rule(:and => { :left => subtree(:left), :right => subtree(:right) }) do
-     res = []
-     left.each do |l|
-       right.each do |r|
-         res << (l + r)
-       end
-     end
-     res
-  end
+class Transformer < Parslet::Transform  
+  rule(:phrase => simple(:phrase)) {
+    p = String(phrase).strip
+    if p =~ /title:(.+)/
+      "(term field='title' '#{$1.gsub(/"/, '')}')"
+    elsif p =~ /author:(.+)/
+      "(term field='authors' '#{$1.gsub(/"/, '')}')"
+    else
+      p
+    end
+  }
 end
 
 begin
@@ -73,8 +68,4 @@ rescue Parslet::ParseFailed => error
   pp string1
 end
 
-# {:and=>
-#   {:left=>{:var=>"1"@3},
-#    :right=>{:or=>{:left=>{:var=>"2"@13}, :right=>{:var=>"3"@21}}}}}
 pp Transformer.new.apply(tree)
-# [["1", "2"], ["1", "3"]]

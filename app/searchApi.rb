@@ -217,11 +217,12 @@ end
 
 # In progress
 def q_structured(q)
-  require_relative 'searchParser'
+  # require_relative 'searchParser'
   #
   #    Do stuff here
   #
-  # testing     return "(and 'schiff' (or 'melvyl' 'twain'))"
+  # testing     
+  # return true, "(term field='title' 'Schiff')"
   return false, q     # Will return false whenever parser fails.
 end
 
@@ -238,7 +239,7 @@ def aws_encode(params, facetTypes, search_type)
   aws_params[:start] = (search_type == "items") ?
         params.dig('start', 0) ? params['start'][0] : 0
      :  params.dig('info_start', 0) ? params['info_start'][0] : 0
-  if aws_params[:query] =~ %r{\b(AND|OR|NOT)\b|\b(title:|keyword:|keywords:|author:)}
+  if aws_params[:query] =~ %r{\b(AND|OR|NOT)\b|\b(title:|author:)}
     is_structured, aws_params[:query] = q_structured(aws_params[:query])
     aws_params[:query_parser] = "structured" if is_structured
   end
