@@ -1,18 +1,19 @@
 require "parslet"
-require 'parslet/convenience' # For debugging:  parser.parse_with_debug(input)
-require "pp"
+# require 'parslet/convenience' # For debugging:  parser.parse_with_debug(input)
 
 # Parses strings like "author:schiff AND (title:twain OR title:melvyl)"
-# respecting operator precedence and parentheses.
+# respecting operator precedence and parentheses. Generates structured query
+# for AWS Cloudsearch. Requires that terms/phrases are prepended with
+# 'title:', 'author:', or 'keywords:', otherwise returns original query string
+
 # Based on https://github.com/kschiess/parslet/blob/master/example/boolean_algebra.rb
 # DOES NOT handle booleans within a field definition
 #   i.e. "author:schiff AND title:(twain OR melvyl)". <-- This breaks the parser
-string1 = 'author:"Schiff, Lisa R" AND NOT title:melvyl'
-# string1 = '(author:"Schiff, Lisa R" AND (title:"twain harte" OR title:melvyl))'
-# string1 = "author:schiff AND (title:twain OR title:melvyl)"
+
+# 'author:schiff OR (title:"twain harte" AND NOT title:melvyl)'
 # Will translate to this: 
-#   (and (term field='authors' 'schiff')
-#        (or (term field='title' 'melvyl') (term field='title' 'twain')))
+# (or (term field='author' 'schiff')
+#   (and (phrase field='title' 'twain harte') (not (term field='title' 'melvyl'))))
 
 class QueryParser < Parslet::Parser
   rule(:space)  { match[" "].repeat(1) }
@@ -26,12 +27,15 @@ class QueryParser < Parslet::Parser
   rule(:not_operator)  { str("NOT")  >> space? }
   rule(:op) { and_operator | or_operator | not_operator }
 
-  rule(:qstr) { op.absent? >> match('[^()\s]').repeat(1) >> space? }
-  rule(:phrase) { qstr.repeat(1).as(:phrase) }
-  rule(:title) { str("title") >> str(":") >> phrase.as(:title) }
-  rule(:author) { str("author") >> str(":") >> phrase.as(:author) }
-  rule(:incl) { phrase | title | author }
-  rule(:excl) { (not_operator >> incl).as(:excl) }
+  rule(:segment) { op.absent? >> match('[^()"\s]').repeat(1) >> space? }
+  rule(:term) { segment.repeat(1).as(:term) }
+  rule(:phrase) { str('"') >> segment.repeat(1).as(:phrase) >> str('"') >> space? }
+
+  rule(:title) { str("title") >> str(":") >> (term|phrase).as(:title) }
+  rule(:author) { str("author") >> str(":") >> (term|phrase).as(:author) }
+  rule(:keywords) { str("keyword") >> str("s").maybe >> str(":") >> (term|phrase).as(:keywords) }
+  rule(:incl) { title | author | keywords }
+  rule(:excl) { not_operator >> incl.as(:excl) }
 
   # The primary rule deals with parentheses.
   rule(:primary) { lparen >> or_operation >> rparen | incl | excl }
@@ -45,27 +49,58 @@ class QueryParser < Parslet::Parser
 
   # We start at the lowest precedence rule.
   root(:or_operation)
+
 end
 
-class Transformer < Parslet::Transform  
-  rule(:phrase => simple(:phrase)) {
-    p = String(phrase).strip
-    if p =~ /title:(.+)/
-      "(term field='title' '#{$1.gsub(/"/, '')}')"
-    elsif p =~ /author:(.+)/
-      "(term field='authors' '#{$1.gsub(/"/, '')}')"
-    else
-      p
-    end
-  }
+class Transformer < Parslet::Transform
+
+  rule(:title => { :term => simple(:term) }) do
+    "(term field='title' '#{String(term).strip}')"
+  end
+  rule(:title => { :phrase => simple(:phrase) }) do
+    "(phrase field='title' '#{String(phrase).strip}')"
+  end
+
+  rule(:author => { :term => simple(:term) }) do
+    "(term field='authors' '#{String(term).strip}')"
+  end
+  rule(:author => { :phrase => simple(:phrase) }) do
+    "(phrase field='authors' '#{String(phrase).strip}')"
+  end
+
+  rule(:keywords => { :term => simple(:term) }) do
+    "(term field='keywords' '#{String(term).strip}')"
+  end
+  rule(:keywords => { :phrase => simple(:phrase) }) do
+    "(phrase field='keywords' '#{String(phrase).strip}')"
+  end
+
+  rule(:excl => subtree(:excl)) do
+    "(not " + excl + ")"
+  end
+
+  rule(:and => { :left => subtree(:left), :right => subtree(:right) }) do
+    "(and " + left + " " + right + ")"
+  end
+  rule(:or => { :left => subtree(:left), :right => subtree(:right) }) do
+    "(or " + left + " " + right + ")"
+  end
+
+  rule(:left => subtree(:left)) { "(" + left + ")" }
+  rule(:left => simple(:left)) { left }
+  rule(:right => subtree(:right)) { "(" + right + ")" }
+  rule(:right => simple(:right)) { right }
+
 end
 
-begin
-  tree = QueryParser.new.parse_with_debug(string1)
-  # tree = QueryParser.new.parse(string1)
-  pp tree
-rescue Parslet::ParseFailed => error
-  pp string1
-end
+def q_structured(q)
+  begin
+    # View parsed tree:
+    # tree = QueryParser.new.parse_with_debug(q)
+    tree = QueryParser.new.parse(q)
+  rescue Parslet::ParseFailed => error
+    return false, q
+  end
 
-pp Transformer.new.apply(tree)
+  return true, Transformer.new.apply(tree)
+end
