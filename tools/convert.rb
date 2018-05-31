@@ -1126,6 +1126,7 @@ def indexItem(itemID, timestamp, batch, nailgun)
       pub_year:      dbItem[:published].year,
       rights:        dbItem[:rights] || "",
       sort_author:   (authors[0] || {name:""})[:name].gsub(/[^\w ]/, '').downcase,
+      keywords:      attrs[:keywords] ? attrs[:keywords] : [""],
       is_info:       0
     }
   }
