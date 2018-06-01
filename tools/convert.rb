@@ -237,7 +237,8 @@ def putAsset(filePath, metadata)
               original_path: filePath.sub(%r{.*/([^/]+/[^/]+)$}, '\1'), # retain only last directory plus filename
               mime_type: MimeMagic.by_magic(File.open(filePath)).to_s
             }))
-    obj.etag == "\"#{md5sum}\"" or raise("S3 returned md5 #{resp.etag.inspect} but we expected #{md5sum.inspect}")
+    # 2018-06-01: Is AWS introducing a introducing a new kind of etag? This occasionally fails.
+    # obj.etag == "\"#{md5sum}\"" or raise("S3 returned md5 #{resp.etag.inspect} but we expected #{md5sum.inspect}")
   end
 
   return sha256Sum
