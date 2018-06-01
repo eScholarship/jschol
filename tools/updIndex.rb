@@ -45,7 +45,7 @@ fields = [
                                                               search_enabled:    true,
                                                               facet_enabled:     true } },
   { index_field_name: "keywords",    index_field_type:      "text-array",
-                                     literal_array_options: { return_enabled:    false,
+                                     text_array_options:    { return_enabled:    false,
                                                               highlight_enabled: false } },
   { index_field_name: "peer_reviewed", index_field_type:    "int",
                                      int_options:           { return_enabled:    false,
