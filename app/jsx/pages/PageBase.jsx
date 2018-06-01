@@ -148,7 +148,9 @@ class PageBase extends React.Component
                         { username: this.state.adminLogin.username, token: this.state.adminLogin.token })})
     .done(data=>{
       if (data.nextURL) {
-        this.setState({ fetchingData: false })
+        // Setting permissionsUnit to null results in forcing reload of permissions data
+        // (needed if new page has been created)
+        this.setState({ fetchingData: false, permissionsUnit: null })
         this.props.router.push(data.nextURL)
       }
       else {
