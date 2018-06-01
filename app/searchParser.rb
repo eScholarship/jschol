@@ -10,10 +10,18 @@ require "parslet"
 # DOES NOT handle booleans within a field definition
 #   i.e. "author:schiff AND title:(twain OR melvyl)". <-- This breaks the parser
 
-# 'author:schiff OR (title:"twain harte" AND NOT title:melvyl)'
+# 'author: schiff OR (title:"twain harte" AND NOT title:melvyl)'
 # Will translate to this: 
 # (or (term field='author' 'schiff')
 #   (and (phrase field='title' 'twain harte') (not (term field='title' 'melvyl'))))
+
+# Can match 'AND' or 'and', etc
+def stri(str)
+  key_chars = str.split(//)
+  key_chars.
+    collect! { |char| match["#{char.upcase}#{char.downcase}"] }.
+    reduce(:>>)
+end
 
 class QueryParser < Parslet::Parser
   rule(:space)  { match[" "].repeat(1) }
@@ -22,18 +30,18 @@ class QueryParser < Parslet::Parser
   rule(:lparen) { str("(") >> space? }
   rule(:rparen) { str(")") >> space? }
 
-  rule(:and_operator) { str("AND") >> space? }
-  rule(:or_operator)  { str("OR")  >> space? }
-  rule(:not_operator)  { str("NOT")  >> space? }
+  rule(:and_operator) { stri("AND") >> space? }
+  rule(:or_operator)  { stri("OR")  >> space? }
+  rule(:not_operator)  { stri("NOT")  >> space? }
   rule(:op) { and_operator | or_operator | not_operator }
 
   rule(:segment) { op.absent? >> match('[^()"\s]').repeat(1) >> space? }
   rule(:term) { segment.repeat(1).as(:term) }
   rule(:phrase) { str('"') >> segment.repeat(1).as(:phrase) >> str('"') >> space? }
 
-  rule(:title) { str("title") >> str(":") >> (term|phrase).as(:title) }
-  rule(:author) { str("author") >> str(":") >> (term|phrase).as(:author) }
-  rule(:keywords) { str("keyword") >> str("s").maybe >> str(":") >> (term|phrase).as(:keywords) }
+  rule(:title) { str("title") >> str(":") >> space? >> (term|phrase).as(:title) }
+  rule(:author) { str("author") >> str(":") >> space? >> (term|phrase).as(:author) }
+  rule(:keywords) { str("keyword") >> str("s").maybe >> str(":") >> space? >> (term|phrase).as(:keywords) }
   rule(:incl) { title | author | keywords }
   rule(:excl) { not_operator >> incl.as(:excl) }
 
