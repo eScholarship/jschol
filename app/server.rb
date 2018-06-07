@@ -1158,6 +1158,9 @@ def getItemHtml(content_type, id)
 
   # DOJ articles often specify target="new" on links, but that's no longer best practice.
   htmlStr.gsub!(%r{<a([^>]*) target="[^"]*"([^>]*)>}, '<a\1\2>')
+
+  # All done
+  return htmlStr
 end
 
 ###################################################################################################
