@@ -13,6 +13,8 @@ require 'pp'
 # Run from the right directory (the parent of the tools dir)
 Dir.chdir(File.dirname(File.expand_path(File.dirname(__FILE__))))
 
+analysis_schemes = [ { analysis_scheme_name: "no_stemming", analysis_options: { algorithmic_stemming: "none" }, analysis_scheme_language: "en" } ]
+
 ###################################################################################################
 # Here are all the field definitions for the jschol CloudSearch domain
 fields = [
@@ -21,7 +23,8 @@ fields = [
                                                               highlight_enabled: true,
                                                               sort_enabled:      false } },
   { index_field_name: "authors",     index_field_type:      "text-array",
-                                     text_array_options:    { return_enabled:    false,
+                                     text_array_options:    { analysis_scheme: "no_stemming",
+                                                              return_enabled:    false,
                                                               highlight_enabled: true } },
   { index_field_name: "campuses",    index_field_type:      "literal-array",
                                      literal_array_options: { return_enabled:    false,
@@ -143,10 +146,17 @@ if isProcessing
 end
 
 # Determine the existing index field definitions, and stuff them in a hash
-resp = cloudSearch.describe_index_fields(domain_name: csDomain)
+respF = cloudSearch.describe_index_fields(domain_name: csDomain)
 oldFields = {}
-resp.index_fields.each { |fs|
+respF.index_fields.each { |fs|
   oldFields[fs.options.index_field_name] = fs.options.to_h
+}
+
+# Do same for analysis schemes
+respA = cloudSearch.describe_analysis_schemes(domain_name: csDomain)
+oldASchemes = {}
+respA.analysis_schemes.each { |as|
+  oldASchemes[as.options.analysis_scheme_name] = as.options.to_h
 }
 
 # Make a similar hash of the field definitions we want
@@ -154,23 +164,42 @@ newFields = {}
 fields.each { |f|
   newFields[f[:index_field_name]] = f
 }
+# and for analysis schemes
+newASchemes = {}
+analysis_schemes.each { |f|
+  newASchemes[f[:analysis_scheme_name]] = f
+}
 
 # Correlate the existing fields with desired fields, and build a list of changes to make.
-updates = []
-removals = []
+fieldUpdates = []
+fieldRemovals = []
 Set.new(oldFields.keys + newFields.keys).each { |fieldName|
   if fieldsEqual(oldFields[fieldName], newFields[fieldName], fieldName)
     #puts " ==> Unchanged."
   elsif newFields[fieldName]
-    updates << newFields[fieldName]
+    fieldUpdates << newFields[fieldName]
   else
     puts "  field #{fieldName.inspect}: removing."
-    removals << fieldName
+    fieldRemovals << fieldName
+  end
+}
+
+# Do same for analysis schemes
+aSchemeUpdates = []
+aSchemeRemovals = []
+Set.new(oldASchemes.keys + newASchemes.keys).each { |asName|
+  if fieldsEqual(oldASchemes[asName], newASchemes[asName], asName)
+    # puts " ==> Analysis Schemes Unchanged."
+  elsif newASchemes[asName]
+    aSchemeUpdates << newASchemes[asName]
+  else
+    puts "  analysis scheme #{asName.inspect}: removing."
+    aSchemeRemovals << asName
   end
 }
 
 # Make sure user is okay with proceeding.
-if (updates + removals).empty?
+if (fieldUpdates + fieldRemovals + aSchemeUpdates + aSchemeRemovals).empty?
   puts "Nothing to do."
   exit 0
 else
@@ -179,21 +208,39 @@ else
   STDIN.readline.upcase =~ /^Y/ or exit 1
 end
 
-# Perform all the updates
-if !updates.empty?
-  puts "Processing updates."
-  updates.each { |fieldData|
+# Perform all the fieldUpdates
+if !fieldUpdates.empty?
+  puts "Processing field updates."
+  fieldUpdates.each { |fieldData|
     puts "  Field #{fieldData[:index_field_name].inspect}"
     cloudSearch.define_index_field(domain_name: csDomain, index_field: fieldData)
   }
 end
 
-# Perform all the removals
-if !removals.empty?
-  puts "Processing removals."
-  removals.each { |fieldName|
+# Perform all the fieldRemovals
+if !fieldRemovals.empty?
+  puts "Processing field removals."
+  fieldRemovals.each { |fieldName|
     puts "  Field #{fieldName.inspect}"
     cloudSearch.delete_index_field(domain_name: csDomain, index_field_name: fieldName)
+  }
+end
+
+# Perform all the analysis scheme updates
+if !aSchemeUpdates.empty?
+  puts "Processing analysis scheme updates."
+  aSchemeUpdates.each { |asData|
+    puts "  Analysis Scheme #{asData[:analysis_scheme_name].inspect}"
+    cloudSearch.define_analysis_scheme(domain_name: csDomain, analysis_scheme: asData)
+  }
+end
+
+# Perform all the analysis scheme removals
+if !aSchemeRemovals.empty?
+  puts "Processing analysis scheme removals."
+  aSchemeRemovals.each { |asName|
+    puts "  Analysis Scheme #{asName.inspect}"
+    cloudSearch.delete_analysis_scheme(domain_name: csDomain, analysis_scheme_name: asName)
   }
 end
 
