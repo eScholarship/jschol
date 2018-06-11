@@ -54,7 +54,7 @@ class FilterComp extends React.Component {
             ) }
           </ul>
         </details>
-        {/* <a href="" className="c-filter__tips">Search tips</a> */}
+        <a href="https://help.escholarship.org/support/solutions/articles/9000148939-using-advanced-search-beta-" className="c-filter__tips">Search tips</a>
       </div>
     )
   }

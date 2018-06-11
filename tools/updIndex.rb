@@ -8,11 +8,12 @@ require 'bundler/setup'
 
 # Remainder are the requirements for this program
 require 'aws-sdk'
-require 'pp'
 
 # Run from the right directory (the parent of the tools dir)
 Dir.chdir(File.dirname(File.expand_path(File.dirname(__FILE__))))
 
+# I had to run script first time to define this as an analysis scheme, 
+#  then ran script again to then call it as an author option
 analysis_schemes = [ { analysis_scheme_name: "no_stemming", analysis_options: { algorithmic_stemming: "none" }, analysis_scheme_language: "en" } ]
 
 ###################################################################################################
