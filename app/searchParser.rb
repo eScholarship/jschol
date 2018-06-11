@@ -107,6 +107,7 @@ def q_structured(q)
     # tree = QueryParser.new.parse_with_debug(q)
     tree = QueryParser.new.parse(q)
   rescue Parslet::ParseFailed => error
+    puts error.parse_failure_cause.ascii_tree
     return false, q
   end
 
