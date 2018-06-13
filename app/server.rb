@@ -461,7 +461,10 @@ get "/content/:fullItemID/*" do |itemID, path|
   content_type MimeMagic.by_path(path)
 
   # Here's the final Merritt URL
-  mrtURL = "https://#{ENV['MRTEXPRESS_HOST'] || raise("missing env MRTEXPRESS_HOST")}/dl/#{mrtID}/#{epath}"
+  ## MH 2018-06-13: Temporary hack to go straight to regular Merritt, since mrtexpress is giving us
+  ##                intermittent 401 Unauthorized responses.
+  mrtURL = "https://merritt.cdlib.org/d/#{CGI.escape(mrtID)}/0/#{CGI.escape(epath)}"
+  #mrtURL = "https://#{ENV['MRTEXPRESS_HOST'] || raise("missing env MRTEXPRESS_HOST")}/dl/#{mrtID}/#{epath}"
 
   # Control how long this remains in browser and CloudFront caches
   cache_control :public, :max_age => 3600   # maybe more?

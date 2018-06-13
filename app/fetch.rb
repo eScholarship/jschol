@@ -153,7 +153,11 @@ class MerrittFetcher < Fetcher
       req.basic_auth ENV['MRTEXPRESS_USERNAME'], ENV['MRTEXPRESS_PASSWORD']
       http.request(req) do |resp|
         resp.code == "200" or raise("Response to #{@url} was HTTP #{resp.code}: #{resp.message}")
-        gotLength(resp["Expected-Content-Length"].to_i)
+        if resp["Expected-Content-Length"]
+          gotLength(resp["Expected-Content-Length"].to_i)
+        elsif resp["Content-Length"]
+          gotLength(resp["Content-Length"].to_i)
+        end
         resp.read_body { |chunk|
           @stop and http.finish
           gotChunk(chunk)
