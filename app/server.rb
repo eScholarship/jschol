@@ -102,7 +102,7 @@ OJS_DB = ensureConnect("OJS_DB")
 $host = ENV['HOST'] ? "#{ENV['HOST']}.escholarship.org" : "localhost"
 
 # Temporary for memory leak debugging
-if $host =~ /pub-jschol-stg|pub-jschol-prd-2a/
+if false
   puts "Will trace object allocations; send signal USR1 to write heap.dump.gz"
   require 'objspace'
   ObjectSpace.trace_object_allocations_start
