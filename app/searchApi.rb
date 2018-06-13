@@ -228,6 +228,11 @@ def aws_encode(params, facetTypes, search_type)
   aws_params[:start] = (search_type == "items") ?
         params.dig('start', 0) ? params['start'][0] : 0
      :  params.dig('info_start', 0) ? params['info_start'][0] : 0
+  if aws_params[:query] =~ %r{\b(title:|author:|keyword:|keywords:)}
+    require_relative 'searchParser'
+    is_structured, aws_params[:query] = q_structured(aws_params[:query])
+    aws_params[:query_parser] = "structured" if is_structured
+  end
   if aws_params[:query] == 'matchall' then aws_params[:query_parser] = "structured" end
 
   # create facet query, only create facet query for fields specified in facetTypes

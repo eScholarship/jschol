@@ -44,21 +44,22 @@ GEM
       mini_portile2 (~> 2.3.0)
     nokogumbo (1.5.0)
       nokogiri
+    parslet (1.8.2)
     power_assert (1.0.2)
     public_suffix (2.0.5)
     puma (3.10.0)
-    rack (2.0.4)
-    rack-protection (2.0.1)
+    rack (2.0.5)
+    rack-protection (2.0.2)
       rack
     sanitize (4.6.4)
       crass (~> 1.0.2)
       nokogiri (>= 1.4.4)
       nokogumbo (~> 1.4)
     sequel (4.48.0)
-    sinatra (2.0.1)
+    sinatra (2.0.2)
       mustermann (~> 1.0)
       rack (~> 2.0)
-      rack-protection (= 2.0.1)
+      rack-protection (= 2.0.2)
       tilt (~> 2.0)
     sinatra-websocket (0.3.1)
       em-websocket (~> 0.3.6)
@@ -94,6 +95,7 @@ DEPENDENCIES
   mysql2
   netrc
   nokogiri
+  parslet
   puma
   sanitize
   sequel

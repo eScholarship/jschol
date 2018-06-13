@@ -237,7 +237,8 @@ def putAsset(filePath, metadata)
               original_path: filePath.sub(%r{.*/([^/]+/[^/]+)$}, '\1'), # retain only last directory plus filename
               mime_type: MimeMagic.by_magic(File.open(filePath)).to_s
             }))
-    obj.etag == "\"#{md5sum}\"" or raise("S3 returned md5 #{resp.etag.inspect} but we expected #{md5sum.inspect}")
+    # 2018-06-01: Is AWS introducing a introducing a new kind of etag? This occasionally fails.
+    # obj.etag == "\"#{md5sum}\"" or raise("S3 returned md5 #{resp.etag.inspect} but we expected #{md5sum.inspect}")
   end
 
   return sha256Sum
@@ -1110,14 +1111,15 @@ def indexItem(itemID, timestamp, batch, nailgun)
   end
 
   text = grabText(itemID, dbItem.content_type)
-
+  
   # Create JSON for the full text index
   idxItem = {
     type:          "add",   # in CloudSearch land this means "add or update"
     id:            itemID,
     fields: {
       title:         dbItem[:title] ? cleanTitle(dbItem[:title]) : "",
-      authors:       (authors.length > 1000 ? authors[0,1000] : authors).map { |auth| auth[:name] },
+      authors:       (authors.length > 1000 ? authors[0,1000] : authors).map { |auth| auth[:name] } +
+                     (contribs.length > 1000 ? contribs[0,1000] : contribs).map { |c| c[:name] },
       abstract:      attrs[:abstract] || "",
       type_of_work:  dbItem[:genre],
       disciplines:   attrs[:disciplines] ? attrs[:disciplines] : [""], # only the numeric parts
@@ -1126,6 +1128,7 @@ def indexItem(itemID, timestamp, batch, nailgun)
       pub_year:      dbItem[:published].year,
       rights:        dbItem[:rights] || "",
       sort_author:   (authors[0] || {name:""})[:name].gsub(/[^\w ]/, '').downcase,
+      keywords:      attrs[:keywords] ? attrs[:keywords] : [""],
       is_info:       0
     }
   }

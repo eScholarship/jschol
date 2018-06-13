@@ -184,9 +184,8 @@ class TabAuthorComp extends React.Component {
 
   contribList(contribs) {
     return contribs.map((a, i) => {return (
-    // ToDo: Link to contrib
-        [<dt key={i}><a href={"/search/?q="+a.name}>{a.name}</a></dt>,
-         <dd key={i+1}>{a.institution ? a.institution : a.department ? a.department : ""}</dd>]
+      [<dt key={i}><a href={"/search/?q="+encodeURIComponent("author:"+a.name)}>{a.name}</a></dt>,
+       <dd key={i+1}>{a.institution ? a.institution : a.department ? a.department : ""}</dd>]
     )})
   }
 
