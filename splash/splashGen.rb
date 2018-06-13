@@ -15,6 +15,17 @@ $activeCampuses = getActiveCampuses
 $hostname = `/bin/hostname`.strip
 
 ###################################################################################################
+def countPages(pdfPath)
+  stdout, stderr, status = Open3.capture3("/usr/bin/qpdf --show-npages #{pdfPath}")
+  if stdout.strip =~ /^\d+$/
+    return stdout.to_i
+  else
+    puts "Warning: error trying to count pages of #{pdfPath}: #{stderr.inspect}"
+    return nil
+  end
+end
+
+###################################################################################################
 def travAndFormat(data, out)
   if data.text?
     text = data.to_s
@@ -229,8 +240,16 @@ def splashGen(itemID, instrucs, origFile, targetFile)
     code = $?.exitstatus
     code == 0 || code == 3 or raise("Error #{code} linearizing.")
 
-    # Return a digest of the instrucs, for later cache validation.
-    return Digest::MD5.base64digest(instrucs.to_json)
+    # Sanity checking
+    origPageCt = countPages(getRealPath(origFile))
+    splashPageCt = countPages(targetFile)
+    if splashPageCt != origPageCt+1
+      puts "Warning: splash version of #{itemID} is #{splashPageCt} pages, but should be #{origPageCt}+1 = #{origPageCt+1}. Suppressing splash version."
+      return 0
+    end
+
+    # Return the size of the resulting PDF
+    return File.size(targetFile)
   ensure
     splashTemp and splashTemp.unlink
     combinedTemp and combinedTemp.unlink
