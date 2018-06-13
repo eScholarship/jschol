@@ -1865,6 +1865,7 @@ def convertPDF(itemID)
   # Skip non-published items (e.g. embargoed, withdrawn)
   if item.status != "published"
     #puts "Not generating splash for #{item.status} item."
+    DisplayPDF.where(item_id: itemID).delete  # delete splash pages when item gets withdrawn
     return
   end
 
@@ -1905,8 +1906,7 @@ def convertPDF(itemID)
     splashLinFile = Tempfile.new(["splashLin_#{itemID}_", ".pdf"], TEMP_DIR)
     splashLinSize = 0
     begin
-      splashGen(itemID, instrucs, linFile, splashLinFile.path)
-      splashLinSize = File.size(splashLinFile.path)
+      splashLinSize = splashGen(itemID, instrucs, linFile, splashLinFile.path)
     rescue Exception => e
       if e.to_s =~ /Internal Server Error/
         puts "Warning: splash generator failed; falling back to plain."
