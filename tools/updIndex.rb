@@ -12,8 +12,6 @@ require 'aws-sdk'
 # Run from the right directory (the parent of the tools dir)
 Dir.chdir(File.dirname(File.expand_path(File.dirname(__FILE__))))
 
-# I had to run script first time to define this as an analysis scheme, 
-#  then ran script again to then call it as an author option
 analysis_schemes = [ { analysis_scheme_name: "no_stemming", analysis_options: { algorithmic_stemming: "none" }, analysis_scheme_language: "en" } ]
 
 ###################################################################################################
@@ -209,24 +207,6 @@ else
   STDIN.readline.upcase =~ /^Y/ or exit 1
 end
 
-# Perform all the fieldUpdates
-if !fieldUpdates.empty?
-  puts "Processing field updates."
-  fieldUpdates.each { |fieldData|
-    puts "  Field #{fieldData[:index_field_name].inspect}"
-    cloudSearch.define_index_field(domain_name: csDomain, index_field: fieldData)
-  }
-end
-
-# Perform all the fieldRemovals
-if !fieldRemovals.empty?
-  puts "Processing field removals."
-  fieldRemovals.each { |fieldName|
-    puts "  Field #{fieldName.inspect}"
-    cloudSearch.delete_index_field(domain_name: csDomain, index_field_name: fieldName)
-  }
-end
-
 # Perform all the analysis scheme updates
 if !aSchemeUpdates.empty?
   puts "Processing analysis scheme updates."
@@ -242,6 +222,24 @@ if !aSchemeRemovals.empty?
   aSchemeRemovals.each { |asName|
     puts "  Analysis Scheme #{asName.inspect}"
     cloudSearch.delete_analysis_scheme(domain_name: csDomain, analysis_scheme_name: asName)
+  }
+end
+
+# Perform all the fieldUpdates
+if !fieldUpdates.empty?
+  puts "Processing field updates."
+  fieldUpdates.each { |fieldData|
+    puts "  Field #{fieldData[:index_field_name].inspect}"
+    cloudSearch.define_index_field(domain_name: csDomain, index_field: fieldData)
+  }
+end
+
+# Perform all the fieldRemovals
+if !fieldRemovals.empty?
+  puts "Processing field removals."
+  fieldRemovals.each { |fieldName|
+    puts "  Field #{fieldName.inspect}"
+    cloudSearch.delete_index_field(domain_name: csDomain, index_field_name: fieldName)
   }
 end
 
