@@ -461,8 +461,7 @@ get "/content/:fullItemID/*" do |itemID, path|
   content_type MimeMagic.by_path(path)
 
   # Here's the final Merritt URL
-  ## MH 2018-06-13: Temporary hack to go straight to regular Merritt, since mrtexpress is giving us
-  ##                intermittent 401 Unauthorized responses.
+  ## MH 2018-06-14: Temporary hack to use old eschol4 server until mrtexpress gets fixed.
   mrtURL = "https://merritt.cdlib.org/d/#{CGI.escape(mrtID)}/0/#{CGI.escape(epath)}"
   #mrtURL = "https://#{ENV['MRTEXPRESS_HOST'] || raise("missing env MRTEXPRESS_HOST")}/dl/#{mrtID}/#{epath}"
 
@@ -482,7 +481,11 @@ get "/content/:fullItemID/*" do |itemID, path|
   displayPDF = DisplayPDF[itemID]
   if !mainPDF || !displayPDF
     fetcher = MerrittFetcher.new(mrtURL)
-    headers "Content-Length" => fetcher.length.to_s
+    if fetcher.length
+      headers "Content-Length" => fetcher.length.to_s
+    else
+      raise fetcher.status
+    end
     return stream { |out| fetcher.streamTo(out) }
   end
 
