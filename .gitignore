@@ -17,6 +17,7 @@ gomysql
 iso.pid
 jschol.pid
 logs/
+mailLogs/
 node_modules/
 normalized/
 prefilterDirs.txt

@@ -102,7 +102,7 @@ OJS_DB = ensureConnect("OJS_DB")
 $host = ENV['HOST'] ? "#{ENV['HOST']}.escholarship.org" : "localhost"
 
 # Temporary for memory leak debugging
-if $host =~ /pub-jschol-stg|pub-jschol-prd-2a/
+if false
   puts "Will trace object allocations; send signal USR1 to write heap.dump.gz"
   require 'objspace'
   ObjectSpace.trace_object_allocations_start
@@ -461,7 +461,9 @@ get "/content/:fullItemID/*" do |itemID, path|
   content_type MimeMagic.by_path(path)
 
   # Here's the final Merritt URL
-  mrtURL = "https://#{ENV['MRTEXPRESS_HOST'] || raise("missing env MRTEXPRESS_HOST")}/dl/#{mrtID}/#{epath}"
+  ## MH 2018-06-14: Temporary hack to use old eschol4 server until mrtexpress gets fixed.
+  mrtURL = "https://merritt.cdlib.org/d/#{CGI.escape(mrtID)}/0/#{CGI.escape(epath)}"
+  #mrtURL = "https://#{ENV['MRTEXPRESS_HOST'] || raise("missing env MRTEXPRESS_HOST")}/dl/#{mrtID}/#{epath}"
 
   # Control how long this remains in browser and CloudFront caches
   cache_control :public, :max_age => 3600   # maybe more?
@@ -479,7 +481,11 @@ get "/content/:fullItemID/*" do |itemID, path|
   displayPDF = DisplayPDF[itemID]
   if !mainPDF || !displayPDF
     fetcher = MerrittFetcher.new(mrtURL)
-    headers "Content-Length" => fetcher.length.to_s
+    if fetcher.length
+      headers "Content-Length" => fetcher.length.to_s
+    else
+      raise fetcher.status
+    end
     return stream { |out| fetcher.streamTo(out) }
   end
 

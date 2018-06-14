@@ -17,7 +17,7 @@ class Fetcher
     @status = "starting"
     @lengthReady = Event.new
     @startTime = Time.now
-    @length = 0
+    @length = nil
     @bytesFetched = 0
     @stop = false
     @waitingThreads = Set.new
@@ -148,12 +148,17 @@ end
 class MerrittFetcher < Fetcher
   def fetchInternal
     uri = URI(@url)
-    Net::HTTP.start(uri.host, uri.port, :use_ssl => (uri.scheme == 'https')) do |http|
+    Net::HTTP.start(uri.host, uri.port, :use_ssl => (uri.scheme == 'https'),
+                    :read_timeout => 5, :open_timeout => 5) do |http|
       req = Net::HTTP::Get.new(uri.request_uri)
       req.basic_auth ENV['MRTEXPRESS_USERNAME'], ENV['MRTEXPRESS_PASSWORD']
       http.request(req) do |resp|
         resp.code == "200" or raise("Response to #{@url} was HTTP #{resp.code}: #{resp.message}")
-        gotLength(resp["Expected-Content-Length"].to_i)
+        if resp["Expected-Content-Length"]
+          gotLength(resp["Expected-Content-Length"].to_i)
+        elsif resp["Content-Length"]
+          gotLength(resp["Content-Length"].to_i)
+        end
         resp.read_body { |chunk|
           @stop and http.finish
           gotChunk(chunk)
