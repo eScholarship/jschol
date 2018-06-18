@@ -1107,6 +1107,7 @@ put "/api/unit/:unitID/deleteUnit" do |unitID|
   DB.transaction {
     UnitHier.where(unit_id: unitID).delete
     Page.where(unit_id: unitID).delete
+    Widget.where(unit_id: unitID).delete
     UnitStat.where(unit_id: unitID).delete
     Unit.where(id: unitID).delete
   }
