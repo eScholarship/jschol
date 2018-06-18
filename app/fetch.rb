@@ -121,7 +121,7 @@ class Fetcher
               buf.empty? and buf << sprintf(fmt, "Status", "time", "pct", "length", "rate", "thrds", "URL")
               buf << sprintf(fmt, fetcher.status.is_a?(Exception) ? "error" : fetcher.status,
                              sprintf("%d:%02d", (fetcher.elapsed/60).to_i, fetcher.elapsed % 60),
-                             sprintf("%5.1f%%", (fetcher.bytesFetched * 100.0 / fetcher.length)),
+                             sprintf("%5.1f%%", (fetcher.bytesFetched * 100.0 / (fetcher.length || 1))),
                              fetcher.length,
                              sprintf("%5.1fM", fetcher.bytesFetched / (fetcher.elapsed + 0.01) / (1024*1024)),
                              fetcher.waitingThreads.size,
