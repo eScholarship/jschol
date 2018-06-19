@@ -426,7 +426,8 @@ get "/content/:fullItemID/*" do |itemID, path|
   # If it's the main content PDF...
   if path =~ /^qt\w{8}\.pdf$/
     epath = "content/#{URI::encode(path)}"
-    attrs["content_merritt_path"] and epath = attrs["content_merritt_path"]
+    ## MH 2018-06-18: hack to use eschol4 path
+    #attrs["content_merritt_path"] and epath = attrs["content_merritt_path"]
     noSplash = params[:nosplash] && isValidContentKey(itemID.sub(/^qt/, ''), params[:nosplash])
     mainPDF = true
   elsif path =~ %r{^inner/(.*)$}
@@ -441,7 +442,9 @@ get "/content/:fullItemID/*" do |itemID, path|
     epath = nil
     attrs["supp_files"].each { |supp|
       if path == "supp/#{supp["file"]}"
-        epath = supp["merritt_path"] ? URI::encode(supp["merritt_path"]) : "content/#{URI::encode(path)}"
+        ## MH 2018-06-18: hack to use eschol4 path
+        epath = "content/#{URI::encode(path)}"
+        #epath = supp["merritt_path"] ? URI::encode(supp["merritt_path"]) : "content/#{URI::encode(path)}"
       end
     }
     epath or halt(404)
@@ -461,8 +464,10 @@ get "/content/:fullItemID/*" do |itemID, path|
   content_type MimeMagic.by_path(path)
 
   # Here's the final Merritt URL
-  ## MH 2018-06-14: Temporary hack to use old eschol4 server until mrtexpress gets fixed.
-  mrtURL = "https://merritt.cdlib.org/d/#{CGI.escape(mrtID)}/0/#{CGI.escape(epath)}"
+  ## MH 2018-06-18: Temporary hack to use eschol4 server until MrtExpress gets fixed
+  mrtURL = "http://submit.escholarship.org:18881/data_pairtree/#{itemID.scan(/\w\w/).join('/')}/#{itemID}/#{epath}"
+  ## MH 2018-06-14: Temporary hack to use main Merritt until MrtExpress gets fixed
+  ##mrtURL = "https://merritt.cdlib.org/d/#{CGI.escape(mrtID)}/0/#{CGI.escape(epath)}"
   #mrtURL = "https://#{ENV['MRTEXPRESS_HOST'] || raise("missing env MRTEXPRESS_HOST")}/dl/#{mrtID}/#{epath}"
 
   # Control how long this remains in browser and CloudFront caches
@@ -1142,7 +1147,9 @@ end
 # Properly target links in HTML blob
 def getItemHtml(content_type, id)
   return false if content_type != "text/html"
-  mrtURL = "https://#{ENV['MRTEXPRESS_HOST'] || raise("missing env MRTEXPRESS_HOST")}/dl/ark:/13030/#{id}/content/#{id}.html"
+  ## MH 2018-06-18: Temporary hack to use eschol4 server until MrtExpress gets fixed
+  mrtURL = "http://submit.escholarship.org:18881/data_pairtree/#{id.scan(/\w\w/).join('/')}/#{id}/content/#{id}.html"
+  #mrtURL = "https://#{ENV['MRTEXPRESS_HOST'] || raise("missing env MRTEXPRESS_HOST")}/dl/ark:/13030/#{id}/content/#{id}.html"
   fetcher = MerrittFetcher.new(mrtURL)
   buf = []
   fetcher.streamTo(buf)

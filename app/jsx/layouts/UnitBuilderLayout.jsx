@@ -119,10 +119,6 @@ export default class UnitBuilderLayout extends React.Component
                   <br/><br/>
                   <label className="c-editable-page__label" htmlFor="hidden">Hidden: </label>
                   <input type="checkbox" id="hidden" name="hidden" defaultChecked={true} />
-
-                  <br/><br/>
-                  <p><i>Important:</i> before selecting 'Create Unit' below, ensure that this unit
-                     has been added to both allStruct.xml and allStruct-eschol5.xml</p>
                   <button type="submit">Create Unit</button>
                 </Form>
               </details>
@@ -138,8 +134,6 @@ export default class UnitBuilderLayout extends React.Component
                 <label className="c-editable-page__label" htmlFor="targetUnitID">Destination parent unit: </label>
                 <input className="c-editable-page__input" id="targetUnitID" name="targetUnitID" type="text"/>
                 <button type="submit">Move Unit '{this.props.unit.id}'</button>
-                <br/><br/>
-                <p><i>Important:</i> after this operation, update allStruct.xml and allStruct-eschol5.xml</p>
               </Form>
             </details>
 
@@ -152,8 +146,6 @@ export default class UnitBuilderLayout extends React.Component
                     }}>
                 <p><i>Note:</i> This will fail (harmlessly) if the unit has any items or sub-units.</p>
                 <button type="submit" className="o-button__3">Delete unit '{this.props.unit.id}'</button>
-                <br/><br/>
-                <p><i>Important:</i> after this operation, update allStruct.xml and allStruct-eschol5.xml</p>
               </Form>
             </details>
           </section>
