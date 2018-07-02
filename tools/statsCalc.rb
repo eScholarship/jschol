@@ -1267,6 +1267,52 @@ def parseLogs
   }
 end
 
+def combineForward(prevEmail, prevPerson, prevAttrs, curEmail, curPerson, curAttrs)
+  return if prevAttrs['forwarded_to'] == curPerson[:id]
+
+  curAttrs['prev_emails'] ||= []
+  curAttrs['prev_emails'] << prevEmail
+  if prevAttrs['prev_emails']
+    curAttrs['prev_emails'] += prevAttrs['prev_emails']
+    prevAttrs.delete('prev_emails')
+  end
+  curAttrs['prev_emails'].uniq!
+
+  curAttrs['forwarded_from'] ||= []
+  curAttrs['forwarded_from'] << prevPerson[:id]
+  if prevAttrs['forwarded_from']
+    # Complex case that does indeed occur, though rarely.
+    prevAttrs['forwarded_from'].each { |wayOldId|
+      wayOldPerson = Person.where(id: wayOldId).first
+      next unless wayOldPerson  # skip forwards that don't involve our authors
+      wayOldEmail = wayOldPerson.email
+      puts "  way old email: #{wayOldEmail}"
+      wayOldAttrs = JSON.parse(wayOldPerson[:attrs])
+      combineForward(wayOldEmail, wayOldPerson, wayOldAttrs, curEmail, curPerson, curAttrs)
+    }
+    curAttrs['forwarded_from'] += prevAttrs['forwarded_from']
+    prevAttrs.delete('forwarded_from')
+  end
+  curAttrs['forwarded_from'].uniq!
+
+  prevAttrs['forwarded_to'] = curPerson[:id]
+
+  puts "    Combining: #{prevAttrs}"
+  puts "           to: #{curAttrs}"
+
+  puts "curPerson.attrs=#{curAttrs}"
+  curPerson.attrs = curAttrs.to_json
+  curPerson.save
+
+  puts "prevPerson.attrs=#{prevAttrs}"
+  prevPerson.attrs = prevAttrs.to_json
+  prevPerson.save
+
+  # Switch all the item author records from old to new
+  nItems = ItemAuthor.where(person_id: prevPerson[:id]).update(person_id: curPerson[:id])
+  puts "    Updated #{nItems} item(s)."
+end
+
 ###################################################################################################
 # Email forwards are recorded in the OJS database. Apply these to forward/combine Person records.
 def applyForwards
@@ -1316,45 +1362,12 @@ def applyForwards
       prevAttrs['email'] = curEmail
       #puts "    Plain switch: #{prevAttrs}"
       prevPerson.attrs = prevAttrs.to_json
-      #prevPerson.save  # FIXME
+      prevPerson.save  # FIXME
     else
       # There are two records, prev and cur. We need to redirect prev to cur.
       curAttrs = JSON.parse(curPerson[:attrs])
       DB.transaction {
-        curAttrs['prev_emails'] ||= []
-        curAttrs['prev_emails'] << prevEmail
-        if prevAttrs['prev_emails']
-          curAttrs['prev_emails'] += prevAttrs['prev_emails']
-          prevAttrs.delete('prev_emails')
-        end
-        curAttrs['prev_emails'].uniq!
-
-        curAttrs['forwarded_from'] ||= []
-        curAttrs['forwarded_from'] << prevPerson[:id]
-        if prevAttrs['forwarded_from']
-          raise("complex todo")
-          # This case hasn't arisen yet. Do something like the following?
-          #prevAttrs['forwarded_from'].each { ...fetch record, point to new record, also do items... }
-          #curAttrs['forwarded_from'] += prevAttrs['forwarded_from']
-          #prevAttrs.delete('forwarded_from')
-        end
-        curAttrs['forwarded_from'].uniq!
-
-        prevAttrs['forwarded_to'] = curPerson[:id]
-
-        puts "    Combining: #{prevAttrs}"
-        puts "           to: #{curAttrs}"
-
-        curPerson.attrs = curAttrs.to_json
-        curPerson.save
-
-        prevPerson.attrs = prevAttrs.to_json
-        prevPerson.save
-
-        # Switch all the item author records from old to new
-        nItems = ItemAuthor.where(person_id: prevPerson[:id]).update(person_id: curPerson[:id])
-        puts "    Updated #{nItems} item(s)."
-        nItems > 0 or raise("person without items?")
+        combineForward(prevEmail, prevPerson, prevAttrs, curEmail, curPerson, curAttrs)
       }
     end
   }
