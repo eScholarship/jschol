@@ -23,6 +23,9 @@ require 'socksify'
 require 'socket'
 require 'uri'
 
+# Easy toggle to enable/disable mrtExpress
+USE_MRTEXPRESS = true
+
 # Make puts thread-safe, and flush after every puts.
 $stdoutMutex = Mutex.new
 $workerNum = 0
@@ -272,7 +275,8 @@ configure do
   use Rack::Deflater,
     :include => %w{application/javascript text/html text/css application/json image/svg+xml},
     :if => lambda { |env, status, headers, body|
-      # advice from https://www.itworld.com/article/2693941/cloud-computing/why-it-doesn-t-make-sense-to-gzip-all-content-from-your-web-server.html
+      # advice from https://www.itworld.com/article/2693941/cloud-computing/
+      #               why-it-doesn-t-make-sense-to-gzip-all-content-from-your-web-server.html
       return headers["Content-Length"].to_i > 1400
     }
 end
@@ -426,8 +430,9 @@ get "/content/:fullItemID/*" do |itemID, path|
   # If it's the main content PDF...
   if path =~ /^qt\w{8}\.pdf$/
     epath = "content/#{URI::encode(path)}"
-    ## MH 2018-06-18: hack to use eschol4 path
-    #attrs["content_merritt_path"] and epath = attrs["content_merritt_path"]
+    if USE_MRTEXPRESS
+      attrs["content_merritt_path"] and epath = attrs["content_merritt_path"]
+    end
     noSplash = params[:nosplash] && isValidContentKey(itemID.sub(/^qt/, ''), params[:nosplash])
     mainPDF = true
   elsif path =~ %r{^inner/(.*)$}
@@ -442,9 +447,10 @@ get "/content/:fullItemID/*" do |itemID, path|
     epath = nil
     attrs["supp_files"].each { |supp|
       if path == "supp/#{supp["file"]}"
-        ## MH 2018-06-18: hack to use eschol4 path
         epath = "content/#{URI::encode(path)}"
-        #epath = supp["merritt_path"] ? URI::encode(supp["merritt_path"]) : "content/#{URI::encode(path)}"
+        if USE_MRTEXPRESS && supp["merritt_path"]
+          epath = URI::encode(supp["merritt_path"])
+        end
       end
     }
     epath or halt(404)
@@ -463,12 +469,12 @@ get "/content/:fullItemID/*" do |itemID, path|
   # Guess the content type by path for now
   content_type MimeMagic.by_path(path)
 
-  # Here's the final Merritt URL
-  ## MH 2018-06-18: Temporary hack to use eschol4 server until MrtExpress gets fixed
-  mrtURL = "http://submit.escholarship.org:18881/data_pairtree/#{itemID.scan(/\w\w/).join('/')}/#{itemID}/#{epath}"
-  ## MH 2018-06-14: Temporary hack to use main Merritt until MrtExpress gets fixed
-  ##mrtURL = "https://merritt.cdlib.org/d/#{CGI.escape(mrtID)}/0/#{CGI.escape(epath)}"
-  #mrtURL = "https://#{ENV['MRTEXPRESS_HOST'] || raise("missing env MRTEXPRESS_HOST")}/dl/#{mrtID}/#{epath}"
+  # Here's the final file URL
+  if USE_MRTEXPRESS
+    fileURL = "https://#{ENV['MRTEXPRESS_HOST'] || raise("missing env MRTEXPRESS_HOST")}/dl/#{mrtID}/#{epath}"
+  else
+    fileURL = "http://submit.escholarship.org:18881/data_pairtree/#{itemID.scan(/\w\w/).join('/')}/#{itemID}/#{epath}"
+  end
 
   # Control how long this remains in browser and CloudFront caches
   cache_control :public, :max_age => 3600   # maybe more?
@@ -485,7 +491,7 @@ get "/content/:fullItemID/*" do |itemID, path|
   # to the version in Merritt.
   displayPDF = DisplayPDF[itemID]
   if !mainPDF || !displayPDF
-    fetcher = MerrittFetcher.new(mrtURL)
+    fetcher = MerrittFetcher.new(fileURL)
     if fetcher.length
       headers "Content-Length" => fetcher.length.to_s
     else
@@ -788,7 +794,9 @@ get "/api/browse/:browse_type/:campusID" do |browse_type, campusID|
   unit = $unitsHash[campusID]
   unit or halt(404, "campusID not found")
   if browse_type == 'units'
-    cu = $hierByAncestor[campusID].sort_by{ |h| $unitsHash[h[:unit_id]].name }.map do |a| getChildDepts($unitsHash[a.unit_id]); end
+    cu = $hierByAncestor[campusID].sort_by{ |h| $unitsHash[h[:unit_id]].name }.map do |a|
+      getChildDepts($unitsHash[a.unit_id])
+    end
     pageTitle = "Academic Units"
   else   # journals
     cj  = $campusJournals.select{ |j| j[:ancestor_unit].include?(campusID) }.sort_by{ |h| h[:name].downcase }
@@ -1147,10 +1155,13 @@ end
 # Properly target links in HTML blob
 def getItemHtml(content_type, id)
   return false if content_type != "text/html"
-  ## MH 2018-06-18: Temporary hack to use eschol4 server until MrtExpress gets fixed
-  mrtURL = "http://submit.escholarship.org:18881/data_pairtree/#{id.scan(/\w\w/).join('/')}/#{id}/content/#{id}.html"
-  #mrtURL = "https://#{ENV['MRTEXPRESS_HOST'] || raise("missing env MRTEXPRESS_HOST")}/dl/ark:/13030/#{id}/content/#{id}.html"
-  fetcher = MerrittFetcher.new(mrtURL)
+  if USE_MRTEXPRESS
+    fileURL = "https://#{ENV['MRTEXPRESS_HOST'] || raise("missing env MRTEXPRESS_HOST")}" +
+              "/dl/ark:/13030/#{id}/content/#{id}.html"
+  else
+    fileURL = "http://submit.escholarship.org:18881/data_pairtree/#{id.scan(/\w\w/).join('/')}/#{id}/content/#{id}.html"
+  end
+  fetcher = MerrittFetcher.new(fileURL)
   buf = []
   fetcher.streamTo(buf)
   buf = buf.join("")
