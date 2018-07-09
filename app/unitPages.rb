@@ -1109,6 +1109,7 @@ put "/api/unit/:unitID/deleteUnit" do |unitID|
     Page.where(unit_id: unitID).delete
     Widget.where(unit_id: unitID).delete
     UnitStat.where(unit_id: unitID).delete
+    UnitCount.where(unit_id: unitID).delete
     CategoryStat.where(unit_id: unitID).delete
     Unit.where(id: unitID).delete
   }

@@ -106,6 +106,11 @@ class Unit < Sequel::Model
   one_to_many :ancestor_hier, :class=>:UnitHier, :key=>:ancestor_unit
 end
 
+# Obsolete table
+class UnitCount < Sequel::Model
+  unrestrict_primary_key
+end
+
 class UnitHier < Sequel::Model(:unit_hier)
   unrestrict_primary_key
   many_to_one :unit,          :class=>:Unit
