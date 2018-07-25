@@ -152,7 +152,9 @@ def getNavBar(unit, navItems, level=1)
     }
     if level==1 && !isTopmostUnit(unit)
       unitID = unit.type.include?('series') ? getUnitAncestor(unit).id : unit.id
-      navItems.unshift({ id: 0, type: "home", name: "Unit Home", url: "/uc/#{unitID}" })
+      navItems.unshift({ id: 0, type: "home",
+                         name: unit.type == "journal" ? "Journal Home" : "Unit Home",
+                         url: "/uc/#{unitID}" })
     end
     return navItems
   end
