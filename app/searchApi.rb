@@ -408,8 +408,7 @@ def extent(id, type)
     query_parser: "structured",
     facet: JSON.generate({
       'pub_year' => $allFacets['pub_year']['awsFacetParam'],
-      }),
-    size: 0
+      })
   }
   if (type == 'oru') then
     aws_params[:filter_query] = "(term field=departments '#{id}')"
@@ -428,5 +427,6 @@ def extent(id, type)
   response = normalizeResponse($csClient.search(return: '_no_fields', **aws_params))
   pb = response['facets']['pub_year']['buckets']
   pub_years = pb.empty? ? [{"value"=>"0"}, {"value"=>"0"}] : pb.sort_by { |bucket| Integer(bucket['value']) }
-  return {:count => response['hits']['found'], :pub_year => {:start => pub_years[0]['value'], :end => pub_years[-1]['value']}}
+  return {:count => response['hits']['hit'].count{|node|node['id'] && node['id'].start_with?('qt')}, 
+          :pub_year => {:start => pub_years[0]['value'], :end => pub_years[-1]['value']}  }
 end
