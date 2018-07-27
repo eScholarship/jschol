@@ -771,7 +771,7 @@ def unitStats_deposits_by_oa(unitID)
   }.unindent, queryParams)
   DB.fetch(query).each { |row|
     yrmo = row[:yr].to_i*100 + row[:mo].to_i
-    posts['OA related'][yrmo] += row[:ct]
+    posts['OA policy related'][yrmo] += row[:ct]
     posts['other'][yrmo] -= row[:ct]
   }
 
