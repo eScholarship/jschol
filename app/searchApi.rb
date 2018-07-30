@@ -408,7 +408,8 @@ def extent(id, type)
     query_parser: "structured",
     facet: JSON.generate({
       'pub_year' => $allFacets['pub_year']['awsFacetParam'],
-      })
+      }),
+    size: 0
   }
   filter = ""
   if (type == 'oru') then
