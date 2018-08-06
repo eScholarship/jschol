@@ -344,7 +344,7 @@ end
 ###################################################################################################
 get %r{/uc/oai(.*)} do
   request.url =~ %r{/uc/oai(.*)}
-  proxyFromURL("http://pub-eschol-prd-2a.escholarship.org:18880/uc/oai#{$1}", "escholarship.org")
+  proxyFromURL("https://submit.escholarship.org/uc/oai#{$1}", "escholarship.org")
 end
 
 ###################################################################################################
@@ -375,14 +375,14 @@ end
 # Old XTF-style "smode" searches fall to here; all other old searches get redirected.
 get %r{/uc/search(.*)} do |stuff|
   request.url =~ %r{/uc/search(.*)}
-  proxyFromURL("http://pub-eschol-prd-2a.escholarship.org:18880/uc/search#{$1}", "escholarship.org")
+  proxyFromURL("https://submit.escholarship.org/uc/search#{$1}", "escholarship.org")
 end
 
 ###################################################################################################
 # Directory used by RePec to crawl our site
 get %r{/repec(.*)} do
   request.url =~ %r{/repec(.*)}
-  proxyFromURL("http://pub-eschol-prd-2a.escholarship.org:18880/repec#{$1}", "escholarship.org")
+  proxyFromURL("https://submit.escholarship.org/repec#{$1}", "escholarship.org")
 end
 
 ###################################################################################################
