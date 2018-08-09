@@ -135,16 +135,17 @@ class TabMetricsComp extends React.Component {
     })).isRequired,
     altmetrics_ok: PropTypes.bool,
     attrs: PropTypes.shape({
-      doi: PropTypes.string
+      doi: PropTypes.string,
+      local_ids: PropTypes.array
     })
   }
 
-  state = {altmetrics_hidden: false, dimensions_hidden: false }
+  state = {altmetrics_nodata: false, dimensions_nodata: false }
 
-  scripts = ["https://d1bxh8uas1mnw7.cloudfront.net/assets/embed.js", /* Altmetric */
-             "https://badge.dimensions.ai/badge.js"                   /* Dimensions */ ]
+  scripts = ["https://badge.dimensions.ai/badge.js",                  /* Dimensions widget https://badge.dimensions.ai/ */
+             "https://d1bxh8uas1mnw7.cloudfront.net/assets/embed.js"  /* Altmetric widget  https://api.altmetric.com/embeds.html */ ]
 
-  componentWillMount() {
+  componentDidMount() {
     if (!(typeof document === "undefined")) {
       this.scripts.forEach(s => {
         const script = document.createElement("script")
@@ -152,19 +153,26 @@ class TabMetricsComp extends React.Component {
         script.async = true
         document.body.appendChild(script)
       })
-      setTimeout(() =>
-        $('.__dimensions_badge_embed__').on('dimensions_embed:hide', () => {
-          this.setState({altmetrics_hidden: true})
-        }))
-      setTimeout(() =>
-        $('.altmetric-embed').on('altmetric:hide', () => {
-          this.setState({dimensions_hidden: true})
-        })
-      )
+      $('.altmetric-embed').on('altmetric:hide', () => {
+        this.setState({altmetrics_nodata: true})
+      })
+      $('.__dimensions_badge_embed__').on('dimensions_embed:hide', () => {
+        this.setState({dimensions_nodata: true})
+      })
     }
   }
 
+  componentWillUpdate() {
+    if (window.__dimensions_embed) window.__dimensions_embed.addBadges()
+  }
+
   render() {
+    let pmid   // Dimensions can also be used with a PubMed ID
+    if (this.props.attrs['local_ids']) {
+      _.each(this.props.attrs['local_ids'], node => {
+        if (node.type == "pmid" && pmid === undefined) pmid = node.id
+      })
+    }
     return (
       <div className="c-tabcontent">
         <h1 className="c-tabcontent__main-heading" tabIndex="-1">Metrics</h1>
@@ -190,17 +198,17 @@ class TabMetricsComp extends React.Component {
           {this.props.altmetrics_ok && this.props.attrs.doi &&
            [<h2 key="0" className="o-heading3">Online Attention</h2>,
             <p key="1">
-              <span className="altmetric-embed" data-badge-type="donut" data-badge-details="right" data-hide-no-mentions="true" data-doi={this.props.attrs.doi}></span></p>,
-            <div key="2" className={this.state.altmetrics_hidden ? "c-tabcontent-hide" : "c-tabcontent-reveal"}>No AltMetric&reg; data currently found</div>,
+              <span className="altmetric-embed" data-doi={this.props.attrs.doi} data-badge-type="donut" data-badge-details="right" data-hide-no-mentions="true"></span></p>,
+            <div key="2" className={this.state.altmetrics_nodata ? "c-tabcontent-reveal" : "c-tabcontent-hide"}>AltMetric&reg; data unavailable</div>,
             <p key="3"><br/></p>]
           }
-          {this.props.attrs.doi &&
+          {(this.props.attrs.doi || pmid) &&
            [<h2 key="0" className="o-heading3">Citations</h2>,
             <p key="1">
-              <span className="__dimensions_badge_embed__" data-doi={this.props.attrs.doi} data-hide-zero-citations="true" data-legend="always" data-style="small_circle"></span>
+              <span className="__dimensions_badge_embed__" data-pmid={pmid} data-doi={this.props.attrs.doi} data-hide-zero-citations="true" data-legend="always" data-style="small_circle"></span>
 
             </p>,
-            <div key="2" className={this.state.dimensions_hidden ? "c-tabcontent-hide" : "c-tabcontent-reveal"}>No citations currently found</div>]
+            <div key="2" className={this.state.dimensions_nodata ? "c-tabcontent-reveal" : "c-tabcontent-hide"}>Citation data unavailable</div>]
           }
           </div>
         </div>
