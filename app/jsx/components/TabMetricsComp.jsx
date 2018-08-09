@@ -176,6 +176,12 @@ class TabMetricsComp extends React.Component {
             <div key="1" className='altmetric-embed' data-badge-type='donut' data-badge-details='right' data-doi={this.props.attrs.doi}></div>]
           }
           </div>
+          <div className="c-tabcontent__divide2x-child">
+          {this.props.attrs.doi &&
+           [<h2 key="0" className="o-heading3">Citations</h2>,
+            <div key="1" className="dimensions-embed" >Dimension Badge here</div>]
+          }
+          </div>
         </div>
       }
       </div>
