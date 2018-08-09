@@ -824,3 +824,9 @@ Lots of stuff modified.
   app/fonts/SourceSansPro-Regular.ttf.woff
   app/fonts/SourceSansPro-Regular.ttf.woff2
 
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> 508a889f0117f50a639d5437e7ea2849ea874618, 2018-08-09        <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+  modified:   app/jsx/components/TabMetricsComp.jsx
+  modified:   app/scss/_tabcontent.scss
