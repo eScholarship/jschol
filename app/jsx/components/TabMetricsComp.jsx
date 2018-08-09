@@ -195,10 +195,10 @@ class TabMetricsComp extends React.Component {
           </div>
         }
           <div className="c-tabcontent__divide2x-child">
-          {this.props.altmetrics_ok && this.props.attrs.doi &&
+          {this.props.altmetrics_ok && (this.props.attrs.doi || pmid) &&
            [<h2 key="0" className="o-heading3">Online Attention</h2>,
             <p key="1">
-              <span className="altmetric-embed" data-doi={this.props.attrs.doi} data-badge-type="donut" data-badge-details="right" data-hide-no-mentions="true"></span></p>,
+              <span className="altmetric-embed" data-pmid={pmid} data-doi={this.props.attrs.doi} data-badge-type="donut" data-badge-details="right" data-hide-no-mentions="true"></span></p>,
             <div key="2" className={this.state.altmetrics_nodata ? "c-tabcontent-reveal" : "c-tabcontent-hide"}>AltMetric&reg; data unavailable</div>,
             <p key="3"><br/></p>]
           }
