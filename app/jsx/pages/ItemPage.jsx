@@ -41,6 +41,11 @@ class ItemPage extends PageBase {
     return "/api/item/" + this.props.params.itemID
   }
 
+  // Unit ID for permissions checking
+  pagePermissionsUnit() {
+    return "root"  // This is only being used for super user access
+  }
+
   tabNameFromHash() {
     return !(typeof location === "undefined") ? location.hash.toLowerCase().replace(/^#/, "") : ""
   }
@@ -50,7 +55,7 @@ class ItemPage extends PageBase {
 
   state = { currentTab: this.articleHashHandler(this.tabNameFromHash()) }
 
-  componentDidMount() {
+  componentDidMount(...args) {
     // Check hash whenever back or forward button clicked
     window.onpopstate = (event) => {
       var h = this.articleHashHandler(this.tabNameFromHash())
@@ -58,6 +63,9 @@ class ItemPage extends PageBase {
         this.setState({currentTab: h})
       }
     }
+    // This is overriding PageBase componentDidMount
+    // ToDo: https://medium.com/@dan_abramov/how-to-use-classes-and-sleep-at-night-9af8de78ccb4
+    super.componentDidMount.apply(this, args);
   }
 
   formatDate = d => {

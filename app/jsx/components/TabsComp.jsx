@@ -2,12 +2,12 @@
 
 import React from 'react'
 import $ from 'jquery'
-
+import { Subscriber } from 'react-broadcast'
 import TabMainComp from '../components/TabMainComp.jsx'
 import TabSupplementalComp from '../components/TabSupplementalComp.jsx'
 import TabMetricsComp from '../components/TabMetricsComp.jsx'
 import TabAuthorComp from '../components/TabAuthorComp.jsx'
-import TabCommentsComp from '../components/TabCommentsComp.jsx'
+import TabMetaComp from '../components/TabMetaComp.jsx'
 
 class TabsComp extends React.Component {
   state = {moreTabs: false}
@@ -19,7 +19,7 @@ class TabsComp extends React.Component {
   componentWillReceiveProps(nextProps) {
     if (this.props.currentTab != nextProps.currentTab) { 
       // For keyboard users, jump to heading within the tab.
-      setTimeout(()=>$(".c-tabcontent__main-heading").focus(), 0)
+      setTimeout(() =>$(".c-tabcontent__main-heading").focus(), 0)
     }
   }
 
@@ -33,32 +33,42 @@ class TabsComp extends React.Component {
       <div className="c-tabs">
         <div className={this.state.moreTabs ? "c-tabs__tabs--show-all" : "c-tabs__tabs"}>
       { ["published", "empty"].includes(this.props.status) &&
-          <button className="c-tabs__button-more" onClick = {()=> this.setState({moreTabs: !this.state.moreTabs})} aria-label="Show all tabs">...</button>
+          <button className="c-tabs__button-more" onClick = {() => this.setState({moreTabs: !this.state.moreTabs})} aria-label="Show all tabs">...</button>
       }
           <button className={p.currentTab == "main" ? "c-tabs__button--active" : "c-tabs__button"}
-                  onClick = {()=> this.tabFocus("main")}>
+                  onClick = {() => this.tabFocus("main")}>
             Main Content</button>
       { p.status == 'published' && p.attrs.supp_files && !multimediaItem &&
           <button className={p.currentTab == "supplemental" ? "c-tabs__button--active" : "c-tabs__button"}
-                  onClick = {()=> this.tabFocus("supplemental")}>
+                  onClick = {() => this.tabFocus("supplemental")}>
             Supplemental Material</button>
       }
       { p.status == 'published' &&
           <button className={p.currentTab == "metrics" ? "c-tabs__button--active" : "c-tabs__button"}
-                  onClick = {()=> this.tabFocus("metrics")}>
+                  onClick = {() => this.tabFocus("metrics")}>
             Metrics</button>
       }
       { p.status != 'withdrawn' &&
           <button className={p.currentTab == "author" ? "c-tabs__button--active" : "c-tabs__button"}
-                  onClick = {()=> this.tabFocus("author")}>
+                  onClick = {() => this.tabFocus("author")}>
             Author & Article Info</button>
       }
+{/*      <Subscriber channel="cms">
+        { cms => 
+          (cms.loggedIn && cms.permissions && cms.permissions.admin) ?*/}
+          <button className={p.currentTab == "meta" ? "c-tabs__button--active" : "c-tabs__button"}
+                onClick = {() => this.tabFocus("meta")}>
+            Meta</button>
+{/*         : null
+        }
+      </Subscriber>*/}
         </div>
         <div className="c-tabs__content">
           {p.currentTab == "main"         && <TabMainComp {...p} />}
           {p.currentTab == "supplemental" && <TabSupplementalComp {...p} />}
           {p.currentTab == "metrics"      && <TabMetricsComp {...p} />}
           {p.currentTab == "author"       && <TabAuthorComp {...p} />}
+          {p.currentTab == "meta"         && <TabMetaComp {...p} />}
           <p><br/></p>
         </div>
       </div>
