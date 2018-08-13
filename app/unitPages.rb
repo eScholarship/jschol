@@ -152,7 +152,9 @@ def getNavBar(unit, navItems, level=1)
     }
     if level==1 && !isTopmostUnit(unit)
       unitID = unit.type.include?('series') ? getUnitAncestor(unit).id : unit.id
-      navItems.unshift({ id: 0, type: "home", name: "Unit Home", url: "/uc/#{unitID}" })
+      navItems.unshift({ id: 0, type: "home",
+                         name: unit.type == "journal" ? "Journal Home" : "Unit Home",
+                         url: "/uc/#{unitID}" })
     end
     return navItems
   end
@@ -1095,7 +1097,7 @@ put "/api/unit/:unitID/moveUnit" do |unitID|
 end
 
 ###################################################################################################
-# Switch unit to a new parent
+# Delete a unit and its pages, widgets, etc.
 put "/api/unit/:unitID/deleteUnit" do |unitID|
   # Only super-users allowed to move units
   getUserPermissions(params[:username], params[:token], unitID)[:super] or halt(401)
@@ -1107,7 +1109,10 @@ put "/api/unit/:unitID/deleteUnit" do |unitID|
   DB.transaction {
     UnitHier.where(unit_id: unitID).delete
     Page.where(unit_id: unitID).delete
+    Widget.where(unit_id: unitID).delete
     UnitStat.where(unit_id: unitID).delete
+    UnitCount.where(unit_id: unitID).delete
+    CategoryStat.where(unit_id: unitID).delete
     Unit.where(id: unitID).delete
   }
   refreshUnitsHash

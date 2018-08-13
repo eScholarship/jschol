@@ -60,27 +60,30 @@ class QueryParser < Parslet::Parser
 
 end
 
-class Transformer < Parslet::Transform
+def _clean(s)
+  return String(s).strip.gsub(/'/, "\\\\'")
+end
 
+class Transformer < Parslet::Transform
   rule(:title => { :term => simple(:term) }) do
-    "(term field='title' '#{String(term).strip}')"
+    "(term field='title' '#{_clean(term)}')"
   end
   rule(:title => { :phrase => simple(:phrase) }) do
-    "(phrase field='title' '#{String(phrase).strip}')"
+    "(phrase field='title' '#{_clean(phrase)}')"
   end
 
   rule(:author => { :term => simple(:term) }) do
-    "(term field='authors' '#{String(term).strip}')"
+    "(term field='authors' '#{_clean(term)}')"
   end
   rule(:author => { :phrase => simple(:phrase) }) do
-    "(phrase field='authors' '#{String(phrase).strip}')"
+    "(phrase field='authors' '#{_clean(phrase)}')"
   end
 
   rule(:keywords => { :term => simple(:term) }) do
-    "(term field='keywords' '#{String(term).strip}')"
+    "(term field='keywords' '#{_clean(term)}')"
   end
   rule(:keywords => { :phrase => simple(:phrase) }) do
-    "(phrase field='keywords' '#{String(phrase).strip}')"
+    "(phrase field='keywords' '#{_clean(phrase)}')"
   end
 
   rule(:excl => subtree(:excl)) do

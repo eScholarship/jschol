@@ -39,6 +39,7 @@ class TabAuthorComp extends React.Component {
       'pmcid':        "PubMed Central ID: ",
       'proquest':     "ProQuest ID: ",
       'repec':        "RePEc ID: ",
+      'report':       "Report #: ",
       'default':      ""
     }
     return v[type] ? v[type] : v["default"]
@@ -183,9 +184,13 @@ class TabAuthorComp extends React.Component {
   }
 
   contribList(contribs) {
-    return contribs.map((a, i) => {return (
-      [<dt key={i}><a href={"/search/?q="+encodeURIComponent("author:"+a.name)}>{a.name}</a></dt>,
-       <dd key={i+1}>{a.institution ? a.institution : a.department ? a.department : ""}</dd>]
+    return contribs.map((a, i) => {
+      let orcid = a.ORCID_id ? "https://orcid.org/" + a.ORCID_id : null
+      return (
+        [<dt key={i}><a href={"/search/?q="+encodeURIComponent("author:"+a.name)}>{a.name}</a></dt>,
+         <dd key={i+1}>{a.institution ? a.institution : a.department ? a.department : ""}
+           &nbsp;&nbsp;{orcid ? <a className="o-textlink__secondary" href={orcid}>{orcid}</a> : ""}
+         </dd>]
     )})
   }
 
