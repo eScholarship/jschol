@@ -138,6 +138,21 @@ export default class UnitBuilderLayout extends React.Component
             </details>
 
             <details className="c-togglecontent">
+              <summary>Copy unit content</summary>
+              <Form to={`/api/unit/${this.props.unit.id}/copyUnit`}
+                    onSubmit={ (event, data) => {
+                      event.preventDefault()
+                      this.props.sendApiData("PUT", event.target.action, data)
+                    }}>
+                <label className="c-editable-page__label" htmlFor="targetParentID">Destination parent unit: </label>
+                <input className="c-editable-page__input" id="targetParentID" name="targetParentID" type="text"/>
+                <label className="c-editable-page__label" htmlFor="newUnitID">Name for copied unit: </label>
+                <input className="c-editable-page__input" id="newUnitID" name="newUnitID" type="text"/>
+                <button type="submit">Copy unit '{this.props.unit.id}'</button>
+              </Form>
+            </details>
+
+            <details className="c-togglecontent">
               <summary>Delete this unit</summary>
               <Form to={`/api/unit/${this.props.unit.id}/deleteUnit`}
                     onSubmit={ (event, data) => {
