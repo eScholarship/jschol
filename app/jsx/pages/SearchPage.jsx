@@ -540,22 +540,6 @@ class FacetForm extends React.Component {
     this.setState({query: newQuery})
   }
 
-  // Set as the Form's onSubmit handler
-  handleSubmit = (event, formData)=>{
-    for(let key in formData) {
-      if (formData[key] == "" ||
-      (key === 'sort' && formData[key] === 'rel') ||
-      (key === 'rows' && formData[key] === '10') ||
-      (key === 'start' && formData[key] === '0')) {
-        delete formData[key]
-      }
-    }
-    // Handy for debugging
-    // console.log("this.state.query = ", this.state.query)
-    // console.log(JSON.stringify(formData))
-    return true
-  }
-
   componentWillReceiveProps(nextProps) {
     if (!_.isEqual(this.props.query, nextProps.query))
       this.setState({query: nextProps.query})
@@ -576,7 +560,7 @@ class FacetForm extends React.Component {
     })
 
     return (
-      <Form id={p.formName} to='/search' method="GET" onSubmit={this.handleSubmit}>
+      <div>
         {/* Top-aligned box with title "Your search: "Teletubbies"" and active filters */}
         <FilterComp query={this.state.query} count={p.data.count} info_count={p.info_count} handler={this.removeFilters}/>
         <div className={this.state.refineActive ? "c-refine--no-drawer" : "c-refine--has-drawer"}>
@@ -589,7 +573,7 @@ class FacetForm extends React.Component {
         {/* Submit button needs to be present so our logic can "press" it at certain times.
             But hide it with display:none so user doesn't see it. */}
         <button type="submit" id={p.formButton} style={{display: "none"}}>Search</button>
-      </Form>
+      </div>
     )
   }
 }
@@ -623,6 +607,22 @@ class SearchPage extends PageBase {
     return "/api/search/" + this.props.location.search  // plus whatever props.params.YourUrlParam, etc.
   }
 
+  // Set as the Form's onSubmit handler
+  handleSubmit = (event, formData)=>{
+    for(let key in formData) {
+      if (formData[key] == "" ||
+      (key === 'sort' && formData[key] === 'rel') ||
+      (key === 'rows' && formData[key] === '10') ||
+      (key === 'start' && formData[key] === '0')) {
+        delete formData[key]
+      }
+    }
+    // Handy for debugging
+    // console.log("this.state.query = ", this.state.query)
+    // console.log(JSON.stringify(formData))
+    return true
+  }
+
   renderData(data) {
     let facetFormData = {facets: data.facets, count: data.count},
         formName = "facetForm",
@@ -635,7 +635,7 @@ class SearchPage extends PageBase {
           <NavComp data={data.header.nav_bar} />
         </div>
     {/* <ExportComp /> */}
-        <div className="c-columns">
+        <Form id={formName} to='/search' method="GET" onSubmit={this.handleSubmit} className="c-columns">
         <aside>
           <FacetForm formName={formName} formButton={formButton} data={facetFormData} info_count={data.info_count} query={data.query} />
         </aside>
@@ -667,7 +667,7 @@ class SearchPage extends PageBase {
           }
           </section>
         </main>
-      </div>
+      </Form>
     </div>
   )}
 }
