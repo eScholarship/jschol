@@ -2156,6 +2156,9 @@ begin
       recalcOA
     when "--checkAllStruct"
       checkAllStruct
+    when "--genAllStruct"
+      cacheAllUnits
+      genAllStruct
     else
       STDERR.puts "Usage: #{__FILE__} --units|--items"
       exit 1
