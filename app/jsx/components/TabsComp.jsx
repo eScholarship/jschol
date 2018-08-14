@@ -53,17 +53,18 @@ class TabsComp extends React.Component {
                   onClick = {() => this.tabFocus("author")}>
             Author & Article Info</button>
       }
-{/*      <Subscriber channel="cms">
+      <Subscriber channel="cms">
         { cms => 
-          (cms.loggedIn && cms.permissions && cms.permissions.admin) ?*/}
+          (cms.loggedIn && cms.permissions && cms.permissions.super) ?
           <button className={p.currentTab == "meta" ? "c-tabs__button--active" : "c-tabs__button"}
                 onClick = {() => this.tabFocus("meta")}>
             Meta</button>
-{/*         : null
+         : null
         }
-      </Subscriber>*/}
+      </Subscriber>
         </div>
         <div className="c-tabs__content">
+          {/* 'tab_anchors' are defined in ItemPage component */}
           {p.currentTab == "main"         && <TabMainComp {...p} />}
           {p.currentTab == "supplemental" && <TabSupplementalComp {...p} />}
           {p.currentTab == "metrics"      && <TabMetricsComp {...p} />}

@@ -25,7 +25,7 @@ if (!(typeof document === "undefined")) {
   const dotdotdot = require('jquery.dotdotdot')
 }
 
-const tab_anchors = ['main', 'supplemental', 'metrics', 'author']
+const tab_anchors = ['main', 'supplemental', 'metrics', 'author', 'meta']
 const anchors = tab_anchors.concat(['article_abstract', 'article_main', 'article_references'])
 
 const MONTHS = [ "January", "February", "March", "April", "May", "June",
@@ -147,7 +147,8 @@ class ItemPage extends PageBase {
                 content={d.pdf_url.substr(0, 4) == "http" ? d.pdf_url : "https://escholarship.org" + d.pdf_url} /> }
         </MetaTagsComp>
         <Header2Comp type={d.unit ? d.unit.type: null}
-                     unitID={(d.appearsIn && d.appearsIn.length > 0) ? d.appearsIn[0]["id"] : null } />
+                     unitID={(d.appearsIn && d.appearsIn.length > 0) ? d.appearsIn[0]["id"] : null}
+                     hideAdminBar={true} />
         {/* Some items have no parent unit, so check for empty d.header */}
         {d.header && <SubheaderComp unit={d.unit} header={d.header} />}
         {d.header && <NavBarComp navBar={d.header.nav_bar} 

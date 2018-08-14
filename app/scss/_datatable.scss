@@ -6,6 +6,16 @@ $table-border-size: 1px;
   max-height: 100vh;
   overflow: auto;
 
+  &.c-datatable-leftalign {
+    td {
+      text-align: left;
+    }
+
+    th[scope='row'] {
+      font-size: .8em;
+    }
+  }
+
   table {
     margin-bottom: $spacing-md;
     border-collapse: collapse;
