@@ -1140,19 +1140,20 @@ put "/api/unit/:unitID/copyUnit" do |oldUnitID|
   lastOrder = UnitHier.where(ancestor_unit: targetParentID, is_direct: true).max(:ordering)
 
   DB.transaction {
-    Unit.create(id: newUnitID, name: oldUnit.name, type: oldUnit.type,
-                status: oldUnit.status, attrs: oldUnit.attrs)
+    Unit.create(oldUnit.values.merge({id: newUnitID}))
 
     UnitHier.create(unit_id: newUnitID, ancestor_unit: targetParentID, ordering: (lastOrder||0)+1, is_direct: true)
     rebuildIndirectLinks(newUnitID)
 
     Page.where(unit_id: oldUnitID).each { |page|
-      page.unit_id = newUnitID
-      page.save
+      props = page.values.merge({unit_id: newUnitID})
+      props.delete(:id)
+      Page.create(props)
     }
     Widget.where(unit_id: oldUnitID).each { |widget|
-      widget.unit_id = newUnitID
-      widget.save
+      props = widget.values.merge({unit_id: newUnitID})
+      props.delete(:id)
+      Widget.create(props)
     }
   }
   refreshUnitsHash
