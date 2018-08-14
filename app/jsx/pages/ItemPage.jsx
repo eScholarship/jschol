@@ -25,7 +25,7 @@ if (!(typeof document === "undefined")) {
   const dotdotdot = require('jquery.dotdotdot')
 }
 
-const tab_anchors = ['main', 'supplemental', 'metrics', 'author']
+const tab_anchors = ['main', 'supplemental', 'metrics', 'author', 'meta']
 const anchors = tab_anchors.concat(['article_abstract', 'article_main', 'article_references'])
 
 const MONTHS = [ "January", "February", "March", "April", "May", "June",
@@ -41,6 +41,11 @@ class ItemPage extends PageBase {
     return "/api/item/" + this.props.params.itemID
   }
 
+  // Unit ID for permissions checking
+  pagePermissionsUnit() {
+    return "root"  // This is only being used for super user access
+  }
+
   tabNameFromHash() {
     return !(typeof location === "undefined") ? location.hash.toLowerCase().replace(/^#/, "") : ""
   }
@@ -50,7 +55,7 @@ class ItemPage extends PageBase {
 
   state = { currentTab: this.articleHashHandler(this.tabNameFromHash()) }
 
-  componentDidMount() {
+  componentDidMount(...args) {
     // Check hash whenever back or forward button clicked
     window.onpopstate = (event) => {
       var h = this.articleHashHandler(this.tabNameFromHash())
@@ -58,6 +63,9 @@ class ItemPage extends PageBase {
         this.setState({currentTab: h})
       }
     }
+    // This is overriding PageBase componentDidMount
+    // ToDo: https://medium.com/@dan_abramov/how-to-use-classes-and-sleep-at-night-9af8de78ccb4
+    super.componentDidMount.apply(this, args);
   }
 
   formatDate = d => {
@@ -139,7 +147,8 @@ class ItemPage extends PageBase {
                 content={d.pdf_url.substr(0, 4) == "http" ? d.pdf_url : "https://escholarship.org" + d.pdf_url} /> }
         </MetaTagsComp>
         <Header2Comp type={d.unit ? d.unit.type: null}
-                     unitID={(d.appearsIn && d.appearsIn.length > 0) ? d.appearsIn[0]["id"] : null } />
+                     unitID={(d.appearsIn && d.appearsIn.length > 0) ? d.appearsIn[0]["id"] : null}
+                     hideAdminBar={true} />
         {/* Some items have no parent unit, so check for empty d.header */}
         {d.header && <SubheaderComp unit={d.unit} header={d.header} />}
         {d.header && <NavBarComp navBar={d.header.nav_bar} 
