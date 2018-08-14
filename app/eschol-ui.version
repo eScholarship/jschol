@@ -830,3 +830,13 @@ Lots of stuff modified.
 
   modified:   app/jsx/components/TabMetricsComp.jsx
   modified:   app/scss/_tabcontent.scss
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> 93adc2e79f3ebe1d3661aa53241e3090d071126f, 2018-08-14        <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+  added: app/jsx/components/TabMetaComp.jsx
+  modified: app/jsx/components/TabsComp.jsx
+  modified: app/scss/_datatable.scss
+  modified: app/scss/_tabs.scss
+
