@@ -1035,6 +1035,7 @@ get "/api/item/:shortArk" do |shortArk|
 
       if unit
         unit_attrs = JSON.parse(unit[:attrs])
+        body[:unit_attrs] = unit_attrs               # Strictly used for admin reference
         if unit.type != 'journal'
           body[:header] = getUnitHeader(unit)
           body[:altmetrics_ok] = true
