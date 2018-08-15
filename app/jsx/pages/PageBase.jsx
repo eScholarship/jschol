@@ -75,10 +75,10 @@ class PageBase extends React.Component
     // Retrieve login info from session storage (but after initial init, so that ISO matches for first render)
     let d = this.getSessionData()
     if (d) {
-      setTimeout(()=>{
+      setTimeout(() =>{
         this.setState({ adminLogin: { loggedIn: true, username: d.username, token: d.token },
                         isEditingPage: d.isEditingPage })
-        setTimeout(()=>this.fetchPermissions(), 0)
+        setTimeout(() =>this.fetchPermissions(), 0)
       }, 0)
     }
   }
@@ -127,7 +127,7 @@ class PageBase extends React.Component
         this.setState({ pageData: data, fetchingData: false })
         if (this.pagePermissionsUnit() != this.state.permissionsUnit)
           this.fetchPermissions()
-      }).fail((jqxhr, textStatus, err)=> {
+      }).fail((jqxhr, textStatus, err) => {
         let message = (jqxhr.responseJSON && jqxhr.responseJSON.message) ? jqxhr.responseJSON.message :
                       (textStatus=="error" && err) ? err :
                       textStatus ? textStatus :
@@ -215,7 +215,7 @@ class PageBase extends React.Component
     if (!_.isEqual(this.props, nextProps)) {
       //this.setState(this.getEmptyState())   bad: this causes loss of context when clicking search facets
       this.setState({ fetchingData: true })
-      setTimeout(()=>this.fetchPageData(), 0) // fetch right after setting the new props
+      setTimeout(() => this.fetchPageData(), 0) // fetch right after setting the new props
     }
   }
 
@@ -255,7 +255,8 @@ class PageBase extends React.Component
     if (this.state.adminLogin && this.state.adminLogin.loggedIn &&
         this.state.cmsModules && this.state.pageData &&
         this.state.permissions && this.state.permissions.admin &&
-        'header' in this.state.pageData && 'nav_bar' in this.state.pageData.header)
+        'header' in this.state.pageData && 'nav_bar' in this.state.pageData.header &&
+        !this.state.pageData.id)
     {
       return (
         <DrawerComp data={this.state.pageData}
@@ -316,7 +317,7 @@ class PageBase extends React.Component
           }
         }
       })
-      .fail((jqxhr, textStatus, err)=> {
+      .fail((jqxhr, textStatus, err) => {
         this.setState({ pageData: { error: textStatus }, fetchingPerms: false, adminLogin: null, permissions: null, isEditingPage: false })
       })
     }
@@ -333,8 +334,8 @@ class PageBase extends React.Component
                                            onLogout: this.onLogout,
                                            isEditingPage: this.state.adminLogin && this.state.adminLogin.loggedIn && this.state.isEditingPage,
                                            onEditingPageChange: this.onEditingPageChange,
-                                           fetchPageData: ()=>this.fetchPageData(this.props),
-                                           goLocation: (loc)=>this.props.router.push(loc),
+                                           fetchPageData: () =>this.fetchPageData(this.props),
+                                           goLocation: (loc) =>this.props.router.push(loc),
                                            modules: this.state.cmsModules,
                                            permissions: this.state.permissions } }>
           {this.renderContent()}
