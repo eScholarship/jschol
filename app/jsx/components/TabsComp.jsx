@@ -69,7 +69,15 @@ class TabsComp extends React.Component {
           {p.currentTab == "supplemental" && <TabSupplementalComp {...p} />}
           {p.currentTab == "metrics"      && <TabMetricsComp {...p} />}
           {p.currentTab == "author"       && <TabAuthorComp {...p} />}
-          {p.currentTab == "meta"         && <TabMetaComp {...p} />}
+          {p.currentTab == "meta"         && 
+            <Subscriber channel="cms">
+              { cms => 
+                (cms.loggedIn && cms.permissions && cms.permissions.super) ?
+                <TabMetaComp {...p} />
+               : null
+              }
+            </Subscriber>
+          }
           <p><br/></p>
         </div>
       </div>
