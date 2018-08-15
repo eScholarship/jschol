@@ -914,9 +914,8 @@ def parseUCIngest(itemID, inMeta, fileType)
   attrs.reject! { |k, v| !v || (v.respond_to?(:empty?) && v.empty?) }
 
   # Detect HTML-formatted items
-  contentFile = inMeta.at("/record/content/file")
-  contentFile && contentFile.at("./native") and contentFile = contentFile.at("./native")
-  contentPath = contentFile && contentFile[:path]
+  contentFile = inMeta.at("/record/content/file[@path]")
+  contentFile && contentFile.at("./native[@path]") and contentFile = contentFile.at("./native")
   contentType = contentFile && contentFile.at("./mimeType") && contentFile.at("./mimeType").text
 
   # For ETDs (all in Merritt), figure out the PDF path in the feed file
@@ -927,6 +926,8 @@ def parseUCIngest(itemID, inMeta, fileType)
       addMerrittPaths(itemID, attrs)
     end
     attrs[:content_length] = File.size(pdfPath)
+  elsif contentType == "application/pdf"
+    contentType = nil   # whatever cruft we got from the mimeType field, no PDF is no PDF.
   end
 
   # Populate the Item model instance
