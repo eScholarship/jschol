@@ -512,10 +512,18 @@ end
 def findIssueCover(unit, volume, issue, caption, dbAttrs)
   key = "#{unit}:#{volume}:#{issue}"
   if !$issueCoverCache.key?(key)
-    # Check the special directory for a cover image.
-    imgPath = "/apps/eschol/erep/xtf/static/issueCovers/#{unit}/#{volume.rjust(2,'0')}_#{issue.rjust(2,'0')}_cover.png"
+    # Check the special directories for a cover image.
+    filename = "#{volume.rjust(2,'0')}_#{issue.rjust(2,'0')}_cover"
+    imgPath = nil
+    # Try a couple old directories, and both possible file extensions (for JPEG and PNG images)
+    ["/apps/eschol/erep/xtf/static/issueCovers", "/apps/eschol/erep/xtf/static/brand"].each { |staticDir|
+      ["jpg", "png"].each { |ext|
+        path = "#{staticDir}/#{unit}/#{volume.rjust(2,'0')}_#{issue.rjust(2,'0')}_cover.#{ext}"
+        File.exist?(path) and imgPath = path
+      }
+    }
     data = nil
-    if File.exist?(imgPath)
+    if imgPath
       data = putImage(imgPath)
       caption and data[:caption] = sanitizeHTML(caption)
     end
