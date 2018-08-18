@@ -400,14 +400,23 @@ def getSeriesLandingPageData(unit, q)
   return response
 end
 
+def getPublishedIssueIds(unit_id)
+  # Returns array of issue IDs
+  return Issue.distinct.select(Sequel[:issues][:id]).join(:sections, issue_id: :id).
+    join(:items, section: Sequel[:sections][:id]).
+    filter(Sequel[:issues][:unit_id] => unit_id,
+           Sequel[:items][:status] => 'published').map { |h| h[:id] }
+end
+
 def getIssues(unit_id)
-  query = Sequel::SQL::PlaceholderLiteralString.new('SELECT * FROM issues WHERE ((unit_id = ?) AND ((volume != "0") OR (issue != "0"))) ORDER BY CAST(volume AS SIGNED) DESC, CAST(issue AS Decimal(6,2)) DESC', [unit_id])
+  publishedIssues = getPublishedIssueIds(unit_id)
+  query = Sequel::SQL::PlaceholderLiteralString.new('SELECT * FROM issues WHERE ((id in ?) AND ((volume != "0") OR (issue != "0"))) ORDER BY CAST(volume AS SIGNED) DESC, CAST(issue AS Decimal(6,2)) DESC', [publishedIssues])
   r = DB.fetch(query).to_hash(:id).map{|id, issue|
     h = issue.to_hash
     h[:attrs] and h[:attrs] = JSON.parse(h[:attrs])
     h
   }
-  articlesInPress = Issue.where(:unit_id => unit_id, :volume => '0', :issue => '0').to_hash(:id).map{|id, issue|
+  articlesInPress = Issue.where(id: publishedIssues, :volume => '0', :issue => '0').to_hash(:id).map{|id, issue|
     h = issue.to_hash
     h[:attrs] and h[:attrs] = JSON.parse(h[:attrs])
     h
@@ -451,7 +460,7 @@ end
 
 def getIssue(unit_id, display, volume=nil, issue=nil)
   if volume.nil?  # Landing page (most recent journal) has no vol/issue entered in URL path
-    i = Issue.where(:unit_id => unit_id).order(Sequel.desc(:published)).order_append(Sequel.desc(Sequel[:issue].cast_numeric)).first
+    i = Issue.where(id: getPublishedIssueIds(unit_id)).order(Sequel.desc(:published)).order_append(Sequel.desc(Sequel[:issue].cast_numeric)).first
   else
     i = Issue.first(:unit_id => unit_id, :volume => volume, :issue => issue)
   end
