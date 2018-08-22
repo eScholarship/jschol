@@ -692,6 +692,7 @@ def addMerrittPaths(itemID, attrs)
   attrs[:supp_files] and attrs[:supp_files].each { |supp|
     suppName = supp[:file]
     suppSize = File.size(arkToFile(itemID, "content/supp/#{suppName}")) or raise
+    supp[:size] = suppSize
     suppFound = false
     feed.xpath("//link").each { |link|
       if link[:rel] == "http://purl.org/dc/terms/hasPart" &&
@@ -929,6 +930,15 @@ def parseUCIngest(itemID, inMeta, fileType)
   contentFile = inMeta.at("/record/content/file[@path]")
   contentFile && contentFile.at("./native[@path]") and contentFile = contentFile.at("./native")
   contentType = contentFile && contentFile.at("./mimeType") && contentFile.at("./mimeType").text
+
+  # Record name of native file, if any
+  if contentFile.name == "native" && contentFile[:path]
+    nativePath = arkToFile(itemID, contentFile[:path].sub(/.*\//, 'content/'))
+    if File.exist?(nativePath)
+      attrs[:native_file] = { name: contentFile[:path].sub(/.*\//, ''),
+                              size: File.size(nativePath) }
+    end
+  end
 
   # For ETDs (all in Merritt), figure out the PDF path in the feed file
   pdfPath = arkToFile(itemID, "content/base.pdf")
