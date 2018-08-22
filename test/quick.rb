@@ -71,7 +71,7 @@ class TestQuick < Test::Unit::TestCase
 
   def test_itemNoParent
     html = fetchAndStrip("http://localhost:4001/uc/item/7sg6571h")
-    assert_match /Lignin depletion enhances/, html
+    assert_match /Lignin depletion enhances/i, html
     assert_match /pdfjs-cdl-wrapper/, html
   end
 
