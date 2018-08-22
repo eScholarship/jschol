@@ -424,7 +424,7 @@ def getJournalIssueData(unit, unit_attrs, volume=nil, issue=nil)
   publishedIssues = Issue.distinct.select(Sequel[:issues][:id]).
     join(:sections, issue_id: :id).
     join(:items, section: Sequel[:sections][:id]).
-    filter(Sequel[:issues][:unit_id] => unit_id,
+    filter(Sequel[:issues][:unit_id] => unit.id,
            Sequel[:items][:status] => 'published').map { |h| h[:id] }
   issues = _getIssues(publishedIssues)
   if unit_attrs['issue_rule'] and unit_attrs['issue_rule'] == 'secondMostRecent' and volume.nil? and issue.nil?
