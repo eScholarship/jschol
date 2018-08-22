@@ -400,14 +400,15 @@ def getSeriesLandingPageData(unit, q)
   return response
 end
 
-def getIssues(unit_id)
-  query = Sequel::SQL::PlaceholderLiteralString.new('SELECT * FROM issues WHERE ((unit_id = ?) AND ((volume != "0") OR (issue != "0"))) ORDER BY CAST(volume AS SIGNED) DESC, CAST(issue AS Decimal(6,2)) DESC', [unit_id])
+# Takes array of issue IDs
+def _getIssues(publishedIssues)
+  query = Sequel::SQL::PlaceholderLiteralString.new('SELECT * FROM issues WHERE ((id in ?) AND ((volume != "0") OR (issue != "0"))) ORDER BY CAST(volume AS SIGNED) DESC, CAST(issue AS Decimal(6,2)) DESC', [publishedIssues])
   r = DB.fetch(query).to_hash(:id).map{|id, issue|
     h = issue.to_hash
     h[:attrs] and h[:attrs] = JSON.parse(h[:attrs])
     h
   }
-  articlesInPress = Issue.where(:unit_id => unit_id, :volume => '0', :issue => '0').to_hash(:id).map{|id, issue|
+  articlesInPress = Issue.where(id: publishedIssues, :volume => '0', :issue => '0').to_hash(:id).map{|id, issue|
     h = issue.to_hash
     h[:attrs] and h[:attrs] = JSON.parse(h[:attrs])
     h
@@ -419,7 +420,13 @@ end
 # Landing page data does not pass arguments volume/issue. It just gets most recent journal
 def getJournalIssueData(unit, unit_attrs, volume=nil, issue=nil)
   display = unit_attrs['magazine_layout'] ? 'magazine' : 'simple'
-  issues = getIssues(unit.id)
+  # Returns array of issue IDs
+  publishedIssues = Issue.distinct.select(Sequel[:issues][:id]).
+    join(:sections, issue_id: :id).
+    join(:items, section: Sequel[:sections][:id]).
+    filter(Sequel[:issues][:unit_id] => unit.id,
+           Sequel[:items][:status] => 'published').map { |h| h[:id] }
+  issues = _getIssues(publishedIssues)
   if unit_attrs['issue_rule'] and unit_attrs['issue_rule'] == 'secondMostRecent' and volume.nil? and issue.nil?
     secondIssue = issues.first(2)[1]
     volume = secondIssue ? secondIssue[:volume] : nil
@@ -427,7 +434,7 @@ def getJournalIssueData(unit, unit_attrs, volume=nil, issue=nil)
   end
   return {
     display: display,
-    issue: getIssue(unit.id, display, volume, issue),
+    issue: _getIssue(unit.id, publishedIssues, volume, issue, display),
     issues: issues,
     doaj: unit_attrs['doaj'],
     issn: unit_attrs['issn'],
@@ -449,9 +456,9 @@ def getIssueNumberingTitle(unit_id, volume, issue)
   return attrs['numbering'], attrs['title']
 end
 
-def getIssue(unit_id, display, volume=nil, issue=nil)
+def _getIssue(unit_id, publishedIssues, volume=nil, issue=nil, display)
   if volume.nil?  # Landing page (most recent journal) has no vol/issue entered in URL path
-    i = Issue.where(:unit_id => unit_id).order(Sequel.desc(:published)).order_append(Sequel.desc(Sequel[:issue].cast_numeric)).first
+    i = Issue.where(id: publishedIssues).order(Sequel.desc(:published)).order_append(Sequel.desc(Sequel[:issue].cast_numeric)).first
   else
     i = Issue.first(:unit_id => unit_id, :volume => volume, :issue => issue)
   end

@@ -1041,13 +1041,14 @@ end
 ###################################################################################################
 # Clean title, to help w/sorting
 # Remove first character if it's not alphanumeric
-# Remove beginning 'The' pronouns 
+# Remove beginning 'The' pronouns
+# Note: CloudSearch sorts by Unicode codepoint, so numbers come before letters and uppercase letters come before lowercase letters
 def cleanTitle(str)
   str.nil? and return str
   r = Sanitize.clean(str).strip
   str.empty? and return str
   r = (r[0].match /[^\w]/) ? r[1..-1].strip : r
-  r.sub(/^(The|A|An) /i, '')
+  r.sub(/^(The|A|An) /i, '').capitalize
 end
 
 ###################################################################################################

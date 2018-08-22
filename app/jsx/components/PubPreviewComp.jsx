@@ -15,14 +15,8 @@ class PubPreviewComp extends React.Component {
       title: PropTypes.string,
       genre: PropTypes.string,
       peerReviewed: PropTypes.bool,
-      journalInfo: PropTypes.shape({
-        unitId: PropTypes.string.isRequired,
-        displayName: PropTypes.string.isRequired,
-      }),
-      unitInfo: PropTypes.shape({
-        unitId: PropTypes.string.isRequired,
-        displayName: PropTypes.string.isRequired,
-      }),
+      journalInfo: PropTypes.any,
+      unitInfo: PropTypes.any,
       authors: PropTypes.array,
       supp_files: PropTypes.array,
       pub_year: PropTypes.number,
