@@ -1678,7 +1678,7 @@ def convertAllItems(arks)
 
     if $rescanMode && rescanBase.nil?
       break
-    elsif !$rescanMode || $preindexMode
+    elsif !$rescanMode
       break
     end
   end
@@ -2148,7 +2148,8 @@ startTime = Time.now
 
 # Pre-index mode: no locking, just index one item and get out
 if ARGV[0] == "--preindex"
-  $preindexMode = $noCloudSearchMode = $forceMode = $rescanMode = true
+  $preindexMode = $noCloudSearchMode = $forceMode = true
+  $rescanMode = false # prevent infinite loop
   convertAllItems(Set.new([ARGV[1]]))
   exit 0
 end
