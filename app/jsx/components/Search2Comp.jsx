@@ -60,7 +60,7 @@ class SearchComp2 extends React.Component {
             <div className="c-search2__inputs">
               <div className="c-search2__form">
                   <label className="c-search2__label" htmlFor="global-search">Search eScholarship</label>
-                  <input type="search" name="q" id="global-search" className="c-search2__field" placeholder="Search over 200,000 items" 
+                  <input type="search" name="q" id="global-search" className="c-search2__field" placeholder="Search" 
                          onFocus={this.makeActive} onBlur={this.makeInactive} autoComplete="off" 
                          autoCapitalize="off" />
               </div>
