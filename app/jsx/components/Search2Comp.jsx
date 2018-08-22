@@ -35,8 +35,8 @@ class SearchControls extends React.Component {
 
 class SearchComp2 extends React.Component {
   state={refineActive: false}
-  makeActive = ()=> this.setState({refineActive: true})
-  makeInactive = ()=> this.setState({refineActive: false})
+  makeActive = () => this.setState({refineActive: true})
+  makeInactive = () => this.setState({refineActive: false})
 
   render() {
     let label, searchUnitType;
