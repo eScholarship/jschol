@@ -344,7 +344,7 @@ end
 ###################################################################################################
 get %r{/uc/oai(.*)} do
   request.url =~ %r{/uc/oai(.*)}
-  proxyFromURL("http://pub-eschol-prd-2a.escholarship.org:18880/uc/oai#{$1}", "escholarship.org")
+  proxyFromURL("https://submit.escholarship.org/uc/oai#{$1}", "escholarship.org")
 end
 
 ###################################################################################################
@@ -375,14 +375,14 @@ end
 # Old XTF-style "smode" searches fall to here; all other old searches get redirected.
 get %r{/uc/search(.*)} do |stuff|
   request.url =~ %r{/uc/search(.*)}
-  proxyFromURL("http://pub-eschol-prd-2a.escholarship.org:18880/uc/search#{$1}", "escholarship.org")
+  proxyFromURL("https://submit.escholarship.org/uc/search#{$1}", "escholarship.org")
 end
 
 ###################################################################################################
 # Directory used by RePec to crawl our site
 get %r{/repec(.*)} do
   request.url =~ %r{/repec(.*)}
-  proxyFromURL("http://pub-eschol-prd-2a.escholarship.org:18880/repec#{$1}", "escholarship.org")
+  proxyFromURL("https://submit.escholarship.org/repec#{$1}", "escholarship.org")
 end
 
 ###################################################################################################
@@ -996,30 +996,37 @@ get "/api/item/:shortArk" do |shortArk|
     (item.genre == "dissertation" && pubDate) and pubDate = pubDate.to_s.sub(/-01-01$/, '')
     begin
       body = {
-        :id => shortArk,
-        :citation => citation,
-        :title => citation[:title],
         # ToDo: Normalize author attributes across all components (i.e. 'family' vs. 'lname')
-        :authors => authors,
-        :editors => editors.any? ? editors : nil,
-        :advisors => advisors.any? ? advisors : nil,
-        :published => pubDate,
         :added => item.added,
-        :genre => item.genre,
-        :status => item.status,
-        :rights => item.rights,
-        :content_type => item.content_type,
+        :advisors => advisors.any? ? advisors : nil,
+        :altmetrics_ok => false,
+        :appearsIn => unitIDs ? unitIDs.map { |unitID| {"id" => unitID, "name" => Unit[unitID].name} }
+                              : nil,
+        :attrs => attrs,
+        :authors => authors,
+        :citation => citation,
         :content_html => getItemHtml(item.content_type, id),
         :content_key => calcContentKey(shortArk),
         :content_prefix => content_prefix,
+        :content_type => item.content_type,
+        :data_digest => item.data_digest,            # Strictly used for admin reference
+        :editors => editors.any? ? editors : nil,
+        :genre => item.genre,
+        :id => shortArk,
+        :index_digest => item.index_digest,          # Strictly used for admin reference
+        :last_indexed => item.last_indexed,          # Strictly used for admin reference
+        :oa_policy => item.oa_policy,                # Strictly used for admin reference
+        :ordering_in_sect => item.ordering_in_sect,  # Strictly used for admin reference
         :pdf_url => pdf_url,
-        :attrs => attrs,
+        :published => pubDate,
+        :rights => item.rights,
         :sidebar => unit ? getItemRelatedItems(unit, id) : nil,
-        :appearsIn => unitIDs ? unitIDs.map { |unitID| {"id" => unitID, "name" => Unit[unitID].name} }
-                              : nil,
+        :source => item.source,                      # Strictly used for admin reference
+        :status => item.status,
+        :submitted => item.submitted,                # Strictly used for admin reference
+        :title => citation[:title],
         :unit => unit ? unit.values.reject { |k,v| k==:attrs } : nil,
         :usage => getItemUsage(id),
-        :altmetrics_ok => false
       }
 
       if attrs['disable_download'] && Date.parse(attrs['disable_download']) > Date.today
@@ -1028,6 +1035,7 @@ get "/api/item/:shortArk" do |shortArk|
 
       if unit
         unit_attrs = JSON.parse(unit[:attrs])
+        body[:unit_attrs] = unit_attrs               # Strictly used for admin reference
         if unit.type != 'journal'
           body[:header] = getUnitHeader(unit)
           body[:altmetrics_ok] = true

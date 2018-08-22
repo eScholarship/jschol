@@ -152,7 +152,9 @@ def getNavBar(unit, navItems, level=1)
     }
     if level==1 && !isTopmostUnit(unit)
       unitID = unit.type.include?('series') ? getUnitAncestor(unit).id : unit.id
-      navItems.unshift({ id: 0, type: "home", name: "Unit Home", url: "/uc/#{unitID}" })
+      navItems.unshift({ id: 0, type: "home",
+                         name: unit.type == "journal" ? "Journal Home" : "Unit Home",
+                         url: "/uc/#{unitID}" })
     end
     return navItems
   end
@@ -1070,7 +1072,6 @@ put "/api/unit/:unitID/moveUnit" do |unitID|
 
   # Get the max ordering of the new parent's existing children.
   lastOrder = UnitHier.where(ancestor_unit: targetUnitID, is_direct: true).max(:ordering)
-  puts "last order of new parent: #{lastOrder}"
 
   DB.transaction {
     # Change the primary direct link
@@ -1115,6 +1116,48 @@ put "/api/unit/:unitID/deleteUnit" do |unitID|
   }
   refreshUnitsHash
   return {status: "ok", nextURL: "/uc/#{$hierByUnit[unitID][0].ancestor_unit}"}.to_json
+end
+
+###################################################################################################
+# Copy a unit with its pages, widgets, etc.
+put "/api/unit/:unitID/copyUnit" do |oldUnitID|
+  # Only super-users allowed to copy units
+  getUserPermissions(params[:username], params[:token], oldUnitID)[:super] or halt(401)
+
+  # Sanity checks
+  $unitsHash[oldUnitID].type == 'root' and jsonHalt(400, "Cannot copy the root-level unit.")
+  targetParentID = params[:targetParentID]
+  targetParent = $unitsHash[targetParentID] or jsonHalt(400, "Unrecognized target parent unit")
+  targetParent.type =~ /series|journal/ and jsonHalt(400, "Target parent unit cannot be a series or journal")
+
+  newUnitID = params[:newUnitID]
+  newUnitID =~ /^[a-z0-9_]+$/ or jsonHalt(400, "Invalid new unit ID")
+  Unit.where(id: newUnitID).count == 0 or jsonHalt(400, "Duplicate unit name")
+
+  oldUnit = Unit[oldUnitID] or jsonHalt(400, "Can't find old unit")
+
+  # Get the max ordering of the new parent's existing children.
+  lastOrder = UnitHier.where(ancestor_unit: targetParentID, is_direct: true).max(:ordering)
+
+  DB.transaction {
+    Unit.create(oldUnit.values.merge({id: newUnitID}))
+
+    UnitHier.create(unit_id: newUnitID, ancestor_unit: targetParentID, ordering: (lastOrder||0)+1, is_direct: true)
+    rebuildIndirectLinks(newUnitID)
+
+    Page.where(unit_id: oldUnitID).each { |page|
+      props = page.values.merge({unit_id: newUnitID})
+      props.delete(:id)
+      Page.create(props)
+    }
+    Widget.where(unit_id: oldUnitID).each { |widget|
+      props = widget.values.merge({unit_id: newUnitID})
+      props.delete(:id)
+      Widget.create(props)
+    }
+  }
+  refreshUnitsHash
+  return {status: "ok", nextURL: "/uc/#{newUnitID}"}.to_json
 end
 
 ###################################################################################################

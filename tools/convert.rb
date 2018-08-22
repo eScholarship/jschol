@@ -150,7 +150,7 @@ $hostname = `/bin/hostname`.strip
 $thumbnailServer = case $hostname
   when 'pub-submit-dev'; 'http://pub-submit-dev.escholarship.org'
   when 'pub-submit-stg-2a', 'pub-submit-stg-2c'; 'http://pub-submit-stg.escholarship.org'
-  when 'pub-submit-prd-2a', 'pub-submit-prd-2c'; 'http://pub-eschol-prd-alb.escholarship.org'
+  when 'pub-submit-prd-2a', 'pub-submit-prd-2c'; 'https://submit.escholarship.org'
   else raise("unrecognized host #{hostname}")
 end
 
@@ -515,10 +515,18 @@ end
 def findIssueCover(unit, volume, issue, caption, dbAttrs)
   key = "#{unit}:#{volume}:#{issue}"
   if !$issueCoverCache.key?(key)
-    # Check the special directory for a cover image.
-    imgPath = "/apps/eschol/erep/xtf/static/issueCovers/#{unit}/#{volume.rjust(2,'0')}_#{issue.rjust(2,'0')}_cover.png"
+    # Check the special directories for a cover image.
+    filename = "#{volume.rjust(2,'0')}_#{issue.rjust(2,'0')}_cover"
+    imgPath = nil
+    # Try a couple old directories, and both possible file extensions (for JPEG and PNG images)
+    ["/apps/eschol/erep/xtf/static/issueCovers", "/apps/eschol/erep/xtf/static/brand"].each { |staticDir|
+      ["jpg", "png"].each { |ext|
+        path = "#{staticDir}/#{unit}/#{volume.rjust(2,'0')}_#{issue.rjust(2,'0')}_cover.#{ext}"
+        File.exist?(path) and imgPath = path
+      }
+    }
     data = nil
-    if File.exist?(imgPath)
+    if imgPath
       data = putImage(imgPath)
       caption and data[:caption] = sanitizeHTML(caption)
     end
@@ -918,9 +926,8 @@ def parseUCIngest(itemID, inMeta, fileType)
   attrs.reject! { |k, v| !v || (v.respond_to?(:empty?) && v.empty?) }
 
   # Detect HTML-formatted items
-  contentFile = inMeta.at("/record/content/file")
-  contentFile && contentFile.at("./native") and contentFile = contentFile.at("./native")
-  contentPath = contentFile && contentFile[:path]
+  contentFile = inMeta.at("/record/content/file[@path]")
+  contentFile && contentFile.at("./native[@path]") and contentFile = contentFile.at("./native")
   contentType = contentFile && contentFile.at("./mimeType") && contentFile.at("./mimeType").text
 
   # For ETDs (all in Merritt), figure out the PDF path in the feed file
@@ -931,6 +938,8 @@ def parseUCIngest(itemID, inMeta, fileType)
       addMerrittPaths(itemID, attrs)
     end
     attrs[:content_length] = File.size(pdfPath)
+  elsif contentType == "application/pdf"
+    contentType = nil   # whatever cruft we got from the mimeType field, no PDF is no PDF.
   end
 
   # Populate the Item model instance
@@ -2178,6 +2187,9 @@ begin
       recalcOA
     when "--checkAllStruct"
       checkAllStruct
+    when "--genAllStruct"
+      cacheAllUnits
+      genAllStruct
     else
       STDERR.puts "Usage: #{__FILE__} --units|--items"
       exit 1
