@@ -26,11 +26,11 @@ class ScholWorksComp extends React.Component {
       genre: PropTypes.string,
       peerReviewed: PropTypes.bool,
       journalInfo: PropTypes.shape({
-        unitId: PropTypes.string.isRequired,
+        link_path: PropTypes.string.isRequired,
         displayName: PropTypes.string.isRequired,
       }),
       unitInfo: PropTypes.shape({
-        unitId: PropTypes.string.isRequired,
+        link_path: PropTypes.string.isRequired,
         displayName: PropTypes.string.isRequired,
       }),
       authors: PropTypes.array,
@@ -68,13 +68,13 @@ class ScholWorksComp extends React.Component {
     
     let itemLink = "/uc/item/"+pr.id.replace(/^qt/, "")
     let publishingInfo
-    let unitId
+    let link_path
     if ('journalInfo' in pr) {
       publishingInfo = pr.journalInfo.displayName
-      unitId = pr.journalInfo.unitId
+      link_path = pr.journalInfo.link_path
     } else if ('unitInfo' in pr) {
       publishingInfo = pr.unitInfo.displayName
-      unitId = pr.unitInfo.unitId
+      link_path = pr.unitInfo.link_path
     }
 
     let authorList
@@ -110,7 +110,7 @@ class ScholWorksComp extends React.Component {
           }
           {pr.pub_year && publishingInfo && 
             <div className="c-scholworks__publication">
-              <Link to={"/uc/" + unitId}>{publishingInfo}</Link> ({pr.pub_year})
+              <Link to={"/uc/" + link_path}>{publishingInfo}</Link> ({pr.pub_year})
             </div>
           }
           {pr.abstract && 
