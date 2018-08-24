@@ -74,15 +74,19 @@ def itemResultData(itemIds, itemData, fields=[])
           # ToDo: This next block is very similar to unitPage.getPageBreadcrumb and should probably be combined
           vol = "Volume #{itemIssue.volume}"
           iss = "Issue #{itemIssue.issue}"
-          numbering = JSON.parse(itemIssue.attrs)["numbering"]
-          if itemIssue.volume == "0" and itemIssue.issue == "0"
-            # Don't tack on vol/iss in this case
-          elsif !numbering
-            displayName += ", " + vol + ", " + iss 
-          elsif numbering == "volume_only"
-            displayName += ", " + vol
-          else
-            displayName += ", " + iss 
+          if itemIssue.attrs
+            numbering = JSON.parse(itemIssue.attrs)["numbering"]
+            if itemIssue.volume == "0" and itemIssue.issue == "0"
+              # Don't tack on vol/iss in this case
+            elsif !numbering
+              displayName = ", " + vol + ", " + iss 
+            elsif numbering == "volume_only"
+              displayName += ", " + vol
+            else
+              displayName += ", " + iss 
+            end
+          else 
+            displayName += ", " + vol + ", " + iss
           end
           itemListItem[:journalInfo] = {displayName: displayName, issueId: itemIssue.id, link_path: itemUnit.id + "/" + itemIssue.volume + "/" + itemIssue.issue}
         #otherwise, use the item link to the unit table for all other content types
