@@ -12,7 +12,12 @@ require 'aws-sdk'
 # Run from the right directory (the parent of the tools dir)
 Dir.chdir(File.dirname(File.expand_path(File.dirname(__FILE__))))
 
-analysis_schemes = [ { analysis_scheme_name: "no_stemming", analysis_options: { algorithmic_stemming: "none" }, analysis_scheme_language: "en" } ]
+analysis_schemes = [
+ { analysis_scheme_name: "no_stemming_20180829",
+   analysis_options: {
+     algorithmic_stemming: "none",
+     stopwords: "['a', 'an', 'and', 'are', 'as', 'at', 'be', 'but', 'by', 'for', 'if', 'in', 'into', 'is', 'it', 'no', 'not', 'of', 'on', 'or', 'such', 'that', 'the', 'their', 'then', 'there', 'these', 'they', 'this', 'to', 'was', 'will', 'with']" },
+   analysis_scheme_language: "en" } ]
 
 ###################################################################################################
 # Here are all the field definitions for the jschol CloudSearch domain
@@ -22,7 +27,7 @@ fields = [
                                                               highlight_enabled: true,
                                                               sort_enabled:      false } },
   { index_field_name: "authors",     index_field_type:      "text-array",
-                                     text_array_options:    { analysis_scheme: "no_stemming",
+                                     text_array_options:    { analysis_scheme: "no_stemming_20180829",
                                                               return_enabled:    false,
                                                               highlight_enabled: true } },
   { index_field_name: "campuses",    index_field_type:      "literal-array",
