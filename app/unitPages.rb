@@ -400,9 +400,13 @@ def getSeriesLandingPageData(unit, q)
   return response
 end
 
+def _queryIssues(publishedIssues)
+  return Sequel::SQL::PlaceholderLiteralString.new('SELECT * FROM issues WHERE ((id in ?) AND ((volume != "0") OR (issue != "0"))) ORDER BY CAST(volume AS SIGNED) DESC, CAST(issue AS Decimal(6,2)) DESC', [publishedIssues])
+end
+
 # Takes array of issue IDs
 def _getIssues(publishedIssues)
-  query = Sequel::SQL::PlaceholderLiteralString.new('SELECT * FROM issues WHERE ((id in ?) AND ((volume != "0") OR (issue != "0"))) ORDER BY CAST(volume AS SIGNED) DESC, CAST(issue AS Decimal(6,2)) DESC', [publishedIssues])
+  query = _queryIssues(publishedIssues)
   r = DB.fetch(query).to_hash(:id).map{|id, issue|
     h = issue.to_hash
     h[:attrs] and h[:attrs] = JSON.parse(h[:attrs])
@@ -458,12 +462,13 @@ end
 
 def _getIssue(unit_id, publishedIssues, volume=nil, issue=nil, display)
   if volume.nil?  # Landing page (most recent journal) has no vol/issue entered in URL path
-    i = Issue.where(id: publishedIssues).order(Sequel.desc(:published)).order_append(Sequel.desc(Sequel[:issue].cast_numeric)).first
+    i = DB.fetch(_queryIssues(publishedIssues)).first
+    return nil if i.nil?
   else
     i = Issue.first(:unit_id => unit_id, :volume => volume, :issue => issue)
+    return nil if i.nil?
+    i = i.values
   end
-  return nil if i.nil?
-  i = i.values
   if i[:attrs]
     attrs = JSON.parse(i[:attrs])
     attrs['numbering']   and i[:numbering] = attrs['numbering']
