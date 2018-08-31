@@ -462,8 +462,9 @@ end
 
 def _getIssue(unit_id, publishedIssues, volume=nil, issue=nil, display)
   if volume.nil?  # Landing page (most recent journal) has no vol/issue entered in URL path
-    i = DB.fetch(_queryIssues(publishedIssues)).first
+    i = DB.fetch(_queryIssues(publishedIssues))
     return nil if i.nil?
+    i = i.first
   else
     i = Issue.first(:unit_id => unit_id, :volume => volume, :issue => issue)
     return nil if i.nil?
