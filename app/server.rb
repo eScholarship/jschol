@@ -330,6 +330,14 @@ get "/check" do
 end
 
 ###################################################################################################
+get %r{/uc/([^/]+)/rss} do |unitID|
+  unit = Unit[unitID] or halt(404, "Unit not found")
+  response = HTTParty.get("http://#{$host}:18900/rss/unit/#{unitID}")
+  response.headers['content-type'] and content_type response.headers['content-type']
+  [response.code, response.body]
+end
+
+###################################################################################################
 def proxyFromURL(url, overrideHostname = nil)
   fetcher = HttpFetcher.new(url, overrideHostname)
   if fetcher.length > 0
