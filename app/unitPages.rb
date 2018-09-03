@@ -210,7 +210,7 @@ def getUnitHeader(unit, pageName=nil, journalIssue=nil, attrs=nil)
     :social => {
       :facebook => attrs['facebook'],
       :twitter => attrs['twitter'],
-      :rss => attrs['rss']
+      :rss => "/uc/#{unit.id}/rss"
     },
     :breadcrumb => (unit.type!='campus') ?
       traverseHierarchyUp([{name: unit.name, id: unit.id, url: unit.type == "root" ? "/" : "/uc/#{unit.id}"}]) +
