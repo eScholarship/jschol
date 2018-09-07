@@ -854,7 +854,7 @@ def parseUCIngest(itemID, inMeta, fileType)
   issue = section = nil
   volNum = inMeta.text_at("./context/volume")
   issueNum = inMeta.text_at("./context/issue")
-  if issueNum or volNum
+  if inMeta[:state] != "withdrawn" and (issueNum or volNum)
     issueUnit = inMeta.xpath("./context/entity[@id]").select {
                       |ent| $allUnits[ent[:id]] && $allUnits[ent[:id]].type == "journal" }[0]
     issueUnit and issueUnit = issueUnit[:id]
@@ -1381,16 +1381,6 @@ def scrubSectionsAndIssues()
   # Remove orphaned sections and issues (can happen when items change)
   $dbMutex.synchronize {
     DB.run("delete from sections where id not in (select distinct section from items where section is not null)")
-    DB.run("delete from sections where id IN (
-      SELECT sectionId FROM (
-        select distinct s.id as sectionId from sections s
-        inner join items it on (s.id = it.section)
-        where it.status != 'published' and s.id NOT IN
-          (select distinct s.id from sections s
-          inner join items it on (s.id = it.section)
-          where it.status = 'published')
-      ) AS deletable
-    )")
     DB.run("delete from issues where id not in (select distinct issue_id from sections where issue_id is not null)")
   }
 end
@@ -1404,6 +1394,7 @@ def updateDbItem(data)
   ItemAuthor.where(item_id: itemID).delete
   ItemContrib.where(item_id: itemID).delete
   UnitItem.where(item_id: itemID).delete
+  data['dbSection'].nil? and Item.where(id: itemID).update(section: nil)
 
   # Insert (or update) the issue and section
   updateIssueAndSection(data)
