@@ -276,14 +276,14 @@ end
 #   and related ORUs, which include children ORUs, sibling ORUs, and parent ORU
 def getORULandingPageData(id)
   children = $hierByAncestor[id]
-  children and children.select! { |u| u.unit.status == 'active' }
+  children and children.select! { |u| u.unit.status != 'hidden' }
   oru_children = children ? children.select { |u| u.unit.type == 'oru' }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : []
   oru_siblings, oru_ancestor = [], []
   oru_ancestor_id = $oruAncestors[id]
   if oru_ancestor_id
     oru_ancestor = [{unit_id: oru_ancestor_id, name: $unitsHash[oru_ancestor_id].name}]
     siblings = $hierByAncestor[oru_ancestor_id]
-    siblings and siblings.select! { |u| u.unit.status == 'active' }
+    siblings and siblings.select! { |u| u.unit.status != 'hidden' }
     oru_siblings = siblings ? siblings.select { |u| u.unit.type == 'oru' and u.unit_id != id }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : []
   end
   related_orus = oru_children + oru_siblings + oru_ancestor
