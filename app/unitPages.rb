@@ -550,6 +550,7 @@ def getUnitProfile(unit, attrs)
     status: unit.status
   }
   
+  attrs['directSubmit'] and profile[:directSubmit] = attrs['directSubmit']
   if unit.type == 'journal'
     profile[:doaj] = attrs['doaj']
     profile[:issn] = attrs['issn']
@@ -557,7 +558,6 @@ def getUnitProfile(unit, attrs)
     profile[:altmetrics_ok] = attrs['altmetrics_ok']
     profile[:magazine_layout] = attrs['magazine_layout']
     profile[:issue_rule] = attrs['issue_rule']
-    profile[:directSubmit] = attrs['directSubmit']
   end
   if unit.type == 'oru'
     profile[:seriesSelector] = true
