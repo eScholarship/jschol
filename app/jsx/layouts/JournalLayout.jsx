@@ -97,7 +97,7 @@ class IssueWrapperComp extends React.Component {
   
   render() {
     let pi = this.props.issue,
-        year = pi.published.match(/\d{4}/),
+        year = pi.published.match(/\d{4}/)[0],
         issueCurrent = [pi.unit_id, pi.volume, pi.issue, year]
     return (
       <section className="o-columnbox1">
@@ -142,7 +142,7 @@ class JournalLayout extends React.Component {
     }).isRequired,
     data: PropTypes.shape({
       display: PropTypes.string,
-      doaj: PropTypes.string,
+      doaj: PropTypes.bool,
       issn: PropTypes.string,
       eissn: PropTypes.string,
       issue: PropTypes.object,     // See IssueWrapperComp prop types directly above

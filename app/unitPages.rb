@@ -152,7 +152,9 @@ def getNavBar(unit, navItems, level=1)
     }
     if level==1 && !isTopmostUnit(unit)
       unitID = unit.type.include?('series') ? getUnitAncestor(unit).id : unit.id
-      navItems.unshift({ id: 0, type: "home", name: "Unit Home", url: "/uc/#{unitID}" })
+      navItems.unshift({ id: 0, type: "home",
+                         name: unit.type == "journal" ? "Journal Home" : "Unit Home",
+                         url: "/uc/#{unitID}" })
     end
     return navItems
   end
@@ -208,7 +210,7 @@ def getUnitHeader(unit, pageName=nil, journalIssue=nil, attrs=nil)
     :social => {
       :facebook => attrs['facebook'],
       :twitter => attrs['twitter'],
-      :rss => attrs['rss']
+      :rss => "/uc/#{unit.id}/rss"
     },
     :breadcrumb => (unit.type!='campus') ?
       traverseHierarchyUp([{name: unit.name, id: unit.id, url: unit.type == "root" ? "/" : "/uc/#{unit.id}"}]) +
@@ -274,14 +276,14 @@ end
 #   and related ORUs, which include children ORUs, sibling ORUs, and parent ORU
 def getORULandingPageData(id)
   children = $hierByAncestor[id]
-  children and children.select! { |u| u.unit.status == 'active' }
+  children and children.select! { |u| u.unit.status != 'hidden' }
   oru_children = children ? children.select { |u| u.unit.type == 'oru' }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : []
   oru_siblings, oru_ancestor = [], []
   oru_ancestor_id = $oruAncestors[id]
   if oru_ancestor_id
     oru_ancestor = [{unit_id: oru_ancestor_id, name: $unitsHash[oru_ancestor_id].name}]
     siblings = $hierByAncestor[oru_ancestor_id]
-    siblings and siblings.select! { |u| u.unit.status == 'active' }
+    siblings and siblings.select! { |u| u.unit.status != 'hidden' }
     oru_siblings = siblings ? siblings.select { |u| u.unit.type == 'oru' and u.unit_id != id }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : []
   end
   related_orus = oru_children + oru_siblings + oru_ancestor
@@ -398,14 +400,19 @@ def getSeriesLandingPageData(unit, q)
   return response
 end
 
-def getIssues(unit_id)
-  query = Sequel::SQL::PlaceholderLiteralString.new('SELECT * FROM issues WHERE ((unit_id = ?) AND ((volume != "0") OR (issue != "0"))) ORDER BY CAST(volume AS SIGNED) DESC, CAST(issue AS Decimal(6,2)) DESC', [unit_id])
+def _queryIssues(publishedIssues)
+  return Sequel::SQL::PlaceholderLiteralString.new('SELECT * FROM issues WHERE ((id in ?) AND ((volume != "0") OR (issue != "0"))) ORDER BY CAST(volume AS SIGNED) DESC, CAST(issue AS Decimal(6,2)) DESC', [publishedIssues])
+end
+
+# Takes array of issue IDs
+def _getIssues(publishedIssues)
+  query = _queryIssues(publishedIssues)
   r = DB.fetch(query).to_hash(:id).map{|id, issue|
     h = issue.to_hash
     h[:attrs] and h[:attrs] = JSON.parse(h[:attrs])
     h
   }
-  articlesInPress = Issue.where(:unit_id => unit_id, :volume => '0', :issue => '0').to_hash(:id).map{|id, issue|
+  articlesInPress = Issue.where(id: publishedIssues, :volume => '0', :issue => '0').to_hash(:id).map{|id, issue|
     h = issue.to_hash
     h[:attrs] and h[:attrs] = JSON.parse(h[:attrs])
     h
@@ -417,7 +424,13 @@ end
 # Landing page data does not pass arguments volume/issue. It just gets most recent journal
 def getJournalIssueData(unit, unit_attrs, volume=nil, issue=nil)
   display = unit_attrs['magazine_layout'] ? 'magazine' : 'simple'
-  issues = getIssues(unit.id)
+  # Returns array of issue IDs
+  publishedIssues = Issue.distinct.select(Sequel[:issues][:id]).
+    join(:sections, issue_id: :id).
+    join(:items, section: Sequel[:sections][:id]).
+    filter(Sequel[:issues][:unit_id] => unit.id,
+           Sequel[:items][:status] => 'published').map { |h| h[:id] }
+  issues = _getIssues(publishedIssues)
   if unit_attrs['issue_rule'] and unit_attrs['issue_rule'] == 'secondMostRecent' and volume.nil? and issue.nil?
     secondIssue = issues.first(2)[1]
     volume = secondIssue ? secondIssue[:volume] : nil
@@ -425,7 +438,7 @@ def getJournalIssueData(unit, unit_attrs, volume=nil, issue=nil)
   end
   return {
     display: display,
-    issue: getIssue(unit.id, display, volume, issue),
+    issue: _getIssue(unit.id, publishedIssues, volume, issue, display),
     issues: issues,
     doaj: unit_attrs['doaj'],
     issn: unit_attrs['issn'],
@@ -447,14 +460,16 @@ def getIssueNumberingTitle(unit_id, volume, issue)
   return attrs['numbering'], attrs['title']
 end
 
-def getIssue(unit_id, display, volume=nil, issue=nil)
+def _getIssue(unit_id, publishedIssues, volume=nil, issue=nil, display)
   if volume.nil?  # Landing page (most recent journal) has no vol/issue entered in URL path
-    i = Issue.where(:unit_id => unit_id).order(Sequel.desc(:published)).order_append(Sequel.desc(Sequel[:issue].cast_numeric)).first
+    i = DB.fetch(_queryIssues(publishedIssues))
+    i = i.nil? ? nil : i.first
+    return nil if i.nil?
   else
     i = Issue.first(:unit_id => unit_id, :volume => volume, :issue => issue)
+    return nil if i.nil?
+    i = i.values
   end
-  return nil if i.nil?
-  i = i.values
   if i[:attrs]
     attrs = JSON.parse(i[:attrs])
     attrs['numbering']   and i[:numbering] = attrs['numbering']
@@ -535,6 +550,7 @@ def getUnitProfile(unit, attrs)
     status: unit.status
   }
   
+  attrs['directSubmit'] and profile[:directSubmit] = attrs['directSubmit']
   if unit.type == 'journal'
     profile[:doaj] = attrs['doaj']
     profile[:issn] = attrs['issn']
@@ -542,7 +558,6 @@ def getUnitProfile(unit, attrs)
     profile[:altmetrics_ok] = attrs['altmetrics_ok']
     profile[:magazine_layout] = attrs['magazine_layout']
     profile[:issue_rule] = attrs['issue_rule']
-    profile[:directSubmit] = attrs['directSubmit']
   end
   if unit.type == 'oru'
     profile[:seriesSelector] = true
@@ -1070,7 +1085,6 @@ put "/api/unit/:unitID/moveUnit" do |unitID|
 
   # Get the max ordering of the new parent's existing children.
   lastOrder = UnitHier.where(ancestor_unit: targetUnitID, is_direct: true).max(:ordering)
-  puts "last order of new parent: #{lastOrder}"
 
   DB.transaction {
     # Change the primary direct link
@@ -1115,6 +1129,48 @@ put "/api/unit/:unitID/deleteUnit" do |unitID|
   }
   refreshUnitsHash
   return {status: "ok", nextURL: "/uc/#{$hierByUnit[unitID][0].ancestor_unit}"}.to_json
+end
+
+###################################################################################################
+# Copy a unit with its pages, widgets, etc.
+put "/api/unit/:unitID/copyUnit" do |oldUnitID|
+  # Only super-users allowed to copy units
+  getUserPermissions(params[:username], params[:token], oldUnitID)[:super] or halt(401)
+
+  # Sanity checks
+  $unitsHash[oldUnitID].type == 'root' and jsonHalt(400, "Cannot copy the root-level unit.")
+  targetParentID = params[:targetParentID]
+  targetParent = $unitsHash[targetParentID] or jsonHalt(400, "Unrecognized target parent unit")
+  targetParent.type =~ /series|journal/ and jsonHalt(400, "Target parent unit cannot be a series or journal")
+
+  newUnitID = params[:newUnitID]
+  newUnitID =~ /^[a-z0-9_]+$/ or jsonHalt(400, "Invalid new unit ID")
+  Unit.where(id: newUnitID).count == 0 or jsonHalt(400, "Duplicate unit name")
+
+  oldUnit = Unit[oldUnitID] or jsonHalt(400, "Can't find old unit")
+
+  # Get the max ordering of the new parent's existing children.
+  lastOrder = UnitHier.where(ancestor_unit: targetParentID, is_direct: true).max(:ordering)
+
+  DB.transaction {
+    Unit.create(oldUnit.values.merge({id: newUnitID}))
+
+    UnitHier.create(unit_id: newUnitID, ancestor_unit: targetParentID, ordering: (lastOrder||0)+1, is_direct: true)
+    rebuildIndirectLinks(newUnitID)
+
+    Page.where(unit_id: oldUnitID).each { |page|
+      props = page.values.merge({unit_id: newUnitID})
+      props.delete(:id)
+      Page.create(props)
+    }
+    Widget.where(unit_id: oldUnitID).each { |widget|
+      props = widget.values.merge({unit_id: newUnitID})
+      props.delete(:id)
+      Widget.create(props)
+    }
+  }
+  refreshUnitsHash
+  return {status: "ok", nextURL: "/uc/#{newUnitID}"}.to_json
 end
 
 ###################################################################################################

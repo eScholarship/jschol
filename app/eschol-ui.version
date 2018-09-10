@@ -824,3 +824,26 @@ Lots of stuff modified.
   app/fonts/SourceSansPro-Regular.ttf.woff
   app/fonts/SourceSansPro-Regular.ttf.woff2
 
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> 508a889f0117f50a639d5437e7ea2849ea874618, 2018-08-09        <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+  modified:   app/jsx/components/TabMetricsComp.jsx
+  modified:   app/scss/_tabcontent.scss
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> 93adc2e79f3ebe1d3661aa53241e3090d071126f, 2018-08-14        <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+  added: app/jsx/components/TabMetaComp.jsx
+  modified: app/jsx/components/TabsComp.jsx
+  modified: app/scss/_datatable.scss
+  modified: app/scss/_tabs.scss
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> 5f21621bddd175e686afcdcee58e1485e9f074a3, 2018-08-15        <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+  modified: app/scss/_pubpreview.scss
+
+

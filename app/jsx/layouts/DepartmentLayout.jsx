@@ -94,7 +94,7 @@ class DepartmentLayout extends React.Component {
               <div className="c-itemactions">
                 <ShareComp type="unit" id={this.props.unit.id} />
               </div>
-            {(seriesList.length == 0 && monographSeriesList.length ==  0 && data.journals.length == 0 && data.related_orus.length == 0) ?
+            {this.props.unit.extent.count == 0 ?
               <div className="c-unitseries__publications1">There are currently no publications in this collection.</div>
              :
               <div className="c-unitseries__publications1">There are {this.props.unit.extent.count} publications in this collection, published between {this.props.unit.extent.pub_year.start} and {this.props.unit.extent.pub_year.end}.</div>

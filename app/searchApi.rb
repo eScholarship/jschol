@@ -411,22 +411,24 @@ def extent(id, type)
       }),
     size: 0
   }
+  filter = ""
   if (type == 'oru') then
-    aws_params[:filter_query] = "(term field=departments '#{id}')"
+    filter = "(term field=departments '#{id}')"
   elsif (type == 'journal') then
-    aws_params[:filter_query] = "(term field=journals '#{id}')"
+    filter = "(term field=journals '#{id}')"
   elsif (type == 'campus') then
-    aws_params[:filter_query] = "(term field=campuses '#{id}')"
+    filter = "(term field=campuses '#{id}')"
   elsif (type == 'series' || type == 'monograph_series' || type == 'seminar_series') then
-    aws_params[:filter_query] = "(term field=series '#{id}')"
+    filter = "(term field=series '#{id}')"
   elsif (type == 'root') then
     # no extent for now
     return {}
   else
     raise("Not a valid unit type.")
   end
+  aws_params[:filter_query] = "(and (term field=is_info '0')" + filter + ")"
   response = normalizeResponse($csClient.search(return: '_no_fields', **aws_params))
   pb = response['facets']['pub_year']['buckets']
   pub_years = pb.empty? ? [{"value"=>"0"}, {"value"=>"0"}] : pb.sort_by { |bucket| Integer(bucket['value']) }
-  return {:count => response['hits']['found'], :pub_year => {:start => pub_years[0]['value'], :end => pub_years[-1]['value']}}
+  return {:count => response['hits']['found'], :pub_year => {:start => pub_years[0]['value'], :end => pub_years[-1]['value']}  }
 end

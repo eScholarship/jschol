@@ -45,7 +45,7 @@ class SortComp extends React.Component {
           :
             <option value="rel">Relevance</option>
           }
-            <option value="pop">Most Popular</option>
+            {/* <option value="pop">Most Popular</option> */}
             <option value="a-title">A-Z By Title</option>
             <option value="z-title">Z-A By Title</option>
             <option value="a-author">A-Z By Author</option>

@@ -39,6 +39,7 @@ class TabAuthorComp extends React.Component {
       'pmcid':        "PubMed Central ID: ",
       'proquest':     "ProQuest ID: ",
       'repec':        "RePEc ID: ",
+      'report':       "Report #: ",
       'default':      ""
     }
     return v[type] ? v[type] : v["default"]
