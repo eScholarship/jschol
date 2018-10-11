@@ -329,7 +329,7 @@ class TabAuthorComp extends React.Component {
 
           {p.published &&
             [<dt key="0"><strong>Publication Date:</strong></dt>,
-             <dd key="1">{p.published}</dd>]
+             <dd key="1">{p.published.match(/^\d\d\d\d-01-01$/) ? p.published.match(/\d{4}/)[0] : p.published}</dd>]
           }
  
           {unit_type &&
