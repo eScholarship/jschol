@@ -6,14 +6,6 @@
   @include bp(screen1) {
     display: flex;
     position: relative;
-
-    // Detecting 'display: contents' alone is causing a false positive in Safari, so adding 'display: flow-root':
-    @supports (display: contents) and (display: flow-root) {
-      display: grid;
-      grid-template-columns: auto 1fr;
-      grid-template-rows: auto 1fr auto;
-    }
-
   }
 
   @include u-heading() {
@@ -23,20 +15,10 @@
     @include bp(screen1) {
       position: absolute;
       right: 0;
-      left: 0;
+      left: $thumbnail-width + $spacing-md;
       text-overflow: ellipsis;
       white-space: nowrap;
       overflow: hidden;
-      grid-column: 2;
-      grid-row: 1;
-
-      @supports (display: contents) and (display: flow-root) {
-        position: static;
-        margin-bottom: $spacing-sm;
-        white-space: normal;
-        overflow: visible;
-      }
-
     }
 
   }
@@ -47,45 +29,29 @@
   margin: 0 0 $spacing-sm;
 
   @include bp(screen1) {
-    display: contents;
     flex: 0 0 auto;
-    margin: $spacing-lg 0 0;
   }
 
   img {
     width: $thumbnail-width;
     height: auto;
-    margin-bottom: $spacing-base;
+    margin: 0 $spacing-base $spacing-base 0;
     border: 1px solid $color-light-gray;
     box-shadow: $box-shadow2;
 
     @include bp(screen1) {
       margin: 0 $spacing-md 0 0;
-      grid-row: 1 / 4;
     }
 
   }
 
   figcaption {
-    
     @include bp(screen1) {
       position: absolute;
       right: 0;
       bottom: 0;
-      left: $thumbnail-width;
-      margin-left: $spacing-md;
+      left: $thumbnail-width + $spacing-md;
       font-size: 0.9em;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      overflow: hidden;
-      grid-column: 2;
-      grid-row: 3;
-
-      @supports (display: contents) and (display: flow-root) {
-        left: 0;
-        margin-left: 0;
-      }
-
     }
 
   }
@@ -97,13 +63,25 @@
   @include bp(screen1) {
     margin-top: $spacing-lg;
     padding-bottom: $spacing-md;
-    grid-column: 2;
-    grid-row: 2;
+  }
 
-    @supports (display: contents) and (display: flow-root) {
-      margin: 0;
-    }
+}
 
+.c-issue__caption-truncate {
+
+  @include bp(screen1) {
+    max-height: 1.9em; // truncate to 1 line per jquery.dotdotdot
+  }
+
+}
+
+// Button to show untruncated text:
+.c-issue__caption-truncate-more {
+  @extend %o-button__7;
+  display: none;
+
+  @include bp(screen1) {
+    display: contents;
   }
 
 }

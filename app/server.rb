@@ -330,6 +330,14 @@ get "/check" do
 end
 
 ###################################################################################################
+get %r{/uc/([^/]+)/rss} do |unitID|
+  unit = Unit[unitID] or halt(404, "Unit not found")
+  response = HTTParty.get("http://#{$host}:18900/rss/unit/#{unitID}")
+  response.headers['content-type'] and content_type response.headers['content-type']
+  [response.code, response.body]
+end
+
+###################################################################################################
 def proxyFromURL(url, overrideHostname = nil)
   fetcher = HttpFetcher.new(url, overrideHostname)
   if fetcher.length > 0
@@ -734,7 +742,7 @@ end
 # Deposit Wizard get series for an ORU 
 get "/api/wizardlySeries/:unitID" do |unitID|
   children = $hierByAncestor[unitID]
-  os = children ? children.select { |u| u.unit.type == 'series' }.map {|u|
+  os = children ? children.select { |u| u.unit.type.include?('series') }.map {|u|
    unitAttrs = JSON.parse(u.unit.attrs)
    {'id': u.unit_id, 'name': u.unit.name, 'directSubmit': unitAttrs['directSubmit']}
   } : []

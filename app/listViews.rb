@@ -79,7 +79,7 @@ def itemResultData(itemIds, itemData, fields=[])
             if itemIssue.volume == "0" and itemIssue.issue == "0"
               # Don't tack on vol/iss in this case
             elsif !numbering
-              displayName = ", " + vol + ", " + iss 
+              displayName += ", " + vol + ", " + iss 
             elsif numbering == "volume_only"
               displayName += ", " + vol
             else

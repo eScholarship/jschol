@@ -210,7 +210,7 @@ def getUnitHeader(unit, pageName=nil, journalIssue=nil, attrs=nil)
     :social => {
       :facebook => attrs['facebook'],
       :twitter => attrs['twitter'],
-      :rss => attrs['rss']
+      :rss => "/uc/#{unit.id}/rss"
     },
     :breadcrumb => (unit.type!='campus') ?
       traverseHierarchyUp([{name: unit.name, id: unit.id, url: unit.type == "root" ? "/" : "/uc/#{unit.id}"}]) +
@@ -276,14 +276,14 @@ end
 #   and related ORUs, which include children ORUs, sibling ORUs, and parent ORU
 def getORULandingPageData(id)
   children = $hierByAncestor[id]
-  children and children.select! { |u| u.unit.status == 'active' }
+  children and children.select! { |u| u.unit.status != 'hidden' }
   oru_children = children ? children.select { |u| u.unit.type == 'oru' }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : []
   oru_siblings, oru_ancestor = [], []
   oru_ancestor_id = $oruAncestors[id]
   if oru_ancestor_id
     oru_ancestor = [{unit_id: oru_ancestor_id, name: $unitsHash[oru_ancestor_id].name}]
     siblings = $hierByAncestor[oru_ancestor_id]
-    siblings and siblings.select! { |u| u.unit.status == 'active' }
+    siblings and siblings.select! { |u| u.unit.status != 'hidden' }
     oru_siblings = siblings ? siblings.select { |u| u.unit.type == 'oru' and u.unit_id != id }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : []
   end
   related_orus = oru_children + oru_siblings + oru_ancestor
@@ -400,9 +400,13 @@ def getSeriesLandingPageData(unit, q)
   return response
 end
 
+def _queryIssues(publishedIssues)
+  return Sequel::SQL::PlaceholderLiteralString.new('SELECT * FROM issues WHERE ((id in ?) AND ((volume != "0") OR (issue != "0"))) ORDER BY CAST(volume AS SIGNED) DESC, CAST(issue AS Decimal(6,2)) DESC', [publishedIssues])
+end
+
 # Takes array of issue IDs
 def _getIssues(publishedIssues)
-  query = Sequel::SQL::PlaceholderLiteralString.new('SELECT * FROM issues WHERE ((id in ?) AND ((volume != "0") OR (issue != "0"))) ORDER BY CAST(volume AS SIGNED) DESC, CAST(issue AS Decimal(6,2)) DESC', [publishedIssues])
+  query = _queryIssues(publishedIssues)
   r = DB.fetch(query).to_hash(:id).map{|id, issue|
     h = issue.to_hash
     h[:attrs] and h[:attrs] = JSON.parse(h[:attrs])
@@ -458,12 +462,14 @@ end
 
 def _getIssue(unit_id, publishedIssues, volume=nil, issue=nil, display)
   if volume.nil?  # Landing page (most recent journal) has no vol/issue entered in URL path
-    i = Issue.where(id: publishedIssues).order(Sequel.desc(:published)).order_append(Sequel.desc(Sequel[:issue].cast_numeric)).first
+    i = DB.fetch(_queryIssues(publishedIssues))
+    i = i.nil? ? nil : i.first
+    return nil if i.nil?
   else
     i = Issue.first(:unit_id => unit_id, :volume => volume, :issue => issue)
+    return nil if i.nil?
+    i = i.values
   end
-  return nil if i.nil?
-  i = i.values
   if i[:attrs]
     attrs = JSON.parse(i[:attrs])
     attrs['numbering']   and i[:numbering] = attrs['numbering']
@@ -544,6 +550,7 @@ def getUnitProfile(unit, attrs)
     status: unit.status
   }
   
+  attrs['directSubmit'] and profile[:directSubmit] = attrs['directSubmit']
   if unit.type == 'journal'
     profile[:doaj] = attrs['doaj']
     profile[:issn] = attrs['issn']
@@ -551,7 +558,6 @@ def getUnitProfile(unit, attrs)
     profile[:altmetrics_ok] = attrs['altmetrics_ok']
     profile[:magazine_layout] = attrs['magazine_layout']
     profile[:issue_rule] = attrs['issue_rule']
-    profile[:directSubmit] = attrs['directSubmit']
   end
   if unit.type == 'oru'
     profile[:seriesSelector] = true
