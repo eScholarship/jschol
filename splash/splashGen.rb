@@ -171,7 +171,8 @@ def splashInstrucs(itemID, item, attrs)
   end
 
   # Publication date
-  instruc << { h3: { text: "Publication Date" } } << { paragraph: { text: item.published } }
+  pub_date = item.published.to_s =~ /^(\d\d\d\d)-01-01$/ ? $1 : item.published
+  instruc << { h3: { text: "Publication Date" } } << { paragraph: { text: pub_date } }
 
   # DOI
   attrs["doi"] and instruc << { h3: { text: "DOI" } } << { paragraph: { text: attrs["doi"] } }
