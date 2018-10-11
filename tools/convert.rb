@@ -117,7 +117,7 @@ end
 
 # CloudSearch API client
 $csClient = Aws::CloudSearchDomain::Client.new(credentials: Aws::InstanceProfileCredentials.new,
-  endpoint: ENV['CLOUDSEARCH_DOC_ENDPOINT'])
+  endpoint: ENV['CLOUDSEARCH_DOC_ENDPOINT'] || raise("missing env CLOUDSEARCH_DOC_ENDPOINT"))
 
 # S3 API client
 # Note: we use InstanceProfileCredentials here to avoid picking up ancient
@@ -932,7 +932,7 @@ def parseUCIngest(itemID, inMeta, fileType)
   contentType = contentFile && contentFile.at("./mimeType") && contentFile.at("./mimeType").text
 
   # Record name of native file, if any
-  if contentFile.name == "native" && contentFile[:path]
+  if contentFile && contentFile.name == "native" && contentFile[:path]
     nativePath = arkToFile(itemID, contentFile[:path].sub(/.*\//, 'content/'))
     if File.exist?(nativePath)
       attrs[:native_file] = { name: contentFile[:path].sub(/.*\//, ''),
