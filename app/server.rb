@@ -361,7 +361,9 @@ get %r{/graphql} do
     redirect(to('/graphql/iql'))
   else
     response = HTTParty.get("http://#{$host}:18900/graphql?#{URI.escape(request.query_string)}")
-    response.headers['content-type'] and content_type response.headers['content-type']
+    %w{Content-Type Access-Control-Allow-Origin}.each { |h|
+      response.headers[h] and headers h => response.headers[h]
+    }
     [response.code, response.body]
   end
 end
@@ -375,8 +377,16 @@ end
 post %r{/graphql(.*)} do
   response = HTTParty.post("http://#{$host}:18900/graphql#{params['captures'][0]}",
                            body: request.body.read)
-  response.headers['content-type'] and content_type response.headers['content-type']
+  %w{Content-Type Access-Control-Allow-Origin}.each { |h|
+    response.headers[h] and headers h => response.headers[h]
+  }
   [response.code, response.body]
+end
+
+###################################################################################################
+options %r{/graphql(.*)} do
+  headers "Access-Control-Allow-Origin" => "*"
+  200
 end
 
 ###################################################################################################
