@@ -385,7 +385,9 @@ end
 
 ###################################################################################################
 options %r{/graphql(.*)} do
-  headers "Access-Control-Allow-Origin" => "*"
+  headers "Access-Control-Allow-Origin" => "*",
+          "Access-Control-Allow-Headers" => "Accept, Content-Type",
+          "Access-Control-Allow-Methods" => "GET, POST, OPTIONS"
   200
 end
 
