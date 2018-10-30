@@ -78,7 +78,7 @@
 // Button to show untruncated text:
 .c-issue__caption-truncate-more {
   @extend %o-button__7;
-  display: none;
+  // "display: none"  is unnecessary, as truncation doesn't get triggered at this screen size.
 
   @include bp(screen1) {
     display: contents;
