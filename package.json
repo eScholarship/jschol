@@ -70,7 +70,7 @@
     "flickity-imagesloaded": "^2.0.0",
     "intersection-observer": "^0.4.3",
     "jquery": "^3.2.1",
-    "jquery.dotdotdot": "amywieliczka/jQuery.dotdotdot",
+    "jquery.dotdotdot": "amywieliczka/jQuery.dotdotdot#4f7d03a442ceca0b75a2fb641a065e47297d5666",
     "lodash": "^4.17.4",
     "lozad": "^1.0.9",
     "prop-types": "^15.5.10",

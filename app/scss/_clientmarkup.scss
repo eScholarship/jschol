@@ -27,7 +27,16 @@
   // ***** Links ***** //
 
   a {
+    // ToDo: This is similar to c-pubinfo__link...
+    //  It might make sense to create an object with this wrapping property,
+    //  but maybe something to change once we have a regession testing suite.
     @extend %o-textlink__secondary;
+    @include u-one-line-truncation(active);
+
+    @include bp(screen1) {
+      @include u-one-line-truncation(inactive);
+      @include u-overflow-wrap();
+    }
   }
 
   // ***** Lists ***** //

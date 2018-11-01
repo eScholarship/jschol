@@ -5563,7 +5563,7 @@ jpegtran-bin@^3.0.0:
     bin-wrapper "^3.0.0"
     logalot "^2.0.0"
 
-jquery.dotdotdot@amywieliczka/jQuery.dotdotdot:
+jquery.dotdotdot@amywieliczka/jQuery.dotdotdot#4f7d03a442ceca0b75a2fb641a065e47297d5666:
   version "1.8.3"
   resolved "https://codeload.github.com/amywieliczka/jQuery.dotdotdot/tar.gz/4f7d03a442ceca0b75a2fb641a065e47297d5666"
 
