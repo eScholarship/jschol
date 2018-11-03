@@ -47,6 +47,18 @@ class EditableSidebarContentComp extends React.Component
               onChange={ newText => this.setData({ attrs: { html: newText }}) }/>
           </div>
         }
+        { (data.kind == "TwitterFeed") &&
+          <div>
+            <label className="c-editable-page__label" htmlFor="title">Title</label>
+            <input className="c-editable-page__input" id="title" type="text" defaultValue={data.attrs.title}
+                   onChange={ event => this.setData({ attrs: { title: event.target.value } }) }/>
+
+            <label className="c-editable-page__label" htmlFor="handle">Twitter Handle</label>
+            <p>The portion of your Twitter page's URL that appears after: http://www.twitter.com/_____</p>
+            <input className="c-editable-page__input" id="handle" type="text" defaultValue={data.attrs.handle}
+                   onChange={ event => this.setData({ attrs: { handle: event.target.value } }) }/>
+          </div>
+        }
 
         <p>
           <button className="c-editable-page__button" onClick={this.onSave} disabled={dataIsSame}>Save</button>
@@ -73,7 +85,7 @@ export default class UnitSidebarConfigLayout extends React.Component
 
   render() {
     let p = this.props
-    let title = p.data.attrs.title ? p.data.attrs.title : p.data.kind.replace(/([a-z])([A-Z][a-z])/g, "$1 $2")
+    let title = (p.data.kind == "Text" && p.data.attrs.title) ? p.data.attrs.title : p.data.kind.replace(/([a-z])([A-Z][a-z])/g, "$1 $2")
     let kindStr = p.data.kind == "Text" ? "text widget" : "built-in widget"
     return (
       <div className="c-columns">
