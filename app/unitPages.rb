@@ -849,12 +849,14 @@ post "/api/unit/:unitID/sidebar" do |unitID|
 
   # Validate the widget kind
   widgetKind = params[:widgetKind]
-  ['RecentArticles', 'Text', 'Tweets'].include?(widgetKind) or jsonHalt(400, "Invalid widget kind")
+  ['RecentArticles', 'Text', 'TwitterFeed'].include?(widgetKind) or jsonHalt(400, "Invalid widget kind")
 
   # Initial attributes are kind-specific
   attrs = case widgetKind
   when "Text"
     { title: "New #{widgetKind}", html: "" }
+  when "TwitterFeed"
+    { title: "Follow Us On Twitter", twitter_handle: "" }
   else
     {}
   end
@@ -1263,6 +1265,7 @@ put "/api/unit/:unitID/sidebar/:widgetID" do |unitID, widgetID|
     attrs = {}
     inAttrs[:title] and attrs[:title] = sanitizeHTML(inAttrs[:title])
     inAttrs[:html]  and attrs[:html]  = sanitizeHTML(inAttrs[:html])
+    inAttrs[:twitter_handle]  and attrs[:twitter_handle]  = inAttrs[:twitter_handle]
     widget.attrs = attrs.to_json
     widget.save
   }
