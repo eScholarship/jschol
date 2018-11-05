@@ -1265,7 +1265,7 @@ put "/api/unit/:unitID/sidebar/:widgetID" do |unitID, widgetID|
     attrs = {}
     inAttrs[:title] and attrs[:title] = sanitizeHTML(inAttrs[:title])
     inAttrs[:html]  and attrs[:html]  = sanitizeHTML(inAttrs[:html])
-    inAttrs[:twitter_handle]  and attrs[:twitter_handle]  = sanitizeHTML(inAttrs[:twitter_handle])
+    inAttrs[:twitter_handle]  and attrs[:twitter_handle]  = inAttrs[:twitter_handle]
     widget.attrs = attrs.to_json
     widget.save
   }
