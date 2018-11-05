@@ -7,7 +7,6 @@ import { Timeline } from 'react-twitter-widgets'
 class SocialFeedComp extends React.Component {
 
   render() {
-    console.log(this.props)
     return (
       <div className="c-socialfeed">
         <Timeline
@@ -20,7 +19,7 @@ class SocialFeedComp extends React.Component {
             height: '700'
           }}
         />
-     </div>
+      </div>
     )
   }
 }

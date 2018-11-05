@@ -53,10 +53,10 @@ class EditableSidebarContentComp extends React.Component
             <input className="c-editable-page__input" id="title" type="text" defaultValue={data.attrs.title}
                    onChange={ event => this.setData({ attrs: { title: event.target.value } }) }/>
 
-            <label className="c-editable-page__label" htmlFor="handle">Twitter Handle</label>
+            <label className="c-editable-page__label" htmlFor="twitter_handle">Twitter Handle</label>
             <p>The portion of your Twitter page's URL that appears after: http://www.twitter.com/_____</p>
-            <input className="c-editable-page__input" id="handle" type="text" defaultValue={data.attrs.handle}
-                   onChange={ event => this.setData({ attrs: { handle: event.target.value } }) }/>
+            <input className="c-editable-page__input" id="twitter_handle" type="text" defaultValue={data.attrs.twitter_handle}
+                   onChange={ event => this.setData({ attrs: { twitter_handle: event.target.value } }) }/>
           </div>
         }
 

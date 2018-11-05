@@ -856,7 +856,7 @@ post "/api/unit/:unitID/sidebar" do |unitID|
   when "Text"
     { title: "New #{widgetKind}", html: "" }
   when "TwitterFeed"
-    { title: "Follow Us On Twitter", handle: "" }
+    { title: "Follow Us On Twitter", twitter_handle: "" }
   else
     {}
   end
@@ -1265,7 +1265,7 @@ put "/api/unit/:unitID/sidebar/:widgetID" do |unitID, widgetID|
     attrs = {}
     inAttrs[:title] and attrs[:title] = sanitizeHTML(inAttrs[:title])
     inAttrs[:html]  and attrs[:html]  = sanitizeHTML(inAttrs[:html])
-    inAttrs[:handle]  and attrs[:handle]  = sanitizeHTML(inAttrs[:handle])  # Twitter username
+    inAttrs[:twitter_handle]  and attrs[:twitter_handle]  = sanitizeHTML(inAttrs[:twitter_handle])
     widget.attrs = attrs.to_json
     widget.save
   }
