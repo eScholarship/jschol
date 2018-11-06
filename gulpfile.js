@@ -157,15 +157,15 @@ gulp.task('rsync', function() {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Watch sass, html, and js and reload browser if any changes
 gulp.task('watch', function() {
-  gulp.watch('app/scss/*.scss', {interval:500}, ['sass']);
-  gulp.watch(['app/*.rb', 'util/*.rb'], {interval:500}, ['restart-sinatra']);
-  gulp.watch(['app/isomorphic.jsx'], {interval:800}, ['restart-express']);
+  gulp.watch('app/scss/*.scss', {interval:500}, gulp.parallel(['sass']));
+  gulp.watch(['app/*.rb', 'util/*.rb'], {interval:500}, gulp.parallel(['restart-sinatra']));
+  gulp.watch(['app/isomorphic.jsx'], {interval:800}, gulp.parallel(['restart-express']));
 
   if (fs.existsSync('/outer_jschol/app/jsx/App.jsx'))
     gulp.watch(['/outer_jschol/app/scss/*.scss',
                 '/outer_jschol/app/jsx/**/*.jsx',
                 '/outer_jschol/app/*.rb', '/outer_jschol/util/*.rb'],
-               {interval:2000}, ['rsync']);
+               {interval:2000}, gulp.parallel(['rsync']));
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -180,8 +180,8 @@ gulp.task('maybe-socks', function() {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Build everything in order, then start the servers and watch for incremental changes.
 if (productionMode) {
-  gulp.task('default',  ['watch:src', 'watch', 'start-sinatra', 'sass'])
+  gulp.task('default',  gulp.parallel(['watch:src', 'watch', 'start-sinatra', 'sass']))
 } else {
-  gulp.task('default', ['watch:src', 'watch', 'start-sinatra', 'start-express', 
-                        'maybe-socks', 'livereload', 'sass'])
+  gulp.task('default', gulp.parallel(['watch:src', 'watch', 'start-sinatra', 'start-express',
+                        'maybe-socks', 'livereload', 'sass']))
 }
