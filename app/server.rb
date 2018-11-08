@@ -361,7 +361,9 @@ get %r{/graphql} do
     redirect(to('/graphql/iql'))
   else
     response = HTTParty.get("http://#{$host}:18900/graphql?#{URI.escape(request.query_string)}")
-    response.headers['content-type'] and content_type response.headers['content-type']
+    %w{Content-Type Access-Control-Allow-Origin}.each { |h|
+      response.headers[h] and headers h => response.headers[h]
+    }
     [response.code, response.body]
   end
 end
@@ -375,8 +377,18 @@ end
 post %r{/graphql(.*)} do
   response = HTTParty.post("http://#{$host}:18900/graphql#{params['captures'][0]}",
                            body: request.body.read)
-  response.headers['content-type'] and content_type response.headers['content-type']
+  %w{Content-Type Access-Control-Allow-Origin}.each { |h|
+    response.headers[h] and headers h => response.headers[h]
+  }
   [response.code, response.body]
+end
+
+###################################################################################################
+options %r{/graphql(.*)} do
+  headers "Access-Control-Allow-Origin" => "*",
+          "Access-Control-Allow-Headers" => "Accept, Content-Type",
+          "Access-Control-Allow-Methods" => "GET, POST, OPTIONS"
+  200
 end
 
 ###################################################################################################
@@ -999,9 +1011,6 @@ get "/api/item/:shortArk" do |shortArk|
     advisors = ItemContrib.filter(:item_id => id, :role => 'advisor').order(:ordering).
                  map(:attrs).collect{ |h| JSON.parse(h)}
     citation = getCitation(unit, shortArk, authors, attrs)
-    pubDate = item.published
-    # Unfortunately with ProQuest ETDs, only the year is actually significant
-    (item.genre == "dissertation" && pubDate) and pubDate = pubDate.to_s.sub(/-01-01$/, '')
     begin
       body = {
         # ToDo: Normalize author attributes across all components (i.e. 'family' vs. 'lname')
@@ -1026,7 +1035,7 @@ get "/api/item/:shortArk" do |shortArk|
         :oa_policy => item.oa_policy,                # Strictly used for admin reference
         :ordering_in_sect => item.ordering_in_sect,  # Strictly used for admin reference
         :pdf_url => pdf_url,
-        :published => pubDate,
+        :published => item.published.to_s =~ /^(\d\d\d\d)-01-01$/ ? $1 : item.published,
         :rights => item.rights,
         :sidebar => unit ? getItemRelatedItems(unit, id) : nil,
         :source => item.source,                      # Strictly used for admin reference

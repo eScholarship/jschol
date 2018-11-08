@@ -31,6 +31,12 @@ export default class MetaTagsComp extends React.Component
         <title>{finalTitle}</title>
         <meta id="meta-title" property="citation_title" content={finalTitle} />
         <meta id="og-title" property="og:title" content={finalTitle} />
+
+        {/* Twitter specific config https://developer.twitter.com/en/docs/twitter-for-websites/webpage-properties/overview */}
+        <meta name="twitter:widgets:autoload" content="off" />
+        <meta name="twitter:dnt" content="on" />
+        <meta name="twitter:widgets:csp" content="on" />
+
         { p.abstract && <meta id="meta-abstract" name="citation_abstract" content={abstract} /> }
         {descrip_on && <meta id="meta-description" name="description" content={descrip} /> }
         {descrip_on && <meta id="og-description" name="og:description" content={descrip} /> }

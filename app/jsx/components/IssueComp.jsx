@@ -30,7 +30,7 @@ class IssueComp extends React.Component {
          after: '.c-issue__caption-truncate-more',
          callback: () => $(this.caption).find(".c-issue__caption-truncate-more").click(this.openAndAdjust)
       });
-      setTimeout(() => $(this.caption).trigger('update'), 0) // removes 'more' link upon page load if less than truncation threshold
+      setTimeout(() => $(this.caption).trigger('update'), 0) // removes 'more' link upon page load if less than truncation threshold (max-height), or if no max-height is applied (mobile)
     }
     if (!(this.thumbnail)) { this.handleMissingThumbnail() }
   }
