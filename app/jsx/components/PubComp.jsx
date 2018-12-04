@@ -1,6 +1,7 @@
 // ##### Publication Component ##### //
 
 import React from 'react'
+import Utils from '../utils.jsx'
 import PropTypes from 'prop-types'
 import { Link } from 'react-router'
 import TruncationObj from '../objects/TruncationObj.jsx'
@@ -23,6 +24,7 @@ class PubComp extends React.Component {
       title: PropTypes.string,
       genre: PropTypes.string,
       peerReviewed: PropTypes.bool,
+      author_hide: PropTypes.bool,
       authors: PropTypes.array,
       supp_files: PropTypes.array,
       pub_year: PropTypes.number,
@@ -35,12 +37,14 @@ class PubComp extends React.Component {
     let pr = this.props.result
     let itemLink = "/uc/item/"+pr.id.replace(/^qt/, "")
     let authorList
-    if (pr.authors) {
+    if (!pr.author_hide && pr.authors) {
       // Joel's CSS handles inserting semicolons here.
       authorList = pr.authors.map(function(author, i, a) {
-        return (<li key={i}><a href={"/search/?q="+author.name}>{author.name}</a></li>)
+        return (<li key={i}><a href={"/search/?q="+encodeURIComponent("author:"+author.name)}>
+          {author.name}</a></li>)
       })
     }
+    let totalSuppFiles = Utils.sumValueTotals(pr.supp_files, "count")
     return (
       <div className="c-pub">
         <TruncationObj element={this.props.h} className="c-pub__heading">
@@ -61,10 +65,10 @@ class PubComp extends React.Component {
       }
       {pr.abstract && 
         <TruncationObj element="div" className="c-pub__abstract">
-          <ArbitraryHTMLComp html={pr.abstract} h1Level={3}/>
+          <ArbitraryHTMLComp html={pr.abstract} p_wrap={true} h1Level={3}/>
         </TruncationObj>
       }
-      {pr.supp_files && 
+      {totalSuppFiles > 0 && 
         <MediaListComp supp_files={pr.supp_files} />
       }
       </div>

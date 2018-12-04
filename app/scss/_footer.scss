@@ -1,85 +1,83 @@
 // ##### Footer Component ##### //
 
+$footer-logo-width: 200px;
+
 .c-footer {
-  @extend %page-bleed;
+  @extend %u-page-bleed;
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: $spacing-md;
   background-color: $color-light-black;
 
-  @supports (display: grid) {
-    display: grid;
-    justify-items: center;
-  }
-
   @include bp(screen2) {
-    position: relative;
-    align-items: flex-start;
-
-    @supports (display: grid) {
-      grid-template-columns: auto 1fr;
-      justify-items: stretch;
-    }
-
+    display: grid;
+    grid-template-columns: 1fr 1fr;
   }
 
 }
 
 .c-footer__nav {
-  columns: 2;
-  column-gap: $spacing-lg;
+  margin-bottom: $spacing-sm;
 
-  @include bp(screen2) {
-    position: absolute;
-    top: 0;
-    right: 0;
-    left: 55%;
-    margin: $spacing-md 0 0;
+  ul {
+    @extend %u-reset-list-styles;
+    columns: 2;
+    column-gap: $spacing-lg;
 
-    @supports (display: grid) {
-      position: static;
-      margin-left: 35%;
-      grid-column: 2;
-      grid-row: 1 / 4;
+    li {
+      margin-bottom: $spacing-md;
+      break-inside: avoid;
+
+      a {
+        display: block;
+        color: $color-white;
+        text-decoration: none;
+      }
+
     }
 
   }
 
-  a {
-    display: block;
-    margin-bottom: 15px;
-    color: $color-white;
-    text-decoration: none;
+  @include bp(screen2) {
+    margin-bottom: 0;
+    grid-column: 2;
+    grid-row: 1 / 4;
   }
 
 }
 
 .c-footer__logo {
-  margin: 0 0 $spacing-sm;
+  margin-bottom: $spacing-md;
   color: $color-white;
 
   img {
-    width: 200px;
+    width: $footer-logo-width;
+    height: 100%; // for IE 11
   }
 
 }
 
 .c-footer__icons {
-  margin-bottom: $spacing-sm;
+  display: flex;
+  justify-content: space-around;
+  width: $footer-logo-width;
+  height: auto;
+  margin-bottom: $spacing-md;
 
   @supports (display: grid) {
-    justify-self: center;
+    justify-content: space-evenly;
+  }
+
+  @include bp(screen2) {
+    justify-self: stretch;
+    grid-column: 1;
   }
 
   a {
 
-    &:not(:first-child) {
-      margin-left: $spacing-lg;
-    }
-
     img {
-      height: $element-height;
+      @extend %u-interactive-element-size;
     }
 
   }
@@ -90,6 +88,10 @@
   color: $color-light-gray;
   font-size: 0.8em;
   line-height: $line-height1;
+
+  @include bp(screen2) {
+    grid-column: 1;
+  }
 
   a {
     color: $color-white;

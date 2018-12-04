@@ -27,7 +27,7 @@ $widget-selector-right-margin: 30px;
 .c-widgetselector__selector {
 
   summary {
-    @extend %interactive-element-size;
+    @extend %u-interactive-element-size;
     position: relative;
 
     &::after {

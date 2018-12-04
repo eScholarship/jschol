@@ -5,12 +5,14 @@
 // Styles that extend .o-button button object styles (like for applying custom button icons) should be placed in _itemactions.scss, as with the c-itemactions__button-[name] examples below:
 
 import React from 'react'
+import PropTypes from 'prop-types'
 import ShareComp from '../components/ShareComp.jsx'
 import NotYetLink from '../components/NotYetLink.jsx'
 import DropdownMenu from '../components/DropdownMenu.jsx'
+import { Link } from 'react-router'
 
 class Downloadable extends React.Component {
-  linkBuyPrint = () => {window.location = this.props.buy_link}
+  linkBuyPrint = () => {window.location = this.props.attrs.buy_link}
 
   render() {
     let p = this.props,
@@ -62,7 +64,7 @@ class Downloadable extends React.Component {
           {/*     <li><NotYetLink element="a">RefWorks</NotYetLink></li>  */}
                 </ul>
               </li>
-          {/* p.supp_files &&
+          {/* p.attrs.supp_files &&
               <li className="o-download__nested-list3">
                 Supplemental Material
                 <ul>
@@ -78,7 +80,7 @@ class Downloadable extends React.Component {
             </ul>
           </DropdownMenu>
         </div>
-      {p.buy_link &&
+      {p.attrs.buy_link &&
         <button onClick={() => {this.linkBuyPrint()}} className="c-itemactions__button-print">Buy in Print</button>
         // ToDo: Hook this up when we get eBook links
         // <button className="c-itemactions__button-buy">Buy e-Book</button>
@@ -89,24 +91,52 @@ class Downloadable extends React.Component {
   }
 }
 
+// For withdrawn, embargoed, or items with no content_type,
+// with one exception: "multimedia item", which is a published item with no content type
+// and no published web location, but with supplemental media.
 class Undownloadable extends React.Component {
   render() {
+    let p = this.props
+    let multimediaItem = p.status=='published' && !p.content_type && !p.attrs.pub_web_loc && p.attrs.supp_files && p.attrs.supp_files.length > 0
+    // ToDo: For multimedia content, add functionality to zip up supp files for download, and put button here (like Downloadable class above) that says 'Download Content' */}
+    let msg = !multimediaItem ?
+                <div className="o-alert1" role="alert">
+                  {p.attrs.withdrawn_message ?
+                    p.attrs.withdrawn_message
+                  : "This item is not available for download from eScholarship"
+                  }
+                </div>
+              :
+                null
     return (
       <div className="c-itemactions">
-        <div className="o-alert1" role="alert">This item is not available for download from eScholarship</div>
-        <ShareComp type="item" id={this.props.id} />
+        {msg}
+      {p.status != "withdrawn" ?
+        <ShareComp type="item" id={p.id} />
+      :
+        <div className="c-share">{/* Keep this div here to allow sister element 'o-alert1' to be aligned properly to the left */}</div>
+      }
       </div>
     )
   }
 }
 
 class ItemActionsComp extends React.Component {
+  static propTypes = {
+    id: PropTypes.string.isRequired,
+    status: PropTypes.string.isRequired,
+    content_type: PropTypes.string,
+    pdf_url: PropTypes.string,
+    attrs: PropTypes.any,
+    download_restricted: PropTypes.bool,
+  }
+
   render() {
     let p = this.props
     return (
       <div>
         {(["withdrawn", "embargoed"].includes(p.status) || !p.content_type) ?
-           <Undownloadable id={p.id} />
+           <Undownloadable {...p} />
          :
            <Downloadable {...p} />}
       </div>

@@ -1,4 +1,0 @@
-# jSchol server configuration
-mainPort: 4001      # usually 4001 for local machines, 18880 for servers
-#isoPort: 4002      # usually 4002, or leave commented out for no ISO mode
-#isoWorkers: 2      # generally # CPUs minus 1 (comment out if not doing ISO)

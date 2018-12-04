@@ -1,0 +1,16 @@
+// ##### Date Range picker ##### //
+
+.c-daterange {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+
+  button {
+    @extend %o-button__8;
+  }
+
+  .o-input__inline {
+    margin-right: $spacing-md;
+  }
+
+}

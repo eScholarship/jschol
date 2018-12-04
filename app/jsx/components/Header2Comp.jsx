@@ -1,7 +1,6 @@
 // ##### Header2 Component ##### //
 // Header2 Component contains the eScholarship logo and the search box
 // Used on all pages except homepage and main search page
-// Props = {type: "campus|journal|oru|series|monograph_series|seminar_series|special", unitID: "<unitID>"}
 // Props used to provide specificity to search box behavior
 
 import React from 'react'
@@ -11,13 +10,16 @@ import Search1Comp from '../components/Search1Comp.jsx'
 import Search2Comp from '../components/Search2Comp.jsx'
 import Breakpoints from '../../js/breakpoints.json'
 import AdminBarComp from '../components/AdminBarComp.jsx'
+import MEDIA_PATH from '../../js/MediaPath.js'
 
 class HeaderComp2 extends React.Component {
   static propTypes = {
     type: PropTypes.string,       // not required, at least on global search page
+          // i.e.: "campus|journal|oru|series|monograph_series|seminar_series|special"
     unitID: PropTypes.string,     // ditto
     searchComp: PropTypes.string, // ditto
-    query: PropTypes.string
+    hideAdminBar: PropTypes.bool, // AdminBar not needed on Item page
+    // query: PropTypes.string    // This is a hash of query parameters, too much stuff to detail right here right now
   }
 
   constructor(props){
@@ -27,12 +29,14 @@ class HeaderComp2 extends React.Component {
   render() {
     return (
       <div>
+      {!this.props.hideAdminBar &&
         <AdminBarComp/>
-        <header className="c-header">
+      }
+        <header id="#top" className="c-header">
           <Link className="c-header__logo2" to="/">
             <picture>
-              <source srcSet="/images/logo_eschol-small.svg" media={"(min-width: "+Breakpoints.screen3+")"}/>
-              <img src="/images/logo_eschol-mobile.svg" alt="eScholarship"/>
+              <source srcSet={MEDIA_PATH + 'logo_eschol-small.svg'} media={"(min-width: "+Breakpoints.screen3+")"}/>
+              <img src={MEDIA_PATH + 'logo_eschol-mobile.svg'} alt="eScholarship"/>
             </picture>
             <div className="c-header__logo2-tagline">
               Open Access Publications from the University of California

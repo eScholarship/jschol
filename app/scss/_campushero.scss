@@ -19,7 +19,7 @@ $campushero-text-shadow: 1px 1px 1px $color-light-black;
     align-content: center;
     height: 30vw;
     padding: 0;
-    background: no-repeat center / cover;
+    background: $color-teal no-repeat center / cover;
     // background-image property/URL is set as an inline HTML style on this element
     z-index: 0;
     grid-template-columns: 60% auto;
@@ -43,6 +43,7 @@ $campushero-text-shadow: 1px 1px 1px $color-light-black;
 }
 
 .c-campushero__lede {
+  @extend %u-sourcesansprolight-font-stack;
   @extend %c-campushero__text-bg;
   margin: (-$spacing-sm) (-$spacing-sm) $spacing-sm;
   padding: $spacing-sm;
@@ -56,7 +57,6 @@ $campushero-text-shadow: 1px 1px 1px $color-light-black;
     padding: 0 0 $spacing-md $spacing-lg;
     padding-top: $spacing-md;
     background-color: rgba($color-teal, .7);
-    font-family: 'KievitWebLight';
     font-size: 3.5vw;
     font-weight: normal;
     text-align: left;

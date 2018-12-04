@@ -84,7 +84,7 @@ class HomePage extends PageBase
           <header>
             <h2>eScholarship is also an open access publishing platform</h2>
           </header>
-          <HomeSection3Comp />
+          <HomeSection3Comp count_journals={data.stats.statsCountEscholJournals} />
         </section>
       </div>
     )

@@ -1,11 +1,8 @@
 // ##### Tab Main Content Component ##### //
 
 import React from 'react'
-import ItemActionsComp from '../components/ItemActionsComp.jsx'
-import AuthorListComp from '../components/AuthorListComp.jsx'
 import PdfViewComp from '../components/PdfViewComp.jsx'
-import PubLocationComp from '../components/PubLocationComp.jsx'
-import PubDataComp from '../components/PubDataComp.jsx'
+import MediaViewerComp from '../components/MediaViewerComp.jsx'
 import ViewExternalComp from '../components/ViewExternalComp.jsx'
 import { Link } from 'react-router'
 import ArbitraryHTMLComp from "../components/ArbitraryHTMLComp.jsx"
@@ -16,9 +13,9 @@ class Abstract extends React.Component {
     return (
       <details className="c-togglecontent" open>
         <summary>Abstract</summary>
-        <ArbitraryHTMLComp html={this.props.abstract} h1Level={3}/>
-        {(this.props.unit.id.match(/^.*_postprints/)) &&
-          <p className="c-well">Many UC-authored scholarly publications are freely available on this site because of the UC Academic Senate&apos;s Open Access Policy. <a href="https://help.escholarship.org/support/tickets/new">Let us know how this access is important for you.</a></p>
+        <ArbitraryHTMLComp html={this.props.abstract} p_wrap={true} h1Level={3}/>
+        {(this.props.unit && this.props.unit.id.match(/^.*_postprints/)) &&
+          <p className="o-well-colored">Many UC-authored scholarly publications are freely available on this site because of the UC Academic Senate&apos;s Open Access Policy. <a href="https://help.escholarship.org/support/tickets/new">Let us know how this access is important for you.</a></p>
         }
       </details>
     )
@@ -29,10 +26,21 @@ class MainContent extends React.Component {
   render() {
     let p = this.props
     switch(p.status) {
+      // Empty items are published but with no content: no published web loc, no supp files.
+      // Could use the <Withdrawn> class here but using <NoContent> for semantic reasons
+      case "empty":
+        return (<NoContent/>)
       case "published":
         if (!p.content_type) {
-          if ((p.attrs.pub_web_loc && p.attrs.pub_web_loc.length > 0) || (p.attrs.supp_files && p.attrs.supp_files.length > 0)) {
+          if (p.attrs.pub_web_loc && p.attrs.pub_web_loc.length > 0) {
             return (<NoContent pub_web_loc={p.attrs.pub_web_loc} supp_files={p.attrs.supp_files} changeTab={p.changeTab} />)
+          } else if (p.attrs.supp_files && p.attrs.supp_files.length > 0) {
+            return (
+              <details className="c-togglecontent" open>
+                <summary>Main Content</summary>
+                <MediaViewerComp id={this.props.id} supp_files={this.props.attrs.supp_files} content_prefix={this.props.content_prefix}/>
+              </details>
+            )
           } else {
             return (<Withdrawn message="This item is not available from eScholarship." />)
           }
@@ -59,7 +67,7 @@ class MainContent extends React.Component {
             coming right after it's sibling of the same class name */}
         <ScrollingAnchorComp name="article_main" />
         <summary>Main Content</summary>
-        <ArbitraryHTMLComp html={p.content_html} h1Level={2}/>
+        <ArbitraryHTMLComp html={p.content_html} h1Level={3}/>
         <br/><br/>
       </details>
   )}
@@ -119,6 +127,12 @@ class NoContent extends React.Component {
           All content for this item is under the <Link to="#" onClick={(e)=>this.handleClick(e, "supplemental")} className="o-textlink__secondary">Supplemental Material</Link> tab.
         </div>
       }
+      {!this.props.pub_web_loc && !this.props.supp_files &&
+        <div style={{paddingLeft: '25px'}}>
+          <br/><br/>
+          The text for this item is currently unavailable.
+        </div>
+      }
       <p>&nbsp;</p>
       <p>&nbsp;</p>
       <p>&nbsp;</p>
@@ -132,25 +146,11 @@ class TabMainComp extends React.Component {
     let p = this.props
     return (
       <div className="c-tabcontent">
-        <ItemActionsComp id={p.id}
-                         status={p.status}
-                         content_type={p.content_type}
-                         pdf_url={p.pdf_url}
-                         supp_files={p.attrs.supp_files}
-                         buy_link={p.attrs.buy_link}
-                         download_restricted={p.download_restricted} />
-        <h2 className="c-tabcontent__main-heading" tabIndex="-1"><ArbitraryHTMLComp html={p.title}/></h2>
-        <AuthorListComp pubdate={p.pub_date}
-                        authors={p.authors}
-                        changeTab={p.changeTab} />
-        <PubLocationComp pub_web_loc={p.attrs.pub_web_loc}
-                         rights={p.rights} />
-        <PubDataComp content_type={p.content_type} />
-        {this.props.attrs.abstract && (this.props.status != "withdrawn") &&
-          [<ScrollingAnchorComp key="0" name="article_abstract" />,
-           <Abstract key="1" status={p.status}
-                             abstract={p.attrs.abstract}
-                             unit={p.unit} />] }
+      {this.props.attrs.abstract && (this.props.status != "withdrawn") &&
+        [<ScrollingAnchorComp key="0" name="article_abstract" />,
+         <Abstract key="1" status={p.status}
+                           abstract={p.attrs.abstract}
+                           unit={p.unit} />] }
         <MainContent {...p} />
       </div>
     )

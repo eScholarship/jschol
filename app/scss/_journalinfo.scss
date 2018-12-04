@@ -7,7 +7,7 @@
   }
 
   ul {
-    @extend %no-bullet-ul;
+    @extend %u-reset-list-styles;
 
     li {
       font-size: 1.1em;

@@ -58,13 +58,13 @@ class CampusLayout extends React.Component {
   }
 
   renderCampusCarousel(contentCarousel) {
-    // Most recent 10 journals for this campus
-    if (contentCarousel.mode == 'journals') return (
-      <JournalCarouselComp {...contentCarousel.data} />
-    )
     // Most recent 10 articles for chosen unit (configured by admin)
     if (contentCarousel.mode == 'unit') return (
       <UnitCarouselComp {...contentCarousel.data} />
+    )
+    // Most recent 10 journals for this campus
+    else if (contentCarousel.mode == 'journals') return (
+      <JournalCarouselComp {...contentCarousel.data} />
     )
   }
 

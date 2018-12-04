@@ -2,7 +2,6 @@
 
 import React from 'react'
 import ArbitraryHTMLComp from "../components/ArbitraryHTMLComp.jsx"
-import PropTypes from 'prop-types'
 import $ from 'jquery'
 
 // Load dotdotdot in browser but not server

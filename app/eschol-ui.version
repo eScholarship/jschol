@@ -651,3 +651,221 @@ As well as:
   modified:   app/jsx/objects/DivideContentObj.jsx
   deleted:    app/jsx/objects/ImageContentObj.jsx
   modified:   app/jsx/objects/StatsObj.jsx
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's a033afa8e5783695c73a9583eadfa1fca6f9dd96, 2017-10-30 <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+  modified:   app/jsx/components/MediaListComp.jsx
+  modified:   app/jsx/components/PubYearComp.jsx
+  modified:   app/jsx/components/TabMainComp.jsx
+  modified:   app/jsx/components/UnitSeriesComp.jsx
+  modified:   app/jsx/layouts/DepartmentLayout.jsx
+  modified:   app/jsx/layouts/SeriesLayout.jsx
+  modified:   app/jsx/pages/ItemPage.jsx
+  modified:   app/jsx/pages/SearchPage.jsx
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's 250c8737fa208dbaef56930cfd9df61f9c08a19c, 2017-11-09 <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+Andy added all scss and changes since last.
+As well as:
+
+  deleted:    app/jsx/components/SidebarNavComp.jsx
+  deleted:    app/scss/_sidebarnav.scss
+  modified:   app/jsx/components/BreadcrumbComp.jsx
+  modified:   app/jsx/components/ItemActionsComp.jsx
+  modified:   app/jsx/components/JumpComp.jsx
+  modified:   app/jsx/components/PaginationComp.jsx
+  modified:   app/jsx/components/ScholWorksComp.jsx
+  modified:   app/jsx/objects/ButtonObj.jsx
+  modified:   app/jsx/pages/ItemPage.jsx
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's 3736a0f14ca9e97e3bfad75f206644a98ba9650d, 2017-11-14 <<<
+>>  Partial migration...Holding on implementing 'clientmarkup' CSS <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+scss and changes since last, except for 'clientmarkup' CSS
+As well as:
+
+  modified:   app/jsx/components/NavComp.jsx
+  modified:   app/jsx/components/NavSubComp.jsx
+  modified:   app/jsx/components/SubheaderComp.jsx
+  modified:   app/jsx/components/WizardInertComp.jsx
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's f84a44ebd0b718ef0b29637d6346f9b941847365, 2017-11-27 <<<
+>>  Implemented 'clientmarkup' CSS                              <<<
+>>  Partial migration...Holding on implementing IssueComp       <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+  modified:   app/jsx/components/ArbitraryHTMLComp.jsx
+  modified:   app/jsx/components/PaginationComp.jsx
+  modified:   app/jsx/components/TabAuthorComp.jsx
+
+>>> Integration of IssueComp completed 2017-11-28 <<<
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's 9fa9c5dfe5a57ec4d81998d0eea085e311e4ce1e, 2017-12-06 <<<
+>>  Partial migration...                                        <<<
+>>  Holding on implementing DataAvailabilityComp                <<<
+>>  SearchPage (RefineComp) needs a tweak before PR'ing this    <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+  modified:   package.json
+  modified:   app/jsx/components/IssueComp.jsx
+  modified:   app/jsx/components/NavComp.jsx
+  modified:   app/jsx/components/NavSubComp.jsx
+  modified:   app/jsx/components/PubPreviewComp.jsx
+  modified:   app/jsx/components/StatCarouselComp.jsx
+  modified:   app/jsx/pages/SearchPage.jsx
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's 98cf8d43c5bd22c4e4d9285f7d5635fa3c3a6939, 2017-12-14 <<<
+>>   **  EXCEPT I didn't wrap LazyImageComp into RightsComp      <<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+  modified:   app/jsx/components/PubInfoComp.jsx
+  modified:   app/jsx/components/RightsComp.jsx
+  modified:   app/jsx/pages/ItemPage.jsx
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's f1c1778b500dd85d27066aad4d79544341ca5ff6, 2017-12-18 <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+  modified:   app/jsx/components/FooterComp.jsx
+  modified:   app/jsx/components/JournalGridComp.jsx
+  modified:   app/jsx/components/ScrollToTopComp.jsx
+  modified:   app/jsx/components/RightsComp.jsx
+  modified:   app/jsx/objects/ColumnBoxObj.jsx
+  modified:   app/jsx/pages/SearchPage.jsx
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's a30bb50c88223efa93cbd790e8b53841df5e8c2c, 2018-01-17 <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+Integrated *only* DataTableComp and its scss.
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Joel's b96b9719d367bd17e7f79ad3b0c38f8f877b2633, 2018-01-18 <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+Integrated *only* _datatable.scss
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> Big eschol-ui merge #341
+>>> Joel's c729a2758cb0dbafec376c1bfa1378c39ee71ea7, 2018-03-08 <<<
+>>> Going forward, UI changes are now in hands of Martin & Andy <<<
+>>> eschol-ui now being hosted here: eScholarship/eschol-ui/    <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+Lots of stuff modified.
+
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> 491a614cca9f1111ce14ca2d274f1740e358875a, 2018-03-26        <<< 
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+  modified: app/scss/_mediafeature.scss  (Andy)
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> 94f4c1f258474dc4f2806f0669ca6ae12eb9daac, 2018-04-04        <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+  modified: app/scss/_authorlist.scss  (Andy)
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> 76aac26ab3b1a15b3a52c99f0bd80a6f055b134f, 2018-04-16        <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+  deleted:    app/jsx/components/WellComp.jsx
+  modified:   app/jsx/components/TabMainComp.jsx
+  modified:   app/jsx/components/TabMetricsComp.jsx
+  modified:   app/jsx/pages/BrowsePage.jsx
+  modified:   app/jsx/pages/SearchPage.jsx
+  modified:   app/scss/_variables.scss
+  modified:   app/scss/_well.scss
+  modified:   app/scss/main.scss
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> e08364e1b02ac7a9127b0bdbb7eee503ba4b322e, 2018-04-30        <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+  modified:   app/jsx/components/ScholWorksComp.jsx
+  modified:   app/scss/_clientmarkup.scss
+  modified:   app/scss/_heading.scss
+  modified:   app/scss/_marquee.scss
+  modified:   app/scss/_scholworks.scss
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> f093fe1a0b6297dd52755541741200d5f7047bd4, 2018-05-07        <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+ NEW FONT:
+  deleted:    app/fonts/KievitWeb-Light.woff
+  deleted:    app/fonts/KievitWeb-Light.woff2
+  deleted:    app/fonts/KievitWeb.woff
+  deleted:    app/fonts/KievitWeb.woff2
+  modified:   app/scss/_campushero.scss
+  modified:   app/scss/_fonts.scss
+  modified:   app/scss/_hero.scss
+  modified:   app/scss/_stat.scss
+  modified:   app/scss/_utilities.scss
+  modified:   app/scss/_well.scss
+  modified:   app/scss/main.scss
+  app/fonts/SourceSansPro-Light.ttf.woff
+  app/fonts/SourceSansPro-Light.ttf.woff2
+  app/fonts/SourceSansPro-Regular.ttf.woff
+  app/fonts/SourceSansPro-Regular.ttf.woff2
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> 508a889f0117f50a639d5437e7ea2849ea874618, 2018-08-09        <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+  modified:   app/jsx/components/TabMetricsComp.jsx
+  modified:   app/scss/_tabcontent.scss
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> 93adc2e79f3ebe1d3661aa53241e3090d071126f, 2018-08-14        <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+  added: app/jsx/components/TabMetaComp.jsx
+  modified: app/jsx/components/TabsComp.jsx
+  modified: app/scss/_datatable.scss
+  modified: app/scss/_tabs.scss
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> 5f21621bddd175e686afcdcee58e1485e9f074a3, 2018-08-15        <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+  modified: app/scss/_pubpreview.scss
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> 9954ca9ef6fad7ad181c1f90a18920070977a8d5, 2018-10-10        <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+  modified:   app/jsx/components/IssueComp.jsx
+  modified:   app/scss/_issue.scss
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> 95c0937e0d91a4cdcb7534f88853c127967dc4df, 2018-10-24        <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+  added: app/jsx/components/SocialFeedComp.jsx
+  added: app/scss/_socialfeed.scss
+  modified: app/scss/_issue.scss
+  modified: app/scss/_clientmarkup.scss
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> 65d91bcb0dfdc505560a09893e86fd9443182007, 2018-11-13        <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+  modified: app/scss/_clientmarkup.scss
+
+

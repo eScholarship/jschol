@@ -35,7 +35,7 @@ export default class RecentArticlesComp extends React.Component
             <ArbitraryHTMLComp html={item.title}/>
           </a>
         </h3>
-      {item.authors && item.authors.length > 0 &&
+      {!item.author_hide && item.authors && item.authors.length > 0 &&
         <AuthorsComp authors={item.authors} />
       }
       </li>)

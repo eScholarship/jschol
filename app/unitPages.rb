@@ -9,7 +9,8 @@ def putAsset(filePath, metadata)
   # Calculate the sha256 hash, and use it to form the s3 path
   md5sum    = Digest::MD5.file(filePath).hexdigest
   sha256Sum = Digest::SHA256.file(filePath).hexdigest
-  s3Path = "#{$s3Config.prefix}/binaries/#{sha256Sum[0,2]}/#{sha256Sum[2,2]}/#{sha256Sum}"
+  pfx = ENV['S3_PREFIX'] || raise("missing env S3_PREFIX")
+  s3Path = "#{pfx}/binaries/#{sha256Sum[0,2]}/#{sha256Sum[2,2]}/#{sha256Sum}"
 
   # If the S3 file is already correct, don't re-upload it.
   obj = $s3Bucket.object(s3Path)
@@ -104,6 +105,7 @@ end
 # Permissions per nav item
 def getNavPerms(unit, navItems, userPerms)
   noAccess = { change_slug: false, change_text: false, remove: false, reorder: false }
+  unit.nil? and return noAccess
   result = {}
   slugs = getSlugs(navItems)
   slugs << "link" << "folder" << "page"  # special pseudo-slugs for specials
@@ -122,7 +124,7 @@ def getNavPerms(unit, navItems, userPerms)
         result[slug] = { change_slug: false, change_text: false, remove: false, reorder: true  }
       when /^(submitPaper|submissionGuidelines|submissionprocess|howsubmit)$/i
         result[slug] = { change_slug: false, change_text: true,  remove: false, reorder: true  }
-      when /^(contactUs)$/i
+      when /^(contactUs|contact)$/i
         result[slug] = { change_slug: false, change_text: true,  remove: false, reorder: false }
       when /^(aboutus|about)$/i
         result[slug] = { change_slug: false, change_text: true,  remove: false, reorder: true  }
@@ -150,7 +152,9 @@ def getNavBar(unit, navItems, level=1)
     }
     if level==1 && !isTopmostUnit(unit)
       unitID = unit.type.include?('series') ? getUnitAncestor(unit).id : unit.id
-      navItems.unshift({ id: 0, type: "home", name: "Unit Home", url: "/uc/#{unitID}" })
+      navItems.unshift({ id: 0, type: "home",
+                         name: unit.type == "journal" ? "Journal Home" : "Unit Home",
+                         url: "/uc/#{unitID}" })
     end
     return navItems
   end
@@ -163,7 +167,9 @@ def getPageBreadcrumb(unit, pageName, issue=nil)
   if issue
    vol = "Volume #{issue[:volume]}"
    iss = "Issue #{issue[:issue]}"
-   if !issue[:numbering]
+   if issue[:volume] == "0" and issue[:issue] == "0"
+     name = issue[:title] 
+   elsif !issue[:numbering]
      name = vol + ", " + iss 
    elsif issue[:numbering] == "volume_only"
      name = vol 
@@ -190,6 +196,7 @@ def getUnitHeader(unit, pageName=nil, journalIssue=nil, attrs=nil)
   campusID = getCampusId(unit)
   ancestor = isTopmostUnit(unit) ? nil : getUnitAncestor(unit)
 
+
   header = {
     :campusID => campusID,
     :campusName => $unitsHash[campusID].name,
@@ -199,11 +206,11 @@ def getUnitHeader(unit, pageName=nil, journalIssue=nil, attrs=nil)
     :logo => (unit.type.include? 'series') ? getLogoData(JSON.parse(ancestor.attrs)['logo']) : getLogoData(attrs['logo']),
     :directSubmit => attrs['directSubmit'],
     :directSubmitURL => attrs['directSubmitURL'],
-    :nav_bar => getNavBar(unit, attrs['nav_bar']),
+    :nav_bar => unit.type.include?('series') ? getNavBar(ancestor, JSON.parse(ancestor.attrs)['nav_bar']) : getNavBar(unit, attrs['nav_bar']),
     :social => {
       :facebook => attrs['facebook'],
       :twitter => attrs['twitter'],
-      :rss => attrs['rss']
+      :rss => "/uc/#{unit.id}/rss"
     },
     :breadcrumb => (unit.type!='campus') ?
       traverseHierarchyUp([{name: unit.name, id: unit.id, url: unit.type == "root" ? "/" : "/uc/#{unit.id}"}]) +
@@ -258,17 +265,25 @@ def getUnitMarquee(unit, attrs)
   }
 end
 
+# Unit builder data
+def getUnitBuilderData(unit)
+  return { sub_units: UnitHier.where(ancestor_unit: unit.id, is_direct: true).order(:ordering).map { |u|
+    {id: u.unit_id, name: u.unit.name, type: u.unit.type} } }
+end
+
 # Department Landing Page
 # Grab data about: related series (children), related journals (children)
 #   and related ORUs, which include children ORUs, sibling ORUs, and parent ORU
 def getORULandingPageData(id)
   children = $hierByAncestor[id]
+  children and children.select! { |u| u.unit.status != 'hidden' }
   oru_children = children ? children.select { |u| u.unit.type == 'oru' }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : []
   oru_siblings, oru_ancestor = [], []
   oru_ancestor_id = $oruAncestors[id]
   if oru_ancestor_id
     oru_ancestor = [{unit_id: oru_ancestor_id, name: $unitsHash[oru_ancestor_id].name}]
     siblings = $hierByAncestor[oru_ancestor_id]
+    siblings and siblings.select! { |u| u.unit.status != 'hidden' }
     oru_siblings = siblings ? siblings.select { |u| u.unit.type == 'oru' and u.unit_id != id }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : []
   end
   related_orus = oru_children + oru_siblings + oru_ancestor
@@ -300,7 +315,7 @@ def getCampusCarousel(campus, content_attrs)
     journals.keep_if { |x| journals_w_issues.any? {|y| y[:unit_id] == x[:unit_id]} }
     journals_covers = journals.map { |u|
       i = Issue.where(:unit_id => u[:unit_id]).where(Sequel.lit("attrs->\"$.cover\" is not null"))
-               .order(Sequel.desc(:pub_date)).first
+               .order(Sequel.desc(:published)).order_append(Sequel.desc(Sequel[:issue].cast_numeric)).first
       if i
         u[:cover] = JSON.parse(i[:attrs])['cover']
       end
@@ -356,8 +371,7 @@ end
 
 # Preview of Series for a Department Landing Page
 def seriesPreview(u)
-  items = Item.join(:unit_items, :item_id => :id).where(unit_id: u.unit_id)
-              .where(Sequel.lit("attrs->\"$.suppress_content\" is null"))
+  items = Item.join(:unit_items, :item_id => :id).where(unit_id: u.unit_id).where(status: 'published')
   count = items.count
   previewLimit = 3
   preview = items.limit(previewLimit).map(:item_id)
@@ -386,26 +400,46 @@ def getSeriesLandingPageData(unit, q)
   return response
 end
 
-def getIssues(unit_id)
-  Issue.where(:unit_id => unit_id).order(Sequel.desc(:pub_date)).to_hash(:id).map{|id, issue|
+def _queryIssues(publishedIssues)
+  return Sequel::SQL::PlaceholderLiteralString.new('SELECT * FROM issues WHERE ((id in ?) AND ((volume != "0") OR (issue != "0"))) ORDER BY CAST(volume AS SIGNED) DESC, CAST(issue AS Decimal(6,2)) DESC', [publishedIssues])
+end
+
+# Takes array of issue IDs
+def _getIssues(publishedIssues)
+  query = _queryIssues(publishedIssues)
+  r = DB.fetch(query).to_hash(:id).map{|id, issue|
     h = issue.to_hash
     h[:attrs] and h[:attrs] = JSON.parse(h[:attrs])
     h
   }
+  articlesInPress = Issue.where(id: publishedIssues, :volume => '0', :issue => '0').to_hash(:id).map{|id, issue|
+    h = issue.to_hash
+    h[:attrs] and h[:attrs] = JSON.parse(h[:attrs])
+    h
+  }
+  r.unshift(articlesInPress[0]) if articlesInPress[0]
+  return r 
 end 
 
 # Landing page data does not pass arguments volume/issue. It just gets most recent journal
 def getJournalIssueData(unit, unit_attrs, volume=nil, issue=nil)
   display = unit_attrs['magazine_layout'] ? 'magazine' : 'simple'
+  # Returns array of issue IDs
+  publishedIssues = Issue.distinct.select(Sequel[:issues][:id]).
+    join(:sections, issue_id: :id).
+    join(:items, section: Sequel[:sections][:id]).
+    filter(Sequel[:issues][:unit_id] => unit.id,
+           Sequel[:items][:status] => 'published').map { |h| h[:id] }
+  issues = _getIssues(publishedIssues)
   if unit_attrs['issue_rule'] and unit_attrs['issue_rule'] == 'secondMostRecent' and volume.nil? and issue.nil?
-    secondIssue = Issue.where(:unit_id => unit.id).order(Sequel.desc(:pub_date)).first(2)[1]
-    volume = secondIssue ? secondIssue.values[:volume] : nil
-    issue = secondIssue ? secondIssue.values[:issue] : nil
+    secondIssue = issues.first(2)[1]
+    volume = secondIssue ? secondIssue[:volume] : nil
+    issue = secondIssue ? secondIssue[:issue] : nil
   end
   return {
     display: display,
-    issue: getIssue(unit.id, display, volume, issue),
-    issues: getIssues(unit.id),
+    issue: _getIssue(unit.id, publishedIssues, volume, issue, display),
+    issues: issues,
     doaj: unit_attrs['doaj'],
     issn: unit_attrs['issn'],
     eissn: unit_attrs['eissn']
@@ -416,23 +450,26 @@ def isJournalIssue?(unit_id, volume, issue)
   !!Issue.first(:unit_id => unit_id, :volume => volume, :issue => issue)
 end
 
-def getIssueNumbering(unit_id, volume, issue)
+# Returns pair: 'numbering' setting and title for custom breadcrumb on item pages
+def getIssueNumberingTitle(unit_id, volume, issue)
   i = Issue.first(:unit_id => unit_id, :volume => volume, :issue => issue)
-  return nil if i.nil?
+  return nil, nil if i.nil?
   i = i.values
-  return nil if i[:attrs].nil?
+  return nil, nil if i[:attrs].nil?
   attrs = JSON.parse(i[:attrs])
-  return attrs['numbering']
+  return attrs['numbering'], attrs['title']
 end
 
-def getIssue(unit_id, display, volume=nil, issue=nil)
+def _getIssue(unit_id, publishedIssues, volume=nil, issue=nil, display)
   if volume.nil?  # Landing page (most recent journal) has no vol/issue entered in URL path
-    i = Issue.where(:unit_id => unit_id).order(Sequel.desc(:pub_date)).first
+    i = DB.fetch(_queryIssues(publishedIssues))
+    i = i.nil? ? nil : i.first
+    return nil if i.nil?
   else
     i = Issue.first(:unit_id => unit_id, :volume => volume, :issue => issue)
+    return nil if i.nil?
+    i = i.values
   end
-  return nil if i.nil?
-  i = i.values
   if i[:attrs]
     attrs = JSON.parse(i[:attrs])
     attrs['numbering']   and i[:numbering] = attrs['numbering']
@@ -447,7 +484,7 @@ def getIssue(unit_id, display, volume=nil, issue=nil)
   i[:sections].map! do |section|
     section = section.values
     items = Item.where(:section=>section[:id]).
-                 where(Sequel.lit("attrs->\"$.suppress_content\" is null")).
+                 where(status: 'published').
                  order(:ordering_in_sect).to_hash(:id)
     itemIds = items.keys
     authors = ItemAuthors.where(item_id: itemIds).order(:ordering).to_hash_groups(:item_id)
@@ -509,9 +546,11 @@ def getUnitProfile(unit, attrs)
     logo: attrs['logo'],
     facebook: attrs['facebook'],
     twitter: attrs['twitter'],
-    marquee: getUnitMarquee(unit, attrs)
+    marquee: getUnitMarquee(unit, attrs),
+    status: unit.status
   }
   
+  attrs['directSubmit'] and profile[:directSubmit] = attrs['directSubmit']
   if unit.type == 'journal'
     profile[:doaj] = attrs['doaj']
     profile[:issn] = attrs['issn']
@@ -556,18 +595,19 @@ def getItemAuthors(itemID)
   return ItemAuthors.filter(:item_id => itemID).order(:ordering).map(:attrs).collect{ |h| JSON.parse(h)}
 end
 
-# Get recent items (with author info) given a unit ID, by most recent eschol_date
+# Get recent items (with author info) given a unit ID, by most recent added date
 # Pass an item id in if you don't want that item included in results
 def getRecentItems(unitID, limit=5, item_id=nil)
   items = item_id ? Item.join(:unit_items, :item_id => :id).where(unit_id: unitID)
-                        .where(Sequel.lit("attrs->\"$.suppress_content\" is null"))
+                        .where(status: 'published')
                         .exclude(id: item_id)
-                        .reverse(:eschol_date).limit(limit)
+                        .reverse(:added).limit(limit)
                   : Item.join(:unit_items, :item_id => :id).where(unit_id: unitID)
-                        .where(Sequel.lit("attrs->\"$.suppress_content\" is null"))
-                        .reverse(:eschol_date).limit(limit)
+                        .where(status: 'published')
+                        .reverse(:added).limit(limit)
   return items.map { |item|
-    { id: item.id, title: item.title, authors: getItemAuthors(item.id), genre: item.genre }
+    { id: item.id, title: item.title, authors: getItemAuthors(item.id), genre: item.genre, 
+      author_hide: JSON.parse(item.attrs)["author_hide"] }
   }
 end
 
@@ -809,12 +849,14 @@ post "/api/unit/:unitID/sidebar" do |unitID|
 
   # Validate the widget kind
   widgetKind = params[:widgetKind]
-  ['RecentArticles', 'Text', 'Tweets'].include?(widgetKind) or jsonHalt(400, "Invalid widget kind")
+  ['RecentArticles', 'Text', 'TwitterFeed'].include?(widgetKind) or jsonHalt(400, "Invalid widget kind")
 
   # Initial attributes are kind-specific
   attrs = case widgetKind
   when "Text"
     { title: "New #{widgetKind}", html: "" }
+  when "TwitterFeed"
+    { title: "Follow Us On Twitter", twitter_handle: "" }
   else
     {}
   end
@@ -901,6 +943,236 @@ def validateURL(url, allowExternal)
   url.sub!(%r{https?://(pub-jschol[^\.]+\.|www\.|beta\.)?escholarship.org/?([^"]*)}, '/\2')
   url =~ (allowExternal ? %r{^(/|https?://).*} : %r{^/}) or jsonHalt(400, "Invalid URL")
   return url
+end
+
+###################################################################################################
+# Add a new unit
+put "/api/unit/:unitID/unitBuilder" do |parentUnitID|
+  # Only super-users allowed to add units
+  getUserPermissions(params[:username], params[:token], parentUnitID)[:super] or halt(401)
+
+  newUnitID = params[:newUnitID]
+  newUnitID =~ /^[a-z0-9_]+$/ or jsonHalt(400, "Invalid unit ID")
+  Unit[newUnitID].nil? or jsonHalt(400, "Duplicate unit ID")
+
+  unitName = params[:name]
+  unitName.nil? || unitName.empty? and jsonHalt(400, "Invalid unit name")
+
+  unitType = params[:type]
+  %w{oru journal series monograph_series}.include?(unitType) or jsonHalt(400, "Invalid unit type")
+
+  isHidden = !!params[:hidden]
+
+  attrs = {
+    about: "About #{unitName}: TODO",
+    nav_bar: %w{oru journal}.include?(unitType) ? [
+      { id: 1, name: "About", slug: "about", type: "page" },
+      { id: 2, name: "Contact us", slug: "contact", type: "page" }
+    ] : []
+  }
+
+  DB.transaction {
+    Unit.create(id: newUnitID,
+                name: unitName,
+                type: unitType,
+                status: isHidden ? "hidden" : "active",
+                attrs: attrs.to_json)
+
+    if %w{oru journal}.include?(unitType)
+      Page.create(unit_id: newUnitID,
+                  name: "About",
+                  title: "About #{unitName}",
+                  slug: "about",
+                  attrs: { html: "" }.to_json)
+      Page.create(unit_id: newUnitID,
+                  name: "Contact us",
+                  title: "Contact us",
+                  slug: "contact",
+                  attrs: { html: "" }.to_json)
+    end
+
+    maxExisting = UnitHier.where(ancestor_unit: parentUnitID, is_direct: 1).max(:ordering)
+    UnitHier.create(unit_id: newUnitID,
+                    ancestor_unit: parentUnitID,
+                    ordering: maxExisting.nil? ? 1 : maxExisting+1,
+                    is_direct: true)
+    UnitHier.where(unit_id: parentUnitID).each { |hier|
+      UnitHier.create(unit_id: newUnitID,
+                      ancestor_unit: hier.ancestor_unit,
+                      is_direct: false)
+    }
+  }
+  refreshUnitsHash
+  return {status: "ok", nextURL: "/uc/#{newUnitID}"}.to_json
+end
+
+###################################################################################################
+# Re-order units
+put "/api/unit/:unitID/unitOrder" do |unitID|
+  # Check user permissions
+  perms = getUserPermissions(params[:username], params[:token], unitID)[:super] or restrictedHalt
+  content_type :json
+
+  DB.transaction {
+    unit = Unit[unitID] or jsonHalt(404, "Unit not found")
+    newOrder = JSON.parse(params[:order])
+    UnitHier.where(ancestor_unit: unitID, is_direct: true).count == newOrder.length or jsonHalt(400, "must reorder all at once")
+
+    # Make two passes, to absolutely avoid conflicting order in the table at any time.
+    maxOldOrder = UnitHier.where(ancestor_unit: unitID, is_direct: true).max(:ordering)
+    (1..2).each { |pass|
+      offset = (pass == 1) ? maxOldOrder+1 : 1
+      newOrder.each_with_index { |childID, idx|
+        h = UnitHier.where(ancestor_unit: unitID, unit_id: childID, is_direct: true).first
+        h.ordering = idx + offset
+        h.save
+      }
+    }
+    return {status: "ok"}.to_json
+  }
+end
+
+###################################################################################################
+# Rebuild the indirect hierarchy links for the unit and its items. Recursively processes sub-units
+# as well.
+def rebuildIndirectLinks(unitID, hier = nil)
+  # Cache the direct hierarchy
+  hier ||= UnitHier.filter(is_direct: true).to_hash_groups(:unit_id, :ancestor_unit)
+
+  # Reconstruct indirect unit links. Handle possible multiple parents.
+  done = Set.new
+  UnitHier.where(unit_id: unitID, is_direct: false).delete
+  queue = UnitHier.where(unit_id: unitID, is_direct: true).select_map(:ancestor_unit).map{ |p| hier[p] }.flatten
+  while !queue.empty?
+    p = queue.shift
+    next if done.include?(p)
+    UnitHier.create(unit_id: unitID, ancestor_unit: p, is_direct: false)
+    done << p
+    hier[p] and queue += hier[p]
+  end
+
+  # Rebuild indirect item links in similar fashion.
+  UnitItem.where(unit_id: unitID, is_direct: true).select_map(:item_id).each { |itemID|
+    done = Set.new
+    UnitItem.where(item_id: itemID, is_direct: false).delete
+    queue = UnitItem.where(item_id: itemID, is_direct: true).select_map(:unit_id).map{ |p| hier[p] }.flatten
+    lastOrder = 10000
+    while !queue.empty?
+      p = queue.shift
+      next if done.include?(p)
+      UnitItem.create(item_id: itemID, unit_id: p, ordering_of_units: lastOrder+1, is_direct: false)
+      lastOrder += 1
+      done << p
+      hier[p] and queue += hier[p]
+    end
+  }
+
+  # Recursively process sub-units
+  UnitHier.where(ancestor_unit: unitID, is_direct: true).select_map(:unit_id).each { |kid|
+    rebuildIndirectLinks(kid, hier)
+  }
+end
+
+###################################################################################################
+# Switch unit to a new parent
+put "/api/unit/:unitID/moveUnit" do |unitID|
+  # Only super-users allowed to move units
+  getUserPermissions(params[:username], params[:token], unitID)[:super] or halt(401)
+
+  # Sanity checks
+  %w{campus root}.include?($unitsHash[unitID].type) and jsonHalt(400, "Cannot move top-level units.")
+  targetUnitID = params[:targetUnitID]
+  targetUnit = $unitsHash[targetUnitID] or jsonHalt(400, "Unrecognized target unit")
+  targetUnit.type =~ /series|journal/ and jsonHalt(400, "Destination parent unit cannot be a series or journal")
+
+  # Get the max ordering of the new parent's existing children.
+  lastOrder = UnitHier.where(ancestor_unit: targetUnitID, is_direct: true).max(:ordering)
+
+  DB.transaction {
+    # Change the primary direct link
+    oldParent = UnitHier.where(unit_id: unitID, is_direct: true).order(:ordering).last[:ancestor_unit]
+    puts "old parent: #{oldParent}"
+    UnitHier.where(unit_id: unitID, ancestor_unit: oldParent, is_direct: true).
+             update(ancestor_unit: targetUnitID, ordering: lastOrder+1)
+
+    # And rebuild all the indirect links
+    #puts "Unit hier before:\n#{UnitHier.where(unit_id: unitID).all.map { |h| "  #{h.to_hash.to_s}" }.sort.join("\n")}"
+    #puts "Item hier before:\n#{UnitItem.where(item_id: UnitItem.where(unit_id: unitID).order(:item_id).
+    #  select_map(:item_id)).all.map { |h| "  #{h.to_hash.to_s}" }.join("\n")}"
+    rebuildIndirectLinks(unitID)
+    #puts "Unit hier after:\n#{UnitHier.where(unit_id: unitID).all.map { |h| "  #{h.to_hash.to_s}" }.sort.join("\n")}"
+    #puts "Item hier after:\n#{UnitItem.where(item_id: UnitItem.where(unit_id: unitID).order(:item_id).
+    #  select_map(:item_id)).all.map { |h| "  #{h.to_hash.to_s}" }.join("\n")}"
+
+    #raise Sequel::Rollback  # for testing only
+  }
+  refreshUnitsHash
+  return {status: "ok"}.to_json
+end
+
+###################################################################################################
+# Delete a unit and its pages, widgets, etc.
+put "/api/unit/:unitID/deleteUnit" do |unitID|
+  # Only super-users allowed to move units
+  getUserPermissions(params[:username], params[:token], unitID)[:super] or halt(401)
+
+  # Sanity checks
+  UnitHier.where(ancestor_unit: unitID).count > 0 and jsonHalt(400, "Cannot delete unit having sub-units.")
+  UnitItem.where(unit_id: unitID).count > 0 and jsonHalt(400, "Cannot delete unit containing items.")
+
+  DB.transaction {
+    UnitHier.where(unit_id: unitID).delete
+    Page.where(unit_id: unitID).delete
+    Widget.where(unit_id: unitID).delete
+    UnitStat.where(unit_id: unitID).delete
+    UnitCount.where(unit_id: unitID).delete
+    CategoryStat.where(unit_id: unitID).delete
+    Unit.where(id: unitID).delete
+  }
+  refreshUnitsHash
+  return {status: "ok", nextURL: "/uc/#{$hierByUnit[unitID][0].ancestor_unit}"}.to_json
+end
+
+###################################################################################################
+# Copy a unit with its pages, widgets, etc.
+put "/api/unit/:unitID/copyUnit" do |oldUnitID|
+  # Only super-users allowed to copy units
+  getUserPermissions(params[:username], params[:token], oldUnitID)[:super] or halt(401)
+
+  # Sanity checks
+  $unitsHash[oldUnitID].type == 'root' and jsonHalt(400, "Cannot copy the root-level unit.")
+  targetParentID = params[:targetParentID]
+  targetParent = $unitsHash[targetParentID] or jsonHalt(400, "Unrecognized target parent unit")
+  targetParent.type =~ /series|journal/ and jsonHalt(400, "Target parent unit cannot be a series or journal")
+
+  newUnitID = params[:newUnitID]
+  newUnitID =~ /^[a-z0-9_]+$/ or jsonHalt(400, "Invalid new unit ID")
+  Unit.where(id: newUnitID).count == 0 or jsonHalt(400, "Duplicate unit name")
+
+  oldUnit = Unit[oldUnitID] or jsonHalt(400, "Can't find old unit")
+
+  # Get the max ordering of the new parent's existing children.
+  lastOrder = UnitHier.where(ancestor_unit: targetParentID, is_direct: true).max(:ordering)
+
+  DB.transaction {
+    Unit.create(oldUnit.values.merge({id: newUnitID}))
+
+    UnitHier.create(unit_id: newUnitID, ancestor_unit: targetParentID, ordering: (lastOrder||0)+1, is_direct: true)
+    rebuildIndirectLinks(newUnitID)
+
+    Page.where(unit_id: oldUnitID).each { |page|
+      props = page.values.merge({unit_id: newUnitID})
+      props.delete(:id)
+      Page.create(props)
+    }
+    Widget.where(unit_id: oldUnitID).each { |widget|
+      props = widget.values.merge({unit_id: newUnitID})
+      props.delete(:id)
+      Widget.create(props)
+    }
+  }
+  refreshUnitsHash
+  return {status: "ok", nextURL: "/uc/#{newUnitID}"}.to_json
 end
 
 ###################################################################################################
@@ -993,6 +1265,7 @@ put "/api/unit/:unitID/sidebar/:widgetID" do |unitID, widgetID|
     attrs = {}
     inAttrs[:title] and attrs[:title] = sanitizeHTML(inAttrs[:title])
     inAttrs[:html]  and attrs[:html]  = sanitizeHTML(inAttrs[:html])
+    inAttrs[:twitter_handle]  and attrs[:twitter_handle]  = inAttrs[:twitter_handle]
     widget.attrs = attrs.to_json
     widget.save
   }
@@ -1053,6 +1326,14 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
       if perms[:super]
         unitAttrs['doaj'] = (params['data']['doajSeal'] == 'on')
         unitAttrs['altmetrics_ok'] = (params['data']['altmetrics_ok'] == 'on')
+        %w{active hidden archived}.include?(params['data']['status']) or jsonHalt(400, "invalid status")
+        unit.status = params['data']['status']
+        %w{enabled disabled moribund}.include?(params['data']['directSubmit']) or jsonHalt(400, "invalid directSubmit")
+        if params['data']['directSubmit'] == "enabled"
+          unitAttrs.delete('directSubmit')
+        else
+          unitAttrs['directSubmit'] = params['data']['directSubmit']
+        end
       end
     end
 
@@ -1275,7 +1556,7 @@ end
 
 def getUnitIssueConfig(unit, unitAttrs)
   template = { "numbering" => "both", "rights" => nil, "buy_link" => nil }
-  issues = Issue.where(unit_id: unit.id).reverse(:pub_date).map { |issue|
+  issues = Issue.where(unit_id: unit.id).order(Sequel.desc(:published)).order_append(Sequel.desc(Sequel[:issue].cast_numeric)).map { |issue|
     { voliss: "#{issue.volume}.#{issue.issue}" }.merge(template).
       merge(JSON.parse(issue.attrs || "{}").select { |k,v| template.key?(k) })
   }
@@ -1342,4 +1623,40 @@ put "/api/unit/:unitID/issueConfig" do |unitID|
   }
   content_type :json
   return { success: true }.to_json
+end
+
+def getAuthorSearchData
+  str = params['q']
+  str && str.length > 1 or return { authors: [] }
+
+  # Query for all variations of email or name that contain the partial string
+  personMap = Hash.new { |h,k| h[k] = Set.new }
+  query = Sequel::SQL::PlaceholderLiteralString.new(%{
+    select distinct
+      person_id,
+      JSON_UNQUOTE(item_authors.attrs->"$.name") name,
+      JSON_UNQUOTE(item_authors.attrs->"$.email") auth_email,
+      JSON_UNQUOTE(people.attrs->"$.email") person_email
+    from item_authors
+    inner join people on people.id = item_authors.person_id
+    where lower(item_authors.attrs->"$.email") like :matchStr
+       or lower(item_authors.attrs->"$.name") like :matchStr
+       or lower(people.attrs->"$.email") like :matchStr
+    limit 200
+  }.unindent, { matchStr: "%#{str.downcase}%" })
+  DB.fetch(query).each { |row|
+    personMap[row[:person_id]] << [row[:auth_email], row[:person_email], row[:name]]
+  }
+
+  # Sum them all up into unique sets by person ID
+  authors = personMap.sort.map { |personID, variations|
+    emails = Set.new
+    names = Set.new
+    variations.each { |authEmail, personEmail, name|
+      emails << authEmail << personEmail
+      names << name
+    }
+    { person_id: personID.sub(%r{^ark:/99166/},''), emails: emails.to_a.sort, names: names.to_a.sort }
+  }
+  return { search_str: str, authors: authors }
 end

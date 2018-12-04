@@ -2,13 +2,14 @@
 
 import React from 'react'
 import RightsComp from '../components/RightsComp.jsx'
+import MEDIA_PATH from '../../js/MediaPath.js'
 
 class JournalInfoComp extends React.Component {
   render() {
     return (
       <div className="c-journalinfo">
       {this.props.doaj &&
-        <img src="/images/temp_journalinfo.png" alt="DOAJ"/> }
+        <img src={MEDIA_PATH + 'temp_journalinfo.png'} alt="DOAJ"/> }
       {this.props.rights &&
         <RightsComp rights={this.props.rights} size="large" /> }
         <ul>

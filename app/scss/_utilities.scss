@@ -1,0 +1,271 @@
+// ##### Global Utilities ##### //
+
+%u-sourcesansprolight-font-stack {
+  font-family: 'SourceSansProLight', 'Arial', 'Helvetica', sans-serif;
+}
+
+// Create short media query blocks:
+
+@mixin bp($point) {
+
+  @if $point == screen1 {
+    @media (min-width: $screen1) { @content; }
+
+  } @else if $point == screen2 {
+    @media (min-width: $screen2) { @content; }
+
+  } @else if $point == screen3 {
+    @media (min-width: $screen3) { @content; }
+
+  } @else if $point == screen4 {
+    @media (min-width: $screen4) { @content; }
+
+  } @else if $point == screen5 {
+    @media (min-width: $screen5) { @content; }
+  }
+
+}
+
+/*
+
+Selector pattern using above media query mixin:
+
+.selector {
+  property: $value;
+
+  @include bp(screen1) {
+    property: $value;
+  }
+
+  @include bp(screen2) {
+    property: $value;
+  }
+
+  @include bp(screen3) {
+    property: $value;
+  }
+
+}
+
+*/
+
+// Bleed component to left/right of viewport by equalling <body> left/right padding:
+
+%u-page-bleed {
+  margin: 0 (-$spacing-sm);
+
+  @include bp(screen2) {
+    margin: 0 (-$spacing-md);
+  }
+
+}
+
+// Enlarge an interactive element's minimum width and height if there's a touch screen:
+
+%u-interactive-element-size { 
+  min-width: $pointer-size-fine;
+  min-height: $pointer-size-fine;
+
+  @media (any-pointer: coarse) {
+    min-width: $pointer-size-coarse;
+    min-height: $pointer-size-coarse;
+  }
+
+}
+
+// Enlarge a <summary> element's height if there's a touch screen. Height should match element height of %u-interactive-element-size utility above:
+
+%u-interactive-summary-size { 
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
+
+  @media (any-pointer: coarse) {
+    padding-top: 0.9em;
+    padding-bottom: 0.9em;
+  }
+
+}
+
+/*
+
+Set an interactive element's styles if there's a touchscreen (coarse) or mouse-only screen (fine). Example:
+
+@include u-interactive-element-pointer(coarse) {
+  property: $value;
+}
+
+*/
+
+@mixin u-interactive-element-pointer($pointer-size) {
+
+  @if $pointer-size == coarse {
+    
+    @media (any-pointer: coarse) {
+      @content;
+    }
+
+  // The "fine" option is not currenty used in any components but here for possible future cases:
+
+  } @else if $pointer-size == fine {
+
+    @media (any-pointer: fine) {
+      @content;
+    }
+
+  }
+
+}
+
+// No bullet unordered lists
+
+%u-reset-list-styles {
+  margin: 0;
+  padding: 0;
+
+  li {
+    list-style: none;
+  }
+
+}
+
+// Hide something visually but not for screen readers
+
+%u-hide {
+  position: absolute;
+  left: -9999px;
+}
+
+// Navigation item styles
+
+%nav-item {
+  @extend %u-interactive-element-size;
+  display: flex;
+  align-items: center;
+  padding: $spacing-base $spacing-sm;
+  border: 1px solid $color-dark-gray;
+  background: $color-white;
+  color: $color-dark-gray;
+  font-size: 1.1em;
+  text-decoration: none;
+
+  &:hover:not(div) {
+    color: $color-dark-orange;
+  }
+
+}
+
+// Headings generator
+
+@mixin u-heading($from: 1, $to: 6) {
+  @for $i from $from through $to {
+    h#{$i} {
+      @content
+    }
+  }
+}
+
+// Clear floats
+
+%u-clearfix {
+
+  &::after {
+    display: table;
+    clear: both;
+    content: '';
+  }
+
+}
+
+// Wrap long strings of unbroken text to prevent text overflow.
+
+@mixin u-overflow-wrap {
+  overflow-wrap: break-word; // all except IE
+  word-wrap: break-word; // Legacy IE browsers
+  word-break: break-all; // Modern Windows browsers
+  hyphens: auto;
+}
+
+/*
+
+Background color with progressively-enhanced blur effect. Example:
+
+@include u-background-filter($color-black);
+
+*/
+
+@mixin u-background-filter($bgcolor) {
+  background-color: rgba($bgcolor, 0.7);
+
+  @supports (backdrop-filter: blur()) {
+    background-color: rgba($bgcolor, 0.6);
+    backdrop-filter: blur(5px);
+  }
+
+}
+
+// Remove native fieldset styles
+
+%u-reset-fieldset-styles {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+// Make an image reponsive
+
+%u-responsive-images {
+
+  img {
+    display: block;
+    max-width: 100%;
+  }
+
+}
+
+// Fluid text mixin courtesy of: https://css-tricks.com/snippets/css/fluid-typography/
+
+@function strip-unit($value) {
+  @return $value / ($value * 0 + 1);
+}
+
+@mixin u-fluid-type($min-vw, $max-vw, $min-font-size, $max-font-size) {
+  $u1: unit($min-vw);
+  $u2: unit($max-vw);
+  $u3: unit($min-font-size);
+  $u4: unit($max-font-size);
+
+  @if $u1 == $u2 and $u1 == $u3 and $u1 == $u4 {
+    & {
+      font-size: $min-font-size;
+      @media screen and (min-width: $min-vw) {
+        font-size: calc(#{$min-font-size} + #{strip-unit($max-font-size - $min-font-size)} * ((100vw - #{$min-vw}) / #{strip-unit($max-vw - $min-vw)}));
+      }
+      @media screen and (min-width: $max-vw) {
+        font-size: $max-font-size;
+      }
+    }
+  }
+}
+
+/*
+
+One-line truncation. Use like:
+
+@include u-one-line-truncation(active);
+
+*/
+
+@mixin u-one-line-truncation($state) {
+
+  @if $state == inactive {
+    white-space: normal;
+  }
+
+  @else if $state == active {
+    display: block;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+}

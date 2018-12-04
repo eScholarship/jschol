@@ -32,7 +32,7 @@ def getCitation(unit, shortArk, authors, attrs)
     :type => item.genre,
     :title => item.title,
     :URL => "http://" + request.host + "/uc/item/" + shortArk,
-    :issued => {"raw": [getDateString(item.pub_date)]}
+    :issued => {"raw": [getDateString(item.published)]}
   }
   if attrs['publisher']
     c[:publisher] = attrs['publisher']

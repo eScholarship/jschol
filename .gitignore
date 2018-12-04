@@ -4,6 +4,7 @@ app/js/*bundle*.js
 app/js/manifest.json
 app/js/*.map
 app/siteMap*.xml
+awsLogs/
 bin/
 .bundle/
 bower_components/
@@ -16,6 +17,7 @@ gomysql
 iso.pid
 jschol.pid
 logs/
+mailLogs/
 node_modules/
 normalized/
 prefilterDirs.txt
@@ -35,4 +37,5 @@ node_modules
 *.css.map
 *.log
 .mysqlProxySock
+*.out
 *.sql_log

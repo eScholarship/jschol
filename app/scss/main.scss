@@ -4,11 +4,7 @@
 
 @import 'breakpoints';
 @import 'variables';
-@import 'mixins';
-
-// ***** Vendor Libraries ***** //
-
-@import '../bower_components/normalize-scss/_normalize.scss';
+@import 'utilities';
 
 // ***** Added to jschol (not in eschol-ui) ***** //
 @import '../bower_components/flickity/dist/flickity.css';
@@ -19,7 +15,7 @@
 @import 'eschol_pdf_viewer';
 @import 'issueConfig';
 @import 'redirectConfig';
-@import 'searchExtra';
+@import 'statsReports';
 @import 'widgetselector';
 
 // ***** Objects ***** //
@@ -31,19 +27,22 @@
 @import 'dividecontent';
 @import 'heading';
 @import 'input';
-@import 'textlink';
 @import 'stat';
+@import 'textlink';
+@import 'well';
 
 // ***** Components ***** //
 
 @import 'authorlist';
 @import 'breadcrumb';
+@import 'campuscarouselframe';
 @import 'campushero';
 @import 'campussearch';
-@import 'campusselector';
 @import 'checkbox';
+@import 'clientmarkup';
 @import 'columns';
 @import 'datatable';
+@import 'daterange';
 @import 'descriptionlist';
 @import 'download';
 @import 'export';
@@ -51,23 +50,25 @@
 @import 'filter';
 @import 'footer';
 @import 'header';
-@import 'heatmap';
 @import 'hero';
 @import 'homesection';
 @import 'infopages';
+@import 'issue';
 @import 'itemactions';
-@import 'itemcarousel';
 @import 'itemunavailable';
 @import 'journal';
+@import 'journalcarousel';
 @import 'journalgrid';
 @import 'journalinfo';
 @import 'jump';
 @import 'language';
+@import 'lazyimage';
 @import 'marquee';
 @import 'mediafeature';
 @import 'mediafile';
 @import 'mediafilegrid';
 @import 'medialist';
+@import 'mediaviewer';
 @import 'modal';
 @import 'nav';
 @import 'navbar';
@@ -75,16 +76,17 @@
 @import 'pdfview';
 @import 'pub';
 @import 'pubdata';
+@import 'pubinfo';
 @import 'publocation';
 @import 'pubpreview';
 @import 'pubyear';
+@import 'refine';
 @import 'relateditems';
 @import 'scholworks';
 @import 'search1';
 @import 'search2';
 @import 'servererror';
 @import 'share';
-@import 'sidebarnav';
 @import 'skipnav';
 @import 'sort';
 @import 'sortpagination';
@@ -99,11 +101,11 @@
 @import 'togglecontent';
 @import 'togglelist';
 @import 'togglesection';
-@import 'unititem';
+@import 'toplink';
+@import 'unitcarousel';
 @import 'unitlist';
-@import 'unitpub';
+@import 'unitseries';
 @import 'viewexternal';
-@import 'well';
 @import 'wizard';
 
 // ***** Global Styles ***** //
@@ -116,7 +118,7 @@ body {
   margin: 0 auto;
   padding: $spacing-sm $spacing-sm 0;
   background-color: lighten($color-light-gray, 15%);
-  font-family: 'KievitWeb';
+  font-family: 'SourceSansPro', 'Arial', 'Helvetica', sans-serif;
   overflow-x: hidden;
 
   @include bp (screen2) {

@@ -1,7 +1,7 @@
 // ##### Subheader Component ##### //
 
 .c-subheader {
-  @extend %page-bleed;
+  @extend %u-page-bleed;
   display: flex;
   position: relative; // to absolute positioned nav component
   align-items: center;
@@ -104,30 +104,6 @@
       margin-top: 2px;
     }
 
-  }
-
-}
-
-.c-subheader__sidebar-text {
-  display: none;
-
-  @include bp(screen3) {
-    display: block;
-    width: 14em;
-    margin: $spacing-sm 0;
-    font-size: 0.8em;
-    text-align: right;
-  }
-
-}
-
-.c-subheader__sidebar-number {
-  display: none;
-
-  @include bp(screen3) {
-    display: block;
-    color: $color-teal;
-    text-align: right;
   }
 
 }

@@ -1,8 +1,9 @@
 // ##### Informational Pages Component ##### //
 
+/* in HTML but not styled:
 .c-infopages {
-  // no styles
 }
+*/
 
 .c-infopages__show-more {
   padding-top: $spacing-md;
@@ -23,7 +24,7 @@
 
   }
 
-  .c-pagination {
+  [class^='c-pagination'] {
     margin: 0 $spacing-sm $spacing-base;
 
     @include bp(screen2) {
@@ -63,7 +64,7 @@
     padding: $spacing-md;
   }
 
-  @include headings() {
+  @include u-heading() {
     margin: 0;
     font-size: 1em;
     font-weight: normal;

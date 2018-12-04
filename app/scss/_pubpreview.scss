@@ -1,7 +1,6 @@
 // ##### Publication Preview Component ##### //
 
 .c-pubpreview {
-  margin-bottom: $spacing-md;
 
   @include bp(screen1) {
     display: flex;
@@ -9,20 +8,30 @@
   }
 
   + .c-pubpreview {
-    padding-top: $spacing-md;
     border-top: 1px solid $color-dark-gray;
+
+    @include bp(screen1) {
+      padding-top: $spacing-md;
+    }
+
   }
 
 }
 
 .c-pubpreview__img {
-  display: inline-block;
-  flex: 0 0 150px;
-  border: 1px solid $color-light-gray;
-  box-shadow: $box-shadow2;
+  display: none;
 
   @include bp(screen1) {
+    display: inline-block;
+    flex: 0 0 121px;
     margin-right: $spacing-md;
+    margin-bottom: $spacing-md;
+    border: 1px solid $color-light-gray;
+    box-shadow: $box-shadow2;
+  }
+
+  img {
+    display: block;
   }
 
 }

@@ -2,6 +2,7 @@
 # Methods for obtaining database Caches
 
 $lastFillTime = nil
+$cacheFillMutex = Mutex.new
 
 def getUnitsHash
   return Unit.to_hash(:id)
@@ -10,7 +11,9 @@ end
 def refreshUnitsHash
   # Signal for all Puma workers to rebuild their hashes
   signalDbRefill
-  $unitsHash = getUnitsHash
+  $cacheFillMutex.synchronize {
+    $unitsHash = getUnitsHash
+  }
 end
 
 def getHierByUnit
@@ -62,11 +65,11 @@ end
 
 ########### HOME PAGE statistics ############
 def countItems
-  return Item.where(status: 'published').count
+  return UnitStat.where(unit_id: 'root').sum(Sequel.lit("attrs->'$.post'")).to_i
 end
 
 def countViews
-  return UnitCount.where(unit_id: 'root').sum(:hits)
+  return UnitStat.where(unit_id: 'root').sum(Sequel.lit("attrs->'$.hit'")).to_i
 end
 
 def countOpenItems
@@ -74,23 +77,17 @@ def countOpenItems
 end
 
 def countEscholJournals
-  return Unit.where(type: 'journal').exclude(status: 'hidden').count
+  return Unit.where(type: 'journal', status: 'active').count
 end
 
 def countOrus 
   return Unit.where(type: 'oru').exclude(status: 'hidden').count
 end
 
-def countArticles
-  return Item.where(status: 'published').where(genre: 'article').count
-end
-
-def countThesesDiss
-  return Item.where(status: 'published').where(genre: 'dissertation').count
-end
-
-def countBooks
-  return Item.where(status: 'published').where(genre: 'monograph').count
+def countGenres
+  genreCounts = Item.where(status: 'published').
+                     group_and_count(:genre).as_hash(:genre, :count)
+  return genreCounts['article'], genreCounts['dissertation'], genreCounts['monograph']
 end
 
 ############ CAMPUS PAGE statistics ###########
@@ -99,8 +96,10 @@ end
 # {"ucb"=>11000, "ucd"=>982 ...}
 def getViewsPerCampus
   activeCampusIds = $activeCampuses.map{|id, c| id }
-  array = UnitCount.select_group(:unit_id).where(:unit_id=>activeCampusIds).select_append{sum(:hits).as(count)}.
-    map{|y| y.values}
+  array = UnitStat.where(:unit_id=>activeCampusIds).
+                   select_group(:unit_id).
+                   select_append{sum(Sequel.lit("attrs->'$.hit'")).as(count)}.
+                   map{ |y| y.values }
   return Hash[array.map(&:values).map(&:flatten)]
 end
 
@@ -125,30 +124,30 @@ def getUnitCarouselStats
     next x
   end
   unitsInCars.reject!{ |u| u.empty? }.flatten!.uniq!
-  # This is how it would look if we were using the UnitItems table to get counts
-  # itemsInUnitCar = UnitItem.join(:items, :id=>:item_id).
-  #  where(:unit_id=>unitsInCars).exclude(:status=>'withdrawn').group_and_count(:unit_id).
-  #  map{|y| y.values}
-  # itemCounts = Hash[itemsInUnitCar.map(&:values).map(&:flatten)]
-  itemsInUnitCar = UnitCount.select_group(:unit_id).where(:unit_id=>unitsInCars).select_append{sum(:items_posted).as(item_count)}.map{|y| y.values}
-  viewsInUnitCar = UnitCount.select_group(:unit_id).where(:unit_id=>unitsInCars).select_append{sum(:hits).as(view_count)}.map{|y| y.values}
+  itemsInUnitCar = UnitStat.select_group(:unit_id).where(:unit_id=>unitsInCars).
+                            select_append{sum(Sequel.lit("attrs->'$.post'")).as(item_count)}.map{|y| y.values}
+  viewsInUnitCar = UnitStat.select_group(:unit_id).where(:unit_id=>unitsInCars).
+                            select_append{sum(Sequel.lit("attrs->'$.hit'")).as(view_count)}.map{|y| y.values}
   x = (itemsInUnitCar + viewsInUnitCar).group_by{|h| h[:unit_id]}.map{|k, v| v.reduce(Hash.new, :merge) }
   return x.map{|h| [h[:unit_id], {:item_count=>h[:item_count], :view_count=>h[:view_count]}]}.to_h
 end
 
 def sumArrayCounts(array)
-  return array.inject(0) {|sum, h| sum + h[:count]}
+  return array.inject(0) {|sum, h| sum + (h[:count] || 0)}
 end
 
-# Journal Carousel: Compile item and view counts for all journals, segmented by campus. (Throwing them all in, not bothering to check if campus turned journal carousel on in configuration or not)
+# Journal Carousel: Compile item and view counts for all journals, segmented by campus.
+# (Throwing them all in, not bothering to check if campus turned journal carousel on in configuration or not)
 # {"ucb"=> {item_count: 3408, view_count: 30000}, "ucla"=>...}
 def getJournalCarouselStats
   journalsInCars = $activeCampuses.map do |id, c|
     c_journals = $campusJournals.select{ |j| j[:ancestor_unit].include?(id) }
                   .select{ |h| h[:status]!="archived" }.map{|u| u[:id] }
-    item_counts_per_unit = UnitCount.select_group(:unit_id).where(:unit_id=>c_journals).select_append{sum(:items_posted).as(count)}.map{|y| y.values}
+    item_counts_per_unit = UnitStat.select_group(:unit_id).where(:unit_id=>c_journals).
+                                    select_append{sum(Sequel.lit("attrs->'$.post'")).as(count)}.map{|y| y.values}
     item_count = sumArrayCounts(item_counts_per_unit)
-    view_counts_per_unit = UnitCount.select_group(:unit_id).where(:unit_id=>c_journals).select_append{sum(:hits).as(count)}.map{|y| y.values}
+    view_counts_per_unit = UnitStat.select_group(:unit_id).where(:unit_id=>c_journals).
+                                    select_append{sum(Sequel.lit("attrs->'$.hit'")).as(count)}.map{|y| y.values}
     view_count = sumArrayCounts(view_counts_per_unit)
     {id => {'item_count': item_count, 'view_count': view_count}}
   end
@@ -161,16 +160,17 @@ end
 # {"ucb"=>11000, "ucd"=>982 ...}
 def getItemStatsPerCampus
   activeCampusIds = $activeCampuses.map{|id, c| id }
-  array = UnitItem.join(:items, :id=>:item_id).
-    where(:unit_id=>activeCampusIds).exclude(:status=>'withdrawn').group_and_count(:unit_id).
-    map{|y| y.values}
+  array = UnitStat.where(:unit_id=>activeCampusIds).
+                 select_group(:unit_id).
+                 select_append{sum(Sequel.lit("attrs->'$.post'")).as(count)}.
+                 map{ |y| y.values }
   return Hash[array.map(&:values).map(&:flatten)]
 end
 
 # Get number of journals per campus as one hash.
 # {"ucb"=>53, "ucd"=>20 ...}
 def getJournalStatsPerCampus
-  activeJournals = Unit.filter(type: 'journal').exclude(status: "hidden").map(:id)
+  activeJournals = Unit.filter(type: 'journal', status: 'active').map(:id)
   activeCampusIds = $activeCampuses.map{|id, c| id }
   array = UnitHier.join(:units, :id=>:unit_id).
     where(:unit_id=>activeJournals, :ancestor_unit=>activeCampusIds).group_and_count(:ancestor_unit).
@@ -181,7 +181,8 @@ end
 # Get number of ORUs per campus as one hash. ORUs must contain items in unit_items table to be counted
 # {"ucb"=>117, "ucd"=>42 ...}
 def getOruStatsPerCampus
-  orusWithContent = Unit.join(:unit_items, :unit_id=>:id).filter(type: 'oru').exclude(status: 'hidden').distinct.select(:id).map(:id)
+  orusWithContent = Unit.join(:unit_items, :unit_id=>:id).filter(type: 'oru').exclude(status: 'hidden').
+                         distinct.select(:id).map(:id)
   activeCampusIds = $activeCampuses.map{|id, c| id }
   array = UnitHier.join(:units, :id=>:unit_id).
     where(:unit_id=>orusWithContent, :ancestor_unit=>activeCampusIds).group_and_count(:ancestor_unit).
@@ -237,61 +238,56 @@ Thread.new {
 }
 
 def fillCaches
-  begin
-    utime = getLastTableUpdateTime
-    if utime && $lastFillTime == utime  # don't refill if nothing changed
-      return
+  $cacheFillMutex.synchronize {
+    begin
+      utime = getLastTableUpdateTime
+      if utime && $lastFillTime == utime  # don't refill if nothing changed
+        return
+      end
+      $lastFillTime = utime
+      puts "Filling caches.           "
+      $unitsHash = getUnitsHash
+      $hierByUnit = getHierByUnit
+      $hierByAncestor = getHierByAncestor
+      $activeCampuses = getActiveCampuses
+      $oruAncestors = getOruAncestors
+      $campusJournals = getJournalsPerCampus    # Used for browse pages
+
+      #####################################################################
+      # STATISTICS
+      # These are dependent on instantiation of $activeCampuses
+
+      # HOME PAGE statistics
+      $statsCountItems =  countItems
+      $statsCountViews = countViews
+      $statsCountOpenItems = countOpenItems
+      $statsCountEscholJournals = countEscholJournals
+      $statsCountOrus = countOrus
+      $statsCountArticles, $statsCountThesesDiss, $statsCountBooks = countGenres
+
+      # CAMPUS PAGE statistics
+      $statsCampusViews = getViewsPerCampus
+      $statsUnitCarousel = getUnitCarouselStats
+      $statsJournalCarousel = getJournalCarouselStats
+
+      # BROWSE PAGE AND CAMPUS PAGE statistics
+      $statsCampusItems = getItemStatsPerCampus
+      $statsCampusJournals = getJournalStatsPerCampus
+      $statsCampusOrus = getOruStatsPerCampus
+
+      # OTHER
+      $staticRedirects = getStaticRedirects
+
+      puts "...filled             "
+    rescue Exception => e
+      puts "Unexpected exception during cache filling: #{e} #{e.backtrace}"
     end
-    $lastFillTime = utime
-    puts "Filling caches.           "
-    $unitsHash = getUnitsHash
-    $hierByUnit = getHierByUnit
-    $hierByAncestor = getHierByAncestor
-    $activeCampuses = getActiveCampuses
-    $oruAncestors = getOruAncestors
-    $campusJournals = getJournalsPerCampus    # Used for browse pages
-
-    #####################################################################
-    # STATISTICS
-    # These are dependent on instantiation of $activeCampuses
-
-    # HOME PAGE statistics
-    $statsCountItems =  countItems
-    $statsCountViews = countViews
-    $statsCountOpenItems = countOpenItems
-    $statsCountEscholJournals = countEscholJournals
-    $statsCountOrus = countOrus
-    $statsCountArticles = countArticles
-    $statsCountThesesDiss = countThesesDiss
-    $statsCountBooks = countBooks
-
-    # CAMPUS PAGE statistics
-    $statsCampusViews = getViewsPerCampus
-    $statsUnitCarousel = getUnitCarouselStats
-    $statsJournalCarousel = getJournalCarouselStats
-
-    # BROWSE PAGE AND CAMPUS PAGE statistics
-    $statsCampusItems = getItemStatsPerCampus
-    $statsCampusJournals = getJournalStatsPerCampus
-    $statsCampusOrus = getOruStatsPerCampus
-
-    # OTHER
-    $staticRedirects = getStaticRedirects
-
-    puts "...filled             "
-  rescue Exception => e
-    puts "Unexpected exception during cache filling: #{e} #{e.backtrace}"
-  end
+  }
 end
 
 # Signal from the master process that caches need to be rebuilt.
 Signal.trap("WINCH") {
-  # Ignore on non-worker process
-  if $workerPrefix != ""
-    Thread.new {
-      fillCaches
-    }
-  end
+  Thread.new {
+    fillCaches
+  }
 }
-
-fillCaches

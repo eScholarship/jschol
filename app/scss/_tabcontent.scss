@@ -1,8 +1,9 @@
 // ##### Tab Content Components ##### //
 
+/* in HTML but not styled:
 .c-tabcontent {
-  // not used
 }
+*/
 
 .c-tabcontent__main-heading {
   @extend %o-heading1a;
@@ -36,4 +37,9 @@
 
   }
 
+}
+
+.c-tabcontent-hide {
+  display: none;
+  // .c-tabcontent-reveal acts as opposite
 }

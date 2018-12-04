@@ -80,7 +80,8 @@ class UnitProfileLayout extends React.Component {
       <Subscriber channel="cms">
       { cms => {
          let disableEdit = !(cms.permissions && cms.permissions.super)
-         let disableLogo = this.props.unit.type == "campus" && disableEdit
+         let disableLogo = (this.props.unit.type.indexOf("series") >= 0) ||
+                           (this.props.unit.type == "campus" && disableEdit)
          return (
          <div>
            <h3>Unit Configuration</h3>
@@ -120,6 +121,25 @@ class UnitProfileLayout extends React.Component {
                      </div>
                    }
                    <br/>
+
+                   { cms.permissions && cms.permissions.super &&
+                     <div>
+                       <label className="c-editable-page__label" htmlFor="status">Unit status: </label>
+                       <select name="status" defaultValue={data.status}>
+                         <option value="active">Active</option>
+                         <option value="hidden">Hidden</option>
+                         <option value="archived">Archived</option>
+                       </select>
+                       <br/><br/>
+                       <label className="c-editable-page__label" htmlFor="directSubmit">Direct submit: </label>
+                       <select name="directSubmit" defaultValue={data.directSubmit}>
+                         <option value="enabled">Enabled</option>
+                         <option value="disabled">Disabled</option>
+                         <option value="moribund">Archived</option>
+                       </select>
+                       <br/><br/>
+                     </div>
+                   }
 
                    { this.props.unit.type == 'journal' &&
                      <div>
@@ -223,26 +243,6 @@ class UnitProfileLayout extends React.Component {
     )
   }
 
-  renderDepartmentConfig() {
-    let data = this.props.data
-
-    return (
-      <div>
-        <h3>Main Content Configuration</h3>
-        <div className="c-columns">
-          <main id="maincontent">
-            <section className="o-columnbox1">
-              <div>
-                Here you can suppress a given series, and reorder series.
-                <br/><i>(not yet implemented)</i>
-              </div>
-            </section>
-          </main>
-        </div>
-      </div>
-    )
-  }
-
   renderJournalConfig() {
     let data = this.props.data
 
@@ -284,7 +284,6 @@ class UnitProfileLayout extends React.Component {
         { this.renderUnitConfig() }
         { this.renderSocialConfig() }
         { this.renderAboutConfig() }
-        { this.props.unit.type == 'oru' && this.renderDepartmentConfig() }
         { this.props.unit.type == 'journal' && this.renderJournalConfig() }
       </div>
     )

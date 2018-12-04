@@ -2,10 +2,6 @@
 
 # This script converts data from old eScholarship into the new eschol5 database.
 #
-# The "--units" mode converts the contents of allStruct-eschol5.xml and the
-# various brand files into the unit/unitHier/etc tables. It is
-# built to be fully incremental.
-#
 # The "--items" mode converts combined an XTF index dump with the contents of
 # UCI metadata files into the items/sections/issues/etc. tables. It is also
 # built to be fully incremental.
@@ -14,10 +10,14 @@
 require 'rubygems'
 require 'bundler/setup'
 
+# Run from the right directory (the parent of the tools dir)
+Dir.chdir(File.dirname(File.expand_path(File.dirname(__FILE__))))
+
 # Remainder are the requirements for this program
 require 'aws-sdk'
 require 'date'
 require 'digest'
+require 'ezid-client'
 require 'fastimage'
 require 'fileutils'
 require 'httparty'
@@ -25,15 +25,19 @@ require 'json'
 require 'logger'
 require 'mimemagic'
 require 'mimemagic/overlay' # for Office 2007+ formats
+require 'mini_magick'
+require 'netrc'
 require 'nokogiri'
 require 'open3'
+require 'ostruct'
 require 'pp'
 require 'rack'
+require 'sanitize'
 require 'sequel'
-require 'ostruct'
 require 'time'
-require 'yaml'
+require 'unindent'
 require_relative '../util/nailgun.rb'
+require_relative '../util/normalize.rb'
 require_relative '../util/sanitize.rb'
 require_relative '../util/xmlutil.rb'
 
@@ -56,18 +60,30 @@ TEMP_DIR = "/apps/eschol/eschol5/jschol/tmp"
 FileUtils.mkdir_p(TEMP_DIR)
 
 # The main database we're inserting data into
-DB = Sequel.connect(YAML.load_file("config/database.yaml"))
+DB = Sequel.connect({
+  "adapter"  => "mysql2",
+  "host"     => ENV["ESCHOL_DB_HOST"] || raise("missing env ESCHOL_DB_HOST"),
+  "port"     => ENV["ESCHOL_DB_PORT"] || raise("missing env ESCHOL_DB_PORT").to_i,
+  "database" => ENV["ESCHOL_DB_DATABASE"] || raise("missing env ESCHOL_DB_DATABASE"),
+  "username" => ENV["ESCHOL_DB_USERNAME"] || raise("missing env ESCHOL_DB_USERNAME"),
+  "password" => ENV["ESCHOL_DB_PASSWORD"] || raise("missing env ESCHOL_DB_HOST") })
 $dbMutex = Mutex.new
 
 # Log SQL statements, to aid debugging
-#File.exists?('convert.sql_log') and File.delete('convert.sql_log')
+File.exists?('convert.sql_log') and File.delete('convert.sql_log')
 #DB.loggers << Logger.new('convert.sql_log')
 
 # The old eschol queue database, from which we can get a list of indexable ARKs
-QUEUE_DB = Sequel.connect(YAML.load_file("config/queueDb.yaml"))
+QUEUE_DB = Sequel.connect({ adapter: "sqlite",
+                            database: "/apps/eschol/erep/xtf/control/db/queues.db",
+                            readonly: true,
+                            timeout: 30000 })
 
 # The old stats database, from which we can copy item counts
-STATS_DB = Sequel.connect(YAML.load_file("config/statsDb.yaml"))
+STATS_DB = Sequel.connect({ adapter: "sqlite",
+                            database: "/apps/eschol/erep/xtf/stats/stats.db",
+                            readonly: true,
+                            timeout: 600000 })
 
 # Queues for thread coordination
 $indexQueue = SizedQueue.new(100)
@@ -75,6 +91,7 @@ $batchQueue = SizedQueue.new(1)  # no use getting very far ahead of CloudSearch
 $splashQueue = Queue.new
 
 # Mode to force checking of the index digests (useful when indexing algorithm or unit structure changes)
+RESCAN_SET_SIZE = 2000
 $rescanMode = ARGV.delete('--rescan')
 
 # Mode to process a single item and just print it out (no inserting or batching)
@@ -97,20 +114,20 @@ end
 
 # CloudSearch API client
 $csClient = Aws::CloudSearchDomain::Client.new(credentials: Aws::InstanceProfileCredentials.new,
-  endpoint: YAML.load_file("config/cloudSearch.yaml")["docEndpoint"])
+  endpoint: ENV['CLOUDSEARCH_DOC_ENDPOINT'])
 
 # S3 API client
-$s3Config = OpenStruct.new(YAML.load_file("config/s3.yaml"))
-$s3Client = Aws::S3::Client.new(credentials: Aws::InstanceProfileCredentials.new, region: $s3Config.region)
-$s3Bucket = Aws::S3::Bucket.new($s3Config.bucket, client: $s3Client)
+# Note: we use InstanceProfileCredentials here to avoid picking up ancient
+#       credentials file pub-submit-prd:~/.aws/config
+$s3Client = Aws::S3::Client.new(credentials: Aws::InstanceProfileCredentials.new,
+                                region: ENV['S3_REGION'] || raise("missing env S3_REGION"))
+$s3Bucket = Aws::S3::Bucket.new(ENV['S3_BUCKET'] || raise("missing env S3_BUCKET"), client: $s3Client)
 
 # Caches for speed
 $allUnits = nil
 $unitAncestors = nil
+$unitChildren = nil
 $issueCoverCache = {}
-$issueBuyLinks = Hash[*File.readlines("/apps/eschol/erep/xtf/style/textIndexer/mapping/buyLinks.txt").map { |line|
-  line =~ %r{^.*entity=(.*);volume=(.*);issue=(.*)\|(.*?)\s*$} ? ["#{$1}:#{$2}:#{$3}", $4] : [nil, line]
-}.flatten]
 $issueNumberingCache = {}
 
 # Make puts thread-safe, and prepend each line with the thread it's coming from. While we're at it,
@@ -128,9 +145,9 @@ end
 # Determine the old front-end server to use for thumbnailing
 $hostname = `/bin/hostname`.strip
 $thumbnailServer = case $hostname
-  when 'pub-submit-dev'; 'http://pub-eschol-dev.escholarship.org'
+  when 'pub-submit-dev'; 'http://pub-submit-dev.escholarship.org'
   when 'pub-submit-stg-2a', 'pub-submit-stg-2c'; 'http://pub-eschol-stg.escholarship.org'
-  when 'pub-submit-prd-2a', 'pub-submit-prd-2c'; 'http://pub-eschol-prd-alb.escholarship.org'
+  when 'pub-submit-prd-2a', 'pub-submit-prd-2c'; 'https://submit.escholarship.org'
   else raise("unrecognized host #{hostname}")
 end
 
@@ -153,6 +170,27 @@ $discTbl = {"1540" => "Life Sciences",
             "2932" => "Architecture",
             "3579" => "Education"}
 
+$issueRightsCache = {}
+
+$oaPolicyDate = { lbnl:    "2015-10-01",
+                  ucsf:    "2012-05-21",
+                  ucop:    nil,  # not included for now; maybe will be: 2015-10-23
+                  anrcs:   nil,  # not included for now
+                  default: "2013-07-24" }
+
+###################################################################################################
+# Configure EZID API for minting arks for people
+Ezid::Client.configure do |config|
+  (ezidCred = Netrc.read['ezid.cdlib.org']) or raise("Need credentials for ezid.cdlib.org in ~/.netrc")
+  config.user = ezidCred[0]
+  config.password = ezidCred[1]
+  config.default_shoulder = case $hostname
+    when 'pub-submit-stg-2a', 'pub-submit-stg-2c', 'pub-submit-dev'; 'ark:/99999/fk4'
+    when 'pub-submit-prd-2a', 'pub-submit-prd-2c'; 'ark:/99166/p3'
+    else raise "Unrecognized hostname for shoulder determination."
+  end
+end
+
 ###################################################################################################
 # Monkey-patch to nicely ellide strings.
 class String
@@ -168,116 +206,17 @@ class String
   end unless defined? ellipsize
 end
 
-###################################################################################################
-# Monkey-patch to add update_or_replace functionality, which is strangely absent in the Sequel gem.
-class Sequel::Model
-  def self.update_or_replace(id, **data)
-    record = self[id]
-    if record
-      record.update(**data)
-    else
-      data[@primary_key] = id
-      Unit.create(**data)
-    end
-  end
-end
-
-###################################################################################################
-# Model classes for easy object-relational mapping in the database
-
-class Unit < Sequel::Model
-  unrestrict_primary_key
-end
-
-class UnitHier < Sequel::Model(:unit_hier)
-  unrestrict_primary_key
-end
-
-class UnitCount < Sequel::Model
-end
-
-class Item < Sequel::Model
-  unrestrict_primary_key
-end
-
-class UnitItem < Sequel::Model
-  unrestrict_primary_key
-end
-
-class ItemAuthor < Sequel::Model
-  unrestrict_primary_key
-end
-
-class ItemCount < Sequel::Model
-end
-
-class ItemAuthors < Sequel::Model(:item_authors)
-  unrestrict_primary_key
-end
-
-class Issue < Sequel::Model
-end
-
-class Section < Sequel::Model
-end
-
-class Widget < Sequel::Model
-end
-
-class Page < Sequel::Model
-end
-
-class InfoIndex < Sequel::Model(:info_index)
-end
-
-class DisplayPDF < Sequel::Model
-  unrestrict_primary_key
-end
-
-class Redirect < Sequel::Model
-end
-
+require_relative './models.rb'
 require_relative '../splash/splashGen.rb'
 
 ###################################################################################################
-# Insert hierarchy links (skipping dupes) for all descendants of the given unit id.
-def linkUnit(id, childMap, done)
-  childMap[id].each_with_index { |child, idx|
-    if !done.include?([id, child])
-      UnitHier.create(
-        :ancestor_unit => id,
-        :unit_id => child,
-        :ordering => idx,
-        :is_direct => true
-      )
-      done << [id, child]
-    end
-    if childMap.include?(child)
-      linkUnit(child, childMap, done)
-      linkDescendants(id, child, childMap, done)
-    end
-  }
-end
-
-###################################################################################################
-# Helper function for linkUnit
-def linkDescendants(id, child, childMap, done)
-  childMap[child].each { |child2|
-    if !done.include?([id, child2])
-      #puts "linkDescendants: id=#{id} child2=#{child2}"
-      UnitHier.create(
-        :ancestor_unit => id,
-        :unit_id => child2,
-        :ordering => nil,
-        :is_direct => false
-      )
-      done << [id, child2]
-    end
-    if childMap.include?(child2)
-      linkDescendants(id, child2, childMap, done)
-    end
-  }
-end
+$issueBuyLinks = Hash[*File.readlines("/apps/eschol/erep/xtf/style/textIndexer/mapping/buyLinks.txt").map { |line|
+  line =~ %r{^.*entity=(.*);volume=(.*);issue=(.*)\|(.*?)\s*$} ? ["#{$1}:#{$2}:#{$3}", $4] : [nil, line]
+}.flatten]
+# Retain buy-link overrides in eschol5
+Issue.where(Sequel.lit("attrs->'$.buy_link' is not null")).each { |record|
+  $issueBuyLinks["#{record.unit_id}:#{record.volume}:#{record.issue}"] = JSON.parse(record.attrs)['buy_link']
+}
 
 ###################################################################################################
 # Upload an asset file to S3 (if not already there), and return the asset ID. Attaches a hash of
@@ -287,7 +226,7 @@ def putAsset(filePath, metadata)
   # Calculate the sha256 hash, and use it to form the s3 path
   md5sum    = Digest::MD5.file(filePath).hexdigest
   sha256Sum = Digest::SHA256.file(filePath).hexdigest
-  s3Path = "#{$s3Config.prefix}/binaries/#{sha256Sum[0,2]}/#{sha256Sum[2,2]}/#{sha256Sum}"
+  s3Path = "#{ENV['S3_PREFIX'] || raise("missing env S3_PREFIX")}/binaries/#{sha256Sum[0,2]}/#{sha256Sum[2,2]}/#{sha256Sum}"
 
   # If the S3 file is already correct, don't re-upload it.
   obj = $s3Bucket.object(s3Path)
@@ -298,7 +237,8 @@ def putAsset(filePath, metadata)
               original_path: filePath.sub(%r{.*/([^/]+/[^/]+)$}, '\1'), # retain only last directory plus filename
               mime_type: MimeMagic.by_magic(File.open(filePath)).to_s
             }))
-    obj.etag == "\"#{md5sum}\"" or raise("S3 returned md5 #{resp.etag.inspect} but we expected #{md5sum.inspect}")
+    # 2018-06-01: Is AWS introducing a introducing a new kind of etag? This occasionally fails.
+    # obj.etag == "\"#{md5sum}\"" or raise("S3 returned md5 #{resp.etag.inspect} but we expected #{md5sum.inspect}")
   end
 
   return sha256Sum
@@ -323,506 +263,6 @@ def putImage(imgPath, &block)
              width: dims[0],
              height: dims[1]
            }
-  end
-end
-
-###################################################################################################
-def convertLogo(unitID, unitType, logoEl)
-  # Locate the image reference
-  logoImgEl = logoEl && logoEl.at("./div[@id='logoDiv']/img[@src]")
-  if !logoImgEl
-    if unitType != "campus"
-      return {}
-    end
-    # Default logo for campus
-    imgPath = "app/images/logo_#{unitID}.svg"
-  else
-    imgPath = logoImgEl && "/apps/eschol/erep/xtf/static/#{logoImgEl[:src]}"
-    imgPath =~ %r{LOGO_PATH|/$} and return {} # logo never configured
-  end
-  if !File.file?(imgPath)
-    #puts "Warning: Can't find logo image: #{imgPath.inspect}" # who cares
-    return {}
-  end
-
-  data = putImage(imgPath)
-  (logoEl && logoEl.attr('banner') == "single") and data[:is_banner] = true
-  return { logo: data }
-end
-
-###################################################################################################
-def convertBlurb(unitID, blurbEl)
-  # Make sure there's a div
-  divEl = blurbEl && blurbEl.at("./div")
-  divEl or return {}
-
-  # Make sure the HTML conforms to our specs
-  html = sanitizeHTML(divEl.inner_html)
-  html.length > 0 or return {}
-  return { about: html }
-end
-
-###################################################################################################
-def stripXMLWhitespace(node)
-  node.children.each_with_index { |kid, idx|
-    if kid.comment?
-      kid.remove
-    elsif kid.element?
-      stripXMLWhitespace(kid)
-    elsif kid.text?
-      prevIsElement = node.children[idx-1] && node.children[idx-1].element?
-      nextIsElement = node.children[idx+1] && node.children[idx+1].element?
-      ls = kid.content.lstrip
-      if ls != kid.content
-        if idx == 0
-          if ls.empty?
-            kid.remove
-            next
-          else
-            kid.content = ls
-          end
-        elsif prevIsElement && nextIsElement
-          if kid.content.strip.empty?
-            kid.remove
-            next
-          else
-            kid.content = " " + kid.content.strip + " "
-          end
-        else
-          kid.content = " " + ls
-        end
-      end
-      rs = kid.content.rstrip
-      if rs != kid.content
-        if idx == node.children.length - 1
-          if rs.empty?
-            kid.remove
-            next
-          else
-            kid.content = rs
-          end
-        else
-          kid.content = rs + " "
-        end
-      end
-    end
-  }
-end
-
-###################################################################################################
-def putBrandDownload(entity, filename)
-  filePath = "/apps/eschol/erep/xtf/static/brand/#{entity}/#{filename}"
-  if !File.exist?(filePath)
-    puts "Warning: can't find brand download #{filePath}"
-    return nil
-  end
-  return putAsset(filePath, {})
-end
-
-###################################################################################################
-def convertBrandDownloadToPage(unitID, navBar, navID, linkName, linkTarget)
-  if !(linkTarget =~ %r{/brand/([^/]+)/([^/]+)$})
-    puts "Warning: can't parse link to file in brand dir: #{linkTarget}"
-    return
-  end
-  entity, filename = $1, $2
-  assetID = putBrandDownload(entity, filename)
-  assertID or return
-
-  html = "<p>Please see <a href=\"/assets/#{assetID}\">#{filename}</a></p>"
-  html = sanitizeHTML(html)
-
-  slug = linkTarget.sub("\.[^.]+$", "").gsub(/[^\w ]/, '')
-
-  Page.create(unit_id: unitID,
-              slug: slug,
-              name: linkName,
-              title: linkName,
-              attrs: JSON.generate({ html: html }))
-  navBar << { id: navID, type: "page", slug: slug, name: linkName }
-end
-
-###################################################################################################
-def convertTables(html)
-  html.gsub! %r{<table[^>]*>}i, ""
-  html.gsub! %r{</table>}i, ""
-
-  html.gsub! %r{<tr[^>]*>}i, ""
-  html.gsub! %r{</tr>}i, "<br/>"
-
-  html.gsub! %r{</(td|th)>\s*<(td|th)[^>]*>}i, " | "
-  html.gsub! %r{</?(td|th)[^>]*>}i, ""
-  return html
-end
-
-###################################################################################################
-def convertPage(unitID, navBar, navID, contentDiv, slug, name)
-  title = nil
-  stripXMLWhitespace(contentDiv)
-  if contentDiv.children.empty?
-    #puts "Warning: empty page content for page #{slug}" # who cares
-    return
-  end
-
-  # If content consists of a single <p>, strip it off.
-  kid = contentDiv.children[0]
-  if contentDiv.children.length == 1 && kid.name =~ /^[pP]$/
-    contentDiv = kid
-  end
-
-  # If it starts with a heading, grab that.
-  kid = contentDiv.children[0]
-  if kid.name =~ /^h1|h2|h3|H1|H2|H3$/
-    title = kid.inner_html
-    kid.remove
-  else
-    #puts("Warning: no title for page #{slug} #{name.inspect}") # who cares
-  end
-
-  # If missing name, use title (or fall back to slug). And vice-versa
-  name ||= title || slug
-  title ||= name
-
-  # If remaining content consists of a single <p>, strip it off.
-  kid = contentDiv.children[0]
-  if contentDiv.children.length == 1 && kid.name =~ /^[pP]$/
-    contentDiv = kid
-  end
-
-  # Cheesy conversion of tables to lists, for now at least
-  html = contentDiv.inner_html
-  convertTables(html)
-
-  html = sanitizeHTML(html)
-  html.length > 0 or return
-
-  # Replace old-style links
-  html.gsub!(%r{href="([^"]+)"}) { |m|
-    link = $1
-    %{href="#{mapEntityLink(link) || link}"}
-  }
-
-  Page.create(unit_id: unitID,
-              slug: slug,
-              name: name,
-              title: title ? title : name,
-              attrs: JSON.generate({ html: html }))
-  navBar << { id: navID, type: "page", slug: slug, name: name }
-end
-
-###################################################################################################
-def mapEntityLink(linkTarget)
-  case linkTarget.sub(%r{^https?://escholarship.org}, '').sub(%r{^[/.]+}, '')
-  when %r{^uc/search\?entity=([^;]+)(;view=([^;]+))?}
-    "/uc/#{$1}#{$3 && "/#{$3}"}"
-  when %r{^uc/search\?entity=([^;]+)(;rmode=[^;]+)?$}
-    "/uc/#{$1}"
-  when %r{^uc/search\?entity=([^;]+);volume=(\d+);issue=(\d+)$}
-    "/uc/#{$1}/#{$2}/#{$3}"
-  when %r{^uc/([a-zA-Z0-9_]+)(\?rmode=[^;]+)?$}
-    "/uc/#{$1}"
-  when %r{^brand/([^/]+)/([^/]+)$}
-    entity, filename = $1, $2
-    "/uc/#{entity}/#{putBrandDownload(entity, filename)}"
-  else
-    return nil
-  end
-end
-
-###################################################################################################
-def convertNavBar(unitID, generalEl)
-  # Blow away existing database pages for this unit
-  Page.where(unit_id: unitID).delete
-
-  navBar = []
-  generalEl or return { nav_bar: navBar }
-
-  # Convert each link in linkset
-  linkedPagesUsed = Set.new
-  aboutBar = nil
-  curNavID = 0
-  generalEl.xpath("./linkSet/div").each { |linkDiv|
-    linkDiv.children.each { |para|
-      # First, a bunch of validation checks. We're expecting this kind of thing:
-      # <p><a href="http://blah">Link name</a></p>
-      para.comment? and next
-      if para.text?
-        text = para.text.strip
-        if !text.empty? and !(para.to_s =~ /--&gt;/)
-          puts "Extraneous text in linkSet: #{para}"
-        end
-        next
-      end
-
-      if para.name == "a"
-        links = [para]
-      elsif para.name != "p"
-        puts "Extraneous element in linkSet: #{para}"
-        next
-      else
-        links = para.xpath("./a")
-      end
-
-      if links.empty?
-        #puts "Missing <a> in linkSet: #{para.inner_html}" # happens for informational headings we strip anyhow
-        next
-      end
-      if links.length > 1
-        puts "Too many <a> in linkSet: #{para.inner_html}"
-        next
-      end
-
-      link = links[0]
-      linkName = link.text
-      linkName and linkName.strip!
-      if !linkName || linkName.empty?
-        puts "Missing link text: #{para.inner_html}"
-        next
-      end
-
-      linkTarget = link.attr('href')
-      if !linkTarget && link.attr('onclick') =~ /location.href='([^']+)'/
-        linkTarget = $1
-      elsif !linkTarget
-        puts "Missing link target: #{para.inner_html}"
-        next
-      end
-
-      if linkTarget =~ /view=(contact|policyStatement|policies|submitPaper|submissionGuidelines)/i
-        addTo = navBar
-      else
-        if !aboutBar
-          aboutBar = { id: curNavID+=1, type: "folder", name: "About", sub_nav: [] }
-          navBar << aboutBar
-        end
-        addTo = aboutBar[:sub_nav]
-      end
-
-      if linkTarget =~ %r{/uc/search\?entity=[^;]+;view=([^;]+)$}
-        slug = $1
-        linkedPage = generalEl.at("./linkedPages/div[@id='#{slug}']")
-        if !linkedPage
-          puts "Can't find linked page #{slug.inspect}"
-          next
-        end
-        convertPage(unitID, addTo, curNavID+=1, linkedPage, slug, linkName)
-        linkedPagesUsed << slug
-      elsif linkTarget =~ %r{^https?://}
-        addTo << { id: curNavID+=1, type: "link", name: linkName, url: linkTarget }
-      elsif (mapped = mapEntityLink(linkTarget))
-        addTo << { id: curNavID+=1, type: "link", name: linkName, url: mapped }
-      elsif linkTarget =~ %r{/brand/}
-        convertBrandDownloadToPage(unitID, addTo, curNavID+=1, linkName, linkTarget)
-      else
-        puts "Invalid link target: #{para.inner_html}"
-      end
-    }
-  }
-
-  # TODO: The "contactInfo" part of the brand file is supposed to end up in the "Journal Information"
-  # box at the right side of the eschol UI. Database conversion TBD.
-  #convertPage(unitID, navBar, generalEl.at("./contactInfo/div"), "journalInfo", BLAH)
-
-  # Convert unused pages to a hidden bar
-  hiddenBar = nil
-  generalEl.xpath("./linkedPages/div").each { |page|
-    slug = page.attr('id')
-    next if slug.nil? || slug.empty?
-    next if linkedPagesUsed.include?(slug)
-    #puts "Unused linked page, id=#{slug.inspect}" # who cares about the message
-    if !hiddenBar
-      hiddenBar = { id: curNavID+=1, type: "folder", name: "other pages", hidden: true, sub_nav: [] }
-      navBar << hiddenBar
-    end
-    convertPage(unitID, hiddenBar[:sub_nav], curNavID+=1, page, slug, nil)
-  }
-
-  # All done.
-  return { nav_bar: navBar }
-end
-
-###################################################################################################
-def convertSocial(unitID, divs)
-  # Hack in some social media for now
-  if unitID == "ucla"
-    return { twitter: "UCLA", facebook: "uclabruins" }
-  elsif unitID == "uclalaw"
-   return { twitter: "UCLA_Law", facebook: "pages/UCLA-School-of-Law-Official/148867995080" }
-  end
-
-  dataOut = {}
-  divs.each { |div|
-    next unless div.attr('id') =~ /^(contact|contactUs)$/
-
-    # See if we can find twitter or facebook info
-    div.xpath(".//a[@href]").each { |el|
-      href = el.attr('href')
-      if href =~ %r{^http.*twitter.com/(.*)}
-        dataOut[:twitter] = $1
-      elsif href =~ %r{^http.*facebook.com/(.*)}
-        dataOut[:facebook] = $1
-      end
-    }
-  }
-  return dataOut
-end
-
-###################################################################################################
-def convertDirectSubmit(unitID, el)
-  el && el[:url] or return {}
-
-  # Map old page URLs to new
-  url = el[:url]
-  url =~ %r{/uc/search\?entity=[^;]+;view=([^;]+)$} and url = "/uc/#{unitID}/#{$1}"
-
-  # All done.
-  return { directSubmitURL: url }
-end
-
-###################################################################################################
-def defaultNav(unitID, unitType)
-  if unitType == "root"
-    return [
-      { id: 1, type: "folder", name: "About", sub_nav: [] },
-      { id: 2, type: "folder", name: "Campus Sites", sub_nav: [] },
-      { id: 3, type: "folder", name: "UC Open Access", sub_nav: [] },
-      { id: 4, type: "link", name: "eScholarship Publishing", url: "#" }
-    ]
-  elsif unitType == "campus"
-    return [
-      { id: 1, type: "link", name: "Open Access Policies", url: "#" },
-      { id: 2, type: "link", name: "Journals", url: "/#{unitID}/journals" },
-      { id: 3, type: "link", name: "Academic Units", url: "/#{unitID}/units" }
-    ]
-  else
-    #puts "Warning: no brand file found for unit #{unitID.inspect}" # who cares about msg
-    return []
-  end
-end
-
-###################################################################################################
-def convertUnitBrand(unitID, unitType)
-  begin
-    dataOut = {}
-
-    bfPath = "/apps/eschol/erep/xtf/static/brand/#{unitID}/#{unitID}.xml"
-    if File.exist?(bfPath)
-      dataIn = fileToXML(bfPath).root
-      dataOut.merge!(convertLogo(unitID, unitType, dataIn.at("./display/mainFrame/logo")))
-      dataOut.merge!(convertBlurb(unitID, dataIn.at("./display/mainFrame/blurb")))
-      if unitType == "campus"
-        dataOut.merge!({ nav_bar: defaultNav(unitID, unitType) })
-      else
-        dataOut.merge!(convertNavBar(unitID, dataIn.at("./display/generalInfo")))
-      end
-      dataOut.merge!(convertSocial(unitID, dataIn.xpath("./display/generalInfo/linkedPages/div")))
-      dataOut.merge!(convertDirectSubmit(unitID, dataIn.at("./directSubmitURL")))
-    else
-      dataOut.merge!({ nav_bar: defaultNav(unitID, unitType) })
-    end
-
-    return dataOut
-  rescue
-    puts "Error converting brand data for #{unitID.inspect}:"
-    raise
-  end
-end
-
-###################################################################################################
-def addDefaultWidgets(unitID, unitType)
-  # Blow away existing widgets for this unit
-  Widget.where(unit_id: unitID).delete
-
-  widgets = []
-  # The following are from the wireframes, but we haven't implemented the widgets yet
-  #case unitType
-  #  when "root"
-  #    widgets << { kind: "FeaturedArticles", region: "sidebar", attrs: nil }
-  #    widgets << { kind: "NewJournalIssues", region: "sidebar", attrs: nil }
-  #    widgets << { kind: "Tweets", region: "sidebar", attrs: nil }
-  #  when "campus"
-  #    widgets << { kind: "FeaturedJournals", region: "sidebar", attrs: nil }
-  #    widgets << { kind: "Tweets", region: "sidebar", attrs: nil }
-  #  else
-  #    widgets << { kind: "FeaturedArticles", region: "sidebar", attrs: nil }
-  #end
-  # So for now, just put RecentArticles on everything.
-  widgets << { kind: "RecentArticles", region: "sidebar", attrs: {}.to_json }
-
-  widgets.each_with_index { |widgetInfo, idx|
-    Widget.create(unit_id: unitID, ordering: idx+1, **widgetInfo)
-  }
-end
-
-###################################################################################################
-# Convert an allStruct element, and all its child elements, into the database.
-def convertUnits(el, parentMap, childMap, allIds, selectedUnits)
-  id = el[:id] || el[:ref] || "root"
-  allIds << id
-  Thread.current[:name] = id.ljust(30)
-  #puts "name=#{el.name} id=#{id.inspect} name=#{el[:label].inspect}"
-
-  # Create or update the main database record
-  if selectedUnits == "ALL" || selectedUnits.include?(id)
-    if el.name != "ptr"
-      unitType = id=="root" ? "root" : el[:type]
-      # Retain CMS modifications to root and campuses
-      if ['root','campus'].include?(unitType) && Unit.where(id: id).first
-        #puts "Preserving #{id}."
-      else
-        selectedUnits == "ALL" or puts "Converting."
-        DB.transaction {
-          name = id=="root" ? "eScholarship" : el[:label]
-          Unit.update_or_replace(id,
-            type:      unitType,
-            name:      name,
-            status:    el[:directSubmit] == "moribund" ? "archived" :
-                       ["eschol", "all"].include?(el[:hide]) ? "hidden" :
-                       "active"
-          )
-
-          # We can't totally fill in the brand attributes when initially inserting the record,
-          # so do it as an update after inserting.
-          attrs = {}
-          el[:directSubmit] and attrs[:directSubmit] = el[:directSubmit]
-          el[:hide]         and attrs[:hide]         = el[:hide]
-          el[:issn]         and attrs[:issn]         = el[:issn]
-          attrs.merge!(convertUnitBrand(id, unitType))
-          Unit[id].update(attrs: JSON.generate(attrs))
-
-          addDefaultWidgets(id, unitType)
-        }
-      end
-    end
-  end
-
-  # Now recursively process the child units
-  el.children.each { |child|
-    if child.name != "allStruct"
-      id or raise("id-less node with children")
-      childID = child[:id] || child[:ref]
-      childID or raise("id-less child node")
-      parentMap[childID] ||= []
-      parentMap[childID] << id
-      childMap[id] ||= []
-      childMap[id] << childID
-    end
-    convertUnits(child, parentMap, childMap, allIds, selectedUnits)
-  }
-
-  # After traversing the whole thing, it's safe to form all the hierarchy links
-  if el.name == "allStruct"
-    Thread.current[:name] = nil
-    if selectedUnits == "ALL"
-      DB.transaction {
-        # Delete extraneous units from prior conversions
-        deleteExtraUnits(allIds)
-
-        puts "Linking units."
-        UnitHier.dataset.delete
-        linkUnit("root", childMap, Set.new)
-      }
-    end
   end
 end
 
@@ -853,7 +293,7 @@ def grabText(itemID, contentType)
   elsif contentType.nil?
     return ""
   else
-    puts "Warning: no text found"
+    #puts "Warning: no text found"
     return ""
   end
   return translateEntities(buf.join("\n"))
@@ -871,6 +311,7 @@ end
 ###################################################################################################
 # Given a list of units, figure out which campus(es), department(s), and journal(s) are responsible.
 def traceUnits(units)
+  firstCampus = nil
   campuses    = Set.new
   departments = Set.new
   journals    = Set.new
@@ -889,6 +330,7 @@ def traceUnits(units)
       if unit.type == "journal"
         journals << unitID
       elsif unit.type == "campus"
+        firstCampus ||= unitID
         campuses << unitID
       elsif unit.type == "oru"
         departments << unitID
@@ -899,7 +341,7 @@ def traceUnits(units)
     end
   end
 
-  return [campuses.to_a, departments.to_a, journals.to_a, series.to_a]
+  return [firstCampus, campuses.to_a, departments.to_a, journals.to_a, series.to_a]
 end
 
 ###################################################################################################
@@ -955,18 +397,12 @@ def formatAuthName(auth)
 end
 
 ###################################################################################################
-# Try to get fine-grained author info from UCIngest metadata; if not avail, fall back to index data.
-def getAuthors(indexMeta, rawMeta)
-  # If not UC-Ingest formatted, fall back on index info
-  if !rawMeta.at("//authors") && indexMeta
-    return indexMeta.multiple("creator").map { |name| {name: name} }
-  end
-
-  # For UC-Ingest, we can provide more detailed author info
-  rawMeta.xpath("//authors/*").map { |el|
+# Try to get fine-grained author info from UCIngest metadata
+def getAuthors(metaEls, role)
+  result = metaEls.map { |el|
     if el.name == "organization"
       { name: el.text, organization: el.text }
-    elsif el.name == "author"
+    elsif %w{author editor advisor}.include?(el.name)
       data = { name: formatAuthName(el) }
       el.children.each { |sub|
         text = sub.text.strip
@@ -978,6 +414,8 @@ def getAuthors(indexMeta, rawMeta)
       raise("Unknown element #{el.name.inspect} within UCIngest authors")
     end
   }.select{ |v| v }
+  role != "author" and result.each { |data| data[:role] = role }
+  return result
 end
 
 ###################################################################################################
@@ -992,42 +430,77 @@ def mimeTypeToSummaryType(mimeType)
 end
 
 ###################################################################################################
-def generatePdfThumbnail(itemID, existingItem)
+def closeTempFile(file)
+  begin
+    file.close
+    rescue Exception => e
+    # ignore
+  end
+  file.unlink
+end
+
+###################################################################################################
+def generatePdfThumbnail(itemID, inMeta, existingItem)
   begin
     pdfPath = arkToFile(itemID, "content/base.pdf")
     File.exist?(pdfPath) or return nil
     pdfTimestamp = File.mtime(pdfPath).to_i
-    existingThumb = existingItem ? JSON.parse(existingItem.attrs)["thumbnail"] : nil
-    if existingThumb && existingThumb["timestamp"] == pdfTimestamp
-      # Rebuilding to keep order of fields consistent
-      return { asset_id:   existingThumb["asset_id"],
-               image_type: existingThumb["image_type"],
-               width:      existingThumb["width"].to_i,
-               height:     existingThumb["height"].to_i,
-               timestamp:  existingThumb["timestamp"].to_i
-              }
-    end
-
-    url = "#{$thumbnailServer}/uc/item/#{itemID.sub(/^qt/, '')}?image.view=generateImage;imgWidth=121;pageNum=1"
-    response = HTTParty.get(url)
-    response.code.to_i == 200 or raise("Error generating thumbnail: HTTP #{response.code}: #{response.message}")
-    tempFile = Tempfile.new("thumbnail")
-    begin
-      tempFile.write(response.body)
-      tempFile.close
-      data = putImage(tempFile.path) { |dims|
-        dims[0] == 121 or raise("Got thumbnail width #{dims[0]}, wanted 121")
-        dims[1] < 300 or raise("Got thumbnail height #{dims[1]}, wanted less than 300")
-      }
-      data[:timestamp] = pdfTimestamp
-      return data
-    ensure
-      begin
-        tempFile.close
-      rescue Exception => e
-        # ignore
+    cover = inMeta.at("./content/cover/file[@path]")
+    cover and coverPath = arkToFile(itemID, cover[:path])
+    if (coverPath and File.exist?(coverPath))
+      tempFile0 = Tempfile.new("thumbnail")
+      # perform appropriate 90 degree rotation on the image to orient the image for correct viewing 
+      MiniMagick::Tool::Convert.new do |convert|
+        convert << coverPath 
+        convert.auto_orient
+        convert << tempFile0.path
       end
-      tempFile.unlink
+      temp1 = MiniMagick::Image.open(tempFile0.path)
+      # Resize to 150 pixels wide if bigger than that 
+      if (temp1.width > 150)
+        temp1.resize (((150.0/temp1.width.to_i).round(4) * 100).to_s + "%")
+        tempFile1 = Tempfile.new("thumbnail")
+        begin
+          temp1.write(tempFile1) 
+          data = putImage(tempFile1.path)
+        ensure
+          closeTempFile(tempFile1)
+        end
+      else
+        data = putImage(coverPath)
+      end
+      closeTempFile(tempFile0)
+      data[:timestamp] = pdfTimestamp
+      data[:is_cover] = true
+      return data
+    else
+      existingThumb = existingItem ? JSON.parse(existingItem.attrs)["thumbnail"] : nil
+      if existingThumb && existingThumb["timestamp"] == pdfTimestamp
+        # Rebuilding to keep order of fields consistent
+        return { asset_id:   existingThumb["asset_id"],
+                 image_type: existingThumb["image_type"],
+                 width:      existingThumb["width"].to_i,
+                 height:     existingThumb["height"].to_i,
+                 timestamp:  existingThumb["timestamp"].to_i
+                }
+      end
+      # Rip 1st page
+      url = "#{$thumbnailServer}/uc/item/#{itemID.sub(/^qt/, '')}?image.view=generateImage;imgWidth=121;pageNum=1"
+      response = HTTParty.get(url)
+      response.code.to_i == 200 or raise("Error generating thumbnail: HTTP #{response.code}: #{response.message}")
+      tempFile2 = Tempfile.new("thumbnail")
+      begin
+        tempFile2.write(response.body)
+        tempFile2.close
+        data = putImage(tempFile2.path) { |dims|
+          dims[0] == 121 or raise("Got thumbnail width #{dims[0]}, wanted 121")
+          dims[1] < 300 or raise("Got thumbnail height #{dims[1]}, wanted less than 300")
+        }
+        data[:timestamp] = pdfTimestamp
+        return data
+      ensure
+        closeTempFile(tempFile2)
+      end
     end
   rescue Exception => e
     puts "Warning: error generating thumbnail: #{e}: #{e.backtrace.join("; ")}"
@@ -1039,10 +512,18 @@ end
 def findIssueCover(unit, volume, issue, caption, dbAttrs)
   key = "#{unit}:#{volume}:#{issue}"
   if !$issueCoverCache.key?(key)
-    # Check the special directory for a cover image.
-    imgPath = "/apps/eschol/erep/xtf/static/issueCovers/#{unit}/#{volume.rjust(2,'0')}_#{issue.rjust(2,'0')}_cover.png"
+    # Check the special directories for a cover image.
+    filename = "#{volume.rjust(2,'0')}_#{issue.rjust(2,'0')}_cover"
+    imgPath = nil
+    # Try a couple old directories, and both possible file extensions (for JPEG and PNG images)
+    ["/apps/eschol/erep/xtf/static/issueCovers", "/apps/eschol/erep/xtf/static/brand"].each { |staticDir|
+      ["jpg", "png"].each { |ext|
+        path = "#{staticDir}/#{unit}/#{volume.rjust(2,'0')}_#{issue.rjust(2,'0')}_cover.#{ext}"
+        File.exist?(path) and imgPath = path
+      }
+    }
     data = nil
-    if File.exist?(imgPath)
+    if imgPath
       data = putImage(imgPath)
       caption and data[:caption] = sanitizeHTML(caption)
     end
@@ -1062,33 +543,34 @@ end
 
 ###################################################################################################
 def addIssueNumberingAttrs(issueUnit, volNum, issueNum, issueAttrs)
-  data = $issueNumberingCache[issueUnit]
-  if !data
-    data = {}
-    bfPath = "/apps/eschol/erep/xtf/static/brand/#{issueUnit}/#{issueUnit}.xml"
-    if File.exist?(bfPath)
-      dataIn = fileToXML(bfPath).root
-      el = dataIn.at(".//singleIssue")
-      if el && el.text == "yes"
-        data[:singleIssue] = true
-        data[:startVolume] = dataIn.at("./singleIssue").attr("startVolume")
-      end
-      el = dataIn.at(".//singleVolume")
-      if el && el.text == "yes"
-        data[:singleVolume] = true
+  key = "#{issueUnit}:#{volNum}:#{issueNum}"
+  if !$issueNumberingCache.key?(key)
+    numbering = nil
+    # First, check for existing issue numbering
+    iss = Issue.where(unit_id: issueUnit, volume: volNum, issue: issueNum).first
+    if iss
+      issAttrs = (iss.attrs && JSON.parse(iss.attrs)) || {}
+      numbering = issAttrs["numbering"]
+    else
+      # Failing that, check for a default set on the unit
+      unit = $allUnits[issueUnit]
+      unitAttrs = unit && unit.attrs && JSON.parse(unit.attrs) || {}
+      if unitAttrs["default_issue"] && unitAttrs["default_issue"]["numbering"]
+        numbering = unitAttrs["default_issue"]["numbering"]
+      else
+        # Failing that, use values from the most-recent issue
+        iss = Issue.where(unit_id: issueUnit).order(Sequel.desc(:published)).order_append(Sequel.desc(:issue)).first
+        if iss
+          issAttrs = (iss.attrs && JSON.parse(iss.attrs)) || {}
+          numbering = issAttrs["numbering"]
+        end
       end
     end
-    $issueNumberingCache[issueUnit] = data
+    $issueNumberingCache[key] = numbering
   end
 
-  if data[:singleIssue]
-    if data[:startVolume].nil? or volNum.to_i >= data[:startVolume].to_i
-      issueAttrs[:numbering] = "volume_only"
-    end
-  elsif data[:singleVolume]
-    issueAttrs[:numbering] = "issue_only"
-  end
-
+  # Finally, stuff the cached value into the output attrs for this issue
+  $issueNumberingCache[key] and issueAttrs[:numbering] = $issueNumberingCache[key]
 end
 
 ###################################################################################################
@@ -1161,7 +643,7 @@ def shouldSuppressContent(itemID, inMeta)
     return false
   end
 
-  puts "Warning: content-free item"
+  #puts "Warning: content-free item"
   return true
 end
 
@@ -1222,22 +704,61 @@ def addMerrittPaths(itemID, attrs)
 end
 
 ###################################################################################################
+# If an issue's rights have been overridden in eschol5, be sure to prefer that. Likewise, if there's
+# a default, take that instead. Failing that, use the most recent issue. If there isn't one, use
+# whatever eschol5 came up with.
+def checkRightsOverride(unitID, volNum, issNum, oldRights)
+  key = "#{unitID}|#{volNum}|#{issNum}"
+  if !$issueRightsCache.key?(key)
+    # First, check for existing issue rights
+    iss = Issue.where(unit_id: unitID, volume: volNum, issue: issNum).first
+    if iss
+      issAttrs = (iss.attrs && JSON.parse(iss.attrs)) || {}
+      rights = issAttrs["rights"]
+    else
+      # Failing that, check for a default set on the unit
+      unit = $allUnits[unitID]
+      unitAttrs = unit && unit.attrs && JSON.parse(unit.attrs) || {}
+      if unitAttrs["default_issue"] && unitAttrs["default_issue"]["rights"]
+        rights = unitAttrs["default_issue"]["rights"]
+      else
+        # Failing that, use values from the most-recent issue
+        iss = Issue.where(unit_id: unitID).order(Sequel.desc(:published)).order_append(Sequel.desc(:issue)).first
+        if iss
+          issAttrs = (iss.attrs && JSON.parse(iss.attrs)) || {}
+          rights = issAttrs["rights"]
+        else
+          # Failing that, just use whatever rights eschol4 came up with.
+          rights = oldRights
+        end
+      end
+    end
+    $issueRightsCache[key] = rights
+  end
+  return $issueRightsCache[key]
+end
+
+###################################################################################################
 def parseUCIngest(itemID, inMeta, fileType)
   attrs = {}
-  attrs[:suppress_content] = shouldSuppressContent(itemID, inMeta)
+  attrs[:addl_info] = inMeta.html_at("./comments") and sanitizeHTML(inMeta.html_at("./comments"))
+  attrs[:author_hide] = !!inMeta.at("./authors[@hideAuthor]")   # Only journal items can have this attribute
+  attrs[:bepress_id] = inMeta.text_at("./context/bpid")
+  attrs[:book_title] = inMeta.text_at("./context/bookTitle")
+  attrs[:buy_link] = inMeta.text_at("./context/buyLink")
+  attrs[:custom_citation] = inMeta.text_at("./customCitation")
+  attrs[:doi] = inMeta.text_at("./doi")
+  attrs[:embargo_date] = parseDate(inMeta[:embargoDate])
   attrs[:is_peer_reviewed] = inMeta[:peerReview] == "yes"
   attrs[:is_undergrad] = inMeta[:underGrad] == "yes"
-  attrs[:embargo_date] = parseDate(inMeta[:embargoDate])
-  attrs[:publisher] = inMeta.text_at("./publisher")
-  attrs[:orig_citation] = inMeta.text_at("./originalCitation")
-  attrs[:custom_citation] = inMeta.text_at("./customCitation")
-  attrs[:local_ids] = inMeta.xpath("./context/localID").map { |el| { type: el[:type], id: el.text } }
-  attrs[:pub_web_loc] = inMeta.xpath("./context/publishedWebLocation").map { |el| el.text.strip }
-  attrs[:buy_link] = inMeta.text_at("./context/buyLink")
-  attrs[:language] = inMeta.text_at("./context/language")
-  attrs[:doi] = inMeta.text_at("./doi")
   attrs[:isbn] = inMeta.text_at("./context/isbn")
-  attrs[:bepress_id] = inMeta.text_at("./context/bpid")
+  attrs[:language] = inMeta.text_at("./context/language")
+  attrs[:local_ids] = inMeta.xpath("./context/localID").map { |el| { type: el[:type], id: el.text } }
+  attrs[:orig_citation] = inMeta.text_at("./originalCitation")
+  attrs[:pub_status] = inMeta[:pubStatus]
+  attrs[:pub_web_loc] = inMeta.xpath("./context/publishedWebLocation").map { |el| el.text.strip }
+  attrs[:publisher] = inMeta.text_at("./publisher")
+  attrs[:suppress_content] = shouldSuppressContent(itemID, inMeta)
 
   # Normalize language codes
   attrs[:language] and attrs[:language] = attrs[:language].sub("english", "en").sub("german", "de").
@@ -1258,6 +779,40 @@ def parseUCIngest(itemID, inMeta, fileType)
     msg and attrs[:withdrawn_message] = msg
   end
 
+  # Everything needs a submission date
+  parseDate(inMeta[:dateStamp]).nil? and raise("missing datestamp")
+  submissionDate = parseDate(inMeta.text_at("./history/submissionDate"))
+  if submissionDate.nil? || submissionDate > parseDate(inMeta[:dateStamp])
+    submissionDate = parseDate(inMeta[:dateStamp])
+  end
+
+  # Figure out the published date as well
+  publishedDate = parseDate(inMeta.text_at("./history/originalPublicationDate")) ||
+                  parseDate(inMeta.text_at("./history/escholPublicationDate")) ||
+                  submissionDate
+
+  # Also we need the date it was added to eScholarship. For sanity, clamp dates before
+  # it was even submitted.
+  escholDate = parseDate(inMeta.text_at("./history/escholPublicationDate"))
+  addDate = (escholDate && escholDate > submissionDate) ? escholDate : submissionDate
+  if addDate.nil? || addDate < submissionDate
+    addDate = submissionDate
+  elsif addDate > parseDate(inMeta[:dateStamp])  # rare crazy dates
+    addDate = parseDate(inMeta[:dateStamp])
+  end
+
+  # Similar for update date
+  begin
+    updateTime = DateTime.parse(inMeta[:dateStamp]) || DateTime.now
+  rescue
+    updateTime = DateTime.now
+  end
+  if updateTime.to_date.iso8601 < submissionDate
+    updateTime = Date.parse(submissionDate).to_datetime  # sanity
+  elsif updateTime > DateTime.now
+    updateTime = DateTime.now  # sanity
+  end
+
   # Filter out "n/a" abstracts
   abstract = inMeta.html_at("./abstract")
   abstract and abstract = sanitizeHTML(abstract)
@@ -1273,13 +828,18 @@ def parseUCIngest(itemID, inMeta, fileType)
       discID and discID.sub!(/^disc/, "")
       label = $discTbl[discID]
     end
-    if !label
-      puts("Warning: unknown discipline ID #{discID.inspect}")
-      puts "uci: discEl=#{discEl}"
-      puts "uci: discTbl=#{$discTbl}" # FIXME FOO
-    end
+    #label or puts("Warning: unknown discipline #{discEl}")
     label
   }.select { |v| v }
+
+  # Subjects and keywords come directly across
+  attrs[:subjects] = inMeta.xpath("./subjects/subject").map { |el| el.text.strip }
+  attrs[:keywords] = inMeta.xpath("./keywords/keyword").map { |el| el.text.strip }
+
+  # Grab grant data and other stuff for OSTI reporting
+  attrs[:grants] = inMeta.xpath("./funding/grant").map { |el| el.to_h }
+  attrs[:uc_pms_pub_type] = inMeta.text_at("./context/ucpmsPubType")
+  attrs[:proceedings] = inMeta.text_at("./context/proceedings")
 
   # Supplemental files
   attrs[:supp_files], suppSummaryTypes = summarizeSupps(itemID, grabUCISupps(inMeta))
@@ -1294,7 +854,7 @@ def parseUCIngest(itemID, inMeta, fileType)
   issue = section = nil
   volNum = inMeta.text_at("./context/volume")
   issueNum = inMeta.text_at("./context/issue")
-  if issueNum
+  if inMeta[:state] != "withdrawn" and (issueNum or volNum)
     issueUnit = inMeta.xpath("./context/entity[@id]").select {
                       |ent| $allUnits[ent[:id]] && $allUnits[ent[:id]].type == "journal" }[0]
     issueUnit and issueUnit = issueUnit[:id]
@@ -1303,24 +863,27 @@ def parseUCIngest(itemID, inMeta, fileType)
       if $allUnits.include?(issueUnit)
         volNum.nil? and raise("missing volume number on eschol journal item")
 
+        # Prefer eschol5 rights overrides to eschol4.
+        rights = checkRightsOverride(issueUnit, volNum, issueNum, rights)
+
         issue = Issue.new
         issue[:unit_id]  = issueUnit
         issue[:volume]   = volNum
         issue[:issue]    = issueNum
         if inMeta.text_at("./context/issueDate") == "0"  # hack for westjem AIP
-          issue[:pub_date] = parseDate(inMeta.text_at("./history/originalPublicationDate") ||
-                                       inMeta.text_at("./history/escholPublicationDate") ||
-                                       inMeta[:dateStamp])
+          issue[:published] = parseDate(inMeta.text_at("./history/originalPublicationDate") ||
+                                        inMeta.text_at("./history/escholPublicationDate") ||
+                                        submissionDate)
         else
-          issue[:pub_date] = parseDate(inMeta.text_at("./context/issueDate") ||
-                                       inMeta.text_at("./history/originalPublicationDate") ||
-                                       inMeta.text_at("./history/escholPublicationDate") ||
-                                       inMeta[:dateStamp])
+          issue[:published] = parseDate(inMeta.text_at("./context/issueDate") ||
+                                        inMeta.text_at("./history/originalPublicationDate") ||
+                                        inMeta.text_at("./history/escholPublicationDate") ||
+                                        submissionDate)
         end
         issueAttrs = {}
         tmp = inMeta.text_at("/record/context/issueTitle")
         tmp and issueAttrs[:title] = tmp
-        tmp = inMeta.text_at("/record/context/issueDescription")
+        tmp = sanitizeHTML(inMeta.html_at("/record/context/issueDescription"))
         tmp and issueAttrs[:description] = tmp
         tmp = inMeta.text_at("/record/context/issueCoverCaption")
         findIssueCover(issueUnit, volNum, issueNum, tmp, issueAttrs)
@@ -1352,16 +915,15 @@ def parseUCIngest(itemID, inMeta, fileType)
 
   # Generate thumbnails (but only for non-suppressed PDF items)
   if !attrs[:suppress_content] && File.exist?(arkToFile(itemID, "content/base.pdf"))
-    attrs[:thumbnail] = generatePdfThumbnail(itemID, Item[itemID])
+    attrs[:thumbnail] = generatePdfThumbnail(itemID, inMeta, Item[itemID])
   end
 
   # Remove empty attrs
   attrs.reject! { |k, v| !v || (v.respond_to?(:empty?) && v.empty?) }
 
   # Detect HTML-formatted items
-  contentFile = inMeta.at("/record/content/file")
-  contentFile && contentFile.at("./native") and contentFile = contentFile.at("./native")
-  contentPath = contentFile && contentFile[:path]
+  contentFile = inMeta.at("/record/content/file[@path]")
+  contentFile && contentFile.at("./native[@path]") and contentFile = contentFile.at("./native")
   contentType = contentFile && contentFile.at("./mimeType") && contentFile.at("./mimeType").text
 
   # For ETDs (all in Merritt), figure out the PDF path in the feed file
@@ -1372,6 +934,8 @@ def parseUCIngest(itemID, inMeta, fileType)
       addMerrittPaths(itemID, attrs)
     end
     attrs[:content_length] = File.size(pdfPath)
+  elsif contentType == "application/pdf"
+    contentType = nil   # whatever cruft we got from the mimeType field, no PDF is no PDF.
   end
 
   # Populate the Item model instance
@@ -1380,11 +944,13 @@ def parseUCIngest(itemID, inMeta, fileType)
   dbItem[:source]       = inMeta.text_at("./source") or raise("no source found")
   dbItem[:status]       = attrs[:withdrawn_date] ? "withdrawn" :
                           isEmbargoed(attrs[:embargo_date]) ? "embargoed" :
+                          (attrs[:suppress_content] && inMeta[:state] == "published") ? "empty" :
                           (inMeta[:state] || raise("no state in record"))
   dbItem[:title]        = sanitizeHTML(inMeta.html_at("./title"))
   dbItem[:content_type] = attrs[:suppress_content] ? nil :
                           attrs[:withdrawn_date] ? nil :
                           isEmbargoed(attrs[:embargo_date]) ? nil :
+                          inMeta[:type] == "non-textual" ? nil :
                           pdfExists ? "application/pdf" :
                           contentType && contentType.strip.length > 0 ? contentType :
                           nil
@@ -1394,16 +960,18 @@ def parseUCIngest(itemID, inMeta, fileType)
                           fileType == "ETD" ? "dissertation" :
                           inMeta[:type] ? inMeta[:type].sub("paper", "article") :
                           "article"
-  dbItem[:eschol_date]  = parseDate(inMeta.text_at("./history/escholPublicationDate")) ||
-                          parseDate(inMeta[:dateStamp])
-  dbItem[:pub_date]     = parseDate(inMeta.text_at("./history/originalPublicationDate")) ||
-                          dbItem[:eschol_date]
+  dbItem[:submitted]    = submissionDate
+  dbItem[:added]        = addDate
+  dbItem[:published]    = publishedDate
+  dbItem[:updated]      = updateTime
   dbItem[:attrs]        = JSON.generate(attrs)
   dbItem[:rights]       = rights
   dbItem[:ordering_in_sect] = inMeta.text_at("./context/publicationOrder")
 
   # Populate ItemAuthor model instances
-  authors = getAuthors(nil, inMeta)
+  authors = getAuthors(inMeta.xpath("//authors/*"), "author")
+  contribs = getAuthors(inMeta.xpath("//editors/*"), "editor") +
+             getAuthors(inMeta.xpath("//advisors/*"), "advisor")
 
   # Make a list of all the units this item belongs to
   units = inMeta.xpath("./context/entity[@id]").map { |ent| ent[:id] }.select { |unitID|
@@ -1412,7 +980,7 @@ def parseUCIngest(itemID, inMeta, fileType)
       true
   }
 
-  return dbItem, attrs, authors, units, issue, section, suppSummaryTypes
+  return dbItem, attrs, authors, contribs, units, issue, section, suppSummaryTypes
 end
 
 ###################################################################################################
@@ -1457,12 +1025,60 @@ def processWithNormalizer(fileType, itemID, metaPath, nailgun)
 end
 
 ###################################################################################################
+# Clean title, to help w/sorting
+# Remove first character if it's not alphanumeric
+# Remove beginning 'The' pronouns
+# Note: CloudSearch sorts by Unicode codepoint, so numbers come before letters and uppercase letters come before lowercase letters
+def cleanTitle(str)
+  str.nil? and return str
+  r = Sanitize.clean(str).strip
+  str.empty? and return str
+  r = (r[0].match /[^\w]/) ? r[1..-1].strip : r
+  r.sub(/^(The|A|An) /i, '').capitalize
+end
+
+###################################################################################################
 def addIdxUnits(idxItem, units)
-  campuses, departments, journals, series = traceUnits(units)
+  firstCampus, campuses, departments, journals, series = traceUnits(units)
   campuses.empty?    or idxItem[:fields][:campuses] = campuses
   departments.empty? or idxItem[:fields][:departments] = departments
   journals.empty?    or idxItem[:fields][:journals] = journals
   series.empty?      or idxItem[:fields][:series] = series
+  return firstCampus
+end
+
+###################################################################################################
+def oaPolicyAssoc(campus, units, dbItem, pubStatus)
+  campus or return nil
+  policyDate = $oaPolicyDate.key?(campus.to_sym) ? $oaPolicyDate[campus.to_sym] : $oaPolicyDate[:default]
+
+  #old
+  # To try and match old 2017 Accountability Report numbers, filter out items submitted since then
+  #isCovered = dbItem[:submitted].iso8601 <= "2017-04-28" &&
+  #            !policyDate.nil? &&
+  #            ['externalAccept', 'externalPub'].include?(pubStatus) &&
+  #            ['article', 'multimedia', 'chapter', 'non-textual'].include?(dbItem[:genre]) &&
+  #            dbItem[:published].iso8601.sub(/-01-01$/, '-12-31') >= policyDate
+
+  #new-ish
+  #isCovered = dbItem[:submitted].iso8601 <= "2017-04-28" &&
+  #            !policyDate.nil? &&
+  #            (campus == 'lbnl' || units.include?("#{campus}_postprints")) &&
+  #            %w{published withdrawn embargoed}.include?(dbItem[:status]) &&
+  #            [nil, 'externalAccept', 'externalPub'].include?(pubStatus) &&
+  #            %w{article chapter}.include?(dbItem[:genre]) &&
+  #            dbItem[:published].iso8601.sub(/-01-01$/, '-12-31') >= policyDate &&
+  #            dbItem[:submitted].iso8601 >= policyDate
+
+  # Current
+  isCovered = !policyDate.nil? &&
+              (campus == 'lbnl' || units.include?("#{campus}_postprints")) &&
+              %w{published}.include?(dbItem[:status]) &&
+              [nil, 'externalAccept', 'externalPub'].include?(pubStatus) &&
+              ['article', 'chapter'].include?(dbItem[:genre]) &&
+              dbItem[:published].iso8601.sub(/-01-01$/, '-12-31') >= policyDate &&
+              dbItem[:submitted].iso8601 >= policyDate
+  return isCovered ? campus : nil
 end
 
 ###################################################################################################
@@ -1474,7 +1090,7 @@ def indexItem(itemID, timestamp, batch, nailgun)
   # Grab the main metadata file
   metaPath = arkToFile(itemID, "meta/base.meta.xml")
   if !File.exists?(metaPath) || File.size(metaPath) < 50
-    puts "Warning: skipping #{itemID} due to missing or truncated meta.xml"
+    #puts "Warning: skipping #{itemID} due to missing or truncated meta.xml"
     $nSkipped += 1
     return
   end
@@ -1497,36 +1113,41 @@ def indexItem(itemID, timestamp, batch, nailgun)
   Thread.current[:name] = "index thread: #{itemID} #{sprintf("%-8s", normalize ? normalize : "UCIngest")}"
 
   if normalize
-    dbItem, attrs, authors, units, issue, section, suppSummaryTypes =
+    dbItem, attrs, authors, contribs, units, issue, section, suppSummaryTypes =
       processWithNormalizer(normalize, itemID, metaPath, nailgun)
   else
-    dbItem, attrs, authors, units, issue, section, suppSummaryTypes =
+    dbItem, attrs, authors, contribs, units, issue, section, suppSummaryTypes =
       parseUCIngest(itemID, rawMeta, "UCIngest")
   end
 
   text = grabText(itemID, dbItem.content_type)
-
+  
   # Create JSON for the full text index
   idxItem = {
     type:          "add",   # in CloudSearch land this means "add or update"
     id:            itemID,
     fields: {
-      title:         dbItem[:title] || "",
-      authors:       (authors.length > 1000 ? authors[0,1000] : authors).map { |auth| auth[:name] },
+      title:         dbItem[:title] ? cleanTitle(dbItem[:title]) : "",
+      authors:       (authors.length > 1000 ? authors[0,1000] : authors).map { |auth| auth[:name] } +
+                     (contribs.length > 1000 ? contribs[0,1000] : contribs).map { |c| c[:name] },
       abstract:      attrs[:abstract] || "",
       type_of_work:  dbItem[:genre],
       disciplines:   attrs[:disciplines] ? attrs[:disciplines] : [""], # only the numeric parts
       peer_reviewed: attrs[:is_peer_reviewed] ? 1 : 0,
-      pub_date:      dbItem[:pub_date].to_date.iso8601 + "T00:00:00Z",
-      pub_year:      dbItem[:pub_date].year,
+      pub_date:      dbItem[:published].to_date.iso8601 + "T00:00:00Z",
+      pub_year:      dbItem[:published].year,
       rights:        dbItem[:rights] || "",
       sort_author:   (authors[0] || {name:""})[:name].gsub(/[^\w ]/, '').downcase,
+      keywords:      attrs[:keywords] ? attrs[:keywords] : [""],
       is_info:       0
     }
   }
 
   # Determine campus(es), department(s), and journal(s) by tracing the unit connnections.
-  addIdxUnits(idxItem, units)
+  firstCampus = addIdxUnits(idxItem, units)
+
+  # Use the first campus and various other attributes to make an OA policy association
+  dbItem[:oa_policy] = oaPolicyAssoc(firstCampus, units, dbItem, attrs[:pub_status])
 
   # Summary of supplemental file types
   suppSummaryTypes.empty? or idxItem[:fields][:supp_file_types] = suppSummaryTypes.to_a
@@ -1543,7 +1164,7 @@ def indexItem(itemID, timestamp, batch, nailgun)
       JSON.generate({text: text[0, text.size - cut]}).bytesize + baseSize < MAX_TEXT_SIZE
     }
     (toCut==0 || toCut.nil?) and raise("Internal error: have to cut something, but toCut=#{toCut.inspect}")
-    puts "Note: Keeping only #{text.size - toCut} of #{text.size} text chars."
+    #puts "Note: Keeping only #{text.size - toCut} of #{text.size} text chars."
     idxItem[:fields][:text] = text[0, text.size - toCut]
   end
 
@@ -1563,6 +1184,17 @@ def indexItem(itemID, timestamp, batch, nailgun)
     }
   }
 
+  roleCounts = Hash.new { |h,k| h[k] = 0 }
+  dbContribs = contribs.each_with_index.map { |data, idx|
+    ItemContrib.new { |contrib|
+      contrib[:item_id] = itemID
+      contrib[:role] = data[:role]
+      data.delete(:role)
+      contrib[:attrs] = JSON.generate(data)
+      contrib[:ordering] = (roleCounts[contrib[:role]] += 1)
+    }
+  }
+
   # Calculate digests of the index data and database records
   idxData = JSON.generate(idxItem)
   idxDigest = Digest::MD5.base64digest(idxData)
@@ -1573,6 +1205,7 @@ def indexItem(itemID, timestamp, batch, nailgun)
     dbSection: section ? section.to_hash : nil,
     units: units
   }
+  dbContribs.empty? or dbCombined[:dbContribs] = dbContribs.map { |record| record.to_hash }
   dataDigest = Digest::MD5.base64digest(JSON.generate(dbCombined))
 
   # Add time-varying things into the database item now that we've generated a stable digest.
@@ -1580,7 +1213,8 @@ def indexItem(itemID, timestamp, batch, nailgun)
   dbItem[:index_digest] = idxDigest
   dbItem[:data_digest] = dataDigest
 
-  dbDataBlock = { dbItem: dbItem, dbAuthors: dbAuthors, dbIssue: issue, dbSection: section, units: units }
+  dbDataBlock = { dbItem: dbItem, dbAuthors: dbAuthors, dbContribs: dbContribs,
+                  dbIssue: issue, dbSection: section, units: units }
 
   # Single-item debug
   if $testMode
@@ -1592,13 +1226,6 @@ def indexItem(itemID, timestamp, batch, nailgun)
   end
 
   # If nothing has changed, skip the work of updating this record.
-
-  # Bootstrapping the addition of data digest (temporary)
-  # FIXME: Remove this soon
-  if existingItem && existingItem[:data_digest].nil?
-    existingItem[:index_digest] = idxDigest
-  end
-
   if existingItem && !$forceMode && existingItem[:index_digest] == idxDigest
 
     # If only the database portion changed, we can safely skip the CloudSearch re-indxing
@@ -1609,6 +1236,8 @@ def indexItem(itemID, timestamp, batch, nailgun)
           updateDbItem(dbDataBlock)
         end
       }
+      # Check/update the splash page now that this item has a real record
+      $splashQueue << itemID
       $nProcessed += 1
       return
     end
@@ -1648,35 +1277,43 @@ end
 ###################################################################################################
 # Index all the items in our queue
 def indexAllItems
-  Thread.current[:name] = "index thread"  # label all stdout from this thread
-  batch = emptyBatch({})
+  begin
+    Thread.current[:name] = "index thread"  # label all stdout from this thread
+    batch = emptyBatch({})
 
-  # The resolver and catalog stuff below is to prevent BioMed files from loading external DTDs
-  # (which is not only slow but also unreliable)
-  classPath = "/apps/eschol/erep/xtf/WEB-INF/lib/saxonb-8.9.jar:" +
-              "/apps/eschol/erep/xtf/control/xsl/jing.jar:" +
-              "/apps/eschol/erep/xtf/normalization/resolver.jar"
-  Nailgun.run(classPath, 0, "-Dxml.catalog.files=/apps/eschol/erep/xtf/normalization/catalog.xml") { |nailgun|
-    loop do
-      # Grab an item from the input queue
-      Thread.current[:name] = "index thread"  # label all stdout from this thread
-      itemID, timestamp = $indexQueue.pop
-      itemID or break
+    # The resolver and catalog stuff below is to prevent BioMed files from loading external DTDs
+    # (which is not only slow but also unreliable)
+    classPath = "/apps/eschol/erep/xtf/WEB-INF/lib/saxonb-8.9.jar:" +
+                "/apps/eschol/erep/xtf/control/xsl/jing.jar:" +
+                "/apps/eschol/erep/xtf/normalization/resolver.jar"
+    Nailgun.run(classPath, 0, "-Dxml.catalog.files=/apps/eschol/erep/xtf/normalization/catalog.xml") { |nailgun|
+      loop do
+        # Grab an item from the input queue
+        Thread.current[:name] = "index thread"  # label all stdout from this thread
+        itemID, timestamp = $indexQueue.pop
+        itemID or break
 
-      # Extract data and index it (in batches)
-      begin
-        Thread.current[:name] = "index thread: #{itemID}"  # label all stdout from this thread
-        indexItem(itemID, timestamp, batch, nailgun)
-      rescue Exception => e
-        puts "Error indexing item #{itemID}"
-        raise
+        # Extract data and index it (in batches)
+        begin
+          Thread.current[:name] = "index thread: #{itemID}"  # label all stdout from this thread
+          indexItem(itemID, timestamp, batch, nailgun)
+        rescue Exception => e
+          puts "Error indexing item #{itemID}"
+          raise
+        end
+
+        # To avoid Saxon's Java process from growing gigantic, restart it once in a while.
+        nailgun.callCount == 1000 and nailgun.restart
       end
-    end
-  }
+    }
 
-  # Finish off the last batch.
-  batch[:items].empty? or $batchQueue << batch
-  $batchQueue << nil   # marker for end-of-queue
+    # Finish off the last batch.
+    batch[:items].empty? or $batchQueue << batch
+  rescue Exception => e
+    puts "Exception in indexAllItems: #{e} #{e.backtrace}"
+  ensure
+    $batchQueue << nil   # marker for end-of-queue
+  end
 end
 
 ###################################################################################################
@@ -1687,13 +1324,15 @@ def updateIssueAndSection(data)
   found = Issue.first(unit_id: iss.unit_id, volume: iss.volume, issue: iss.issue)
   if found
     issueChanged = false
-    if found.pub_date != iss.pub_date
-      #puts "issue #{iss.unit_id} #{iss.volume}/#{iss.issue} pub date changed from #{found.pub_date.inspect} to #{iss.pub_date.inspect}."
-      found.pub_date = iss.pub_date
+    if found.published != iss.published
+      #puts "issue #{iss.unit_id} #{iss.volume}/#{iss.issue} pub date " +
+      #changed from #{found.published.inspect} to #{iss.published.inspect}."
+      found.published = iss.published
       issueChanged = true
     end
     if found.attrs != iss.attrs
-      #puts "issue #{iss.unit_id} #{iss.volume}/#{iss.issue} attrs changed from #{found.attrs.inspect} to #{iss.attrs.inspect}."
+      #puts "issue #{iss.unit_id} #{iss.volume}/#{iss.issue} attrs " +
+      #"changed from #{found.attrs.inspect} to #{iss.attrs.inspect}."
       found.attrs = iss.attrs
       issueChanged = true
     end
@@ -1750,25 +1389,20 @@ end
 def updateDbItem(data)
   itemID = data[:dbItem][:id]
 
-  # Delete any existing data related to this item
+  # Delete any existing data related to this item, except the item record itself (which is used
+  # as a foreign key in stats tables).
   ItemAuthor.where(item_id: itemID).delete
+  ItemContrib.where(item_id: itemID).delete
   UnitItem.where(item_id: itemID).delete
-  ItemCount.where(item_id: itemID).delete
+  data['dbSection'].nil? and Item.where(id: itemID).update(section: nil)
 
   # Insert (or update) the issue and section
   updateIssueAndSection(data)
 
-  # Now insert the item and its authors
-  Item.where(id: itemID).delete
-  data[:dbItem].save()
-  data[:dbAuthors].each { |dbAuth|
-    dbAuth.save()
-  }
-
-  # Copy item counts from the old stats database
-  STATS_DB.fetch("SELECT * FROM itemCounts WHERE itemId = ?", itemID.sub(/^qt/, "")) { |row|
-    ItemCount.insert(item_id: itemID, month: row[:month], hits: row[:hits], downloads: row[:downloads])
-  }
+  # Now create/insert the item, and insert its authors (and other contributors if any)
+  data[:dbItem].create_or_update()
+  data[:dbAuthors].each { |record| record.save() }
+  data[:dbContribs] and data[:dbContribs].each { |record| record.save }
 
   # Link the item to its units
   done = Set.new
@@ -1831,6 +1465,9 @@ def processBatch(batch)
     DB.transaction do
       batch[:items].each { |data| updateDbItem(data) }
     end
+
+    # Process splash pages now that all the DB records exist
+    batch[:items].each { |data| $splashQueue << data[:dbItem][:id] }
   }
 
   # Periodically scrub out orphaned sections and issues
@@ -1858,6 +1495,7 @@ def processAllBatches
     # And process it
     processBatch(batch)
   end
+  $splashQueue << nil # mark no more coming
 end
 
 ###################################################################################################
@@ -1892,21 +1530,6 @@ def deleteExtraUnits(allIds)
 end
 
 ###################################################################################################
-# Main driver for unit conversion.
-def convertAllUnits(units)
-  # Let the user know what we're doing
-  puts "Converting #{units=="ALL" ? "all" : "selected"} units."
-  startTime = Time.now
-
-  # Load allStruct and traverse it. This will create Unit and Unit_hier records for all units,
-  # and delete any extraneous old ones.
-  allStructPath = "/apps/eschol/erep/xtf/style/textIndexer/mapping/allStruct-eschol5.xml"
-  open(allStructPath, "r") { |io|
-    convertUnits(fileToXML(allStructPath).root, {}, {}, Set.new, units)
-  }
-end
-
-###################################################################################################
 def getShortArk(arkStr)
   arkStr =~ %r{^ark:/?13030/(qt\w{8})$} and return $1
   arkStr =~ /^(qt\w{8})$/ and return arkStr
@@ -1919,9 +1542,69 @@ def cacheAllUnits()
   # Build a list of all valid units
   $allUnits = Unit.map { |unit| [unit.id, unit] }.to_h
 
-  # Build a cache of unit ancestors
+  # Build a cache of unit ancestors and children
   $unitAncestors = Hash.new { |h,k| h[k] = [] }
-  UnitHier.each { |hier| $unitAncestors[hier.unit_id] << hier.ancestor_unit }
+  $unitChildren = Hash.new { |h,k| h[k] = [] }
+  UnitHier.order(:ordering).each { |hier|
+    $unitAncestors[hier.unit_id] << hier.ancestor_unit
+    hier.is_direct and $unitChildren[hier.ancestor_unit] << hier.unit_id
+  }
+end
+
+###################################################################################################
+def createPersonArk(name, email)
+  # Determine the EZID metadata
+  who = email ? "#{name} <#{email}>" : name
+  meta = { 'erc.what' => normalizeERC("Internal eScholarship agent ID"),
+           'erc.who'  => "#{normalizeERC(name)} <#{normalizeERC(email)}>",
+           'erc.when' => DateTime.now.iso8601 }
+
+  # Mint it the new ID
+  resp = Ezid::Identifier.mint(nil, meta)
+  return resp.id
+end
+
+###################################################################################################
+# Connect people to authors
+def connectAuthors
+
+  # Skip if all authors were already connected
+  unconnectedAuthors = ItemAuthor.where(Sequel.lit("attrs->'$.email' is not null and person_id is null"))
+  nTodo = unconnectedAuthors.count
+  nTodo > 0 or return
+
+  # First, record existing email -> person correlations
+  puts "Connecting items/authors to people."
+  emailToPerson = {}
+  Person.where(Sequel.lit("attrs->'$.email' is not null")).each { |person|
+    attrs = JSON.parse(person.attrs)
+    next if attrs['forwarded_to']
+    Set.new([attrs['email']] + (attrs['prev_emails'] || [])).each { |email|
+      if emailToPerson.key?(email) && emailToPerson[email] != person.id
+        puts "Warning: multiple matching people for email #{email.inspect}"
+      end
+      emailToPerson[email] = person.id
+    }
+  }
+
+  # Then connect all unconnected authors to people
+  nDone = 0
+  unconnectedAuthors.each { |auth|
+    DB.transaction {
+      authAttrs = JSON.parse(auth.attrs)
+      email = authAttrs["email"].downcase
+      person = emailToPerson[email]
+      (nDone % 1000) == 0 and puts "Connecting items/authors to people: #{nDone} / #{nTodo}"
+      if !person
+        person = createPersonArk(authAttrs["name"] || "unknown", email)
+        Person.create(id: person, attrs: { email: email }.to_json)
+        emailToPerson[email] = person
+      end
+      ItemAuthor.where(item_id: auth.item_id, ordering: auth.ordering).update(person_id: person)
+      nDone += 1
+    }
+  }
+  puts "Connecting items/authors to people: #{nDone} / #{nTodo}"
 end
 
 ###################################################################################################
@@ -1931,44 +1614,75 @@ def convertAllItems(arks)
   puts "Converting #{arks=="ALL" ? "all" : "selected"} items."
 
   cacheAllUnits()
+  genAllStruct()
 
-  # Fire up threads for doing the work in parallel
-  Thread.abort_on_exception = true
-  indexThread = Thread.new { indexAllItems }
-  batchThread = Thread.new { processAllBatches }
+  # Normally loop runs once, but in rescan mode it's multiple times.
+  rescanBase = ""
+  while true
 
-  # Count how many total there are, for status updates
-  $nTotal = QUEUE_DB.fetch("SELECT count(*) as total FROM indexStates WHERE indexName='erep'").first[:total]
+    # Fire up threads for doing the work in parallel
+    Thread.abort_on_exception = true
+    indexThread = Thread.new { indexAllItems }
+    batchThread = Thread.new { processAllBatches }
+    splashThread = Thread.new { splashFromQueue }
 
-  # Grab the timestamps of all items, for speed
-  $allItemTimes = (arks=="ALL" ? Item : Item.where(id: arks.to_a)).to_hash(:id, :last_indexed)
+    # Count how many total there are, for status updates
+    $nTotal = QUEUE_DB.fetch("SELECT count(*) as total FROM indexStates WHERE indexName='erep'").first[:total]
 
-  # Convert all the items that are indexable
-  query = QUEUE_DB[:indexStates].where(indexName: 'erep').select(:itemId, :time).order(:itemId)
-  $nTotal = query.count
-  if $skipTo
-    puts "Skipping all up to #{$skipTo}..."
-    query = query.where{ itemId >= "ark:13030/#{$skipTo}" }
-    $nSkipped = $nTotal - query.count
-  end
-  query.all.each do |row|   # all so we don't keep db locked
-    shortArk = getShortArk(row[:itemId])
-    next if arks != 'ALL' && !arks.include?(shortArk)
-    erepTime = Time.at(row[:time].to_i).to_time
-    itemTime = $allItemTimes[shortArk]
-    if itemTime.nil? || itemTime < erepTime || $rescanMode
-      $indexQueue << [shortArk, erepTime]
-    else
-      #puts "#{shortArk} is up to date, skipping."
-      $nSkipped += 1
+    # If we've been asked to rescan everything, do so in batches.
+    if $rescanMode
+      if arks == 'ALL'
+        redoSet = Item.where{ id > rescanBase }.limit(RESCAN_SET_SIZE)
+        $skipTo and redoSet = redoSet.where{ id >= $skipTo }
+        $skipTo = nil
+        redoSet.update(:last_indexed => nil)
+        rescanBase = redoSet.map(:id).max
+        puts "Rescan reset, nextbase=#{rescanBase.inspect}."
+      else
+        rescanBase = nil
+      end
+    end
+
+    # Grab the timestamps of all items, for speed
+    allItemTimes = (arks=="ALL" ? Item : Item.where(id: arks.to_a)).to_hash(:id, :last_indexed)
+
+    # Convert all the items that are indexable
+    query = QUEUE_DB[:indexStates].where(indexName: 'erep').select(:itemId, :time).order(:itemId)
+    $nTotal = query.count
+    if $skipTo
+      puts "Skipping all up to #{$skipTo}..."
+      query = query.where{ itemId >= "ark:13030/#{$skipTo}" }
+      $nSkipped = $nTotal - query.count
+    end
+    query.all.each do |row|   # all so we don't keep db locked
+      shortArk = getShortArk(row[:itemId])
+      next if arks != 'ALL' && !arks.include?(shortArk)
+      erepTime = Time.at(row[:time].to_i).to_time
+      itemTime = allItemTimes[shortArk]
+      if itemTime.nil? || itemTime < erepTime || ($rescanMode && arks.include?(shortArk))
+        $indexQueue << [shortArk, erepTime]
+      else
+        #puts "#{shortArk} is up to date, skipping."
+        $nSkipped += 1
+      end
+    end
+
+    $indexQueue << nil  # end-of-queue
+    indexThread.join
+    if !$testMode && !($hostname =~ /-dev|-stg/)
+      connectAuthors  # make sure all newly converted (or reconvered) items have author->people links
+    end
+    batchThread.join
+    splashThread.join
+
+    if $rescanMode && rescanBase.nil?
+      break
+    elsif !$rescanMode
+      break
     end
   end
 
-  $indexQueue << nil  # end-of-queue
-  indexThread.join
-  batchThread.join
-
-  scrubSectionsAndIssues() # one final scrub
+  $nTotal > 0 and scrubSectionsAndIssues() # one final scrub
 end
 
 ###################################################################################################
@@ -2161,23 +1875,35 @@ end
 # Main driver for PDF display version generation
 def convertPDF(itemID)
   item = Item[itemID]
-  attrs = JSON.parse(item.attrs)
+
+  # Skip non-published items (e.g. embargoed, withdrawn)
+  if item.status != "published"
+    #puts "Not generating splash for #{item.status} item."
+    DisplayPDF.where(item_id: itemID).delete  # delete splash pages when item gets withdrawn
+    return
+  end
 
   # Generate the splash instructions, for cache checking
+  attrs = JSON.parse(item.attrs)
   instrucs = splashInstrucs(itemID, item, attrs)
   instrucDigest = Digest::MD5.base64digest(instrucs.to_json)
 
   # See if current splash page is adequate
   origFile = arkToFile(itemID, "content/base.pdf")
-  origFile or raise("Warning: missing content file")
-  origSize = File.size(origFile)
-
-  dbPdf = DisplayPDF[itemID]
-  if !$forceMode && dbPdf && dbPdf.orig_size == origSize
-    #puts "Unchanged."
+  if !File.exist?(origFile)
+    #puts "Missing content file; skipping splash."
     return
   end
-  puts "Updating."
+  origSize = File.size(origFile)
+  origTimestamp = File.mtime(origFile)
+
+  dbPdf = DisplayPDF[itemID]
+  # It's odd, but comparing timestamps by value isn't reliable. Converting them to strings is though.
+  if !$forceMode && dbPdf && dbPdf.orig_size == origSize && dbPdf.orig_timestamp.to_s == origTimestamp.to_s
+    #puts "Splash unchanged."
+    return
+  end
+  puts "Updating splash."
 
   # Linearize the original PDF
   linFile, linDiff, splashLinFile, splashLinDiff = nil, nil, nil, nil
@@ -2192,22 +1918,31 @@ def convertPDF(itemID)
 
     # Then generate a splash page, and linearize that as well.
     splashLinFile = Tempfile.new(["splashLin_#{itemID}_", ".pdf"], TEMP_DIR)
-    splashGen(itemID, instrucs, linFile, splashLinFile.path)
-    splashLinSize = File.size(splashLinFile.path)
+    splashLinSize = 0
+    begin
+      splashLinSize = splashGen(itemID, instrucs, linFile, splashLinFile.path)
+    rescue Exception => e
+      if e.to_s =~ /Internal Server Error/
+        puts "Warning: splash generator failed; falling back to plain."
+      else
+        raise
+      end
+    end
 
-    $s3Bucket.object("#{$s3Config.prefix}/pdf_patches/linearized/#{itemID}").put(body: linFile)
-    $s3Bucket.object("#{$s3Config.prefix}/pdf_patches/splash/#{itemID}").put(body: splashLinFile)
+    pfx = ENV['S3_PREFIX'] || raise("missing env S3_PREFIX")
+    $s3Bucket.object("#{pfx}/pdf_patches/linearized/#{itemID}").put(body: linFile)
+    splashLinSize > 0 and $s3Bucket.object("#{pfx}/pdf_patches/splash/#{itemID}").put(body: splashLinFile)
 
     DisplayPDF.where(item_id: itemID).delete
     DisplayPDF.create(item_id: itemID,
       orig_size:          origSize,
-      orig_timestamp:     File.mtime(origFile),
+      orig_timestamp:     origTimestamp,
       linear_size:        linSize,
-      splash_info_digest: instrucDigest,
+      splash_info_digest: splashLinSize > 0 ? instrucDigest : nil,
       splash_size:        splashLinSize
     )
 
-    puts sprintf("Updated: lin=%d/%d = %.1f%%; splashLin=%d/%d = %.1f%%",
+    puts sprintf("Splash updated: lin=%d/%d = %.1f%%; splashLin=%d/%d = %.1f%%",
                  linSize, origSize, linSize*100.0/origSize,
                  splashLinSize, origSize, splashLinSize*100.0/origSize)
   ensure
@@ -2220,18 +1955,19 @@ end
 
 ###################################################################################################
 def splashFromQueue
+  Thread.current[:name] = "splash thread"
   loop do
     # Grab an item from the input queue
     itemID = $splashQueue.pop
     itemID or break
-    Thread.current[:name] = itemID  # label all stdout from this thread
+    Thread.current[:name] = "splash thread: #{itemID}"  # label all stdout from this thread
     begin
       convertPDF(itemID)
     rescue Exception => e
       e.is_a?(Interrupt) || e.is_a?(SignalException) and raise
       puts "Exception: #{e} #{e.backtrace}"
     end
-    Thread.current[:name] = nil
+    Thread.current[:name] = "splash thread"
   end
 end
 
@@ -2242,8 +1978,7 @@ def splashAllPDFs(arks)
   puts "Splashing #{arks=="ALL" ? "all" : "selected"} PDFs."
 
   # Start a couple worker threads to do the splash conversions.
-  nThreads = 2
-  splashThreads = nThreads.times.map { Thread.new { splashFromQueue } }
+  splashThread = Thread.new { splashFromQueue }
 
   # Grab all the arks
   if arks == "ALL"
@@ -2254,26 +1989,8 @@ def splashAllPDFs(arks)
     arks.each { |item| $splashQueue << item }
   end
 
-  nThreads.times { $splashQueue << nil } # mark end-of-queue
-  splashThreads.each { |t| t.join }
-end
-
-###################################################################################################
-# Update item and unit stats
-def updateUnitStats
-  puts "Updating unit stats."
-  cacheAllUnits
-  $allUnits.keys.sort.each_slice(10) { |slice|
-    slice.each { |unitID|
-      DB.transaction {
-        UnitCount.where(unit_id: unitID).delete
-        STATS_DB.fetch("SELECT * FROM unitCounts WHERE unitId = ? and direct = 0", unitID) { |row|
-          UnitCount.insert(unit_id: unitID, month: row[:month],
-                           hits: row[:hits], downloads: row[:downloads], items_posted: row[:nItemsPosted])
-        }
-      }
-    }
-  }
+  $splashQueue << nil # mark end-of-queue
+  splashThread.join
 end
 
 ###################################################################################################
@@ -2283,150 +2000,142 @@ def flushDbQueue(queue)
 end
 
 ###################################################################################################
-# Need to do queueing in a function to force the paramters to be captured. Doing a plain lambda
-# inline gets references to variables which then change before lambdas get called.
-def queueRedirect(queue, kind, from_path, to_path, descrip)
-  queue << lambda {
-    Redirect.create(kind: kind,
-                    from_path: from_path,
-                    to_path: to_path,
-                    descrip: descrip)
+def recalcOA
+  puts "Reading units and item links."
+  cacheAllUnits
+  itemUnits = Hash.new { |h,k| h[k] = [] }
+  UnitItem.where(is_direct: 1).order(:ordering_of_units).each { |link|
+    itemUnits[link.item_id] << link.unit_id
+  }
+  puts "Processing items."
+  toUpdate = []
+  Item.each { |item|
+    units = itemUnits[item.id]
+    units or next
+    firstCampus, campuses, departments, journals, series = traceUnits(units)
+    firstCampus or next
+    attrs = item.attrs.nil? ? {} : JSON.parse(item.attrs)
+    newPol = oaPolicyAssoc(firstCampus, units, item, attrs['pub_status'])
+    if !(newPol == item.oa_policy)
+      puts "item=#{item.id} submitted=#{item.submitted} oa_policy: #{item.oa_policy.inspect} -> #{newPol.inspect}"
+      toUpdate << [item.id, newPol]
+    end
+  }
+  puts "Updating #{toUpdate.length} item records."
+  DB.transaction {
+    toUpdate.each { |itemID, newPol|
+      Item.where(id: itemID).update(oa_policy: newPol)
+    }
   }
 end
 
 ###################################################################################################
-def convertOldStyleRedirects(kind, filename)
-  # Skip if already done.
-  !$forceMode && Redirect.where(kind: kind).count > 0 and return
-
-  puts "Converting #{kind} redirects."
-  Redirect.where(kind: kind).delete
-  queue = []
-  open("redirects/#{filename}").each_line do |line|
-    line =~ %r{<from>(http://repositories.cdlib.org/)?([^<]+)</from>.*<to>([^<]+)</to>} or raise
-    fp, tp = $2, $3
-    fp.sub! "&amp;", "&"
-    tp.sub! "&amp;", "&"
-    tp.sub! %r{^/uc/search\?entity=(.*);volume=(.*);issue=(.*)}, '/uc/\1/\2/\3'
-    queueRedirect(queue, kind, "/#{fp}", tp, nil)
-    queue.length >= 1000 and flushDbQueue(queue)
-  end
-  flushDbQueue(queue)
-end
-
-###################################################################################################
-def convertItemRedirects
-  # Skip if already done.
-  !$forceMode && Redirect.where(kind: 'item').count > 0 and return
-
-  puts "Converting item redirects."
-  Redirect.where(kind: 'item').delete
-  fromArks = []
-  comment = nil
-  queue = []
-  didArks = {}
-  open("/apps/eschol/erep/xtf/style/dynaXML/docFormatter/pdf/objectRedirect.xsl").each_line do |line|
-    if line =~ /test="matches/
-      fromArks.empty? or raise("multiple whens with no value-of: #{line}")
-      fromArks = line.scan /\b\d\w{7}\b/
-      fromArks.empty? and raise("no fromArks found: #{line}")
-    elsif line =~ %r{<!--(.*)-->}
-      comment = $1.strip
-      comment.empty? and comment = nil
-    elsif line =~ /xsl:value-of/
-      fromArks.empty? and raise("value-of without when: #{line}")
-      line.sub! "/980931r'", "/980931rf'"  # hack missing char in old redirect
-      toArks = line.scan /\b\d\w{7}\b/
-      toArks.length == 1 or raise("need exactly one to-ark: #{line}")
-      toArk = toArks[0]
-      fromArks.each { |fromArk|
-        if didArks.include? fromArk
-          toArk != didArks[fromArk] and puts "Duplicate from=#{fromArk} to=#{didArks[fromArk]} vs #{toArk}. Skipping."
-          next
-        end
-        queueRedirect(queue, 'item', "/uc/item/#{fromArk}", "/uc/item/#{toArk}", comment)
-        queue.length >= 1000 and flushDbQueue(queue)
-        didArks[fromArk] = toArk
-      }
-      comment = nil
-      fromArks.clear
-    end
-  end
-  flushDbQueue(queue)
-end
-
-###################################################################################################
-def convertUnitRedirects
-  # Skip if already done.
-  !$forceMode && Redirect.where(kind: 'unit').count > 0 and return
-  puts "Converting unit redirects."
-  Redirect.where(kind: 'unit').delete
-
-  fromUnit = nil
-  queue = []
-  open("/apps/eschol/erep/xtf/style/erepCommon/unitRedirect.xsl").each_line do |line|
-    if line =~ /entity='([a-z0-9_]+)'/
-      fromUnit.nil? or raise("multiple whens with no value-of: #{line}")
-      fromUnit = $1
-    elsif line =~ /replace\(\$http\.URL,\s*'([a-z0-9_]+)',\s*'([^']+)'/
-      fromUnit.nil? and raise("value-of without when: #{line}")
-      fromUnit == $1 or raise("value-of doesn't match when: #{line}")
-      fp = "/uc/#{fromUnit}"
-      tp = "/uc/#{$2}"
-      queueRedirect(queue, 'unit', fp, tp, nil)
-      fromUnit = nil
-    end
-  end
-  flushDbQueue(queue)
-end
-
-###################################################################################################
-def fixURL(url)
-  url.sub(%r{^(https?://)([^/]+)//}, '\1\2/')
-end
-
-###################################################################################################
-def convertLogRedirects
-  # Skip if already done.
-  !$forceMode && Redirect.where(kind: 'log').count > 0 and return
-  puts "Converting log redirects."
-  Redirect.where(kind: 'log').delete
-
-  open("redirects/random_redirects").each_line do |line|
-    fromURL, toURL, code = line.split("|")
-
-    # Fix double slashes
-    fromURL = fixURL(fromURL)
-    toURL = fixURL(toURL)
-
-    # www.escholarship -> escholarship
-    next if fromURL.sub("www.escholarship.org", "escholarship.org") == toURL
-    next if fromURL.sub(".pdf", "") == toURL
-
-    # Screwing around with query params on items
-    next if fromURL.sub(%r{(/uc/item/.*)\?.*}, '$1') == toURL.sub(%r{(/uc/item/.*)\?.*}, '$1')
-
-    # Item redirects
-    if fromURL =~ %r{/uc/item/([^/]+)}
-      itemID = $1
-      itemRedir = Redirect.where(kind: "item", from_path: "/uc/item/#{itemID}").first
-      if itemRedir
-        puts "item redirect found: #{itemID} -> #{itemRedir.to_path}"
-        next
+def genDivChildren(xml, parentID, generatedDivs)
+  $unitChildren[parentID].each { |unitID|
+    if generatedDivs.include?(unitID)
+      xml.ptr(ref: unitID)
+    else
+      unit = $allUnits[unitID]
+      unitAttrs = JSON.parse(unit.attrs)
+      divAttrs = {id: unitID, label: unit.name, type: unit.type}
+      unitAttrs['directSubmit'] and divAttrs[:directSubmit] = unitAttrs['directSubmit']
+      unitAttrs['hide'] and divAttrs[:hide] = unitAttrs['hide']
+      if unitAttrs['eissn']
+        divAttrs[:issn] = unitAttrs['eissn']
+      elsif unitAttrs['issn']
+        divAttrs[:issn] = unitAttrs['issn']
       end
+      unitAttrs['elements_id'] and divAttrs[:elementsID] = unitAttrs['elements_id']
+      unitAttrs['is_undergrad'] and divAttrs[:undergrad] = unitAttrs['is_undergrad']
+      unitAttrs['submit_datasets'] and divAttrs[:dataSet] = unitAttrs['submit_datasets']
+      xml.div(divAttrs) {
+        genDivChildren(xml, unitID, generatedDivs)
+      }
+      generatedDivs << unitID
     end
-
-    puts "#{fromURL} -> #{toURL}"
-  end
+  }
 end
 
 ###################################################################################################
-def convertRedirects
-  convertOldStyleRedirects('bepress', 'bp_redirects')
-  convertOldStyleRedirects('doj', 'doj_redirects')
-  convertItemRedirects
-  convertUnitRedirects
-  #convertLogRedirects
+# Regenerate the old allStruct.xml file that Subi and eschol4 controller depend upon
+def genAllStruct
+  cacheAllUnits
+  builder = Nokogiri::XML::Builder.new { |xml|
+    xml.allStruct {
+      genDivChildren(xml, "root", Set.new)
+    }
+  }
+
+  allStructDir = "/apps/eschol/erep/xtf/style/textIndexer/mapping"
+  File.open("#{allStructDir}/allStruct-new.xml", "w") { |io|
+    io.write(builder.to_xml)
+  }
+  File.rename("#{allStructDir}/allStruct-new.xml", "#{allStructDir}/allStruct.xml")
+end
+
+###################################################################################################
+# Allstruct checking (temporary during transition from hand-edited to auto-generated allStruct)
+def extractDivsInner(el, addTo)
+  el.elements.each { |sub|
+    if sub.name == "div"
+      addTo.key?(sub[:id]) and puts("Warning: dupe #{sub}")
+      addTo[sub[:id]] = sub.clone
+    end
+    extractDivsInner(sub, addTo)
+  }
+end
+
+def extractDivs(path)
+  xml = fileToXML(path)
+  addTo = {}
+  extractDivsInner(xml, addTo)
+  return addTo
+end
+
+def fixUnitAttr(unitID, attrName, newVal)
+  puts "    Fixing unit #{unitID} attr #{attrName}=#{newVal.inspect}"
+  unit = Unit[unitID]
+  attrs = JSON.parse(unit.attrs)
+  attrs[attrName] = newVal
+  unit.attrs = attrs.to_json
+  unit.save
+end
+
+def checkAllStruct
+  puts "Checking."
+  oldDivs = extractDivs("/apps/eschol/erep/xtf/style/textIndexer/mapping/allStruct.xml.orig")
+  newDivs = extractDivs("/apps/eschol/erep/xtf/style/textIndexer/mapping/allStruct.xml")
+  (Set.new(oldDivs.keys) + Set.new(newDivs.keys)).each { |id|
+    oldDiv = oldDivs[id]
+    newDiv = newDivs[id]
+    if !oldDiv
+      puts "  Excess new div for id=#{id}"
+    elsif !newDiv
+      puts "  Missing new div for id=#{id}"
+    else
+      (Set.new(oldDiv.attributes.keys) + Set.new(newDiv.attributes.keys)).each { |attrName|
+        next if attrName =~ /^(customFields|seriesBrandFile|label)$/
+        next if oldDiv[attrName] == newDiv[attrName]
+        if !oldDiv[attrName]
+          puts "  Extra attr #{attrName}=#{newDiv[attrName].inspect} for unit #{id}"
+        else
+          if !newDiv[attrName]
+            next if attrName == "directSubmit" && oldDiv[attrName] == "enabled"  # enabled same as nil default
+            puts "  Missing attr #{attrName}=#{oldDiv[attrName].inspect} for unit #{id}"
+          else
+            puts "  Attr diff: old #{attrName}=#{oldDiv[attrName].inspect} vs new #{newDiv[attrName].inspect} for unit #{id}"
+          end
+          if attrName == "elementsID"
+            fixUnitAttr(id, "elements_id", oldDiv[attrName])
+          elsif attrName == "undergrad"
+            fixUnitAttr(id, "is_undergrad", oldDiv[attrName])
+          elsif attrName == "dataSet"
+            fixUnitAttr(id, "submit_datasets", oldDiv[attrName])
+          end
+        end
+      }
+    end
+  }
 end
 
 ###################################################################################################
@@ -2446,9 +2155,6 @@ begin
   end
 
   case ARGV[0]
-    when "--units"
-      units = ARGV.select { |a| a =~ /^[^-]/ }
-      convertAllUnits(units.empty? ? "ALL" : Set.new(units))
     when "--items"
       arks = ARGV.select { |a| a =~ /qt\w{8}/ }
       convertAllItems(arks.empty? ? "ALL" : Set.new(arks))
@@ -2457,10 +2163,13 @@ begin
     when "--splash"
       arks = ARGV.select { |a| a =~ /qt\w{8}/ }
       splashAllPDFs(arks.empty? ? "ALL" : Set.new(arks))
-    when "--stats"
-      updateUnitStats
-    when "--redirects"
-      convertRedirects
+    when "--oa"
+      recalcOA
+    when "--checkAllStruct"
+      checkAllStruct
+    when "--genAllStruct"
+      cacheAllUnits
+      genAllStruct
     else
       STDERR.puts "Usage: #{__FILE__} --units|--items"
       exit 1

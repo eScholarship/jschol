@@ -52,51 +52,47 @@ class CampusCarouselComp extends React.Component {
           initialIndex: 0,
           pageDots: false
         }}>
-        <div className="c-statcarousel__section">
-          <h2 className="c-statcarousel__cell-heading">
-            {this.props.campusName}
-          </h2>
+        <div className="c-statcarousel__section-heading">
+          <h2>{this.props.campusName}</h2>
           <div className="o-stat--item c-statcarousel__cell">
             <a href={"/search?campuses="+this.props.campusID}>{c.item_count.toLocaleString()}</a> Items
           </div>
-        {c.view_count > 0 &&
-          <div className="o-stat--view c-statcarousel__cell">
-            <b>{c.view_count.toLocaleString()}</b> Views
-          </div>
-        }
+        </div>
+      {c.view_count > 0 &&
+        <div className="o-stat--view c-statcarousel__cell">
+          <b>{c.view_count.toLocaleString()}</b> Views
+        </div>
+      }
       {/* <div className="o-stat--passed c-statcarousel__cell">
              <a href="">9,999</a> Items since UC <br/> OA Policy passed
           </div> */}
-        {c.journal_count > 0 &&
-          <div className="o-stat--journals c-statcarousel__cell">
-             <a href={"/"+this.props.campusID+"/journals"}>{c.journal_count.toLocaleString()}</a> eScholarship Journal{pluralJ}
-          </div>
-        }
-        {c.oru_count > 0 &&
-          <div className="o-stat--units c-statcarousel__cell">
-             <a href={"/"+this.props.campusID+"/units"}>{c.oru_count.toLocaleString()}</a> Research Unit{pluralU}
-          </div>
-        }
+      {c.journal_count > 0 &&
+        <div className="o-stat--journals c-statcarousel__cell">
+           <a href={"/"+this.props.campusID+"/journals"}>{c.journal_count.toLocaleString()}</a> eScholarship Journal{pluralJ}
         </div>
-        <div className="c-statcarousel__section">
-          <h2 className="c-statcarousel__cell-heading">
-            All eScholarship
-          </h2>
+      }
+      {c.oru_count > 0 &&
+        <div className="o-stat--units c-statcarousel__cell">
+           <a href={"/"+this.props.campusID+"/units"}>{c.oru_count.toLocaleString()}</a> Research Unit{pluralU}
+        </div>
+      }
+        <div className="c-statcarousel__section-heading">
+          <h2>All eScholarship</h2>
           <div className="o-stat--item c-statcarousel__cell">
              <b>{a.all_item_count.toLocaleString()}</b> Items
           </div>
-          <div className="o-stat--view c-statcarousel__cell">
-             <b>{a.all_view_count.toLocaleString()}</b> Views
-          </div>
+        </div>
+        <div className="o-stat--view c-statcarousel__cell">
+           <b>{a.all_view_count.toLocaleString()}</b> Views
+        </div>
      {/*  <div className="o-stat--passed c-statcarousel__cell">
              <b>99,999</b> Items since UC <br/> OA Policy passed
           </div> */}
-          <div className="o-stat--journals c-statcarousel__cell">
-             <a href="/journals">{a.all_journal_count.toLocaleString()}</a> eScholarship Journals
-          </div>
-          <div className="o-stat--units c-statcarousel__cell">
-             <b>{a.all_oru_count.toLocaleString()}</b> Research Units
-          </div>
+        <div className="o-stat--journals c-statcarousel__cell">
+           <a href="/journals">{a.all_journal_count.toLocaleString()}</a> eScholarship Journals
+        </div>
+        <div className="o-stat--units c-statcarousel__cell">
+           <b>{a.all_oru_count.toLocaleString()}</b> Research Units
         </div>
       </CarouselComp>
     )

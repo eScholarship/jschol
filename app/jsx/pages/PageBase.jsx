@@ -4,6 +4,7 @@ import $ from 'jquery'
 import _ from 'lodash'
 import ReactGA from 'react-ga'
 import { Broadcast, Subscriber } from 'react-broadcast'
+import { Link } from 'react-router'
 
 import SkipNavComp from '../components/SkipNavComp.jsx'
 import Header1Comp from '../components/Header1Comp.jsx'
@@ -74,10 +75,10 @@ class PageBase extends React.Component
     // Retrieve login info from session storage (but after initial init, so that ISO matches for first render)
     let d = this.getSessionData()
     if (d) {
-      setTimeout(()=>{
+      setTimeout(() =>{
         this.setState({ adminLogin: { loggedIn: true, username: d.username, token: d.token },
                         isEditingPage: d.isEditingPage })
-        setTimeout(()=>this.fetchPermissions(), 0)
+        setTimeout(() =>this.fetchPermissions(), 0)
       }, 0)
     }
   }
@@ -126,8 +127,12 @@ class PageBase extends React.Component
         this.setState({ pageData: data, fetchingData: false })
         if (this.pagePermissionsUnit() != this.state.permissionsUnit)
           this.fetchPermissions()
-      }).fail((jqxhr, textStatus, err)=> {
-        this.setState({ pageData: { error: textStatus=="error" ? err : textStatus }, fetchingData: false })
+      }).fail((jqxhr, textStatus, err) => {
+        let message = (jqxhr.responseJSON && jqxhr.responseJSON.message) ? jqxhr.responseJSON.message :
+                      (textStatus=="error" && err) ? err :
+                      textStatus ? textStatus :
+                      "error"
+        this.setState({ pageData: { error: message }, fetchingData: false })
       })
     }
     else {
@@ -142,13 +147,16 @@ class PageBase extends React.Component
                 data: _.merge(_.cloneDeep(data),
                         { username: this.state.adminLogin.username, token: this.state.adminLogin.token })})
     .done(data=>{
-      this.fetchPermissions(true)
       if (data.nextURL) {
-        this.setState({ fetchingData: false })
+        // Setting permissionsUnit to null results in forcing reload of permissions data
+        // (needed if new page has been created)
+        this.setState({ fetchingData: false, permissionsUnit: null })
         this.props.router.push(data.nextURL)
       }
-      else
+      else {
+        this.fetchPermissions(true)
         this.fetchPageData()
+      }
     })
     .fail(data=>{
       alert("Error" + (data.responseJSON ? `:\n${data.responseJSON.message}`
@@ -196,6 +204,7 @@ class PageBase extends React.Component
       if (/jmie_sfews/.test(unit_id)) { this.runExtGATracker('sfewsTracker', 'UA-31540406-1') }
       if (/^nanocad/.test(unit_id)) { this.runExtGATracker('nanocadTracker', 'UA-17962781-1') }
       if (/^uciem_westjem/.test(unit_id)) { this.runExtGATracker('westjemTracker', 'UA-34762732-1') }
+      if (/^ucla_epss/.test(unit_id)) { this.runExtGATracker('epssTracker', 'UA-111990925-2') }
     }
   }
 
@@ -206,7 +215,7 @@ class PageBase extends React.Component
     if (!_.isEqual(this.props, nextProps)) {
       //this.setState(this.getEmptyState())   bad: this causes loss of context when clicking search facets
       this.setState({ fetchingData: true })
-      setTimeout(()=>this.fetchPageData(), 0) // fetch right after setting the new props
+      setTimeout(() => this.fetchPageData(), 0) // fetch right after setting the new props
     }
   }
 
@@ -227,13 +236,18 @@ class PageBase extends React.Component
     throw "Derived class must override renderData method"
   }
 
+  // Most pages want header and footer (automatically)
+  needHeaderFooter() {
+    return true
+  }
+
   renderContent() {
     // Error case
-    if (this.state.pageData && this.state.pageData.error) {
+    if (this.state.pageData && this.state.pageData.error !== undefined) {
       return (
         <div className="body">
           {this.renderError()}
-          <FooterComp/>
+          {this.needHeaderFooter() && <FooterComp/>}
         </div>)
     }
 
@@ -241,7 +255,8 @@ class PageBase extends React.Component
     if (this.state.adminLogin && this.state.adminLogin.loggedIn &&
         this.state.cmsModules && this.state.pageData &&
         this.state.permissions && this.state.permissions.admin &&
-        'header' in this.state.pageData && 'nav_bar' in this.state.pageData.header)
+        'header' in this.state.pageData && 'nav_bar' in this.state.pageData.header &&
+        !this.state.pageData.id)
     {
       return (
         <DrawerComp data={this.state.pageData}
@@ -250,9 +265,9 @@ class PageBase extends React.Component
                     fetchingData={this.state.fetchingData}>
           {/* Not sure why the padding below is needed, but it is */}
           <div className="body" style={{ padding: "20px" }}>
-            <SkipNavComp/>
+            {this.needHeaderFooter() && <SkipNavComp/>}
             {this.state.pageData ? this.renderData(this.state.pageData) : this.renderLoading()}
-            <FooterComp/>
+            {this.needHeaderFooter() && <FooterComp/>}
           </div>
         </DrawerComp>)
     }
@@ -260,9 +275,16 @@ class PageBase extends React.Component
     // Normal case
     return (
       <div className="body">
-        <SkipNavComp/>
+        {this.needHeaderFooter() && <SkipNavComp/>}
         {this.state.pageData ? this.renderData(this.state.pageData) : this.renderLoading()}
-        <FooterComp/>
+        {this.needHeaderFooter() &&
+          <div>
+            <div className="c-toplink">
+              <a href="javascript:window.scrollTo(0, 0)">Top</a>
+            </div>
+            <FooterComp/>
+          </div>
+        }
       </div>)
   }
 
@@ -295,7 +317,7 @@ class PageBase extends React.Component
           }
         }
       })
-      .fail((jqxhr, textStatus, err)=> {
+      .fail((jqxhr, textStatus, err) => {
         this.setState({ pageData: { error: textStatus }, fetchingPerms: false, adminLogin: null, permissions: null, isEditingPage: false })
       })
     }
@@ -312,8 +334,8 @@ class PageBase extends React.Component
                                            onLogout: this.onLogout,
                                            isEditingPage: this.state.adminLogin && this.state.adminLogin.loggedIn && this.state.isEditingPage,
                                            onEditingPageChange: this.onEditingPageChange,
-                                           fetchPageData: ()=>this.fetchPageData(this.props),
-                                           goLocation: (loc)=>this.props.router.push(loc),
+                                           fetchPageData: () =>this.fetchPageData(this.props),
+                                           goLocation: (loc) =>this.props.router.push(loc),
                                            modules: this.state.cmsModules,
                                            permissions: this.state.permissions } }>
           {this.renderContent()}
@@ -324,7 +346,7 @@ class PageBase extends React.Component
 
   renderLoading() { return(
     <div>
-      <Header1Comp/>
+      {this.needHeaderFooter() && <Header1Comp/>}
       <h2 style={{ marginTop: "5em", marginBottom: "5em" }}>Loading...</h2>
     </div>
   )}
@@ -332,7 +354,7 @@ class PageBase extends React.Component
   renderError() { return (
     <div>
       <MetaTagsComp title={this.state.pageData.error}/>
-      <Header1Comp/>
+      {this.needHeaderFooter() && <Header1Comp/>}
       <div className="c-navbar">
       </div>
       <div className="c-columns">

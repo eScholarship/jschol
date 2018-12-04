@@ -1,9 +1,7 @@
-// ##### Content Well Component ##### //
+// ##### Content Well Object ##### //
 
-.c-well {
-  margin-bottom: $spacing-md;
+%o-well {
   padding: $spacing-sm;
-  background-color: $color-light-teal;
 
   @include bp(screen2) {
     padding: $spacing-md;
@@ -13,4 +11,26 @@
     @extend %o-textlink__secondary;
   }
 
+}
+
+// ***** Well with colored background ***** //
+
+.o-well-colored {
+  @extend %o-well;
+
+  margin-bottom: $spacing-md;
+
+  background-color: $color-light-teal;
+}
+
+// ***** Large (well padded) Well ***** //
+
+.o-well-large {
+  @extend %o-well;
+
+  padding: $spacing-xl $spacing-sm;
+
+  @include bp(screen2) {
+    padding: $spacing-xl $spacing-md;
+  }
 }

@@ -1,12 +1,12 @@
 // ##### Related Items Component ##### //
 
 .c-relateditems {
-  @extend %no-bullet-ul;
+  @extend %u-reset-list-styles;
 
   li {
     line-height: $line-height1;
 
-    @include headings() {
+    @include u-heading() {
       margin: 0;
       font-size: 1em;
       font-weight: normal;

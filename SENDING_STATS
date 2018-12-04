@@ -1,0 +1,25 @@
+1. If needed, update (and commit/push) mailTemplates/adminEmail-monthly.erb and authorEmail-monthly.erb
+
+2. tools/massEmail.rb stats-admins recent-hits mailTemplates/adminEmail-monthly.erb preview >> mailLogs/`date +"%Y%m%d"`_admin_pvw_out.log 2> >(tee -a mailLogs/`date +"%Y%m%d"`_admin_pvw_err.log >&2)
+
+3. Quick check:
+   less mailLogs/`date +"%Y%m%d"`_admin_pvw_out.log
+
+4. tools/massEmail.rb authors recent-hits mailTemplates/authorEmail-monthly.erb preview >> mailLogs/`date +"%Y%m%d"`_author_pvw_out.log 2> >(tee -a mailLogs/`date +"%Y%m%d"`_author_pvw_err.log >&2)
+   ...this takes a minute or so
+
+5. Quick check:
+  less mailLogs/`date +"%Y%m%d"`_author_pvw_out.log
+
+6. (tools/massEmail.rb stats-admins recent-hits mailTemplates/adminEmail-monthly.erb go4it >> mailLogs/`date +"%Y%m%d"`_admin_go4it.log 2>&1 & )
+
+7. tail -f mailLogs/`date +"%Y%m%d"`_admin_go4it.log
+  ...this takes about 10 minutes
+
+8. (tools/massEmail.rb authors recent-hits mailTemplates/authorEmail-monthly.erb go4it >> mailLogs/`date +"%Y%m%d"`_author_go4it.log 2>&1 & )
+
+9. tail -f mailLogs/`date +"%Y%m%d"`_author_go4it.log
+  ...this takes 5-6 hours
+
+10. After several hours for bounces to roll in, you can run a bounce test to see how many permanent bounces and complaints occurred:
+    tools/massEmail.rb authors recent-hits mailTemplates/authorEmail-monthly.erb bounceTest |& tee mailLogs/`date +"%Y%m%d"`_bounceTest.log

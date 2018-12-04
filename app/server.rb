@@ -19,9 +19,12 @@ require 'pp'
 require 'sequel'
 require 'sinatra'
 require 'tempfile'
-require 'yaml'
 require 'socksify'
 require 'socket'
+require 'uri'
+
+# Easy toggle to enable/disable mrtExpress
+USE_MRTEXPRESS = true
 
 # Make puts thread-safe, and flush after every puts.
 $stdoutMutex = Mutex.new
@@ -48,19 +51,30 @@ end
 STDOUT.write "\n=====================================================================================\n"
 
 def waitForSocks(host, port)
-  first = true
   begin
     sock = TCPSocket.new(host, port)
     sock.close
   rescue Errno::ECONNREFUSED
-    first and puts("Waiting for SOCKS proxy to start.")
-    first = false
-    sleep 0.5
-    retry
+    retries ||= 0
+    retries == 0 and puts("Waiting for SOCKS proxy to start.")
+    retries += 1
+    if retries == 60 # == 30 sec
+      puts "SOCKS proxy failed. Verify that 'ssh yourUsername@pub-jschol-dev.escholarship.org' works."
+      exit 1
+    else
+      sleep 0.5
+      retry
+    end
   end
 end
 
-def ensureConnect(dbConfig)
+def ensureConnect(envPrefix)
+  dbConfig = { "adapter"  => "mysql2",
+               "host"     => ENV["#{envPrefix}_HOST"] || raise("missing env #{envPrefix}_HOST"),
+               "port"     => ENV["#{envPrefix}_PORT"] || raise("missing env #{envPrefix}_PORT").to_i,
+               "database" => ENV["#{envPrefix}_DATABASE"] || raise("missing env #{envPrefix}_DATABASE"),
+               "username" => ENV["#{envPrefix}_USERNAME"] || raise("missing env #{envPrefix}_USERNAME"),
+               "password" => ENV["#{envPrefix}_PASSWORD"] || raise("missing env #{envPrefix}_HOST") }
   if TCPSocket::socks_port
     SocksMysql.new(dbConfig)
   end
@@ -72,43 +86,71 @@ end
 
 # Use the Sequel gem to get object-relational mapping, connection pooling, thread safety, etc.
 # If specified, use SOCKS proxy for all connections (including database).
-escholDbConfig = YAML.load_file("config/database.yaml")
-ojsDbConfig = YAML.load_file("config/ojsDb.yaml")
-if File.exist? "config/socks.yaml"
+if ENV['SOCKS_PORT']
   # Configure socksify for all TCP connections. Jump through hoops for MySQL to use it too.
-  socksPort = YAML.load_file("config/socks.yaml")['port']
+  socksPort = ENV['SOCKS_PORT']
   waitForSocks("127.0.0.1", socksPort)
   TCPSocket::socks_server = "127.0.0.1"
   TCPSocket::socks_port = socksPort
   require_relative 'socksMysql'
 end
 puts "Connecting to eschol DB.    "
-DB = ensureConnect(escholDbConfig)
+DB = ensureConnect("ESCHOL_DB")
 #DB.loggers << Logger.new('server.sql_log')  # Enable to debug SQL queries on main db
 puts "Connecting to OJS DB.       "
-OJS_DB = ensureConnect(ojsDbConfig)
+OJS_DB = ensureConnect("OJS_DB")
 #OJS_DB.loggers << Logger.new('ojs.sql_log')  # Enable to debug SQL queries on OJS db
 
 # When fetching ISO pages and PDFs from the local server, we need the host name.
 $host = ENV['HOST'] ? "#{ENV['HOST']}.escholarship.org" : "localhost"
 
-# Need credentials for fetching content files from MrtExpress
-$mrtExpressConfig = YAML.load_file("config/mrtExpress.yaml")
+# Temporary for memory leak debugging
+if false
+  puts "Will trace object allocations; send signal USR1 to write heap.dump.gz"
+  require 'objspace'
+  ObjectSpace.trace_object_allocations_start
+  Signal.trap("USR1") {
+    Thread.new {
+      puts "Dumping heap to 'heap.dump'."
+      File.open('heap.dump', "w") { |io|
+        ObjectSpace.dump_all(output: io)
+      }
+      puts "Heap dump complete."
+    }
+  }
+end
 
 # Need a key for encrypting login credentials and URL keys
-$jscholKey = open("config/jscholKey.dat").read.strip
+$jscholKey = ENV['JSCHOL_KEY'] or raise("missing env JSCHOL_KEY")
 
 # S3 API client
 puts "Connecting to S3.           "
-$s3Config = OpenStruct.new(YAML.load_file("config/s3.yaml"))
-$s3Client = Aws::S3::Client.new(region: $s3Config.region)
-$s3Bucket = Aws::S3::Bucket.new($s3Config.bucket, client: $s3Client)
-
-# CloudFront info
-$cloudFrontConfig = File.exist?("config/cloudFront.yaml") && YAML.load_file("config/cloudFront.yaml")
-
-# Info about isomorphic mode and port
-$serverConfig = YAML.load_file("config/server.yaml")
+S3_LOGGING = false
+if S3_LOGGING
+  # Temporary wire logging while we diagnose S3 timeouts with the AWS folks.
+  # It's so verbose that it even dumps binary data; to keep the log size at all
+  # reasonable, omit that part.
+  class S3Logger < Logger
+    @prevWasOmitted = false
+    def << (msg)
+      if msg =~ /\\r\\n/ && !(msg =~ /\\x/)
+        puts "s3: #{msg}"
+        @prevWasOmitted = false
+      else
+        if !@prevWasOmitted
+          puts "s3: [data omitted]"
+        end
+        @prevWasOmitted = true
+      end
+    end
+  end
+  s3Logger = S3Logger.new(STDOUT)
+  $s3Client = Aws::S3::Client.new(region: ENV['S3_REGION'] || raise("missing env S3_REGION"),
+                                  :logger => s3Logger, :http_wire_trace => true)
+else
+  $s3Client = Aws::S3::Client.new(region: ENV['S3_REGION'] || raise("missing env S3_REGION"))
+  $s3Bucket = Aws::S3::Bucket.new(ENV['S3_BUCKET'] || raise("missing env S3_BUCKET"), client: $s3Client)
+end
 
 # Internal modules to implement specific pages and functionality
 require_relative '../util/sanitize.rb'
@@ -118,6 +160,7 @@ require_relative 'hierarchy'
 require_relative 'listViews'
 require_relative 'searchApi'
 require_relative 'queueWithTimeout'
+require_relative 'statsPages'
 require_relative 'unitPages'
 require_relative 'citation'
 require_relative 'loginApi'
@@ -132,6 +175,87 @@ end
 
 $stdoutLogger = StdoutLogger.new
 
+# Replace Rack's CommonLogger with a slight modification to log Referer and X-Amzn-Trace-Id
+class AccessLogger
+
+  FORMAT = %{%s - %s [%s] "%s %s%s %s" %d %s %0.4f %s %s\n}
+
+  def initialize(app, logger=nil)
+    @app = app
+    @logger = logger
+  end
+
+  def call(env)
+    began_at = Rack::Utils.clock_time
+    status, header, body = @app.call(env)
+    header = Rack::Utils::HeaderHash.new(header)
+    body = Rack::BodyProxy.new(body) { log(env, status, header, began_at) }
+    [status, header, body]
+  end
+
+  private
+
+  def log(env, status, header, began_at)
+    length = extract_content_length(header)
+
+    msg = FORMAT % [
+      env['HTTP_X_FORWARDED_FOR'] || env["REMOTE_ADDR"] || "-",
+      env["REMOTE_USER"] || "-",
+      Time.now.strftime("%d/%b/%Y:%H:%M:%S %z"),
+      env[Rack::REQUEST_METHOD],
+      env[Rack::PATH_INFO],
+      env[Rack::QUERY_STRING].empty? ? "" : "?#{env[Rack::QUERY_STRING]}",
+      env[Rack::HTTP_VERSION],
+      status.to_s[0..3],
+      length,
+      Rack::Utils.clock_time - began_at,
+      extract_referer(env, header),  # added
+      extract_trace(env, header) ]   # added
+
+    logger = @logger || env[Rack::RACK_ERRORS]
+    # Standard library logger doesn't support write but it supports << which actually
+    # calls to write on the log device without formatting
+    if logger.respond_to?(:write)
+      logger.write(msg)
+    else
+      logger << msg
+    end
+  end
+
+  def extract_content_length(headers)
+    value = headers[Rack::CONTENT_LENGTH] or return '-'
+    value.to_s == '0' ? '-' : value
+  end
+
+  def extract_referer(env, headers)
+    value = env['HTTP_REFERER'] || headers['REFERER'] or return '-'
+    return quote(value)
+  end
+
+  def extract_trace(env, headers)
+    value = env['HTTP_X_AMZN_TRACE_ID'] || headers['X-AMZN-TRACE-ID'] or return '-'
+    return quote(value)
+  end
+
+  def quote(value)
+    return "\"#{value.gsub("\"", "%22").gsub(/\s/, "+")}\""
+  end
+end
+
+###################################################################################################
+# Model classes for easy interaction with the database.
+#
+# For more info on the database schema, see contents of migrations/ directory, and for a more
+# graphical version, see:
+#
+# https://docs.google.com/drawings/d/1gCi8l7qteyy06nR5Ol2vCknh9Juo-0j91VGGyeWbXqI/edit
+puts "Populating db models."
+require_relative '../tools/models.rb'
+
+# DbCache uses the models above.
+require_relative 'dbCache'
+fillCaches
+
 # Sinatra configuration
 configure do
   # Puma is good for multiprocess *and* multithreading
@@ -145,81 +269,20 @@ configure do
   # Replace Sinatra's normal logging with one that goes to our overridden stdout puts, so we
   # can include the pid and thread number with each request.
   set :logging, false
-  use Rack::CommonLogger, $stdoutLogger
+  use AccessLogger, $stdoutLogger
+
+   # Compress things that can benefit
   use Rack::Deflater,
     :include => %w{application/javascript text/html text/css application/json image/svg+xml},
     :if => lambda { |env, status, headers, body|
-      # advice from https://www.itworld.com/article/2693941/cloud-computing/why-it-doesn-t-make-sense-to-gzip-all-content-from-your-web-server.html
+      # advice from https://www.itworld.com/article/2693941/cloud-computing/
+      #               why-it-doesn-t-make-sense-to-gzip-all-content-from-your-web-server.html
       return headers["Content-Length"].to_i > 1400
     }
 end
 
-# Compress responses
-## NO: This fails when streaming files. Not sure why yet.
-#use Rack::Deflater
-
 TEMP_DIR = "tmp"
 FileUtils.mkdir_p(TEMP_DIR)
-
-###################################################################################################
-# Model classes for easy interaction with the database.
-#
-# For more info on the database schema, see contents of migrations/ directory, and for a more
-# graphical version, see:
-#
-# https://docs.google.com/drawings/d/1gCi8l7qteyy06nR5Ol2vCknh9Juo-0j91VGGyeWbXqI/edit
-
-class UnitCount < Sequel::Model
-end
-
-class Unit < Sequel::Model
-  unrestrict_primary_key
-  one_to_many :unit_hier,     :class=>:UnitHier, :key=>:unit_id
-  one_to_many :ancestor_hier, :class=>:UnitHier, :key=>:ancestor_unit
-end
-
-class UnitHier < Sequel::Model(:unit_hier)
-  unrestrict_primary_key
-  many_to_one :unit,          :class=>:Unit
-  many_to_one :ancestor,      :class=>:Unit, :key=>:ancestor_unit
-end
-
-class UnitItem < Sequel::Model
-  unrestrict_primary_key
-end
-
-class Item < Sequel::Model
-  unrestrict_primary_key
-end
-
-class ItemAuthors < Sequel::Model(:item_authors)
-  unrestrict_primary_key
-end
-
-class Issue < Sequel::Model
-end
-
-class Section < Sequel::Model
-end
-
-class Page < Sequel::Model
-end
-
-class Widget < Sequel::Model
-end
-
-class ItemCount < Sequel::Model
-end
-
-class DisplayPDF < Sequel::Model
-  unrestrict_primary_key
-end
-
-class Redirect < Sequel::Model
-end
-
-# DbCache uses the models above.
-require_relative 'dbCache'
 
 ###################################################################################################
 # ISOMORPHIC JAVASCRIPT
@@ -245,9 +308,11 @@ require_relative 'dbCache'
 
 ###################################################################################################
 # IP address filtering, redirect processing, etc.
-$ipFilter = File.exist?("config/allowed_ips") && Regexp.new(File.read("config/allowed_ips").strip)
+$ipInclude = File.exist?("config/allowed_ips") && Regexp.new(File.read("config/allowed_ips").strip)
+$ipExclude = File.exist?("config/blocked_ips") && Regexp.new(File.read("config/blocked_ips").strip)
 before do
-  $ipFilter && !$ipFilter.match(request.ip) and halt 403
+  $ipInclude && !$ipInclude.match(request.ip) and halt 403
+  $ipExclude && $ipExclude.match(request.ip) and halt 403
   redirURI, code = checkRedirect(URI.parse(request.url))
   if code
     if code >= 300 && code <= 399
@@ -265,12 +330,20 @@ get "/check" do
 end
 
 ###################################################################################################
+get %r{/uc/([^/]+)/rss} do |unitID|
+  unit = Unit[unitID] or halt(404, "Unit not found")
+  response = HTTParty.get("http://#{$host}:18900/rss/unit/#{unitID}")
+  response.headers['content-type'] and content_type response.headers['content-type']
+  [response.code, response.body]
+end
+
+###################################################################################################
 def proxyFromURL(url, overrideHostname = nil)
   fetcher = HttpFetcher.new(url, overrideHostname)
   if fetcher.length > 0
     headers "Content-Length" => fetcher.length.to_s
   end
-  if fetcher.headers.dig('content-type', 0)
+  if fetcher.headers && fetcher.headers.dig('content-type', 0)
     headers "content-type" => fetcher.headers.dig('content-type', 0)
   end
   return stream { |out| fetcher.streamTo(out) }
@@ -279,14 +352,57 @@ end
 ###################################################################################################
 get %r{/uc/oai(.*)} do
   request.url =~ %r{/uc/oai(.*)}
-  proxyFromURL("http://pub-eschol-prd-2a.escholarship.org:18880/uc/oai#{$1}", "escholarship.org")
+  proxyFromURL("https://submit.escholarship.org/uc/oai#{$1}", "escholarship.org")
+end
+
+###################################################################################################
+get %r{/graphql} do
+  if request.query_string.empty?
+    redirect(to('/graphql/iql'))
+  else
+    response = HTTParty.get("http://#{$host}:18900/graphql?#{URI.escape(request.query_string)}")
+    %w{Content-Type Access-Control-Allow-Origin}.each { |h|
+      response.headers[h] and headers h => response.headers[h]
+    }
+    [response.code, response.body]
+  end
+end
+
+###################################################################################################
+get %r{/graphql(.*)} do
+  proxyFromURL("http://#{$host}:18900/graphql#{params['captures'][0]}", "escholarship.org")
+end
+
+###################################################################################################
+post %r{/graphql(.*)} do
+  response = HTTParty.post("http://#{$host}:18900/graphql#{params['captures'][0]}",
+                           body: request.body.read)
+  %w{Content-Type Access-Control-Allow-Origin}.each { |h|
+    response.headers[h] and headers h => response.headers[h]
+  }
+  [response.code, response.body]
+end
+
+###################################################################################################
+options %r{/graphql(.*)} do
+  headers "Access-Control-Allow-Origin" => "*",
+          "Access-Control-Allow-Headers" => "Accept, Content-Type",
+          "Access-Control-Allow-Methods" => "GET, POST, OPTIONS"
+  200
 end
 
 ###################################################################################################
 # Old XTF-style "smode" searches fall to here; all other old searches get redirected.
 get %r{/uc/search(.*)} do |stuff|
   request.url =~ %r{/uc/search(.*)}
-  proxyFromURL("http://pub-eschol-prd-2a.escholarship.org:18880/uc/search#{$1}", "escholarship.org")
+  proxyFromURL("https://submit.escholarship.org/uc/search#{$1}", "escholarship.org")
+end
+
+###################################################################################################
+# Directory used by RePec to crawl our site
+get %r{/repec(.*)} do
+  request.url =~ %r{/repec(.*)}
+  proxyFromURL("https://submit.escholarship.org/repec#{$1}", "escholarship.org")
 end
 
 ###################################################################################################
@@ -300,7 +416,7 @@ end
 
 ###################################################################################################
 get %r{/assets/([0-9a-f]{64})} do |hash|
-  s3Path = "#{$s3Config.prefix}/binaries/#{hash[0,2]}/#{hash[2,2]}/#{hash}"
+  s3Path = "#{ENV['S3_PREFIX'] || raise("missing env S3_PREFIX")}/binaries/#{hash[0,2]}/#{hash[2,2]}/#{hash}"
   obj = $s3Bucket.object(s3Path)
   obj.exists? or halt(404)
   Tempfile.open("s3_", TEMP_DIR) { |s3Tmp|
@@ -334,7 +450,9 @@ get "/content/:fullItemID/*" do |itemID, path|
   # If it's the main content PDF...
   if path =~ /^qt\w{8}\.pdf$/
     epath = "content/#{URI::encode(path)}"
-    attrs["content_merritt_path"] and epath = attrs["content_merritt_path"]
+    if USE_MRTEXPRESS
+      attrs["content_merritt_path"] and epath = attrs["content_merritt_path"]
+    end
     noSplash = params[:nosplash] && isValidContentKey(itemID.sub(/^qt/, ''), params[:nosplash])
     mainPDF = true
   elsif path =~ %r{^inner/(.*)$}
@@ -349,7 +467,10 @@ get "/content/:fullItemID/*" do |itemID, path|
     epath = nil
     attrs["supp_files"].each { |supp|
       if path == "supp/#{supp["file"]}"
-        epath = supp["merritt_path"] || "content/#{URI::encode(path)}"
+        epath = "content/#{URI::encode(path)}"
+        if USE_MRTEXPRESS && supp["merritt_path"]
+          epath = URI::encode(supp["merritt_path"])
+        end
       end
     }
     epath or halt(404)
@@ -358,16 +479,22 @@ get "/content/:fullItemID/*" do |itemID, path|
   end
 
   # Some items have a date-based download restriction. In this case, we only support the
-  # no-splash version used for pdf.js rendering, and protected (lightly) by a key.
-  if attrs['disable_download'] && Date.parse(attrs['disable_download']) > Date.today && !(mainPDF && noSplash)
+  # no-splash version used for pdf.js rendering, and protected (lightly) by a key. Note that
+  # supp files are explicitly allowed, e.g. for the Greek Satyr Play. See
+  # https://www.pivotaltracker.com/story/show/152981894
+  if attrs['disable_download'] && Date.parse(attrs['disable_download']) > Date.today && mainPDF && !noSplash
     halt 403, "Download restricted until #{attrs['disable_download']}"
   end
 
   # Guess the content type by path for now
   content_type MimeMagic.by_path(path)
 
-  # Here's the final Merritt URL
-  mrtURL = "https://#{$mrtExpressConfig['host']}/dl/#{mrtID}/#{epath}"
+  # Here's the final file URL
+  if USE_MRTEXPRESS
+    fileURL = "https://#{ENV['MRTEXPRESS_HOST'] || raise("missing env MRTEXPRESS_HOST")}/dl/#{mrtID}/#{epath}"
+  else
+    fileURL = "http://submit.escholarship.org:18881/data_pairtree/#{itemID.scan(/\w\w/).join('/')}/#{itemID}/#{epath}"
+  end
 
   # Control how long this remains in browser and CloudFront caches
   cache_control :public, :max_age => 3600   # maybe more?
@@ -384,17 +511,21 @@ get "/content/:fullItemID/*" do |itemID, path|
   # to the version in Merritt.
   displayPDF = DisplayPDF[itemID]
   if !mainPDF || !displayPDF
-    fetcher = MerrittFetcher.new(mrtURL)
-    headers "Content-Length" => fetcher.length.to_s
+    fetcher = MerrittFetcher.new(fileURL)
+    if fetcher.length
+      headers "Content-Length" => fetcher.length.to_s
+    else
+      raise fetcher.status
+    end
     return stream { |out| fetcher.streamTo(out) }
   end
 
   # Decide which display version to send
-  if noSplash
-    s3Path = "#{$s3Config.prefix}/pdf_patches/linearized/#{itemID}"
+  if noSplash || displayPDF.splash_size == 0
+    s3Path = "#{ENV['S3_PREFIX'] || raise("missing env S3_PREFIX")}/pdf_patches/linearized/#{itemID}"
     outLen = displayPDF.linear_size
   else
-    s3Path = "#{$s3Config.prefix}/pdf_patches/splash/#{itemID}"
+    s3Path = "#{ENV['S3_PREFIX'] || raise("missing env S3_PREFIX")}/pdf_patches/splash/#{itemID}"
     outLen = displayPDF.splash_size
   end
 
@@ -406,7 +537,6 @@ get "/content/:fullItemID/*" do |itemID, path|
   range = request.env["HTTP_RANGE"]
   s3Obj = $s3Bucket.object(s3Path)
   s3Obj.exists? or raise("missing display PDF")
-  fetcher = S3Fetcher.new(s3Obj, s3Path, range)
   if range
     range =~ /^bytes=(\d+)-(\d+)?/ or raise("can't parse range #{range.inspect}")
     fromByte, toByte = $1.to_i, $2.to_i
@@ -421,6 +551,7 @@ get "/content/:fullItemID/*" do |itemID, path|
   headers "Content-Length" => outLen.to_s,
           "ETag" => s3Obj.etag,
           "Last-Modified" => s3Obj.last_modified.to_s
+  fetcher = S3Fetcher.new(s3Obj, s3Path, range)
   stream { |out| fetcher.streamTo(out) }
 end
 
@@ -460,8 +591,14 @@ end
 get %r{.*} do
   # The regex below ensures that /api, /content, /locale, and files with a file ext get served
   # elsewhere.
-  if request.path_info =~ %r{api/.*|content/.*|locale/.*|.*\.\w{1,4}}
+  if request.path_info =~ %r{api/.*|content/.*|locale/.*|.*\.[a-zA-Z]\w{0,3}}
     pass
+  elsif request.path_info =~ %r{/stats($|/)}
+    # Don't do iso on stats reports
+    resp = generalResponse(false)
+
+    # Prevent stats pages from getting into Google/Bing/etc.
+    resp.sub!('<metaTags></metaTags>', '<metaTags><meta name="robots" content="noindex"></metaTags>')
   else
     generalResponse
   end
@@ -477,7 +614,7 @@ def generalResponse(iso_ok = true)
   template.sub!("/css/main.css", "/css/main-#{Digest::MD5.file("app/css/main.css").hexdigest[0,16]}.css")
 
   # Isomorphic javascript rendering on the server
-  if $serverConfig['isoPort']
+  if ENV['ISO_PORT'] && iso_ok
     # Parse out payload of the URL (i.e. not including the host name)
     request.url =~ %r{^https?://([^/:]+)(:\d+)?(.*)$} or fail
     remainder = $3
@@ -485,8 +622,8 @@ def generalResponse(iso_ok = true)
     # Pass the full path and query string to our little Node Express app, which will run it through
     # ReactRouter and React.
     begin
-      outerHttp = Net::HTTP.new($host, $serverConfig['isoPort'])
-      outerHttp.read_timeout = 5
+      outerHttp = Net::HTTP.new($host, ENV['ISO_PORT'])
+      outerHttp.read_timeout = ($host == "localhost") ? 20 : 5  # need extra time on local dev machines
       response = outerHttp.start {|http| http.request(Net::HTTP::Get.new(remainder)) }
     rescue Exception => e
       # If there's an exception (like iso is completely dead), fall back to non-iso mode.
@@ -551,7 +688,7 @@ not_found do
   if request.path =~ %r{\.[^/]+$}   # handle probable file paths like .jpg, .gif, etc.
     return "Resource not found.\n"
   elsif request.path =~ %r{/api/}
-    return "API not found.\n"
+    return jsonHalt(404, "Not Found")
   else
     generalResponse(false)  # handles 404's in the same fashion as other req's, but no iso
   end
@@ -617,7 +754,7 @@ end
 # Deposit Wizard get series for an ORU 
 get "/api/wizardlySeries/:unitID" do |unitID|
   children = $hierByAncestor[unitID]
-  os = children ? children.select { |u| u.unit.type == 'series' }.map {|u|
+  os = children ? children.select { |u| u.unit.type.include?('series') }.map {|u|
    unitAttrs = JSON.parse(u.unit.attrs)
    {'id': u.unit_id, 'name': u.unit.name, 'directSubmit': unitAttrs['directSubmit']}
   } : []
@@ -677,7 +814,9 @@ get "/api/browse/:browse_type/:campusID" do |browse_type, campusID|
   unit = $unitsHash[campusID]
   unit or halt(404, "campusID not found")
   if browse_type == 'units'
-    cu = $hierByAncestor[campusID].map do |a| getChildDepts($unitsHash[a.unit_id]); end
+    cu = $hierByAncestor[campusID].sort_by{ |h| $unitsHash[h[:unit_id]].name }.map do |a|
+      getChildDepts($unitsHash[a.unit_id])
+    end
     pageTitle = "Academic Units"
   else   # journals
     cj  = $campusJournals.select{ |j| j[:ancestor_unit].include?(campusID) }.sort_by{ |h| h[:name].downcase }
@@ -707,8 +846,10 @@ def getChildDepts(unit)
     return nil
   else
     node = {"id" => unit.id, "name" => unit.name}
-    child = $hierByAncestor[unit.id].map { |c| getChildDepts($unitsHash[c.unit_id]) }.compact
-    if child[0] then node["children"] = child end
+    if $hierByAncestor[unit.id]
+      child = $hierByAncestor[unit.id].map { |c| getChildDepts($unitsHash[c.unit_id]) }.compact
+      if child[0] then node["children"] = child end
+    end
     return node
   end
 end
@@ -736,6 +877,20 @@ get "/api/globalStatic/*" do
   return pageData.to_json
 end
 
+def parseIssueHeaderData(unit_id, vol, iss, issue)
+  title = issue[:attrs] ? JSON.parse(issue[:attrs])["title"] : nil
+  return {'unit_id': unit_id, 'volume': vol, 'issue': iss, 'title': title, 'numbering': issue[:numbering]}
+end
+
+###################################################################################################
+# Person stats
+get "/api/author/:personID/stats/?:pageName?" do
+  content_type :json
+  personID = "ark:/99166/#{params[:personID]}"
+  Person[personID] or jsonHalt(404, "Author not found")
+  return authorStatsData(personID, params[:pageName])
+end
+
 ###################################################################################################
 # Unit page data. 
 # pageName may be some administrative function (nav, profile), specific journal volume, or static page name
@@ -746,7 +901,8 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
 
   attrs = JSON.parse(unit[:attrs])
   pageName = params[:pageName]
-  issueData = nil
+  pageName == "stats" and return unitStatsData(params[:unitID], params[:subPage])
+  issueHeaderData = nil
   if pageName
     ext = nil
     begin
@@ -757,17 +913,15 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
     end
     pageData = {
       unit: unit.values.reject{|k,v| k==:attrs}.merge(:extent => ext),
-      sidebar: getUnitSidebar(unit)
+      sidebar: getUnitSidebar(unit.type.include?('series') ? getUnitAncestor(unit) : unit)
     }
     if ["home", "search"].include? pageName  # 'home' here refers to the unit's homepage, not root home
       q = nil
       q = CGI::parse(request.query_string) if pageName == "search"
       pageData[:content] = getUnitPageContent(unit, attrs, q)
       if unit.type == 'journal' and pageData[:content][:issue]
-        iss = pageData[:content][:issue]
-        # need this information for building header breadcrumb
-        issueData = {'unit_id': params[:unitID], 'volume': iss[:volume], 'issue': iss[:issue],
-                     'numbering': iss[:numbering] }
+        issue = pageData[:content][:issue]
+        issueHeaderData = parseIssueHeaderData(params[:unitID], issue[:volume], issue[:issue], issue)
       end
     elsif pageName == 'profile'
       pageData[:content] = getUnitProfile(unit, attrs)
@@ -776,24 +930,28 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
       pageData[:content] = getUnitCarouselConfig(unit, attrs)
     elsif pageName == 'issueConfig'
       pageData[:content] = getUnitIssueConfig(unit, attrs)
+    elsif pageName == 'unitBuilder'
+      pageData[:content] = getUnitBuilderData(unit)
     elsif pageName == 'nav'
       pageData[:content] = getUnitNavConfig(unit, attrs['nav_bar'], params[:subPage])
     elsif pageName == 'sidebar'
       pageData[:content] = getUnitSidebarWidget(unit, params[:subPage])
     elsif pageName == "redirects"
       pageData[:content] = getRedirectData(params[:subPage])
+    elsif pageName == "authorSearch"
+      pageData[:content] = getAuthorSearchData
     elsif isJournalIssue?(unit.id, params[:pageName], params[:subPage])
       pageData[:content] = getJournalIssueData(unit, attrs, params[:pageName], params[:subPage])
       # A specific issue, otherwise you get journal landing (through getUnitPageContent method above)
-      issueData = {'unit_id': params[:unitID], 'volume': params[:pageName], 'issue': params[:subPage],
-                   'numbering': pageData[:content][:issue][:numbering] }
+      issueHeaderData = parseIssueHeaderData(params[:unitID], params[:pageName], params[:subPage], pageData[:content][:issue])
     else
       pageData[:content] = getUnitStaticPage(unit, attrs, pageName)
     end
     pageData[:header] = getUnitHeader(unit,
-                                      (pageName =~ /^(nav|sidebar|profile|carousel|issueConfig|redirects)/ or issueData) ? nil : pageName,
-                                      issueData, attrs)
-    pageData[:marquee] = getUnitMarquee(unit, attrs) if (["home", "search"].include? pageName or issueData)
+      (pageName =~ /^(nav|sidebar|profile|carousel|issueConfig|redirects|unitBuilder|authorSearch)/ or issueHeaderData) ?
+        nil : pageName,
+      issueHeaderData, attrs)
+    pageData[:marquee] = getUnitMarquee(unit, attrs) if (["home", "search"].include? pageName or issueHeaderData)
   else
     #public API data
     pageData = {
@@ -819,6 +977,14 @@ def isValidContentKey(shortArk, key)
 end
 
 ###################################################################################################
+def getItemUsage(itemID)
+  ItemStat.where(item_id: itemID).order(:month).to_hash(:month).map { |m,v|
+    attrs = JSON.parse(v.attrs)
+    { month: "#{m.to_s[0..3]}-#{m.to_s[4..5]}", hits: attrs['hit'] || 0, downloads: attrs['dl'] || 0 }
+  }
+end
+
+###################################################################################################
 # Item view page data.
 get "/api/item/:shortArk" do |shortArk|
   content_type :json
@@ -827,37 +993,57 @@ get "/api/item/:shortArk" do |shortArk|
   attrs = JSON.parse(Item.filter(:id => id).map(:attrs)[0])
   unitIDs = UnitItem.where(:item_id => id, :is_direct => true).order(:ordering_of_units).select_map(:unit_id)
   unit = unitIDs ? Unit[unitIDs[0]] : nil
-  content_prefix = $cloudFrontConfig ? $cloudFrontConfig['public-url'] : ""
-  pdf_url = item.content_type == "application/pdf" ? content_prefix+"/content/"+id+"/"+id+".pdf" : nil
+  content_prefix = ENV['CLOUDFRONT_PUBLIC_URL'] || ""
+  pdf_url = nil
+  if item.content_type == "application/pdf" && item.status == "published"
+    pdf_url = content_prefix+"/content/"+id+"/"+id+".pdf"
+    displayPDF = DisplayPDF[id]
+    if displayPDF && displayPDF.orig_timestamp
+      pdf_url += "?t=#{displayPDF.orig_timestamp.to_i.to_s(36)}"
+    end
+  end
 
   if !item.nil?
     authors = ItemAuthors.filter(:item_id => id).order(:ordering).
                  map(:attrs).collect{ |h| JSON.parse(h)}
+    editors = ItemContrib.filter(:item_id => id, :role => 'editor').order(:ordering).
+                 map(:attrs).collect{ |h| JSON.parse(h)}
+    advisors = ItemContrib.filter(:item_id => id, :role => 'advisor').order(:ordering).
+                 map(:attrs).collect{ |h| JSON.parse(h)}
     citation = getCitation(unit, shortArk, authors, attrs)
     begin
       body = {
-        :id => shortArk,
-        :citation => citation,
-        :title => citation[:title],
         # ToDo: Normalize author attributes across all components (i.e. 'family' vs. 'lname')
+        :added => item.added,
+        :advisors => advisors.any? ? advisors : nil,
+        :altmetrics_ok => false,
+        :appearsIn => unitIDs ? unitIDs.map { |unitID| {"id" => unitID, "name" => Unit[unitID].name} }
+                              : nil,
+        :attrs => attrs,
         :authors => authors,
-        :pub_date => item.pub_date,
-        :eschol_date => item.eschol_date,
-        :genre => item.genre,
-        :status => item.status,
-        :rights => item.rights,
-        :content_type => item.content_type,
+        :citation => citation,
         :content_html => getItemHtml(item.content_type, id),
         :content_key => calcContentKey(shortArk),
         :content_prefix => content_prefix,
+        :content_type => item.content_type,
+        :data_digest => item.data_digest,            # Strictly used for admin reference
+        :editors => editors.any? ? editors : nil,
+        :genre => item.genre,
+        :id => shortArk,
+        :index_digest => item.index_digest,          # Strictly used for admin reference
+        :last_indexed => item.last_indexed,          # Strictly used for admin reference
+        :oa_policy => item.oa_policy,                # Strictly used for admin reference
+        :ordering_in_sect => item.ordering_in_sect,  # Strictly used for admin reference
         :pdf_url => pdf_url,
-        :attrs => attrs,
+        :published => item.published.to_s =~ /^(\d\d\d\d)-01-01$/ ? $1 : item.published,
+        :rights => item.rights,
         :sidebar => unit ? getItemRelatedItems(unit, id) : nil,
-        :appearsIn => unitIDs ? unitIDs.map { |unitID| {"id" => unitID, "name" => Unit[unitID].name} }
-                              : nil,
+        :source => item.source,                      # Strictly used for admin reference
+        :status => item.status,
+        :submitted => item.submitted,                # Strictly used for admin reference
+        :title => citation[:title],
         :unit => unit ? unit.values.reject { |k,v| k==:attrs } : nil,
-        :usage => ItemCount.where(item_id: id).order(:month).to_hash(:month).map { |m,v| { "month"=>m, "hits"=>v.hits, "downloads"=>v.downloads }},
-        :altmetrics_ok => false
+        :usage => getItemUsage(id),
       }
 
       if attrs['disable_download'] && Date.parse(attrs['disable_download']) > Date.today
@@ -866,6 +1052,7 @@ get "/api/item/:shortArk" do |shortArk|
 
       if unit
         unit_attrs = JSON.parse(unit[:attrs])
+        body[:unit_attrs] = unit_attrs               # Strictly used for admin reference
         if unit.type != 'journal'
           body[:header] = getUnitHeader(unit)
           body[:altmetrics_ok] = true
@@ -874,9 +1061,10 @@ get "/api/item/:shortArk" do |shortArk|
           issue_id = Item.join(:sections, :id => :section).filter(Sequel.qualify("items", "id") => id).map(:issue_id)[0]
           if issue_id
             unit_id, volume, issue = Section.join(:issues, :id => issue_id).map([:unit_id, :volume, :issue])[0]
-            numbering = getIssueNumbering(unit.id, volume, issue)
+            numbering, title = getIssueNumberingTitle(unit.id, volume, issue)
             body[:header] = getUnitHeader(unit, nil,
-              {'unit_id': unit_id, 'volume': volume, 'issue': issue, numbering: numbering})
+              {'unit_id': unit_id, 'volume': volume, 'issue': issue, 'title': title, 'numbering': numbering})
+            body[:numbering] = numbering 
             body[:citation][:volume] = volume
             body[:citation][:issue] = issue
           else
@@ -884,6 +1072,7 @@ get "/api/item/:shortArk" do |shortArk|
           end
         end
       end
+      # pp(body)
       return body.to_json
     rescue Exception => e
       puts "Error in item API:"
@@ -894,28 +1083,6 @@ get "/api/item/:shortArk" do |shortArk|
     puts "Item not found!"
     halt 404, "Item not found"
   end
-end
-
-###################################################################################################
-# Item Metrics 
-get "/api/item/metrics" do |shortArk|
-  content_type :json
-  id = "qt"+shortArk
-  item = Item[id]
-  # ItemCounts 
-
-  # Example python code from EZID:
-  # all_months = _computeMonths(table)
-  # if len(all_months) > 0:
-  #  d["totals"] = _computeTotals(table)
-  #  month_earliest = table[0][0]
-  #  month_latest = "%s-%s" % (datetime.now().year, datetime.now().month)
-  #  d['months_all'] = [m[0] for m in table]
-  #  default_table = table[-12:]
-  #  d["month_from"] = REQUEST["month_from"] if "month_from" in REQUEST else default_table[0][0]
-  #  d["month_to"] = REQUEST["month_to"] if "month_to" in REQUEST else default_table[-1][0]
-  #  d["totals_by_month"] = _computeMonths(_getScopedRange(table, d['month_from'], d['month_to']))
-  return {} 
 end
 
 ###################################################################################################
@@ -1013,8 +1180,13 @@ end
 # Properly target links in HTML blob
 def getItemHtml(content_type, id)
   return false if content_type != "text/html"
-  mrtURL = "https://#{$mrtExpressConfig['host']}/dl/ark:/13030/#{id}/content/#{id}.html"
-  fetcher = MerrittFetcher.new(mrtURL)
+  if USE_MRTEXPRESS
+    fileURL = "https://#{ENV['MRTEXPRESS_HOST'] || raise("missing env MRTEXPRESS_HOST")}" +
+              "/dl/ark:/13030/#{id}/content/#{id}.html"
+  else
+    fileURL = "http://submit.escholarship.org:18881/data_pairtree/#{id.scan(/\w\w/).join('/')}/#{id}/content/#{id}.html"
+  end
+  fetcher = MerrittFetcher.new(fileURL)
   buf = []
   fetcher.streamTo(buf)
   buf = buf.join("")
@@ -1024,11 +1196,20 @@ def getItemHtml(content_type, id)
   buf.gsub! %r{<iframe.*?</iframe>}im, ''
   buf.gsub! %r{<script.*?</script>}im, ''
   htmlStr = stringToXML(buf).to_xml
-  htmlStr.gsub(/(href|src)="((?!#)[^"]+)"/) { |m|
+  htmlStr.gsub!(/(href|src)="((?!#)[^"]+)"/) { |m|
     attrib, url = $1, $2
     url = url.start_with?("http", "ftp") ? url : "/content/#{id}/inner/#{url}"
     "#{attrib}=\"#{url}\"" + ((attrib == "src") ? "" : " target=\"new\"")
   }
+
+  # Browsers don't seem to like <a name="foo"/>. Instead they want <a name="foo"></a>
+  htmlStr.gsub!(%r{<a name="([^"]+)"/>}, '<a name="\1"></a>')
+
+  # DOJ articles often specify target="new" on links, but that's no longer best practice.
+  htmlStr.gsub!(%r{<a([^>]*) target="[^"]*"([^>]*)>}, '<a\1\2>')
+
+  # All done
+  return htmlStr
 end
 
 ###################################################################################################

@@ -12,6 +12,18 @@ def getActiveCampuses
 end
 
 $activeCampuses = getActiveCampuses
+$hostname = `/bin/hostname`.strip
+
+###################################################################################################
+def countPages(pdfPath)
+  stdout, stderr, status = Open3.capture3("/usr/bin/qpdf --show-npages #{pdfPath}")
+  if stdout.strip =~ /^\d+$/
+    return stdout.to_i
+  else
+    puts "Warning: error trying to count pages of #{pdfPath}: #{stderr.inspect}"
+    return nil
+  end
+end
 
 ###################################################################################################
 def travAndFormat(data, out)
@@ -159,7 +171,8 @@ def splashInstrucs(itemID, item, attrs)
   end
 
   # Publication date
-  instruc << { h3: { text: "Publication Date" } } << { paragraph: { text: item.pub_date } }
+  pub_date = item.published.to_s =~ /^(\d\d\d\d)-01-01$/ ? $1 : item.published
+  instruc << { h3: { text: "Publication Date" } } << { paragraph: { text: pub_date } }
 
   # DOI
   attrs["doi"] and instruc << { h3: { text: "DOI" } } << { paragraph: { text: attrs["doi"] } }
@@ -219,7 +232,8 @@ def splashGen(itemID, instrucs, origFile, targetFile)
              combinedFile: getRealPath(combinedTemp.path),
              instrucs: instrucs }
     #puts "Sending splash data: #{data.to_json.encode("UTF-8")}"
-    response = HTTParty.post("http://#{ENV['HOST']}:18881/splash/splashGen", body: data.to_json.encode("UTF-8"))
+    url = "http://#{$hostname}.escholarship.org:18881/splash/splashGen"
+    response = HTTParty.post(url, body: data.to_json.encode("UTF-8"))
     response.success? or raise("Error #{response.code} generating splash page: #{response.message}")
 
     # Linearize the result for fast display of the first page on all platforms.
@@ -227,8 +241,16 @@ def splashGen(itemID, instrucs, origFile, targetFile)
     code = $?.exitstatus
     code == 0 || code == 3 or raise("Error #{code} linearizing.")
 
-    # Return a digest of the instrucs, for later cache validation.
-    return Digest::MD5.base64digest(instrucs.to_json)
+    # Sanity checking
+    origPageCt = countPages(getRealPath(origFile))
+    splashPageCt = countPages(targetFile)
+    if splashPageCt != origPageCt+1
+      puts "Warning: splash version of #{itemID} is #{splashPageCt} pages, but should be #{origPageCt}+1 = #{origPageCt+1}. Suppressing splash version."
+      return 0
+    end
+
+    # Return the size of the resulting PDF
+    return File.size(targetFile)
   ensure
     splashTemp and splashTemp.unlink
     combinedTemp and combinedTemp.unlink

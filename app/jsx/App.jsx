@@ -1,5 +1,11 @@
 
 // ##### Top-level React Router App ##### //
+if (!(typeof document === "undefined")) {
+  require('babel-polyfill')   // do we need this?
+  require('details-polyfill')
+  require('intersection-observer')
+  require('smoothscroll-polyfill').polyfill();
+}
 
 import React from 'react'
 import ReactDOM from 'react-dom'
@@ -9,6 +15,7 @@ import ReactGA from 'react-ga'
 import HomePage from './pages/HomePage.jsx'
 import BrowsePage from './pages/BrowsePage.jsx'
 import ItemPage from './pages/ItemPage.jsx'
+import { UnitStatsPage, AuthorStatsPage } from './pages/StatsPage.jsx'
 import UnitPage from './pages/UnitPage.jsx'
 import { SearchPage } from './pages/SearchPage.jsx';
 import GlobalStaticPage from './pages/GlobalStaticPage.jsx'
@@ -39,6 +46,10 @@ const routes = (
     <Route path="/:campusID/units" component={BrowsePage} />
     <Route path="/:campusID/journals" component={BrowsePage} />
     <Route path="/uc/item/:itemID" component={ItemPage} />
+    <Route path="/uc/author/:personID/stats" component={AuthorStatsPage} />
+    <Route path="/uc/author/:personID/stats/:pageName" component={AuthorStatsPage} />
+    <Route path="/uc/:unitID/stats" component={UnitStatsPage} />
+    <Route path="/uc/:unitID/stats/:pageName" component={UnitStatsPage} />
     <Route path="/uc/:unitID" component={UnitPage} />
     <Route path="/uc/:unitID/:pageName" component={UnitPage} />
     <Route path="/uc/:unitID/:pageName/**" component={UnitPage} />

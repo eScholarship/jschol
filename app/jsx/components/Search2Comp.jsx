@@ -1,4 +1,4 @@
-// ##### Search Component - With Search Controls ##### //
+// ##### Search 2 Component - With Search Controls; Used on unit pages  ##### //
 
 import React from 'react'
 import Form from 'react-router-form'
@@ -35,8 +35,8 @@ class SearchControls extends React.Component {
 
 class SearchComp2 extends React.Component {
   state={refineActive: false}
-  makeActive = ()=> this.setState({refineActive: true})
-  makeInactive = ()=> this.setState({refineActive: false})
+  makeActive = () => this.setState({refineActive: true})
+  makeInactive = () => this.setState({refineActive: false})
 
   render() {
     let label, searchUnitType;
@@ -61,7 +61,8 @@ class SearchComp2 extends React.Component {
               <div className="c-search2__form">
                   <label className="c-search2__label" htmlFor="global-search">Search eScholarship</label>
                   <input type="search" name="q" id="global-search" className="c-search2__field" placeholder="Search" 
-                         onFocus={this.makeActive} onBlur={this.makeInactive} autoComplete="off" />
+                         onFocus={this.makeActive} onBlur={this.makeInactive} autoComplete="off" 
+                         autoCapitalize="off" />
               </div>
               <SearchControls refineActive={this.state.refineActive}
                               label={label}
@@ -71,7 +72,7 @@ class SearchComp2 extends React.Component {
                               searchUnitType={searchUnitType} />
             </div>
             <button type="submit" className="c-search2__submit-button" aria-label="search"></button>
-            <button className="c-search2__search-close-button" aria-label="close search field" onClick = {()=>this.props.onClose()}></button>
+            <button type="button" className="c-search2__search-close-button" aria-label="close search field" onClick = {()=>this.props.onClose()}></button>
           </div>
         </Form>
     )

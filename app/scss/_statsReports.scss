@@ -1,0 +1,36 @@
+// ##### stats reports styles ##### //
+
+.c-statsReport h1 {
+  font-size: 1.5em;
+  margin-top: 0.2em;
+  margin-bottom: 0.2em;
+}
+
+.c-statsReport h2 {
+  font-size: 1.2em;
+  margin-top: 0.2em;
+  margin-bottom: 0.5em;
+}
+
+.c-statsReport-id {
+  font-family: "Lucida Console", Monaco, monospace;
+  font-size: 90%;
+}
+
+.c-statsReport-title {
+  min-width: 300px;
+}
+
+.c-statsReport .c-reportList a {
+  margin-left: 0.3em;
+}
+
+.c-statsReport .c-statsReport-disclaimer {
+  font-size: 90%;
+  font-style: italic;
+}
+
+.c-statsReport-bottomButtons {
+  display: flex;
+  justify-content: space-between;
+}

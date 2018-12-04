@@ -1,8 +1,13 @@
 // ##### Navigation Component ##### //
 
 .c-nav {
-  flex: 1 0 auto; // to .c-subheader flexbox
+  flex: 1 0 auto; // to .c-navbar flexbox
   z-index: 1; // prevents stacking under marquee carousel in some browsers
+
+  ul {
+    @extend %u-reset-list-styles;
+  }
+
 }
 
 .c-nav__main {
@@ -18,6 +23,7 @@
 }
 
 .c-nav__main-button {
+  @extend %u-interactive-summary-size;
   display: inline-block;
   position: relative;
   padding-right: 2em;
@@ -40,22 +46,45 @@
     content: '';
   }
 
-  // <summary> isn't responding to flexbox values in Safari, so need to use <span> child with those values:
-  span {
-    @extend %interactive-element-size;
-    display: inline-flex;
-    align-items: center;
-  }
-
 }
 
 // ***** Main Navigation Items ***** //
 
 %c-nav__item {
-  @extend %nav-item;
+  border: 1px solid $color-dark-gray;
+  background: $color-white;
 
   &:not(:first-child) {
     border-top: none;
+  }
+
+  @include bp(screen3) {
+
+    &:first-child {
+      border-top: none;
+    }
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+  }
+
+  a,
+  button {
+    @extend %u-interactive-summary-size;
+    display: flex;
+    align-items: center;
+    padding-right: $spacing-sm;
+    padding-left: $spacing-sm;
+    color: $color-dark-gray;
+    font-size: 1.1em;
+    text-decoration: none;
+
+    &:hover {
+      color: $color-dark-orange;
+    }
+
   }
 
 }
@@ -64,44 +93,32 @@
   position: absolute; // to <body>
   right: $spacing-sm;
   left: $spacing-sm;
-  margin-top: $spacing-base;
+  margin-top: $spacing-base !important;
   transition: transform 0.5s;
 
   @include bp(screen3) {
     display: flex;
     position: static;
+    align-items: center;
     justify-content: space-around;
-    margin-top: 0;
+    margin-top: 0 !important;
   }
 
-  > a {
+  > li {
     @extend %c-nav__item;
 
+    &:not(:first-child) {
+      border-top: none;
+    }
+
     @include bp(screen3) {
-      padding: 0;
       border: none;
       background: none;
     }
 
-    &.c-nav__item--active {
+    .c-nav__item--active {
       color: $color-black;
-
-      @include bp(screen3) {
-        font-weight: bold;
-      }
-
-    }
-
-  }
-
-  > * {
-
-    &:not(:first-child) {
-
-      .c-nav__sub-button {
-        border-top: none;
-      }
-
+      font-weight: bold;
     }
 
   }
@@ -126,6 +143,8 @@
 // ***** Sub Navigation (exists in NavSubComp.jsx) ***** //
 
 .c-nav__sub {
+  flex: 1 0 auto;
+  background-color: $color-white;
 
   @include bp(screen3) {
     position: relative;
@@ -143,27 +162,21 @@
 }
 
 .c-nav__sub-button {
-  @extend %c-nav__item;
+  @extend %u-interactive-summary-size;
   position: relative;
-  padding-top: 0;
-  padding-bottom: 0;
+  padding-right: 2.1em;
+  padding-left: $spacing-sm;
+  border: none;
+  color: $color-dark-gray;
+  font-size: 1.1em;
   user-select: none;
+
+  &:hover {
+    color: $color-dark-orange;
+  }
 
   @include bp(screen3) {
     border: none;
-  }
-
-  // <summary> isn't responding to flexbox values in Safari, so need to use <span> child with those values:
-  span {
-    @extend %interactive-element-size;
-    display: inline-flex;
-    align-items: center;
-
-    @include bp(screen3) {
-      padding-right: 0.9em;
-      padding-left: 0;
-    }
-
   }
 
   &::after {
@@ -176,7 +189,6 @@
     content: '';
 
     @include bp(screen3) {
-      right: 0;
       width: 0.8em;
       background-image: inline('../images/icon_arrow-down.svg');
     }
@@ -196,16 +208,16 @@
 
   @include bp(screen3) {
     top: auto;
-    left: (-$spacing-sm);
     width: 12em;
     max-height: 23em;
     margin-top: $spacing-base;
     transform: translateX(0);
     border-top: 1px solid $color-dark-gray;
+    border-bottom: 1px solid $color-dark-gray;
     overflow: auto;
   }
 
-  a {
+  li {
     @extend %c-nav__item;
   }
 
@@ -215,12 +227,13 @@
   @extend %c-nav__item;
   width: 100%;
   margin-right: $spacing-sm;
-  padding: 0 0 0 2em;
+  padding-left: 2em !important;
+  border-bottom: none;
   background: $color-white inline('../images/icon_angle-double-left-gray.svg') no-repeat left $spacing-sm center / 1em;
   text-align: left;
 
   @include bp(screen3) {
-    display: none;
+    display: none !important;
   }
 
 }

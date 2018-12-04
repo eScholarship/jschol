@@ -31,45 +31,48 @@ class NavComp extends React.Component {
     this.setState({isOpen: this.mq.matches})
   }
 
-  onNavClick = () => this.setState({submenuActive: null})
+  onNavClick = () => this.setState({submenuActive: null, isOpen: (this.mq.matches ? true : false)})
 
   getNavItemJSX(navItem) {
     if (navItem.type == "link")
-      return (<a href={navItem.url} onClick={this.onNavClick} key={navItem.id}>{navItem.name}</a>)
+      return (<li key={navItem.id}><a href={navItem.url} onClick={this.onNavClick}>{navItem.name}</a></li>)
     else
-      return (<Link to={navItem.url} onClick={this.onNavClick} key={navItem.id}>{navItem.name}</Link>)
+      return (<li key={navItem.id}><Link to={navItem.url} onClick={this.onNavClick}>{navItem.name}</Link></li>)
   }
 
   render() {
     let navList = this.props.data.filter(navItem => !navItem.hidden).map((navItem) => {
       if (navItem.type == "folder") {
         return (
-          <NavSubComp name={navItem.name}
-            open={this.state.submenuActive == navItem.name}
-            onSubmenuChanged={(flag)=> this.setState({submenuActive:flag ? navItem.name : null})}
-            key={navItem.id}>
-            {navItem.sub_nav.filter(subItem => !subItem.hidden).map((subItem) => {
-              return this.getNavItemJSX(subItem);
-            })}
-          </NavSubComp>
+          <li key={navItem.id}>
+            <NavSubComp name={navItem.name}
+              open={this.state.submenuActive == navItem.name}
+              onSubmenuChanged={(flag)=> this.setState({submenuActive:flag ? navItem.name : null})}>
+              <ul>
+              {navItem.sub_nav.filter(subItem => !subItem.hidden).map((subItem) => {
+                return this.getNavItemJSX(subItem);
+              })}
+              </ul>
+            </NavSubComp>
+          </li>
         )
       } else {
         return this.getNavItemJSX(navItem);
       }
     })
     return (
-      <div className="c-nav">
-        <details open={this.state.isOpen ? "open" : ""} aria-expanded={this.state.isOpen ? "true" : "false"} className="c-nav__main" ref={(domNode)=> this.details = domNode}>
+      <nav className="c-nav">
+        <details open={this.state.isOpen ? "open" : ""} className="c-nav__main" ref={(domNode)=> this.details = domNode}>
           <summary className="c-nav__main-button" onClick = {(event)=>{
             this.setState({isOpen: !this.details.open})
             event.preventDefault()
-          }}><span>Menu</span>
+          }}>Menu
           </summary>
-          <nav className={this.state.submenuActive ? "c-nav__main-items--submenu-active" : "c-nav__main-items"}>
+          <ul className={this.state.submenuActive ? "c-nav__main-items--submenu-active" : "c-nav__main-items"}>
             {navList}
-          </nav>
+          </ul>
         </details>
-      </div>
+      </nav>
     )
   }
 }

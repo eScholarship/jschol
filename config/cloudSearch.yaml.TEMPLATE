@@ -1,3 +1,0 @@
-domain: the-domain
-searchEndpoint: https://search-domain-BLAH.amazonaws.com
-docEndpoint: https://doc-domain-BLAH.amazonaws.com

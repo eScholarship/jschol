@@ -1,6 +1,7 @@
 // ##### Text List Objects ##### //
 
 import React from 'react'
+import faker from 'faker/locale/en'
 
 class TextListObj extends React.Component {
   render() {
@@ -10,31 +11,22 @@ class TextListObj extends React.Component {
         <h1>Bulleted List</h1>
 
         <ul className="o-textlist1">
-          <li>Lorem ipsum dolor sit amet.
+          <li>{faker.fake("{{lorem.words}}")}</li>
+          <li>{faker.fake("{{lorem.words}}")} <a href="">{faker.fake("{{lorem.words}}")}</a>
           </li>
-          <li>Culpa quis deleniti <a href="">voluptates quae</a>.
-          </li>
-          <li>Nihil, quaerat ratione! Fugiat, consectetur.
-          </li>
-          <li>Incidunt distinctio maiores non vel.
-          </li>
-          <li>A eligendi inventore recusandae veniam.
-          </li>
+          <li>{faker.fake("{{lorem.words}}")}</li>
+          <li>{faker.fake("{{lorem.words}}")}</li>
+          <li>{faker.fake("{{lorem.words}}")}</li>
         </ul>
 
         <h1>Non-bulleted List</h1>
 
         <ul className="o-textlist2">
-          <li>Lorem ipsum dolor sit amet.
-          </li>
-          <li>Aperiam, iusto esse veniam illum.
-          </li>
-          <li>Perferendis id culpa laborum rerum.
-          </li>
-          <li><a href="">Officiis numquam dicta sit</a>, natus?
-          </li>
-          <li>Commodi non totam, inventore. Deserunt.
-          </li>
+          <li>{faker.fake("{{lorem.words}}")}</li>
+          <li>{faker.fake("{{lorem.words}}")}</li>
+          <li>{faker.fake("{{lorem.words}}")}</li>
+          <li>{faker.fake("{{lorem.words}}")}</li>
+          <li>{faker.fake("{{lorem.words}}")}</li>
         </ul>
 
       </div>

@@ -1,0 +1,46 @@
+// ##### Unit Series Component ##### //
+
+.c-unitseries {
+  
+  + .c-unitseries {
+    margin: 0;
+    padding-top: 0;
+    border: none;
+  }
+
+  &:last-of-type { // compensate for u-interactive-element-size
+    margin-bottom: $spacing-sm;
+  }
+
+  summary {
+
+    a {
+      @extend %o-textlink__secondary;
+      @extend %u-interactive-element-size;
+      display: inline-flex;
+      align-items: center;
+      font-size: 1.3rem;
+      font-weight: normal;
+    }
+
+  }
+
+  .c-pub__heading {
+    font-size: 1.1em;
+  }
+
+}
+
+.c-unitseries__publications1 {
+  margin-bottom: $spacing-md;
+}
+
+.c-unitseries__publications2 {
+  margin-bottom: $spacing-md;
+  text-align: right;
+
+  a {
+    @extend %o-textlink__secondary;
+  }
+
+}

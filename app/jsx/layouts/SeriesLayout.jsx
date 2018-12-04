@@ -38,13 +38,14 @@ class SeriesSelector extends React.Component {
         <h2 className="o-customselector__heading">{p.unit.name}</h2>
         <details open={this.state.isOpen}
                  ref={domElement => this.details=domElement}
-                 onClick={()=>setTimeout(()=>this.setState({isOpen: this.details.open}), 0)}
                  className="o-customselector__selector">
-          <summary aria-label="Select a different series"></summary>
+          <summary aria-label="Select a different series" 
+                 onClick = {(event) =>{this.setState({isOpen: !this.details.open})
+                                      event.preventDefault()}}></summary>
           <div className="o-customselector__menu">
             <ul className="o-customselector__items" role="list">
               {p.series.map((s, i) =>
-                <li key={i}><Link to={"/uc/"+ s.unit_id} onClick={()=>this.closeSelector()}>{s.name}</Link></li> )}
+                <li key={i}><Link to={"/uc/"+ s.unit_id} onClick={() =>this.closeSelector()}>{s.name}</Link></li> )}
             </ul>
           </div>
         </details>
@@ -78,7 +79,7 @@ class SeriesLayout extends React.Component {
   }
 
   // Set as the Form's onSubmit handler
-  handleSubmit = (event, formData)=>{
+  handleSubmit = (event, formData) =>{
     for(let key in formData) {
       if (formData[key] == "" ||
       (key === 'sort' && formData[key] === 'rel') ||
@@ -120,7 +121,7 @@ class SeriesLayout extends React.Component {
            :
             <Form id={formName} to={"/uc/"+this.props.unit.id+"/search"} method="GET" onSubmit={this.handleSubmit}>
             {(this.props.data.count > 2) &&
-              <SortPaginationComp formName={formName} formButton={formButton} query={data.query} count={data.count}relQueryOff={true} />
+              <SortPaginationComp formName={formName} formButton={formButton} query={data.query} count={data.count} relQueryOff={true} />
             }
               <div>
                 { data.searchResults.map(result =>

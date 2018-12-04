@@ -26,11 +26,11 @@ class ScholWorksComp extends React.Component {
       genre: PropTypes.string,
       peerReviewed: PropTypes.bool,
       journalInfo: PropTypes.shape({
-        unitId: PropTypes.string.isRequired,
+        link_path: PropTypes.string.isRequired,
         displayName: PropTypes.string.isRequired,
       }),
       unitInfo: PropTypes.shape({
-        unitId: PropTypes.string.isRequired,
+        link_path: PropTypes.string.isRequired,
         displayName: PropTypes.string.isRequired,
       }),
       authors: PropTypes.array,
@@ -68,20 +68,21 @@ class ScholWorksComp extends React.Component {
     
     let itemLink = "/uc/item/"+pr.id.replace(/^qt/, "")
     let publishingInfo
-    let unitId
+    let link_path
     if ('journalInfo' in pr) {
       publishingInfo = pr.journalInfo.displayName
-      unitId = pr.journalInfo.unitId
+      link_path = pr.journalInfo.link_path
     } else if ('unitInfo' in pr) {
       publishingInfo = pr.unitInfo.displayName
-      unitId = pr.unitInfo.unitId
+      link_path = pr.unitInfo.link_path
     }
 
     let authorList
-    if (pr.authors) {
+    if (!pr.author_hide && pr.authors) {
       // Joel's CSS handles inserting semicolons here.
       authorList = pr.authors.map(function(author, i, a) {
-        return (<li key={i}><a href={"/search/?q="+author.name}>{author.name}</a></li>)
+        return (<li key={i}><a href={"/search/?q="+encodeURIComponent("author:"+author.name)}>
+          {author.name}</a></li>)
       })
     }
     return (
@@ -109,7 +110,7 @@ class ScholWorksComp extends React.Component {
           }
           {pr.pub_year && publishingInfo && 
             <div className="c-scholworks__publication">
-              <Link to={"/uc/" + unitId}>{publishingInfo}</Link> ({pr.pub_year})
+              <Link to={"/uc/" + link_path}>{publishingInfo}</Link> ({pr.pub_year})
             </div>
           }
           {pr.abstract && 
@@ -119,10 +120,16 @@ class ScholWorksComp extends React.Component {
           }
           <div className="c-scholworks__media">
             <MediaListComp supp_files={pr.supp_files} />
-            {pr.rights && <RightsComp rights={pr.rights} size="small" />}
           </div>
         </div>
-        {pr.thumbnail && <img className="c-scholworks__article-preview" src={"/assets/"+pr.thumbnail.asset_id} width={pr.thumbnail.width} height={pr.thumbnail.height} alt={`Cover page: ${pr.title}`} />}
+      {(pr.rights || pr.thumbnail) &&
+        <div className="c-scholworks__ancillary">
+          {pr.thumbnail && <Link to={itemLink} className="c-scholworks__thumbnail">
+            <img src={"/assets/"+pr.thumbnail.asset_id} alt={`Cover page: ${pr.title}`} />
+          </Link>}
+          {pr.rights && <RightsComp rights={pr.rights} size="small" classname="c-scholworks__license" />}
+        </div>
+      }
       </section>
     )
   }

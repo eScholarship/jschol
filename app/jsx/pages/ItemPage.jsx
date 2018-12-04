@@ -9,6 +9,11 @@ import Header2Comp from '../components/Header2Comp.jsx'
 import SubheaderComp from '../components/SubheaderComp.jsx'
 import NavBarComp from '../components/NavBarComp.jsx'
 import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
+import ItemActionsComp from '../components/ItemActionsComp.jsx'
+import ArbitraryHTMLComp from "../components/ArbitraryHTMLComp.jsx"
+import AuthorListComp from '../components/AuthorListComp.jsx'
+import PdfViewComp from '../components/PdfViewComp.jsx'
+import PubInfoComp from '../components/PubInfoComp.jsx'
 import TabsComp from '../components/TabsComp.jsx'
 import JumpComp from '../components/JumpComp.jsx'
 import SidebarComp from '../components/SidebarComp.jsx'
@@ -20,13 +25,11 @@ if (!(typeof document === "undefined")) {
   const dotdotdot = require('jquery.dotdotdot')
 }
 
-const tab_anchors = ['main', 'supplemental', 'metrics', 'author']
+const tab_anchors = ['main', 'supplemental', 'metrics', 'author', 'meta']
 const anchors = tab_anchors.concat(['article_abstract', 'article_main', 'article_references'])
 
-const MONTHS = [ "January", "Februrary", "March",
-                 "April", "May", "June",
-                 "July", "August", "September",
-                 "October", "November", "December" ]
+const MONTHS = [ "January", "February", "March", "April", "May", "June",
+                 "July", "August", "September", "October", "November", "December" ]
 
 class ItemPage extends PageBase {
   static propTypes = {
@@ -38,6 +41,11 @@ class ItemPage extends PageBase {
     return "/api/item/" + this.props.params.itemID
   }
 
+  // Unit ID for permissions checking
+  pagePermissionsUnit() {
+    return "root"  // This is only being used for super user access
+  }
+
   tabNameFromHash() {
     return !(typeof location === "undefined") ? location.hash.toLowerCase().replace(/^#/, "") : ""
   }
@@ -47,7 +55,7 @@ class ItemPage extends PageBase {
 
   state = { currentTab: this.articleHashHandler(this.tabNameFromHash()) }
 
-  componentDidMount() {
+  componentDidMount(...args) {
     // Check hash whenever back or forward button clicked
     window.onpopstate = (event) => {
       var h = this.articleHashHandler(this.tabNameFromHash())
@@ -55,6 +63,9 @@ class ItemPage extends PageBase {
         this.setState({currentTab: h})
       }
     }
+    // This is overriding PageBase componentDidMount
+    // ToDo: https://medium.com/@dan_abramov/how-to-use-classes-and-sleep-at-night-9af8de78ccb4
+    super.componentDidMount.apply(this, args);
   }
 
   formatDate = d => {
@@ -87,9 +98,13 @@ class ItemPage extends PageBase {
     let currentTab = tab_anchors.includes(this.state.currentTab) ? this.state.currentTab : "main" 
     let d = data
     let a = d.attrs
-    let meta_authors = d.authors.slice(0, 85).map(function(author, i) {
+    let meta_authors = a.author_hide ? null : d.authors.slice(0, 85).map((author, i) => {
       return <meta key={i} id={"meta-author"+i} name="citation_author" content={author.name}/>
      })
+    let descr_authors = a.author_hide ? "" : (d.authors.length > 0) ? "Author(s): " + d.authors.slice(0, 85).map((author) => { return author.name }).join('; ') : ""
+    let descr_editors = d.editors ? "Editor(s): " + d.editors.slice(0, 85).map((editor) => { return editor.name }).join('; ') : ""
+    let descr_advisors = d.advisors ? "Advisor(s): " + d.advisors.slice(0, 85).map((advisor) => { return advisor.name }).join('; ') : ""
+    let contribs = [descr_authors, descr_editors, descr_advisors].filter(e => e !== '').join(' | ')
     let [issn, volume, issue, firstpage, lastpage] = [null, null, null, null, null]
     if (a['ext_journal']) {
       let extj = a['ext_journal']
@@ -108,10 +123,10 @@ class ItemPage extends PageBase {
     d.unit && this.extGA(d.unit.id)  // Google Analytics for external trackers called from PageBase
     return (
       <div>
-        <MetaTagsComp title={d.title} descrip={a.abstract}>
+        <MetaTagsComp title={d.title} contribs={contribs} abstract={a.abstract}>
           {meta_authors}
-        {d.pub_date &&
-          <meta id="meta-publication_date" name="citation_publication_date" content={d.pub_date} /> }
+        {d.published &&
+          <meta id="meta-publication_date" name="citation_publication_date" content={d.published} /> }
         {a.isbn &&
           <meta id="meta-isbn" name="citation_isbn" content={a.isbn} /> }
         {a.doi &&
@@ -121,8 +136,8 @@ class ItemPage extends PageBase {
           {issn} {volume} {issue} {firstpage} {lastpage}
         {d.genre == 'dissertation' && d.header &&
           <meta id="meta-dissertation_institution" name="citation_dissertation_institution" content={d.header.breadcrumb[1]['name']} /> }
-        {d.eschol_date &&
-          <meta id="meta-online_date" name="citation_online_date" content={d.eschol_date} /> }
+        {d.added &&
+          <meta id="meta-online_date" name="citation_online_date" content={d.added} /> }
         {["withdrawn", "embargoed"].includes(d.status) &&
           <meta id="meta-robots" name="robots" content="noindex" /> }
         {keywords &&
@@ -132,7 +147,8 @@ class ItemPage extends PageBase {
                 content={d.pdf_url.substr(0, 4) == "http" ? d.pdf_url : "https://escholarship.org" + d.pdf_url} /> }
         </MetaTagsComp>
         <Header2Comp type={d.unit ? d.unit.type: null}
-                     unitID={(d.appearsIn && d.appearsIn.length > 0) ? d.appearsIn[0]["id"] : null } />
+                     unitID={(d.appearsIn && d.appearsIn.length > 0) ? d.appearsIn[0]["id"] : null}
+                     hideAdminBar={true} />
         {/* Some items have no parent unit, so check for empty d.header */}
         {d.header && <SubheaderComp unit={d.unit} header={d.header} />}
         {d.header && <NavBarComp navBar={d.header.nav_bar} 
@@ -141,6 +157,26 @@ class ItemPage extends PageBase {
         <BreadcrumbComp array={d.header ? d.header.breadcrumb : null} />
         <div className="c-columns--sticky-sidebar">
           <main id="maincontent">
+            <ItemActionsComp id={d.id}
+                         status={d.status}
+                         content_type={d.content_type}
+                         pdf_url={d.pdf_url}
+                         attrs={d.attrs}
+                         download_restricted={d.download_restricted} />
+            <h2 className="c-tabcontent__main-heading" tabIndex="-1"><ArbitraryHTMLComp html={d.title}/></h2>
+            <AuthorListComp pubdate={d.published}
+                            author_hide={a.author_hide}
+                            authors={d.authors}
+                            editors={d.editors}
+                            advisors={d.advisors}
+                            changeTab={this.changeTab} />
+          {(a.doi || a.pub_web_loc || d.rights || d.attrs.data_avail_stmnt || !d.content_type) &&
+            <PubInfoComp doi={a.doi}
+                         pub_web_loc={a.pub_web_loc}
+                         content_type={d.content_type}
+                         data_avail_stmnt={d.attrs.data_avail_stmnt}
+                         rights={d.rights} />
+          }
             <TabsComp currentTab={currentTab}
                       changeTab={this.changeTab}
                       formatDate={this.formatDate}
@@ -148,12 +184,7 @@ class ItemPage extends PageBase {
           </main>
           <aside>
           {(d.status == "published" && d.content_type) &&
-            <section className="o-columnbox1">
-              <header>
-                <h2>Jump To</h2>
-              </header>
-              <JumpComp changeTab={this.changeTab} attrs={d.attrs} />
-            </section>
+            <JumpComp changeTab={this.changeTab} attrs={d.attrs} />
           }
           {d.sidebar &&
             <SidebarComp data={d.sidebar}/> }

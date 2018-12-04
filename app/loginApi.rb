@@ -123,9 +123,7 @@ def getUserPermissions(username, sessionID, unitID)
   OJS_DB[:sessions].where(session_id: sessionID, user_id: userID).update(last_used: Time.now.to_i)
 
   # Check for permissions
-  if unit.type.include?("series")
-    return {}  # disallow all actions on series until we get clone-fork in place
-  elsif OJS_DB[:user_settings].where(user_id: userID, setting_name: 'eschol_superuser').first
+  if OJS_DB[:user_settings].where(user_id: userID, setting_name: 'eschol_superuser').first
     return { admin: true, super: true }
   elsif OJS_DB[:eschol_roles].where(user_id: userID, role: 'admin', unit_id: unitID).first
     return { admin: true }
@@ -144,7 +142,7 @@ get "/api/permissions/:unitID" do |unitID|
 
   # Per-nav-item permissions
   unit = Unit[unitID]
-  attrs = JSON.parse(unit.attrs)
+  attrs = unit ? JSON.parse(unit.attrs) : {}
   navPerms = {}
   result[:nav_perms] = getNavPerms(Unit[unitID], attrs["nav_bar"], result)
 

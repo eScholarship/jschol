@@ -18,7 +18,7 @@ $hero-text-shadow: 1px 1px 1px $color-light-black;
     align-items: center;
     height: 30vw;
     padding: 0;
-    background: no-repeat center / cover;
+    background: $color-teal no-repeat center / cover;
     // background-image property/URL is set as an inline HTML style on this element
     z-index: 0;
   }
@@ -27,7 +27,8 @@ $hero-text-shadow: 1px 1px 1px $color-light-black;
     height: 24em;
   }
 
-  @include headings() {
+  @include u-heading() {
+    @extend %u-sourcesansprolight-font-stack;
     margin: 0;
     color: $color-white;
     font-size: 1.3em;
@@ -38,7 +39,6 @@ $hero-text-shadow: 1px 1px 1px $color-light-black;
       width: 11em;
       padding: $spacing-md $spacing-lg;
       background: linear-gradient(to right, $hero-bg-color 85%, transparent);
-      font-family: 'KievitWebLight';
       font-size: 4vw;
       text-align: left;
       text-shadow: $hero-text-shadow;

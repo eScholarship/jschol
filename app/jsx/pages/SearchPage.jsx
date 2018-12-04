@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import $ from 'jquery'
-import _ from 'lodash'   // mainly for _.isEmtpy() which also works server-side (unlike $.isEmptyObject)
+import _ from 'lodash'
 import { Link } from 'react-router'
 import Form from 'react-router-form'
 
@@ -14,6 +14,7 @@ import ExportComp from '../components/ExportComp.jsx'
 import SortPaginationComp from '../components/SortPaginationComp.jsx'
 import InfoPagesComp from '../components/InfoPagesComp.jsx'
 import PaginationComp from '../components/PaginationComp.jsx'
+import Breakpoints from '../../js/breakpoints.json'
 import ModalComp from '../components/ModalComp.jsx'
 import MetaTagsComp from '../components/MetaTagsComp.jsx'
 
@@ -22,8 +23,9 @@ if (!(typeof document === "undefined")) {
   const dotdotdot = require('jquery.dotdotdot')
 }
 
+let MAX_SET_SIZE = 6
 
-// FacetItem  
+// FacetItem
 // props = {
 //   data: { facetType: 'departments',
 //     ancestorChecked: true|false                     //Optional, only specified if facet has ancestors (departments)
@@ -164,10 +166,10 @@ class PubYear extends React.Component {
     return this.props.data.range && this.props.data.range.pub_year_end ? this.props.data.range.pub_year_end : ''
   }
 
-  onBlur = event=>{
+  handleSubmit = event =>{
     let displayYears
-    if (this.state.pub_year_start || this.state.pub_year_end) {
-      displayYears = this.state.pub_year_start + "-" + this.state.pub_year_end
+    if (this.pub_year_start.value || this.pub_year_end.value) {
+      displayYears = this.pub_year_start.value + "-" + this.pub_year_end.value
     }
     else {
       displayYears = ""
@@ -182,31 +184,41 @@ class PubYear extends React.Component {
     $('#facet-form-submit').click()
   }
 
-  handleChange = event=>{
-    if (event.target.id == 'pub_year_start') {
-      this.setState({pub_year_start: event.target.value})
-    } else if (event.target.id = 'pub_year_end') {
-      this.setState({pub_year_end: event.target.value})
+  handleKeyPress = e => {
+    // suppress Enter key - it goes to the wrong submit button
+    if ((e.keyCode || e.which || e.charCode) == 13) {
+      e.stopPropagation()
+      e.preventDefault()
+      return false
     }
+    return true
   }
 
   render() {
+    let year = (new Date()).getFullYear()
     return (
       <div className="c-pubyear">
-        <label htmlFor="pub_year_start">From: </label>
-        <input id="pub_year_start" name="pub_year_start" type="text" maxLength="4" placeholder="YYYY"
-          defaultValue={this.state.pub_year_start}
-          onChange={ this.handleChange } onBlur={ this.onBlur }/>
-        <label htmlFor="pub_year_end">To: </label>
-        <input id="pub_year_end" name="pub_year_end" type="text" maxLength="4" placeholder="YYYY"
-          defaultValue={this.state.pub_year_end}
-          onChange={ this.handleChange } onBlur={ this.onBlur }/>
+        <div className="c-pubyear__field">
+          <label htmlFor="c-pubyear__textfield1">From:</label>
+          <input id="c-pubyear__textfield1" name="pub_year_start" type="text" maxLength="4" placeholder="1900"
+            defaultValue={this.state.pub_year_start} ref={(input) => { this.pub_year_start = input }}
+            onKeyPress={this.handleKeyPress} />
+        </div>
+        <div className="c-pubyear__field">
+          <label htmlFor="c-pubyear__textfield2">To:</label>
+          <input id="c-pubyear__textfield2" name="pub_year_end" type="text" maxLength="4" placeholder={year}
+            defaultValue={this.state.pub_year_end} ref={(input) => { this.pub_year_end = input }}
+            onKeyPress={this.handleKeyPress} />
+        </div>
+        <button className="c-pubyear__button" onClick={this.handleSubmit}>Apply</button>
       </div>
     ) 
   }
 }
 
-// FacetFieldset basically differentiates between Publication Year, and all the other 'normal' facets
+// A FacetFieldset is a single grouping of facet items.
+// A facetFieldset with many facets is expandable: can be expanded into a modal to show all facet items
+// Note: Differentiates between Publication Year, and all the other 'normal' facets
 // FacetFieldset props: 
 // props = {
 //   data: { fieldName: 'departments',
@@ -322,48 +334,123 @@ class FacetFieldset extends React.Component {
       }
     </ul>
 
-  sliceFacets(facets)
+  getLength = ({ descendents }) => {
+    let i = 0 
+    if (descendents)
+      return descendents.length + Math.max(...descendents.map(this.getLength))
+    return 1 + i
+  }
+
+  /* Display prescribed maximum (rows of) facets.
+     Optional filter for just returning facets included in provided hash
+     Note: For any given facet: all of its descendents should be displayed,
+           so slice will extend past maximum in some cases */
+  facetsSliced = (facets, maxLength, checkHashFilter=false, checkedHash=null)  => {
+    let i = 0, r = []
+    for (let facet of facets){
+      if (!checkHashFilter || (facet.value in checkedHash === false)) {
+        r.push(facet)
+        i += this.getLength(facet) 
+        if (i >= maxLength) break
+      }
+    }
+    return r
+  }
+
+  traverse = (facets, func) => {
+    for (let i of facets){
+      func.apply(this, [i])
+      if (i.descendents) {
+        this.traverse(i.descendents, func)
+      }
+    }
+  }
+
+  /* Gather all IDS of facets already in checkedHash (converts tree to flat hash) */
+  checkedFacetsFromTree = (facets, checkedHash) =>{
+    let hash = {}
+    this.traverse(facets, function(node){
+      if (node.value in checkedHash)
+        hash[node.value] = true
+    })
+    return hash
+  }
+
+  /* Checked items will percolate to top */
+  sliceArrangeFacets(facets)
   {
     if (!this.props.query.filters)
-      return facets.slice(0, 5)
+      return this.facetsSliced(facets, MAX_SET_SIZE)     /* Just return first set of 6 facets */
 
-    let checked = {}
+    /* Gather values of checked facets */
+    let checkedHash = {}
     for (let filter of this.props.query.filters)
-      checked[filter.value] = true
+      checkedHash[filter.value] = true
 
-    let out = []
-    for (let facet of facets) {
-      if (facet.value in checked)
-        out.push(facet)
-      else if (out.length < 5)
-        out.push(facet)
+    let checked = []
+    /* Collect checked facets into variable 'checked' (recursive)
+     * Can't use Generator function here since it's not supported by IE */
+    let collectChecked = facets => {
+      for (let facet of facets) {
+        if (facet.value in checkedHash) {
+          checked.unshift(facet)
+        }
+        if (facet.descendents)
+          collectChecked(facet.descendents)
+      }
     }
+    collectChecked(facets)
 
-    return out
+    let remaining_count = MAX_SET_SIZE - Object.keys(checked).length
+
+    /* Add unchecked facets to this sidebar facet set if there's room */
+    if (remaining_count > 0) {
+      let uncheckedParents = this.facetsSliced(facets, remaining_count, true, checkedHash)
+      /* Retroactively remove any checked that may be children of this uncheckedParents */
+      let checkedIds = this.checkedFacetsFromTree(uncheckedParents, checkedHash)
+      if (checkedIds) {
+        checked = checked.filter(facet => (facet.value in checkedIds === false))
+      }
+      return checked.concat(uncheckedParents)
+    } else {
+      return this.facetsSliced(checked, Math.max(MAX_SET_SIZE, Object.keys(checkedHash).length))
+    }
   }
 
   render() {
     let data = this.props.data
-    let facets, facetItemNodes
+    let facets, facetSidebarNodes, modal
+    // Sidebar logic for facet placement/sorting
     if (data.facets) {
-      facets = this.state.modalOpen ? [] :
-               (this.props.modal && data.facets.length > 5) ? this.sliceFacets(data.facets) :
-               data.facets
-      facetItemNodes = this.getFacetNodes(facets)
+      let expandable = ["departments", "journals"].includes(data.fieldName)
+      modal = expandable && (data.facets.length > MAX_SET_SIZE)
+      if (this.state.modalOpen) {
+        facets = []
+      } else if (expandable) {
+      /* Most facets come in alphabetized. For 'expandable' facets (like departments and journals)
+         the modal (exposed from the 'Show more' link) should keep the alpha order, but in the 
+         sidebar they should be sorted by count.    */
+        facets = _.orderBy(data.facets, ['count'], ['desc'])
+      /* But facets that are checked should have highest priority (visible in sidebar) */
+        facets = (modal && data.facets.length > (MAX_SET_SIZE - 1)) ? this.sliceArrangeFacets(facets) : facets
+      } else {
+        facets = data.facets
+      }
+      facetSidebarNodes = this.getFacetNodes(facets)
     } else if (data.fieldName == "pub_year") {
-      facetItemNodes = (
+      facetSidebarNodes = (
         <PubYear data={data} query={this.props.query} handler={this.pubDateChange} />
       )
-    }
-    else {
-      facetItemNodes = []
+    } else {
+      facetSidebarNodes = []
     }
     return (
       <details className="c-facetbox" open={this.props.open}>
+        {/* Each facetbox needs a distinct <span id> and <fieldset aria-labelledby> matching value */}
         <summary className="c-facetbox__summary"><span id={this.props.index}>{data.display}</span></summary>
           <fieldset aria-labelledby={this.props.index}>
-            {facetItemNodes}
-          {this.props.modal &&
+            {facetSidebarNodes}
+          {modal &&
             <div id={`facetModalBase-${data.fieldName}`}>
               <button className="c-facetbox__show-more"
                       onClick={(event)=>{
@@ -372,17 +459,12 @@ class FacetFieldset extends React.Component {
                               }>
                 Show more
               </button>
-              {/* style: maxHeight and overflowY hack below makes scrolling modal,
-                  until Joel propagates the change to the scss where it really belongs.
-              */}
               <ModalComp isOpen={this.state.modalOpen}
                 parentSelector={()=>$(`#facetModalBase-${data.fieldName}`)[0]}
                 header={"Refine By " + data.display}
                 onOK={e=>this.closeModal(e, data.fieldName)} okLabel="Done"
                 onCancel={e=>this.closeModal(e, data.fieldName)}
-                content={ <div style={{ maxHeight: "45vh", overflowY: "auto" }}>
-                            { this.getFacetNodes(data.facets) }
-                          </div> }
+                content={ <div>{ this.getFacetNodes(data.facets) }</div> }
               />
             </div>
           }
@@ -392,10 +474,11 @@ class FacetFieldset extends React.Component {
   }
 }
 
-// FacetForm manages the state for FacetItems and FilterComp 
-// all interactions with faceting search parameters get propagated up to FacetForm
+// FacetForm manages the state for FacetItems and FilterComp in the sidebar.
+// FacetItems are grouped by the FacetFieldset component.
+// All interactions with faceting search parameters get propagated up to FacetForm
 // and then down to their respective components before issuing the search query
-// to update the scholarly works list
+// to update the scholarly works list (main column of search results)
 // FacetForm props:
 // props = {
 //   data: {
@@ -422,8 +505,20 @@ class FacetFieldset extends React.Component {
 //   }
 // }
 class FacetForm extends React.Component {
-  state = {
-    query: this.props.query,
+  state={ query: this.props.query,
+          refineActive: false,
+          drawerOpen: false }
+
+  widthChange = ()=> {
+    this.setState({refineActive: this.mq.matches, drawerOpen: this.mq.matches})
+  }
+
+  componentWillMount() {
+    if (!(typeof matchMedia === "undefined")) {
+      this.mq = matchMedia("(min-width:"+Breakpoints.screen1+")")
+      this.mq.addListener(this.widthChange)
+      this.widthChange()
+    }
   }
 
   // Called by FacetFieldset's handleChange function
@@ -445,22 +540,6 @@ class FacetForm extends React.Component {
     this.setState({query: newQuery})
   }
 
-  // Set as the Form's onSubmit handler
-  handleSubmit = (event, formData)=>{
-    for(let key in formData) {
-      if (formData[key] == "" ||
-      (key === 'sort' && formData[key] === 'rel') ||
-      (key === 'rows' && formData[key] === '10') ||
-      (key === 'start' && formData[key] === '0')) {
-        delete formData[key]
-      }
-    }
-    // Handy for debugging
-    // console.log("this.state.query = ", this.state.query)
-    // console.log(JSON.stringify(formData))
-    return true
-  }
-
   componentWillReceiveProps(nextProps) {
     if (!_.isEqual(this.props.query, nextProps.query))
       this.setState({query: nextProps.query})
@@ -473,23 +552,28 @@ class FacetForm extends React.Component {
       let filters = this.state.query.filters && this.state.query.filters[fieldName] ? this.state.query.filters[fieldName] : {}
       let facets = fieldset.facets
       return (
-        <FacetFieldset key={fieldName} index={"facetbox" + i} data={fieldset} query={filters} handler={this.changeFacet}
+        <FacetFieldset key={fieldName} index={"facetbox" + i} data={fieldset} query={filters}
+                       handler={this.changeFacet}
                        // Have first two open by default
-                       open={[0,1].includes(i)}
-                       modal={((["departments", "journals"].includes(fieldName)) &&
-                              (facets) && (facets.length > 6))} />
+                       open={[0,1].includes(i)} />
       )
     })
 
     return (
-      <Form id={p.formName} to='/search' method="GET" onSubmit={this.handleSubmit}>
+      <div>
         {/* Top-aligned box with title "Your search: "Teletubbies"" and active filters */}
         <FilterComp query={this.state.query} count={p.data.count} info_count={p.info_count} handler={this.removeFilters}/>
-        {facetForm}
+        <div className={this.state.refineActive ? "c-refine--no-drawer" : "c-refine--has-drawer"}>
+          <button className="c-refine__button--open" onClick={()=> this.setState({drawerOpen: true})} hidden={this.state.drawerOpen}>Refine Results</button>
+          <button className="c-refine__button--close" onClick={()=> this.setState({drawerOpen: false})} hidden={!this.state.drawerOpen}>Back to Results</button>
+          <div className={this.state.drawerOpen ? "c-refine__drawer--opened" : "c-refine__drawer--closed"}>
+            {facetForm}
+          </div>
+        </div>
         {/* Submit button needs to be present so our logic can "press" it at certain times.
             But hide it with display:none so user doesn't see it. */}
         <button type="submit" id={p.formButton} style={{display: "none"}}>Search</button>
-      </Form>
+      </div>
     )
   }
 }
@@ -523,6 +607,22 @@ class SearchPage extends PageBase {
     return "/api/search/" + this.props.location.search  // plus whatever props.params.YourUrlParam, etc.
   }
 
+  // Set as the Form's onSubmit handler
+  handleSubmit = (event, formData)=>{
+    for(let key in formData) {
+      if (formData[key] == "" ||
+      (key === 'sort' && formData[key] === 'rel') ||
+      (key === 'rows' && formData[key] === '10') ||
+      (key === 'start' && formData[key] === '0')) {
+        delete formData[key]
+      }
+    }
+    // Handy for debugging
+    // console.log("this.state.query = ", this.state.query)
+    // console.log(JSON.stringify(formData))
+    return true
+  }
+
   renderData(data) {
     let facetFormData = {facets: data.facets, count: data.count},
         formName = "facetForm",
@@ -530,26 +630,25 @@ class SearchPage extends PageBase {
     return(
       <div className="l_search">
         <MetaTagsComp title="Search"/>
-        <Header2Comp searchComp="1" query={data.query.q} />
+        <Header2Comp searchComp="1" query={this.props.location.query} />
         <div className="c-navbar">
           <NavComp data={data.header.nav_bar} />
         </div>
     {/* <ExportComp /> */}
-        <div className="c-columns">
+        <Form id={formName} to='/search' method="GET" onSubmit={this.handleSubmit} className="c-columns">
         <aside>
           <FacetForm formName={formName} formButton={formButton} data={facetFormData} info_count={data.info_count} query={data.query} />
         </aside>
-        <main id="maincontent" style={{position: "relative"}}>
-          { this.state.fetchingData ? <div className="c-search-extra__loading-overlay"/> : null }
+        <main id="maincontent">
         {data.info_count > 0 &&
-          <section className="o-columnbox1">
+          <section className={this.state.fetchingData ? "o-columnbox1 is-loading-data" : "o-columnbox1"}>
             <header>
               <h2 className="o-columnbox1__heading">{"Informational Pages ("+data.info_count+" results)"}</h2>
             </header>
             <InfoPagesComp query={data.query} info_count={data.info_count} infoResults={data.infoResults} />
           </section>
         }
-          <section className="o-columnbox1">
+          <section className={this.state.fetchingData ? "o-columnbox1 is-loading-data" : "o-columnbox1"}>
             <header>
               <h2 className="o-columnbox1__heading">
                 Scholarly Works ({data.count + " results" + (data.count > 10000 ? ", showing first 10000" : "")})</h2>
@@ -557,21 +656,18 @@ class SearchPage extends PageBase {
           {(data.count > 2) &&
             <SortPaginationComp formName={formName} formButton={formButton} query={data.query} count={data.count}/>
           }
-            <div>
-            {(data.count != 0 ) ? 
-              data.searchResults.map(result =>
-                <ScholWorksComp h="h3" key={result.id} result={result} />)
-            :
-              <p><br/><br/>No results found.<br/><br/></p>
-            }
-            </div>
-            <p><br/></p>
+          {(data.count != 0 ) ? 
+            data.searchResults.map(result =>
+              <ScholWorksComp h="h3" key={result.id} result={result} />)
+          :
+            <div className="o-well-large">No results found.</div>
+          }
           {(data.count > data.query.rows) &&
             <PaginationComp formName={formName} formButton={formButton} query={data.query} count={data.count}/>
           }
           </section>
         </main>
-      </div>
+      </Form>
     </div>
   )}
 }

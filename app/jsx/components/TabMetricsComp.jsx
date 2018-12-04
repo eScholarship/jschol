@@ -6,48 +6,43 @@
 //    {month: '2016-03', hits: 2221, downloads: 29} ... ]
 
 import React from 'react'
+import Utils from '../utils.jsx'
 import PropTypes from 'prop-types'
+import $ from 'jquery'
 
 class TotalUsage extends React.Component {
-
-  getTotal = (rows, v) => {
-    if (rows.length == 0) return 0
-    return rows.reduce(function (a, b) {
-      return b[v] == null ? a : (a + b[v])
-    }, 0)
-  }
-
-
   render() {
-    let hitsTotal = this.getTotal(this.props.usage, "hits"),
+    let hitsTotal = Utils.sumValueTotals(this.props.usage, "hits"),
         hitsTotal_str = hitsTotal.toLocaleString(),
         hitsAvg = this.props.usage.length > 0 ? Math.round(hitsTotal / this.props.usage.length).toLocaleString() : 0,
-        downloadsTotal = this.getTotal(this.props.usage, "downloads"),
+        downloadsTotal = Utils.sumValueTotals(this.props.usage, "downloads"),
         downloadsTotal_str = downloadsTotal.toLocaleString(),
         downloadsAvg = this.props.usage.length > 0 ? Math.round(downloadsTotal / this.props.usage.length).toLocaleString() : 0
     return (
-      <table className="c-datatable">
-        <caption>Total Usage</caption>
-        <thead>
-          <tr>
-            <th scope="col">Actions</th>
-            <th scope="col">Total</th>
-            <th scope="col">Monthly Average</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <th scope="row">Hits</th>
-            <td>{hitsTotal_str}</td>
-            <td>{hitsAvg}</td>
-          </tr>
-          <tr>
-            <th scope="row">Downloads</th>
-            <td>{downloadsTotal_str}</td>
-            <td>{downloadsAvg}</td>
-          </tr>
-        </tbody>
-      </table>
+      <div className="c-datatable">
+        <table>
+          <caption>Total Usage</caption>
+          <thead>
+            <tr>
+              <th scope="col">Actions</th>
+              <th scope="col">Total</th>
+              <th scope="col">Monthly Average</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Hits</th>
+              <td>{hitsTotal_str}</td>
+              <td>{hitsAvg}</td>
+            </tr>
+            <tr>
+              <th scope="row">Downloads</th>
+              <td>{downloadsTotal_str}</td>
+              <td>{downloadsAvg}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     )
   }
 }
@@ -112,18 +107,20 @@ class MonthlyUsage extends React.Component {
             </select>
           </div>
         </div>
-        <table className="c-datatable">
-          <thead>
-            <tr> 
-              <th scope="col">Monthly</th>
-              <th scope="col">Hits</th>
-              <th scope="col">Downloads</th>
-            </tr>
-          </thead>
-          <tbody>
-            {selectedUsage}
-          </tbody>
-        </table>
+        <div className="c-datatable">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Month</th>
+                <th scope="col">Hits</th>
+                <th scope="col">Downloads</th>
+              </tr>
+            </thead>
+            <tbody>
+              {selectedUsage}
+            </tbody>
+          </table>
+        </div>
       </div>
     )
   }
@@ -138,26 +135,49 @@ class TabMetricsComp extends React.Component {
     })).isRequired,
     altmetrics_ok: PropTypes.bool,
     attrs: PropTypes.shape({
-      doi: PropTypes.string
+      doi: PropTypes.string,
+      local_ids: PropTypes.array
     })
   }
 
-  componentWillMount() {
+  state = {altmetrics_nodata: false, dimensions_nodata: false }
+
+  scripts = ["https://badge.dimensions.ai/badge.js",                  /* Dimensions widget https://badge.dimensions.ai/ */
+             "https://d1bxh8uas1mnw7.cloudfront.net/assets/embed.js"  /* Altmetric widget  https://api.altmetric.com/embeds.html */ ]
+
+  componentDidMount() {
     if (!(typeof document === "undefined")) {
-      // Altmetric widget  https://api.altmetric.com/embeds.html
-      const script = document.createElement("script")
-      script.src = "https://d1bxh8uas1mnw7.cloudfront.net/assets/embed.js"
-      script.async = true
-      document.body.appendChild(script)
+      this.scripts.forEach(s => {
+        const script = document.createElement("script")
+        script.src = s
+        script.async = true
+        document.body.appendChild(script)
+      })
+      $('.altmetric-embed').on('altmetric:hide', () => {
+        this.setState({altmetrics_nodata: true})
+      })
+      $('.__dimensions_badge_embed__').on('dimensions_embed:hide', () => {
+        this.setState({dimensions_nodata: true})
+      })
     }
   }
 
+  componentWillUpdate() {
+    if (window.__dimensions_embed) window.__dimensions_embed.addBadges()
+  }
+
   render() {
+    let pmid   // Dimensions can also be used with a PubMed ID
+    if (this.props.attrs['local_ids']) {
+      _.each(this.props.attrs['local_ids'], node => {
+        if (node.type == "pmid" && pmid === undefined) pmid = node.id
+      })
+    }
     return (
       <div className="c-tabcontent">
         <h1 className="c-tabcontent__main-heading" tabIndex="-1">Metrics</h1>
       {!this.props.altmetrics_ok && (!this.props.usage || (this.props.usage && this.props.usage.length == 0)) ?
-        <div className="c-well">
+        <div className="o-well-colored">
           No usage data currently found for this item.
         </div>
       :
@@ -169,15 +189,26 @@ class TabMetricsComp extends React.Component {
           </div>
         :
           <div className="c-tabcontent__divide2x-child">
-            <div className="c-well">
+            <div className="o-well-colored">
               No usage data currently found for this item.
             </div>
           </div>
         }
           <div className="c-tabcontent__divide2x-child">
-          {this.props.altmetrics_ok && this.props.attrs.doi &&
+          {this.props.altmetrics_ok && (this.props.attrs.doi || pmid) &&
            [<h2 key="0" className="o-heading3">Online Attention</h2>,
-            <div key="1" className='altmetric-embed' data-badge-type='donut' data-badge-details='right' data-doi={this.props.attrs.doi}></div>]
+            <p key="1">
+              <span className="altmetric-embed" data-pmid={pmid} data-doi={this.props.attrs.doi} data-badge-type="donut" data-badge-details="right" data-hide-no-mentions="true"></span></p>,
+            <div key="2" className={this.state.altmetrics_nodata ? "c-tabcontent-reveal" : "c-tabcontent-hide"}>AltMetric&reg; data unavailable</div>,
+            <p key="3"><br/></p>]
+          }
+          {(this.props.attrs.doi || pmid) &&
+           [<h2 key="0" className="o-heading3">Citations</h2>,
+            <p key="1">
+              <span className="__dimensions_badge_embed__" data-pmid={pmid} data-doi={this.props.attrs.doi} data-hide-zero-citations="true" data-legend="always" data-style="small_circle"></span>
+
+            </p>,
+            <div key="2" className={this.state.dimensions_nodata ? "c-tabcontent-reveal" : "c-tabcontent-hide"}>Citation data unavailable</div>]
           }
           </div>
         </div>

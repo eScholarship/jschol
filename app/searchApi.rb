@@ -5,7 +5,7 @@ require 'pp'
 
 # API to connect to AWS CloudSearch
 $csClient = Aws::CloudSearchDomain::Client.new(
-  endpoint: YAML.load_file("config/cloudSearch.yaml")["searchEndpoint"])
+  endpoint: ENV['CLOUDSEARCH_SEARCH_ENDPOINT'] || raise("missing env CLOUDSEARCH_SEARCH_ENDPOINT"))
 
 # key is escholarship UI/aws field value in all instances except pub_year (aws field value)
 # value is a hash {displayName, awsFacetParam, filterTransform, facetTransform}
@@ -38,7 +38,7 @@ def initAllFacets()
   },
   'type_of_work' => {
     'displayName' => 'Type of Work',
-    'awsFacetParam' => {buckets: ['article', 'monograph', 'dissertation', 'multimedia']},
+    'awsFacetParam' => {buckets: TYPE_OF_WORK.keys},
     'filterTransform' => lambda { |filterVals| filterVals.map { |filterVal| {'value' => filterVal, 'displayName' => TYPE_OF_WORK[filterVal]} } },
     'facetTransform' => lambda { |facetVals| facetVals.map { |facetVal| {'value' => facetVal['value'], 'count' => facetVal['count'], 'displayName' => TYPE_OF_WORK[facetVal['value']]} } }
   },
@@ -49,7 +49,7 @@ def initAllFacets()
     'facetTransform' => lambda { |facetVals| facetVals.map { |facetVal| {'value' => facetVal['value'], 'count' => facetVal['count'], 'displayName' => 'Peer-reviewed only'} } }
   },
   'supp_file_types' => {
-    'displayName' => 'Included Media',
+    'displayName' => 'Supplemental Material',
     'awsFacetParam' => {buckets: ['video', 'audio', 'images', 'zip', 'other files']},
     'filterTransform' => lambda { |filterVals| filterVals.map { |filterVal| {'value' => filterVal, 'displayName' => filterVal.capitalize} } },
     'facetTransform' => lambda { |facetVals| facetVals.map { |facetVal| {'value' => facetVal['value'], 'count' => facetVal['count'], 'displayName' => facetVal['value'].capitalize } } },
@@ -61,16 +61,13 @@ def initAllFacets()
       if year_start and year_end
         return [{'value' => "#{year_start}-#{year_end}"}]
       elsif year_start
-        return [{'value' => year_start }]
+        return [{'value' => "#{year_start}-" }]
       elsif year_end
-        return [{'value' => year_end }]
+        return [{'value' => "-#{year_end}" }]
       end
     end,
     'facetTransform' => lambda { |year_start, year_end| {pub_year_start: year_start, pub_year_end: year_end} }
   },
-  # per message from Lisa 9/13/2016 regarding campus facets:
-  #   - lbnl should be lbl (unsure if it should be LBL in the display too?)
-  #   - ANR (Agriculture and Natural Resources) should be added to this list
   'campuses' => {
     'displayName' => 'Campus',
     'awsFacetParam' => {buckets: $activeCampuses.keys},
@@ -87,7 +84,7 @@ def initAllFacets()
     'displayName' => 'Journal',
     'awsFacetParam' => {sort: 'count', size: 100},
     'filterTransform' => lambda { |filterVals| filterVals.map { |filterVal| {'value' => filterVal, 'displayName' => get_unit_display_name(filterVal)} } },
-    'facetTransform' => lambda { |facetVals| facetVals.map { |facetVal| {'value' => facetVal['value'], 'count' => facetVal['count'], 'displayName' => get_unit_display_name(facetVal['value'])} } }
+    'facetTransform' => lambda { |facetVals| facetVals.map { |facetVal| {'value' => facetVal['value'], 'count' => facetVal['count'], 'displayName' => get_unit_display_name(facetVal['value'])} }.sort_by{ |f| f['displayName'].downcase} }
   },
   'disciplines' => {
     'displayName' => 'Discipline',
@@ -148,6 +145,13 @@ def get_unit_display_name(unitID)
   unit ? unit.name : "null"
 end
 
+# Recursive sort of nested facet array 
+def sortFacetTree(fa)  
+  fa = fa.sort_by{|f| [ f['displayName'].downcase ]} 
+  fa.each{ |f| f['descendents'] = sortFacetTree(f['descendents']) if (f['descendents'].nil? ? [] : f['descendents']).size > 0 }  
+  fa 
+end
+
 # takes list of facets in [{value: , count: }] form where value is the value that escholarship UI/AWS uses.
 # returns a nested hierarchy list: [{value, count, displayName, (optionally) descendents: []}, ...]
 def get_unit_hierarchy(unitFacets)
@@ -176,7 +180,7 @@ def get_unit_hierarchy(unitFacets)
     end
   end
 
-  return unitFacets.select { |unitFacet| !unitFacet['ancestor_in_list'] }
+  return sortFacetTree(unitFacets.select { |unitFacet| !unitFacet['ancestor_in_list'] })
 end
 
 def get_query_display(params)
@@ -202,7 +206,7 @@ def get_query_display(params)
   end
 
   display_params = {
-    'q' => params['q'] ? params['q'].join(" ") : '',
+    'q' => isQueryEmpty(params) ? 'All items' : params['q'] ? params['q'].join(" ") : '',
     'sort' => params.dig('sort', 0) ? params['sort'][0] : 'rel',
     'rows' => params.dig('rows', 0) ? params['rows'][0] : '10',
     'info_start' => params.dig('info_start', 0) ? params['info_start'][0] : '0',
@@ -224,6 +228,11 @@ def aws_encode(params, facetTypes, search_type)
   aws_params[:start] = (search_type == "items") ?
         params.dig('start', 0) ? params['start'][0] : 0
      :  params.dig('info_start', 0) ? params['info_start'][0] : 0
+  if aws_params[:query] =~ %r{\b(title:|author:|keyword:|keywords:)}
+    require_relative 'searchParser'
+    is_structured, aws_params[:query] = q_structured(aws_params[:query])
+    aws_params[:query_parser] = "structured" if is_structured
+  end
   if aws_params[:query] == 'matchall' then aws_params[:query_parser] = "structured" end
 
   # create facet query, only create facet query for fields specified in facetTypes
@@ -278,6 +287,10 @@ def normalizeResponse(response)
   end
 end
 
+def isQueryEmpty(params)
+  return params.empty? || (params && !(params.keys.include?("q"))) || (params["q"] && params["q"][0] && params["q"][0].gsub(/\s+/, "").empty?)
+end
+
 # Get search results for 'items' or 'infopages'. 'Infopages' means the units and pages
 #   (and freshdesk, when it's added) indexed in CloudSearch
 #
@@ -301,6 +314,7 @@ end
 #  "info_count"=>12,        <-- different
 #  "infoResults"=> ...      <-- different
 def searchByType(params, facetTypes=$allFacets.keys, search_type)
+  params.delete("q") if isQueryEmpty(params)
   aws_params = aws_encode(params, facetTypes, search_type)
   response = normalizeResponse($csClient.search(return: '_no_fields', **aws_params))
 
@@ -377,7 +391,7 @@ end
 # Query on items. Then, if faceting on anything other than Campus, Department, or Journal, DON'T query for info pages
 def search(params, facetTypes=$allFacets.keys)
   r = searchByType(params, facetTypes, "items")
-  if (params.keys & ITEM_SPECIFIC).size == 0
+  if (params.keys & ITEM_SPECIFIC).size == 0 && !isQueryEmpty(params)
     info_r = searchByType(params, facetTypes, "infopages")
     r['info_count'] = info_r['info_count']
     r['infoResults'] = info_r['infoResults']
@@ -397,22 +411,24 @@ def extent(id, type)
       }),
     size: 0
   }
+  filter = ""
   if (type == 'oru') then
-    aws_params[:filter_query] = "(term field=departments '#{id}')"
+    filter = "(term field=departments '#{id}')"
   elsif (type == 'journal') then
-    aws_params[:filter_query] = "(term field=journals '#{id}')"
+    filter = "(term field=journals '#{id}')"
   elsif (type == 'campus') then
-    aws_params[:filter_query] = "(term field=campuses '#{id}')"
+    filter = "(term field=campuses '#{id}')"
   elsif (type == 'series' || type == 'monograph_series' || type == 'seminar_series') then
-    aws_params[:filter_query] = "(term field=series '#{id}')"
+    filter = "(term field=series '#{id}')"
   elsif (type == 'root') then
     # no extent for now
     return {}
   else
     raise("Not a valid unit type.")
   end
+  aws_params[:filter_query] = "(and (term field=is_info '0')" + filter + ")"
   response = normalizeResponse($csClient.search(return: '_no_fields', **aws_params))
   pb = response['facets']['pub_year']['buckets']
   pub_years = pb.empty? ? [{"value"=>"0"}, {"value"=>"0"}] : pb.sort_by { |bucket| Integer(bucket['value']) }
-  return {:count => response['hits']['found'], :pub_year => {:start => pub_years[0]['value'], :end => pub_years[-1]['value']}}
+  return {:count => response['hits']['found'], :pub_year => {:start => pub_years[0]['value'], :end => pub_years[-1]['value']}  }
 end

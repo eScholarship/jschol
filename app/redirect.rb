@@ -43,13 +43,19 @@ def checkRedirect(origURI)
       uri = handleSearchRedirect(uri)
     elsif uri.path =~ %r{^/uc/temporary}
       uri = handleBpTempRedirect(uri)
+    elsif uri.path =~ %r{^/uc/stats/}
+      uri = URI.parse("https://help.escholarship.org/support/discussions/topics/9000037605")
+      break
     elsif uri.path =~ %r{^/uc/([^/]+)(.*)}
       uri = handleUnitRedirect(uri, $1, $2)
     elsif uri.host == "repositories.cdlib.org"
       uri = handleBepressRedirect(uri)
     elsif uri.host =~ /dermatology(-s10)?.cdlib.org/
       uri = handleDojRedirect(uri)
-    elsif uri.path =~ /(\.html?$)|(\.cgi)|(cgi-bin)/   # old HTML and CGI pages
+    elsif uri.path =~ %r{^/oa_harvester/}
+      uri.path = "/images#{uri.path}"
+      break
+    elsif uri.path =~ /(\.html?$)|(\.cgi)|(cgi-bin)/ && !uri.path =~ %r{/inner/}  # old HTML and CGI pages
       uri.path = "/"
       uri.query = nil
     end
@@ -85,8 +91,8 @@ def handleItemRedirect(uri, itemID, remainder)
   elsif (redir = Redirect.where(kind: "item", from_path: "/uc/item/#{itemID}").first)
     uri.path = "#{redir.to_path}#{remainder}"
   elsif remainder =~ %r{^\.pdf}
-    if $cloudFrontConfig
-      uri = URI.parse("#{$cloudFrontConfig['public-url']}/content/qt#{itemID}/qt#{itemID}.pdf")
+    if ENV['CLOUDFRONT_PUBLIC_URL']
+      uri = URI.parse("#{ENV['CLOUDFRONT_PUBLIC_URL']}/content/qt#{itemID}/qt#{itemID}.pdf")
     else
       uri.path = "/content/qt#{itemID}/qt#{itemID}.pdf"
     end
@@ -114,6 +120,16 @@ def handleSearchRedirect(uri)
     kwd = $1
     uri.path = "/search"
     uri.query = "q=#{kwd}"
+  elsif uri.query =~ %r{smode=browse}
+    if uri.query =~ %r{browse-journal=}
+      uri.path = "/journals"
+    elsif uri.query =~ %r{browse-department=([\w_]+)}
+      campus = $1
+      uri.path = $unitsHash[campus] && $unitsHash[campus].type == "campus" ? "/#{campus}/units" : "/campuses"
+    else
+      uri.path = "/campuses"
+    end
+    uri.query = nil
   else
     return nil
   end
@@ -196,6 +212,9 @@ end
 def handleUnitRedirect(uri, unit, remainder)
   if (redir = Redirect.where(kind: "unit", from_path: "/uc/#{unit}").first)
     uri.path = "#{redir.to_path}#{remainder}"
+  elsif uri.query =~ /rmode=rss/
+    uri.path = "/uc/#{unit}/rss"
+    uri.query = nil
   end
   return uri
 end

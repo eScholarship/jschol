@@ -10,7 +10,7 @@ class AddWidgetMenu extends React.Component {
       <div className="c-drawer__nav-buttons" >
         <details className="c-widgetselector__selector" open={this.state.isOpen} ref={el=>this.detailsEl=el}>
           <summary aria-label="select widget type"
-                   onClick={e=>setTimeout(()=>this.setState({isOpen: this.detailsEl.open}), 0)}/>
+                   onClick={e=>setTimeout(() =>this.setState({isOpen: this.detailsEl.open}), 0)}/>
           <div className="c-widgetselector__menu">
             <div className="c-widgetselector__sub-heading" id="c-widgetselector__sub-heading">{this.props.title}</div>
             <div className="c-widgetselector__items" aria-labelledby="c-widgetselector__sub-heading" role="list"
@@ -99,7 +99,7 @@ class SortableNavList extends React.Component {
           return true
         }}
         onChange={treeData => this.setState({ data: treeData })}
-        onMoveNode={()=>this.props.onChangeOrder(this.travOrder(this.state.data))}/>
+        onMoveNode={() =>this.props.onChangeOrder(this.travOrder(this.state.data))}/>
     )
   }
 }
@@ -125,7 +125,7 @@ class SortableSidebarList extends React.Component {
       id: sb.id,
       kind: sb.kind,
       title: <Link to={`/uc/${this.props.unit}/sidebar/${sb.id}`}>
-               {(sb.attrs && sb.attrs.title) ? sb.attrs.title : sb.kind.replace(/([a-z])([A-Z][a-z])/g, "$1 $2")}
+               {(sb.kind=='Text' && sb.attrs && sb.attrs.title) ? sb.attrs.title : sb.kind.replace(/([a-z])([A-Z][a-z])/g, "$1 $2")}
              </Link>,
       subtitle: <i>{sb.kind=='Text' ? "text widget" : "built-in widget"}</i> }})
   }
@@ -143,7 +143,7 @@ class SortableSidebarList extends React.Component {
         scaffoldBlockPxWidth={30}
         maxDepth={1}
         onChange={treeData => this.setState({ data: treeData })}
-        onMoveNode={()=>this.props.onChangeOrder(this.travOrder(this.state.data))}/>
+        onMoveNode={() =>this.props.onChangeOrder(this.travOrder(this.state.data))}/>
     )
   }
 }
@@ -170,7 +170,7 @@ class NonSortableList extends React.Component {
         isVirtualized={false}
         scaffoldBlockPxWidth={30}
         maxDepth={1}
-        canDrag={()=>false}
+        canDrag={() =>false}
         onChange={treeData => this.setState({ data: treeData })}/>
     )
   }
@@ -214,6 +214,12 @@ class DrawerComp extends React.Component {
     if (this.props.data.unit.type == "root") {
       siteSettings.push({ id: "redirects",
                           title: <Link to={`/uc/root/redirects/static`}>Sitewide Redirects</Link>})
+      siteSettings.push({ id: "authorSearch",
+                          title: <Link to={`/uc/root/authorSearch`}>Author Search</Link>})
+    }
+    if (cms.permissions.super && this.props.data.unit.id != "root") {
+      siteSettings.push({ id: "unitBuilder",
+                          title: <Link to={`/uc/${this.props.data.unit.id}/unitBuilder`}>Unit Builder</Link>})
     }
     if (this.props.data.unit.type === 'journal') {
       siteSettings.push({ id: "issueConfig", 
@@ -227,37 +233,50 @@ class DrawerComp extends React.Component {
 
         <div className="c-drawer__heading">
           Navigation Items
+        {!this.props.data.unit.type.includes('series') &&
           <AddWidgetMenu title="Add Nav Item">
             <a href="" key="page"   onClick={e=>this.addNavItem(e, 'page')  }>Page</a>
             <a href="" key="url"    onClick={e=>this.addNavItem(e, 'link')  }>External Link</a>
             <a href="" key="folder" onClick={e=>this.addNavItem(e, 'folder')}>Dropdown Menu</a>
           </AddWidgetMenu>
+        }
         </div>
 
+      {!this.props.data.unit.type.includes('series') ?
         <SortableNavList cms={cms}
                          unit={this.props.data.unit.id}
                          navItems={this.props.data.header.nav_bar}
                          fetchingData={this.props.fetchingData}
                          onChangeOrder={this.reorderNav}/>
+      :
+        <div className="c-drawer__row">To make changes to navigation items, navigate to your unit’s homepage</div>
+      }
 
         <div className="c-drawer__heading">
           Sidebar Widgets
+        {!this.props.data.unit.type.includes('series') &&
           <AddWidgetMenu title="Add Widget">
             <a href="" key="RecentArticles" onClick={e=>this.addSidebarWidget(e, 'RecentArticles')  }>Recent Articles</a>
             <a href="" key="Text" onClick={e=>this.addSidebarWidget(e, 'Text')  }>Text</a>
+            <a href="" key="TwitterFeed" onClick={e=>this.addSidebarWidget(e, 'TwitterFeed')  }>Twitter Feed</a>
           </AddWidgetMenu>
+        }
         </div>
 
+      {!this.props.data.unit.type.includes('series') ?
         <SortableSidebarList cms={cms}
                              unit={this.props.data.unit.id}
                              sidebarWidgets={this.props.data.sidebar}
                              fetchingData={this.props.fetchingData}
                              onChangeOrder={this.reorderSidebar}/>
+      :
+        <div className="c-drawer__row">To make changes to sidebar widgets, navigate to your unit’s homepage</div>
+      }
       </div>
     )
   }
 
-  render = ()=>
+  render = () =>
     <Subscriber channel="cms">
       { cms =>
         <div>

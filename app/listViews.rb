@@ -21,6 +21,7 @@ def itemResultData(itemIds, itemData, fields=[])
         :title => item.title,
         :abstract => attrs['abstract'],
         :content_type => item.content_type,
+        :author_hide => attrs['author_hide'],
       }
       itemListItem[:authors] = itemData[:authors][itemID].map { |author| JSON.parse(author.attrs) } if itemData.dig(:authors, itemID)
 
@@ -57,8 +58,8 @@ def itemResultData(itemIds, itemData, fields=[])
 
       #conditional data included as needed as specified by 'fields' parameter
       itemListItem[:thumbnail] = attrs['thumbnail'] if fields.include? 'thumbnail'
-      itemListItem[:pub_date] = item.pub_date if fields.include? 'pub_date'
-      itemListItem[:pub_year] = item.pub_date.year if fields.include? 'pub_year'
+      itemListItem[:published] = item.published if fields.include? 'published'
+      itemListItem[:pub_year] = item.published.year if fields.include? 'pub_year'
       itemListItem[:genre] = item.genre if fields.include? 'type_of_work'
       itemListItem[:rights] = item.rights if fields.include? 'rights'
       itemListItem[:peerReviewed] = attrs['is_peer_reviewed'] if fields.include? 'peer_reviewed'
@@ -69,13 +70,31 @@ def itemResultData(itemIds, itemData, fields=[])
         if item.section
           itemIssue = Issue[Section[item.section].issue_id]
           itemUnit = $unitsHash[itemIssue.unit_id]
-          itemListItem[:journalInfo] = {displayName: "#{itemUnit.name}, Volume #{itemIssue.volume}, Issue #{itemIssue.issue}", issueId: itemIssue.id, unitId: itemUnit.id}
+          displayName = itemUnit.name
+          # ToDo: This next block is very similar to unitPage.getPageBreadcrumb and should probably be combined
+          vol = "Volume #{itemIssue.volume}"
+          iss = "Issue #{itemIssue.issue}"
+          if itemIssue.attrs
+            numbering = JSON.parse(itemIssue.attrs)["numbering"]
+            if itemIssue.volume == "0" and itemIssue.issue == "0"
+              # Don't tack on vol/iss in this case
+            elsif !numbering
+              displayName += ", " + vol + ", " + iss 
+            elsif numbering == "volume_only"
+              displayName += ", " + vol
+            else
+              displayName += ", " + iss 
+            end
+          else 
+            displayName += ", " + vol + ", " + iss
+          end
+          itemListItem[:journalInfo] = {displayName: displayName, issueId: itemIssue.id, link_path: itemUnit.id + "/" + itemIssue.volume + "/" + itemIssue.issue}
         #otherwise, use the item link to the unit table for all other content types
         else
           if itemData[:units][itemID]
             unitItem = itemData[:units][itemID][0]  # take first unit only, for now
             unit = $unitsHash[unitItem.unit_id]
-            itemListItem[:unitInfo] = {displayName: unit.name, unitId: unit.id}
+            itemListItem[:unitInfo] = {displayName: unit.name, link_path: unit.id}
           end
         end
       end
@@ -115,6 +134,7 @@ def infoResultData(infoIds)
 
     unit_id = nodes[1]
     unit = $unitsHash[unit_id]
+    next if unit.nil?  # filter out info pages in search index from deleted unit
 
     case nodes[0]
     when "unit"

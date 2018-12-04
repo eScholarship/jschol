@@ -1,27 +1,39 @@
 // ##### Statistics Carousel Component ##### //
 
-$statcarousel-heading-height: 1.1em;
-
 .c-statcarousel {
   @extend %statcarousel-flickity-customizations;
+  position: relative;
   margin-bottom: $spacing-md;
   padding: $spacing-md 2.5em;
   background-color: $color-white;
   box-shadow: $box-shadow1;
 }
 
-.c-statcarousel__section {
-  display: flex;
-  position: relative;
-  padding-top: $statcarousel-heading-height + 0.5em;
-  background-color: $color-white; // hides section underneith when overlapping upon browser resize
+.c-statcarousel__section-heading {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+
+  @include u-heading() {
+    position: absolute;
+    width: max-content;
+    margin: 0;
+    color: $color-dark-gray;
+    font-size: 1.1em;
+    font-weight: normal;
+  }
 
   &:not(:first-child) {
+    margin-left: $spacing-sm;
+    padding-left: $spacing-sm;
+    border-left: 1px solid $color-dark-gray;
 
-    .c-statcarousel__cell {
+    @include bp(screen1) {
+      margin-left: 0;
+      padding-left: 0;
 
-      &:first-of-type {
-        border-left: 1px solid $color-dark-gray;
+      @include u-heading() {
+        padding-left: $spacing-sm;
       }
 
     }
@@ -30,19 +42,13 @@ $statcarousel-heading-height: 1.1em;
 
 }
 
-.c-statcarousel__cell-heading {
-  position: absolute;
-  top: 0;
-  left: $spacing-sm;
-  margin: 0;
-  color: $color-dark-gray;
-  font-size: $statcarousel-heading-height;
-  font-weight: normal;
-}
-
 .c-statcarousel__cell {
-  width: 15vw;
-  min-width: 6.3em;
+  margin-top: $spacing-lg;
+
+  @include bp(screen1) {
+    width: 15vw;
+  }
+
 }
 
 // ***** Flickity Customizations ***** //

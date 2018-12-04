@@ -1,18 +1,19 @@
 // ##### Column Box Objects ##### //
 
 %o-columnbox {
-  @extend %responsive-images;
+  @extend %u-responsive-images;
   margin-bottom: $spacing-sm;
   padding: $spacing-sm $spacing-sm 0;
 
   header {
     margin: (-$spacing-sm) (-$spacing-sm) $spacing-sm;
+    background: $color-light-gray;
 
-    @include headings() {
+    @include u-heading() {
       @extend %o-heading3a;
-      margin: 0;
+      display: inline-block;
+      margin: 0 !important;
       padding: 0.4em $spacing-sm;
-      background: $color-light-gray;
     }
 
   }
@@ -23,7 +24,7 @@
     header {
       margin: (-$spacing-lg) (-$spacing-lg) $spacing-md;
 
-      @include headings() {
+      @include u-heading() {
         padding: 0.4em $spacing-md;
       }
 
@@ -39,12 +40,51 @@
 
 .o-columnbox1 {
   @extend %o-columnbox;
+  position: relative;
   padding: $spacing-sm;
   background: $color-white;
   box-shadow: $box-shadow1;
 
   @include bp(screen1) {
     padding: $spacing-lg;
+  }
+
+  // Columnbox1 overlay and spinner elements triggered by '--is-loading-data':
+
+  &::before {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    transition: opacity 0.2s;
+    background-color: $color-white;
+    opacity: 0;
+    pointer-events: none;
+
+    // only render this element if pointer-events is supported to prevent blocked pointer/touch access to underlying links, buttons, text, etc:
+    @supports (pointer-events: none) {
+      content: '';
+    }
+
+  }
+
+  &.is-loading-data {
+
+    &::before {
+      opacity: 0.8;
+    }
+
+    &::after {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      background: url('#{$media-path}spinner.gif') no-repeat top 3em center / 3em;
+      content: '';
+    }
+
   }
 
 }
