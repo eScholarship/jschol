@@ -6,12 +6,12 @@
 # UCI metadata files into the items/sections/issues/etc. tables. It is also
 # built to be fully incremental.
 
+# Run from the right directory (the parent of the tools dir)
+Dir.chdir(File.dirname(File.expand_path(File.dirname(__FILE__))))
+
 # Use bundler to keep dependencies local
 require 'rubygems'
 require 'bundler/setup'
-
-# Run from the right directory (the parent of the tools dir)
-Dir.chdir(File.dirname(File.expand_path(File.dirname(__FILE__))))
 
 # Remainder are the requirements for this program
 require 'aws-sdk'
@@ -101,6 +101,9 @@ $testMode = ARGV.delete('--test')
 $forceMode = ARGV.delete('--force')
 $forceMode and $rescanMode = true
 
+# Pre-indexing mode (avoids locking, doesn't touch search index)
+$preindexMode = false
+
 # Mode to skip CloudSearch indexing and just do db updates
 $noCloudSearchMode = ARGV.delete('--noCloudSearch')
 
@@ -146,7 +149,7 @@ end
 $hostname = `/bin/hostname`.strip
 $thumbnailServer = case $hostname
   when 'pub-submit-dev'; 'http://pub-submit-dev.escholarship.org'
-  when 'pub-submit-stg-2a', 'pub-submit-stg-2c'; 'http://pub-eschol-stg.escholarship.org'
+  when 'pub-submit-stg-2a', 'pub-submit-stg-2c'; 'https://pub-submit-stg.escholarship.org'
   when 'pub-submit-prd-2a', 'pub-submit-prd-2c'; 'https://submit.escholarship.org'
   else raise("unrecognized host #{hostname}")
 end
@@ -832,9 +835,10 @@ def parseUCIngest(itemID, inMeta, fileType)
     label
   }.select { |v| v }
 
-  # Subjects and keywords come directly across
+  # Subjects and keywords come directly across.
   attrs[:subjects] = inMeta.xpath("./subjects/subject").map { |el| el.text.strip }
-  attrs[:keywords] = inMeta.xpath("./keywords/keyword").map { |el| el.text.strip }
+  # Sometimes keywords are separated into elements, sometimes lumped as a delimited list within an element.
+  attrs[:keywords] = inMeta.xpath("./keywords/keyword").map { |el| el.text.split(/[,;]/).map { |t| t.strip } }.flatten
 
   # Grab grant data and other stuff for OSTI reporting
   attrs[:grants] = inMeta.xpath("./funding/grant").map { |el| el.to_h }
@@ -1626,44 +1630,52 @@ def convertAllItems(arks)
     batchThread = Thread.new { processAllBatches }
     splashThread = Thread.new { splashFromQueue }
 
-    # Count how many total there are, for status updates
-    $nTotal = QUEUE_DB.fetch("SELECT count(*) as total FROM indexStates WHERE indexName='erep'").first[:total]
+    if $preindexMode
+      arks.each { |ark|
+        ark =~ /^qt\w{8}$/ or raise
+        $indexQueue << [ark, nil]
+      }
+    else
 
-    # If we've been asked to rescan everything, do so in batches.
-    if $rescanMode
-      if arks == 'ALL'
-        redoSet = Item.where{ id > rescanBase }.limit(RESCAN_SET_SIZE)
-        $skipTo and redoSet = redoSet.where{ id >= $skipTo }
-        $skipTo = nil
-        redoSet.update(:last_indexed => nil)
-        rescanBase = redoSet.map(:id).max
-        puts "Rescan reset, nextbase=#{rescanBase.inspect}."
-      else
-        rescanBase = nil
+      # Count how many total there are, for status updates
+      $nTotal = QUEUE_DB.fetch("SELECT count(*) as total FROM indexStates WHERE indexName='erep'").first[:total]
+
+      # If we've been asked to rescan everything, do so in batches.
+      if $rescanMode
+        if arks == 'ALL'
+          redoSet = Item.where{ id > rescanBase }.limit(RESCAN_SET_SIZE)
+          $skipTo and redoSet = redoSet.where{ id >= $skipTo }
+          $skipTo = nil
+          redoSet.update(:last_indexed => nil)
+          rescanBase = redoSet.map(:id).max
+          puts "Rescan reset, nextbase=#{rescanBase.inspect}."
+        else
+          rescanBase = nil
+        end
       end
-    end
 
-    # Grab the timestamps of all items, for speed
-    allItemTimes = (arks=="ALL" ? Item : Item.where(id: arks.to_a)).to_hash(:id, :last_indexed)
+      # Grab the timestamps of all items, for speed
+      allItemTimes = (arks=="ALL" ? Item : Item.where(id: arks.to_a)).to_hash(:id, :last_indexed)
 
-    # Convert all the items that are indexable
-    query = QUEUE_DB[:indexStates].where(indexName: 'erep').select(:itemId, :time).order(:itemId)
-    $nTotal = query.count
-    if $skipTo
-      puts "Skipping all up to #{$skipTo}..."
-      query = query.where{ itemId >= "ark:13030/#{$skipTo}" }
-      $nSkipped = $nTotal - query.count
-    end
-    query.all.each do |row|   # all so we don't keep db locked
-      shortArk = getShortArk(row[:itemId])
-      next if arks != 'ALL' && !arks.include?(shortArk)
-      erepTime = Time.at(row[:time].to_i).to_time
-      itemTime = allItemTimes[shortArk]
-      if itemTime.nil? || itemTime < erepTime || ($rescanMode && arks.include?(shortArk))
-        $indexQueue << [shortArk, erepTime]
-      else
-        #puts "#{shortArk} is up to date, skipping."
-        $nSkipped += 1
+      # Convert all the items that are indexable
+      query = QUEUE_DB[:indexStates].where(indexName: 'erep').select(:itemId, :time).order(:itemId)
+      $nTotal = query.count
+      if $skipTo
+        puts "Skipping all up to #{$skipTo}..."
+        query = query.where{ itemId >= "ark:13030/#{$skipTo}" }
+        $nSkipped = $nTotal - query.count
+      end
+      query.all.each do |row|   # all so we don't keep db locked
+        shortArk = getShortArk(row[:itemId])
+        next if arks != 'ALL' && !arks.include?(shortArk)
+        erepTime = Time.at(row[:time].to_i).to_time
+        itemTime = allItemTimes[shortArk]
+        if itemTime.nil? || itemTime < erepTime || ($rescanMode && arks.include?(shortArk))
+          $indexQueue << [shortArk, erepTime]
+        else
+          #puts "#{shortArk} is up to date, skipping."
+          $nSkipped += 1
+        end
       end
     end
 
@@ -1677,7 +1689,7 @@ def convertAllItems(arks)
 
     if $rescanMode && rescanBase.nil?
       break
-    elsif !$rescanMode
+    elsif !$rescanMode || $preindexMode
       break
     end
   end
@@ -1962,7 +1974,9 @@ def splashFromQueue
     itemID or break
     Thread.current[:name] = "splash thread: #{itemID}"  # label all stdout from this thread
     begin
-      convertPDF(itemID)
+      if !$preindexMode
+        convertPDF(itemID)
+      end
     rescue Exception => e
       e.is_a?(Interrupt) || e.is_a?(SignalException) and raise
       puts "Exception: #{e} #{e.backtrace}"
@@ -2142,6 +2156,13 @@ end
 # Main action begins here
 
 startTime = Time.now
+
+# Pre-index mode: no locking, just index one item and get out
+if ARGV[0] == "--preindex"
+  $preindexMode = $noCloudSearchMode = $forceMode = $rescanMode = true
+  convertAllItems(Set.new([ARGV[1]]))
+  exit 0
+end
 
 # MH: Could not for the life of me get File.flock to actually do what it
 #     claims, so falling back to file existence check.

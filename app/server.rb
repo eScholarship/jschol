@@ -356,11 +356,25 @@ get %r{/uc/oai(.*)} do
 end
 
 ###################################################################################################
+# New OAI endpoint. In production, this proxying isn't necessary -- the ALB is configured to do it.
+get %r{/oai(.*)} do
+  request.url =~ %r{/oai(.*)}
+  headers = {}
+  request.env['HTTP_PRIVILEGED'] and headers['Privileged'] = request.env['HTTP_PRIVILEGED']
+  response = HTTParty.get("http://#{$host}:18900/oai#{$1}", headers: headers)
+  response.headers['content-type'] and content_type response.headers['content-type']
+  [response.code, response.body]
+end
+
+###################################################################################################
 get %r{/graphql} do
   if request.query_string.empty?
     redirect(to('/graphql/iql'))
   else
-    response = HTTParty.get("http://#{$host}:18900/graphql?#{URI.escape(request.query_string)}")
+    outHeaders = {}
+    request.env['HTTP_PRIVILEGED'] and outHeaders['Privileged'] = request.env['HTTP_PRIVILEGED']
+    response = HTTParty.get("http://#{$host}:18900/graphql?#{URI.escape(request.query_string)}",
+                            headers: outHeaders)
     %w{Content-Type Access-Control-Allow-Origin}.each { |h|
       response.headers[h] and headers h => response.headers[h]
     }
@@ -375,7 +389,10 @@ end
 
 ###################################################################################################
 post %r{/graphql(.*)} do
+  headers = {}
+  request.env['HTTP_PRIVILEGED'] and headers['Privileged'] = request.env['HTTP_PRIVILEGED']
   response = HTTParty.post("http://#{$host}:18900/graphql#{params['captures'][0]}",
+                           headers: headers,
                            body: request.body.read)
   %w{Content-Type Access-Control-Allow-Origin}.each { |h|
     response.headers[h] and headers h => response.headers[h]
@@ -687,8 +704,10 @@ not_found do
   status 404
   if request.path =~ %r{\.[^/]+$}   # handle probable file paths like .jpg, .gif, etc.
     return "Resource not found.\n"
-  elsif request.path =~ %r{/api/}
+  elsif request.path =~ %r{/(api|graphql)/}
     return jsonHalt(404, "Not Found")
+  elsif request.path =~ %r{/(dspace|oai)}
+    return halt(404, "Not Found.\n")
   else
     generalResponse(false)  # handles 404's in the same fashion as other req's, but no iso
   end
