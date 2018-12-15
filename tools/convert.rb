@@ -117,7 +117,7 @@ end
 
 # CloudSearch API client
 $csClient = Aws::CloudSearchDomain::Client.new(credentials: Aws::InstanceProfileCredentials.new,
-  endpoint: ENV['CLOUDSEARCH_DOC_ENDPOINT'])
+  endpoint: ENV['CLOUDSEARCH_DOC_ENDPOINT'] || raise("missing env CLOUDSEARCH_DOC_ENDPOINT"))
 
 # S3 API client
 # Note: we use InstanceProfileCredentials here to avoid picking up ancient
@@ -692,6 +692,7 @@ def addMerrittPaths(itemID, attrs)
   attrs[:supp_files] and attrs[:supp_files].each { |supp|
     suppName = supp[:file]
     suppSize = File.size(arkToFile(itemID, "content/supp/#{suppName}")) or raise
+    supp[:size] = suppSize
     suppFound = false
     feed.xpath("//link").each { |link|
       if link[:rel] == "http://purl.org/dc/terms/hasPart" &&
@@ -929,6 +930,15 @@ def parseUCIngest(itemID, inMeta, fileType)
   contentFile = inMeta.at("/record/content/file[@path]")
   contentFile && contentFile.at("./native[@path]") and contentFile = contentFile.at("./native")
   contentType = contentFile && contentFile.at("./mimeType") && contentFile.at("./mimeType").text
+
+  # Record name of native file, if any
+  if contentFile && contentFile.name == "native" && contentFile[:path]
+    nativePath = arkToFile(itemID, contentFile[:path].sub(/.*\//, 'content/'))
+    if File.exist?(nativePath)
+      attrs[:native_file] = { name: contentFile[:path].sub(/.*\//, ''),
+                              size: File.size(nativePath) }
+    end
+  end
 
   # For ETDs (all in Merritt), figure out the PDF path in the feed file
   pdfPath = arkToFile(itemID, "content/base.pdf")
@@ -1689,7 +1699,7 @@ def convertAllItems(arks)
 
     if $rescanMode && rescanBase.nil?
       break
-    elsif !$rescanMode || $preindexMode
+    elsif !$rescanMode
       break
     end
   end
@@ -1974,9 +1984,7 @@ def splashFromQueue
     itemID or break
     Thread.current[:name] = "splash thread: #{itemID}"  # label all stdout from this thread
     begin
-      if !$preindexMode
-        convertPDF(itemID)
-      end
+      convertPDF(itemID)
     rescue Exception => e
       e.is_a?(Interrupt) || e.is_a?(SignalException) and raise
       puts "Exception: #{e} #{e.backtrace}"
@@ -2159,7 +2167,8 @@ startTime = Time.now
 
 # Pre-index mode: no locking, just index one item and get out
 if ARGV[0] == "--preindex"
-  $preindexMode = $noCloudSearchMode = $forceMode = $rescanMode = true
+  $preindexMode = $noCloudSearchMode = $forceMode = true
+  $rescanMode = false # prevent infinite loop
   convertAllItems(Set.new([ARGV[1]]))
   exit 0
 end
