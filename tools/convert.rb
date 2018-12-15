@@ -1984,9 +1984,7 @@ def splashFromQueue
     itemID or break
     Thread.current[:name] = "splash thread: #{itemID}"  # label all stdout from this thread
     begin
-      if !$preindexMode
-        convertPDF(itemID)
-      end
+      convertPDF(itemID)
     rescue Exception => e
       e.is_a?(Interrupt) || e.is_a?(SignalException) and raise
       puts "Exception: #{e} #{e.backtrace}"
