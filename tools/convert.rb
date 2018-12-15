@@ -149,7 +149,7 @@ end
 $hostname = `/bin/hostname`.strip
 $thumbnailServer = case $hostname
   when 'pub-submit-dev'; 'http://pub-submit-dev.escholarship.org'
-  when 'pub-submit-stg-2a', 'pub-submit-stg-2c'; 'http://pub-submit-stg.escholarship.org'
+  when 'pub-submit-stg-2a', 'pub-submit-stg-2c'; 'https://pub-submit-stg.escholarship.org'
   when 'pub-submit-prd-2a', 'pub-submit-prd-2c'; 'https://submit.escholarship.org'
   else raise("unrecognized host #{hostname}")
 end
