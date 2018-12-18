@@ -24,6 +24,7 @@ prefilterDirs.txt
 public/css/
 public/js/
 redirects/
+robots.txt
 splash/downloaded/
 splash/tmp/
 splash/WEB-INF/classes/
