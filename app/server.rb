@@ -340,7 +340,7 @@ end
 ###################################################################################################
 def proxyFromURL(url, overrideHostname = nil)
   fetcher = HttpFetcher.new(url, overrideHostname)
-  if fetcher.length > 0
+  if !fetcher.length.nil? && fetcher.length > 0
     headers "Content-Length" => fetcher.length.to_s
   end
   if fetcher.headers && fetcher.headers.dig('content-type', 0)
