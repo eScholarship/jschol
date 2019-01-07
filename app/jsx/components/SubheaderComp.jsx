@@ -79,7 +79,8 @@ class SubheaderComp extends React.Component {
     } else {
       // If unit is a series, pass in its parent's unitID
       let [unitIDForWiz, unitNameForWiz] = (unit.type == 'oru') ? [unit.id, unit.name] : (unit.type.includes('series')) ? [h.ancestorID, h.ancestorName] : [null, null]
-      depositWizard = (<WizardComp showModal={this.state.depositModalOpen}
+      depositWizard = (<WizardComp key={unitIDForWiz}   // re-create instance across units
+                  showModal={this.state.depositModalOpen}
                   parentSelector={()=>$('#wizardModalBase')[0]}
                   onCancel={e=>this.closeWizardModal(e)}
                   campuses={h.campuses}
