@@ -25,15 +25,20 @@ class HeaderComp extends React.Component {
 class ManageSubmissionsComp extends React.Component {
   render() {
     let submit_url = "https://submit.escholarship.org"
-    let url = this.props.type == 'campus' ? submit_url : submit_url+"/subi/directAdmin?target="+this.props.unit_id
+    let editor_url = this.props.type == 'campus' ? submit_url : submit_url+"/subi/directAdmin?target="+this.props.unit_id
+    let editor_text = this.props.directSubmitURL_manage ? "Editor Login" : "Log in to manage your submissions"
     return (
       <div className="c-wizard__step">
         <HeaderComp header={this.props.header} closeModal={this.props.closeModal} />
         <div className="c-wizard__heading"></div>
         <div className="c-wizard__message">
-          <br/><br/>
-          <a className="c-wizard__external-link" href={url}>Log in to manage your submissions</a>
-          <br/><br/>
+        {this.props.directSubmitURL_manage &&
+          [<br key="0"/>, 
+          <div key="1" className="c-wizard__centered"><a className="c-wizard__external-link" href={this.props.directSubmitURL_manage}>Author Login</a></div>]
+        }
+          <br/>
+          <div className="c-wizard__centered"> <a className="c-wizard__external-link" href={editor_url}>{editor_text}</a></div>
+          <br/>
         </div>
         <footer></footer>
       </div>
@@ -114,7 +119,8 @@ class WizardInertComp extends React.Component {
     onCancel: PropTypes.any,
     type: PropTypes.string,
     directSubmit: PropTypes.string,
-    directSubmitURL: PropTypes.string,
+    directSubmitURL: PropTypes.string,   // called from Deposit/Submit button
+    directSubmitURL_manage: PropTypes.string,   // called from Manage Submissions button
     header: PropTypes.string,
     unit_id: PropTypes.string,
   }
@@ -149,7 +155,7 @@ class WizardInertComp extends React.Component {
         >
           <div className="c-wizard">
           {this.props.header == "Manage Submissions" ?
-            <ManageSubmissionsComp header={this.props.header} type={type} unit_id={this.props.unit_id} closeModal={this.closeModal} />
+            <ManageSubmissionsComp header={this.props.header} type={type} unit_id={this.props.unit_id} closeModal={this.closeModal} directSubmitURL_manage={this.props.directSubmitURL_manage} />
             :
             this.props.directSubmit == "disabled" ?
                // Single use case here for lbnl
