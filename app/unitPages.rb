@@ -551,6 +551,7 @@ def getUnitProfile(unit, attrs)
   }
   
   attrs['directSubmit'] and profile[:directSubmit] = attrs['directSubmit']
+  attrs['directSubmitURL'] and profile[:directSubmitURL] = attrs['directSubmitURL']
   if unit.type == 'journal'
     profile[:doaj] = attrs['doaj']
     profile[:issn] = attrs['issn']
@@ -1334,6 +1335,7 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
         else
           unitAttrs['directSubmit'] = params['data']['directSubmit']
         end
+        if params['data']['directSubmitURL'] then unitAttrs['directSubmitURL'] = params['data']['directSubmitURL'] end
       end
     end
 
@@ -1348,7 +1350,6 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
 
     if params['data']['facebook'] then unitAttrs['facebook'] = params['data']['facebook'] end
     if params['data']['twitter'] then unitAttrs['twitter'] = params['data']['twitter'] end
-
     if params['data']['about'] then unitAttrs['about'] = params['data']['about'] end
 
     unitAttrs.delete_if {|k,v| (v.is_a? String and v.empty?) || (v == false) || v.nil? }

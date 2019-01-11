@@ -139,8 +139,8 @@ class UnitProfileLayout extends React.Component {
                        </select>
                        <br/><br/>
                        <label className="c-editable-page__label" htmlFor="directSubmitURL">Direct submit URL (for external submission management): </label>
-                       <br/><input disabled={disableEdit} className="c-editable-page__input" id="directSubmitURL" type="text" defaultValue={data.directSubmitURL}
-                           onChange={ event => this.setData({ name: event.target.value }) }/>
+                       <input disabled={disableEdit} className="c-editable-page__input" id="directSubmitURL" type="text" defaultValue={data.directSubmitURL}
+                           onChange={ event => this.setData({ directSubmitURL: event.target.value }) }/>
                      </div>
                    }
 
