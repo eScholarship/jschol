@@ -30,7 +30,7 @@ class SortableNavList extends React.Component {
   setupState(props) {
     return {
       data: this.generateData(props.navItems),
-      firstIsHome: props.navItems[0].type == "home"
+      firstIsFixed: props.navItems[0].type.includes("fixed")
     }
   }
 
@@ -43,14 +43,15 @@ class SortableNavList extends React.Component {
     if (!navItems)
       return undefined
     return navItems.map(nav => {
+      // console.log(nav.type)
       let data = {
         id: nav.id,
         type: nav.type,
         slug: nav.slug,
-        title: <Link to={`/uc/${this.props.unit}${(nav.type == "home") ? "" : `/nav/${nav.id}`}`}>{nav.name}</Link>,
+        title: <Link to={`/uc/${this.props.unit}${(nav.type.includes("fixed")) ? "" : `/nav/${nav.id}`}`}>{nav.name}</Link>,
         subtitle: <i>{nav.hidden && 'hidden '}{nav.type}</i>
       }
-      if (nav.type == "folder") {
+      if (nav.type.includes("folder")) {
         data.children = this.generateData(nav.sub_nav)
         data.expanded = true
       }
@@ -78,7 +79,7 @@ class SortableNavList extends React.Component {
         scaffoldBlockPxWidth={30}
         maxDepth={2}
         canDrag={({ node }) => {
-          if (node.type == "home") // don't allow dragging unit home
+          if (node.type.includes("fixed")) // don't allow dragging unit home or journal issues drop down
             return false
           let slug = (node.type == "page") ? node.slug : node.type
           if (!(this.props.cms.permissions.nav_perms[slug] || {}).reorder)
@@ -86,15 +87,15 @@ class SortableNavList extends React.Component {
           return true
         }}
         canDrop={({ node, nextTreeIndex, nextParent }) => {
-          if (this.state.firstIsHome && nextTreeIndex == 0) // don't allow rearranging above the unit home
+          if (this.state.firstIsFixed && nextTreeIndex <= 0) // don't allow rearranging above fixed nodes
             return false
           if (!nextParent)
             return true
-          if (node.type == "folder")
+          if (node.type.includes("folder"))
             return false
           if (nextParent.noChildren)
             return false
-          if (nextParent.type != "folder")
+          if (!nextParent.type.includes("folder"))
             return false
           return true
         }}

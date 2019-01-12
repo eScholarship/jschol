@@ -36,13 +36,16 @@ class NavComp extends React.Component {
   getNavItemJSX(navItem) {
     if (navItem.type == "link")
       return (<li key={navItem.id}><a href={navItem.url} onClick={this.onNavClick}>{navItem.name}</a></li>)
-    else
+    else {
+      // console.log(navItem)
       return (<li key={navItem.id}><Link to={navItem.url} onClick={this.onNavClick}>{navItem.name}</Link></li>)
+    }
   }
 
   render() {
     let navList = this.props.data.filter(navItem => !navItem.hidden).map((navItem) => {
-      if (navItem.type == "folder") {
+      // console.log(navItem.type + " " + navItem.name)
+      if (navItem.type.includes("folder")) {
         return (
           <li key={navItem.id}>
             <NavSubComp name={navItem.name}

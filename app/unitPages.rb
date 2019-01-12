@@ -136,11 +136,34 @@ def getNavPerms(unit, navItems, userPerms)
   return result
 end
 
-# Add a URL to each nav bar item
+def getIssuesSubNav(unitID)
+  # ToDo: This is being repeated. Refactor.
+  # vvvvvvvvvvvvvvvvvv
+  publishedIssues = Issue.distinct.select(Sequel[:issues][:id]).
+    join(:sections, issue_id: :id).
+    join(:items, section: Sequel[:sections][:id]).
+    filter(Sequel[:issues][:unit_id] => unitID,
+           Sequel[:items][:status] => 'published').map { |h| h[:id] }
+  # ^^^^^^^^^^^^^^^^^^
+  # ToDo: This is being repeated. Refactor.
+  issues = _getIssues(publishedIssues)
+  # rename id to issue_id otherwise possible collision in nav. Create new (negative) id
+  mappings = {:id => :issue_id}
+  issues_rev = []
+  issues.each.with_index(1) do |issue, index|
+    issue = issue.map {|k, v| [mappings[k] || k, v] }.to_h
+    issue[:id] = -(index)
+    issue[:type] = 'page'
+    issues_rev << issue
+  end
+  return issues_rev
+end
+
+# Add a URL to each nav bar item; Include fixed item "Home" and - if journal - issue dropdown
 def getNavBar(unit, navItems, level=1)
   if navItems
     navItems.each { |navItem|
-      if navItem['type'] == 'folder'
+      if navItem['type'].include?('folder')
         navItem['sub_nav'] = getNavBar(unit, navItem['sub_nav'], level+1)
       elsif navItem['slug']
         if unit.id == 'root'
@@ -152,7 +175,11 @@ def getNavBar(unit, navItems, level=1)
     }
     if level==1 && !isTopmostUnit(unit)
       unitID = unit.type.include?('series') ? getUnitAncestor(unit).id : unit.id
-      navItems.unshift({ id: 0, type: "home",
+      unit.type == "journal" and
+        navItems.unshift({ id: 0, type: "fixed_folder",
+                          name: "Issues",   # ToDo: Make this name based on unit_attrs.default_issue.numbering
+                          url: nil, sub_nav: getIssuesSubNav(unitID) })
+      navItems.unshift({ id: -9999, type: "fixed_page",
                          name: unit.type == "journal" ? "Journal Home" : "Unit Home",
                          url: "/uc/#{unitID}" })
     end
@@ -196,7 +223,6 @@ def getUnitHeader(unit, pageName=nil, journalIssue=nil, attrs=nil)
   campusID = getCampusId(unit)
   ancestor = isTopmostUnit(unit) ? nil : getUnitAncestor(unit)
 
-
   header = {
     :campusID => campusID,
     :campusName => $unitsHash[campusID].name,
@@ -224,6 +250,8 @@ def getUnitHeader(unit, pageName=nil, journalIssue=nil, attrs=nil)
       ancestor = $hierByUnit[ancestor.id][0].ancestor
     end
   end
+
+  # puts header[:nav_bar]
 
   return header
 end
@@ -636,7 +664,7 @@ end
 def travNav(navBar, &block)
   navBar.each { |nav|
     block.yield(nav)
-    if nav['type'] == 'folder'
+    if nav['type'].include?('folder')
       travNav(nav['sub_nav'], &block)
     end
   }
@@ -652,6 +680,7 @@ end
 def deleteNavByID(navBar, navID)
   return navBar.map { |nav|
     nav['id'].to_s == navID.to_s ? nil
+      # Check for 'folder' (You would never want to delete a 'fixed_folder')
       : nav['type'] == "folder" ? nav.merge({'sub_nav'=>deleteNavByID(nav['sub_nav'], navID) })
       : nav
   }.compact
@@ -740,12 +769,12 @@ put "/api/unit/:unitID/nav/:navID" do |unitID, navID|
 end
 
 def remapOrder(oldNav, newOrder)
-  newOrder = newOrder.map { |stub| stub['id'] == 0 ? nil : stub }.compact
+  newOrder = newOrder.map { |stub| stub['id'] <= 0 ? nil : stub }.compact
   return newOrder.map { |stub|
     source = getNavByID(oldNav, stub['id'])
     source or raise("Unknown nav id #{stub['id']}")
     newNav = source.clone
-    if source['type'] == "folder"
+    if source['type'].include?("folder")
       stub['sub_nav'] or raise("can't change nav type")
       newNav['sub_nav'] = remapOrder(oldNav, stub['sub_nav'])
     end
@@ -963,6 +992,7 @@ put "/api/unit/:unitID/unitBuilder" do |parentUnitID|
 
   isHidden = !!params[:hidden]
 
+  # Add a basic nav bar. Fixed/immovable nav buttons "__ Home" (and "Issues" dropdown for journals) will be included in the nav by default (called up when page is being rendered)
   attrs = {
     about: "About #{unitName}: TODO",
     nav_bar: %w{oru journal}.include?(unitType) ? [
@@ -1221,6 +1251,8 @@ end
 ###################################################################################################
 # *Delete* to remove a static page from a unit
 delete "/api/unit/:unitID/nav/:navID" do |unitID, navID|
+  # Don't allow deletion of 'fixed_' navigation items (which have ids of zero or less)
+  navID > 0 or restrictedHalt
   # Check user permissions
   userPerms = getUserPermissions(params[:username], params[:token], unitID)
   userPerms[:admin] or halt(401)
