@@ -209,8 +209,8 @@ def getPageBreadcrumb(unit, pageName, issue=nil)
   end
 end
 
+# Returns array of a journal issue's IDs, only for published issues
 def _getIssueIds (unit)
-  # Returns array of a journal issue's IDs
   if unit.type == 'journal'
     return Issue.distinct.select(Sequel[:issues][:id]).
       join(:sections, issue_id: :id).
@@ -222,12 +222,12 @@ def _getIssueIds (unit)
   end
 end
 
-# Takes array of issue IDs
+# Takes array of issue IDs and returns query
 def _queryIssues(publishedIssues)
   return Sequel::SQL::PlaceholderLiteralString.new('SELECT * FROM issues WHERE ((id in ?) AND ((volume != "0") OR (issue != "0"))) ORDER BY CAST(volume AS SIGNED) DESC, CAST(issue AS Decimal(6,2)) DESC', [publishedIssues])
 end
 
-# Takes array of issue IDs
+# Takes array of issue IDs and returns ordered array of all published Issues (vol/issue/date/attrs), including Articles In Press
 def _getPublishedJournalIssues(publishedIssues)
   query = _queryIssues(publishedIssues)
   r = DB.fetch(query).to_hash(:id).map{|id, issue|
@@ -251,6 +251,7 @@ def getUnitHeader(unit, pageName=nil, journalIssue=nil, attrs=nil)
   campusID = getCampusId(unit)
   ancestor = isTopmostUnit(unit) ? nil : getUnitAncestor(unit)
   issueIds = _getIssueIds(unit)
+  issuesPublished = (issueIds && issueIds.any?) ? _getPublishedJournalIssues(issueIds) : nil
 
   header = {
     :campusID => campusID,
@@ -262,7 +263,7 @@ def getUnitHeader(unit, pageName=nil, journalIssue=nil, attrs=nil)
     :directSubmit => attrs['directSubmit'],
     :directSubmitURL => attrs['directSubmitURL'],
     :issueIds => issueIds,
-    # :issuesPublished => issueIds.any? ? _getPublishedJournalIssues(issueIds) : nil,
+    :issuesPublished => issuesPublished,
     :nav_bar => unit.type.include?('series') ? getNavBar(ancestor, JSON.parse(ancestor.attrs)['nav_bar']) : getNavBar(unit, attrs['nav_bar'], 1, issuesPublished),
     :social => {
       :facebook => attrs['facebook'],
@@ -460,39 +461,8 @@ def getSeriesLandingPageData(unit, q)
   return response
 end
 
-# Landing page data does not pass arguments volume/issue. It just gets most recent journal
-def getJournalIssueData(unit, unit_attrs, issueIds, issuesPublished, volume=nil, issue=nil)
-  display = unit_attrs['magazine_layout'] ? 'magazine' : 'simple'
-  if unit_attrs['issue_rule'] and unit_attrs['issue_rule'] == 'secondMostRecent' and volume.nil? and issue.nil?
-    secondIssue = issues.first(2)[1]
-    volume = secondIssue ? secondIssue[:volume] : nil
-    issue = secondIssue ? secondIssue[:issue] : nil
-  end
-  return {
-    display: display,
-    # issue: _getIssue(unit.id, issueIds, volume, issue, display),
-    # issues: issuesPublished,
-    doaj: unit_attrs['doaj'],
-    issn: unit_attrs['issn'],
-    eissn: unit_attrs['eissn']
-  }
-end
-
-def isJournalIssue?(unit_id, volume, issue)
-  !!Issue.first(:unit_id => unit_id, :volume => volume, :issue => issue)
-end
-
-# Returns pair: 'numbering' setting and title for custom breadcrumb on item pages
-def getIssueNumberingTitle(unit_id, volume, issue)
-  i = Issue.first(:unit_id => unit_id, :volume => volume, :issue => issue)
-  return nil, nil if i.nil?
-  i = i.values
-  return nil, nil if i[:attrs].nil?
-  attrs = JSON.parse(i[:attrs])
-  return attrs['numbering'], attrs['title']
-end
-
-# issueIds represent ids of all published issues
+# Get everything about an issue
+# issueIds represent ids of all published issues for given unit_id
 def _getIssue(unit_id, issueIds, volume=nil, issue=nil, display)
   if volume.nil?  # Landing page (most recent journal) has no vol/issue entered in URL path
     i = DB.fetch(_queryIssues(issueIds))
@@ -530,6 +500,38 @@ def _getIssue(unit_id, issueIds, volume=nil, issue=nil, display)
     next section
   end
   return i 
+end
+
+# Landing page data does not pass arguments volume/issue. It just gets most recent journal
+def getJournalIssueData(unit, unit_attrs, issueIds, issuesPublished, volume=nil, issue=nil)
+  display = unit_attrs['magazine_layout'] ? 'magazine' : 'simple'
+  if unit_attrs['issue_rule'] and unit_attrs['issue_rule'] == 'secondMostRecent' and volume.nil? and issue.nil?
+    secondIssue = issuesPublished.first(2)[1]
+    volume = secondIssue ? secondIssue[:volume] : nil
+    issue = secondIssue ? secondIssue[:issue] : nil
+  end
+  return {
+    display: display,
+    issue: _getIssue(unit.id, issueIds, volume, issue, display),
+    issues: issuesPublished,
+    doaj: unit_attrs['doaj'],
+    issn: unit_attrs['issn'],
+    eissn: unit_attrs['eissn']
+  }
+end
+
+def isJournalIssue?(unit_id, volume, issue)
+  !!Issue.first(:unit_id => unit_id, :volume => volume, :issue => issue)
+end
+
+# Returns pair: 'numbering' setting and title for custom breadcrumb on item pages
+def getIssueNumberingTitle(unit_id, volume, issue)
+  i = Issue.first(:unit_id => unit_id, :volume => volume, :issue => issue)
+  return nil, nil if i.nil?
+  i = i.values
+  return nil, nil if i[:attrs].nil?
+  attrs = JSON.parse(i[:attrs])
+  return attrs['numbering'], attrs['title']
 end
 
 def unitSearch(params, unit)

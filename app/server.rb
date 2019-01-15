@@ -933,19 +933,24 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
       unit: unit.values.reject{|k,v| k==:attrs}.merge(:extent => ext),
       sidebar: getUnitSidebar(unit.type.include?('series') ? getUnitAncestor(unit) : unit)
     }
-    if unit.type == 'journal'
-    # ******** and pageData[:content][:issue]
-      issue = pageData[:content][:issue]
-      issueHeaderData = parseIssueHeaderData(params[:unitID], issue[:volume], issue[:issue], issue)
+    if unit.type == 'journal' and isJournalIssue?(unit.id, params[:pageName], params[:subPage])
+      volume = params[:pageName]
+      issue = params[:subPage]
+      numbering, title = getIssueNumberingTitle(unit.id, volume, issue)
+      pageData[:header] = getUnitHeader(unit, nil,
+              {'unit_id': unit.id, 'volume': volume, 'issue': issue, 'title': title, 'numbering': numbering},
+              attrs)
+    else
+      pageData[:header] = getUnitHeader(unit, 
+      (pageName =~ /^(nav|sidebar|profile|carousel|issueConfig|redirects|unitBuilder|authorSearch)/) ?
+        nil : pageName, nil, attrs)
     end
-    # def getUnitHeader(unit, pageName=nil, journalIssue=nil, attrs=nil)
-    pageData[:header] = getUnitHeader(unit,
-      (pageName =~ /^(nav|sidebar|profile|carousel|issueConfig|redirects|unitBuilder|authorSearch)/ or issueHeaderData) ?
-        nil : pageName, issueHeaderData, attrs)
     if ["home", "search"].include? pageName  # 'home' here refers to the unit's homepage, not root home
       q = nil
       q = CGI::parse(request.query_string) if pageName == "search"
-      pageData[:content] = getUnitPageContent(unit: unit, attrs: attrs, query: q, issueIds: nil, issuesPublished: nil)
+      # JSON array of Issues published are shared in header AND in page content
+      pageData[:content] = getUnitPageContent(unit: unit, attrs: attrs, query: q,
+                             issueIds: pageData[:header][:issueIds], issuesPublished: pageData[:header][:issuesPublished])
     elsif pageName == 'profile'
       pageData[:content] = getUnitProfile(unit, attrs)
     elsif pageName == 'carousel'
@@ -964,14 +969,13 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
     elsif pageName == "authorSearch"
       pageData[:content] = getAuthorSearchData
     elsif isJournalIssue?(unit.id, params[:pageName], params[:subPage])
-      pageData[:content] = getJournalIssueData(unit, attrs, params[:pageName], params[:subPage])
-      # A specific issue, otherwise you get journal landing (through getUnitPageContent method above)
-      issueHeaderData = parseIssueHeaderData(params[:unitID], params[:pageName], params[:subPage], pageData[:content][:issue])
+      # JSON array of Issues published are shared in header AND in page content
+      pageData[:content] = getJournalIssueData(unit, attrs, 
+        pageData[:header][:issueIds], pageData[:header][:issuesPublished], params[:pageName], params[:subPage])
     else
       pageData[:content] = getUnitStaticPage(unit, attrs, pageName)
     end
-    pageData[:marquee] = getUnitMarquee(unit, attrs) if (["home", "search"].include? pageName or issueHeaderData)
-    puts pageData[:header]
+    pageData[:marquee] = getUnitMarquee(unit, attrs) if (["home", "search"].include? pageName or unit.type == 'journal')
   else
     #public API data
     pageData = {
