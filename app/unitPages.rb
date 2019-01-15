@@ -136,17 +136,9 @@ def getNavPerms(unit, navItems, userPerms)
   return result
 end
 
-def getIssuesSubNav(unitID)
-  # ToDo: This is being repeated. Refactor.
-  # vvvvvvvvvvvvvvvvvv
-  publishedIssues = Issue.distinct.select(Sequel[:issues][:id]).
-    join(:sections, issue_id: :id).
-    join(:items, section: Sequel[:sections][:id]).
-    filter(Sequel[:issues][:unit_id] => unitID,
-           Sequel[:items][:status] => 'published').map { |h| h[:id] }
-  # ^^^^^^^^^^^^^^^^^^
-  # ToDo: This is being repeated. Refactor.
-  issues = _getIssues(publishedIssues)
+# Takes array of hashes representing all pubished issues in this journal
+# Does some transfomration so that it can be read into a navigational component
+def getIssuesSubNav(issues)
   # rename id to issue_id otherwise possible collision in nav. Create new (negative) id
   mappings = {:id => :issue_id}
   issues_rev = []
@@ -160,7 +152,7 @@ def getIssuesSubNav(unitID)
 end
 
 # Add a URL to each nav bar item; Include fixed item "Home" and - if journal - issue dropdown
-def getNavBar(unit, navItems, level=1)
+def getNavBar(unit, navItems, level=1, issues=nil)
   if navItems
     navItems.each { |navItem|
       if navItem['type'].include?('folder')
@@ -175,10 +167,10 @@ def getNavBar(unit, navItems, level=1)
     }
     if level==1 && !isTopmostUnit(unit)
       unitID = unit.type.include?('series') ? getUnitAncestor(unit).id : unit.id
-      unit.type == "journal" and
+      unit.type == "journal" and issues and
         navItems.unshift({ id: 0, type: "fixed_folder",
                           name: "Issues",   # ToDo: Make this name based on unit_attrs.default_issue.numbering
-                          url: nil, sub_nav: getIssuesSubNav(unitID) })
+                          url: nil, sub_nav: getIssuesSubNav(issues) })
       navItems.unshift({ id: -9999, type: "fixed_page",
                          name: unit.type == "journal" ? "Journal Home" : "Unit Home",
                          url: "/uc/#{unitID}" })
@@ -217,11 +209,48 @@ def getPageBreadcrumb(unit, pageName, issue=nil)
   end
 end
 
+def _getIssueIds (unit)
+  # Returns array of a journal issue's IDs
+  if unit.type == 'journal'
+    return Issue.distinct.select(Sequel[:issues][:id]).
+      join(:sections, issue_id: :id).
+      join(:items, section: Sequel[:sections][:id]).
+      filter(Sequel[:issues][:unit_id] => unit.id,
+             Sequel[:items][:status] => 'published').map { |h| h[:id] }
+  else
+    return nil
+  end
+end
+
+# Takes array of issue IDs
+def _queryIssues(publishedIssues)
+  return Sequel::SQL::PlaceholderLiteralString.new('SELECT * FROM issues WHERE ((id in ?) AND ((volume != "0") OR (issue != "0"))) ORDER BY CAST(volume AS SIGNED) DESC, CAST(issue AS Decimal(6,2)) DESC', [publishedIssues])
+end
+
+# Takes array of issue IDs
+def _getPublishedJournalIssues(publishedIssues)
+  query = _queryIssues(publishedIssues)
+  r = DB.fetch(query).to_hash(:id).map{|id, issue|
+    h = issue.to_hash
+    h[:attrs] and h[:attrs] = JSON.parse(h[:attrs])
+    h
+  }
+  articlesInPress = Issue.where(id: publishedIssues, :volume => '0', :issue => '0').to_hash(:id).map{|id, issue|
+    h = issue.to_hash
+    h[:attrs] and h[:attrs] = JSON.parse(h[:attrs])
+    h
+  }
+  r.unshift(articlesInPress[0]) if articlesInPress[0]
+  return r 
+end 
+
 # Generate breadcrumb and header content for Unit-branded pages
+# issueIds and issuesPublished is used here in header as well as on journal landing page
 def getUnitHeader(unit, pageName=nil, journalIssue=nil, attrs=nil)
   if !attrs then attrs = JSON.parse(unit[:attrs]) end
   campusID = getCampusId(unit)
   ancestor = isTopmostUnit(unit) ? nil : getUnitAncestor(unit)
+  issueIds = _getIssueIds(unit)
 
   header = {
     :campusID => campusID,
@@ -232,7 +261,9 @@ def getUnitHeader(unit, pageName=nil, journalIssue=nil, attrs=nil)
     :logo => (unit.type.include? 'series') ? getLogoData(JSON.parse(ancestor.attrs)['logo']) : getLogoData(attrs['logo']),
     :directSubmit => attrs['directSubmit'],
     :directSubmitURL => attrs['directSubmitURL'],
-    :nav_bar => unit.type.include?('series') ? getNavBar(ancestor, JSON.parse(ancestor.attrs)['nav_bar']) : getNavBar(unit, attrs['nav_bar']),
+    :issueIds => issueIds,
+    # :issuesPublished => issueIds.any? ? _getPublishedJournalIssues(issueIds) : nil,
+    :nav_bar => unit.type.include?('series') ? getNavBar(ancestor, JSON.parse(ancestor.attrs)['nav_bar']) : getNavBar(unit, attrs['nav_bar'], 1, issuesPublished),
     :social => {
       :facebook => attrs['facebook'],
       :twitter => attrs['twitter'],
@@ -264,7 +295,8 @@ def getCampusHeros
   end
 end
 
-def getUnitPageContent(unit, attrs, query)
+# Series use query and Journals use issueIds and issuesPublished
+def getUnitPageContent(unit:, attrs:, query:, issueIds:, issuesPublished:)
   if unit.type == 'oru'
    return getORULandingPageData(unit.id)
   elsif unit.type == 'campus'
@@ -272,7 +304,7 @@ def getUnitPageContent(unit, attrs, query)
   elsif unit.type.include? 'series'
     return getSeriesLandingPageData(unit, query)
   elsif unit.type == 'journal'
-    return getJournalIssueData(unit, attrs)
+    return getJournalIssueData(unit, attrs, issueIds, issuesPublished)
   else
     # ToDo: handle 'special' type here
     halt(404, "Unknown unit type #{unit.type}")
@@ -428,37 +460,9 @@ def getSeriesLandingPageData(unit, q)
   return response
 end
 
-def _queryIssues(publishedIssues)
-  return Sequel::SQL::PlaceholderLiteralString.new('SELECT * FROM issues WHERE ((id in ?) AND ((volume != "0") OR (issue != "0"))) ORDER BY CAST(volume AS SIGNED) DESC, CAST(issue AS Decimal(6,2)) DESC', [publishedIssues])
-end
-
-# Takes array of issue IDs
-def _getIssues(publishedIssues)
-  query = _queryIssues(publishedIssues)
-  r = DB.fetch(query).to_hash(:id).map{|id, issue|
-    h = issue.to_hash
-    h[:attrs] and h[:attrs] = JSON.parse(h[:attrs])
-    h
-  }
-  articlesInPress = Issue.where(id: publishedIssues, :volume => '0', :issue => '0').to_hash(:id).map{|id, issue|
-    h = issue.to_hash
-    h[:attrs] and h[:attrs] = JSON.parse(h[:attrs])
-    h
-  }
-  r.unshift(articlesInPress[0]) if articlesInPress[0]
-  return r 
-end 
-
 # Landing page data does not pass arguments volume/issue. It just gets most recent journal
-def getJournalIssueData(unit, unit_attrs, volume=nil, issue=nil)
+def getJournalIssueData(unit, unit_attrs, issueIds, issuesPublished, volume=nil, issue=nil)
   display = unit_attrs['magazine_layout'] ? 'magazine' : 'simple'
-  # Returns array of issue IDs
-  publishedIssues = Issue.distinct.select(Sequel[:issues][:id]).
-    join(:sections, issue_id: :id).
-    join(:items, section: Sequel[:sections][:id]).
-    filter(Sequel[:issues][:unit_id] => unit.id,
-           Sequel[:items][:status] => 'published').map { |h| h[:id] }
-  issues = _getIssues(publishedIssues)
   if unit_attrs['issue_rule'] and unit_attrs['issue_rule'] == 'secondMostRecent' and volume.nil? and issue.nil?
     secondIssue = issues.first(2)[1]
     volume = secondIssue ? secondIssue[:volume] : nil
@@ -466,8 +470,8 @@ def getJournalIssueData(unit, unit_attrs, volume=nil, issue=nil)
   end
   return {
     display: display,
-    issue: _getIssue(unit.id, publishedIssues, volume, issue, display),
-    issues: issues,
+    # issue: _getIssue(unit.id, issueIds, volume, issue, display),
+    # issues: issuesPublished,
     doaj: unit_attrs['doaj'],
     issn: unit_attrs['issn'],
     eissn: unit_attrs['eissn']
@@ -488,9 +492,10 @@ def getIssueNumberingTitle(unit_id, volume, issue)
   return attrs['numbering'], attrs['title']
 end
 
-def _getIssue(unit_id, publishedIssues, volume=nil, issue=nil, display)
+# issueIds represent ids of all published issues
+def _getIssue(unit_id, issueIds, volume=nil, issue=nil, display)
   if volume.nil?  # Landing page (most recent journal) has no vol/issue entered in URL path
-    i = DB.fetch(_queryIssues(publishedIssues))
+    i = DB.fetch(_queryIssues(issueIds))
     i = i.nil? ? nil : i.first
     return nil if i.nil?
   else

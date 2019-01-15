@@ -892,7 +892,6 @@ get "/api/globalStatic/*" do
     pageData[:header] = getGlobalHeader
     pageData[:pageNotFound] = true
   end
-
   return pageData.to_json
 end
 
@@ -934,14 +933,19 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
       unit: unit.values.reject{|k,v| k==:attrs}.merge(:extent => ext),
       sidebar: getUnitSidebar(unit.type.include?('series') ? getUnitAncestor(unit) : unit)
     }
+    if unit.type == 'journal'
+    # ******** and pageData[:content][:issue]
+      issue = pageData[:content][:issue]
+      issueHeaderData = parseIssueHeaderData(params[:unitID], issue[:volume], issue[:issue], issue)
+    end
+    # def getUnitHeader(unit, pageName=nil, journalIssue=nil, attrs=nil)
+    pageData[:header] = getUnitHeader(unit,
+      (pageName =~ /^(nav|sidebar|profile|carousel|issueConfig|redirects|unitBuilder|authorSearch)/ or issueHeaderData) ?
+        nil : pageName, issueHeaderData, attrs)
     if ["home", "search"].include? pageName  # 'home' here refers to the unit's homepage, not root home
       q = nil
       q = CGI::parse(request.query_string) if pageName == "search"
-      pageData[:content] = getUnitPageContent(unit, attrs, q)
-      if unit.type == 'journal' and pageData[:content][:issue]
-        issue = pageData[:content][:issue]
-        issueHeaderData = parseIssueHeaderData(params[:unitID], issue[:volume], issue[:issue], issue)
-      end
+      pageData[:content] = getUnitPageContent(unit: unit, attrs: attrs, query: q, issueIds: nil, issuesPublished: nil)
     elsif pageName == 'profile'
       pageData[:content] = getUnitProfile(unit, attrs)
     elsif pageName == 'carousel'
@@ -966,11 +970,8 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
     else
       pageData[:content] = getUnitStaticPage(unit, attrs, pageName)
     end
-    pageData[:header] = getUnitHeader(unit,
-      (pageName =~ /^(nav|sidebar|profile|carousel|issueConfig|redirects|unitBuilder|authorSearch)/ or issueHeaderData) ?
-        nil : pageName,
-      issueHeaderData, attrs)
     pageData[:marquee] = getUnitMarquee(unit, attrs) if (["home", "search"].include? pageName or issueHeaderData)
+    puts pageData[:header]
   else
     #public API data
     pageData = {
