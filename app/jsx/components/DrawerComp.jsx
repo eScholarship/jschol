@@ -40,25 +40,38 @@ class SortableNavList extends React.Component {
   }
 
   generateData(navItems) {
-    if (!navItems)
-      return undefined
-    return navItems.map(nav => {
-      // console.log(nav.type)
-      let data = {
-        id: nav.id,
-        type: nav.type,
-        slug: nav.slug,
-        title: <Link to={`/uc/${this.props.unit}${(nav.type.includes("fixed")) ? "" : `/nav/${nav.id}`}`}>{nav.name}</Link>,
-        subtitle: <i>{nav.hidden && 'hidden '}{nav.type}</i>
-      }
-      if (nav.type.includes("folder")) {
-        data.children = this.generateData(nav.sub_nav)
-        data.expanded = true
-      }
-      else
-        data.noChildren = true
-      return data
-    })
+    let generate = (navItems) => {
+      if (!navItems)
+        return undefined
+      return navItems.map(nav => {
+        let data = {
+          id: nav.id,
+          type: nav.type,
+          slug: nav.slug,
+          title: <Link to={`/uc/${this.props.unit}${(nav.type.includes("fixed")) ? "" : `/nav/${nav.id}`}`}>{nav.name}</Link>,
+          subtitle: <i>{nav.hidden && 'hidden '}{nav.type.replace(/_/g," ")}</i>
+        }
+        if (nav.type.includes("folder") && (nav.id >= 0 || nav.id == -9999)) {
+          data.children = generate(nav.sub_nav)
+          data.expanded = true
+        }
+        else
+          data.noChildren = true
+        return data
+      })
+    }
+
+    let removeFixedPages = (navItems) => {
+      if (!navItems)
+        return undefined
+      let filtered = navItems.filter((nav) => {
+        if (nav.children) nav.children = removeFixedPages(nav.children);
+        return (nav.id >= 0 || nav.id == -9999)
+      })
+      return filtered;
+    }
+
+    return removeFixedPages(generate(navItems))
   }
 
   travOrder(treeData) {

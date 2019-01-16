@@ -933,6 +933,8 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
       unit: unit.values.reject{|k,v| k==:attrs}.merge(:extent => ext),
       sidebar: getUnitSidebar(unit.type.include?('series') ? getUnitAncestor(unit) : unit)
     }
+
+    # Gather header data
     if unit.type == 'journal' and isJournalIssue?(unit.id, params[:pageName], params[:subPage])
       volume = params[:pageName]
       issue = params[:subPage]
@@ -945,6 +947,8 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
       (pageName =~ /^(nav|sidebar|profile|carousel|issueConfig|redirects|unitBuilder|authorSearch)/) ?
         nil : pageName, nil, attrs)
     end
+
+    # Gather page content data
     if ["home", "search"].include? pageName  # 'home' here refers to the unit's homepage, not root home
       q = nil
       q = CGI::parse(request.query_string) if pageName == "search"
