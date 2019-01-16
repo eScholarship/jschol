@@ -61,17 +61,17 @@ class SortableNavList extends React.Component {
       })
     }
 
-    let removeFixedPages = (navItems) => {
+    let removeFixedSubPages = (navItems) => {
       if (!navItems)
         return undefined
       let filtered = navItems.filter((nav) => {
-        if (nav.children) nav.children = removeFixedPages(nav.children);
+        if (nav.children) nav.children = removeFixedSubPages(nav.children);
         return (nav.id >= 0 || nav.id == -9999)
       })
       return filtered;
     }
 
-    return removeFixedPages(generate(navItems))
+    return removeFixedSubPages(generate(navItems))
   }
 
   travOrder(treeData) {

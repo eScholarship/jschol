@@ -151,7 +151,7 @@ def getIssuesSubNav(issues)
   return issues_rev
 end
 
-# Add a URL to each nav bar item; Include fixed item "Home" and - if journal - issue dropdown
+# Add a URL to each nav bar item; Include item "Home" (fixed_page) and - if journal - issue dropdown (fixed_folder)
 def getNavBar(unit, navItems, level=1, issues=nil)
   if navItems
     navItems.each { |navItem|
@@ -687,7 +687,7 @@ end
 def deleteNavByID(navBar, navID)
   return navBar.map { |nav|
     nav['id'].to_s == navID.to_s ? nil
-      # Check for 'folder' (You would never want to delete a 'fixed_folder')
+      # Check for 'folder'    (You would never want to delete a 'fixed_folder')
       : nav['type'] == "folder" ? nav.merge({'sub_nav'=>deleteNavByID(nav['sub_nav'], navID) })
       : nav
   }.compact
@@ -822,7 +822,7 @@ post "/api/unit/:unitID/nav" do |unitID|
   unit = Unit[unitID]
   unit or halt(404)
 
-  # Validate the nav type
+  # Validate the nav type. ('fixed_page' and 'fixed_folder' can't be added)
   navType = params[:navType]
   ['page', 'link', 'folder'].include?(navType) or halt(400)
 
