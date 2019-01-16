@@ -139,12 +139,16 @@ end
 # Takes array of hashes representing all pubished issues in this journal
 # Does some transfomration so that it can be read into a navigational component
 def getIssuesSubNav(issues)
-  # rename id to issue_id otherwise possible collision in nav. Create new (negative) id
+  # rename id to issue_id otherwise possible collision in nav.
   mappings = {:id => :issue_id}
   issues_rev = []
   issues.each.with_index(1) do |issue, index|
     issue = issue.map {|k, v| [mappings[k] || k, v] }.to_h
+    # Create new (negative) id
     issue[:id] = -(index)
+    issue[:url] = "/uc/#{issue[:unit_id]}/#{issue[:volume]}/#{issue[:issue]}"
+    title = issue[:attrs]['title'] ? ": #{issue[:attrs]['title']}" : ''
+    issue[:name] = "Volume #{issue[:volume]}#{title}, Issue #{issue[:issue]}"
     issue[:type] = 'page'
     issues_rev << issue
   end
@@ -282,8 +286,6 @@ def getUnitHeader(unit, pageName=nil, journalIssue=nil, attrs=nil)
       ancestor = $hierByUnit[ancestor.id][0].ancestor
     end
   end
-
-  # puts header[:nav_bar]
 
   return header
 end

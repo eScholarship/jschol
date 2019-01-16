@@ -8,6 +8,7 @@ import IssueComp from '../components/IssueComp.jsx'
 import PubComp from '../components/PubComp.jsx'
 import IssueActionsComp from '../components/IssueActionsComp.jsx'
 
+// ToDo: Adopt data now being handled by ruby in unitPages.getIssuesSubNav code (used or nav_bar in Issue Dropdown)
 class VolumeSelector extends React.Component {
   static PropTypes = {
     vip: PropTypes.array.isRequired,     // [unit_id, Volume, Issue, published]
