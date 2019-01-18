@@ -1,5 +1,5 @@
 # Ruby gems required by this application
-ruby '~> 2.3.0'
+ruby '> 2.3.0'
 source 'https://rubygems.org'
 gem 'aws-sdk'             # used to talk to AWS CloudSearch
 gem 'ezid-client'         # for minting people-arks
