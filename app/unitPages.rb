@@ -136,6 +136,26 @@ def getNavPerms(unit, navItems, userPerms)
   return result
 end
 
+def getPubYear(pubDate)
+  pubDate.nil? ? nil : pubDate.strftime("%Y")
+end
+
+def getIssueName(vol, iss, numbering, title, year)
+  if (vol == "0" and iss == "0")
+    return title.nil? ? 'Articles in Press' : title
+  else
+    voliss = nil
+    if (!numbering)
+      voliss = "Volume " + vol + ", Issue " + iss 
+    elsif (numbering === "volume_only")
+      voliss = "Volume " + vol 
+    else
+      voliss = "Issue " + iss 
+    end
+    return voliss + ", " + year 
+  end
+end
+
 # Takes array of hashes representing all pubished issues in this journal
 # Does some transfomration so that it can be read into a navigational component
 def getIssuesSubNav(issues)
@@ -144,15 +164,27 @@ def getIssuesSubNav(issues)
   issues_rev = []
   issues.each.with_index(1) do |issue, index|
     issue = issue.map {|k, v| [mappings[k] || k, v] }.to_h
-    # Create new (negative) id
-    issue[:id] = -(index)
+    issue[:id] = -(index)   # Create new (negative) id
     issue[:url] = "/uc/#{issue[:unit_id]}/#{issue[:volume]}/#{issue[:issue]}"
-    title = issue[:attrs]['title'] ? ": #{issue[:attrs]['title']}" : ''
-    issue[:name] = "Volume #{issue[:volume]}#{title}, Issue #{issue[:issue]}"
+    # puts issue[:issue_id]
+    # puts 'vol' + issue[:volume]
+    # puts 'iss' + issue[:issue]
+    # puts 'attrs' + issue[:attrs].to_s
+    # puts issue[:attrs]['title']
+    # puts 'published' + issue[:published].to_s
+    issue[:name] = getIssueName(issue[:volume], issue[:issue], issue[:attrs].nil? ? nil : issue[:attrs]['numbering'], 
+                     issue[:attrs].nil? ? nil : issue[:attrs]['title'], getPubYear(issue[:published]))
     issue[:type] = 'page'
     issues_rev << issue
   end
   return issues_rev
+end
+
+#  Make issue dropdown name based on unit_attrs.default_issue.numbering
+def getIssueDropDownName(unit)
+  default_issue = JSON.parse(unit.attrs)['default_issue']
+  default_issue.nil? ? "Issues" : default_issue['numbering'] == 'volume_only' ?
+                                    "Volumes" : "Issues"
 end
 
 # Add a URL to each nav bar item; Include item "Home" (fixed_page) and - if journal - issue dropdown (fixed_folder)
@@ -173,7 +205,7 @@ def getNavBar(unit, navItems, level=1, issues=nil)
       unitID = unit.type.include?('series') ? getUnitAncestor(unit).id : unit.id
       unit.type == "journal" and issues and
         navItems.unshift({ id: 0, type: "fixed_folder",
-                          name: "Issues",   # ToDo: Make this name based on unit_attrs.default_issue.numbering
+                          name: getIssueDropDownName(unit),
                           url: nil, sub_nav: getIssuesSubNav(issues) })
       navItems.unshift({ id: -9999, type: "fixed_page",
                          name: unit.type == "journal" ? "Journal Home" : "Unit Home",
