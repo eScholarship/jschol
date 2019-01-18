@@ -16,7 +16,7 @@ $hostname = `/bin/hostname`.strip
 
 ###################################################################################################
 def countPages(pdfPath)
-  stdout, stderr, status = Open3.capture3("/usr/bin/qpdf --show-npages #{pdfPath}")
+  stdout, stderr, status = Open3.capture3("/apps/eschol/bin/qpdf --show-npages #{pdfPath}")
   if stdout.strip =~ /^\d+$/
     return stdout.to_i
   else
@@ -237,7 +237,7 @@ def splashGen(itemID, instrucs, origFile, targetFile)
     response.success? or raise("Error #{response.code} generating splash page: #{response.message}")
 
     # Linearize the result for fast display of the first page on all platforms.
-    system("/usr/bin/qpdf --linearize #{combinedTemp.path} #{targetFile}")
+    system("/apps/eschol/bin/qpdf --linearize #{combinedTemp.path} #{targetFile}")
     code = $?.exitstatus
     code == 0 || code == 3 or raise("Error #{code} linearizing.")
 
