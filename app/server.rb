@@ -391,6 +391,7 @@ end
 post %r{/graphql(.*)} do
   headers = {}
   request.env['HTTP_PRIVILEGED'] and headers['Privileged'] = request.env['HTTP_PRIVILEGED']
+  request.env['CONTENT_TYPE'] and headers['Content-Type'] = request.env['CONTENT_TYPE']
   response = HTTParty.post("http://#{$host}:18900/graphql#{params['captures'][0]}",
                            headers: headers,
                            body: request.body.read)
