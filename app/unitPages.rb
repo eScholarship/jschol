@@ -701,7 +701,10 @@ end
 def travNav(navBar, &block)
   navBar.each { |nav|
     block.yield(nav)
-    if nav['type'].include?('folder')
+    if nav[:type] and nav[:type].include?('folder')
+      travNav(nav['sub_nav'], &block)
+    end
+    if nav['type'] and nav['type'].include?('folder')
       travNav(nav['sub_nav'], &block)
     end
   }
