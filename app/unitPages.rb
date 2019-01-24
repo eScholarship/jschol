@@ -157,8 +157,9 @@ def getIssueName(vol, iss, numbering, title, year)
 end
 
 # Takes array of hashes representing all pubished issues in this journal
-# Does some transfomration so that it can be read into a navigational component
+# Does some transformation so that it can be read into a navigational component
 def getIssuesSubNav(issues)
+  issues.nil? and return []
   # rename id to issue_id otherwise possible collision in nav.
   mappings = {:id => :issue_id}
   issues_rev = []
@@ -166,12 +167,6 @@ def getIssuesSubNav(issues)
     issue = issue.map {|k, v| [mappings[k] || k, v] }.to_h
     issue[:id] = -(index)   # Create new (negative) id
     issue[:url] = "/uc/#{issue[:unit_id]}/#{issue[:volume]}/#{issue[:issue]}"
-    # puts issue[:issue_id]
-    # puts 'vol' + issue[:volume]
-    # puts 'iss' + issue[:issue]
-    # puts 'attrs' + issue[:attrs].to_s
-    # puts issue[:attrs]['title']
-    # puts 'published' + issue[:published].to_s
     issue[:name] = getIssueName(issue[:volume], issue[:issue], issue[:attrs].nil? ? nil : issue[:attrs]['numbering'], 
                      issue[:attrs].nil? ? nil : issue[:attrs]['title'], getPubYear(issue[:published]))
     issue[:type] = 'page'
@@ -209,7 +204,7 @@ def getNavBar(unit, navItems, level=1, issuesSubNav=nil)
     }
     if level==1 && !isTopmostUnit(unit)
       unitID = unit.type.include?('series') ? getUnitAncestor(unit).id : unit.id
-      if unit.type == "journal" and issuesSubNav
+      if unit.type == "journal" and issuesSubNav.length > 0
         navItems.unshift({ id: 0, type: "fixed_folder",
                           name: getIssueDropDownName(unit, issuesSubNav),
                           url: nil, sub_nav: issuesSubNav })
@@ -288,7 +283,6 @@ def getPublishedJournalIssues(publishedIssues)
 end
 
 # Generate breadcrumb and header content for Unit-branded pages
-# issueIds and issuesPublished is used here in header as well as on journal landing page
 def getUnitHeader(unit, pageName=nil, journalIssue=nil, issuesSubNav=nil, attrs=nil)
   if !attrs then attrs = JSON.parse(unit[:attrs]) end
   campusID = getCampusId(unit)
@@ -550,7 +544,6 @@ def getJournalIssueData(unit, unit_attrs, issueIds, issuesPublished, volume=nil,
   return {
     display: display,
     issue: _getIssue(unit.id, issueIds, volume, issue, display),
-    # issuesSubNav data is shared by page's header and content (see server.rb)
     doaj: unit_attrs['doaj'],
     issn: unit_attrs['issn'],
     eissn: unit_attrs['eissn']

@@ -953,7 +953,6 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
     if ["home", "search"].include? pageName  # 'home' here refers to the unit's homepage, not root home
       q = nil
       q = CGI::parse(request.query_string) if pageName == "search"
-      # JSON array of Issues published are shared in header AND in page content
       pageData[:content] = getUnitPageContent(unit: unit, attrs: attrs, query: q,
                              issueIds: issueIds, issuesPublished: issuesPublished)
     elsif pageName == 'profile'
@@ -974,7 +973,6 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
     elsif pageName == "authorSearch"
       pageData[:content] = getAuthorSearchData
     elsif isJournalIssue?(unit.id, params[:pageName], params[:subPage])
-      # JSON array of Issues published are shared in header AND in page content
       pageData[:content] = getJournalIssueData(unit, attrs, 
         issueIds, issuesPublished, params[:pageName], params[:subPage])
     else
