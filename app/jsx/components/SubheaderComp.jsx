@@ -47,6 +47,7 @@ class SubheaderComp extends React.Component {
     let banner_class = (h.logo && h.logo.is_banner) ? "c-subheader__banner--wide" : "c-subheader__banner--narrow"
     let [banner_url, banner_title] = unit.type.includes('series') ? [h.ancestorID, h.ancestorName] : [unit.id, unit.name]
     let directSubmitURL = h.directSubmitURL ? h.directSubmitURL : "https://submit.escholarship.org/subi/directSubmit?target="+unit.id
+    let directSubmitURL_manage = h.directSubmitURL ? h.directSubmitURL : null
 
    // Button Configuration based on unit type
    //   unit.type == 'journal'  -->        Submit  / Manage Submissions
@@ -79,7 +80,8 @@ class SubheaderComp extends React.Component {
     } else {
       // If unit is a series, pass in its parent's unitID
       let [unitIDForWiz, unitNameForWiz] = (unit.type == 'oru') ? [unit.id, unit.name] : (unit.type.includes('series')) ? [h.ancestorID, h.ancestorName] : [null, null]
-      depositWizard = (<WizardComp showModal={this.state.depositModalOpen}
+      depositWizard = (<WizardComp key={unitIDForWiz}   // re-create instance across units
+                  showModal={this.state.depositModalOpen}
                   parentSelector={()=>$('#wizardModalBase')[0]}
                   onCancel={e=>this.closeWizardModal(e)}
                   campuses={h.campuses}
@@ -95,7 +97,8 @@ class SubheaderComp extends React.Component {
                           parentSelector={()=>$('#wizardModalBase')[0]}
                           onCancel={e=>this.closeWizardModal(e)}
                           header="Manage Submissions"
-                          type={unit.type} unit_id={unit.id} />)
+                          type={unit.type} unit_id={unit.id} 
+                          directSubmitURL_manage={directSubmitURL_manage} />)
     return (
       <div className="c-subheader">
         <CampusSelectorComp campusID={h.campusID}

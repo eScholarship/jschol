@@ -36,7 +36,7 @@ class WizardComp extends React.Component {
             unitID: this.props.data.unitID, 
             unitName: this.props.data.unitName, 
             seriesName: null,
-            arg: null,       // An arbitary field used to passs logic between steps
+            arg: null,       // An arbitary field used to pass logic between steps
             type: null       // Used for distinguishing disabled/moribund units and series for last step
             }
   }
@@ -140,6 +140,7 @@ class WizardComp extends React.Component {
           className="c-wizard__modal"
           overlayClassName="c-modal__overlay"
         >
+
           <div className="c-wizard">
             <div className={d.wizardStep === 1 ? `c-wizard__current-${d.wizardDir}` : `c-wizard__standby-${d.wizardDir}`} aria-hidden={d.wizardStep === 1 ? null : true}>
 
