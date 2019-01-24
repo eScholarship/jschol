@@ -180,7 +180,7 @@ def getIssuesSubNav(issues)
   return issues_rev
 end
 
-#  Make issue dropdown name based on default issue from db, or most recent issue, else 'Issues'
+#  Make issue dropdown name based on default issue from db, or most recent issue. Default is 'Issues'
 def getIssueDropDownName(unit, sub_nav)
   default_issue = JSON.parse(unit.attrs)['default_issue']
   if default_issue.nil?
@@ -194,7 +194,7 @@ def getIssueDropDownName(unit, sub_nav)
 end
 
 # Add a URL to each nav bar item; Include item "Home" (fixed_page) and - if journal - issue dropdown (fixed_folder)
-def getNavBar(unit, navItems, level=1, issues=nil)
+def getNavBar(unit, navItems, level=1, issuesSubNav=nil)
   if navItems
     navItems.each { |navItem|
       if navItem['type'].include?('folder')
@@ -209,11 +209,10 @@ def getNavBar(unit, navItems, level=1, issues=nil)
     }
     if level==1 && !isTopmostUnit(unit)
       unitID = unit.type.include?('series') ? getUnitAncestor(unit).id : unit.id
-      if unit.type == "journal" and issues
-        sub_nav = getIssuesSubNav(issues)
+      if unit.type == "journal" and issuesSubNav
         navItems.unshift({ id: 0, type: "fixed_folder",
-                          name: getIssueDropDownName(unit, sub_nav),
-                          url: nil, sub_nav: sub_nav })
+                          name: getIssueDropDownName(unit, issuesSubNav),
+                          url: nil, sub_nav: issuesSubNav })
       end
       navItems.unshift({ id: -9999, type: "fixed_page",
                          name: unit.type == "journal" ? "Journal Home" : "Unit Home",
@@ -254,7 +253,7 @@ def getPageBreadcrumb(unit, pageName, issue=nil)
 end
 
 # Returns array of a journal issue's IDs, only for published issues
-def _getIssueIds (unit)
+def getIssueIds (unit)
   if unit.type == 'journal'
     return Issue.distinct.select(Sequel[:issues][:id]).
       join(:sections, issue_id: :id).
@@ -272,7 +271,7 @@ def _queryIssues(publishedIssues)
 end
 
 # Takes array of issue IDs and returns ordered array of all published Issues (vol/issue/date/attrs), including Articles In Press
-def _getPublishedJournalIssues(publishedIssues)
+def getPublishedJournalIssues(publishedIssues)
   query = _queryIssues(publishedIssues)
   r = DB.fetch(query).to_hash(:id).map{|id, issue|
     h = issue.to_hash
@@ -286,16 +285,14 @@ def _getPublishedJournalIssues(publishedIssues)
   }
   r.unshift(articlesInPress[0]) if articlesInPress[0]
   return r 
-end 
+end
 
 # Generate breadcrumb and header content for Unit-branded pages
 # issueIds and issuesPublished is used here in header as well as on journal landing page
-def getUnitHeader(unit, pageName=nil, journalIssue=nil, attrs=nil)
+def getUnitHeader(unit, pageName=nil, journalIssue=nil, issuesSubNav=nil, attrs=nil)
   if !attrs then attrs = JSON.parse(unit[:attrs]) end
   campusID = getCampusId(unit)
   ancestor = isTopmostUnit(unit) ? nil : getUnitAncestor(unit)
-  issueIds = _getIssueIds(unit)
-  issuesPublished = (issueIds && issueIds.any?) ? _getPublishedJournalIssues(issueIds) : nil
 
   header = {
     :campusID => campusID,
@@ -306,9 +303,7 @@ def getUnitHeader(unit, pageName=nil, journalIssue=nil, attrs=nil)
     :logo => (unit.type.include? 'series') ? getLogoData(JSON.parse(ancestor.attrs)['logo']) : getLogoData(attrs['logo']),
     :directSubmit => attrs['directSubmit'],
     :directSubmitURL => attrs['directSubmitURL'],
-    :issueIds => issueIds,
-    :issuesPublished => issuesPublished,
-    :nav_bar => unit.type.include?('series') ? getNavBar(ancestor, JSON.parse(ancestor.attrs)['nav_bar']) : getNavBar(unit, attrs['nav_bar'], 1, issuesPublished),
+    :nav_bar => unit.type.include?('series') ? getNavBar(ancestor, JSON.parse(ancestor.attrs)['nav_bar']) : getNavBar(unit, attrs['nav_bar'], 1, issuesSubNav),
     :social => {
       :facebook => attrs['facebook'],
       :twitter => attrs['twitter'],
@@ -555,7 +550,7 @@ def getJournalIssueData(unit, unit_attrs, issueIds, issuesPublished, volume=nil,
   return {
     display: display,
     issue: _getIssue(unit.id, issueIds, volume, issue, display),
-    issues: issuesPublished,
+    # issuesSubNav data is shared by page's header and content (see server.rb)
     doaj: unit_attrs['doaj'],
     issn: unit_attrs['issn'],
     eissn: unit_attrs['eissn']

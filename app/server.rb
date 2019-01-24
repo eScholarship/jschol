@@ -895,11 +895,6 @@ get "/api/globalStatic/*" do
   return pageData.to_json
 end
 
-def parseIssueHeaderData(unit_id, vol, iss, issue)
-  title = issue[:attrs] ? JSON.parse(issue[:attrs])["title"] : nil
-  return {'unit_id': unit_id, 'volume': vol, 'issue': iss, 'title': title, 'numbering': issue[:numbering]}
-end
-
 ###################################################################################################
 # Person stats
 get "/api/author/:personID/stats/?:pageName?" do
@@ -934,18 +929,24 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
       sidebar: getUnitSidebar(unit.type.include?('series') ? getUnitAncestor(unit) : unit)
     }
 
+    issuesSubNav, issueIds, issuesPublished, journalIssue = nil, nil, nil, nil
     # Gather header data
-    if unit.type == 'journal' and isJournalIssue?(unit.id, params[:pageName], params[:subPage])
-      volume = params[:pageName]
-      issue = params[:subPage]
-      numbering, title = getIssueNumberingTitle(unit.id, volume, issue)
-      pageData[:header] = getUnitHeader(unit, nil,
-              {'unit_id': unit.id, 'volume': volume, 'issue': issue, 'title': title, 'numbering': numbering},
-              attrs)
+    if unit.type == 'journal'
+      issueIds = getIssueIds(unit)
+      issuesPublished = (issueIds && issueIds.any?) ? getPublishedJournalIssues(issueIds) : nil
+      issuesSubNav = getIssuesSubNav(issuesPublished)
+
+      if isJournalIssue?(unit.id, params[:pageName], params[:subPage])
+        volume = params[:pageName]
+        issue = params[:subPage]
+        numbering, title = getIssueNumberingTitle(unit.id, volume, issue)
+        journalIssue = {'unit_id': unit.id, 'volume': volume, 'issue': issue, 'title': title, 'numbering': numbering}
+      end
+      pageData[:header] = getUnitHeader(unit, nil, journalIssue, issuesSubNav, attrs)
     else
       pageData[:header] = getUnitHeader(unit, 
       (pageName =~ /^(nav|sidebar|profile|carousel|issueConfig|redirects|unitBuilder|authorSearch)/) ?
-        nil : pageName, nil, attrs)
+        nil : pageName, nil, nil, attrs)
     end
 
     # Gather page content data
@@ -954,7 +955,7 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
       q = CGI::parse(request.query_string) if pageName == "search"
       # JSON array of Issues published are shared in header AND in page content
       pageData[:content] = getUnitPageContent(unit: unit, attrs: attrs, query: q,
-                             issueIds: pageData[:header][:issueIds], issuesPublished: pageData[:header][:issuesPublished])
+                             issueIds: issueIds, issuesPublished: issuesPublished)
     elsif pageName == 'profile'
       pageData[:content] = getUnitProfile(unit, attrs)
     elsif pageName == 'carousel'
@@ -975,10 +976,12 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
     elsif isJournalIssue?(unit.id, params[:pageName], params[:subPage])
       # JSON array of Issues published are shared in header AND in page content
       pageData[:content] = getJournalIssueData(unit, attrs, 
-        pageData[:header][:issueIds], pageData[:header][:issuesPublished], params[:pageName], params[:subPage])
+        issueIds, issuesPublished, params[:pageName], params[:subPage])
     else
       pageData[:content] = getUnitStaticPage(unit, attrs, pageName)
     end
+    # For journals, Issues SubNav data shared in header and body
+    pageData[:content][:issuesSubNav] = issuesSubNav
     pageData[:marquee] = getUnitMarquee(unit, attrs) if (["home", "search"].include? pageName or unit.type == 'journal')
   else
     #public API data
@@ -1090,8 +1093,11 @@ get "/api/item/:shortArk" do |shortArk|
           if issue_id
             unit_id, volume, issue = Section.join(:issues, :id => issue_id).map([:unit_id, :volume, :issue])[0]
             numbering, title = getIssueNumberingTitle(unit.id, volume, issue)
+            issueIds = getIssueIds(unit)
+            issuesSubNav = getIssuesSubNav((issueIds && issueIds.any?) ? getPublishedJournalIssues(issueIds) : nil)
+            # getUnitHeader(unit, pageName=nil, journalIssue=nil, issuesSubNav=nil, attrs=nil)
             body[:header] = getUnitHeader(unit, nil,
-              {'unit_id': unit_id, 'volume': volume, 'issue': issue, 'title': title, 'numbering': numbering})
+              {'unit_id': unit_id, 'volume': volume, 'issue': issue, 'title': title, 'numbering': numbering}, issuesSubNav)
             body[:numbering] = numbering 
             body[:citation][:volume] = volume
             body[:citation][:issue] = issue
