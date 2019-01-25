@@ -136,11 +136,63 @@ def getNavPerms(unit, navItems, userPerms)
   return result
 end
 
-# Add a URL to each nav bar item
-def getNavBar(unit, navItems, level=1)
+def getPubYear(pubDate)
+  pubDate.nil? ? nil : pubDate.strftime("%Y")
+end
+
+def getIssueName(vol, iss, numbering, title, year)
+  if (vol == "0" and iss == "0")
+    return title.nil? ? 'Articles in Press' : title
+  else
+    voliss = nil
+    if (!numbering)
+      voliss = "Volume " + vol + ", Issue " + iss 
+    elsif (numbering === "volume_only")
+      voliss = "Volume " + vol 
+    else
+      voliss = "Issue " + iss 
+    end
+    return voliss + ", " + year 
+  end
+end
+
+# Takes array of hashes representing all pubished issues in this journal
+# Does some transformation so that it can be read into a navigational component
+def getIssuesSubNav(issues)
+  issues.nil? and return []
+  # rename id to issue_id otherwise possible collision in nav.
+  mappings = {:id => "issue_id"}
+  issues_rev = []
+  issues.each.with_index(1) do |issue, index|
+    issue = issue.map {|k, v| [mappings[k] || k, v] }.to_h
+    issue["id"] = -(index)   # Create new (negative) id
+    issue["url"] = "/uc/#{issue[:unit_id]}/#{issue[:volume]}/#{issue[:issue]}"
+    issue["name"] = getIssueName(issue[:volume], issue[:issue], issue[:attrs].nil? ? nil : issue[:attrs]['numbering'], 
+                     issue[:attrs].nil? ? nil : issue[:attrs]['title'], getPubYear(issue[:published]))
+    issue["type"] = "page"
+    issues_rev << issue
+  end
+  return issues_rev
+end
+
+#  Make issue dropdown name based on default issue from db, or most recent issue. Default is 'Issues'
+def getIssueDropDownName(unit, sub_nav)
+  default_issue = JSON.parse(unit.attrs)['default_issue']
+  if default_issue.nil?
+    if sub_nav[0] and sub_nav[0][:attrs]
+      return sub_nav[0][:attrs]["numbering"] == 'volume_only' ? "Volumes" : "Issues"
+    end
+    return "Issues"
+  else 
+    return default_issue['numbering'] == 'volume_only' ? "Volumes" : "Issues"
+  end
+end
+
+# Add a URL to each nav bar item; Include item "Home" (fixed_page) and - if journal - issue dropdown (fixed_folder)
+def getNavBar(unit, navItems, level=1, issuesSubNav=nil)
   if navItems
     navItems.each { |navItem|
-      if navItem['type'] == 'folder'
+      if navItem['type'].include?('folder')
         navItem['sub_nav'] = getNavBar(unit, navItem['sub_nav'], level+1)
       elsif navItem['slug']
         if unit.id == 'root'
@@ -152,9 +204,14 @@ def getNavBar(unit, navItems, level=1)
     }
     if level==1 && !isTopmostUnit(unit)
       unitID = unit.type.include?('series') ? getUnitAncestor(unit).id : unit.id
-      navItems.unshift({ id: 0, type: "home",
-                         name: unit.type == "journal" ? "Journal Home" : "Unit Home",
-                         url: "/uc/#{unitID}" })
+      if unit.type == "journal" and issuesSubNav.length > 0
+        navItems.unshift({ "id"=>0, "type"=>"fixed_folder",
+                          "name"=>getIssueDropDownName(unit, issuesSubNav),
+                          "url"=>nil, "sub_nav"=>issuesSubNav })
+      end
+      navItems.unshift({ "id"=>-9999, "type"=>"fixed_page",
+                         "name"=>unit.type == "journal" ? "Journal Home" : "Unit Home",
+                         "url"=>"/uc/#{unitID}" })
     end
     return navItems
   end
@@ -190,12 +247,46 @@ def getPageBreadcrumb(unit, pageName, issue=nil)
   end
 end
 
+# Returns array of a journal issue's IDs, only for published issues
+def getIssueIds (unit)
+  if unit.type == 'journal'
+    return Issue.distinct.select(Sequel[:issues][:id]).
+      join(:sections, issue_id: :id).
+      join(:items, section: Sequel[:sections][:id]).
+      filter(Sequel[:issues][:unit_id] => unit.id,
+             Sequel[:items][:status] => 'published').map { |h| h[:id] }
+  else
+    return nil
+  end
+end
+
+# Takes array of issue IDs and returns query
+def _queryIssues(publishedIssues)
+  return Sequel::SQL::PlaceholderLiteralString.new('SELECT * FROM issues WHERE ((id in ?) AND ((volume != "0") OR (issue != "0"))) ORDER BY CAST(volume AS SIGNED) DESC, CAST(issue AS Decimal(6,2)) DESC', [publishedIssues])
+end
+
+# Takes array of issue IDs and returns ordered array of all published Issues (vol/issue/date/attrs), including Articles In Press
+def getPublishedJournalIssues(publishedIssues)
+  query = _queryIssues(publishedIssues)
+  r = DB.fetch(query).to_hash(:id).map{|id, issue|
+    h = issue.to_hash
+    h[:attrs] and h[:attrs] = JSON.parse(h[:attrs])
+    h
+  }
+  articlesInPress = Issue.where(id: publishedIssues, :volume => '0', :issue => '0').to_hash(:id).map{|id, issue|
+    h = issue.to_hash
+    h[:attrs] and h[:attrs] = JSON.parse(h[:attrs])
+    h
+  }
+  r.unshift(articlesInPress[0]) if articlesInPress[0]
+  return r 
+end
+
 # Generate breadcrumb and header content for Unit-branded pages
-def getUnitHeader(unit, pageName=nil, journalIssue=nil, attrs=nil)
+def getUnitHeader(unit, pageName=nil, journalIssue=nil, issuesSubNav=nil, attrs=nil)
   if !attrs then attrs = JSON.parse(unit[:attrs]) end
   campusID = getCampusId(unit)
   ancestor = isTopmostUnit(unit) ? nil : getUnitAncestor(unit)
-
 
   header = {
     :campusID => campusID,
@@ -206,7 +297,7 @@ def getUnitHeader(unit, pageName=nil, journalIssue=nil, attrs=nil)
     :logo => (unit.type.include? 'series') ? getLogoData(JSON.parse(ancestor.attrs)['logo']) : getLogoData(attrs['logo']),
     :directSubmit => attrs['directSubmit'],
     :directSubmitURL => attrs['directSubmitURL'],
-    :nav_bar => unit.type.include?('series') ? getNavBar(ancestor, JSON.parse(ancestor.attrs)['nav_bar']) : getNavBar(unit, attrs['nav_bar']),
+    :nav_bar => unit.type.include?('series') ? getNavBar(ancestor, JSON.parse(ancestor.attrs)['nav_bar']) : getNavBar(unit, attrs['nav_bar'], 1, issuesSubNav),
     :social => {
       :facebook => attrs['facebook'],
       :twitter => attrs['twitter'],
@@ -236,7 +327,8 @@ def getCampusHeros
   end
 end
 
-def getUnitPageContent(unit, attrs, query)
+# Series use query and Journals use issueIds and issuesPublished
+def getUnitPageContent(unit:, attrs:, query:, issueIds:, issuesPublished:)
   if unit.type == 'oru'
    return getORULandingPageData(unit.id)
   elsif unit.type == 'campus'
@@ -244,7 +336,7 @@ def getUnitPageContent(unit, attrs, query)
   elsif unit.type.include? 'series'
     return getSeriesLandingPageData(unit, query)
   elsif unit.type == 'journal'
-    return getJournalIssueData(unit, attrs)
+    return getJournalIssueData(unit, attrs, issueIds, issuesPublished)
   else
     # ToDo: handle 'special' type here
     halt(404, "Unknown unit type #{unit.type}")
@@ -400,69 +492,11 @@ def getSeriesLandingPageData(unit, q)
   return response
 end
 
-def _queryIssues(publishedIssues)
-  return Sequel::SQL::PlaceholderLiteralString.new('SELECT * FROM issues WHERE ((id in ?) AND ((volume != "0") OR (issue != "0"))) ORDER BY CAST(volume AS SIGNED) DESC, CAST(issue AS Decimal(6,2)) DESC', [publishedIssues])
-end
-
-# Takes array of issue IDs
-def _getIssues(publishedIssues)
-  query = _queryIssues(publishedIssues)
-  r = DB.fetch(query).to_hash(:id).map{|id, issue|
-    h = issue.to_hash
-    h[:attrs] and h[:attrs] = JSON.parse(h[:attrs])
-    h
-  }
-  articlesInPress = Issue.where(id: publishedIssues, :volume => '0', :issue => '0').to_hash(:id).map{|id, issue|
-    h = issue.to_hash
-    h[:attrs] and h[:attrs] = JSON.parse(h[:attrs])
-    h
-  }
-  r.unshift(articlesInPress[0]) if articlesInPress[0]
-  return r 
-end 
-
-# Landing page data does not pass arguments volume/issue. It just gets most recent journal
-def getJournalIssueData(unit, unit_attrs, volume=nil, issue=nil)
-  display = unit_attrs['magazine_layout'] ? 'magazine' : 'simple'
-  # Returns array of issue IDs
-  publishedIssues = Issue.distinct.select(Sequel[:issues][:id]).
-    join(:sections, issue_id: :id).
-    join(:items, section: Sequel[:sections][:id]).
-    filter(Sequel[:issues][:unit_id] => unit.id,
-           Sequel[:items][:status] => 'published').map { |h| h[:id] }
-  issues = _getIssues(publishedIssues)
-  if unit_attrs['issue_rule'] and unit_attrs['issue_rule'] == 'secondMostRecent' and volume.nil? and issue.nil?
-    secondIssue = issues.first(2)[1]
-    volume = secondIssue ? secondIssue[:volume] : nil
-    issue = secondIssue ? secondIssue[:issue] : nil
-  end
-  return {
-    display: display,
-    issue: _getIssue(unit.id, publishedIssues, volume, issue, display),
-    issues: issues,
-    doaj: unit_attrs['doaj'],
-    issn: unit_attrs['issn'],
-    eissn: unit_attrs['eissn']
-  }
-end
-
-def isJournalIssue?(unit_id, volume, issue)
-  !!Issue.first(:unit_id => unit_id, :volume => volume, :issue => issue)
-end
-
-# Returns pair: 'numbering' setting and title for custom breadcrumb on item pages
-def getIssueNumberingTitle(unit_id, volume, issue)
-  i = Issue.first(:unit_id => unit_id, :volume => volume, :issue => issue)
-  return nil, nil if i.nil?
-  i = i.values
-  return nil, nil if i[:attrs].nil?
-  attrs = JSON.parse(i[:attrs])
-  return attrs['numbering'], attrs['title']
-end
-
-def _getIssue(unit_id, publishedIssues, volume=nil, issue=nil, display)
+# Get everything about an issue
+# issueIds represent ids of all published issues for given unit_id
+def _getIssue(unit_id, issueIds, volume=nil, issue=nil, display)
   if volume.nil?  # Landing page (most recent journal) has no vol/issue entered in URL path
-    i = DB.fetch(_queryIssues(publishedIssues))
+    i = DB.fetch(_queryIssues(issueIds))
     i = i.nil? ? nil : i.first
     return nil if i.nil?
   else
@@ -497,6 +531,37 @@ def _getIssue(unit_id, publishedIssues, volume=nil, issue=nil, display)
     next section
   end
   return i 
+end
+
+# Landing page data does not pass arguments volume/issue. It just gets most recent journal
+def getJournalIssueData(unit, unit_attrs, issueIds, issuesPublished, volume=nil, issue=nil)
+  display = unit_attrs['magazine_layout'] ? 'magazine' : 'simple'
+  if unit_attrs['issue_rule'] and unit_attrs['issue_rule'] == 'secondMostRecent' and volume.nil? and issue.nil?
+    secondIssue = issuesPublished.first(2)[1]
+    volume = secondIssue ? secondIssue[:volume] : nil
+    issue = secondIssue ? secondIssue[:issue] : nil
+  end
+  return {
+    display: display,
+    issue: _getIssue(unit.id, issueIds, volume, issue, display),
+    doaj: unit_attrs['doaj'],
+    issn: unit_attrs['issn'],
+    eissn: unit_attrs['eissn']
+  }
+end
+
+def isJournalIssue?(unit_id, volume, issue)
+  !!Issue.first(:unit_id => unit_id, :volume => volume, :issue => issue)
+end
+
+# Returns pair: 'numbering' setting and title for custom breadcrumb on item pages
+def getIssueNumberingTitle(unit_id, volume, issue)
+  i = Issue.first(:unit_id => unit_id, :volume => volume, :issue => issue)
+  return nil, nil if i.nil?
+  i = i.values
+  return nil, nil if i[:attrs].nil?
+  attrs = JSON.parse(i[:attrs])
+  return attrs['numbering'], attrs['title']
 end
 
 def unitSearch(params, unit)
@@ -637,7 +702,7 @@ end
 def travNav(navBar, &block)
   navBar.each { |nav|
     block.yield(nav)
-    if nav['type'] == 'folder'
+    if nav['type'] and nav['type'].include?('folder')
       travNav(nav['sub_nav'], &block)
     end
   }
@@ -653,6 +718,7 @@ end
 def deleteNavByID(navBar, navID)
   return navBar.map { |nav|
     nav['id'].to_s == navID.to_s ? nil
+      # Check for 'folder'    (You would never want to delete a 'fixed_folder')
       : nav['type'] == "folder" ? nav.merge({'sub_nav'=>deleteNavByID(nav['sub_nav'], navID) })
       : nav
   }.compact
@@ -741,12 +807,12 @@ put "/api/unit/:unitID/nav/:navID" do |unitID, navID|
 end
 
 def remapOrder(oldNav, newOrder)
-  newOrder = newOrder.map { |stub| stub['id'] == 0 ? nil : stub }.compact
+  newOrder = newOrder.map { |stub| stub['id'] <= 0 ? nil : stub }.compact
   return newOrder.map { |stub|
     source = getNavByID(oldNav, stub['id'])
     source or raise("Unknown nav id #{stub['id']}")
     newNav = source.clone
-    if source['type'] == "folder"
+    if source['type'].include?("folder")
       stub['sub_nav'] or raise("can't change nav type")
       newNav['sub_nav'] = remapOrder(oldNav, stub['sub_nav'])
     end
@@ -787,7 +853,7 @@ post "/api/unit/:unitID/nav" do |unitID|
   unit = Unit[unitID]
   unit or halt(404)
 
-  # Validate the nav type
+  # Validate the nav type. ('fixed_page' and 'fixed_folder' can't be added)
   navType = params[:navType]
   ['page', 'link', 'folder'].include?(navType) or halt(400)
 
@@ -964,6 +1030,7 @@ put "/api/unit/:unitID/unitBuilder" do |parentUnitID|
 
   isHidden = !!params[:hidden]
 
+  # Add a basic nav bar. Fixed/immovable nav buttons "__ Home" (and "Issues" dropdown for journals) will be included in the nav by default (called up when page is being rendered)
   attrs = {
     about: "About #{unitName}: TODO",
     nav_bar: %w{oru journal}.include?(unitType) ? [
@@ -1222,6 +1289,8 @@ end
 ###################################################################################################
 # *Delete* to remove a static page from a unit
 delete "/api/unit/:unitID/nav/:navID" do |unitID, navID|
+  # Don't allow deletion of 'fixed_' navigation items (which have ids of zero or less)
+  navID.to_i > 0 or restrictedHalt
   # Check user permissions
   userPerms = getUserPermissions(params[:username], params[:token], unitID)
   userPerms[:admin] or halt(401)
@@ -1235,7 +1304,7 @@ delete "/api/unit/:unitID/nav/:navID" do |unitID, navID|
     unitAttrs['nav_bar'] = deleteNavByID(unitAttrs['nav_bar'], navID)
     getNavByID(unitAttrs['nav_bar'], navID).nil? or raise("delete failed")
     if nav['type'] == "folder" && !nav['sub_nav'].empty?
-      jsonHalt(404, "Can't delete non-empty folder")
+      jsonHalt(400, "Can't delete non-empty folder")
     end
     if nav['type'] == "page"
       page = Page.where(unit_id: unitID, slug: nav['slug']).first or jsonHalt(404, "Page not found")

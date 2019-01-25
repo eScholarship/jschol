@@ -893,13 +893,7 @@ get "/api/globalStatic/*" do
     pageData[:header] = getGlobalHeader
     pageData[:pageNotFound] = true
   end
-
   return pageData.to_json
-end
-
-def parseIssueHeaderData(unit_id, vol, iss, issue)
-  title = issue[:attrs] ? JSON.parse(issue[:attrs])["title"] : nil
-  return {'unit_id': unit_id, 'volume': vol, 'issue': iss, 'title': title, 'numbering': issue[:numbering]}
 end
 
 ###################################################################################################
@@ -935,14 +929,35 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
       unit: unit.values.reject{|k,v| k==:attrs}.merge(:extent => ext),
       sidebar: getUnitSidebar(unit.type.include?('series') ? getUnitAncestor(unit) : unit)
     }
+
+    issuesSubNav, issueIds, issuesPublished, journalIssue = nil, nil, nil, nil
+    # Gather header data
+    if unit.type == 'journal'
+      issueIds = getIssueIds(unit)
+      issuesPublished = (issueIds && issueIds.any?) ? getPublishedJournalIssues(issueIds) : nil
+      issuesSubNav = getIssuesSubNav(issuesPublished)
+
+      if isJournalIssue?(unit.id, params[:pageName], params[:subPage])
+        volume = params[:pageName]
+        issue = params[:subPage]
+        numbering, title = getIssueNumberingTitle(unit.id, volume, issue)
+        journalIssue = {'unit_id': unit.id, 'volume': volume, 'issue': issue, 'title': title, 'numbering': numbering}
+      end
+      pageData[:header] = getUnitHeader(unit, nil, journalIssue, issuesSubNav, attrs)
+    else
+      pageData[:header] = getUnitHeader(unit, 
+      (pageName =~ /^(nav|sidebar|profile|carousel|issueConfig|redirects|unitBuilder|authorSearch)/) ?
+        nil : pageName, nil, nil, attrs)
+    end
+
+    # Gather page content data
     if ["home", "search"].include? pageName  # 'home' here refers to the unit's homepage, not root home
       q = nil
       q = CGI::parse(request.query_string) if pageName == "search"
-      pageData[:content] = getUnitPageContent(unit, attrs, q)
-      if unit.type == 'journal' and pageData[:content][:issue]
-        issue = pageData[:content][:issue]
-        issueHeaderData = parseIssueHeaderData(params[:unitID], issue[:volume], issue[:issue], issue)
-      end
+      pageData[:content] = getUnitPageContent(unit: unit, attrs: attrs, query: q,
+                             issueIds: issueIds, issuesPublished: issuesPublished)
+      # For journals, Issues SubNav data shared in header and body
+      pageData[:content][:issuesSubNav] = issuesSubNav
     elsif pageName == 'profile'
       pageData[:content] = getUnitProfile(unit, attrs)
     elsif pageName == 'carousel'
@@ -961,17 +976,13 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
     elsif pageName == "authorSearch"
       pageData[:content] = getAuthorSearchData
     elsif isJournalIssue?(unit.id, params[:pageName], params[:subPage])
-      pageData[:content] = getJournalIssueData(unit, attrs, params[:pageName], params[:subPage])
-      # A specific issue, otherwise you get journal landing (through getUnitPageContent method above)
-      issueHeaderData = parseIssueHeaderData(params[:unitID], params[:pageName], params[:subPage], pageData[:content][:issue])
+      pageData[:content] = getJournalIssueData(unit, attrs, 
+        issueIds, issuesPublished, params[:pageName], params[:subPage])
+      pageData[:content][:issuesSubNav] = issuesSubNav
     else
       pageData[:content] = getUnitStaticPage(unit, attrs, pageName)
     end
-    pageData[:header] = getUnitHeader(unit,
-      (pageName =~ /^(nav|sidebar|profile|carousel|issueConfig|redirects|unitBuilder|authorSearch)/ or issueHeaderData) ?
-        nil : pageName,
-      issueHeaderData, attrs)
-    pageData[:marquee] = getUnitMarquee(unit, attrs) if (["home", "search"].include? pageName or issueHeaderData)
+    pageData[:marquee] = getUnitMarquee(unit, attrs) if (["home", "search"].include? pageName or unit.type == 'journal')
   else
     #public API data
     pageData = {
@@ -1082,8 +1093,10 @@ get "/api/item/:shortArk" do |shortArk|
           if issue_id
             unit_id, volume, issue = Section.join(:issues, :id => issue_id).map([:unit_id, :volume, :issue])[0]
             numbering, title = getIssueNumberingTitle(unit.id, volume, issue)
+            issueIds = getIssueIds(unit)
+            issuesSubNav = getIssuesSubNav((issueIds && issueIds.any?) ? getPublishedJournalIssues(issueIds) : nil)
             body[:header] = getUnitHeader(unit, nil,
-              {'unit_id': unit_id, 'volume': volume, 'issue': issue, 'title': title, 'numbering': numbering})
+              {'unit_id': unit_id, 'volume': volume, 'issue': issue, 'title': title, 'numbering': numbering}, issuesSubNav)
             body[:numbering] = numbering 
             body[:citation][:volume] = volume
             body[:citation][:issue] = issue

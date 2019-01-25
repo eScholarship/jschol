@@ -10,10 +10,9 @@ import IssueActionsComp from '../components/IssueActionsComp.jsx'
 
 class VolumeSelector extends React.Component {
   static PropTypes = {
-    vip: PropTypes.array.isRequired,     // [unit_id, Volume, Issue, published]
-    issue_numbering: PropTypes.string,
-    title: PropTypes.string,
-    issues: PropTypes.array.isRequired   // [ {:id=>3258, :volume=>"1", :issue=>"2", :published=>#<Date: ...}, ... ]
+    current_issue_title: PropTypes.string,
+    issues: PropTypes.array.isRequired  // [ {:id=>-1, :name=>"Volume 14, Issue 0, 2017",
+                                        // :volume=>"1", :issue=>"2", :published=>#<Date: ...}, ... ]
   }
 
   getIssuePath = (unit_id, v,i) => {
@@ -24,38 +23,17 @@ class VolumeSelector extends React.Component {
     return date.match(/\d{4}/)
   }
 
-  issueTitle = (vol, iss, numbering, title, year) => {
-    if (vol == "0" && iss == "0") {
-      return title 
-    }
-    else {
-      let voliss
-      if (!numbering) {
-        voliss = "Volume " + vol + ", Issue " + iss 
-      } else if (numbering === "volume_only") {
-        voliss = "Volume " + vol 
-      } else {
-        voliss = "Issue " + iss 
-      }
-      return voliss + ", " + year 
-    }
-  }
-
   render() {
     let p = this.props
-    let this_issue_title = this.issueTitle(p.vip[1], p.vip[2], p.issue_numbering, p.title, p.vip[3])
     return (
       <div className="o-customselector">
-        <h2 className="o-customselector__heading">{this_issue_title}</h2>
+        <h2 className="o-customselector__heading">{p.current_issue_title ? p.current_issue_title : "This Issue"}</h2>
         <details className="o-customselector__selector">
           <summary aria-label="Select a different issue"></summary>
           <div className="o-customselector__menu">
             <ul className="o-customselector__items">
               {p.issues.map( i => {
-                let numbering = i.attrs ? i.attrs.numbering : null
-                let title = i.attrs ? i.attrs.title : null
-                let name = this.issueTitle(i.volume, i.issue, numbering, title, this.getPubYear(i.published))
-                return (<li key={i.id}><Link to={this.getIssuePath(i.unit_id, i.volume, i.issue)}>{name}</Link></li>)})
+                return (<li key={i.id}><Link to={this.getIssuePath(i.unit_id, i.volume, i.issue)}>{i.name}</Link></li>)})
               }
             </ul>
           </div>
@@ -97,13 +75,12 @@ class IssueWrapperComp extends React.Component {
   
   render() {
     let pi = this.props.issue,
-        year = pi.published.match(/\d{4}/)[0],
-        issueCurrent = [pi.unit_id, pi.volume, pi.issue, year]
+        pi_title = this.props.issues.find(x => x.issue_id === pi.id).name
     return (
       <section className="o-columnbox1">
         <IssueActionsComp unit_id={pi.unit_id} buy_link={pi.buy_link} />
         {/*              articles={} */}
-        <VolumeSelector vip={issueCurrent} issue_numbering={pi.numbering} title={pi.title} issues={this.props.issues} />
+        <VolumeSelector current_issue_title={pi_title} issues={this.props.issues} />
       {(pi.cover || pi.title || pi.description) &&
         <IssueComp cover={pi.cover} title={pi.title} description={pi.description} />
       }
@@ -146,7 +123,7 @@ class JournalLayout extends React.Component {
       issn: PropTypes.string,
       eissn: PropTypes.string,
       issue: PropTypes.object,     // See IssueWrapperComp prop types directly above
-      issues: PropTypes.array
+      issuesSubNav: PropTypes.array
     }).isRequired,
     marquee: PropTypes.shape({
       carousel: PropTypes.any,
@@ -165,7 +142,7 @@ class JournalLayout extends React.Component {
         <div className="c-columns">
           <main id="maincontent">
           {this.props.data.issue ?
-            <IssueWrapperComp issue={data.issue} issues={data.issues} display={data.display} />
+            <IssueWrapperComp issue={data.issue} issues={data.issuesSubNav} display={data.display} />
           :
             <section className="o-columnbox1">
               <p>Currently no issues to display
