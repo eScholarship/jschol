@@ -955,6 +955,8 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
       q = CGI::parse(request.query_string) if pageName == "search"
       pageData[:content] = getUnitPageContent(unit: unit, attrs: attrs, query: q,
                              issueIds: issueIds, issuesPublished: issuesPublished)
+      # For journals, Issues SubNav data shared in header and body
+      pageData[:content][:issuesSubNav] = issuesSubNav
     elsif pageName == 'profile'
       pageData[:content] = getUnitProfile(unit, attrs)
     elsif pageName == 'carousel'
@@ -975,11 +977,10 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
     elsif isJournalIssue?(unit.id, params[:pageName], params[:subPage])
       pageData[:content] = getJournalIssueData(unit, attrs, 
         issueIds, issuesPublished, params[:pageName], params[:subPage])
+      pageData[:content][:issuesSubNav] = issuesSubNav
     else
       pageData[:content] = getUnitStaticPage(unit, attrs, pageName)
     end
-    # For journals, Issues SubNav data shared in header and body
-    pageData[:content][:issuesSubNav] = issuesSubNav
     pageData[:marquee] = getUnitMarquee(unit, attrs) if (["home", "search"].include? pageName or unit.type == 'journal')
   else
     #public API data

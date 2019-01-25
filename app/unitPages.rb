@@ -161,15 +161,15 @@ end
 def getIssuesSubNav(issues)
   issues.nil? and return []
   # rename id to issue_id otherwise possible collision in nav.
-  mappings = {:id => :issue_id}
+  mappings = {:id => "issue_id"}
   issues_rev = []
   issues.each.with_index(1) do |issue, index|
     issue = issue.map {|k, v| [mappings[k] || k, v] }.to_h
-    issue[:id] = -(index)   # Create new (negative) id
-    issue[:url] = "/uc/#{issue[:unit_id]}/#{issue[:volume]}/#{issue[:issue]}"
-    issue[:name] = getIssueName(issue[:volume], issue[:issue], issue[:attrs].nil? ? nil : issue[:attrs]['numbering'], 
+    issue["id"] = -(index)   # Create new (negative) id
+    issue["url"] = "/uc/#{issue[:unit_id]}/#{issue[:volume]}/#{issue[:issue]}"
+    issue["name"] = getIssueName(issue[:volume], issue[:issue], issue[:attrs].nil? ? nil : issue[:attrs]['numbering'], 
                      issue[:attrs].nil? ? nil : issue[:attrs]['title'], getPubYear(issue[:published]))
-    issue[:type] = 'page'
+    issue["type"] = "page"
     issues_rev << issue
   end
   return issues_rev
@@ -205,13 +205,13 @@ def getNavBar(unit, navItems, level=1, issuesSubNav=nil)
     if level==1 && !isTopmostUnit(unit)
       unitID = unit.type.include?('series') ? getUnitAncestor(unit).id : unit.id
       if unit.type == "journal" and issuesSubNav.length > 0
-        navItems.unshift({ id: 0, type: "fixed_folder",
-                          name: getIssueDropDownName(unit, issuesSubNav),
-                          url: nil, sub_nav: issuesSubNav })
+        navItems.unshift({ "id"=>0, "type"=>"fixed_folder",
+                          "name"=>getIssueDropDownName(unit, issuesSubNav),
+                          "url"=>nil, "sub_nav"=>issuesSubNav })
       end
-      navItems.unshift({ id: -9999, type: "fixed_page",
-                         name: unit.type == "journal" ? "Journal Home" : "Unit Home",
-                         url: "/uc/#{unitID}" })
+      navItems.unshift({ "id"=>-9999, "type"=>"fixed_page",
+                         "name"=>unit.type == "journal" ? "Journal Home" : "Unit Home",
+                         "url"=>"/uc/#{unitID}" })
     end
     return navItems
   end
@@ -701,9 +701,6 @@ end
 def travNav(navBar, &block)
   navBar.each { |nav|
     block.yield(nav)
-    if nav[:type] and nav[:type].include?('folder')
-      travNav(nav['sub_nav'], &block)
-    end
     if nav['type'] and nav['type'].include?('folder')
       travNav(nav['sub_nav'], &block)
     end
@@ -1292,7 +1289,7 @@ end
 # *Delete* to remove a static page from a unit
 delete "/api/unit/:unitID/nav/:navID" do |unitID, navID|
   # Don't allow deletion of 'fixed_' navigation items (which have ids of zero or less)
-  navID > 0 or restrictedHalt
+  navID.to_i > 0 or restrictedHalt
   # Check user permissions
   userPerms = getUserPermissions(params[:username], params[:token], unitID)
   userPerms[:admin] or halt(401)
@@ -1306,7 +1303,7 @@ delete "/api/unit/:unitID/nav/:navID" do |unitID, navID|
     unitAttrs['nav_bar'] = deleteNavByID(unitAttrs['nav_bar'], navID)
     getNavByID(unitAttrs['nav_bar'], navID).nil? or raise("delete failed")
     if nav['type'] == "folder" && !nav['sub_nav'].empty?
-      jsonHalt(404, "Can't delete non-empty folder")
+      jsonHalt(400, "Can't delete non-empty folder")
     end
     if nav['type'] == "page"
       page = Page.where(unit_id: unitID, slug: nav['slug']).first or jsonHalt(404, "Page not found")
