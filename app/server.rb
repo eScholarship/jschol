@@ -1094,7 +1094,6 @@ get "/api/item/:shortArk" do |shortArk|
             numbering, title = getIssueNumberingTitle(unit.id, volume, issue)
             issueIds = getIssueIds(unit)
             issuesSubNav = getIssuesSubNav((issueIds && issueIds.any?) ? getPublishedJournalIssues(issueIds) : nil)
-            # getUnitHeader(unit, pageName=nil, journalIssue=nil, issuesSubNav=nil, attrs=nil)
             body[:header] = getUnitHeader(unit, nil,
               {'unit_id': unit_id, 'volume': volume, 'issue': issue, 'title': title, 'numbering': numbering}, issuesSubNav)
             body[:numbering] = numbering 
