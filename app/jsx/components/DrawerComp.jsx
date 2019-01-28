@@ -51,6 +51,7 @@ class SortableNavList extends React.Component {
           title: <Link to={`/uc/${this.props.unit}${(nav.type.includes("fixed")) ? "" : `/nav/${nav.id}`}`}>{nav.name}</Link>,
           subtitle: <i>{nav.hidden && 'hidden '}{nav.type.replace(/_/g," ")}</i>
         }
+        // Anything else zero or lower is the Journal Issues dropdown, so should be avoided, except for id -9999 which is the Journal Home nav
         if (nav.type.includes("folder") && (nav.id >= 0 || nav.id == -9999)) {
           data.children = generate(nav.sub_nav)
           data.expanded = true
