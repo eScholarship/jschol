@@ -747,7 +747,7 @@ def maxNavID(navBar)
 end
 
 def jsonHalt(httpCode, message)
-  puts "jsonHalt: code=#{httpCode} messaage=#{message.inspect}"
+  puts "jsonHalt: code=#{httpCode} message=#{message.inspect}"
   content_type :json
   halt(httpCode, { error: true, message: message }.to_json)
 end

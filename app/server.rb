@@ -1119,6 +1119,16 @@ get "/api/item/:shortArk" do |shortArk|
 end
 
 ###################################################################################################
+# Withdraw an item (super-users only)
+delete "/api/item/:shortArk" do |shortArk|
+  perms = getUserPermissions(params[:username], params[:token], "root")
+  perms[:super] or halt(401)
+  content_type :json
+  puts "in item delete: params=#{params}"
+  jsonHalt(400, "Not yet")
+end
+
+###################################################################################################
 # Search page data
 get "/api/search/" do
   content_type :json

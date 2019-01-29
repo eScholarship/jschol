@@ -162,7 +162,8 @@ class ItemPage extends PageBase {
                          content_type={d.content_type}
                          pdf_url={d.pdf_url}
                          attrs={d.attrs}
-                         download_restricted={d.download_restricted} />
+                         download_restricted={d.download_restricted}
+                         sendApiData={this.sendApiData} />
             <h2 className="c-tabcontent__main-heading" tabIndex="-1"><ArbitraryHTMLComp html={d.title}/></h2>
             <AuthorListComp pubdate={d.published}
                             author_hide={a.author_hide}
