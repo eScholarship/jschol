@@ -1118,14 +1118,41 @@ get "/api/item/:shortArk" do |shortArk|
   end
 end
 
+#################################################################################################
+# Send a mutation to the submission API, returning the JSON results.
+def submitAPIMutation(mutation, vars)
+  query = "mutation(#{vars.map{|name, pair| "$#{name}: #{pair[0]}"}.join(", ")}) { #{mutation} }"
+  varHash = Hash[vars.map{|name,pair| [name.to_s, pair[1]]}]
+  headers = { 'Content-Type' => 'application/json',
+              'Privileged' => ENV['ESCHOL_PRIV_API_KEY'] || raise("missing env ESCHOL_PRIV_API_KEY") }
+  response = HTTParty.post("http://#{$host}:18900/graphql",
+               :headers => headers,
+               :body => { variables: varHash, query: query }.to_json.gsub("%", "%25"))
+  response.code != 200 and raise("Internal error (graphql): " +
+     "HTTP code #{response.code} - #{response.message}.\n" +
+     "#{response.body}")
+  if response['errors']
+    puts "Full error text:"
+    pp response['errors']
+    raise("Internal error (graphql): #{response['errors'][0]['message']}")
+  end
+  return response['data']
+end
+
 ###################################################################################################
 # Withdraw an item (super-users only)
 delete "/api/item/:shortArk" do |shortArk|
   perms = getUserPermissions(params[:username], params[:token], "root")
   perms[:super] or halt(401)
   content_type :json
-  puts "in item delete: params=#{params}"
-  jsonHalt(400, "Not yet")
+  puts "in item delete: params=#{params.inspect}"
+  submitAPIMutation("withdrawItem(input: $input) { message }", { input: ["WithdrawItemInput!", {
+    id: "ark:/13030/#{shortArk}",
+    publicMessage: params[:publicMessage].empty ? jsonHalt(400, "Public message is required") : params[:publicMessage],
+    internalComment: params[:internalComment].empty? ? nil : params[:internalComment],
+    redirectTo: params[:redirectTo].empty? ? nil : "ark:/130303/#{params[:internalComment]}"
+  }]})
+  return { status: "ok" }
 end
 
 ###################################################################################################

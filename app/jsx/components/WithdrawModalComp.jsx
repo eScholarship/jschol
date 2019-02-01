@@ -39,14 +39,24 @@ class WithdrawModalComp extends React.Component {
                 </div>
                 <div className="modal__content">
                   <div className="c-withdrawmodal__warning">
-                    <b>WARNING</b>
-                    <br/>
-                    This item will be permanently withdrawn (and optionally redirected to another item).
+                    <b>WARNING: </b> This item will be permanently withdrawn (and optionally redirected to another item).
                   </div>
-                  <label className="c-withdrawmodal__label" htmlFor="unitName">Withdrawal message:</label>
-                  <input className="c-withdrawmodal__message" id="message" type="text"
-                         onChange={ event => this.setState( { message: event.target.value }) }/>
-                  <label className="c-withdrawmodal__label" htmlFor="unitName">Redirect to item (optional, form of 'qtxxxxxxxx'):</label>
+
+                  <label className="c-withdrawmodal__label" htmlFor="publicMessage">
+                    Withdrawal reason (public):
+                  </label>
+                  <input className="c-withdrawmodal__publicMessage" id="publicMessage" type="text"
+                         onChange={ event => this.setState( { publicMessage: event.target.value }) }/>
+
+                  <label className="c-withdrawmodal__label" htmlFor="internalComment">
+                    Internal comment (optional, e.g. ticket URL):
+                  </label>
+                  <input className="c-withdrawmodal__internalComment" id="internalComment" type="text"
+                         onChange={ event => this.setState( { internalComment: event.target.value }) }/>
+
+                  <label className="c-withdrawmodal__label" htmlFor="redirectTo">
+                    Redirect to item (optional, form of 'qtxxxxxxxx'):
+                  </label>
                   <input className="c-withdrawmodal__redirectTo" id="redirectTo" type="text"
                          onChange={ event => this.setState( { redirectTo: event.target.value }) }/>
                 </div>
