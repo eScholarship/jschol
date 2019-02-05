@@ -1108,8 +1108,7 @@ get "/api/item/:shortArk" do |shortArk|
       # pp(body)
       return body.to_json
     rescue Exception => e
-      puts "Error in item API:"
-      pp e
+      puts "Error in item API: #{e} #{e.backtrace}"
       halt 404, e.message
     end
   else 
@@ -1145,14 +1144,16 @@ delete "/api/item/:shortArk" do |shortArk|
   perms = getUserPermissions(params[:username], params[:token], "root")
   perms[:super] or halt(401)
   content_type :json
-  puts "in item delete: params=#{params.inspect}"
+  if params[:redirectTo] && !(params[:redirectTo] =~ /^$|^qt\w{8}$/)
+    jsonHalt(400, "invalid redirect id")
+  end
   submitAPIMutation("withdrawItem(input: $input) { message }", { input: ["WithdrawItemInput!", {
     id: "ark:/13030/#{shortArk}",
     publicMessage: (params[:publicMessage]||"").empty? ? jsonHalt(400, "Public message is required") : params[:publicMessage],
     internalComment: (params[:internalComment]||"").empty? ? nil : params[:internalComment],
-    redirectTo: (params[:redirectTo]||"").empty? ? nil : "ark:/130303/#{params[:internalComment]}"
+    redirectTo: (params[:redirectTo]||"").empty? ? nil : "ark:/13030/#{params[:redirectTo]}"
   }]})
-  return { status: "ok" }.to_json
+  return { status: "ok", nextURL: "/uc/item/#{shortArk.sub(/^qt/,'')}" }.to_json
 end
 
 ###################################################################################################

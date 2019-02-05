@@ -155,7 +155,7 @@ class ItemPage extends PageBase {
                                     unit={d.unit} 
                                     socialProps={d.header.social} />}
         <BreadcrumbComp array={d.header ? d.header.breadcrumb : null} />
-        <div className="c-columns--sticky-sidebar">
+        <div className={this.state.fetchingData ? "c-columns--sticky-sidebar is-loading-data" : "c-columns--sticky-sidebar"}>
           <main id="maincontent">
             <ItemActionsComp id={d.id}
                          status={d.status}
@@ -163,7 +163,6 @@ class ItemPage extends PageBase {
                          pdf_url={d.pdf_url}
                          attrs={d.attrs}
                          download_restricted={d.download_restricted}
-                         fetchingData={this.state.fetchingData}
                          sendApiData={this.sendApiData} />
             <h2 className="c-tabcontent__main-heading" tabIndex="-1"><ArbitraryHTMLComp html={d.title}/></h2>
             <AuthorListComp pubdate={d.published}

@@ -14,6 +14,7 @@ class WithdrawModalComp extends React.Component {
       { publicMessage: this.state.publicMessage,
         internalComment: this.state.internalComment,
         redirectTo: this.state.redirectTo })
+    this.onClose()
   }
 
   render() {
@@ -61,12 +62,10 @@ class WithdrawModalComp extends React.Component {
                          onChange={ event => this.setState( { redirectTo: event.target.value }) }/>
                 </div>
                 <div className="c-modal__footer">
-                  { this.props.fetchingData ? <p>Withdrawing...</p> :
-                    <div>
-                      <button className="c-modal__button-close" onClick={this.onClose}>Cancel, back to safety</button>
-                      <button className="o-button__3" onClick={this.onOK}>Yes, withdraw this item</button>
-                    </div>
-                  }
+                  <div>
+                    <button className="c-modal__button-close" onClick={this.onClose}>Cancel, back to safety</button>
+                    <button className="o-button__3" onClick={this.onOK}>Yes, withdraw this item</button>
+                  </div>
                 </div>
               </ReactModal>
             </div>
