@@ -1154,12 +1154,12 @@ put "/api/unit/:unitID/moveUnit" do |unitID|
   targetUnit.type =~ /series|journal/ and jsonHalt(400, "Destination parent unit cannot be a series or journal")
 
   # Get the max ordering of the new parent's existing children.
-  lastOrder = UnitHier.where(ancestor_unit: targetUnitID, is_direct: true).max(:ordering)
+  lastOrder = UnitHier.where(ancestor_unit: targetUnitID, is_direct: true).max(:ordering) || 0
 
   DB.transaction {
     # Change the primary direct link
     oldParent = UnitHier.where(unit_id: unitID, is_direct: true).order(:ordering).last[:ancestor_unit]
-    puts "old parent: #{oldParent}"
+    UnitHier.where(unit_id: unitID, ancestor_unit: targetUnitID, is_direct: false).delete # if already descendant
     UnitHier.where(unit_id: unitID, ancestor_unit: oldParent, is_direct: true).
              update(ancestor_unit: targetUnitID, ordering: lastOrder+1)
 
