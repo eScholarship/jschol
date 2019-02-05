@@ -163,6 +163,7 @@ class ItemPage extends PageBase {
                          pdf_url={d.pdf_url}
                          attrs={d.attrs}
                          download_restricted={d.download_restricted}
+                         fetchingData={this.state.fetchingData}
                          sendApiData={this.sendApiData} />
             <h2 className="c-tabcontent__main-heading" tabIndex="-1"><ArbitraryHTMLComp html={d.title}/></h2>
             <AuthorListComp pubdate={d.published}

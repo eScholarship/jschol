@@ -5,15 +5,15 @@ import ReactModal from 'react-modal'
 import { Subscriber } from 'react-broadcast'
 
 class WithdrawModalComp extends React.Component {
-  state = { modalOpen: false }
+  state = { modalOpen: false, inProgress: false }
 
-  onClose = () => this.setState({modalOpen: false})
+  onClose = () => this.setState({modalOpen: false, inProgress: false})
   onOpen = () => this.setState({modalOpen: true, message: null, redirectTo: null})
   onOK = () => {
-    console.log(`message=${this.state.message}`)
-    console.log(`redirectTo=${this.state.redirectTo}`)
     this.props.sendApiData('DELETE', `/api/item/qt${this.props.itemID}`,
-      { message: this.state.message, redirectTo: this.state.redirectTo })
+      { publicMessage: this.state.publicMessage,
+        internalComment: this.state.internalComment,
+        redirectTo: this.state.redirectTo })
   }
 
   render() {
@@ -61,8 +61,12 @@ class WithdrawModalComp extends React.Component {
                          onChange={ event => this.setState( { redirectTo: event.target.value }) }/>
                 </div>
                 <div className="c-modal__footer">
-                  <button className="c-modal__button-close" onClick={this.onClose}>Cancel, back to safety</button>
-                  <button className="o-button__3" onClick={this.onOK}>Yes, withdraw this item</button>
+                  { this.props.fetchingData ? <p>Withdrawing...</p> :
+                    <div>
+                      <button className="c-modal__button-close" onClick={this.onClose}>Cancel, back to safety</button>
+                      <button className="o-button__3" onClick={this.onOK}>Yes, withdraw this item</button>
+                    </div>
+                  }
                 </div>
               </ReactModal>
             </div>

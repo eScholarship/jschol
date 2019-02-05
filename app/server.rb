@@ -1148,11 +1148,11 @@ delete "/api/item/:shortArk" do |shortArk|
   puts "in item delete: params=#{params.inspect}"
   submitAPIMutation("withdrawItem(input: $input) { message }", { input: ["WithdrawItemInput!", {
     id: "ark:/13030/#{shortArk}",
-    publicMessage: params[:publicMessage].empty ? jsonHalt(400, "Public message is required") : params[:publicMessage],
-    internalComment: params[:internalComment].empty? ? nil : params[:internalComment],
-    redirectTo: params[:redirectTo].empty? ? nil : "ark:/130303/#{params[:internalComment]}"
+    publicMessage: (params[:publicMessage]||"").empty? ? jsonHalt(400, "Public message is required") : params[:publicMessage],
+    internalComment: (params[:internalComment]||"").empty? ? nil : params[:internalComment],
+    redirectTo: (params[:redirectTo]||"").empty? ? nil : "ark:/130303/#{params[:internalComment]}"
   }]})
-  return { status: "ok" }
+  return { status: "ok" }.to_json
 end
 
 ###################################################################################################
