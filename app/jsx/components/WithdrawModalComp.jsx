@@ -56,7 +56,7 @@ class WithdrawModalComp extends React.Component {
                          onChange={ event => this.setState( { internalComment: event.target.value }) }/>
 
                   <label className="c-withdrawmodal__label" htmlFor="redirectTo">
-                    Redirect to item (optional, form of 'qtxxxxxxxx'):
+                    Identifier of item to redirect to (optional, form of 'qtxxxxxxxx'):
                   </label>
                   <input className="c-withdrawmodal__redirectTo" id="redirectTo" type="text"
                          onChange={ event => this.setState( { redirectTo: event.target.value }) }/>
