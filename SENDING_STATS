@@ -20,3 +20,6 @@
 
 9. tail -f mailLogs/`date +"%Y%m%d"`_author_go4it.log
   ...this takes 5-6 hours
+
+10. After several hours for bounces to roll in, you can run a bounce test to see how many permanent bounces and complaints occurred:
+    tools/massEmail.rb authors recent-hits mailTemplates/authorEmail-monthly.erb bounceTest |& tee mailLogs/`date +"%Y%m%d"`_bounceTest.log

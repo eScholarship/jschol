@@ -418,7 +418,7 @@ class ALBLogEventSource < LogEventSource
 end
 
 # Jschol log line patterns
-# e.g. [4] 157.55.39.165 - - [18/Dec/2017:00:00:02 -0800] "GET /search/?q=Kabeer,%20Naila HTTP/1.1"
+# e.g. [4] 157.55.39.165 - - [18/Dec/2017:00:00:02 -0800] "GET /search/?q=Kabeer,%20Naila HTTP/1.1, 3.1.2"
 #      200 - 0.7414 - "Root=1-5a377581-76cf406644dc717f3fd2ecbb"
 JSCHOL_LINE_PAT = %r{\[ (?<thread>    \d+       ) \] \s
                         (?<ips>       [\w.:, ]+ ) \s
@@ -435,6 +435,7 @@ JSCHOL_LINE_PAT = %r{\[ (?<thread>    \d+       ) \] \s
 JSCHOL_REQ_PAT = %r{^ (?<method>   [A-Z]+ ) \s
                       (?<path>     .*     ) \s
                       (?<proto2>   [A-Z]+/[\d.]+)
+                      (,\s (?<ver> \d+\.[\d.]+))?
                   $}x
 
 class JscholLogEventSource < LogEventSource
@@ -1285,10 +1286,14 @@ def combineForward(prevEmail, prevPerson, prevAttrs, curEmail, curPerson, curAtt
     prevAttrs['forwarded_from'].each { |wayOldId|
       wayOldPerson = Person.where(id: wayOldId).first
       next unless wayOldPerson  # skip forwards that don't involve our authors
-      wayOldEmail = wayOldPerson.email
-      puts "  way old email: #{wayOldEmail}"
       wayOldAttrs = JSON.parse(wayOldPerson[:attrs])
+      wayOldEmail = wayOldAttrs['email']
+      puts "Note: complex email forwarding:"
+      puts "  curEmail: #{curEmail.inspect}"
+      puts "  prevEmail: #{prevEmail.inspect}"
+      puts "  way old email: #{wayOldEmail.inspect}"
       combineForward(wayOldEmail, wayOldPerson, wayOldAttrs, curEmail, curPerson, curAttrs)
+      puts "  ...handled."
     }
     curAttrs['forwarded_from'] += prevAttrs['forwarded_from']
     prevAttrs.delete('forwarded_from')
@@ -1300,11 +1305,9 @@ def combineForward(prevEmail, prevPerson, prevAttrs, curEmail, curPerson, curAtt
   puts "    Combining: #{prevAttrs}"
   puts "           to: #{curAttrs}"
 
-  puts "curPerson.attrs=#{curAttrs}"
   curPerson.attrs = curAttrs.to_json
   curPerson.save
 
-  puts "prevPerson.attrs=#{prevAttrs}"
   prevPerson.attrs = prevAttrs.to_json
   prevPerson.save
 

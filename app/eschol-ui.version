@@ -853,5 +853,25 @@ Lots of stuff modified.
   modified:   app/jsx/components/IssueComp.jsx
   modified:   app/scss/_issue.scss
 
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> 95c0937e0d91a4cdcb7534f88853c127967dc4df, 2018-10-24        <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+  added: app/jsx/components/SocialFeedComp.jsx
+  added: app/scss/_socialfeed.scss
+  modified: app/scss/_issue.scss
+  modified: app/scss/_clientmarkup.scss
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> 65d91bcb0dfdc505560a09893e86fd9443182007, 2018-11-13        <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+  modified: app/scss/_clientmarkup.scss
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> a2f4770226f6e8d9d692d2e75a12a6caa5d9865f, 2019-01-08        <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+  modified: app/scss/_wizard.scss
 
 
