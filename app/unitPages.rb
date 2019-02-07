@@ -204,7 +204,7 @@ def getNavBar(unit, navItems, level=1, issuesSubNav=nil)
     }
     if level==1 && !isTopmostUnit(unit)
       unitID = unit.type.include?('series') ? getUnitAncestor(unit).id : unit.id
-      if unit.type == "journal" and issuesSubNav.length > 0
+      if unit.type == "journal" && issuesSubNav && issuesSubNav.length > 0
         navItems.unshift({ "id"=>0, "type"=>"fixed_folder",
                           "name"=>getIssueDropDownName(unit, issuesSubNav),
                           "url"=>nil, "sub_nav"=>issuesSubNav })
@@ -747,7 +747,7 @@ def maxNavID(navBar)
 end
 
 def jsonHalt(httpCode, message)
-  puts "jsonHalt: code=#{httpCode} messaage=#{message.inspect}"
+  puts "jsonHalt: code=#{httpCode} message=#{message.inspect}"
   content_type :json
   halt(httpCode, { error: true, message: message }.to_json)
 end
@@ -1154,12 +1154,12 @@ put "/api/unit/:unitID/moveUnit" do |unitID|
   targetUnit.type =~ /series|journal/ and jsonHalt(400, "Destination parent unit cannot be a series or journal")
 
   # Get the max ordering of the new parent's existing children.
-  lastOrder = UnitHier.where(ancestor_unit: targetUnitID, is_direct: true).max(:ordering)
+  lastOrder = UnitHier.where(ancestor_unit: targetUnitID, is_direct: true).max(:ordering) || 0
 
   DB.transaction {
     # Change the primary direct link
     oldParent = UnitHier.where(unit_id: unitID, is_direct: true).order(:ordering).last[:ancestor_unit]
-    puts "old parent: #{oldParent}"
+    UnitHier.where(unit_id: unitID, ancestor_unit: targetUnitID, is_direct: false).delete # if already descendant
     UnitHier.where(unit_id: unitID, ancestor_unit: oldParent, is_direct: true).
              update(ancestor_unit: targetUnitID, ordering: lastOrder+1)
 

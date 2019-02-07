@@ -9,6 +9,7 @@ import PropTypes from 'prop-types'
 import ShareComp from '../components/ShareComp.jsx'
 import NotYetLink from '../components/NotYetLink.jsx'
 import DropdownMenu from '../components/DropdownMenu.jsx'
+import WithdrawModalComp from '../components/WithdrawModalComp.jsx'
 import { Link } from 'react-router'
 
 class Downloadable extends React.Component {
@@ -80,6 +81,7 @@ class Downloadable extends React.Component {
             </ul>
           </DropdownMenu>
         </div>
+        <WithdrawModalComp itemID={this.props.id} sendApiData={this.props.sendApiData}/>
       {p.attrs.buy_link &&
         <button onClick={() => {this.linkBuyPrint()}} className="c-itemactions__button-print">Buy in Print</button>
         // ToDo: Hook this up when we get eBook links
@@ -111,6 +113,10 @@ class Undownloadable extends React.Component {
     return (
       <div className="c-itemactions">
         {msg}
+      {p.status != "withdrawn" &&
+        <WithdrawModalComp itemID={this.props.id}
+                           fetchingData={this.props.fetchingData} sendApiData={this.props.sendApiData}/>
+      }
       {p.status != "withdrawn" ?
         <ShareComp type="item" id={p.id} />
       :
