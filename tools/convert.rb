@@ -146,13 +146,7 @@ end
 
 ###################################################################################################
 # Determine the old front-end server to use for thumbnailing
-$hostname = `/bin/hostname`.strip
-$thumbnailServer = case $hostname
-  when 'pub-submit-dev'; 'http://pub-submit-dev.escholarship.org'
-  when 'pub-submit-stg-2a', 'pub-submit-stg-2c'; 'https://pub-submit-stg.escholarship.org'
-  when 'pub-submit-prd-2a', 'pub-submit-prd-2c'; 'https://submit.escholarship.org'
-  else raise("unrecognized host #{hostname}")
-end
+$thumbnailServer = ENV["THUMBNAIL_SERVER"] || raise("missing env THUMBNAIL_SERVER")
 
 # Item counts for status updates
 $nSkipped = 0
@@ -187,11 +181,7 @@ Ezid::Client.configure do |config|
   (ezidCred = Netrc.read['ezid.cdlib.org']) or raise("Need credentials for ezid.cdlib.org in ~/.netrc")
   config.user = ezidCred[0]
   config.password = ezidCred[1]
-  config.default_shoulder = case $hostname
-    when 'pub-submit-stg-2a', 'pub-submit-stg-2c', 'pub-submit-dev'; 'ark:/99999/fk4'
-    when 'pub-submit-prd-2a', 'pub-submit-prd-2c'; 'ark:/99166/p3'
-    else raise "Unrecognized hostname for shoulder determination."
-  end
+  config.default_shoulder = ENV["PEOPLE_ARK_SHOULDER"] || raise("missing env PEOPLE_ARK_SHOULDER")
 end
 
 ###################################################################################################
@@ -1933,7 +1923,7 @@ def convertPDF(itemID)
     # First, linearize the original file. This will make the first page display quickly in our
     # pdf.js view on the item page.
     linFile = Tempfile.new(["linearized_#{itemID}_", ".pdf"], TEMP_DIR)
-    system("/usr/bin/qpdf --linearize #{origFile} #{linFile.path}")
+    system("/apps/eschol/bin/qpdf --linearize #{origFile} #{linFile.path}")
     code = $?.exitstatus
     code == 0 || code == 3 or raise("Error #{code} linearizing.")
     linSize = File.size(linFile.path)

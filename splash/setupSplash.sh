@@ -4,7 +4,7 @@ rm -rf WEB-INF/lib WEB-INF/bin
 mkdir -p downloaded WEB-INF/lib WEB-INF/bin
 cd downloaded
 echo "Downloading."
-wget --no-clobber --no-verbose https://github.com/itext/itext7/releases/download/7.0.4/itext7-7.0.4.zip
+wget --no-clobber --no-verbose https://github.com/itext/itext7/releases/download/7.1.4/iText7-Core-7.1.4.zip
 wget --no-clobber --no-verbose https://www.slf4j.org/dist/slf4j-1.7.25.tar.gz
 wget --no-clobber --no-verbose http://apache.osuosl.org/logging/log4j/2.9.0/apache-log4j-2.9.0-bin.tar.gz
 wget --no-clobber --no-verbose https://www.bouncycastle.org/download/bcprov-jdk15on-158.jar
@@ -14,7 +14,8 @@ echo "Checking integrity."
 sha256sum -c *.sha256
 echo "Extracting."
 cd ../WEB-INF/lib
-unzip -q ../../downloaded/itext7-7.0.4.zip '*-7.0.4.jar'
+unzip -q ../../downloaded/iText7-Core-7.1.4.zip '*.jar'
+rm *-javadoc.jar *-sources.jar
 tar xfz ../../downloaded/apache-log4j-2.9.0-bin.tar.gz --wildcards '*-2.9.0.jar'
 mv apache-log4j-2.9.0-bin/*.jar . && rm -rf apache-log4j-2.9.0-bin
 rm log4j-slf4j-impl-2.9.0.jar

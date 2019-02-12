@@ -4,7 +4,7 @@
 
 import com.itextpdf.forms.PdfPageFormCopier;
 import com.itextpdf.kernel.crypto.BadPasswordException;
-import com.itextpdf.kernel.color.DeviceRgb;
+import com.itextpdf.kernel.colors.DeviceRgb;
 import com.itextpdf.kernel.geom.PageSize;
 import com.itextpdf.kernel.geom.Rectangle;
 import com.itextpdf.kernel.pdf.PdfDocument;
