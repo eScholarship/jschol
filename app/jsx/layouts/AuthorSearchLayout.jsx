@@ -2,7 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Link } from 'react-router'
 import _ from 'lodash'
-import Form from 'react-router-form'
+//import Form from 'react-router-form'
 
 export default class AuthorSearchLayout extends React.Component
 {
@@ -25,11 +25,11 @@ export default class AuthorSearchLayout extends React.Component
                 Author Search
               </h1>
             </header>
-            <Form to={p.location.pathname} method="GET">
+            <form to={p.location.pathname} method="GET">
               <label htmlFor="authSearchBox">Email/name (partial ok): </label>
               <input type="text" size="40" name="q" id="authorSearchBox" defaultValue={p.data.search_str}/>&#160;
               <button type="submit">Go</button>
-            </Form>
+            </form>
             <br/><br/>
             { p.data.authors && p.data.authors.length > 0 &&
               <div className="c-datatable">

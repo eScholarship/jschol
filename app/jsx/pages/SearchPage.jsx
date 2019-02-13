@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import $ from 'jquery'
 import _ from 'lodash'
 import { Link } from 'react-router'
-import Form from 'react-router-form'
+//import Form from 'react-router-form'
 
 import PageBase from './PageBase.jsx'
 import Header2Comp from '../components/Header2Comp.jsx'
@@ -635,7 +635,7 @@ class SearchPage extends PageBase {
           <NavComp data={data.header.nav_bar} />
         </div>
     {/* <ExportComp /> */}
-        <Form id={formName} to='/search' method="GET" onSubmit={this.handleSubmit} className="c-columns">
+        <form id={formName} to='/search' method="GET" onSubmit={this.handleSubmit} className="c-columns">
         <aside>
           <FacetForm formName={formName} formButton={formButton} data={facetFormData} info_count={data.info_count} query={data.query} />
         </aside>
@@ -667,7 +667,7 @@ class SearchPage extends PageBase {
           }
           </section>
         </main>
-      </Form>
+      </form>
     </div>
   )}
 }

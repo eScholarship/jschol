@@ -1,5 +1,5 @@
 import React from 'react'
-import Form from 'react-router-form'
+//import Form from 'react-router-form'
 import WysiwygEditorComp from '../components/WysiwygEditorComp.jsx'
 import MarqueeComp from '../components/MarqueeComp.jsx'
 import PropTypes from 'prop-types'
@@ -176,7 +176,7 @@ class HeroCarouselLayout extends React.Component {
         <div className="c-columns">
           <main>
             <section className="o-columnbox1">
-              <Form to={`/api/unit/${this.props.unit.id}/carouselConfig`} onSubmit={this.handleSubmit}>
+              <form to={`/api/unit/${this.props.unit.id}/carouselConfig`} onSubmit={this.handleSubmit}>
                 <div className="can-toggle can-toggle--size-small">
                   <input id="displayCarousel" name="carouselFlag" type="checkbox" defaultChecked={data.marquee.carousel}
                          onChange={ event => this.setMarqueeData({carousel: event.target.checked}) }/>
@@ -200,7 +200,7 @@ class HeroCarouselLayout extends React.Component {
                   </div>
                 </div>
                 <br/><br/>
-              </Form>
+              </form>
             </section>
           </main>
         </div>
@@ -265,7 +265,7 @@ class CampusCarouselConfig extends React.Component {
         <div className="c-columns">
           <main>
             <section className="o-columnbox1">
-              <Form to={`/api/unit/${this.props.unit.id}/campusCarouselConfig`} onSubmit={this.handleSubmit}>
+              <form to={`/api/unit/${this.props.unit.id}/campusCarouselConfig`} onSubmit={this.handleSubmit}>
                 <p>Content carousels may be used to feature content collections on your campus landing pages.</p>
                 <div className="c-editable-page__label">Content Carousel 1</div>
                 <ConfigSettings unit={this.props.unit} contentCarousel={data.contentCar1} index={1} campusUnits={data.campusUnits} />
@@ -277,7 +277,7 @@ class CampusCarouselConfig extends React.Component {
               {/* ToDo: Fix 
                  Right now, this selects no radio buttons, which doesn't make sense
                 <button type="reset">Cancel</button>   */}
-              </Form>
+              </form>
             </section>
           </main>
         </div>

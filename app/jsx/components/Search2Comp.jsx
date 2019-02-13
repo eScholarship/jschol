@@ -1,7 +1,7 @@
 // ##### Search 2 Component - With Search Controls; Used on unit pages  ##### //
 
 import React from 'react'
-import Form from 'react-router-form'
+//import Form from 'react-router-form'
 
 class SearchControls extends React.Component {
   render() {
@@ -55,7 +55,7 @@ class SearchComp2 extends React.Component {
     }
 
     return (
-        <Form to="/search" method="GET" autoComplete="off">
+        <form to="/search" method="GET" autoComplete="off">
           <div className="c-search2">
             <div className="c-search2__inputs">
               <div className="c-search2__form">
@@ -74,7 +74,7 @@ class SearchComp2 extends React.Component {
             <button type="submit" className="c-search2__submit-button" aria-label="search"></button>
             <button type="button" className="c-search2__search-close-button" aria-label="close search field" onClick = {()=>this.props.onClose()}></button>
           </div>
-        </Form>
+        </form>
     )
   }
 }

@@ -1,12 +1,12 @@
 // ##### Campus Search Component ##### //
 
 import React from 'react'
-import Form from 'react-router-form'
+//import Form from 'react-router-form'
 
 class CampusSearchComp extends React.Component {
   render() {
     return (
-    <Form to="/search" method="GET">
+    <form to="/search" method="GET">
       <div className="c-campussearch">
         <label htmlFor="c-campussearch__search" className="c-campussearch__label">Discover {this.props.campusName} scholarship</label>
         <div className="c-campussearch__search">
@@ -16,7 +16,7 @@ class CampusSearchComp extends React.Component {
           <button type="submit" className="c-campussearch__button" aria-label="Search"></button>
         </div>
       </div>
-    </Form>
+    </form>
     )
   }
 }

@@ -1,6 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import Form from 'react-router-form'
+//import Form from 'react-router-form'
 import { Link } from 'react-router'
 import { Subscriber } from 'react-broadcast'
 
@@ -96,7 +96,7 @@ export default class UnitBuilderLayout extends React.Component
             {/oru|campus/.test(this.props.unit.type) &&
               <details className="c-togglecontent" open>
                 <summary>Add new sub-unit</summary>
-                <Form to={`/api/unit/${this.props.unit.id}/unitBuilder`}
+                <form to={`/api/unit/${this.props.unit.id}/unitBuilder`}
                       onSubmit={ (event, data) => {
                         event.preventDefault()
                         this.props.sendApiData("PUT", event.target.action, data)
@@ -120,13 +120,13 @@ export default class UnitBuilderLayout extends React.Component
                   <label className="c-editable-page__label" htmlFor="hidden">Hidden: </label>
                   <input type="checkbox" id="hidden" name="hidden" defaultChecked={true} />
                   <button type="submit">Create Unit</button>
-                </Form>
+                </form>
               </details>
             }
 
             <details className="c-togglecontent">
               <summary>Move this unit</summary>
-              <Form to={`/api/unit/${this.props.unit.id}/moveUnit`}
+              <form to={`/api/unit/${this.props.unit.id}/moveUnit`}
                     onSubmit={ (event, data) => {
                       event.preventDefault()
                       this.props.sendApiData("PUT", event.target.action, data)
@@ -134,12 +134,12 @@ export default class UnitBuilderLayout extends React.Component
                 <label className="c-editable-page__label" htmlFor="targetUnitID">Destination parent unit: </label>
                 <input className="c-editable-page__input" id="targetUnitID" name="targetUnitID" type="text"/>
                 <button type="submit">Move Unit '{this.props.unit.id}'</button>
-              </Form>
+              </form>
             </details>
 
             <details className="c-togglecontent">
               <summary>Copy unit content</summary>
-              <Form to={`/api/unit/${this.props.unit.id}/copyUnit`}
+              <form to={`/api/unit/${this.props.unit.id}/copyUnit`}
                     onSubmit={ (event, data) => {
                       event.preventDefault()
                       this.props.sendApiData("PUT", event.target.action, data)
@@ -149,19 +149,19 @@ export default class UnitBuilderLayout extends React.Component
                 <label className="c-editable-page__label" htmlFor="newUnitID">Name for copied unit: </label>
                 <input className="c-editable-page__input" id="newUnitID" name="newUnitID" type="text"/>
                 <button type="submit">Copy unit '{this.props.unit.id}'</button>
-              </Form>
+              </form>
             </details>
 
             <details className="c-togglecontent">
               <summary>Delete this unit</summary>
-              <Form to={`/api/unit/${this.props.unit.id}/deleteUnit`}
+              <form to={`/api/unit/${this.props.unit.id}/deleteUnit`}
                     onSubmit={ (event, data) => {
                       event.preventDefault()
                       this.props.sendApiData("PUT", event.target.action, data)
                     }}>
                 <p><i>Note:</i> This will fail (harmlessly) if the unit has any items or sub-units.</p>
                 <button type="submit" className="o-button__3">Delete unit '{this.props.unit.id}'</button>
-              </Form>
+              </form>
             </details>
           </section>
         </main>
