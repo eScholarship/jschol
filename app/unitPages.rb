@@ -204,7 +204,7 @@ def getNavBar(unit, navItems, level=1, issuesSubNav=nil)
     }
     if level==1 && !isTopmostUnit(unit)
       unitID = unit.type.include?('series') ? getUnitAncestor(unit).id : unit.id
-      if unit.type == "journal" and issuesSubNav.length > 0
+      if unit.type == "journal" && issuesSubNav && issuesSubNav.length > 0
         navItems.unshift({ "id"=>0, "type"=>"fixed_folder",
                           "name"=>getIssueDropDownName(unit, issuesSubNav),
                           "url"=>nil, "sub_nav"=>issuesSubNav })
@@ -747,7 +747,7 @@ def maxNavID(navBar)
 end
 
 def jsonHalt(httpCode, message)
-  puts "jsonHalt: code=#{httpCode} messaage=#{message.inspect}"
+  puts "jsonHalt: code=#{httpCode} message=#{message.inspect}"
   content_type :json
   halt(httpCode, { error: true, message: message }.to_json)
 end

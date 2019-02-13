@@ -319,7 +319,8 @@ class PageBase extends React.Component
         }
       })
       .fail((jqxhr, textStatus, err) => {
-        this.setState({ pageData: { error: textStatus }, fetchingPerms: false, adminLogin: null, permissions: null, isEditingPage: false })
+        this.setState({ pageData: { error: textStatus }, fetchingPerms: false,
+                        adminLogin: null, permissions: null, isEditingPage: false })
       })
     }
   }
@@ -333,7 +334,8 @@ class PageBase extends React.Component
                                            token: this.state.adminLogin && this.state.adminLogin.token,
                                            onLogin: this.onLogin,
                                            onLogout: this.onLogout,
-                                           isEditingPage: this.state.adminLogin && this.state.adminLogin.loggedIn && this.state.isEditingPage,
+                                           isEditingPage: this.state.adminLogin && this.state.adminLogin.loggedIn &&
+                                                          this.state.isEditingPage,
                                            onEditingPageChange: this.onEditingPageChange,
                                            fetchPageData: () =>this.fetchPageData(this.props),
                                            goLocation: (loc) =>this.props.router.push(loc),
