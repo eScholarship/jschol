@@ -20,7 +20,7 @@ class BrowsePage extends PageBase
   // PageBase will fetch the following URL for us, and place the results in this.state.pageData
   pageDataURL() {
     if (this.props.match.params.campusID) {
-      return (this.props.route.path.includes('units')) ?          // URL = /:campusID/units
+      return (this.props.match.path.includes('units')) ?          // URL = /:campusID/units
         "/api/browse/units/" + this.props.match.params.campusID
         :                                                         // URL = /:campusID/journals
          "/api/browse/journals/" + this.props.match.params.campusID

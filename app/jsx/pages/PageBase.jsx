@@ -328,20 +328,22 @@ class PageBase extends React.Component
   render() {
     // If ScrollToTopComp gives you trouble, you can disable by replacing it with a plain <div>
     return (
-      <Contexts.CMS.Provider value={ { loggedIn: this.state.adminLogin && this.state.adminLogin.loggedIn,
-                                           username: this.state.adminLogin && this.state.adminLogin.username,
-                                           token: this.state.adminLogin && this.state.adminLogin.token,
-                                           onLogin: this.onLogin,
-                                           onLogout: this.onLogout,
-                                           isEditingPage: this.state.adminLogin && this.state.adminLogin.loggedIn &&
-                                                          this.state.isEditingPage,
-                                           onEditingPageChange: this.onEditingPageChange,
-                                           fetchPageData: () =>this.fetchPageData(this.props),
-                                           goLocation: (loc) =>this.props.router.push(loc),
-                                           modules: this.state.cmsModules,
-                                           permissions: this.state.permissions } }>
-        {this.renderContent()}
-      </Contexts.CMS.Provider>
+      <ScrollToTopComp>
+        <Contexts.CMS.Provider value={ { loggedIn: this.state.adminLogin && this.state.adminLogin.loggedIn,
+                                             username: this.state.adminLogin && this.state.adminLogin.username,
+                                             token: this.state.adminLogin && this.state.adminLogin.token,
+                                             onLogin: this.onLogin,
+                                             onLogout: this.onLogout,
+                                             isEditingPage: this.state.adminLogin && this.state.adminLogin.loggedIn &&
+                                                            this.state.isEditingPage,
+                                             onEditingPageChange: this.onEditingPageChange,
+                                             fetchPageData: () =>this.fetchPageData(this.props),
+                                             goLocation: (loc) =>this.props.router.push(loc),
+                                             modules: this.state.cmsModules,
+                                             permissions: this.state.permissions } }>
+          {this.renderContent()}
+        </Contexts.CMS.Provider>
+      </ScrollToTopComp>
     )
   }
 

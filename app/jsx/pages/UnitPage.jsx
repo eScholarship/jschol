@@ -55,10 +55,13 @@ class UnitPage extends PageBase {
         return `/api/unit/${pm.unitID}/${pm.pageName}`
       else if (pm.pageName == "authorSearch")
         return `/api/unit/${pm.unitID}/authorSearch${this.props.location.search}`
-      else
-        return `/api/unit/${pm.unitID}/${pm.pageName}/${pm.splat}`
+      else // e.g. /uc/ucbgse_bre/policies
+        return `/api/unit/${pm.unitID}/${pm.pageName}`
     }
-    return `/api/unit/${pm.unitID}/home`
+    else if (pm[0])  // e.g. /uc/ucbgse_bre/7/1
+      return `/api/unit/${pm.unitID}/${pm[0]}`
+    else
+      return `/api/unit/${pm.unitID}/home`
   }
 
   // Unit ID for permissions checking

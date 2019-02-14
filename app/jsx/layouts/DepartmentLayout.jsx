@@ -31,7 +31,7 @@ class SeriesComp extends React.Component {
       <details className="c-togglecontent c-unitseries">
       <summary><Link to={"/uc/"+data.unit_id}>{data.name} ({data.count})</Link></summary>
       {data.items.map((item) =>
-        <PubComp key={item.id} result={item} h="H3" />) }
+        <PubComp key={item.id} result={item} h="h3" />) }
       {data.count > data.previewLimit &&
         <div className="c-unitseries__publications2">{data.count - data.previewLimit} more work{plural} &mdash; <Link to={"/uc/"+data.unit_id}>show all</Link></div> }
       </details>

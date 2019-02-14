@@ -9,7 +9,7 @@ import PubComp from '../components/PubComp.jsx'
 import IssueActionsComp from '../components/IssueActionsComp.jsx'
 
 class VolumeSelector extends React.Component {
-  static PropTypes = {
+  static propTypes = {
     current_issue_title: PropTypes.string,
     issues: PropTypes.array.isRequired  // [ {:id=>-1, :name=>"Volume 14, Issue 0, 2017",
                                         // :volume=>"1", :issue=>"2", :published=>#<Date: ...}, ... ]
@@ -44,7 +44,7 @@ class VolumeSelector extends React.Component {
 }
 
 class IssueWrapperComp extends React.Component {
-  static PropTypes = {
+  static propTypes = {
     display: PropTypes.string.isRequired,
     issue: PropTypes.shape({
       id: PropTypes.number,
