@@ -4,7 +4,7 @@ import url                       from 'url'
 import http                      from 'http'
 import React                     from 'react'
 import { renderToString }        from 'react-dom/server'
-import { Router, RouterContext, match }  from 'react-router'
+import { Router, RouterContext, match }  from 'react-router-dom'
 import decache                   from 'decache'
 import fs                        from 'fs'
 import MetaTagsServer            from 'react-meta-tags/server';

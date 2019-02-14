@@ -1,7 +1,7 @@
 // ##### Breadcrumb Component ##### //
 
 import React from 'react'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 
 class BreadcrumbComp extends React.Component {
   render() {

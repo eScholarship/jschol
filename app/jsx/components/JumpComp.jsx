@@ -3,7 +3,7 @@
 
 import React from 'react'
 import Breakpoints from '../../js/breakpoints.json'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 
 class JumpComp extends React.Component {
   state = {show: true /* default to true for server-side */}

@@ -3,7 +3,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import $ from 'jquery'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 import NotYetLink from '../components/NotYetLink.jsx'
 import PaginationComp from '../components/PaginationComp.jsx'
 

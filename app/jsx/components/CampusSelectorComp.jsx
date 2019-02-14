@@ -1,7 +1,7 @@
 // ##### Campus Heading and Menu Component ##### //
 
 import React from 'react'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 import DropdownMenu from '../components/DropdownMenu.jsx'
 
 class CampusSelectorComp extends React.Component {

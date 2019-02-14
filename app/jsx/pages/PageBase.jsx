@@ -4,7 +4,7 @@ import $ from 'jquery'
 import _ from 'lodash'
 import ReactGA from 'react-ga'
 import Contexts from '../contexts.jsx'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 
 import SkipNavComp from '../components/SkipNavComp.jsx'
 import Header1Comp from '../components/Header1Comp.jsx'

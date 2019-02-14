@@ -1,5 +1,5 @@
 import React from 'react'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 
 import PageBase from './PageBase.jsx'
 import ServerErrorComp from '../components/ServerErrorComp.jsx'
@@ -33,7 +33,7 @@ export default class GlobalStaticPage extends PageBase
 
   // PageBase will fetch the following URL for us, and place the results in this.state.pageData
   pageDataURL() {
-    return `/api/globalStatic/${this.props.params.splat}`
+    return `/api/globalStatic${this.props.location.pathname}`
   }
 
   // Unit ID for permissions checking

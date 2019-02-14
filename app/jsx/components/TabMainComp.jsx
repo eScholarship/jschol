@@ -4,7 +4,7 @@ import React from 'react'
 import PdfViewComp from '../components/PdfViewComp.jsx'
 import MediaViewerComp from '../components/MediaViewerComp.jsx'
 import ViewExternalComp from '../components/ViewExternalComp.jsx'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 import ArbitraryHTMLComp from "../components/ArbitraryHTMLComp.jsx"
 import ScrollingAnchorComp from "../components/ScrollingAnchorComp.jsx"
 

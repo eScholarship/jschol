@@ -2,7 +2,7 @@
 
 import React from 'react'
 import Contexts from '../contexts.jsx'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 
 class WizardRoleComp extends React.Component {
   render() {

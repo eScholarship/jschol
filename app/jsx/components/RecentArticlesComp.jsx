@@ -1,7 +1,7 @@
 // ##### Recent Articles sidebar widget ##### //
 
 import React from 'react'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 import ArbitraryHTMLComp from "../components/ArbitraryHTMLComp.jsx"
 import TruncationObj from '../objects/TruncationObj.jsx'
 

@@ -1,6 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 
 import PubPreviewComp from '../components/PubPreviewComp.jsx'
 import SortPaginationComp from '../components/SortPaginationComp.jsx'

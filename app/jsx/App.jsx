@@ -40,30 +40,29 @@ if (!(typeof document === "undefined")) {
   ReactDOM.render((
     <BrowserRouter>
       <div>
-        <Route path="/" component={HomePage} />
-        <Route path="/campuses" component={BrowsePage} />
-        <Route path="/journals" component={BrowsePage} />
-        <Route path="/:campusID/units" component={BrowsePage} />
-        <Route path="/:campusID/journals" component={BrowsePage} />
-        <Route path="/uc/item/:itemID" component={ItemPage} />
-        <Route path="/uc/author/:personID/stats" component={AuthorStatsPage} />
-        <Route path="/uc/author/:personID/stats/:pageName" component={AuthorStatsPage} />
-        <Route path="/uc/:unitID/stats" component={UnitStatsPage} />
-        <Route path="/uc/:unitID/stats/:pageName" component={UnitStatsPage} />
-        <Route path="/uc/:unitID" component={UnitPage} />
-        <Route path="/uc/:unitID/:pageName" component={UnitPage} />
-        <Route path="/uc/:unitID/:pageName/**" component={UnitPage} />
-        <Route path="/search" component={SearchPage} />
-        <Route path="/login" component={LoginPage} />
-        <Route path="/loginSuccess/**" component={LoginSuccessPage} />
-        <Route path="/loginSuccess" component={LoginSuccessPage} />
-        <Route path="/logout" component={LogoutPage} />
-        <Route path="/logoutSuccess/**" component={LogoutSuccessPage} />
-        <Route path="/logoutSuccess" component={LogoutSuccessPage} />
+        <Route exact path="/" component={HomePage} />
+        <Route exact path="/campuses" component={BrowsePage} />
+        <Route exact path="/journals" component={BrowsePage} />
+        <Route exact path="/:campusID/units" component={BrowsePage} />
+        <Route exact path="/:campusID/journals" component={BrowsePage} />
+        <Route exact path="/uc/item/:itemID" component={ItemPage} />
+        <Route exact path="/uc/author/:personID/stats" component={AuthorStatsPage} />
+        <Route exact path="/uc/author/:personID/stats/:pageName" component={AuthorStatsPage} />
+        <Route exact path="/uc/:unitID/stats" component={UnitStatsPage} />
+        <Route exact path="/uc/:unitID/stats/:pageName" component={UnitStatsPage} />
+        <Route exact path="/uc/:unitID" component={UnitPage} />
+        <Route exact path="/uc/:unitID/:pageName" component={UnitPage} />
+        <Route exact path="/uc/:unitID/:pageName/**" component={UnitPage} />
+        <Route exact path="/search" component={SearchPage} />
+        <Route exact path="/login" component={LoginPage} />
+        <Route exact path="/loginSuccess/**" component={LoginSuccessPage} />
+        <Route exact path="/loginSuccess" component={LoginSuccessPage} />
+        <Route exact path="/logout" component={LogoutPage} />
+        <Route exact path="/logoutSuccess/**" component={LogoutSuccessPage} />
+        <Route exact path="/logoutSuccess" component={LogoutSuccessPage} />
         <Route path="*" component={GlobalStaticPage}/>
       </div>
     </BrowserRouter>
   ), document.getElementById('main'))
 }
 
-module.exports = routes

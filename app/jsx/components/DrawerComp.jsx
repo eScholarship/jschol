@@ -1,6 +1,6 @@
 import React from 'react'
 import Contexts from '../contexts.jsx'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 import _ from 'lodash'
 
 class AddWidgetMenu extends React.Component {

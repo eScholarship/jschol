@@ -11,7 +11,7 @@
 import React from 'react'
 import NavSubComp from '../components/NavSubComp.jsx'
 import Breakpoints from '../../js/breakpoints.json'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 
 class NavComp extends React.Component {
   constructor(props){

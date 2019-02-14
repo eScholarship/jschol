@@ -6,7 +6,7 @@ import StatCarouselComp from '../components/StatCarouselComp.jsx'
 import UnitCarouselComp from '../components/UnitCarouselComp.jsx'
 import JournalCarouselComp from '../components/JournalCarouselComp.jsx'
 import NotYetLink from '../components/NotYetLink.jsx'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 
 class CampusLayout extends React.Component {
   static propTypes = {

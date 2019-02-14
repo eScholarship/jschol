@@ -38,7 +38,7 @@ class ItemPage extends PageBase {
 
   // PageBase will fetch the following URL for us, and place the results in this.state.pageData
   pageDataURL() {
-    return "/api/item/" + this.props.params.itemID
+    return "/api/item/" + this.props.match.params.itemID
   }
 
   // Unit ID for permissions checking

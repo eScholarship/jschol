@@ -1,5 +1,5 @@
 import React from 'react'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 
 import PageBase from './PageBase.jsx'
 import Header1Comp from '../components/Header1Comp.jsx'
@@ -15,8 +15,8 @@ class LogoutSuccessPage extends PageBase
   renderData(data) {
     if (!(typeof document === "undefined")) {
       // Return to the page whence the user originally came, if any
-      if (this.props.params.splat)
-        setTimeout(()=>this.props.router.push("/" + this.props.params.splat), 1000)
+      if (this.props.match.params.splat)
+        setTimeout(()=>this.props.router.push("/" + this.props.match.params.splat), 1000)
     }
     return(
     <div>
@@ -33,7 +33,7 @@ class LogoutSuccessPage extends PageBase
             </header>
             <div>
               <p>Logged out.</p>
-              {this.props.params.splat &&
+              {this.props.match.params.splat &&
                 <p>Returning to where you left off...</p>
               }
             </div>

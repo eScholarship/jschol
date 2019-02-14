@@ -2,7 +2,7 @@
 
 import React from 'react'
 //import Form from 'react-router-form'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import MEDIA_PATH from '../../js/MediaPath.js'
 

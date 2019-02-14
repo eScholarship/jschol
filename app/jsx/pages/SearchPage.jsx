@@ -2,7 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import $ from 'jquery'
 import _ from 'lodash'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 //import Form from 'react-router-form'
 
 import PageBase from './PageBase.jsx'
@@ -604,7 +604,7 @@ class SearchPage extends PageBase {
 
   // PageBase will fetch the following URL for us, and place the results in this.state.pageData
   pageDataURL() {
-    return "/api/search/" + this.props.location.search  // plus whatever props.params.YourUrlParam, etc.
+    return "/api/search/" + this.props.location.search  // plus whatever props.match.params.YourUrlParam, etc.
   }
 
   // Set as the Form's onSubmit handler

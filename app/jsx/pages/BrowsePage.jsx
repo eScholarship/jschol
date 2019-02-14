@@ -1,7 +1,7 @@
 // ##### Browse Page ##### // 
 
 import React from 'react'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 
 import PageBase from './PageBase.jsx'
 import Header1Comp from '../components/Header1Comp.jsx'
@@ -19,18 +19,18 @@ class BrowsePage extends PageBase
 {
   // PageBase will fetch the following URL for us, and place the results in this.state.pageData
   pageDataURL() {
-    if (this.props.params.campusID) {
+    if (this.props.match.params.campusID) {
       return (this.props.route.path.includes('units')) ?          // URL = /:campusID/units
-        "/api/browse/units/" + this.props.params.campusID
+        "/api/browse/units/" + this.props.match.params.campusID
         :                                                         // URL = /:campusID/journals
-         "/api/browse/journals/" + this.props.params.campusID
+         "/api/browse/journals/" + this.props.match.params.campusID
     } else {                                                      // URL = /journals or /campuses
       return "/api/browse/" + this.props.route.path
     }
   }
 
   pagePermissionsUnit() {
-    return this.props.params.campusID ? this.props.params.campusID : "root"
+    return this.props.match.params.campusID ? this.props.match.params.campusID : "root"
   }
 
   renderData(data) {

@@ -1,5 +1,5 @@
 import React from 'react'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 //import Form from 'react-router-form'
 import Contexts from '../contexts.jsx'
 
@@ -41,15 +41,15 @@ class LoginSuccessPage extends PageBase
                       setTimeout(()=>cms.onLogin(this.state.pageData['username'], this.state.pageData['key']), 0)
 
                       // Return to the page whence the user originally came, if any
-                      if (this.props.params.splat)
-                        setTimeout(()=>this.props.router.push("/" + this.props.params.splat), 1000)
+                      if (this.props.match.params.splat)
+                        setTimeout(()=>this.props.router.push("/" + this.props.match.params.splat), 1000)
                     }
                     username = this.state.pageData['username']
                   }
                   return (
                     <div>
                       <p>You are logged in as '{username}'.</p>
-                      {this.props.params.splat &&
+                      {this.props.match.params.splat &&
                         <p>Returning to where you left off...</p>
                       }
                     </div>
