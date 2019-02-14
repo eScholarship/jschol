@@ -147,7 +147,7 @@ gulp.task('restart-express', restartExpress)
 gulp.task('start-express', restartExpress)
 
 gulp.task('rsync', function() {
-  exec('rsync -a --exclude js --exclude css --exclude bower_components /outer_jschol/app/ /home/jschol/inner_jschol/app/',
+  exec('rsync -a --exclude js --exclude css /outer_jschol/app/ /home/jschol/inner_jschol/app/',
     (err, stdout, stderr) => {
       console.log(stderr)
     }

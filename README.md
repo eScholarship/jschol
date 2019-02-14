@@ -21,7 +21,6 @@ Description of files
 * `README.md`: This file.
 * `LICENSE`: Software license.
 * `app/`: Directory that contains all the JSX, CSS, HTML, etc.
-* `app/bower_components`: Gets populated by 'bower' with the Javascript packages for the front-end. Don't modify directly.
 * `app/css`: Gets populated with compiled CSS files. Don't modify directly.
 * `app/fonts`: Special fonts for this app.
 * `app/images`: JPG, PNG, etc.
@@ -31,7 +30,6 @@ Description of files
 * `app/scss`: CSS styles. Uses SCSS so macros, variables, etc. are available. These get compiled (through Gulp) into app/css/.
 * `app/server.rb`: Main app driver with code to generate the page outline, supply database data, cache bust, etc.
 * `bin/`: Gets populated by 'bundler' with driver scripts for gems it installs. Don't modify directly.
-* `bower.json`: List of Javascript packages used in the front-end. Used by 'node' to download and install them locally.
 * `config`: A place to keep environment variables such as database and S3 connection parameters.
 * `convert.rb`: Script to populate the new eschol5 database with units, item, etc. from the old eScholarship.
 * `gems`: Gets populated by 'bundler' with driver scripts for gems it installs. Don't modify directly.

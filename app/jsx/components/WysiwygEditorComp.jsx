@@ -40,7 +40,7 @@ export default class WysiwygEditorComp extends React.Component
                    buttons={buttons}
                    data={this.initialHTML}
                    shouldInjectSvgIcons={false}
-                   svgIconsPath="/bower_components/trumbowyg/dist/ui/icons.svg"
+                   svgIconsPath="/node_modules/trumbowyg/dist/ui/icons.svg"
                    onChange={e => this.props.onChange(e.target.innerHTML)}
                    disabled={this.props.disabled}
                    plugins={{
