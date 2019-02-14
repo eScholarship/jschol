@@ -3,7 +3,7 @@
 import React from 'react'
 import LazyImageComp from '../components/LazyImageComp.jsx'
 import { Link } from 'react-router'
-import { Subscriber } from 'react-broadcast'
+import Contexts from '../contexts.jsx'
 import MEDIA_PATH from '../../js/MediaPath.js'
 
 class FooterComp extends React.Component {
@@ -21,11 +21,11 @@ class FooterComp extends React.Component {
             <li><Link to="/privacypolicy">Privacy Statement</Link></li>
             <li><Link to="/policies">Site Policies</Link></li>
             <li><Link to="/terms">Terms of Use</Link></li>
-            <Subscriber channel="cms">
+            <Contexts.CMS.Consumer>
               { cms => cms.loggedIn ?
                 <li><Link to="/logout" onClick={()=>setTimeout(()=>cms.onLogout(), 0)}><strong>Admin Logout</strong></Link></li>
               : <li><Link to="/login"><strong>Admin Login</strong></Link></li> }
-            </Subscriber>
+            </Contexts.CMS.Consumer>
             <li><a href="https://help.escholarship.org"><strong>Help</strong></a></li>
           </ul>
         </nav>

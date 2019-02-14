@@ -1,7 +1,7 @@
 import React from 'react'
 import { Link } from 'react-router'
 //import Form from 'react-router-form'
-import { Subscriber } from 'react-broadcast'
+import Contexts from '../contexts.jsx'
 
 import PageBase from './PageBase.jsx'
 import Header1Comp from '../components/Header1Comp.jsx'
@@ -32,7 +32,7 @@ class LoginSuccessPage extends PageBase
             <header>
               <h1 className="o-columnbox1__heading">Login Success</h1>
             </header>
-            <Subscriber channel="cms">
+            <Contexts.CMS.Consumer>
               { cms => {
                   let username = cms.username
                   if (!username) {
@@ -56,7 +56,7 @@ class LoginSuccessPage extends PageBase
                   )
                 }
               }
-            </Subscriber>
+            </Contexts.CMS.Consumer>
           </section>
         </main>
       </div>

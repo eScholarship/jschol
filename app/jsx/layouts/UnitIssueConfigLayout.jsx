@@ -2,7 +2,7 @@ import React from 'react'
 import { Link } from 'react-router'
 //import Form from 'react-router-form'
 import _ from 'lodash'
-import { Subscriber } from 'react-broadcast'
+import Contexts from '../contexts.jsx'
 
 class RightsDropdown extends React.Component {
   render = () =>
@@ -85,7 +85,7 @@ class IssueTable extends React.Component {
 export default class UnitIssueConfigLayout extends React.Component
 {
   render = () =>
-    <Subscriber channel="cms">
+    <Contexts.CMS.Consumer>
       { cms => {
           let p = this.props
           let tableProps = {
@@ -110,5 +110,5 @@ export default class UnitIssueConfigLayout extends React.Component
           )
         }
       }
-    </Subscriber>
+    </Contexts.CMS.Consumer>
 }

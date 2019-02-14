@@ -1,13 +1,13 @@
 // ##### Deposit Wizard - [1] Role Component ##### //
 
 import React from 'react'
-import { Subscriber } from 'react-broadcast'
+import Contexts from '../contexts.jsx'
 import { Link } from 'react-router'
 
 class WizardRoleComp extends React.Component {
   render() {
     return (
-      <Subscriber channel="wiz">
+      <Contexts.Wiz.Consumer>
         { wiz => {
             let name = wiz.campusName,
                 [campusName, affiliation, facNext, studNext] = wiz.launchedFromRoot ?
@@ -58,7 +58,7 @@ class WizardRoleComp extends React.Component {
       }
       </div>
       )}}
-      </Subscriber>
+      </Contexts.Wiz.Consumer>
     )
   }
 }

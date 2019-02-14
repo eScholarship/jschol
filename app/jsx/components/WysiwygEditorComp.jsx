@@ -2,7 +2,7 @@
 
 import React from 'react'
 import PropTypes from 'prop-types'
-import { Subscriber } from 'react-broadcast'
+import Contexts from '../contexts.jsx'
 
 // Formatting buttons to display in the Trumbowyg editor
 const TRUMBO_BUTTONS = [
@@ -33,7 +33,7 @@ export default class WysiwygEditorComp extends React.Component
   render() {
   let buttons = this.props.buttons ? this.props.buttons : TRUMBO_BUTTONS 
   return(
-    <Subscriber channel="cms">
+    <Contexts.CMS.Consumer>
       { cms => cms.modules &&
         <cms.modules.Trumbowyg 
                    id={this.id}
@@ -58,6 +58,6 @@ export default class WysiwygEditorComp extends React.Component
                     }
                   }}/>
       }
-    </Subscriber>
+    </Contexts.CMS.Consumer>
   )}
 }

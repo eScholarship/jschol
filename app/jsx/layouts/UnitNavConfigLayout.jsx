@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import { Link } from 'react-router'
 import _ from 'lodash'
 import WysiwygEditorComp from '../components/WysiwygEditorComp.jsx'
-import { Subscriber } from 'react-broadcast'
+import Contexts from '../contexts.jsx'
 
 class EditableNavContentComp extends React.Component
 {
@@ -35,7 +35,7 @@ class EditableNavContentComp extends React.Component
     let data = this.props.data
     let dataIsSame = _.isEqual(data, this.state.newData)
     return (
-      <Subscriber channel="cms">
+      <Contexts.CMS.Consumer>
         { cms => {
           let navPerms = (cms.permissions && cms.permissions.nav_perms[data.slug]) || {}
           return (
@@ -101,7 +101,7 @@ class EditableNavContentComp extends React.Component
           </div>
           ) }
         }
-      </Subscriber>
+      </Contexts.CMS.Consumer>
     )
   }
 }

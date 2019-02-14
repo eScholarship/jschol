@@ -1,7 +1,7 @@
 // ##### Deposit Wizard Component ##### //
 
 import React from 'react'
-import { Broadcast, Subscriber } from 'react-broadcast'
+import Contexts from '../contexts.jsx'
 import PropTypes from 'prop-types'
 import WizardCampusComp from './WizardCampusComp.jsx'
 import WizardLinkComp from './WizardLinkComp.jsx'
@@ -121,7 +121,7 @@ class WizardComp extends React.Component {
     let d = this.state.data
     return (
       <div className="c-modal">
-      <Broadcast className="c-modal" channel="wiz" value={
+      <Contexts.Wiz.Provider value={
          { launchedFromRoot: this.state.launchedFromRoot,
            campusName: d.campusName ? d.campusName : "eScholarship", 
            campusID: d.campusID,
@@ -177,7 +177,7 @@ class WizardComp extends React.Component {
             </div>
           </div>
         </ReactModal>
-      </Broadcast>
+      </Contexts.Wiz.Provider>
       </div>
     )
   }

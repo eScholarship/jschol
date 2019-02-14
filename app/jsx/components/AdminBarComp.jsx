@@ -1,11 +1,11 @@
 // ##### AdminBar Component ##### //
 
 import React from 'react'
-import { Subscriber } from 'react-broadcast'
+import Contexts from '../contexts.jsx'
 import MEDIA_PATH from '../../js/MediaPath.js'
 
 const AdminBarComp = (props) =>
-  <Subscriber channel="cms">
+  <Contexts.CMS.Consumer>
     { cms =>
       <div style={{ marginTop: (cms.permissions && cms.permissions.admin && cms.modules) ? "-20px" : "-10px" }}>
         { cms.loggedIn &&
@@ -27,6 +27,6 @@ const AdminBarComp = (props) =>
         }
       </div>
     }
-  </Subscriber>
+  </Contexts.CMS.Consumer>
 
 module.exports = AdminBarComp;

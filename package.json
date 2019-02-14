@@ -76,7 +76,6 @@
     "lozad": "^1.0.9",
     "prop-types": "^15.5.10",
     "react": "^16.8.1",
-    "react-broadcast": "^0.7.1",
     "react-dom": "^16.8.1",
     "react-ga": "^2.5.7",
     "react-meta-tags": "^0.7.3",

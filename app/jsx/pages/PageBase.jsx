@@ -3,7 +3,7 @@ import React from 'react'
 import $ from 'jquery'
 import _ from 'lodash'
 import ReactGA from 'react-ga'
-import { Broadcast, Subscriber } from 'react-broadcast'
+import Contexts from '../contexts.jsx'
 import { Link } from 'react-router'
 
 import SkipNavComp from '../components/SkipNavComp.jsx'
@@ -329,20 +329,20 @@ class PageBase extends React.Component
     // If ScrollToTopComp gives you trouble, you can disable by replacing it with a plain <div>
     return (
       <ScrollToTopComp>
-        <Broadcast channel="cms" value={ { loggedIn: this.state.adminLogin && this.state.adminLogin.loggedIn,
-                                           username: this.state.adminLogin && this.state.adminLogin.username,
-                                           token: this.state.adminLogin && this.state.adminLogin.token,
-                                           onLogin: this.onLogin,
-                                           onLogout: this.onLogout,
-                                           isEditingPage: this.state.adminLogin && this.state.adminLogin.loggedIn &&
-                                                          this.state.isEditingPage,
-                                           onEditingPageChange: this.onEditingPageChange,
-                                           fetchPageData: () =>this.fetchPageData(this.props),
-                                           goLocation: (loc) =>this.props.router.push(loc),
-                                           modules: this.state.cmsModules,
-                                           permissions: this.state.permissions } }>
+        <Contexts.CMS.Provider value={ { loggedIn: this.state.adminLogin && this.state.adminLogin.loggedIn,
+                                             username: this.state.adminLogin && this.state.adminLogin.username,
+                                             token: this.state.adminLogin && this.state.adminLogin.token,
+                                             onLogin: this.onLogin,
+                                             onLogout: this.onLogout,
+                                             isEditingPage: this.state.adminLogin && this.state.adminLogin.loggedIn &&
+                                                            this.state.isEditingPage,
+                                             onEditingPageChange: this.onEditingPageChange,
+                                             fetchPageData: () =>this.fetchPageData(this.props),
+                                             goLocation: (loc) =>this.props.router.push(loc),
+                                             modules: this.state.cmsModules,
+                                             permissions: this.state.permissions } }>
           {this.renderContent()}
-        </Broadcast>
+        </Contexts.CMS.Provider>
       </ScrollToTopComp>
     )
   }

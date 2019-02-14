@@ -1,7 +1,7 @@
 // ##### Deposit Wizard - [4] Unit (ORU) Component ##### //
 
 import React from 'react'
-import { Subscriber } from 'react-broadcast'
+import Contexts from '../contexts.jsx'
 
 class WizardUnitComp extends React.Component {
   state = {fetchingData: true,
@@ -46,7 +46,7 @@ class WizardUnitComp extends React.Component {
         } )
       : null
     return (
-      <Subscriber channel="wiz">
+      <Contexts.Wiz.Consumer>
         { wiz => {
             this.fetchUnits(wiz.campusID)
             let prevStep = 3    // where other faculty go
@@ -82,7 +82,7 @@ class WizardUnitComp extends React.Component {
       }
       </div>
       )}}
-      </Subscriber>
+      </Contexts.Wiz.Consumer>
     )
   }
 }

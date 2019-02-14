@@ -2,7 +2,7 @@
 
 import React from 'react'
 import ReactModal from 'react-modal'
-import { Subscriber } from 'react-broadcast'
+import Contexts from '../contexts.jsx'
 
 class WithdrawModalComp extends React.Component {
   state = { modalOpen: false, inProgress: false }
@@ -19,7 +19,7 @@ class WithdrawModalComp extends React.Component {
 
   render() {
     return (
-      <Subscriber channel="cms">
+      <Contexts.CMS.Consumer>
         { cms =>
           (cms.loggedIn && cms.permissions && cms.permissions.super) ?
           <div>
@@ -72,7 +72,7 @@ class WithdrawModalComp extends React.Component {
           </div>
           : null
         }
-      </Subscriber>
+      </Contexts.CMS.Consumer>
     )
   }
 }

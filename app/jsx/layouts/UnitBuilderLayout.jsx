@@ -2,7 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 //import Form from 'react-router-form'
 import { Link } from 'react-router'
-import { Subscriber } from 'react-broadcast'
+import Contexts from '../contexts.jsx'
 
 const UNIT_TYPE_TO_LABEL = { series: "paper series",
                              monograph_series: "monograph series",
@@ -82,14 +82,14 @@ export default class UnitBuilderLayout extends React.Component
             {this.props.data.sub_units.length > 0 &&
               <details className="c-togglecontent" open>
                 <summary>Arrange sub-units</summary>
-                <Subscriber channel="cms">
+                <Contexts.CMS.Consumer>
                   { cms => cms && cms.modules &&
                     <SortableUnitList cms={cms}
                                       unit={this.props.unit.id}
                                       subUnits={this.props.data.sub_units}
                                       onChangeOrder={this.reorderUnits}/>
                   }
-                </Subscriber>
+                </Contexts.CMS.Consumer>
               </details>
             }
 

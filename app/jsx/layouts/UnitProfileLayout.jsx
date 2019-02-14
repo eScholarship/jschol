@@ -1,7 +1,7 @@
 import React from 'react'
 import WysiwygEditorComp from '../components/WysiwygEditorComp.jsx'
+import Contexts from '../contexts.jsx'
 //import Form from 'react-router-form'
-import { Subscriber } from 'react-broadcast'
 import _ from 'lodash'
 
 class UnitProfileLayout extends React.Component {
@@ -77,7 +77,7 @@ class UnitProfileLayout extends React.Component {
             ? "/assets/" + data.hero.asset_id
             : "http://placehold.it/500x200?text=No+hero+image"
     return (
-      <Subscriber channel="cms">
+      <Contexts.CMS.Consumer>
       { cms => {
          let disableEdit = !(cms.permissions && cms.permissions.super)
          let disableLogo = (this.props.unit.type.indexOf("series") >= 0) ||
@@ -179,7 +179,7 @@ class UnitProfileLayout extends React.Component {
          )
         }
       }
-      </Subscriber>
+      </Contexts.CMS.Consumer>
     )
   }
 
