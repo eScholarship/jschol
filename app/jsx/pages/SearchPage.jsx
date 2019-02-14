@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import $ from 'jquery'
 import _ from 'lodash'
 import { Link } from 'react-router-dom'
-//import Form from 'react-router-form'
+import getFormData from 'get-form-data'
 
 import PageBase from './PageBase.jsx'
 import Header2Comp from '../components/Header2Comp.jsx'
@@ -17,6 +17,7 @@ import PaginationComp from '../components/PaginationComp.jsx'
 import Breakpoints from '../../js/breakpoints.json'
 import ModalComp from '../components/ModalComp.jsx'
 import MetaTagsComp from '../components/MetaTagsComp.jsx'
+import FormComp from '../components/FormComp.jsx'
 
 // Load dotdotdot in browser but not server
 if (!(typeof document === "undefined")) {
@@ -607,20 +608,19 @@ class SearchPage extends PageBase {
     return "/api/search/" + this.props.location.search  // plus whatever props.match.params.YourUrlParam, etc.
   }
 
-  // Set as the Form's onSubmit handler
-  handleSubmit = (event, formData)=>{
-    for(let key in formData) {
-      if (formData[key] == "" ||
-      (key === 'sort' && formData[key] === 'rel') ||
-      (key === 'rows' && formData[key] === '10') ||
-      (key === 'start' && formData[key] === '0')) {
-        delete formData[key]
+  formFilter = (data) => {
+    let out = {}
+    for(let key in data) {
+      if (data[key] == "" ||
+          (key === 'sort' && data[key] === 'rel') ||
+          (key === 'rows' && data[key] === '10') ||
+          (key === 'start' && data[key] === '0'))
+      {
+        continue
       }
+      out[key] = data[key]
     }
-    // Handy for debugging
-    // console.log("this.state.query = ", this.state.query)
-    // console.log(JSON.stringify(formData))
-    return true
+    return out
   }
 
   renderData(data) {
@@ -635,7 +635,7 @@ class SearchPage extends PageBase {
           <NavComp data={data.header.nav_bar} />
         </div>
     {/* <ExportComp /> */}
-        <form id={formName} to='/search' method="GET" onSubmit={this.handleSubmit} className="c-columns">
+        <FormComp id={formName} to='/search' filter={this.formFilter} className="c-columns">
         <aside>
           <FacetForm formName={formName} formButton={formButton} data={facetFormData} info_count={data.info_count} query={data.query} />
         </aside>
@@ -667,7 +667,7 @@ class SearchPage extends PageBase {
           }
           </section>
         </main>
-      </form>
+      </FormComp>
     </div>
   )}
 }

@@ -10,14 +10,18 @@ class FormComp extends React.Component
 {
   static propTypes = {
     to: PropTypes.string.isRequired,
-    className: PropTypes.string.isRequired
+    className: PropTypes.string.isRequired,
+    filter: PropTypes.func
   }
 
   formEl = React.createRef()
 
   onSubmit = (event) => {
     event.preventDefault()
-    this.props.history.push(this.props.to + "?" + $.param(getFormData(this.formEl.current)))
+    let data = getFormData(this.formEl.current)
+    if (this.props.filter)
+      data = this.props.filter(data)
+    this.props.history.push(this.props.to + "?" + $.param(data))
   }
 
   render = () =>
