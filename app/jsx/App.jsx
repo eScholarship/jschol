@@ -35,35 +35,55 @@ let logPageView = () => {
   ReactGA.pageview(window.location.pathname + window.location.search)
 }
 
+let prevPathname = null
+
+class RecordLocation extends React.Component
+{
+  render = () => {
+    if (this.props.location.pathname != prevPathname) {
+      this.props.location.prevPathname = prevPathname
+      prevPathname = this.props.location.pathname
+    }
+    return null
+  }
+}
+
+class App extends React.Component
+{
+  render = () =>
+    <div>
+      <Route path="*" component={RecordLocation} />
+      <Switch> {/* only one route below will match */}
+        <Route exact path="/" component={HomePage} />
+        <Route exact path="/campuses" component={BrowsePage} />
+        <Route exact path="/journals" component={BrowsePage} />
+        <Route exact path="/:campusID/units" component={BrowsePage} />
+        <Route exact path="/:campusID/journals" component={BrowsePage} />
+        <Route exact path="/uc/item/:itemID" component={ItemPage} />
+        <Route exact path="/uc/author/:personID/stats" component={AuthorStatsPage} />
+        <Route exact path="/uc/author/:personID/stats/:pageName" component={AuthorStatsPage} />
+        <Route exact path="/uc/:unitID/stats" component={UnitStatsPage} />
+        <Route exact path="/uc/:unitID/stats/:pageName" component={UnitStatsPage} />
+        <Route exact path="/uc/:unitID" component={UnitPage} />
+        <Route exact path="/uc/:unitID/:pageName" component={UnitPage} />
+        <Route       path="/uc/:unitID/*" component={UnitPage} />
+        <Route exact path="/search" component={SearchPage} />
+        <Route exact path="/login" component={LoginPage} />
+        <Route exact path="/loginSuccess" component={LoginSuccessPage} />
+        <Route       path="/loginSuccess/*" component={LoginSuccessPage} />
+        <Route exact path="/logout" component={LogoutPage} />
+        <Route exact path="/logoutSuccess" component={LogoutSuccessPage} />
+        <Route       path="/logoutSuccess/*" component={LogoutSuccessPage} />
+        <Route path="*" component={GlobalStaticPage}/> {/* both global static, and 401 catch-all */}
+      </Switch>
+    </div>
+}
+
 // When running in the browser, render with React (vs. server-side where iso runs it for us)
 if (!(typeof document === "undefined")) {
   ReactDOM.render((
     <BrowserRouter>
-      <div>
-        <Switch>
-          <Route exact path="/" component={HomePage} />
-          <Route exact path="/campuses" component={BrowsePage} />
-          <Route exact path="/journals" component={BrowsePage} />
-          <Route exact path="/:campusID/units" component={BrowsePage} />
-          <Route exact path="/:campusID/journals" component={BrowsePage} />
-          <Route exact path="/uc/item/:itemID" component={ItemPage} />
-          <Route exact path="/uc/author/:personID/stats" component={AuthorStatsPage} />
-          <Route exact path="/uc/author/:personID/stats/:pageName" component={AuthorStatsPage} />
-          <Route exact path="/uc/:unitID/stats" component={UnitStatsPage} />
-          <Route exact path="/uc/:unitID/stats/:pageName" component={UnitStatsPage} />
-          <Route exact path="/uc/:unitID" component={UnitPage} />
-          <Route exact path="/uc/:unitID/:pageName" component={UnitPage} />
-          <Route       path="/uc/:unitID/*" component={UnitPage} />
-          <Route exact path="/search" component={SearchPage} />
-          <Route exact path="/login" component={LoginPage} />
-          <Route       path="/loginSuccess/**" component={LoginSuccessPage} />
-          <Route exact path="/loginSuccess" component={LoginSuccessPage} />
-          <Route exact path="/logout" component={LogoutPage} />
-          <Route       path="/logoutSuccess/**" component={LogoutSuccessPage} />
-          <Route exact path="/logoutSuccess" component={LogoutSuccessPage} />
-          <Route path="*" component={GlobalStaticPage}/>
-        </Switch>
-      </div>
+      <App/>
     </BrowserRouter>
   ), document.getElementById('main'))
 }

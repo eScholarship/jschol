@@ -13,7 +13,7 @@ class LoginSuccessPage extends PageBase
 {
   // PageBase will fetch the following URL for us, and place the results in this.state.pageData
   pageDataURL(props) {
-    return `/api/loginValidate?nonce=${props.location.query.nonce}&data=${props.location.query.data}`
+    return `/api/loginValidate${props.location.search}`
   }
 
   renderData(data) {
@@ -41,15 +41,15 @@ class LoginSuccessPage extends PageBase
                       setTimeout(()=>cms.onLogin(this.state.pageData['username'], this.state.pageData['key']), 0)
 
                       // Return to the page whence the user originally came, if any
-                      if (this.props.match.params.splat)
-                        setTimeout(()=>this.props.router.push("/" + this.props.match.params.splat), 1000)
+                      if (this.props.match.params[0])
+                        setTimeout(()=>this.props.history.push("/" + this.props.match.params[0]), 1000)
                     }
                     username = this.state.pageData['username']
                   }
                   return (
                     <div>
                       <p>You are logged in as '{username}'.</p>
-                      {this.props.match.params.splat &&
+                      {this.props.match.params[0] &&
                         <p>Returning to where you left off...</p>
                       }
                     </div>

@@ -151,7 +151,7 @@ class PageBase extends React.Component
         // Setting permissionsUnit to null results in forcing reload of permissions data
         // (needed if new page has been created)
         this.setState({ fetchingData: false, permissionsUnit: null })
-        this.props.router.push(data.nextURL)
+        this.props.history.push(data.nextURL)
       }
       else {
         this.fetchPermissions(true)
@@ -181,7 +181,7 @@ class PageBase extends React.Component
     .done(data=>{
       if (data.nextURL) {
         this.setState({ fetchingData: false })
-        this.props.router.push(data.nextURL)
+        this.props.history.push(data.nextURL)
       }
       else
         this.fetchPageData()
@@ -338,7 +338,7 @@ class PageBase extends React.Component
                                                             this.state.isEditingPage,
                                              onEditingPageChange: this.onEditingPageChange,
                                              fetchPageData: () =>this.fetchPageData(this.props),
-                                             goLocation: (loc) =>this.props.router.push(loc),
+                                             goLocation: (loc) =>this.props.history.push(loc),
                                              modules: this.state.cmsModules,
                                              permissions: this.state.permissions } }>
           {this.renderContent()}
