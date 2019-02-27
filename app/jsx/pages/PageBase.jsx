@@ -42,14 +42,14 @@ class PageBase extends React.Component
     if (dataURL)
     {
       // Phase 1: Initial server-side load. We just save the URL, and iso will later fetch it and re-run React
-      if (this.props.location.urlsToFetch) {
+      if (this.props.staticContext && this.props.staticContext.urlsToFetch) {
         state.fetchingData = true
-        this.props.location.urlsToFetch.push(dataURL)
+        this.props.staticContext.urlsToFetch.push(dataURL)
       }
       // Phase 2: Second server-side load, where our data has been fetched and stored in props.location
-      else if (this.props.location.urlsFetched) {
+      else if (this.props.staticContext && this.props.staticContext.urlsFetched) {
         state.fetchingData = false
-        state.pageData = this.props.location.urlsFetched[this.pageDataURL(this.props)]
+        state.pageData = this.props.staticContext.urlsFetched[this.pageDataURL(this.props)]
       }
       // Phase 3: Initial browser load. Server should have placed our data in window.
       else if (window.jscholApp_initialPageData) {
