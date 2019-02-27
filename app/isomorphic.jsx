@@ -36,7 +36,7 @@ app.use((req, res) =>
     return
   }
 
-  // Now route the request
+  // Perform an initial routing and render to grab the API URL that gets fetched.
   var refURL = req.protocol + '://' + req.get('host') + req.originalUrl
   console.log("ISO fetch:", refURL)
 
@@ -53,6 +53,7 @@ app.use((req, res) =>
     res.send(`<metaTags>${metaTagsInstance.renderToString()}</metaTags>\n<div id=\"main\">${renderedHTML}</div>`)
   else if (urls.length == 1)
   {
+    // Go get the API data
     var partialURL = urls[0]
     var finalURL = url.resolve(refURL, partialURL).replace(":"+process.env.ISO_PORT, ":"+process.env.PUMA_PORT)
     console.log("...integrating data from:", finalURL)
@@ -93,6 +94,7 @@ app.use((req, res) =>
           /* Note: must leave comments like <!-- react-text: 14 --> so that react will
              properly match up the rendered HTML to client-generated HTML */
 
+          // And integrate the API data into the app to produce the final output
           let urlsFetched = {}
           urlsFetched[partialURL] = response
           metaTagsInstance = MetaTagsServer()
