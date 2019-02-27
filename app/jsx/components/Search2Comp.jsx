@@ -1,7 +1,7 @@
 // ##### Search 2 Component - With Search Controls; Used on unit pages  ##### //
 
 import React from 'react'
-import Form from '../components/FormComp.jsx'
+import FormComp from '../components/FormComp.jsx'
 
 class SearchControls extends React.Component {
   render() {
@@ -55,26 +55,24 @@ class SearchComp2 extends React.Component {
     }
 
     return (
-        <Form to="/search" autoComplete="off">
-          <div className="c-search2">
-            <div className="c-search2__inputs">
-              <div className="c-search2__form">
-                  <label className="c-search2__label" htmlFor="global-search">Search eScholarship</label>
-                  <input type="search" name="q" id="global-search" className="c-search2__field" placeholder="Search" 
-                         onFocus={this.makeActive} onBlur={this.makeInactive} autoComplete="off" 
-                         autoCapitalize="off" />
-              </div>
-              <SearchControls refineActive={this.state.refineActive}
-                              label={label}
-                              makeActive={this.makeActive}
-                              makeInactive={this.makeInactive}
-                              unitID={this.props.unitID}
-                              searchUnitType={searchUnitType} />
+        <FormComp to="/search" autoComplete="off" className="c-search2">
+          <div className="c-search2__inputs">
+            <div className="c-search2__form">
+                <label className="c-search2__label" htmlFor="global-search">Search eScholarship</label>
+                <input type="search" name="q" id="global-search" className="c-search2__field" placeholder="Search"
+                       onFocus={this.makeActive} onBlur={this.makeInactive} autoComplete="off"
+                       autoCapitalize="off" />
             </div>
-            <button type="submit" className="c-search2__submit-button" aria-label="search"></button>
-            <button type="button" className="c-search2__search-close-button" aria-label="close search field" onClick = {()=>this.props.onClose()}></button>
+            <SearchControls refineActive={this.state.refineActive}
+                            label={label}
+                            makeActive={this.makeActive}
+                            makeInactive={this.makeInactive}
+                            unitID={this.props.unitID}
+                            searchUnitType={searchUnitType} />
           </div>
-        </Form>
+          <button type="submit" className="c-search2__submit-button" aria-label="search"></button>
+          <button type="button" className="c-search2__search-close-button" aria-label="close search field" onClick = {()=>this.props.onClose()}></button>
+        </FormComp>
     )
   }
 }
