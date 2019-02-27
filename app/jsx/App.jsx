@@ -81,10 +81,21 @@ class App extends React.Component
 
 // When running in the browser, render with React (vs. server-side where iso runs it for us)
 if (!(typeof document === "undefined")) {
-  ReactDOM.render((
-    <BrowserRouter>
-      <App/>
-    </BrowserRouter>
-  ), document.getElementById('main'))
+  if (window.jscholApp_initialPageData) {
+    ReactDOM.hydrate((
+      <BrowserRouter>
+        <App/>
+      </BrowserRouter>
+    ), document.getElementById('main'))
+  }
+  else {
+    ReactDOM.render((
+      <BrowserRouter>
+        <App/>
+      </BrowserRouter>
+    ), document.getElementById('main'))
+  }
 }
 
+// When running on the server, return an object that iso can render.
+module.exports = App
