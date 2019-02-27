@@ -25,7 +25,7 @@ class BrowsePage extends PageBase
         :                                                         // URL = /:campusID/journals
          "/api/browse/journals/" + this.props.match.params.campusID
     } else {                                                      // URL = /journals or /campuses
-      return "/api/browse/" + this.props.route.path
+      return "/api/browse" + this.props.location.pathname
     }
   }
 

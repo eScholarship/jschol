@@ -46,7 +46,7 @@ class PageBase extends React.Component
         state.fetchingData = true
         this.props.staticContext.urlsToFetch.push(dataURL)
       }
-      // Phase 2: Second server-side load, where our data has been fetched and stored in props.location
+      // Phase 2: Second server-side load, where our data has been fetched and stored in props.staticContext
       else if (this.props.staticContext && this.props.staticContext.urlsFetched) {
         state.fetchingData = false
         state.pageData = this.props.staticContext.urlsFetched[this.pageDataURL(this.props)]
