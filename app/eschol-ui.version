@@ -874,4 +874,13 @@ Lots of stuff modified.
 
   modified: app/scss/_wizard.scss
 
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> 4ce03b84df3fdb0d224b31655dc521582ceffeab, 2019-02-27        <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+  added:    app/jsx/components/WithdrawModalComp.jsx
+  added:    app/scss/_withdrawmodal.scss
+  modified: app/jsx/components/ItemActionsComp.jsx
+  modified: app/scss/_columns.scss
+  modified: app/scss/_variables.scss
 
