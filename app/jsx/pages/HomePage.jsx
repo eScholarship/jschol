@@ -66,26 +66,28 @@ class HomePage extends PageBase
         </div>
         <HeroComp hero_data={this.getRandomHero(data.hero_data)} />
         <TeaserComp changeAnchor={this.changeAnchor} />
-        <section className="c-homesection">
-          <header>
-            <h2>Why Open Access with eScholarship?</h2>
-          </header>
-          <HomeSection1Comp stats={data.stats} />
-        </section>
-        <ScrollingAnchorComp name="home_repository" />
-        <section className="c-homesection">
-          <header>
-            <h2>eScholarship is the institutional repository for the UC system</h2>
-          </header>
-          <HomeSection2Comp stats={data.stats} campuses={data.header.campuses} />
-        </section>
-        <ScrollingAnchorComp name="home_publishing" />
-        <section className="c-homesection">
-          <header>
-            <h2>eScholarship is also an open access publishing platform</h2>
-          </header>
-          <HomeSection3Comp count_journals={data.stats.statsCountEscholJournals} />
-        </section>
+        <main id="maincontent" tabIndex="-1">
+          <section className="c-homesection">
+            <header>
+              <h2>Why Open Access with eScholarship?</h2>
+            </header>
+            <HomeSection1Comp stats={data.stats} />
+          </section>
+          <ScrollingAnchorComp name="home_repository" />
+          <section className="c-homesection">
+            <header>
+              <h2>eScholarship is the institutional repository for the UC system</h2>
+            </header>
+            <HomeSection2Comp stats={data.stats} campuses={data.header.campuses} />
+          </section>
+          <ScrollingAnchorComp name="home_publishing" />
+          <section className="c-homesection">
+            <header>
+              <h2>eScholarship is also an open access publishing platform</h2>
+            </header>
+            <HomeSection3Comp count_journals={data.stats.statsCountEscholJournals} />
+          </section>
+        </main>
       </div>
     )
   }
