@@ -89,7 +89,7 @@ export default class UnitSidebarConfigLayout extends React.Component
     let kindStr = p.data.kind == "Text" ? "text widget" : "built-in widget"
     return (
       <div className="c-columns">
-        <main id="maincontent">
+        <main id="maincontent" tabIndex="-1">
           <section className="o-columnbox1">
             <header>
               <h1 className="o-columnbox1__heading">

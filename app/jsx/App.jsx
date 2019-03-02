@@ -11,6 +11,7 @@ import React from 'react'
 import ReactDOM from 'react-dom'
 import { BrowserRouter, Route, Switch } from 'react-router-dom'
 import ReactGA from 'react-ga'
+import ReactModal from 'react-modal'
 
 import HomePage from './pages/HomePage.jsx'
 import BrowsePage from './pages/BrowsePage.jsx'
@@ -81,6 +82,7 @@ class App extends React.Component
 
 // When running in the browser, render with React (vs. server-side where iso runs it for us)
 if (!(typeof document === "undefined")) {
+  ReactModal.setAppElement('#main')
   if (window.jscholApp_initialPageData) {
     ReactDOM.hydrate((
       <BrowserRouter>

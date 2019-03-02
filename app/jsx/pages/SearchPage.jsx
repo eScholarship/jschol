@@ -639,7 +639,7 @@ class SearchPage extends PageBase {
         <aside>
           <FacetForm formName={formName} formButton={formButton} data={facetFormData} info_count={data.info_count} query={data.query} />
         </aside>
-        <main id="maincontent">
+        <main id="maincontent" tabIndex="-1">
         {data.info_count > 0 &&
           <section className={this.state.fetchingData ? "o-columnbox1 is-loading-data" : "o-columnbox1"}>
             <header>

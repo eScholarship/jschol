@@ -20,7 +20,7 @@ class UnitStaticPageLayout extends React.Component
   render() {
     return (
       <div className="c-columns">
-        <main id="maincontent">
+        <main id="maincontent" tabIndex="-1">
           <section className="o-columnbox1">
             <header>
               <h1 className="o-columnbox1__heading">{this.props.data.title}</h1>

@@ -361,7 +361,7 @@ class PageBase extends React.Component
       <div className="c-navbar">
       </div>
       <div className="c-columns">
-        <main id="maincontent">
+        <main id="maincontent" tabIndex="-1">
           <section className="o-columnbox1">
             <ServerErrorComp error={this.state.pageData.error}/>
           </section>

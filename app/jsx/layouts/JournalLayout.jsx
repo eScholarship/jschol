@@ -140,7 +140,7 @@ class JournalLayout extends React.Component {
         <MarqueeComp marquee={marquee} />
       }
         <div className="c-columns">
-          <main id="maincontent">
+          <main id="maincontent" tabIndex="-1">
           {this.props.data.issue ?
             <IssueWrapperComp issue={data.issue} issues={data.issuesSubNav} display={data.display} />
           :

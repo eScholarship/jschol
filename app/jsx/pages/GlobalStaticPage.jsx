@@ -15,7 +15,7 @@ class NotFoundLayout extends React.Component
 {
   render = () =>
     <div className="c-columns">
-      <main id="maincontent">
+      <main id="maincontent" tabIndex="-1">
         <section className="o-columnbox1">
           <ServerErrorComp error="Not Found"/>
         </section>

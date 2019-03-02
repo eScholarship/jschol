@@ -234,3 +234,20 @@ $wizard-nav-icon-size: 1.5em;
   overflow-y: auto;
   overflow-x: hidden;
 }
+
+.c-wiz-modal__portal {
+
+  // sass-lint:disable class-name-format
+  .ReactModal__Overlay {
+      transition: opacity 500ms ease-in-out;
+      opacity: 0;
+  }
+
+  .ReactModal__Overlay--after-open {
+      opacity: 1;
+  }
+
+  .ReactModal__Overlay--before-close {
+      opacity: 0;
+  }
+}

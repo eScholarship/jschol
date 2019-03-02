@@ -86,7 +86,7 @@ class DepartmentLayout extends React.Component {
         <MarqueeComp marquee={marquee} />
       }
         <div className="c-columns">
-          <main id="maincontent">
+          <main id="maincontent" tabIndex="-1">
             <section className="o-columnbox1">
               <header>
                 <h2>{this.props.unit.name}</h2>

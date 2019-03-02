@@ -18,7 +18,7 @@ export default class AuthorSearchLayout extends React.Component
     let p = this.props
     return (
       <div className="c-columns">
-        <main id="maincontent">
+        <main id="maincontent" tabIndex="-1">
           <section className="o-columnbox1">
             <header>
               <h1 className="o-columnbox1__heading">

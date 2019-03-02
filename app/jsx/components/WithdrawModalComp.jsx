@@ -46,19 +46,19 @@ class WithdrawModalComp extends React.Component {
                   <label className="c-withdrawmodal__label" htmlFor="publicMessage">
                     Withdrawal reason (public):
                   </label>
-                  <input className="c-withdrawmodal__publicMessage" id="publicMessage" type="text"
+                  <input className="c-withdrawmodal__public-message" id="publicMessage" type="text"
                          onChange={ event => this.setState( { publicMessage: event.target.value }) }/>
 
                   <label className="c-withdrawmodal__label" htmlFor="internalComment">
                     Internal comment (optional, e.g. ticket URL):
                   </label>
-                  <input className="c-withdrawmodal__internalComment" id="internalComment" type="text"
+                  <input className="c-withdrawmodal__internal-comment" id="internalComment" type="text"
                          onChange={ event => this.setState( { internalComment: event.target.value }) }/>
 
                   <label className="c-withdrawmodal__label" htmlFor="redirectTo">
                     Identifier of item to redirect to (optional, form of 'qtxxxxxxxx'):
                   </label>
-                  <input className="c-withdrawmodal__redirectTo" id="redirectTo" type="text"
+                  <input className="c-withdrawmodal__redirect-to" id="redirectTo" type="text"
                          onChange={ event => this.setState( { redirectTo: event.target.value }) }/>
                 </div>
                 <div className="c-modal__footer">

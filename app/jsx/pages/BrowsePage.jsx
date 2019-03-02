@@ -66,7 +66,7 @@ class Content extends React.Component {
     let p = this.props
     return (
       <div className="c-columns">
-        <main id="maincontent">
+        <main id="maincontent" tabIndex="-1">
         {/* Global browse pages */}
         { p.browse_type == "campuses" && <AllCampuses campusesStats={p.campusesStats} otherStats={p.otherStats}/> }
         { p.browse_type == "all_journals" && <AllJournals journals={p.journals}
