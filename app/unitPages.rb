@@ -1500,7 +1500,7 @@ def saveImage (name, unitID, data)
   DB.transaction {
     unit = Unit[unitID] or jsonHalt(404, "Unit not found")
     unitAttrs = JSON.parse(unit.attrs)
-    isBanner = unitAttrs[name]['is_banner']
+    isBanner = unitAttrs.dig(name, 'is_banner')
     unitAttrs[name] = data.to_a.collect{|x| [x[0].to_s, x[1]]}.to_h
     isBanner and unitAttrs[name]['is_banner'] = true
     unit.attrs = unitAttrs.to_json
