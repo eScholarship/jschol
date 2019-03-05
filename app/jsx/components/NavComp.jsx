@@ -19,7 +19,7 @@ class NavComp extends React.Component {
     this.state = {submenuActive: null, isOpen: true /* default to true for server-side */}
   }
 
-  componentWillMount() {
+  componentDidMount() {
     if (!(typeof matchMedia === "undefined")) {
       this.mq = matchMedia("(min-width:"+Breakpoints.screen3+")")
       this.mq.addListener(this.widthChange)

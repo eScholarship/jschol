@@ -13,7 +13,7 @@ class Error404Layout extends React.Component {
     super(props)
     this.state = {submenuActive: null}
   }
-  componentWillMount() {
+  componentDidMount() {
     if (matchMedia) {
       this.mq = matchMedia("(min-width:"+Breakpoints.screen3+")")
       this.mq.addListener(this.widthChange)
