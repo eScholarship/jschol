@@ -40,7 +40,7 @@ class FilterComp extends React.Component {
     let resultCount = this.props.count + this.props.info_count 
 
     return (
-      <div className={activeFilters ? "c-filter--active" : "c-filter"}>
+      <div className={activeFilters ? "c-filter--active" : "c-filter"} aria-live="polite">
         <h1 className="c-filter__heading">{searchString}</h1>
         <input type="hidden" name="q" value={this.props.query.q == "All items" ? "" : this.props.query.q} />
         <div className="c-filter__results">{resultCount} results</div>

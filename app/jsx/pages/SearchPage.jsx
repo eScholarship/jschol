@@ -514,7 +514,7 @@ class FacetForm extends React.Component {
     this.setState({refineActive: this.mq.matches, drawerOpen: this.mq.matches})
   }
 
-  componentWillMount() {
+  componentDidMount() {
     if (!(typeof matchMedia === "undefined")) {
       this.mq = matchMedia("(min-width:"+Breakpoints.screen1+")")
       this.mq.addListener(this.widthChange)
@@ -568,6 +568,8 @@ class FacetForm extends React.Component {
           <button className="c-refine__button--open" onClick={()=> this.setState({drawerOpen: true})} hidden={this.state.drawerOpen}>Refine Results</button>
           <button className="c-refine__button--close" onClick={()=> this.setState({drawerOpen: false})} hidden={!this.state.drawerOpen}>Back to Results</button>
           <div className={this.state.drawerOpen ? "c-refine__drawer--opened" : "c-refine__drawer--closed"}>
+            {console.log("drawerOpen:", this.state.drawerOpen)}
+            {console.log("refineActive:", this.state.refineActive)}
             {facetForm}
           </div>
         </div>
