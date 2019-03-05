@@ -507,6 +507,7 @@ def generatePdfThumbnail(itemID, inMeta, existingItem)
     end
   rescue Exception => e
     puts "Warning: error generating thumbnail: #{e}: #{e.backtrace.join("; ")}"
+    return nil
   end
 end
 

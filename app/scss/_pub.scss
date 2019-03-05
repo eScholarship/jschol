@@ -1,6 +1,8 @@
 // ##### Publication Component ##### //
 
 .c-pub {
+  display: inline-block;
+  width: 100%;
   margin-bottom: $spacing-md;
   break-inside: avoid;
 }

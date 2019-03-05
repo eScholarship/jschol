@@ -17,7 +17,7 @@ class FooterComp extends React.Component {
             <li><Link to="/campuses">Campus Sites</Link></li>
             <li><Link to="/ucoapolicies">UC Open Access Policy</Link></li>
             <li><Link to="/publishing">eScholarship Publishing</Link></li>
-            <li><a href="https://www.cdlib.org/about/accessibility.html">Accessibility Policy</a></li>
+            <li><a href="https://www.cdlib.org/about/accessibility.html">Accessibility</a></li>
             <li><Link to="/privacypolicy">Privacy Statement</Link></li>
             <li><Link to="/policies">Site Policies</Link></li>
             <li><Link to="/terms">Terms of Use</Link></li>
