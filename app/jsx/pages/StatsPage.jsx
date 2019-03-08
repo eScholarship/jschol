@@ -65,11 +65,11 @@ const downloadCSV = (table, params) =>
 class StatsHeader extends React.Component {
   render() {
     let p = this.props
-    let pageName = p.params.pageName || "summary"
+    let pageName = p.match.params.pageName || "summary"
     let isIssuePage = pageName.indexOf("issue") >= 0
     let isByMonthPage = pageName.indexOf("by_month") >= 0
-    let thisLink = p.params.unitID ? `/uc/${p.params.unitID}/stats` : `/uc/author/${p.params.personID}/stats`
-    let thisLabel = p.params.unitID ? p.data.unit_name : p.data.author_name
+    let thisLink = p.match.params.unitID ? `/uc/${p.match.params.unitID}/stats` : `/uc/author/${p.match.params.personID}/stats`
+    let thisLabel = p.match.params.unitID ? p.data.unit_name : p.data.author_name
     return(
       <div>
         <MetaTagsComp title={`${p.title}: ${p.data.unit_name || p.data.author_name}`}/>
@@ -78,7 +78,7 @@ class StatsHeader extends React.Component {
         </h1>
         { p.data.parent_id && !isIssuePage &&
           <p>
-            Parent: <Link to={statsLink(p.data.parent_id, p.params.pageName, p.location.search)}>
+            Parent: <Link to={statsLink(p.data.parent_id, p.match.params.pageName, p.location.search)}>
                       {p.data.parent_name}
                     </Link>
           </p>
@@ -122,7 +122,7 @@ class StatsForm extends React.Component
       <form to={p.location.pathname} method="GET">
         <div className="c-daterange">
           <div className="o-input__inline">
-            <div className="o-input__droplist1">
+            <div key="range" className="o-input__droplist1">
               <label htmlFor="range">Date range</label>
               <select id="range" name="range" defaultValue={p.data.range} onChange={this.onChangeRange}>
                 <option value="1mo">Last month</option>
@@ -135,25 +135,25 @@ class StatsForm extends React.Component
             </div>
             {this.state.customDates &&
               [
-                <div className="o-input__droplist1">
+                <div key="st_yr" className="o-input__droplist1">
                   <label htmlFor="st_yr">Start year</label>
                   <select id="st_yr" name="st_yr" defaultValue={p.data.st_yr}>
                     {p.data.all_years.map(val => <option key={val} value={val}>{val}</option>)}
                   </select>
                 </div>,
-                <div className="o-input__droplist1">
+                <div key="st_mo" className="o-input__droplist1">
                   <label htmlFor="st_mo">Start month</label>
                   <select id="st_mo" name="st_mo" defaultValue={p.data.st_mo}>
                     {_.range(1,13).map(val => <option key={val} value={val}>{val}</option>)}
                   </select>
                 </div>,
-                <div className="o-input__droplist1">
+                <div key="en_yr" className="o-input__droplist1">
                   <label htmlFor="en_yr">End year</label>
                   <select id="en_yr" name="en_yr" defaultValue={p.data.en_yr}>
                     {p.data.all_years.map(val => <option key={val} value={val}>{val}</option>)}
                   </select>
                 </div>,
-                <div className="o-input__droplist1">
+                <div key="en_mo" className="o-input__droplist1">
                   <label htmlFor="en_mo">End month</label>
                   <select id="en_mo" name="en_mo" defaultValue={p.data.en_mo}>
                     {_.range(1,13).map(val => <option key={val} value={val}>{val}</option>)}
@@ -162,7 +162,7 @@ class StatsForm extends React.Component
               ]
             }
             {p.showLimit &&
-              <div className="o-input__droplist1">
+              <div key="limit" className="o-input__droplist1">
                 <label htmlFor="limit">Max items:</label>
                 <select id="limit" name="limit" defaultValue={p.data.limit}>
                   <option key={50} value={50}>50</option>
@@ -742,7 +742,7 @@ class UnitStats_HistoryByUnit extends React.Component {
                   {p.data.any_drill_down &&
                     <td key="dd">
                       {cd.child_types &&
-                        <Link to={statsLink(cd.unit_id, p.params.pageName, p.location.search)}>
+                        <Link to={statsLink(cd.unit_id, p.match.params.pageName, p.location.search)}>
                           {describeChildren(cd.child_types)}
                         </Link>}
                     </td>
@@ -795,7 +795,7 @@ class UnitStats_AvgByUnit extends React.Component {
                   {p.data.any_drill_down &&
                     <td key="dd">
                       {cd.child_types &&
-                        <Link to={statsLink(cd.unit_id, p.params.pageName, p.location.search)}>
+                        <Link to={statsLink(cd.unit_id, p.match.params.pageName, p.location.search)}>
                           {describeChildren(cd.child_types)}
                         </Link>}
                     </td>
@@ -887,7 +887,7 @@ class UnitStats_BreakdownByUnit extends React.Component {
                   {p.data.any_drill_down &&
                     <th key="dd">
                       {cd.child_types &&
-                        <Link to={statsLink(cd.unit_id, p.params.pageName, p.location.search)}>
+                        <Link to={statsLink(cd.unit_id, p.match.params.pageName, p.location.search)}>
                           {describeChildren(cd.child_types)}
                         </Link>
                       }
