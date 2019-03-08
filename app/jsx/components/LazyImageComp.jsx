@@ -17,6 +17,9 @@ class LazyImageComp extends React.Component {
       if (!observer)
         observer = lozad('.c-lazyimage');
       observer.observe();
+      // When running visual regression tests, load every image immediately
+      if (navigator.userAgent == "puppeteer")
+        document.querySelectorAll(".c-lazyimage").forEach(el => observer.triggerLoad(el))
     }
   }
 
