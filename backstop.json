@@ -1,0 +1,53 @@
+{
+  "id": "backstop_default",
+  "asyncCaptureLimit": 1,
+  "viewports": [
+    {
+      "label": "phone",
+      "width": 320,
+      "height": 480
+    },
+    {
+      "label": "tablet",
+      "width": 960,
+      "height": 700
+    },
+    {
+      "label": "desktop",
+      "width": 1280,
+      "height": 1024
+    }
+  ],
+  "onBeforeScript": "puppet/onBefore.js",
+  "onReadyScript": "puppet/onReady.js",
+  "scenarios": [
+    { "label": "homepage", "url": "http://localhost:4001/", "hideSelectors": [".c-hero"] },
+    { "label": "static page", "url": "http://localhost:4001/ucoapolicies" },
+    { "label": "not-found page", "url": "http://localhost:4001/foo", "delay": 1000 },
+    { "label": "campus page", "url": "http://localhost:4001/uc/ucb" },
+    { "label": "journal list", "url": "http://localhost:4001/ucb/journals" },
+    { "label": "unit list", "url": "http://localhost:4001/ucb/units" },
+    { "label": "plain parent unit", "url": "http://localhost:4001/uc/arf" },
+    { "label": "plain series", "url": "http://localhost:4001/uc/arf" },
+    { "label": "complex journal", "url": "http://localhost:4001/uc/ismrg_cisj" },
+    { "label": "journal with ad", "url": "http://localhost:4001/uc/uciem_westjem" },
+    { "label": "search", "url": "http://localhost:4001/search?q=africa", "delay": 1000 },
+    { "label": "item view", "url": "http://localhost:4001/uc/item/5563x8nf", "delay": 5000 }
+  ],
+  "paths": {
+    "bitmaps_reference": "backstop_data/bitmaps_reference",
+    "bitmaps_test": "backstop_data/bitmaps_test",
+    "engine_scripts": "backstop_data/engine_scripts",
+    "html_report": "backstop_data/html_report",
+    "ci_report": "backstop_data/ci_report"
+  },
+  "report": ["browser"],
+  "engine": "puppeteer",
+  "engineOptions": {
+    "args": ["--no-sandbox"]
+  },
+  "asyncCaptureLimit": 5,
+  "asyncCompareLimit": 50,
+  "debug": false,
+  "debugWindow": false
+}
