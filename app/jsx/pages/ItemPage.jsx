@@ -53,9 +53,11 @@ class ItemPage extends PageBase {
   // currentTab should be 'main' whenever hash starts with 'article_" (or is empty)
   articleHashHandler = h => { return ((h.startsWith("article") || h=='') ? "main" : h) }
 
-  state = { currentTab: this.articleHashHandler(this.tabNameFromHash()) }
+  state = { currentTab: "main" }
 
   componentDidMount(...args) {
+    this.setState({currentTab: this.articleHashHandler(this.tabNameFromHash())})
+
     // Check hash whenever back or forward button clicked
     window.onpopstate = (event) => {
       var h = this.articleHashHandler(this.tabNameFromHash())
