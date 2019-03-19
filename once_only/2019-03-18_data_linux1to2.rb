@@ -16,19 +16,13 @@ if `/apps/eschol/bin/eye info` =~ / up /
   exit 1
 end
 
-# Remove prior contents of the log file
-$logFile = "/apps/eschol/tmp/rsyncs.log"
-File.open($logFile, "w") { |io| io.truncate(0) }
-
 def runCmd(cmd)
-  File.open($logFile, "a") { |io|
-    io.puts
-    io.puts "-------------------------------------------------------------------------------------------"
-    io.puts "-- #{DateTime.now.iso8601}"
-    io.puts "-- #{cmd}"
-    io.puts
-  }
-  if !system("#{cmd} >> #{$logFile} 2>&1")
+  puts
+  puts "-------------------------------------------------------------------------------------------"
+  puts "-- #{DateTime.now.iso8601}"
+  puts "-- #{cmd}"
+  puts
+  if !system(cmd)
     status = $?.exitstatus
     msg = "#{cmd} exited with status #{status}"
     if $ignoreErrors
@@ -41,7 +35,7 @@ end
 
 # Okay, we've got a whole list of general directories to sync.
 dirs = [
-  "sword",
+  "sword/biomed",
   "apache/logs",
   "erep/statistics",
   "erep/xtf/bpRedirect",
@@ -80,8 +74,8 @@ runCmd("rsync -av pub-submit-dev.escholarship.org:/apps/eschol/erep/xtf/index /a
 runCmd("rsync -av pub-submit-dev.escholarship.org:/apps/eschol/erep/xtf/preview-index /apps/eschol/erep/xtf/preview-index")
 
 dirs.each { |dir|
-  puts "Syncing #{dir.inspect}."
-  cmd = "rsync -a --dry-run"
+  cmd = "rsync -a"
+  #cmd += " --dry-run"
 
   # Only preserve local changes in tmp; for other dirs, blow local changes away
   if dir == "tmp"
