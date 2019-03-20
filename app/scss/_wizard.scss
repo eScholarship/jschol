@@ -213,11 +213,13 @@ $wizard-nav-icon-size: 1.5em;
 
 }
 
+.c-wizard__centered {
+  display: flex;
+  justify-content: center;
+}
+
 .c-wizard__external-link {
   @extend %o-textlink__right-icon;
-  display: inline-flex;
-  align-items: center;
-  margin: 0 $spacing-md;
 }
 
 // ***** Modal ***** //

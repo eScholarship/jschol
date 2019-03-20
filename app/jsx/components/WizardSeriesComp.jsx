@@ -50,7 +50,7 @@ class WizardSeriesComp extends React.Component {
         window.location = this.props.subi_link+this.state.series[0].id
       }
       if (this.state.series.length == 0) {
-        // HACK: This screen should never comecuz any unit's with zero series should
+        // HACK: This screen should never come cuz any units with zero series should
         //       themselves should be tagged as 'disabled', but keeping this here as a backup
         seriesList = (<li><a onClick = {(event)=>{
                   event.preventDefault()

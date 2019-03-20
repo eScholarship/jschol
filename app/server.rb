@@ -340,7 +340,7 @@ end
 ###################################################################################################
 def proxyFromURL(url, overrideHostname = nil)
   fetcher = HttpFetcher.new(url, overrideHostname)
-  if fetcher.length > 0
+  if !fetcher.length.nil? && fetcher.length > 0
     headers "Content-Length" => fetcher.length.to_s
   end
   if fetcher.headers && fetcher.headers.dig('content-type', 0)
@@ -391,6 +391,7 @@ end
 post %r{/graphql(.*)} do
   headers = {}
   request.env['HTTP_PRIVILEGED'] and headers['Privileged'] = request.env['HTTP_PRIVILEGED']
+  request.env['CONTENT_TYPE'] and headers['Content-Type'] = request.env['CONTENT_TYPE']
   response = HTTParty.post("http://#{$host}:18900/graphql#{params['captures'][0]}",
                            headers: headers,
                            body: request.body.read)
@@ -892,13 +893,7 @@ get "/api/globalStatic/*" do
     pageData[:header] = getGlobalHeader
     pageData[:pageNotFound] = true
   end
-
   return pageData.to_json
-end
-
-def parseIssueHeaderData(unit_id, vol, iss, issue)
-  title = issue[:attrs] ? JSON.parse(issue[:attrs])["title"] : nil
-  return {'unit_id': unit_id, 'volume': vol, 'issue': iss, 'title': title, 'numbering': issue[:numbering]}
 end
 
 ###################################################################################################
@@ -934,14 +929,35 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
       unit: unit.values.reject{|k,v| k==:attrs}.merge(:extent => ext),
       sidebar: getUnitSidebar(unit.type.include?('series') ? getUnitAncestor(unit) : unit)
     }
+
+    issuesSubNav, issueIds, issuesPublished, journalIssue = nil, nil, nil, nil
+    # Gather header data
+    if unit.type == 'journal'
+      issueIds = getIssueIds(unit)
+      issuesPublished = (issueIds && issueIds.any?) ? getPublishedJournalIssues(issueIds) : nil
+      issuesSubNav = getIssuesSubNav(issuesPublished)
+
+      if isJournalIssue?(unit.id, params[:pageName], params[:subPage])
+        volume = params[:pageName]
+        issue = params[:subPage]
+        numbering, title = getIssueNumberingTitle(unit.id, volume, issue)
+        journalIssue = {'unit_id': unit.id, 'volume': volume, 'issue': issue, 'title': title, 'numbering': numbering}
+      end
+      pageData[:header] = getUnitHeader(unit, nil, journalIssue, issuesSubNav, attrs)
+    else
+      pageData[:header] = getUnitHeader(unit, 
+      (pageName =~ /^(nav|sidebar|profile|carousel|issueConfig|redirects|unitBuilder|authorSearch)/) ?
+        nil : pageName, nil, nil, attrs)
+    end
+
+    # Gather page content data
     if ["home", "search"].include? pageName  # 'home' here refers to the unit's homepage, not root home
       q = nil
       q = CGI::parse(request.query_string) if pageName == "search"
-      pageData[:content] = getUnitPageContent(unit, attrs, q)
-      if unit.type == 'journal' and pageData[:content][:issue]
-        issue = pageData[:content][:issue]
-        issueHeaderData = parseIssueHeaderData(params[:unitID], issue[:volume], issue[:issue], issue)
-      end
+      pageData[:content] = getUnitPageContent(unit: unit, attrs: attrs, query: q,
+                             issueIds: issueIds, issuesPublished: issuesPublished)
+      # For journals, Issues SubNav data shared in header and body
+      pageData[:content][:issuesSubNav] = issuesSubNav
     elsif pageName == 'profile'
       pageData[:content] = getUnitProfile(unit, attrs)
     elsif pageName == 'carousel'
@@ -960,17 +976,13 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
     elsif pageName == "authorSearch"
       pageData[:content] = getAuthorSearchData
     elsif isJournalIssue?(unit.id, params[:pageName], params[:subPage])
-      pageData[:content] = getJournalIssueData(unit, attrs, params[:pageName], params[:subPage])
-      # A specific issue, otherwise you get journal landing (through getUnitPageContent method above)
-      issueHeaderData = parseIssueHeaderData(params[:unitID], params[:pageName], params[:subPage], pageData[:content][:issue])
+      pageData[:content] = getJournalIssueData(unit, attrs, 
+        issueIds, issuesPublished, params[:pageName], params[:subPage])
+      pageData[:content][:issuesSubNav] = issuesSubNav
     else
       pageData[:content] = getUnitStaticPage(unit, attrs, pageName)
     end
-    pageData[:header] = getUnitHeader(unit,
-      (pageName =~ /^(nav|sidebar|profile|carousel|issueConfig|redirects|unitBuilder|authorSearch)/ or issueHeaderData) ?
-        nil : pageName,
-      issueHeaderData, attrs)
-    pageData[:marquee] = getUnitMarquee(unit, attrs) if (["home", "search"].include? pageName or issueHeaderData)
+    pageData[:marquee] = getUnitMarquee(unit, attrs) if (["home", "search"].include? pageName or unit.type == 'journal')
   else
     #public API data
     pageData = {
@@ -1081,8 +1093,10 @@ get "/api/item/:shortArk" do |shortArk|
           if issue_id
             unit_id, volume, issue = Section.join(:issues, :id => issue_id).map([:unit_id, :volume, :issue])[0]
             numbering, title = getIssueNumberingTitle(unit.id, volume, issue)
+            issueIds = getIssueIds(unit)
+            issuesSubNav = getIssuesSubNav((issueIds && issueIds.any?) ? getPublishedJournalIssues(issueIds) : nil)
             body[:header] = getUnitHeader(unit, nil,
-              {'unit_id': unit_id, 'volume': volume, 'issue': issue, 'title': title, 'numbering': numbering})
+              {'unit_id': unit_id, 'volume': volume, 'issue': issue, 'title': title, 'numbering': numbering}, issuesSubNav)
             body[:numbering] = numbering 
             body[:citation][:volume] = volume
             body[:citation][:issue] = issue
@@ -1094,14 +1108,52 @@ get "/api/item/:shortArk" do |shortArk|
       # pp(body)
       return body.to_json
     rescue Exception => e
-      puts "Error in item API:"
-      pp e
+      puts "Error in item API: #{e} #{e.backtrace}"
       halt 404, e.message
     end
   else 
     puts "Item not found!"
     halt 404, "Item not found"
   end
+end
+
+#################################################################################################
+# Send a mutation to the submission API, returning the JSON results.
+def submitAPIMutation(mutation, vars)
+  query = "mutation(#{vars.map{|name, pair| "$#{name}: #{pair[0]}"}.join(", ")}) { #{mutation} }"
+  varHash = Hash[vars.map{|name,pair| [name.to_s, pair[1]]}]
+  headers = { 'Content-Type' => 'application/json',
+              'Privileged' => ENV['ESCHOL_PRIV_API_KEY'] || raise("missing env ESCHOL_PRIV_API_KEY") }
+  response = HTTParty.post("http://#{$host}:18900/graphql",
+               :headers => headers,
+               :body => { variables: varHash, query: query }.to_json.gsub("%", "%25"))
+  response.code != 200 and raise("Internal error (graphql): " +
+     "HTTP code #{response.code} - #{response.message}.\n" +
+     "#{response.body}")
+  if response['errors']
+    puts "Full error text:"
+    pp response['errors']
+    raise("Internal error (graphql): #{response['errors'][0]['message']}")
+  end
+  return response['data']
+end
+
+###################################################################################################
+# Withdraw an item (super-users only)
+delete "/api/item/:shortArk" do |shortArk|
+  perms = getUserPermissions(params[:username], params[:token], "root")
+  perms[:super] or halt(401)
+  content_type :json
+  if params[:redirectTo] && !(params[:redirectTo] =~ /^$|^qt\w{8}$/)
+    jsonHalt(400, "invalid redirect id")
+  end
+  submitAPIMutation("withdrawItem(input: $input) { message }", { input: ["WithdrawItemInput!", {
+    id: "ark:/13030/#{shortArk}",
+    publicMessage: (params[:publicMessage]||"").empty? ? jsonHalt(400, "Public message is required") : params[:publicMessage],
+    internalComment: (params[:internalComment]||"").empty? ? nil : params[:internalComment],
+    redirectTo: (params[:redirectTo]||"").empty? ? nil : "ark:/13030/#{params[:redirectTo]}"
+  }]})
+  return { status: "ok", nextURL: "/uc/item/#{shortArk.sub(/^qt/,'')}" }.to_json
 end
 
 ###################################################################################################
