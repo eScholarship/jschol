@@ -44,7 +44,7 @@ def checkRedirect(origURI)
     elsif uri.path =~ %r{^/uc/temporary}
       uri = handleBpTempRedirect(uri)
     elsif uri.path =~ %r{^/uc/stats/}
-      uri = URI.parse("https://help.escholarship.org/support/discussions/topics/9000037605")
+      uri = URI.parse("https://help.escholarship.org/support/solutions/articles/9000131087")
       break
     elsif uri.path =~ %r{^/uc/([^/]+)(.*)}
       uri = handleUnitRedirect(uri, $1, $2)

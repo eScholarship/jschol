@@ -155,6 +155,7 @@ end
 # takes list of facets in [{value: , count: }] form where value is the value that escholarship UI/AWS uses.
 # returns a nested hierarchy list: [{value, count, displayName, (optionally) descendents: []}, ...]
 def get_unit_hierarchy(unitFacets)
+  unitFacets.reject! { |unitFacet| !$unitsHash.key?(unitFacet['value']) }  # search index can be out of date
   idToUnitFacet = Hash[unitFacets.map { |unitFacet| [unitFacet['value'], unitFacet] }]
   for unitFacet in unitFacets
     unit = $unitsHash[unitFacet['value']]

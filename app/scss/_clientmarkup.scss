@@ -27,7 +27,12 @@
   // ***** Links ***** //
 
   a {
+    // Similar to c-pubinfo__link, but without the u-one-line-truncation mixin
     @extend %o-textlink__secondary;
+
+    @include bp(screen1) {
+      @include u-overflow-wrap();
+    }
   }
 
   // ***** Lists ***** //

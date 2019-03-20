@@ -205,9 +205,12 @@ class PageBase extends React.Component
       if (/^nanocad/.test(unit_id)) { this.runExtGATracker('nanocadTracker', 'UA-17962781-1') }
       if (/^uciem_westjem/.test(unit_id)) { this.runExtGATracker('westjemTracker', 'UA-34762732-1') }
       if (/^ucla_epss/.test(unit_id)) { this.runExtGATracker('epssTracker', 'UA-111990925-2') }
+      if (/^refract/.test(unit_id)) { this.runExtGATracker('refractTracker', 'UA-130336975-1') }      
+      if (/^itsdavis_ncst/.test(unit_id)) { this.runExtGATracker('itsdavisncstTracker', 'UA-54945925-1') }      
     }
   }
-
+ 
+  
   // This gets called when props change by switching to a new page.
   // It is *not* called on first-time construction. We use it to fetch new page data
   // for the page being switched to.
@@ -318,7 +321,8 @@ class PageBase extends React.Component
         }
       })
       .fail((jqxhr, textStatus, err) => {
-        this.setState({ pageData: { error: textStatus }, fetchingPerms: false, adminLogin: null, permissions: null, isEditingPage: false })
+        this.setState({ pageData: { error: textStatus }, fetchingPerms: false,
+                        adminLogin: null, permissions: null, isEditingPage: false })
       })
     }
   }
@@ -332,7 +336,8 @@ class PageBase extends React.Component
                                            token: this.state.adminLogin && this.state.adminLogin.token,
                                            onLogin: this.onLogin,
                                            onLogout: this.onLogout,
-                                           isEditingPage: this.state.adminLogin && this.state.adminLogin.loggedIn && this.state.isEditingPage,
+                                           isEditingPage: this.state.adminLogin && this.state.adminLogin.loggedIn &&
+                                                          this.state.isEditingPage,
                                            onEditingPageChange: this.onEditingPageChange,
                                            fetchPageData: () =>this.fetchPageData(this.props),
                                            goLocation: (loc) =>this.props.router.push(loc),

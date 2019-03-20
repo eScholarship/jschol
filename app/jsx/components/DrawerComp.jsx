@@ -10,7 +10,7 @@ class AddWidgetMenu extends React.Component {
       <div className="c-drawer__nav-buttons" >
         <details className="c-widgetselector__selector" open={this.state.isOpen} ref={el=>this.detailsEl=el}>
           <summary aria-label="select widget type"
-                   onClick={e=>setTimeout(()=>this.setState({isOpen: this.detailsEl.open}), 0)}/>
+                   onClick={e=>setTimeout(() =>this.setState({isOpen: this.detailsEl.open}), 0)}/>
           <div className="c-widgetselector__menu">
             <div className="c-widgetselector__sub-heading" id="c-widgetselector__sub-heading">{this.props.title}</div>
             <div className="c-widgetselector__items" aria-labelledby="c-widgetselector__sub-heading" role="list"
@@ -30,7 +30,7 @@ class SortableNavList extends React.Component {
   setupState(props) {
     return {
       data: this.generateData(props.navItems),
-      firstIsHome: props.navItems[0].type == "home"
+      firstIsFixed: props.navItems[0].type.includes("fixed")
     }
   }
 
@@ -40,24 +40,39 @@ class SortableNavList extends React.Component {
   }
 
   generateData(navItems) {
-    if (!navItems)
-      return undefined
-    return navItems.map(nav => {
-      let data = {
-        id: nav.id,
-        type: nav.type,
-        slug: nav.slug,
-        title: <Link to={`/uc/${this.props.unit}${(nav.type == "home") ? "" : `/nav/${nav.id}`}`}>{nav.name}</Link>,
-        subtitle: <i>{nav.hidden && 'hidden '}{nav.type}</i>
-      }
-      if (nav.type == "folder") {
-        data.children = this.generateData(nav.sub_nav)
-        data.expanded = true
-      }
-      else
-        data.noChildren = true
-      return data
-    })
+    let generate = (navItems) => {
+      if (!navItems)
+        return undefined
+      return navItems.map(nav => {
+        let data = {
+          id: nav.id,
+          type: nav.type,
+          slug: nav.slug,
+          title: <Link to={`/uc/${this.props.unit}${(nav.type.includes("fixed")) ? "" : `/nav/${nav.id}`}`}>{nav.name}</Link>,
+          subtitle: <i>{nav.hidden && 'hidden '}{nav.type.replace(/_/g," ")}</i>
+        }
+        // Anything else zero or lower is the Journal Issues dropdown, so should be avoided, except for id -9999 which is the Journal Home nav
+        if (nav.type.includes("folder") && (nav.id >= 0 || nav.id == -9999)) {
+          data.children = generate(nav.sub_nav)
+          data.expanded = true
+        }
+        else
+          data.noChildren = true
+        return data
+      })
+    }
+
+    let removeFixedSubPages = (navItems) => {
+      if (!navItems)
+        return undefined
+      let filtered = navItems.filter((nav) => {
+        if (nav.children) nav.children = removeFixedSubPages(nav.children);
+        return (nav.id >= 0 || nav.id == -9999)
+      })
+      return filtered;
+    }
+
+    return removeFixedSubPages(generate(navItems))
   }
 
   travOrder(treeData) {
@@ -78,7 +93,7 @@ class SortableNavList extends React.Component {
         scaffoldBlockPxWidth={30}
         maxDepth={2}
         canDrag={({ node }) => {
-          if (node.type == "home") // don't allow dragging unit home
+          if (node.type.includes("fixed")) // don't allow dragging unit home or journal issues drop down
             return false
           let slug = (node.type == "page") ? node.slug : node.type
           if (!(this.props.cms.permissions.nav_perms[slug] || {}).reorder)
@@ -86,20 +101,20 @@ class SortableNavList extends React.Component {
           return true
         }}
         canDrop={({ node, nextTreeIndex, nextParent }) => {
-          if (this.state.firstIsHome && nextTreeIndex == 0) // don't allow rearranging above the unit home
+          if (this.state.firstIsFixed && nextTreeIndex <= 0) // don't allow rearranging above fixed nodes
             return false
           if (!nextParent)
             return true
-          if (node.type == "folder")
+          if (node.type.includes("folder"))
             return false
           if (nextParent.noChildren)
             return false
-          if (nextParent.type != "folder")
+          if (!nextParent.type.includes("folder"))
             return false
           return true
         }}
         onChange={treeData => this.setState({ data: treeData })}
-        onMoveNode={()=>this.props.onChangeOrder(this.travOrder(this.state.data))}/>
+        onMoveNode={() =>this.props.onChangeOrder(this.travOrder(this.state.data))}/>
     )
   }
 }
@@ -125,7 +140,7 @@ class SortableSidebarList extends React.Component {
       id: sb.id,
       kind: sb.kind,
       title: <Link to={`/uc/${this.props.unit}/sidebar/${sb.id}`}>
-               {(sb.attrs && sb.attrs.title) ? sb.attrs.title : sb.kind.replace(/([a-z])([A-Z][a-z])/g, "$1 $2")}
+               {(sb.kind=='Text' && sb.attrs && sb.attrs.title) ? sb.attrs.title : sb.kind.replace(/([a-z])([A-Z][a-z])/g, "$1 $2")}
              </Link>,
       subtitle: <i>{sb.kind=='Text' ? "text widget" : "built-in widget"}</i> }})
   }
@@ -143,7 +158,7 @@ class SortableSidebarList extends React.Component {
         scaffoldBlockPxWidth={30}
         maxDepth={1}
         onChange={treeData => this.setState({ data: treeData })}
-        onMoveNode={()=>this.props.onChangeOrder(this.travOrder(this.state.data))}/>
+        onMoveNode={() =>this.props.onChangeOrder(this.travOrder(this.state.data))}/>
     )
   }
 }
@@ -170,7 +185,7 @@ class NonSortableList extends React.Component {
         isVirtualized={false}
         scaffoldBlockPxWidth={30}
         maxDepth={1}
-        canDrag={()=>false}
+        canDrag={() =>false}
         onChange={treeData => this.setState({ data: treeData })}/>
     )
   }
@@ -258,6 +273,7 @@ class DrawerComp extends React.Component {
           <AddWidgetMenu title="Add Widget">
             <a href="" key="RecentArticles" onClick={e=>this.addSidebarWidget(e, 'RecentArticles')  }>Recent Articles</a>
             <a href="" key="Text" onClick={e=>this.addSidebarWidget(e, 'Text')  }>Text</a>
+            <a href="" key="TwitterFeed" onClick={e=>this.addSidebarWidget(e, 'TwitterFeed')  }>Twitter Feed</a>
           </AddWidgetMenu>
         }
         </div>
@@ -275,7 +291,7 @@ class DrawerComp extends React.Component {
     )
   }
 
-  render = ()=>
+  render = () =>
     <Subscriber channel="cms">
       { cms =>
         <div>
