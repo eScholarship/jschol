@@ -10,7 +10,7 @@ export default class PdfViewerComp extends React.Component
 
   // Re-initialize when loading new item 
   componentWillReceiveProps(nextProps) {
-    this.initted = (this.props.url == nextProps.url)
+    this.initted = this.initted && (this.props.url == nextProps.url)
   }
 
   // Re-initialize on back button
@@ -22,20 +22,24 @@ export default class PdfViewerComp extends React.Component
 
   // Close out when disappearing
   componentWillUnmount() {
+    this.compDiv = null
     if (window.webViewerUnload) {
       window.webViewerUnload()
     }
   }
 
   render = () =>
-    <div id="pdfjs-cdl-wrapper" ref={(c) => this.initViewer(c)} dangerouslySetInnerHTML={this.viewerHTML()}/>
+    <div id="pdfjs-cdl-wrapper"
+         ref={(c) => { this.compDiv = c; setTimeout(()=>this.initViewer(), 0) }}
+         dangerouslySetInnerHTML={this.viewerHTML()}/>
 
   shouldComponentUpdate() {
     return this.initted ? false : true // never replace the HTML once created
   }
 
-  initViewer(compDiv) {
-    if (this.initted)
+  initViewer() {
+    // compDiv will be null if we had a tab switch just after init (e.g. due to #metrics hash at end of URL)
+    if (this.initted || !this.compDiv)
       return
     this.initted = true
 
