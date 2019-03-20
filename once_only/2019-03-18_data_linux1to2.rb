@@ -37,6 +37,7 @@ end
 dirs = [
   "sword/biomed",
   "apache/logs",
+  "eschol5/jschol/awsLogs",
   "erep/statistics",
   "erep/xtf/bpRedirect",
   "erep/xtf/control/db",
@@ -47,6 +48,7 @@ dirs = [
   "erep/xtf/stats",
   "linkBack",
   "oa_report",
+  "ojs",
   "repec",
   "subi/pub-oapi",
   "tomcat/logs",
@@ -91,6 +93,11 @@ dirs.each { |dir|
 
   # Dev and stg don't have a data_shadow dir
   if dir == "erep/data_shadow" && $host =~ /dev|stg/
+    next
+  end
+
+  # Dev and stg don't have an awsLogs dir
+  if dir == "eschol5/jschol/awsLogs" && $host =~ /dev|stg/
     next
   end
 
