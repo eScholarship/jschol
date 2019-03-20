@@ -497,6 +497,7 @@ def generatePdfThumbnail(itemID, inMeta, existingItem)
     end
   rescue Exception => e
     puts "Warning: error generating thumbnail: #{e}: #{e.backtrace.join("; ")}"
+    return nil
   end
 end
 
@@ -769,8 +770,12 @@ def parseUCIngest(itemID, inMeta, fileType)
       puts "Warning: no withdraw date found; using stateDate."
       attrs[:withdrawn_date] = inMeta[:stateDate]
     end
-    msg = inMeta.text_at("./history/stateChange[@state='withdrawn']/comment")
-    msg and attrs[:withdrawn_message] = msg
+
+    tmp = inMeta.text_at("./history/stateChange[@state='withdrawn']/comment")
+    tmp and attrs[:withdrawn_message] = tmp
+
+    tmp = inMeta.text_at("./history/stateChange[@state='withdrawn']/internalComment")
+    tmp and attrs[:withdrawn_internal_comment] = tmp
   end
 
   # Everything needs a submission date

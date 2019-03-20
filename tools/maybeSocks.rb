@@ -31,7 +31,7 @@ puts "\nStarting SOCKS proxy."
 user = ENV['SOCKS_USER'] ? "#{ENV['SOCKS_USER']}@" : ""
 cmd = "ssh -N -D #{port} " +
       "-F /dev/null " +
-      "#{bastion ? "-o ProxyCommand='ssh -C -W %h:%p -o StrictHostKeyChecking=no -o CheckHostIP=no #{bastionPort ? "-p #{bastionPort}" : ""} #{user}cdl-aws-bastion.cdlib.org' " : ""}" +
+      "#{bastion ? "-o ProxyCommand='ssh -C -W %h:%p -o StrictHostKeyChecking=no -o CheckHostIP=no #{bastionPort ? "-p #{bastionPort}" : ""} #{user}bastion2.cdlib.org' " : ""}" +
       "-o StrictHostKeyChecking=no " +
       "-o CheckHostIP=no " +
       "#{user}#{targetMachine}"

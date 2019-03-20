@@ -237,15 +237,33 @@ def splashGen(itemID, instrucs, origFile, targetFile)
     response.success? or raise("Error #{response.code} generating splash page: #{response.message}")
 
     # Linearize the result for fast display of the first page on all platforms.
-    system("/apps/eschol/bin/qpdf --linearize #{combinedTemp.path} #{targetFile}")
-    code = $?.exitstatus
-    code == 0 || code == 3 or raise("Error #{code} linearizing.")
+    linFix = true
+    if linFix
+      # A strange bug on Chrome 63+ causes the first page of our linearized PDFs to render as
+      # gibberish. Found by experimentation that running the combined file through pdftk before
+      # linearizing works around the problem, for reasons unknown.
+      # See https://www.pivotaltracker.com/story/show/161164221
+      # and https://bugs.chromium.org/p/chromium/issues/detail?id=711984
+      fixTemp = Tempfile.new(["fixed_#{itemID}_", ".pdf"], TEMP_DIR)
+      system("/apps/eschol/bin/pdftk #{combinedTemp.path} output #{fixTemp.path}")
+      code = $?.exitstatus
+      code == 0 || code == 3 or raise("Error #{code} fixing.")
+
+      system("/apps/eschol/bin/qpdf --linearize #{fixTemp.path} #{targetFile}")
+      code = $?.exitstatus
+      code == 0 || code == 3 or raise("Error #{code} linearizing.")
+    else
+      system("/apps/eschol/bin/qpdf --linearize #{combinedTemp.path} #{targetFile}")
+      code = $?.exitstatus
+      code == 0 || code == 3 or raise("Error #{code} linearizing.")
+    end
 
     # Sanity checking
     origPageCt = countPages(getRealPath(origFile))
     splashPageCt = countPages(targetFile)
     if splashPageCt != origPageCt+1
-      puts "Warning: splash version of #{itemID} is #{splashPageCt} pages, but should be #{origPageCt}+1 = #{origPageCt+1}. Suppressing splash version."
+      puts "Warning: splash version of #{itemID} is #{splashPageCt} pages, " +
+           "but should be #{origPageCt}+1 = #{origPageCt+1}. Suppressing splash version."
       return 0
     end
 
