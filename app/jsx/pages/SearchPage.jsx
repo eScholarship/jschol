@@ -4,6 +4,7 @@ import $ from 'jquery'
 import _ from 'lodash'
 import { Link } from 'react-router-dom'
 import getFormData from 'get-form-data'
+import queryString from 'query-string'
 
 import PageBase from './PageBase.jsx'
 import Header2Comp from '../components/Header2Comp.jsx'
@@ -630,7 +631,7 @@ class SearchPage extends PageBase {
     return(
       <div className="l_search">
         <MetaTagsComp title="Search"/>
-        <Header2Comp searchComp="1" query={this.props.location.query} />
+        <Header2Comp searchComp="1" query={queryString.parse(this.props.location.search)} />
         <div className="c-navbar">
           <NavComp data={data.header.nav_bar} />
         </div>

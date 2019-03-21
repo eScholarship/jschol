@@ -77,6 +77,7 @@
     "lodash": "^4.17.11",
     "lozad": "^1.0.9",
     "prop-types": "^15.5.10",
+    "query-string": "^6.4.0",
     "react": "^16.8.1",
     "react-dom": "^16.8.1",
     "react-ga": "^2.5.7",
