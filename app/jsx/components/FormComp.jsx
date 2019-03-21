@@ -9,6 +9,7 @@ import { withRouter } from 'react-router'
 class FormComp extends React.Component
 {
   static propTypes = {
+    id: PropTypes.string,
     to: PropTypes.string.isRequired,
     className: PropTypes.string.isRequired,
     filter: PropTypes.func
@@ -25,7 +26,7 @@ class FormComp extends React.Component
   }
 
   render = () =>
-    <form onSubmit={this.onSubmit} ref={this.formEl} className={this.props.className}>
+    <form id={this.props.id} onSubmit={this.onSubmit} ref={this.formEl} className={this.props.className}>
       {this.props.children}
     </form>
 }
