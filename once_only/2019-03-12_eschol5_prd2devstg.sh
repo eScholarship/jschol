@@ -28,39 +28,37 @@ if [[ " $MACHINES " =~ " $THIS_MACHINE " ]]; then
     trap finish EXIT
 
     # Stop all services on this machine
-    if [[ "" ]]; then
-      eye stop all
-      sleep 5
+    eye stop all
+    sleep 5
 
-      # Synchronize lots of miscellaneous directories
-      for dir in allStructReport \
-                 linkBack \
-                 oa_report \
-                 repec \
-                 erep/statistics \
-                 erep/xtf/bpRedirect \
-                 erep/xtf/dojRedirect \
-                 erep/xtf/ripCache \
-                 erep/xtf/stats; \
-      do
-        echo "Syncing $dir from prod."
-        rsync -a --delete eschol@submit.escholarship.org:/apps/eschol/$dir/ /apps/eschol/$dir/
-      done
+    # Synchronize lots of miscellaneous directories
+    for dir in allStructReport \
+               linkBack \
+               oa_report \
+               repec \
+               erep/statistics \
+               erep/xtf/bpRedirect \
+               erep/xtf/dojRedirect \
+               erep/xtf/ripCache \
+               erep/xtf/stats; \
+    do
+      echo "Syncing $dir from prod."
+      rsync -a --delete eschol@submit.escholarship.org:/apps/eschol/$dir/ /apps/eschol/$dir/
+    done
 
-      ############ JSCHOL ###########
-      # Dump the local jschol database and back it up
-      ~/bin/backupJscholDb.sh
+    ############ JSCHOL ###########
+    # Dump the local jschol database and back it up
+    ~/bin/backupJscholDb.sh
 
-      # Dump the prod jschol database to a file.
-      ssh eschol@submit.escholarship.org /bin/bash /apps/eschol/bin/backupJscholDb.sh
+    # Dump the prod jschol database to a file.
+    ssh eschol@submit.escholarship.org /bin/bash /apps/eschol/bin/backupJscholDb.sh
 
-      # Copy the db backup file from prod.
-      PROD_FILE=`ssh eschol@submit.escholarship.org ls -t '/apps/eschol/eschol5/jschol/db_backup/dump*' | head -1`
-      scp eschol@submit.escholarship.org:$PROD_FILE /apps/eschol/tmp/jschol_db_fromprod.gz
+    # Copy the db backup file from prod.
+    PROD_FILE=`ssh eschol@submit.escholarship.org ls -t '/apps/eschol/eschol5/jschol/db_backup/dump*' | head -1`
+    scp eschol@submit.escholarship.org:$PROD_FILE /apps/eschol/tmp/jschol_db_fromprod.gz
 
-      # Rebuild the jschol database on this machine
-      ~/bin/restoreJscholDb.sh /apps/eschol/tmp/jschol_db_fromprod.gz
-    fi
+    # Rebuild the jschol database on this machine
+    ~/bin/restoreJscholDb.sh /apps/eschol/tmp/jschol_db_fromprod.gz
 
     # Copy the contents of prod's S3 bucket to this machine
     DEV_OR_STG=`hostname | sed 's/pub-submit2*-//' | sed 's/-.*//'`
