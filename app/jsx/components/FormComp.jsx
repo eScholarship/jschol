@@ -22,7 +22,7 @@ class FormComp extends React.Component
     let data = getFormData(this.formEl.current)
     if (this.props.filter)
       data = this.props.filter(data)
-    this.props.history.push(this.props.to + "?" + $.param(data))
+    this.props.history.push(this.props.to + "?" + $.param(data).replace(/%5B%5D/g, ""))
   }
 
   render = () =>

@@ -3,7 +3,6 @@ import PropTypes from 'prop-types'
 import $ from 'jquery'
 import _ from 'lodash'
 import { Link } from 'react-router-dom'
-import getFormData from 'get-form-data'
 import queryString from 'query-string'
 
 import PageBase from './PageBase.jsx'
