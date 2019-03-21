@@ -634,41 +634,41 @@ class SearchPage extends PageBase {
         <div className="c-navbar">
           <NavComp data={data.header.nav_bar} />
         </div>
-    {/* <ExportComp /> */}
+        {/* <ExportComp /> */}
         <FormComp id={formName} to='/search' filter={this.formFilter} className="c-columns">
-        <aside>
-          <FacetForm formName={formName} formButton={formButton} data={facetFormData} info_count={data.info_count} query={data.query} />
-        </aside>
-        <main id="maincontent" tabIndex="-1">
-        {data.info_count > 0 &&
-          <section className={this.state.fetchingData ? "o-columnbox1 is-loading-data" : "o-columnbox1"}>
-            <header>
-              <h2 className="o-columnbox1__heading">{"Informational Pages ("+data.info_count+" results)"}</h2>
-            </header>
-            <InfoPagesComp query={data.query} info_count={data.info_count} infoResults={data.infoResults} />
-          </section>
-        }
-          <section className={this.state.fetchingData ? "o-columnbox1 is-loading-data" : "o-columnbox1"}>
-            <header>
-              <h2 className="o-columnbox1__heading">
-                Scholarly Works ({data.count + " results" + (data.count > 10000 ? ", showing first 10000" : "")})</h2>
-            </header>
-          {(data.count > 2) &&
-            <SortPaginationComp formName={formName} formButton={formButton} query={data.query} count={data.count}/>
-          }
-          {(data.count != 0 ) ? 
-            data.searchResults.map(result =>
-              <ScholWorksComp h="h3" key={result.id} result={result} />)
-          :
-            <div className="o-well-large">No results found.</div>
-          }
-          {(data.count > data.query.rows) &&
-            <PaginationComp formName={formName} formButton={formButton} query={data.query} count={data.count}/>
-          }
-          </section>
-        </main>
-      </FormComp>
-    </div>
+          <aside>
+            <FacetForm formName={formName} formButton={formButton} data={facetFormData} info_count={data.info_count} query={data.query} />
+          </aside>
+          <main id="maincontent" tabIndex="-1">
+            {data.info_count > 0 &&
+              <section className={this.state.fetchingData ? "o-columnbox1 is-loading-data" : "o-columnbox1"}>
+                <header>
+                  <h2 className="o-columnbox1__heading">{"Informational Pages ("+data.info_count+" results)"}</h2>
+                </header>
+                <InfoPagesComp query={data.query} info_count={data.info_count} infoResults={data.infoResults} />
+              </section>
+            }
+            <section className={this.state.fetchingData ? "o-columnbox1 is-loading-data" : "o-columnbox1"}>
+              <header>
+                <h2 className="o-columnbox1__heading">
+                  Scholarly Works ({data.count + " results" + (data.count > 10000 ? ", showing first 10000" : "")})</h2>
+              </header>
+              {(data.count > 2) &&
+                <SortPaginationComp formName={formName} formButton={formButton} query={data.query} count={data.count}/>
+              }
+              {(data.count != 0 ) ?
+                data.searchResults.map(result =>
+                  <ScholWorksComp h="h3" key={result.id} result={result} />)
+              :
+                <div className="o-well-large">No results found.</div>
+              }
+              {(data.count > data.query.rows) &&
+                <PaginationComp formName={formName} formButton={formButton} query={data.query} count={data.count}/>
+              }
+            </section>
+          </main>
+        </FormComp>
+      </div>
   )}
 }
 
