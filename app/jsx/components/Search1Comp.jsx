@@ -1,7 +1,6 @@
 // ##### Search 1 Component - used on global (non-unit) pages and on search page itself ##### //
 
 import React from 'react'
-//import Form from 'react-router-form'
 import PropTypes from 'prop-types'
 import FormComp from '../components/FormComp.jsx'
 

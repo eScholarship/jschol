@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-//import Form from 'react-router-form'
+import FormComp from '../components/FormComp.jsx'
 import _ from 'lodash'
 import Contexts from '../contexts.jsx'
 
@@ -57,7 +57,7 @@ class IssueTable extends React.Component {
   render() {
     let p = this.props
     return (
-      <form to={`/api/unit/${p.unit.id}/issueConfig`} onSubmit={this.handleSubmit}>
+      <FormComp to={`/api/unit/${p.unit.id}/issueConfig`} onSubmit={this.handleSubmit}>
         <table className="c-issueTable">
           <thead>
             <tr>
@@ -77,7 +77,7 @@ class IssueTable extends React.Component {
             ? <p>Only eScholarship staff may change this information.</p>
             : <button type="submit">Save Changes</button>
         }
-      </form>
+      </FormComp>
     )
   }
 }

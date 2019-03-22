@@ -2,7 +2,7 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import _ from 'lodash'
-//import Form from 'react-router-form'
+import FormComp from '../components/FormComp.jsx'
 
 import ArbitraryHTMLComp from "../components/ArbitraryHTMLComp.jsx"
 import MetaTagsComp from '../components/MetaTagsComp.jsx'
@@ -119,7 +119,7 @@ class StatsForm extends React.Component
   render() {
     let p = this.props
     return (
-      <form to={p.location.pathname} method="GET">
+      <FormComp to={p.location.pathname} method="GET">
         <div className="c-daterange">
           <div className="o-input__inline">
             <div key="range" className="o-input__droplist1">
@@ -175,7 +175,7 @@ class StatsForm extends React.Component
           </div>
           <button type="submit" key="submit">Update</button>
         </div>
-      </form>
+      </FormComp>
     )
   }
 }
