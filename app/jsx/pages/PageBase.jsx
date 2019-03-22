@@ -119,14 +119,21 @@ class PageBase extends React.Component
   // Browser-side AJAX fetch of page data. Sets state when the data is returned to us.
   fetchPageData = props => {
     this.dataURL = this.pageDataURL(props)
+    let urlFetching = this.dataURL
     if (this.dataURL) {
       this.setState({ fetchingData: true, 
                       permissions: (this.state && this.pagePermissionsUnit() == this.state.permissionsUnit)
                         ? this.state.permissions : null })
       $.getJSON(this.pageDataURL(props)).done((data) => {
-        this.setState({ pageData: data, fetchingData: false })
-        if (this.pagePermissionsUnit() != this.state.permissionsUnit)
-          this.fetchPermissions()
+        if (urlFetching == this.dataURL) {
+          this.setState({ pageData: data, fetchingData: false })
+          if (this.pagePermissionsUnit() != this.state.permissionsUnit)
+            this.fetchPermissions()
+        }
+        else {
+          // Another page was fetched before data for first page came back. Toss the first.
+          console.log("Note: discarding obsolete API data from:", urlFetching)
+        }
       }).fail((jqxhr, textStatus, err) => {
         let message = (jqxhr.responseJSON && jqxhr.responseJSON.message) ? jqxhr.responseJSON.message :
                       (textStatus=="error" && err) ? err :
