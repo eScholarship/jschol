@@ -26,7 +26,7 @@ def runCmd(cmd)
     status = $?.exitstatus
     msg = "#{cmd} exited with status #{status}"
     if $ignoreErrors
-      puts "Warning: #{msg}"
+      puts "-- Warning: #{msg}"
     else
       raise msg
     end
@@ -58,7 +58,7 @@ dirs = [
   "erep/data_shadow",
 ]
 
-srcMachine = "#{$host.sub('submit2', 'submit')}.escholarship.org"
+srcMachine = "#{$host.sub('submit2', 'submit').sub("-stg", "-stg-2a")}.escholarship.org"
 srcMachine != $host or raise("failed to map to source machine name")
 
 # Remove extraneous index links.
@@ -72,8 +72,8 @@ srcMachine != $host or raise("failed to map to source machine name")
 `rm -f /apps/eschol/erep/xtf/preview-index-spare`
 
 # Copy the main index links as well
-runCmd("rsync -av pub-submit-dev.escholarship.org:/apps/eschol/erep/xtf/index /apps/eschol/erep/xtf/index")
-runCmd("rsync -av pub-submit-dev.escholarship.org:/apps/eschol/erep/xtf/preview-index /apps/eschol/erep/xtf/preview-index")
+runCmd("rsync -av #{srcMachine}:/apps/eschol/erep/xtf/index /apps/eschol/erep/xtf/index")
+runCmd("rsync -av #{srcMachine}:/apps/eschol/erep/xtf/preview-index /apps/eschol/erep/xtf/preview-index")
 
 dirs.each { |dir|
   cmd = "rsync -a"
@@ -86,18 +86,18 @@ dirs.each { |dir|
     cmd += " --delete"
   end
 
-  # We only expect hard links amongst the indexes
+  # We only expect hard links amongst the XTF indexes
   if dir == "erep/xtf/indexes"
     cmd += " --hard-links"
   end
 
-  # Dev and stg don't have a data_shadow dir
-  if dir == "erep/data_shadow" && $host =~ /dev|stg/
+  # Dev doesn't have a data_shadow dir
+  if dir == "erep/data_shadow" && $host =~ /dev/
     next
   end
 
-  # Dev and stg don't have an awsLogs dir
-  if dir == "eschol5/jschol/awsLogs" && $host =~ /dev|stg/
+  # Dev doesn't have an awsLogs dir
+  if dir == "eschol5/jschol/awsLogs" && $host =~ /dev/
     next
   end
 
@@ -111,3 +111,6 @@ dirs.each { |dir|
   runCmd(cmd)
 }
 
+puts "-------------------------------------------------------------------------------------------"
+puts "-- #{DateTime.now.iso8601}"
+puts "-- All done."
