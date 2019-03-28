@@ -83,10 +83,6 @@ if [[ " $MACHINES " =~ " $THIS_MACHINE " ]]; then
     cd ~/apache/htdocs/ojs/eschol/utilities && ./restore.sh
     cd ~
 
-    # Rebuild the jschol database on this machine
-    cd ~/bin && ./restoreJscholDb.sh
-    cd ~
-
     # Sometimes the controller and preview daemon don't clean up their lock files. Do that
     # so they will restart cleanly later.
     #
