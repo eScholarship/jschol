@@ -10,11 +10,7 @@ bundle install --quiet --path=gems --binstubs
 bundle clean
 
 printf "\n== Installing node packages (used by gulp and iso via Node) ==\n"
-yarn install --silent
-
-printf "\n== Patching React to suppress unavoidable warnings from sub-modules ==\n"
-perl -pi -e 's/warnedForCreateClass = false/warnedForCreateClass = true/' node_modules/react/lib/React.js
-perl -pi -e 's/didWarnPropTypesDeprecated = false/didWarnPropTypesDeprecated = true/' node_modules/react/lib/React.js
+npm install
 
 if [[ `/bin/hostname` == "*pub-submit*" ]]; then
   printf "\n== Building splash page generator ==\n"
