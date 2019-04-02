@@ -1,5 +1,5 @@
 import React from 'react'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 
 import PageBase from './PageBase.jsx'
 import Header1Comp from '../components/Header1Comp.jsx'
@@ -33,7 +33,7 @@ class LogoutPage extends PageBase
           <NavComp data={data.header.nav_bar} />
         </div>
         <div className="c-columns">
-          <main id="maincontent">
+          <main id="maincontent" tabIndex="-1">
             <section className="o-columnbox1">
               <header>
                 <h1 className="o-columnbox1__heading">Logout</h1>

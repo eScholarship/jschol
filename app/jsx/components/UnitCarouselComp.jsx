@@ -3,7 +3,7 @@ import React from 'react'
 import $ from 'jquery'
 import PropTypes from 'prop-types'
 import CarouselComp from '../components/CarouselComp.jsx'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 import ArbitraryHTMLComp from "../components/ArbitraryHTMLComp.jsx"
 
 function capitalize(str) {

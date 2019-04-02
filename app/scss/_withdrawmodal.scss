@@ -5,19 +5,19 @@
 }
 
 .c-withdrawmodal__label {
-  font-weight: 700;
   margin-bottom: 5px;
+  font-weight: 700;
 }
 
-.c-withdrawmodal__publicMessage,
-.c-withdrawmodal__internalComment {
-  margin-bottom: 10px;
+.c-withdrawmodal__public-message,
+.c-withdrawmodal__internal-comment {
   display: block;
   width: 600px;
+  margin-bottom: 10px;
 }
 
-.c-withdrawmodal__redirectTo {
-  margin-bottom: 10px;
+.c-withdrawmodal__redirect-to {
   display: block;
   width: 100px;
+  margin-bottom: 10px;
 }

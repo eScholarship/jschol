@@ -3,7 +3,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import $ from 'jquery'
 import CarouselComp from '../components/CarouselComp.jsx'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 import MEDIA_PATH from '../../js/MediaPath.js'
 
 // Load dotdotdot in browser but not server

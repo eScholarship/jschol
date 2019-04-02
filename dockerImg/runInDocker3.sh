@@ -2,7 +2,7 @@
 
 set -e
 
-rsync -a --exclude run.sh --exclude .git --exclude bin --exclude config --exclude gems --exclude node_modules --exclude app/js --exclude app/css --exclude app/bower_components /outer_jschol/ ./
+rsync -a --exclude run.sh --exclude .git --exclude bin --exclude config --exclude gems --exclude node_modules --exclude app/js --exclude app/css /outer_jschol/ ./
 
 source config/env.sh
 config/env2config.sh

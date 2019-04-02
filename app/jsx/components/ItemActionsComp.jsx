@@ -10,7 +10,7 @@ import ShareComp from '../components/ShareComp.jsx'
 import NotYetLink from '../components/NotYetLink.jsx'
 import DropdownMenu from '../components/DropdownMenu.jsx'
 import WithdrawModalComp from '../components/WithdrawModalComp.jsx'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 
 class Downloadable extends React.Component {
   linkBuyPrint = () => {window.location = this.props.attrs.buy_link}

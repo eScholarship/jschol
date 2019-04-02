@@ -1,7 +1,7 @@
 // ##### Toggle List Sub Component ##### //
 
 import React from 'react'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 
 class ToggleListSubComp extends React.Component {
   constructor(props){

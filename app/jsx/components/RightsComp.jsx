@@ -6,7 +6,7 @@ import PropTypes from 'prop-types'
 import MEDIA_PATH from '../../js/MediaPath.js'
 
 class RightsComp extends React.Component {
-  static PropTypes = {
+  static propTypes = {
     rights: PropTypes.string,
     size: PropTypes.oneOf(['small', 'large']),
     classname: PropTypes.string

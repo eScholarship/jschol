@@ -4,7 +4,7 @@
 
 import React from 'react'
 import PropTypes from 'prop-types'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 import PubComp from '../components/PubComp.jsx'
 
 class PubPreviewComp extends React.Component {

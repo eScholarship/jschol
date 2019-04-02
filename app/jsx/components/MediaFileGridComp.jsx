@@ -4,7 +4,7 @@ import React from 'react'
 import MediaModalComp from '../components/MediaModalComp.jsx'
 import MediaFeatureObj from '../objects/MediaFeatureObj.jsx'
 import $ from 'jquery'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 
 // Load dotdotdot in browser but not server
 if (!(typeof document === "undefined")) {

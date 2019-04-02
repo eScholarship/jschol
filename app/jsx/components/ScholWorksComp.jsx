@@ -4,7 +4,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import RightsComp from '../components/RightsComp.jsx'
 import $ from 'jquery'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 import TruncationObj from '../objects/TruncationObj.jsx'
 import MediaListComp from '../components/MediaListComp.jsx'
 import ArbitraryHTMLComp from '../components/ArbitraryHTMLComp.jsx'
@@ -95,11 +95,11 @@ class ScholWorksComp extends React.Component {
               ) 
             }) }
           </ul>
-          <heading>
+          <div>
             <TruncationObj element={this.props.h} className="c-scholworks__heading">
               <a href={itemLink}><ArbitraryHTMLComp html={pr.title}/></a>
             </TruncationObj>
-          </heading>
+          </div>
           {authorList && 
             <div className="c-authorlist">
               <DotAuthorUl className="c-authorlist__list">

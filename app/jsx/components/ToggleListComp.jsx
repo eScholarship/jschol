@@ -1,7 +1,7 @@
 // ##### Toggle List Component ##### //
 
 import React from 'react'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 import ToggleListSubComp from '../components/ToggleListSubComp.jsx'
 
 class ToggleListComp extends React.Component {

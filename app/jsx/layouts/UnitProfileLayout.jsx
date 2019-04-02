@@ -1,7 +1,7 @@
 import React from 'react'
 import WysiwygEditorComp from '../components/WysiwygEditorComp.jsx'
-import Form from 'react-router-form'
-import { Subscriber } from 'react-broadcast'
+import Contexts from '../contexts.jsx'
+import FormComp from '../components/FormComp.jsx'
 import _ from 'lodash'
 
 class UnitProfileLayout extends React.Component {
@@ -77,7 +77,7 @@ class UnitProfileLayout extends React.Component {
             ? "/assets/" + data.hero.asset_id
             : "http://placehold.it/500x200?text=No+hero+image"
     return (
-      <Subscriber channel="cms">
+      <Contexts.CMS.Consumer>
       { cms => {
          let disableEdit = !(cms.permissions && cms.permissions.super)
          let disableLogo = (this.props.unit.type.indexOf("series") >= 0) ||
@@ -88,7 +88,7 @@ class UnitProfileLayout extends React.Component {
            <div className="c-columns">
              <main>
                <section className="o-columnbox1">
-                 <Form to={`/api/unit/${this.props.unit.id}/profileContentConfig`} onSubmit={this.handleSubmit}>
+                 <FormComp to={`/api/unit/${this.props.unit.id}/profileContentConfig`} onSubmit={this.handleSubmit}>
                    {/* Marker so that unitPages.rb can tell which section is being submitted */}
                    <input type="hidden" name="unitConfigSection" defaultValue="yes"/>
                    <label className="c-editable-page__label" htmlFor="unitName">Name: {disableEdit ? "(restricted)" : ""}</label>
@@ -171,7 +171,7 @@ class UnitProfileLayout extends React.Component {
                     }
 
                    <button type="submit">Save Changes</button>
-                 </Form>
+                 </FormComp>
                </section>
              </main>
            </div>
@@ -179,7 +179,7 @@ class UnitProfileLayout extends React.Component {
          )
         }
       }
-      </Subscriber>
+      </Contexts.CMS.Consumer>
     )
   }
 
@@ -193,7 +193,7 @@ class UnitProfileLayout extends React.Component {
           <main>
             <section className="o-columnbox1">
               <div>
-                <Form to={`/api/unit/${this.props.unit.id}/profileContentConfig`} onSubmit={this.handleSubmit}>
+                <FormComp to={`/api/unit/${this.props.unit.id}/profileContentConfig`} onSubmit={this.handleSubmit}>
                   <p>You may provide links to your social media page(s). These will appear as icons in your site's navigation bar.</p>
                   <label className="c-editable-page__label" htmlFor="facebook">Facebook Page Name: </label>
                   <p>The portion of your Facebook page's URL that appears after: http://www.facebook.com/_____</p>
@@ -208,7 +208,7 @@ class UnitProfileLayout extends React.Component {
                   <button type="submit">Save Changes</button>
                 {/* Not using this right now
                   <button type="reset">Cancel</button>   */}
-                </Form>
+                </FormComp>
               </div>
             </section>
           </main>
@@ -226,7 +226,7 @@ class UnitProfileLayout extends React.Component {
         <div className="c-columns">
           <main>
             <section className="o-columnbox1">
-              <Form to={`/api/unit/${this.props.unit.id}/profileContentConfig`} onSubmit={this.handleSubmit}>
+              <FormComp to={`/api/unit/${this.props.unit.id}/profileContentConfig`} onSubmit={this.handleSubmit}>
                 <label className="c-editable-page__label" htmlFor="aboutText">About Text</label>
                 <p>About text will appear at the top of your site's landing page. It should be fewer than 400 characters in length.</p>
                 <WysiwygEditorComp className="c-editable-page__input" name="about" id="about"
@@ -238,7 +238,7 @@ class UnitProfileLayout extends React.Component {
                 <button type="submit">Save Changes</button>
               {/* Not using this right now
                 <button type="reset">Cancel</button>  */}
-              </Form>
+              </FormComp>
             </section>
           </main>
         </div>
@@ -255,7 +255,7 @@ class UnitProfileLayout extends React.Component {
         <div className="c-columns">
           <main>
             <section className="o-columnbox1">
-              <Form to={`/api/unit/${this.props.unit.id}/profileContentConfig`} onSubmit={this.handleSubmit}>
+              <FormComp to={`/api/unit/${this.props.unit.id}/profileContentConfig`} onSubmit={this.handleSubmit}>
                 <input type="hidden" name="journalConfigSection" defaultValue="yes"/>
                 <label className="c-editable-page__label" htmlFor="magazine_layout">Magazine layout?</label>
                 <input type="checkbox" id="magazine_layout" name="magazine_layout" defaultChecked={data.magazine_layout}/>
@@ -273,7 +273,7 @@ class UnitProfileLayout extends React.Component {
                 <button>Save Changes</button>
               {/* Not using this right now
                 <button>Cancel</button> */}
-              </Form>
+              </FormComp>
             </section>
           </main>
         </div>

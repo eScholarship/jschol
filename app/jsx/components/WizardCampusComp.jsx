@@ -1,7 +1,7 @@
 // ##### Deposit Wizard - [2] Campus Component ##### //
 
 import React from 'react'
-import { Subscriber } from 'react-broadcast'
+import Contexts from '../contexts.jsx'
 import PropTypes from 'prop-types'
 
 class WizardCampusComp extends React.Component {
@@ -31,7 +31,7 @@ class WizardCampusComp extends React.Component {
 
   render() {
     return (
-      <Subscriber channel="wiz">
+      <Contexts.Wiz.Consumer>
         { wiz => {
         // Student is not asked to select type of material (skip step 3)
         let nextStep = (wiz.arg == "2_student") ? 4 : 3
@@ -56,7 +56,7 @@ class WizardCampusComp extends React.Component {
         </footer>
       </div>
       )}}
-      </Subscriber>
+      </Contexts.Wiz.Consumer>
     )
   }
 }

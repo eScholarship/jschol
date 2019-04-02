@@ -3,12 +3,12 @@
 
 import React from 'react'
 import Breakpoints from '../../js/breakpoints.json'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 
 class JumpComp extends React.Component {
   state = {show: true /* default to true for server-side */}
 
-  componentWillMount() {
+  componentDidMount() {
     if (!(typeof matchMedia === "undefined")) {
       this.mq = matchMedia("(min-width:"+Breakpoints.screen2+")")
       this.mq.addListener(this.widthChange)

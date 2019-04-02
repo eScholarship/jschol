@@ -1,7 +1,7 @@
 // ##### Deposit Wizard - [3] Type Component ##### //
 
 import React from 'react'
-import { Subscriber } from 'react-broadcast'
+import Contexts from '../contexts.jsx'
 
 const DASH_LIST = {
     'ucb': 'https://dash.berkeley.edu/stash',
@@ -16,7 +16,7 @@ const DASH_LIST = {
 class WizardTypeComp extends React.Component {
   render() {
     return (
-      <Subscriber channel="wiz">
+      <Contexts.Wiz.Consumer>
         { wiz => {
             // If logged in as campus, prevStep should send you back to WizardRoleComp
             let prevStep = wiz.launchedFromRoot ? 2 : 1
@@ -59,7 +59,7 @@ class WizardTypeComp extends React.Component {
         </footer>
       </div>
      )} }
-      </Subscriber>
+      </Contexts.Wiz.Consumer>
     )
   }
 }
