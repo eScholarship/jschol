@@ -30,9 +30,9 @@ class QueryParser < Parslet::Parser
   rule(:lparen) { str("(") >> space? }
   rule(:rparen) { str(")") >> space? }
 
-  rule(:and_operator) { stri("AND") >> space? }
-  rule(:or_operator)  { stri("OR")  >> space? }
-  rule(:not_operator)  { stri("NOT")  >> space? }
+  rule(:and_operator) { stri("AND") >> space }
+  rule(:or_operator)  { stri("OR")  >> space }
+  rule(:not_operator)  { stri("NOT")  >> space }
   rule(:op) { and_operator | or_operator | not_operator }
 
   rule(:segment) { op.absent? >> match('[^()"\s]').repeat(1) >> space? }
@@ -60,8 +60,17 @@ class QueryParser < Parslet::Parser
 
 end
 
-def _clean(s)
-  return String(s).strip.gsub(/'/, "\\\\'")
+def _clean(str)
+  return String(str).strip.gsub(/'/, "\\\\'")
+end
+
+def _lastNameFirst(str)
+  a = str.split
+  if a.size > 1
+    ln = "#{a.pop},"
+    return a.unshift(ln).join(' ')
+  end
+  return str
 end
 
 class Transformer < Parslet::Transform
@@ -72,8 +81,11 @@ class Transformer < Parslet::Transform
     "(phrase field='title' '#{_clean(phrase)}')"
   end
 
+  # Force any queries on author to be phrase queries.
+  # If no comma, re-arrange name to have last name first
   rule(:author => { :term => simple(:term) }) do
-    "(term field='authors' '#{_clean(term)}')"
+    r = _clean(term)
+    "(phrase field='authors' '#{r =~ /,/ ? r : _lastNameFirst(r)}')"
   end
   rule(:author => { :phrase => simple(:phrase) }) do
     "(phrase field='authors' '#{_clean(phrase)}')"
@@ -113,6 +125,5 @@ def q_structured(q)
     puts error.parse_failure_cause.ascii_tree
     return false, q
   end
-
   return true, Transformer.new.apply(tree)
 end
