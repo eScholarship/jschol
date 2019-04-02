@@ -16,7 +16,7 @@ $hostname = `/bin/hostname`.strip
 
 ###################################################################################################
 def countPages(pdfPath)
-  stdout, stderr, status = Open3.capture3("/usr/bin/qpdf --show-npages #{pdfPath}")
+  stdout, stderr, status = Open3.capture3("/apps/eschol/bin/qpdf --show-npages #{pdfPath}")
   if stdout.strip =~ /^\d+$/
     return stdout.to_i
   else
@@ -245,15 +245,15 @@ def splashGen(itemID, instrucs, origFile, targetFile)
       # See https://www.pivotaltracker.com/story/show/161164221
       # and https://bugs.chromium.org/p/chromium/issues/detail?id=711984
       fixTemp = Tempfile.new(["fixed_#{itemID}_", ".pdf"], TEMP_DIR)
-      system("/apps/eschol/pkg/bin/pdftk #{combinedTemp.path} output #{fixTemp.path}")
+      system("/apps/eschol/bin/pdftk #{combinedTemp.path} output #{fixTemp.path}")
       code = $?.exitstatus
       code == 0 || code == 3 or raise("Error #{code} fixing.")
 
-      system("/usr/bin/qpdf --linearize #{fixTemp.path} #{targetFile}")
+      system("/apps/eschol/bin/qpdf --linearize #{fixTemp.path} #{targetFile}")
       code = $?.exitstatus
       code == 0 || code == 3 or raise("Error #{code} linearizing.")
     else
-      system("/usr/bin/qpdf --linearize #{combinedTemp.path} #{targetFile}")
+      system("/apps/eschol/bin/qpdf --linearize #{combinedTemp.path} #{targetFile}")
       code = $?.exitstatus
       code == 0 || code == 3 or raise("Error #{code} linearizing.")
     end

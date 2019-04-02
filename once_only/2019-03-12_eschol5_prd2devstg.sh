@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-MACHINES="pub-submit-dev pub-submit-stg-2a"
+MACHINES="pub-submit-dev pub-submit2-dev pub-submit-stg-2a pub-submit2-stg"
 NOTIFY="r.c.martin.haye@ucop.edu"
 THIS_MACHINE=`hostname`
 if [[ " $MACHINES " =~ " $THIS_MACHINE " ]]; then
@@ -51,14 +51,14 @@ if [[ " $MACHINES " =~ " $THIS_MACHINE " ]]; then
     ~/bin/backupJscholDb.sh
 
     # Dump the prod jschol database to a file.
-    ssh eschol@submit.escholarship.org /bin/bash /apps/eschol/bin/backupJscholDb.sh
+    ssh eschol@submit.escholarship.org /bin/bash /apps/eschol/bin/backupJscholDb.sh --raw
 
     # Copy the db backup file from prod.
-    PROD_FILE=`ssh eschol@submit.escholarship.org ls -t '/apps/eschol/eschol5/jschol/db_backup/dump*' | head -1`
+    PROD_FILE=`ssh eschol@submit.escholarship.org ls -t '/apps/eschol/eschol5/jschol/db_backup/raw_dump*' | head -1`
     scp eschol@submit.escholarship.org:$PROD_FILE /apps/eschol/tmp/jschol_db_fromprod.gz
 
     # Rebuild the jschol database on this machine
-    ~/bin/restoreJscholDb.sh /apps/eschol/tmp/jschol_db_fromprod.gz
+    ~/bin/restoreJscholDb.sh /apps/eschol/tmp/jschol_db_fromprod.gz --raw
 
     # Copy the contents of prod's S3 bucket to this machine
     DEV_OR_STG=`hostname | sed 's/pub-submit2*-//' | sed 's/-.*//'`
@@ -81,10 +81,6 @@ if [[ " $MACHINES " =~ " $THIS_MACHINE " ]]; then
 
     # Rebuild the OJS database on this machine
     cd ~/apache/htdocs/ojs/eschol/utilities && ./restore.sh
-    cd ~
-
-    # Rebuild the jschol database on this machine
-    cd ~/bin && ./restoreJscholDb.sh
     cd ~
 
     # Sometimes the controller and preview daemon don't clean up their lock files. Do that
