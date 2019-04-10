@@ -1219,6 +1219,7 @@ def parseLogs
   # Application Load Balancer (ALB) logs
   Dir.glob("./awsLogs/alb-logs/**/*").sort.each { |fn|
     next unless File.file?(fn)
+    next if File.empty?(fn)
     next if fn =~ /ELBAccessLogTestFile/
     next if fn == prev+".gz"  # skip dupe gz of non-gz file
     prev = fn
@@ -1229,6 +1230,7 @@ def parseLogs
   # jschol logs (needed to link referrers to ALB logs)
   Dir.glob("./awsLogs/jschol-logs/**/*").sort.each { |fn|
     next unless File.file?(fn)
+    next if File.empty?(fn)
     next if fn =~ %r{/iso\.}  # we only want the jschol logs, not iso logs
     next if fn == prev+".gz"  # skip dupe gz of non-gz file
     prev = fn
