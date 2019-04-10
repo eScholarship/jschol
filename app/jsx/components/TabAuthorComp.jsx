@@ -2,7 +2,7 @@
 //
 import React from 'react'
 import ArbitraryHTMLComp from "../components/ArbitraryHTMLComp.jsx"
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 
 class TabAuthorComp extends React.Component {
   // ToDo: Maybe componentize this as similar logic is also being used in JournalLayout

@@ -1,6 +1,8 @@
 // ##### Utilities Component ##### //
 // A collection of methods shared across components 
 
+import React from 'react'
+
 export default class {
 
   /**
@@ -22,5 +24,4 @@ export default class {
     if (html.match(/^<p>.*<\/p>$/)) return html
     return '<p>'+ html +'</p>'
   }
-
 }

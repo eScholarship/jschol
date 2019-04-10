@@ -319,12 +319,13 @@ def getUnitHeader(unit, pageName=nil, journalIssue=nil, issuesSubNav=nil, attrs=
   return header
 end
 
-def getCampusHeros
-  return $activeCampuses.values.map do |c|
+def getCampusHero
+  # Get a random hero image
+  heros = $activeCampuses.values.map do |c|
     unit = $unitsHash[c.id]
     attrs = JSON.parse(unit.attrs)
     ["ucop", "lbnl", "anrcs"].include?(c.id) ? nil : {'unit_id': c.id, 'unit_name': c.name, 'hero': getLogoData(attrs['hero'])}
-  end
+  end.compact.shuffle[0]
 end
 
 # Series use query and Journals use issueIds and issuesPublished

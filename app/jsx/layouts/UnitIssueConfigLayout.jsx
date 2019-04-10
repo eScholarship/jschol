@@ -1,8 +1,8 @@
 import React from 'react'
-import { Link } from 'react-router'
-import Form from 'react-router-form'
+import { Link } from 'react-router-dom'
+import FormComp from '../components/FormComp.jsx'
 import _ from 'lodash'
-import { Subscriber } from 'react-broadcast'
+import Contexts from '../contexts.jsx'
 
 class RightsDropdown extends React.Component {
   render = () =>
@@ -57,7 +57,7 @@ class IssueTable extends React.Component {
   render() {
     let p = this.props
     return (
-      <Form to={`/api/unit/${p.unit.id}/issueConfig`} onSubmit={this.handleSubmit}>
+      <FormComp to={`/api/unit/${p.unit.id}/issueConfig`} onSubmit={this.handleSubmit}>
         <table className="c-issueTable">
           <thead>
             <tr>
@@ -77,7 +77,7 @@ class IssueTable extends React.Component {
             ? <p>Only eScholarship staff may change this information.</p>
             : <button type="submit">Save Changes</button>
         }
-      </Form>
+      </FormComp>
     )
   }
 }
@@ -85,7 +85,7 @@ class IssueTable extends React.Component {
 export default class UnitIssueConfigLayout extends React.Component
 {
   render = () =>
-    <Subscriber channel="cms">
+    <Contexts.CMS.Consumer>
       { cms => {
           let p = this.props
           let tableProps = {
@@ -110,5 +110,5 @@ export default class UnitIssueConfigLayout extends React.Component
           )
         }
       }
-    </Subscriber>
+    </Contexts.CMS.Consumer>
 }

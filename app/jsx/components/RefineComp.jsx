@@ -7,7 +7,7 @@ import PubYearComp from '../components/PubYearComp.jsx'
 class RefineComp extends React.Component {
   state={refineActive: false, drawerOpen: false}
 
-  componentWillMount() {
+  componentDidMount() {
     if (matchMedia) {
       this.mq = matchMedia("(min-width:"+Breakpoints.screen1+")")
       this.mq.addListener(this.widthChange)

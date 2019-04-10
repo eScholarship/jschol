@@ -38,7 +38,7 @@ class ItemPage extends PageBase {
 
   // PageBase will fetch the following URL for us, and place the results in this.state.pageData
   pageDataURL() {
-    return "/api/item/" + this.props.params.itemID
+    return "/api/item/" + this.props.match.params.itemID
   }
 
   // Unit ID for permissions checking
@@ -53,9 +53,11 @@ class ItemPage extends PageBase {
   // currentTab should be 'main' whenever hash starts with 'article_" (or is empty)
   articleHashHandler = h => { return ((h.startsWith("article") || h=='') ? "main" : h) }
 
-  state = { currentTab: this.articleHashHandler(this.tabNameFromHash()) }
+  state = { currentTab: "main" }
 
   componentDidMount(...args) {
+    this.setState({currentTab: this.articleHashHandler(this.tabNameFromHash())})
+
     // Check hash whenever back or forward button clicked
     window.onpopstate = (event) => {
       var h = this.articleHashHandler(this.tabNameFromHash())
@@ -156,7 +158,7 @@ class ItemPage extends PageBase {
                                     socialProps={d.header.social} />}
         <BreadcrumbComp array={d.header ? d.header.breadcrumb : null} />
         <div className={this.state.fetchingData ? "c-columns--sticky-sidebar is-loading-data" : "c-columns--sticky-sidebar"}>
-          <main id="maincontent">
+          <main id="maincontent" tabIndex="-1">
             <ItemActionsComp id={d.id}
                          status={d.status}
                          content_type={d.content_type}

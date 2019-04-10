@@ -1,6 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 
 import ScholWorksComp from '../components/ScholWorksComp.jsx'
 import SortPaginationComp from '../components/SortPaginationComp.jsx'
@@ -48,7 +48,7 @@ class UnitSearchLayout extends React.Component {
     var data = this.props.data;
     return (
       <div className="c-columns">
-        <main id="maincontent">
+        <main id="maincontent" tabIndex="-1">
           <section className="o-columnbox1">
             <SortPaginationComp query={data.query} count={data.count}/>
             <div>

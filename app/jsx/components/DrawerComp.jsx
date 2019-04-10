@@ -1,6 +1,6 @@
 import React from 'react'
-import { Subscriber } from 'react-broadcast'
-import { Link } from 'react-router'
+import Contexts from '../contexts.jsx'
+import { Link } from 'react-router-dom'
 import _ from 'lodash'
 
 class AddWidgetMenu extends React.Component {
@@ -292,7 +292,7 @@ class DrawerComp extends React.Component {
   }
 
   render = () =>
-    <Subscriber channel="cms">
+    <Contexts.CMS.Consumer>
       { cms =>
         <div>
           {this.props.fetchingData && <div className="c-drawer__working-overlay"/>}
@@ -304,7 +304,7 @@ class DrawerComp extends React.Component {
           </cms.modules.Sidebar>
         </div>
       }
-    </Subscriber>
+    </Contexts.CMS.Consumer>
 }
 
 module.exports = DrawerComp;

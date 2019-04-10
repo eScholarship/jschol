@@ -1,6 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 import ArbitraryHTMLComp from '../components/ArbitraryHTMLComp.jsx'
 
 class UnitStaticPageLayout extends React.Component
@@ -20,7 +20,7 @@ class UnitStaticPageLayout extends React.Component
   render() {
     return (
       <div className="c-columns">
-        <main id="maincontent">
+        <main id="maincontent" tabIndex="-1">
           <section className="o-columnbox1">
             <header>
               <h1 className="o-columnbox1__heading">{this.props.data.title}</h1>

@@ -1,6 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 import _ from 'lodash'
 import WysiwygEditorComp from '../components/WysiwygEditorComp.jsx'
 
@@ -89,7 +89,7 @@ export default class UnitSidebarConfigLayout extends React.Component
     let kindStr = p.data.kind == "Text" ? "text widget" : "built-in widget"
     return (
       <div className="c-columns">
-        <main id="maincontent">
+        <main id="maincontent" tabIndex="-1">
           <section className="o-columnbox1">
             <header>
               <h1 className="o-columnbox1__heading">

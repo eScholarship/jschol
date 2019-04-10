@@ -2,7 +2,7 @@
 
 import React from 'react'
 import JournalGridComp from '../components/JournalGridComp.jsx'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 
 class HomeSection3Comp extends React.Component {
   render() {

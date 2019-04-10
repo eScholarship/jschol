@@ -2,7 +2,7 @@
 
 import React from 'react'
 import LazyImageComp from '../components/LazyImageComp.jsx'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 import MEDIA_PATH from '../../js/MediaPath.js'
 
 class JournalGridComp extends React.Component {

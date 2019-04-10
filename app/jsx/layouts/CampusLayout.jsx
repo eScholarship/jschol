@@ -6,7 +6,7 @@ import StatCarouselComp from '../components/StatCarouselComp.jsx'
 import UnitCarouselComp from '../components/UnitCarouselComp.jsx'
 import JournalCarouselComp from '../components/JournalCarouselComp.jsx'
 import NotYetLink from '../components/NotYetLink.jsx'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 
 class CampusLayout extends React.Component {
   static propTypes = {
@@ -76,7 +76,7 @@ class CampusLayout extends React.Component {
         <CampusHeroComp hero={data.hero} campusID={unit.id} />
         <StatCarouselComp campusName={unit.name} campusID={unit.id} campusStats={data.campusStats} allStats={data.allStats} />
         <div className="c-columns">
-          <main id="maincontent">
+          <main id="maincontent" tabIndex="-1">
             <CampusSearchComp campusID={unit.id} campusName={unit.name} />
          {data.contentCar1 && data.contentCar1.mode && data.contentCar1.mode != 'disabled' && data.contentCar1.data &&
             this.renderCampusCarousel(data.contentCar1)

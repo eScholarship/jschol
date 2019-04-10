@@ -1,6 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 
 import MarqueeComp from '../components/MarqueeComp.jsx'
 import ShareComp from '../components/ShareComp.jsx'
@@ -31,7 +31,7 @@ class SeriesComp extends React.Component {
       <details className="c-togglecontent c-unitseries">
       <summary><Link to={"/uc/"+data.unit_id}>{data.name} ({data.count})</Link></summary>
       {data.items.map((item) =>
-        <PubComp key={item.id} result={item} h="H3" />) }
+        <PubComp key={item.id} result={item} h="h3" />) }
       {data.count > data.previewLimit &&
         <div className="c-unitseries__publications2">{data.count - data.previewLimit} more work{plural} &mdash; <Link to={"/uc/"+data.unit_id}>show all</Link></div> }
       </details>
@@ -86,7 +86,7 @@ class DepartmentLayout extends React.Component {
         <MarqueeComp marquee={marquee} />
       }
         <div className="c-columns">
-          <main id="maincontent">
+          <main id="maincontent" tabIndex="-1">
             <section className="o-columnbox1">
               <header>
                 <h2>{this.props.unit.name}</h2>

@@ -1,6 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 import $ from 'jquery'
 
 class RedirRow extends React.Component {
@@ -57,7 +57,7 @@ export default class RedirectConfigLayout extends React.Component
     let p = this.props
     return (
       <div className="c-columns">
-        <main id="maincontent">
+        <main id="maincontent" tabIndex="-1">
           <section className="o-columnbox1">
             <header>
               <h1 className="o-columnbox1__heading">

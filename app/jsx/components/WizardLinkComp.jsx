@@ -1,7 +1,7 @@
 // ##### Deposit Wizard - [6] Link Component ##### //
 
 import React from 'react'
-import { Subscriber } from 'react-broadcast'
+import Contexts from '../contexts.jsx'
 
 const SUPPORT_LINK = "https://help.escholarship.org/support/tickets/new"
 
@@ -27,7 +27,7 @@ class WizardLinkComp extends React.Component {
   render() {
     // 'arg' property used to define user logic, or it will be the DASH link
     return (
-      <Subscriber channel="wiz">
+      <Contexts.Wiz.Consumer>
         { wiz => {
           let name = (wiz.type == "series") ? wiz.seriesName : wiz.unitName
       return (
@@ -88,7 +88,7 @@ class WizardLinkComp extends React.Component {
     }
       </WrapperComp>
       )}}
-      </Subscriber>
+      </Contexts.Wiz.Consumer>
     )
   }
 }

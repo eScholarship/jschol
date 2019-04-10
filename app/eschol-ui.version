@@ -875,6 +875,15 @@ Lots of stuff modified.
   modified: app/scss/_wizard.scss
 
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> 43fce70fab4e8be39ca94e3333ea1009b32e8d33, 2019-03-01        <<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+  modified:   app/scss/_withdrawmodal.scss
+  modified:   app/scss/_wizard.scss
+  modified:   lightly touched all <main id="maincontent"> files, i.e. *Page.jsx, *Layout.jsx
+  merged:     WizardComp.jsx, WithdrawModalComp.jsx
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 >>> 4ce03b84df3fdb0d224b31655dc521582ceffeab, 2019-02-27        <<<
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 

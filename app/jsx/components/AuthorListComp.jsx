@@ -2,7 +2,7 @@
 
 import React from 'react'
 import $ from 'jquery'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 import TruncationObj from '../objects/TruncationObj.jsx'
 
 class AuthorListComp extends React.Component {

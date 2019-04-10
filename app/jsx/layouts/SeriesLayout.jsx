@@ -1,13 +1,13 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 
 import PubPreviewComp from '../components/PubPreviewComp.jsx'
 import SortPaginationComp from '../components/SortPaginationComp.jsx'
 import PaginationComp from '../components/PaginationComp.jsx'
 import ShareComp from '../components/ShareComp.jsx'
 import ArbitraryHTMLComp from "../components/ArbitraryHTMLComp.jsx"
-import Form from 'react-router-form'
+import FormComp from '../components/FormComp.jsx'
 
 // [********** AJM - 7/03/17 **********]
 // TODO: If UnitSearchLayout is going to be resuscitated, should this layout be wrapped into it?
@@ -102,7 +102,7 @@ class SeriesLayout extends React.Component {
     return (
       <div className="c-columns">
         {/* No marquee component used in series layout. But note marquee.about data used below */}
-        <main id="maincontent">
+        <main id="maincontent" tabIndex="-1">
           <section className="o-columnbox1">
             <div className="c-itemactions">
             {data.series.length > 1 ?
@@ -119,7 +119,7 @@ class SeriesLayout extends React.Component {
             <div><hr/>
               <p><br/><br/>There are currently no publications in this series &quot;{unit.name}&quot;.</p></div>
            :
-            <Form id={formName} to={"/uc/"+this.props.unit.id+"/search"} method="GET" onSubmit={this.handleSubmit}>
+            <FormComp id={formName} to={"/uc/"+this.props.unit.id+"/search"} method="GET" onSubmit={this.handleSubmit}>
             {(this.props.data.count > 2) &&
               <SortPaginationComp formName={formName} formButton={formButton} query={data.query} count={data.count} relQueryOff={true} />
             }
@@ -134,7 +134,7 @@ class SeriesLayout extends React.Component {
               {/* Submit button needs to be present so our logic can "press" it at certain times.
                   But hide it with display:none so user doesn't see it. */}
               <button type="submit" id={formButton} style={{display: "none"}}>Search</button>
-            </Form>
+            </FormComp>
           }
           </section>
         </main>

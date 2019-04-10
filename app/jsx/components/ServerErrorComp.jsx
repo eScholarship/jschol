@@ -1,8 +1,8 @@
 // ##### Server Error Component ##### //
 
 import React from 'react'
-import Form from 'react-router-form'
-import { Link } from 'react-router'
+import FormComp from '../components/FormComp.jsx'
+import { Link } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import MEDIA_PATH from '../../js/MediaPath.js'
 
@@ -20,11 +20,11 @@ class ServerErrorComp extends React.Component {
            "Error."}
         </h1>
         <img className="c-servererror__image" src={MEDIA_PATH + 'squirrel.jpg'} alt="squirrel"/>
-        <Form to='/search' method="GET" className="c-servererror__search">
+        <FormComp to='/search' method="GET" className="c-servererror__search">
           <label htmlFor="c-servererror__input" className="c-servererror__label">Search for it!</label>
           <input type="search" className="c-servererror__input" name="q" id="c-servererror__input" placeholder="Search for it!" />
           <button className="c-servererror__button" aria-label="Search"></button>
-        </Form>
+        </FormComp>
         <small>If you think this is a problem with eScholarship, please <a href="https://help.escholarship.org/support/tickets/new">contact us</a>.</small>
         <small>Or return to the <Link to="/">homepage</Link>.</small>
         <div style={{display: "none"}} id="serverError">{this.props.error}</div> {/* signal to server.rb */}
