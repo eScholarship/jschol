@@ -66,6 +66,7 @@ class App extends React.Component
         <Route exact path="/uc/:unitID/stats" component={UnitStatsPage} />
         <Route exact path="/uc/:unitID/stats/:pageName" component={UnitStatsPage} />
         <Route exact path="/uc/:unitID" component={UnitPage} />
+        <Route       path="/uc/:unitID/:pageName/*" component={UnitPage} />
         <Route exact path="/uc/:unitID/:pageName" component={UnitPage} />
         <Route       path="/uc/:unitID/*" component={UnitPage} />
         <Route exact path="/search" component={SearchPage} />
