@@ -38,7 +38,7 @@ class PageBase extends React.Component
   // back before the component is ready to receive state.
   componentWillMount() {
     let state = this.getEmptyState()
-    let dataURL = this.pageDataURL(this.props)
+    let dataURL = this.tmpPageDataURL(this.props)
     if (dataURL)
     {
       // Phase 1: Initial server-side load. We just save the URL, and iso will later fetch it and re-run React
@@ -49,7 +49,7 @@ class PageBase extends React.Component
       // Phase 2: Second server-side load, where our data has been fetched and stored in props.staticContext
       else if (this.props.staticContext && this.props.staticContext.urlsFetched) {
         state.fetchingData = false
-        state.pageData = this.props.staticContext.urlsFetched[this.pageDataURL(this.props)]
+        state.pageData = this.props.staticContext.urlsFetched[this.tmpPageDataURL(this.props)]
       }
       // Phase 3: Initial browser load. Server should have placed our data in window.
       else if (window.jscholApp_initialPageData) {
@@ -118,13 +118,13 @@ class PageBase extends React.Component
 
   // Browser-side AJAX fetch of page data. Sets state when the data is returned to us.
   fetchPageData = props => {
-    this.dataURL = this.pageDataURL(props)
+    this.dataURL = this.tmpPageDataURL(props)
     let urlFetching = this.dataURL
     if (this.dataURL) {
       this.setState({ fetchingData: true, 
                       permissions: (this.state && this.pagePermissionsUnit() == this.state.permissionsUnit)
                         ? this.state.permissions : null })
-      $.getJSON(this.pageDataURL(props)).done((data) => {
+      $.getJSON(this.tmpPageDataURL(props)).done((data) => {
         if (urlFetching == this.dataURL) {
           this.setState({ pageData: data, fetchingData: false })
           if (this.pagePermissionsUnit() != this.state.permissionsUnit)
@@ -229,10 +229,9 @@ class PageBase extends React.Component
     }
   }
 
-  // Method to be supplied by derived classes, so they can make a URL that will grab
-  // the proper API data from the server.
-  pageDataURL() {
-    throw "Derived class must override pageDataURL method"
+  // Temporary method - will be moved to Ruby soon
+  tmpPageDataURL() {
+    return "/api/pageData?path=" + encodeURIComponent(this.props.location.pathname + this.props.location.search)
   }
 
   // Optional method: for editable pages, the unit ID to look up permissions for

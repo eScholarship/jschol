@@ -574,6 +574,29 @@ get "/content/:fullItemID/*" do |itemID, path|
 end
 
 ###################################################################################################
+# Translate incoming page data requests to the proper internal API
+get "/api/pageData" do
+  path = params['path'] or jsonHalt(401, "invalid pageData request")
+  path.sub!(%r{/$}, '')  # remove trailing slash for forgiving path matching
+  query = nil
+  if path =~ %r{(.*?)\?(.*)$}  # extract query parameters
+    path, query = $1, $2
+  end
+  puts "query=#{query}"
+  puts "matching path=#{path.inspect}"
+  api = case path
+    when ""; "/api/home"
+    when %r{^/(campuses|journals)$}; "/api/browse/#{$1}"
+    when %r{^/([^/]+)/(units|journals)$}; "/api/browse/#{$2}/#{$1}"
+    when %r{^/uc/item/([^/]+)$}; "/api/item/#{$1}"
+    when %r{^/uc/author/([^/]+)/stats(/[^/]+)?$}; "/api/author/#{$1}/stats#{$2 || "/summary"}"
+    else jsonHalt(404, "unrecognized pageData path")
+  end
+  puts "...going to #{api.inspect}"
+  call env.merge("PATH_INFO" => api, "QUERY_STRING" => query)
+end
+
+###################################################################################################
 # If a cache buster comes in, strip it down to the original, and re-dispatch the request to return
 # the actual file.
 get %r{\/css\/main-[a-zA-Z0-9]{16}\.css} do

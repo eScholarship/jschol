@@ -17,18 +17,6 @@ import MetaTagsComp from '../components/MetaTagsComp.jsx'
 
 class BrowsePage extends PageBase
 {
-  // PageBase will fetch the following URL for us, and place the results in this.state.pageData
-  pageDataURL() {
-    if (this.props.match.params.campusID) {
-      return (this.props.match.path.includes('units')) ?          // URL = /:campusID/units
-        "/api/browse/units/" + this.props.match.params.campusID
-        :                                                         // URL = /:campusID/journals
-         "/api/browse/journals/" + this.props.match.params.campusID
-    } else {                                                      // URL = /journals or /campuses
-      return "/api/browse" + this.props.location.pathname
-    }
-  }
-
   pagePermissionsUnit() {
     return this.props.match.params.campusID ? this.props.match.params.campusID : "root"
   }
