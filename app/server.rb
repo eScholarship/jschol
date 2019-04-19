@@ -574,26 +574,24 @@ get "/content/:fullItemID/*" do |itemID, path|
 end
 
 ###################################################################################################
-# Translate incoming page data requests to the proper internal API
-get "/api/pageData" do
-  path = params['path'] or jsonHalt(401, "invalid pageData request")
-  path.sub!(%r{/$}, '')  # remove trailing slash for forgiving path matching
-  query = nil
-  if path =~ %r{(.*?)\?(.*)$}  # extract query parameters
-    path, query = $1, $2
-  end
-  puts "query=#{query}"
-  puts "matching path=#{path.inspect}"
-  api = case path
-    when ""; "/api/home"
-    when %r{^/(campuses|journals)$}; "/api/browse/#{$1}"
-    when %r{^/([^/]+)/(units|journals)$}; "/api/browse/#{$2}/#{$1}"
-    when %r{^/uc/item/([^/]+)$}; "/api/item/#{$1}"
-    when %r{^/uc/author/([^/]+)/stats(/[^/]+)?$}; "/api/author/#{$1}/stats#{$2 || "/summary"}"
+def getPageData(path)
+  puts "in getPageData: params=#{params}"
+  case path.sub(%r{/$}, '')  # forgive trailing slash
+    when ""; getHomePageData
+    when "/campuses"; browseAllCampuses
+    when "/journals"; browseAllJournals
+    when %r{^/([^/]+)/(units|journals)$}; getCampusBrowseData($1, $2)
+    when %r{^/uc/item/([^/]+)$}; getItemPageData($1)
+    when %r{^/uc/author/([^/]+)/stats(/([^/]+))?$}; authorStatsData("ark:/99166/#{$1}", $3 || "summary")
     else jsonHalt(404, "unrecognized pageData path")
   end
-  puts "...going to #{api.inspect}"
-  call env.merge("PATH_INFO" => api, "QUERY_STRING" => query)
+end
+
+###################################################################################################
+# Translate incoming page data requests to the proper internal API
+get %r{/api/pageData([^\?]+)} do |path|
+  content_type :json
+  return getPageData(path)
 end
 
 ###################################################################################################
@@ -751,8 +749,7 @@ end
 
 ###################################################################################################
 # Home Page 
-get "/api/home" do
-  content_type :json
+def getHomePageData
   body = {
     :header => getGlobalHeader,
     :hero_data => getCampusHero,
@@ -806,8 +803,7 @@ end
 
 ###################################################################################################
 # Browse all campuses
-get "/api/browse/campuses" do 
-  content_type :json
+def browseAllCampuses
   # Build array of hashes containing campus and stats
   stats = []
   $activeCampuses.each do |k, v|
@@ -833,8 +829,7 @@ end
 
 ###################################################################################################
 # Browse all journals
-get "/api/browse/journals" do 
-  content_type :json
+def browseAllJournals
   journals = $campusJournals.sort_by{ |h| h[:name].downcase }
   unit = $unitsHash['root']
   body = {
@@ -851,8 +846,7 @@ end
 
 ###################################################################################################
 # Browse a campus's units or journals
-get "/api/browse/:browse_type/:campusID" do |browse_type, campusID|
-  content_type :json
+def getCampusBrowseData(campusID, browse_type)
   cu, cj, pageTitle = nil, nil, nil
   unit = $unitsHash[campusID]
   unit or halt(404, "campusID not found")
@@ -917,15 +911,6 @@ get "/api/globalStatic/*" do
     pageData[:pageNotFound] = true
   end
   return pageData.to_json
-end
-
-###################################################################################################
-# Person stats
-get "/api/author/:personID/stats/?:pageName?" do
-  content_type :json
-  personID = "ark:/99166/#{params[:personID]}"
-  Person[personID] or jsonHalt(404, "Author not found")
-  return authorStatsData(personID, params[:pageName])
 end
 
 ###################################################################################################
@@ -1040,8 +1025,7 @@ end
 
 ###################################################################################################
 # Item view page data.
-get "/api/item/:shortArk" do |shortArk|
-  content_type :json
+def getItemPageData(shortArk)
   id = "qt"+shortArk
   item = Item[id] or halt(404)
   attrs = JSON.parse(Item.filter(:id => id).map(:attrs)[0])

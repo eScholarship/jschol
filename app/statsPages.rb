@@ -28,6 +28,7 @@ end
 
 ###################################################################################################
 def authorStatsData(authorID, pageName)
+  Person[authorID] or jsonHalt(404, "Author not found")
   case pageName
   when 'summary';              authorStats_summary(authorID)
   when 'history_by_item';      authorStats_historyByItem(authorID)

@@ -231,7 +231,7 @@ class PageBase extends React.Component
 
   // Temporary method - will be moved to Ruby soon
   tmpPageDataURL() {
-    return "/api/pageData?path=" + encodeURIComponent(this.props.location.pathname + this.props.location.search)
+    return "/api/pageData" + this.props.location.pathname + this.props.location.search
   }
 
   // Optional method: for editable pages, the unit ID to look up permissions for
