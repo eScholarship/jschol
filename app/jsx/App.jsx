@@ -76,7 +76,7 @@ class App extends React.Component
         <Route exact path="/logout" component={LogoutPage} />
         <Route exact path="/logoutSuccess" component={LogoutSuccessPage} />
         <Route       path="/logoutSuccess/*" component={LogoutSuccessPage} />
-        <Route path="*" component={GlobalStaticPage}/> {/* both global static, and 401 catch-all */}
+        <Route path="*" component={GlobalStaticPage}/> {/* both global static, and 404 catch-all */}
       </Switch>
     </div>
 }

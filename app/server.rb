@@ -582,7 +582,7 @@ def getPageData(path)
     when %r{^/([^/]+)/(units|journals)$}; getCampusBrowseData($1, $2)
     when %r{^/uc/item/([^/]+)$}; getItemPageData($1)
     when %r{^/uc/author/([^/]+)/stats(/([^/]+))?$}; authorStatsData("ark:/99166/#{$1}", $3 || "summary")
-    else jsonHalt(404, "unrecognized pageData path")
+    else getGlobalStaticData(path)
   end
 end
 
@@ -931,8 +931,7 @@ end
 
 ###################################################################################################
 # Global static pages; also, a fallback for global not-found.
-get "/api/globalStatic/*" do
-  content_type :json
+def getGlobalStaticData(path)
   unit = $unitsHash['root']
   attrs = JSON.parse(unit[:attrs])
   pageData = {
@@ -940,15 +939,14 @@ get "/api/globalStatic/*" do
     sidebar: getUnitSidebar(unit)
   }
 
-  pageName = params['splat'].join("/")
+  pageName = path.sub(%r{^/}, "")
   if pageName =~ %r{^[a-zA-Z]([a-zA-Z_]+/)*[a-zA-Z_]+$} && Page.where(unit_id: 'root', slug: pageName).count > 0
     pageData[:header] = getUnitHeader(unit, pageName, nil, attrs)
     pageData[:content] = getUnitStaticPage(unit, attrs, pageName)
   else
-    pageData[:header] = getGlobalHeader
-    pageData[:pageNotFound] = true
+    jsonHalt(404, "Not Found")
   end
-  return pageData.to_json
+  return pageData
 end
 
 ###################################################################################################
