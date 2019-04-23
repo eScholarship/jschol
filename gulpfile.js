@@ -22,7 +22,7 @@ var expressProc // Sub-app for isomophic javascript in Express (Node/Javascript)
 var productionMode = !!gutil.env.production
 
 // Build javscript bundles with Webpack
-gulp.task('watch:src', (cb) => {
+gulp.task('watch:src', (done) => {
   const config = Object.create(require('./webpack.' + (productionMode ? 'prd' : 'dev') + '.js'));
   webpack(config, function(error, stats) {
     if (error) {
@@ -31,6 +31,7 @@ gulp.task('watch:src', (cb) => {
     showSummary(stats);
     livereload.reload()
   });
+  done()
 });
 
 function showSummary(stats) {
@@ -98,7 +99,7 @@ function startSinatra(afterFunc)
   }, 500)
 }
 
-function restartSinatra()
+function restartSinatra(done)
 {
   if (sinatraProc) {
     console.log("Restarting Sinatra.")
@@ -107,9 +108,9 @@ function restartSinatra()
   else {
     startSinatra()
   }
+  console.log("restart sinatra complete.")
+  done()
 }
-
-gulp.task('restart-sinatra', restartSinatra)
 
 gulp.task('start-sinatra', restartSinatra)
 
@@ -128,7 +129,7 @@ function startExpress()
   }
 }
 
-function restartExpress() {
+function restartExpress(done) {
   if (expressProc) {
     console.log("Restarting Express.")
     expressProc.on('exit', function(code) {
@@ -140,9 +141,8 @@ function restartExpress() {
   else {
     startExpress()
   }
+  done()
 }
-
-gulp.task('restart-express', restartExpress)
 
 gulp.task('start-express', restartExpress)
 
@@ -158,8 +158,8 @@ gulp.task('rsync', function() {
 // Watch sass, html, and js and reload browser if any changes
 gulp.task('watch', function() {
   gulp.watch('app/scss/*.scss', {interval:500}, gulp.parallel(['sass']));
-  gulp.watch(['app/*.rb', 'util/*.rb'], {interval:500}, gulp.parallel(['restart-sinatra']));
-  gulp.watch(['app/isomorphic.jsx'], {interval:800}, gulp.parallel(['restart-express']));
+  gulp.watch(['app/*.rb', 'util/*.rb'], {interval:500}, restartSinatra)
+  gulp.watch(['app/isomorphic.jsx'], {interval:800}, restartExpress);
 
   if (fs.existsSync('/outer_jschol/app/jsx/App.jsx'))
     gulp.watch(['/outer_jschol/app/scss/*.scss',
