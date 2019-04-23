@@ -359,14 +359,14 @@ class PageBase extends React.Component
 
   renderError() { return (
     <div>
-      <MetaTagsComp title={this.state.pageData.error}/>
+      <MetaTagsComp title={this.state.pageData.message}/>
       {this.needHeaderFooter() && <Header1Comp/>}
       <div className="c-navbar">
       </div>
       <div className="c-columns">
         <main id="maincontent" tabIndex="-1">
           <section className="o-columnbox1">
-            <ServerErrorComp error={this.state.pageData.error}/>
+            <ServerErrorComp error={this.state.pageData.message}/>
           </section>
         </main>
       </div>

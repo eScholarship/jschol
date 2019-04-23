@@ -660,27 +660,41 @@ def generalResponse(iso_ok = true)
   # Get API data
   pageData = nil
   apiErr = catch (:halt) {
-    pageData = getPageData(request.path_info)
-    pageData.is_a?(Hash) or raise("an API function failed to return a hash, for path=#{request.path_info.inspect}")
-    #puts "pageData=#{pageData.inspect}"
+    begin
+      pageData = getPageData(request.path_info)
+      pageData.is_a?(Hash) or raise("an API function failed to return a hash, for path=#{request.path_info.inspect}")
+    rescue Exception => e
+      puts "Exception getting page data: #{e}\n    #{e.backtrace.join("\n    ")}"
+      pageData = { error: true, message: "Server Error" }
+    end
     nil
   }
 
   content_type :html  # in case it got set to json
 
-  # If there was any error from APIs, fall back to non-iso mode for now. In future it's probably possible
-  # to iso-render error pages as well, but it'll take some thinking.
-  if apiErr
+  # If there was any error from APIs, return an ISO error page.
+  if apiErr.is_a?(Array)
     status apiErr[0] || 500
-    message = nil
-    begin
-      message = JSON.parse(apiErr[1])['message']
-    rescue
-      message = "Error"
+    if apiErr[1].is_a?(String)
+      if apiErr[1] =~ /{/
+        begin
+          parsed = JSON.parse(apiErr[1])
+          parsed['error'] && parsed['message'] or raise("APIs should jsonHalt")
+          pageData = { error: true, message: parsed['message'] }
+        rescue
+          pageData = { error: true, message: apiErr[1] }
+        end
+      else
+        pageData = { error: true, message: apiErr[1] }
+      end
+    else
+      pageData = { error: true, message: "Error" }
     end
-    metaTags = "<title>#{message} - eScholarship</title>"
-    template.sub!('<metaTags></metaTags>', metaTags) or raise("missing template section")
-    return template
+  elsif apiErr.is_a?(Numeric)
+    status apiErr
+    pageData = { error: true, message: apiErr == 404 ? "Not Found" : "Error" }
+  elsif apiErr
+    raise("can't figure out apiErr: #{apiErr.inspect}")
   end
 
   # Parse out payload of the URL (i.e. not including the host name)
@@ -712,20 +726,13 @@ def generalResponse(iso_ok = true)
     metaTags.gsub! />\s*</, ">\n  <"  # add some newlines to make it look nice
   end
 
-  # Put proper HTTP code on server error pages
-  if body =~ %r{<div [^>]*id="serverError"[^>]*>([^<]+)</div>}
-    status ($1 =~ /Not Found/i ? 404 : 500)
-  else
-    # Redirect http to https (but only on production)
-    if request.scheme == "http" && request.host == "escholarship.org"
-      uri = URI.parse(request.url)
-      uri.scheme = "https"
-      uri.port = nil
-      redirect to(uri.to_s), 301
-      return
-    end
-
-    status 200
+  # Redirect http to https (but only on production)
+  if request.scheme == "http" && request.host == "escholarship.org"
+    uri = URI.parse(request.url)
+    uri.scheme = "https"
+    uri.port = nil
+    redirect to(uri.to_s), 301
+    return
   end
 
   # We need to turn the page data into a code snippet. It's not as straightforward as one mightt hink.
@@ -762,7 +769,7 @@ not_found do
   elsif request.path =~ %r{/(dspace|oai)}
     return halt(404, "Not Found.\n")
   else
-    generalResponse(false)  # handles 404's in the same fashion as other req's, but no iso
+    generalResponse
   end
 end
 
