@@ -632,18 +632,17 @@ get %r{.*} do
   if request.path_info =~ %r{api/.*|content/.*|locale/.*|.*\.[a-zA-Z]\w{0,3}}
     pass
   elsif request.path_info =~ %r{/stats($|/)}
-    # Don't do iso on stats reports
-    resp = generalResponse(false)
-
     # Prevent stats pages from getting into Google/Bing/etc.
-    resp.sub!('<metaTags></metaTags>', '<metaTags><meta name="robots" content="noindex"></metaTags>')
+    resp = generalResponse
+    resp.sub!(%r{<metaTags>.*</metaTags>}m, '<metaTags><meta name="robots" content="noindex"></metaTags>')
+    resp
   else
     generalResponse
   end
 end
 
 ###################################################################################################
-def generalResponse(iso_ok = true)
+def generalResponse
   # Replace startup URLs for proper cache busting
   template = File.new("app/app.html").read
   webpackManifest = JSON.parse(File.read('app/js/manifest.json'))
@@ -651,11 +650,8 @@ def generalResponse(iso_ok = true)
   template.sub!("/js/app-bundle.js", "/js/#{webpackManifest["app.js"]}")
   template.sub!("/css/main.css", "/css/main-#{Digest::MD5.file("app/css/main.css").hexdigest[0,16]}.css")
 
-  # Isomorphic javascript rendering on the server
-  if !iso_ok or !ENV['ISO_PORT']
-    # Development mode - skip iso
-    return template
-  end
+  # In development mode, skip iso
+  ENV['ISO_PORT'] or return template
 
   # Get API data
   pageData = nil
