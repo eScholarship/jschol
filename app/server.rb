@@ -575,7 +575,6 @@ end
 
 ###################################################################################################
 def getPageData(path)
-  puts "in getPageData: params=#{params}"
   case path.sub(%r{/$}, '')  # forgive trailing slash
     when ""; getHomePageData
     when "/campuses"; browseAllCampuses
@@ -591,7 +590,7 @@ end
 # Translate incoming page data requests to the proper internal API
 get %r{/api/pageData([^\?]+)} do |path|
   content_type :json
-  return getPageData(path)
+  return getPageData(path).to_json
 end
 
 ###################################################################################################
@@ -653,72 +652,104 @@ def generalResponse(iso_ok = true)
   template.sub!("/css/main.css", "/css/main-#{Digest::MD5.file("app/css/main.css").hexdigest[0,16]}.css")
 
   # Isomorphic javascript rendering on the server
-  if ENV['ISO_PORT'] && iso_ok
-    # Parse out payload of the URL (i.e. not including the host name)
-    request.url =~ %r{^https?://([^/:]+)(:\d+)?(.*)$} or fail
-    remainder = $3
-
-    # Pass the full path and query string to our little Node Express app, which will run it through
-    # ReactRouter and React.
-    begin
-      outerHttp = Net::HTTP.new($host, ENV['ISO_PORT'])
-      outerHttp.read_timeout = ($host == "localhost") ? 20 : 5  # need extra time on local dev machines
-      response = outerHttp.start {|http| http.request(Net::HTTP::Get.new(remainder)) }
-    rescue Exception => e
-      # If there's an exception (like iso is completely dead), fall back to non-iso mode.
-      if e.to_s =~ /Net::ReadTimeout/
-        puts "Warning: read timeout from ISO. Falling back."
-      elsif e.to_s =~ /Connection refused/
-        puts "Warning: ISO refused connection. Falling back."
-      else
-        puts "Warning: unexpected exception (not HTTP error) from iso (falling back): #{e} #{e.backtrace}"
-      end
-      return template
-    end
-    if response.code.to_i != 200
-      # For all error pages, fall back to non-ISO since we don't know how to render it here.
-      # But 404's are common (and we haven't figured out how to do them isomorphically) so
-      # don't log those.
-      if response.code.to_i != 404
-        puts "Unexpected code #{response.code} from iso; falling back to non-iso."
-      end
-      status response.code
-      metaTags = "<title>Error - eScholarship</title>"
-      template.sub!('<metaTags></metaTags>', metaTags) or raise("missing template section")
-      return template
-    end
-
-    # Extract meta tags so we can put them in <head>
-    metaTags, body = "", response.body
-    if body =~ %r{<metaTags>(.*)</metaTags>(.*)$}m
-      metaTags, body = $1, $2
-      metaTags.gsub! />\s*</, ">\n  <"  # add some newlines to make it look nice
-    end
-
-    # Put proper HTTP code on server error pages
-    if body =~ %r{<div [^>]*id="serverError"[^>]*>([^<]+)</div>}
-      status ($1 =~ /Not Found/i ? 404 : 500)
-    else
-      # Redirect http to https (but only on production)
-      if request.scheme == "http" && request.host == "escholarship.org"
-        uri = URI.parse(request.url)
-        uri.scheme = "https"
-        uri.port = nil
-        redirect to(uri.to_s), 301
-        return
-      end
-
-      status 200
-    end
-
-    # In the template, substitute the results from React/ReactRouter
-    template.sub!('<metaTags></metaTags>', metaTags) or raise("missing template section")
-    template.sub!('<div id="main"></div>', body) or raise("missing template section")
-    return template
-  else
+  if !iso_ok or !ENV['ISO_PORT']
     # Development mode - skip iso
     return template
   end
+
+  # Get API data
+  pageData = nil
+  apiErr = catch (:halt) {
+    pageData = getPageData(request.path_info)
+    pageData.is_a?(Hash) or raise("an API function failed to return a hash, for path=#{request.path_info.inspect}")
+    #puts "pageData=#{pageData.inspect}"
+    nil
+  }
+
+  content_type :html  # in case it got set to json
+
+  # If there was any error from APIs, fall back to non-iso mode for now. In future it's probably possible
+  # to iso-render error pages as well, but it'll take some thinking.
+  if apiErr
+    status apiErr[0] || 500
+    message = nil
+    begin
+      message = JSON.parse(apiErr[1])['message']
+    rescue
+      message = "Error"
+    end
+    metaTags = "<title>#{message} - eScholarship</title>"
+    template.sub!('<metaTags></metaTags>', metaTags) or raise("missing template section")
+    return template
+  end
+
+  # Parse out payload of the URL (i.e. not including the host name)
+  request.url =~ %r{^https?://([^/:]+)(:\d+)?(.*)$} or fail
+  remainder = $3
+
+  # Pass the full path and query string to our little Node Express app, which will run it through
+  # ReactRouter and React.
+  outerHttp = Net::HTTP.new($host, ENV['ISO_PORT'])
+  outerHttp.read_timeout = ($host == "localhost") ? 20 : 5  # need extra time on local dev machines
+  response = outerHttp.start {|http| http.request(Net::HTTP::Get.new(remainder)) }
+
+  response = HTTParty.post("http://#{$host}:#{ENV['ISO_PORT']}#{remainder}",
+               :headers => { 'Content-Type' => 'application/json' },
+               :body => pageData.to_json,
+               :timeout => 10)
+  if response.code != 200
+    # If there's an exception (like iso is completely dead), fall back to non-iso mode.
+    puts "Warning: unexpected error from iso (falling back): #{response.code} - #{response.body}"
+    metaTags = "<title>ISO error - eScholarship</title>"
+    template.sub!('<metaTags></metaTags>', metaTags) or raise("missing template section")
+    return template
+  end
+
+  # Extract meta tags so we can put them in <head>
+  metaTags, body = "", response.body
+  if body =~ %r{<metaTags>(.*)</metaTags>(.*)$}m
+    metaTags, body = $1, $2
+    metaTags.gsub! />\s*</, ">\n  <"  # add some newlines to make it look nice
+  end
+
+  # Put proper HTTP code on server error pages
+  if body =~ %r{<div [^>]*id="serverError"[^>]*>([^<]+)</div>}
+    status ($1 =~ /Not Found/i ? 404 : 500)
+  else
+    # Redirect http to https (but only on production)
+    if request.scheme == "http" && request.host == "escholarship.org"
+      uri = URI.parse(request.url)
+      uri.scheme = "https"
+      uri.port = nil
+      redirect to(uri.to_s), 301
+      return
+    end
+
+    status 200
+  end
+
+  # We need to turn the page data into a code snippet. It's not as straightforward as one mightt hink.
+  # For instance, unicode characters can't be inline (at least, it doesn't work for me); rather, they
+  # have to be encoded in "\uXXYY" form.
+  #
+  # For a test sample see the copyright symbol near the end of the abstract in qt0015h4ns.
+  jsonPageData = pageData.to_json
+  jsonPageData.gsub!(/[\u007F-\uFFFF]/) { |m| "\\u%04X" % m.codepoints[0] }
+
+  # Also, backslashes are particularly difficult. First of all, they need to be escaped in the
+  # javascript, so that's "\\". But you'll see eight backslashes below. What's that about? Well,
+  # to produce two backslashes in the output, you need four going in. In addition, because this
+  # is going in to the String.sub! function, we have to double that to defeat them being interpreted
+  # as backreferences to the match. Crazy cray cray.
+  #
+  # For a test sample, see the "5\%" near the end of the abstract in qt3f3256kv.
+  jsonPageData.gsub!("\\", "\\\\\\\\")
+
+  # In the template, substitute the results from React/ReactRouter, and the API data so the
+  # client-side React code can successfully rehydrate the page.
+  return template.sub('<metaTags></metaTags>', metaTags).
+                  sub('<script></script>', "<script>window.jscholApp_initialPageData = #{jsonPageData};</script>").
+                  sub('<div id="main"></div>', body)
 end
 
 # Not found errors on /content, /api, etc.
@@ -763,7 +794,7 @@ def getHomePageData
       :statsCountThesesDiss => $statsCountThesesDiss,
       :statsCountBooks => $statsCountBooks
     }
-  }.to_json
+  }
 end
 
 ###################################################################################################
@@ -824,7 +855,7 @@ def browseAllCampuses
     :otherStats => stats.select { |h| otherCampuses.include?(h['id']) }
   }
   breadcrumb = [{"name" => "Campuses and Other Locations", "url" => "/campuses"},]
-  return body.merge(getHeaderElements(breadcrumb, nil)).to_json
+  return body.merge(getHeaderElements(breadcrumb, nil))
 end
 
 ###################################################################################################
@@ -841,7 +872,7 @@ def browseAllJournals
     :archived => journals.select{ |h| h[:status]=="archived" }
   }
   breadcrumb = [{"name" => "Journals", "url" => "/journals"},]
-  return body.merge(getHeaderElements(breadcrumb, "All Campuses")).to_json
+  return body.merge(getHeaderElements(breadcrumb, "All Campuses"))
 end
 
 ###################################################################################################
@@ -874,7 +905,7 @@ def getCampusBrowseData(campusID, browse_type)
   breadcrumb = [
     {"name" => pageTitle, "url" => "/" + campusID + "/" + browse_type},
     {"name" => unit.name, "url" => "/uc/" + campusID}]
-  return body.merge(getHeaderElements(breadcrumb, nil)).to_json
+  return body.merge(getHeaderElements(breadcrumb, nil))
 end
 
 # Returns an array like [{"id"=>"uceap", "name"=>"UCEAP Mexico", "children" => []}, ...]
@@ -1113,7 +1144,7 @@ def getItemPageData(shortArk)
         end
       end
       # pp(body)
-      return body.to_json
+      return body
     rescue Exception => e
       puts "Error in item API: #{e} #{e.backtrace}"
       halt 404, e.message

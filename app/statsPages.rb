@@ -823,7 +823,7 @@ def authorStats_summary(personID)
     posts:       stats[:total_posts].to_i,
     hits:        stats[:total_hits].to_i,
     downloads:   stats[:total_downloads].to_i
-  }.to_json
+  }
 end
 
 ###################################################################################################
@@ -854,7 +854,7 @@ def authorStats_historyByItem(personID)
 
   # Form the final data structure with everything needed to render the form and report
   out[:report_data] = itemData
-  return out.to_json
+  return out
 end
 
 ###################################################################################################
@@ -882,7 +882,7 @@ def authorStats_breakdownByItem(personID)
 
   # Form the final data structure with everything needed to render the form and report
   out[:report_data] = itemData
-  return out.to_json
+  return out
 end
 
 ###################################################################################################
@@ -903,5 +903,5 @@ def authorStats_breakdownByMonth(personID)
     [row[:month], row[:posts], row[:hits], row[:downloads]]
   }
 
-  return out.to_json
+  return out
 end

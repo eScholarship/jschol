@@ -41,23 +41,18 @@ class PageBase extends React.Component
     let dataURL = this.tmpPageDataURL(this.props)
     if (dataURL)
     {
-      // Phase 1: Initial server-side load. We just save the URL, and iso will later fetch it and re-run React
-      if (this.props.staticContext && this.props.staticContext.urlsToFetch) {
-        state.fetchingData = true
-        this.props.staticContext.urlsToFetch.push(dataURL)
-      }
-      // Phase 2: Second server-side load, where our data has been fetched and stored in props.staticContext
-      else if (this.props.staticContext && this.props.staticContext.urlsFetched) {
+      // Phase 1: Server-side load, where our page data has been precalculated and stored in props.staticContext
+      if (this.props.staticContext && this.props.staticContext.pageData) {
         state.fetchingData = false
-        state.pageData = this.props.staticContext.urlsFetched[this.tmpPageDataURL(this.props)]
+        state.pageData = this.props.staticContext.pageData
       }
-      // Phase 3: Initial browser load. Server should have placed our data in window.
-      else if (window.jscholApp_initialPageData) {
+      // Phase 2: Initial browser load. Server should have placed our data in window.
+      else if (!(typeof window === "undefined") && window.jscholApp_initialPageData) {
         state.fetchingData = false
         state.pageData = window.jscholApp_initialPageData
         delete window.jscholApp_initialPageData
       }
-      // Phase 4: Browser-side page switch. We have to fetch new data ourselves. Start with basic
+      // Phase 3: Browser-side page switch. We have to fetch new data ourselves. Start with basic
       // state, and the pageData will get filled when the ajax returns.
       else {
         state.fetchingData = true
