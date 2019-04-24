@@ -603,11 +603,6 @@ class SearchPage extends PageBase {
 //   count: 331,
 //   facets: [ {display: 'Type of Work', fieldName: 'type_of_work', facets: []} ]
 
-  // PageBase will fetch the following URL for us, and place the results in this.state.pageData
-  pageDataURL() {
-    return "/api/search/" + this.props.location.search  // plus whatever props.match.params.YourUrlParam, etc.
-  }
-
   formFilter = (data) => {
     let out = {}
     for(let key in data) {

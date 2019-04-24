@@ -331,7 +331,7 @@ end
 
 ###################################################################################################
 get %r{/uc/([^/]+)/rss} do |unitID|
-  unit = Unit[unitID] or halt(404, "Unit not found")
+  Unit[unitID] or halt(404, "Unit not found")
   response = HTTParty.get("http://#{$host}:18900/rss/unit/#{unitID}")
   response.headers['content-type'] and content_type response.headers['content-type']
   [response.code, response.body]
@@ -575,6 +575,7 @@ end
 
 ###################################################################################################
 def getPageData(path)
+  #puts "Routing on path #{path.sub(%r{/$}, '')}"
   case path.sub(%r{/$}, '')  # forgive trailing slash
     when ""; getHomePageData
     when "/campuses"; browseAllCampuses
@@ -582,6 +583,13 @@ def getPageData(path)
     when %r{^/([^/]+)/(units|journals)$}; getCampusBrowseData($1, $2)
     when %r{^/uc/item/([^/]+)$}; getItemPageData($1)
     when %r{^/uc/author/([^/]+)/stats(/([^/]+))?$}; authorStatsData("ark:/99166/#{$1}", $3 || "summary")
+    when %r{^/uc/([^/]+)/stats(/([^/]+))?$}; unitStatsData($1, $3 || "summary")
+    when %r{^/uc/([^/]+)(/([^/]+))?(/([^/]+))?$}; getUnitPageData($1, $3 || "home", $5)
+    when "/search"; getSearchData
+    when "/login"; loginStartData
+    when %r{/loginSuccess(/.*)?}; loginValidateData
+    when "/logout"; { header: getGlobalHeader }
+    when %r{/logoutSuccess(/.*)?}; { header: getGlobalHeader }
     else getGlobalStaticData(path)
   end
 end
@@ -719,7 +727,7 @@ def generalResponse
   metaTags, body = "", response.body
   if body =~ %r{<metaTags>(.*)</metaTags>(.*)$}m
     metaTags, body = $1, $2
-    metaTags.gsub! />\s*</, ">\n  <"  # add some newlines to make it look nice
+    metaTags.gsub!(/>\s*</, ">\n  <")  # add some newlines to make it look nice
   end
 
   # Redirect http to https (but only on production)
@@ -770,21 +778,9 @@ not_found do
 end
 
 ###################################################################################################
-# Pages with no data except header/footer stuff
-get %r{/api/(notFound|logoutSuccess)} do
-  content_type :json
-  unit = $unitsHash['root']
-  body = {
-    :header => getGlobalHeader,
-    :unit => unit.values.reject{|k,v| k==:attrs},
-    :sidebar => getUnitSidebar(unit)
-  }.to_json
-end
-
-###################################################################################################
 # Home Page 
 def getHomePageData
-  body = {
+  return {
     :header => getGlobalHeader,
     :hero_data => getCampusHero,
     :stats => {
@@ -928,35 +924,29 @@ end
 ###################################################################################################
 # Global static pages; also, a fallback for global not-found.
 def getGlobalStaticData(path)
-  unit = $unitsHash['root']
-  attrs = JSON.parse(unit[:attrs])
-  pageData = {
-    unit: unit.values.reject{|k,v| k==:attrs},
-    sidebar: getUnitSidebar(unit)
-  }
-
   pageName = path.sub(%r{^/}, "")
   if pageName =~ %r{^[a-zA-Z]([a-zA-Z_]+/)*[a-zA-Z_]+$} && Page.where(unit_id: 'root', slug: pageName).count > 0
-    pageData[:header] = getUnitHeader(unit, pageName, nil, attrs)
-    pageData[:content] = getUnitStaticPage(unit, attrs, pageName)
+    unit = $unitsHash['root']
+    attrs = JSON.parse(unit[:attrs])
+    return {
+      unit: unit.values.reject{|k,v| k==:attrs},
+      sidebar: getUnitSidebar(unit),
+      header: getUnitHeader(unit, pageName, nil, attrs),
+      content: getUnitStaticPage(unit, attrs, pageName)
+    }
   else
     jsonHalt(404, "Not Found")
   end
-  return pageData
 end
 
 ###################################################################################################
 # Unit page data. 
 # pageName may be some administrative function (nav, profile), specific journal volume, or static page name
-get "/api/unit/:unitID/:pageName/?:subPage?" do
-  content_type :json
-  unit = Unit[params[:unitID]]
-  unit or jsonHalt(404, "Unit not found")
-
+def getUnitPageData(unitID, pageName, subPage)
+  puts "getUnitPageData: unitID=#{unitID.inspect} pageName=#{pageName.inspect} subPage=#{subPage.inspect}"
+  unit = Unit[unitID] or jsonHalt(404, "Unit not found")
   attrs = JSON.parse(unit[:attrs])
-  pageName = params[:pageName]
-  pageName == "stats" and return unitStatsData(params[:unitID], params[:subPage])
-  issueHeaderData = nil
+  pageName == "stats" and return unitStatsData(unitID, subPage)
   if pageName
     ext = nil
     begin
@@ -977,9 +967,9 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
       issuesPublished = (issueIds && issueIds.any?) ? getPublishedJournalIssues(issueIds) : nil
       issuesSubNav = getIssuesSubNav(issuesPublished)
 
-      if isJournalIssue?(unit.id, params[:pageName], params[:subPage])
-        volume = params[:pageName]
-        issue = params[:subPage]
+      if isJournalIssue?(unit.id, pageName, subPage)
+        volume = pageName
+        issue = subPage
         numbering, title = getIssueNumberingTitle(unit.id, volume, issue)
         journalIssue = {'unit_id': unit.id, 'volume': volume, 'issue': issue, 'title': title, 'numbering': numbering}
       end
@@ -1008,16 +998,16 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
     elsif pageName == 'unitBuilder'
       pageData[:content] = getUnitBuilderData(unit)
     elsif pageName == 'nav'
-      pageData[:content] = getUnitNavConfig(unit, attrs['nav_bar'], params[:subPage])
+      pageData[:content] = getUnitNavConfig(unit, attrs['nav_bar'], subPage)
     elsif pageName == 'sidebar'
-      pageData[:content] = getUnitSidebarWidget(unit, params[:subPage])
+      pageData[:content] = getUnitSidebarWidget(unit, subPage)
     elsif pageName == "redirects"
-      pageData[:content] = getRedirectData(params[:subPage])
+      pageData[:content] = getRedirectData(subPage)
     elsif pageName == "authorSearch"
       pageData[:content] = getAuthorSearchData
-    elsif isJournalIssue?(unit.id, params[:pageName], params[:subPage])
+    elsif isJournalIssue?(unit.id, pageName, subPage)
       pageData[:content] = getJournalIssueData(unit, attrs, 
-        issueIds, issuesPublished, params[:pageName], params[:subPage])
+        issueIds, issuesPublished, pageName, subPage)
       pageData[:content][:issuesSubNav] = issuesSubNav
     else
       pageData[:content] = getUnitStaticPage(unit, attrs, pageName)
@@ -1029,7 +1019,7 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
       unit: unit.values.reject{|k,v| k==:attrs}
     }
   end
-  return pageData.to_json
+  return pageData
 end
 
 ###################################################################################################
@@ -1197,8 +1187,7 @@ end
 
 ###################################################################################################
 # Search page data
-get "/api/search/" do
-  content_type :json
+def getSearchData()
   body = {
     :header => getGlobalHeader,
     :campuses => getCampusesAsMenu
@@ -1217,7 +1206,7 @@ get "/api/search/" do
       params[searchUnitType] = [searchType]
     end
   end
-  return body.merge(search(params, facetList)).to_json
+  return body.merge(search(params, facetList))
 end
 
 ###################################################################################################

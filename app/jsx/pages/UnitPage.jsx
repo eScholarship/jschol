@@ -46,25 +46,6 @@ class UnitPage extends PageBase {
   // React tries to render different content components 
   // (ie - switch between DeparmentLayout and Series Layout or UnitSearchLayout)
   // before the AJAX call for the different content has returned and then there are lots of issues!
-  pageDataURL() {
-    const pm = this.props.match.params
-    if (pm.pageName) {
-      if (pm.pageName == 'search')
-        return `/api/unit/${pm.unitID}/search/${this.props.location.search}`
-      else if (['profile', 'carousel', 'issueConfig', 'unitBuilder'].includes(pm.pageName))
-        return `/api/unit/${pm.unitID}/${pm.pageName}`
-      else if (pm.pageName == "authorSearch")
-        return `/api/unit/${pm.unitID}/authorSearch${this.props.location.search}`
-      else if (pm[0]) // e.g. /uc/lasc_interversar/sidebar/6139
-        return `/api/unit/${pm.unitID}/${pm.pageName}/${pm[0]}`
-      else // e.g. /uc/ucbgse_bre/policies
-        return `/api/unit/${pm.unitID}/${pm.pageName}`
-    }
-    else if (pm[0])  // e.g. /uc/ucbgse_bre/7/1
-      return `/api/unit/${pm.unitID}/${pm[0]}`
-    else
-      return `/api/unit/${pm.unitID}/home`
-  }
 
   // Unit ID for permissions checking
   pagePermissionsUnit() {
@@ -84,7 +65,7 @@ class UnitPage extends PageBase {
   // [********** AMY NOTES 3/15/17 **********]
   // TODO: each of the content layouts currently include the sidebars, 
   // but this should get stripped out and handled here in UnitPage
-  // TODO [UNIT-CONTENT-AJAX-ISSUE]: handle the AJAX issue described above pageDataURL method definition
+  // TODO [UNIT-CONTENT-AJAX-ISSUE]: handle the AJAX issue described above
   renderData(data) { 
     let sidebar = <SidebarComp data={data.sidebar}/>
     let title = data.unit.name

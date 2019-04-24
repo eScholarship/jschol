@@ -10,8 +10,6 @@ import MetaTagsComp from '../components/MetaTagsComp.jsx'
 
 class LogoutSuccessPage extends PageBase
 {
-  pageDataURL() { return "/api/logoutSuccess" }
-
   renderData(data) {
     if (!(typeof document === "undefined")) {
       // Return to the page whence the user originally came, if any

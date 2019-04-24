@@ -31,11 +31,6 @@ export default class GlobalStaticPage extends PageBase
     this.setState({modalOpen:false})
   }
 
-  // PageBase will fetch the following URL for us, and place the results in this.state.pageData
-  pageDataURL() {
-    return `/api/globalStatic${this.props.location.pathname}`
-  }
-
   // Unit ID for permissions checking
   pagePermissionsUnit() {
     return "root"

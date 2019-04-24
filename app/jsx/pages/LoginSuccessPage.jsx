@@ -10,11 +10,6 @@ import MetaTagsComp from '../components/MetaTagsComp.jsx'
 
 class LoginSuccessPage extends PageBase
 {
-  // PageBase will fetch the following URL for us, and place the results in this.state.pageData
-  pageDataURL(props) {
-    return `/api/loginValidate${props.location.search}`
-  }
-
   renderData(data) {
     // start is something like:  https://submit.escholarship.org/secure/jscholLogin?nonce=1234567890ABCDEF&returnTo=http%3A%2F%2Flocalhost%3A4001%2FloginSuccess
     // return is something like: http://localhost:4001/loginSuccess?data=fQpdFQ7Ah+UscNPkgSA9PtQ07BcPplF/ggKvNDIrjrHvIwC9gt73X7I61lGq%0APGv1w3aBBbwtcYLtt0EFfktWd/QYr6Z+6YamJyO5bDM1mzXDcPJcakuBfljg%0A8qXi

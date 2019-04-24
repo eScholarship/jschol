@@ -22,7 +22,7 @@ def unitStatsData(unitID, pageName)
   when 'avg_by_unit';          unitStats_avgByUnit(unitID)
   when 'avg_by_category';      unitStats_avgByCategory(unitID)
   when 'KMBCCiwUg0mTS8f';      unitStats_deposits_by_oa(unitID)
-  else raise("unknown unit stats page #{pageName.inspect}")
+  else halt(404, "unknown unit stats page #{pageName.inspect}")
   end
 end
 
@@ -34,7 +34,7 @@ def authorStatsData(authorID, pageName)
   when 'history_by_item';      authorStats_historyByItem(authorID)
   when 'breakdown_by_item';    authorStats_breakdownByItem(authorID)
   when 'breakdown_by_month';   authorStats_breakdownByMonth(authorID)
-  else raise("unknown author stats page #{pageName.inspect}")
+  else halt(404, "unknown author stats page #{pageName.inspect}")
   end
 end
 
@@ -226,7 +226,7 @@ def unitStats_summary(unitID)
     referrals: translateRefs(attrs['ref'])[0..4],
     num_categories: CategoryStat.select(:category).distinct.where(unit_id: unitID).count,
     has_children: !!$hierByAncestor[unitID]
-  }.to_json
+  }
 end
 
 ###################################################################################################
@@ -236,7 +236,7 @@ def unitStats_breakdownByMonth(unitID)
                                order(Sequel.desc(:month)).map{ |st|
     attrs = JSON.parse(st.attrs)
     [st.month, attrs['post'] && attrs['post'].to_i, attrs['hit'] && attrs['hit'].to_i, attrs['dl'] && attrs['dl'].to_i] }
-  return out.to_json
+  return out
 end
 
 ###################################################################################################
@@ -267,7 +267,7 @@ def unitStats_historyByItem(unitID)
 
   # Form the final data structure with everything needed to render the form and report
   out[:report_data] = itemData
-  return out.to_json
+  return out
 end
 
 ###################################################################################################
@@ -305,7 +305,7 @@ def unitStats_historyByIssue(unitID)
 
   # Form the final data structure with everything needed to render the form and report
   out[:report_data] = issueData
-  return out.to_json
+  return out
 end
 
 ###################################################################################################
@@ -338,7 +338,7 @@ def unitStats_breakdownByIssue(unitID)
 
   # Form the final data structure with everything needed to render the form and report
   out[:report_data] = issueData.to_a
-  return out.to_json
+  return out
 end
 
 ###################################################################################################
@@ -366,7 +366,7 @@ def unitStats_breakdownByItem(unitID)
 
   # Form the final data structure with everything needed to render the form and report
   out[:report_data] = itemData
-  return out.to_json
+  return out
 end
 
 ###################################################################################################
@@ -411,7 +411,7 @@ def unitStats_referrals(unitID)
       by_month: monthsByStr[refStr] || {}
     }
   }
-  return out.to_json
+  return out
 end
 
 ###################################################################################################
@@ -440,7 +440,7 @@ def unitStats_depositsByCategory(unitID)
       by_month: byMonth
     }
   }
-  return out.to_json
+  return out
 end
 
 ###################################################################################################
@@ -494,7 +494,7 @@ def unitStats_avgByCategory(unitID)
         [mo, posts[cat][mo] ? sprintf("%.2f", hits.to_f / posts[cat][mo]) : nil] }]
     }
   }
-  return out.to_json
+  return out
 end
 
 ###################################################################################################
@@ -529,7 +529,7 @@ def unitStats_breakdownByCategory(unitID)
       total_downloads: rd[:downloads]>0 && rd[:downloads]
     }
   }
-  return out.to_json
+  return out
 end
 
 ###################################################################################################
@@ -582,7 +582,7 @@ def unitStats_depositsByUnit(unitID)
       by_month: byMonth
     }
   }
-  return out.to_json
+  return out
 end
 
 ###################################################################################################
@@ -625,7 +625,7 @@ def unitStats_historyByUnit(unitID)
       by_month: byMonth
     }
   }
-  return out.to_json
+  return out
 end
 
 ###################################################################################################
@@ -687,7 +687,7 @@ def unitStats_avgByUnit(unitID)
       by_month: Hash[byMonth.map{ |mo, hits| [mo, posts[u][mo] > 0 ? sprintf("%.2f", hits.to_f / posts[u][mo]) : nil] }]
     }
   }
-  return out.to_json
+  return out
 end
 
 ###################################################################################################
@@ -736,7 +736,7 @@ def unitStats_breakdownByUnit(unitID)
       total_downloads: rd[:downloads]>0 && rd[:downloads]
     }
   }
-  return out.to_json
+  return out
 end
 
 ###################################################################################################
@@ -788,7 +788,7 @@ def unitStats_deposits_by_oa(unitID)
       by_month: byMonth
     }
   }
-  return out.to_json
+  return out
 end
 
 ###################################################################################################

@@ -969,11 +969,6 @@ class AuthorStats_Summary extends React.Component {
 
 export class UnitStatsPage extends PageBase
 {
-  pageDataURL() {
-    const pm = this.props.match.params
-    return `/api/unit/${pm.unitID}/stats/${pm.pageName || "summary"}${this.props.location.search}`
-  }
-
   needHeaderFooter() { return false } //  disable standard header and footer
 
   renderContent() {
@@ -1022,11 +1017,6 @@ export class UnitStatsPage extends PageBase
 
 export class AuthorStatsPage extends PageBase
 {
-  pageDataURL() {
-    const pm = this.props.match.params
-    return `/api/author/${pm.personID}/stats/${pm.pageName || "summary"}${this.props.location.search}`
-  }
-
   needHeaderFooter() { return false } //  disable standard header and footer
 
   renderContent() {

@@ -39,11 +39,6 @@ class HomePage extends PageBase
     })
   }
 
-  // PageBase will fetch the following URL for us, and place the results in this.state.pageData
-  pageDataURL() {
-    return "/api/home"
-  }
-
   changeAnchor = name => {
     // Set hash based on what was clicked.
     window.location.hash=name

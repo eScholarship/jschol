@@ -38,7 +38,7 @@ class PageBase extends React.Component
   // back before the component is ready to receive state.
   componentWillMount() {
     let state = this.getEmptyState()
-    let dataURL = this.tmpPageDataURL(this.props)
+    let dataURL = this.pageDataURL(this.props)
     if (dataURL)
     {
       // Phase 1: Server-side load, where our page data has been precalculated and stored in props.staticContext
@@ -113,13 +113,13 @@ class PageBase extends React.Component
 
   // Browser-side AJAX fetch of page data. Sets state when the data is returned to us.
   fetchPageData = props => {
-    this.dataURL = this.tmpPageDataURL(props)
+    this.dataURL = this.pageDataURL(props)
     let urlFetching = this.dataURL
     if (this.dataURL) {
       this.setState({ fetchingData: true, 
                       permissions: (this.state && this.pagePermissionsUnit() == this.state.permissionsUnit)
                         ? this.state.permissions : null })
-      $.getJSON(this.tmpPageDataURL(props)).done((data) => {
+      $.getJSON(this.pageDataURL(props)).done((data) => {
         if (urlFetching == this.dataURL) {
           this.setState({ pageData: data, fetchingData: false })
           if (this.pagePermissionsUnit() != this.state.permissionsUnit)
@@ -224,8 +224,8 @@ class PageBase extends React.Component
     }
   }
 
-  // Temporary method - will be moved to Ruby soon
-  tmpPageDataURL() {
+  // This has been made uniform to simplify iso rendering. Server will figure out which API based on the path.
+  pageDataURL() {
     return "/api/pageData" + this.props.location.pathname + this.props.location.search
   }
 
