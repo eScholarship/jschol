@@ -677,28 +677,38 @@ def generalResponse
   content_type :html  # in case it got set to json
 
   # If there was any error from APIs, return an ISO error page.
-  if apiErr.is_a?(Array)
-    status apiErr[0] || 500
-    if apiErr[1].is_a?(String)
-      if apiErr[1] =~ /{/
-        begin
-          parsed = JSON.parse(apiErr[1])
-          parsed['error'] && parsed['message'] or raise("APIs should jsonHalt")
-          pageData = { error: true, message: parsed['message'] }
-        rescue
-          pageData = { error: true, message: apiErr[1] }
+  if apiErr
+    unit = $unitsHash['root']
+    attrs = JSON.parse(unit[:attrs])
+    pageData = {
+      unit: unit.values.reject{|k,v| k==:attrs},
+      header: getUnitHeader(unit, nil, nil, attrs),
+      error: true
+    }
+    if apiErr.is_a?(Array)
+      status apiErr[0] || 500
+      if apiErr[1].is_a?(String)
+        if apiErr[1] =~ /{/
+          begin
+            parsed = JSON.parse(apiErr[1])
+            parsed['error'] && parsed['message'] or raise("APIs should jsonHalt")
+            pageData[:message] = parsed['message']
+          rescue
+            pageData[:message] = apiErr[1]
+          end
+        else
+          pageData[:message] = apiErr[1]
         end
       else
-        pageData = { error: true, message: apiErr[1] }
+        pageData[:message] = "Error"
       end
+    elsif apiErr.is_a?(Numeric)
+      status apiErr
+      pageData[:message] = apiErr == 404 ? "Not Found" : "Error"
     else
-      pageData = { error: true, message: "Error" }
+      raise("can't figure out apiErr: #{apiErr.inspect}")
     end
-  elsif apiErr.is_a?(Numeric)
-    status apiErr
-    pageData = { error: true, message: apiErr == 404 ? "Not Found" : "Error" }
-  elsif apiErr
-    raise("can't figure out apiErr: #{apiErr.inspect}")
+    puts "error pageData=#{pageData}"
   end
 
   # Parse out payload of the URL (i.e. not including the host name)
@@ -943,7 +953,6 @@ end
 # Unit page data. 
 # pageName may be some administrative function (nav, profile), specific journal volume, or static page name
 def getUnitPageData(unitID, pageName, subPage)
-  puts "getUnitPageData: unitID=#{unitID.inspect} pageName=#{pageName.inspect} subPage=#{subPage.inspect}"
   unit = Unit[unitID] or jsonHalt(404, "Unit not found")
   attrs = JSON.parse(unit[:attrs])
   pageName == "stats" and return unitStatsData(unitID, subPage)

@@ -15,6 +15,7 @@ import ScrollToTopComp from '../components/ScrollToTopComp.jsx'
 import NavComp from '../components/NavComp.jsx'
 import ServerErrorComp from '../components/ServerErrorComp.jsx'
 import MetaTagsComp from '../components/MetaTagsComp.jsx'
+import NavBarComp from '../components/NavBarComp.jsx'
 
 // Keys used to store CMS-related data in browser's session storage
 const SESSION_LOGIN_KEY = "escholLogin"
@@ -251,6 +252,9 @@ class PageBase extends React.Component
       return (
         <div className="body">
           {this.renderError()}
+          <div className="c-toplink">
+            <a href="javascript:window.scrollTo(0, 0)">Top</a>
+          </div>
           {this.needHeaderFooter() && <FooterComp/>}
         </div>)
     }
@@ -357,16 +361,23 @@ class PageBase extends React.Component
     </div>
   )}
 
-  renderError() { return (
+  renderError() {
+    let data = this.state.pageData
+    return (
     <div>
-      <MetaTagsComp title={this.state.pageData.message}/>
-      {this.needHeaderFooter() && <Header1Comp/>}
-      <div className="c-navbar">
-      </div>
+      <MetaTagsComp title={data.message}/>
+      <Header1Comp/>
+      {data.header && data.unit &&
+        <NavBarComp navBar={data.header.nav_bar} unit={data.unit} socialProps={data.header.social} />}
+      {data.header && !data.unit &&
+        <div className="c-navbar">
+          <NavComp data={data.header.nav_bar} />}
+        </div>
+      }
       <div className="c-columns">
         <main id="maincontent" tabIndex="-1">
           <section className="o-columnbox1">
-            <ServerErrorComp error={this.state.pageData.message}/>
+            <ServerErrorComp error={data.message}/>
           </section>
         </main>
       </div>

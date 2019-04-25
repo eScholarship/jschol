@@ -16,8 +16,7 @@ var AppRoot = null
 
 const app = express()
 
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
+app.use(bodyParser.json({limit: '10mb'}));
 
 function cacheBundle()
 {
