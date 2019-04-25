@@ -35,7 +35,7 @@ function cacheBundle()
 }
 
 // Simple check for up-ness
-app.get('check', (req, res) =>
+app.get('/check', (req, res) =>
 {
   cacheBundle()
   res.send("ok")
