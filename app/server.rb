@@ -718,7 +718,7 @@ def generalResponse
   # Pass the full path and query string to our little Node Express app, which will run it through
   # ReactRouter and React.
   outerHttp = Net::HTTP.new($host, ENV['ISO_PORT'])
-  outerHttp.read_timeout = ($host == "localhost") ? 20 : 5  # need extra time on local dev machines
+  outerHttp.read_timeout = 20
   response = outerHttp.start {|http| http.request(Net::HTTP::Get.new(remainder)) }
 
   response = HTTParty.post("http://#{$host}:#{ENV['ISO_PORT']}#{remainder}",
