@@ -13,7 +13,6 @@ require 'httparty'
 require 'json'
 require 'logger'
 require 'mimemagic'
-require 'net/http'
 require 'open-uri'
 require 'pp'
 require 'sequel'
@@ -717,14 +716,10 @@ def generalResponse
 
   # Pass the full path and query string to our little Node Express app, which will run it through
   # ReactRouter and React.
-  outerHttp = Net::HTTP.new($host, ENV['ISO_PORT'])
-  outerHttp.read_timeout = 20
-  response = outerHttp.start {|http| http.request(Net::HTTP::Get.new(remainder)) }
-
   response = HTTParty.post("http://#{$host}:#{ENV['ISO_PORT']}#{remainder}",
                :headers => { 'Content-Type' => 'application/json' },
                :body => pageData.to_json,
-               :timeout => 10)
+               :timeout => 20)
   if response.code != 200
     # If there's an exception (like iso is completely dead), fall back to non-iso mode.
     puts "Warning: unexpected error from iso (falling back): #{response.code} - #{response.body}"
