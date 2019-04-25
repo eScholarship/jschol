@@ -15,6 +15,7 @@ import ScrollToTopComp from '../components/ScrollToTopComp.jsx'
 import NavComp from '../components/NavComp.jsx'
 import ServerErrorComp from '../components/ServerErrorComp.jsx'
 import MetaTagsComp from '../components/MetaTagsComp.jsx'
+import NavBarComp from '../components/NavBarComp.jsx'
 
 // Keys used to store CMS-related data in browser's session storage
 const SESSION_LOGIN_KEY = "escholLogin"
@@ -41,23 +42,18 @@ class PageBase extends React.Component
     let dataURL = this.pageDataURL(this.props)
     if (dataURL)
     {
-      // Phase 1: Initial server-side load. We just save the URL, and iso will later fetch it and re-run React
-      if (this.props.staticContext && this.props.staticContext.urlsToFetch) {
-        state.fetchingData = true
-        this.props.staticContext.urlsToFetch.push(dataURL)
-      }
-      // Phase 2: Second server-side load, where our data has been fetched and stored in props.staticContext
-      else if (this.props.staticContext && this.props.staticContext.urlsFetched) {
+      // Phase 1: Server-side load, where our page data has been precalculated and stored in props.staticContext
+      if (this.props.staticContext && this.props.staticContext.pageData) {
         state.fetchingData = false
-        state.pageData = this.props.staticContext.urlsFetched[this.pageDataURL(this.props)]
+        state.pageData = this.props.staticContext.pageData
       }
-      // Phase 3: Initial browser load. Server should have placed our data in window.
-      else if (window.jscholApp_initialPageData) {
+      // Phase 2: Initial browser load. Server should have placed our data in window.
+      else if (!(typeof window === "undefined") && window.jscholApp_initialPageData) {
         state.fetchingData = false
         state.pageData = window.jscholApp_initialPageData
         delete window.jscholApp_initialPageData
       }
-      // Phase 4: Browser-side page switch. We have to fetch new data ourselves. Start with basic
+      // Phase 3: Browser-side page switch. We have to fetch new data ourselves. Start with basic
       // state, and the pageData will get filled when the ajax returns.
       else {
         state.fetchingData = true
@@ -229,10 +225,9 @@ class PageBase extends React.Component
     }
   }
 
-  // Method to be supplied by derived classes, so they can make a URL that will grab
-  // the proper API data from the server.
+  // This has been made uniform to simplify iso rendering. Server will figure out which API based on the path.
   pageDataURL() {
-    throw "Derived class must override pageDataURL method"
+    return "/api/pageData" + this.props.location.pathname + this.props.location.search
   }
 
   // Optional method: for editable pages, the unit ID to look up permissions for
@@ -257,6 +252,9 @@ class PageBase extends React.Component
       return (
         <div className="body">
           {this.renderError()}
+          <div className="c-toplink">
+            <a href="javascript:window.scrollTo(0, 0)">Top</a>
+          </div>
           {this.needHeaderFooter() && <FooterComp/>}
         </div>)
     }
@@ -363,16 +361,23 @@ class PageBase extends React.Component
     </div>
   )}
 
-  renderError() { return (
+  renderError() {
+    let data = this.state.pageData
+    return (
     <div>
-      <MetaTagsComp title={this.state.pageData.error}/>
-      {this.needHeaderFooter() && <Header1Comp/>}
-      <div className="c-navbar">
-      </div>
+      <MetaTagsComp title={data.message}/>
+      <Header1Comp/>
+      {data.header && data.unit &&
+        <NavBarComp navBar={data.header.nav_bar} unit={data.unit} socialProps={data.header.social} />}
+      {data.header && !data.unit &&
+        <div className="c-navbar">
+          <NavComp data={data.header.nav_bar} />}
+        </div>
+      }
       <div className="c-columns">
         <main id="maincontent" tabIndex="-1">
           <section className="o-columnbox1">
-            <ServerErrorComp error={this.state.pageData.error}/>
+            <ServerErrorComp error={data.message}/>
           </section>
         </main>
       </div>

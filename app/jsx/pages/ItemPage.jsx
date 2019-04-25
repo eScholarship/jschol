@@ -36,11 +36,6 @@ class ItemPage extends PageBase {
     currentTab: PropTypes.oneOf(anchors)
   }
 
-  // PageBase will fetch the following URL for us, and place the results in this.state.pageData
-  pageDataURL() {
-    return "/api/item/" + this.props.match.params.itemID
-  }
-
   // Unit ID for permissions checking
   pagePermissionsUnit() {
     return "root"  // This is only being used for super user access
