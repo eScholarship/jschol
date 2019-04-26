@@ -16,6 +16,7 @@ gem 'netrc'               # used to read EZID credentials
 gem 'nokogiri'            # parsing and generating XML
 gem 'parslet'             # parser to transform search into Cloudsearch compound query
 gem 'puma'                # Rack web service layer
+gem 'puma_worker_killer'  # because mem leak has been so hard to find
 gem 'sanitize'            # parse and sanitize user-supplied HTML fragments
 gem 'sequel'              # object-relational mapper (including migrations)
 gem 'sinatra'             # lightweight web framework
@@ -24,4 +25,5 @@ gem 'socksify'            # for proxying all TCP through SOCKS proxy
 gem 'sqlite3'             # for local testing without remote Mysql database
 gem 'test-unit'           # test/quick.rb
 gem 'unindent'            # remove indentation from lines of a string
+gem 'vmstat'              # for determining machine's RAM size to work around mem leak
 gem 'xml-sitemap'         # generate Google sitemap
