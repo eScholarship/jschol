@@ -19,6 +19,7 @@ gem 'puma'                # Rack web service layer
 gem 'puma_worker_killer'  # because mem leak has been so hard to find
 gem 'sanitize'            # parse and sanitize user-supplied HTML fragments
 gem 'sequel'              # object-relational mapper (including migrations)
+gem 'sigdump', require: 'sigdump/setup' # to get thread traces with kill -CONT
 gem 'sinatra'             # lightweight web framework
 gem 'sinatra-websocket'   # web socket support for Sinatra
 gem 'socksify'            # for proxying all TCP through SOCKS proxy

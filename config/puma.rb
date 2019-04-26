@@ -9,6 +9,7 @@ worker_shutdown_timeout 90  # HTTP timeout is usually 60 sec, so give extra to b
 before_fork do
   require 'vmstat'
   require 'puma_worker_killer'
+  require 'sigdump/setup'
   mem = Vmstat.snapshot.memory
   megs = mem.pagesize * (mem.wired + mem.active + mem.inactive + mem.free) / 1024 / 1024
   puts "PumaWorkerKiller (pre-start) RAM size: #{megs} mb"

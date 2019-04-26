@@ -60,6 +60,7 @@ GEM
       nokogiri (>= 1.4.4)
       nokogumbo (~> 1.4)
     sequel (4.48.0)
+    sigdump (0.2.4)
     sinatra (2.0.2)
       mustermann (~> 1.0)
       rack (~> 2.0)
@@ -105,6 +106,7 @@ DEPENDENCIES
   puma_worker_killer
   sanitize
   sequel
+  sigdump
   sinatra
   sinatra-websocket
   socksify
