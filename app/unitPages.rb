@@ -618,6 +618,7 @@ def getUnitProfile(unit, attrs)
   
   attrs['directSubmit'] and profile[:directSubmit] = attrs['directSubmit']
   attrs['directSubmitURL'] and profile[:directSubmitURL] = attrs['directSubmitURL']
+  attrs['elements_id'] and profile[:elementsID] = attrs['elements_id']
   if unit.type == 'journal'
     profile[:doaj] = attrs['doaj']
     profile[:issn] = attrs['issn']
@@ -1406,6 +1407,10 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
           unitAttrs['directSubmit'] = params['data']['directSubmit']
         end
         if params['data']['directSubmitURL'] then unitAttrs['directSubmitURL'] = params['data']['directSubmitURL'] end
+        if params['data']['elementsID']
+          params['data']['elementsID'] =~ /^[0-9]*$/ or jsonHalt(400, "elements ID must be numeric (or blank)")
+          unitAttrs['elements_id'] = params['data']['elementsID']
+        end
       end
     end
 
