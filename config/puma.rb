@@ -12,10 +12,12 @@ before_fork do
   mem = Vmstat.snapshot.memory
   megs = mem.pagesize * (mem.wired + mem.active + mem.inactive + mem.free) / 1024 / 1024
   puts "PumaWorkerKiller (pre-start) RAM size: #{megs} mb"
+  limit = [[512, megs/2].max, 1500].min  # default to half of RAM but clamp to range [512..1500]
+  puts "PumaWorkerKiller (pre-start) setting limit at #{limit} mb"
   PumaWorkerKiller.config do |config|
-    config.ram           = megs # mb
-    config.percent_usage = 0.50 # kill when our app is > 50% of total RAM usage
-    config.frequency     = 5    # seconds
+    config.ram           = limit # mb
+    config.percent_usage = 1.0 # kill when our app reaches the specified limit
+    config.frequency     = 120  # seconds
   end
   PumaWorkerKiller.start
 end
