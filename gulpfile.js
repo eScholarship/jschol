@@ -22,7 +22,7 @@ var productionMode = !!gutil.env.production
 
 // Build javscript bundles with Webpack
 gulp.task('watch:src', (done) => {
-  const config = Object.create(require('./webpack.' + (productionMode ? 'prd' : 'dev') + '.js'));
+  const config = require('./webpack.' + (productionMode ? 'prd' : 'dev') + '.js');
   webpack(config, function(error, stats) {
     if (error) {
       gutil.log('[webpack]', error);

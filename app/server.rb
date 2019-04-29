@@ -653,8 +653,8 @@ def generalResponse
   # Replace startup URLs for proper cache busting
   template = File.new("app/app.html").read
   webpackManifest = JSON.parse(File.read('app/js/manifest.json'))
-  template.sub!("/js/lib-bundle.js", "/js/#{webpackManifest["lib.js"]}")
-  template.sub!("/js/app-bundle.js", "/js/#{webpackManifest["app.js"]}")
+  template.sub!("/js/vendors~app.js", "#{webpackManifest["vendors~app.js"]}")
+  template.sub!("/js/app.js", "#{webpackManifest["app.js"]}")
   template.sub!("/css/main.css", "/css/main-#{Digest::MD5.file("app/css/main.css").hexdigest[0,16]}.css")
 
   # In development mode, skip iso
