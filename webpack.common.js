@@ -48,7 +48,7 @@ module.exports = {
     },
   },
   module: {
-    loaders: [{
+    rules: [{
       test: /\.jsx$/,
       exclude: /node_modules/,
       loader: 'babel-loader'
@@ -57,10 +57,6 @@ module.exports = {
       test: /node_modules.pdfjs-embed2.*\.js$/,
       exclude: /src\/core\/(glyphlist|unicode)/,
       loader: 'babel-loader'
-    },
-    {
-      test: /\.json$/,
-      loader: 'json-loader'
     }]
   },
   performance : {
