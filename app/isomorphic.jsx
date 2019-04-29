@@ -7,9 +7,10 @@ import ReactDOMServer            from 'react-dom/server'
 import { StaticRouter }          from 'react-router-dom'
 import decache                   from 'decache'
 import fs                        from 'fs'
-import MetaTagsServer            from 'react-meta-tags/server';
-import {MetaTagsContext}         from 'react-meta-tags';
-import bodyParser                from 'body-parser';
+import MetaTagsServer            from 'react-meta-tags/server'
+import {MetaTagsContext}         from 'react-meta-tags'
+import bodyParser                from 'body-parser'
+import { GracefulShutdownManager } from '@moebius/http-graceful-shutdown'
 
 var lastStamp
 var AppRoot = null
@@ -81,11 +82,19 @@ app.post('*', (req, res) =>
 
 const PORT = process.env.ISO_PORT
 
-app.listen(PORT, function () {
-  console.log('ISO worker listening on port', PORT)
+const server = app.listen(PORT, function () {
+  console.log('ISO: Worker listening on port ' + PORT + ".")
 })
+
+const shutdownManager = new GracefulShutdownManager(server)
 
 // Fire off an initial request to get the app bundle loading.
 http.get("http://localhost:4002/check", function(ajaxResp) {
   ajaxResp.on('end', function() { console.log("Initial check: code=", ajaxResp.statusCode) })
+})
+
+process.on('SIGTERM', () => {
+  shutdownManager.terminate(() => {
+    console.log('ISO: worker terminated.')
+  })
 })
