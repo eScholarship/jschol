@@ -135,7 +135,7 @@ class ItemPage extends PageBase {
           <meta id="meta-dissertation_institution" name="citation_dissertation_institution" content={d.header.breadcrumb[1]['name']} /> }
         {d.added &&
           <meta id="meta-online_date" name="citation_online_date" content={d.added} /> }
-        {["withdrawn", "embargoed"].includes(d.status) &&
+        {d.status == "withdrawn" &&
           <meta id="meta-robots" name="robots" content="noindex" /> }
         {keywords &&
           <meta id="meta-keywords" name="citation_keywords" content={keywords} /> }
