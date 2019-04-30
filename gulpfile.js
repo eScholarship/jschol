@@ -15,9 +15,8 @@ const exec = require('child_process').exec
 const spawn = require('child_process').spawn
 const webpack = require('webpack');
 
-// Process control for Sinatra and Express
+// Process control for Sinatra
 var sinatraProc // Main app in Sinatra (Ruby)
-var expressProc // Sub-app for isomophic javascript in Express (Node/Javascript)
 
 var productionMode = !!gutil.env.production
 
@@ -115,57 +114,10 @@ function restartSinatra(done)
 gulp.task('start-sinatra', restartSinatra)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-// Support functions for starting and restarting Express, which runs the isomorphic-js sub-app.
-function startExpress()
-{
-  if (process.env.ISO_PORT) {
-    exec('pkill -9 -f ^node.*iso.*'+process.env.ISO_PORT, (err, stdout, stderr) => { })
-    setTimeout(()=>{
-      expressProc = spawn('node', ['app/isomorphic.js'], { stdio: 'inherit' })
-      expressProc.on('exit', function(code) {
-        expressProc = null
-      })
-    }, 500)
-  }
-}
-
-function restartExpress(done) {
-  if (expressProc) {
-    console.log("Restarting Express.")
-    expressProc.on('exit', function(code) {
-      startExpress()
-    })
-    expressProc.kill()
-    expressProc = null
-  }
-  else {
-    startExpress()
-  }
-  done()
-}
-
-gulp.task('start-express', restartExpress)
-
-gulp.task('rsync', function() {
-  exec('rsync -a --exclude js --exclude css /outer_jschol/app/ /home/jschol/inner_jschol/app/',
-    (err, stdout, stderr) => {
-      console.log(stderr)
-    }
-  )
-});
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
 // Watch sass, html, and js and reload browser if any changes
 gulp.task('watch', function() {
   gulp.watch('app/scss/*.scss', {interval:500}, gulp.parallel(['sass']));
   gulp.watch(['app/*.rb', 'util/*.rb'], {interval:500}, restartSinatra)
-  gulp.watch(['app/isomorphic.jsx'], {interval:800}, restartExpress);
-
-  if (fs.existsSync('/outer_jschol/app/jsx/App.jsx'))
-    gulp.watch(['/outer_jschol/app/scss/*.scss',
-                '/outer_jschol/app/jsx/**/*.jsx',
-                '/outer_jschol/app/*.rb', '/outer_jschol/util/*.rb'],
-               {interval:2000}, gulp.parallel(['rsync']));
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -182,6 +134,6 @@ gulp.task('maybe-socks', function() {
 if (productionMode) {
   gulp.task('default',  gulp.parallel(['watch:src', 'watch', 'start-sinatra', 'sass']))
 } else {
-  gulp.task('default', gulp.parallel(['watch:src', 'watch', 'start-sinatra', 'start-express',
+  gulp.task('default', gulp.parallel(['watch:src', 'watch', 'start-sinatra',
                         'maybe-socks', 'livereload', 'sass']))
 }

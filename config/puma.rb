@@ -6,10 +6,10 @@ worker_shutdown_timeout 90  # HTTP timeout is usually 60 sec, so give extra to b
 # The jschol memory leak has been very hard to track down, so a kludge is needed to
 # keep the app responsive. Previously we were using a cronjob to restart periodically,
 # but in a Beanstalk world it makes more sense to do it based on RAM consumption.
-before_fork do
+def setupWorkerKiller
   require 'vmstat'
   require 'puma_worker_killer'
-  require 'sigdump/setup'
+  require 'sigdump/setup'     # enables stack trace (to /tmp/sigdump_pid.txt) if you send SIGCONT to process
   mem = Vmstat.snapshot.memory
   megs = mem.pagesize * (mem.wired + mem.active + mem.inactive + mem.free) / 1024 / 1024
   puts "PumaWorkerKiller (pre-start) RAM size: #{megs} mb"
@@ -21,6 +21,26 @@ before_fork do
     config.frequency     = 120  # seconds
   end
   PumaWorkerKiller.start
+end
+
+# We run a child Node Express process for isomorphic javascript rendering.
+# Let's be certain it shuts down when we do.
+def startIsoServer
+  port = ENV['ISO_PORT'] or return
+  jscholDir = File.dirname(File.expand_path(File.dirname(__FILE__)))
+  $isoPid = spawn("node app/isomorphic.js")
+  Thread.new {
+    Process.wait($isoPid)
+    $isoPid = nil
+  }
+  at_exit {
+    $isoPid and Process.kill("TERM", $isoPid)
+  }
+end
+
+before_fork do
+  setupWorkerKiller
+  startIsoServer
 end
 
 on_worker_boot do |num|

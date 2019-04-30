@@ -638,11 +638,6 @@ get %r{.*} do
   # elsewhere.
   if request.path_info =~ %r{api/.*|content/.*|locale/.*|.*\.[a-zA-Z]\w{0,3}}
     pass
-  elsif request.path_info =~ %r{/stats($|/)}
-    # Prevent stats pages from getting into Google/Bing/etc.
-    resp = generalResponse
-    resp.sub!(%r{<metaTags>.*</metaTags>}m, '<metaTags><meta name="robots" content="noindex"></metaTags>')
-    resp
   else
     generalResponse
   end
