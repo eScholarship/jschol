@@ -26,7 +26,7 @@ end
 # We run a child Node Express process for isomorphic javascript rendering.
 # Let's be certain it shuts down when we do.
 def startIsoServer
-  port = ENV['ISO_PORT'] or return
+  port = ENV['ISO_PORT'] && !$isoPid or return
   jscholDir = File.dirname(File.expand_path(File.dirname(__FILE__)))
   $isoPid = spawn("node app/isomorphic.js")
   Thread.new {
