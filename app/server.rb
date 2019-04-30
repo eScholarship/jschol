@@ -702,7 +702,6 @@ def generalResponse
     else
       raise("can't figure out apiErr: #{apiErr.inspect}")
     end
-    puts "error pageData=#{pageData}"
   end
 
   # Parse out payload of the URL (i.e. not including the host name)
