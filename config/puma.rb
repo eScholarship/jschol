@@ -40,6 +40,9 @@ end
 
 before_fork do
   setupWorkerKiller
+end
+
+after_worker_fork do
   startIsoServer
 end
 
