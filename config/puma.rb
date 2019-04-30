@@ -28,13 +28,14 @@ end
 def startIsoServer
   port = ENV['ISO_PORT'] && !$isoPid or return
   jscholDir = File.dirname(File.expand_path(File.dirname(__FILE__)))
+  $isoParent = Process.pid
   $isoPid = spawn("node app/isomorphic.js")
   Thread.new {
     Process.wait($isoPid)
     $isoPid = nil
   }
   at_exit {
-    $isoPid and Process.kill("TERM", $isoPid)
+    $isoPid && $isoParent == Process.pid and Process.kill("TERM", $isoPid)
   }
 end
 
