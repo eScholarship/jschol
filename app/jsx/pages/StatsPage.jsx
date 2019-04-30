@@ -72,7 +72,9 @@ class StatsHeader extends React.Component {
     let thisLabel = p.match.params.unitID ? p.data.unit_name : p.data.author_name
     return(
       <div>
-        <MetaTagsComp title={`${p.title}: ${p.data.unit_name || p.data.author_name}`}/>
+        <MetaTagsComp title={`${p.title}: ${p.data.unit_name || p.data.author_name}`}>
+           <meta id="meta-robots" name="robots" content="noindex" />
+        </MetaTagsComp>
         <h1>
           { pageName == "summary" ? thisLabel : <Link to={thisLink}>{thisLabel}</Link> }
         </h1>
