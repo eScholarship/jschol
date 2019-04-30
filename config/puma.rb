@@ -12,9 +12,8 @@ def setupWorkerKiller
   require 'sigdump/setup'     # enables stack trace (to /tmp/sigdump_pid.txt) if you send SIGCONT to process
   mem = Vmstat.snapshot.memory
   megs = mem.pagesize * (mem.wired + mem.active + mem.inactive + mem.free) / 1024 / 1024
-  puts "PumaWorkerKiller (pre-start) RAM size: #{megs} mb"
   limit = [[512, megs/2].max, 2048].min  # default to half of RAM but clamp to range [512..2048]
-  puts "PumaWorkerKiller (pre-start) setting limit at #{limit} mb"
+  puts "PumaWorkerKiller (pre-start) RAM size: #{megs} mb, setting limit at #{limit} mb"
   PumaWorkerKiller.config do |config|
     config.ram           = limit # mb
     config.percent_usage = 1.0 # kill when our app reaches the specified limit
@@ -26,7 +25,7 @@ end
 # We run a child Node Express process for isomorphic javascript rendering.
 # Let's be certain it shuts down when we do.
 def startIsoServer
-  port = ENV['ISO_PORT'] or return
+  port = ENV['ISO_PORT'] && !$isoPid or return
   jscholDir = File.dirname(File.expand_path(File.dirname(__FILE__)))
   $isoPid = spawn("node app/isomorphic.js")
   Thread.new {
@@ -40,6 +39,9 @@ end
 
 before_fork do
   setupWorkerKiller
+end
+
+after_worker_fork do
   startIsoServer
 end
 

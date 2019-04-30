@@ -66,6 +66,7 @@
   "dependencies-note2": "The query-string module must be 5.x only; 6.x does not support IE11",
   "dependencies": {
     "array-includes": "^3.0.3",
+    "core-js": "^2.5.7",
     "details-polyfill": "^1.0.2",
     "flickity": "^2.0.5",
     "flickity-imagesloaded": "^2.0.0",

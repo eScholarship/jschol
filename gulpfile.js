@@ -121,12 +121,14 @@ gulp.task('watch', function() {
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-gulp.task('livereload', function() {
+gulp.task('livereload', function(done) {
   livereload.listen();
+  done()
 });
 
-gulp.task('maybe-socks', function() {
+gulp.task('maybe-socks', function(done) {
   var socksProc = spawn('ruby', ['tools/maybeSocks.rb'], { stdio: 'inherit' })
+  done()
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
