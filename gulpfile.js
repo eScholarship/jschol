@@ -22,7 +22,7 @@ var productionMode = !!gutil.env.production
 
 // Build javscript bundles with Webpack
 gulp.task('watch:src', (done) => {
-  const config = Object.create(require('./webpack.' + (productionMode ? 'prd' : 'dev') + '.js'));
+  const config = require('./webpack.' + (productionMode ? 'prd' : 'dev') + '.js');
   webpack(config, function(error, stats) {
     if (error) {
       gutil.log('[webpack]', error);
@@ -121,12 +121,14 @@ gulp.task('watch', function() {
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-gulp.task('livereload', function() {
+gulp.task('livereload', function(done) {
   livereload.listen();
+  done()
 });
 
-gulp.task('maybe-socks', function() {
+gulp.task('maybe-socks', function(done) {
   var socksProc = spawn('ruby', ['tools/maybeSocks.rb'], { stdio: 'inherit' })
+  done()
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

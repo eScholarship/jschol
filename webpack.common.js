@@ -16,21 +16,25 @@ function getNPMPackageIds() {
 }
 
 module.exports = {
+  mode: 'development',
   watch: true,
   cache: true,
   bail: false,
   entry: {
-    app: './app/jsx/App.jsx',
-    lib: getNPMPackageIds()
+    app: './app/jsx/App.jsx'
   },
   output: {
     filename: '[name]-bundle-[chunkhash].js',
     path: __dirname + '/app/js',
     publicPath: "/js/"
   },
+  optimization: {
+    splitChunks: {
+      chunks: 'all',
+      name: true
+    }
+  },
   plugins: [
-    // Chunk up our vendor libraries
-    new webpack.optimize.CommonsChunkPlugin("lib"),
     // Provides jQuery globally to all browser modules, so we can use jquery plugins like Trumbowyg
     new webpack.ProvidePlugin({
       $: "jquery",
@@ -48,7 +52,7 @@ module.exports = {
     },
   },
   module: {
-    loaders: [{
+    rules: [{
       test: /\.jsx$/,
       exclude: /node_modules/,
       loader: 'babel-loader'
@@ -57,10 +61,6 @@ module.exports = {
       test: /node_modules.pdfjs-embed2.*\.js$/,
       exclude: /src\/core\/(glyphlist|unicode)/,
       loader: 'babel-loader'
-    },
-    {
-      test: /\.json$/,
-      loader: 'json-loader'
     }]
   },
   performance : {
