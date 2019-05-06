@@ -45,11 +45,17 @@ if [[ env_exists -ne 1 ]]
     usage
 fi
 
-ZIP="$DIR-$VERSION.zip"
+# Build the app (transpile, uglify, etc.) so it doesn't have to be built on each worker
+if [[ "$1" =~ "-dev|-stg" ]]; then
+  ./webpack --config webpack.dev.js
+else
+  ./webpack --config webpack.prd.js
+fi
 
 # package app and upload
+ZIP="$DIR-$VERSION.zip"
 git archive --format=zip HEAD > $ZIP
-zip -r $ZIP app/js
+zip -r $ZIP app/js app/css
 
 echo "Exiting early."
 exit 1
