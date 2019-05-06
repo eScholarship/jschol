@@ -45,8 +45,11 @@ if [[ env_exists -ne 1 ]]
     usage
 fi
 
+# Pretranslate all the CSS
+./gulp sass
+
 # Build the app (transpile, uglify, etc.) so it doesn't have to be built on each worker
-if [[ "$1" =~ "-dev|-stg" ]]; then
+if [[ "$1" =~ "-dev" ]]; then
   ./webpack --config webpack.dev.js
 else
   ./webpack --config webpack.prd.js

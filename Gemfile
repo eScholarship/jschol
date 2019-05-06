@@ -2,6 +2,7 @@
 ruby '> 2.3.0'
 source 'https://rubygems.org'
 gem 'aws-sdk'             # used to talk to AWS CloudSearch
+gem 'bundler'             # needed for use in Beanstalk environment
 gem 'ezid-client'         # for minting people-arks
 gem 'fastimage'           # for determining dimensions of image files
 gem 'htmlentities'        # for decoding HTML entites
