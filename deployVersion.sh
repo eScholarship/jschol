@@ -64,13 +64,6 @@ ZIP="$DIR-$VERSION.zip"
 git archive --format=zip HEAD > dist/$ZIP
 zip -r dist/$ZIP app/js app/css
 
-rm -rf foo
-mkdir foo
-cd foo
-unzip ../dist/$ZIP
-echo "Exiting early."
-exit 1
-
 aws s3 cp dist/$ZIP s3://$BUCKET/$DIR/$ZIP
 
 aws elasticbeanstalk create-application-version \
