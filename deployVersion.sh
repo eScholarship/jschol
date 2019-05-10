@@ -25,12 +25,15 @@ fi
 
 set -u
 
+# Ensure that all local changes are checked in.
+git diff-index --quiet HEAD --
+
 export TZ=":America/Los_Angeles"
 VERSION=`date -Iseconds`
 DIR=jschol
 BUCKET=cdlpub-apps
 REGION=us-west-2
-APPNAME=pub-jschol-app
+APPNAME=jschol
 
 # make sure environment actually exists
 env_exists=$(aws elasticbeanstalk describe-environments \
@@ -49,22 +52,19 @@ fi
 ./gulp sass
 
 # Build the app (transpile, uglify, etc.) so it doesn't have to be built on each worker
-if [[ "$1" =~ "-dev" ]]; then
-  ./webpack --config webpack.dev.js
-else
-  ./webpack --config webpack.prd.js
-fi
+#if [[ "$1" =~ "-dev" ]]; then
+#  ./webpack --config webpack.dev.js
+#else
+#  ./webpack --config webpack.prd.js
+#fi
 
 # package app and upload
+mkdir -p dist
 ZIP="$DIR-$VERSION.zip"
-git archive --format=zip HEAD > $ZIP
-zip -r $ZIP app/js app/css
+git archive --format=zip HEAD > dist/$ZIP
+zip -r dist/$ZIP app/js app/css
 
-echo "Exiting early."
-exit 1
-
-aws s3 cp $ZIP s3://$BUCKET/$DIR/$ZIP
-rm $ZIP
+aws s3 cp dist/$ZIP s3://$BUCKET/$DIR/$ZIP
 
 aws elasticbeanstalk create-application-version \
   --application-name $APPNAME \
@@ -76,10 +76,9 @@ aws elasticbeanstalk create-application-version \
 aws elasticbeanstalk update-environment \
   --environment-name "$1" \
   --region $REGION \
-  --version-label "$VERSION" \
-  --option-settings file://eboptions.json
+  --version-label "$VERSION"
 
-# Copyright (c) 2018, Regents of the University of California
+# Copyright (c) 2019, Regents of the University of California
 #
 # All rights reserved.
 #
