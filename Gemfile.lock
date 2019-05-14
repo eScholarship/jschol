@@ -89,6 +89,7 @@ PLATFORMS
 
 DEPENDENCIES
   aws-sdk
+  bundler
   ezid-client
   fastimage
   htmlentities
