@@ -42,10 +42,10 @@ def loginValidateData
   cipherKey = Digest::SHA1.hexdigest(cipherKeyData)
 
   # Set up the decryptor and give it the key and init vector
-  cipher = OpenSSL::Cipher::Cipher.new("aes-256-ctr")
+  cipher = OpenSSL::Cipher.new("aes-256-ctr")
   cipher.decrypt
-  cipher.key = cipherKey
-  cipher.iv = nonce
+  cipher.key = cipherKey[0,32]
+  cipher.iv = nonce[0,16]
 
   # Now decrypt the message
   encrypted = Base64.urlsafe_decode64(data)
