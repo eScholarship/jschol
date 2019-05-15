@@ -33,7 +33,7 @@ VERSION=`date -Iseconds`
 DIR=jschol
 BUCKET=cdlpub-apps
 REGION=us-west-2
-APPNAME=jschol
+APPNAME=eb-pub-jschol
 
 # make sure environment actually exists
 env_exists=$(aws elasticbeanstalk describe-environments \
@@ -55,7 +55,7 @@ fi
 if [[ "$1" =~ "-dev" ]]; then
   ./webpack --config webpack.dev.js
 else
-  ./webpack --config webpack.prd.js
+  ./webpack --config webpack.dev.js   # FIXME
 fi
 
 # package app and upload
