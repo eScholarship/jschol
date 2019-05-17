@@ -321,6 +321,10 @@ before do
       halt code
     end
   end
+
+  # Most of the responses from this app are dynamic and shouldn't be cached (e.g. unit pages,
+  # pageData responses, etc.) The exceptions, e.g. assets, explicitly override cache_control.
+  cache_control :no_store
 end
 
 ###################################################################################################
@@ -441,6 +445,7 @@ get %r{/assets/([0-9a-f]{64})} do |hash|
     obj.get(response_target: s3Tmp)
     s3Tmp.seek(0)
     etag hash
+    cache_control :public, :max_age => 3600   # maybe more?
     send_file(s3Tmp,
               last_modified: obj.last_modified,
               type: obj.metadata["mime_type"] || "application/octet-stream",
