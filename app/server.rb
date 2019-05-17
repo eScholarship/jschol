@@ -25,6 +25,9 @@ require 'uri'
 # Easy toggle to enable/disable mrtExpress
 USE_MRTEXPRESS = true
 
+# On dev and stg we control access with a special cookie
+ACCESS_COOKIE = (ENV['ACCESS_COOKIE'] || '').empty? ? nil : ENV['ACCESS_COOKIE']
+
 # Make puts thread-safe, and flush after every puts.
 $stdoutMutex = Mutex.new
 $workerNum = 0
@@ -325,11 +328,25 @@ before do
   # Most of the responses from this app are dynamic and shouldn't be cached (e.g. unit pages,
   # pageData responses, etc.) The exceptions, e.g. assets, explicitly override cache_control.
   cache_control :no_store
+
+  # On dev and stg, control access with a special cookie
+  if ACCESS_COOKIE
+    if request.params['access']
+      response.set_cookie(:ACCESS_COOKIE, :value => request.params['access'], :path => "/")
+      ACCESS_COOKIE == request.params['access'] or halt(401, "Not authorized.")
+    else
+      ACCESS_COOKIE == request.cookies['ACCESS_COOKIE'] or halt(401, "Not authorized.")
+    end
+  end
 end
 
 ###################################################################################################
 # Simple up-ness check
 get "/check" do
+  if ENV['ISO_PORT']
+    response = HTTParty.get("http://#{$host}:#{ENV['ISO_PORT']}/check", :timeout => 20)
+    response.code == 200 or halt(500, "ISO server not ok.")
+  end
   return "ok"
 end
 
