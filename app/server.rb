@@ -334,7 +334,7 @@ before do
     if request.params['access']
       response.set_cookie(:ACCESS_COOKIE, :value => request.params['access'], :path => "/")
       ACCESS_COOKIE == request.params['access'] or halt(401, "Not authorized.")
-    else
+    elsif request.path != "/check"
       ACCESS_COOKIE == request.cookies['ACCESS_COOKIE'] or halt(401, "Not authorized.")
     end
   end
