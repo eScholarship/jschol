@@ -52,11 +52,11 @@ fi
 ./gulp sass
 
 # Build the app (transpile, uglify, etc.) so it doesn't have to be built on each worker
-#if [[ "$1" =~ "-dev" ]]; then
-#  ./webpack --config webpack.dev.js
-#else
-#  ./webpack --config webpack.prd.js
-#fi
+if [[ "$1" =~ "-dev" ]]; then
+  ./webpack --config webpack.dev.js
+else
+  ./webpack --config webpack.prd.js
+fi
 
 # package app and upload
 mkdir -p dist
