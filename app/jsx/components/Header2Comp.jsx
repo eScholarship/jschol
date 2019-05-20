@@ -5,7 +5,7 @@
 
 import React from 'react'
 import PropTypes from 'prop-types'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 import Search1Comp from '../components/Search1Comp.jsx'
 import Search2Comp from '../components/Search2Comp.jsx'
 import Breakpoints from '../../js/breakpoints.json'

@@ -17,7 +17,7 @@ class HomeLayout extends React.Component {
     super(props)
     this.state = {submenuActive: null, showSection1: true, showSection2: true, showSection3: true}
   }
-  componentWillMount() {
+  componentDidMount() {
     if (matchMedia) {
       this.mq = matchMedia("(min-width:"+Breakpoints.screen3+")")
       this.mq.addListener(this.widthChange)

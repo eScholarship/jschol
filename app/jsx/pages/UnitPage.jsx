@@ -8,7 +8,7 @@
 // }
 
 import React from 'react'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 
 import PageBase from './PageBase.jsx'
 import Header1Comp from '../components/Header1Comp.jsx'
@@ -46,30 +46,16 @@ class UnitPage extends PageBase {
   // React tries to render different content components 
   // (ie - switch between DeparmentLayout and Series Layout or UnitSearchLayout)
   // before the AJAX call for the different content has returned and then there are lots of issues!
-  pageDataURL() {
-    const pm = this.props.params
-    if (pm.pageName) {
-      if (pm.pageName == 'search')
-        return `/api/unit/${pm.unitID}/search/${this.props.location.search}`
-      else if (['profile', 'carousel', 'issueConfig', 'unitBuilder'].includes(pm.pageName))
-        return `/api/unit/${pm.unitID}/${pm.pageName}`
-      else if (pm.pageName == "authorSearch")
-        return `/api/unit/${pm.unitID}/authorSearch${this.props.location.search}`
-      else
-        return `/api/unit/${pm.unitID}/${pm.pageName}/${pm.splat}`
-    }
-    return `/api/unit/${pm.unitID}/home`
-  }
 
   // Unit ID for permissions checking
   pagePermissionsUnit() {
-    return this.props.params.unitID
+    return this.props.match.params.unitID
   }
 
   cmsPage(data, page) {
     if (this.state.adminLogin && !this.state.fetchingPerms && !this.state.isEditingPage) {
       //console.log("Editing turned off; redirecting to unit page.")
-      setTimeout(()=>this.props.router.push(
+      setTimeout(()=>this.props.history.push(
         data.unit.id == "root" ? "/" : `/uc/${data.unit.id}`), 0)
     }
     else
@@ -79,44 +65,44 @@ class UnitPage extends PageBase {
   // [********** AMY NOTES 3/15/17 **********]
   // TODO: each of the content layouts currently include the sidebars, 
   // but this should get stripped out and handled here in UnitPage
-  // TODO [UNIT-CONTENT-AJAX-ISSUE]: handle the AJAX issue described above pageDataURL method definition
+  // TODO [UNIT-CONTENT-AJAX-ISSUE]: handle the AJAX issue described above
   renderData(data) { 
     let sidebar = <SidebarComp data={data.sidebar}/>
     let title = data.unit.name
     let contentLayout
     if (this.state.fetchingData)
       contentLayout = (<h2 style={{ marginTop: "5em", marginBottom: "5em" }}>Loading...</h2>)
-    else if (this.props.params.pageName === 'search') {
+    else if (this.props.match.params.pageName === 'search') {
       this.extGA(data.unit.id)  // Google Analytics for external trackers called from PageBase
       {/* ToDo: For now, serieslayout is the only unit search that occurs, but this should be properly componentized
       contentLayout = (<UnitSearchLayout unit={data.unit} data={data.content} sidebar={sidebar}/>) */}
       contentLayout = (<SeriesLayout unit={data.unit} data={data.content} sidebar={sidebar} marquee={data.marquee}/>)
-    } else if (this.props.params.pageName === 'profile') {
+    } else if (this.props.match.params.pageName === 'profile') {
       contentLayout = this.cmsPage(data, <UnitProfileLayout unit={data.unit} data={data.content} sendApiData={this.sendApiData} sendBinaryFileData={this.sendBinaryFileData}/>)
       title = `Profile: ${data.unit.name}`
-    } else if (this.props.params.pageName === 'carousel') {
+    } else if (this.props.match.params.pageName === 'carousel') {
       contentLayout = this.cmsPage(data, <UnitCarouselConfigLayout unit={data.unit} data={data.content} sendApiData={this.sendApiData} sendBinaryFileData={this.sendBinaryFileData}/>)
       title = `Carousel: ${data.unit.name}`
-    } else if (this.props.params.pageName === 'issueConfig') {
+    } else if (this.props.match.params.pageName === 'issueConfig') {
       contentLayout = this.cmsPage(data, <UnitIssueConfigLayout unit={data.unit} data={data.content} sendApiData={this.sendApiData}/>)
       title = `Issue config: ${data.unit.name}`
-    } else if (this.props.params.pageName === 'unitBuilder') {
+    } else if (this.props.match.params.pageName === 'unitBuilder') {
       contentLayout = this.cmsPage(data, <UnitBuilderLayout unit={data.unit} data={data.content} sendApiData={this.sendApiData}/>)
       title = `Unit builder: ${data.unit.name}`
-    } else if (this.props.params.pageName === 'nav') {
+    } else if (this.props.match.params.pageName === 'nav') {
       contentLayout = this.cmsPage(data, <UnitNavConfigLayout unit={data.unit} data={data.content} sendApiData={this.sendApiData}/>)
       title = `Navigation: ${data.unit.name}`
-    } else if (this.props.params.pageName === 'sidebar') {
+    } else if (this.props.match.params.pageName === 'sidebar') {
       contentLayout = this.cmsPage(data, <UnitSidebarConfigLayout unit={data.unit} data={data.content} sendApiData={this.sendApiData}/>)
       title = `Sidebar: ${data.unit.name}`
-    } else if (this.props.params.pageName === 'redirects') {
+    } else if (this.props.match.params.pageName === 'redirects') {
       contentLayout = this.cmsPage(data, <RedirectConfigLayout data={data.content} sendApiData={this.sendApiData}/>)
       title = `Redirects`
-    } else if (this.props.params.pageName === 'authorSearch') {
+    } else if (this.props.match.params.pageName === 'authorSearch') {
       contentLayout = this.cmsPage(data,
         <AuthorSearchLayout data={data.content} location={this.props.location} sendApiData={this.sendApiData}/>)
       title = `Author Search`
-    } else if (this.props.params.pageName && !(data.content.issue)) {
+    } else if (this.props.match.params.pageName && !(data.content.issue)) {
       // If there's issue data here it's a journal page, otherwise it's static content
       contentLayout = (<UnitStaticPageLayout unit={data.unit} data={data.content} sidebar={sidebar} fetchPageData={this.fetchPageData}/>)
       title = data.content.title

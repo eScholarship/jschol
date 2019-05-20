@@ -3,7 +3,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import WizardComp from './WizardComp.jsx'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 
 class HomeSection2Comp extends React.Component {
   static propTypes = {
@@ -43,12 +43,14 @@ class HomeSection2Comp extends React.Component {
         </div>
         <a href="/search" className="c-homesection__2-browse-all">Browse all eScholarship holdings</a>
         <Link to="/repository" className="c-homesection__2-more">Learn more about the eScholarship repository</Link>
-        <WizardComp showModal={this.state.modalOpen}
-                  parentSelector={()=>$('#repository')[0]}
-                  onCancel={e=>this.closeWizardModal(e)}
-                  campuses={this.props.campuses}
-                  data={{campusID: null, campusName: null, unitID: null, unitName: null}}
-                />
+        <div id="wizardModalBase">
+          <WizardComp showModal={this.state.modalOpen}
+                    parentSelector={()=>$('#wizardModalBase')[0]}
+                    onCancel={e=>this.closeWizardModal(e)}
+                    campuses={this.props.campuses}
+                    data={{campusID: null, campusName: null, unitID: null, unitName: null}}
+                  />
+        </div>
       </div>
     )
   }

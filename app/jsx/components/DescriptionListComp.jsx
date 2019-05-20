@@ -1,7 +1,7 @@
 // ##### Description List Component ##### //
 
 import React from 'react'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 
 // StatNum displays stats (# publications, # depts, # journals) for a given campus or affilated unit
 class StatNum extends React.Component {

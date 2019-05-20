@@ -1,7 +1,7 @@
 // ##### Header1 Component ##### //
 
 import React from 'react'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 import Breakpoints from '../../js/breakpoints.json'
 import Search1Comp from '../components/Search1Comp.jsx'
 import AdminBarComp from '../components/AdminBarComp.jsx'

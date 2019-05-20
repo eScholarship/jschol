@@ -156,6 +156,7 @@ def handleBepressRedirect(uri)
       uri.path = redir.to_path
       return uri
     end
+    path =~ %r{/[^/]+$} or raise("failure parsing bp redirect path for #{uri.inspect}")  # prevent infinite loop
     path.sub!(%r{/[^/]+$},'')
   end
 

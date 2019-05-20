@@ -2,7 +2,7 @@
 
 import React from 'react'
 import $ from 'jquery'
-import { Subscriber } from 'react-broadcast'
+import Contexts from '../contexts.jsx'
 import TabMainComp from '../components/TabMainComp.jsx'
 import TabSupplementalComp from '../components/TabSupplementalComp.jsx'
 import TabMetricsComp from '../components/TabMetricsComp.jsx'
@@ -53,7 +53,7 @@ class TabsComp extends React.Component {
                   onClick = {() => this.tabFocus("author")}>
             Author & Article Info</button>
       }
-      <Subscriber channel="cms">
+      <Contexts.CMS.Consumer>
         { cms => 
           (cms.loggedIn && cms.permissions && cms.permissions.super) ?
           <button className={p.currentTab == "meta" ? "c-tabs__button--active" : "c-tabs__button"}
@@ -61,7 +61,7 @@ class TabsComp extends React.Component {
             Meta</button>
          : null
         }
-      </Subscriber>
+      </Contexts.CMS.Consumer>
         </div>
         <div className="c-tabs__content">
           {/* 'tab_anchors' are defined in ItemPage component */}
@@ -70,13 +70,13 @@ class TabsComp extends React.Component {
           {p.currentTab == "metrics"      && <TabMetricsComp {...p} />}
           {p.currentTab == "author"       && <TabAuthorComp {...p} />}
           {p.currentTab == "meta"         && 
-            <Subscriber channel="cms">
+            <Contexts.CMS.Consumer>
               { cms => 
                 (cms.loggedIn && cms.permissions && cms.permissions.super) ?
                 <TabMetaComp {...p} />
                : null
               }
-            </Subscriber>
+            </Contexts.CMS.Consumer>
           }
           <p><br/></p>
         </div>

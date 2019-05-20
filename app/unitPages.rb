@@ -319,12 +319,13 @@ def getUnitHeader(unit, pageName=nil, journalIssue=nil, issuesSubNav=nil, attrs=
   return header
 end
 
-def getCampusHeros
-  return $activeCampuses.values.map do |c|
+def getCampusHero
+  # Get a random hero image
+  heros = $activeCampuses.values.map do |c|
     unit = $unitsHash[c.id]
     attrs = JSON.parse(unit.attrs)
     ["ucop", "lbnl", "anrcs"].include?(c.id) ? nil : {'unit_id': c.id, 'unit_name': c.name, 'hero': getLogoData(attrs['hero'])}
-  end
+  end.compact.shuffle[0]
 end
 
 # Series use query and Journals use issueIds and issuesPublished
@@ -617,6 +618,7 @@ def getUnitProfile(unit, attrs)
   
   attrs['directSubmit'] and profile[:directSubmit] = attrs['directSubmit']
   attrs['directSubmitURL'] and profile[:directSubmitURL] = attrs['directSubmitURL']
+  attrs['elements_id'] and profile[:elementsID] = attrs['elements_id']
   if unit.type == 'journal'
     profile[:doaj] = attrs['doaj']
     profile[:issn] = attrs['issn']
@@ -1405,6 +1407,10 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
           unitAttrs['directSubmit'] = params['data']['directSubmit']
         end
         if params['data']['directSubmitURL'] then unitAttrs['directSubmitURL'] = params['data']['directSubmitURL'] end
+        if params['data']['elementsID']
+          params['data']['elementsID'] =~ /^[0-9]*$/ or jsonHalt(400, "elements ID must be numeric (or blank)")
+          unitAttrs['elements_id'] = params['data']['elementsID']
+        end
       end
     end
 

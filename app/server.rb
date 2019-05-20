@@ -13,7 +13,6 @@ require 'httparty'
 require 'json'
 require 'logger'
 require 'mimemagic'
-require 'net/http'
 require 'open-uri'
 require 'pp'
 require 'sequel'
@@ -331,7 +330,7 @@ end
 
 ###################################################################################################
 get %r{/uc/([^/]+)/rss} do |unitID|
-  unit = Unit[unitID] or halt(404, "Unit not found")
+  Unit[unitID] or halt(404, "Unit not found")
   response = HTTParty.get("http://#{$host}:18900/rss/unit/#{unitID}")
   response.headers['content-type'] and content_type response.headers['content-type']
   [response.code, response.body]
@@ -574,6 +573,34 @@ get "/content/:fullItemID/*" do |itemID, path|
 end
 
 ###################################################################################################
+def getPageData(path)
+  #puts "Routing on path #{path.sub(%r{/$}, '')}"
+  case path.sub(%r{/$}, '')  # forgive trailing slash
+    when ""; getHomePageData
+    when "/campuses"; browseAllCampuses
+    when "/journals"; browseAllJournals
+    when %r{^/([^/]+)/(units|journals)$}; getCampusBrowseData($1, $2)
+    when %r{^/uc/item/([^/]+)$}; getItemPageData($1)
+    when %r{^/uc/author/([^/]+)/stats(/([^/]+))?$}; authorStatsData("ark:/99166/#{$1}", $3 || "summary")
+    when %r{^/uc/([^/]+)/stats(/([^/]+))?$}; unitStatsData($1, $3 || "summary")
+    when %r{^/uc/([^/]+)(/([^/]+))?(/([^/]+))?$}; getUnitPageData($1, $3 || "home", $5)
+    when "/search"; getSearchData
+    when "/login"; loginStartData
+    when %r{/loginSuccess(/.*)?}; loginValidateData
+    when "/logout"; { header: getGlobalHeader }
+    when %r{/logoutSuccess(/.*)?}; { header: getGlobalHeader }
+    else getGlobalStaticData(path)
+  end
+end
+
+###################################################################################################
+# Translate incoming page data requests to the proper internal API
+get %r{/api/pageData([^\?]+)} do |path|
+  content_type :json
+  return getPageData(path).to_json
+end
+
+###################################################################################################
 # If a cache buster comes in, strip it down to the original, and re-dispatch the request to return
 # the actual file.
 get %r{\/css\/main-[a-zA-Z0-9]{16}\.css} do
@@ -611,93 +638,128 @@ get %r{.*} do
   # elsewhere.
   if request.path_info =~ %r{api/.*|content/.*|locale/.*|.*\.[a-zA-Z]\w{0,3}}
     pass
-  elsif request.path_info =~ %r{/stats($|/)}
-    # Don't do iso on stats reports
-    resp = generalResponse(false)
-
-    # Prevent stats pages from getting into Google/Bing/etc.
-    resp.sub!('<metaTags></metaTags>', '<metaTags><meta name="robots" content="noindex"></metaTags>')
   else
     generalResponse
   end
 end
 
 ###################################################################################################
-def generalResponse(iso_ok = true)
+def generalResponse
   # Replace startup URLs for proper cache busting
   template = File.new("app/app.html").read
   webpackManifest = JSON.parse(File.read('app/js/manifest.json'))
-  template.sub!("/js/lib-bundle.js", "/js/#{webpackManifest["lib.js"]}")
-  template.sub!("/js/app-bundle.js", "/js/#{webpackManifest["app.js"]}")
+  template.sub!("/js/vendors~app.js", "#{webpackManifest["vendors~app.js"]}")
+  template.sub!("/js/app.js", "#{webpackManifest["app.js"]}")
   template.sub!("/css/main.css", "/css/main-#{Digest::MD5.file("app/css/main.css").hexdigest[0,16]}.css")
 
-  # Isomorphic javascript rendering on the server
-  if ENV['ISO_PORT'] && iso_ok
-    # Parse out payload of the URL (i.e. not including the host name)
-    request.url =~ %r{^https?://([^/:]+)(:\d+)?(.*)$} or fail
-    remainder = $3
+  # In development mode, skip iso
+  ENV['ISO_PORT'] or return template
 
-    # Pass the full path and query string to our little Node Express app, which will run it through
-    # ReactRouter and React.
+  # Get API data
+  pageData = nil
+  apiErr = catch (:halt) {
     begin
-      outerHttp = Net::HTTP.new($host, ENV['ISO_PORT'])
-      outerHttp.read_timeout = ($host == "localhost") ? 20 : 5  # need extra time on local dev machines
-      response = outerHttp.start {|http| http.request(Net::HTTP::Get.new(remainder)) }
+      pageData = getPageData(request.path_info)
+      pageData.is_a?(Hash) or raise("an API function failed to return a hash, for path=#{request.path_info.inspect}")
     rescue Exception => e
-      # If there's an exception (like iso is completely dead), fall back to non-iso mode.
-      if e.to_s =~ /Net::ReadTimeout/
-        puts "Warning: read timeout from ISO. Falling back."
-      elsif e.to_s =~ /Connection refused/
-        puts "Warning: ISO refused connection. Falling back."
+      puts "Exception getting page data: #{e}\n    #{e.backtrace.join("\n    ")}"
+      pageData = { error: true, message: "Server Error" }
+    end
+    nil
+  }
+
+  content_type :html  # in case it got set to json
+
+  # If there was any error from APIs, return an ISO error page.
+  if apiErr
+    unit = $unitsHash['root']
+    attrs = JSON.parse(unit[:attrs])
+    pageData = {
+      unit: unit.values.reject{|k,v| k==:attrs},
+      header: getUnitHeader(unit, nil, nil, attrs),
+      error: true
+    }
+    if apiErr.is_a?(Array)
+      status apiErr[0] || 500
+      if apiErr[1].is_a?(String)
+        if apiErr[1] =~ /{/
+          begin
+            parsed = JSON.parse(apiErr[1])
+            parsed['error'] && parsed['message'] or raise("APIs should jsonHalt")
+            pageData[:message] = parsed['message']
+          rescue
+            pageData[:message] = apiErr[1]
+          end
+        else
+          pageData[:message] = apiErr[1]
+        end
       else
-        puts "Warning: unexpected exception (not HTTP error) from iso (falling back): #{e} #{e.backtrace}"
+        pageData[:message] = "Error"
       end
-      return template
-    end
-    if response.code.to_i != 200
-      # For all error pages, fall back to non-ISO since we don't know how to render it here.
-      # But 404's are common (and we haven't figured out how to do them isomorphically) so
-      # don't log those.
-      if response.code.to_i != 404
-        puts "Unexpected code #{response.code} from iso; falling back to non-iso."
-      end
-      status response.code
-      metaTags = "<title>Error - eScholarship</title>"
-      template.sub!('<metaTags></metaTags>', metaTags) or raise("missing template section")
-      return template
-    end
-
-    # Extract meta tags so we can put them in <head>
-    metaTags, body = "", response.body
-    if body =~ %r{<metaTags>(.*)</metaTags>(.*)$}m
-      metaTags, body = $1, $2
-      metaTags.gsub! />\s*</, ">\n  <"  # add some newlines to make it look nice
-    end
-
-    # Put proper HTTP code on server error pages
-    if body =~ %r{<div [^>]*id="serverError"[^>]*>([^<]+)</div>}
-      status ($1 =~ /Not Found/i ? 404 : 500)
+    elsif apiErr.is_a?(Numeric)
+      status apiErr
+      pageData[:message] = apiErr == 404 ? "Not Found" : "Error"
     else
-      # Redirect http to https (but only on production)
-      if request.scheme == "http" && request.host == "escholarship.org"
-        uri = URI.parse(request.url)
-        uri.scheme = "https"
-        uri.port = nil
-        redirect to(uri.to_s), 301
-        return
-      end
-
-      status 200
+      raise("can't figure out apiErr: #{apiErr.inspect}")
     end
+  end
 
-    # In the template, substitute the results from React/ReactRouter
+  # Parse out payload of the URL (i.e. not including the host name)
+  request.url =~ %r{^https?://([^/:]+)(:\d+)?(.*)$} or fail
+  remainder = $3
+
+  # Pass the full path and query string to our little Node Express app, which will run it through
+  # ReactRouter and React.
+  response = HTTParty.post("http://#{$host}:#{ENV['ISO_PORT']}#{remainder}",
+               :headers => { 'Content-Type' => 'application/json' },
+               :body => pageData.to_json,
+               :timeout => 20)
+  if response.code != 200
+    # If there's an exception (like iso is completely dead), fall back to non-iso mode.
+    puts "Warning: unexpected error from iso (falling back): #{response.code} - #{response.body}"
+    metaTags = "<title>ISO error - eScholarship</title>"
     template.sub!('<metaTags></metaTags>', metaTags) or raise("missing template section")
-    template.sub!('<div id="main"></div>', body) or raise("missing template section")
-    return template
-  else
-    # Development mode - skip iso
     return template
   end
+
+  # Extract meta tags so we can put them in <head>
+  metaTags, body = "", response.body
+  if body =~ %r{<metaTags>(.*)</metaTags>(.*)$}m
+    metaTags, body = $1, $2
+    metaTags.gsub!(/>\s*</, ">\n  <")  # add some newlines to make it look nice
+  end
+
+  # Redirect http to https (but only on production)
+  if request.scheme == "http" && request.host == "escholarship.org"
+    uri = URI.parse(request.url)
+    uri.scheme = "https"
+    uri.port = nil
+    redirect to(uri.to_s), 301
+    return
+  end
+
+  # We need to turn the page data into a code snippet. It's not as straightforward as one mightt hink.
+  # For instance, unicode characters can't be inline (at least, it doesn't work for me); rather, they
+  # have to be encoded in "\uXXYY" form.
+  #
+  # For a test sample see the copyright symbol near the end of the abstract in qt0015h4ns.
+  jsonPageData = pageData.to_json
+  jsonPageData.gsub!(/[\u007F-\uFFFF]/) { |m| "\\u%04X" % m.codepoints[0] }
+
+  # Also, backslashes are particularly difficult. First of all, they need to be escaped in the
+  # javascript, so that's "\\". But you'll see eight backslashes below. What's that about? Well,
+  # to produce two backslashes in the output, you need four going in. In addition, because this
+  # is going in to the String.sub! function, we have to double that to defeat them being interpreted
+  # as backreferences to the match. Crazy cray cray.
+  #
+  # For a test sample, see the "5\%" near the end of the abstract in qt3f3256kv.
+  jsonPageData.gsub!("\\", "\\\\\\\\")
+
+  # In the template, substitute the results from React/ReactRouter, and the API data so the
+  # client-side React code can successfully rehydrate the page.
+  return template.sub('<metaTags></metaTags>', metaTags).
+                  sub('<script></script>', "<script>window.jscholApp_initialPageData = #{jsonPageData};</script>").
+                  sub('<div id="main"></div>', body)
 end
 
 # Not found errors on /content, /api, etc.
@@ -710,29 +772,16 @@ not_found do
   elsif request.path =~ %r{/(dspace|oai)}
     return halt(404, "Not Found.\n")
   else
-    generalResponse(false)  # handles 404's in the same fashion as other req's, but no iso
+    generalResponse
   end
 end
 
 ###################################################################################################
-# Pages with no data except header/footer stuff
-get %r{/api/(notFound|logoutSuccess)} do
-  content_type :json
-  unit = $unitsHash['root']
-  body = {
-    :header => getGlobalHeader,
-    :unit => unit.values.reject{|k,v| k==:attrs},
-    :sidebar => getUnitSidebar(unit)
-  }.to_json
-end
-
-###################################################################################################
 # Home Page 
-get "/api/home" do
-  content_type :json
-  body = {
+def getHomePageData
+  return {
     :header => getGlobalHeader,
-    :hero_data => getCampusHeros.compact,
+    :hero_data => getCampusHero,
     :stats => {
       :statsCountItems => $statsCountItems,
       :statsCountViews => $statsCountViews,
@@ -743,7 +792,7 @@ get "/api/home" do
       :statsCountThesesDiss => $statsCountThesesDiss,
       :statsCountBooks => $statsCountBooks
     }
-  }.to_json
+  }
 end
 
 ###################################################################################################
@@ -783,8 +832,7 @@ end
 
 ###################################################################################################
 # Browse all campuses
-get "/api/browse/campuses" do 
-  content_type :json
+def browseAllCampuses
   # Build array of hashes containing campus and stats
   stats = []
   $activeCampuses.each do |k, v|
@@ -805,13 +853,12 @@ get "/api/browse/campuses" do
     :otherStats => stats.select { |h| otherCampuses.include?(h['id']) }
   }
   breadcrumb = [{"name" => "Campuses and Other Locations", "url" => "/campuses"},]
-  return body.merge(getHeaderElements(breadcrumb, nil)).to_json
+  return body.merge(getHeaderElements(breadcrumb, nil))
 end
 
 ###################################################################################################
 # Browse all journals
-get "/api/browse/journals" do 
-  content_type :json
+def browseAllJournals
   journals = $campusJournals.sort_by{ |h| h[:name].downcase }
   unit = $unitsHash['root']
   body = {
@@ -823,13 +870,12 @@ get "/api/browse/journals" do
     :archived => journals.select{ |h| h[:status]=="archived" }
   }
   breadcrumb = [{"name" => "Journals", "url" => "/journals"},]
-  return body.merge(getHeaderElements(breadcrumb, "All Campuses")).to_json
+  return body.merge(getHeaderElements(breadcrumb, "All Campuses"))
 end
 
 ###################################################################################################
 # Browse a campus's units or journals
-get "/api/browse/:browse_type/:campusID" do |browse_type, campusID|
-  content_type :json
+def getCampusBrowseData(campusID, browse_type)
   cu, cj, pageTitle = nil, nil, nil
   unit = $unitsHash[campusID]
   unit or halt(404, "campusID not found")
@@ -857,7 +903,7 @@ get "/api/browse/:browse_type/:campusID" do |browse_type, campusID|
   breadcrumb = [
     {"name" => pageTitle, "url" => "/" + campusID + "/" + browse_type},
     {"name" => unit.name, "url" => "/uc/" + campusID}]
-  return body.merge(getHeaderElements(breadcrumb, nil)).to_json
+  return body.merge(getHeaderElements(breadcrumb, nil))
 end
 
 # Returns an array like [{"id"=>"uceap", "name"=>"UCEAP Mexico", "children" => []}, ...]
@@ -876,47 +922,29 @@ end
 
 ###################################################################################################
 # Global static pages; also, a fallback for global not-found.
-get "/api/globalStatic/*" do
-  content_type :json
-  unit = $unitsHash['root']
-  attrs = JSON.parse(unit[:attrs])
-  pageData = {
-    unit: unit.values.reject{|k,v| k==:attrs},
-    sidebar: getUnitSidebar(unit)
-  }
-
-  pageName = params['splat'].join("/")
+def getGlobalStaticData(path)
+  pageName = path.sub(%r{^/}, "")
   if pageName =~ %r{^[a-zA-Z]([a-zA-Z_]+/)*[a-zA-Z_]+$} && Page.where(unit_id: 'root', slug: pageName).count > 0
-    pageData[:header] = getUnitHeader(unit, pageName, nil, attrs)
-    pageData[:content] = getUnitStaticPage(unit, attrs, pageName)
+    unit = $unitsHash['root']
+    attrs = JSON.parse(unit[:attrs])
+    return {
+      unit: unit.values.reject{|k,v| k==:attrs},
+      sidebar: getUnitSidebar(unit),
+      header: getUnitHeader(unit, pageName, nil, attrs),
+      content: getUnitStaticPage(unit, attrs, pageName)
+    }
   else
-    pageData[:header] = getGlobalHeader
-    pageData[:pageNotFound] = true
+    jsonHalt(404, "Not Found")
   end
-  return pageData.to_json
-end
-
-###################################################################################################
-# Person stats
-get "/api/author/:personID/stats/?:pageName?" do
-  content_type :json
-  personID = "ark:/99166/#{params[:personID]}"
-  Person[personID] or jsonHalt(404, "Author not found")
-  return authorStatsData(personID, params[:pageName])
 end
 
 ###################################################################################################
 # Unit page data. 
 # pageName may be some administrative function (nav, profile), specific journal volume, or static page name
-get "/api/unit/:unitID/:pageName/?:subPage?" do
-  content_type :json
-  unit = Unit[params[:unitID]]
-  unit or jsonHalt(404, "Unit not found")
-
+def getUnitPageData(unitID, pageName, subPage)
+  unit = Unit[unitID] or jsonHalt(404, "Unit not found")
   attrs = JSON.parse(unit[:attrs])
-  pageName = params[:pageName]
-  pageName == "stats" and return unitStatsData(params[:unitID], params[:subPage])
-  issueHeaderData = nil
+  pageName == "stats" and return unitStatsData(unitID, subPage)
   if pageName
     ext = nil
     begin
@@ -937,9 +965,9 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
       issuesPublished = (issueIds && issueIds.any?) ? getPublishedJournalIssues(issueIds) : nil
       issuesSubNav = getIssuesSubNav(issuesPublished)
 
-      if isJournalIssue?(unit.id, params[:pageName], params[:subPage])
-        volume = params[:pageName]
-        issue = params[:subPage]
+      if isJournalIssue?(unit.id, pageName, subPage)
+        volume = pageName
+        issue = subPage
         numbering, title = getIssueNumberingTitle(unit.id, volume, issue)
         journalIssue = {'unit_id': unit.id, 'volume': volume, 'issue': issue, 'title': title, 'numbering': numbering}
       end
@@ -968,16 +996,16 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
     elsif pageName == 'unitBuilder'
       pageData[:content] = getUnitBuilderData(unit)
     elsif pageName == 'nav'
-      pageData[:content] = getUnitNavConfig(unit, attrs['nav_bar'], params[:subPage])
+      pageData[:content] = getUnitNavConfig(unit, attrs['nav_bar'], subPage)
     elsif pageName == 'sidebar'
-      pageData[:content] = getUnitSidebarWidget(unit, params[:subPage])
+      pageData[:content] = getUnitSidebarWidget(unit, subPage)
     elsif pageName == "redirects"
-      pageData[:content] = getRedirectData(params[:subPage])
+      pageData[:content] = getRedirectData(subPage)
     elsif pageName == "authorSearch"
       pageData[:content] = getAuthorSearchData
-    elsif isJournalIssue?(unit.id, params[:pageName], params[:subPage])
+    elsif isJournalIssue?(unit.id, pageName, subPage)
       pageData[:content] = getJournalIssueData(unit, attrs, 
-        issueIds, issuesPublished, params[:pageName], params[:subPage])
+        issueIds, issuesPublished, pageName, subPage)
       pageData[:content][:issuesSubNav] = issuesSubNav
     else
       pageData[:content] = getUnitStaticPage(unit, attrs, pageName)
@@ -989,7 +1017,7 @@ get "/api/unit/:unitID/:pageName/?:subPage?" do
       unit: unit.values.reject{|k,v| k==:attrs}
     }
   end
-  return pageData.to_json
+  return pageData
 end
 
 ###################################################################################################
@@ -1017,8 +1045,7 @@ end
 
 ###################################################################################################
 # Item view page data.
-get "/api/item/:shortArk" do |shortArk|
-  content_type :json
+def getItemPageData(shortArk)
   id = "qt"+shortArk
   item = Item[id] or halt(404)
   attrs = JSON.parse(Item.filter(:id => id).map(:attrs)[0])
@@ -1106,7 +1133,7 @@ get "/api/item/:shortArk" do |shortArk|
         end
       end
       # pp(body)
-      return body.to_json
+      return body
     rescue Exception => e
       puts "Error in item API: #{e} #{e.backtrace}"
       halt 404, e.message
@@ -1158,8 +1185,7 @@ end
 
 ###################################################################################################
 # Search page data
-get "/api/search/" do
-  content_type :json
+def getSearchData()
   body = {
     :header => getGlobalHeader,
     :campuses => getCampusesAsMenu
@@ -1178,7 +1204,7 @@ get "/api/search/" do
       params[searchUnitType] = [searchType]
     end
   end
-  return body.merge(search(params, facetList)).to_json
+  return body.merge(search(params, facetList))
 end
 
 ###################################################################################################

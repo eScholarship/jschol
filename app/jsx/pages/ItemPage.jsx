@@ -36,11 +36,6 @@ class ItemPage extends PageBase {
     currentTab: PropTypes.oneOf(anchors)
   }
 
-  // PageBase will fetch the following URL for us, and place the results in this.state.pageData
-  pageDataURL() {
-    return "/api/item/" + this.props.params.itemID
-  }
-
   // Unit ID for permissions checking
   pagePermissionsUnit() {
     return "root"  // This is only being used for super user access
@@ -53,9 +48,11 @@ class ItemPage extends PageBase {
   // currentTab should be 'main' whenever hash starts with 'article_" (or is empty)
   articleHashHandler = h => { return ((h.startsWith("article") || h=='') ? "main" : h) }
 
-  state = { currentTab: this.articleHashHandler(this.tabNameFromHash()) }
+  state = { currentTab: "main" }
 
   componentDidMount(...args) {
+    this.setState({currentTab: this.articleHashHandler(this.tabNameFromHash())})
+
     // Check hash whenever back or forward button clicked
     window.onpopstate = (event) => {
       var h = this.articleHashHandler(this.tabNameFromHash())
@@ -138,7 +135,7 @@ class ItemPage extends PageBase {
           <meta id="meta-dissertation_institution" name="citation_dissertation_institution" content={d.header.breadcrumb[1]['name']} /> }
         {d.added &&
           <meta id="meta-online_date" name="citation_online_date" content={d.added} /> }
-        {["withdrawn", "embargoed"].includes(d.status) &&
+        {d.status == "withdrawn" &&
           <meta id="meta-robots" name="robots" content="noindex" /> }
         {keywords &&
           <meta id="meta-keywords" name="citation_keywords" content={keywords} /> }
@@ -156,7 +153,7 @@ class ItemPage extends PageBase {
                                     socialProps={d.header.social} />}
         <BreadcrumbComp array={d.header ? d.header.breadcrumb : null} />
         <div className={this.state.fetchingData ? "c-columns--sticky-sidebar is-loading-data" : "c-columns--sticky-sidebar"}>
-          <main id="maincontent">
+          <main id="maincontent" tabIndex="-1">
             <ItemActionsComp id={d.id}
                          status={d.status}
                          content_type={d.content_type}

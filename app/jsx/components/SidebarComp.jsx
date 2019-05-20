@@ -9,7 +9,7 @@ import SocialFeedComp from "../components/SocialFeedComp.jsx"
 export default class SidebarComp extends React.Component {
   render = () =>
     <div>
-      {this.props.data.map(sb =>
+      {this.props.data ? this.props.data.map(sb =>
         sb.kind == "RecentArticles" && sb.attrs.items == 0 ? null
         :
         <section key={sb.id} className="o-columnbox1">
@@ -21,7 +21,7 @@ export default class SidebarComp extends React.Component {
             : sb.kind == "TwitterFeed" && sb.attrs.twitter_handle && sb.attrs.twitter_handle != '' ? <SocialFeedComp handle={sb.attrs.twitter_handle}/>
             : <p><i>Not yet implemented</i></p>
           }
-        </section>)
+        </section>) : null
       }
     </div>
 }

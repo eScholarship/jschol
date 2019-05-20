@@ -1,8 +1,8 @@
 
 import React from 'react'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 import _ from 'lodash'
-import Form from 'react-router-form'
+import FormComp from '../components/FormComp.jsx'
 
 import ArbitraryHTMLComp from "../components/ArbitraryHTMLComp.jsx"
 import MetaTagsComp from '../components/MetaTagsComp.jsx'
@@ -65,20 +65,22 @@ const downloadCSV = (table, params) =>
 class StatsHeader extends React.Component {
   render() {
     let p = this.props
-    let pageName = p.params.pageName || "summary"
+    let pageName = p.match.params.pageName || "summary"
     let isIssuePage = pageName.indexOf("issue") >= 0
     let isByMonthPage = pageName.indexOf("by_month") >= 0
-    let thisLink = p.params.unitID ? `/uc/${p.params.unitID}/stats` : `/uc/author/${p.params.personID}/stats`
-    let thisLabel = p.params.unitID ? p.data.unit_name : p.data.author_name
+    let thisLink = p.match.params.unitID ? `/uc/${p.match.params.unitID}/stats` : `/uc/author/${p.match.params.personID}/stats`
+    let thisLabel = p.match.params.unitID ? p.data.unit_name : p.data.author_name
     return(
       <div>
-        <MetaTagsComp title={`${p.title}: ${p.data.unit_name || p.data.author_name}`}/>
+        <MetaTagsComp title={`${p.title}: ${p.data.unit_name || p.data.author_name}`}>
+           <meta id="meta-robots" name="robots" content="noindex" />
+        </MetaTagsComp>
         <h1>
           { pageName == "summary" ? thisLabel : <Link to={thisLink}>{thisLabel}</Link> }
         </h1>
         { p.data.parent_id && !isIssuePage &&
           <p>
-            Parent: <Link to={statsLink(p.data.parent_id, p.params.pageName, p.location.search)}>
+            Parent: <Link to={statsLink(p.data.parent_id, p.match.params.pageName, p.location.search)}>
                       {p.data.parent_name}
                     </Link>
           </p>
@@ -119,10 +121,10 @@ class StatsForm extends React.Component
   render() {
     let p = this.props
     return (
-      <Form to={p.location.pathname} method="GET">
+      <FormComp to={p.location.pathname} method="GET">
         <div className="c-daterange">
           <div className="o-input__inline">
-            <div className="o-input__droplist1">
+            <div key="range" className="o-input__droplist1">
               <label htmlFor="range">Date range</label>
               <select id="range" name="range" defaultValue={p.data.range} onChange={this.onChangeRange}>
                 <option value="1mo">Last month</option>
@@ -135,25 +137,25 @@ class StatsForm extends React.Component
             </div>
             {this.state.customDates &&
               [
-                <div className="o-input__droplist1">
+                <div key="st_yr" className="o-input__droplist1">
                   <label htmlFor="st_yr">Start year</label>
                   <select id="st_yr" name="st_yr" defaultValue={p.data.st_yr}>
                     {p.data.all_years.map(val => <option key={val} value={val}>{val}</option>)}
                   </select>
                 </div>,
-                <div className="o-input__droplist1">
+                <div key="st_mo" className="o-input__droplist1">
                   <label htmlFor="st_mo">Start month</label>
                   <select id="st_mo" name="st_mo" defaultValue={p.data.st_mo}>
                     {_.range(1,13).map(val => <option key={val} value={val}>{val}</option>)}
                   </select>
                 </div>,
-                <div className="o-input__droplist1">
+                <div key="en_yr" className="o-input__droplist1">
                   <label htmlFor="en_yr">End year</label>
                   <select id="en_yr" name="en_yr" defaultValue={p.data.en_yr}>
                     {p.data.all_years.map(val => <option key={val} value={val}>{val}</option>)}
                   </select>
                 </div>,
-                <div className="o-input__droplist1">
+                <div key="en_mo" className="o-input__droplist1">
                   <label htmlFor="en_mo">End month</label>
                   <select id="en_mo" name="en_mo" defaultValue={p.data.en_mo}>
                     {_.range(1,13).map(val => <option key={val} value={val}>{val}</option>)}
@@ -162,7 +164,7 @@ class StatsForm extends React.Component
               ]
             }
             {p.showLimit &&
-              <div className="o-input__droplist1">
+              <div key="limit" className="o-input__droplist1">
                 <label htmlFor="limit">Max items:</label>
                 <select id="limit" name="limit" defaultValue={p.data.limit}>
                   <option key={50} value={50}>50</option>
@@ -175,7 +177,7 @@ class StatsForm extends React.Component
           </div>
           <button type="submit" key="submit">Update</button>
         </div>
-      </Form>
+      </FormComp>
     )
   }
 }
@@ -232,50 +234,50 @@ class UnitStats_Summary extends React.Component {
           <li>
             History by:
             {data.unit_type == "journal" &&
-              <Link to={`/uc/${this.props.params.unitID}/stats/history_by_issue`}>Issue</Link>}
-            <Link to={`/uc/${this.props.params.unitID}/stats/history_by_item`}>Item</Link>
+              <Link to={`/uc/${this.props.match.params.unitID}/stats/history_by_issue`}>Issue</Link>}
+            <Link to={`/uc/${this.props.match.params.unitID}/stats/history_by_item`}>Item</Link>
             {data.has_children &&
-              <Link to={`/uc/${this.props.params.unitID}/stats/history_by_unit`}>Unit</Link> }
-            <Link to={`/uc/${this.props.params.unitID}/stats/referrals`}>Referrer</Link>
+              <Link to={`/uc/${this.props.match.params.unitID}/stats/history_by_unit`}>Unit</Link> }
+            <Link to={`/uc/${this.props.match.params.unitID}/stats/referrals`}>Referrer</Link>
           </li>
           <li>
             Breakdown by:
-            <Link to={`/uc/${this.props.params.unitID}/stats/breakdown_by_month`}>Month</Link>
+            <Link to={`/uc/${this.props.match.params.unitID}/stats/breakdown_by_month`}>Month</Link>
             {data.unit_type == "journal" &&
-              <Link to={`/uc/${this.props.params.unitID}/stats/breakdown_by_issue`}>Issue</Link>}
-            <Link to={`/uc/${this.props.params.unitID}/stats/breakdown_by_item`}>Item</Link>
+              <Link to={`/uc/${this.props.match.params.unitID}/stats/breakdown_by_issue`}>Issue</Link>}
+            <Link to={`/uc/${this.props.match.params.unitID}/stats/breakdown_by_item`}>Item</Link>
             {data.has_children &&
-              <Link to={`/uc/${this.props.params.unitID}/stats/breakdown_by_unit`}>Unit</Link> }
+              <Link to={`/uc/${this.props.match.params.unitID}/stats/breakdown_by_unit`}>Unit</Link> }
             {data.num_categories > 1 &&
-              <Link to={`/uc/${this.props.params.unitID}/stats/breakdown_by_category`}>Category</Link>}
+              <Link to={`/uc/${this.props.match.params.unitID}/stats/breakdown_by_category`}>Category</Link>}
           </li>
           {(data.num_categories > 1 || data.has_children) &&
             <li>
               Deposits by:
               {data.has_children &&
-                <Link to={`/uc/${this.props.params.unitID}/stats/deposits_by_unit`}>Unit</Link>}
+                <Link to={`/uc/${this.props.match.params.unitID}/stats/deposits_by_unit`}>Unit</Link>}
               {data.num_categories > 1 &&
-                <Link to={`/uc/${this.props.params.unitID}/stats/deposits_by_category`}>Category</Link>}
+                <Link to={`/uc/${this.props.match.params.unitID}/stats/deposits_by_category`}>Category</Link>}
             </li>
           }
           {(data.num_categories > 1 || data.has_children) &&
             <li>
               Average requests per item by:
               {data.has_children &&
-                <Link to={`/uc/${this.props.params.unitID}/stats/avg_by_unit`}>Unit</Link>}
+                <Link to={`/uc/${this.props.match.params.unitID}/stats/avg_by_unit`}>Unit</Link>}
               {data.num_categories > 1 &&
-                <Link to={`/uc/${this.props.params.unitID}/stats/avg_by_category`}>Category</Link>}
+                <Link to={`/uc/${this.props.match.params.unitID}/stats/avg_by_category`}>Category</Link>}
             </li>
           }
           {/* NOT YET:
-           this.props.params.unitID == "root" &&
+           this.props.match.params.unitID == "root" &&
             <li>
               Other:
-              <Link to={`/uc/${this.props.params.unitID}/stats/deposits_by_oa`}>Deposits by OA</Link>
+              <Link to={`/uc/${this.props.match.params.unitID}/stats/deposits_by_oa`}>Deposits by OA</Link>
             </li>
           */}
         </ul>
-        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.params)}/>
+        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.match.params)}/>
       </div>
     )
   }
@@ -320,7 +322,7 @@ class EitherStats_HistoryByItem extends React.Component {
             </tbody>
           </table>
         </div>
-        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.params)}/>
+        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.match.params)}/>
       </div>
     )
   }
@@ -352,7 +354,7 @@ class UnitStats_HistoryByIssue extends React.Component {
                 return(
                   <tr key={issue}>
                     <th scope="row" key="id">
-                      <Link to={`/uc/${this.props.params.unitID}/${md.vol_num}/${md.iss_num}`}>{issue}</Link>
+                      <Link to={`/uc/${this.props.match.params.unitID}/${md.vol_num}/${md.iss_num}`}>{issue}</Link>
                     </th>
                     {data.report_months.length > 1 &&
                       <td key="total">{formatNum(md.total_hits)}</td>}
@@ -365,7 +367,7 @@ class UnitStats_HistoryByIssue extends React.Component {
             </tbody>
           </table>
         </div>
-        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.params)}/>
+        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.match.params)}/>
       </div>
     )
   }
@@ -410,7 +412,7 @@ class UnitStats_Referrals extends React.Component {
         {/* Let the user know there was a gap in referral data */}
         {(months.indexOf(201710) >= 0 || months.indexOf(201711) >= 0 || months.indexOf(201712) >= 0) &&
           <p>Note: Referral data was not collected from Oct 19 to Dec 4, 2017.</p>}
-        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.params)}/>
+        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.match.params)}/>
       </div>
     )
   }
@@ -453,7 +455,7 @@ class EitherStats_BreakdownByItem extends React.Component {
             </tbody>
           </table>
         </div>
-        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.params)}/>
+        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.match.params)}/>
       </div>
     )
   }
@@ -484,7 +486,7 @@ class UnitStats_BreakdownByIssue extends React.Component {
                 return(
                   <tr key={issue}>
                     <th scope="row">
-                      <Link to={`/uc/${this.props.params.unitID}/${md.vol_num}/${md.iss_num}`}>{issue}</Link>
+                      <Link to={`/uc/${this.props.match.params.unitID}/${md.vol_num}/${md.iss_num}`}>{issue}</Link>
                     </th>
                     <td>{formatNum(md.total_hits)}</td>
                     <td>{formatNum(md.total_downloads)}</td>
@@ -496,7 +498,7 @@ class UnitStats_BreakdownByIssue extends React.Component {
             </tbody>
           </table>
         </div>
-        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.params)}/>
+        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.match.params)}/>
       </div>
     )
   }
@@ -534,7 +536,7 @@ class EitherStats_BreakdownByMonth extends React.Component {
             </tbody>
           </table>
         </div>
-        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.params)}/>
+        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.match.params)}/>
       </div>
     )
   }
@@ -573,7 +575,7 @@ class UnitStats_BreakdownByCategory extends React.Component {
             </tbody>
           </table>
         </div>
-        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.params)}/>
+        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.match.params)}/>
       </div>
     )
   }
@@ -612,7 +614,7 @@ class UnitStats_DepositsByCategory extends React.Component {
             </tbody>
           </table>
         </div>
-        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.params)}/>
+        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.match.params)}/>
       </div>
     )
   }
@@ -651,7 +653,7 @@ class UnitStats_DepositsByOA extends React.Component {
             </tbody>
           </table>
         </div>
-        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.params)}/>
+        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.match.params)}/>
       </div>
     )
   }
@@ -704,7 +706,7 @@ class UnitStats_DepositsByUnit extends React.Component {
             </tbody>
           </table>
         </div>
-        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.params)}/>
+        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.match.params)}/>
       </div>
     )
   }
@@ -742,7 +744,7 @@ class UnitStats_HistoryByUnit extends React.Component {
                   {p.data.any_drill_down &&
                     <td key="dd">
                       {cd.child_types &&
-                        <Link to={statsLink(cd.unit_id, p.params.pageName, p.location.search)}>
+                        <Link to={statsLink(cd.unit_id, p.match.params.pageName, p.location.search)}>
                           {describeChildren(cd.child_types)}
                         </Link>}
                     </td>
@@ -757,7 +759,7 @@ class UnitStats_HistoryByUnit extends React.Component {
             </tbody>
           </table>
         </div>
-        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.params)}/>
+        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.match.params)}/>
       </div>
     )
   }
@@ -795,7 +797,7 @@ class UnitStats_AvgByUnit extends React.Component {
                   {p.data.any_drill_down &&
                     <td key="dd">
                       {cd.child_types &&
-                        <Link to={statsLink(cd.unit_id, p.params.pageName, p.location.search)}>
+                        <Link to={statsLink(cd.unit_id, p.match.params.pageName, p.location.search)}>
                           {describeChildren(cd.child_types)}
                         </Link>}
                     </td>
@@ -810,7 +812,7 @@ class UnitStats_AvgByUnit extends React.Component {
             </tbody>
           </table>
         </div>
-        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.params)}/>
+        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.match.params)}/>
       </div>
     )
   }
@@ -849,7 +851,7 @@ class UnitStats_AvgByCategory extends React.Component {
             </tbody>
           </table>
         </div>
-        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.params)}/>
+        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.match.params)}/>
       </div>
     )
   }
@@ -887,7 +889,7 @@ class UnitStats_BreakdownByUnit extends React.Component {
                   {p.data.any_drill_down &&
                     <th key="dd">
                       {cd.child_types &&
-                        <Link to={statsLink(cd.unit_id, p.params.pageName, p.location.search)}>
+                        <Link to={statsLink(cd.unit_id, p.match.params.pageName, p.location.search)}>
                           {describeChildren(cd.child_types)}
                         </Link>
                       }
@@ -903,7 +905,7 @@ class UnitStats_BreakdownByUnit extends React.Component {
             </tbody>
           </table>
         </div>
-        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.params)}/>
+        <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.match.params)}/>
       </div>
     )
   }
@@ -943,12 +945,12 @@ class AuthorStats_Summary extends React.Component {
         <ul className="c-reportList">
           <li>
             History by:
-            <Link to={`/uc/author/${this.props.params.personID}/stats/history_by_item`}>Item</Link>
+            <Link to={`/uc/author/${this.props.match.params.personID}/stats/history_by_item`}>Item</Link>
           </li>
           <li>
             Breakdown by:
-            <Link to={`/uc/author/${this.props.params.personID}/stats/breakdown_by_item`}>Item</Link>
-            <Link to={`/uc/author/${this.props.params.personID}/stats/breakdown_by_month`}>Month</Link>
+            <Link to={`/uc/author/${this.props.match.params.personID}/stats/breakdown_by_item`}>Item</Link>
+            <Link to={`/uc/author/${this.props.match.params.personID}/stats/breakdown_by_month`}>Month</Link>
           </li>
         </ul>
         { data.variations.length > 1 &&
@@ -969,11 +971,6 @@ class AuthorStats_Summary extends React.Component {
 
 export class UnitStatsPage extends PageBase
 {
-  pageDataURL() {
-    const pm = this.props.params
-    return `/api/unit/${pm.unitID}/stats/${pm.pageName || "summary"}${this.props.location.search}`
-  }
-
   needHeaderFooter() { return false } //  disable standard header and footer
 
   renderContent() {
@@ -986,7 +983,7 @@ export class UnitStatsPage extends PageBase
   }
 
   renderData(data) {
-    const pageName = this.props.params.pageName || "summary"
+    const pageName = this.props.match.params.pageName || "summary"
     if (pageName == "summary")
       return <UnitStats_Summary data={data} {...this.props}/>
     else if (pageName == "history_by_item")
@@ -1022,11 +1019,6 @@ export class UnitStatsPage extends PageBase
 
 export class AuthorStatsPage extends PageBase
 {
-  pageDataURL() {
-    const pm = this.props.params
-    return `/api/author/${pm.personID}/stats/${pm.pageName || "summary"}${this.props.location.search}`
-  }
-
   needHeaderFooter() { return false } //  disable standard header and footer
 
   renderContent() {
@@ -1039,7 +1031,7 @@ export class AuthorStatsPage extends PageBase
   }
 
   renderData(data) {
-    const pageName = this.props.params.pageName || "summary"
+    const pageName = this.props.match.params.pageName || "summary"
     if (pageName == "summary")
       return <AuthorStats_Summary data={data} {...this.props}/>
     else if (pageName == "history_by_item")

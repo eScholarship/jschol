@@ -52,12 +52,15 @@ export default class TruncationObj extends React.Component {
   }
 
   componentDidMount() {
-    job_queue.append(()=>{
-      if (this.domEl) {
-        $(this.domEl).dotdotdot(this.props.options ? this.props.options : {watch:"window"})
-        job_queue.append(()=>this.domEl && $(this.domEl).trigger("update"))
-      }
-    })
+    // Don't do truncation on scripted tests (too hard to wait for completion)
+    if (navigator.userAgent != "puppeteer") {
+      job_queue.append(()=>{
+        if (this.domEl) {
+          $(this.domEl).dotdotdot(this.props.options ? this.props.options : {watch:"window"})
+          job_queue.append(()=>this.domEl && $(this.domEl).trigger("update"))
+        }
+      })
+    }
   }
 
   componentWillUnmount() {

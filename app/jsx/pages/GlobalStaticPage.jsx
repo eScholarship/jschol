@@ -1,5 +1,5 @@
 import React from 'react'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 
 import PageBase from './PageBase.jsx'
 import ServerErrorComp from '../components/ServerErrorComp.jsx'
@@ -15,7 +15,7 @@ class NotFoundLayout extends React.Component
 {
   render = () =>
     <div className="c-columns">
-      <main id="maincontent">
+      <main id="maincontent" tabIndex="-1">
         <section className="o-columnbox1">
           <ServerErrorComp error="Not Found"/>
         </section>
@@ -29,11 +29,6 @@ export default class GlobalStaticPage extends PageBase
 
   closeWizardModal = e => {
     this.setState({modalOpen:false})
-  }
-
-  // PageBase will fetch the following URL for us, and place the results in this.state.pageData
-  pageDataURL() {
-    return `/api/globalStatic/${this.props.params.splat}`
   }
 
   // Unit ID for permissions checking

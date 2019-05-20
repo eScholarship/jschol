@@ -6,11 +6,6 @@ import MetaTagsComp from '../components/MetaTagsComp.jsx'
 
 class LoginPage extends PageBase
 {
-  // PageBase will fetch the following URL for us, and place the results in this.state.pageData
-  pageDataURL() {
-    return "/api/loginStart"
-  }
-
   renderData(data) {
     if (!(typeof document === "undefined")) {
       // Only redirect on browser, not on server
@@ -29,7 +24,7 @@ class LoginPage extends PageBase
           <NavComp data={data.header.nav_bar} />
         </div>
         <div className="c-columns">
-          <main id="maincontent">
+          <main id="maincontent" tabIndex="-1">
             <section className="o-columnbox1">
               <header>
                 <h1 className="o-columnbox1__heading">Login</h1>

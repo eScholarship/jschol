@@ -1,0 +1,60 @@
+{
+  "id": "backstop_default",
+  "viewports": [
+    {
+      "label": "phone",
+      "width": 320,
+      "height": 480
+    },
+    {
+      "label": "tablet",
+      "width": 960,
+      "height": 700
+    },
+    {
+      "label": "desktop",
+      "width": 1280,
+      "height": 1024
+    }
+  ],
+  "onBeforeScript": "puppet/onBefore.js",
+  "onReadyScript": "puppet/onReady.js",
+  "scenarios": [
+    { "label": "homepage", "url": "http://localhost:4001/", "hideSelectors": [".c-hero"] },
+    { "label": "global static page", "url": "http://localhost:4001/ucoapolicies" },
+    { "label": "not-found page", "url": "http://localhost:4001/foo", "delay": 1000 },
+    { "label": "list of campuses", "url": "http://localhost:4001/campuses" },
+    { "label": "list of journals", "url": "http://localhost:4001/journals" },
+    { "label": "campus page", "url": "http://localhost:4001/uc/ucb" },
+    { "label": "journal list", "url": "http://localhost:4001/ucb/journals" },
+    { "label": "unit list", "url": "http://localhost:4001/ucb/units" },
+    { "label": "plain parent unit", "url": "http://localhost:4001/uc/arf" },
+    { "label": "plain series", "url": "http://localhost:4001/uc/arf" },
+    { "label": "complex journal", "url": "http://localhost:4001/uc/ismrg_cisj" },
+    { "label": "journal with ad", "url": "http://localhost:4001/uc/uciem_westjem" },
+    { "label": "journal static page", "url": "http://localhost:4001/uc/doj/contactus" },
+    { "label": "search", "url": "http://localhost:4001/search?q=africa", "delay": 1000 },
+    { "label": "item view - pdf", "url": "http://localhost:4001/uc/item/5563x8nf", "delay": 5000 },
+    { "label": "item view - html", "url": "http://localhost:4001/uc/item/25m840mz" },
+    { "label": "item view - metrics", "url": "http://localhost:4001/uc/item/25m840mz#metrics", "delay": 500 },
+    { "label": "item view - authors", "url": "http://localhost:4001/uc/item/25m840mz#author", "delay": 500 },
+    { "label": "item view - link only", "url": "http://localhost:4001/uc/item/7733j81h" },
+    { "label": "stats by unit", "url": "http://localhost:4001/uc/root/stats/history_by_unit?range=custom&st_yr=2018&st_mo=1&en_yr=2018&en_mo=4", "delay": 2000 }
+  ],
+  "paths": {
+    "bitmaps_reference": "backstop_data/bitmaps_reference",
+    "bitmaps_test": "backstop_data/bitmaps_test",
+    "engine_scripts": "backstop_data/engine_scripts",
+    "html_report": "backstop_data/html_report",
+    "ci_report": "backstop_data/ci_report"
+  },
+  "report": ["browser"],
+  "engine": "puppeteer",
+  "engineOptions": {
+    "args": ["--no-sandbox"]
+  },
+  "asyncCaptureLimit": 5,
+  "asyncCompareLimit": 50,
+  "debug": false,
+  "debugWindow": false
+}

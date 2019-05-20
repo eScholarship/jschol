@@ -1,7 +1,7 @@
 // ##### Campus Hero Component ##### //
 
 import React from 'react'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 
 class CampusHeroComp extends React.Component {
   render() {

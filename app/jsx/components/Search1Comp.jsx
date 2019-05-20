@@ -1,10 +1,11 @@
 // ##### Search 1 Component - used on global (non-unit) pages and on search page itself ##### //
 
 import React from 'react'
-import Form from 'react-router-form'
 import PropTypes from 'prop-types'
+import FormComp from '../components/FormComp.jsx'
 
-class SearchComp1 extends React.Component {
+export default class SearchComp1 extends React.Component {
+
   render() {
     let query = this.props.query
     let q = query && query.q ? query.q : ''
@@ -26,15 +27,13 @@ class SearchComp1 extends React.Component {
     }
 
     return (
-      <Form to='/search' method="GET" className="c-search1">
+      <FormComp to="/search" className="c-search1">
         <label className="c-search1__label" htmlFor="c-search1__field">search</label>
         <input type="search" id="c-search1__field" name="q" className="c-search1__field" placeholder="Search over 200,000 items" defaultValue={q} autoCapitalize="off" />
         {filters}
         <button type="submit" className="c-search1__submit-button" aria-label="submit search"></button>
         <button type="button" className="c-search1__search-close-button" aria-label="close search field" onClick = {()=>this.props.onClose()}></button>
-      </Form>
+      </FormComp>
     )
   }
 }
-
-module.exports = SearchComp1;

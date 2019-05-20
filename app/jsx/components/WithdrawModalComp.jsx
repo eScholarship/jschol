@@ -2,7 +2,7 @@
 
 import React from 'react'
 import ReactModal from 'react-modal'
-import { Subscriber } from 'react-broadcast'
+import Contexts from '../contexts.jsx'
 
 class WithdrawModalComp extends React.Component {
   state = { modalOpen: false, inProgress: false }
@@ -19,7 +19,7 @@ class WithdrawModalComp extends React.Component {
 
   render() {
     return (
-      <Subscriber channel="cms">
+      <Contexts.CMS.Consumer>
         { cms =>
           (cms.loggedIn && cms.permissions && cms.permissions.super) ?
           <div>
@@ -46,19 +46,19 @@ class WithdrawModalComp extends React.Component {
                   <label className="c-withdrawmodal__label" htmlFor="publicMessage">
                     Withdrawal reason (public):
                   </label>
-                  <input className="c-withdrawmodal__publicMessage" id="publicMessage" type="text"
+                  <input className="c-withdrawmodal__public-message" id="publicMessage" type="text"
                          onChange={ event => this.setState( { publicMessage: event.target.value }) }/>
 
                   <label className="c-withdrawmodal__label" htmlFor="internalComment">
                     Internal comment (optional, e.g. ticket URL):
                   </label>
-                  <input className="c-withdrawmodal__internalComment" id="internalComment" type="text"
+                  <input className="c-withdrawmodal__internal-comment" id="internalComment" type="text"
                          onChange={ event => this.setState( { internalComment: event.target.value }) }/>
 
                   <label className="c-withdrawmodal__label" htmlFor="redirectTo">
                     Identifier of item to redirect to (optional, form of 'qtxxxxxxxx'):
                   </label>
-                  <input className="c-withdrawmodal__redirectTo" id="redirectTo" type="text"
+                  <input className="c-withdrawmodal__redirect-to" id="redirectTo" type="text"
                          onChange={ event => this.setState( { redirectTo: event.target.value }) }/>
                 </div>
                 <div className="c-modal__footer">
@@ -72,7 +72,7 @@ class WithdrawModalComp extends React.Component {
           </div>
           : null
         }
-      </Subscriber>
+      </Contexts.CMS.Consumer>
     )
   }
 }

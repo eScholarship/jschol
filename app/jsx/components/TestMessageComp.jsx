@@ -1,11 +1,11 @@
 // ##### Test Message Component ##### //
 
 import React from 'react'
-import { Subscriber } from 'react-broadcast'
+import Contexts from '../contexts.jsx'
 
 class TestMessageComp extends React.Component {
   render = () =>
-    <Subscriber channel="cms">
+    <Contexts.CMS.Consumer>
       { cms =>
         <div className="c-testmessage"
              style={{display:"flex", justifyContent:"space-between",
@@ -26,7 +26,7 @@ class TestMessageComp extends React.Component {
           </div>
         </div>
       }
-    </Subscriber>
+    </Contexts.CMS.Consumer>
 }
 
 module.exports = TestMessageComp;

@@ -1,13 +1,12 @@
-app/bower_components
 app/css
 app/js/*bundle*.js
 app/js/manifest.json
 app/js/*.map
 app/siteMap*.xml
 awsLogs/
+backstop_data/
 bin/
 .bundle/
-bower_components/
 cache/
 config/
 db_backup/

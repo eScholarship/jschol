@@ -1,7 +1,7 @@
 // ##### Deposit Wizard - [5] Series Component ##### //
 
 import React from 'react'
-import { Subscriber } from 'react-broadcast'
+import Contexts from '../contexts.jsx'
 
 class WizardSeriesComp extends React.Component {
   state = {fetchingData: true,
@@ -59,7 +59,7 @@ class WizardSeriesComp extends React.Component {
       }
     }
     return (
-      <Subscriber channel="wiz">
+      <Contexts.Wiz.Consumer>
         { wiz => {
             this.fetchSeries(wiz.unitID)
       return (
@@ -89,7 +89,7 @@ class WizardSeriesComp extends React.Component {
       }
       </div>
       )}}
-      </Subscriber>
+      </Contexts.Wiz.Consumer>
     )
   }
 }

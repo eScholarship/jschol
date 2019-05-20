@@ -104,13 +104,13 @@ makeMap('siteMapStatic.xml', true){|map|
 
 # Build items sitemap
 ITEM_BUCKETS = 10
-total_items = Item.where(status: 'published').count
+total_items = Item.where(status: ['published', 'embargoed']).count
 batch_count = (total_items / ITEM_BUCKETS.to_f).ceil
 offset = 0
 index = 0
 while offset < total_items + 1 do
   makeMap('siteMapItem-' + format('%02d', index) + '.xml'){|map|
-    Item.where(status: 'published').select(:id, :last_indexed).limit(batch_count,offset).each { |item|
+    Item.where(status: ['published', 'embargoed']).select(:id, :last_indexed).limit(batch_count,offset).each { |item|
       map.add '/uc/item/' + item.id[/^qt(.*)$/, 1], :period => :monthly, :updated => item.last_indexed.to_s[/\d\d\d\d-\d\d-\d\d/]
     }
   } 

@@ -2,8 +2,8 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import $ from 'jquery'
 import _ from 'lodash'
-import { Link } from 'react-router'
-import Form from 'react-router-form'
+import { Link } from 'react-router-dom'
+import queryString from 'query-string'
 
 import PageBase from './PageBase.jsx'
 import Header2Comp from '../components/Header2Comp.jsx'
@@ -17,6 +17,7 @@ import PaginationComp from '../components/PaginationComp.jsx'
 import Breakpoints from '../../js/breakpoints.json'
 import ModalComp from '../components/ModalComp.jsx'
 import MetaTagsComp from '../components/MetaTagsComp.jsx'
+import FormComp from '../components/FormComp.jsx'
 
 // Load dotdotdot in browser but not server
 if (!(typeof document === "undefined")) {
@@ -513,7 +514,7 @@ class FacetForm extends React.Component {
     this.setState({refineActive: this.mq.matches, drawerOpen: this.mq.matches})
   }
 
-  componentWillMount() {
+  componentDidMount() {
     if (!(typeof matchMedia === "undefined")) {
       this.mq = matchMedia("(min-width:"+Breakpoints.screen1+")")
       this.mq.addListener(this.widthChange)
@@ -602,25 +603,19 @@ class SearchPage extends PageBase {
 //   count: 331,
 //   facets: [ {display: 'Type of Work', fieldName: 'type_of_work', facets: []} ]
 
-  // PageBase will fetch the following URL for us, and place the results in this.state.pageData
-  pageDataURL() {
-    return "/api/search/" + this.props.location.search  // plus whatever props.params.YourUrlParam, etc.
-  }
-
-  // Set as the Form's onSubmit handler
-  handleSubmit = (event, formData)=>{
-    for(let key in formData) {
-      if (formData[key] == "" ||
-      (key === 'sort' && formData[key] === 'rel') ||
-      (key === 'rows' && formData[key] === '10') ||
-      (key === 'start' && formData[key] === '0')) {
-        delete formData[key]
+  formFilter = (data) => {
+    let out = {}
+    for(let key in data) {
+      if (data[key] == "" ||
+          (key === 'sort' && data[key] === 'rel') ||
+          (key === 'rows' && data[key] === '10') ||
+          (key === 'start' && data[key] === '0'))
+      {
+        continue
       }
+      out[key] = data[key]
     }
-    // Handy for debugging
-    // console.log("this.state.query = ", this.state.query)
-    // console.log(JSON.stringify(formData))
-    return true
+    return out
   }
 
   renderData(data) {
@@ -630,45 +625,45 @@ class SearchPage extends PageBase {
     return(
       <div className="l_search">
         <MetaTagsComp title="Search"/>
-        <Header2Comp searchComp="1" query={this.props.location.query} />
+        <Header2Comp searchComp="1" query={queryString.parse(this.props.location.search)} />
         <div className="c-navbar">
           <NavComp data={data.header.nav_bar} />
         </div>
-    {/* <ExportComp /> */}
-        <Form id={formName} to='/search' method="GET" onSubmit={this.handleSubmit} className="c-columns">
-        <aside>
-          <FacetForm formName={formName} formButton={formButton} data={facetFormData} info_count={data.info_count} query={data.query} />
-        </aside>
-        <main id="maincontent">
-        {data.info_count > 0 &&
-          <section className={this.state.fetchingData ? "o-columnbox1 is-loading-data" : "o-columnbox1"}>
-            <header>
-              <h2 className="o-columnbox1__heading">{"Informational Pages ("+data.info_count+" results)"}</h2>
-            </header>
-            <InfoPagesComp query={data.query} info_count={data.info_count} infoResults={data.infoResults} />
-          </section>
-        }
-          <section className={this.state.fetchingData ? "o-columnbox1 is-loading-data" : "o-columnbox1"}>
-            <header>
-              <h2 className="o-columnbox1__heading">
-                Scholarly Works ({data.count + " results" + (data.count > 10000 ? ", showing first 10000" : "")})</h2>
-            </header>
-          {(data.count > 2) &&
-            <SortPaginationComp formName={formName} formButton={formButton} query={data.query} count={data.count}/>
-          }
-          {(data.count != 0 ) ? 
-            data.searchResults.map(result =>
-              <ScholWorksComp h="h3" key={result.id} result={result} />)
-          :
-            <div className="o-well-large">No results found.</div>
-          }
-          {(data.count > data.query.rows) &&
-            <PaginationComp formName={formName} formButton={formButton} query={data.query} count={data.count}/>
-          }
-          </section>
-        </main>
-      </Form>
-    </div>
+        {/* <ExportComp /> */}
+        <FormComp id={formName} to='/search' filter={this.formFilter} className="c-columns">
+          <aside>
+            <FacetForm formName={formName} formButton={formButton} data={facetFormData} info_count={data.info_count} query={data.query} />
+          </aside>
+          <main id="maincontent" tabIndex="-1">
+            {data.info_count > 0 &&
+              <section className={this.state.fetchingData ? "o-columnbox1 is-loading-data" : "o-columnbox1"}>
+                <header>
+                  <h2 className="o-columnbox1__heading" aria-live="polite">{"Informational Pages ("+data.info_count+" results)"}</h2>
+                </header>
+                <InfoPagesComp query={data.query} info_count={data.info_count} infoResults={data.infoResults} />
+              </section>
+            }
+            <section className={this.state.fetchingData ? "o-columnbox1 is-loading-data" : "o-columnbox1"}>
+              <header>
+                <h2 className="o-columnbox1__heading" aria-live="polite">
+                  Scholarly Works ({data.count + " results" + (data.count > 10000 ? ", showing first 10000" : "")})</h2>
+              </header>
+              {(data.count > 2) &&
+                <SortPaginationComp formName={formName} formButton={formButton} query={data.query} count={data.count}/>
+              }
+              {(data.count != 0 ) ?
+                data.searchResults.map(result =>
+                  <ScholWorksComp h="h3" key={result.id} result={result} />)
+              :
+                <div className="o-well-large">No results found.</div>
+              }
+              {(data.count > data.query.rows) &&
+                <PaginationComp formName={formName} formButton={formButton} query={data.query} count={data.count}/>
+              }
+            </section>
+          </main>
+        </FormComp>
+      </div>
   )}
 }
 

@@ -1,7 +1,7 @@
 // ##### Home Section 1 Component ##### //
 
 import React from 'react'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 
 class HomeSection1Comp extends React.Component {
   render() {
