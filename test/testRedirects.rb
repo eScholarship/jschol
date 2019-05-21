@@ -58,7 +58,7 @@ testRedirect("http://escholarship.org/uc/search?smode=browse;browse-creator=oo",
 
 # Old stats reports
 testRedirect("http://escholarship.org/uc/stats/author/edu/ucsd/lrichmond/richmond_lawana_nicole.html",
-             "https://help.escholarship.org/support/discussions/topics/9000037605")
+             "https://help.escholarship.org/support/solutions/articles/9000131087")
 
 # Crazy item URL from google
 testRedirect("http://escholarship.org/uc/item/49n325b7%253Fimage.view%253DgenerateImage%253BimgWidth%253D600%253BpageNum%253D1",
@@ -75,16 +75,16 @@ testRedirect("http://escholarship.org/repec/", nil)
 testRedirect("http://escholarship.org/repec/cdlseri.rdf", nil)
 testRedirect("http://escholarship.org/uc/search?smode=pmid;pubType=journal;relation-exclude=springer;subSet=0", nil)
 testRedirect("http://escholarship.org/uc/ucbclassics", nil)
-testRedirect("http://escholarship.org/node_modules/babel-polyfill/browser-polyfill.js", nil)
+testRedirect("http://escholarship.org/node_modules/flickity/dist/flickity.min.css", nil)
 testRedirect("http://escholarship.org/uc/item/8304n08d", nil)
 testRedirect("http://escholarship.org/search/?q=china", nil)
-testRedirect("http://escholarship.org/api/search/?q=china&searchType=eScholarship&searchUnitType=departments", nil)
+testRedirect("http://escholarship.org/api/pageData/search?q=china&searchType=eScholarship&searchUnitType=departments", nil)
 
 # Old HTML pages
-testRedirect("http://escholarship.cdlib.org/about_news_pkp_partnership.html",
-             "http://escholarship.org/")
-testRedirect("http://escholarship.cdlib.org/rtennant/presentations/2004oregon/alice.htm",
-             "http://escholarship.org/")
+#testRedirect("http://escholarship.cdlib.org/about_news_pkp_partnership.html",
+#             "http://escholarship.org/")
+#testRedirect("http://escholarship.cdlib.org/rtennant/presentations/2004oregon/alice.htm",
+#             "http://escholarship.org/")
 
 # Old CGIs
 testRedirect("http://escholarship.cdlib.org/sunbbs.cgi?mode=form",
