@@ -55,7 +55,7 @@ fi
 if [[ "$1" =~ "-dev" ]]; then
   ./webpack --config webpack.dev.js
 else
-  ./webpack --config webpack.dev.js
+  ./webpack --config webpack.prd.js
 fi
 
 # package app and upload
