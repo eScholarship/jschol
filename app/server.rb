@@ -541,11 +541,13 @@ get "/content/:fullItemID/*" do |itemID, path|
 
   # Allow cross-origin requests so that main site and CloudFront cache can co-operate. Also, let
   # crawlers know that the canonical URL is the item page.
-  headers "Access-Control-Allow-Origin" => "*",
-          "Access-Control-Allow-Headers" => "Range",
-          "Access-Control-Expose-Headers" => "Accept-Ranges, Content-Encoding, Content-Length, Content-Range",
-          "Access-Control-Allow-Methods" => "GET, OPTIONS",
-          "Link" => "<https://escholarship.org/uc/item/#{itemID.sub(/^qt/,'')}>; rel=\"canonical\""
+  if ENV['CLOUDFRONT_PUBLIC_URL']
+    headers "Access-Control-Allow-Origin" => "*",
+            "Access-Control-Allow-Headers" => "Range",
+            "Access-Control-Expose-Headers" => "Accept-Ranges, Content-Encoding, Content-Length, Content-Range",
+            "Access-Control-Allow-Methods" => "GET, OPTIONS"
+  end
+  headers "Link" => "<https://escholarship.org/uc/item/#{itemID.sub(/^qt/,'')}>; rel=\"canonical\""
 
   # Stream supp files out directly from Merritt. Also, if there's no display PDF, fall back
   # to the version in Merritt.
