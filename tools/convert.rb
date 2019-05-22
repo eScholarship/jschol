@@ -755,6 +755,11 @@ def parseUCIngest(itemID, inMeta, fileType)
   attrs[:publisher] = inMeta.text_at("./publisher")
   attrs[:suppress_content] = shouldSuppressContent(itemID, inMeta)
 
+  # Record submitter (especially useful for forensics)
+  attrs[:submitter] = inMeta.xpath("./history/stateChange").map { |sc|
+    sc[:state] =~ /^(new|uploaded|pending|published)/ && sc[:who] ? sc[:who] : nil
+  }.compact[0]
+
   # Normalize language codes
   attrs[:language] and attrs[:language] = attrs[:language].sub("english", "en").sub("german", "de").
                                                            sub("french", "fr").sub("spanish", "es")
