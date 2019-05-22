@@ -263,9 +263,10 @@ fillCaches
 configure do
   # Puma is good for multiprocess *and* multithreading
   set :server, 'puma'
-  # We like to use the 'app' folder for all our static resources
-  set :public_folder, Proc.new { root }
-  set :static_cache_control, [:public, :max_age => 3600]
+
+  # Sinatra unfortunately serves static files before running the 'before' block, preventing
+  # us from doing redirects on static files.
+  set :static, false
 
   set :show_exceptions, false
 
@@ -316,6 +317,18 @@ $ipExclude = File.exist?("config/blocked_ips") && Regexp.new(File.read("config/b
 before do
   $ipInclude && !$ipInclude.match(request.ip) and halt 403
   $ipExclude && $ipExclude.match(request.ip) and halt 403
+
+  # On dev and stg, control access with a special cookie
+  if ACCESS_COOKIE
+    if request.params['access']
+      response.set_cookie(:ACCESS_COOKIE, :value => request.params['access'], :path => "/")
+      ACCESS_COOKIE == request.params['access'] or halt(401, "Not authorized.")
+    elsif request.path != "/check"
+      ACCESS_COOKIE == request.cookies['ACCESS_COOKIE'] or halt(401, "Not authorized.")
+    end
+  end
+
+  # Check the long list of things to redirect
   redirURI, code = checkRedirect(URI.parse(request.url))
   if code
     if code >= 300 && code <= 399
@@ -329,14 +342,12 @@ before do
   # pageData responses, etc.) The exceptions, e.g. assets, explicitly override cache_control.
   cache_control :no_store
 
-  # On dev and stg, control access with a special cookie
-  if ACCESS_COOKIE
-    if request.params['access']
-      response.set_cookie(:ACCESS_COOKIE, :value => request.params['access'], :path => "/")
-      ACCESS_COOKIE == request.params['access'] or halt(401, "Not authorized.")
-    elsif request.path != "/check"
-      ACCESS_COOKIE == request.cookies['ACCESS_COOKIE'] or halt(401, "Not authorized.")
-    end
+  # Emulate Sinatra's handling of static files, *after* all our access and redirect checks
+  path = File.expand_path("app/#{URI::unescape(request.path_info)}")
+  if File.file?(path)
+    env['sinatra.static_file'] = path
+    cache_control(:public, :max_age => 3600)
+    send_file path, :disposition => nil
   end
 end
 

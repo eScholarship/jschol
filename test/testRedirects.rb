@@ -103,6 +103,12 @@ testRedirect("http://dermatology.cdlib.org//102/case_presentations/pseudomonas/2
              "http://escholarship.org/uc/item/6fz6c3r8")
 testRedirect("http://dermatology.cdlib.org//search?uri=1&go=1&entity=doj&keyword=Search%20journal...&q=1&scope=../../../../../../../../../../../../../../../../etc/passwd",
              "http://escholarship.org/uc/doj")
+testRedirect("http://dermatology.cdlib.org/robots.txt", "https://escholarship.org/uc/doj")
+testRedirect("http://dermatology.cdlib.org", "https://escholarship.org/uc/doj")
+testRedirect("http://dermatology.cdlib.org/images/logo_eschol-mobile.svg", "https://escholarship.org/uc/doj")
+testRedirect("http://dermatology-s10.cdlib.org/", "https://escholarship.org/uc/doj")
+testRedirect("http://dermatology-s10.cdlib.org/145/nyu/cases/112106_3a.jpg", "https://escholarship.org/uc/item/90z93266")
+
 
 # Bepress redirects
 testRedirect("http://escholarship.org/uc/temporary?bpid=2251892",
@@ -159,6 +165,12 @@ testRedirect("http://eprints.cdlib.org/uc/item/8gj3x1dc",
 
 # Redirect eschol.cdlib
 testRedirect("http://escholarship.cdlib.org/uc/item/9ws876kn.pdf",
+             "#{$cfPrefix}/content/qt9ws876kn/qt9ws876kn.pdf")
+testRedirect("http://www.escholarship.cdlib.org/uc/item/9ws876kn.pdf",
+             "#{$cfPrefix}/content/qt9ws876kn/qt9ws876kn.pdf")
+testRedirect("http://escholarship-s10.cdlib.org/uc/item/9ws876kn.pdf",
+             "#{$cfPrefix}/content/qt9ws876kn/qt9ws876kn.pdf")
+testRedirect("http://www.escholarship-s8.cdlib.org/uc/item/9ws876kn.pdf",
              "#{$cfPrefix}/content/qt9ws876kn/qt9ws876kn.pdf")
 
 # Redirect old PDF links
