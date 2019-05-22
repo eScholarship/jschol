@@ -1,19 +1,20 @@
 // ##### Gulp Toolkit for the jschol app #####
 
-const _ = require('lodash');
-const del = require('del');
-const fs = require('fs');
-const gulp = require('gulp');
-const gutil = require('gulp-util');
-const sass = require('gulp-sass');
-const autoprefixer = require('gulp-autoprefixer');
-const sourcemaps = require('gulp-sourcemaps');
-const postcss = require('gulp-postcss');
-const assets = require('postcss-assets');
+const _ = require('lodash')
+const del = require('del')
+const fs = require('fs')
+const gulp = require('gulp')
+const gutil = require('gulp-util')
+const sass = require('gulp-sass')
+const autoprefixer = require('gulp-autoprefixer')
+const sourcemaps = require('gulp-sourcemaps')
+const postcss = require('gulp-postcss')
+const assets = require('postcss-assets')
 const livereload = require('gulp-livereload')
 const exec = require('child_process').exec
 const spawn = require('child_process').spawn
-const webpack = require('webpack');
+const webpack = require('webpack')
+const merge = require('webpack-merge')
 
 // Process control for Sinatra
 var sinatraProc // Main app in Sinatra (Ruby)
@@ -22,7 +23,9 @@ var productionMode = !!gutil.env.production
 
 // Build javscript bundles with Webpack
 gulp.task('watch:src', (done) => {
-  const config = require('./webpack.' + (productionMode ? 'prd' : 'dev') + '.js');
+  const config = merge(require('./webpack.' + (productionMode ? 'prd' : 'dev') + '.js'), {
+    watch: true,
+  })
   webpack(config, function(error, stats) {
     if (error) {
       gutil.log('[webpack]', error);

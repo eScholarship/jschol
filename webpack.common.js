@@ -1,5 +1,6 @@
 const webpack = require("webpack");
 const _ = require('lodash');
+const CleanWebpackPlugin = require('clean-webpack-plugin');
 const ManifestPlugin = require('webpack-manifest-plugin');
 const ProgressPlugin = require('webpack/lib/ProgressPlugin');
 
@@ -16,8 +17,6 @@ function getNPMPackageIds() {
 }
 
 module.exports = {
-  mode: 'development',
-  watch: true,
   cache: true,
   bail: false,
   entry: {
@@ -39,6 +38,9 @@ module.exports = {
     new webpack.ProvidePlugin({
       $: "jquery",
       jQuery: "jquery"
+    }),
+    new CleanWebpackPlugin({
+      cleanOnceBeforeBuildPatterns: ["*-bundle*.js*"]
     }),
     // Generates manifest.json so app can know the exact names of files for cache-busting
     new ManifestPlugin(),

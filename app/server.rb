@@ -25,6 +25,9 @@ require 'uri'
 # Easy toggle to enable/disable mrtExpress
 USE_MRTEXPRESS = true
 
+# On dev and stg we control access with a special cookie
+ACCESS_COOKIE = (ENV['ACCESS_COOKIE'] || '').empty? ? nil : ENV['ACCESS_COOKIE']
+
 # Make puts thread-safe, and flush after every puts.
 $stdoutMutex = Mutex.new
 $workerNum = 0
@@ -165,6 +168,7 @@ require_relative 'citation'
 require_relative 'loginApi'
 require_relative 'fetch'
 require_relative 'redirect'
+require_relative 'sitemap'
 
 class StdoutLogger
   def << (str)
@@ -259,9 +263,10 @@ fillCaches
 configure do
   # Puma is good for multiprocess *and* multithreading
   set :server, 'puma'
-  # We like to use the 'app' folder for all our static resources
-  set :public_folder, Proc.new { root }
-  set :static_cache_control, [:public, :max_age => 3600]
+
+  # Sinatra unfortunately serves static files before running the 'before' block, preventing
+  # us from doing redirects on static files.
+  set :static, false
 
   set :show_exceptions, false
 
@@ -272,7 +277,7 @@ configure do
 
    # Compress things that can benefit
   use Rack::Deflater,
-    :include => %w{application/javascript text/html text/css application/json image/svg+xml},
+    :include => %w{application/javascript application/xml text/html text/css application/json image/svg+xml},
     :if => lambda { |env, status, headers, body|
       # advice from https://www.itworld.com/article/2693941/cloud-computing/
       #               why-it-doesn-t-make-sense-to-gzip-all-content-from-your-web-server.html
@@ -312,6 +317,18 @@ $ipExclude = File.exist?("config/blocked_ips") && Regexp.new(File.read("config/b
 before do
   $ipInclude && !$ipInclude.match(request.ip) and halt 403
   $ipExclude && $ipExclude.match(request.ip) and halt 403
+
+  # On dev and stg, control access with a special cookie
+  if ACCESS_COOKIE
+    if request.params['access']
+      response.set_cookie(:ACCESS_COOKIE, :value => request.params['access'], :path => "/")
+      ACCESS_COOKIE == request.params['access'] or halt(401, "Not authorized.")
+    elsif request.path != "/check"
+      ACCESS_COOKIE == request.cookies['ACCESS_COOKIE'] or halt(401, "Not authorized.")
+    end
+  end
+
+  # Check the long list of things to redirect
   redirURI, code = checkRedirect(URI.parse(request.url))
   if code
     if code >= 300 && code <= 399
@@ -320,11 +337,27 @@ before do
       halt code
     end
   end
+
+  # Most of the responses from this app are dynamic and shouldn't be cached (e.g. unit pages,
+  # pageData responses, etc.) The exceptions, e.g. assets, explicitly override cache_control.
+  cache_control :no_store
+
+  # Emulate Sinatra's handling of static files, *after* all our access and redirect checks
+  path = File.expand_path("app/#{URI::unescape(request.path_info)}")
+  if File.file?(path)
+    env['sinatra.static_file'] = path
+    cache_control(:public, :max_age => 3600)
+    send_file path, :disposition => nil
+  end
 end
 
 ###################################################################################################
 # Simple up-ness check
 get "/check" do
+  if ENV['ISO_PORT']
+    response = HTTParty.get("http://#{$host}:#{ENV['ISO_PORT']}/check", :timeout => 20)
+    response.code == 200 or halt(500, "ISO server not ok.")
+  end
   return "ok"
 end
 
@@ -440,6 +473,7 @@ get %r{/assets/([0-9a-f]{64})} do |hash|
     obj.get(response_target: s3Tmp)
     s3Tmp.seek(0)
     etag hash
+    cache_control :public, :max_age => 3600   # maybe more?
     send_file(s3Tmp,
               last_modified: obj.last_modified,
               type: obj.metadata["mime_type"] || "application/octet-stream",
@@ -518,11 +552,13 @@ get "/content/:fullItemID/*" do |itemID, path|
 
   # Allow cross-origin requests so that main site and CloudFront cache can co-operate. Also, let
   # crawlers know that the canonical URL is the item page.
-  headers "Access-Control-Allow-Origin" => "*",
-          "Access-Control-Allow-Headers" => "Range",
-          "Access-Control-Expose-Headers" => "Accept-Ranges, Content-Encoding, Content-Length, Content-Range",
-          "Access-Control-Allow-Methods" => "GET, OPTIONS",
-          "Link" => "<https://escholarship.org/uc/item/#{itemID.sub(/^qt/,'')}>; rel=\"canonical\""
+  if ENV['CLOUDFRONT_PUBLIC_URL']
+    headers "Access-Control-Allow-Origin" => "*",
+            "Access-Control-Allow-Headers" => "Range",
+            "Access-Control-Expose-Headers" => "Accept-Ranges, Content-Encoding, Content-Length, Content-Range",
+            "Access-Control-Allow-Methods" => "GET, OPTIONS"
+  end
+  headers "Link" => "<https://escholarship.org/uc/item/#{itemID.sub(/^qt/,'')}>; rel=\"canonical\""
 
   # Stream supp files out directly from Merritt. Also, if there's no display PDF, fall back
   # to the version in Merritt.
