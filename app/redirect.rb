@@ -76,7 +76,7 @@ def checkRedirect(origURI)
       uri.scheme = "https"
       uri.port = nil
     end
-    puts "Final redirect: #{origURI} -> #{uri}"
+    #puts "Final redirect: #{origURI} -> #{uri}"
     return uri, 301
   end
 end
