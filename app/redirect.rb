@@ -34,7 +34,12 @@ def checkRedirect(origURI)
     #elsif uri.scheme != "https" && $machine =~ /^pub-jschol-prd-2[ac]$/
     #  uri.scheme = "https"
     #  uri.port = nil
-    elsif ["www.escholarship.org", "pvw.escholarship.org", "eprints.cdlib.org", "escholarship.cdlib.org"].include?(uri.host)
+    elsif ["www.escholarship.org", "pvw.escholarship.org",
+           "eprints.cdlib.org",
+           "escholarship.cdlib.org", "www.escholarship.cdlib.org",
+           "escholarship-s10.cdlib.org", "www.escholarship-s8.cdlib.org",
+           "escholarship.ucop.edu"
+          ].include?(uri.host)
       uri.host = "escholarship.org"
     elsif uri.path =~ %r{^/uc/item/(\w+)(.*)}
       uri = handleItemRedirect(uri, $1, $2)

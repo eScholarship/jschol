@@ -40,6 +40,9 @@ def testRedirect(fromURL, toURL)
   end
 end
 
+# Redirect escholarship.ucop.edu to eschol
+testRedirect("http://escholarship.ucop.edu/uc/ucpress", "http://escholarship.org/uc/ucpress")
+
 # OA policy images
 testRedirect("http://escholarship.org/oa_harvester/ucsc/ucsc_email_header.png",
              "http://escholarship.org/images/oa_harvester/ucsc/ucsc_email_header.png")
