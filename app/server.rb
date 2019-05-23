@@ -77,7 +77,7 @@ def ensureConnect(envPrefix)
                "database" => ENV["#{envPrefix}_DATABASE"] || raise("missing env #{envPrefix}_DATABASE"),
                "username" => ENV["#{envPrefix}_USERNAME"] || raise("missing env #{envPrefix}_USERNAME"),
                "password" => ENV["#{envPrefix}_PASSWORD"] || raise("missing env #{envPrefix}_HOST"),
-               "max_connections" => 10 }
+               "max_connections" => 32 }
   if TCPSocket::socks_port
     SocksMysql.new(dbConfig)
   end
