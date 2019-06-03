@@ -218,8 +218,8 @@ end
 def handleUnitRedirect(uri, unit, remainder)
   if (redir = Redirect.where(kind: "unit", from_path: "/uc/#{unit}").first)
     uri.path = "#{redir.to_path}#{remainder}"
-  elsif uri.query =~ /rmode=rss/
-    uri.path = "/uc/#{unit}/rss"
+  elsif uri.query =~ /rmode=rss/ || remainder =~ %r{/rss}
+    uri.path = "/rss/unit/#{unit}"
     uri.query = nil
   end
   return uri
