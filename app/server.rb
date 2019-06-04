@@ -76,8 +76,7 @@ def ensureConnect(envPrefix)
                "port"     => ENV["#{envPrefix}_PORT"] || raise("missing env #{envPrefix}_PORT").to_i,
                "database" => ENV["#{envPrefix}_DATABASE"] || raise("missing env #{envPrefix}_DATABASE"),
                "username" => ENV["#{envPrefix}_USERNAME"] || raise("missing env #{envPrefix}_USERNAME"),
-               "password" => ENV["#{envPrefix}_PASSWORD"] || raise("missing env #{envPrefix}_HOST"),
-               "max_connections" => 32 }
+               "password" => ENV["#{envPrefix}_PASSWORD"] || raise("missing env #{envPrefix}_HOST") }
   if TCPSocket::socks_port
     SocksMysql.new(dbConfig)
   end
@@ -104,8 +103,11 @@ puts "Connecting to OJS DB.       "
 OJS_DB = ensureConnect("OJS_DB")
 #OJS_DB.loggers << Logger.new('ojs.sql_log')  # Enable to debug SQL queries on OJS db
 
-# When fetching ISO pages and PDFs from the local server, we need the host name.
+# When fetching ISO pages from the local server, we need the host name.
 $host = ENV['HOST'] ? "#{ENV['HOST']}.escholarship.org" : "localhost"
+
+# Used when fetching RSS data from the API server
+$escholApiServer = ENV['ESCHOL_API_SERVER'] || raise("missing env ESCHOL_API_SERVER")
 
 # Temporary for memory leak debugging
 if false
@@ -363,9 +365,9 @@ get "/check" do
 end
 
 ###################################################################################################
-get %r{/uc/([^/]+)/rss} do |unitID|
+get %r{/rss/unit/([^/]+)} do |unitID|
   Unit[unitID] or halt(404, "Unit not found")
-  response = HTTParty.get("http://#{$host}:18900/rss/unit/#{unitID}")
+  response = HTTParty.get("#{$escholApiServer}/rss/unit/#{unitID}")
   response.headers['content-type'] and content_type response.headers['content-type']
   [response.code, response.body]
 end
@@ -394,7 +396,7 @@ get %r{/oai(.*)} do
   request.url =~ %r{/oai(.*)}
   headers = {}
   request.env['HTTP_PRIVILEGED'] and headers['Privileged'] = request.env['HTTP_PRIVILEGED']
-  response = HTTParty.get("http://#{$host}:18900/oai#{$1}", headers: headers)
+  response = HTTParty.get("#{$escholApiServer}/oai#{$1}", headers: headers)
   response.headers['content-type'] and content_type response.headers['content-type']
   [response.code, response.body]
 end
@@ -406,7 +408,7 @@ get %r{/graphql} do
   else
     outHeaders = {}
     request.env['HTTP_PRIVILEGED'] and outHeaders['Privileged'] = request.env['HTTP_PRIVILEGED']
-    response = HTTParty.get("http://#{$host}:18900/graphql?#{URI.escape(request.query_string)}",
+    response = HTTParty.get("#{$escholApiServer}/graphql?#{URI.escape(request.query_string)}",
                             headers: outHeaders)
     %w{Content-Type Access-Control-Allow-Origin}.each { |h|
       response.headers[h] and headers h => response.headers[h]
@@ -417,7 +419,7 @@ end
 
 ###################################################################################################
 get %r{/graphql(.*)} do
-  proxyFromURL("http://#{$host}:18900/graphql#{params['captures'][0]}", "escholarship.org")
+  proxyFromURL("#{$escholApiServer}/graphql#{params['captures'][0]}", "escholarship.org")
 end
 
 ###################################################################################################
@@ -425,7 +427,7 @@ post %r{/graphql(.*)} do
   headers = {}
   request.env['HTTP_PRIVILEGED'] and headers['Privileged'] = request.env['HTTP_PRIVILEGED']
   request.env['CONTENT_TYPE'] and headers['Content-Type'] = request.env['CONTENT_TYPE']
-  response = HTTParty.post("http://#{$host}:18900/graphql#{params['captures'][0]}",
+  response = HTTParty.post("#{$escholApiServer}/graphql#{params['captures'][0]}",
                            headers: headers,
                            body: request.body.read)
   %w{Content-Type Access-Control-Allow-Origin}.each { |h|
@@ -1188,7 +1190,7 @@ def submitAPIMutation(mutation, vars)
   varHash = Hash[vars.map{|name,pair| [name.to_s, pair[1]]}]
   headers = { 'Content-Type' => 'application/json',
               'Privileged' => ENV['ESCHOL_PRIV_API_KEY'] || raise("missing env ESCHOL_PRIV_API_KEY") }
-  response = HTTParty.post("http://#{$host}:18900/graphql",
+  response = HTTParty.post("#{$escholApiServer}/graphql",
                :headers => headers,
                :body => { variables: varHash, query: query }.to_json.gsub("%", "%25"))
   response.code != 200 and raise("Internal error (graphql): " +
