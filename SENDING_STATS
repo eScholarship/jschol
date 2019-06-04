@@ -10,6 +10,7 @@
 
 5. Quick check:
   less mailLogs/`date +"%Y%m%d"`_author_pvw_out.log
+  ** CHECK at least ONE unsubscribe link to be sure it's valid (but don't unsubscribe) **
 
 6. (tools/massEmail.rb stats-admins recent-hits mailTemplates/adminEmail-monthly.erb go4it >> mailLogs/`date +"%Y%m%d"`_admin_go4it.log 2>&1 & )
 
