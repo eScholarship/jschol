@@ -25,9 +25,6 @@ fi
 
 set -u
 
-# Ensure that all local changes are checked in.
-git diff-index --quiet HEAD --
-
 export TZ=":America/Los_Angeles"
 VERSION=`date -Iseconds`
 DIR=jschol
@@ -61,7 +58,7 @@ fi
 # package app and upload
 mkdir -p dist
 ZIP="$DIR-$VERSION.zip"
-git archive --format=zip HEAD > dist/$ZIP
+git ls-files -x app | xargs zip -ry dist/$ZIP   # picks up mods in working dir, unlike 'git archive'
 zip -r dist/$ZIP app/js app/css
 
 aws s3 cp dist/$ZIP s3://$BUCKET/$DIR/$ZIP
