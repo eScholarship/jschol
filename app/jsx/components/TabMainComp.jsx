@@ -53,6 +53,7 @@ class MainContent extends React.Component {
                     p.content_type == "text/html" ? this.renderHtml(p) : null)
         }
       case "withdrawn":
+      case "withdrawn-junk":
         return (<Withdrawn message={p.attrs.withdrawn_message} />)
       case "embargoed":
         return (<Embargoed date={p.attrs.embargo_date}
@@ -146,7 +147,7 @@ class TabMainComp extends React.Component {
     let p = this.props
     return (
       <div className="c-tabcontent">
-      {this.props.attrs.abstract && (this.props.status != "withdrawn") &&
+      {this.props.attrs.abstract && !/withdrawn/.test(this.props.status) &&
         [<ScrollingAnchorComp key="0" name="article_abstract" />,
          <Abstract key="1" status={p.status}
                            abstract={p.attrs.abstract}
