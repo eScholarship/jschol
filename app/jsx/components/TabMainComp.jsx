@@ -29,6 +29,7 @@ class MainContent extends React.Component {
       // Empty items are published but with no content: no published web loc, no supp files.
       // Could use the <Withdrawn> class here but using <NoContent> for semantic reasons
       case "empty":
+        return (<NoContent/>)
       case "published":
         if (!p.content_type) {
           if (p.attrs.pub_web_loc && p.attrs.pub_web_loc.length > 0) {
