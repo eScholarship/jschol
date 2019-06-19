@@ -29,8 +29,6 @@ class MainContent extends React.Component {
       // Empty items are published but with no content: no published web loc, no supp files.
       // Could use the <Withdrawn> class here but using <NoContent> for semantic reasons
       case "empty":
-      case "withdrawn-junk":
-        return (<NoContent/>)
       case "published":
         if (!p.content_type) {
           if (p.attrs.pub_web_loc && p.attrs.pub_web_loc.length > 0) {
@@ -54,6 +52,7 @@ class MainContent extends React.Component {
                     p.content_type == "text/html" ? this.renderHtml(p) : null)
         }
       case "withdrawn":
+      case "withdrawn-junk":
         return (<Withdrawn message={p.attrs.withdrawn_message} />)
       case "embargoed":
         return (<Embargoed date={p.attrs.embargo_date}
@@ -147,7 +146,7 @@ class TabMainComp extends React.Component {
     let p = this.props
     return (
       <div className="c-tabcontent">
-      {this.props.attrs.abstract && (this.props.status != "withdrawn") &&
+      {this.props.attrs.abstract && !/withdrawn/.test(this.props.status) &&
         [<ScrollingAnchorComp key="0" name="article_abstract" />,
          <Abstract key="1" status={p.status}
                            abstract={p.attrs.abstract}

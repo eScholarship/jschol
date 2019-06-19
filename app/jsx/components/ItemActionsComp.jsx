@@ -113,11 +113,11 @@ class Undownloadable extends React.Component {
     return (
       <div className="c-itemactions">
         {msg}
-      {/withdrawn/.test(p.status) &&
+      {!/withdrawn/.test(p.status) &&
         <WithdrawModalComp itemID={this.props.id}
                            fetchingData={this.props.fetchingData} sendApiData={this.props.sendApiData}/>
       }
-      {/withdrawn/.test(p.status) ?
+      {!/withdrawn/.test(p.status) ?
         <ShareComp type="item" id={p.id} />
       :
         <div className="c-share">{/* Keep this div here to allow sister element 'o-alert1' to be aligned properly to the left */}</div>

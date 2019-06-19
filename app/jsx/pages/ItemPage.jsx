@@ -117,32 +117,34 @@ class ItemPage extends PageBase {
       issue = c['issue'] && <meta id="meta-issue" name="citation_issue" content={c['issue']}/>
     }
     let keywords = a.disciplines ? a.disciplines.join('; ') : null
+    let isWithdrawn = /withdrawn/.test(d.status)
     d.unit && this.extGA(d.unit.id)  // Google Analytics for external trackers called from PageBase
     return (
       <div>
-        <MetaTagsComp title={d.title} contribs={contribs} abstract={a.abstract}>
-          {meta_authors}
-        {d.published &&
-          <meta id="meta-publication_date" name="citation_publication_date" content={d.published} /> }
-        {a.isbn &&
-          <meta id="meta-isbn" name="citation_isbn" content={a.isbn} /> }
-        {a.doi &&
-          <meta id="meta-doi" name="citation_doi" content={a.doi} /> }
-        {d.unit && d.unit.type == 'journal' &&
-          <meta id="meta-journal_title" name="citation_journal_title" content={d.unit.name} /> }
-          {issn} {volume} {issue} {firstpage} {lastpage}
-        {d.genre == 'dissertation' && d.header &&
-          <meta id="meta-dissertation_institution" name="citation_dissertation_institution" content={d.header.breadcrumb[1]['name']} /> }
-        {d.added &&
-          <meta id="meta-online_date" name="citation_online_date" content={d.added} /> }
-        {/withdrawn/.test(d.status) &&
-          <meta id="meta-robots" name="robots" content="noindex" /> }
-        {keywords &&
-          <meta id="meta-keywords" name="citation_keywords" content={keywords} /> }
-        {!d.download_restricted && d.pdf_url &&
-          <meta id="meta-pdf_url" name="citation_pdf_url"
-                content={d.pdf_url.substr(0, 4) == "http" ? d.pdf_url : "https://escholarship.org" + d.pdf_url} /> }
-        </MetaTagsComp>
+        {isWithdrawn && <MetaTagsComp> <meta id="meta-robots" name="robots" content="noindex" /> </MetaTagsComp>}
+        {!isWithdrawn &&
+          <MetaTagsComp title={d.title} contribs={contribs} abstract={a.abstract}>
+            {meta_authors}
+            {d.published &&
+              <meta id="meta-publication_date" name="citation_publication_date" content={d.published} /> }
+            {a.isbn &&
+              <meta id="meta-isbn" name="citation_isbn" content={a.isbn} /> }
+            {a.doi &&
+              <meta id="meta-doi" name="citation_doi" content={a.doi} /> }
+            {d.unit && d.unit.type == 'journal' &&
+              <meta id="meta-journal_title" name="citation_journal_title" content={d.unit.name} /> }
+              {issn} {volume} {issue} {firstpage} {lastpage}
+            {d.genre == 'dissertation' && d.header &&
+              <meta id="meta-dissertation_institution" name="citation_dissertation_institution" content={d.header.breadcrumb[1]['name']} /> }
+            {d.added &&
+              <meta id="meta-online_date" name="citation_online_date" content={d.added} /> }
+            {keywords &&
+              <meta id="meta-keywords" name="citation_keywords" content={keywords} /> }
+            {!d.download_restricted && d.pdf_url &&
+              <meta id="meta-pdf_url" name="citation_pdf_url"
+                    content={d.pdf_url.substr(0, 4) == "http" ? d.pdf_url : "https://escholarship.org" + d.pdf_url} /> }
+          </MetaTagsComp>
+        }
         <Header2Comp type={d.unit ? d.unit.type: null}
                      unitID={(d.appearsIn && d.appearsIn.length > 0) ? d.appearsIn[0]["id"] : null}
                      hideAdminBar={true} />
@@ -163,12 +165,12 @@ class ItemPage extends PageBase {
                          sendApiData={this.sendApiData} />
             <h2 className="c-tabcontent__main-heading" tabIndex="-1"><ArbitraryHTMLComp html={d.title}/></h2>
             <AuthorListComp pubdate={d.published}
-                            author_hide={a.author_hide}
-                            authors={d.authors}
-                            editors={d.editors}
-                            advisors={d.advisors}
-                            changeTab={this.changeTab} />
-          {(a.doi || a.pub_web_loc || d.rights || d.attrs.data_avail_stmnt || !d.content_type) &&
+                          author_hide={a.author_hide}
+                          authors={d.authors}
+                          editors={d.editors}
+                          advisors={d.advisors}
+                          changeTab={this.changeTab} />
+          {(a.doi || a.pub_web_loc || d.rights || d.attrs.data_avail_stmnt || !d.content_type) && !isWithdrawn &&
             <PubInfoComp doi={a.doi}
                          pub_web_loc={a.pub_web_loc}
                          content_type={d.content_type}
@@ -184,7 +186,7 @@ class ItemPage extends PageBase {
           {(d.status == "published" && d.content_type) &&
             <JumpComp changeTab={this.changeTab} attrs={d.attrs} />
           }
-          {d.sidebar &&
+          {d.sidebar && !isWithdrawn &&
             <SidebarComp data={d.sidebar}/> }
           </aside>
         </div>

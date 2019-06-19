@@ -1087,6 +1087,7 @@ end
 def getItemPageData(shortArk)
   id = "qt"+shortArk
   item = Item[id] or halt(404)
+  item.status == "withdrawn-junk" and halt(404)
   attrs = JSON.parse(Item.filter(:id => id).map(:attrs)[0])
   unitIDs = UnitItem.where(:item_id => id, :is_direct => true).order(:ordering_of_units).select_map(:unit_id)
   unit = unitIDs ? Unit[unitIDs[0]] : nil
