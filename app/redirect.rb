@@ -38,11 +38,14 @@ def checkRedirect(origURI)
            "eprints.cdlib.org",
            "escholarship.cdlib.org", "www.escholarship.cdlib.org",
            "escholarship-s10.cdlib.org", "www.escholarship-s8.cdlib.org",
-           "escholarship.ucop.edu"
+           "escholarship.ucop.edu", "cloudfront.escholarship.org",
+           "pub-jschol-prd.escholarship.org"
           ].include?(uri.host)
       uri.host = "escholarship.org"
     elsif uri.path =~ %r{^/uc/item/(\w+)(.*)}
       uri = handleItemRedirect(uri, $1, $2)
+    elsif uri.path =~ %r{^/dist/prd/(.*)}
+      uri.path = "/#{$1}"  # old CloudFront URLs
     elsif uri.path =~ %r{^/uc/search} &&
           !(uri.query =~ %r{smode=(pmid|PR|postprintReport|repec|bpList|eeList|etdLinks)\b})
       uri = handleSearchRedirect(uri)

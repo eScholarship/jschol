@@ -40,6 +40,13 @@ def testRedirect(fromURL, toURL)
   end
 end
 
+# Redirect old CloudFront URLs
+testRedirect("http://cloudfront.escholarship.org/dist/prd/content/qt5563x8nf/qt5563x8nf.pdf?t=mpqhzr&v=lg",
+             "http://escholarship.org/content/qt5563x8nf/qt5563x8nf.pdf?t=mpqhzr&v=lg")
+
+# Redirect alias of old load balancer
+testRedirect("http://pub-jschol-prd.escholarship.org/ucoapolicies", "http://escholarship.org/ucoapolicies")
+
 # Redirect escholarship.ucop.edu to eschol
 testRedirect("http://escholarship.ucop.edu/uc/ucpress", "http://escholarship.org/uc/ucpress")
 
