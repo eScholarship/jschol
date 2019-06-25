@@ -769,7 +769,8 @@ def generalResponse
   end
 
   # Redirect http to https (but only on production)
-  if request.scheme == "http" && request.host == "escholarship.org"
+  scheme = request.env['HTTP_CLOUDFRONT_FORWARDED_PROTO'] || request.scheme
+  if scheme == "http" && request.host == "escholarship.org"
     uri = URI.parse(request.url)
     uri.scheme = "https"
     uri.port = nil
