@@ -102,9 +102,12 @@ class ItemPage extends PageBase {
     let descr_editors = d.editors ? "Editor(s): " + d.editors.slice(0, 85).map((editor) => { return editor.name }).join('; ') : ""
     let descr_advisors = d.advisors ? "Advisor(s): " + d.advisors.slice(0, 85).map((advisor) => { return advisor.name }).join('; ') : ""
     let contribs = [descr_authors, descr_editors, descr_advisors].filter(e => e !== '').join(' | ')
+    let journal_title = (d.unit && (d.unit.type == 'journal')) ? 
+      <meta id="meta-journal_title" name="citation_journal_title" content={d.unit.name} /> : null
     let [issn, volume, issue, firstpage, lastpage] = [null, null, null, null, null]
     if (a['ext_journal']) {
       let extj = a['ext_journal']
+      journal_title = extj['name'] && <meta id="meta-journal_title" name="citation_journal_title" content={extj['name']}/>
       issn = extj['issn'] && <meta id="meta-issn" name="citation_issn" content={extj['issn']}/>
       volume = extj['volume'] && <meta id="meta-volume" name="citation_volume" content={extj['volume']}/>
       issue = extj['issue'] && <meta id="meta-issue" name="citation_issue" content={extj['issue']}/>
@@ -131,9 +134,7 @@ class ItemPage extends PageBase {
               <meta id="meta-isbn" name="citation_isbn" content={a.isbn} /> }
             {a.doi &&
               <meta id="meta-doi" name="citation_doi" content={a.doi} /> }
-            {d.unit && d.unit.type == 'journal' &&
-              <meta id="meta-journal_title" name="citation_journal_title" content={d.unit.name} /> }
-              {issn} {volume} {issue} {firstpage} {lastpage}
+            {journal_title} {issn} {volume} {issue} {firstpage} {lastpage}
             {d.genre == 'dissertation' && d.header &&
               <meta id="meta-dissertation_institution" name="citation_dissertation_institution" content={d.header.breadcrumb[1]['name']} /> }
             {d.added &&
