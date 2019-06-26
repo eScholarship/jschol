@@ -203,7 +203,8 @@ require_relative './models.rb'
 require_relative '../splash/splashGen.rb'
 
 ###################################################################################################
-$issueBuyLinks = Hash[*File.readlines("/apps/eschol/erep/xtf/style/textIndexer/mapping/buyLinks.txt").map { |line|
+$issueBuyLinks = Hash[*File.readlines("/apps/eschol/erep/xtf/style/textIndexer/mapping/buyLinks.txt", 
+                                      :encoding => 'UTF-8').map { |line|
   line =~ %r{^.*entity=(.*);volume=(.*);issue=(.*)\|(.*?)\s*$} ? ["#{$1}:#{$2}:#{$3}", $4] : [nil, line]
 }.flatten]
 # Retain buy-link overrides in eschol5
@@ -1637,7 +1638,7 @@ def convertAllItems(arks)
 
     if $preindexMode
       arks.each { |ark|
-        ark =~ /^qt\w{8}$/ or raise
+        ark =~ /^qt\w{8}$/ or raise("Invalid ark #{ark.inspect}")
         $indexQueue << [ark, nil]
       }
     else
