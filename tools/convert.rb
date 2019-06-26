@@ -756,6 +756,11 @@ def parseUCIngest(itemID, inMeta, fileType)
   attrs[:publisher] = inMeta.text_at("./publisher")
   attrs[:suppress_content] = shouldSuppressContent(itemID, inMeta)
 
+  # Record submitter (especially useful for forensics)
+  attrs[:submitter] = inMeta.xpath("./history/stateChange").map { |sc|
+    sc[:state] =~ /^(new|uploaded|pending|published)/ && sc[:who] ? sc[:who] : nil
+  }.compact[0]
+
   # Normalize language codes
   attrs[:language] and attrs[:language] = attrs[:language].sub("english", "en").sub("german", "de").
                                                            sub("french", "fr").sub("spanish", "es")
@@ -764,6 +769,7 @@ def parseUCIngest(itemID, inMeta, fileType)
   tmp = inMeta.at("./content/file[@disableDownload]")
   tmp && tmp = parseDate(tmp[:disableDownload]) and attrs[:disable_download] = tmp
 
+  isJunk = false
   if inMeta[:state] == "withdrawn"
     tmp = inMeta.at("./history/stateChange[@state='withdrawn']")
     tmp and attrs[:withdrawn_date] = tmp[:date].sub(/T.+$/, "")
@@ -774,6 +780,7 @@ def parseUCIngest(itemID, inMeta, fileType)
 
     tmp = inMeta.text_at("./history/stateChange[@state='withdrawn']/comment")
     tmp and attrs[:withdrawn_message] = tmp
+    tmp =~ /spam|junk|violation.*policy/i and isJunk = true
 
     tmp = inMeta.text_at("./history/stateChange[@state='withdrawn']/internalComment")
     tmp and attrs[:withdrawn_internal_comment] = tmp
@@ -952,7 +959,8 @@ def parseUCIngest(itemID, inMeta, fileType)
   dbItem = Item.new
   dbItem[:id]           = itemID
   dbItem[:source]       = inMeta.text_at("./source") or raise("no source found")
-  dbItem[:status]       = attrs[:withdrawn_date] ? "withdrawn" :
+  dbItem[:status]       = isJunk ? "withdrawn-junk" :
+                          attrs[:withdrawn_date] ? "withdrawn" :
                           isEmbargoed(attrs[:embargo_date]) ? "embargoed" :
                           (attrs[:suppress_content] && inMeta[:state] == "published") ? "empty" :
                           (inMeta[:state] || raise("no state in record"))

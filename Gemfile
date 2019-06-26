@@ -2,6 +2,7 @@
 ruby '> 2.3.0'
 source 'https://rubygems.org'
 gem 'aws-sdk'             # used to talk to AWS CloudSearch
+gem 'bundler'             # needed for use in Beanstalk environment
 gem 'ezid-client'         # for minting people-arks
 gem 'fastimage'           # for determining dimensions of image files
 gem 'htmlentities'        # for decoding HTML entites
@@ -16,12 +17,15 @@ gem 'netrc'               # used to read EZID credentials
 gem 'nokogiri'            # parsing and generating XML
 gem 'parslet'             # parser to transform search into Cloudsearch compound query
 gem 'puma'                # Rack web service layer
+gem 'puma_worker_killer'  # because mem leak has been so hard to find
 gem 'sanitize'            # parse and sanitize user-supplied HTML fragments
 gem 'sequel'              # object-relational mapper (including migrations)
+gem 'sigdump', require: 'sigdump/setup' # to get thread traces with kill -CONT
 gem 'sinatra'             # lightweight web framework
 gem 'sinatra-websocket'   # web socket support for Sinatra
 gem 'socksify'            # for proxying all TCP through SOCKS proxy
 gem 'sqlite3'             # for local testing without remote Mysql database
 gem 'test-unit'           # test/quick.rb
 gem 'unindent'            # remove indentation from lines of a string
+gem 'vmstat'              # for determining machine's RAM size to work around mem leak
 gem 'xml-sitemap'         # generate Google sitemap

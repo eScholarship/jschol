@@ -48,7 +48,7 @@ class TabsComp extends React.Component {
                   onClick = {() => this.tabFocus("metrics")}>
             Metrics</button>
       }
-      { p.status != 'withdrawn' &&
+      { !/withdrawn/.test(p.status) &&
           <button className={p.currentTab == "author" ? "c-tabs__button--active" : "c-tabs__button"}
                   onClick = {() => this.tabFocus("author")}>
             Author & Article Info</button>

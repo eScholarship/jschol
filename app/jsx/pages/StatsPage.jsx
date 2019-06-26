@@ -72,7 +72,9 @@ class StatsHeader extends React.Component {
     let thisLabel = p.match.params.unitID ? p.data.unit_name : p.data.author_name
     return(
       <div>
-        <MetaTagsComp title={`${p.title}: ${p.data.unit_name || p.data.author_name}`}/>
+        <MetaTagsComp title={`${p.title}: ${p.data.unit_name || p.data.author_name}`}>
+           <meta id="meta-robots" name="robots" content="noindex" />
+        </MetaTagsComp>
         <h1>
           { pageName == "summary" ? thisLabel : <Link to={thisLink}>{thisLabel}</Link> }
         </h1>
@@ -969,11 +971,6 @@ class AuthorStats_Summary extends React.Component {
 
 export class UnitStatsPage extends PageBase
 {
-  pageDataURL() {
-    const pm = this.props.match.params
-    return `/api/unit/${pm.unitID}/stats/${pm.pageName || "summary"}${this.props.location.search}`
-  }
-
   needHeaderFooter() { return false } //  disable standard header and footer
 
   renderContent() {
@@ -1022,11 +1019,6 @@ export class UnitStatsPage extends PageBase
 
 export class AuthorStatsPage extends PageBase
 {
-  pageDataURL() {
-    const pm = this.props.match.params
-    return `/api/author/${pm.personID}/stats/${pm.pageName || "summary"}${this.props.location.search}`
-  }
-
   needHeaderFooter() { return false } //  disable standard header and footer
 
   renderContent() {

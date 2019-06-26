@@ -8,7 +8,7 @@ require 'date'
 
 ###################################################################################################
 # Begin the login process by creating a session ID and a session record in the OJS database
-get "/api/loginStart" do
+def loginStartData
   # Invent a random session key (nonce)
   nonce = SecureRandom.uuid.gsub("-", "")  # Guid, without the dashes
   nonce =~ /^\w{32}$/ or raise("Invalid GUID generated")
@@ -22,13 +22,12 @@ get "/api/loginStart" do
                            remember: false,
                            data: nil,
                            acting_as: 0)
-  content_type :json
-  return JSON.generate({ header: getGlobalHeader, nonce: nonce})
+  return { header: getGlobalHeader, nonce: nonce}
 end
 
 ###################################################################################################
 # Finish up the login process by decrypting and recording the username.
-get "/api/loginValidate" do
+def loginValidateData
   nonce = params[:nonce]
   data = params[:data]
 
@@ -43,10 +42,10 @@ get "/api/loginValidate" do
   cipherKey = Digest::SHA1.hexdigest(cipherKeyData)
 
   # Set up the decryptor and give it the key and init vector
-  cipher = OpenSSL::Cipher::Cipher.new("aes-256-ctr")
+  cipher = OpenSSL::Cipher.new("aes-256-ctr")
   cipher.decrypt
-  cipher.key = cipherKey
-  cipher.iv = nonce
+  cipher.key = cipherKey[0,32]
+  cipher.iv = nonce[0,16]
 
   # Now decrypt the message
   encrypted = Base64.urlsafe_decode64(data)
@@ -68,19 +67,18 @@ get "/api/loginValidate" do
   end
 
   # And return the data
-  content_type :json
-  return JSON.generate({header: getGlobalHeader, username: username, key: params[:nonce]})
+  return {header: getGlobalHeader, username: username, key: params[:nonce]}
 end
 
 ###################################################################################################
 # Logout record keeping
-get "/api/loginEnd" do
-  content_type :json
-  userID = getUserID(params[:username]) or return JSON.generate(permFail("invalid username"))
+post "/api/logout" do
+  userID = getUserID(params[:username]) or return permFail("invalid username")
   sessionID = params[:token]
-  sessionID =~ /^\w{32}$/ or return JSON.generate(permFail("invalid session ID"))
+  sessionID =~ /^\w{32}$/ or return permFail("invalid session ID")
   OJS_DB[:sessions].where(user_id: userID, session_id: sessionID).delete
-  return JSON.generate({ header: getGlobalHeader, message: "ok" })
+  content_type :json
+  return { message: "ok" }.to_json
 end
 
 ###################################################################################################

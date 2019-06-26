@@ -42,7 +42,7 @@ class SubheaderComp extends React.Component {
   }
 
   render() {
-    let unit = this.props.unit
+    let unit = this.props.unit ? this.props.unit : { id: "unknown", type: "unknown", name: "unknown" }
     let h = this.props.header
     let banner_class = (h.logo && h.logo.is_banner) ? "c-subheader__banner--wide" : "c-subheader__banner--narrow"
     let [banner_url, banner_title] = unit.type.includes('series') ? [h.ancestorID, h.ancestorName] : [unit.id, unit.name]

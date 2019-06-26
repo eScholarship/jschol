@@ -1,5 +1,8 @@
 # Classes for fetching files from Merritt, and synchronizing those fetches.
 
+BUFFER_LOW_WATER = 1*1024*1024
+BUFFER_HIGH_WATER = 2*1024*1024
+
 ###################################################################################################
 class Fetcher
   attr_reader :url, :bytesFetched, :status, :waitingThreads
@@ -19,6 +22,7 @@ class Fetcher
     @startTime = Time.now
     @length = nil
     @bytesFetched = 0
+    @queuedLength = 0
     @stop = false
     @waitingThreads = Set.new
     @@fetcherMutex.synchronize {
@@ -56,6 +60,7 @@ class Fetcher
         data == 0 and next  # ignore initial status=ok message
         data.is_a?(Exception) and raise(data)  # pass exceptions on to main thread
         data.nil? and break
+        @queuedLength -= data.length
         data.length > 0 and out << data
       end
       out.respond_to?(:close) and out.close
@@ -82,6 +87,12 @@ class Fetcher
     @stop and raise("stopped")
     @bytesFetched += chunk.length
     @queue.push(chunk)
+    @queuedLength += chunk.length
+    if @queuedLength > BUFFER_HIGH_WATER
+      while !@stop && @queuedLength > BUFFER_LOW_WATER
+        sleep 0.05
+      end
+    end
   end
 
   private

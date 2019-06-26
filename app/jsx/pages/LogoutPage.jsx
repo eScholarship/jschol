@@ -10,21 +10,21 @@ import MetaTagsComp from '../components/MetaTagsComp.jsx'
 
 class LogoutPage extends PageBase
 {
-  pageDataURL() { 
-    const sessionData = this.getSessionData() || {}
-    return `/api/loginEnd?username=${sessionData.username}&token=${sessionData.token}`
-  }
-
-  renderData(data) {
+  componentDidMount() {
+    super.componentDidMount()
     if (!(typeof document === "undefined")) {
       // Only redirect on browser, not on server
       setTimeout(()=>{
+        this.sendApiData('POST', '/api/logout', {})
         let prevPath = this.props.location.prevPathname
         window.location = "https://submit.escholarship.org/Shibboleth.sso/Logout?return=" +
           encodeURIComponent(window.location.href.replace("/logout",
             "/logoutSuccess" + (prevPath && !prevPath.match(/login|logout/) ? prevPath : "")))
       }, 100)
     }
+  }
+
+  renderData(data) {
     return (
       <div>
         <MetaTagsComp title="Logout"/>
