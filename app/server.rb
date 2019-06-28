@@ -570,6 +570,8 @@ get "/content/:fullItemID/*" do |itemID, path|
     fetcher = MerrittFetcher.new(fileURL)
     if fetcher.length
       headers "Content-Length" => fetcher.length.to_s
+    elsif fetcher.status.to_s =~ /HTTP 404/
+      halt 404
     else
       raise fetcher.status
     end
