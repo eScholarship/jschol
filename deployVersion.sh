@@ -32,6 +32,13 @@ BUCKET=cdlpub-apps
 REGION=us-west-2
 APPNAME=eb-pub-jschol
 
+# make sure we don't push non-prd branch to prd
+CUR_BRANCH=`git rev-parse --abbrev-ref HEAD`
+if [[ "$1" == *"prd"* && "$CUR_BRANCH" != "prd" ]]; then
+  echo "Sanity check: should only push prd branch to prd environment."
+  exit 1
+fi
+
 # make sure environment actually exists
 env_exists=$(aws elasticbeanstalk describe-environments \
   --environment-name "$1" \
