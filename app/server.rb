@@ -365,6 +365,12 @@ get "/check" do
 end
 
 ###################################################################################################
+# Permissive robots.txt on production; restrictive elsewhere.
+get "/robots.txt" do
+  return "User-agent: *\nDisallow:#{request.host == "escholarship.org" ? "" : " /"}\n"
+end
+
+###################################################################################################
 get %r{/rss/unit/([^/]+)} do |unitID|
   Unit[unitID] or halt(404, "Unit not found")
   response = HTTParty.get("#{$escholApiServer}/rss/unit/#{unitID}")
