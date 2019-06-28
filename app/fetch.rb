@@ -69,7 +69,7 @@ class Fetcher
     rescue Exception => e
       @lengthReady.set  # just in case somebody's waiting for it
       @stop = true
-      if e.to_s =~ /closed stream|Socket timeout writing data|gotChunk stopped/
+      if e.to_s =~ /closed stream|Socket timeout writing data|gotChunk stopped|Not Found/
         # already logged elsewhere
         e.set_backtrace ""
       end
@@ -107,9 +107,11 @@ class Fetcher
         @queue << nil  # mark end-of-data
       rescue Exception => e
         if e.to_s =~ /^stopped|closed stream|Socket timeout writing data|gotChunk stopped/
-          puts "Stream closed early for url #{url}."
+          puts "Normal early stream close: #{e} for url #{@url}"
+        elsif e.to_s =~ /Not Found/
+          puts "Normal fetch exception: #{e} for url #{@url}."
         else
-          puts "Fetch exception: #{e} for url #{@url}. #{e.backtrace}"
+          puts "Unexpected fetch exception: #{e} for url #{@url}. #{e.backtrace}"
         end
         @status = e
         @queue << e
@@ -140,7 +142,7 @@ class Fetcher
                              fetcher.waitingThreads.size,
                              fetcher.url.sub("express.cdlib.org/dl/ark:/13030", "..."))
               # Abort long-running, low-producing threads. Let's be conservative.
-              if !fetcher.stop && fetcher.status == 'fetching' && fetcher.elapsed >= 60 && rate < 0.1  #FIXME FOO
+              if !fetcher.stop && fetcher.status == 'fetching' && fetcher.elapsed >= 60 && rate < 0.1
                 puts "...setting stop flag on long-running fetch."
                 fetcher.stop = true
               end
