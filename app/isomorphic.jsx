@@ -49,7 +49,7 @@ app.post('*', (req, res) =>
 
   // Perform an initial routing and render to grab the API URL that gets fetched.
   var refURL = req.protocol + '://' + req.get('host') + req.originalUrl
-  console.log("ISO fetch:", refURL)
+  //console.log("ISO fetch:", refURL)
 
   try {
 
