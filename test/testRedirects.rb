@@ -41,6 +41,8 @@ def testRedirect(fromURL, toURL)
 end
 
 # Redirect old CloudFront URLs
+testRedirect("http://cloudfront.escholarship.org/dist/wJD5zTgC2vrImRR/dist/prd/content/qt2dz7t8r8/qt2dz7t8r8.pdf?t=p0khvh",
+             "http://escholarship.org/content/qt2dz7t8r8/qt2dz7t8r8.pdf?t=p0khvh")
 testRedirect("http://cloudfront.escholarship.org/dist/prd/content/qt5563x8nf/qt5563x8nf.pdf?t=mpqhzr&v=lg",
              "http://escholarship.org/content/qt5563x8nf/qt5563x8nf.pdf?t=mpqhzr&v=lg")
 
