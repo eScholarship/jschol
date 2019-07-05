@@ -44,8 +44,8 @@ def checkRedirect(origURI)
       uri.host = "escholarship.org"
     elsif uri.path =~ %r{^/uc/item/(\w+)(.*)}
       uri = handleItemRedirect(uri, $1, $2)
-    elsif uri.path =~ %r{^/dist/prd/(.*)}
-      uri.path = "/#{$1}"  # old CloudFront URLs
+    elsif uri.path =~ %r{^/(dist/\w+/)?dist/prd/(.*)}
+      uri.path = "/#{$2}"  # old CloudFront URLs
     elsif uri.path =~ %r{^/uc/search} &&
           !(uri.query =~ %r{smode=(pmid|PR|postprintReport|repec|bpList|eeList|etdLinks)\b})
       uri = handleSearchRedirect(uri)
