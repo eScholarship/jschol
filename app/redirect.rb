@@ -99,11 +99,7 @@ def handleItemRedirect(uri, itemID, remainder)
   elsif (redir = Redirect.where(kind: "item", from_path: "/uc/item/#{itemID}").first)
     uri.path = "#{redir.to_path}#{remainder}"
   elsif remainder =~ %r{^\.pdf}
-    if ENV['CLOUDFRONT_PUBLIC_URL']
-      uri = URI.parse("#{ENV['CLOUDFRONT_PUBLIC_URL']}/content/qt#{itemID}/qt#{itemID}.pdf")
-    else
-      uri.path = "/content/qt#{itemID}/qt#{itemID}.pdf"
-    end
+    uri.path = "/content/qt#{itemID}/qt#{itemID}.pdf"
   elsif !remainder.empty?
     uri.path = "/uc/item/#{itemID}"
   end

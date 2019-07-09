@@ -559,14 +559,7 @@ get "/content/:fullItemID/*" do |itemID, path|
   # Control how long this remains in browser and CloudFront caches
   cache_control :public, :max_age => 3600   # maybe more?
 
-  # Allow cross-origin requests so that main site and CloudFront cache can co-operate. Also, let
-  # crawlers know that the canonical URL is the item page.
-  if ENV['CLOUDFRONT_PUBLIC_URL']
-    headers "Access-Control-Allow-Origin" => "*",
-            "Access-Control-Allow-Headers" => "Range",
-            "Access-Control-Expose-Headers" => "Accept-Ranges, Content-Encoding, Content-Length, Content-Range",
-            "Access-Control-Allow-Methods" => "GET, OPTIONS"
-  end
+  # Let crawlers know that the canonical URL is the item page.
   headers "Link" => "<https://escholarship.org/uc/item/#{itemID.sub(/^qt/,'')}>; rel=\"canonical\""
 
   # Stream supp files out directly from Merritt. Also, if there's no display PDF, fall back
@@ -652,29 +645,6 @@ end
 # the actual file.
 get %r{\/css\/main-[a-zA-Z0-9]{16}\.css} do
   call env.merge("PATH_INFO" => "/css/main.css")
-end
-
-###################################################################################################
-# CORS for CloudFront
-options %r{/dist/(\w+)/dist/prd/(\w+)/(.*)} do
-  headers "Access-Control-Allow-Origin" => "*",
-          "Access-Control-Allow-Headers" => "Range",
-          "Access-Control-Expose-Headers" => "Accept-Ranges, Content-Encoding, Content-Length, Content-Range",
-          "Access-Control-Allow-Methods" => "GET, OPTIONS"
-  return ""
-end
-
-###################################################################################################
-# Handle requests from CloudFront
-get %r{/dist/(\w+)/dist/prd/(\w+)/(.*)} do
-  cfKey, kind, path = params['captures']
-  if kind == "static"
-    call env.merge("PATH_INFO" => "/#{path}")
-  elsif kind == "content" || kind == "assets"
-    call env.merge("PATH_INFO" => "/#{kind}/#{path}")
-  else
-    halt(404)
-  end
 end
 
 ###################################################################################################
@@ -774,16 +744,6 @@ def generalResponse
   if body =~ %r{<metaTags>(.*)</metaTags>(.*)$}m
     metaTags, body = $1, $2
     metaTags.gsub!(/>\s*</, ">\n  <")  # add some newlines to make it look nice
-  end
-
-  # Redirect http to https (but only on production)
-  scheme = request.env['HTTP_CLOUDFRONT_FORWARDED_PROTO'] || request.scheme
-  if scheme == "http" && request.host == "escholarship.org"
-    uri = URI.parse(request.url)
-    uri.scheme = "https"
-    uri.port = nil
-    redirect to(uri.to_s), 301
-    return
   end
 
   # We need to turn the page data into a code snippet. It's not as straightforward as one mightt hink.
@@ -1100,10 +1060,9 @@ def getItemPageData(shortArk)
   attrs = JSON.parse(Item.filter(:id => id).map(:attrs)[0])
   unitIDs = UnitItem.where(:item_id => id, :is_direct => true).order(:ordering_of_units).select_map(:unit_id)
   unit = unitIDs ? Unit[unitIDs[0]] : nil
-  content_prefix = ENV['CLOUDFRONT_PUBLIC_URL'] || ""
   pdf_url = nil
   if item.content_type == "application/pdf" && item.status == "published"
-    pdf_url = content_prefix+"/content/"+id+"/"+id+".pdf"
+    pdf_url = "/content/"+id+"/"+id+".pdf"
     displayPDF = DisplayPDF[id]
     if displayPDF && displayPDF.orig_timestamp
       pdf_url += "?t=#{displayPDF.orig_timestamp.to_i.to_s(36)}"
@@ -1131,7 +1090,6 @@ def getItemPageData(shortArk)
         :citation => citation,
         :content_html => getItemHtml(item.content_type, id),
         :content_key => calcContentKey(shortArk),
-        :content_prefix => content_prefix,
         :content_type => item.content_type,
         :data_digest => item.data_digest,            # Strictly used for admin reference
         :editors => editors.any? ? editors : nil,
