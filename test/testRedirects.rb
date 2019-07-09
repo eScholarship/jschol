@@ -6,8 +6,6 @@ $hostname = `/bin/hostname`.strip
 $hostIP = $hostname =~ /^pub-jschol/ ? `/bin/hostname --ip-address`.strip : "127.0.0.1"
 $mainPort = ENV['PUMA_PORT'] or raise("missing env PUMA_PORT")
 
-$cfPrefix = ENV['CLOUDFRONT_PUBLIC_URL'] || "http://escholarship.org"
-
 def error(msg)
   puts "Error: #{msg}"
   exit 1
@@ -177,17 +175,17 @@ testRedirect("http://eprints.cdlib.org/uc/item/8gj3x1dc",
 
 # Redirect eschol.cdlib
 testRedirect("http://escholarship.cdlib.org/uc/item/9ws876kn.pdf",
-             "#{$cfPrefix}/content/qt9ws876kn/qt9ws876kn.pdf")
+             "http://escholarship.org/content/qt9ws876kn/qt9ws876kn.pdf")
 testRedirect("http://www.escholarship.cdlib.org/uc/item/9ws876kn.pdf",
-             "#{$cfPrefix}/content/qt9ws876kn/qt9ws876kn.pdf")
+             "http://escholarship.org/content/qt9ws876kn/qt9ws876kn.pdf")
 testRedirect("http://escholarship-s10.cdlib.org/uc/item/9ws876kn.pdf",
-             "#{$cfPrefix}/content/qt9ws876kn/qt9ws876kn.pdf")
+             "http://escholarship.org/content/qt9ws876kn/qt9ws876kn.pdf")
 testRedirect("http://www.escholarship-s8.cdlib.org/uc/item/9ws876kn.pdf",
-             "#{$cfPrefix}/content/qt9ws876kn/qt9ws876kn.pdf")
+             "http://escholarship.org/content/qt9ws876kn/qt9ws876kn.pdf")
 
 # Redirect old PDF links
 testRedirect("http://escholarship.org/uc/item/4590m805.pdf",
-             "#{$cfPrefix}/content/qt4590m805/qt4590m805.pdf")
+             "http://escholarship.org/content/qt4590m805/qt4590m805.pdf")
 
 # No longer redirecting PDF links
 testRedirect("http://escholarship.org/content/qt4590m805/qt4590m805.pdf", nil)
