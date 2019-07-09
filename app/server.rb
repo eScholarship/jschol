@@ -314,12 +314,8 @@ FileUtils.mkdir_p(TEMP_DIR)
 ###################################################################################################
 
 ###################################################################################################
-# IP address filtering, redirect processing, etc.
-$ipInclude = File.exist?("config/allowed_ips") && Regexp.new(File.read("config/allowed_ips").strip)
-$ipExclude = File.exist?("config/blocked_ips") && Regexp.new(File.read("config/blocked_ips").strip)
+# Redirect processing, access control, cache control, etc.
 before do
-  $ipInclude && !$ipInclude.match(request.ip) and halt 403
-  $ipExclude && $ipExclude.match(request.ip) and halt 403
 
   # On dev and stg, control access with a special cookie
   if ACCESS_COOKIE
@@ -371,14 +367,6 @@ get "/robots.txt" do
 end
 
 ###################################################################################################
-get %r{/rss/unit/([^/]+)} do |unitID|
-  Unit[unitID] or halt(404, "Unit not found")
-  response = HTTParty.get("#{$escholApiServer}/rss/unit/#{unitID}")
-  response.headers['content-type'] and content_type response.headers['content-type']
-  [response.code, response.body]
-end
-
-###################################################################################################
 def proxyFromURL(url, overrideHostname = nil)
   fetcher = HttpFetcher.new(url, overrideHostname)
   if !fetcher.length.nil? && fetcher.length > 0
@@ -388,66 +376,6 @@ def proxyFromURL(url, overrideHostname = nil)
     headers "content-type" => fetcher.headers.dig('content-type', 0)
   end
   return stream { |out| fetcher.streamTo(out) }
-end
-
-###################################################################################################
-get %r{/uc/oai(.*)} do
-  request.url =~ %r{/uc/oai(.*)}
-  proxyFromURL("https://submit.escholarship.org/uc/oai#{$1}", "escholarship.org")
-end
-
-###################################################################################################
-# New OAI endpoint. In production, this proxying isn't necessary -- the ALB is configured to do it.
-get %r{/oai(.*)} do
-  request.url =~ %r{/oai(.*)}
-  headers = {}
-  request.env['HTTP_PRIVILEGED'] and headers['Privileged'] = request.env['HTTP_PRIVILEGED']
-  response = HTTParty.get("#{$escholApiServer}/oai#{$1}", headers: headers)
-  response.headers['content-type'] and content_type response.headers['content-type']
-  [response.code, response.body]
-end
-
-###################################################################################################
-get %r{/graphql} do
-  if request.query_string.empty?
-    redirect(to('/graphql/iql'))
-  else
-    outHeaders = {}
-    request.env['HTTP_PRIVILEGED'] and outHeaders['Privileged'] = request.env['HTTP_PRIVILEGED']
-    response = HTTParty.get("#{$escholApiServer}/graphql?#{URI.escape(request.query_string)}",
-                            headers: outHeaders)
-    %w{Content-Type Access-Control-Allow-Origin}.each { |h|
-      response.headers[h] and headers h => response.headers[h]
-    }
-    [response.code, response.body]
-  end
-end
-
-###################################################################################################
-get %r{/graphql(.*)} do
-  proxyFromURL("#{$escholApiServer}/graphql#{params['captures'][0]}", "escholarship.org")
-end
-
-###################################################################################################
-post %r{/graphql(.*)} do
-  headers = {}
-  request.env['HTTP_PRIVILEGED'] and headers['Privileged'] = request.env['HTTP_PRIVILEGED']
-  request.env['CONTENT_TYPE'] and headers['Content-Type'] = request.env['CONTENT_TYPE']
-  response = HTTParty.post("#{$escholApiServer}/graphql#{params['captures'][0]}",
-                           headers: headers,
-                           body: request.body.read)
-  %w{Content-Type Access-Control-Allow-Origin}.each { |h|
-    response.headers[h] and headers h => response.headers[h]
-  }
-  [response.code, response.body]
-end
-
-###################################################################################################
-options %r{/graphql(.*)} do
-  headers "Access-Control-Allow-Origin" => "*",
-          "Access-Control-Allow-Headers" => "Accept, Content-Type",
-          "Access-Control-Allow-Methods" => "GET, POST, OPTIONS"
-  200
 end
 
 ###################################################################################################
