@@ -360,6 +360,7 @@ end
 
 # Unit builder data
 def getUnitBuilderData(unit)
+  getUserPermissions(params[:username], params[:token], unit.id)[:admin] or halt(401)
   return { sub_units: UnitHier.where(ancestor_unit: unit.id, is_direct: true).order(:ordering).map { |u|
     {id: u.unit_id, name: u.unit.name, type: u.unit.type} } }
 end
@@ -606,6 +607,7 @@ def getUnitStaticPage(unit, attrs, pageName)
 end
 
 def getUnitProfile(unit, attrs)
+  getUserPermissions(params[:username], params[:token], unit.id)[:admin] or halt(401)
   profile = {
     name: unit.name,
     slug: unit.id,
@@ -637,6 +639,7 @@ def getUnitProfile(unit, attrs)
 end
 
 def getUnitCarouselConfig(unit, attrs)
+  getUserPermissions(params[:username], params[:token], unit.id)[:admin] or halt(401)
   config = {
     marquee: getUnitMarquee(unit, attrs)
   }
@@ -694,6 +697,7 @@ def getUnitSidebar(unit)
 end
 
 def getUnitSidebarWidget(unit, widgetID)
+  getUserPermissions(params[:username], params[:token], unit.id)[:admin] or halt(401)
   widget = Widget[widgetID]
   widget.unit_id == unit.id && widget.region == "sidebar" or jsonHalt(400, "invalid widget")
   return { id: widget[:id], kind: widget[:kind], attrs: widget[:attrs] ? JSON.parse(widget[:attrs]) : {} }
@@ -727,6 +731,7 @@ def deleteNavByID(navBar, navID)
 end
 
 def getUnitNavConfig(unit, navBar, navID)
+  getUserPermissions(params[:username], params[:token], unit.id)[:admin] or halt(401)
   travNav(navBar) { |nav|
     if nav['id'].to_s == navID.to_s
       if nav['type'] == 'page'
@@ -999,6 +1004,7 @@ end
 ###################################################################################################
 # Gather data for redirect view/edit
 def getRedirectData(kind)
+  getUserPermissions(params[:username], params[:token], 'root')[:super] or halt(401)
   return { kind: kind,
            redirects: Redirect.where(kind: kind).order(:id).all.map { |record| record.to_hash }
          }
@@ -1633,6 +1639,7 @@ end
 # Issue configuration section
 
 def getUnitIssueConfig(unit, unitAttrs)
+  getUserPermissions(params[:username], params[:token], unit.id)[:admin] or halt(401)
   template = { "numbering" => "both", "rights" => nil, "buy_link" => nil }
   issues = Issue.where(unit_id: unit.id).order(Sequel.desc(:published)).order_append(Sequel.desc(Sequel[:issue].cast_numeric)).map { |issue|
     { voliss: "#{issue.volume}.#{issue.issue}" }.merge(template).
@@ -1704,6 +1711,7 @@ put "/api/unit/:unitID/issueConfig" do |unitID|
 end
 
 def getAuthorSearchData
+  getUserPermissions(params[:username], params[:token], 'root')[:super] or halt(401)
   str = params['q']
   str && str.length > 1 or return { authors: [] }
 

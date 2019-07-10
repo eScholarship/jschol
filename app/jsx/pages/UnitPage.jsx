@@ -53,10 +53,11 @@ class UnitPage extends PageBase {
   }
 
   cmsPage(data, page) {
-    if (this.state.adminLogin && !this.state.fetchingPerms && !this.state.isEditingPage) {
-      //console.log("Editing turned off; redirecting to unit page.")
-      setTimeout(()=>this.props.history.push(
-        data.unit.id == "root" ? "/" : `/uc/${data.unit.id}`), 0)
+    if ((this.state.adminLogin && !this.state.fetchingPerms && !this.state.isEditingPage) ||
+        !this.state.adminLogin)
+    {
+      console.log("Editing turned off; redirecting to unit page.")
+      setTimeout(()=>this.props.history.push(data.unit.id == "root" ? "/" : `/uc/${data.unit.id}`), 0)
     }
     else
       return page

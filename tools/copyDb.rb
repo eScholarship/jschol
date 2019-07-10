@@ -12,6 +12,9 @@ require 'bundler/setup'
 require 'sequel'
 require 'pp'
 
+# Make puts synchronous (e.g. auto-flush)
+STDOUT.sync = true
+
 # Parse command line
 if ARGV.length != 2
   STDERR.puts "Usage: #{__FILE__} db1 db2"
