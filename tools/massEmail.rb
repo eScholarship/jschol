@@ -82,10 +82,10 @@ $nDoubleTempBounces = 0
 
 ###################################################################################################
 # Grab SES email logs and put them into our 'awsLogs' directory
-def grabBounceLogs
+def grabBounceLogs(mode)
   # If logs are fresh, skip.
   age = ((Time.now.to_i - File.mtime("./awsLogs/ses-logs").to_i) / 60 / 60.0).round(1)
-  if age <= 18
+  if age <= 18 && mode != "bounceTest"
     STDERR.puts "SES logs checked #{age} hours ago; skipping grab."
     return
   end
@@ -173,8 +173,8 @@ end
 
 ###################################################################################################
 # Process any new bounce notifications
-def processBounces
-  grabBounceLogs
+def processBounces(mode)
+  grabBounceLogs(mode)
 
   STDERR.puts "Processing SES bounces."
   Dir.glob("./awsLogs/ses-logs/**/*").sort.each { |fn|
@@ -456,7 +456,7 @@ File.file?(template) or raise("File not found: #{template}")
 if mode == "bounceTest"
   OJS_DB.transaction {
     DB.transaction {
-      processBounces
+      processBounces(mode)
       raise Sequel::Rollback
     }
     raise Sequel::Rollback
@@ -464,7 +464,7 @@ if mode == "bounceTest"
   STDERR.puts "Bounce test complete (changes rolled back)."
   exit 0
 else
-  processBounces
+  processBounces(mode)
 end
 
 # Build the list of users (uses the bounce records built above)
