@@ -117,10 +117,16 @@ class PageBase extends React.Component
     this.dataURL = this.pageDataURL(props)
     let urlFetching = this.dataURL
     if (this.dataURL) {
+      let finalURL = this.pageDataURL(props)
+      let d = this.getSessionData()
+      if (d) {
+        finalURL += (finalURL.indexOf("?") < 0) ? "?" : "&"
+        finalURL += "username=" + d.username + "&token=" + d.token
+      }
       this.setState({ fetchingData: true, 
                       permissions: (this.state && this.pagePermissionsUnit() == this.state.permissionsUnit)
                         ? this.state.permissions : null })
-      $.getJSON(this.pageDataURL(props)).done((data) => {
+      $.getJSON(finalURL).done((data) => {
         if (urlFetching == this.dataURL) {
           this.setState({ pageData: data, fetchingData: false })
           if (this.pagePermissionsUnit() != this.state.permissionsUnit)
@@ -364,9 +370,10 @@ class PageBase extends React.Component
 
   renderError() {
     let data = this.state.pageData
+    let message = data.message ? data.message : data.error ? data.error : null
     return (
     <div>
-      <MetaTagsComp title={data.message}/>
+      <MetaTagsComp title={message}/>
       <Header1Comp/>
       {data.header && data.unit &&
         <NavBarComp navBar={data.header.nav_bar} unit={data.unit} socialProps={data.header.social} />}
@@ -378,7 +385,7 @@ class PageBase extends React.Component
       <div className="c-columns">
         <main id="maincontent" tabIndex="-1">
           <section className="o-columnbox1">
-            <ServerErrorComp error={data.message}/>
+            <ServerErrorComp error={message}/>
           </section>
         </main>
       </div>

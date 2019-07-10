@@ -600,6 +600,13 @@ def generalResponse
   # In development mode, skip iso
   ENV['ISO_PORT'] or return template
 
+  # Skip ISO for CMS pages, since we need to check credentials that are held in browser session storage,
+  # and thus don't have access until Javascript is running on the client side.
+  if request.path =~ %r{/(profile|carousel|issueConfig|unitBuilder|nav|sidebar|redirects|authorSearch)\b}
+    puts "Skipping ISO for CMS page."
+    return template
+  end
+
   # Get API data
   pageData = nil
   apiErr = catch (:halt) {
