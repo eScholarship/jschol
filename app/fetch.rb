@@ -6,6 +6,7 @@ BUFFER_HIGH_WATER = 2*1024*1024
 ###################################################################################################
 class Fetcher
   attr_reader :url, :bytesFetched, :status, :waitingThreads
+  attr_accessor :stop
 
   @@allFetchers = Set.new
   @@fetcherMutex = Mutex.new
@@ -68,11 +69,11 @@ class Fetcher
     rescue Exception => e
       @lengthReady.set  # just in case somebody's waiting for it
       @stop = true
-      if e.to_s =~ /closed stream|Socket timeout writing data/
+      if e.to_s =~ /closed stream|Socket timeout writing data|gotChunk stopped|Not Found/
         # already logged elsewhere
-      else
-        puts "Unexpected streamTo exception: #{e} #{e.backtrace}"
+        e.set_backtrace ""
       end
+      raise e
     ensure
       @waitingThreads.delete(Thread.current)
     end
@@ -84,7 +85,7 @@ class Fetcher
   end
 
   def gotChunk(chunk)
-    @stop and raise("stopped")
+    @stop and raise("gotChunk stopped")
     @bytesFetched += chunk.length
     @queue.push(chunk)
     @queuedLength += chunk.length
@@ -105,10 +106,12 @@ class Fetcher
         @status = "done"
         @queue << nil  # mark end-of-data
       rescue Exception => e
-        if e.to_s =~ /^stopped|closed stream|Socket timeout writing data/
-          puts "Stream closed early for url #{url}."
+        if e.to_s =~ /^stopped|closed stream|Socket timeout writing data|gotChunk stopped/
+          puts "Normal early stream close: #{e} for url #{@url}"
+        elsif e.to_s =~ /Not Found/
+          puts "Normal fetch exception: #{e} for url #{@url}."
         else
-          puts "Fetch exception: #{e} for url #{@url}. #{e.backtrace}"
+          puts "Unexpected fetch exception: #{e} for url #{@url}. #{e.backtrace}"
         end
         @status = e
         @queue << e
@@ -130,13 +133,19 @@ class Fetcher
           @@allFetchers.each { |fetcher|
             if fetcher.elapsed > 1
               buf.empty? and buf << sprintf(fmt, "Status", "time", "pct", "length", "rate", "thrds", "URL")
+              rate = fetcher.bytesFetched / (fetcher.elapsed + 0.01) / (1024*1024)
               buf << sprintf(fmt, fetcher.status.is_a?(Exception) ? "error" : fetcher.status,
                              sprintf("%d:%02d", (fetcher.elapsed/60).to_i, fetcher.elapsed % 60),
                              sprintf("%5.1f%%", (fetcher.bytesFetched * 100.0 / (fetcher.length || 1))),
                              fetcher.length,
-                             sprintf("%5.1fM", fetcher.bytesFetched / (fetcher.elapsed + 0.01) / (1024*1024)),
+                             sprintf("%5.1fM", rate),
                              fetcher.waitingThreads.size,
                              fetcher.url.sub("express.cdlib.org/dl/ark:/13030", "..."))
+              # Abort long-running, low-producing threads. Let's be conservative.
+              if !fetcher.stop && fetcher.status == 'fetching' && fetcher.elapsed >= 60 && rate < 0.1
+                puts "...setting stop flag on long-running fetch."
+                fetcher.stop = true
+              end
             end
             if fetcher.waitingThreads.empty? && !%w{starting fetching}.include?(fetcher.status)
               doneFetchers << fetcher

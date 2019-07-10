@@ -314,12 +314,8 @@ FileUtils.mkdir_p(TEMP_DIR)
 ###################################################################################################
 
 ###################################################################################################
-# IP address filtering, redirect processing, etc.
-$ipInclude = File.exist?("config/allowed_ips") && Regexp.new(File.read("config/allowed_ips").strip)
-$ipExclude = File.exist?("config/blocked_ips") && Regexp.new(File.read("config/blocked_ips").strip)
+# Redirect processing, access control, cache control, etc.
 before do
-  $ipInclude && !$ipInclude.match(request.ip) and halt 403
-  $ipExclude && $ipExclude.match(request.ip) and halt 403
 
   # On dev and stg, control access with a special cookie
   if ACCESS_COOKIE
@@ -365,11 +361,9 @@ get "/check" do
 end
 
 ###################################################################################################
-get %r{/rss/unit/([^/]+)} do |unitID|
-  Unit[unitID] or halt(404, "Unit not found")
-  response = HTTParty.get("#{$escholApiServer}/rss/unit/#{unitID}")
-  response.headers['content-type'] and content_type response.headers['content-type']
-  [response.code, response.body]
+# Permissive robots.txt on production; restrictive elsewhere.
+get "/robots.txt" do
+  return "User-agent: *\nDisallow:#{request.host == "escholarship.org" ? "" : " /"}\n"
 end
 
 ###################################################################################################
@@ -382,66 +376,6 @@ def proxyFromURL(url, overrideHostname = nil)
     headers "content-type" => fetcher.headers.dig('content-type', 0)
   end
   return stream { |out| fetcher.streamTo(out) }
-end
-
-###################################################################################################
-get %r{/uc/oai(.*)} do
-  request.url =~ %r{/uc/oai(.*)}
-  proxyFromURL("https://submit.escholarship.org/uc/oai#{$1}", "escholarship.org")
-end
-
-###################################################################################################
-# New OAI endpoint. In production, this proxying isn't necessary -- the ALB is configured to do it.
-get %r{/oai(.*)} do
-  request.url =~ %r{/oai(.*)}
-  headers = {}
-  request.env['HTTP_PRIVILEGED'] and headers['Privileged'] = request.env['HTTP_PRIVILEGED']
-  response = HTTParty.get("#{$escholApiServer}/oai#{$1}", headers: headers)
-  response.headers['content-type'] and content_type response.headers['content-type']
-  [response.code, response.body]
-end
-
-###################################################################################################
-get %r{/graphql} do
-  if request.query_string.empty?
-    redirect(to('/graphql/iql'))
-  else
-    outHeaders = {}
-    request.env['HTTP_PRIVILEGED'] and outHeaders['Privileged'] = request.env['HTTP_PRIVILEGED']
-    response = HTTParty.get("#{$escholApiServer}/graphql?#{URI.escape(request.query_string)}",
-                            headers: outHeaders)
-    %w{Content-Type Access-Control-Allow-Origin}.each { |h|
-      response.headers[h] and headers h => response.headers[h]
-    }
-    [response.code, response.body]
-  end
-end
-
-###################################################################################################
-get %r{/graphql(.*)} do
-  proxyFromURL("#{$escholApiServer}/graphql#{params['captures'][0]}", "escholarship.org")
-end
-
-###################################################################################################
-post %r{/graphql(.*)} do
-  headers = {}
-  request.env['HTTP_PRIVILEGED'] and headers['Privileged'] = request.env['HTTP_PRIVILEGED']
-  request.env['CONTENT_TYPE'] and headers['Content-Type'] = request.env['CONTENT_TYPE']
-  response = HTTParty.post("#{$escholApiServer}/graphql#{params['captures'][0]}",
-                           headers: headers,
-                           body: request.body.read)
-  %w{Content-Type Access-Control-Allow-Origin}.each { |h|
-    response.headers[h] and headers h => response.headers[h]
-  }
-  [response.code, response.body]
-end
-
-###################################################################################################
-options %r{/graphql(.*)} do
-  headers "Access-Control-Allow-Origin" => "*",
-          "Access-Control-Allow-Headers" => "Accept, Content-Type",
-          "Access-Control-Allow-Methods" => "GET, POST, OPTIONS"
-  200
 end
 
 ###################################################################################################
@@ -553,14 +487,7 @@ get "/content/:fullItemID/*" do |itemID, path|
   # Control how long this remains in browser and CloudFront caches
   cache_control :public, :max_age => 3600   # maybe more?
 
-  # Allow cross-origin requests so that main site and CloudFront cache can co-operate. Also, let
-  # crawlers know that the canonical URL is the item page.
-  if ENV['CLOUDFRONT_PUBLIC_URL']
-    headers "Access-Control-Allow-Origin" => "*",
-            "Access-Control-Allow-Headers" => "Range",
-            "Access-Control-Expose-Headers" => "Accept-Ranges, Content-Encoding, Content-Length, Content-Range",
-            "Access-Control-Allow-Methods" => "GET, OPTIONS"
-  end
+  # Let crawlers know that the canonical URL is the item page.
   headers "Link" => "<https://escholarship.org/uc/item/#{itemID.sub(/^qt/,'')}>; rel=\"canonical\""
 
   # Stream supp files out directly from Merritt. Also, if there's no display PDF, fall back
@@ -570,6 +497,8 @@ get "/content/:fullItemID/*" do |itemID, path|
     fetcher = MerrittFetcher.new(fileURL)
     if fetcher.length
       headers "Content-Length" => fetcher.length.to_s
+    elsif fetcher.status.to_s =~ /HTTP 404/
+      halt 404
     else
       raise fetcher.status
     end
@@ -644,29 +573,6 @@ end
 # the actual file.
 get %r{\/css\/main-[a-zA-Z0-9]{16}\.css} do
   call env.merge("PATH_INFO" => "/css/main.css")
-end
-
-###################################################################################################
-# CORS for CloudFront
-options %r{/dist/(\w+)/dist/prd/(\w+)/(.*)} do
-  headers "Access-Control-Allow-Origin" => "*",
-          "Access-Control-Allow-Headers" => "Range",
-          "Access-Control-Expose-Headers" => "Accept-Ranges, Content-Encoding, Content-Length, Content-Range",
-          "Access-Control-Allow-Methods" => "GET, OPTIONS"
-  return ""
-end
-
-###################################################################################################
-# Handle requests from CloudFront
-get %r{/dist/(\w+)/dist/prd/(\w+)/(.*)} do
-  cfKey, kind, path = params['captures']
-  if kind == "static"
-    call env.merge("PATH_INFO" => "/#{path}")
-  elsif kind == "content" || kind == "assets"
-    call env.merge("PATH_INFO" => "/#{kind}/#{path}")
-  else
-    halt(404)
-  end
 end
 
 ###################################################################################################
@@ -766,16 +672,6 @@ def generalResponse
   if body =~ %r{<metaTags>(.*)</metaTags>(.*)$}m
     metaTags, body = $1, $2
     metaTags.gsub!(/>\s*</, ">\n  <")  # add some newlines to make it look nice
-  end
-
-  # Redirect http to https (but only on production)
-  scheme = request.env['HTTP_CLOUDFRONT_FORWARDED_PROTO'] || request.scheme
-  if scheme == "http" && request.host == "escholarship.org"
-    uri = URI.parse(request.url)
-    uri.scheme = "https"
-    uri.port = nil
-    redirect to(uri.to_s), 301
-    return
   end
 
   # We need to turn the page data into a code snippet. It's not as straightforward as one mightt hink.
@@ -1092,10 +988,9 @@ def getItemPageData(shortArk)
   attrs = JSON.parse(Item.filter(:id => id).map(:attrs)[0])
   unitIDs = UnitItem.where(:item_id => id, :is_direct => true).order(:ordering_of_units).select_map(:unit_id)
   unit = unitIDs ? Unit[unitIDs[0]] : nil
-  content_prefix = ENV['CLOUDFRONT_PUBLIC_URL'] || ""
   pdf_url = nil
   if item.content_type == "application/pdf" && item.status == "published"
-    pdf_url = content_prefix+"/content/"+id+"/"+id+".pdf"
+    pdf_url = "/content/"+id+"/"+id+".pdf"
     displayPDF = DisplayPDF[id]
     if displayPDF && displayPDF.orig_timestamp
       pdf_url += "?t=#{displayPDF.orig_timestamp.to_i.to_s(36)}"
@@ -1123,7 +1018,6 @@ def getItemPageData(shortArk)
         :citation => citation,
         :content_html => getItemHtml(item.content_type, id),
         :content_key => calcContentKey(shortArk),
-        :content_prefix => content_prefix,
         :content_type => item.content_type,
         :data_digest => item.data_digest,            # Strictly used for admin reference
         :editors => editors.any? ? editors : nil,

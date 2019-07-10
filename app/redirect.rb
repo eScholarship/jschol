@@ -44,8 +44,8 @@ def checkRedirect(origURI)
       uri.host = "escholarship.org"
     elsif uri.path =~ %r{^/uc/item/(\w+)(.*)}
       uri = handleItemRedirect(uri, $1, $2)
-    elsif uri.path =~ %r{^/dist/prd/(.*)}
-      uri.path = "/#{$1}"  # old CloudFront URLs
+    elsif uri.path =~ %r{^/(dist/\w+/)?dist/prd/(.*)}
+      uri.path = "/#{$2}"  # old CloudFront URLs
     elsif uri.path =~ %r{^/uc/search} &&
           !(uri.query =~ %r{smode=(pmid|PR|postprintReport|repec|bpList|eeList|etdLinks)\b})
       uri = handleSearchRedirect(uri)
@@ -99,11 +99,7 @@ def handleItemRedirect(uri, itemID, remainder)
   elsif (redir = Redirect.where(kind: "item", from_path: "/uc/item/#{itemID}").first)
     uri.path = "#{redir.to_path}#{remainder}"
   elsif remainder =~ %r{^\.pdf}
-    if ENV['CLOUDFRONT_PUBLIC_URL']
-      uri = URI.parse("#{ENV['CLOUDFRONT_PUBLIC_URL']}/content/qt#{itemID}/qt#{itemID}.pdf")
-    else
-      uri.path = "/content/qt#{itemID}/qt#{itemID}.pdf"
-    end
+    uri.path = "/content/qt#{itemID}/qt#{itemID}.pdf"
   elsif !remainder.empty?
     uri.path = "/uc/item/#{itemID}"
   end
