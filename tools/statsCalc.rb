@@ -31,6 +31,8 @@ if (pos = ARGV.index("--test"))
   $testDate = Date.parse(ARGV.delete_at(pos))
 end
 
+$forceMode = ARGV.delete("--force")
+
 # Make puts synchronous (e.g. auto-flush)
 STDOUT.sync = true
 
@@ -339,149 +341,6 @@ class CloudFrontLogEventSource < LogEventSource
   end
 end
 
-# Fieldspec for ALB logs
-# e.g. https 2018-03-03T05:43:14.641341Z app/pub-jschol-prd-alb/683d40c2feb7aa9f 157.55.39.138:4121 172.30.35.180:18880
-#      0.000 0.157 0.000 500 500 301 475
-#      "GET https://escholarship.org:443/search/?q=Dur\xC3\x83\xC2\xA1n,%20Mercedes HTTP/1.1"
-#      "Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)" ECDHE-RSA-AES128-GCM-SHA256 TLSv1.2
-#      arn:aws:elasticloadbalancing:us-west-2:451826914157:targetgroup/pub-jschol-prd-tg/a1d8bd825b060349
-#      "Root=1-5a9a35f2-d2421d2484bafe92b1e358c8" "escholarship.org" "session-reused" 0
-# See http://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-access-logs.html
-O_ALB_type = 0
-O_ALB_timestamp = 1
-O_ALB_elb = 2
-O_ALB_client_port = 3
-O_ALB_target_port = 4
-O_ALB_request_processing_time = 5
-O_ALB_target_processing_time = 6
-O_ALB_response_processing_time = 7
-O_ALB_elb_status_code = 8
-O_ALB_target_status_code = 9
-O_ALB_received_bytes = 10
-O_ALB_sent_bytes = 11
-O_ALB_request = 12
-O_ALB_user_agent = 13
-O_ALB_ssl_cipher = 14
-O_ALB_ssl_protocol = 15
-O_ALB_target_group_arn = 16
-O_ALB_trace_id = 17
-O_ALB_domain_name = 18
-O_ALB_chosen_cert_arn = 19
-
-ALB_PORT_PAT = %r{^ (?<ip>   \d+\.\d+\.\d+\.\d+) :
-                  (?<port> \d+)
-               $}x
-
-ALB_REQ_PAT = %r{^ (?<method>   [-A-Z]+) \s
-                  (?<protocol> [^/]+) ://
-                  (?<host>     [^/:]+)
-                  (: (?<port>  \d+))?
-                  (?<path>     .*) \s
-                  (?<proto2>   [A-Z]+/[\d.]+)
-              $}x
-
-class ALBLogEventSource < LogEventSource
-  def initialize(path)
-    @path = path
-    m = path.match(%r{_ (?<year>   2\d\d\d )
-                        (?<month>  \d\d    )
-                        (?<day>    \d\d    ) T
-                        (?<hour>   \d\d    )
-                        (?<minute> \d\d    ) Z
-                     }x)or raise("can't parse ALB filename #{path.inspect}")
-    @date = Time.utc(m[:year].to_i, m[:month].to_i, m[:day].to_i, m[:hour].to_i, m[:minute]).localtime.to_date
-  end
-
-  def srcName
-    "ALB"
-  end
-
-  def eachEvent
-    eachLogLine(@path) { |line|
-      next unless line.include?("GET") && (line.include?("/item/") || line.include?("content/"))
-      m1 = line.scan(/"[^"]*"|\S+/).map { |s| s.gsub('"', '') }
-      m1.length >= O_ALB_chosen_cert_arn or raise("can't parse ALB line #{line.inspect}")
-      m1[O_ALB_target_group_arn] =~ /^(-$|arn:aws)/ or raise("bad parse of ALB line #{line.inspect}")
-      m2 = m1[O_ALB_client_port].match(ALB_PORT_PAT) or raise
-      next if m1[O_ALB_request] =~ /:\d+-/  # e.g. weird things like: "- http://pub-jschol-prd-alb-blah.amazonaws.com:80- "
-      m3 = m1[O_ALB_request].match(ALB_REQ_PAT) or raise("can't match request #{m1[O_ALB_request].inspect}")
-      yield LogEvent.new(m2[:ip],
-                         Time.parse(m1[O_ALB_timestamp]).localtime,
-                         m3[:method],
-                         m3[:path],
-                         m1[O_ALB_elb_status_code].to_i,
-                         nil,   # unfortunately, have to use trace to link referrer from jschol logs
-                         m1[O_ALB_user_agent] == '-' ? nil : m1[O_ALB_user_agent],
-                         m1[O_ALB_trace_id])
-    }
-  end
-end
-
-# Jschol log line patterns
-# e.g. [4] 157.55.39.165 - - [18/Dec/2017:00:00:02 -0800] "GET /search/?q=Kabeer,%20Naila HTTP/1.1, 3.1.2"
-#      200 - 0.7414 - "Root=1-5a377581-76cf406644dc717f3fd2ecbb"
-JSCHOL_LINE_PAT = %r{\[ (?<thread>    \d+       ) \] \s
-                        (?<ips>       [\w.:, ]+ ) \s
-                        (?<skip1>     -         ) \s
-                        (?<skip2>     -         ) \s
-                     \[ (?<timestamp> [^\]]+    ) \] \s
-                     "  (?<request>   [^"]+     ) " \s
-                        (?<status>    \d+       ) \s
-                        (?<size>      -|[-\d]+  ) \s
-                        (?<elapsed>   -|[\d.]+  )
-                        (\s (- | ("(?<referrer> [^"]*)"))
-                         \s (- | ("(?<trace_id> [^"]*)")))?
-                    $}x
-JSCHOL_REQ_PAT = %r{^ (?<method>   [A-Z]+ ) \s
-                      (?<path>     .*     ) \s
-                      (?<proto2>   [A-Z]+/[\d.]+)
-                      (,\s (?<ver> \d+\.[\d.]+))?
-                  $}x
-
-class JscholLogEventSource < LogEventSource
-  def initialize(path)
-    @path = path
-    m = path.match(%r{jschol\. (?<year>   2\d\d\d ) \.
-                               (?<month>  \d\d    ) \.
-                               (?<day>    \d\d    )
-                     }x) or raise("can't parse jschol log filename #{path.inspect}")
-    @date = Date.new(m[:year].to_i, m[:month].to_i, m[:day].to_i)
-  end
-
-  def srcName
-    "jschol"
-  end
-
-  def eachEvent
-    eachLogLine(@path) { |line|
-      next unless line.include?("GET") && (line.include?("/item/") || line.include?("content/"))
-      m1 = line.match(JSCHOL_LINE_PAT)
-      if !m1
-        if line =~ /\[\d+\] \d+\.\d+\.\d+\.\d+/
-          puts "Warning: skipping #{line.inspect}"
-        end
-        next  # lots of other kinds of lines come out of jschol; ignore them
-      end
-      m2 = m1[:request].match(JSCHOL_REQ_PAT) or raise("can't match request #{m1[:request].inspect}")
-      ip = nil
-      m1[:ips].split(/, ?/).each { |addr|
-        addr =~ /^\d+\.\d+\.\d+\.\d+$/ and ip ||= addr
-      }
-      ip or raise("can't find ip in #{m1[:ips].inspect}")
-      m3 = m1[:timestamp].match(%r{[^:]+:(?<time>[\d:]+)})
-      m3 or raise("can't parse time in #{m1[:timestamp]}")
-      yield LogEvent.new(m1[:ips].sub(/,.*/, ''),  # just the first IP (second is often CloudFront)
-                         parseTime(@date, m3[:time], false), # false = local time
-                         m2[:method],
-                         m2[:path],
-                         m1[:status].to_i,
-                         m1[:referrer] && !m1[:referrer].empty? ? m1[:referrer] : nil,
-                         nil,
-                         m1[:trace_id] && !m1[:trace_id].empty? ? m1[:trace_id] : nil)
-    }
-  end
-end
-
 ###################################################################################################
 def parseDate(dateStr)
   dateStr.instance_of?(Date) and return dateStr
@@ -783,27 +642,19 @@ end
 # Grab logs from their various places and put them into our 'awsLogs' directory
 def grabLogs
   # If logs are fresh, skip.
-  latest = Dir.glob("./awsLogs/alb-logs/**/*").inject(0) { |memo, path| [memo, File.mtime(path).to_i].max }
+  latest = Dir.glob("./awsLogs/cf-logs/**/*").inject(0) { |memo, path| [memo, File.mtime(path).to_i].max }
   age = ((Time.now.to_i - latest) / 60 / 60.0).round(1)
   if age <= 18
     puts "Logs grabbed #{age} hours ago; skipping grab."
     return
   end
 
-  puts "Grabbing AppLoadBalancer logs."
-  FileUtils.mkdir_p("./awsLogs/alb-logs")
+  puts "Grabbing CloudFront logs."
+  FileUtils.mkdir_p("./awsLogs/cf-logs")
   # Note: on production there's an old ~/.aws/config file that points to different AWS credentials.
   #       We use an explicit "instance" profile (also defined in that file) to get back to plain
   #       default instance credentials.
-  checkCall("aws s3 sync --profile instance --quiet --delete s3://pub-s3-prd/jschol/alb-logs/ ./awsLogs/alb-logs/")
-  puts "Grabbing CloudFront logs."
-  FileUtils.mkdir_p("./awsLogs/cf-logs")
   checkCall("aws s3 sync --profile instance --quiet --delete s3://pub-s3-prd/jschol/cf-logs/ ./awsLogs/cf-logs/")
-  puts "Grabbing jschol logs."
-  FileUtils.mkdir_p("./awsLogs/jschol-logs/2a")
-  checkCall("rsync -a --delete pub-jschol-prd-2a.escholarship.org:/apps/eschol/jschol/logs ./awsLogs/jschol-logs/2a/")
-  FileUtils.mkdir_p("./awsLogs/jschol-logs/2c")
-  checkCall("rsync -a --delete pub-jschol-prd-2c.escholarship.org:/apps/eschol/jschol/logs ./awsLogs/jschol-logs/2c/")
 end
 
 ###################################################################################################
@@ -970,27 +821,20 @@ def parseDateLogs(date, sources)
   puts "Parsing logs from #{date.iso8601}."
   startTime = Time.now
 
-  albLinks = {}
   sessionCounts = Hash.new { |h,k| h[k] = 0 }
   itemSessions  = Hash.new { |h,k| h[k] = {} }
   $testDate and testEvents = Hash.new { |h,k| h[k] = [] }
 
   totalReq = 0
   robotReq = 0
-  linkedRef = 0
-  fooCount = nil  # TODO: remove fooCount after this logic is fully tested
 
   prevSrc = nil
   sources.each { |source|
     if source.srcName != prevSrc
       puts "Source: #{source.srcName}"
       prevSrc = source.srcName
-      fooCount = 2**64
     end
-    fooCount < 0 and next
     source.eachEvent { |event|
-      fooCount -= 1
-      fooCount < 0 and break
       item, attrs, isRobot = identifyEvent(source.srcName, event)
       if !attrs
         #puts "  skip: #{source.srcName} #{item} #{event}"
@@ -1000,20 +844,6 @@ def parseDateLogs(date, sources)
 
       # Ascribe requests for redirected items to their target
       item = getFinalItem(item)
-
-      # We use jschol events *only* to connect referrers to ALB events
-      if source.srcName == "jschol"
-        if event.trace && albLinks[event.trace] && !albLinks[event.trace][:ref] && event.referrer
-          ref = extractReferrer(item, event)
-          if ref
-            #puts "Found matching ALB for trace #{event.trace}, " +
-            #     "copying referrer #{event.referrer.inspect} to #{albLinks[event.trace]}"
-            linkedRef += 1
-            albLinks[event.trace][:ref] = { lookupReferrer(extractReferrer(item, event)) => 1 }
-          end
-        end
-        next # only use for link, not for hit counting
-      end
 
       # Exclude known and suspected robots
       session = [event.ip, event.agent]
@@ -1057,11 +887,6 @@ def parseDateLogs(date, sources)
         sessionCounts[session] += 1
       end
 
-      # This has to come after we've recorded the session attrs
-      if source.srcName == "ALB" && event.trace
-        albLinks[event.trace] = itemSessions[item][session]
-      end
-
       $testDate and testEvents[[item,session]] << ["count", event]
     }
   }
@@ -1092,7 +917,6 @@ def parseDateLogs(date, sources)
   end
 
   puts "Robot req: #{robotReq}/#{totalReq} (#{sprintf("%.1f", robotReq * 100.0 / totalReq)}%)"
-  puts "Linked refs: #{linkedRef}"
 
   if $testDate
     puts "Writing robotsFound.out."
@@ -1203,6 +1027,33 @@ def parseDateLogs(date, sources)
 end
 
 ###################################################################################################
+class LoggingMD5Digest < Digest::MD5
+  def initialize
+    super
+    @buffer = []
+  end
+
+  def << (str)
+    @buffer << str
+    super(str)
+  end
+
+  def base64digest
+    digest = super
+    FileUtils.mkdir_p("./md5Logs")
+    File.open("./md5Logs/#{digest.gsub('/','.').sub(/=+$/,'')}", "w") { |io|
+      @buffer.each { |str| io << str }
+    }
+    return digest
+  end
+
+  # Useful only if hand-checking the files using command-line `md5sum`
+  def hex_to_base64_digest(hexdigest)
+    [[hexdigest].pack("H*")].pack("m0")
+  end
+end
+
+###################################################################################################
 # Figure out which logs need to be parsed.
 def parseLogs
   logsByDate = Hash.new { |h,k| h[k] = [] }
@@ -1216,28 +1067,6 @@ def parseLogs
     logsByDate[src.date] << src
   }
 
-  # Application Load Balancer (ALB) logs
-  Dir.glob("./awsLogs/alb-logs/**/*").sort.each { |fn|
-    next unless File.file?(fn)
-    next if File.empty?(fn)
-    next if fn =~ /ELBAccessLogTestFile/
-    next if fn == prev+".gz"  # skip dupe gz of non-gz file
-    prev = fn
-    src = ALBLogEventSource.new(fn)
-    logsByDate[src.date] << src
-  }
-
-  # jschol logs (needed to link referrers to ALB logs)
-  Dir.glob("./awsLogs/jschol-logs/**/*").sort.each { |fn|
-    next unless File.file?(fn)
-    next if File.empty?(fn)
-    next if fn =~ %r{/iso\.}  # we only want the jschol logs, not iso logs
-    next if fn == prev+".gz"  # skip dupe gz of non-gz file
-    prev = fn
-    src = JscholLogEventSource.new(fn)
-    logsByDate[src.date] << src
-  }
-
   # Test mode - just run a certain date
   if $testDate
     return parseDateLogs($testDate, logsByDate[$testDate])
@@ -1245,21 +1074,30 @@ def parseLogs
 
   # Form a digest for each date, so we can detect differences.
   dateDigests = Hash[logsByDate.map { |date, sources|
-    [date, calcBase64Digest(sources.reduce(Digest::MD5.new) { |digester, src|
+    [date, calcBase64Digest(sources.reduce(LoggingMD5Digest.new) { |digester, src|
       digester << src.path << File.size(src.path).to_s
     })]
   }]
 
   # Now work our way back from the end, checking for differences. Stop at the first date that
   # has the same digest as previously processed. This logic is to prevent recalculating dates
-  # long-past because they logs get expired and deleted.
+  # long-past because their logs got expired and deleted.
   todo = []
   dateDigests.sort.reverse.each { |date, digest|
     existing = EventLog[date]
+    #puts "date=#{date} digest=#{digest} existing=#{existing && existing.digest}"
     break if existing and existing.digest == digest
     break if date <  ESCHOL5_RELEASE_DATE # ignore activity before release
     todo.unshift [date, digest]   # unshift so we end up in forward date order
   }
+
+  if todo.size > 10 && !$forceMode
+    puts("Error: would process #{todo.size} log dates starting at #{todo[0][0].to_s}. " +
+         "It is unusual for more than a few days to be processed, unless stats calculation has been " +
+         "off or failing for a long time. You may want to investigate (md5Logs dir may help), or " +
+         "override this message with --force")
+    exit 1
+  end
 
   # And process each one
   todo.each { |date, digest|
