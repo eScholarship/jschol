@@ -363,7 +363,11 @@ end
 ###################################################################################################
 # Permissive robots.txt on production; restrictive elsewhere.
 get "/robots.txt" do
-  return "User-agent: *\nDisallow:#{request.host == "escholarship.org" ? "" : " /"}\n"
+  content_type "text/plain"
+  lines = ["User-agent: *",
+           "Disallow:#{request.host == "escholarship.org" ? "" : " /"}",
+           "Sitemap: #{request.scheme}://#{request.host}/siteMapIndex.xml"]
+  return lines.join("\n")
 end
 
 ###################################################################################################
