@@ -1948,7 +1948,7 @@ def convertPDF(itemID)
     begin
       splashLinSize = splashGen(itemID, instrucs, linFile, splashLinFile.path)
     rescue Exception => e
-      if e.to_s =~ /Internal Server Error/
+      if e.to_s =~ /Internal Server Error|Error 500/
         puts "Warning: splash generator failed; falling back to plain."
       else
         raise
