@@ -366,7 +366,7 @@ get "/robots.txt" do
   content_type "text/plain"
   lines = ["User-agent: *",
            "Disallow:#{request.host == "escholarship.org" ? "" : " /"}",
-           "Sitemap: #{request.scheme}://#{request.host}/siteMapIndex.xml"]
+           "Sitemap: #{request.env['HTTP_CLOUDFRONT_FORWARDED_PROTO'] || request.scheme}://#{request.host}/siteMapIndex.xml"]
   return lines.join("\n")
 end
 
