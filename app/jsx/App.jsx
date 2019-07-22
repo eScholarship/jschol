@@ -30,12 +30,6 @@ Array.prototype.includes = require('array-includes').shim()
 
 ReactGA.initialize('UA-26286226-1', { debug: false })
 
-let logPageView = () => {
-  ReactGA.set({ page: window.location.pathname + window.location.search,
-                anonymizeIp: true })
-  ReactGA.pageview(window.location.pathname + window.location.search)
-}
-
 let prevPathname = null
 
 class RecordLocation extends React.Component
@@ -44,6 +38,11 @@ class RecordLocation extends React.Component
     if (this.props.location.pathname != prevPathname) {
       this.props.location.prevPathname = prevPathname
       prevPathname = this.props.location.pathname
+      if (!(typeof document === "undefined")) {
+        ReactGA.set({ page: window.location.pathname + window.location.search,
+                      anonymizeIp: true })
+        ReactGA.pageview(window.location.pathname + window.location.search)
+      }
     }
     return null
   }
