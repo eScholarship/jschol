@@ -668,16 +668,17 @@ end
 
 # Get recent items (with author info) given a unit ID, by most recent added date
 # Pass an item id in if you don't want that item included in results
+# This query takes a while, so we cache the results
 def getRecentItems(unitID, limit=5, item_id=nil)
-  items = item_id ? Item.join(:unit_items, :item_id => :id).where(unit_id: unitID)
-                        .where(status: 'published')
-                        .exclude(id: item_id)
-                        .reverse(:added).limit(limit)
-                  : Item.join(:unit_items, :item_id => :id).where(unit_id: unitID)
-                        .where(status: 'published')
-                        .reverse(:added).limit(limit)
-  return items.map { |item|
-    { id: item.id, title: item.title, authors: getItemAuthors(item.id), genre: item.genre, 
+  cacheKey = "#{unitID}|#{limit}"
+  $recentItems[cacheKey] ||= Item.join(:unit_items, :item_id => :id)
+                                 .where(unit_id: unitID)
+                                 .where(status: 'published')
+                                 .reverse(:added).limit(limit+1)  # so we can filter out one item by id later
+                                 .select(:id)
+                                 .map { |item| item.id }
+  return Item.where(id: $recentItems[cacheKey].select{ |id| id != item_id }[0,limit]).map { |item|
+    { id: item.id, title: item.title, authors: getItemAuthors(item.id), genre: item.genre,
       author_hide: JSON.parse(item.attrs)["author_hide"] }
   }
 end

@@ -278,6 +278,9 @@ def fillCaches
       # OTHER
       $staticRedirects = getStaticRedirects
 
+      # RECENT ITEMS - filled incrementally rather than up-front
+      $recentItems = {}
+
       puts "...filled             "
     rescue Exception => e
       puts "Unexpected exception during cache filling: #{e} #{e.backtrace}"
