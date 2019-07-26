@@ -968,8 +968,8 @@ def parseUCIngest(itemID, inMeta, fileType)
   dbItem[:content_type] = attrs[:suppress_content] ? nil :
                           attrs[:withdrawn_date] ? nil :
                           isEmbargoed(attrs[:embargo_date]) ? nil :
+                          pdfExists ? "application/pdf" :  # consider before non-textual, in case PDF was supplied by Elements
                           inMeta[:type] == "non-textual" ? nil :
-                          pdfExists ? "application/pdf" :
                           contentType && contentType.strip.length > 0 ? contentType :
                           nil
   dbItem[:genre]        = (!attrs[:suppress_content] &&
