@@ -42,6 +42,9 @@ def checkRedirect(origURI)
            "pub-jschol-prd.escholarship.org"
           ].include?(uri.host)
       uri.host = "escholarship.org"
+    elsif uri.path =~ %r{^/uc/oai/?(.*)}
+      uri.path = "/oai#{$1}"
+      break
     elsif uri.path =~ %r{^/uc/item/(\w+)(.*)}
       uri = handleItemRedirect(uri, $1, $2)
     elsif uri.path =~ %r{^/(dist/\w+/)?dist/prd/(.*)}
