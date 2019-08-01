@@ -1084,6 +1084,55 @@ put "/api/unit/:unitID/unitBuilder" do |parentUnitID|
 end
 
 ###################################################################################################
+# Adopt an existing unit as a sub-unit
+put "/api/unit/:unitID/adoptUnit" do |parentUnitID|
+  # Only super-users allowed to adopt units
+  getUserPermissions(params[:username], params[:token], parentUnitID)[:super] or halt(401)
+
+  existingUnitID = params[:existingUnitID]
+  Unit[existingUnitID] or jsonHalt(400, "Unknown unit ID")
+
+  DB.transaction {
+    maxExisting = UnitHier.where(ancestor_unit: parentUnitID, is_direct: 1).max(:ordering)
+    UnitHier.create(unit_id: existingUnitID,
+                    ancestor_unit: parentUnitID,
+                    ordering: maxExisting.nil? ? 1 : maxExisting+1,
+                    is_direct: true)
+    UnitHier.where(unit_id: parentUnitID).each { |hier|
+      begin
+        UnitHier.create(unit_id: existingUnitID,
+                        ancestor_unit: hier.ancestor_unit,
+                        is_direct: false)
+      rescue
+        puts "Skipping hier create for unit=#{existingUnitID} ancestor=#{hier.ancestor_unit}"
+      end
+    }
+  }
+  refreshUnitsHash
+  return {status: "ok"}.to_json
+end
+
+###################################################################################################
+# Disown a sub-unit (must have at least one other parent)
+put "/api/unit/:unitID/disownUnit" do |parentUnitID|
+  # Only super-users allowed to disown units
+  getUserPermissions(params[:username], params[:token], parentUnitID)[:super] or halt(401)
+
+  existingUnitID = params[:existingUnitID]
+  Unit[existingUnitID] or jsonHalt(400, "Unknown unit ID")
+  UnitHier.where(ancestor_unit: parentUnitID, unit_id: existingUnitID, is_direct: 1).empty? and jsonHalt(400, "Unit is not a child")
+  UnitHier.where(unit_id: existingUnitID, is_direct: 1).count >= 2 or jsonHalt(400, "Unit would be orphaned")
+
+  DB.transaction {
+    UnitHier.where(unit_id: existingUnitID, ancestor_unit: parentUnitID, is_direct: 1).delete
+    rebuildIndirectLinks(parentUnitID)
+    rebuildIndirectLinks(existingUnitID)
+  }
+  refreshUnitsHash
+  return {status: "ok"}.to_json
+end
+
+###################################################################################################
 # Re-order units
 put "/api/unit/:unitID/unitOrder" do |unitID|
   # Check user permissions

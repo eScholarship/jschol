@@ -122,6 +122,40 @@ export default class UnitBuilderLayout extends React.Component
                 </FormComp>
               </details>
             }
+            {/oru|campus/.test(this.props.unit.type) &&
+              <details className="c-togglecontent">
+                <summary>Adopt existing unit as sub-unit</summary>
+                <FormComp onSubmit={ (event, data) => {
+                            event.preventDefault()
+                            this.props.sendApiData("PUT", `/api/unit/${this.props.unit.id}/adoptUnit`, data)
+                          }}>
+                  <p><i>Make sure you are accessing this page from the desired parent unit.</i></p>
+
+                  <label className="c-editable-page__label" htmlFor="existingUnitID">Existing unit URL to adopt: </label>
+                  <input className="c-editable-page__input" id="existingUnitID" name="existingUnitID" type="text"/>
+
+                  <button type="submit">Adopt Unit</button>
+                </FormComp>
+              </details>
+            }
+            {/oru|campus/.test(this.props.unit.type) &&
+              <details className="c-togglecontent">
+                <summary>Disown sub-unit</summary>
+                <FormComp onSubmit={ (event, data) => {
+                            event.preventDefault()
+                            this.props.sendApiData("PUT", `/api/unit/${this.props.unit.id}/disownUnit`, data)
+                          }}>
+
+                  <p><i>This option will only work for child units that have at least one other parent, to avoid orphans.
+                        You can use Delete Unit for units that only have one parent.</i></p>
+
+                  <label className="c-editable-page__label" htmlFor="existingUnitID">Child unit URL to disown: </label>
+                  <input className="c-editable-page__input" id="existingUnitID" name="existingUnitID" type="text"/>
+
+                  <button type="submit">Disown Unit</button>
+                </FormComp>
+              </details>
+            }
 
             <details className="c-togglecontent">
               <summary>Move this unit</summary>
