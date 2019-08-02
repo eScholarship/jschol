@@ -361,8 +361,12 @@ end
 # Unit builder data
 def getUnitBuilderData(unit)
   getUserPermissions(params[:username], params[:token], unit.id)[:admin] or halt(401)
-  return { sub_units: UnitHier.where(ancestor_unit: unit.id, is_direct: true).order(:ordering).map { |u|
-    {id: u.unit_id, name: u.unit.name, type: u.unit.type} } }
+  return {
+    sub_units: UnitHier.where(ancestor_unit: unit.id, is_direct: true).order(:ordering).map { |u|
+                {id: u.unit_id, name: u.unit.name, type: u.unit.type} },
+    parent_units: UnitHier.where(unit_id: unit.id, is_direct: true).map { |u|
+                {id: u.ancestor_unit, name: $unitsHash[u.ancestor_unit].name, type: $unitsHash[u.ancestor_unit].type} }
+  }
 end
 
 # Department Landing Page
