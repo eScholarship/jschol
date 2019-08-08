@@ -68,6 +68,14 @@ ZIP="$DIR-$VERSION.zip"
 git ls-files -x app | xargs zip -ry dist/$ZIP   # picks up mods in working dir, unlike 'git archive'
 zip -r dist/$ZIP app/js app/css
 
+# add the temporary overlay files
+mkdir -p tmp/app
+cp -r overlay_files/* tmp/app/
+cd tmp
+zip -r ../dist/$ZIP app/
+rm -rf tmp/app
+cd ..
+
 aws s3 cp dist/$ZIP s3://$BUCKET/$DIR/$ZIP
 
 aws elasticbeanstalk create-application-version \

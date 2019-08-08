@@ -19,6 +19,7 @@ logs/
 mailLogs/
 node_modules/
 normalized/
+overlay_files/
 prefilterDirs.txt
 public/css/
 public/js/
