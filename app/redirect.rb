@@ -67,8 +67,11 @@ def checkRedirect(origURI)
       uri.path = "/images#{uri.path}"
       break
     elsif uri.path =~ /(\.html?$)|(\.cgi)|(cgi-bin)/ && !(uri.path =~ %r{/inner/})  # old HTML and CGI pages
-      uri.path = "/"
-      uri.query = nil
+      fpath = "./app/#{sanitizeFilePath(uri.path).sub(%r{^/+}, '')}"
+      if !File.exist?(fpath) # allow overlaid HTML files at the root, e.g. for Google site verification
+        uri.path = "/"
+        uri.query = nil
+      end
     end
     break if uri == fromURI
     tried.include?(uri) and raise("URI redirect loop detected involving #{uri.to_s}")
