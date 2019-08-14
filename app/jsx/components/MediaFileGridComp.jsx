@@ -83,4 +83,4 @@ class MediaFileGridComp extends React.Component {
   }
 }
 
-module.exports = MediaFileGridComp;
+export default MediaFileGridComp;

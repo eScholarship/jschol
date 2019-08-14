@@ -28,4 +28,4 @@ class SocialIconsComp extends React.Component {
   }
 }
 
-module.exports = SocialIconsComp;
+export default SocialIconsComp;

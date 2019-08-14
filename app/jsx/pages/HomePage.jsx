@@ -83,4 +83,4 @@ class HomePage extends PageBase
   }
 }
 
-module.exports = HomePage;
+export default HomePage;

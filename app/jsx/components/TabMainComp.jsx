@@ -158,4 +158,4 @@ class TabMainComp extends React.Component {
   }
 }
 
-module.exports = TabMainComp;
+export default TabMainComp;

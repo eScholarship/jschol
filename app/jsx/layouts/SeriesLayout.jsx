@@ -146,4 +146,4 @@ class SeriesLayout extends React.Component {
   }
 }
 
-module.exports = SeriesLayout
+export default SeriesLayout

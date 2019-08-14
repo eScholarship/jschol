@@ -34,4 +34,4 @@ class CustomSelectorCampusObj extends React.Component {
   }
 }
 
-module.exports = CustomSelectorCampusObj;
+export default CustomSelectorCampusObj;

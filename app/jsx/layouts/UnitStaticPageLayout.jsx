@@ -36,4 +36,4 @@ class UnitStaticPageLayout extends React.Component
   }
 }
 
-module.exports = UnitStaticPageLayout
+export default UnitStaticPageLayout

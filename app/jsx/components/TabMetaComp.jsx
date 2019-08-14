@@ -108,4 +108,4 @@ class TabMetaComp extends React.Component {
   }
 }
 
-module.exports = TabMetaComp;
+export default TabMetaComp;

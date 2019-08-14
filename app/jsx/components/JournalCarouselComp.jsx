@@ -80,4 +80,4 @@ class JournalCarouselComp extends React.Component {
   }
 }
 
-module.exports = JournalCarouselComp;
+export default JournalCarouselComp;

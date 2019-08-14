@@ -27,4 +27,4 @@ class MediaViewerImageObj extends React.Component {
   }
 }
 
-module.exports = MediaViewerImageObj;
+export default MediaViewerImageObj;

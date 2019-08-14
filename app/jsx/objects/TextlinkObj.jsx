@@ -32,4 +32,4 @@ class TextlinkObj extends React.Component {
   }
 }
 
-module.exports = TextlinkObj;
+export default TextlinkObj;

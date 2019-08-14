@@ -44,9 +44,9 @@ module.exports = {
     }),
     // Generates manifest.json so app can know the exact names of files for cache-busting
     new ManifestPlugin(),
-    new ProgressPlugin( (percent, message) =>
-      process.stdout.write(" [" + Math.round(percent*100) + "%] " + message + "                                \r")
-    )
+    //new ProgressPlugin( (percent, message) =>
+    //  process.stdout.write(" [" + Math.round(percent*100) + "%] " + message + "                                \r")
+    //)
   ],
   resolve: {
     alias: {
@@ -60,7 +60,7 @@ module.exports = {
       loader: 'babel-loader'
     },
     {
-      test: /node_modules.pdfjs-embed2.*\.js$/,
+      test: /pdfjs-embed2.*\.js$/,
       exclude: /src\/core\/(glyphlist|unicode)/,
       loader: 'babel-loader'
     }]

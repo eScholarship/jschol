@@ -122,4 +122,4 @@ class MediaViewerComp extends React.Component {
   }
 }
 
-module.exports = MediaViewerComp;
+export default MediaViewerComp;

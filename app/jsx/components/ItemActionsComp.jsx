@@ -150,4 +150,4 @@ class ItemActionsComp extends React.Component {
   }
 }
         
-module.exports = ItemActionsComp;
+export default ItemActionsComp;

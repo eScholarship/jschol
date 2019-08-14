@@ -43,4 +43,4 @@ class MediaViewerObj extends React.Component {
   }
 }
 
-module.exports = MediaViewerObj;
+export default MediaViewerObj;

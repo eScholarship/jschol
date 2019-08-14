@@ -33,4 +33,4 @@ class ToggleListSubComp extends React.Component {
   }
 }
 
-module.exports = ToggleListSubComp;
+export default ToggleListSubComp;

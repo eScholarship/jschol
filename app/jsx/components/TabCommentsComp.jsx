@@ -12,4 +12,4 @@ class TabCommentsComp extends React.Component {
   }
 }
 
-module.exports = TabCommentsComp;
+export default TabCommentsComp;

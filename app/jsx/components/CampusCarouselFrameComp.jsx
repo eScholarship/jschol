@@ -23,4 +23,4 @@ class CampusCarouselFrameComp extends React.Component {
   }
 }
 
-module.exports = CampusCarouselFrameComp;
+export default CampusCarouselFrameComp;

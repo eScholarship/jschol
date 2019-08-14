@@ -35,4 +35,4 @@ class JournalObj extends React.Component {
   }
 }
 
-module.exports = JournalObj;
+export default JournalObj;

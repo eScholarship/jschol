@@ -18,4 +18,4 @@ class ViewExternalComp extends React.Component {
   }
 }
 
-module.exports = ViewExternalComp;
+export default ViewExternalComp;

@@ -38,4 +38,4 @@ class MediaFileDataObj extends React.Component {
   }
 }
 
-module.exports = MediaFileDataObj;
+export default MediaFileDataObj;

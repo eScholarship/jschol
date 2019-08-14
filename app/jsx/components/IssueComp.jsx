@@ -62,4 +62,4 @@ class IssueComp extends React.Component {
   }
 }
 
-module.exports = IssueComp;
+export default IssueComp;

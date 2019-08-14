@@ -394,4 +394,4 @@ class PageBase extends React.Component
 
 }
 
-module.exports = PageBase
+export default PageBase

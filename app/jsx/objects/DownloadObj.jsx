@@ -65,4 +65,4 @@ class DownloadObj extends React.Component {
   }
 }
 
-module.exports = DownloadObj;
+export default DownloadObj;

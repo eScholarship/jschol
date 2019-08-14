@@ -38,4 +38,4 @@ class HeadingObj extends React.Component {
   }
 }
 
-module.exports = HeadingObj;
+export default HeadingObj;

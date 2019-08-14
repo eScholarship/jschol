@@ -141,4 +141,4 @@ class UnitPage extends PageBase {
 
 }
 
-module.exports = UnitPage
+export default UnitPage

@@ -118,4 +118,4 @@ class UnitCarouselComp extends React.Component {
   }
 }
 
-module.exports = UnitCarouselComp;
+export default UnitCarouselComp;

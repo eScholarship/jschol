@@ -127,4 +127,4 @@ class ColumnBoxObj extends React.Component {
   }
 }
 
-module.exports = ColumnBoxObj;
+export default ColumnBoxObj;

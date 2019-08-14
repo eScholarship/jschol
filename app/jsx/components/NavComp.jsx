@@ -78,4 +78,4 @@ class NavComp extends React.Component {
   }
 }
 
-module.exports = NavComp;
+export default NavComp;

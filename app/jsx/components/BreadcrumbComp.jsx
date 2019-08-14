@@ -28,4 +28,4 @@ class BreadcrumbComp extends React.Component {
   }
 }
 
-module.exports = BreadcrumbComp;
+export default BreadcrumbComp;

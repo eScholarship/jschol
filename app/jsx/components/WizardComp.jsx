@@ -190,4 +190,4 @@ class WizardComp extends React.Component {
   }
 }
 
-module.exports = WizardComp;
+export default WizardComp;

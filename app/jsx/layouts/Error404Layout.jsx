@@ -76,4 +76,4 @@ class Error404Layout extends React.Component {
   }
 }
 
-module.exports = Error404Layout;
+export default Error404Layout;

@@ -45,4 +45,4 @@ class NotYetLink extends React.Component {
   }
 }
 
-module.exports = NotYetLink;
+export default NotYetLink;

@@ -30,4 +30,4 @@ class CustomSelectorObj extends React.Component {
   }
 }
 
-module.exports = CustomSelectorObj;
+export default CustomSelectorObj;

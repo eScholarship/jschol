@@ -52,4 +52,4 @@ class TabSupplementalComp extends React.Component {
   }
 }
 
-module.exports = TabSupplementalComp;
+export default TabSupplementalComp;

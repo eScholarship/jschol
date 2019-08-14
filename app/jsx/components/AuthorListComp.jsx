@@ -51,4 +51,4 @@ class AuthorListComp extends React.Component {
   }
 }
 
-module.exports = AuthorListComp;
+export default AuthorListComp;

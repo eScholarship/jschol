@@ -6,7 +6,7 @@ import Breakpoints from '../../js/breakpoints.json'
 
 export default class PdfViewerComp extends React.Component
 {
-  initted: false
+  initted = false
 
   // Re-initialize when loading new item 
   componentWillReceiveProps(nextProps) {

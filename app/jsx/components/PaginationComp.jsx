@@ -169,4 +169,4 @@ class PaginationComp extends React.Component {
 
 }
 
-module.exports = PaginationComp;
+export default PaginationComp;

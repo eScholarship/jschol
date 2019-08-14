@@ -85,4 +85,4 @@ class ColumnsComp extends React.Component {
   }
 }
 
-module.exports = ColumnsComp;
+export default ColumnsComp;

@@ -10,4 +10,4 @@ class SkipNavComp extends React.Component {
   }
 }
 
-module.exports = SkipNavComp;
+export default SkipNavComp;
