@@ -10,8 +10,6 @@
   "author": "California Digital Library",
   "license": "MIT",
   "devDependencies": {
-    "@babel/core": "^7.0.0",
-    "@babel/polyfill": "^7.0.0",
     "babel-loader": "^8.0.0",
     "backstopjs": "^3.8.8",
     "chai": "^3.5.0",
@@ -67,6 +65,7 @@
     "@babel/plugin-proposal-throw-expressions": "^7.0.0",
     "@babel/plugin-syntax-dynamic-import": "^7.0.0",
     "@babel/plugin-syntax-import-meta": "^7.0.0",
+    "@babel/polyfill": "^7.0.0",
     "@babel/preset-env": "^7.0.0",
     "@babel/preset-react": "^7.0.0",
     "@babel/register": "^7.0.0",
