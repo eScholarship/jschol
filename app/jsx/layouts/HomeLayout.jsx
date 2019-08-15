@@ -105,4 +105,4 @@ class HomeLayout extends React.Component {
   }
 }
 
-module.exports = HomeLayout;
+export default HomeLayout;

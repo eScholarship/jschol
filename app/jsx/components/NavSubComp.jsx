@@ -21,4 +21,4 @@ class NavSubComp extends React.Component {
   }
 }
 
-module.exports = NavSubComp;
+export default NavSubComp;

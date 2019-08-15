@@ -76,4 +76,4 @@ class PubComp extends React.Component {
   }
 }
 
-module.exports = PubComp;
+export default PubComp;

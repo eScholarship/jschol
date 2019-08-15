@@ -37,4 +37,4 @@ class MediaFeatureObj extends React.Component {
   }
 }
 
-module.exports = MediaFeatureObj;
+export default MediaFeatureObj;

@@ -19,4 +19,4 @@ class MediaFeatureDataObj extends React.Component {
   }
 }
 
-module.exports = MediaFeatureDataObj;
+export default MediaFeatureDataObj;

@@ -100,4 +100,4 @@ if (!(typeof document === "undefined")) {
 }
 
 // When running on the server, return an object that iso can render.
-module.exports = App
+export default App

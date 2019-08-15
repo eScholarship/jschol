@@ -19,4 +19,4 @@ class SortPaginationComp extends React.Component {
   }
 }
 
-module.exports = SortPaginationComp;
+export default SortPaginationComp;

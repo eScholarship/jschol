@@ -31,4 +31,4 @@ class CampusSelectorComp extends React.Component {
   }
 }
 
-module.exports = CampusSelectorComp;
+export default CampusSelectorComp;

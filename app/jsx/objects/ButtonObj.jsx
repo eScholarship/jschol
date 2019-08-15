@@ -30,4 +30,4 @@ class InputObj extends React.Component {
   }
 }
 
-module.exports = InputObj;
+export default InputObj;

@@ -56,4 +56,4 @@ class HomeSection2Comp extends React.Component {
   }
 }
 
-module.exports = HomeSection2Comp;
+export default HomeSection2Comp;

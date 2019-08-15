@@ -167,4 +167,4 @@ class JournalLayout extends React.Component {
   }
 }
 
-module.exports = JournalLayout
+export default JournalLayout

@@ -60,4 +60,4 @@ class FilterComp extends React.Component {
   }
 }
 
-module.exports = FilterComp;
+export default FilterComp;

@@ -200,4 +200,4 @@ class DataTableComp extends React.Component {
   }
 }
 
-module.exports = DataTableComp;
+export default DataTableComp;

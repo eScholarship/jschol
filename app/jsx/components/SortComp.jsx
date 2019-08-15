@@ -73,4 +73,4 @@ class SortComp extends React.Component {
   }
 }
 
-module.exports = SortComp;
+export default SortComp;

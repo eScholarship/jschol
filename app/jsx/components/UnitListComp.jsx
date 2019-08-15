@@ -23,4 +23,4 @@ class UnitListComp extends React.Component {
   }
 }
 
-module.exports = UnitListComp;
+export default UnitListComp;

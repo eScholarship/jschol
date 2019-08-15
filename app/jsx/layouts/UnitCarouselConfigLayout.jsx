@@ -337,4 +337,4 @@ class UnitCarouselConfigLayout extends React.Component {
   }
 }
 
-module.exports = UnitCarouselConfigLayout
+export default UnitCarouselConfigLayout

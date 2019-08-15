@@ -25,4 +25,4 @@ class SocialFeedComp extends React.Component {
   }
 }
 
-module.exports = SocialFeedComp;
+export default SocialFeedComp;

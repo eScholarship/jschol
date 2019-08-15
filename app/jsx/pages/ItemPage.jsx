@@ -196,4 +196,4 @@ class ItemPage extends PageBase {
   }
 }
 
-module.exports = ItemPage;
+export default ItemPage;

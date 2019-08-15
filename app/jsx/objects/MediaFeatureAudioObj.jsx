@@ -19,4 +19,4 @@ class MediaFeatureAudioObj extends React.Component {
   }
 }
 
-module.exports = MediaFeatureAudioObj;
+export default MediaFeatureAudioObj;

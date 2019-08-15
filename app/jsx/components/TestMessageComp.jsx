@@ -29,4 +29,4 @@ class TestMessageComp extends React.Component {
     </Contexts.CMS.Consumer>
 }
 
-module.exports = TestMessageComp;
+export default TestMessageComp;

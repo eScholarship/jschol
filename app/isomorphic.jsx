@@ -29,7 +29,7 @@ function cacheBundle()
       lastStamp = curStamp
       if (AppRoot)
         decache('./jsx/App.jsx')
-      AppRoot = require('./jsx/App.jsx')
+      AppRoot = require('./jsx/App.jsx').default
       console.log("ISO: Bundle loaded.             ")
     }
   }

@@ -38,4 +38,4 @@ class LoginPage extends PageBase
   }
 }
 
-module.exports = LoginPage
+export default LoginPage

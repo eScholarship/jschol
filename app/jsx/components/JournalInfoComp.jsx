@@ -23,4 +23,4 @@ class JournalInfoComp extends React.Component {
   }
 }
 
-module.exports = JournalInfoComp;
+export default JournalInfoComp;

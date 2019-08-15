@@ -209,4 +209,4 @@ class CampusJournals extends React.Component {
   )}
 }
 
-module.exports = BrowsePage
+export default BrowsePage

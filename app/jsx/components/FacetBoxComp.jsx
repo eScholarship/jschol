@@ -14,4 +14,4 @@ class FacetBoxComp extends React.Component {
   }
 }
 
-module.exports = FacetBoxComp;
+export default FacetBoxComp;

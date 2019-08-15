@@ -218,4 +218,4 @@ class TabMetricsComp extends React.Component {
   }
 }
 
-module.exports = TabMetricsComp;
+export default TabMetricsComp;

@@ -94,4 +94,4 @@ class CampusLayout extends React.Component {
   }
 }
 
-module.exports = CampusLayout
+export default CampusLayout

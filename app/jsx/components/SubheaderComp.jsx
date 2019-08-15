@@ -122,4 +122,4 @@ class SubheaderComp extends React.Component {
   }
 }
 
-module.exports = SubheaderComp;
+export default SubheaderComp;

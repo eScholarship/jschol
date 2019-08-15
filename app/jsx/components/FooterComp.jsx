@@ -51,4 +51,4 @@ class FooterComp extends React.Component {
   }
 }
 
-module.exports = FooterComp;
+export default FooterComp;

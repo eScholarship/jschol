@@ -58,4 +58,4 @@ class LoginSuccessPage extends PageBase
   )}
 }
 
-module.exports = LoginSuccessPage
+export default LoginSuccessPage

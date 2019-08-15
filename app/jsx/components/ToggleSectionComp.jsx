@@ -24,4 +24,4 @@ class ToggleSectionComp extends React.Component {
   }
 }
 
-module.exports = ToggleSectionComp;
+export default ToggleSectionComp;

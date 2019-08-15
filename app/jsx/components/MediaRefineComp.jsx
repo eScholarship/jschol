@@ -43,4 +43,4 @@ class MediaRefineComp extends React.Component {
   }
 }
 
-module.exports = MediaRefineComp;
+export default MediaRefineComp;

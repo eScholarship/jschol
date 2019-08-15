@@ -69,4 +69,4 @@ class UnitSearchLayout extends React.Component {
   }
 }
 
-module.exports = UnitSearchLayout
+export default UnitSearchLayout

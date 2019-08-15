@@ -27,4 +27,4 @@ class ItemUnavailableObj extends React.Component {
   }
 }
 
-module.exports = ItemUnavailableObj;
+export default ItemUnavailableObj;

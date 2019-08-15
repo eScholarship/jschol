@@ -300,4 +300,4 @@ class UnitProfileLayout extends React.Component {
   }
 }
 
-module.exports = UnitProfileLayout
+export default UnitProfileLayout

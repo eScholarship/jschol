@@ -374,4 +374,4 @@ class TabAuthorComp extends React.Component {
   }
 }
 
-module.exports = TabAuthorComp;
+export default TabAuthorComp;

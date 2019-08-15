@@ -140,4 +140,4 @@ class RefineComp extends React.Component {
   }
 }
 
-module.exports = RefineComp;
+export default RefineComp;

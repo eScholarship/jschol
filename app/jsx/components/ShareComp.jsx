@@ -28,4 +28,4 @@ class ShareComp extends React.Component {
   }
 }
 
-module.exports = ShareComp;
+export default ShareComp;

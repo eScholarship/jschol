@@ -96,4 +96,4 @@ class InfoPagesComp extends React.Component {
   }
 }
 
-module.exports = InfoPagesComp;
+export default InfoPagesComp;

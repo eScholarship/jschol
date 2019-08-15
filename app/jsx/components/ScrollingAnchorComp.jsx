@@ -16,4 +16,4 @@ class ScrollingAnchorComp extends React.Component {
  }
 }
 
-module.exports = ScrollingAnchorComp;
+export default ScrollingAnchorComp;
