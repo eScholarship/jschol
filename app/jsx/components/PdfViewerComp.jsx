@@ -423,6 +423,6 @@ export default class PdfViewerComp extends React.Component
     </div> <!-- outerContainer -->
     <div id="printContainer"></div>
  </div> <!-- pdfjs-viewer -->
-    `}
+    `.replace('div class="progress"', 'div class="progress indeterminate" style="width:100%;"')}
   }
 }
