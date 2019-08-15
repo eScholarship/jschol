@@ -22,4 +22,4 @@ class HomeSection3Comp extends React.Component {
   }
 }
 
-module.exports = HomeSection3Comp;
+export default HomeSection3Comp;

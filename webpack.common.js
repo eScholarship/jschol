@@ -60,7 +60,7 @@ module.exports = {
       loader: 'babel-loader'
     },
     {
-      test: /node_modules.pdfjs-embed2.*\.js$/,
+      test: /pdfjs-embed2.*\.js$/,
       exclude: /src\/core\/(glyphlist|unicode)/,
       loader: 'babel-loader'
     }]

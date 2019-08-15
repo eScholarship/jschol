@@ -66,4 +66,4 @@ class CheckboxComp extends React.Component {
   }
 }
 
-module.exports = CheckboxComp;
+export default CheckboxComp;

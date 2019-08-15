@@ -50,4 +50,4 @@ class DescriptionListComp extends React.Component {
   }
 }
 
-module.exports = DescriptionListComp;
+export default DescriptionListComp;

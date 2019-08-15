@@ -63,4 +63,4 @@ class WizardRoleComp extends React.Component {
   }
 }
 
-module.exports = WizardRoleComp;
+export default WizardRoleComp;

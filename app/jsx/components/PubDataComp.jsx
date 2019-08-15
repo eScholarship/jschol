@@ -41,4 +41,4 @@ class PubDataComp extends React.Component {
   }
 }
 
-module.exports = PubDataComp;
+export default PubDataComp;

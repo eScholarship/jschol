@@ -19,4 +19,4 @@ class MediaFeatureImageObj extends React.Component {
   }
 }
 
-module.exports = MediaFeatureImageObj;
+export default MediaFeatureImageObj;

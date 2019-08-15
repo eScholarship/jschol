@@ -29,4 +29,4 @@ const AdminBarComp = (props) =>
     }
   </Contexts.CMS.Consumer>
 
-module.exports = AdminBarComp;
+export default AdminBarComp;

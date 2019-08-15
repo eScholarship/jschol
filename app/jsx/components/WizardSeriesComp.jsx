@@ -94,4 +94,4 @@ class WizardSeriesComp extends React.Component {
   }
 }
 
-module.exports = WizardSeriesComp;
+export default WizardSeriesComp;

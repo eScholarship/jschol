@@ -22,4 +22,4 @@ class JournalGridComp extends React.Component {
   }
 }
 
-module.exports = JournalGridComp;
+export default JournalGridComp;

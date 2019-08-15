@@ -177,4 +177,4 @@ class WizardInertComp extends React.Component {
   }
 }
 
-module.exports = WizardInertComp;
+export default WizardInertComp;

@@ -44,4 +44,4 @@ class NavBarComp extends React.Component {
   }
 }
 
-module.exports = NavBarComp;
+export default NavBarComp;

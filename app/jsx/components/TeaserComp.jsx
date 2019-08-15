@@ -33,4 +33,4 @@ class TeaserComp extends React.Component {
   }
 }
 
-module.exports = TeaserComp;
+export default TeaserComp;

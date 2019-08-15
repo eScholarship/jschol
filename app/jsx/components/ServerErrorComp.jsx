@@ -33,4 +33,4 @@ class ServerErrorComp extends React.Component {
   }
 }
 
-module.exports = ServerErrorComp;
+export default ServerErrorComp;

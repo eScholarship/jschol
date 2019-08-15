@@ -99,4 +99,4 @@ class CampusCarouselComp extends React.Component {
   }
 }
 
-module.exports = CampusCarouselComp;
+export default CampusCarouselComp;

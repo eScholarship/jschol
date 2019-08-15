@@ -76,5 +76,3 @@ export default class TruncationObj extends React.Component {
       }
     )
 }
-
-module.exports = TruncationObj

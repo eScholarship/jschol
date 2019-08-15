@@ -42,4 +42,4 @@ class LogoutSuccessPage extends PageBase
   )}
 }
 
-module.exports = LogoutSuccessPage
+export default LogoutSuccessPage

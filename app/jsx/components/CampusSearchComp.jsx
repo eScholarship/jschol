@@ -21,4 +21,4 @@ class CampusSearchComp extends React.Component {
   }
 }
 
-module.exports = CampusSearchComp;
+export default CampusSearchComp;

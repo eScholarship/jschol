@@ -43,4 +43,4 @@ class IssueActionsComp extends React.Component {
   }
 }
 
-module.exports = IssueActionsComp;
+export default IssueActionsComp;

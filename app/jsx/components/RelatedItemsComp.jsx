@@ -41,4 +41,4 @@ class RelatedItemsComp extends React.Component {
   }
 }
 
-module.exports = RelatedItemsComp;
+export default RelatedItemsComp;

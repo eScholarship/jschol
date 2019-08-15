@@ -307,4 +307,4 @@ class DrawerComp extends React.Component {
     </Contexts.CMS.Consumer>
 }
 
-module.exports = DrawerComp;
+export default DrawerComp;

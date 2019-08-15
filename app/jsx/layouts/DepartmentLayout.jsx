@@ -128,4 +128,4 @@ class DepartmentLayout extends React.Component {
   }
 }
 
-module.exports = DepartmentLayout
+export default DepartmentLayout

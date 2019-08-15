@@ -24,4 +24,4 @@ class CampusHeroComp extends React.Component {
   }
 }
 
-module.exports = CampusHeroComp;
+export default CampusHeroComp;

@@ -30,4 +30,4 @@ class HeaderComp1 extends React.Component {
   }
 }
 
-module.exports = HeaderComp1;
+export default HeaderComp1;

@@ -34,4 +34,4 @@ class TextListObj extends React.Component {
   }
 }
 
-module.exports = TextListObj;
+export default TextListObj;

@@ -77,4 +77,4 @@ class WithdrawModalComp extends React.Component {
   }
 }
 
-module.exports = WithdrawModalComp;
+export default WithdrawModalComp;

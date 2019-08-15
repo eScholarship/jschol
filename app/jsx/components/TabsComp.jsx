@@ -85,4 +85,4 @@ class TabsComp extends React.Component {
   }
 }
 
-module.exports = TabsComp;
+export default TabsComp;

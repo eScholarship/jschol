@@ -31,4 +31,4 @@ class MediaListComp extends React.Component {
   }
 }
 
-module.exports = MediaListComp;
+export default MediaListComp;

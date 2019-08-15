@@ -38,4 +38,4 @@ class MediaFileAudioObj extends React.Component {
   }
 }
 
-module.exports = MediaFileAudioObj;
+export default MediaFileAudioObj;

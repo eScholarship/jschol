@@ -67,4 +67,4 @@ class CarouselComp extends React.Component {
   }
 }
 
-module.exports = CarouselComp;
+export default CarouselComp;

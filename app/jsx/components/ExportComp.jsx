@@ -13,4 +13,4 @@ class ExportComp extends React.Component {
   }
 }
 
-module.exports = ExportComp;
+export default ExportComp;

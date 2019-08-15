@@ -32,4 +32,4 @@ class HeroComp extends React.Component {
   }
 }
 
-module.exports = HeroComp;
+export default HeroComp;

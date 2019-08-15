@@ -32,4 +32,4 @@ class LazyImageComp extends React.Component {
   }
 }
 
-module.exports = LazyImageComp;
+export default LazyImageComp;

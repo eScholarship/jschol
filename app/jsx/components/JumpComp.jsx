@@ -53,4 +53,4 @@ class JumpComp extends React.Component {
   }
 }
 
-module.exports = JumpComp;
+export default JumpComp;

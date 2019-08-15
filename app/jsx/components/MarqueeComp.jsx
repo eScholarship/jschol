@@ -131,4 +131,4 @@ class MarqueeComp extends React.Component {
   }
 }
 
-module.exports = MarqueeComp;
+export default MarqueeComp;

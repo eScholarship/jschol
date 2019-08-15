@@ -93,4 +93,4 @@ class WizardLinkComp extends React.Component {
   }
 }
 
-module.exports = WizardLinkComp;
+export default WizardLinkComp;

@@ -59,4 +59,4 @@ class HeaderComp2 extends React.Component {
   }
 }
 
-module.exports = HeaderComp2;
+export default HeaderComp2;

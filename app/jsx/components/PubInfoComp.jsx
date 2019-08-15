@@ -77,4 +77,4 @@ class PubInfoComp extends React.Component {
   }
 }
 
-module.exports = PubInfoComp;
+export default PubInfoComp;

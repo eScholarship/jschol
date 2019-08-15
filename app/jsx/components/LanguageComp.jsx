@@ -19,4 +19,4 @@ class LanguageComp extends React.Component {
   }
 }
 
-module.exports = LanguageComp;
+export default LanguageComp;

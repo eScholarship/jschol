@@ -24,4 +24,4 @@ class UnitSeriesComp extends React.Component {
   }
 }
 
-module.exports = UnitSeriesComp;
+export default UnitSeriesComp;

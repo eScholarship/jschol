@@ -26,4 +26,4 @@ class MediaModalComp extends React.Component {
   }
 }
 
-module.exports = MediaModalComp;
+export default MediaModalComp;

@@ -77,4 +77,4 @@ class SearchComp2 extends React.Component {
   }
 }
 
-module.exports = SearchComp2;
+export default SearchComp2;

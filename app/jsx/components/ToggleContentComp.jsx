@@ -14,4 +14,4 @@ class ToggleContentComp extends React.Component {
   }
 }
 
-module.exports = ToggleContentComp;
+export default ToggleContentComp;
