@@ -69,6 +69,7 @@ git ls-files -x app | xargs zip -ry dist/$ZIP   # picks up mods in working dir, 
 zip -r dist/$ZIP app/js app/css
 
 # add the temporary overlay files
+rm -rf tmp/app
 mkdir -p tmp/app
 cp -r overlay_files/* tmp/app/
 cd tmp
