@@ -338,7 +338,11 @@ def generateEmail(tpl, email, vars, allUnits, allHier)
   optoutKey = Digest::SHA1.hexdigest($subiSecrets['optoutSecret'] + email)[0,10]
   unsubscribeLink = "https://submit.escholarship.org/subi/optout?e=#{escapedEmail}&k=#{optoutKey}"
 
-  !vars[:people] || vars[:people].length <= 1 or raise("multiple people for email #{email}: #{vars[:people].inspect}")
+  if vars[:people] && vars[:people].length > 1
+    STDERR.puts "Warning: multiple people for email #{email}: #{vars[:people].inspect}"
+    vars[:people] = Set.new([vars[:people].to_a.sort[0]])
+    STDERR.puts "...choosing #{vars[:people].inspect} arbitrarily."
+  end
   person = vars[:people] && !vars[:people].empty? && vars[:people].to_a[0].sub(%r{^ark:/99166/}, '')
 
   return tpl.result(binding)
