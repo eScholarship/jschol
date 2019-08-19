@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-DEBUG=1
+DEBUG=
 if [[ -n "$DEBUG" ]]; then
   set -x
 fi
@@ -40,6 +40,7 @@ if [[ "$1" == *"prd"* && "$CUR_BRANCH" != "prd" ]]; then
 fi
 
 # make sure environment actually exists
+echo "Checking environment."
 env_exists=$(aws elasticbeanstalk describe-environments \
   --environment-name "$1" \
   --no-include-deleted \
@@ -53,6 +54,7 @@ if [[ env_exists -ne 1 ]]
 fi
 
 # Pretranslate all the CSS
+echo "Building app."
 ./gulp sass
 
 # Build the app (transpile, uglify, etc.) so it doesn't have to be built on each worker
@@ -63,6 +65,7 @@ else
 fi
 
 # package app and upload
+echo "Packaging app."
 mkdir -p dist
 ZIP="$DIR-$VERSION.zip"
 git ls-files -x app | xargs zip -ry dist/$ZIP   # picks up mods in working dir, unlike 'git archive'
@@ -79,6 +82,7 @@ cd ..
 
 aws s3 cp dist/$ZIP s3://$BUCKET/$DIR/$ZIP
 
+echo "Deploying."
 aws elasticbeanstalk create-application-version \
   --application-name $APPNAME \
   --region $REGION \
@@ -90,6 +94,31 @@ aws elasticbeanstalk update-environment \
   --environment-name "$1" \
   --region $REGION \
   --version-label "$VERSION"
+
+# Wait for the deploy to complete.
+echo "Waiting for deploy to finish."
+PREV_DATETIME=""
+while [[ 1 ]]; do
+  STATUS_JSON=`aws elasticbeanstalk describe-events --environment-name "$1" --region $REGION --max-items 1`
+  DATETIME=`echo "$STATUS_JSON" | jq '.Events[0].EventDate' | sed 's/"//g'`
+  MSG=`echo "$STATUS_JSON" | jq '.Events[0].Message' | sed 's/"//g'`
+  if [[ "$PREV_DATETIME" != "$DATETIME" ]]; then
+    PREV_DATETIME="$DATETIME"
+    echo "$DATETIME: $MSG"
+    if [[ "$MSG" =~ "update completed" ]]; then break; fi
+  fi
+  sleep 5
+done
+
+# Invalidate the CloudFront cache
+echo "Invalidating CloudFront cache."
+if [[ "$1" =~ "-stg" ]]; then
+  aws cloudfront create-invalidation --distribution-id E1PJWI7L2EBN0N --paths '/*'
+elif [[ "$1" =~ "-prd" ]]; then
+  aws cloudfront create-invalidation --distribution-id E1KER2WHN1RBOD --paths '/*'
+fi
+
+echo "Deployment complete."
 
 # Copyright (c) 2019, Regents of the University of California
 #
