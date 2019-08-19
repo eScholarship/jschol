@@ -35,4 +35,4 @@ class StatsObj extends React.Component {
   }
 }
 
-module.exports = StatsObj;
+export default StatsObj;

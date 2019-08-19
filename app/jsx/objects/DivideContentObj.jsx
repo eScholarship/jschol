@@ -26,4 +26,4 @@ class DivideContentObj extends React.Component {
   }
 }
 
-module.exports = DivideContentObj;
+export default DivideContentObj;

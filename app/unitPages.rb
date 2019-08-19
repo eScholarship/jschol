@@ -361,8 +361,12 @@ end
 # Unit builder data
 def getUnitBuilderData(unit)
   getUserPermissions(params[:username], params[:token], unit.id)[:admin] or halt(401)
-  return { sub_units: UnitHier.where(ancestor_unit: unit.id, is_direct: true).order(:ordering).map { |u|
-    {id: u.unit_id, name: u.unit.name, type: u.unit.type} } }
+  return {
+    sub_units: UnitHier.where(ancestor_unit: unit.id, is_direct: true).order(:ordering).map { |u|
+                {id: u.unit_id, name: u.unit.name, type: u.unit.type} },
+    parent_units: UnitHier.where(unit_id: unit.id, is_direct: true).map { |u|
+                {id: u.ancestor_unit, name: $unitsHash[u.ancestor_unit].name, type: $unitsHash[u.ancestor_unit].type} }
+  }
 end
 
 # Department Landing Page
@@ -1081,6 +1085,55 @@ put "/api/unit/:unitID/unitBuilder" do |parentUnitID|
   }
   refreshUnitsHash
   return {status: "ok", nextURL: "/uc/#{newUnitID}"}.to_json
+end
+
+###################################################################################################
+# Adopt an existing unit as a sub-unit
+put "/api/unit/:unitID/adoptUnit" do |parentUnitID|
+  # Only super-users allowed to adopt units
+  getUserPermissions(params[:username], params[:token], parentUnitID)[:super] or halt(401)
+
+  existingUnitID = params[:existingUnitID]
+  Unit[existingUnitID] or jsonHalt(400, "Unknown unit ID")
+
+  DB.transaction {
+    maxExisting = UnitHier.where(ancestor_unit: parentUnitID, is_direct: 1).max(:ordering)
+    UnitHier.create(unit_id: existingUnitID,
+                    ancestor_unit: parentUnitID,
+                    ordering: maxExisting.nil? ? 1 : maxExisting+1,
+                    is_direct: true)
+    UnitHier.where(unit_id: parentUnitID).each { |hier|
+      begin
+        UnitHier.create(unit_id: existingUnitID,
+                        ancestor_unit: hier.ancestor_unit,
+                        is_direct: false)
+      rescue
+        puts "Skipping hier create for unit=#{existingUnitID} ancestor=#{hier.ancestor_unit}"
+      end
+    }
+  }
+  refreshUnitsHash
+  return {status: "ok"}.to_json
+end
+
+###################################################################################################
+# Disown a sub-unit (must have at least one other parent)
+put "/api/unit/:unitID/disownUnit" do |parentUnitID|
+  # Only super-users allowed to disown units
+  getUserPermissions(params[:username], params[:token], parentUnitID)[:super] or halt(401)
+
+  existingUnitID = params[:existingUnitID]
+  Unit[existingUnitID] or jsonHalt(400, "Unknown unit ID")
+  UnitHier.where(ancestor_unit: parentUnitID, unit_id: existingUnitID, is_direct: 1).empty? and jsonHalt(400, "Unit is not a child")
+  UnitHier.where(unit_id: existingUnitID, is_direct: 1).count >= 2 or jsonHalt(400, "Unit would be orphaned")
+
+  DB.transaction {
+    UnitHier.where(unit_id: existingUnitID, ancestor_unit: parentUnitID, is_direct: 1).delete
+    rebuildIndirectLinks(parentUnitID)
+    rebuildIndirectLinks(existingUnitID)
+  }
+  refreshUnitsHash
+  return {status: "ok"}.to_json
 end
 
 ###################################################################################################

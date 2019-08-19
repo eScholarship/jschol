@@ -135,4 +135,4 @@ class ScholWorksComp extends React.Component {
   }
 }
 
-module.exports = ScholWorksComp
+export default ScholWorksComp

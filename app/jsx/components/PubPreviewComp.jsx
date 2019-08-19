@@ -46,4 +46,4 @@ class PubPreviewComp extends React.Component {
   }
 }
 
-module.exports = PubPreviewComp
+export default PubPreviewComp

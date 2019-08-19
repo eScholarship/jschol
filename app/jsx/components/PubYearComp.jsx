@@ -21,4 +21,4 @@ class PubYearComp extends React.Component {
   }
 }
 
-module.exports = PubYearComp;
+export default PubYearComp;

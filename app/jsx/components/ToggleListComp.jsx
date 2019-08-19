@@ -33,4 +33,4 @@ class ToggleListComp extends React.Component {
   }
 }
 
-module.exports = ToggleListComp;
+export default ToggleListComp;

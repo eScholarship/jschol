@@ -30,4 +30,4 @@ class PubLocationComp extends React.Component {
   }
 }
 
-module.exports = PubLocationComp;
+export default PubLocationComp;

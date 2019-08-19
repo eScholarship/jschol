@@ -18,4 +18,4 @@ class AlertObj extends React.Component {
   }
 }
 
-module.exports = AlertObj;
+export default AlertObj;

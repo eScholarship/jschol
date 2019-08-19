@@ -27,4 +27,4 @@ class MediaViewerAudioObj extends React.Component {
   }
 }
 
-module.exports = MediaViewerAudioObj;
+export default MediaViewerAudioObj;

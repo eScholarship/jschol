@@ -38,4 +38,4 @@ class FormComp extends React.Component
     </form>
 }
 
-module.exports = withRouter(FormComp);
+export default withRouter(FormComp);

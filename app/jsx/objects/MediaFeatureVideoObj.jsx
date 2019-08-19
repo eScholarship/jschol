@@ -19,4 +19,4 @@ class MediaFeatureVideoObj extends React.Component {
   }
 }
 
-module.exports = MediaFeatureVideoObj;
+export default MediaFeatureVideoObj;

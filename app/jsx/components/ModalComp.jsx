@@ -30,4 +30,4 @@ class ModalComp extends React.Component {
   }
 }
 
-module.exports = ModalComp;
+export default ModalComp;

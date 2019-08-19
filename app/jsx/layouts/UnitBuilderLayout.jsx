@@ -79,26 +79,35 @@ export default class UnitBuilderLayout extends React.Component
               </h1>
             </header>
 
-            {this.props.data.sub_units.length > 0 &&
+            {p.data.sub_units.length > 0 &&
               <details className="c-togglecontent" open>
                 <summary>Arrange sub-units</summary>
                 <Contexts.CMS.Consumer>
                   { cms => cms && cms.modules &&
                     <SortableUnitList cms={cms}
-                                      unit={this.props.unit.id}
-                                      subUnits={this.props.data.sub_units}
+                                      unit={p.unit.id}
+                                      subUnits={p.data.sub_units}
                                       onChangeOrder={this.reorderUnits}/>
                   }
                 </Contexts.CMS.Consumer>
               </details>
             }
 
-            {/oru|campus/.test(this.props.unit.type) &&
-              <details className="c-togglecontent" open>
+            <details className="c-togglecontent">
+              <summary>List parent unit(s)</summary>
+              <ul>
+                { p.data.parent_units.map(u =>
+                    <li key={u.id}><a href={"/uc/" + u.id}>{u.name}</a></li>)
+                }
+              </ul>
+            </details>
+
+            {/oru|campus/.test(p.unit.type) &&
+              <details className="c-togglecontent">
                 <summary>Add new sub-unit</summary>
                 <FormComp onSubmit={ (event, data) => {
                             event.preventDefault()
-                            this.props.sendApiData("PUT", `/api/unit/${this.props.unit.id}/unitBuilder`, data)
+                            p.sendApiData("PUT", `/api/unit/${p.unit.id}/unitBuilder`, data)
                           }}>
                   <p><i>Make sure you are accessing this page from the desired parent unit.</i></p>
 
@@ -122,16 +131,50 @@ export default class UnitBuilderLayout extends React.Component
                 </FormComp>
               </details>
             }
+            {/oru|campus/.test(p.unit.type) &&
+              <details className="c-togglecontent">
+                <summary>Adopt existing unit as sub-unit</summary>
+                <FormComp onSubmit={ (event, data) => {
+                            event.preventDefault()
+                            p.sendApiData("PUT", `/api/unit/${p.unit.id}/adoptUnit`, data)
+                          }}>
+                  <p><i>Make sure you are accessing this page from the desired parent unit.</i></p>
+
+                  <label className="c-editable-page__label" htmlFor="existingUnitID">Existing unit URL to adopt: </label>
+                  <input className="c-editable-page__input" id="existingUnitID" name="existingUnitID" type="text"/>
+
+                  <button type="submit">Adopt Unit</button>
+                </FormComp>
+              </details>
+            }
+            {/oru|campus/.test(p.unit.type) &&
+              <details className="c-togglecontent">
+                <summary>Disown sub-unit</summary>
+                <FormComp onSubmit={ (event, data) => {
+                            event.preventDefault()
+                            p.sendApiData("PUT", `/api/unit/${p.unit.id}/disownUnit`, data)
+                          }}>
+
+                  <p><i>This option will only work for child units that have at least one other parent, to avoid orphans.
+                        You can use Delete Unit for units that only have one parent.</i></p>
+
+                  <label className="c-editable-page__label" htmlFor="existingUnitID">Child unit URL to disown: </label>
+                  <input className="c-editable-page__input" id="existingUnitID" name="existingUnitID" type="text"/>
+
+                  <button type="submit">Disown Unit</button>
+                </FormComp>
+              </details>
+            }
 
             <details className="c-togglecontent">
               <summary>Move this unit</summary>
               <FormComp onSubmit={ (event, data) => {
                           event.preventDefault()
-                          this.props.sendApiData("PUT", `/api/unit/${this.props.unit.id}/moveUnit`, data)
+                          p.sendApiData("PUT", `/api/unit/${p.unit.id}/moveUnit`, data)
                         }}>
                 <label className="c-editable-page__label" htmlFor="targetUnitID">Destination parent unit: </label>
                 <input className="c-editable-page__input" id="targetUnitID" name="targetUnitID" type="text"/>
-                <button type="submit">Move Unit '{this.props.unit.id}'</button>
+                <button type="submit">Move Unit '{p.unit.id}'</button>
               </FormComp>
             </details>
 
@@ -139,13 +182,13 @@ export default class UnitBuilderLayout extends React.Component
               <summary>Copy unit content</summary>
               <FormComp onSubmit={ (event, data) => {
                           event.preventDefault()
-                          this.props.sendApiData("PUT", `/api/unit/${this.props.unit.id}/copyUnit`, data)
+                          p.sendApiData("PUT", `/api/unit/${p.unit.id}/copyUnit`, data)
                         }}>
                 <label className="c-editable-page__label" htmlFor="targetParentID">Destination parent unit: </label>
                 <input className="c-editable-page__input" id="targetParentID" name="targetParentID" type="text"/>
                 <label className="c-editable-page__label" htmlFor="newUnitID">Name for copied unit: </label>
                 <input className="c-editable-page__input" id="newUnitID" name="newUnitID" type="text"/>
-                <button type="submit">Copy unit '{this.props.unit.id}'</button>
+                <button type="submit">Copy unit '{p.unit.id}'</button>
               </FormComp>
             </details>
 
@@ -153,10 +196,10 @@ export default class UnitBuilderLayout extends React.Component
               <summary>Delete this unit</summary>
               <FormComp onSubmit={ (event, data) => {
                           event.preventDefault()
-                          this.props.sendApiData("PUT", `/api/unit/${this.props.unit.id}/deleteUnit`, data)
+                          p.sendApiData("PUT", `/api/unit/${p.unit.id}/deleteUnit`, data)
                         }}>
                 <p><i>Note:</i> This will fail (harmlessly) if the unit has any items or sub-units.</p>
-                <button type="submit" className="o-button__3">Delete unit '{this.props.unit.id}'</button>
+                <button type="submit" className="o-button__3">Delete unit '{p.unit.id}'</button>
               </FormComp>
             </details>
           </section>

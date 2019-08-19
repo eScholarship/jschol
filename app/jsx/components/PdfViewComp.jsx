@@ -34,4 +34,4 @@ class PdfViewComp extends React.Component {
   }
 }
 
-module.exports = PdfViewComp;
+export default PdfViewComp;

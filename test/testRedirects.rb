@@ -38,6 +38,11 @@ def testRedirect(fromURL, toURL)
   end
 end
 
+# Redirect old OAI urls
+testRedirect("http://escholarship.org/uc/oai?verb=Identify", "http://escholarship.org/oai?verb=Identify")
+testRedirect("http://escholarship.org/uc/oai/?verb=Identify", "http://escholarship.org/oai?verb=Identify")
+
+
 # Redirect old CloudFront URLs
 testRedirect("http://cloudfront.escholarship.org/dist/wJD5zTgC2vrImRR/dist/prd/content/qt2dz7t8r8/qt2dz7t8r8.pdf?t=p0khvh",
              "http://escholarship.org/content/qt2dz7t8r8/qt2dz7t8r8.pdf?t=p0khvh")
@@ -194,7 +199,7 @@ testRedirect("http://escholarship.org/content/qt4590m805/qt4590m805.pdf", nil)
 testRedirect("http://escholarship.org/uc/item/3kq9770m/socr_pt4_20070806_v256_part_2.mpg",
              "http://escholarship.org/uc/item/3kq9770m")
 # but not new-style sub files
-testRedirect("http://escholarship.org/content/qt0zw0j0hz/inner/1.jpg", nil)
+#testRedirect("http://escholarship.org/content/qt0zw0j0hz/inner/1.jpg", nil)  # can't test on dev because of Merritt access
 
 # Strip query parameters from item URLs
 testRedirect("http://escholarship.org/uc/item/0nm3g51w?foo=bar",

@@ -32,4 +32,4 @@ class RightsComp extends React.Component {
   }
 }
 
-module.exports = RightsComp;
+export default RightsComp;

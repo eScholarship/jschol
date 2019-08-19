@@ -47,4 +47,4 @@ class AboutComp extends React.Component {
   }
 }
 
-module.exports = AboutComp;
+export default AboutComp;

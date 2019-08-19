@@ -57,4 +57,4 @@ class Tabs2Comp extends React.Component {
   }
 }
 
-module.exports = Tabs2Comp;
+export default Tabs2Comp;
