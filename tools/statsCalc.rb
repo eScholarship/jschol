@@ -369,7 +369,7 @@ def calcUnitDigests(result)
   UnitItem.select_order_map([:item_id, :unit_id]).each { |item, unit|
     if prevItem != item
       prevItem.nil? or result[prevItem].unitsDigest = calcIntDigest(digester)
-      prevItem, digester = item, Digest::MD5.new
+      prevItem, digester = item, LoggingMD5Digest.new
     end
     digester << unit
   }
@@ -384,7 +384,7 @@ def calcPeopleDigests(result)
   ItemAuthor.where(Sequel.~(person_id: nil)).select_order_map([:item_id, :person_id]).each { |item, person|
     if prevItem != item
       prevItem.nil? or result[prevItem].peopleDigest = calcIntDigest(digester)
-      prevItem, digester = item, Digest::MD5.new
+      prevItem, digester = item, LoggingMD5Digest.new
     end
     digester << person
   }
@@ -456,7 +456,11 @@ def calcStatsMonths()
     summ.minMonth.nil? and next
     if prevMonth != summ.minMonth
       prevMonth.nil? or monthDigests[prevMonth] = calcBase64Digest(digester)
-      prevMonth, digester = summ.minMonth, Digest::MD5.new
+      prevMonth, digester = summ.minMonth, LoggingMD5Digest.new
+      # Meant all along to be repropagating if the count changed, but didn't implement until 2019-08
+      if summ.minMonth >= 201906
+        digester << monthCounts[summ.minMonth].inspect
+      end
     end
     digester << itemID << summ.unitsDigest.inspect << summ.peopleDigest.inspect
   }
@@ -609,7 +613,7 @@ def calcStats
   monthPosts = Hash.new { |h,k| h[k] = [] }
   # Omit non-published items from posting counts.
   # NOTE: These numbers differ slightly from old (eschol4) stats because our new code converter
-  #       (based on normalization stylesheets) has better date calulation for ETDs (using the
+  #       (based on normalization stylesheets) has better date calculation for ETDs (using the
   #       history.xml file instead of timestamp on meta).
   Item.where(status: 'published').
        select_map([:id, :submitted]).each { |item, sdate|
@@ -624,6 +628,7 @@ def calcStats
   totalCount = doneCount = 0
   months.each { |sm| totalCount += sm.cur_count }
   months.each { |sm|
+    #puts "sm.month=#{sm.month} sm.cur_digest=#{sm.cur_digest} sm.old_digest=#{sm.old_digest}"
     propagateItemMonth(itemUnits, itemCategory, monthPosts[sm.month], sm.month)
     doneCount += sm.cur_count
     if doneCount > 0
@@ -855,6 +860,12 @@ def parseDateLogs(date, sources)
         next
       end
 
+      # Map referrers
+      if event.referrer
+        ref = extractReferrer(item, event)
+        ref and attrs[:ref] = { lookupReferrer(ref) => 1 }
+      end
+
       #puts "#{attrs}: #{source.srcName} #{event}"
       #puts
 
@@ -1041,8 +1052,10 @@ class LoggingMD5Digest < Digest::MD5
   def base64digest
     digest = super
     FileUtils.mkdir_p("./md5Logs")
-    File.open("./md5Logs/#{digest.gsub('/','.').sub(/=+$/,'')}", "w") { |io|
-      @buffer.each { |str| io << str }
+    File.open("./md5Logs/#{digest.gsub('/','.').sub(/=+$/,'')}.gz", "w") { |rawIO|
+      io = Zlib::GzipWriter.new(rawIO)
+      @buffer.each { |str| io << str << "\n" }
+      io.close
     }
     return digest
   end

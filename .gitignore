@@ -17,6 +17,7 @@ iso.pid
 jschol.pid
 logs/
 mailLogs/
+md5Logs/
 node_modules/
 normalized/
 prefilterDirs.txt
@@ -30,6 +31,7 @@ splash/WEB-INF/classes/
 splash/WEB-INF/lib/
 splash/test/
 test.db
+testCounts.csv
 testLogs/
 tmp/
 node_modules
