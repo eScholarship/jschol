@@ -33,7 +33,7 @@ class JumpComp extends React.Component {
           <h2>Jump To</h2>
         </header>
         <div className="c-jump">
-          <Link id="c-jump__label" to="#" onClick={(e)=>this.handleClick(e, "main")}>{kind}</Link>
+          <a href="#page=1">{kind}</a>
           <ul className="c-jump__tree" aria-labelledby="c-jump__label">
             { this.props.attrs.abstract && !this.props.attrs.toc &&
               <li><Link to="#" onClick={(e)=>this.handleClick(e, "article_abstract")}>Abstract</Link></li> }
