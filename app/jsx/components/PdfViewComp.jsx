@@ -14,6 +14,11 @@ class PdfViewComp extends React.Component {
     }
   }
 
+  // Make a best effort to avoid re-initting pdf.js, which loses page context
+  shouldComponentUpdate(nextProps, nextState) {
+    return !(this.props.url == nextProps.url)
+  }
+
   render() {
     let separator = this.props.url.indexOf("?") >= 0 ? "&" : "?"
     return (
