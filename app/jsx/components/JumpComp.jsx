@@ -27,6 +27,7 @@ class JumpComp extends React.Component {
 
   render() {
     let kind = (this.props.genre == 'monograph') ? "Book" : "Article"
+    let toc = this.props.attrs.toc && this.props.attrs.toc.divs
     return (
       <section className="o-columnbox1" hidden={!this.state.show}>
         <header>
@@ -35,12 +36,12 @@ class JumpComp extends React.Component {
         <div className="c-jump">
           <a href="#page=1">{kind}</a>
           <ul className="c-jump__tree" aria-labelledby="c-jump__label">
-            { this.props.attrs.abstract && !this.props.attrs.toc &&
+            { this.props.attrs.abstract && !toc &&
               <li><Link to="#" onClick={(e)=>this.handleClick(e, "article_abstract")}>Abstract</Link></li> }
-            { !this.props.attrs.toc &&
+            { !toc &&
               <li><Link to="#" onClick={(e)=>this.handleClick(e, "article_main")}>Main Content</Link></li> }
-            { this.props.attrs.toc &&
-              this.props.attrs.toc.map(div =>
+            { toc &&
+              toc.map(div =>
                 <li key={div.title}><a href={"#page=" + div.page}>{div.title}</a></li>)
             }
             {/* ToDo: Add Links here to headers when item content type is HTML */}
