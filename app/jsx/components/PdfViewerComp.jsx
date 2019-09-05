@@ -51,6 +51,10 @@ export default class PdfViewerComp extends React.Component
 
     this.initted = true
 
+    // If we're going to scroll to a page, give a clue by making the loading PDF viewer visible
+    if (window.location.hash && /^#page=/.test(window.location.hash))
+      this.compDiv.scrollIntoView()
+
     // Override the default URL in pdf.js
     window.DEFAULT_URL = this.props.url
 

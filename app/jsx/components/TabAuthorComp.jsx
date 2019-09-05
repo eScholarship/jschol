@@ -248,6 +248,7 @@ class TabAuthorComp extends React.Component {
         }
       })
     }
+    let kind = p.genre == "monograph" ? "Book" : "Article"
     return(
       <div className="c-tabcontent">
       {!p.attrs['orig_citation'] &&
@@ -267,7 +268,7 @@ class TabAuthorComp extends React.Component {
           </div> */}
         </div>
       }
-        <h1 className="c-tabcontent__main-heading" tabIndex="-1">Author & Article Info</h1>
+        <h1 className="c-tabcontent__main-heading" tabIndex="-1">Author & {kind} Info</h1>
 
         <details className="c-togglecontent" open>
           <summary>Author(s)</summary>

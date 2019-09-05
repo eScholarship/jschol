@@ -46,7 +46,7 @@ class ItemPage extends PageBase {
   }
 
   // currentTab should be 'main' whenever hash starts with 'article_" (or is empty)
-  articleHashHandler = h => { return ((h.startsWith("article") || h=='') ? "main" : h) }
+  articleHashHandler = h => { return ((/^article|^page=/.test(h) || h=='') ? "main" : h) }
 
   state = { currentTab: "main" }
 
@@ -185,7 +185,7 @@ class ItemPage extends PageBase {
           </main>
           <aside>
           {(d.status == "published" && d.content_type) &&
-            <JumpComp changeTab={this.changeTab} attrs={d.attrs} />
+            <JumpComp changeTab={this.changeTab} genre={d.genre} attrs={d.attrs} />
           }
           {d.sidebar && !isWithdrawn &&
             <SidebarComp data={d.sidebar}/> }

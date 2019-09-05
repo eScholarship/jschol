@@ -223,9 +223,11 @@ class PageBase extends React.Component
   
   // This gets called when props change by switching to a new page.
   // It is *not* called on first-time construction. We use it to fetch new page data
-  // for the page being switched to.
+  // for the page being switched to, if the URL has changed.
   componentWillReceiveProps(nextProps) {
-    if (!_.isEqual(this.props, nextProps)) {
+    if (this.props.location.pathname != nextProps.location.pathname ||
+        this.props.location.search != nextProps.location.search)
+    {
       //this.setState(this.getEmptyState())   bad: this causes loss of context when clicking search facets
       this.setState({ fetchingData: true })
       setTimeout(() => this.fetchPageData(), 0) // fetch right after setting the new props

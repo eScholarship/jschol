@@ -29,6 +29,7 @@ class TabsComp extends React.Component {
     //  but with supplemental media. When the item is a Multimedia Item, we
     //  don't need to display the Supplemental Media tab
     let multimediaItem = p.status=='published' && !p.content_type && !p.attrs.pub_web_loc && p.attrs.supp_files && p.attrs.supp_files.length > 0
+    let kind = p.genre == "monograph" ? "Book" : "Article"
     return (
       <div className="c-tabs">
         <div className={this.state.moreTabs ? "c-tabs__tabs--show-all" : "c-tabs__tabs"}>
@@ -51,7 +52,7 @@ class TabsComp extends React.Component {
       { !/withdrawn/.test(p.status) &&
           <button className={p.currentTab == "author" ? "c-tabs__button--active" : "c-tabs__button"}
                   onClick = {() => this.tabFocus("author")}>
-            Author & Article Info</button>
+            Author & {kind} Info</button>
       }
       <Contexts.CMS.Consumer>
         { cms => 
