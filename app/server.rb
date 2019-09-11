@@ -23,7 +23,7 @@ require 'socket'
 require 'uri'
 
 # Easy toggle to enable/disable mrtExpress
-USE_MRTEXPRESS = true
+USE_MRTEXPRESS = !!ENV['MRTEXPRESS_HOST']
 
 # On dev and stg we control access with a special cookie
 ACCESS_COOKIE = (ENV['ACCESS_COOKIE'] || '').empty? ? nil : ENV['ACCESS_COOKIE']
