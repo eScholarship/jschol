@@ -34,7 +34,9 @@ class JumpComp extends React.Component {
           <h2>Jump To</h2>
         </header>
         <div className="c-jump">
-          <a href="#page=1">{kind}</a>
+          <Link to="#" onClick={e=>this.handleClick(e, toc ? (toc[0].page ? "#page=1" : "#"+toc[0].anchor) : "#article_main")}>
+            {kind}
+          </Link>
           <ul className="c-jump__tree" aria-labelledby="c-jump__label">
             { this.props.attrs.abstract && !toc &&
               <li><Link to="#" onClick={(e)=>this.handleClick(e, "article_abstract")}>Abstract</Link></li> }
@@ -42,9 +44,12 @@ class JumpComp extends React.Component {
               <li><Link to="#" onClick={(e)=>this.handleClick(e, "article_main")}>Main Content</Link></li> }
             { toc &&
               toc.map(div =>
-                <li key={div.title}><a href={"#page=" + div.page}>{div.title}</a></li>)
+                <li key={div.title}>
+                  <Link to="#" onClick={(e)=>this.handleClick(e, div.page ? ("#page=" + div.page) : "#"+div.anchor)}>
+                    {div.title}
+                  </Link>
+                </li>)
             }
-            {/* ToDo: Add Links here to headers when item content type is HTML */}
           </ul>
           <ul className="c-jump__siblings">
          { this.props.attrs.supp_files &&
