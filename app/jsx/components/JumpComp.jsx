@@ -34,7 +34,7 @@ class JumpComp extends React.Component {
           <h2>Jump To</h2>
         </header>
         <div className="c-jump">
-          <Link to="#" onClick={e=>this.handleClick(e, toc ? (toc[0].page ? "#page=1" : "#"+toc[0].anchor) : "#article_main")}>
+          <Link to="#" onClick={e=>this.handleClick(e, "article_main")}>
             {kind}
           </Link>
           <ul className="c-jump__tree" aria-labelledby="c-jump__label">
@@ -45,7 +45,7 @@ class JumpComp extends React.Component {
             { toc &&
               toc.map(div =>
                 <li key={div.title}>
-                  <Link to="#" onClick={(e)=>this.handleClick(e, div.page ? ("#page=" + div.page) : "#"+div.anchor)}>
+                  <Link to="#" onClick={(e)=>this.handleClick(e, div.anchor)}>
                     {div.title}
                   </Link>
                 </li>)

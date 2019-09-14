@@ -47,7 +47,7 @@ class ItemPage extends PageBase {
 
   // currentTab should be 'main' whenever hash starts with 'article_" (or is empty)
   articleHashHandler = (h, toc) => {
-    if (/^article|^page=|^$/.test(h))
+    if (/^article|^$/.test(h))
       return "main"
     if (toc) {
       for (let i in toc.divs) {
