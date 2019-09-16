@@ -46,16 +46,28 @@ class ItemPage extends PageBase {
   }
 
   // currentTab should be 'main' whenever hash starts with 'article_" (or is empty)
-  articleHashHandler = h => { return ((h.startsWith("article") || h=='') ? "main" : h) }
+  articleHashHandler = (h, toc) => {
+    if (/^article|^$/.test(h))
+      return "main"
+    if (toc) {
+      for (let i in toc.divs) {
+        if (h == toc.divs[i].anchor)
+          return "main"
+      }
+    }
+    return h
+  }
 
   state = { currentTab: "main" }
 
   componentDidMount(...args) {
-    this.setState({currentTab: this.articleHashHandler(this.tabNameFromHash())})
+    let toc = this.state.pageData && this.state.pageData.attrs && this.state.pageData.attrs.toc
+    this.setState({currentTab: this.articleHashHandler(this.tabNameFromHash(), toc)})
 
     // Check hash whenever back or forward button clicked
     window.onpopstate = (event) => {
-      var h = this.articleHashHandler(this.tabNameFromHash())
+      let toc = this.state.pageData && this.state.pageData.attrs && this.state.pageData.attrs.toc
+      var h = this.articleHashHandler(this.tabNameFromHash(), toc)
       if ((h != this.state.currentTab) && anchors.includes(h)) {
         this.setState({currentTab: h})
       }
@@ -86,9 +98,16 @@ class ItemPage extends PageBase {
   }
 
   changeTab = tabName => {
-    this.setState({currentTab: this.articleHashHandler(tabName) })
-    // Set hash based on what was clicked.
-    window.location.hash=tabName
+    let toc = this.state.pageData && this.state.pageData.attrs && this.state.pageData.attrs.toc
+    let newTab = this.articleHashHandler(tabName.toLowerCase().replace(/^#/, ""), toc)
+    if (newTab != this.state.currentTab) {
+      this.setState({currentTab: this.articleHashHandler(tabName, toc) })
+      // Set hash based on what was clicked. Since we are switching tabs,
+      // delay a little for the render so the target anchor will be available.
+      setTimeout(()=>window.location.hash=tabName, 200)
+    }
+    else
+      window.location.hash=tabName
   }
 
   renderData = data => {
@@ -185,7 +204,7 @@ class ItemPage extends PageBase {
           </main>
           <aside>
           {(d.status == "published" && d.content_type) &&
-            <JumpComp changeTab={this.changeTab} attrs={d.attrs} />
+            <JumpComp changeTab={this.changeTab} genre={d.genre} attrs={d.attrs} />
           }
           {d.sidebar && !isWithdrawn &&
             <SidebarComp data={d.sidebar}/> }

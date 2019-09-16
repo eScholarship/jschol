@@ -95,7 +95,22 @@ class Nailgun
 
   #################################################################################################
   def call(javaClass, args, joinStderr = false)
-    callInternal(false, joinStderr, ([javaClass] + args).join(" "))
+    begin
+      retries ||= 0
+      callInternal(false, joinStderr, ([javaClass] + args).join(" "))
+    rescue Exception => e
+      # We've been getting a mysterious "code 227" error sometimes from Nailgun. Restart and retry
+      # appears to fix it.
+      if e.to_s =~ /code 227/ && (retries += 1) <= 3
+        puts "Exception, will retry: #{e}"
+        stopInternal
+        sleep 1
+        startInternal
+        sleep 5
+        retry
+      end
+      raise
+    end
   end
 
   #################################################################################################

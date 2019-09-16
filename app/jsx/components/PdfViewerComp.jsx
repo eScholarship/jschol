@@ -41,7 +41,19 @@ export default class PdfViewerComp extends React.Component
     // compDiv will be null if we had a tab switch just after init (e.g. due to #metrics hash at end of URL)
     if (this.initted || !this.compDiv)
       return
+
+    // On small mobile displays, the viewer is hidden and replaced by a download button. Put off init until
+    // viewer becomes visible.
+    if (window.getComputedStyle(document.getElementsByClassName('c-pdfview__viewer')[0]).display != 'block') {
+      setTimeout(()=>this.initViewer(), 500)
+      return
+    }
+
     this.initted = true
+
+    // If we're going to scroll to a page, give a clue by making the loading PDF viewer visible
+    if (window.location.hash && /^#page=/.test(window.location.hash))
+      this.compDiv.scrollIntoView()
 
     // Override the default URL in pdf.js
     window.DEFAULT_URL = this.props.url

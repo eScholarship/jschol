@@ -26,26 +26,37 @@ class JumpComp extends React.Component {
   }
 
   render() {
+    let kind = (this.props.genre == 'monograph') ? "Book" : "Article"
+    let toc = this.props.attrs.toc && this.props.attrs.toc.divs
     return (
       <section className="o-columnbox1" hidden={!this.state.show}>
         <header>
           <h2>Jump To</h2>
         </header>
         <div className="c-jump">
-          <Link id="c-jump__label" to="#" onClick={(e)=>this.handleClick(e, "main")}>Article</Link>
+          <Link to="#" onClick={e=>this.handleClick(e, "article_main")}>
+            {kind}
+          </Link>
           <ul className="c-jump__tree" aria-labelledby="c-jump__label">
-         { this.props.attrs.abstract &&
-            <li><Link to="#" onClick={(e)=>this.handleClick(e, "article_abstract")}>Abstract</Link></li>
-         }
-            <li><Link to="#" onClick={(e)=>this.handleClick(e, "article_main")}>Main Content</Link></li>
-            {/* ToDo: Add Links here to headers when item content type is HTML */}
+            { this.props.attrs.abstract && !toc &&
+              <li><Link to="#" onClick={(e)=>this.handleClick(e, "article_abstract")}>Abstract</Link></li> }
+            { !toc &&
+              <li><Link to="#" onClick={(e)=>this.handleClick(e, "article_main")}>Main Content</Link></li> }
+            { toc &&
+              toc.map(div =>
+                <li key={div.title}>
+                  <Link to="#" onClick={(e)=>this.handleClick(e, div.anchor)}>
+                    {div.title}
+                  </Link>
+                </li>)
+            }
           </ul>
           <ul className="c-jump__siblings">
          { this.props.attrs.supp_files &&
             <li><Link to="#" onClick={(e)=>this.handleClick(e, "supplemental")}>Supplemental Material</Link></li>
          }
             <li><Link to="#" onClick={(e)=>this.handleClick(e, "metrics")}>Metrics</Link></li>
-            <li><Link to="#" onClick={(e)=>this.handleClick(e, "author")}>Author & Article Info</Link></li>
+            <li><Link to="#" onClick={(e)=>this.handleClick(e, "author")}>Author & {kind} Info</Link></li>
           </ul>
         </div>
       </section>

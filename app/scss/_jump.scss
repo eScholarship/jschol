@@ -14,21 +14,38 @@ $jump-list-spacing: 0.5em;
 .c-jump__tree {
   @extend %u-reset-list-styles;
   margin: $jump-list-spacing 0;
+  position: relative;
 
   li {
     margin-left: $spacing-sm;
-    padding: $jump-list-spacing 0 $jump-list-spacing $spacing-md;
-    background-image: inline('../images/icon_tree-node.svg');
-    background-repeat: no-repeat;
-    background-position: left center;
-    background-size: 1.5em;
-
-    &:last-child {
-      background-image: inline('../images/icon_tree-end.svg');
+    padding: $jump-list-spacing/2 0 $jump-list-spacing $spacing-md;
+    // CSS-only tree drawing ideas from: https://two-wrongs.com/draw-a-tree-structure-with-only-css
+    position: relative;
+    &::before, &::after {
+      content: "";
+      position: absolute;
+      left: -0.2em;
+    }
+    &:before {
+      border-top: 2px solid #888;
+      top: 0.8em;
+      width: 1em;
+      height: 0;
+    }
+    &:after {
+      border-left: 2px solid #888;
+      height: 100%;
+      width: 0;
+      top: 2px;
+    }
+    &:last-child::after {
+      height: 0.8em;
     }
 
+    a {
+      font-size: 1.0em;
+    }
   }
-
 }
 
 .c-jump__siblings {

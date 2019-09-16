@@ -46,8 +46,9 @@
   aside {
     position: sticky;
     top: $spacing-md;
+    overflow: scroll; // enable vertical scrolling...
+    max-height: 95vh; // ...if sidebar gets taller than 95% of the viewport height
   }
-
 
   &.is-loading-data {
 
@@ -57,10 +58,13 @@
       right: 0;
       bottom: 0;
       left: 0;
-      z-index: 99;
       background-color: $color-black-semitrans;
       content: '';
+      z-index: 99;
+
     }
 
   }
+
 }
+
