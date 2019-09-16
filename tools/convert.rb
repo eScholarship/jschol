@@ -539,6 +539,138 @@ def parseCustomTOC(itemID)
 end
 
 ###################################################################################################
+def filterTOCDivs(divs)
+
+  # Remove duplicate lines, e.g. qt00h9x985:
+  #   1. Introduction #1,0,842
+  #   1. Introduction #2,54,781
+  #   1. Introduction #2,54,781
+  divs = divs.map.with_index { |div, idx|
+    (idx >= 1 && div[:title] == divs[idx-1][:title]) ? nil : div
+  }.compact
+
+  # Remove "link_" lines, e.g. qt01g5w8m8:
+  #   link_CR1        #16
+  #   link_CR2        #17
+  divs.reject! { |div| div[:title] =~ /^link/ }
+
+  # Remove "p. " lines, e.g. qt01w2r6sh:
+  #   p. 36
+  #   p. 37
+  divs.reject! { |div| div[:title] =~ /^p\b/i }
+
+  # Remove individual references, e.g. qt0243w7p5
+  #   Reference 1
+  #   Reference 2
+  #   Reference 3
+  divs.reject! { |div| div[:title] =~ /^reference[ _]\d/i }
+
+  # Remove probable filename extensions, e.g. qt03n8h3g9:
+  #   01_intro_pages_16.doc.pdf       #1,0,796
+  #   02_Chapter1_19.doc.pdf  #17,0,796
+  #   03_Chapter2_24.doc.pdf  #36,0,796
+  #   04_Chapter3_28.doc.pdf  #60,0,796
+  #   05_Chapter4_33.doc.pdf  #89,0,796
+  #   06_Chapter5_23.doc.pdf  #122,0,796
+  #   07_Chapter6_6.doc.pdf   #149,0,796
+  #   08_Chapter7.doc.pdf     #158,0,796
+  #   09_References_12.doc.pdf        #165,0,796
+  divs.each { |div| div[:title].sub!(/(\.\w{3,4}){1,2}$/, '') }
+
+  # Remove very short lines
+  divs.reject! { |div| div[:title].length < 4 }
+
+  # If there's a single starting level-0 div, remove it. e.g. t0353w3wm:
+  #    Prognostic Significance of the^MNon–Size-Based AJCC T2 Descriptors      #1,0,684
+  #            Materials and Methods   #2,0,590
+  #            Results #3,0,539
+  #            Discussion      #5,0,487
+  #            References      #7,0,319
+  if divs.length > 4 && divs[0][:level] == 0 && divs[1..-1].map{|div| div[:level]}.min > 0
+    divs.shift
+  end
+
+  # If the top level has too few entries, try second level
+  if divs.select{ |div| div[:level] == 0 }.length >= 4
+    divs = divs.select{ |div| div[:level] == 0 }
+  elsif divs.select{ |div| div[:level] <= 1 }.length >= 4
+    divs = divs.select{ |div| div[:level] <= 1 }
+  else
+    divs = divs.select{ |div| div[:level] <= 2 }
+  end
+
+  # The divs should be fairly different, e.g. the following (from qt2nw4p6dt) is bad:
+  #   Arens2007-Assessment-of indoor-environments-Keynote, Roomvent-2007 WITH FOOTERS-1       #1,0,796
+  #   Arens2007-Assessment-of indoor-environments-Keynote, Roomvent-2007 WITH FOOTERS-2       #2,0,796
+  #   Arens2007-Assessment-of indoor-environments-Keynote, Roomvent-2007 WITH FOOTERS-3       #3,0,796
+  #   Arens2007-Assessment-of indoor-environments-Keynote, Roomvent-2007 WITH FOOTERS-4       #4,0,796
+  #   Arens2007-Assessment-of indoor-environments-Keynote, Roomvent-2007 WITH FOOTERS-5       #5,0,796
+  #   ...
+  reasons = []
+  totalSame = 0
+  (0..(divs.length-2)).each { |idx|
+    thisTitle = divs[idx][:title].gsub(/(chapter|appendix|table|figure|section)[\s_]+/i,'')   # "chapter 1", "chapter 2" etc ok
+    nextTitle = divs[idx+1][:title].gsub(/(chapter|appendix|table|figure|section)[\s_]+/i,'')
+    lcs = longest_common_substring(thisTitle, nextTitle)
+    totalSame += lcs.length / (thisTitle.length + 0.001)
+  }
+  avgSame = totalSame / (divs.length-1 + 0.001)
+  avgSame > 0.6 and reasons << "Entries are too uniform (avgSame=#{(avgSame * 100).round(1)}%)"
+
+  # Some things are too wordy to be a real TOC, e.g. qt03h468n4:
+  #   Young adults encounter a wide array of hardships that provide significant developmental challenges and opportunities (Arnett, 2000; Collins & van Dulmen, 2006; Vollrath, 2000). In a nationally representative study in the United States, young adults r...   #10,105,619
+  #   Fortunately, research on the social contexts of coping is thriving (Lakey & Orehek 2011; Mikulincer & Shaver, 2009; Thoits, 2011). Empirical findings suggest that the type of social support offered, such as instrumental help or emotional reassurance,...   #10,105,343
+  #   The more we understand particular sources of social support for young adults, the more it becomes important to understand the processes that connect the sources. One issue that has recently attracted the field’s attention concerns the fit between the...   #11,105,702
+  totalWords = 0
+  divs.each { |div| totalWords += div[:title].split(/\s+/).length }
+  avgWords = totalWords / (divs.length + 0.001)
+  avgWords > 10 and reasons << "Entries are too wordy (avgWords=#{avgWords.round(1)})"
+
+  # Make sure we ended up with something interesting.
+  divs.length < 4 and reasons << "Not enough entries (#{divs.length})"
+  divs.length > 40 and reasons << "Too many entries (#{divs.length})"
+
+  if !reasons.empty?
+    puts "Warning: Unusable TOC (#{reasons.join("; ")})"
+  else
+    puts "Usable TOC. avgWords=#{avgWords.round(1)} avgSame=#{(avgSame * 100).round(1)}%"
+  end
+
+  # Don't output the 'level' in the final data
+  divs.each{ |div| div.delete(:level) }
+  #puts "Divs (count=#{divs.length} avgWords=#{avgWords.round(1)} avgSame=#{(avgSame * 100).round(1)}%):"; pp divs
+  return reasons.empty? ? divs : nil
+
+end
+
+###################################################################################################
+def generateHtmlTOC(itemID)
+  htmlPath = arkToFile(itemID, "content/base.html")
+  File.exist?(htmlPath) or return nil
+  htmlDoc = Nokogiri::HTML(File.open(htmlPath), &:noblanks)
+  divs = []
+  prev = nil
+  htmlDoc.traverse { |node|
+    if node.name =~ /^h(\d)/ && prev && prev.name == "a" && prev[:name]
+      div = { level: $1.to_i,
+              title: node.inner_html.gsub(%r{<[^>]+>}, ''),
+              anchor: prev[:name] }
+      divs << div
+    elsif node.name =~ /^text|font|b|i|em|style$/
+      next
+    end
+    prev = node
+  }
+  minLevel = divs.map{ |div| div[:level] }.min
+  divs.each { |div| div[:level] -= (minLevel-1) }
+
+  #puts "raw divs:"; pp divs
+  divs = filterTOCDivs(divs)
+  #puts "final divs:"; pp divs; puts
+  return divs ? { source: 'html', divs: divs } : nil
+end
+
+###################################################################################################
 def generatePdfTOC(itemID)
   begin
     pdfPath = arkToFile(itemID, "content/base.pdf")
@@ -554,7 +686,7 @@ def generatePdfTOC(itemID)
     outline.each { |line|
       if line =~ /\t#/
         (buf+line) =~ /^(\t*)([^\t]*)\t#(\d+)/ or raise("can't parse TOC line: #{line.inspect}")
-        divs << { level: $1.length, title: $2.strip, page: $3.to_i }
+        divs << { level: $1.length, title: $2.strip, anchor: "page=#{$3.to_i}" }
         buf = ""
       elsif line =~ /\(null\)/
         buf = ""
@@ -563,95 +695,8 @@ def generatePdfTOC(itemID)
       end
     }
 
-    # Remove duplicate lines, e.g. qt00h9x985:
-    #   1. Introduction #1,0,842
-    #   1. Introduction #2,54,781
-    #   1. Introduction #2,54,781
-    divs = divs.map.with_index { |div, idx|
-      (idx >= 1 && div[:title] == divs[idx-1][:title]) ? nil : div
-    }.compact
-
-    # Remove "link_" lines, e.g. qt01g5w8m8:
-    #   link_CR1        #16
-    #   link_CR2        #17
-    divs.reject! { |div| div[:title] =~ /^link/ }
-
-    # Remove "p. " lines, e.g. qt01w2r6sh:
-    #   p. 36
-    #   p. 37
-    divs.reject! { |div| div[:title] =~ /^p\b/i }
-
-    # Remove individual references, e.g. qt0243w7p5
-    #   Reference 1
-    #   Reference 2
-    #   Reference 3
-    divs.reject! { |div| div[:title] =~ /^reference[ _]\d/i }
-
-    # Remove probable filenames, e.g. qt03n8h3g9:
-    #   01_intro_pages_16.doc.pdf       #1,0,796
-    #   02_Chapter1_19.doc.pdf  #17,0,796
-    #   03_Chapter2_24.doc.pdf  #36,0,796
-    #   04_Chapter3_28.doc.pdf  #60,0,796
-    #   05_Chapter4_33.doc.pdf  #89,0,796
-    #   06_Chapter5_23.doc.pdf  #122,0,796
-    #   07_Chapter6_6.doc.pdf   #149,0,796
-    #   08_Chapter7.doc.pdf     #158,0,796
-    #   09_References_12.doc.pdf        #165,0,796
-    divs.each { |div| div[:title].sub!(/(\.\w{3,4}){1,2}$/, '') }
-
-    # Remove very short lines
-    divs.reject! { |div| div[:title].length < 4 }
-
-    # If the top level has too few entries, try second level
-    if divs.select{ |line| line[:level] == 0 }.length >= 4
-      divs = divs.select{ |line| line[:level] == 0 }
-    elsif divs.select{ |line| line[:level] == 1 }.length >= 4
-      divs = divs.select{ |line| line[:level] == 1 }
-    else
-      divs = divs.select{ |line| line[:level] == 2 }
-    end
-
-    # The divs should be fairly different, e.g. the following (from qt2nw4p6dt) is bad:
-    #   Arens2007-Assessment-of indoor-environments-Keynote, Roomvent-2007 WITH FOOTERS-1       #1,0,796
-    #   Arens2007-Assessment-of indoor-environments-Keynote, Roomvent-2007 WITH FOOTERS-2       #2,0,796
-    #   Arens2007-Assessment-of indoor-environments-Keynote, Roomvent-2007 WITH FOOTERS-3       #3,0,796
-    #   Arens2007-Assessment-of indoor-environments-Keynote, Roomvent-2007 WITH FOOTERS-4       #4,0,796
-    #   Arens2007-Assessment-of indoor-environments-Keynote, Roomvent-2007 WITH FOOTERS-5       #5,0,796
-    #   ...
-    reasons = []
-    totalSame = 0
-    (0..(divs.length-2)).each { |idx|
-      thisTitle = divs[idx][:title].gsub(/(chapter|appendix|table|figure|section)[\s_]+/i,'')   # "chapter 1", "chapter 2" etc ok
-      nextTitle = divs[idx+1][:title].gsub(/(chapter|appendix|table|figure|section)[\s_]+/i,'')
-      lcs = longest_common_substring(thisTitle, nextTitle)
-      totalSame += lcs.length / (thisTitle.length + 0.001)
-    }
-    avgSame = totalSame / (divs.length-1 + 0.001)
-    avgSame > 0.6 and reasons << "Entries are too uniform (avgSame=#{(avgSame * 100).round(1)}%)"
-
-    # Some things are too wordy to be a real TOC, e.g. qt03h468n4:
-    #   Young adults encounter a wide array of hardships that provide significant developmental challenges and opportunities (Arnett, 2000; Collins & van Dulmen, 2006; Vollrath, 2000). In a nationally representative study in the United States, young adults r...   #10,105,619
-    #   Fortunately, research on the social contexts of coping is thriving (Lakey & Orehek 2011; Mikulincer & Shaver, 2009; Thoits, 2011). Empirical findings suggest that the type of social support offered, such as instrumental help or emotional reassurance,...   #10,105,343
-    #   The more we understand particular sources of social support for young adults, the more it becomes important to understand the processes that connect the sources. One issue that has recently attracted the field’s attention concerns the fit between the...   #11,105,702
-    totalWords = 0
-    divs.each { |div| totalWords += div[:title].split(/\s+/).length }
-    avgWords = totalWords / (divs.length + 0.001)
-    avgWords > 10 and reasons << "Entries are too wordy (avgWords=#{avgWords.round(1)})"
-
-    # Make sure we ended up with something interesting.
-    divs.length < 4 and reasons << "Not enough entries (#{divs.length})"
-    divs.length > 40 and reasons << "Too many entries (#{divs.length})"
-
-    if !reasons.empty?
-      puts "Warning: Unusable TOC (#{reasons.join("; ")})"
-    else
-      puts "Usable TOC. avgWords=#{avgWords.round(1)} avgSame=#{(avgSame * 100).round(1)}%"
-    end
-
-    # Don't output the 'level' in the final data
-    divs.each{ |div| div.delete(:level) }
-    #puts "Divs (count=#{divs.length} avgWords=#{avgWords.round(1)} avgSame=#{(avgSame * 100).round(1)}%):"; pp divs
-    return reasons.empty? ? { source: 'mutool', divs: divs } : nil
+    divs = filterTOCDivs(divs)
+    return divs ? { source: 'mutool', divs: divs } : nil
 
   rescue Exception => e
     puts "Warning: error generating toc: #{e}: #{e.backtrace.join("; ")}"
@@ -1080,8 +1125,7 @@ def parseUCIngest(itemID, inMeta, fileType)
 
   # Generate thumbnails and TOCs (but only for non-suppressed PDF items)
   if !attrs[:suppress_content] && File.exist?(arkToFile(itemID, "content/base.pdf"))
-    itemRecord = Item[itemID]
-    attrs[:thumbnail] = generatePdfThumbnail(itemID, inMeta, itemRecord)
+    attrs[:thumbnail] = generatePdfThumbnail(itemID, inMeta, Item[itemID])
     attrs[:toc] = parseCustomTOC(itemID) || generatePdfTOC(itemID)
   end
 
@@ -1112,6 +1156,12 @@ def parseUCIngest(itemID, inMeta, fileType)
     attrs[:content_length] = File.size(pdfPath)
   elsif contentType == "application/pdf"
     contentType = nil   # whatever cruft we got from the mimeType field, no PDF is no PDF.
+  end
+
+  # Generate thumbnails and TOCs (but only for non-suppressed PDF items)
+  if !attrs[:suppress_content] && !attrs[:toc] && contentType == "text/html" &&
+                  File.exist?(arkToFile(itemID, "content/base.html"))
+    attrs[:toc] = generateHtmlTOC(itemID)
   end
 
   # Populate the Item model instance
