@@ -615,7 +615,7 @@ def translateRights(oldRights)
     when "cc5"; "CC BY-NC-SA"
     when "cc6"; "CC BY-NC-ND"
     when nil, "public"; nil
-    else puts "Unknown rights value #{pf.single("rights").inspect}"
+    else puts "Unknown rights value #{oldRights}"; nil
   end
 end
 
