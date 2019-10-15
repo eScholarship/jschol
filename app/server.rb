@@ -1239,7 +1239,8 @@ def getItemHtml(content_type, id)
     fileURL = "https://#{ENV['MRTEXPRESS_HOST'] || raise("missing env MRTEXPRESS_HOST")}" +
               "/dl/ark:/13030/#{id}/content/#{id}.html"
   else
-    fileURL = "http://submit.escholarship.org:18881/data_pairtree/#{id.scan(/\w\w/).join('/')}/#{id}/content/#{id}.html"
+    fileURL = "https://submit.escholarship.org/data_full_oWNpUFP8vnuCo2YPoMeQ/" +
+              "#{id.scan(/\w\w/).join('/')}/#{id}/content/#{id}.html"
   end
   fetcher = MerrittFetcher.new(fileURL)
   buf = []
