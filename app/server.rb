@@ -485,7 +485,7 @@ get "/content/:fullItemID/*" do |itemID, path|
   if USE_MRTEXPRESS
     fileURL = "https://#{ENV['MRTEXPRESS_HOST'] || raise("missing env MRTEXPRESS_HOST")}/dl/#{mrtID}/#{epath}"
   else
-    fileURL = "http://submit.escholarship.org:18881/data_pairtree/#{itemID.scan(/\w\w/).join('/')}/#{itemID}/#{epath}"
+    fileURL = "https://submit.escholarship.org/data_full_oWNpUFP8vnuCo2YPoMeQ/#{itemID.scan(/\w\w/).join('/')}/#{itemID}/#{epath}"
   end
 
   # Control how long this remains in browser and CloudFront caches
