@@ -1841,11 +1841,13 @@ def convertAllItems(arks)
   puts "Converting #{arks=="ALL" ? "all" : "selected"} items."
 
   cacheAllUnits()
-  genAllStruct()
 
   # Normally loop runs once, but in rescan mode it's multiple times.
   rescanBase = ""
   while true
+
+    # Make sure to do this critical work periodically
+    genAllStruct()
 
     # Fire up threads for doing the work in parallel
     Thread.abort_on_exception = true
@@ -2134,7 +2136,10 @@ def convertPDF(itemID)
 
   dbPdf = DisplayPDF[itemID]
   # It's odd, but comparing timestamps by value isn't reliable. Converting them to strings is though.
-  if !$forceMode && dbPdf && dbPdf.orig_size == origSize && dbPdf.orig_timestamp.to_s == origTimestamp.to_s
+  if !$forceMode && dbPdf &&
+       dbPdf.orig_size == origSize &&
+       dbPdf.orig_timestamp.to_s == origTimestamp.to_s &&
+       dbPdf.splash_info_digest == instrucDigest
     #puts "Splash unchanged."
     return
   end
