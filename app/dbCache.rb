@@ -220,10 +220,10 @@ end
 
 Thread.new {
   begin
-    prevTime = nil
+    prevTime = getLastTableUpdateTime
     while true
       utime = getLastTableUpdateTime
-      if !utime || utime != prevTime
+      if utime != prevTime
         prevTime and puts "Unit/hier changed."
         signalDbRefill
         sleep 30  # re-fill at most every 30 sec
