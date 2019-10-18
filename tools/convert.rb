@@ -778,7 +778,10 @@ def grabUCISupps(rawMeta)
   # For UCIngest format, read supp data from the raw metadata file.
   supps = []
   rawMeta.xpath("//content/supplemental/file").each { |fileEl|
-    suppAttrs = { file: fileEl[:path].sub(%r{.*content/supp/}, "") }
+    # First regex below normalizes old filenames that used to start with "content/supp".
+    # Second regex below gets rid of URL query parameters that come from the old OJS converter,
+    # e.g. "?origin=ojsimport"
+    suppAttrs = { file: fileEl[:path].sub(%r{.*content/supp/}, "").sub(%r{\?.*$}, "") }
     fileEl.children.each { |subEl|
       next if subEl.name == "mimeType" && subEl.text == "unknown"
       suppAttrs[subEl.name] = subEl.text
