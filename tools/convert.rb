@@ -108,6 +108,9 @@ $preindexMode = false
 # Mode to skip CloudSearch indexing and just do db updates
 $noCloudSearchMode = ARGV.delete('--noCloudSearch')
 
+# Skip locking for certain test scenarios
+$noLockMode = ARGV.delete("--noLock")
+
 # For testing only, skip items <= X, where X is like "qt26s1s6d3"
 $skipTo = nil
 pos = ARGV.index('--skipTo')
@@ -2397,9 +2400,11 @@ lockFile = "/tmp/jschol_convert.lock"
 File.exist?(lockFile) or FileUtils.touch(lockFile)
 lock = File.new(lockFile)
 begin
-  if !lock.flock(File::LOCK_EX | File::LOCK_NB)
-    puts "Another copy is already running."
-    exit 1
+  if !$noLockMode
+    if !lock.flock(File::LOCK_EX | File::LOCK_NB)
+      puts "Another copy is already running."
+      exit 1
+    end
   end
 
   case ARGV[0]
@@ -2426,5 +2431,7 @@ begin
   puts "Elapsed: #{Time.now - startTime} sec."
   puts "Done."
 ensure
-  lock.flock(File::LOCK_UN)
+  if !$noLockMode
+    lock.flock(File::LOCK_UN)
+  end
 end
