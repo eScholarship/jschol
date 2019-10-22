@@ -485,7 +485,7 @@ get "/content/:fullItemID/*" do |itemID, path|
   if USE_MRTEXPRESS
     fileURL = "https://#{ENV['MRTEXPRESS_HOST'] || raise("missing env MRTEXPRESS_HOST")}/dl/#{mrtID}/#{epath}"
   else
-    fileURL = "https://submit.escholarship.org/data_full_oWNpUFP8vnuCo2YPoMeQ/#{itemID.scan(/\w\w/).join('/')}/#{itemID}/#{epath}"
+    fileURL = "https://#{ENV['MRTEXPRESS_SUBST'] || raise("missing env MRTEXPRESS_SUBST")}/#{itemID.scan(/\w\w/).join('/')}/#{itemID}/#{epath}"
   end
 
   # Control how long this remains in browser and CloudFront caches
@@ -1239,7 +1239,7 @@ def getItemHtml(content_type, id)
     fileURL = "https://#{ENV['MRTEXPRESS_HOST'] || raise("missing env MRTEXPRESS_HOST")}" +
               "/dl/ark:/13030/#{id}/content/#{id}.html"
   else
-    fileURL = "http://submit.escholarship.org:18881/data_pairtree/#{id.scan(/\w\w/).join('/')}/#{id}/content/#{id}.html"
+    fileURL = "https://#{ENV['MRTEXPRESS_SUBST'] || raise("missing env MRTEXPRESS_SUBST")}/#{id.scan(/\w\w/).join('/')}/#{id}/content/#{id}.html"
   end
   fetcher = MerrittFetcher.new(fileURL)
   buf = []
