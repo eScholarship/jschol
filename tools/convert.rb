@@ -108,6 +108,9 @@ $preindexMode = false
 # Mode to skip CloudSearch indexing and just do db updates
 $noCloudSearchMode = ARGV.delete('--noCloudSearch')
 
+# Skip locking for certain test scenarios
+$noLockMode = ARGV.delete("--noLock")
+
 # For testing only, skip items <= X, where X is like "qt26s1s6d3"
 $skipTo = nil
 pos = ARGV.index('--skipTo')
@@ -775,7 +778,10 @@ def grabUCISupps(rawMeta)
   # For UCIngest format, read supp data from the raw metadata file.
   supps = []
   rawMeta.xpath("//content/supplemental/file").each { |fileEl|
-    suppAttrs = { file: fileEl[:path].sub(%r{.*content/supp/}, "") }
+    # First regex below normalizes old filenames that used to start with "content/supp".
+    # Second regex below gets rid of URL query parameters that come from the old OJS converter,
+    # e.g. "?origin=ojsimport"
+    suppAttrs = { file: fileEl[:path].sub(%r{.*content/supp/}, "").sub(%r{\?.*$}, "") }
     fileEl.children.each { |subEl|
       next if subEl.name == "mimeType" && subEl.text == "unknown"
       suppAttrs[subEl.name] = subEl.text
@@ -1841,11 +1847,13 @@ def convertAllItems(arks)
   puts "Converting #{arks=="ALL" ? "all" : "selected"} items."
 
   cacheAllUnits()
-  genAllStruct()
 
   # Normally loop runs once, but in rescan mode it's multiple times.
   rescanBase = ""
   while true
+
+    # Make sure to do this critical work periodically
+    genAllStruct()
 
     # Fire up threads for doing the work in parallel
     Thread.abort_on_exception = true
@@ -2134,7 +2142,10 @@ def convertPDF(itemID)
 
   dbPdf = DisplayPDF[itemID]
   # It's odd, but comparing timestamps by value isn't reliable. Converting them to strings is though.
-  if !$forceMode && dbPdf && dbPdf.orig_size == origSize && dbPdf.orig_timestamp.to_s == origTimestamp.to_s
+  if !$forceMode && dbPdf &&
+       dbPdf.orig_size == origSize &&
+       dbPdf.orig_timestamp.to_s == origTimestamp.to_s &&
+       dbPdf.splash_info_digest == instrucDigest
     #puts "Splash unchanged."
     return
   end
@@ -2392,9 +2403,11 @@ lockFile = "/tmp/jschol_convert.lock"
 File.exist?(lockFile) or FileUtils.touch(lockFile)
 lock = File.new(lockFile)
 begin
-  if !lock.flock(File::LOCK_EX | File::LOCK_NB)
-    puts "Another copy is already running."
-    exit 1
+  if !$noLockMode
+    if !lock.flock(File::LOCK_EX | File::LOCK_NB)
+      puts "Another copy is already running."
+      exit 1
+    end
   end
 
   case ARGV[0]
@@ -2421,5 +2434,7 @@ begin
   puts "Elapsed: #{Time.now - startTime} sec."
   puts "Done."
 ensure
-  lock.flock(File::LOCK_UN)
+  if !$noLockMode
+    lock.flock(File::LOCK_UN)
+  end
 end
