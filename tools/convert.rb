@@ -820,7 +820,7 @@ def summarizeSupps(itemID, inSupps)
   suppSummaryTypes = Set.new
   inSupps.each { |supp|
     suppPath = tryMainAndSequester(arkToFile(itemID, "content/supp/#{supp[:file]}"))
-    if !File.exist?(suppPath)
+    if !suppPath
       puts "Warning: can't find supp file #{supp[:file]}"
     else
       # Mime types aren't always reliable coming from Subi. Let's try harder.
@@ -914,7 +914,7 @@ def addMerrittPaths(itemID, attrs)
   # Then do any supp files
   attrs[:supp_files] and attrs[:supp_files].each { |supp|
     suppName = supp[:file]
-    suppSize = tryMainAndSequester(File.size(arkToFile(itemID, "content/supp/#{suppName}"))) or raise
+    suppSize = File.size(tryMainAndSequester(arkToFile(itemID, "content/supp/#{suppName}"))) or raise
     supp[:size] = suppSize
     suppFound = false
     feed.xpath("//link").each { |link|
