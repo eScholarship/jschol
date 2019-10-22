@@ -163,6 +163,8 @@ class ItemPage extends PageBase {
             {!d.download_restricted && d.pdf_url &&
               <meta id="meta-pdf_url" name="citation_pdf_url"
                     content={d.pdf_url.substr(0, 4) == "http" ? d.pdf_url : "https://escholarship.org" + d.pdf_url} /> }
+            {/* rel=canonical below helps hypothes.is properly anchor annotations */}
+            <link rel="canonical" href={!(typeof location === "undefined") ? location.href.replace(/\?.*/,"").replace("/#.*/", "") : ""}/>
           </MetaTagsComp>
         }
         <Header2Comp type={d.unit ? d.unit.type: null}
