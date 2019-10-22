@@ -269,16 +269,39 @@ def arkToFile(ark, subpath, root = DATA_DIR)
 end
 
 ###################################################################################################
-# Traverse XML, looking for indexable text to add to the buffer.
+class StringBuf
+  def initialize
+    @buf = []
+    @length = 0
+  end
+
+  def << (str)
+    @buf << str
+    @length += str.length
+  end
+
+  def to_s
+    return @buf.join("\n")
+  end
+
+  def length
+    return @length
+  end
+end
+
+###################################################################################################
+# Traverse XML, looking for indexable text to add to the buffer. Stops if the text size exceeds
+# the max amount we can index (MAX_TEXT_SIZE).
 def traverseText(node, buf)
   return if node['meta'] == "yes" || node['index'] == "no"
+  return if buf.length > MAX_TEXT_SIZE
   node.text? and buf << node.to_s.strip
   node.children.each { |child| traverseText(child, buf) }
 end
 
 ###################################################################################################
 def grabText(itemID, contentType)
-  buf = []
+  buf = StringBuf.new
   textCoordsPath = arkToFile(itemID, "rip/base.textCoords.xml")
   htmlPath = arkToFile(itemID, "content/base.html")
   if contentType == "application/pdf" && File.file?(textCoordsPath)
@@ -291,7 +314,7 @@ def grabText(itemID, contentType)
     #puts "Warning: no text found"
     return ""
   end
-  return translateEntities(buf.join("\n"))
+  return translateEntities(buf.to_s)
 end
 
 ###################################################################################################
@@ -470,7 +493,7 @@ def generatePdfThumbnail(itemID, inMeta, existingItem)
       return data
     else
       existingThumb = existingItem ? JSON.parse(existingItem.attrs)["thumbnail"] : nil
-      if existingThumb && existingThumb["timestamp"] == pdfTimestamp && !$rescanMode && !$forceMode
+      if existingThumb && existingThumb["timestamp"] == pdfTimestamp && !$rescanMode && !$forceMode && !$preindexMode
         # Rebuilding to keep order of fields consistent
         return { asset_id:   existingThumb["asset_id"],
                  image_type: existingThumb["image_type"],
@@ -790,7 +813,7 @@ def summarizeSupps(itemID, inSupps)
   outSupps = nil
   suppSummaryTypes = Set.new
   inSupps.each { |supp|
-    suppPath = arkToFile(itemID, "content/supp/#{supp[:file]}")
+    suppPath = tryMainAndSequester(arkToFile(itemID, "content/supp/#{supp[:file]}"))
     if !File.exist?(suppPath)
       puts "Warning: can't find supp file #{supp[:file]}"
     else
@@ -885,7 +908,7 @@ def addMerrittPaths(itemID, attrs)
   # Then do any supp files
   attrs[:supp_files] and attrs[:supp_files].each { |supp|
     suppName = supp[:file]
-    suppSize = File.size(arkToFile(itemID, "content/supp/#{suppName}")) or raise
+    suppSize = tryMainAndSequester(File.size(arkToFile(itemID, "content/supp/#{suppName}"))) or raise
     supp[:size] = suppSize
     suppFound = false
     feed.xpath("//link").each { |link|
@@ -934,6 +957,14 @@ def checkRightsOverride(unitID, volNum, issNum, oldRights)
     $issueRightsCache[key] = rights
   end
   return $issueRightsCache[key]
+end
+
+###################################################################################################
+def tryMainAndSequester(path)
+  File.exist?(path) and return path
+  path = path.sub("erep/data/", "erep/data_sequester/")
+  File.exist?(path) and return path
+  return nil
 end
 
 ###################################################################################################
@@ -1123,8 +1154,10 @@ def parseUCIngest(itemID, inMeta, fileType)
     end
   end
 
-  # Generate thumbnails and TOCs (but only for non-suppressed PDF items)
-  if !attrs[:suppress_content] && File.exist?(arkToFile(itemID, "content/base.pdf"))
+  # Generate thumbnails and TOCs (but only for non-suppressed PDF items).
+  # But in pre-index mode don't do this step because sometimes it takes a long time, and
+  # pre-index needs to happen quickly so the API can return.
+  if !attrs[:suppress_content] && File.exist?(arkToFile(itemID, "content/base.pdf")) && !$preindexMode
     attrs[:thumbnail] = generatePdfThumbnail(itemID, inMeta, Item[itemID])
     attrs[:toc] = parseCustomTOC(itemID) || generatePdfTOC(itemID)
   end
@@ -1139,8 +1172,8 @@ def parseUCIngest(itemID, inMeta, fileType)
 
   # Record name of native file, if any
   if contentFile && contentFile.name == "native" && contentFile[:path]
-    nativePath = arkToFile(itemID, contentFile[:path].sub(/.*\//, 'content/'))
-    if File.exist?(nativePath)
+    nativePath = tryMainAndSequester(arkToFile(itemID, contentFile[:path].sub(/.*\//, 'content/')))
+    if nativePath
       attrs[:native_file] = { name: contentFile[:path].sub(/.*\//, ''),
                               size: File.size(nativePath) }
     end
@@ -1347,7 +1380,7 @@ def indexItem(itemID, timestamp, batch, nailgun)
       parseUCIngest(itemID, rawMeta, "UCIngest")
   end
 
-  text = grabText(itemID, dbItem.content_type)
+  text = $noCloudSearchMode ? "" : grabText(itemID, dbItem.content_type)
   
   # Create JSON for the full text index
   idxItem = {
@@ -1437,7 +1470,7 @@ def indexItem(itemID, timestamp, batch, nailgun)
 
   # Add time-varying things into the database item now that we've generated a stable digest.
   dbItem[:last_indexed] = timestamp
-  dbItem[:index_digest] = idxDigest
+  dbItem[:index_digest] = $noCloudSearchMode ? (existingItem && existingItem[:index_digest]) : idxDigest
   dbItem[:data_digest] = dataDigest
 
   dbDataBlock = { dbItem: dbItem, dbAuthors: dbAuthors, dbContribs: dbContribs,
@@ -1453,7 +1486,7 @@ def indexItem(itemID, timestamp, batch, nailgun)
   end
 
   # If nothing has changed, skip the work of updating this record.
-  if existingItem && !$forceMode && existingItem[:index_digest] == idxDigest
+  if existingItem && !$forceMode && ($preindexMode || existingItem[:index_digest] == idxDigest)
 
     # If only the database portion changed, we can safely skip the CloudSearch re-indxing
     if existingItem[:data_digest] != dataDigest
@@ -1464,7 +1497,7 @@ def indexItem(itemID, timestamp, batch, nailgun)
         end
       }
       # Check/update the splash page now that this item has a real record
-      $splashQueue << itemID
+      !$preindexMode and $splashQueue << itemID
       $nProcessed += 1
       return
     end
@@ -1680,7 +1713,8 @@ end
 def processBatch(batch)
   puts "Processing batch: nItems=#{batch[:items].size}, size=#{batch[:idxDataSize]}."
 
-  # Finish the data buffer, and send to AWS
+  # Finish the data buffer, and send to AWS. Note that in $noCloudSearchMode, we shouldn't have
+  # any batch data anyway, since the digest logic above reverts to the old digest.
   if !$noCloudSearchMode
     batch[:idxData] << "]"
     submitBatch(batch)
@@ -1694,7 +1728,7 @@ def processBatch(batch)
     end
 
     # Process splash pages now that all the DB records exist
-    batch[:items].each { |data| $splashQueue << data[:dbItem][:id] }
+    !$preindexMode and batch[:items].each { |data| $splashQueue << data[:dbItem][:id] }
   }
 
   # Periodically scrub out orphaned sections and issues
@@ -2378,9 +2412,9 @@ end
 
 startTime = Time.now
 
-# Pre-index mode: no locking, just index one item and get out
+# Pre-index mode: no locking, just update database for one item and get out
 if ARGV[0] == "--preindex"
-  $preindexMode = $noCloudSearchMode = $forceMode = true
+  $preindexMode = $noCloudSearchMode = true
   $rescanMode = false # prevent infinite loop
   convertAllItems(Set.new([ARGV[1]]))
   exit 0
