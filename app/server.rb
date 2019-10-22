@@ -485,7 +485,7 @@ get "/content/:fullItemID/*" do |itemID, path|
   if USE_MRTEXPRESS
     fileURL = "https://#{ENV['MRTEXPRESS_HOST'] || raise("missing env MRTEXPRESS_HOST")}/dl/#{mrtID}/#{epath}"
   else
-    fileURL = "http://submit.escholarship.org:18881/data_pairtree/#{itemID.scan(/\w\w/).join('/')}/#{itemID}/#{epath}"
+    fileURL = "https://submit.escholarship.org/data_full_oWNpUFP8vnuCo2YPoMeQ/#{itemID.scan(/\w\w/).join('/')}/#{itemID}/#{epath}"
   end
 
   # Control how long this remains in browser and CloudFront caches
@@ -1130,6 +1130,15 @@ delete "/api/item/:shortArk" do |shortArk|
 end
 
 ###################################################################################################
+# Used to sanitize numeric parameters for search (and only search)
+def forceNumeric(cgiParams, name)
+  if cgiParams[name] && !(cgiParams[name].inspect =~ /^\[(\"\d+\")?\]$/)
+    puts "Note: Filtering out invalid #{name.inspect} param: #{cgiParams[name].inspect}"
+    cgiParams.delete(name)
+  end
+end
+
+###################################################################################################
 # Search page data
 def getSearchData()
   body = {
@@ -1138,19 +1147,22 @@ def getSearchData()
   }
   facetList = ['type_of_work', 'peer_reviewed', 'supp_file_types', 'pub_year',
                'campuses', 'departments', 'journals', 'disciplines', 'rights']
-  params = CGI::parse(request.query_string)
-  searchType = params["searchType"][0]
+  # Does tricky extra stuff with params
+  cgiParams = CGI::parse(request.query_string)
+  forceNumeric(cgiParams, 'start')
+  forceNumeric(cgiParams, 'rows')
+  searchType = cgiParams["searchType"][0]
   # Perform global search when searchType is assigned 'eScholarship'
   # otherwise: 'searchType' will be assigned the unit ID - and then 'searchUnitType' specifies type of unit.
   if searchType and searchType != "eScholarship"
-    searchUnitType = params["searchUnitType"][0]
+    searchUnitType = cgiParams["searchUnitType"][0]
     if searchUnitType.nil? or searchUnitType == ''
-      params["searchType"] = ["eScholarship"]
+      cgiParams["searchType"] = ["eScholarship"]
     else
-      params[searchUnitType] = [searchType]
+      cgiParams[searchUnitType] = [searchType]
     end
   end
-  return body.merge(search(params, facetList))
+  return body.merge(search(cgiParams, facetList))
 end
 
 ###################################################################################################
@@ -1227,7 +1239,8 @@ def getItemHtml(content_type, id)
     fileURL = "https://#{ENV['MRTEXPRESS_HOST'] || raise("missing env MRTEXPRESS_HOST")}" +
               "/dl/ark:/13030/#{id}/content/#{id}.html"
   else
-    fileURL = "http://submit.escholarship.org:18881/data_pairtree/#{id.scan(/\w\w/).join('/')}/#{id}/content/#{id}.html"
+    fileURL = "https://submit.escholarship.org/data_full_oWNpUFP8vnuCo2YPoMeQ/" +
+              "#{id.scan(/\w\w/).join('/')}/#{id}/content/#{id}.html"
   end
   fetcher = MerrittFetcher.new(fileURL)
   buf = []

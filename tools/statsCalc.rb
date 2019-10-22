@@ -649,7 +649,7 @@ def grabLogs
   # If logs are fresh, skip.
   latest = Dir.glob("./awsLogs/cf-logs/**/*").inject(0) { |memo, path| [memo, File.mtime(path).to_i].max }
   age = ((Time.now.to_i - latest) / 60 / 60.0).round(1)
-  if age <= 18
+  if age <= 8
     puts "Logs grabbed #{age} hours ago; skipping grab."
     return
   end
