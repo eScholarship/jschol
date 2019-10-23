@@ -688,7 +688,7 @@ def generatePdfTOC(itemID)
     buf = ""
     outline.each { |line|
       if line =~ /\t#/
-        (buf+line) =~ /^(\t*)([^\t]*)\t#(\d+)/ or raise("can't parse TOC line: #{line.inspect}")
+        (buf+line) =~ /^[^\t]?(\t*)"([^\t]*)"\t#(\d+)/ or raise("can't parse TOC line: #{line.inspect}")
         divs << { level: $1.length, title: $2.strip, anchor: "page=#{$3.to_i}" }
         buf = ""
       elsif line =~ /\(null\)/
