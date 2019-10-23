@@ -9,7 +9,7 @@ const TRUMBO_BUTTONS = [
   ['strong', 'em', 'underline'],
   ['formatting'],
   ['link', 'image-upload', 'file-upload'],
-  'btnGrp-lists',
+  ['unorderedList', 'orderedList'],
   ['horizontalRule'],
   ['superscript', 'subscript', 'strikethrough'],
   ['removeformat']

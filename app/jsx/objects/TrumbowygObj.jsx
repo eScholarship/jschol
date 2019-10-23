@@ -3,6 +3,9 @@ import PropTypes from 'prop-types'
 import trumbowyg from 'trumbowyg'
 const trumbowygIconsId = 'trumbowyg-icons'
 
+// Load some standard plugins
+import 'trumbowyg/plugins/cleanpaste/trumbowyg.cleanpaste.js'
+
 // MH CDL: Load our customized plugins
 import './trumbowyg.uploadImage.jsx'
 import './trumbowyg.uploadFile.jsx'
@@ -133,13 +136,14 @@ class Trumbowyg extends Component {
 Trumbowyg.defaultProps = {
   buttons: [
     ['viewHTML'],
+    ['undo', 'redo'], // Only supported in Blink browsers
     ['formatting'],
-    'btnGrp-semantic',
+    ['strong', 'em', 'del'],
     ['superscript', 'subscript'],
     ['link'],
     ['insertImage'],
-    'btnGrp-justify',
-    'btnGrp-lists',
+    ['justifyLeft', 'justifyCenter', 'justifyRight', 'justifyFull'],
+    ['unorderedList', 'orderedList'],
     ['horizontalRule'],
     ['removeformat'],
     ['fullscreen']
