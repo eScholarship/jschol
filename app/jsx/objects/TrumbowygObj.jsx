@@ -9,6 +9,8 @@ import 'trumbowyg/plugins/cleanpaste/trumbowyg.cleanpaste.js'
 // MH CDL: Load our customized plugins
 import './trumbowyg.uploadImage.jsx'
 import './trumbowyg.uploadFile.jsx'
+import './trumbowyg.fancyCreateLink.jsx'
+import './trumbowyg.fancyRemoveFormat.jsx'
 
 class Trumbowyg extends Component {
   constructor(props) {
@@ -43,7 +45,8 @@ class Trumbowyg extends Component {
       plugins,
       shouldUseSvgIcons,
       shouldInjectSvgIcons,
-      svgIconsPath
+      svgIconsPath,
+      tabToIndent
     } = this.props
 
     if (shouldInjectSvgIcons && $(`#${trumbowygIconsId}`).length === 0) {
@@ -58,6 +61,7 @@ class Trumbowyg extends Component {
         resetCss: resetCss,
         removeformatPasted: removeformatPasted,
         autogrow: autogrow,
+        tabToIndent: tabToIndent,
         svgPath: shouldUseSvgIcons
           ? shouldInjectSvgIcons ? '' : svgIconsPath
           : false,

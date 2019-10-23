@@ -8,11 +8,12 @@ import Contexts from '../contexts.jsx'
 const TRUMBO_BUTTONS = [
   ['strong', 'em', 'underline'],
   ['formatting'],
-  ['link', 'image-upload', 'file-upload'],
+  ['fancyCreateLink', 'unlink'],
+  ['image-upload', 'file-upload'],
   ['unorderedList', 'orderedList'],
   ['horizontalRule'],
   ['superscript', 'subscript', 'strikethrough'],
-  ['removeformat']
+  ['fancyRemoveFormat']
 ]
 
 export default class WysiwygEditorComp extends React.Component
@@ -43,6 +44,7 @@ export default class WysiwygEditorComp extends React.Component
                    svgIconsPath="/node_modules/trumbowyg/dist/ui/icons.svg"
                    onChange={e => this.props.onChange(e.target.innerHTML)}
                    disabled={this.props.disabled}
+                   tabToIndent={true}
                    plugins={{
                     // Add parameters to uploadImage plugin
                     uploadImage: {
