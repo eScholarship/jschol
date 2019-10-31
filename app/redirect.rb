@@ -13,6 +13,8 @@ def checkRedirect(origURI)
       uri = nil
     elsif uri.path =~ %r{^//+(.*)}  # normalize multiple initial slashes
       uri.path = "/#{$1}"
+    elsif uri.host == "eschol.org"
+      uri = handleShortenerRedirect(uri)
     elsif $staticRedirects[uri.path]
       if $staticRedirects[uri.path] =~ /^http/
         uri = URI.parse($staticRedirects[uri.path])
@@ -93,6 +95,19 @@ def checkRedirect(origURI)
     #puts "Final redirect: #{origURI} -> #{uri}"
     return uri, 301
   end
+end
+
+###################################################################################################
+def handleShortenerRedirect(uri)
+  uri.host = "escholarship.org"
+  if uri.path =~ %r{^/(\d\w\w\d\w\d\w\w)$} && Item["qt#{$1}"]
+    uri.path = "/uc/item/#{$1}"
+  elsif uri.path =~ %r{^/(\w.*)$} && Unit[$1]
+    uri.path = "/uc/#{$1}"
+  else
+    uri.path = "/notfound"
+  end
+  return uri
 end
 
 ###################################################################################################

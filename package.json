@@ -102,6 +102,6 @@
     "pdfjs-embed2": "escholarship/pdfjs-embed2#32df2ad73209abb827dfc114c3a78ca4f3b759b5",
     "react-sidebar": "^2.3.0",
     "react-sortable-tree": "^2.6.0",
-    "trumbowyg": "^2.7.0"
+    "trumbowyg": "^2.19.1"
   }
 }
