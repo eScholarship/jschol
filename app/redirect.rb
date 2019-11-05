@@ -104,6 +104,11 @@ def handleShortenerRedirect(uri)
     uri.path = "/uc/item/#{$1}"
   elsif uri.path =~ %r{^/(\w.*)$} && Unit[$1]
     uri.path = "/uc/#{$1}"
+  elsif uri.path == "/"
+    uri.scheme = "https"
+    uri.port = nil
+    uri.host = "help.escholarship.org"
+    uri.path = "/support/solutions/articles/9000177383"
   else
     uri.path = "/notfound"
   end
