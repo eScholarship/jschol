@@ -38,7 +38,6 @@ class Nailgun
 
     # Start up, do the work, and always stop afterward
     begin
-      startInternal
       blk.yield(self)
     ensure
       stopInternal
@@ -47,6 +46,8 @@ class Nailgun
 
   #################################################################################################
   def startInternal
+    return if @started
+
     @callCount = 0
     fullClassPath = "/apps/eschol/erep/xtf/control/xsl/nailgun.jar:#{@classPath}"
     cmd = "java -cp #{fullClassPath} #{@systemProps} -server com.martiansoftware.nailgun.NGServer #{@port} > nailgun.log 2>&1"
@@ -62,10 +63,13 @@ class Nailgun
       raise("Nailgun failed to start within 10 seconds.")
     end
     @callCount = 0
+    @started = true
   end
 
   #################################################################################################
   def stopInternal
+    return if !@started
+
     # Tell nailgun to shut down
     begin
       callInternal(true, false, "ng-stop")
@@ -76,6 +80,7 @@ class Nailgun
     # And wait for the shutdown
     status = Process.wait2(@pid)[1]
     status == 0 or raise("Nailgun command failed with code #{status}")
+    @started = false
   end
 
   #################################################################################################
@@ -95,6 +100,7 @@ class Nailgun
 
   #################################################################################################
   def call(javaClass, args, joinStderr = false)
+    startInternal
     begin
       retries ||= 0
       callInternal(false, joinStderr, ([javaClass] + args).join(" "))
