@@ -94,10 +94,7 @@
     "react-modal": "^3.8.1",
     "react-router-dom": "^4.3.1",
     "react-twitter-widgets": "^1.7.1",
-    "smoothscroll-polyfill": "^0.4.0"
-  },
-  "optionalDependencies-note": "These modules are separately bundled and loaded on-demand via require.ensure",
-  "optionalDependencies": {
+    "smoothscroll-polyfill": "^0.4.0",
     "downloadjs": "^1.4.7",
     "pdfjs-embed2": "escholarship/pdfjs-embed2#32df2ad73209abb827dfc114c3a78ca4f3b759b5",
     "react-sidebar": "^2.3.0",
