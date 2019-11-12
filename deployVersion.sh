@@ -53,6 +53,9 @@ if [[ env_exists -ne 1 ]]
     usage
 fi
 
+# Make sure we have the right packages.
+npm install
+
 # Pretranslate all the CSS
 echo "Building app."
 ./gulp sass
