@@ -108,6 +108,9 @@ $preindexMode = false
 # Mode to skip CloudSearch indexing and just do db updates
 $noCloudSearchMode = ARGV.delete('--noCloudSearch')
 
+# Skip locking for certain test scenarios
+$noLockMode = ARGV.delete("--noLock")
+
 # For testing only, skip items <= X, where X is like "qt26s1s6d3"
 $skipTo = nil
 pos = ARGV.index('--skipTo')
@@ -269,16 +272,39 @@ def arkToFile(ark, subpath, root = DATA_DIR)
 end
 
 ###################################################################################################
-# Traverse XML, looking for indexable text to add to the buffer.
+class StringBuf
+  def initialize
+    @buf = []
+    @length = 0
+  end
+
+  def << (str)
+    @buf << str
+    @length += str.length
+  end
+
+  def to_s
+    return @buf.join("\n")
+  end
+
+  def length
+    return @length
+  end
+end
+
+###################################################################################################
+# Traverse XML, looking for indexable text to add to the buffer. Stops if the text size exceeds
+# the max amount we can index (MAX_TEXT_SIZE).
 def traverseText(node, buf)
   return if node['meta'] == "yes" || node['index'] == "no"
+  return if buf.length > MAX_TEXT_SIZE
   node.text? and buf << node.to_s.strip
   node.children.each { |child| traverseText(child, buf) }
 end
 
 ###################################################################################################
 def grabText(itemID, contentType)
-  buf = []
+  buf = StringBuf.new
   textCoordsPath = arkToFile(itemID, "rip/base.textCoords.xml")
   htmlPath = arkToFile(itemID, "content/base.html")
   if contentType == "application/pdf" && File.file?(textCoordsPath)
@@ -291,7 +317,7 @@ def grabText(itemID, contentType)
     #puts "Warning: no text found"
     return ""
   end
-  return translateEntities(buf.join("\n"))
+  return translateEntities(buf.to_s)
 end
 
 ###################################################################################################
@@ -470,7 +496,7 @@ def generatePdfThumbnail(itemID, inMeta, existingItem)
       return data
     else
       existingThumb = existingItem ? JSON.parse(existingItem.attrs)["thumbnail"] : nil
-      if existingThumb && existingThumb["timestamp"] == pdfTimestamp && !$rescanMode && !$forceMode
+      if existingThumb && existingThumb["timestamp"] == pdfTimestamp && !$rescanMode && !$forceMode && !$preindexMode
         # Rebuilding to keep order of fields consistent
         return { asset_id:   existingThumb["asset_id"],
                  image_type: existingThumb["image_type"],
@@ -685,7 +711,7 @@ def generatePdfTOC(itemID)
     buf = ""
     outline.each { |line|
       if line =~ /\t#/
-        (buf+line) =~ /^(\t*)([^\t]*)\t#(\d+)/ or raise("can't parse TOC line: #{line.inspect}")
+        (buf+line) =~ /^[^\t]?(\t*)"([^\t]*)"\t#(\d+)/ or raise("can't parse TOC line: #{line.inspect}")
         divs << { level: $1.length, title: $2.strip, anchor: "page=#{$3.to_i}" }
         buf = ""
       elsif line =~ /\(null\)/
@@ -775,7 +801,10 @@ def grabUCISupps(rawMeta)
   # For UCIngest format, read supp data from the raw metadata file.
   supps = []
   rawMeta.xpath("//content/supplemental/file").each { |fileEl|
-    suppAttrs = { file: fileEl[:path].sub(%r{.*content/supp/}, "") }
+    # First regex below normalizes old filenames that used to start with "content/supp".
+    # Second regex below gets rid of URL query parameters that come from the old OJS converter,
+    # e.g. "?origin=ojsimport"
+    suppAttrs = { file: fileEl[:path].sub(%r{.*content/supp/}, "").sub(%r{\?.*$}, "") }
     fileEl.children.each { |subEl|
       next if subEl.name == "mimeType" && subEl.text == "unknown"
       suppAttrs[subEl.name] = subEl.text
@@ -790,8 +819,8 @@ def summarizeSupps(itemID, inSupps)
   outSupps = nil
   suppSummaryTypes = Set.new
   inSupps.each { |supp|
-    suppPath = arkToFile(itemID, "content/supp/#{supp[:file]}")
-    if !File.exist?(suppPath)
+    suppPath = tryMainAndSequester(arkToFile(itemID, "content/supp/#{supp[:file]}"))
+    if !suppPath
       puts "Warning: can't find supp file #{supp[:file]}"
     else
       # Mime types aren't always reliable coming from Subi. Let's try harder.
@@ -885,7 +914,7 @@ def addMerrittPaths(itemID, attrs)
   # Then do any supp files
   attrs[:supp_files] and attrs[:supp_files].each { |supp|
     suppName = supp[:file]
-    suppSize = File.size(arkToFile(itemID, "content/supp/#{suppName}")) or raise
+    suppSize = File.size(tryMainAndSequester(arkToFile(itemID, "content/supp/#{suppName}"))) or raise
     supp[:size] = suppSize
     suppFound = false
     feed.xpath("//link").each { |link|
@@ -934,6 +963,14 @@ def checkRightsOverride(unitID, volNum, issNum, oldRights)
     $issueRightsCache[key] = rights
   end
   return $issueRightsCache[key]
+end
+
+###################################################################################################
+def tryMainAndSequester(path)
+  File.exist?(path) and return path
+  path = path.sub("erep/data/", "erep/data_sequester/")
+  File.exist?(path) and return path
+  return nil
 end
 
 ###################################################################################################
@@ -1123,8 +1160,10 @@ def parseUCIngest(itemID, inMeta, fileType)
     end
   end
 
-  # Generate thumbnails and TOCs (but only for non-suppressed PDF items)
-  if !attrs[:suppress_content] && File.exist?(arkToFile(itemID, "content/base.pdf"))
+  # Generate thumbnails and TOCs (but only for non-suppressed PDF items).
+  # But in pre-index mode don't do this step because sometimes it takes a long time, and
+  # pre-index needs to happen quickly so the API can return.
+  if !attrs[:suppress_content] && File.exist?(arkToFile(itemID, "content/base.pdf")) && !$preindexMode
     attrs[:thumbnail] = generatePdfThumbnail(itemID, inMeta, Item[itemID])
     attrs[:toc] = parseCustomTOC(itemID) || generatePdfTOC(itemID)
   end
@@ -1139,8 +1178,8 @@ def parseUCIngest(itemID, inMeta, fileType)
 
   # Record name of native file, if any
   if contentFile && contentFile.name == "native" && contentFile[:path]
-    nativePath = arkToFile(itemID, contentFile[:path].sub(/.*\//, 'content/'))
-    if File.exist?(nativePath)
+    nativePath = tryMainAndSequester(arkToFile(itemID, contentFile[:path].sub(/.*\//, 'content/')))
+    if nativePath
       attrs[:native_file] = { name: contentFile[:path].sub(/.*\//, ''),
                               size: File.size(nativePath) }
     end
@@ -1347,7 +1386,7 @@ def indexItem(itemID, timestamp, batch, nailgun)
       parseUCIngest(itemID, rawMeta, "UCIngest")
   end
 
-  text = grabText(itemID, dbItem.content_type)
+  text = $noCloudSearchMode ? "" : grabText(itemID, dbItem.content_type)
   
   # Create JSON for the full text index
   idxItem = {
@@ -1437,7 +1476,7 @@ def indexItem(itemID, timestamp, batch, nailgun)
 
   # Add time-varying things into the database item now that we've generated a stable digest.
   dbItem[:last_indexed] = timestamp
-  dbItem[:index_digest] = idxDigest
+  dbItem[:index_digest] = $noCloudSearchMode ? (existingItem && existingItem[:index_digest]) : idxDigest
   dbItem[:data_digest] = dataDigest
 
   dbDataBlock = { dbItem: dbItem, dbAuthors: dbAuthors, dbContribs: dbContribs,
@@ -1453,7 +1492,7 @@ def indexItem(itemID, timestamp, batch, nailgun)
   end
 
   # If nothing has changed, skip the work of updating this record.
-  if existingItem && !$forceMode && existingItem[:index_digest] == idxDigest
+  if existingItem && !$forceMode && ($preindexMode || existingItem[:index_digest] == idxDigest)
 
     # If only the database portion changed, we can safely skip the CloudSearch re-indxing
     if existingItem[:data_digest] != dataDigest
@@ -1464,7 +1503,7 @@ def indexItem(itemID, timestamp, batch, nailgun)
         end
       }
       # Check/update the splash page now that this item has a real record
-      $splashQueue << itemID
+      !$preindexMode and $splashQueue << itemID
       $nProcessed += 1
       return
     end
@@ -1680,7 +1719,8 @@ end
 def processBatch(batch)
   puts "Processing batch: nItems=#{batch[:items].size}, size=#{batch[:idxDataSize]}."
 
-  # Finish the data buffer, and send to AWS
+  # Finish the data buffer, and send to AWS. Note that in $noCloudSearchMode, we shouldn't have
+  # any batch data anyway, since the digest logic above reverts to the old digest.
   if !$noCloudSearchMode
     batch[:idxData] << "]"
     submitBatch(batch)
@@ -1694,7 +1734,7 @@ def processBatch(batch)
     end
 
     # Process splash pages now that all the DB records exist
-    batch[:items].each { |data| $splashQueue << data[:dbItem][:id] }
+    !$preindexMode and batch[:items].each { |data| $splashQueue << data[:dbItem][:id] }
   }
 
   # Periodically scrub out orphaned sections and issues
@@ -1841,11 +1881,13 @@ def convertAllItems(arks)
   puts "Converting #{arks=="ALL" ? "all" : "selected"} items."
 
   cacheAllUnits()
-  genAllStruct()
 
   # Normally loop runs once, but in rescan mode it's multiple times.
   rescanBase = ""
   while true
+
+    # Make sure to do this critical work periodically
+    genAllStruct()
 
     # Fire up threads for doing the work in parallel
     Thread.abort_on_exception = true
@@ -2134,7 +2176,10 @@ def convertPDF(itemID)
 
   dbPdf = DisplayPDF[itemID]
   # It's odd, but comparing timestamps by value isn't reliable. Converting them to strings is though.
-  if !$forceMode && dbPdf && dbPdf.orig_size == origSize && dbPdf.orig_timestamp.to_s == origTimestamp.to_s
+  if !$forceMode && dbPdf &&
+       dbPdf.orig_size == origSize &&
+       dbPdf.orig_timestamp.to_s == origTimestamp.to_s &&
+       dbPdf.splash_info_digest == instrucDigest
     #puts "Splash unchanged."
     return
   end
@@ -2378,9 +2423,9 @@ end
 
 startTime = Time.now
 
-# Pre-index mode: no locking, just index one item and get out
+# Pre-index mode: no locking, just update database for one item and get out
 if ARGV[0] == "--preindex"
-  $preindexMode = $noCloudSearchMode = $forceMode = true
+  $preindexMode = $noCloudSearchMode = true
   $rescanMode = false # prevent infinite loop
   convertAllItems(Set.new([ARGV[1]]))
   exit 0
@@ -2392,9 +2437,11 @@ lockFile = "/tmp/jschol_convert.lock"
 File.exist?(lockFile) or FileUtils.touch(lockFile)
 lock = File.new(lockFile)
 begin
-  if !lock.flock(File::LOCK_EX | File::LOCK_NB)
-    puts "Another copy is already running."
-    exit 1
+  if !$noLockMode
+    if !lock.flock(File::LOCK_EX | File::LOCK_NB)
+      puts "Another copy is already running."
+      exit 1
+    end
   end
 
   case ARGV[0]
@@ -2421,5 +2468,7 @@ begin
   puts "Elapsed: #{Time.now - startTime} sec."
   puts "Done."
 ensure
-  lock.flock(File::LOCK_UN)
+  if !$noLockMode
+    lock.flock(File::LOCK_UN)
+  end
 end

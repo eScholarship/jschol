@@ -174,7 +174,7 @@
                                             } else {
                                                 if (!!getDeep(data, trumbowyg.o.plugins.uploadImage.statusPropertyName.split('.'))) {
                                                     var url = getDeep(data, trumbowyg.o.plugins.uploadImage.urlPropertyName.split('.'));
-                                                    trumbowyg.execCmd('insertImage', url);
+                                                    trumbowyg.execCmd('insertImage', url, false, true);
                                                     $('img[src="' + url + '"]:not([alt])', trumbowyg.$box).attr('alt', values.alt);
                                                     trumbowyg.$c.trigger('tbwchange'); // to pick up the alt added above
                                                     setTimeout(function () {

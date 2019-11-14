@@ -94,14 +94,11 @@
     "react-modal": "^3.8.1",
     "react-router-dom": "^4.3.1",
     "react-twitter-widgets": "^1.7.1",
-    "smoothscroll-polyfill": "^0.4.0"
-  },
-  "optionalDependencies-note": "These modules are separately bundled and loaded on-demand via require.ensure",
-  "optionalDependencies": {
+    "smoothscroll-polyfill": "^0.4.0",
     "downloadjs": "^1.4.7",
     "pdfjs-embed2": "escholarship/pdfjs-embed2#dab83845bc60a953d08963ea6550df8df9a73e77",
     "react-sidebar": "^2.3.0",
     "react-sortable-tree": "^2.6.0",
-    "trumbowyg": "^2.7.0"
+    "trumbowyg": "^2.19.1"
   }
 }

@@ -53,6 +53,10 @@ if [[ env_exists -ne 1 ]]
     usage
 fi
 
+# Make sure we have the right packages.
+if [ -d node_modules.full ]; then mv node_modules.full node_modules; fi
+npm install
+
 # Pretranslate all the CSS
 echo "Building app."
 ./gulp sass
@@ -69,7 +73,12 @@ echo "Packaging app."
 mkdir -p dist
 ZIP="$DIR-$VERSION.zip"
 git ls-files -x app | xargs zip -ry dist/$ZIP   # picks up mods in working dir, unlike 'git archive'
-zip -r dist/$ZIP app/js app/css
+mv node_modules node_modules.full
+npm install --production
+zip -r dist/$ZIP app/js app/css node_modules
+rm -rf node_modules
+mv node_modules.full node_modules
+git checkout package-lock.json
 
 # add the temporary overlay files
 rm -rf tmp/app
