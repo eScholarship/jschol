@@ -12,7 +12,6 @@ import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
 import ItemActionsComp from '../components/ItemActionsComp.jsx'
 import ArbitraryHTMLComp from "../components/ArbitraryHTMLComp.jsx"
 import AuthorListComp from '../components/AuthorListComp.jsx'
-import PdfViewComp from '../components/PdfViewComp.jsx'
 import PubInfoComp from '../components/PubInfoComp.jsx'
 import TabsComp from '../components/TabsComp.jsx'
 import JumpComp from '../components/JumpComp.jsx'

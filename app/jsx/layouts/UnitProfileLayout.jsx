@@ -177,6 +177,23 @@ class UnitProfileLayout extends React.Component {
                      </div>
                     }
 
+                    { /series|journal/.test(this.props.unit.type) &&
+                      <div>
+                        { disableEdit ?
+                          <div>
+                            <div>Commenting enabled in hypothes.is (restricted): </div>
+                            <span>{data.commenting_ok ? "Yes" : "No"}</span>
+                          </div>
+                          :
+                          <div>
+                            <label className="c-editable-page__label" htmlFor="altmetrics_ok">Commenting enabled in hypothes.is: </label>
+                            <input type="checkbox" id="commenting_ok" name="commenting_ok" defaultChecked={data.commenting_ok}/>
+                          </div>
+                        }
+                        <br/>
+                      </div>
+                    }
+
                    <button type="submit">Save Changes</button>
                  </FormComp>
                </section>

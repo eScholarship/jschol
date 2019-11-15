@@ -633,6 +633,9 @@ def getUnitProfile(unit, attrs)
     profile[:magazine_layout] = attrs['magazine_layout']
     profile[:issue_rule] = attrs['issue_rule']
   end
+  if unit.type =~ /series|journal/
+    profile[:commenting_ok] = attrs['commenting_ok']
+  end
   if unit.type == 'oru'
     profile[:seriesSelector] = true
   end
@@ -1458,6 +1461,7 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
       if perms[:super]
         unitAttrs['doaj'] = (params['data']['doajSeal'] == 'on')
         unitAttrs['altmetrics_ok'] = (params['data']['altmetrics_ok'] == 'on')
+        unitAttrs['commenting_ok'] = (params['data']['commenting_ok'] == 'on')
         %w{active hidden archived}.include?(params['data']['status']) or jsonHalt(400, "invalid status")
         unit.status = params['data']['status']
         %w{enabled disabled moribund}.include?(params['data']['directSubmit']) or jsonHalt(400, "invalid directSubmit")

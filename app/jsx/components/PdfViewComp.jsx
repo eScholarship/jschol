@@ -121,7 +121,7 @@ class PdfViewComp extends React.Component {
         <div className="c-pdfview__viewer">
           <PdfViewerComp url={this.props.url + separator + "nosplash=" + this.props.content_key}/>
         </div>
-        <HypothesisClient/>
+        { this.props.commenting_ok && <HypothesisClient/> }
       </details>
     )
   }

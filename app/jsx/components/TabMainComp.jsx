@@ -48,7 +48,8 @@ class MainContent extends React.Component {
           return (p.content_type == "application/pdf" ?
                     <PdfViewComp url={p.pdf_url}
                                  content_key={p.content_key}
-                                 download_restricted={p.download_restricted}/>
+                                 download_restricted={p.download_restricted}
+                                 commenting_ok={p.commenting_ok}/>
                     :
                     p.content_type == "text/html" ? this.renderHtml(p) : null)
         }

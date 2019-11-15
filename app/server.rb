@@ -1077,6 +1077,7 @@ def getItemPageData(shortArk)
             body[:header] = getUnitHeader(unit, nil, nil)
           end
         end
+        body[:commenting_ok] = unit_attrs['commenting_ok']
       end
       # pp(body)
       return body
