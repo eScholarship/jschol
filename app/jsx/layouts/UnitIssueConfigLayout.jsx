@@ -10,12 +10,18 @@ class RightsDropdown extends React.Component {
             name={`rights-${this.props.voliss}`}
             defaultValue={this.props.rights || "none"}>
       <option value="none">None</option>
-      <option value="CC BY">CC BY</option>
-      <option value="CC BY-NC">CC BY-NC</option>
-      <option value="CC BY-NC-ND">CC BY-NC-ND</option>
-      <option value="CC BY-NC-SA">CC BY-NC-SA</option>
-      <option value="CC BY-ND">CC BY-ND</option>
-      <option value="CC BY-SA">CC BY-SA</option>
+      <option value="https://creativecommons.org/licenses/by/4.0/">CC BY v4.0</option>
+      <option value="https://creativecommons.org/licenses/by-nc/4.0/">CC BY-NC v4.0</option>
+      <option value="https://creativecommons.org/licenses/by-nc-nd/4.0/">CC BY-NC-ND v4.0</option>
+      <option value="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA v4.0</option>
+      <option value="https://creativecommons.org/licenses/by-nd/4.0/">CC BY-ND v4.0</option>
+      <option value="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA v4.0</option>
+      <option value="https://creativecommons.org/licenses/by/3.0/">(old CC BY v3.0)</option>
+      <option value="https://creativecommons.org/licenses/by-nc/3.0/">(old CC BY-NC v3.0)</option>
+      <option value="https://creativecommons.org/licenses/by-nc-nd/3.0/">(old CC BY-NC-ND v3.0)</option>
+      <option value="https://creativecommons.org/licenses/by-nc-sa/3.0/">(old CC BY-NC-SA v3.0)</option>
+      <option value="https://creativecommons.org/licenses/by-nd/3.0/">(old CC BY-ND v3.0)</option>
+      <option value="https://creativecommons.org/licenses/by-sa/3.0/">(old CC BY-SA v3.0)</option>
     </select>
 }
 

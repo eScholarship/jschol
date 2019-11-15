@@ -1712,8 +1712,7 @@ end
 
 def validateRights(rights)
   rights == "none" and return nil
-  ["CC BY", "CC BY-NC", "CC BY-NC-ND", "CC BY-NC-SA", "CC BY-ND", "CC BY-SA"].
-    include?(rights) or jsonHalt(400, "Invalid rights")
+  rights =~ %r{https://creativecommons.org/licenses/(by|by-nc|by-nc-nd|by-nc-sa|by-nd|by-sa)/\d.\d/}
   return rights
 end
 
