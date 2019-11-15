@@ -15,7 +15,11 @@ class Abstract extends React.Component {
         <summary>Abstract</summary>
         <ArbitraryHTMLComp html={this.props.abstract} p_wrap={true} h1Level={3}/>
         {(this.props.unit && this.props.unit.id.match(/^.*_postprints/)) &&
-          <p className="o-well-colored">Many UC-authored scholarly publications are freely available on this site because of the UC Academic Senate&apos;s Open Access Policy. <a href="https://help.escholarship.org/support/tickets/new">Let us know how this access is important for you.</a></p>
+          <p className="o-well-colored">
+            Many UC-authored scholarly publications are freely available on this site
+            because of the UC&apos;s <a href="https://osc.universityofcalifornia.edu/open-access-at-uc/open-access-policy/">
+            open access policies</a>. <a href="https://help.escholarship.org/support/tickets/new">Let us know how this access is important for you.</a>
+          </p>
         }
       </details>
     )
