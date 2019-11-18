@@ -839,15 +839,23 @@ end
 ###################################################################################################
 def translateRights(oldRights)
   case oldRights
-    when "cc1"; "CC BY"
-    when "cc2"; "CC BY-SA"
-    when "cc3"; "CC BY-ND"
-    when "cc4"; "CC BY-NC"
-    when "cc5"; "CC BY-NC-SA"
-    when "cc6"; "CC BY-NC-ND"
+    when "cc1"; "https://creativecommons.org/licenses/by/4.0/"
+    when "cc2"; "https://creativecommons.org/licenses/by-sa/4.0/"
+    when "cc3"; "https://creativecommons.org/licenses/by-nd/4.0/"
+    when "cc4"; "https://creativecommons.org/licenses/by-nc/4.0/"
+    when "cc5"; "https://creativecommons.org/licenses/by-nc-sa/4.0/"
+    when "cc6"; "https://creativecommons.org/licenses/by-nc-nd/4.0/"
     when nil, "public"; nil
     else puts "Unknown rights value #{oldRights.inspect}"; nil
   end
+end
+
+###################################################################################################
+def rightsURLToCode(rights)
+  rights.nil? and return ""
+  rights =~ %r{^https://creativecommons.org/licenses/(by|by-nc|by-nc-nd|by-nc-sa|by-nd|by-sa)/(\d.\d)/$} or raise
+  kind, ver = $1, $2
+  return "CC #{kind.upcase}"  # e.g. "CC BY-NC"
 end
 
 ###################################################################################################
@@ -1402,7 +1410,7 @@ def indexItem(itemID, timestamp, batch, nailgun)
       peer_reviewed: attrs[:is_peer_reviewed] ? 1 : 0,
       pub_date:      dbItem[:published].to_date.iso8601 + "T00:00:00Z",
       pub_year:      dbItem[:published].year,
-      rights:        dbItem[:rights] || "",
+      rights:        rightsURLToCode(dbItem[:rights]),
       sort_author:   (authors[0] || {name:""})[:name].gsub(/[^\w ]/, '').downcase,
       keywords:      attrs[:keywords] ? attrs[:keywords] : [""],
       is_info:       0
