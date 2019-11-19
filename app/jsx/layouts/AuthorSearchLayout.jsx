@@ -22,17 +22,17 @@ export default class AuthorSearchLayout extends React.Component
           <section className="o-columnbox1">
             <header>
               <h1 className="o-columnbox1__heading">
-                Author Search
+                Author/Account Search
               </h1>
             </header>
             <FormComp to={p.location.pathname} method="GET">
-              <label htmlFor="authSearchBox">Email/name (partial ok): </label>
+              <label htmlFor="authSearchBox">Search for (email or name, partial ok): </label>
               <input type="text" size="40" name="q" id="authorSearchBox" defaultValue={p.data.search_str}/>&#160;
               <button type="submit">Go</button>
             </FormComp>
-            <br/><br/>
             { p.data.authors && p.data.authors.length > 0 &&
               <div className="c-datatable">
+                <h2>Author matches</h2>
                 <table>
                   <thead>
                     <tr>
@@ -52,6 +52,36 @@ export default class AuthorSearchLayout extends React.Component
                         </td>
                         <td className="c-editable-tableCell">
                           {_.map(data.emails, email => <div key={email}>{email}</div>)}
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            }
+            { p.data.accounts && p.data.accounts.length > 0 &&
+              <div className="c-datatable">
+                <h2>Account matches</h2>
+                <table>
+                  <thead>
+                    <tr>
+                      <th scope="col">Email / account link</th>
+                      <th scope="col">Name</th>
+                      <th scope="col">Unit(s)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    { _.map(p.data.accounts, data =>
+                      <tr key={data.email}>
+                        <td className="c-editable-tableCell">
+                          <Link to={`/uc/account/${data.user_id}`}>{data.email}</Link>
+                        </td>
+                        <td className="c-editable-tableCell">
+                          { data.name }
+                        </td>
+                        <td className="c-editable-tableCell">
+                          { _.map(data.units.slice(0,5), unit => <div key={unit}><Link to={`/uc/${unit}`}>{unit}</Link></div>) }
+                          { data.units.length > 5 && <div key="...">...</div> }
                         </td>
                       </tr>
                     )}

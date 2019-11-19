@@ -1782,9 +1782,8 @@ def getAuthorSearchData
       JSON_UNQUOTE(people.attrs->"$.email") person_email
     from item_authors
     inner join people on people.id = item_authors.person_id
-    where lower(item_authors.attrs->"$.email") like :matchStr
-       or lower(item_authors.attrs->"$.name") like :matchStr
-       or lower(people.attrs->"$.email") like :matchStr
+    where lower(concat(item_authors.attrs->"$.email", item_authors.attrs->"$.name", people.attrs->"$.email")) like :matchStr
+    order by item_authors.attrs->"$.name"
     limit 200
   }.unindent, { matchStr: "%#{str.downcase}%" })
   DB.fetch(query).each { |row|
@@ -1801,5 +1800,30 @@ def getAuthorSearchData
     }
     { person_id: personID.sub(%r{^ark:/99166/},''), emails: emails.to_a.sort, names: names.to_a.sort }
   }
-  return { search_str: str, authors: authors }
+
+  # Let's do similar stuff for user accounts
+  query = Sequel::SQL::PlaceholderLiteralString.new(%{
+    select users.user_id, email, first_name, last_name,
+           group_concat(distinct journals.path) as journals,
+           group_concat(distinct eschol_roles.unit_id) as units
+    from users
+    left join roles on users.user_id = roles.user_id
+    left join journals on journals.journal_id = roles.journal_id
+    left join eschol_roles on users.user_id = eschol_roles.user_id
+    where lower(concat(email, first_name, last_name)) like :matchStr
+    group by users.user_id
+    order by last_name = '', last_name, first_name, email
+    limit 200
+  }.unindent, { matchStr: "%#{str.downcase}%" })
+  accounts = OJS_DB.fetch(query).map { |row|
+    { user_id: row[:user_id],
+      email: row[:email],
+      name: [row[:last_name]=="" ? nil : row[:last_name],
+             row[:first_name]=="" ? nil : row[:first_name]].compact.join(", "),
+      units: (Set.new(row[:journals] ? row[:journals].split(",") : []) +
+              Set.new(row[:units] ? row[:units].split(",") : [])).to_a.sort[0,6]  # limit 5, plus marker of more
+    }
+  }
+
+  return { search_str: str, authors: authors, accounts: accounts }
 end
