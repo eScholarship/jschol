@@ -950,7 +950,8 @@ def getUserAccountData(userID)
   query = Sequel::SQL::PlaceholderLiteralString.new("select * from eschol_prev_email where user_id = :userID", { userID: userID })
   prevEmails = OJS_DB.fetch(query).map { |row| row[:email] }
 
-  return { last_name: generalData[:last_name],
+  return { user_id: userID,
+           last_name: generalData[:last_name],
            first_name: generalData[:first_name],
            email: generalData[:email],
            registered: generalData[:date_registered],
@@ -963,6 +964,49 @@ def getUserAccountData(userID)
            unit_roles: unitRoles.to_a,
            journal_roles: journalRoles.to_a,
            prev_emails: prevEmails }
+end
+
+###################################################################################################
+def changeOJSFlag(userID, flag, value)
+  OJS_DB.run(Sequel::SQL::PlaceholderLiteralString.new(
+    "delete from user_settings where setting_name = :flag and user_id = :userID", { flag: flag, userID: userID }))
+  if value
+    OJS_DB.run(Sequel::SQL::PlaceholderLiteralString.new(%{
+      insert into user_settings(user_id, locale, setting_name, setting_value, setting_type)
+      values (:userID, 'en_US', :flag, 'yes', 'string')
+    }, { flag: flag, userID: userID }))
+  end
+end
+
+###################################################################################################
+put "/api/userFlags/:userID" do |userID|
+  # Only super-users allowed to see or edit user accounts
+  getUserPermissions(params[:username], params[:token], 'root')[:super] or halt(401)
+
+  # Get data to compare with
+  oldData = getUserAccountData(userID)[:flags]
+
+  # Make updates
+  puts "params:"; pp params
+  newData = params['data']
+
+  if (newData['flag_validated'] == 'on') != oldData[:validated]
+    OJS_DB.run(Sequel::SQL::PlaceholderLiteralString.new(
+      "update users set date_validated = :val where user_id = :userID",
+      { userID: userID, val: (newData['flag_validated'] == 'on') ? DateTime.now.iso8601 : nil }))
+  end
+  if (newData['flag_superuser'] == 'on') != oldData[:superuser]
+    changeOJSFlag(userID, 'eschol_superuser', newData['flag_superuser'] == 'on')
+  end
+  if (newData['flag_opted_out'] == 'on') != oldData[:opted_out]
+    changeOJSFlag(userID, 'eschol_opt_out', newData['flag_opted_out'] == 'on')
+  end
+  if (newData['flag_bouncing'] == 'on') != oldData[:bouncing]
+    changeOJSFlag(userID, 'eschol_bouncing_email', newData['flag_bouncing'] == 'on')
+  end
+
+  content_type :json
+  return { status: "ok" }.to_json
 end
 
 ###################################################################################################

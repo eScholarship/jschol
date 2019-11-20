@@ -15,16 +15,16 @@ export default class UserAccountPage extends PageBase
   handleSubmit = (event, data) => {
     event.preventDefault()
     this.sendApiData("PUT", event.target.action, {data: data})
+    this.setState({anyChanges: false})
   }
 
   renderData(data) {
     let fl = data.flags
-    console.log("data=", data)
     return(
       <div>
         <Header1Comp/>
         <MetaTagsComp title={"eScholarship"}/>
-        <div className="c-columns">
+        <div className={this.state.fetchingData ? "c-columns is-loading-data" : "c-columns"}>
           <main id="maincontent" tabIndex="-1">
             <section className="o-columnbox1">
               <header>
@@ -43,34 +43,39 @@ export default class UserAccountPage extends PageBase
                 </div>
               </div>
               <h3>Settings</h3>
-              <FormComp to="/api/userFlags" onSubmit={this.handleSubmit}>
+              <FormComp to={`/api/userFlags/${data.user_id}`} onSubmit={this.handleSubmit}>
                 <div className="c-editable-pTable">
                   <div className="c-editable-pRow">
-                    <input id="flag_validated" type="checkbox" className="c-editable-pCell" name="flag_validated" defaultChecked={fl.validated}/>
+                    <input id="flag_validated" type="checkbox" className="c-editable-pCell" name="flag_validated" defaultChecked={fl.validated}
+                           onChange={()=>this.setState({anyChanges: true})}/>
                     <label htmlFor="flag_validated" className="c-editable-pCell">Validated email address</label>
                   </div>
                   <div className="c-editable-pRow">
-                    <input id="flag_opted_out" type="checkbox" className="c-editable-pCell" name="flag_opted_out" defaultChecked={fl.opted_out}/>
+                    <input id="flag_opted_out" type="checkbox" className="c-editable-pCell" name="flag_opted_out" defaultChecked={fl.opted_out}
+                           onChange={()=>this.setState({anyChanges: true})}/>
                     <label htmlFor="flag_opted_out" className="c-editable-pCell">Opted out of emails</label>
                   </div>
                   <div className="c-editable-pRow">
-                    <input id="flag_bouncing" type="checkbox" className="c-editable-pCell" name="flag_bouncing" defaultChecked={fl.bouncing}/>
+                    <input id="flag_bouncing" type="checkbox" className="c-editable-pCell" name="flag_bouncing" defaultChecked={fl.bouncing}
+                           onChange={()=>this.setState({anyChanges: true})}/>
                     <label htmlFor="flag_bouncing" className="c-editable-pCell">Bouncing email address</label>
                   </div>
                   <div className="c-editable-pRow">
-                    <input id="flag_superuser" type="checkbox" className="c-editable-pCell" name="flag_superuser" defaultChecked={fl.superuser}/>
+                    <input id="flag_superuser" type="checkbox" className="c-editable-pCell" name="flag_superuser" defaultChecked={fl.superuser}
+                           onChange={()=>this.setState({anyChanges: true})}/>
                     <label htmlFor="flag_superuser" className="c-editable-pCell">Super-user</label>
                   </div>
                 </div>
                 <div className="c-editable-pTable">
                   <div className="c-editable-pRow">
                     <label htmlFor="new_password" className="c-editable-pCell">Set new password:</label>
-                    <input id="new_password" type="text" className="c-editable-pCell" name="new_password"/>
+                    <input id="new_password" type="text" className="c-editable-pCell" name="new_password"
+                           onChange={()=>this.setState({anyChanges: true})}/>
                   </div>
                 </div>
                 <div className="c-editable-pTable">
                   <div className="c-editable-pRow">
-                    <button type="submit" className="c-editable-pCell">Save changes</button>
+                    <button type="submit" disabled={!this.state.anyChanges} className="c-editable-pCell">Save changes</button>
                   </div>
                 </div>
               </FormComp>
