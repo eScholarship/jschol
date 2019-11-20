@@ -1825,5 +1825,19 @@ def getAuthorSearchData
     }
   }
 
-  return { search_str: str, authors: authors, accounts: accounts }
+  # Also query for forwarded addresses (and point to the target user)
+  query = Sequel::SQL::PlaceholderLiteralString.new(%{
+    select users.user_id, eschol_prev_email.email as prev_email, users.email as cur_email
+    from eschol_prev_email
+    join users on users.user_id = eschol_prev_email.user_id
+    where lower(eschol_prev_email.email) like :matchStr
+  }.unindent, { matchStr: "%#{str.downcase}%" })
+  forwards = {}
+  OJS_DB.fetch(query).each { |row|
+    forwards.key?(row[:cur_email]) or forwards[row[:cur_email]] =
+      { user_id: row[:user_id], cur_email: row[:cur_email], prev_emails: [] }
+    forwards[row[:cur_email]][:prev_emails] << row[:prev_email]
+  }
+
+  return { search_str: str, authors: authors, accounts: accounts, forwards: forwards.values }
 end

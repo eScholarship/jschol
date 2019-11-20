@@ -319,3 +319,18 @@
   
 }
 
+/* Pseudo-table: a thing that formats like a table, but isn't for tabular data (e.g. lining up controls) */
+.c-editable-pTable {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+.c-editable-pRow {
+  display: table-row;
+}
+
+.c-editable-pCell {
+  display: table-cell;
+  padding-left: 0.5em;
+  margin-left: 0.5em;
+}

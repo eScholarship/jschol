@@ -556,6 +556,7 @@ def getPageData(path)
     when %r{^/uc/author/([^/]+)/stats(/([^/]+))?$}; authorStatsData("ark:/99166/#{$1}", $3 || "summary")
     when %r{^/uc/([^/]+)/stats(/([^/]+))?$}; unitStatsData($1, $3 || "summary")
     when %r{^/uc/([^/]+)(/([^/]+))?(/([^/]+))?$}; getUnitPageData($1, $3 || "home", $5)
+    when %r{^/userAccount/(\d+)$}; getUserAccountData($1)
     when "/search"; getSearchData
     when "/login"; loginStartData
     when %r{/loginSuccess(/.*)?}; loginValidateData
@@ -606,7 +607,7 @@ def generalResponse
 
   # Skip ISO for CMS pages, since we need to check credentials that are held in browser session storage,
   # and thus don't have access until Javascript is running on the client side.
-  if request.path =~ %r{/(profile|carousel|issueConfig|unitBuilder|nav|sidebar|redirects|authorSearch)\b}
+  if request.path =~ %r{/(profile|carousel|issueConfig|unitBuilder|nav|sidebar|redirects|authorSearch|userAccount)\b}
     puts "Skipping ISO for CMS page."
     return template
   end
@@ -883,6 +884,85 @@ def getGlobalStaticData(path)
   else
     jsonHalt(404, "Not Found")
   end
+end
+
+###################################################################################################
+# User account data
+def getUserAccountData(userID)
+  # Only super-users allowed to see or edit user accounts
+  getUserPermissions(params[:username], params[:token], 'root')[:super] or halt(401)
+
+  # Get general data
+  query = Sequel::SQL::PlaceholderLiteralString.new(%{
+    select last_name, first_name, email,
+    date_registered, date_last_login, date_validated
+    from users where user_id = :userID}.unindent, { userID: userID })
+  generalData = OJS_DB.fetch(query).first.to_h
+
+  # Get flags
+  query = Sequel::SQL::PlaceholderLiteralString.new(
+    "select setting_name, setting_value from user_settings where user_id = :userID", { userID: userID })
+  flags = Hash[OJS_DB.fetch(query).map { |row|
+    [row[:setting_name], row[:setting_value]]
+  }]
+
+  # Get forwarding
+  query = Sequel::SQL::PlaceholderLiteralString.new(
+    "select email from eschol_prev_email where user_id = :userID", { userID: userID })
+  prevEmails = OJS_DB.fetch(query).map { |row| row[:email] }
+
+  # Get eschol unit permissions
+  query = Sequel::SQL::PlaceholderLiteralString.new(
+    "select unit_id, role from eschol_roles where user_id = :userID", { userID: userID })
+  unitRoles = Hash.new { |h,k| h[k] = [] }
+  OJS_DB.fetch(query).each { |row|
+    unitRoles[row[:unit_id]] << row[:role]
+  }
+
+  # Get journals and associated role permissions
+  query = Sequel::SQL::PlaceholderLiteralString.new(%{
+    select journals.path,
+      case
+        when role_id =       1 then 'admin'
+        when role_id =      16 then 'manager'
+        when role_id =     256 then 'editor'
+        when role_id =     512 then 'section editor'
+        when role_id =     768 then 'layout editor'
+        when role_id =    4096 then 'reviewer'
+        when role_id =    8192 then 'copy editor'
+        when role_id =   12288 then 'proofreader'
+        when role_id =   65536 then 'author'
+        when role_id = 1048576 then 'reader'
+        when role_id = 2097152 then 'subscription manager'
+      end as role
+    from users
+    left join roles on users.user_id = roles.user_id
+    left join journals on journals.journal_id = roles.journal_id
+    where users.user_id = :userID
+    order by journals.path
+  }.unindent, { userID: userID })
+  journalRoles = Hash.new { |h,k| h[k] = [] }
+  OJS_DB.fetch(query).each { |row|
+    journalRoles[row[:path]] << row[:role]
+  }
+
+  # Get forwarded email addresses
+  query = Sequel::SQL::PlaceholderLiteralString.new("select * from eschol_prev_email where user_id = :userID", { userID: userID })
+  prevEmails = OJS_DB.fetch(query).map { |row| row[:email] }
+
+  return { last_name: generalData[:last_name],
+           first_name: generalData[:first_name],
+           email: generalData[:email],
+           registered: generalData[:date_registered],
+           last_login: generalData[:date_last_login],
+           flags: { validated: !generalData[:date_validated].nil?,
+                    superuser: flags['eschol_superuser'] == 'yes',
+                    opted_out: flags['eschol_opt_out'] == 'yes',
+                    bouncing:  flags['eschol_bouncing_email'] == 'yes' },
+           prev_emails: prevEmails,
+           unit_roles: unitRoles.to_a,
+           journal_roles: journalRoles.to_a,
+           prev_emails: prevEmails }
 end
 
 ###################################################################################################

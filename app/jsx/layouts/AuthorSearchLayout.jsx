@@ -22,7 +22,7 @@ export default class AuthorSearchLayout extends React.Component
           <section className="o-columnbox1">
             <header>
               <h1 className="o-columnbox1__heading">
-                Author/Account Search
+                Author/User Search
               </h1>
             </header>
             <FormComp to={p.location.pathname} method="GET">
@@ -42,16 +42,16 @@ export default class AuthorSearchLayout extends React.Component
                     </tr>
                   </thead>
                   <tbody>
-                    { _.map(p.data.authors, data =>
-                      <tr key={data.person_id}>
+                    { _.map(p.data.authors, row =>
+                      <tr key={row.person_id}>
                         <td className="c-editable-tableCell">
-                          <Link to={`/uc/author/${data.person_id}/stats`}>{data.person_id}</Link>
+                          <Link to={`/uc/author/${row.person_id}/stats`}>{row.person_id}</Link>
                         </td>
                         <td className="c-editable-tableCell">
-                          {_.map(data.names, name => <div key={name}>{name}</div>)}
+                          {_.map(row.names, name => <div key={name}>{name}</div>)}
                         </td>
                         <td className="c-editable-tableCell">
-                          {_.map(data.emails, email => <div key={email}>{email}</div>)}
+                          {_.map(row.emails, email => <div key={email}>{email}</div>)}
                         </td>
                       </tr>
                     )}
@@ -61,7 +61,7 @@ export default class AuthorSearchLayout extends React.Component
             }
             { p.data.accounts && p.data.accounts.length > 0 &&
               <div className="c-datatable">
-                <h2>Account matches</h2>
+                <h2>User account matches</h2>
                 <table>
                   <thead>
                     <tr>
@@ -71,17 +71,42 @@ export default class AuthorSearchLayout extends React.Component
                     </tr>
                   </thead>
                   <tbody>
-                    { _.map(p.data.accounts, data =>
-                      <tr key={data.email}>
+                    { _.map(p.data.accounts, row =>
+                      <tr key={row.email}>
                         <td className="c-editable-tableCell">
-                          <Link to={`/uc/account/${data.user_id}`}>{data.email}</Link>
+                          <Link to={`/userAccount/${row.user_id}`}>{row.email}</Link>
                         </td>
                         <td className="c-editable-tableCell">
-                          { data.name }
+                          { row.name }
                         </td>
                         <td className="c-editable-tableCell">
-                          { _.map(data.units.slice(0,5), unit => <div key={unit}><Link to={`/uc/${unit}`}>{unit}</Link></div>) }
-                          { data.units.length > 5 && <div key="...">...</div> }
+                          { _.map(row.units.slice(0,5), unit => <div key={unit}><Link to={`/uc/${unit}`}>{unit}</Link></div>) }
+                          { row.units.length > 5 && <div key="...">...</div> }
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            }
+            { p.data.forwards && p.data.forwards.length > 0 &&
+              <div className="c-datatable">
+                <h2>Forwarded email matches</h2>
+                <table>
+                  <thead>
+                    <tr>
+                      <th scope="col">Current email / acct link</th>
+                      <th scope="col">Previous email addr(s)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    { _.map(p.data.forwards, row =>
+                      <tr key={row.user_id}>
+                        <td className="c-editable-tableCell">
+                          <Link to={`/userAccount/${row.user_id}`}>{row.cur_email}</Link>
+                        </td>
+                        <td className="c-editable-tableCell">
+                          { _.map(row.prev_emails, pe => <div key={pe}>{pe}</div>) }
                         </td>
                       </tr>
                     )}
