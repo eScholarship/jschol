@@ -69,7 +69,7 @@ export default class UserAccountPage extends PageBase
                 <div className="c-editable-pTable">
                   <div className="c-editable-pRow">
                     <label htmlFor="new_password" className="c-editable-pCell">Set new password:</label>
-                    <input id="new_password" type="text" className="c-editable-pCell" name="new_password"
+                    <input id="new_password" type="password" className="c-editable-pCell" name="new_password"
                            onChange={()=>this.setState({anyChanges: true})}/>
                   </div>
                 </div>

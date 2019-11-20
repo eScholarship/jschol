@@ -967,10 +967,12 @@ def getUserAccountData(userID)
 end
 
 ###################################################################################################
-def changeOJSFlag(userID, flag, value)
+def changeOJSFlag(userID, flag, oldValue, newValue)
+  oldValue == newValue and return  # no-op
   OJS_DB.run(Sequel::SQL::PlaceholderLiteralString.new(
-    "delete from user_settings where setting_name = :flag and user_id = :userID", { flag: flag, userID: userID }))
-  if value
+    "delete from user_settings where setting_name = :flag and user_id = :userID",
+    { flag: flag, userID: userID }))
+  if newValue
     OJS_DB.run(Sequel::SQL::PlaceholderLiteralString.new(%{
       insert into user_settings(user_id, locale, setting_name, setting_value, setting_type)
       values (:userID, 'en_US', :flag, 'yes', 'string')
@@ -987,22 +989,21 @@ put "/api/userFlags/:userID" do |userID|
   oldData = getUserAccountData(userID)[:flags]
 
   # Make updates
-  puts "params:"; pp params
   newData = params['data']
-
-  if (newData['flag_validated'] == 'on') != oldData[:validated]
+  changeOJSFlag(userID, 'eschol_superuser',      oldData[:superuser], newData['flag_superuser'] == 'on')
+  changeOJSFlag(userID, 'eschol_opt_out',        oldData[:opted_out], newData['flag_opted_out'] == 'on')
+  changeOJSFlag(userID, 'eschol_bouncing_email', oldData[:bouncing],  newData['flag_bouncing']  == 'on')
+  if (val = newData['flag_validated'] == 'on') != oldData[:validated]
     OJS_DB.run(Sequel::SQL::PlaceholderLiteralString.new(
       "update users set date_validated = :val where user_id = :userID",
-      { userID: userID, val: (newData['flag_validated'] == 'on') ? DateTime.now.iso8601 : nil }))
+      { userID: userID, val: val ? DateTime.now.iso8601 : nil }))
   end
-  if (newData['flag_superuser'] == 'on') != oldData[:superuser]
-    changeOJSFlag(userID, 'eschol_superuser', newData['flag_superuser'] == 'on')
-  end
-  if (newData['flag_opted_out'] == 'on') != oldData[:opted_out]
-    changeOJSFlag(userID, 'eschol_opt_out', newData['flag_opted_out'] == 'on')
-  end
-  if (newData['flag_bouncing'] == 'on') != oldData[:bouncing]
-    changeOJSFlag(userID, 'eschol_bouncing_email', newData['flag_bouncing'] == 'on')
+  if (val = newData['new_password']) && !val.empty?
+    uname = OJS_DB.fetch(Sequel::SQL::PlaceholderLiteralString.new(
+      "select username from users where user_id = :userID", { userID: userID })).first[:username]
+    OJS_DB.run(Sequel::SQL::PlaceholderLiteralString.new(
+      "update users set password = :hash where user_id = :userID",
+      { userID: userID, hash: Digest::SHA1.hexdigest(uname + val) }))
   end
 
   content_type :json
