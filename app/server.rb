@@ -607,7 +607,7 @@ def generalResponse
 
   # Skip ISO for CMS pages, since we need to check credentials that are held in browser session storage,
   # and thus don't have access until Javascript is running on the client side.
-  if request.path =~ %r{/(profile|carousel|issueConfig|unitBuilder|nav|sidebar|redirects|authorSearch|userAccount)\b}
+  if request.path =~ %r{/(profile|carousel|issueConfig|userConfig|unitBuilder|nav|sidebar|redirects|authorSearch|userAccount)\b}
     puts "Skipping ISO for CMS page."
     return template
   end
@@ -960,7 +960,6 @@ def getUserAccountData(userID)
                     superuser: flags['eschol_superuser'] == 'yes',
                     opted_out: flags['eschol_opt_out'] == 'yes',
                     bouncing:  flags['eschol_bouncing_email'] == 'yes' },
-           prev_emails: prevEmails,
            unit_roles: unitRoles.to_a,
            journal_roles: journalRoles.to_a,
            prev_emails: prevEmails }
@@ -1046,7 +1045,7 @@ def getUnitPageData(unitID, pageName, subPage)
       pageData[:header] = getUnitHeader(unit, nil, journalIssue, issuesSubNav, attrs)
     else
       pageData[:header] = getUnitHeader(unit, 
-      (pageName =~ /^(nav|sidebar|profile|carousel|issueConfig|redirects|unitBuilder|authorSearch)/) ?
+      (pageName =~ /^(nav|sidebar|profile|carousel|issueConfig|userConfig|redirects|unitBuilder|authorSearch)/) ?
         nil : pageName, nil, nil, attrs)
     end
 
@@ -1065,6 +1064,8 @@ def getUnitPageData(unitID, pageName, subPage)
       pageData[:content] = getUnitCarouselConfig(unit, attrs)
     elsif pageName == 'issueConfig'
       pageData[:content] = getUnitIssueConfig(unit, attrs)
+    elsif pageName == 'userConfig'
+      pageData[:content] = getUnitUserConfig(unit)
     elsif pageName == 'unitBuilder'
       pageData[:content] = getUnitBuilderData(unit)
     elsif pageName == 'nav'

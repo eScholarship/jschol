@@ -240,6 +240,8 @@ class DrawerComp extends React.Component {
       siteSettings.push({ id: "issueConfig", 
                           title: <Link to={`/uc/${this.props.data.unit.id}/issueConfig`}>Issue Configuration</Link>})
     }
+    siteSettings.push({ id: "userConfig",
+                        title: <Link to={`/uc/${this.props.data.unit.id}/userConfig`}>Users</Link>})
     return (
       <div>
         <div className="c-drawer__heading">Site Settings</div>

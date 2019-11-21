@@ -83,7 +83,7 @@ export default class UserAccountPage extends PageBase
               { data.unit_roles.length > 0 &&
                 <div>
                   <h3>Unit roles</h3>
-                  <div className="c-datatable">
+                  <div className="c-datatable-nomaxheight">
                     <table>
                       <thead>
                         <tr>
@@ -111,7 +111,7 @@ export default class UserAccountPage extends PageBase
               { data.journal_roles.length > 0 &&
                 <div>
                   <h3>Journal roles</h3>
-                  <div className="c-datatable">
+                  <div className="c-datatable-nomaxheight">
                     <table>
                       <thead>
                         <tr>

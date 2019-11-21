@@ -25,6 +25,7 @@ import UnitStaticPageLayout from '../layouts/UnitStaticPageLayout.jsx'
 import UnitProfileLayout from '../layouts/UnitProfileLayout.jsx'
 import UnitCarouselConfigLayout from '../layouts/UnitCarouselConfigLayout.jsx'
 import UnitIssueConfigLayout from '../layouts/UnitIssueConfigLayout.jsx'
+import UnitUserConfigLayout from '../layouts/UnitUserConfigLayout.jsx'
 import UnitSidebarConfigLayout from '../layouts/UnitSidebarConfigLayout.jsx'
 import UnitNavConfigLayout from '../layouts/UnitNavConfigLayout.jsx'
 import RedirectConfigLayout from '../layouts/RedirectConfigLayout.jsx'
@@ -87,6 +88,9 @@ class UnitPage extends PageBase {
     } else if (this.props.match.params.pageName === 'issueConfig') {
       contentLayout = this.cmsPage(data, <UnitIssueConfigLayout unit={data.unit} data={data.content} sendApiData={this.sendApiData}/>)
       title = `Issue config: ${data.unit.name}`
+    } else if (this.props.match.params.pageName === 'userConfig') {
+      contentLayout = this.cmsPage(data, <UnitUserConfigLayout unit={data.unit} data={data.content} sendApiData={this.sendApiData}/>)
+      title = `User config: ${data.unit.name}`
     } else if (this.props.match.params.pageName === 'unitBuilder') {
       contentLayout = this.cmsPage(data, <UnitBuilderLayout unit={data.unit} data={data.content} sendApiData={this.sendApiData}/>)
       title = `Unit builder: ${data.unit.name}`

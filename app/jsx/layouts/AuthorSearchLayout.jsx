@@ -31,7 +31,7 @@ export default class AuthorSearchLayout extends React.Component
               <button type="submit">Go</button>
             </FormComp>
             { p.data.authors && p.data.authors.length > 0 &&
-              <div className="c-datatable">
+              <div className="c-datatable-nomaxheight">
                 <h2>Author matches</h2>
                 <table>
                   <thead>
@@ -60,7 +60,7 @@ export default class AuthorSearchLayout extends React.Component
               </div>
             }
             { p.data.accounts && p.data.accounts.length > 0 &&
-              <div className="c-datatable">
+              <div className="c-datatable-nomaxheight">
                 <h2>User account matches</h2>
                 <table>
                   <thead>
@@ -90,7 +90,7 @@ export default class AuthorSearchLayout extends React.Component
               </div>
             }
             { p.data.forwards && p.data.forwards.length > 0 &&
-              <div className="c-datatable">
+              <div className="c-datatable-nomaxheight">
                 <h2>Forwarded email matches</h2>
                 <table>
                   <thead>
