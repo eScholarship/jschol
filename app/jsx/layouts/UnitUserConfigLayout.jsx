@@ -62,10 +62,10 @@ export default class UnitUserConfigLayout extends React.Component
                             )}
                             <tr key="newuser">
                               <td className="c-editable-tableCell">
-                                <i>(add user)</i>
+                                <i>(add role for user)</i>
                               </td>
                               <td className="c-editable-tableCell">
-                                <input type="email" name="email-newuser" disabled={disableEdit} placeholder="email"/>
+                                <input type="email" name="email-newuser" disabled={disableEdit} placeholder="existing email"/>
                               </td>
                               <td className="c-editable-tableCell">
                                 <input type="checkbox" name="admin-newuser" disabled={disableEdit} onChange={()=>this.setState({anyChanges: true})}/>

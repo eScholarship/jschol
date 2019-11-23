@@ -101,7 +101,7 @@ DB = ensureConnect("ESCHOL_DB")
 #DB.loggers << Logger.new('server.sql_log')  # Enable to debug SQL queries on main db
 puts "Connecting to OJS DB.       "
 OJS_DB = ensureConnect("OJS_DB")
-#OJS_DB.loggers << Logger.new('ojs.sql_log')  # Enable to debug SQL queries on OJS db
+OJS_DB.loggers << Logger.new('ojs.sql_log')  # Enable to debug SQL queries on OJS db
 
 # When fetching ISO pages from the local server, we need the host name.
 $host = ENV['HOST'] ? "#{ENV['HOST']}.escholarship.org" : "localhost"
@@ -980,9 +980,18 @@ def changeOJSFlag(userID, flag, oldValue, newValue)
 end
 
 ###################################################################################################
+def validateUserID(userID)
+  row = OJS_DB.fetch(Sequel::SQL::PlaceholderLiteralString.new(
+    "select email from users where user_id = :userID",
+    { userID: userID })).first
+  row.nil? and jsonHalt(400, "Invalid user ID")
+end
+
+###################################################################################################
 put "/api/userFlags/:userID" do |userID|
   # Only super-users allowed to see or edit user accounts
   getUserPermissions(params[:username], params[:token], 'root')[:super] or halt(401)
+  validateUserID(userID)
 
   # Get data to compare with
   oldData = getUserAccountData(userID)[:flags]
@@ -1004,6 +1013,53 @@ put "/api/userFlags/:userID" do |userID|
       "update users set password = :hash where user_id = :userID",
       { userID: userID, hash: Digest::SHA1.hexdigest(uname + val) }))
   end
+
+  content_type :json
+  return { status: "ok" }.to_json
+end
+
+###################################################################################################
+post "/api/userEmailForward/:userID" do |userID|
+  # Only super-users allowed to see or edit user accounts
+  getUserPermissions(params[:username], params[:token], 'root')[:super] or halt(401)
+  validateUserID(userID)
+
+  # Validate the email address. See https://www.regular-expressions.info/email.html
+  email = params.dig('data', 'email')
+  email =~ %r{^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$}i or jsonHalt(400, "Invalid email")
+
+  # Make sure there's not already a mapping for this
+  row = OJS_DB.fetch(Sequel::SQL::PlaceholderLiteralString.new(
+    "select user_id from eschol_prev_email where user_id = :userID and lower(email) = :email",
+    { userID: userID, email: email.downcase })).first
+  row and jsonHalt(400, "Duplicate entry")
+
+  # Make sure there's not already a matching user account for this
+  row = OJS_DB.fetch(Sequel::SQL::PlaceholderLiteralString.new(
+    "select user_id from users where lower(email) = :email",
+    { email: email.downcase })).first
+  row and jsonHalt(400, "Prev email has an account - did you mean to update it?")
+
+  # Ok to insert.
+  OJS_DB.run(Sequel::SQL::PlaceholderLiteralString.new(
+    "insert into eschol_prev_email(user_id, email) values (:userID, :email)",
+    { userID: userID, email: email.downcase }))
+
+  content_type :json
+  return { status: "ok" }.to_json
+end
+
+###################################################################################################
+delete "/api/userEmailForward/:userID" do |userID|
+  # Only super-users allowed to see or edit user accounts
+  getUserPermissions(params[:username], params[:token], 'root')[:super] or halt(401)
+  validateUserID(userID)
+
+  # Ok to delete.
+  email = params.dig('data', 'email')
+  OJS_DB.run(Sequel::SQL::PlaceholderLiteralString.new(
+    "delete from eschol_prev_email where user_id = :userID and lower(email) = :email",
+    { userID: userID, email: email.downcase }))
 
   content_type :json
   return { status: "ok" }.to_json

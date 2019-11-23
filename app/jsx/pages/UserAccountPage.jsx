@@ -18,6 +18,15 @@ export default class UserAccountPage extends PageBase
     this.setState({anyChanges: false})
   }
 
+  onDeleteForward = (userID, email) => {
+    this.sendApiData("DELETE", `/api/userEmailForward/${userID}`, { data: { email: email } })
+  }
+
+  onAddForward = (event, userID) => {
+    const email = this.forwardEmailEl.value
+    this.sendApiData("POST", `/api/userEmailForward/${userID}`, { data: { email: email } })
+  }
+
   renderData(data) {
     let fl = data.flags
     return(
@@ -80,6 +89,37 @@ export default class UserAccountPage extends PageBase
                 </div>
               </FormComp>
 
+              <div>
+                <h3>Previous email addresses</h3>
+                <div className="c-datatable-nomaxheight">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Prev email</th>
+                        <th scope="col">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      { _.map(data.prev_emails, addr =>
+                        <tr key={addr}>
+                          <td className="c-editable-tableCell">
+                            {addr}
+                          </td>
+                          <td className="c-editable-tableCell">
+                            <button onClick={(e) => this.onDeleteForward(data.user_id, addr)}>remove</button>
+                          </td>
+                        </tr>)
+                      }
+                      <tr key="new">
+                        <td className="c-editable-tableCell">
+                          <input type="email" placeholder="email" ref={ (el) => this.forwardEmailEl = el }/></td>
+                        <td className="c-editable-tableCell"><button onClick={(event) => this.onAddForward(event, data.user_id)}>add</button></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
               { data.unit_roles.length > 0 &&
                 <div>
                   <h3>Unit roles</h3>
@@ -133,17 +173,6 @@ export default class UserAccountPage extends PageBase
                       </tbody>
                     </table>
                   </div>
-                </div>
-              }
-
-              { data.prev_emails.length > 0 &&
-                <div>
-                  <h3>Previous email addresses</h3>
-                  <ul>
-                    { _.map(data.prev_emails, addr =>
-                      <li key={addr}>{addr}</li>
-                    )}
-                  </ul>
                 </div>
               }
 
