@@ -83,11 +83,6 @@ GEM
     vmstat (2.3.1)
     xml-sitemap (1.3.3)
       builder (>= 2.0)
-    xml-to-hash (1.0.3)
-      nokogiri (~> 1, >= 1.6)
-    xml-to-json (1.0.1)
-      json
-      xml-to-hash
 
 PLATFORMS
   ruby
@@ -121,7 +116,6 @@ DEPENDENCIES
   unindent
   vmstat
   xml-sitemap
-  xml-to-json
 
 RUBY VERSION
    ruby 2.3.4p301

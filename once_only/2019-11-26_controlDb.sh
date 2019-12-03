@@ -18,7 +18,7 @@ if [[ " $MACHINES " =~ " $THIS_MACHINE " ]]; then
     set -o errexit   ## set -e : exit the script if any statement returns a non-true return value
 
     # Stop controller
-    eye stop control
+    #eye stop control
 
     # Dump the database contents
     echo "Dumping tables."
