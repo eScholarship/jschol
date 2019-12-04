@@ -31,6 +31,7 @@ if [[ " $MACHINES " =~ " $THIS_MACHINE " ]]; then
     echo "begin;" >> control_load.sql
 
     echo "LOCK TABLES arks WRITE, queues WRITE, messages WRITE, index_states WRITE;" >> control_load.sql
+    echo "SET FOREIGN_KEY_CHECKS=0;" >> control_load.sql
     echo "delete from queues;" >> control_load.sql
     echo "delete from messages;" >> control_load.sql
     echo "delete from index_states;" >> control_load.sql
@@ -47,6 +48,10 @@ if [[ " $MACHINES " =~ " $THIS_MACHINE " ]]; then
       sed 's/INSERT INTO/INSERT IGNORE INTO/g' | \
       sed "s/'''/'/g" >> control_load.sql
 
+    echo "delete from queues where item_id not in (select id from arks);" >> control_load.sql
+    echo "delete from messages where item_id not in (select id from arks);" >> control_load.sql
+    echo "delete from index_states where item_id not in (select id from arks);" >> control_load.sql
+    echo "SET FOREIGN_KEY_CHECKS=1;" >> control_load.sql
     echo "UNLOCK TABLES;" >> control_load.sql
     echo "commit;" >> control_load.sql
 
