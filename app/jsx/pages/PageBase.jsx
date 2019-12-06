@@ -255,6 +255,14 @@ class PageBase extends React.Component
     return true
   }
 
+  shouldShowDrawer() {
+    return this.state.adminLogin && this.state.adminLogin.loggedIn &&
+           this.state.cmsModules && this.state.pageData &&
+           this.state.permissions && this.state.permissions.admin &&
+           'header' in this.state.pageData && 'nav_bar' in this.state.pageData.header &&
+           !this.state.pageData.id
+  }
+
   renderContent() {
     // Error case
     if (this.state.pageData && this.state.pageData.error !== undefined) {
@@ -269,12 +277,7 @@ class PageBase extends React.Component
     }
 
     // CMS drawer case
-    if (this.state.adminLogin && this.state.adminLogin.loggedIn &&
-        this.state.cmsModules && this.state.pageData &&
-        this.state.permissions && this.state.permissions.admin &&
-        'header' in this.state.pageData && 'nav_bar' in this.state.pageData.header &&
-        !this.state.pageData.id)
-    {
+    if (this.shouldShowDrawer()) {
       return (
         <DrawerComp data={this.state.pageData}
                     sendApiData={this.sendApiData}
@@ -356,6 +359,7 @@ class PageBase extends React.Component
                                              fetchPageData: () =>this.fetchPageData(this.props),
                                              goLocation: (loc) =>this.props.history.push(loc),
                                              modules: this.state.cmsModules,
+                                             showingDrawer: this.shouldShowDrawer(),
                                              permissions: this.state.permissions } }>
           {this.renderContent()}
         </Contexts.CMS.Provider>

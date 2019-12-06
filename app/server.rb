@@ -101,7 +101,7 @@ DB = ensureConnect("ESCHOL_DB")
 #DB.loggers << Logger.new('server.sql_log')  # Enable to debug SQL queries on main db
 puts "Connecting to OJS DB.       "
 OJS_DB = ensureConnect("OJS_DB")
-#OJS_DB.loggers << Logger.new('ojs.sql_log')  # Enable to debug SQL queries on OJS db
+OJS_DB.loggers << Logger.new('ojs.sql_log')  # Enable to debug SQL queries on OJS db
 
 # When fetching ISO pages from the local server, we need the host name.
 $host = ENV['HOST'] ? "#{ENV['HOST']}.escholarship.org" : "localhost"
@@ -556,6 +556,7 @@ def getPageData(path)
     when %r{^/uc/author/([^/]+)/stats(/([^/]+))?$}; authorStatsData("ark:/99166/#{$1}", $3 || "summary")
     when %r{^/uc/([^/]+)/stats(/([^/]+))?$}; unitStatsData($1, $3 || "summary")
     when %r{^/uc/([^/]+)(/([^/]+))?(/([^/]+))?$}; getUnitPageData($1, $3 || "home", $5)
+    when %r{^/userAccount/(\d+)$}; getUserAccountData($1)
     when "/search"; getSearchData
     when "/login"; loginStartData
     when %r{/loginSuccess(/.*)?}; loginValidateData
@@ -606,7 +607,7 @@ def generalResponse
 
   # Skip ISO for CMS pages, since we need to check credentials that are held in browser session storage,
   # and thus don't have access until Javascript is running on the client side.
-  if request.path =~ %r{/(profile|carousel|issueConfig|unitBuilder|nav|sidebar|redirects|authorSearch)\b}
+  if request.path =~ %r{/(profile|carousel|issueConfig|userConfig|unitBuilder|nav|sidebar|redirects|authorSearch|userAccount)\b}
     puts "Skipping ISO for CMS page."
     return template
   end
@@ -886,6 +887,185 @@ def getGlobalStaticData(path)
 end
 
 ###################################################################################################
+# User account data
+def getUserAccountData(userID)
+  # Only super-users allowed to see or edit user accounts
+  getUserPermissions(params[:username], params[:token], 'root')[:super] or halt(401)
+
+  # Get general data
+  query = Sequel::SQL::PlaceholderLiteralString.new(%{
+    select last_name, first_name, email,
+    date_registered, date_last_login, date_validated
+    from users where user_id = :userID}.unindent, { userID: userID })
+  generalData = OJS_DB.fetch(query).first.to_h
+
+  # Get flags
+  query = Sequel::SQL::PlaceholderLiteralString.new(
+    "select setting_name, setting_value from user_settings where user_id = :userID", { userID: userID })
+  flags = Hash[OJS_DB.fetch(query).map { |row|
+    [row[:setting_name], row[:setting_value]]
+  }]
+
+  # Get forwarding
+  query = Sequel::SQL::PlaceholderLiteralString.new(
+    "select email from eschol_prev_email where user_id = :userID", { userID: userID })
+  prevEmails = OJS_DB.fetch(query).map { |row| row[:email] }
+
+  # Get eschol unit permissions
+  query = Sequel::SQL::PlaceholderLiteralString.new(
+    "select unit_id, role from eschol_roles where user_id = :userID", { userID: userID })
+  unitRoles = Hash.new { |h,k| h[k] = [] }
+  OJS_DB.fetch(query).each { |row|
+    unitRoles[row[:unit_id]] << row[:role]
+  }
+
+  # Get journals and associated role permissions
+  query = Sequel::SQL::PlaceholderLiteralString.new(%{
+    select journals.path,
+      case
+        when role_id =       1 then 'admin'
+        when role_id =      16 then 'manager'
+        when role_id =     256 then 'editor'
+        when role_id =     512 then 'section editor'
+        when role_id =     768 then 'layout editor'
+        when role_id =    4096 then 'reviewer'
+        when role_id =    8192 then 'copy editor'
+        when role_id =   12288 then 'proofreader'
+        when role_id =   65536 then 'author'
+        when role_id = 1048576 then 'reader'
+        when role_id = 2097152 then 'subscription manager'
+      end as role
+    from users
+    left join roles on users.user_id = roles.user_id
+    left join journals on journals.journal_id = roles.journal_id
+    where users.user_id = :userID
+    order by journals.path
+  }.unindent, { userID: userID })
+  journalRoles = Hash.new { |h,k| h[k] = [] }
+  OJS_DB.fetch(query).each { |row|
+    journalRoles[row[:path]] << row[:role]
+  }
+
+  # Get forwarded email addresses
+  query = Sequel::SQL::PlaceholderLiteralString.new("select * from eschol_prev_email where user_id = :userID", { userID: userID })
+  prevEmails = OJS_DB.fetch(query).map { |row| row[:email] }
+
+  return { user_id: userID,
+           last_name: generalData[:last_name],
+           first_name: generalData[:first_name],
+           email: generalData[:email],
+           registered: generalData[:date_registered],
+           last_login: generalData[:date_last_login],
+           flags: { validated: !generalData[:date_validated].nil?,
+                    superuser: flags['eschol_superuser'] == 'yes',
+                    opted_out: flags['eschol_opt_out'] == 'yes',
+                    bouncing:  flags['eschol_bouncing_email'] == 'yes' },
+           unit_roles: unitRoles.to_a,
+           journal_roles: journalRoles.to_a,
+           prev_emails: prevEmails }
+end
+
+###################################################################################################
+def changeOJSFlag(userID, flag, oldValue, newValue)
+  oldValue == newValue and return  # no-op
+  OJS_DB.run(Sequel::SQL::PlaceholderLiteralString.new(
+    "delete from user_settings where setting_name = :flag and user_id = :userID",
+    { flag: flag, userID: userID }))
+  if newValue
+    OJS_DB.run(Sequel::SQL::PlaceholderLiteralString.new(%{
+      insert into user_settings(user_id, locale, setting_name, setting_value, setting_type)
+      values (:userID, 'en_US', :flag, 'yes', 'string')
+    }, { flag: flag, userID: userID }))
+  end
+end
+
+###################################################################################################
+def validateUserID(userID)
+  row = OJS_DB.fetch(Sequel::SQL::PlaceholderLiteralString.new(
+    "select email from users where user_id = :userID",
+    { userID: userID })).first
+  row.nil? and jsonHalt(400, "Invalid user ID")
+end
+
+###################################################################################################
+put "/api/userFlags/:userID" do |userID|
+  # Only super-users allowed to see or edit user accounts
+  getUserPermissions(params[:username], params[:token], 'root')[:super] or halt(401)
+  validateUserID(userID)
+
+  # Get data to compare with
+  oldData = getUserAccountData(userID)[:flags]
+
+  # Make updates
+  newData = params['data']
+  changeOJSFlag(userID, 'eschol_superuser',      oldData[:superuser], newData['flag_superuser'] == 'on')
+  changeOJSFlag(userID, 'eschol_opt_out',        oldData[:opted_out], newData['flag_opted_out'] == 'on')
+  changeOJSFlag(userID, 'eschol_bouncing_email', oldData[:bouncing],  newData['flag_bouncing']  == 'on')
+  if (val = newData['flag_validated'] == 'on') != oldData[:validated]
+    OJS_DB.run(Sequel::SQL::PlaceholderLiteralString.new(
+      "update users set date_validated = :val where user_id = :userID",
+      { userID: userID, val: val ? DateTime.now.iso8601 : nil }))
+  end
+  if (val = newData['new_password']) && !val.empty?
+    uname = OJS_DB.fetch(Sequel::SQL::PlaceholderLiteralString.new(
+      "select username from users where user_id = :userID", { userID: userID })).first[:username]
+    OJS_DB.run(Sequel::SQL::PlaceholderLiteralString.new(
+      "update users set password = :hash where user_id = :userID",
+      { userID: userID, hash: Digest::SHA1.hexdigest(uname + val) }))
+  end
+
+  content_type :json
+  return { status: "ok" }.to_json
+end
+
+###################################################################################################
+post "/api/userEmailForward/:userID" do |userID|
+  # Only super-users allowed to see or edit user accounts
+  getUserPermissions(params[:username], params[:token], 'root')[:super] or halt(401)
+  validateUserID(userID)
+
+  # Validate the email address. See https://www.regular-expressions.info/email.html
+  email = params.dig('data', 'email')
+  email =~ %r{^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$}i or jsonHalt(400, "Invalid email")
+
+  # Make sure there's not already a mapping for this
+  row = OJS_DB.fetch(Sequel::SQL::PlaceholderLiteralString.new(
+    "select user_id from eschol_prev_email where user_id = :userID and lower(email) = :email",
+    { userID: userID, email: email.downcase })).first
+  row and jsonHalt(400, "Duplicate entry")
+
+  # Make sure there's not already a matching user account for this
+  row = OJS_DB.fetch(Sequel::SQL::PlaceholderLiteralString.new(
+    "select user_id from users where lower(email) = :email",
+    { email: email.downcase })).first
+  row and jsonHalt(400, "Prev email has an account - did you mean to update it?")
+
+  # Ok to insert.
+  OJS_DB.run(Sequel::SQL::PlaceholderLiteralString.new(
+    "insert into eschol_prev_email(user_id, email) values (:userID, :email)",
+    { userID: userID, email: email.downcase }))
+
+  content_type :json
+  return { status: "ok" }.to_json
+end
+
+###################################################################################################
+delete "/api/userEmailForward/:userID" do |userID|
+  # Only super-users allowed to see or edit user accounts
+  getUserPermissions(params[:username], params[:token], 'root')[:super] or halt(401)
+  validateUserID(userID)
+
+  # Ok to delete.
+  email = params.dig('data', 'email')
+  OJS_DB.run(Sequel::SQL::PlaceholderLiteralString.new(
+    "delete from eschol_prev_email where user_id = :userID and lower(email) = :email",
+    { userID: userID, email: email.downcase }))
+
+  content_type :json
+  return { status: "ok" }.to_json
+end
+
+###################################################################################################
 # Unit page data. 
 # pageName may be some administrative function (nav, profile), specific journal volume, or static page name
 def getUnitPageData(unitID, pageName, subPage)
@@ -921,7 +1101,7 @@ def getUnitPageData(unitID, pageName, subPage)
       pageData[:header] = getUnitHeader(unit, nil, journalIssue, issuesSubNav, attrs)
     else
       pageData[:header] = getUnitHeader(unit, 
-      (pageName =~ /^(nav|sidebar|profile|carousel|issueConfig|redirects|unitBuilder|authorSearch)/) ?
+      (pageName =~ /^(nav|sidebar|profile|carousel|issueConfig|userConfig|redirects|unitBuilder|authorSearch)/) ?
         nil : pageName, nil, nil, attrs)
     end
 
@@ -940,6 +1120,8 @@ def getUnitPageData(unitID, pageName, subPage)
       pageData[:content] = getUnitCarouselConfig(unit, attrs)
     elsif pageName == 'issueConfig'
       pageData[:content] = getUnitIssueConfig(unit, attrs)
+    elsif pageName == 'userConfig'
+      pageData[:content] = getUnitUserConfig(unit)
     elsif pageName == 'unitBuilder'
       pageData[:content] = getUnitBuilderData(unit)
     elsif pageName == 'nav'

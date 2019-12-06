@@ -242,7 +242,8 @@ end
 ###################################################################################################
 def handleUnitRedirect(uri, unit, remainder)
   if (redir = Redirect.where(kind: "unit", from_path: "/uc/#{unit}").first)
-    uri.path = "#{redir.to_path}#{remainder}"
+    uri.path = "#{redir.to_path.sub(/\?.*/, '')}#{remainder}"
+    uri.query = redir.to_path.include?("?") ? redir.to_path.sub(/.*\?/, '') : nil
   elsif uri.query =~ /rmode=rss/ || remainder =~ %r{/rss}
     uri.path = "/rss/unit/#{unit}"
     uri.query = nil

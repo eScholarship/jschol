@@ -24,6 +24,7 @@ import LoginPage from './pages/LoginPage.jsx'
 import LoginSuccessPage from './pages/LoginSuccessPage.jsx'
 import LogoutPage from './pages/LogoutPage.jsx'
 import LogoutSuccessPage from './pages/LogoutSuccessPage.jsx'
+import UserAccountPage from './pages/UserAccountPage.jsx'
 
 // array-include polyfill for older browsers (and node.js)
 Array.prototype.includes = require('array-includes').shim()
@@ -75,6 +76,7 @@ class App extends React.Component
         <Route exact path="/logout" component={LogoutPage} />
         <Route exact path="/logoutSuccess" component={LogoutSuccessPage} />
         <Route       path="/logoutSuccess/*" component={LogoutSuccessPage} />
+        <Route       path="/userAccount/:userID" component={UserAccountPage} />
         <Route path="*" component={GlobalStaticPage}/> {/* both global static, and 404 catch-all */}
       </Switch>
     </div>

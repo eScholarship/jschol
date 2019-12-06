@@ -87,6 +87,10 @@ class Person < Sequel::Model(:people)
   unrestrict_primary_key
 end
 
+class ArchiveMeta < Sequel::Model(:archive_meta)
+  set_primary_key :item_id
+end
+
 class Redirect < Sequel::Model
 end
 

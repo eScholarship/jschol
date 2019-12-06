@@ -1694,6 +1694,74 @@ put "/api/unit/:campusID/campusCarouselConfig" do |campusID|
 end
 
 ###################################################################################################
+# User configuration section
+
+def getUnitUserConfig(unit)
+  getUserPermissions(params[:username], params[:token], unit.id)[:admin] or halt(401)
+
+  # Get permissions for all users of this unit
+  query = Sequel::SQL::PlaceholderLiteralString.new(%{
+    select eschol_roles.user_id, email, first_name, last_name, role
+    from eschol_roles
+    join users on users.user_id = eschol_roles.user_id
+    where unit_id = :unitID
+    order by last_name = '', last_name, first_name, email
+  }.unindent, { unitID: unit.id })
+  userRoles = {}
+  OJS_DB.fetch(query).each { |row|
+    userID = row[:user_id]
+    userRoles[userID] ||= { user_id: userID, name: formatFirstLast(row), email: row[:email], roles: {} }
+    userRoles[userID][:roles][row[:role]] = true
+  }
+
+  return { user_roles: userRoles.values }
+end
+
+put "/api/unit/:unitID/userConfig" do |unitID|
+  getUserPermissions(params[:username], params[:token], unitID)[:super] or restrictedHalt
+  OJS_DB.transaction {
+    oldRoles = Set.new
+    getUnitUserConfig($unitsHash[unitID])[:user_roles].each { |row|
+      %w{admin stats submit}.each { |role|
+        row[:roles][role] and oldRoles << { userID: row[:user_id], role: role }
+      }
+    }
+
+    newRoles = Set.new
+    params['data'].keys.map{ |k| k.sub(/^\w+-/, '') }.uniq.each { |userID|
+      userID == "newuser" or userID = userID.to_i
+      %w{admin stats submit}.each { |role|
+        params['data']["#{role}-#{userID}"] == 'on' and newRoles << { userID: userID, role: role }
+      }
+    }
+
+    # Remove specified roles
+    (oldRoles - newRoles).each { |pair|
+      OJS_DB.run(Sequel::SQL::PlaceholderLiteralString.new(
+        "delete from eschol_roles where unit_id = :unitID and user_id = :userID and role = :role",
+        { unitID: unitID, userID: pair[:userID], role: pair[:role] }))
+    }
+
+    # Add specified roles
+    (newRoles - oldRoles).each { |pair|
+      userID = pair[:userID]
+      if userID == "newuser"
+        row = OJS_DB.fetch(Sequel::SQL::PlaceholderLiteralString.new(
+          "select user_id from users where lower(email) = :email",
+          { email: params['data']['email-newuser'].downcase })).first
+        row or jsonHalt(400, "Unknown user")
+        userID = row[:user_id]
+      end
+      OJS_DB.run(Sequel::SQL::PlaceholderLiteralString.new(
+        "insert into eschol_roles(unit_id, user_id, role) values (:unitID, :userID, :role)",
+        { unitID: unitID, userID: userID, role: pair[:role] }))
+    }
+  }
+  content_type :json
+  return { success: true }.to_json
+end
+
+###################################################################################################
 # Issue configuration section
 
 def getUnitIssueConfig(unit, unitAttrs)
@@ -1767,6 +1835,11 @@ put "/api/unit/:unitID/issueConfig" do |unitID|
   return { success: true }.to_json
 end
 
+def formatFirstLast(row)
+  return [row[:last_name]=="" ? nil : row[:last_name],
+          row[:first_name]=="" ? nil : row[:first_name]].compact.join(", ")
+end
+
 def getAuthorSearchData
   getUserPermissions(params[:username], params[:token], 'root')[:super] or halt(401)
   str = params['q']
@@ -1782,9 +1855,8 @@ def getAuthorSearchData
       JSON_UNQUOTE(people.attrs->"$.email") person_email
     from item_authors
     inner join people on people.id = item_authors.person_id
-    where lower(item_authors.attrs->"$.email") like :matchStr
-       or lower(item_authors.attrs->"$.name") like :matchStr
-       or lower(people.attrs->"$.email") like :matchStr
+    where lower(concat(item_authors.attrs->"$.email", item_authors.attrs->"$.name", people.attrs->"$.email")) like :matchStr
+    order by item_authors.attrs->"$.name"
     limit 200
   }.unindent, { matchStr: "%#{str.downcase}%" })
   DB.fetch(query).each { |row|
@@ -1801,5 +1873,43 @@ def getAuthorSearchData
     }
     { person_id: personID.sub(%r{^ark:/99166/},''), emails: emails.to_a.sort, names: names.to_a.sort }
   }
-  return { search_str: str, authors: authors }
+
+  # Let's do similar stuff for user accounts
+  query = Sequel::SQL::PlaceholderLiteralString.new(%{
+    select users.user_id, email, first_name, last_name,
+           group_concat(distinct journals.path) as journals,
+           group_concat(distinct eschol_roles.unit_id) as units
+    from users
+    left join roles on users.user_id = roles.user_id
+    left join journals on journals.journal_id = roles.journal_id
+    left join eschol_roles on users.user_id = eschol_roles.user_id
+    where lower(concat(email, first_name, last_name)) like :matchStr
+    group by users.user_id
+    order by last_name = '', last_name, first_name, email
+    limit 200
+  }.unindent, { matchStr: "%#{str.downcase}%" })
+  accounts = OJS_DB.fetch(query).map { |row|
+    { user_id: row[:user_id],
+      email: row[:email],
+      name: formatFirstLast(row),
+      units: (Set.new(row[:journals] ? row[:journals].split(",") : []) +
+              Set.new(row[:units] ? row[:units].split(",") : [])).to_a.sort[0,6]  # limit 5, plus marker of more
+    }
+  }
+
+  # Also query for forwarded addresses (and point to the target user)
+  query = Sequel::SQL::PlaceholderLiteralString.new(%{
+    select users.user_id, eschol_prev_email.email as prev_email, users.email as cur_email
+    from eschol_prev_email
+    join users on users.user_id = eschol_prev_email.user_id
+    where lower(eschol_prev_email.email) like :matchStr
+  }.unindent, { matchStr: "%#{str.downcase}%" })
+  forwards = {}
+  OJS_DB.fetch(query).each { |row|
+    forwards.key?(row[:cur_email]) or forwards[row[:cur_email]] =
+      { user_id: row[:user_id], cur_email: row[:cur_email], prev_emails: [] }
+    forwards[row[:cur_email]][:prev_emails] << row[:prev_email]
+  }
+
+  return { search_str: str, authors: authors, accounts: accounts, forwards: forwards.values }
 end

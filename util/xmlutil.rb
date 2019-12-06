@@ -86,3 +86,63 @@ end
 def stringToXML(str)
   Nokogiri::XML(str, &:noblanks)
 end
+
+###################################################################################################
+def stringFromXML(xml)
+  return xml.to_xml(indent: 3)
+end
+
+###################################################################################################
+# Make a hash representing the contents of an XML document or element. Does not retain all XML
+# features, such as ordering of same-name elements, or intermixing text and elements.
+def hashFromXML(el)
+
+  # Let's start with namespaces
+  attrs = {}
+  if el.node_type == Nokogiri::XML::Node::ELEMENT_NODE
+    el.namespace_definitions.each { |nsd|
+      name = nsd.prefix ? "_xmlns:#{nsd.prefix}" : "_xmlns"
+      attrs[name] = nsd.href
+    }
+  end
+
+  # Then attributes
+  el.keys.each { |name|
+    attrs["_"+name] = el[name]
+  }
+
+  # Then the elements
+  kids = Hash.new { |h,k| h[k] = [] }
+  text = []
+  el.children.each { |kid|
+    if kid.node_type == Nokogiri::XML::Node::TEXT_NODE
+      text << kid.text
+    elsif kid.node_type == Nokogiri::XML::Node::ELEMENT_NODE
+      kids[kid.name] << hashFromXML(kid)
+    else
+      raise("unsupported type in hashFromXML: #{kid.node_type.inspect}")
+    end
+  }
+
+  # If there's only text, let's keep it simple
+  if !text.empty?
+    if attrs.empty? && kids.empty?
+      return text.join("")
+    end
+    out[:_text] = text.join("")
+  end
+
+  out = attrs
+
+  # Avoid arrays when we can
+  kids.each { |name, vals|
+    out[name] = vals.length == 1 ? vals[0] : vals
+  }
+
+  return out
+end
+
+###################################################################################################
+def jsonFromXML(xml)
+  return hashFromXML(xml).to_json
+end

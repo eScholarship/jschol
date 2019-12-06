@@ -1356,6 +1356,22 @@ def oaPolicyAssoc(campus, units, dbItem, pubStatus)
 end
 
 ###################################################################################################
+def reformatXML(path)
+  return File.exist?(path) ? fileToXML(path).to_xml(indent: 3) : nil
+end
+
+###################################################################################################
+def collectArchiveMeta(itemID, rawMetaXML)
+  return ArchiveMeta.new { |record|
+    record[:item_id] = itemID
+    record[:meta] = rawMetaXML || reformatXML(arkToFile(itemID, "meta/base.meta.xml"))
+    record[:feed] = reformatXML(arkToFile(itemID, "meta/base.feed.xml"))
+    record[:cookie] = reformatXML(arkToFile(itemID, "meta/base.cookie.xml"))
+    record[:history] = reformatXML(arkToFile(itemID, "meta/base.history.xml"))
+  }
+end
+
+###################################################################################################
 # Extract metadata for an item, and add it to the current index batch.
 # Note that we create, but don't yet add, records to our database. We put off really inserting
 # into the database until the batch has been successfully processed by AWS.
@@ -1369,6 +1385,7 @@ def indexItem(itemID, timestamp, batch, nailgun)
     return
   end
   rawMeta = fileToXML(metaPath)
+  rawMetaXML = rawMeta.to_xml(indent: 3)
   rawMeta.remove_namespaces!
   rawMeta = rawMeta.root
 
@@ -1469,6 +1486,9 @@ def indexItem(itemID, timestamp, batch, nailgun)
     }
   }
 
+  # For convenient spelunking, record the archival metadata in the db
+  dbArchiveMeta = collectArchiveMeta(itemID, rawMetaXML)
+
   # Calculate digests of the index data and database records
   idxData = JSON.generate(idxItem)
   idxDigest = Digest::MD5.base64digest(idxData)
@@ -1477,7 +1497,8 @@ def indexItem(itemID, timestamp, batch, nailgun)
     dbAuthors: dbAuthors.map { |authRecord| authRecord.to_hash },
     dbIssue: issue ? issue.to_hash : nil,
     dbSection: section ? section.to_hash : nil,
-    units: units
+    units: units,
+    archiveMeta: dbArchiveMeta.to_hash
   }
   dbContribs.empty? or dbCombined[:dbContribs] = dbContribs.map { |record| record.to_hash }
   dataDigest = Digest::MD5.base64digest(JSON.generate(dbCombined))
@@ -1487,8 +1508,11 @@ def indexItem(itemID, timestamp, batch, nailgun)
   dbItem[:index_digest] = $noCloudSearchMode ? (existingItem && existingItem[:index_digest]) : idxDigest
   dbItem[:data_digest] = dataDigest
 
+  # Record the raw metadata for ease of spelunking in the database
+
   dbDataBlock = { dbItem: dbItem, dbAuthors: dbAuthors, dbContribs: dbContribs,
-                  dbIssue: issue, dbSection: section, units: units }
+                  dbIssue: issue, dbSection: section, units: units,
+                  dbArchiveMeta: dbArchiveMeta }
 
   # Single-item debug
   if $testMode
@@ -1677,6 +1701,7 @@ def updateDbItem(data)
   data[:dbItem].create_or_update()
   data[:dbAuthors].each { |record| record.save() }
   data[:dbContribs] and data[:dbContribs].each { |record| record.save }
+  data[:dbArchiveMeta].create_or_update()
 
   # Link the item to its units
   done = Set.new
@@ -2427,6 +2452,20 @@ def checkAllStruct
 end
 
 ###################################################################################################
+# One-time pass to populate the archive_meta table. Then it'll be kept up to date.
+def populateArchiveMeta
+  nDone = 0
+  allIDs = Item.where(Sequel.lit("id not in (select item_id from archive_meta)")).select_map(:id)
+  allIDs.sort.each_slice(100) { |ids|
+    DB.transaction {
+      ids.each { |itemID| collectArchiveMeta(itemID, nil).save }
+    }
+    nDone += ids.length
+    puts "#{nDone}/#{allIDs.length} done."
+  }
+end
+
+###################################################################################################
 # Main action begins here
 
 startTime = Time.now
@@ -2468,6 +2507,8 @@ begin
     when "--genAllStruct"
       cacheAllUnits
       genAllStruct
+    when "--populateArchiveMeta"
+      populateArchiveMeta
     else
       STDERR.puts "Usage: #{__FILE__} --units|--items"
       exit 1

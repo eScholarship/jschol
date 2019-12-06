@@ -7,7 +7,7 @@ import MEDIA_PATH from '../../js/MediaPath.js'
 const AdminBarComp = (props) =>
   <Contexts.CMS.Consumer>
     { cms =>
-      <div style={{ marginTop: (cms.permissions && cms.permissions.admin && cms.modules) ? "-20px" : "-10px" }}>
+      <div style={{ marginTop: (cms.permissions && cms.permissions.admin && cms.modules && cms.showingDrawer) ? "-20px" : "-10px" }}>
         { cms.loggedIn &&
           <div className="c-adminbar">
             <div className="c-adminbar__edit-pg">
