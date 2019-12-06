@@ -405,8 +405,15 @@ def generateEmails(tplFile, users, mode)
       # Okay, go forth and send the email
       mail.delivery_method :smtp, $mail_options
       begin
+        retries ||= 0
         mail.deliver
       rescue
+        retries += 1
+        if retries <= 5
+          puts "Error delivering email; will retry: #{$!.to_s.inspect}."
+          sleep 30
+          retry
+        end
         puts "Error processing email to: #{toAddr.inspect}"
         raise
       end
