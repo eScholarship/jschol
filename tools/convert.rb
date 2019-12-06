@@ -74,18 +74,6 @@ $dbMutex = Mutex.new
 File.exists?('convert.sql_log') and File.delete('convert.sql_log')
 #DB.loggers << Logger.new('convert.sql_log')
 
-# The old eschol queue database, from which we can get a list of indexable ARKs
-QUEUE_DB = Sequel.connect({ adapter: "sqlite",
-                            database: "/apps/eschol/erep/xtf/control/db/queues.db",
-                            readonly: true,
-                            timeout: 30000 })
-
-# The old stats database, from which we can copy item counts
-STATS_DB = Sequel.connect({ adapter: "sqlite",
-                            database: "/apps/eschol/erep/xtf/stats/stats.db",
-                            readonly: true,
-                            timeout: 600000 })
-
 # Queues for thread coordination
 $indexQueue = SizedQueue.new(100)
 $batchQueue = SizedQueue.new(1)  # no use getting very far ahead of CloudSearch
@@ -1936,7 +1924,7 @@ def convertAllItems(arks)
     else
 
       # Count how many total there are, for status updates
-      $nTotal = QUEUE_DB.fetch("SELECT count(*) as total FROM indexStates WHERE indexName='erep'").first[:total]
+      $nTotal = DB.fetch("SELECT count(*) as total FROM index_states WHERE index_name='erep'").first[:total]
 
       # If we've been asked to rescan everything, do so in batches.
       if $rescanMode
@@ -1956,15 +1944,15 @@ def convertAllItems(arks)
       allItemTimes = (arks=="ALL" ? Item : Item.where(id: arks.to_a)).to_hash(:id, :last_indexed)
 
       # Convert all the items that are indexable
-      query = QUEUE_DB[:indexStates].where(indexName: 'erep').select(:itemId, :time).order(:itemId)
+      query = DB[:index_states].where(index_name: 'erep').select(:item_id, :time).order(:item_id)
       $nTotal = query.count
       if $skipTo
         puts "Skipping all up to #{$skipTo}..."
-        query = query.where{ itemId >= "ark:13030/#{$skipTo}" }
+        query = query.where{ item_id >= "ark:13030/#{$skipTo}" }
         $nSkipped = $nTotal - query.count
       end
       query.all.each do |row|   # all so we don't keep db locked
-        shortArk = getShortArk(row[:itemId])
+        shortArk = getShortArk(row[:item_id])
         next if arks != 'ALL' && !arks.include?(shortArk)
         erepTime = Time.at(row[:time].to_i).to_time
         itemTime = allItemTimes[shortArk]
