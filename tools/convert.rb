@@ -1940,18 +1940,45 @@ def convertAllItems(arks)
         end
       end
 
-      # Grab the timestamps of all items, for speed
-      allItemTimes = (arks=="ALL" ? Item : Item.where(id: arks.to_a)).to_hash(:id, :last_indexed)
+      # Figure out latest timestamp of any item that needs reindexing
+      if !$rescanMode && arks == "ALL"
+        startTime = DB.fetch(%{
+          select min(time) as min_time from index_states
+          where index_name = 'erep'
+          and item_id not in (select id from items where last_indexed is not null)
+          or item_id in (
+            select id from items
+            join index_states on items.id = index_states.item_id
+            and index_name = 'erep'
+            where unix_timestamp(items.last_indexed) != index_states.time)
+        }).first[:min_time]
+        if !startTime
+          puts "No items need reindexing."
+          return
+        end
+      else
+        startTime = nil
+      end
+
+      # Grab the timestamps of all relevant items, for speed
+      allItemTimes = (arks=="ALL" ? Item : Item.where(id: arks.to_a)).select(:id, :last_indexed)
+      if startTime
+        allItemTimes = allItemTimes.where(Sequel.lit("last_indexed >= #{startTime}"))
+      end
+      allItemTimes = allItemTimes.to_hash(:id, :last_indexed)
 
       # Convert all the items that are indexable
-      query = DB[:index_states].where(index_name: 'erep').select(:item_id, :time).order(:item_id)
+      query = DB[:index_states].where(index_name: 'erep').select(:item_id, :time)
+      if startTime
+        query = query.where(Sequel.lit("time >= #{startTime}"))
+      end
       $nTotal = query.count
       if $skipTo
         puts "Skipping all up to #{$skipTo}..."
         query = query.where{ item_id >= "ark:13030/#{$skipTo}" }
         $nSkipped = $nTotal - query.count
       end
-      query.all.each do |row|   # all so we don't keep db locked
+      query.all.sort{|a,b| a[:item_id] <=> b[:item_id]}.each do |row|   # all so we don't keep db locked
         shortArk = getShortArk(row[:item_id])
         next if arks != 'ALL' && !arks.include?(shortArk)
         erepTime = Time.at(row[:time].to_i).to_time

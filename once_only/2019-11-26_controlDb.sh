@@ -30,6 +30,8 @@ if [[ " $MACHINES " =~ " $THIS_MACHINE " ]]; then
     echo "" > control_load.sql
     echo "begin;" >> control_load.sql
 
+    echo "SELECT 'Starting load.' as message\G" >> control_load.sql
+
     echo "LOCK TABLES arks WRITE, queues WRITE, messages WRITE, index_states WRITE;" >> control_load.sql
     echo "SET FOREIGN_KEY_CHECKS=0;" >> control_load.sql
     echo "delete from queues;" >> control_load.sql
@@ -37,8 +39,13 @@ if [[ " $MACHINES " =~ " $THIS_MACHINE " ]]; then
     echo "delete from index_states;" >> control_load.sql
     echo "delete from arks;" >> control_load.sql
 
+    echo "SELECT 'Inserting into arks.' as message\G" >> control_load.sql
     egrep 'INSERT INTO "arks"' arks.dump.sql | sed 's/"//g' | sed 's/ark:\/*13030\///g' >> control_load.sql
+
+    echo "SELECT 'Inserting into items.' as message\G" >> control_load.sql
     egrep 'INSERT INTO "items"' queues.dump.sql | sed 's/"items"/"queues"/' | sed 's/"//g' | sed 's/ark:\/*13030\///g' >> control_load.sql
+
+    echo "SELECT 'Inserting into index_states.' as message\G" >> control_load.sql
     cat queues.dump.sql | /apps/eschol/jschol/once_only/sqlite3_newline_fix.py | \
       egrep -i 'INSERT INTO "indexStates"' |\
       sed 's/"indexStates"/"index_states"/' | \
@@ -48,12 +55,16 @@ if [[ " $MACHINES " =~ " $THIS_MACHINE " ]]; then
       sed 's/INSERT INTO/INSERT IGNORE INTO/g' | \
       sed "s/'''/'/g" >> control_load.sql
 
+    echo "SELECT 'Cleaning up records.' as message\G" >> control_load.sql
     echo "delete from queues where item_id not in (select id from arks);" >> control_load.sql
     echo "delete from messages where item_id not in (select id from arks);" >> control_load.sql
     echo "delete from index_states where item_id not in (select id from arks);" >> control_load.sql
+
+    echo "SELECT 'Finalizing.' as message\G" >> control_load.sql
     echo "SET FOREIGN_KEY_CHECKS=1;" >> control_load.sql
     echo "UNLOCK TABLES;" >> control_load.sql
     echo "commit;" >> control_load.sql
+    echo "SELECT 'Done loading.' as message\G" >> control_load.sql
 
     /apps/eschol/bin/singleToMultiTrans.rb control_load.sql > control_load_combo.sql
 
