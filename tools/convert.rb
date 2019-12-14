@@ -79,33 +79,17 @@ $indexQueue = SizedQueue.new(100)
 $batchQueue = SizedQueue.new(1)  # no use getting very far ahead of CloudSearch
 $splashQueue = Queue.new
 
-# Mode to force checking of the index digests (useful when indexing algorithm or unit structure changes)
-RESCAN_SET_SIZE = 2000
-$rescanMode = ARGV.delete('--rescan')
-
 # Mode to process a single item and just print it out (no inserting or batching)
 $testMode = ARGV.delete('--test')
 
 # Mode to override up-to-date test
 $forceMode = ARGV.delete('--force')
-$forceMode and $rescanMode = true
 
-# Pre-indexing mode (avoids locking, doesn't touch search index)
+# Pre-indexing mode (fast - doesn't touch search index)
 $preindexMode = false
 
 # Mode to skip CloudSearch indexing and just do db updates
 $noCloudSearchMode = ARGV.delete('--noCloudSearch')
-
-# Skip locking for certain test scenarios
-$noLockMode = ARGV.delete("--noLock")
-
-# For testing only, skip items <= X, where X is like "qt26s1s6d3"
-$skipTo = nil
-pos = ARGV.index('--skipTo')
-if pos
-  ARGV.delete_at(pos)
-  $skipTo = ARGV.delete_at(pos)
-end
 
 # CloudSearch API client
 $csClient = Aws::CloudSearchDomain::Client.new(credentials: Aws::InstanceProfileCredentials.new,
@@ -484,7 +468,7 @@ def generatePdfThumbnail(itemID, inMeta, existingItem)
       return data
     else
       existingThumb = existingItem ? JSON.parse(existingItem.attrs)["thumbnail"] : nil
-      if existingThumb && existingThumb["timestamp"] == pdfTimestamp && !$rescanMode && !$forceMode && !$preindexMode
+      if existingThumb && existingThumb["timestamp"] == pdfTimestamp && !$forceMode && !$preindexMode
         # Rebuilding to keep order of fields consistent
         return { asset_id:   existingThumb["asset_id"],
                  image_type: existingThumb["image_type"],
@@ -645,9 +629,9 @@ def filterTOCDivs(divs)
   divs.length > 40 and reasons << "Too many entries (#{divs.length})"
 
   if !reasons.empty?
-    puts "Warning: Unusable TOC (#{reasons.join("; ")})"
+    #puts "Warning: Unusable TOC (#{reasons.join("; ")})"
   else
-    puts "Usable TOC. avgWords=#{avgWords.round(1)} avgSame=#{(avgSame * 100).round(1)}%"
+    #puts "Usable TOC. avgWords=#{avgWords.round(1)} avgSame=#{(avgSame * 100).round(1)}%"
   end
 
   # Don't output the 'level' in the final data
@@ -1363,7 +1347,7 @@ end
 # Extract metadata for an item, and add it to the current index batch.
 # Note that we create, but don't yet add, records to our database. We put off really inserting
 # into the database until the batch has been successfully processed by AWS.
-def indexItem(itemID, timestamp, batch, nailgun)
+def indexItem(itemID, batch, nailgun)
 
   # Grab the main metadata file
   metaPath = arkToFile(itemID, "meta/base.meta.xml")
@@ -1492,11 +1476,10 @@ def indexItem(itemID, timestamp, batch, nailgun)
   dataDigest = Digest::MD5.base64digest(JSON.generate(dbCombined))
 
   # Add time-varying things into the database item now that we've generated a stable digest.
+  timestamp = $preindexMode ? nil : DateTime.now
   dbItem[:last_indexed] = timestamp
   dbItem[:index_digest] = $noCloudSearchMode ? (existingItem && existingItem[:index_digest]) : idxDigest
   dbItem[:data_digest] = dataDigest
-
-  # Record the raw metadata for ease of spelunking in the database
 
   dbDataBlock = { dbItem: dbItem, dbAuthors: dbAuthors, dbContribs: dbContribs,
                   dbIssue: issue, dbSection: section, units: units,
@@ -1504,7 +1487,9 @@ def indexItem(itemID, timestamp, batch, nailgun)
 
   # Single-item debug
   if $testMode
-    pp dbCombined
+    fooData = dbCombined.clone
+    fooData.delete(:archiveMeta)
+    pp fooData
     fooData = idxItem.clone
     fooData[:fields] and fooData[:fields][:text] and fooData[:fields].delete(:text)
     pp fooData
@@ -1576,13 +1561,13 @@ def indexAllItems
       loop do
         # Grab an item from the input queue
         Thread.current[:name] = "index thread"  # label all stdout from this thread
-        itemID, timestamp = $indexQueue.pop
+        itemID = $indexQueue.pop
         itemID or break
 
         # Extract data and index it (in batches)
         begin
           Thread.current[:name] = "index thread: #{itemID}"  # label all stdout from this thread
-          indexItem(itemID, timestamp, batch, nailgun)
+          indexItem(itemID, batch, nailgun)
         rescue Exception => e
           puts "Error indexing item #{itemID}"
           raise
@@ -1903,109 +1888,28 @@ def convertAllItems(arks)
 
   cacheAllUnits()
 
-  # Normally loop runs once, but in rescan mode it's multiple times.
-  rescanBase = ""
-  while true
+  # Make sure to do this critical work periodically
+  genAllStruct()
 
-    # Make sure to do this critical work periodically
-    genAllStruct()
+  # Fire up threads for doing the work in parallel
+  Thread.abort_on_exception = true
+  indexThread = Thread.new { indexAllItems }
+  batchThread = Thread.new { processAllBatches }
+  splashThread = Thread.new { splashFromQueue }
 
-    # Fire up threads for doing the work in parallel
-    Thread.abort_on_exception = true
-    indexThread = Thread.new { indexAllItems }
-    batchThread = Thread.new { processAllBatches }
-    splashThread = Thread.new { splashFromQueue }
+  arks.each { |ark|
+    ark =~ /^qt\w{8}$/ or raise("Invalid ark #{ark.inspect}")
+    $indexQueue << ark
+  }
+  $indexQueue << nil  # end-of-queue
 
-    if $preindexMode
-      arks.each { |ark|
-        ark =~ /^qt\w{8}$/ or raise("Invalid ark #{ark.inspect}")
-        $indexQueue << [ark, nil]
-      }
-    else
-
-      # Count how many total there are, for status updates
-      $nTotal = DB.fetch("SELECT count(*) as total FROM index_states WHERE index_name='erep'").first[:total]
-
-      # If we've been asked to rescan everything, do so in batches.
-      if $rescanMode
-        if arks == 'ALL'
-          redoSet = Item.where{ id > rescanBase }.limit(RESCAN_SET_SIZE)
-          $skipTo and redoSet = redoSet.where{ id >= $skipTo }
-          $skipTo = nil
-          redoSet.update(:last_indexed => nil)
-          rescanBase = redoSet.map(:id).max
-          puts "Rescan reset, nextbase=#{rescanBase.inspect}."
-        else
-          rescanBase = nil
-        end
-      end
-
-      # Figure out latest timestamp of any item that needs reindexing
-      if !$rescanMode && arks == "ALL"
-        startTime = DB.fetch(%{
-          select min(time) as min_time from index_states
-          where index_name = 'erep'
-          and item_id not in (select id from items where last_indexed is not null)
-          or item_id in (
-            select id from items
-            join index_states on items.id = index_states.item_id
-            and index_name = 'erep'
-            where unix_timestamp(items.last_indexed) != index_states.time)
-        }).first[:min_time]
-        if !startTime
-          puts "No items need reindexing."
-          return
-        end
-      else
-        startTime = nil
-      end
-
-      # Grab the timestamps of all relevant items, for speed
-      allItemTimes = (arks=="ALL" ? Item : Item.where(id: arks.to_a)).select(:id, :last_indexed)
-      if startTime
-        allItemTimes = allItemTimes.where(Sequel.lit("last_indexed >= #{startTime}"))
-      end
-      allItemTimes = allItemTimes.to_hash(:id, :last_indexed)
-
-      # Convert all the items that are indexable
-      query = DB[:index_states].where(index_name: 'erep').select(:item_id, :time)
-      if startTime
-        query = query.where(Sequel.lit("time >= #{startTime}"))
-      end
-      $nTotal = query.count
-      if $skipTo
-        puts "Skipping all up to #{$skipTo}..."
-        query = query.where{ item_id >= "ark:13030/#{$skipTo}" }
-        $nSkipped = $nTotal - query.count
-      end
-      query.all.sort{|a,b| a[:item_id] <=> b[:item_id]}.each do |row|   # all so we don't keep db locked
-        shortArk = getShortArk(row[:item_id])
-        next if arks != 'ALL' && !arks.include?(shortArk)
-        erepTime = Time.at(row[:time].to_i).to_time
-        itemTime = allItemTimes[shortArk]
-        if itemTime.nil? || itemTime < erepTime || ($rescanMode && arks.include?(shortArk))
-          $indexQueue << [shortArk, erepTime]
-        else
-          #puts "#{shortArk} is up to date, skipping."
-          $nSkipped += 1
-        end
-      end
-    end
-
-    $indexQueue << nil  # end-of-queue
-    indexThread.join
-    if !$testMode && !($hostname =~ /-dev|-stg/)
-      connectAuthors  # make sure all newly converted (or reconvered) items have author->people links
-    end
-    batchThread.join
-    splashThread.join
-
-    if $rescanMode && rescanBase.nil?
-      break
-    elsif !$rescanMode
-      break
-    end
+  # Wait for everything to work its way through the queues.
+  indexThread.join
+  if !$testMode && !($hostname =~ /-dev|-stg/)
+    connectAuthors  # make sure all newly converted (or reconvered) items have author->people links
   end
+  batchThread.join
+  splashThread.join
 
   $nTotal > 0 and scrubSectionsAndIssues() # one final scrub
 end
@@ -2270,9 +2174,9 @@ def convertPDF(itemID)
       splash_size:        splashLinSize
     )
 
-    puts sprintf("Splash updated: lin=%d/%d = %.1f%%; splashLin=%d/%d = %.1f%%",
-                 linSize, origSize, linSize*100.0/origSize,
-                 splashLinSize, origSize, splashLinSize*100.0/origSize)
+    #puts sprintf("Splash updated: lin=%d/%d = %.1f%%; splashLin=%d/%d = %.1f%%",
+    #             linSize, origSize, linSize*100.0/origSize,
+    #             splashLinSize, origSize, splashLinSize*100.0/origSize)
   ensure
     linFile and linFile.unlink
     linDiff and linDiff.unlink
@@ -2488,51 +2392,32 @@ startTime = Time.now
 # Pre-index mode: no locking, just update database for one item and get out
 if ARGV[0] == "--preindex"
   $preindexMode = $noCloudSearchMode = true
-  $rescanMode = false # prevent infinite loop
   convertAllItems(Set.new([ARGV[1]]))
   exit 0
 end
 
-# MH: Could not for the life of me get File.flock to actually do what it
-#     claims, so falling back to file existence check.
-lockFile = "/tmp/jschol_convert.lock"
-File.exist?(lockFile) or FileUtils.touch(lockFile)
-lock = File.new(lockFile)
-begin
-  if !$noLockMode
-    if !lock.flock(File::LOCK_EX | File::LOCK_NB)
-      puts "Another copy is already running."
-      exit 1
-    end
-  end
-
-  case ARGV[0]
-    when "--items"
-      arks = ARGV.select { |a| a =~ /qt\w{8}/ }
-      convertAllItems(arks.empty? ? "ALL" : Set.new(arks))
-    when "--info"
-      indexInfo()
-    when "--splash"
-      arks = ARGV.select { |a| a =~ /qt\w{8}/ }
-      splashAllPDFs(arks.empty? ? "ALL" : Set.new(arks))
-    when "--oa"
-      recalcOA
-    when "--checkAllStruct"
-      checkAllStruct
-    when "--genAllStruct"
-      cacheAllUnits
-      genAllStruct
-    when "--populateArchiveMeta"
-      populateArchiveMeta
-    else
-      STDERR.puts "Usage: #{__FILE__} --units|--items"
-      exit 1
-  end
-
-  puts "Elapsed: #{Time.now - startTime} sec."
-  puts "Done."
-ensure
-  if !$noLockMode
-    lock.flock(File::LOCK_UN)
-  end
+case ARGV[0]
+  when "--items"
+    arks = ARGV.select { |a| a =~ /qt\w{8}/ }
+    convertAllItems(arks.empty? ? "ALL" : Set.new(arks))
+  when "--info"
+    indexInfo()
+  when "--splash"
+    arks = ARGV.select { |a| a =~ /qt\w{8}/ }
+    splashAllPDFs(arks.empty? ? "ALL" : Set.new(arks))
+  when "--oa"
+    recalcOA
+  when "--checkAllStruct"
+    checkAllStruct
+  when "--genAllStruct"
+    cacheAllUnits
+    genAllStruct
+  when "--populateArchiveMeta"
+    populateArchiveMeta
+  else
+    STDERR.puts "Usage: #{__FILE__} --units|--items"
+    exit 1
 end
+
+puts "Elapsed: #{Time.now - startTime} sec."
+puts "Conversion complete."
