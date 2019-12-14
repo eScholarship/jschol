@@ -6,7 +6,7 @@ require 'bundler/setup'
 
 ###################################################################################################
 # External gems we need
-require 'aws-sdk'
+require 'aws-sdk-s3'
 require 'cgi'
 require 'digest'
 require 'httparty'

@@ -14,7 +14,9 @@ require 'rubygems'
 require 'bundler/setup'
 
 # Remainder are the requirements for this program
-require 'aws-sdk'
+require 'aws-sdk-cloudsearch'
+require 'aws-sdk-cloudsearchdomain'
+require 'aws-sdk-s3'
 require 'date'
 require 'digest'
 require 'ezid-client'

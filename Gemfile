@@ -1,7 +1,9 @@
 # Ruby gems required by this application
-ruby '> 2.3.0'
+ruby '> 2.4.0'
 source 'https://rubygems.org'
-gem 'aws-sdk'             # used to talk to AWS CloudSearch
+gem 'aws-sdk-s3'          # used to work with S3 bucket contents
+gem 'aws-sdk-cloudsearch' # used to talk to AWS CloudSearch
+gem 'aws-sdk-cloudsearchdomain' # used to talk to AWS CloudSearch
 gem 'bundler'             # needed for use in Beanstalk environment
 gem 'ezid-client'         # for minting people-arks
 gem 'fastimage'           # for determining dimensions of image files

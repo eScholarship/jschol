@@ -7,7 +7,7 @@ require 'rubygems'
 require 'bundler/setup'
 
 # Remainder are the requirements for this program
-require 'aws-sdk'
+require 'aws-sdk-cloudsearch'
 
 # Run from the right directory (the parent of the tools dir)
 Dir.chdir(File.dirname(File.expand_path(File.dirname(__FILE__))))

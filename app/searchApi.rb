@@ -1,4 +1,4 @@
-require 'aws-sdk'
+require 'aws-sdk-cloudsearchdomain'
 require 'sequel'
 require 'json'
 require 'pp'

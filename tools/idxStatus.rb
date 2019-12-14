@@ -7,7 +7,8 @@ require 'rubygems'
 require 'bundler/setup'
 
 # Remainder are the requirements for this program
-require 'aws-sdk'
+require 'aws-sdk-cloudsearch'
+require 'aws-sdk-cloudsearchdomain'
 require 'pp'
 
 # Run from the right directory (the parent of the tools dir)
