@@ -2204,61 +2204,9 @@ def splashFromQueue
 end
 
 ###################################################################################################
-# Main driver for PDF display version generation
-def splashAllPDFs(arks)
-  # Let the user know what we're doing
-  puts "Splashing #{arks=="ALL" ? "all" : "selected"} PDFs."
-
-  # Start a couple worker threads to do the splash conversions.
-  splashThread = Thread.new { splashFromQueue }
-
-  # Grab all the arks
-  if arks == "ALL"
-    Item.where(content_type: "application/pdf").order(:id).each { |item|
-      $splashQueue << item.id
-    }
-  else
-    arks.each { |item| $splashQueue << item }
-  end
-
-  $splashQueue << nil # mark end-of-queue
-  splashThread.join
-end
-
-###################################################################################################
 def flushDbQueue(queue)
   DB.transaction { queue.each { |func| func.call } }
   queue.clear
-end
-
-###################################################################################################
-def recalcOA
-  puts "Reading units and item links."
-  cacheAllUnits
-  itemUnits = Hash.new { |h,k| h[k] = [] }
-  UnitItem.where(is_direct: 1).order(:ordering_of_units).each { |link|
-    itemUnits[link.item_id] << link.unit_id
-  }
-  puts "Processing items."
-  toUpdate = []
-  Item.each { |item|
-    units = itemUnits[item.id]
-    units or next
-    firstCampus, campuses, departments, journals, series = traceUnits(units)
-    firstCampus or next
-    attrs = item.attrs.nil? ? {} : JSON.parse(item.attrs)
-    newPol = oaPolicyAssoc(firstCampus, units, item, attrs['pub_status'])
-    if !(newPol == item.oa_policy)
-      puts "item=#{item.id} submitted=#{item.submitted} oa_policy: #{item.oa_policy.inspect} -> #{newPol.inspect}"
-      toUpdate << [item.id, newPol]
-    end
-  }
-  puts "Updating #{toUpdate.length} item records."
-  DB.transaction {
-    toUpdate.each { |itemID, newPol|
-      Item.where(id: itemID).update(oa_policy: newPol)
-    }
-  }
 end
 
 ###################################################################################################
@@ -2333,57 +2281,6 @@ def fixUnitAttr(unitID, attrName, newVal)
   unit.save
 end
 
-def checkAllStruct
-  puts "Checking."
-  oldDivs = extractDivs("/apps/eschol/erep/xtf/style/textIndexer/mapping/allStruct.xml.orig")
-  newDivs = extractDivs("/apps/eschol/erep/xtf/style/textIndexer/mapping/allStruct.xml")
-  (Set.new(oldDivs.keys) + Set.new(newDivs.keys)).each { |id|
-    oldDiv = oldDivs[id]
-    newDiv = newDivs[id]
-    if !oldDiv
-      puts "  Excess new div for id=#{id}"
-    elsif !newDiv
-      puts "  Missing new div for id=#{id}"
-    else
-      (Set.new(oldDiv.attributes.keys) + Set.new(newDiv.attributes.keys)).each { |attrName|
-        next if attrName =~ /^(customFields|seriesBrandFile|label)$/
-        next if oldDiv[attrName] == newDiv[attrName]
-        if !oldDiv[attrName]
-          puts "  Extra attr #{attrName}=#{newDiv[attrName].inspect} for unit #{id}"
-        else
-          if !newDiv[attrName]
-            next if attrName == "directSubmit" && oldDiv[attrName] == "enabled"  # enabled same as nil default
-            puts "  Missing attr #{attrName}=#{oldDiv[attrName].inspect} for unit #{id}"
-          else
-            puts "  Attr diff: old #{attrName}=#{oldDiv[attrName].inspect} vs new #{newDiv[attrName].inspect} for unit #{id}"
-          end
-          if attrName == "elementsID"
-            fixUnitAttr(id, "elements_id", oldDiv[attrName])
-          elsif attrName == "undergrad"
-            fixUnitAttr(id, "is_undergrad", oldDiv[attrName])
-          elsif attrName == "dataSet"
-            fixUnitAttr(id, "submit_datasets", oldDiv[attrName])
-          end
-        end
-      }
-    end
-  }
-end
-
-###################################################################################################
-# One-time pass to populate the archive_meta table. Then it'll be kept up to date.
-def populateArchiveMeta
-  nDone = 0
-  allIDs = Item.where(Sequel.lit("id not in (select item_id from archive_meta)")).select_map(:id)
-  allIDs.sort.each_slice(100) { |ids|
-    DB.transaction {
-      ids.each { |itemID| collectArchiveMeta(itemID, nil).save }
-    }
-    nDone += ids.length
-    puts "#{nDone}/#{allIDs.length} done."
-  }
-end
-
 ###################################################################################################
 # Main action begins here
 
@@ -2399,23 +2296,15 @@ end
 case ARGV[0]
   when "--items"
     arks = ARGV.select { |a| a =~ /qt\w{8}/ }
-    convertAllItems(arks.empty? ? "ALL" : Set.new(arks))
+    arks.empty? and raise("Must specify item(s) to convert.")
+    convertAllItems(Set.new(arks))
   when "--info"
     indexInfo()
-  when "--splash"
-    arks = ARGV.select { |a| a =~ /qt\w{8}/ }
-    splashAllPDFs(arks.empty? ? "ALL" : Set.new(arks))
-  when "--oa"
-    recalcOA
-  when "--checkAllStruct"
-    checkAllStruct
   when "--genAllStruct"
     cacheAllUnits
     genAllStruct
-  when "--populateArchiveMeta"
-    populateArchiveMeta
   else
-    STDERR.puts "Usage: #{__FILE__} --units|--items"
+    STDERR.puts "Usage: #{__FILE__} {--items arks...|--info|--genAllStruct} [--test] [--force] [--noCloudSearch]"
     exit 1
 end
 
