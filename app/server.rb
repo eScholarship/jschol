@@ -70,13 +70,17 @@ def waitForSocks(host, port)
   end
 end
 
+def getEnv(name)
+  return ENV[name] || raise("missing env #{name}")
+end
+
 def ensureConnect(envPrefix)
   dbConfig = { "adapter"  => "mysql2",
-               "host"     => ENV["#{envPrefix}_HOST"] || raise("missing env #{envPrefix}_HOST"),
-               "port"     => ENV["#{envPrefix}_PORT"] || raise("missing env #{envPrefix}_PORT").to_i,
-               "database" => ENV["#{envPrefix}_DATABASE"] || raise("missing env #{envPrefix}_DATABASE"),
-               "username" => ENV["#{envPrefix}_USERNAME"] || raise("missing env #{envPrefix}_USERNAME"),
-               "password" => ENV["#{envPrefix}_PASSWORD"] || raise("missing env #{envPrefix}_HOST") }
+               "host"     => getEnv("#{envPrefix}_HOST"),
+               "port"     => getEnv("#{envPrefix}_PORT").to_i,
+               "database" => getEnv("#{envPrefix}_DATABASE"),
+               "username" => getEnv("#{envPrefix}_USERNAME"),
+               "password" => getEnv("#{envPrefix}_PASSWORD") }
   if TCPSocket::socks_port
     SocksMysql.new(dbConfig)
   end
@@ -107,7 +111,7 @@ OJS_DB.loggers << Logger.new('ojs.sql_log')  # Enable to debug SQL queries on OJ
 $host = ENV['HOST'] ? "#{ENV['HOST']}.escholarship.org" : "localhost"
 
 # Used when fetching RSS data from the API server
-$escholApiServer = ENV['ESCHOL_API_SERVER'] || raise("missing env ESCHOL_API_SERVER")
+$escholApiServer = getEnv("ESCHOL_API_SERVER")
 
 # Temporary for memory leak debugging
 if false
@@ -150,12 +154,13 @@ if S3_LOGGING
     end
   end
   s3Logger = S3Logger.new(STDOUT)
-  $s3Client = Aws::S3::Client.new(region: ENV['S3_REGION'] || raise("missing env S3_REGION"),
+  $s3Client = Aws::S3::Client.new(region: getEnv("S3_REGION"),
                                   :logger => s3Logger, :http_wire_trace => true)
 else
-  $s3Client = Aws::S3::Client.new(region: ENV['S3_REGION'] || raise("missing env S3_REGION"))
-  $s3Bucket = Aws::S3::Bucket.new(ENV['S3_BUCKET'] || raise("missing env S3_BUCKET"), client: $s3Client)
+  $s3Client = Aws::S3::Client.new(region: getEnv("S3_REGION"))
 end
+$s3Binaries = Aws::S3::Bucket.new(getEnv("S3_BINARIES_BUCKET"), client: $s3Client)
+$s3Patches = Aws::S3::Bucket.new(getEnv("S3_PATCHES_BUCKET"), client: $s3Client)
 
 # Internal modules to implement specific pages and functionality
 require_relative '../util/sanitize.rb'
@@ -407,8 +412,8 @@ end
 
 ###################################################################################################
 get %r{/assets/([0-9a-f]{64})} do |hash|
-  s3Path = "#{ENV['S3_PREFIX'] || raise("missing env S3_PREFIX")}/binaries/#{hash[0,2]}/#{hash[2,2]}/#{hash}"
-  obj = $s3Bucket.object(s3Path)
+  s3Path = "#{getEnv("S3_BINARIES_PREFIX")}/#{hash[0,2]}/#{hash[2,2]}/#{hash}"
+  obj = $s3Binaries.object(s3Path)
   obj.exists? or halt(404)
   Tempfile.open("s3_", TEMP_DIR) { |s3Tmp|
     obj.get(response_target: s3Tmp)
@@ -483,9 +488,9 @@ get "/content/:fullItemID/*" do |itemID, path|
 
   # Here's the final file URL
   if USE_MRTEXPRESS
-    fileURL = "https://#{ENV['MRTEXPRESS_HOST'] || raise("missing env MRTEXPRESS_HOST")}/dl/#{mrtID}/#{epath}"
+    fileURL = "https://#{getEnv("MRTEXPRESS_HOST")}/dl/#{mrtID}/#{epath}"
   else
-    fileURL = "https://#{ENV['MRTEXPRESS_SUBST'] || raise("missing env MRTEXPRESS_SUBST")}/#{itemID.scan(/\w\w/).join('/')}/#{itemID}/#{epath}"
+    fileURL = "https://#{getEnv("MRTEXPRESS_SUBST")}/#{itemID.scan(/\w\w/).join('/')}/#{itemID}/#{epath}"
   end
 
   # Control how long this remains in browser and CloudFront caches
@@ -511,10 +516,10 @@ get "/content/:fullItemID/*" do |itemID, path|
 
   # Decide which display version to send
   if noSplash || displayPDF.splash_size == 0
-    s3Path = "#{ENV['S3_PREFIX'] || raise("missing env S3_PREFIX")}/pdf_patches/linearized/#{itemID}"
+    s3Path = "#{getEnv("S3_PATCHES_PREFIX")}/linearized/#{itemID}"
     outLen = displayPDF.linear_size
   else
-    s3Path = "#{ENV['S3_PREFIX'] || raise("missing env S3_PREFIX")}/pdf_patches/splash/#{itemID}"
+    s3Path = "#{getEnv("S3_PATCHES_PREFIX")}/splash/#{itemID}"
     outLen = displayPDF.splash_size
   end
 
@@ -524,7 +529,7 @@ get "/content/:fullItemID/*" do |itemID, path|
 
   # Stream the file from S3
   range = request.env["HTTP_RANGE"]
-  s3Obj = $s3Bucket.object(s3Path)
+  s3Obj = $s3Patches.object(s3Path)
   s3Obj.exists? or raise("missing display PDF")
   if range
     range =~ /^bytes=(\d+)-(\d+)?/ or raise("can't parse range #{range.inspect}")
@@ -1279,7 +1284,7 @@ def submitAPIMutation(mutation, vars)
   query = "mutation(#{vars.map{|name, pair| "$#{name}: #{pair[0]}"}.join(", ")}) { #{mutation} }"
   varHash = Hash[vars.map{|name,pair| [name.to_s, pair[1]]}]
   headers = { 'Content-Type' => 'application/json',
-              'Privileged' => ENV['ESCHOL_PRIV_API_KEY'] || raise("missing env ESCHOL_PRIV_API_KEY") }
+              'Privileged' => getEnv("ESCHOL_PRIV_API_KEY") }
   response = HTTParty.post("#{$escholApiServer}/graphql",
                :headers => headers,
                :body => { variables: varHash, query: query }.to_json.gsub("%", "%25"))
@@ -1419,10 +1424,10 @@ end
 def getItemHtml(content_type, id)
   return false if content_type != "text/html"
   if USE_MRTEXPRESS
-    fileURL = "https://#{ENV['MRTEXPRESS_HOST'] || raise("missing env MRTEXPRESS_HOST")}" +
+    fileURL = "https://#{getEnv("MRTEXPRESS_HOST")}" +
               "/dl/ark:/13030/#{id}/content/#{id}.html"
   else
-    fileURL = "https://#{ENV['MRTEXPRESS_SUBST'] || raise("missing env MRTEXPRESS_SUBST")}/#{id.scan(/\w\w/).join('/')}/#{id}/content/#{id}.html"
+    fileURL = "https://#{getEnv("MRTEXPRESS_SUBST")}/#{id.scan(/\w\w/).join('/')}/#{id}/content/#{id}.html"
   end
   fetcher = MerrittFetcher.new(fileURL)
   buf = []

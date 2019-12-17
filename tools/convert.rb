@@ -61,14 +61,18 @@ DATA_DIR = "/apps/eschol/erep/data"
 TEMP_DIR = "/apps/eschol/eschol5/jschol/tmp"
 FileUtils.mkdir_p(TEMP_DIR)
 
+def getEnv(name)
+  return ENV[name] || raise("missing env #{name}")
+end
+
 # The main database we're inserting data into
 DB = Sequel.connect({
   "adapter"  => "mysql2",
-  "host"     => ENV["ESCHOL_DB_HOST"] || raise("missing env ESCHOL_DB_HOST"),
-  "port"     => ENV["ESCHOL_DB_PORT"] || raise("missing env ESCHOL_DB_PORT").to_i,
-  "database" => ENV["ESCHOL_DB_DATABASE"] || raise("missing env ESCHOL_DB_DATABASE"),
-  "username" => ENV["ESCHOL_DB_USERNAME"] || raise("missing env ESCHOL_DB_USERNAME"),
-  "password" => ENV["ESCHOL_DB_PASSWORD"] || raise("missing env ESCHOL_DB_HOST") })
+  "host"     => getEnv("ESCHOL_DB_HOST"),
+  "port"     => getEnv("ESCHOL_DB_PORT").to_i,
+  "database" => getEnv("ESCHOL_DB_DATABASE"),
+  "username" => getEnv("ESCHOL_DB_USERNAME"),
+  "password" => getEnv("ESCHOL_DB_PASSWORD") })
 $dbMutex = Mutex.new
 
 # Log SQL statements, to aid debugging
@@ -94,14 +98,16 @@ $noCloudSearchMode = ARGV.delete('--noCloudSearch')
 
 # CloudSearch API client
 $csClient = Aws::CloudSearchDomain::Client.new(credentials: Aws::InstanceProfileCredentials.new,
-  endpoint: ENV['CLOUDSEARCH_DOC_ENDPOINT'] || raise("missing env CLOUDSEARCH_DOC_ENDPOINT"))
+  endpoint: getEnv("CLOUDSEARCH_DOC_ENDPOINT"))
 
 # S3 API client
 # Note: we use InstanceProfileCredentials here to avoid picking up ancient
 #       credentials file pub-submit-prd:~/.aws/config
 $s3Client = Aws::S3::Client.new(credentials: Aws::InstanceProfileCredentials.new,
-                                region: ENV['S3_REGION'] || raise("missing env S3_REGION"))
-$s3Bucket = Aws::S3::Bucket.new(ENV['S3_BUCKET'] || raise("missing env S3_BUCKET"), client: $s3Client)
+                                region: getEnv("S3_REGION"))
+$s3Binaries = Aws::S3::Bucket.new(getEnv("S3_BINARIES_BUCKET"), client: $s3Client)
+$s3Patches = Aws::S3::Bucket.new(getEnv("S3_PATCHES_BUCKET"), client: $s3Client)
+$s3Content = Aws::S3::Bucket.new(getEnv("S3_CONTENT_BUCKET"), client: $s3Client)
 
 # Caches for speed
 $allUnits = nil
@@ -123,7 +129,7 @@ end
 
 ###################################################################################################
 # Determine the old front-end server to use for thumbnailing
-$thumbnailServer = ENV["THUMBNAIL_SERVER"] || raise("missing env THUMBNAIL_SERVER")
+$thumbnailServer = getEnv("THUMBNAIL_SERVER")
 
 # Item counts for status updates
 $nSkipped = 0
@@ -158,7 +164,7 @@ Ezid::Client.configure do |config|
   (ezidCred = Netrc.read['ezid.cdlib.org']) or raise("Need credentials for ezid.cdlib.org in ~/.netrc")
   config.user = ezidCred[0]
   config.password = ezidCred[1]
-  config.default_shoulder = ENV["PEOPLE_ARK_SHOULDER"] || raise("missing env PEOPLE_ARK_SHOULDER")
+  config.default_shoulder = getEnv("PEOPLE_ARK_SHOULDER")
 end
 
 ###################################################################################################
@@ -195,21 +201,18 @@ Issue.where(Sequel.lit("attrs->'$.buy_link' is not null")).each { |record|
 def putAsset(filePath, metadata)
 
   # Calculate the sha256 hash, and use it to form the s3 path
-  md5sum    = Digest::MD5.file(filePath).hexdigest
   sha256Sum = Digest::SHA256.file(filePath).hexdigest
-  s3Path = "#{ENV['S3_PREFIX'] || raise("missing env S3_PREFIX")}/binaries/#{sha256Sum[0,2]}/#{sha256Sum[2,2]}/#{sha256Sum}"
+  s3Path = "#{getEnv("S3_BINARIES_PREFIX")}/#{sha256Sum[0,2]}/#{sha256Sum[2,2]}/#{sha256Sum}"
 
-  # If the S3 file is already correct, don't re-upload it.
-  obj = $s3Bucket.object(s3Path)
-  if !obj.exists? || obj.etag != "\"#{md5sum}\""
+  # If the S3 file is already present, don't re-upload it.
+  obj = $s3Binaries.object(s3Path)
+  if !obj.exists? || $forceMode
     #puts "Uploading #{filePath} to S3."
     obj.put(body: File.new(filePath),
             metadata: metadata.merge({
               original_path: filePath.sub(%r{.*/([^/]+/[^/]+)$}, '\1'), # retain only last directory plus filename
               mime_type: MimeMagic.by_magic(File.open(filePath)).to_s
             }))
-    # 2018-06-01: Is AWS introducing a introducing a new kind of etag? This occasionally fails.
-    # obj.etag == "\"#{md5sum}\"" or raise("S3 returned md5 #{resp.etag.inspect} but we expected #{md5sum.inspect}")
   end
 
   return sha256Sum
@@ -235,6 +238,29 @@ def putImage(imgPath, &block)
              height: dims[1]
            }
   end
+end
+
+###################################################################################################
+# Upload a content file to S3 (if not already there), if it is out of date. Attaches a hash of
+# metadata to it.
+def putContent(filePath, metadata)
+
+  # Calculate the sha256 hash, and use it to form the s3 path
+  sha256Sum = Digest::SHA256.file(filePath).hexdigest
+  s3Path = "#{getEnv("S3_CONTENT_PREFIX")}/#{sha256Sum[0,2]}/#{sha256Sum[2,2]}/#{sha256Sum}"
+
+  # If the S3 file is already present, don't re-upload it.
+  obj = $s3Content.object(s3Path)
+  if !obj.exists?
+    #puts "Uploading #{filePath} to S3."
+    obj.put(body: File.new(filePath),
+            metadata: metadata.merge({
+              original_path: filePath.sub(%r{.*/([^/]+/[^/]+)$}, '\1'), # retain only last directory plus filename
+              mime_type: MimeMagic.by_magic(File.open(filePath)).to_s
+            }))
+  end
+
+  return sha256Sum
 end
 
 ###################################################################################################
@@ -1823,9 +1849,9 @@ def connectAuthors
     attrs = JSON.parse(person.attrs)
     next if attrs['forwarded_to']
     Set.new([attrs['email']] + (attrs['prev_emails'] || [])).each { |email|
-      if emailToPerson.key?(email) && emailToPerson[email] != person.id
-        puts "Warning: multiple matching people for email #{email.inspect}"
-      end
+      #if emailToPerson.key?(email) && emailToPerson[email] != person.id
+      #  puts "Warning: multiple matching people for email #{email.inspect}"
+      #end
       emailToPerson[email] = person.id
     }
   }
@@ -1876,7 +1902,7 @@ def convertAllItems(arks)
   # Wait for everything to work its way through the queues.
   indexThread.join
   if !$testMode && !($hostname =~ /-dev|-stg/)
-    connectAuthors  # make sure all newly converted (or reconvered) items have author->people links
+    connectAuthors  # make sure all newly converted (or reconverted) items have author->people links
   end
   batchThread.join
   splashThread.join
@@ -2131,9 +2157,9 @@ def convertPDF(itemID)
       end
     end
 
-    pfx = ENV['S3_PREFIX'] || raise("missing env S3_PREFIX")
-    $s3Bucket.object("#{pfx}/pdf_patches/linearized/#{itemID}").put(body: linFile)
-    splashLinSize > 0 and $s3Bucket.object("#{pfx}/pdf_patches/splash/#{itemID}").put(body: splashLinFile)
+    pfx = getEnv("S3_PATCHES_PREFIX")
+    $s3Patches.object("#{pfx}/linearized/#{itemID}").put(body: linFile)
+    splashLinSize > 0 and $s3Patches.object("#{pfx}/splash/#{itemID}").put(body: splashLinFile)
 
     DisplayPDF.where(item_id: itemID).delete
     DisplayPDF.create(item_id: itemID,
