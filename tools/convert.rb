@@ -2,9 +2,8 @@
 
 # This script converts data from old eScholarship into the new eschol5 database.
 #
-# The "--items" mode converts combined an XTF index dump with the contents of
-# UCI metadata files into the items/sections/issues/etc. tables. It is also
-# built to be fully incremental.
+# The "--items" mode converts the contents of UCI metadata files into the
+# items/sections/issues/etc. tables.
 
 # Run from the right directory (the parent of the tools dir)
 Dir.chdir(File.dirname(File.expand_path(File.dirname(__FILE__))))
@@ -1774,37 +1773,6 @@ def processAllBatches
 end
 
 ###################################################################################################
-# Delete extraneous units from prior conversions
-def deleteExtraUnits(allIds)
-  dbUnits = Set.new(Unit.map { |unit| unit.id })
-  (dbUnits - allIds).each { |id|
-    puts "Deleting extra unit: #{id}"
-    DB.transaction do
-      items = UnitItem.where(unit_id: id).map { |link| link.item_id }
-      UnitItem.where(unit_id: id).delete
-      items.each { |itemID|
-        if UnitItem.where(item_id: itemID).empty?
-          ItemAuthor.where(item_id: itemID).delete
-          Item[itemID].delete
-        end
-      }
-
-      Issue.where(unit_id: id).each { |issue|
-        Section.where(issue_id: issue.id).delete
-      }
-      Issue.where(unit_id: id).delete
-
-      Widget.where(unit_id: id).delete
-
-      UnitHier.where(ancestor_unit: id).delete
-      UnitHier.where(unit_id: id).delete
-
-      Unit[id].delete
-    end
-  }
-end
-
-###################################################################################################
 def getShortArk(arkStr)
   arkStr =~ %r{^ark:/?13030/(qt\w{8})$} and return $1
   arkStr =~ /^(qt\w{8})$/ and return arkStr
@@ -2253,34 +2221,6 @@ def genAllStruct
     io.write(builder.to_xml)
   }
   File.rename("#{allStructDir}/allStruct-new.xml", "#{allStructDir}/allStruct.xml")
-end
-
-###################################################################################################
-# Allstruct checking (temporary during transition from hand-edited to auto-generated allStruct)
-def extractDivsInner(el, addTo)
-  el.elements.each { |sub|
-    if sub.name == "div"
-      addTo.key?(sub[:id]) and puts("Warning: dupe #{sub}")
-      addTo[sub[:id]] = sub.clone
-    end
-    extractDivsInner(sub, addTo)
-  }
-end
-
-def extractDivs(path)
-  xml = fileToXML(path)
-  addTo = {}
-  extractDivsInner(xml, addTo)
-  return addTo
-end
-
-def fixUnitAttr(unitID, attrName, newVal)
-  puts "    Fixing unit #{unitID} attr #{attrName}=#{newVal.inspect}"
-  unit = Unit[unitID]
-  attrs = JSON.parse(unit.attrs)
-  attrs[attrName] = newVal
-  unit.attrs = attrs.to_json
-  unit.save
 end
 
 ###################################################################################################
