@@ -29,7 +29,6 @@ require 'mimemagic/overlay' # for Office 2007+ formats
 require 'mini_magick'
 require 'netrc'
 require 'nokogiri'
-require 'open3'
 require 'ostruct'
 require 'pp'
 require 'rack'
@@ -58,9 +57,6 @@ MAX_TEXT_SIZE  = 950*1024
 
 DATA_DIR = "/apps/eschol/erep/data"
 
-TEMP_DIR = "/apps/eschol/eschol5/jschol/tmp"
-FileUtils.mkdir_p(TEMP_DIR)
-
 def getEnv(name)
   return ENV[name] || raise("missing env #{name}")
 end
@@ -82,7 +78,6 @@ File.exists?('convert.sql_log') and File.delete('convert.sql_log')
 # Queues for thread coordination
 $indexQueue = SizedQueue.new(100)
 $batchQueue = SizedQueue.new(1)  # no use getting very far ahead of CloudSearch
-$splashQueue = Queue.new
 
 # Mode to process a single item and just print it out (no inserting or batching)
 $testMode = ARGV.delete('--test')
@@ -183,7 +178,6 @@ class String
 end
 
 require_relative './models.rb'
-require_relative '../splash/splashGen.rb'
 
 ###################################################################################################
 $issueBuyLinks = Hash[*File.readlines("/apps/eschol/erep/xtf/style/textIndexer/mapping/buyLinks.txt", 
@@ -1534,8 +1528,6 @@ def indexItem(itemID, batch, nailgun)
           updateDbItem(dbDataBlock)
         end
       }
-      # Check/update the splash page now that this item has a real record
-      !$preindexMode and $splashQueue << itemID
       $nProcessed += 1
       return
     end
@@ -1765,9 +1757,6 @@ def processBatch(batch)
     DB.transaction do
       batch[:items].each { |data| updateDbItem(data) }
     end
-
-    # Process splash pages now that all the DB records exist
-    !$preindexMode and batch[:items].each { |data| $splashQueue << data[:dbItem][:id] }
   }
 
   # Periodically scrub out orphaned sections and issues
@@ -1795,7 +1784,6 @@ def processAllBatches
     # And process it
     processBatch(batch)
   end
-  $splashQueue << nil # mark no more coming
 end
 
 ###################################################################################################
@@ -1891,7 +1879,6 @@ def convertAllItems(arks)
   Thread.abort_on_exception = true
   indexThread = Thread.new { indexAllItems }
   batchThread = Thread.new { processAllBatches }
-  splashThread = Thread.new { splashFromQueue }
 
   arks.each { |ark|
     ark =~ /^qt\w{8}$/ or raise("Invalid ark #{ark.inspect}")
@@ -1905,7 +1892,6 @@ def convertAllItems(arks)
     connectAuthors  # make sure all newly converted (or reconverted) items have author->people links
   end
   batchThread.join
-  splashThread.join
 
   $nTotal > 0 and scrubSectionsAndIssues() # one final scrub
 end
@@ -2094,109 +2080,6 @@ def indexInfo()
 
   # Flush the last batch
   flushInfoBatch(batch, true)
-end
-
-###################################################################################################
-# Main driver for PDF display version generation
-def convertPDF(itemID)
-  item = Item[itemID]
-
-  # Skip non-published items (e.g. embargoed, withdrawn)
-  if item.status != "published"
-    #puts "Not generating splash for #{item.status} item."
-    DisplayPDF.where(item_id: itemID).delete  # delete splash pages when item gets withdrawn
-    return
-  end
-
-  # Generate the splash instructions, for cache checking
-  attrs = JSON.parse(item.attrs)
-  instrucs = splashInstrucs(itemID, item, attrs)
-  instrucDigest = Digest::MD5.base64digest(instrucs.to_json)
-
-  # See if current splash page is adequate
-  origFile = arkToFile(itemID, "content/base.pdf")
-  if !File.exist?(origFile)
-    #puts "Missing content file; skipping splash."
-    return
-  end
-  origSize = File.size(origFile)
-  origTimestamp = File.mtime(origFile)
-
-  dbPdf = DisplayPDF[itemID]
-  # It's odd, but comparing timestamps by value isn't reliable. Converting them to strings is though.
-  if !$forceMode && dbPdf &&
-       dbPdf.orig_size == origSize &&
-       dbPdf.orig_timestamp.to_s == origTimestamp.to_s &&
-       dbPdf.splash_info_digest == instrucDigest
-    #puts "Splash unchanged."
-    return
-  end
-  puts "Updating splash."
-
-  # Linearize the original PDF
-  linFile, linDiff, splashLinFile, splashLinDiff = nil, nil, nil, nil
-  begin
-    # First, linearize the original file. This will make the first page display quickly in our
-    # pdf.js view on the item page.
-    linFile = Tempfile.new(["linearized_#{itemID}_", ".pdf"], TEMP_DIR)
-    system("/apps/eschol/bin/qpdf --linearize #{origFile} #{linFile.path}")
-    code = $?.exitstatus
-    code == 0 || code == 3 or raise("Error #{code} linearizing.")
-    linSize = File.size(linFile.path)
-
-    # Then generate a splash page, and linearize that as well.
-    splashLinFile = Tempfile.new(["splashLin_#{itemID}_", ".pdf"], TEMP_DIR)
-    splashLinSize = 0
-    begin
-      splashLinSize = splashGen(itemID, instrucs, linFile, splashLinFile.path)
-    rescue Exception => e
-      if e.to_s =~ /Internal Server Error|Error 500/
-        puts "Warning: splash generator failed; falling back to plain."
-      else
-        raise
-      end
-    end
-
-    pfx = getEnv("S3_PATCHES_PREFIX")
-    $s3Patches.object("#{pfx}/linearized/#{itemID}").put(body: linFile)
-    splashLinSize > 0 and $s3Patches.object("#{pfx}/splash/#{itemID}").put(body: splashLinFile)
-
-    DisplayPDF.where(item_id: itemID).delete
-    DisplayPDF.create(item_id: itemID,
-      orig_size:          origSize,
-      orig_timestamp:     origTimestamp,
-      linear_size:        linSize,
-      splash_info_digest: splashLinSize > 0 ? instrucDigest : nil,
-      splash_size:        splashLinSize
-    )
-
-    #puts sprintf("Splash updated: lin=%d/%d = %.1f%%; splashLin=%d/%d = %.1f%%",
-    #             linSize, origSize, linSize*100.0/origSize,
-    #             splashLinSize, origSize, splashLinSize*100.0/origSize)
-  ensure
-    linFile and linFile.unlink
-    linDiff and linDiff.unlink
-    splashLinFile and splashLinFile.unlink
-    splashLinDiff and splashLinDiff.unlink
-  end
-end
-
-###################################################################################################
-def splashFromQueue
-  Thread.current[:name] = "splash thread"
-  loop do
-    # Grab an item from the input queue
-    itemID = $splashQueue.pop
-    itemID or break
-    Thread.current[:name] = "splash thread: #{itemID}"  # label all stdout from this thread
-    begin
-      convertPDF(itemID)
-    rescue Exception => e
-      e.is_a?(Interrupt) || e.is_a?(SignalException) and raise
-      puts "Exception: #{e} #{e.backtrace}"
-    end
-    Thread.current[:name] = "splash thread"
-  end
 end
 
 ###################################################################################################

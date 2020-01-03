@@ -1,8 +1,61 @@
+#!/usr/bin/env ruby
+
+# This script generates linearized versions of a PDF, with and without a splash page.
+
+# Run from the right directory (the parent of the splash dir)
+Dir.chdir(File.dirname(File.expand_path(File.dirname(__FILE__))))
+
+# Use bundler to keep dependencies local
+require 'rubygems'
+require 'bundler/setup'
+
+# System gems
+require 'aws-sdk-s3'
+require 'httparty'
+require 'json'
 require 'nokogiri'
 require 'pathname'
+require 'open3'
+require 'sequel'
+require 'tempfile'
+
+# Local dependencies
+require_relative '../util/sanitize.rb'
+
+# Mode to override up-to-date test
+$forceMode = ARGV.delete('--force')
+
+DATA_DIR = "/apps/eschol/erep/data"
+
+TEMP_DIR = "/apps/eschol/eschol5/jschol/tmp"
+FileUtils.mkdir_p(TEMP_DIR)
 
 SPLASH_MAX_TEXT = 250
 SPLASH_MAX_AUTHORS = 3
+
+def getEnv(name)
+  return ENV[name] || raise("missing env #{name}")
+end
+
+# The main database we're inserting data into
+DB = Sequel.connect({
+  "adapter"  => "mysql2",
+  "host"     => getEnv("ESCHOL_DB_HOST"),
+  "port"     => getEnv("ESCHOL_DB_PORT").to_i,
+  "database" => getEnv("ESCHOL_DB_DATABASE"),
+  "username" => getEnv("ESCHOL_DB_USERNAME"),
+  "password" => getEnv("ESCHOL_DB_PASSWORD") })
+
+require_relative '../tools/models.rb'
+
+# S3 API client
+# Note: we use InstanceProfileCredentials here to avoid picking up ancient
+#       credentials file pub-submit-prd:~/.aws/config
+$s3Client = Aws::S3::Client.new(credentials: Aws::InstanceProfileCredentials.new,
+                                region: getEnv("S3_REGION"))
+$s3Binaries = Aws::S3::Bucket.new(getEnv("S3_BINARIES_BUCKET"), client: $s3Client)
+$s3Patches = Aws::S3::Bucket.new(getEnv("S3_PATCHES_BUCKET"), client: $s3Client)
+$s3Content = Aws::S3::Bucket.new(getEnv("S3_CONTENT_BUCKET"), client: $s3Client)
 
 # Get hash of all active root level campuses/ORUs, sorted by ordering in unit_hier table
 def getActiveCampuses
@@ -13,6 +66,21 @@ end
 
 $activeCampuses = getActiveCampuses
 $hostname = `/bin/hostname`.strip
+
+###################################################################################################
+def getShortArk(arkStr)
+  arkStr =~ %r{^ark:/?13030/(qt\w{8})$} and return $1
+  arkStr =~ /^(qt\w{8})$/ and return arkStr
+  arkStr =~ /^\w{8}$/ and return "qt#{arkStr}"
+  raise("Can't parse ark from #{arkStr.inspect}")
+end
+
+###################################################################################################
+def arkToFile(ark, subpath, root = DATA_DIR)
+  shortArk = getShortArk(ark)
+  path = "#{root}/13030/pairtree_root/#{shortArk.scan(/\w\w/).join('/')}/#{shortArk}/#{subpath}"
+  return path.sub(%r{^/13030}, "13030").gsub(%r{//+}, "/").gsub(/\bbase\b/, shortArk).sub(%r{/+$}, "")
+end
 
 ###################################################################################################
 def countPages(pdfPath)
@@ -275,3 +343,100 @@ def splashGen(itemID, instrucs, origFile, targetFile)
   end
 end
 
+###################################################################################################
+# Main driver for PDF display version generation
+def convertPDF(itemID)
+  item = Item[itemID]
+
+  # Skip non-published items (e.g. embargoed, withdrawn)
+  if item.status != "published"
+    #puts "Not generating splash for #{item.status} item."
+    DisplayPDF.where(item_id: itemID).delete  # delete splash pages when item gets withdrawn
+    return
+  end
+
+  # Generate the splash instructions, for cache checking
+  attrs = JSON.parse(item.attrs)
+  instrucs = splashInstrucs(itemID, item, attrs)
+  instrucDigest = Digest::MD5.base64digest(instrucs.to_json)
+
+  # See if current splash page is adequate
+  origFile = arkToFile(itemID, "content/base.pdf")
+  if !File.exist?(origFile)
+    #puts "Missing content file; skipping splash."
+    return
+  end
+  origSize = File.size(origFile)
+  origTimestamp = File.mtime(origFile)
+
+  dbPdf = DisplayPDF[itemID]
+  # It's odd, but comparing timestamps by value isn't reliable. Converting them to strings is though.
+  if !$forceMode && dbPdf &&
+       dbPdf.orig_size == origSize &&
+       dbPdf.orig_timestamp.to_s == origTimestamp.to_s &&
+       dbPdf.splash_info_digest == instrucDigest
+    #puts "Splash unchanged."
+    return
+  end
+  puts "#{itemID}: Updating splash."
+
+  # Linearize the original PDF
+  linFile, linDiff, splashLinFile, splashLinDiff = nil, nil, nil, nil
+  begin
+    # First, linearize the original file. This will make the first page display quickly in our
+    # pdf.js view on the item page.
+    linFile = Tempfile.new(["linearized_#{itemID}_", ".pdf"], TEMP_DIR)
+    system("/apps/eschol/bin/qpdf --linearize #{origFile} #{linFile.path}")
+    code = $?.exitstatus
+    code == 0 || code == 3 or raise("Error #{code} linearizing.")
+    linSize = File.size(linFile.path)
+
+    # Then generate a splash page, and linearize that as well.
+    splashLinFile = Tempfile.new(["splashLin_#{itemID}_", ".pdf"], TEMP_DIR)
+    splashLinSize = 0
+    begin
+      splashLinSize = splashGen(itemID, instrucs, linFile, splashLinFile.path)
+    rescue Exception => e
+      if e.to_s =~ /Internal Server Error|Error 500/
+        puts "Warning: splash generator failed; falling back to plain."
+      else
+        raise
+      end
+    end
+
+    pfx = getEnv("S3_PATCHES_PREFIX")
+    $s3Patches.object("#{pfx}/linearized/#{itemID}").put(body: linFile)
+    splashLinSize > 0 and $s3Patches.object("#{pfx}/splash/#{itemID}").put(body: splashLinFile)
+
+    DisplayPDF.where(item_id: itemID).delete
+    DisplayPDF.create(item_id: itemID,
+      orig_size:          origSize,
+      orig_timestamp:     origTimestamp,
+      linear_size:        linSize,
+      splash_info_digest: splashLinSize > 0 ? instrucDigest : nil,
+      splash_size:        splashLinSize
+    )
+
+    puts sprintf("#{itemID}: Splash updated: lin=%d/%d = %.1f%%; splashLin=%d/%d = %.1f%%",
+                 linSize, origSize, linSize*100.0/origSize,
+                 splashLinSize, origSize, splashLinSize*100.0/origSize)
+  ensure
+    linFile and linFile.unlink
+    linDiff and linDiff.unlink
+    splashLinFile and splashLinFile.unlink
+    splashLinDiff and splashLinDiff.unlink
+  end
+end
+
+###################################################################################################
+# Main driver
+arks = ARGV.select { |a| a =~ /qt\w{8}/ }
+arks.empty? and raise("Must specify item(s) to convert.")
+arks.each { |ark|
+  begin
+    convertPDF(ark)
+  rescue Exception => e
+    e.is_a?(Interrupt) || e.is_a?(SignalException) and raise
+    puts "Exception: #{e} #{e.backtrace}"
+  end
+}
