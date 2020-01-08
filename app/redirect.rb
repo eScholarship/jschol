@@ -117,7 +117,9 @@ end
 
 ###################################################################################################
 def handleItemRedirect(uri, itemID, remainder)
-  uri.query = nil  # we don't support any queries params on new items
+  if uri.query && !(uri.query =~ /^preview_key=\w+$/)
+    uri.query = nil  # we don't support any query params on new items except preview_key
+  end
   if itemID =~ /^qt(\w{8})/
     uri.path = "/uc/item/#{$1}#{remainder}"
   elsif !(itemID =~ /^\w{8}$/)

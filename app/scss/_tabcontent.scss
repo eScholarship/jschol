@@ -43,3 +43,22 @@
   display: none;
   // .c-tabcontent-reveal acts as opposite
 }
+
+// Display diagonal "Preview" text over the entire page
+.c-preview-watermark {
+
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: 1000;
+
+  // only render this element if pointer-events is supported to prevent blocked pointer/touch access to underlying links, buttons, text, etc:
+  @supports (pointer-events: none) {
+    background-image: url(/images/preview_bkg.svg);
+    background-repeat: repeat;
+  }
+}

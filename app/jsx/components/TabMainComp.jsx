@@ -35,6 +35,7 @@ class MainContent extends React.Component {
       case "empty":
         return (<NoContent/>)
       case "published":
+      case "pending":
         if (!p.content_type) {
           if (p.attrs.pub_web_loc && p.attrs.pub_web_loc.length > 0) {
             return (<NoContent pub_web_loc={p.attrs.pub_web_loc} supp_files={p.attrs.supp_files} changeTab={p.changeTab} />)
@@ -53,9 +54,10 @@ class MainContent extends React.Component {
                     <PdfViewComp url={p.pdf_url}
                                  content_key={p.content_key}
                                  download_restricted={p.download_restricted}
-                                 commenting_ok={p.commenting_ok}/>
-                    :
-                    p.content_type == "text/html" ? this.renderHtml(p) : null)
+                                 commenting_ok={p.commenting_ok}
+                                 preview_key={p.preview_key}/>
+                  : p.content_type == "text/html" ? this.renderHtml(p)
+                  : raise("unknown content_type '" + p.content_type + "'"))
         }
       case "withdrawn":
       case "withdrawn-junk":
@@ -64,6 +66,8 @@ class MainContent extends React.Component {
         return (<Embargoed date={p.attrs.embargo_date}
                            pub_web_loc={p.attrs.pub_web_loc}
                            formatDate={p.formatDate}          />)
+      default:
+        throw "unknown status '" + p.status + "'"
     }
   }
 

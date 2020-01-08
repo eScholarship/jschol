@@ -103,9 +103,11 @@ class Undownloadable extends React.Component {
     // ToDo: For multimedia content, add functionality to zip up supp files for download, and put button here (like Downloadable class above) that says 'Download Content' */}
     let msg = !multimediaItem ?
                 <div className="o-alert1" role="alert">
-                  {p.attrs.withdrawn_message ?
-                    p.attrs.withdrawn_message
-                  : "This item is not available for download from eScholarship"
+                  {p.status=='pending' ?
+                      "This item has not yet been published on eScholarship"
+                   : p.attrs.withdrawn_message ?
+                      p.attrs.withdrawn_message
+                   : "This item is not available for download from eScholarship"
                   }
                 </div>
               :
@@ -117,7 +119,7 @@ class Undownloadable extends React.Component {
         <WithdrawModalComp itemID={this.props.id}
                            fetchingData={this.props.fetchingData} sendApiData={this.props.sendApiData}/>
       }
-      {!/withdrawn/.test(p.status) ?
+      {!/withdrawn|pending/.test(p.status) ?
         <ShareComp type="item" id={p.id} />
       :
         <div className="c-share">{/* Keep this div here to allow sister element 'o-alert1' to be aligned properly to the left */}</div>
