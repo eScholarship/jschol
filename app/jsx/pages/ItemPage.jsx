@@ -142,7 +142,7 @@ class ItemPage extends PageBase {
     d.unit && this.extGA(d.unit.id)  // Google Analytics for external trackers called from PageBase
     return (
       <div>
-        <span className="c-preview-watermark" />
+        {d.status == "pending" && <span className="c-preview-watermark" />}
         {isWithdrawn && <MetaTagsComp> <meta id="meta-robots" name="robots" content="noindex" /> </MetaTagsComp>}
         {!isWithdrawn &&
           <MetaTagsComp title={d.title} contribs={contribs} abstract={a.abstract}>

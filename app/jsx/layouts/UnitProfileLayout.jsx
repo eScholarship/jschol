@@ -186,7 +186,7 @@ class UnitProfileLayout extends React.Component {
                           </div>
                           :
                           <div>
-                            <label className="c-editable-page__label" htmlFor="altmetrics_ok">Commenting enabled in hypothes.is: </label>
+                            <label className="c-editable-page__label" htmlFor="commenting_ok">Commenting enabled in hypothes.is: </label>
                             <input type="checkbox" id="commenting_ok" name="commenting_ok" defaultChecked={data.commenting_ok}/>
                           </div>
                         }

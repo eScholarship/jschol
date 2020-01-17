@@ -162,6 +162,7 @@ end
 $s3Binaries = Aws::S3::Bucket.new(getEnv("S3_BINARIES_BUCKET"), client: $s3Client)
 $s3Patches = Aws::S3::Bucket.new(getEnv("S3_PATCHES_BUCKET"), client: $s3Client)
 $s3Content = Aws::S3::Bucket.new(getEnv("S3_CONTENT_BUCKET"), client: $s3Client)
+$s3Preview = Aws::S3::Bucket.new(getEnv("S3_PREVIEW_BUCKET"), client: $s3Client)
 
 # Internal modules to implement specific pages and functionality
 require_relative '../util/sanitize.rb'
@@ -494,18 +495,20 @@ get "/content/:fullItemID/*" do |itemID, path|
   # Decide which exact file to send
   displayPDF = mainPDF && DisplayPDF[itemID]
   if !mainPDF || !displayPDF
-    s3Path = "#{getEnv("S3_CONTENT_PREFIX")}/#{itemID}/#{epath}"
-    s3Obj = $s3Content.object(s3Path)
+    if item.status == "pending"
+      s3Path = "#{getEnv("S3_PREVIEW_PREFIX")}/#{itemID}/#{epath}"
+      s3Obj = $s3Preview.object(s3Path)
+    else
+      s3Path = "#{getEnv("S3_CONTENT_PREFIX")}/#{itemID}/#{epath}"
+      s3Obj = $s3Content.object(s3Path)
+    end
     outLen = s3Obj.content_length
-  elsif noSplash || displayPDF.splash_size == 0
-    s3Path = "#{getEnv("S3_PATCHES_PREFIX")}/linearized/#{itemID}"
+  else
+    s3Path = "#{getEnv("S3_PATCHES_PREFIX")}/#{(noSplash || displayPDF.splash_size == 0) ? 'linearized' : 'splash'}/#{itemID}"
     s3Obj = $s3Patches.object(s3Path)
     outLen = displayPDF.linear_size
-  else
-    s3Path = "#{getEnv("S3_PATCHES_PREFIX")}/splash/#{itemID}"
-    s3Obj = $s3Patches.object(s3Path)
-    outLen = displayPDF.splash_size
   end
+  puts "s3Path=#{s3Path}"
 
   # So we have to explicitly tell the client. With this, pdf.js will show the first page
   # before downloading the entire file.
@@ -1268,7 +1271,7 @@ def getItemPageData(shortArk)
             body[:header] = getUnitHeader(unit, nil, nil)
           end
         end
-        body[:commenting_ok] = unit_attrs['commenting_ok']
+        body[:commenting_ok] = unit_attrs['commenting_ok'] && item.status == 'published'
       end
       # pp(body)
       return body
