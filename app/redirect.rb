@@ -68,7 +68,7 @@ def checkRedirect(origURI)
     elsif uri.path =~ %r{^/oa_harvester/}
       uri.path = "/images#{uri.path}"
       break
-    elsif uri.path =~ /(\.html?$)|(\.cgi)|(cgi-bin)/ && !(uri.path =~ %r{/inner/})  # old HTML and CGI pages
+    elsif uri.path =~ /(\.html?$)|(\.cgi)|(cgi-bin)/ && !(uri.path =~ %r{/(inner|supp)/})  # old HTML and CGI pages
       fpath = "./app/#{sanitizeFilePath(uri.path).sub(%r{^/+}, '')}"
       if !File.exist?(fpath) # allow overlaid HTML files at the root, e.g. for Google site verification
         uri.path = "/"
@@ -117,7 +117,9 @@ end
 
 ###################################################################################################
 def handleItemRedirect(uri, itemID, remainder)
-  uri.query = nil  # we don't support any queries params on new items
+  if uri.query && !(uri.query =~ /^((access|preview_key)=\w+&?)*$/)
+    uri.query = nil  # we don't support any query params on new items except access and preview_key
+  end
   if itemID =~ /^qt(\w{8})/
     uri.path = "/uc/item/#{$1}#{remainder}"
   elsif !(itemID =~ /^\w{8}$/)

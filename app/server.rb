@@ -161,6 +161,8 @@ else
 end
 $s3Binaries = Aws::S3::Bucket.new(getEnv("S3_BINARIES_BUCKET"), client: $s3Client)
 $s3Patches = Aws::S3::Bucket.new(getEnv("S3_PATCHES_BUCKET"), client: $s3Client)
+$s3Content = Aws::S3::Bucket.new(getEnv("S3_CONTENT_BUCKET"), client: $s3Client)
+$s3Preview = Aws::S3::Bucket.new(getEnv("S3_PREVIEW_BUCKET"), client: $s3Client)
 
 # Internal modules to implement specific pages and functionality
 require_relative '../util/sanitize.rb'
@@ -433,7 +435,11 @@ get "/content/:fullItemID/*" do |itemID, path|
   # Prep work
   itemID =~ /^qt[a-z0-9]{8}$/ or halt(404)  # protect against attacks
   item = Item[itemID] or halt(404)
-  item.status == 'published' or halt(403)  # prevent access to embargoed and withdrawn files
+  if item.status == "pending"
+    isValidPreviewKey(itemID, params[:preview_key]) or halt(403)
+  elsif item.status != 'published'
+    halt(403) # prevent access to embargoed and withdrawn files
+  end
   path = sanitizeFilePath(path)  # protect against attacks
 
   # Figure out the ID in Merritt. eSchol items just use the eSchol ARK; others are recorded
@@ -446,16 +452,13 @@ get "/content/:fullItemID/*" do |itemID, path|
 
   # If it's the main content PDF...
   if path =~ /^qt\w{8}\.pdf$/
-    epath = "content/#{URI::encode(path)}"
-    if USE_MRTEXPRESS
-      attrs["content_merritt_path"] and epath = attrs["content_merritt_path"]
-    end
+    epath = path
     noSplash = params[:nosplash] && isValidContentKey(itemID.sub(/^qt/, ''), params[:nosplash])
     mainPDF = true
   elsif path =~ %r{^inner/(.*)$}
     filename = $1
     halt(403) if filename =~ /^qt\w{8}\.pdf$/  # disallow bypassing main check using inner backdoor
-    epath = "content/#{URI::encode(filename)}"
+    epath = filename
     noSplash = true
     mainPDF = false
   else
@@ -464,10 +467,7 @@ get "/content/:fullItemID/*" do |itemID, path|
     epath = nil
     attrs["supp_files"].each { |supp|
       if path == "supp/#{supp["file"]}"
-        epath = "content/#{URI::encode(path)}"
-        if USE_MRTEXPRESS && supp["merritt_path"]
-          epath = URI::encode(supp["merritt_path"])
-        end
+        epath = path
       end
     }
     epath or halt(404)
@@ -486,42 +486,29 @@ get "/content/:fullItemID/*" do |itemID, path|
   # Guess the content type by path for now
   content_type MimeMagic.by_path(path)
 
-  # Here's the final file URL
-  if USE_MRTEXPRESS
-    fileURL = "https://#{getEnv("MRTEXPRESS_HOST")}/dl/#{mrtID}/#{epath}"
-  else
-    fileURL = "https://#{getEnv("MRTEXPRESS_SUBST")}/#{itemID.scan(/\w\w/).join('/')}/#{itemID}/#{epath}"
-  end
-
   # Control how long this remains in browser and CloudFront caches
   cache_control :public, :max_age => 3600   # maybe more?
 
   # Let crawlers know that the canonical URL is the item page.
   headers "Link" => "<https://escholarship.org/uc/item/#{itemID.sub(/^qt/,'')}>; rel=\"canonical\""
 
-  # Stream supp files out directly from Merritt. Also, if there's no display PDF, fall back
-  # to the version in Merritt.
-  displayPDF = DisplayPDF[itemID]
+  # Decide which exact file to send
+  displayPDF = mainPDF && DisplayPDF[itemID]
   if !mainPDF || !displayPDF
-    fetcher = MerrittFetcher.new(fileURL)
-    if fetcher.length
-      headers "Content-Length" => fetcher.length.to_s
-    elsif fetcher.status.to_s =~ /HTTP 404/
-      halt 404
+    if item.status == "pending"
+      s3Path = "#{getEnv("S3_PREVIEW_PREFIX")}/#{itemID}/#{epath}"
+      s3Obj = $s3Preview.object(s3Path)
     else
-      raise fetcher.status
+      s3Path = "#{getEnv("S3_CONTENT_PREFIX")}/#{itemID}/#{epath}"
+      s3Obj = $s3Content.object(s3Path)
     end
-    return stream { |out| fetcher.streamTo(out) }
-  end
-
-  # Decide which display version to send
-  if noSplash || displayPDF.splash_size == 0
-    s3Path = "#{getEnv("S3_PATCHES_PREFIX")}/linearized/#{itemID}"
-    outLen = displayPDF.linear_size
+    outLen = s3Obj.content_length
   else
-    s3Path = "#{getEnv("S3_PATCHES_PREFIX")}/splash/#{itemID}"
-    outLen = displayPDF.splash_size
+    s3Path = "#{getEnv("S3_PATCHES_PREFIX")}/#{(noSplash || displayPDF.splash_size == 0) ? 'linearized' : 'splash'}/#{itemID}"
+    s3Obj = $s3Patches.object(s3Path)
+    outLen = displayPDF.linear_size
   end
+  puts "s3Path=#{s3Path}"
 
   # So we have to explicitly tell the client. With this, pdf.js will show the first page
   # before downloading the entire file.
@@ -529,8 +516,7 @@ get "/content/:fullItemID/*" do |itemID, path|
 
   # Stream the file from S3
   range = request.env["HTTP_RANGE"]
-  s3Obj = $s3Patches.object(s3Path)
-  s3Obj.exists? or raise("missing display PDF")
+  s3Obj.exists? or halt(404, "file missing from S3")
   if range
     range =~ /^bytes=(\d+)-(\d+)?/ or raise("can't parse range #{range.inspect}")
     fromByte, toByte = $1.to_i, $2.to_i
@@ -1161,8 +1147,26 @@ end
 
 ###################################################################################################
 def isValidContentKey(shortArk, key)
+  # Try yesterday, today, and tomorrow (the latter to account for people across the dateline)
   (-1..1).each { |offset|
     if key == calcContentKey(shortArk, Date.today + offset)
+      return true
+    end
+  }
+  return false
+end
+
+###################################################################################################
+def calcPreviewKey(shortArk, date = nil)
+  Digest::MD5.hexdigest("pvw_v01:#{shortArk}:#{(date || Date.today).iso8601}:#{$jscholKey}")
+end
+
+###################################################################################################
+def isValidPreviewKey(shortArk, key)
+  # Try yesterday, today, and tomorrow (the latter to account for people across the dateline)
+  puts "Want previewKey=#{calcPreviewKey(shortArk, Date.today)}"
+  (-1..1).each { |offset|
+    if key == calcPreviewKey(shortArk, Date.today + offset)
       return true
     end
   }
@@ -1187,7 +1191,9 @@ def getItemPageData(shortArk)
   unitIDs = UnitItem.where(:item_id => id, :is_direct => true).order(:ordering_of_units).select_map(:unit_id)
   unit = unitIDs ? Unit[unitIDs[0]] : nil
   pdf_url = nil
-  if item.content_type == "application/pdf" && item.status == "published"
+  if item.content_type == "application/pdf" && %w{published pending}.include?(item.status)
+    # Only allow access to preview items if the proper key is specified
+    (item.status == 'published' || isValidPreviewKey(id, params[:preview_key])) or halt(403, "Unauthorized")
     pdf_url = "/content/"+id+"/"+id+".pdf"
     displayPDF = DisplayPDF[id]
     if displayPDF && displayPDF.orig_timestamp
@@ -1226,6 +1232,7 @@ def getItemPageData(shortArk)
         :oa_policy => item.oa_policy,                # Strictly used for admin reference
         :ordering_in_sect => item.ordering_in_sect,  # Strictly used for admin reference
         :pdf_url => pdf_url,
+        :preview_key => params[:preview_key],
         :published => item.published.to_s =~ /^(\d\d\d\d)-01-01$/ ? $1 : item.published,
         :rights => item.rights,
         :sidebar => unit ? getItemRelatedItems(unit, id) : nil,
@@ -1264,7 +1271,7 @@ def getItemPageData(shortArk)
             body[:header] = getUnitHeader(unit, nil, nil)
           end
         end
-        body[:commenting_ok] = unit_attrs['commenting_ok']
+        body[:commenting_ok] = unit_attrs['commenting_ok'] && item.status == 'published'
       end
       # pp(body)
       return body
