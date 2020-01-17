@@ -68,7 +68,7 @@ def checkRedirect(origURI)
     elsif uri.path =~ %r{^/oa_harvester/}
       uri.path = "/images#{uri.path}"
       break
-    elsif uri.path =~ /(\.html?$)|(\.cgi)|(cgi-bin)/ && !(uri.path =~ %r{/inner/})  # old HTML and CGI pages
+    elsif uri.path =~ /(\.html?$)|(\.cgi)|(cgi-bin)/ && !(uri.path =~ %r{/(inner|supp)/})  # old HTML and CGI pages
       fpath = "./app/#{sanitizeFilePath(uri.path).sub(%r{^/+}, '')}"
       if !File.exist?(fpath) # allow overlaid HTML files at the root, e.g. for Google site verification
         uri.path = "/"

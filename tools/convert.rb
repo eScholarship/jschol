@@ -1413,13 +1413,13 @@ def indexItem(itemID, batch, nailgun)
   text = $noCloudSearchMode ? "" : grabText(itemID, dbItem.content_type)
   
   # Create JSON for the full text index
+  authsAndContribs = authors.map { |auth| auth[:name] } + contribs.map { |c| c[:name] }
   idxItem = {
     type:          "add",   # in CloudSearch land this means "add or update"
     id:            itemID,
     fields: {
       title:         dbItem[:title] ? cleanTitle(dbItem[:title]) : "",
-      authors:       (authors.length > 1000 ? authors[0,1000] : authors).map { |auth| auth[:name] } +
-                     (contribs.length > 1000 ? contribs[0,1000] : contribs).map { |c| c[:name] },
+      authors:       authsAndContribs.length > 1000 ? authsAndContribs[0,1000] : authsAndContribs,
       abstract:      attrs[:abstract] || "",
       type_of_work:  dbItem[:genre],
       disciplines:   attrs[:disciplines] ? attrs[:disciplines] : [""], # only the numeric parts
