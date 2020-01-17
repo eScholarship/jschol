@@ -349,7 +349,7 @@ def convertPDF(itemID)
   item = Item[itemID]
 
   # Skip non-published items (e.g. embargoed, withdrawn)
-  if item.status != "published"
+  if !item || item.status != "published"
     #puts "Not generating splash for #{item.status} item."
     DisplayPDF.where(item_id: itemID).delete  # delete splash pages when item gets withdrawn
     return

@@ -85,6 +85,9 @@ $testMode = ARGV.delete('--test')
 # Mode to override up-to-date test
 $forceMode = ARGV.delete('--force')
 
+# Used to disable certain features on dev/stg
+$hostname = `/bin/hostname`.strip
+
 # Pre-indexing mode (fast - doesn't touch search index)
 $preindexMode = false
 
@@ -102,7 +105,6 @@ $s3Client = Aws::S3::Client.new(credentials: Aws::InstanceProfileCredentials.new
                                 region: getEnv("S3_REGION"))
 $s3Binaries = Aws::S3::Bucket.new(getEnv("S3_BINARIES_BUCKET"), client: $s3Client)
 $s3Patches = Aws::S3::Bucket.new(getEnv("S3_PATCHES_BUCKET"), client: $s3Client)
-$s3Content = Aws::S3::Bucket.new(getEnv("S3_CONTENT_BUCKET"), client: $s3Client)
 
 # Caches for speed
 $allUnits = nil
@@ -235,32 +237,20 @@ def putImage(imgPath, &block)
 end
 
 ###################################################################################################
-# Upload a content file to S3 (if not already there), if it is out of date. Attaches a hash of
-# metadata to it.
-def putContent(filePath, metadata)
-
-  # Calculate the sha256 hash, and use it to form the s3 path
-  sha256Sum = Digest::SHA256.file(filePath).hexdigest
-  s3Path = "#{getEnv("S3_CONTENT_PREFIX")}/#{sha256Sum[0,2]}/#{sha256Sum[2,2]}/#{sha256Sum}"
-
-  # If the S3 file is already present, don't re-upload it.
-  obj = $s3Content.object(s3Path)
-  if !obj.exists?
-    #puts "Uploading #{filePath} to S3."
-    obj.put(body: File.new(filePath),
-            metadata: metadata.merge({
-              original_path: filePath.sub(%r{.*/([^/]+/[^/]+)$}, '\1'), # retain only last directory plus filename
-              mime_type: MimeMagic.by_magic(File.open(filePath)).to_s
-            }))
-  end
-
-  return sha256Sum
+def rawArkToFile(shortArk, subpath, root = DATA_DIR)
+  path = "#{root}/13030/pairtree_root/#{shortArk.scan(/\w\w/).join('/')}/#{shortArk}/#{subpath}"
+  return path.sub(%r{^/13030}, "13030").gsub(%r{//+}, "/").gsub(/\bbase\b/, shortArk).sub(%r{/+$}, "")
 end
 
 ###################################################################################################
 def arkToFile(ark, subpath, root = DATA_DIR)
   shortArk = getShortArk(ark)
-  path = "#{root}/13030/pairtree_root/#{shortArk.scan(/\w\w/).join('/')}/#{shortArk}/#{subpath}"
+  metaPath =
+  useNext = ""
+  if !File.exist?(rawArkToFile(shortArk, "meta/base.meta.xml")) && File.exist?(rawArkToFile(shortArk, "next/meta/base.meta.xml"))
+    useNext = "next/"
+  end
+  path = "#{root}/13030/pairtree_root/#{shortArk.scan(/\w\w/).join('/')}/#{shortArk}/#{useNext}#{subpath}"
   return path.sub(%r{^/13030}, "13030").gsub(%r{//+}, "/").gsub(/\bbase\b/, shortArk).sub(%r{/+$}, "")
 end
 
@@ -975,7 +965,7 @@ def tryMainAndSequester(path)
 end
 
 ###################################################################################################
-def parseUCIngest(itemID, inMeta, fileType)
+def parseUCIngest(itemID, inMeta, fileType, isPending)
   attrs = {}
   attrs[:addl_info] = inMeta.html_at("./comments") and sanitizeHTML(inMeta.html_at("./comments"))
   attrs[:author_hide] = !!inMeta.at("./authors[@hideAuthor]")   # Only journal items can have this attribute
@@ -1162,10 +1152,12 @@ def parseUCIngest(itemID, inMeta, fileType)
   end
 
   # Generate thumbnails and TOCs (but only for non-suppressed PDF items).
-  # But in pre-index mode don't do this step because sometimes it takes a long time, and
+  # But in pre-index mode don't do the thumbnail step because sometimes it takes a long time, and
   # pre-index needs to happen quickly so the API can return.
-  if !attrs[:suppress_content] && File.exist?(arkToFile(itemID, "content/base.pdf")) && !$preindexMode
-    attrs[:thumbnail] = generatePdfThumbnail(itemID, inMeta, Item[itemID])
+  if !attrs[:suppress_content] && File.exist?(arkToFile(itemID, "content/base.pdf"))
+    if !$preindexMode
+      attrs[:thumbnail] = generatePdfThumbnail(itemID, inMeta, Item[itemID])
+    end
     attrs[:toc] = parseCustomTOC(itemID) || generatePdfTOC(itemID)
   end
 
@@ -1208,7 +1200,8 @@ def parseUCIngest(itemID, inMeta, fileType)
   dbItem = Item.new
   dbItem[:id]           = itemID
   dbItem[:source]       = inMeta.text_at("./source") or raise("no source found")
-  dbItem[:status]       = isJunk ? "withdrawn-junk" :
+  dbItem[:status]       = isPending ? "pending" :
+                          isJunk ? "withdrawn-junk" :
                           attrs[:withdrawn_date] ? "withdrawn" :
                           isEmbargoed(attrs[:embargo_date]) ? "embargoed" :
                           (attrs[:suppress_content] && inMeta[:state] == "published") ? "empty" :
@@ -1251,7 +1244,7 @@ def parseUCIngest(itemID, inMeta, fileType)
 end
 
 ###################################################################################################
-def processWithNormalizer(fileType, itemID, metaPath, nailgun)
+def processWithNormalizer(fileType, itemID, metaPath, nailgun, isPending)
   normalizer = case fileType
     when "ETD"
       "/apps/eschol/erep/xtf/normalization/etd/normalize_etd.xsl"
@@ -1288,7 +1281,7 @@ def processWithNormalizer(fileType, itemID, metaPath, nailgun)
   #end
 
   # And parse the data
-  return parseUCIngest(itemID, normXML.root, fileType)
+  return parseUCIngest(itemID, normXML.root, fileType, isPending)
 end
 
 ###################################################################################################
@@ -1373,7 +1366,7 @@ def indexItem(itemID, batch, nailgun)
   # Grab the main metadata file
   metaPath = arkToFile(itemID, "meta/base.meta.xml")
   if !File.exists?(metaPath) || File.size(metaPath) < 50
-    #puts "Warning: skipping #{itemID} due to missing or truncated meta.xml"
+    puts "Warning: skipping #{itemID} due to missing or truncated meta.xml"
     $nSkipped += 1
     return
   end
@@ -1381,6 +1374,8 @@ def indexItem(itemID, batch, nailgun)
   rawMetaXML = rawMeta.to_xml(indent: 3)
   rawMeta.remove_namespaces!
   rawMeta = rawMeta.root
+
+  isPending = metaPath.include?("/next/")
 
   existingItem = Item[itemID]
 
@@ -1398,10 +1393,10 @@ def indexItem(itemID, batch, nailgun)
 
   if normalize
     dbItem, attrs, authors, contribs, units, issue, section, suppSummaryTypes =
-      processWithNormalizer(normalize, itemID, metaPath, nailgun)
+      processWithNormalizer(normalize, itemID, metaPath, nailgun, isPending)
   else
     dbItem, attrs, authors, contribs, units, issue, section, suppSummaryTypes =
-      parseUCIngest(itemID, rawMeta, "UCIngest")
+      parseUCIngest(itemID, rawMeta, "UCIngest", isPending)
   end
 
   text = $noCloudSearchMode ? "" : grabText(itemID, dbItem.content_type)
@@ -1524,9 +1519,7 @@ def indexItem(itemID, batch, nailgun)
     if existingItem[:data_digest] != dataDigest
       puts "Changed item. (database change only, search data unchanged)"
       $dbMutex.synchronize {
-        DB.transaction do
-          updateDbItem(dbDataBlock)
-        end
+        DB.transaction { updateDbItem(dbDataBlock) }
       }
       $nProcessed += 1
       return
@@ -1541,6 +1534,14 @@ def indexItem(itemID, batch, nailgun)
   end
 
   puts "#{existingItem ? 'Changed' : 'New'} item.#{attrs[:suppress_content] ? " (suppressed content)" : ""}"
+
+  if $noCloudSearchMode
+    $dbMutex.synchronize {
+      DB.transaction { updateDbItem(dbDataBlock) }
+    }
+    $nProcessed += 1
+    return
+  end
 
   # Make doubly sure the logic above didn't generate a record that's too big.
   if idxData.bytesize >= 1024*1024
@@ -1561,7 +1562,6 @@ def indexItem(itemID, batch, nailgun)
   batch[:idxDataSize] += idxData.bytesize
   batch[:items] << dbDataBlock
   #puts "current batch size: #{batch[:idxDataSize]}"
-
 end
 
 ###################################################################################################
@@ -1600,7 +1600,11 @@ def indexAllItems
     # Finish off the last batch.
     batch[:items].empty? or $batchQueue << batch
   rescue Exception => e
-    puts "Exception in indexAllItems: #{e} #{e.backtrace}"
+    if $preindexMode
+      raise e
+    else
+      puts "Exception in indexAllItems: #{e} #{e.backtrace}"
+    end
   ensure
     $batchQueue << nil   # marker for end-of-queue
   end
@@ -1888,7 +1892,7 @@ def convertAllItems(arks)
 
   # Wait for everything to work its way through the queues.
   indexThread.join
-  if !$testMode && !($hostname =~ /-dev|-stg/)
+  if !$testMode && !$preindexMode && !($hostname =~ /-dev|-stg/)
     connectAuthors  # make sure all newly converted (or reconverted) items have author->people links
   end
   batchThread.join
