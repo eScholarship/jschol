@@ -919,7 +919,6 @@ def unitStats_allUsers(unitID)
 
   selectedUnitTypes = %w{campus oru journal}.map { |t| params["type-#{t}"] == "on" ? t : nil }.compact
   params['type-series'] == "on" and selectedUnitTypes += %w{series seminar_series monograph_series}
-  puts "selectedUnitTypes=#{selectedUnitTypes.inspect}"
 
   ojsRoles = {
     'JournalAdmin':        1,
@@ -962,7 +961,7 @@ def unitStats_allUsers(unitID)
   if !selectedOjsRoles.empty? && !units.empty?
     rows += OJS_DB.fetch(Sequel::SQL::PlaceholderLiteralString.new(%{
       select
-        concat(first_name, ' ', last_name) name,
+        concat(last_name, ', ', first_name) name,
         email,
         group_concat(distinct concat(journals.path, ':', role_id)) roles
       from roles
@@ -978,13 +977,13 @@ def unitStats_allUsers(unitID)
   if !selectedEscholRoles.empty? && !units.empty?
     rows += OJS_DB.fetch(Sequel::SQL::PlaceholderLiteralString.new(%{
       select
-        concat(first_name, ' ', last_name) name,
+        concat(last_name, ', ', first_name) name,
         email,
         group_concat(distinct concat(eschol_roles.unit_id, ':', eschol_roles.role)) roles
       from eschol_roles
       join users on users.user_id = eschol_roles.user_id
       and email != 'help@escholarship.org'
-      and role in (#{selectedEscholRoles.map{|r| "'#{r}'"}.join(",")})
+      and role in (#{selectedEscholRoles.map{|r| "'#{escholRoles[r]}'"}.join(",")})
       group by eschol_roles.user_id
     }, {})).all
   end
@@ -1003,9 +1002,9 @@ def unitStats_allUsers(unitID)
 
   out = { all_roles: allRoles.to_a,
           date_str: "today",
-          report_data: infoByUser.keys.sort.map { |k|
-                          info = infoByUser[k]
-                          info[:roles].empty? ? nil : { name: info[:name], email: info[:email], roles: info[:roles] }
+          report_data: infoByUser.sort{ |a,b| a[1][:name].downcase <=> b[1][:name].downcase }.map { |k, info|
+                          info[:roles].empty? ? nil :
+                            { name: info[:name].sub(/^, /, ''), email: info[:email], roles: info[:roles] }
                        }.compact,
           selection: params.map { |k, v| k =~ /^(role-|type-)/ ? k : nil }.compact
         }

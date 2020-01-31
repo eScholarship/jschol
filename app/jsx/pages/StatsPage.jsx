@@ -42,7 +42,11 @@ const downloadCSV = (table, params) =>
     _.each(tsect.children, tr => {
       let rd = []
       _.each(tr.children, td => {
-        let val = td.children[0] ? td.children[0].innerHTML : td.innerHTML
+        let val
+        if (td.children[0]) // handle multiple lines in the cell:
+          _.each(td.children, ch => { val = (val ? val+"\n" : "") + (ch.innerHTML === undefined ? "" : ch.innerHTML) })
+        else
+          val = td.innerHTML
         val = val.replace(/<!--[^>]+-->/g, '').replace(/%$/, '').replace(/&nbsp;/g, ' ')
         if (/^[0-9,]+$/.test(val))
           rd.push(parseInt(val.replace(/,/g, '')))
@@ -1068,36 +1072,40 @@ class UnitStats_AllUsers extends React.Component {
             </div>
           </div>
         </FormComp>
-        <br/><br/>
-        <div className="c-datatable">
-          <table ref={el => this.table=el}>
-            <thead>
-              <tr>
-                <th scope="col">Email</th>
-                <th scope="col">Name</th>
-                { _.map(data.all_roles, role =>
-                  <th scope="col" key={role}>{role}</th>
-                )}
-              </tr>
-            </thead>
-            <tbody>
-              { _.map(data.report_data, d =>
-                <tr key={d.email}>
-                  <td>{d.email}</td>
-                  <td>{d.name}</td>
+        <br/>
+        { data.report_data[0] ?
+          <div className="c-datatable c-datatable-leftalign">
+            <table ref={el => this.table=el}>
+              <thead>
+                <tr>
+                  <th scope="col">Email</th>
+                  <th scope="col">Name</th>
                   { _.map(data.all_roles, role =>
-                    <td key={role}>
-                      { _.map(d.roles[role], unit =>
-                        <div key={unit}>{unit}</div>
-                      )}
-                    </td>
+                    <th scope="col" key={role}>{role.replace(/([A-Z][^A-Z]*)([A-Z].*)/, "$1 $2")}</th>
                   )}
                 </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-        <StatsFooter onDownload={e=>downloadCSV(this.table, p.match.params)}/>
+              </thead>
+              <tbody>
+                { _.map(data.report_data, d =>
+                  <tr key={d.email}>
+                    <td>{d.email}</td>
+                    <td>{d.name}</td>
+                    { _.map(data.all_roles, role =>
+                      <td key={role}>
+                        { _.map(d.roles[role], unit =>
+                          <div key={unit}>{unit}</div>
+                        )}
+                      </td>
+                    )}
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+          : <div><i>(no matching users)</i></div>
+        }
+        { data.report_data[0] &&
+          <StatsFooter onDownload={e=>downloadCSV(this.table, p.match.params)}/> }
       </div>
     )
   }
