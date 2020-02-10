@@ -11,6 +11,7 @@ require 'bundler/setup'
 Dir.chdir(File.dirname(File.expand_path(File.dirname(__FILE__))))
 
 # Remainder are the requirements for this program
+require 'cgi'
 require 'date'
 require 'digest'
 require 'fileutils'
@@ -333,8 +334,8 @@ class CloudFrontLogEventSource < LogEventSource
                            values[O_CF_method],
                            values[O_CF_query] == '-' ? values[O_CF_uriStem] : values[O_CF_uriStem]+'?'+values[O_CF_query],
                            values[O_CF_status].to_i,
-                           values[O_CF_referrer] == '-' ? nil : fixUtfEncoding(URI.unescape(URI.unescape(values[O_CF_referrer]))),
-                           values[O_CF_agent] == '-' ? nil : fixUtfEncoding(URI.unescape(URI.unescape(values[O_CF_agent]))),
+                           values[O_CF_referrer] == '-' ? nil : fixUtfEncoding(CGI.unescape(CGI.unescape(values[O_CF_referrer]))),
+                           values[O_CF_agent] == '-' ? nil : fixUtfEncoding(CGI.unescape(CGI.unescape(values[O_CF_agent]))),
                            nil)  # no trace ID
       end
     }
