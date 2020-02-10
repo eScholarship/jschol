@@ -1896,6 +1896,55 @@ def connectAuthors
 end
 
 ###################################################################################################
+# Fix duplicate 'people' records created by race condition.
+def fixDupePeople
+  puts "Scanning for unconnected authors."
+  connectAuthors  # make sure all newly converted (or reconverted) items have author->people links
+
+  puts "Scanning for referenced people."
+  referencedPeople = Set.new
+  ItemAuthor.where(Sequel.lit("person_id is not null")).each { |row|
+    row[:person_id] and referencedPeople << row[:person_id]
+  }
+
+  puts "Scanning for duplicate people."
+  emailToPeople = Hash.new { |h,k| h[k] = Set.new }
+  Person.where(Sequel.lit("attrs->'$.email' is not null")).each { |person|
+    attrs = JSON.parse(person.attrs)
+    next if attrs['forwarded_to']
+    Set.new([attrs['email']] + (attrs['prev_emails'] || [])).each { |email|
+      emailToPeople[email.downcase] << person.id
+    }
+  }
+
+  puts "Change phase starting."
+  DB.transaction {
+    emailToPeople.each { |email, people|
+      next if people.size == 1
+
+      keep = people & referencedPeople
+      keep.empty? and keep << people.to_a.sort[0]
+
+      toss = people - keep
+      if !toss.empty?
+        puts "#{email}: keep=#{keep.to_a.join(";")} toss=#{toss.to_a.join(";")}"
+        toss.each { |id| Person[id].delete }
+      end
+
+      if keep.size > 1
+        sorted = keep.to_a.sort
+        target = sorted[0]
+        remap = sorted[1..-1]
+        puts "#{email}: target=#{target} remap=#{remap.join(";")}"
+        remap.each { |source|
+          ItemAuthor.where(person_id: source).update(person_id: target)
+        }
+      end
+    }
+  }
+end
+
+###################################################################################################
 # Main driver for item conversion
 def convertAllItems(arks)
   # Let the user know what we're doing
@@ -1994,8 +2043,8 @@ def convertAllItems(arks)
 
     $indexQueue << nil  # end-of-queue
     indexThread.join
-    if !$testMode && !($hostname =~ /-dev|-stg/)
-      connectAuthors  # make sure all newly converted (or reconvered) items have author->people links
+    if !$testMode && !$noLockMode && !$preindexMode && !($hostname =~ /-dev|-stg/)
+      connectAuthors  # make sure all newly converted (or reconverted) items have author->people links
     end
     batchThread.join
     splashThread.join
@@ -2524,6 +2573,8 @@ begin
       genAllStruct
     when "--populateArchiveMeta"
       populateArchiveMeta
+    when "--fixDupePeople"
+      fixDupePeople
     else
       STDERR.puts "Usage: #{__FILE__} --units|--items"
       exit 1
