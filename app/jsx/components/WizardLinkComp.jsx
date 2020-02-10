@@ -46,11 +46,11 @@ class WizardLinkComp extends React.Component {
     }
     {(/https/.test(wiz.arg)) &&
        [<div key="0" className="c-wizard__heading">
-          Deposit your data in Dash 
+          Deposit your data in Dryad 
         </div>,
         <div key="1" className="c-wizard__message">
-          <p>{wiz.campusName} faculty, students and staff can take advantage of Dash, a specialized data publication and preservation service.</p>
-          <a className="c-wizard__external-link" href={wiz.arg}>Go to {wiz.campusName} Dash</a>
+          <p>{wiz.campusName} faculty, students and staff can take advantage of Dryad, a specialized data publication and preservation service.</p>
+          <a className="c-wizard__external-link" href={wiz.arg}>Go to {wiz.campusName} Dryad</a>
         </div>,
         <footer key="2"></footer>]
     }

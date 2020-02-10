@@ -21,7 +21,8 @@ def unitStatsData(unitID, pageName)
   when 'breakdown_by_unit';    unitStats_breakdownByUnit(unitID)
   when 'avg_by_unit';          unitStats_avgByUnit(unitID)
   when 'avg_by_category';      unitStats_avgByCategory(unitID)
-  when 'KMBCCiwUg0mTS8f';      unitStats_deposits_by_oa(unitID)
+  when 'deposits_by_oa';       unitStats_depositsByOA(unitID)
+  when 'all_users';            unitStats_allUsers(unitID)
   else halt(404, "unknown unit stats page #{pageName.inspect}")
   end
 end
@@ -740,7 +741,10 @@ def unitStats_breakdownByUnit(unitID)
 end
 
 ###################################################################################################
-def unitStats_deposits_by_oa(unitID)
+def unitStats_depositsByOA(unitID)
+  # Check user permissions
+  perms = getUserPermissions(params[:username], params[:token], unitID)
+  perms[:admin] or halt(401)
   unitID == 'root' or halt(404)  # this report only valid at the root level
 
   # Splat the raw stats into a hash
@@ -905,3 +909,107 @@ def authorStats_breakdownByMonth(personID)
 
   return out
 end
+
+###################################################################################################
+def unitStats_allUsers(unitID)
+  # Check user permissions
+  perms = getUserPermissions(params[:username], params[:token], unitID)
+  perms[:admin] or halt(401)
+  unitID == 'root' or halt(404)  # this report only valid at the root level
+
+  selectedUnitTypes = %w{campus oru journal}.map { |t| params["type-#{t}"] == "on" ? t : nil }.compact
+  params['type-series'] == "on" and selectedUnitTypes += %w{series seminar_series monograph_series}
+
+  ojsRoles = {
+    'JournalAdmin':        1,
+    'JournalManager':      16,
+    'JournalEditor':       256,
+    'SectionEditor':       512,
+    'LayoutEditor':        768,
+    'Reviewer':            4096,
+    'CopyEditor':          8192,
+    'Proofreader':         12288,
+    'JournalAuthor':       65536,
+    'Reader':              1048576,
+    'SubscriptionManager': 2097152
+  }
+  selectedOjsRoles = ojsRoles.keys.map { |r| params["role-#{r}"] == "on" ? r : nil }.compact
+
+  escholRoles = {
+    'UnitAdmin':     'admin',
+    'StatsReceiver': 'stats',
+    'Submitter':     'submit'
+  }
+  selectedEscholRoles = escholRoles.keys.map { |r| params["role-#{r}"] == "on" ? r : nil }.compact
+
+  # Grab valid units, filtering out archived units
+  if selectedUnitTypes.empty?
+    units = Set.new
+  else
+    units = Set.new(DB.fetch(Sequel::SQL::PlaceholderLiteralString.new(%{
+      select id, type
+      from units
+      where status != 'archived'
+      and attrs->>'$.directSubmit' != 'moribund'
+      and type in (#{selectedUnitTypes.map { |t| "'#{t}'" }.join(",")})
+    }, {})).map { |row| row[:id] })
+  end
+
+  # Get all the OJS role associations
+  infoByUser = {}
+  rows = []
+  if !selectedOjsRoles.empty? && !units.empty?
+    rows += OJS_DB.fetch(Sequel::SQL::PlaceholderLiteralString.new(%{
+      select
+        concat(last_name, ', ', first_name) name,
+        email,
+        group_concat(distinct concat(journals.path, ':', role_id)) roles
+      from roles
+      join users on users.user_id = roles.user_id
+      join journals on journals.journal_id = roles.journal_id
+      where role_id in (#{selectedOjsRoles.map{|r| ojsRoles[r]}.join(",")})
+      and email != 'help@escholarship.org'
+      group by roles.user_id
+    }, {})).all
+  end
+
+  # Get all the eschol roles
+  if !selectedEscholRoles.empty? && !units.empty?
+    rows += OJS_DB.fetch(Sequel::SQL::PlaceholderLiteralString.new(%{
+      select
+        concat(last_name, ', ', first_name) name,
+        email,
+        group_concat(distinct concat(eschol_roles.unit_id, ':', eschol_roles.role)) roles
+      from eschol_roles
+      join users on users.user_id = eschol_roles.user_id
+      and email != 'help@escholarship.org'
+      and role in (#{selectedEscholRoles.map{|r| "'#{escholRoles[r]}'"}.join(",")})
+      group by eschol_roles.user_id
+    }, {})).all
+  end
+
+  allRoles = Set.new
+  rows.each { |row|
+    info = (infoByUser[row[:email]] ||= { name: row[:name], email: row[:email], roles: {} })
+    row[:roles].split(",").each { |pair|
+      unit, role = pair.split(":")
+      units.include?(unit) or next  # skip obsolete or non-selected units
+      role = ojsRoles.key(role.to_i) || escholRoles.key(role) || raise("can't map role: #{role.inspect}")
+      allRoles << role
+      (info[:roles][role] ||= []) << unit
+    }
+  }
+
+  out = { all_roles: allRoles.to_a,
+          date_str: "today",
+          report_data: infoByUser.sort{ |a,b| a[1][:name].downcase <=> b[1][:name].downcase }.map { |k, info|
+                          info[:roles].empty? ? nil :
+                            { name: info[:name].sub(/^, /, ''), email: info[:email], roles: info[:roles] }
+                       }.compact,
+          selection: params.map { |k, v| k =~ /^(role-|type-)/ ? k : nil }.compact
+        }
+
+  # Form the final data structure with everything needed to render the form and report
+  return out
+end
+
