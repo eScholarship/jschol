@@ -3,10 +3,12 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import _ from 'lodash'
 import FormComp from '../components/FormComp.jsx'
+import Contexts from '../contexts.jsx'
 
 import ArbitraryHTMLComp from "../components/ArbitraryHTMLComp.jsx"
 import MetaTagsComp from '../components/MetaTagsComp.jsx'
 import PageBase from './PageBase.jsx'
+import ServerErrorComp from '../components/ServerErrorComp.jsx'
 
 const ymToString = ym =>
   ym.toString().substr(0,4) + "-" + ym.toString().substr(4,2)
@@ -40,7 +42,11 @@ const downloadCSV = (table, params) =>
     _.each(tsect.children, tr => {
       let rd = []
       _.each(tr.children, td => {
-        let val = td.children[0] ? td.children[0].innerHTML : td.innerHTML
+        let val
+        if (td.children[0]) // handle multiple lines in the cell:
+          _.each(td.children, ch => { val = (val ? val+"\n" : "") + (ch.innerHTML === undefined ? "" : ch.innerHTML) })
+        else
+          val = td.innerHTML
         val = val.replace(/<!--[^>]+-->/g, '').replace(/%$/, '').replace(/&nbsp;/g, ' ')
         if (/^[0-9,]+$/.test(val))
           rd.push(parseInt(val.replace(/,/g, '')))
@@ -72,7 +78,7 @@ class StatsHeader extends React.Component {
     let thisLabel = p.match.params.unitID ? p.data.unit_name : p.data.author_name
     return(
       <div>
-        <MetaTagsComp title={`${p.title}: ${p.data.unit_name || p.data.author_name}`}>
+        <MetaTagsComp title={`${p.title}: ${p.data.unit_name || p.data.author_name || "current"}`}>
            <meta id="meta-robots" name="robots" content="noindex" />
         </MetaTagsComp>
         <h1>
@@ -269,13 +275,16 @@ class UnitStats_Summary extends React.Component {
                 <Link to={`/uc/${this.props.match.params.unitID}/stats/avg_by_category`}>Category</Link>}
             </li>
           }
-          {/* NOT YET:
-           this.props.match.params.unitID == "root" &&
-            <li>
-              Other:
-              <Link to={`/uc/${this.props.match.params.unitID}/stats/deposits_by_oa`}>Deposits by OA</Link>
-            </li>
-          */}
+          <Contexts.CMS.Consumer>
+            { cms =>
+              (cms.loggedIn && cms.permissions && cms.permissions.super && this.props.match.params.unitID == "root") &&
+              <li>
+                Other:
+                <Link to={`/uc/root/stats/deposits_by_oa`}>Deposits by OA</Link>
+                <Link to={`/uc/root/stats/all_users`}>All users</Link>
+              </li>
+            }
+          </Contexts.CMS.Consumer>
         </ul>
         <StatsFooter onDownload={e=>downloadCSV(this.table, this.props.match.params)}/>
       </div>
@@ -969,11 +978,149 @@ class AuthorStats_Summary extends React.Component {
   }
 }
 
+class UnitStats_AllUsers extends React.Component {
+  render() {
+    let p = this.props
+    let data = p.data
+    return(
+      <div className="c-statsReport">
+        <StatsHeader title="All Users" {...p}/>
+        <FormComp to={p.location.pathname} method="GET">
+          <div className="c-daterange">
+            <div>
+              <div className="o-input__inline">
+                <span className="c-statsReport-dateSection">Unit types:</span>
+
+                <input type="checkbox" id="type-campus" name="type-campus" className="c-statsReport-checkbox"
+                       defaultChecked={_.includes(data.selection, 'type-campus')}/>
+                <label htmlFor="type-campus" className="c-statsReport-checkbox-label">Campus</label>
+
+                <input type="checkbox" id="type-oru" name="type-oru" className="c-statsReport-checkbox"
+                       defaultChecked={_.includes(data.selection, 'type-oru')}/>
+                <label htmlFor="type-oru" className="c-statsReport-checkbox-label">ORU</label>
+
+                <input type="checkbox" id="type-series" name="type-series" className="c-statsReport-checkbox"
+                       defaultChecked={_.includes(data.selection, 'type-series')}/>
+                <label htmlFor="type-series" className="c-statsReport-checkbox-label">Series</label>
+
+                <input type="checkbox" id="type-journal" name="type-journal" className="c-statsReport-checkbox"
+                       defaultChecked={_.includes(data.selection, 'type-journal')}/>
+                <label htmlFor="type-journal" className="c-statsReport-checkbox-label">Journal</label>
+              </div>
+            </div>
+            <div>
+              <div className="o-input__inline">
+                <span className="c-statsReport-dateSection">Journal roles:</span>
+
+                <input type="checkbox" id="role-JournalManager" name="role-JournalManager" className="c-statsReport-checkbox"
+                       defaultChecked={_.includes(data.selection, 'role-JournalManager')}/>
+                <label htmlFor="role-JournalManager" className="c-statsReport-checkbox-label">Manager</label>
+
+                <input type="checkbox" id="role-JournalEditor" name="role-JournalEditor" className="c-statsReport-checkbox"
+                       defaultChecked={_.includes(data.selection, 'role-JournalEditor')}/>
+                <label htmlFor="role-JournalEditor" className="c-statsReport-checkbox-label">Journal Editor</label>
+
+                <input type="checkbox" id="role-SectionEditor" name="role-SectionEditor" className="c-statsReport-checkbox"
+                       defaultChecked={_.includes(data.selection, 'role-SectionEditor')}/>
+                <label htmlFor="role-SectionEditor" className="c-statsReport-checkbox-label">Section Editor</label>
+
+                <input type="checkbox" id="role-LayoutEditor" name="role-LayoutEditor" className="c-statsReport-checkbox"
+                       defaultChecked={_.includes(data.selection, 'role-LayoutEditor')}/>
+                <label htmlFor="role-LayoutEditor" className="c-statsReport-checkbox-label">Layout Editor</label>
+
+                <input type="checkbox" id="role-Reviewer" name="role-Reviewer" className="c-statsReport-checkbox"
+                       defaultChecked={_.includes(data.selection, 'role-Reviewer')}/>
+                <label htmlFor="role-Reviewer" className="c-statsReport-checkbox-label">Reviewer</label>
+
+                <input type="checkbox" id="role-CopyEditor" name="role-CopyEditor" className="c-statsReport-checkbox"
+                       defaultChecked={_.includes(data.selection, 'role-CopyEditor')}/>
+                <label htmlFor="role-CopyEditor" className="c-statsReport-checkbox-label">Copy Editor</label>
+
+                <input type="checkbox" id="role-Proofreader" name="role-Proofreader" className="c-statsReport-checkbox"
+                       defaultChecked={_.includes(data.selection, 'role-Proofreader')}/>
+                <label htmlFor="role-Proofreader" className="c-statsReport-checkbox-label">Proofreader</label>
+
+                <input type="checkbox" id="role-JournalAuthor" name="role-JournalAuthor" className="c-statsReport-checkbox"
+                       defaultChecked={_.includes(data.selection, 'role-JournalAuthor')}/>
+                <label htmlFor="role-JournalAuthor" className="c-statsReport-checkbox-label">Author</label>
+
+                <input type="checkbox" id="role-Reader" name="role-Reader" className="c-statsReport-checkbox"
+                       defaultChecked={_.includes(data.selection, 'role-Reader')}/>
+                <label htmlFor="role-Reader" className="c-statsReport-checkbox-label">Reader</label>
+
+                <input type="checkbox" id="role-SubscriptionManager" name="role-SubscriptionManager" className="c-statsReport-checkbox"
+                       defaultChecked={_.includes(data.selection, 'role-SubscriptionManager')}/>
+                <label htmlFor="role-SubscriptionManager" className="c-statsReport-checkbox-label">Subscription Manager</label>
+              </div>
+              <div className="o-input__inline">
+                <span className="c-statsReport-dateSection">eSchol roles:</span>
+                <input type="checkbox" id="role-UnitAdmin" name="role-UnitAdmin" className="c-statsReport-checkbox"
+                       defaultChecked={_.includes(data.selection, 'role-UnitAdmin')}/>
+                <label htmlFor="role-UnitAdmin" className="c-statsReport-checkbox-label">Unit Admin</label>
+
+                <input type="checkbox" id="role-StatsReceiver" name="role-StatsReceiver" className="c-statsReport-checkbox"
+                       defaultChecked={_.includes(data.selection, 'role-StatsReceiver')}/>
+                <label htmlFor="role-StatsReceiver" className="c-statsReport-checkbox-label">Stats Receiver</label>
+
+                <input type="checkbox" id="role-Submitter" name="role-Submitter" className="c-statsReport-checkbox"
+                       defaultChecked={_.includes(data.selection, 'role-Submitter')}/>
+                <label htmlFor="role-Submitter" className="c-statsReport-checkbox-label">Submitter</label>
+              </div>
+            </div>
+            <div>
+              <button type="submit" key="submit">Update</button>
+            </div>
+          </div>
+        </FormComp>
+        <br/>
+        { data.report_data[0] ?
+          <div className="c-datatable c-datatable-leftalign">
+            <table ref={el => this.table=el}>
+              <thead>
+                <tr>
+                  <th scope="col">Email</th>
+                  <th scope="col">Name</th>
+                  { _.map(data.all_roles, role =>
+                    <th scope="col" key={role}>{role.replace(/([A-Z][^A-Z]*)([A-Z].*)/, "$1 $2")}</th>
+                  )}
+                </tr>
+              </thead>
+              <tbody>
+                { _.map(data.report_data, d =>
+                  <tr key={d.email}>
+                    <td>{d.email}</td>
+                    <td>{d.name}</td>
+                    { _.map(data.all_roles, role =>
+                      <td key={role}>
+                        { _.map(d.roles[role], unit =>
+                          <div key={unit}>{unit}</div>
+                        )}
+                      </td>
+                    )}
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+          : <div><i>(no matching users)</i></div>
+        }
+        { data.report_data[0] &&
+          <StatsFooter onDownload={e=>downloadCSV(this.table, p.match.params)}/> }
+      </div>
+    )
+  }
+}
+
 export class UnitStatsPage extends PageBase
 {
   needHeaderFooter() { return false } //  disable standard header and footer
 
-  renderContent() {
+   // Unit ID for permissions checking
+  pagePermissionsUnit() {
+    return this.props.match.params.unitID
+  }
+
+ renderContent() {
     // Error case
     if (this.state.pageData && this.state.pageData.error)
       return this.renderError()
@@ -1012,8 +1159,12 @@ export class UnitStatsPage extends PageBase
       return <UnitStats_AvgByUnit data={data} {...this.props}/>
     else if (pageName == "avg_by_category")
       return <UnitStats_AvgByCategory data={data} {...this.props}/>
-    else if (pageName == "KMBCCiwUg0mTS8f")
+    else if (pageName == "deposits_by_oa")
       return <UnitStats_DepositsByOA data={data} {...this.props}/>
+    else if (pageName == "all_users")
+      return <UnitStats_AllUsers data={data} {...this.props}/>
+    else
+      return <ServerErrorComp error="Not Found"/>
   }
 }
 

@@ -105,7 +105,7 @@ DB = ensureConnect("ESCHOL_DB")
 #DB.loggers << Logger.new('server.sql_log')  # Enable to debug SQL queries on main db
 puts "Connecting to OJS DB.       "
 OJS_DB = ensureConnect("OJS_DB")
-OJS_DB.loggers << Logger.new('ojs.sql_log')  # Enable to debug SQL queries on OJS db
+#OJS_DB.loggers << Logger.new('ojs.sql_log')  # Enable to debug SQL queries on OJS db
 
 # When fetching ISO pages from the local server, we need the host name.
 $host = ENV['HOST'] ? "#{ENV['HOST']}.escholarship.org" : "localhost"
@@ -600,6 +600,12 @@ def generalResponse
   # and thus don't have access until Javascript is running on the client side.
   if request.path =~ %r{/(profile|carousel|issueConfig|userConfig|unitBuilder|nav|sidebar|redirects|authorSearch|userAccount)\b}
     puts "Skipping ISO for CMS page."
+    return template
+  end
+
+  # Also skip ISO for the rare credential-protected stats pages
+  if request.path =~ %r{/stats/(deposits_by_oa|all_users)\b}
+    puts "Skipping ISO for credential-affected stats page."
     return template
   end
 

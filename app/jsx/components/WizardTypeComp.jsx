@@ -4,13 +4,13 @@ import React from 'react'
 import Contexts from '../contexts.jsx'
 
 const DASH_LIST = {
-    'ucb': 'https://dash.berkeley.edu/stash',
-    'uci': 'https://dash.lib.uci.edu/stash',
-    'ucm': 'https://dash.ucmerced.edu/stash',
-    'ucop': 'https://dash.ucop.edu/stash',
-    'ucr': 'https://dash.ucr.edu/stash',
-    'ucsc': 'https://dash.library.ucsc.edu/stash',
-    'ucsf': 'https://datashare.ucsf.edu/stash',
+    'ucb': 'https://datadryad.org',
+    'uci': 'https://datadryad.org',
+    'ucm': 'https://datadryad.org',
+    'ucop': 'https://datadryad.org',
+    'ucr': 'https://datadryad.org',
+    'ucsc': 'https://datadryad.org',
+    'ucsf': 'https://datadryad.org',
   }
 
 class WizardTypeComp extends React.Component {
