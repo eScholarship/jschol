@@ -1672,11 +1672,13 @@ end
 
 ###################################################################################################
 def scrubSectionsAndIssues()
-  # Remove orphaned sections and issues (can happen when items change)
-  $dbMutex.synchronize {
-    DB.run("delete from sections where id not in (select distinct section from items where section is not null)")
-    DB.run("delete from issues where id not in (select distinct issue_id from sections where issue_id is not null)")
-  }
+  if !$preindexMode
+    # Remove orphaned sections and issues (can happen when items change)
+    $dbMutex.synchronize {
+      DB.run("delete from sections where id not in (select distinct section from items where section is not null)")
+      DB.run("delete from issues where id not in (select distinct issue_id from sections where issue_id is not null)")
+    }
+  end
 end
 
 ###################################################################################################
