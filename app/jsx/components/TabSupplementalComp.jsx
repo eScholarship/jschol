@@ -44,7 +44,8 @@ class TabSupplementalComp extends React.Component {
           <MediaRefineComp mimeTypes={mimeTypes} filterType={this.state.filterType} changeType={this.changeType} />
         }
         {supp_files ?
-          <MediaFileGridComp id={this.props.id} supp_files={supp_files} filterType={this.state.filterType}/>
+          <MediaFileGridComp id={this.props.id} supp_files={supp_files} filterType={this.state.filterType}
+                             preview_key={this.props.preview_key}/>
           : <div>No supplemental material included with this item</div>
         }
       </div>

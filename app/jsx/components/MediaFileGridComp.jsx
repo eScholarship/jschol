@@ -19,7 +19,9 @@ class CellComp extends React.Component {
 
   render() {
     let p = this.props,
-        url = "/content/qt" + p.id + "/supp/" + p.file,
+        url = (p.preview_key ? "/preview/" : "/content/") +
+              "qt" + p.id + "/supp/" + p.file +
+              (p.preview_key ? "?preview_key=" + p.preview_key : ""),
         mimeSimple = (p.mimeSimple=="doc") ? "data" : p.mimeSimple,
         m = { "audio": "play audio file", "image": "view larger", "video": "play video file" },
         fileLabel = m[mimeSimple] ? m[mimeSimple] : p.file 
@@ -66,7 +68,8 @@ class MediaFileGridComp extends React.Component {
                       title={title}
                       file={f.file}
                       description={description} 
-                      useFilenameForTitle={useFilenameForTitle} />
+                      useFilenameForTitle={useFilenameForTitle}
+                      preview_key={this.props.preview_key} />
       if (p) {foundOne = true}
       return p
     })

@@ -1127,7 +1127,7 @@ def isValidPreviewKey(shortArk, key)
       return true
     end
   }
-  puts "Want previewKey=#{calcPreviewKey(shortArk, Date.today)} but got #{key}"
+  puts "Want preview_key #{calcPreviewKey(shortArk, Date.today).inspect} but got #{key.inspect}."
   return false
 end
 
