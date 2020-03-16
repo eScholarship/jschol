@@ -1956,8 +1956,10 @@ def convertAllItems(arks)
   rescanBase = ""
   while true
 
-    # Make sure to do this critical work periodically
-    genAllStruct()
+    # Make sure to do this critical work periodically during normal conversion
+    if !$noLockMode && !$preindexMode
+      genAllStruct()
+    end
 
     # Fire up threads for doing the work in parallel
     Thread.abort_on_exception = true
