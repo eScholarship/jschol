@@ -11,6 +11,7 @@ require 'bundler/setup'
 
 # System gems
 require 'aws-sdk-s3'
+require 'digest'
 require 'httparty'
 require 'json'
 require 'nokogiri'
@@ -56,6 +57,7 @@ $s3Client = Aws::S3::Client.new(credentials: Aws::InstanceProfileCredentials.new
 $s3Binaries = Aws::S3::Bucket.new(getEnv("S3_BINARIES_BUCKET"), client: $s3Client)
 $s3Patches = Aws::S3::Bucket.new(getEnv("S3_PATCHES_BUCKET"), client: $s3Client)
 $s3Content = Aws::S3::Bucket.new(getEnv("S3_CONTENT_BUCKET"), client: $s3Client)
+$s3Preview = Aws::S3::Bucket.new(getEnv("S3_PREVIEW_BUCKET"), client: $s3Client)
 
 # Get hash of all active root level campuses/ORUs, sorted by ordering in unit_hier table
 def getActiveCampuses
@@ -344,13 +346,18 @@ def splashGen(itemID, instrucs, origFile, targetFile)
 end
 
 ###################################################################################################
+def calcSha256(path)
+  return Digest::SHA256.file(path).hexdigest
+end
+
+###################################################################################################
 # Main driver for PDF display version generation
 def convertPDF(itemID)
   item = Item[itemID]
 
   # Skip non-published items (e.g. embargoed, withdrawn)
-  if !item || item.status != "published"
-    #puts "Not generating splash for #{item.status} item."
+  if !item || !%w{published pending}.include?(item.status)
+    puts "Not generating splash for #{item.status} item."
     DisplayPDF.where(item_id: itemID).delete  # delete splash pages when item gets withdrawn
     return
   end
@@ -361,9 +368,13 @@ def convertPDF(itemID)
   instrucDigest = Digest::MD5.base64digest(instrucs.to_json)
 
   # See if current splash page is adequate
-  origFile = arkToFile(itemID, "content/base.pdf")
+  if File.exist?(arkToFile(itemID, "content/base.meta.xml"))
+    origFile = arkToFile(itemID, "content/base.pdf")
+  else
+    origFile = arkToFile(itemID, "next/content/base.pdf")
+  end
   if !File.exist?(origFile)
-    #puts "Missing content file; skipping splash."
+    puts "Missing content file; skipping splash."
     return
   end
   origSize = File.size(origFile)
@@ -375,7 +386,7 @@ def convertPDF(itemID)
        dbPdf.orig_size == origSize &&
        dbPdf.orig_timestamp.to_s == origTimestamp.to_s &&
        dbPdf.splash_info_digest == instrucDigest
-    #puts "Splash unchanged."
+    puts "Splash unchanged."
     return
   end
   puts "#{itemID}: Updating splash."
@@ -404,10 +415,29 @@ def convertPDF(itemID)
       end
     end
 
+    # Legacy S3 location
+    # Note 2019-02-24: It's important to use TempFile.path here - otherwise Ruby S3 SDK is ridiculously slow.
+    # See https://stackoverflow.com/questions/48930354/awss3-put-object-very-slow-with-aws-sdk-ruby
     pfx = getEnv("S3_PATCHES_PREFIX")
-    $s3Patches.object("#{pfx}/linearized/#{itemID}").put(body: linFile)
-    splashLinSize > 0 and $s3Patches.object("#{pfx}/splash/#{itemID}").put(body: splashLinFile)
+    $s3Patches.object("#{pfx}/linearized/#{itemID}").upload_file(linFile.path)
+    splashLinSize > 0 and $s3Patches.object("#{pfx}/splash/#{itemID}").upload_file(splashLinFile.path)
 
+    # New S3 location
+    # Note 2019-02-24: It's important to use TempFile.path here - otherwise Ruby S3 SDK is ridiculously slow.
+    # See https://stackoverflow.com/questions/48930354/awss3-put-object-very-slow-with-aws-sdk-ruby
+    isPending = Item[itemID].status == "pending"
+    pfx = getEnv(isPending ? "S3_PREVIEW_PREFIX" : "S3_CONTENT_PREFIX")
+    bucket = isPending ? $s3Preview : $s3Content
+
+    noSplashKey = Digest::MD5.hexdigest("noSplash:#{getEnv('JSCHOL_KEY')}|#{itemID}")
+    bucket.object("#{pfx}/#{itemID}/#{itemID}_noSplash_#{noSplashKey}.pdf").
+      upload_file(linFile.path, { metadata: { sha256: calcSha256(linFile) }, content_type: "application/pdf" })
+
+    mainFile = splashLinSize > 0 ? splashLinFile : linFile
+    bucket.object("#{pfx}/#{itemID}/#{itemID}.pdf").
+      upload_file(mainFile.path, { metadata: { sha256: calcSha256(mainFile) }, content_type: "application/pdf" })
+
+    # Update the database
     DisplayPDF.where(item_id: itemID).delete
     DisplayPDF.create(item_id: itemID,
       orig_size:          origSize,
