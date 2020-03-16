@@ -1081,7 +1081,9 @@ class UnitStats_AllUsers extends React.Component {
                   <th scope="col">Email</th>
                   <th scope="col">Name</th>
                   { _.map(data.all_roles, role =>
-                    <th scope="col" key={role}>{role.replace(/([A-Z][^A-Z]*)([A-Z].*)/, "$1 $2")}</th>
+                    [<th scope="col" key={`${role}-1`}>{role.replace(/([A-Z][^A-Z]*)([A-Z].*)/, "$1 $2")} by id</th>,
+                     <th scope="col" key={`${role}-2`}>{role.replace(/([A-Z][^A-Z]*)([A-Z].*)/, "$1 $2")} by name</th>
+                    ]
                   )}
                 </tr>
               </thead>
@@ -1091,11 +1093,18 @@ class UnitStats_AllUsers extends React.Component {
                     <td>{d.email}</td>
                     <td>{d.name}</td>
                     { _.map(data.all_roles, role =>
-                      <td key={role}>
-                        { _.map(d.roles[role], unit =>
-                          <div key={unit}>{unit}</div>
-                        )}
-                      </td>
+                      [
+                        <td key={`${role}-1`}>
+                          { _.map(d.roles[role], unit =>
+                            <div key={unit[0]}>{unit[0]}</div>
+                          )}
+                        </td>,
+                        <td key={`${role}-2`}>
+                          { _.map(d.roles[role], unit =>
+                            <div key={unit[1]}>{unit[1]}</div>
+                          )}
+                        </td>
+                      ]
                     )}
                   </tr>
                 )}
