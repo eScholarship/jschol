@@ -56,15 +56,15 @@ class Downloadable extends React.Component {
                 </ul>
               </li>
             }
-              <li className="o-download__nested-list2">
+              {/*    <li className="o-download__nested-list2">
                 Citation
                 <ul>
-          {/*     <li><NotYetLink element="a">RIS</NotYetLink></li>
-                  <li><NotYetLink element="a">BibText</NotYetLink></li>   */}
+               <li><NotYetLink element="a">RIS</NotYetLink></li>
+                  <li><NotYetLink element="a">BibText</NotYetLink></li>   
                   <li><NotYetLink element="a">EndNote</NotYetLink></li>
-          {/*     <li><NotYetLink element="a">RefWorks</NotYetLink></li>  */}
+               <li><NotYetLink element="a">RefWorks</NotYetLink></li> 
                 </ul>
-              </li>
+              </li> */}
           {/* p.attrs.supp_files &&
               <li className="o-download__nested-list3">
                 Supplemental Material
