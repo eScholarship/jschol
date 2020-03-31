@@ -386,7 +386,7 @@ def convertPDF(itemID)
        dbPdf.orig_size == origSize &&
        dbPdf.orig_timestamp.to_s == origTimestamp.to_s &&
        dbPdf.splash_info_digest == instrucDigest
-    puts "Splash unchanged."
+    puts "Original unchanged; retaining existing splash version."
     return
   end
   puts "#{itemID}: Updating splash."
@@ -464,6 +464,7 @@ arks = ARGV.select { |a| a =~ /qt\w{8}/ }
 arks.empty? and raise("Must specify item(s) to convert.")
 arks.each { |ark|
   begin
+    puts "Splashing #{ark}."
     convertPDF(ark)
   rescue Exception => e
     e.is_a?(Interrupt) || e.is_a?(SignalException) and raise
