@@ -45,7 +45,10 @@ class MediaViewerComp extends React.Component {
           mimeSimple = (f['mimeSimple']=="doc") ? "data" : f['mimeSimple'],
           c
       if (f['mimeSimple'].includes(filterType) || filterType =="") {
-        let url="/content/qt" + this.props.id + "/supp/" + f.file
+        console.log("mvc props:", this.props)
+        let url=(this.props.preview_key ? "/preview/" : "/content/") +
+                "qt" + this.props.id + "/supp/" + f.file +
+                (this.props.preview_key ? "?preview_key="+this.props.preview_key : "")
         c = <MediaViewerObj key={i}
               mimeSimple={mimeSimple}
               title={title}

@@ -33,13 +33,13 @@ class TabsComp extends React.Component {
     return (
       <div className="c-tabs">
         <div className={this.state.moreTabs ? "c-tabs__tabs--show-all" : "c-tabs__tabs"}>
-      { ["published", "empty"].includes(this.props.status) &&
+      { ["published", "empty"].includes(p.status) &&
           <button className="c-tabs__button-more" onClick = {() => this.setState({moreTabs: !this.state.moreTabs})} aria-label="Show all tabs">...</button>
       }
           <button className={p.currentTab == "main" ? "c-tabs__button--active" : "c-tabs__button"}
                   onClick = {() => this.tabFocus("main")}>
             Main Content</button>
-      { p.status == 'published' && p.attrs.supp_files && !multimediaItem &&
+      { ["published", "pending"].includes(p.status) && p.attrs.supp_files && !multimediaItem &&
           <button className={p.currentTab == "supplemental" ? "c-tabs__button--active" : "c-tabs__button"}
                   onClick = {() => this.tabFocus("supplemental")}>
             Supplemental Material</button>

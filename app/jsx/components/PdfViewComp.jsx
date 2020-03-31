@@ -97,7 +97,8 @@ class PdfViewComp extends React.Component {
       alert("Download restricted until " + this.props.download_restricted)
     else {
       let separator = this.props.url.indexOf("?") >= 0 ? "&" : "?"
-      window.location = this.props.url + separator + "v=lg"
+      window.location = this.props.url + separator + "v=lg" +
+                        (this.props.preview_key ? "&preview_key=" + this.props.preview_key : "")
     }
   }
 
@@ -119,9 +120,8 @@ class PdfViewComp extends React.Component {
           <button onClick={() => {this.view()}} className="c-pdfview__button-view">View Larger</button>
         </div>
         <div className="c-pdfview__viewer">
-          <PdfViewerComp url={this.props.url + separator
-                              + "nosplash=" + this.props.content_key
-                              + (this.props.preview_key ? "&preview_key=" + this.props.preview_key : "")}/>
+          <PdfViewerComp url={this.props.url.replace(".pdf", "_noSplash_" + this.props.content_key + ".pdf")
+                              + (this.props.preview_key ? separator+"preview_key=" + this.props.preview_key : "")}/>
         </div>
         { this.props.commenting_ok && <HypothesisClient/> }
       </details>

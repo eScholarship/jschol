@@ -15,4 +15,8 @@
 
   }
 
+  a {
+    @include u-overflow-wrap();
+  }
+
 }

@@ -22,9 +22,6 @@ require 'socksify'
 require 'socket'
 require 'uri'
 
-# Easy toggle to enable/disable mrtExpress
-USE_MRTEXPRESS = !!ENV['MRTEXPRESS_HOST']
-
 # On dev and stg we control access with a special cookie
 ACCESS_COOKIE = (ENV['ACCESS_COOKIE'] || '').empty? ? nil : ENV['ACCESS_COOKIE']
 
@@ -159,10 +156,7 @@ if S3_LOGGING
 else
   $s3Client = Aws::S3::Client.new(region: getEnv("S3_REGION"))
 end
-$s3Binaries = Aws::S3::Bucket.new(getEnv("S3_BINARIES_BUCKET"), client: $s3Client)
-$s3Patches = Aws::S3::Bucket.new(getEnv("S3_PATCHES_BUCKET"), client: $s3Client)
-$s3Content = Aws::S3::Bucket.new(getEnv("S3_CONTENT_BUCKET"), client: $s3Client)
-$s3Preview = Aws::S3::Bucket.new(getEnv("S3_PREVIEW_BUCKET"), client: $s3Client)
+$s3Bucket = Aws::S3::Bucket.new(getEnv("S3_BUCKET"), client: $s3Client)
 
 # Internal modules to implement specific pages and functionality
 require_relative '../util/sanitize.rb'
@@ -415,7 +409,7 @@ end
 ###################################################################################################
 get %r{/assets/([0-9a-f]{64})} do |hash|
   s3Path = "#{getEnv("S3_BINARIES_PREFIX")}/#{hash[0,2]}/#{hash[2,2]}/#{hash}"
-  obj = $s3Binaries.object(s3Path)
+  obj = $s3Bucket.object(s3Path)
   obj.exists? or halt(404)
   Tempfile.open("s3_", TEMP_DIR) { |s3Tmp|
     obj.get(response_target: s3Tmp)
@@ -431,92 +425,21 @@ get %r{/assets/([0-9a-f]{64})} do |hash|
 end
 
 ###################################################################################################
-get "/content/:fullItemID/*" do |itemID, path|
-  # Prep work
-  itemID =~ /^qt[a-z0-9]{8}$/ or halt(404)  # protect against attacks
-  item = Item[itemID] or halt(404)
-  if item.status == "pending"
-    isValidPreviewKey(itemID, params[:preview_key]) or halt(403)
-  elsif item.status != 'published'
-    halt(403) # prevent access to embargoed and withdrawn files
-  end
-  path = sanitizeFilePath(path)  # protect against attacks
+def streamFromS3(itemID, s3Obj)
+  s3Obj.exists? or halt(404)
+  outLen = s3Obj.content_length
 
-  # Figure out the ID in Merritt. eSchol items just use the eSchol ARK; others are recorded
-  # as local IDs in the attributes.
-  mrtID = "ark:/13030/#{itemID}"
-  attrs = JSON.parse(item.attrs)
-  (attrs["local_ids"] || []).each { |localID|
-    localID["type"] == "merritt" and mrtID = localID["id"]
-  }
+  content_type s3Obj.content_type
 
-  # If it's the main content PDF...
-  if path =~ /^qt\w{8}\.pdf$/
-    epath = path
-    noSplash = params[:nosplash] && isValidContentKey(itemID.sub(/^qt/, ''), params[:nosplash])
-    mainPDF = true
-  elsif path =~ %r{^inner/(.*)$}
-    filename = $1
-    halt(403) if filename =~ /^qt\w{8}\.pdf$/  # disallow bypassing main check using inner backdoor
-    epath = filename
-    noSplash = true
-    mainPDF = false
-  else
-    # Must be a supp file.
-    attrs["supp_files"] or halt(404)
-    epath = nil
-    attrs["supp_files"].each { |supp|
-      if path == "supp/#{supp["file"]}"
-        epath = path
-      end
-    }
-    epath or halt(404)
-    noSplash = true
-    mainPDF = false
-  end
-
-  # Some items have a date-based download restriction. In this case, we only support the
-  # no-splash version used for pdf.js rendering, and protected (lightly) by a key. Note that
-  # supp files are explicitly allowed, e.g. for the Greek Satyr Play. See
-  # https://www.pivotaltracker.com/story/show/152981894
-  if attrs['disable_download'] && Date.parse(attrs['disable_download']) > Date.today && mainPDF && !noSplash
-    halt 403, "Download restricted until #{attrs['disable_download']}"
-  end
-
-  # Guess the content type by path for now
-  content_type MimeMagic.by_path(path)
+  # So we have to explicitly tell the client we accept ranges. With this, pdf.js will show the
+  # first page before downloading the entire file.
+  headers "Accept-Ranges" => "bytes"
 
   # Control how long this remains in browser and CloudFront caches
   cache_control :public, :max_age => 3600   # maybe more?
 
-  # Let crawlers know that the canonical URL is the item page.
-  headers "Link" => "<https://escholarship.org/uc/item/#{itemID.sub(/^qt/,'')}>; rel=\"canonical\""
-
-  # Decide which exact file to send
-  displayPDF = mainPDF && DisplayPDF[itemID]
-  if !mainPDF || !displayPDF
-    if item.status == "pending"
-      s3Path = "#{getEnv("S3_PREVIEW_PREFIX")}/#{itemID}/#{epath}"
-      s3Obj = $s3Preview.object(s3Path)
-    else
-      s3Path = "#{getEnv("S3_CONTENT_PREFIX")}/#{itemID}/#{epath}"
-      s3Obj = $s3Content.object(s3Path)
-    end
-    outLen = s3Obj.content_length
-  else
-    s3Path = "#{getEnv("S3_PATCHES_PREFIX")}/#{(noSplash || displayPDF.splash_size == 0) ? 'linearized' : 'splash'}/#{itemID}"
-    s3Obj = $s3Patches.object(s3Path)
-    outLen = displayPDF.linear_size
-  end
-  puts "s3Path=#{s3Path}"
-
-  # So we have to explicitly tell the client. With this, pdf.js will show the first page
-  # before downloading the entire file.
-  headers "Accept-Ranges" => "bytes"
-
   # Stream the file from S3
   range = request.env["HTTP_RANGE"]
-  s3Obj.exists? or halt(404, "file missing from S3")
   if range
     range =~ /^bytes=(\d+)-(\d+)?/ or raise("can't parse range #{range.inspect}")
     fromByte, toByte = $1.to_i, $2.to_i
@@ -530,9 +453,49 @@ get "/content/:fullItemID/*" do |itemID, path|
   end
   headers "Content-Length" => outLen.to_s,
           "ETag" => s3Obj.etag,
-          "Last-Modified" => s3Obj.last_modified.to_s
-  fetcher = S3Fetcher.new(s3Obj, s3Path, range)
-  stream { |out| fetcher.streamTo(out) }
+          "Last-Modified" => s3Obj.last_modified.httpdate
+  stream { |out|
+    s3Obj.get(range: range) { |block|
+      out << block
+    }
+  }
+end
+
+###################################################################################################
+get "/content/:fullItemID/*" do |itemID, path|
+  # Prep work
+  itemID =~ /^qt[a-z0-9]{8}$/ or halt(404)  # protect against attacks
+  item = Item[itemID] or halt(404)
+  item.status == 'published' or halt(403) # prevent access to embargoed, withdrawn, and pending files
+  path = sanitizeFilePath(path)  # protect against attacks
+
+  # Some items have a date-based download restriction. In this case, we only support the
+  # no-splash version used for pdf.js rendering, and protected (lightly) by a key. Note that
+  # supp files are explicitly allowed, e.g. for the Greek Satyr Play. See
+  # https://www.pivotaltracker.com/story/show/152981894
+  attrs = JSON.parse(item[:attrs])
+  if attrs['disable_download'] && Date.parse(attrs['disable_download']) > Date.today && path =~ /^qt\w{8}\.pdf$/
+    halt 403, "Download restricted until #{attrs['disable_download']}"
+  end
+
+  # Let crawlers know that the canonical URL is the item page.
+  headers "Link" => "<https://escholarship.org/uc/item/#{itemID.sub(/^qt/,'')}>; rel=\"canonical\""
+
+  # Grunt work for streaming the file from S3
+  return streamFromS3(itemID, $s3Bucket.object("#{getEnv("S3_CONTENT_PREFIX")}/#{itemID}/#{path}"))
+end
+
+###################################################################################################
+get "/preview/:fullItemID/*" do |itemID, path|
+  # Prep work
+  itemID =~ /^qt[a-z0-9]{8}$/ or halt(404)  # protect against attacks
+  item = Item[itemID] or halt(404)
+  item.status == "pending" or halt(403) # can't access published items through preview URL
+  isValidPreviewKey(itemID, params[:preview_key]) or halt(403)
+  path = sanitizeFilePath(path)  # protect against attacks
+
+  # Grunt work for streaming the file from S3
+  return streamFromS3(itemID, $s3Bucket.object("#{getEnv("S3_PREVIEW_PREFIX")}/#{itemID}/#{path}"))
 end
 
 ###################################################################################################
@@ -1147,19 +1110,8 @@ def getUnitPageData(unitID, pageName, subPage)
 end
 
 ###################################################################################################
-def calcContentKey(shortArk, date = nil)
-  Digest::MD5.hexdigest("V01:#{shortArk}:#{(date || Date.today).iso8601}:#{$jscholKey}")
-end
-
-###################################################################################################
-def isValidContentKey(shortArk, key)
-  # Try yesterday, today, and tomorrow (the latter to account for people across the dateline)
-  (-1..1).each { |offset|
-    if key == calcContentKey(shortArk, Date.today + offset)
-      return true
-    end
-  }
-  return false
+def calcNoSplashKey(shortArk)
+  Digest::MD5.hexdigest("noSplash:#{$jscholKey}|qt#{shortArk}")
 end
 
 ###################################################################################################
@@ -1170,12 +1122,12 @@ end
 ###################################################################################################
 def isValidPreviewKey(shortArk, key)
   # Try yesterday, today, and tomorrow (the latter to account for people across the dateline)
-  puts "Want previewKey=#{calcPreviewKey(shortArk, Date.today)}"
   (-1..1).each { |offset|
     if key == calcPreviewKey(shortArk, Date.today + offset)
       return true
     end
   }
+  puts "Want preview_key #{calcPreviewKey(shortArk, Date.today).inspect} but got #{key.inspect}."
   return false
 end
 
@@ -1193,14 +1145,15 @@ def getItemPageData(shortArk)
   id = "qt"+shortArk
   item = Item[id] or halt(404)
   item.status == "withdrawn-junk" and halt(404)
+  # Only allow access to preview items if the proper key is specified
+  (item.status == 'published' || isValidPreviewKey(id, params[:preview_key])) or halt(403, "Unauthorized")
+
   attrs = JSON.parse(item.attrs)
   unitIDs = UnitItem.where(:item_id => id, :is_direct => true).order(:ordering_of_units).select_map(:unit_id)
   unit = unitIDs ? Unit[unitIDs[0]] : nil
   pdf_url = nil
   if item.content_type == "application/pdf" && %w{published pending}.include?(item.status)
-    # Only allow access to preview items if the proper key is specified
-    (item.status == 'published' || isValidPreviewKey(id, params[:preview_key])) or halt(403, "Unauthorized")
-    pdf_url = "/content/"+id+"/"+id+".pdf"
+    pdf_url = (item.status == 'pending' ? "/preview/" : "/content/") + id + "/" + id + ".pdf"
     displayPDF = DisplayPDF[id]
     if displayPDF && displayPDF.orig_timestamp
       pdf_url += "?t=#{displayPDF.orig_timestamp.to_i.to_s(36)}"
@@ -1226,8 +1179,8 @@ def getItemPageData(shortArk)
         :attrs => attrs,
         :authors => authors,
         :citation => citation,
-        :content_html => getItemHtml(item.content_type, id),
-        :content_key => calcContentKey(shortArk),
+        :content_html => getItemHtml(item.content_type, id, item.status == "pending"),
+        :content_key => calcNoSplashKey(shortArk),
         :content_type => item.content_type,
         :data_digest => item.data_digest,            # Strictly used for admin reference
         :editors => editors.any? ? editors : nil,
@@ -1434,27 +1387,27 @@ def getCampusId(unit)
 end
 
 # Properly target links in HTML blob
-def getItemHtml(content_type, id)
+def getItemHtml(content_type, id, isPending)
   return false if content_type != "text/html"
-  if USE_MRTEXPRESS
-    fileURL = "https://#{getEnv("MRTEXPRESS_HOST")}" +
-              "/dl/ark:/13030/#{id}/content/#{id}.html"
-  else
-    fileURL = "https://#{getEnv("MRTEXPRESS_SUBST")}/#{id.scan(/\w\w/).join('/')}/#{id}/content/#{id}.html"
-  end
-  fetcher = MerrittFetcher.new(fileURL)
-  buf = []
-  fetcher.streamTo(buf)
-  buf = buf.join("")
+
+  s3Path = "#{getEnv(isPending ? "S3_PREVIEW_PREFIX" : "S3_CONTENT_PREFIX")}/#{id}/#{id}.html"
+  s3Obj = $s3Bucket.object(s3Path)
+  s3Obj.exists? or halt(404)
+
+  buf = s3Obj.get().body.read
+
   # Hacks for LIMN
   buf.gsub! %r{<head.*?</head>}im, ''
   buf.gsub! %r{<style.*?</style>}im, ''
   buf.gsub! %r{<iframe.*?</iframe>}im, ''
   buf.gsub! %r{<script.*?</script>}im, ''
+
+  # Remap the links
   htmlStr = stringToXML(buf).to_xml
   htmlStr.gsub!(/(href|src)="((?!#)[^"]+)"/) { |m|
     attrib, url = $1, $2
-    url = url.start_with?("http", "ftp") ? url : "/content/#{id}/inner/#{url}"
+    url = url.start_with?("http", "ftp") ? url : "/#{isPending ? "preview" : "content"}/#{id}/#{url}"
+    isPending and url += "?preview_key=#{calcPreviewKey(id)}"
     "#{attrib}=\"#{url}\"" + ((attrib == "src") ? "" : " target=\"new\"")
   }
 

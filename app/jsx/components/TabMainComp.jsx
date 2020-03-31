@@ -43,7 +43,7 @@ class MainContent extends React.Component {
             return (
               <details className="c-togglecontent" open>
                 <summary>Main Content</summary>
-                <MediaViewerComp id={this.props.id} supp_files={this.props.attrs.supp_files}/>
+                <MediaViewerComp id={this.props.id} supp_files={this.props.attrs.supp_files} preview_key={this.props.preview_key}/>
               </details>
             )
           } else {
