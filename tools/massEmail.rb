@@ -85,7 +85,7 @@ $nDoubleTempBounces = 0
 def grabBounceLogs(mode)
   # If logs are fresh, skip.
   age = ((Time.now.to_i - File.mtime("./awsLogs/ses-logs").to_i) / 60 / 60.0).round(1)
-  if age <= 18 && mode != "bounceTest"
+  if age <= 18 && mode != "bounceTest" && mode != "bounceProcess"
     STDERR.puts "SES logs checked #{age} hours ago; skipping grab."
     return
   end
@@ -447,7 +447,7 @@ def usage
       where 'group' is one of: stats-admins, authors
             'filter' is one of: recent-hits, all
             'template' is the filename of an erb email template
-            'mode' is one of: preview, go4it, bounceTest
+            'mode' is one of: preview, go4it, bounceTest, bounceProcess
   }.unindent.strip
   exit 1
 end
@@ -458,10 +458,10 @@ end
 # Parse args
 ARGV.length == 4 or usage
 group, filter, template, mode = ARGV
-%w{stats-admins authors}.include?(group) or usage
-%w{recent-hits all}.include?(filter) or usage
-%w{preview go4it bounceTest}.include?(mode) or usage
-File.file?(template) or raise("File not found: #{template}")
+%w{stats-admins authors}.include?(group) || mode =~ /bounceTest|bounceProcess/ or usage
+%w{recent-hits all}.include?(filter) || mode =~ /bounceTest|bounceProcess/ or usage
+%w{preview go4it bounceTest bounceProcess}.include?(mode) or usage
+File.file?(template) || mode =~ /bounceTest|bounceProcess/ or raise("File not found: #{template}")
 
 # Update bounce records
 if mode == "bounceTest"
@@ -476,6 +476,9 @@ if mode == "bounceTest"
   exit 0
 else
   processBounces(mode)
+  if mode == "bounceProcess"
+    exit 0
+  end
 end
 
 # Build the list of users (uses the bounce records built above)

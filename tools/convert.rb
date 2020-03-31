@@ -1402,7 +1402,7 @@ def indexItem(itemID, batch, nailgun)
   text = $noCloudSearchMode ? "" : grabText(itemID, dbItem.content_type)
   
   # Create JSON for the full text index
-  authsAndContribs = authors.map { |auth| auth[:name] } + contribs.map { |c| c[:name] }
+  authsAndContribs = authors.map { |auth| auth[:name][0,1024] } + contribs.map { |c| c[:name][0,1024] }
   idxItem = {
     type:          "add",   # in CloudSearch land this means "add or update"
     id:            itemID,
@@ -1416,7 +1416,7 @@ def indexItem(itemID, batch, nailgun)
       pub_date:      dbItem[:published].to_date.iso8601 + "T00:00:00Z",
       pub_year:      dbItem[:published].year,
       rights:        rightsURLToCode(dbItem[:rights]),
-      sort_author:   (authors[0] || {name:""})[:name].gsub(/[^\w ]/, '').downcase,
+      sort_author:   (authors[0] || {name:""})[:name].gsub(/[^\w ]/, '')[0,1024].downcase,
       keywords:      attrs[:keywords] ? attrs[:keywords] : [""],
       is_info:       0
     }
@@ -1928,7 +1928,9 @@ def convertAllItems(arks)
   cacheAllUnits()
 
   # Make sure to do this critical work periodically
-  genAllStruct()
+  if !$preindexMode
+    genAllStruct()
+  end
 
   # Fire up threads for doing the work in parallel
   Thread.abort_on_exception = true

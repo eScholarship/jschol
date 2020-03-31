@@ -943,16 +943,17 @@ def unitStats_allUsers(unitID)
   selectedEscholRoles = escholRoles.keys.map { |r| params["role-#{r}"] == "on" ? r : nil }.compact
 
   # Grab valid units, filtering out archived units
+  unitNames = {}
   if selectedUnitTypes.empty?
     units = Set.new
   else
     units = Set.new(DB.fetch(Sequel::SQL::PlaceholderLiteralString.new(%{
-      select id, type
+      select id, type, name
       from units
       where status != 'archived'
       and attrs->>'$.directSubmit' != 'moribund'
       and type in (#{selectedUnitTypes.map { |t| "'#{t}'" }.join(",")})
-    }, {})).map { |row| row[:id] })
+    }, {})).map { |row| unitNames[row[:id]] = row[:name]; row[:id] })
   end
 
   # Get all the OJS role associations
@@ -996,7 +997,7 @@ def unitStats_allUsers(unitID)
       units.include?(unit) or next  # skip obsolete or non-selected units
       role = ojsRoles.key(role.to_i) || escholRoles.key(role) || raise("can't map role: #{role.inspect}")
       allRoles << role
-      (info[:roles][role] ||= []) << unit
+      (info[:roles][role] ||= []) << [unit, unitNames[unit]]
     }
   }
 
