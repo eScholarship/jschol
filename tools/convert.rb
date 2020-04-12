@@ -104,7 +104,6 @@ $csClient = Aws::CloudSearchDomain::Client.new(credentials: Aws::InstanceProfile
 $s3Client = Aws::S3::Client.new(credentials: Aws::InstanceProfileCredentials.new,
                                 region: getEnv("S3_REGION"))
 $s3Binaries = Aws::S3::Bucket.new(getEnv("S3_BINARIES_BUCKET"), client: $s3Client)
-$s3Patches = Aws::S3::Bucket.new(getEnv("S3_PATCHES_BUCKET"), client: $s3Client)
 
 # Caches for speed
 $allUnits = nil

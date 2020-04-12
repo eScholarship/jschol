@@ -351,13 +351,62 @@ def calcSha256(path)
 end
 
 ###################################################################################################
+def calcNoSplashKey(itemID)
+  return Digest::MD5.hexdigest("noSplash:#{getEnv('JSCHOL_KEY')}|#{itemID}")
+end
+
+###################################################################################################
+def copyPatch(itemID, oldObj, newObj)
+  tmpFile = nil
+  begin
+    tmpFile = Tempfile.new(["patch_#{itemID}_", ".pdf"], TEMP_DIR)
+    oldObj.get(response_target: tmpFile.path)
+    newObj.upload_file(tmpFile.path, { metadata: { sha256: calcSha256(tmpFile.path) }, content_type: "application/pdf" })
+  ensure
+    tmpFile and tmpFile.unlink
+  end
+end
+
+###################################################################################################
+# Legacy only - copy from old patches location to new content/preview location
+def copyPatches(itemID, contentPfx, contentBucket)
+    legacyPfx = getEnv("S3_PATCHES_PREFIX")
+    oldLin = $s3Patches.object("#{legacyPfx}/linearized/#{itemID}")
+    oldSplash = $s3Patches.object("#{legacyPfx}/splash/#{itemID}")
+
+    noSplashKey = calcNoSplashKey(itemID)
+    newLin = contentBucket.object("#{contentPfx}/#{itemID}/#{itemID}_noSplash_#{noSplashKey}.pdf")
+    newSplash = contentBucket.object("#{contentPfx}/#{itemID}/#{itemID}.pdf")
+
+    if oldLin.exists? && (!newLin.exists? ||
+                          newLin.content_length != oldLin.content_length ||
+                          newLin.content_type != "application/pdf")
+      puts "  Backfill: copying #{oldLin.key} to #{newLin.key}."
+      copyPatch(itemID, oldLin, newLin)
+    end
+
+    if oldSplash.exists? && (!newSplash.exists? ||
+                             newSplash.content_length != oldSplash.content_length ||
+                             newSplash.content_type != "application/pdf")
+      puts "  Backfill: copying #{oldSplash.key} to #{newSplash.key}."
+      copyPatch(itemID, oldSplash, newSplash)
+    elsif !oldSplash.exists? && oldLin.exists? && (!newSplash.exists? ||
+                                                   newSplash.content_length != oldLin.content_length ||
+                                                   newSplash.content_type != "application/pdf")
+      puts "  Backfill: copying #{oldLin.key} to #{newSplash.key}."
+      copyPatch(itemID, oldLin, newSplash)
+    end
+end
+
+###################################################################################################
 # Main driver for PDF display version generation
 def convertPDF(itemID)
   item = Item[itemID]
+  isPending = Item[itemID].status == "pending"
 
   # Skip non-published items (e.g. embargoed, withdrawn)
   if !item || !%w{published pending}.include?(item.status)
-    puts "Not generating splash for #{item.status} item."
+    puts "  Not generating splash for #{item.status} item."
     DisplayPDF.where(item_id: itemID).delete  # delete splash pages when item gets withdrawn
     return
   end
@@ -368,17 +417,20 @@ def convertPDF(itemID)
   instrucDigest = Digest::MD5.base64digest(instrucs.to_json)
 
   # See if current splash page is adequate
-  if File.exist?(arkToFile(itemID, "content/base.meta.xml"))
+  if File.exist?(arkToFile(itemID, "meta/base.meta.xml"))
     origFile = arkToFile(itemID, "content/base.pdf")
   else
     origFile = arkToFile(itemID, "next/content/base.pdf")
   end
   if !File.exist?(origFile)
-    puts "Missing content file; skipping splash."
+    puts "  Missing content file; skipping splash."
     return
   end
   origSize = File.size(origFile)
   origTimestamp = File.mtime(origFile)
+
+  contentPfx = getEnv(isPending ? "S3_PREVIEW_PREFIX" : "S3_CONTENT_PREFIX")
+  contentBucket = isPending ? $s3Preview : $s3Content
 
   dbPdf = DisplayPDF[itemID]
   # It's odd, but comparing timestamps by value isn't reliable. Converting them to strings is though.
@@ -386,10 +438,11 @@ def convertPDF(itemID)
        dbPdf.orig_size == origSize &&
        dbPdf.orig_timestamp.to_s == origTimestamp.to_s &&
        dbPdf.splash_info_digest == instrucDigest
-    puts "Original unchanged; retaining existing splash version."
+    puts "  Original unchanged; retaining existing splash version."
+    copyPatches(itemID, contentPfx, contentBucket)  # FIXME - remove this when s3 transition is complete
     return
   end
-  puts "#{itemID}: Updating splash."
+  puts "  Updating splash."
 
   # Linearize the original PDF
   linFile, linDiff, splashLinFile, splashLinDiff = nil, nil, nil, nil
@@ -409,7 +462,7 @@ def convertPDF(itemID)
       splashLinSize = splashGen(itemID, instrucs, linFile, splashLinFile.path)
     rescue Exception => e
       if e.to_s =~ /Internal Server Error|Error 500/
-        puts "Warning: splash generator failed; falling back to plain."
+        puts "  Warning: splash generator failed; falling back to plain."
       else
         raise
       end
@@ -418,23 +471,19 @@ def convertPDF(itemID)
     # Legacy S3 location
     # Note 2019-02-24: It's important to use TempFile.path here - otherwise Ruby S3 SDK is ridiculously slow.
     # See https://stackoverflow.com/questions/48930354/awss3-put-object-very-slow-with-aws-sdk-ruby
-    pfx = getEnv("S3_PATCHES_PREFIX")
-    $s3Patches.object("#{pfx}/linearized/#{itemID}").upload_file(linFile.path)
-    splashLinSize > 0 and $s3Patches.object("#{pfx}/splash/#{itemID}").upload_file(splashLinFile.path)
+    # FIXME - remove this legacy stuff when s3 transition is complete
+    legacyPfx = getEnv("S3_PATCHES_PREFIX")
+    $s3Patches.object("#{legacyPfx}/linearized/#{itemID}").upload_file(linFile.path)
+    splashLinSize > 0 and $s3Patches.object("#{legacyPfx}/splash/#{itemID}").upload_file(splashLinFile.path)
 
     # New S3 location
     # Note 2019-02-24: It's important to use TempFile.path here - otherwise Ruby S3 SDK is ridiculously slow.
     # See https://stackoverflow.com/questions/48930354/awss3-put-object-very-slow-with-aws-sdk-ruby
-    isPending = Item[itemID].status == "pending"
-    pfx = getEnv(isPending ? "S3_PREVIEW_PREFIX" : "S3_CONTENT_PREFIX")
-    bucket = isPending ? $s3Preview : $s3Content
-
-    noSplashKey = Digest::MD5.hexdigest("noSplash:#{getEnv('JSCHOL_KEY')}|#{itemID}")
-    bucket.object("#{pfx}/#{itemID}/#{itemID}_noSplash_#{noSplashKey}.pdf").
+    contentBucket.object("#{contentPfx}/#{itemID}/#{itemID}_noSplash_#{calcNoSplashKey(itemID)}.pdf").
       upload_file(linFile.path, { metadata: { sha256: calcSha256(linFile) }, content_type: "application/pdf" })
 
     mainFile = splashLinSize > 0 ? splashLinFile : linFile
-    bucket.object("#{pfx}/#{itemID}/#{itemID}.pdf").
+    contentBucket.object("#{contentPfx}/#{itemID}/#{itemID}.pdf").
       upload_file(mainFile.path, { metadata: { sha256: calcSha256(mainFile) }, content_type: "application/pdf" })
 
     # Update the database
@@ -447,9 +496,18 @@ def convertPDF(itemID)
       splash_size:        splashLinSize
     )
 
-    puts sprintf("#{itemID}: Splash updated: lin=%d/%d = %.1f%%; splashLin=%d/%d = %.1f%%",
+    puts sprintf("  Splash updated: lin=%d/%d = %.1f%%; splashLin=%d/%d = %.1f%%",
                  linSize, origSize, linSize*100.0/origSize,
                  splashLinSize, origSize, splashLinSize*100.0/origSize)
+  rescue
+    # If splashing fails, fall back and put the original file into S3 so we can still
+    # access it from the front-end
+    contentBucket.object("#{contentPfx}/#{itemID}/#{itemID}.pdf").
+      upload_file(origFile, { metadata: { sha256: calcSha256(origFile) }, content_type: "application/pdf" })
+    contentBucket.object("#{contentPfx}/#{itemID}/#{itemID}_noSplash_#{calcNoSplashKey(itemID)}.pdf").
+      upload_file(origFile, { metadata: { sha256: calcSha256(origFile) }, content_type: "application/pdf" })
+    DisplayPDF.where(item_id: itemID).delete
+    raise
   ensure
     linFile and linFile.unlink
     linDiff and linDiff.unlink
