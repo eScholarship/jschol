@@ -416,7 +416,7 @@ def calcMinMonths(result)
 end
 
 ###################################################################################################
-# Get minimum effective month for every item
+# Calculate how many item events there are per month. Used for propagation work calculation.
 def calcMonthCounts()
   result = Hash.new { |h,k| h[k] = 0 }
   ItemEvent.group_and_count(:date).each { |record|
@@ -467,7 +467,7 @@ def calcStatsMonths()
   }
   prevMonth.nil? or monthDigests[prevMonth] = calcBase64Digest(digester)
 
-  # Update the month digests in the database.
+  # Update the month digests in the database. cur_count is used for propagation work estimation.
   DB.transaction {
     monthDigests.each { |month, digest|
       StatsMonth.create_or_update(month, cur_digest: digest, cur_count: monthCounts[month])
@@ -626,6 +626,7 @@ def calcStats
   # Propagate all months that need it
   startTime = Time.now
   months = StatsMonth.order(:month).all.select { |sm| sm.cur_digest != sm.old_digest }
+  # Along the way, use the number of records per month to estimate work and thus time remaining.
   totalCount = doneCount = 0
   months.each { |sm| totalCount += sm.cur_count }
   months.each { |sm|
