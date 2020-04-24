@@ -490,7 +490,7 @@ def generatePdfThumbnail(itemID, inMeta, existingItem)
       # Rip 1st page
       url = "#{$thumbnailServer}/uc/item/#{itemID.sub(/^qt/, '')}?image.view=generateImage;imgWidth=121;pageNum=1"
       response = HTTParty.get(url)
-      response.code.to_i == 200 or raise("Error generating thumbnail: HTTP #{response.code}: #{response.message}")
+      response.code.to_i == 200 or raise("Error generating thumbnail: url=#{url} code=#{response.code} message=#{response.message.inspect}")
       tempFile2 = Tempfile.new("thumbnail")
       begin
         tempFile2.write(response.body)
@@ -1091,7 +1091,7 @@ def parseUCIngest(itemID, inMeta, fileType, isPending)
   issue = section = nil
   volNum = inMeta.text_at("./context/volume")
   issueNum = inMeta.text_at("./context/issue")
-  if inMeta[:state] != "withdrawn" and (issueNum or volNum)
+  if inMeta[:state] != "withdrawn" && issueNum && volNum
     issueUnit = inMeta.xpath("./context/entity[@id]").select {
                       |ent| $allUnits[ent[:id]] && $allUnits[ent[:id]].type == "journal" }[0]
     issueUnit and issueUnit = issueUnit[:id]
@@ -1154,7 +1154,7 @@ def parseUCIngest(itemID, inMeta, fileType, isPending)
   # But in pre-index mode don't do the thumbnail step because sometimes it takes a long time, and
   # pre-index needs to happen quickly so the API can return.
   if !attrs[:suppress_content] && File.exist?(arkToFile(itemID, "content/base.pdf"))
-    if !$preindexMode
+    if !$preindexMode && !isPending
       attrs[:thumbnail] = generatePdfThumbnail(itemID, inMeta, Item[itemID])
     end
     attrs[:toc] = parseCustomTOC(itemID) || generatePdfTOC(itemID)
@@ -1198,7 +1198,7 @@ def parseUCIngest(itemID, inMeta, fileType, isPending)
   # Populate the Item model instance
   dbItem = Item.new
   dbItem[:id]           = itemID
-  dbItem[:source]       = inMeta.text_at("./source") or raise("no source found")
+  dbItem[:source]       = inMeta.text_at("./source") || "unknown"
   dbItem[:status]       = isPending ? "pending" :
                           isJunk ? "withdrawn-junk" :
                           attrs[:withdrawn_date] ? "withdrawn" :
@@ -1516,7 +1516,7 @@ def indexItem(itemID, batch, nailgun)
 
     # If only the database portion changed, we can safely skip the CloudSearch re-indxing
     if existingItem[:data_digest] != dataDigest
-      puts "Changed item. (database change only, search data unchanged)"
+      puts "#{$forceMode ? "Forced" : "Changed"} item. (database change only, search data unchanged)"
       $dbMutex.synchronize {
         DB.transaction { updateDbItem(dbDataBlock) }
       }
@@ -1532,7 +1532,7 @@ def indexItem(itemID, batch, nailgun)
     return
   end
 
-  puts "#{existingItem ? 'Changed' : 'New'} item.#{attrs[:suppress_content] ? " (suppressed content)" : ""}"
+  puts "#{existingItem ? ($forceMode ? 'Forced' : 'Changed') : 'New'} item.#{attrs[:suppress_content] ? " (suppressed content)" : ""}"
 
   if $noCloudSearchMode
     $dbMutex.synchronize {
@@ -2192,26 +2192,27 @@ end
 # Main action begins here
 
 startTime = Time.now
+arks = Set.new(ARGV.select { |a| a =~ /qt\w{8}/ })
 
 # Pre-index mode: no locking, just update database for one item and get out
-if ARGV[0] == "--preindex"
+if ARGV.delete("--preindex")
+  arks.empty? and raise("Must specify item(s) to convert.")
   $preindexMode = $noCloudSearchMode = true
-  convertAllItems(Set.new([ARGV[1]]))
+  convertAllItems(arks)
   exit 0
 end
 
 case ARGV[0]
   when "--items"
-    arks = ARGV.select { |a| a =~ /qt\w{8}/ }
     arks.empty? and raise("Must specify item(s) to convert.")
-    convertAllItems(Set.new(arks))
+    convertAllItems(arks)
   when "--info"
     indexInfo()
   when "--genAllStruct"
     cacheAllUnits
     genAllStruct
   else
-    STDERR.puts "Usage: #{__FILE__} {--items arks...|--info|--genAllStruct} [--test] [--force] [--noCloudSearch]"
+    STDERR.puts "Usage: #{__FILE__} {--items arks...|--info|--genAllStruct} [--preindex] [--test] [--force] [--noCloudSearch]"
     exit 1
 end
 
