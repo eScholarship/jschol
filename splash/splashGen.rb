@@ -361,7 +361,9 @@ def copyPatch(itemID, oldObj, newObj)
   begin
     tmpFile = Tempfile.new(["patch_#{itemID}_", ".pdf"], TEMP_DIR)
     oldObj.get(response_target: tmpFile.path)
-    newObj.upload_file(tmpFile.path, { metadata: { sha256: calcSha256(tmpFile.path) }, content_type: "application/pdf" })
+    newObj.upload_file(tmpFile.path, { metadata: { sha256: calcSha256(tmpFile.path) },
+                                       content_type: "application/pdf",
+                                       storage_class: "INTELLIGENT_TIERING" })
   ensure
     tmpFile and tmpFile.unlink
   end
@@ -472,19 +474,25 @@ def convertPDF(itemID)
     # Note 2019-02-24: It's important to use TempFile.path here - otherwise Ruby S3 SDK is ridiculously slow.
     # See https://stackoverflow.com/questions/48930354/awss3-put-object-very-slow-with-aws-sdk-ruby
     # FIXME - remove this legacy stuff when s3 transition is complete
-    legacyPfx = getEnv("S3_PATCHES_PREFIX")
-    $s3Patches.object("#{legacyPfx}/linearized/#{itemID}").upload_file(linFile.path)
-    splashLinSize > 0 and $s3Patches.object("#{legacyPfx}/splash/#{itemID}").upload_file(splashLinFile.path)
+    if !isPending
+      legacyPfx = getEnv("S3_PATCHES_PREFIX")
+      $s3Patches.object("#{legacyPfx}/linearized/#{itemID}").upload_file(linFile.path)
+      splashLinSize > 0 and $s3Patches.object("#{legacyPfx}/splash/#{itemID}").upload_file(splashLinFile.path)
+    end
 
     # New S3 location
     # Note 2019-02-24: It's important to use TempFile.path here - otherwise Ruby S3 SDK is ridiculously slow.
     # See https://stackoverflow.com/questions/48930354/awss3-put-object-very-slow-with-aws-sdk-ruby
     contentBucket.object("#{contentPfx}/#{itemID}/#{itemID}_noSplash_#{calcNoSplashKey(itemID)}.pdf").
-      upload_file(linFile.path, { metadata: { sha256: calcSha256(linFile) }, content_type: "application/pdf" })
+      upload_file(linFile.path, { metadata: { sha256: calcSha256(linFile) },
+                                  content_type: "application/pdf",
+                                  storage_class: "INTELLIGENT_TIERING" })
 
     mainFile = splashLinSize > 0 ? splashLinFile : linFile
     contentBucket.object("#{contentPfx}/#{itemID}/#{itemID}.pdf").
-      upload_file(mainFile.path, { metadata: { sha256: calcSha256(mainFile) }, content_type: "application/pdf" })
+      upload_file(mainFile.path, { metadata: { sha256: calcSha256(mainFile) },
+                                   content_type: "application/pdf",
+                                   storage_class: "INTELLIGENT_TIERING" })
 
     # Update the database
     DisplayPDF.where(item_id: itemID).delete
@@ -503,9 +511,13 @@ def convertPDF(itemID)
     # If splashing fails, fall back and put the original file into S3 so we can still
     # access it from the front-end
     contentBucket.object("#{contentPfx}/#{itemID}/#{itemID}.pdf").
-      upload_file(origFile, { metadata: { sha256: calcSha256(origFile) }, content_type: "application/pdf" })
+      upload_file(origFile, { metadata: { sha256: calcSha256(origFile) },
+                              content_type: "application/pdf",
+                              storage_class: "INTELLIGENT_TIERING" })
     contentBucket.object("#{contentPfx}/#{itemID}/#{itemID}_noSplash_#{calcNoSplashKey(itemID)}.pdf").
-      upload_file(origFile, { metadata: { sha256: calcSha256(origFile) }, content_type: "application/pdf" })
+      upload_file(origFile, { metadata: { sha256: calcSha256(origFile) },
+                              content_type: "application/pdf",
+                              storage_class: "INTELLIGENT_TIERING" })
     DisplayPDF.where(item_id: itemID).delete
     raise
   ensure
