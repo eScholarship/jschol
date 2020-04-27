@@ -698,8 +698,12 @@ def generatePdfTOC(itemID)
     divs = []
     buf = ""
     outline.each { |line|
-      # handle garbled UTF-8 strings courtesty of mutools ( see https://bugs.ghostscript.com/show_bug.cgi?id=702358 )
-      line.gsub!(/\\x([CDEF][0-9A-F])\\x([89AB][0-9A-F])/) { [Regexp.last_match[1].to_i(16), Regexp.last_match[2].to_i(16)].pack("c*").force_encoding('UTF-8') }
+      # handle garbled 2, 3 and 4-byte UTF-8 strings 'courtesty' of mutools ( see story 172061580 and https://bugs.ghostscript.com/show_bug.cgi?id=702358 )
+      # example garbled text: Declaraci\xC3\xB3n del artista
+      # the regex below matches the following text in the example garbled text: \xC3\xB3
+      # the following line converts each match back into the original single UTF-8 character
+      line.gsub!(/\\x[CDEF][0-9A-F](\\x[89AB][0-9A-F])+/) { |m|
+        m.to_s.scan(/[0-9A-Z]+/).map { |hex| hex.to_i(16) }.pack("c*").force_encoding('UTF-8') }
       if line =~ /\t#/
         (buf+line) =~ /^[^\t]?(\t*)"([^\t]*)"\t#(\d+)/ or raise("can't parse TOC line: #{line.inspect}")
         divs << { level: $1.length, title: $2.strip, anchor: "page=#{$3.to_i}" }
