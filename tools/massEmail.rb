@@ -122,9 +122,11 @@ def processBounce(email, bounceDate, bounceKind)
     # Avoid duplicates
     return unless Bounce.where(email: email, date: bounceDate).empty?
 
-    # If we get two temporary bounces within 90 days, that's enough to stop sending.
-    prev = Bounce.where(email: email).order(Sequel::desc(:date)).first
-    needMark = prev && ((Date.today - prev.date) < 90 && (Date.today - bounceDate) < 90)
+    # 2020-03-20 MCH: This was marking some addresses we know are good, like editor@westjem.org.
+    # Since Amazon doesn't ding us for temporary bounces, let's not mark them.
+    ## OLD LOGIC: If we get two temporary bounces within 90 days, that's enough to stop sending.
+    #prev = Bounce.where(email: email).order(Sequel::desc(:date)).first
+    #needMark = prev && ((Date.today - prev.date) < 90 && (Date.today - bounceDate) < 90)
 
   end
 
