@@ -64,7 +64,7 @@
 
                 t.openModalInsert(t.lang.createLink, options, function (v) { // v is value
                     // Make escholarship.org links root-relative
-                    var url = v.url.replace(/http(s?):\/\/[^/]*escholarship.org/, '')
+                    var url = v.url.replace(/http(s?):\/\/(?!help\.)[^/]*escholarship.org/, '')
                     if (!url.length) {
                         return false;
                     }
