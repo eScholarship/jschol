@@ -1394,7 +1394,7 @@ def getItemHtml(content_type, id, isPending)
   s3Obj = $s3Bucket.object(s3Path)
   s3Obj.exists? or halt(404)
 
-  buf = s3Obj.get().body.read
+  buf = s3Obj.get().body.read.force_encoding("UTF-8")
 
   # Hacks for LIMN
   buf.gsub! %r{<head.*?</head>}im, ''
