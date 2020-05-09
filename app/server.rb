@@ -170,7 +170,6 @@ require_relative 'statsPages'
 require_relative 'unitPages'
 require_relative 'citation'
 require_relative 'loginApi'
-require_relative 'fetch'
 require_relative 'redirect'
 require_relative 'sitemap'
 
@@ -373,14 +372,10 @@ end
 
 ###################################################################################################
 def proxyFromURL(url, overrideHostname = nil)
-  fetcher = HttpFetcher.new(url, overrideHostname)
-  if !fetcher.length.nil? && fetcher.length > 0
-    headers "Content-Length" => fetcher.length.to_s
-  end
-  if fetcher.headers && fetcher.headers.dig('content-type', 0)
-    headers "content-type" => fetcher.headers.dig('content-type', 0)
-  end
-  return stream { |out| fetcher.streamTo(out) }
+  response = HTTParty.get(url)
+  response.code == 200 or halt(response.code)
+  response.headers['content-type'] and headers("Content-Type" => response.headers['content-type'])
+  return response.body
 end
 
 ###################################################################################################
@@ -1394,7 +1389,7 @@ def getItemHtml(content_type, id, isPending)
   s3Obj = $s3Bucket.object(s3Path)
   s3Obj.exists? or halt(404)
 
-  buf = s3Obj.get().body.read
+  buf = s3Obj.get().body.read.force_encoding("UTF-8")
 
   # Hacks for LIMN
   buf.gsub! %r{<head.*?</head>}im, ''
