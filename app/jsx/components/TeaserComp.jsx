@@ -14,19 +14,19 @@ class TeaserComp extends React.Component {
       <div className="c-teaser">
         <section>
           <header>
-            <h2>eScholarship Repository</h2>
-          </header>
-          <p>Open Access repository services for UC researchers to share their scholarly output.
-          </p>
-          <Link to="#" onClick={(e)=>this.handleClick(e, "home_repository")}>Learn More</Link>
-        </section>
-        <section>
-          <header>
             <h2>eScholarship Publishing</h2>
           </header>
           <p>Open Access publishing for journals, monographs, conference proceedings and more.
           </p>
           <Link to="#" onClick={(e)=>this.handleClick(e, "home_publishing")}>Learn More</Link>
+        </section>
+        <section>
+          <header>
+            <h2>eScholarship Repository</h2>
+          </header>
+          <p>Open Access repository services for UC researchers to share their scholarly output.
+          </p>
+          <Link to="#" onClick={(e)=>this.handleClick(e, "home_repository")}>Learn More</Link>
         </section>
       </div>
     )
