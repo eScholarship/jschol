@@ -1141,7 +1141,9 @@ def getItemPageData(shortArk)
   item = Item[id] or halt(404)
   item.status == "withdrawn-junk" and halt(404)
   # Only allow access to preview items if the proper key is specified
-  (item.status == 'published' || isValidPreviewKey(id, params[:preview_key])) or halt(403, "Unauthorized")
+  if item.status == 'pending'
+    isValidPreviewKey(id, params[:preview_key]) or halt(403, "Unauthorized")
+  end
 
   attrs = JSON.parse(item.attrs)
   unitIDs = UnitItem.where(:item_id => id, :is_direct => true).order(:ordering_of_units).select_map(:unit_id)
