@@ -353,7 +353,7 @@ def calcNoSplashKey(itemID)
 end
 
 ###################################################################################################
-def copyPatch(itemID, oldObj, newObj)
+def copyContentFile(itemID, oldObj, newObj)
   tmpFile = nil
   begin
     tmpFile = Tempfile.new(["patch_#{itemID}_", ".pdf"], TEMP_DIR)
@@ -369,32 +369,98 @@ end
 ###################################################################################################
 # Legacy only - copy from old patches location to new content/preview location
 def copyPatches(itemID, contentPfx)
-    legacyPfx = getEnv("S3_PATCHES_PREFIX")
-    oldLin = $s3Bucket.object("#{legacyPfx}/linearized/#{itemID}")
+  legacyPfx = getEnv("S3_PATCHES_PREFIX")
+  oldLin = $s3Bucket.object("#{legacyPfx}/linearized/#{itemID}")
+  oldSplash = $s3Bucket.object("#{legacyPfx}/splash/#{itemID}")
+
+  noSplashKey = calcNoSplashKey(itemID)
+  newLin = $s3Bucket.object("#{contentPfx}/#{itemID}/#{itemID}_noSplash_#{noSplashKey}.pdf")
+  newSplash = $s3Bucket.object("#{contentPfx}/#{itemID}/#{itemID}.pdf")
+
+  if oldLin.exists? && (!newLin.exists? ||
+                        newLin.content_length != oldLin.content_length ||
+                        newLin.content_type != "application/pdf")
+    puts "  Backfill: copying #{oldLin.key} to #{newLin.key}"
+    copyContentFile(itemID, oldLin, newLin)
+  end
+
+  if oldSplash.exists? && (!newSplash.exists? ||
+                           newSplash.content_length != oldSplash.content_length ||
+                           newSplash.content_type != "application/pdf")
+    puts "  Backfill: copying #{oldSplash.key} to #{newSplash.key}"
+    copyContentFile(itemID, oldSplash, newSplash)
+  elsif !oldSplash.exists? && oldLin.exists? && (!newSplash.exists? ||
+                                                 newSplash.content_length != oldLin.content_length ||
+                                                 newSplash.content_type != "application/pdf")
+    puts "  Backfill: copying #{oldLin.key} to #{newSplash.key}."
+    copyContentFile(itemID, oldLin, newSplash)
+  end
+end
+
+###################################################################################################
+# Move pending PDF files to their published location
+def movePendingFiles(itemID)
+  noSplashKey = calcNoSplashKey(itemID)
+
+  pvwPfx = getEnv("S3_PREVIEW_PREFIX")
+  pvwLin = $s3Bucket.object("#{pvwPfx}/#{itemID}/#{itemID}_noSplash_#{noSplashKey}.pdf")
+  pvwSplash = $s3Bucket.object("#{pvwPfx}/#{itemID}/#{itemID}.pdf")
+
+  # If there's no preview file to move, we have nothing to do
+  pvwLin.exists? or return
+
+  # Legacy files - remove after transition
+  legacyPfx = getEnv("S3_PATCHES_PREFIX")
+  if pvwSplash.exists?
     oldSplash = $s3Bucket.object("#{legacyPfx}/splash/#{itemID}")
+    puts "  movePending: copying #{pvwSplash.key} to #{oldSplash.key}"
+    copyContentFile(itemID, pvwSplash, oldSplash)
+  end
+  oldLin = $s3Bucket.object("#{legacyPfx}/linearized/#{itemID}")
+  puts "  movePending: copying #{pvwLin.key} to #{oldLin.key}"
+  copyContentFile(itemID, pvwLin, oldLin)
 
-    noSplashKey = calcNoSplashKey(itemID)
-    newLin = $s3Bucket.object("#{contentPfx}/#{itemID}/#{itemID}_noSplash_#{noSplashKey}.pdf")
+  # Move the preview splash file, if present
+  contentPfx = getEnv("S3_CONTENT_PREFIX")
+  if pvwSplash.exists?
     newSplash = $s3Bucket.object("#{contentPfx}/#{itemID}/#{itemID}.pdf")
+    puts "  movePending: copying #{pvwSplash.key} to #{newSplash.key}"
+    copyContentFile(itemID, pvwSplash, newSplash)
+    pvwSplash.delete
+  end
 
-    if oldLin.exists? && (!newLin.exists? ||
-                          newLin.content_length != oldLin.content_length ||
-                          newLin.content_type != "application/pdf")
-      puts "  Backfill: copying #{oldLin.key} to #{newLin.key}."
-      copyPatch(itemID, oldLin, newLin)
-    end
+  # Move the linearized file
+  newLin = $s3Bucket.object("#{contentPfx}/#{itemID}/#{itemID}_noSplash_#{noSplashKey}.pdf")
+  puts "  movePending: copying #{pvwLin.key} to #{newLin.key}"
+  copyContentFile(itemID, pvwLin, newLin)
+  pvwLin.delete
+end
 
-    if oldSplash.exists? && (!newSplash.exists? ||
-                             newSplash.content_length != oldSplash.content_length ||
-                             newSplash.content_type != "application/pdf")
-      puts "  Backfill: copying #{oldSplash.key} to #{newSplash.key}."
-      copyPatch(itemID, oldSplash, newSplash)
-    elsif !oldSplash.exists? && oldLin.exists? && (!newSplash.exists? ||
-                                                   newSplash.content_length != oldLin.content_length ||
-                                                   newSplash.content_type != "application/pdf")
-      puts "  Backfill: copying #{oldLin.key} to #{newSplash.key}."
-      copyPatch(itemID, oldLin, newSplash)
-    end
+###################################################################################################
+# Delete files for withdrawn item
+def deleteContentFiles(itemID)
+  noSplashKey = calcNoSplashKey(itemID)
+
+  # Remove the preview files if present
+  pvwPfx = getEnv("S3_PREVIEW_PREFIX")
+  pvwLin = $s3Bucket.object("#{pvwPfx}/#{itemID}/#{itemID}_noSplash_#{noSplashKey}.pdf")
+  pvwLin.exists? and pvwLin.delete
+  pvwSplash = $s3Bucket.object("#{pvwPfx}/#{itemID}/#{itemID}.pdf")
+  pvwSplash.exists? and pvwSplash.delete
+
+  # Legacy files - get rid of this code after transition
+  legacyPfx = getEnv("S3_PATCHES_PREFIX")
+  oldSplash = $s3Bucket.object("#{legacyPfx}/splash/#{itemID}")
+  oldSplash.exists? and oldSplash.delete
+  oldLin = $s3Bucket.object("#{legacyPfx}/linearized/#{itemID}")
+  oldLin.exists? and oldLin.delete
+
+  # Remove the published files if present
+  contentPfx = getEnv("S3_CONTENT_PREFIX")
+  newSplash = $s3Bucket.object("#{contentPfx}/#{itemID}/#{itemID}.pdf")
+  newSplash.exists? and newSplash.delete
+  newLin = $s3Bucket.object("#{contentPfx}/#{itemID}/#{itemID}_noSplash_#{noSplashKey}.pdf")
+  newLin.exists? and newLin.delete
 end
 
 ###################################################################################################
@@ -402,13 +468,18 @@ end
 def convertPDF(itemID)
   item = Item[itemID]
   isPending = Item[itemID].status == "pending"
+  contentPfx = getEnv(isPending ? "S3_PREVIEW_PREFIX" : "S3_CONTENT_PREFIX")
 
   # Skip non-published items (e.g. embargoed, withdrawn)
   if !item || !%w{published pending}.include?(item.status)
     puts "  Not generating splash for #{item.status} item."
     DisplayPDF.where(item_id: itemID).delete  # delete splash pages when item gets withdrawn
+    deleteContentFiles(itemID)
     return
   end
+
+  # If item is transitioning from pending to published, move the old files.
+  !isPending and movePendingFiles(itemID)
 
   # Generate the splash instructions, for cache checking
   attrs = JSON.parse(item.attrs)
