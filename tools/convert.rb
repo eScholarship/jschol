@@ -73,7 +73,7 @@ $dbMutex = Mutex.new
 
 # Log SQL statements, to aid debugging
 File.exists?('convert.sql_log') and File.delete('convert.sql_log')
-#DB.loggers << Logger.new('convert.sql_log')
+DB.loggers << Logger.new('convert.sql_log')
 
 # Queues for thread coordination
 $indexQueue = SizedQueue.new(100)
@@ -1353,13 +1353,15 @@ end
 
 ###################################################################################################
 def collectArchiveMeta(itemID, rawMetaXML)
-  return ArchiveMeta.new { |record|
-    record[:item_id] = itemID
-    record[:meta] = rawMetaXML || reformatXML(arkToFile(itemID, "meta/base.meta.xml"))
-    record[:feed] = reformatXML(arkToFile(itemID, "meta/base.feed.xml"))
-    record[:cookie] = reformatXML(arkToFile(itemID, "meta/base.cookie.xml"))
-    record[:history] = reformatXML(arkToFile(itemID, "meta/base.history.xml"))
-  }
+  return {}
+  # 2020-05-18 MH: Disabling for now to speed up controller
+  ##return ArchiveMeta.new { |record|
+  ##  record[:item_id] = itemID
+  ##  record[:meta] = rawMetaXML || reformatXML(arkToFile(itemID, "meta/base.meta.xml"))
+  ##  record[:feed] = reformatXML(arkToFile(itemID, "meta/base.feed.xml"))
+  ##  record[:cookie] = reformatXML(arkToFile(itemID, "meta/base.cookie.xml"))
+  ##  record[:history] = reformatXML(arkToFile(itemID, "meta/base.history.xml"))
+  ##}
 end
 
 ###################################################################################################
@@ -1452,8 +1454,9 @@ def indexItem(itemID, batch, nailgun)
     idxItem[:fields][:text] = text[0, text.size - toCut]
   end
 
-  # Make sure withdrawn items get deleted from the index
-  if attrs[:suppress_content]
+  # Make sure withdrawn items get deleted from the index. Also make sure pending items
+  # aren't in the index.
+  if attrs[:suppress_content] || dbItem[:status] == "pending"
     idxItem = {
       type:          "delete",
       id:            itemID
@@ -1704,7 +1707,9 @@ def updateDbItem(data)
   data[:dbItem].create_or_update()
   data[:dbAuthors].each { |record| record.save() }
   data[:dbContribs] and data[:dbContribs].each { |record| record.save }
-  data[:dbArchiveMeta].create_or_update()
+  # MH 2020-05-18: disabling archive meta for now; it was taking a fair amount of time.
+  # I'm trying to get the conversion queue to drain quickly.
+  ##data[:dbArchiveMeta].create_or_update()
 
   # Link the item to its units
   done = Set.new
@@ -1951,7 +1956,10 @@ def convertAllItems(arks)
   # Wait for everything to work its way through the queues.
   indexThread.join
   if !$testMode && !$preindexMode && !($hostname =~ /-dev|-stg/)
-    connectAuthors  # make sure all newly converted (or reconverted) items have author->people links
+    # 2020-05-18 MCH: This step is taking a long time, and is only needed for stats, so let's
+    # put it off to try and chug through our conversion queue.
+    puts "FIXME: Skipping connectAuthors"
+    ##connectAuthors  # make sure all newly converted (or reconverted) items have author->people links
   end
   batchThread.join
 
