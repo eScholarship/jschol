@@ -103,7 +103,7 @@ $csClient = Aws::CloudSearchDomain::Client.new(credentials: Aws::InstanceProfile
 #       credentials file pub-submit-prd:~/.aws/config
 $s3Client = Aws::S3::Client.new(credentials: Aws::InstanceProfileCredentials.new,
                                 region: getEnv("S3_REGION"))
-$s3Binaries = Aws::S3::Bucket.new(getEnv("S3_BINARIES_BUCKET"), client: $s3Client)
+$s3Bucket = Aws::S3::Bucket.new(getEnv("S3_BUCKET"), client: $s3Client)
 
 # Caches for speed
 $allUnits = nil
@@ -200,7 +200,7 @@ def putAsset(filePath, metadata)
   s3Path = "#{getEnv("S3_BINARIES_PREFIX")}/#{sha256Sum[0,2]}/#{sha256Sum[2,2]}/#{sha256Sum}"
 
   # If the S3 file is already present, don't re-upload it.
-  obj = $s3Binaries.object(s3Path)
+  obj = $s3Bucket.object(s3Path)
   if !obj.exists? || $forceMode
     #puts "Uploading #{filePath} to S3."
     obj.put(body: File.new(filePath),

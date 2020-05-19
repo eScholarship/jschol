@@ -12,7 +12,7 @@ def putAsset(filePath, metadata)
   s3Path = "#{getEnv("S3_BINARIES_PREFIX")}/#{sha256Sum[0,2]}/#{sha256Sum[2,2]}/#{sha256Sum}"
 
   # If the S3 file is already correct, don't re-upload it.
-  obj = $s3Binaries.object(s3Path)
+  obj = $s3Bucket.object(s3Path)
   if !obj.exists? || obj.etag != "\"#{md5sum}\""
     #puts "Uploading #{filePath} to S3."
     obj.put(body: File.new(filePath),

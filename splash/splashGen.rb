@@ -54,10 +54,7 @@ require_relative '../tools/models.rb'
 #       credentials file pub-submit-prd:~/.aws/config
 $s3Client = Aws::S3::Client.new(credentials: Aws::InstanceProfileCredentials.new,
                                 region: getEnv("S3_REGION"))
-$s3Binaries = Aws::S3::Bucket.new(getEnv("S3_BINARIES_BUCKET"), client: $s3Client)
-$s3Patches = Aws::S3::Bucket.new(getEnv("S3_PATCHES_BUCKET"), client: $s3Client)
-$s3Content = Aws::S3::Bucket.new(getEnv("S3_CONTENT_BUCKET"), client: $s3Client)
-$s3Preview = Aws::S3::Bucket.new(getEnv("S3_PREVIEW_BUCKET"), client: $s3Client)
+$s3Bucket = Aws::S3::Bucket.new(getEnv("S3_BUCKET"), client: $s3Client)
 
 # Get hash of all active root level campuses/ORUs, sorted by ordering in unit_hier table
 def getActiveCampuses
@@ -371,14 +368,14 @@ end
 
 ###################################################################################################
 # Legacy only - copy from old patches location to new content/preview location
-def copyPatches(itemID, contentPfx, contentBucket)
+def copyPatches(itemID, contentPfx)
     legacyPfx = getEnv("S3_PATCHES_PREFIX")
-    oldLin = $s3Patches.object("#{legacyPfx}/linearized/#{itemID}")
-    oldSplash = $s3Patches.object("#{legacyPfx}/splash/#{itemID}")
+    oldLin = $s3Bucket.object("#{legacyPfx}/linearized/#{itemID}")
+    oldSplash = $s3Bucket.object("#{legacyPfx}/splash/#{itemID}")
 
     noSplashKey = calcNoSplashKey(itemID)
-    newLin = contentBucket.object("#{contentPfx}/#{itemID}/#{itemID}_noSplash_#{noSplashKey}.pdf")
-    newSplash = contentBucket.object("#{contentPfx}/#{itemID}/#{itemID}.pdf")
+    newLin = $s3Bucket.object("#{contentPfx}/#{itemID}/#{itemID}_noSplash_#{noSplashKey}.pdf")
+    newSplash = $s3Bucket.object("#{contentPfx}/#{itemID}/#{itemID}.pdf")
 
     if oldLin.exists? && (!newLin.exists? ||
                           newLin.content_length != oldLin.content_length ||
@@ -432,7 +429,6 @@ def convertPDF(itemID)
   origTimestamp = File.mtime(origFile)
 
   contentPfx = getEnv(isPending ? "S3_PREVIEW_PREFIX" : "S3_CONTENT_PREFIX")
-  contentBucket = isPending ? $s3Preview : $s3Content
 
   dbPdf = DisplayPDF[itemID]
   # It's odd, but comparing timestamps by value isn't reliable. Converting them to strings is though.
@@ -441,7 +437,7 @@ def convertPDF(itemID)
        dbPdf.orig_timestamp.to_s == origTimestamp.to_s &&
        dbPdf.splash_info_digest == instrucDigest
     puts "  Original unchanged; retaining existing splash version."
-    copyPatches(itemID, contentPfx, contentBucket)  # FIXME - remove this when s3 transition is complete
+    copyPatches(itemID, contentPfx)  # FIXME - remove this when s3 transition is complete
     return
   end
   puts "  Updating splash."
@@ -476,20 +472,20 @@ def convertPDF(itemID)
     # FIXME - remove this legacy stuff when s3 transition is complete
     if !isPending
       legacyPfx = getEnv("S3_PATCHES_PREFIX")
-      $s3Patches.object("#{legacyPfx}/linearized/#{itemID}").upload_file(linFile.path)
-      splashLinSize > 0 and $s3Patches.object("#{legacyPfx}/splash/#{itemID}").upload_file(splashLinFile.path)
+      $s3Bucket.object("#{legacyPfx}/linearized/#{itemID}").upload_file(linFile.path)
+      splashLinSize > 0 and $s3Bucket.object("#{legacyPfx}/splash/#{itemID}").upload_file(splashLinFile.path)
     end
 
     # New S3 location
     # Note 2019-02-24: It's important to use TempFile.path here - otherwise Ruby S3 SDK is ridiculously slow.
     # See https://stackoverflow.com/questions/48930354/awss3-put-object-very-slow-with-aws-sdk-ruby
-    contentBucket.object("#{contentPfx}/#{itemID}/#{itemID}_noSplash_#{calcNoSplashKey(itemID)}.pdf").
+    $s3Bucket.object("#{contentPfx}/#{itemID}/#{itemID}_noSplash_#{calcNoSplashKey(itemID)}.pdf").
       upload_file(linFile.path, { metadata: { sha256: calcSha256(linFile) },
                                   content_type: "application/pdf",
                                   storage_class: "INTELLIGENT_TIERING" })
 
     mainFile = splashLinSize > 0 ? splashLinFile : linFile
-    contentBucket.object("#{contentPfx}/#{itemID}/#{itemID}.pdf").
+    $s3Bucket.object("#{contentPfx}/#{itemID}/#{itemID}.pdf").
       upload_file(mainFile.path, { metadata: { sha256: calcSha256(mainFile) },
                                    content_type: "application/pdf",
                                    storage_class: "INTELLIGENT_TIERING" })
@@ -510,11 +506,11 @@ def convertPDF(itemID)
   rescue
     # If splashing fails, fall back and put the original file into S3 so we can still
     # access it from the front-end
-    contentBucket.object("#{contentPfx}/#{itemID}/#{itemID}.pdf").
+    $s3Bucket.object("#{contentPfx}/#{itemID}/#{itemID}.pdf").
       upload_file(origFile, { metadata: { sha256: calcSha256(origFile) },
                               content_type: "application/pdf",
                               storage_class: "INTELLIGENT_TIERING" })
-    contentBucket.object("#{contentPfx}/#{itemID}/#{itemID}_noSplash_#{calcNoSplashKey(itemID)}.pdf").
+    $s3Bucket.object("#{contentPfx}/#{itemID}/#{itemID}_noSplash_#{calcNoSplashKey(itemID)}.pdf").
       upload_file(origFile, { metadata: { sha256: calcSha256(origFile) },
                               content_type: "application/pdf",
                               storage_class: "INTELLIGENT_TIERING" })
