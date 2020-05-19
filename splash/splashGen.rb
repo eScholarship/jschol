@@ -54,10 +54,7 @@ require_relative '../tools/models.rb'
 #       credentials file pub-submit-prd:~/.aws/config
 $s3Client = Aws::S3::Client.new(credentials: Aws::InstanceProfileCredentials.new,
                                 region: getEnv("S3_REGION"))
-$s3Binaries = Aws::S3::Bucket.new(getEnv("S3_BINARIES_BUCKET"), client: $s3Client)
-$s3Patches = Aws::S3::Bucket.new(getEnv("S3_PATCHES_BUCKET"), client: $s3Client)
-$s3Content = Aws::S3::Bucket.new(getEnv("S3_CONTENT_BUCKET"), client: $s3Client)
-$s3Preview = Aws::S3::Bucket.new(getEnv("S3_PREVIEW_BUCKET"), client: $s3Client)
+$s3Bucket = Aws::S3::Bucket.new(getEnv("S3_BUCKET"), client: $s3Client)
 
 # Get hash of all active root level campuses/ORUs, sorted by ordering in unit_hier table
 def getActiveCampuses
@@ -371,14 +368,14 @@ end
 
 ###################################################################################################
 # Legacy only - copy from old patches location to new content/preview location
-def copyPatches(itemID, contentPfx, contentBucket)
+def copyPatches(itemID, contentPfx)
   legacyPfx = getEnv("S3_PATCHES_PREFIX")
-  oldLin = $s3Patches.object("#{legacyPfx}/linearized/#{itemID}")
-  oldSplash = $s3Patches.object("#{legacyPfx}/splash/#{itemID}")
+  oldLin = $s3Bucket.object("#{legacyPfx}/linearized/#{itemID}")
+  oldSplash = $s3Bucket.object("#{legacyPfx}/splash/#{itemID}")
 
   noSplashKey = calcNoSplashKey(itemID)
-  newLin = contentBucket.object("#{contentPfx}/#{itemID}/#{itemID}_noSplash_#{noSplashKey}.pdf")
-  newSplash = contentBucket.object("#{contentPfx}/#{itemID}/#{itemID}.pdf")
+  newLin = $s3Bucket.object("#{contentPfx}/#{itemID}/#{itemID}_noSplash_#{noSplashKey}.pdf")
+  newSplash = $s3Bucket.object("#{contentPfx}/#{itemID}/#{itemID}.pdf")
 
   if oldLin.exists? && (!newLin.exists? ||
                         newLin.content_length != oldLin.content_length ||
@@ -406,8 +403,8 @@ def movePendingFiles(itemID)
   noSplashKey = calcNoSplashKey(itemID)
 
   pvwPfx = getEnv("S3_PREVIEW_PREFIX")
-  pvwLin = $s3Preview.object("#{pvwPfx}/#{itemID}/#{itemID}_noSplash_#{noSplashKey}.pdf")
-  pvwSplash = $s3Preview.object("#{pvwPfx}/#{itemID}/#{itemID}.pdf")
+  pvwLin = $s3Bucket.object("#{pvwPfx}/#{itemID}/#{itemID}_noSplash_#{noSplashKey}.pdf")
+  pvwSplash = $s3Bucket.object("#{pvwPfx}/#{itemID}/#{itemID}.pdf")
 
   # If there's no preview file to move, we have nothing to do
   pvwLin.exists? or return
@@ -415,25 +412,25 @@ def movePendingFiles(itemID)
   # Legacy files - remove after transition
   legacyPfx = getEnv("S3_PATCHES_PREFIX")
   if pvwSplash.exists?
-    oldSplash = $s3Patches.object("#{legacyPfx}/splash/#{itemID}")
+    oldSplash = $s3Bucket.object("#{legacyPfx}/splash/#{itemID}")
     puts "  movePending: copying #{pvwSplash.key} to #{oldSplash.key}"
     copyContentFile(itemID, pvwSplash, oldSplash)
   end
-  oldLin = $s3Patches.object("#{legacyPfx}/linearized/#{itemID}")
+  oldLin = $s3Bucket.object("#{legacyPfx}/linearized/#{itemID}")
   puts "  movePending: copying #{pvwLin.key} to #{oldLin.key}"
   copyContentFile(itemID, pvwLin, oldLin)
 
   # Move the preview splash file, if present
   contentPfx = getEnv("S3_CONTENT_PREFIX")
   if pvwSplash.exists?
-    newSplash = $s3Content.object("#{contentPfx}/#{itemID}/#{itemID}.pdf")
+    newSplash = $s3Bucket.object("#{contentPfx}/#{itemID}/#{itemID}.pdf")
     puts "  movePending: copying #{pvwSplash.key} to #{newSplash.key}"
     copyContentFile(itemID, pvwSplash, newSplash)
     pvwSplash.delete
   end
 
   # Move the linearized file
-  newLin = $s3Content.object("#{contentPfx}/#{itemID}/#{itemID}_noSplash_#{noSplashKey}.pdf")
+  newLin = $s3Bucket.object("#{contentPfx}/#{itemID}/#{itemID}_noSplash_#{noSplashKey}.pdf")
   puts "  movePending: copying #{pvwLin.key} to #{newLin.key}"
   copyContentFile(itemID, pvwLin, newLin)
   pvwLin.delete
@@ -446,23 +443,23 @@ def deleteContentFiles(itemID)
 
   # Remove the preview files if present
   pvwPfx = getEnv("S3_PREVIEW_PREFIX")
-  pvwLin = $s3Preview.object("#{pvwPfx}/#{itemID}/#{itemID}_noSplash_#{noSplashKey}.pdf")
+  pvwLin = $s3Bucket.object("#{pvwPfx}/#{itemID}/#{itemID}_noSplash_#{noSplashKey}.pdf")
   pvwLin.exists? and pvwLin.delete
-  pvwSplash = $s3Preview.object("#{pvwPfx}/#{itemID}/#{itemID}.pdf")
+  pvwSplash = $s3Bucket.object("#{pvwPfx}/#{itemID}/#{itemID}.pdf")
   pvwSplash.exists? and pvwSplash.delete
 
   # Legacy files - get rid of this code after transition
   legacyPfx = getEnv("S3_PATCHES_PREFIX")
-  oldSplash = $s3Patches.object("#{legacyPfx}/splash/#{itemID}")
+  oldSplash = $s3Bucket.object("#{legacyPfx}/splash/#{itemID}")
   oldSplash.exists? and oldSplash.delete
-  oldLin = $s3Patches.object("#{legacyPfx}/linearized/#{itemID}")
+  oldLin = $s3Bucket.object("#{legacyPfx}/linearized/#{itemID}")
   oldLin.exists? and oldLin.delete
 
   # Remove the published files if present
   contentPfx = getEnv("S3_CONTENT_PREFIX")
-  newSplash = $s3Content.object("#{contentPfx}/#{itemID}/#{itemID}.pdf")
+  newSplash = $s3Bucket.object("#{contentPfx}/#{itemID}/#{itemID}.pdf")
   newSplash.exists? and newSplash.delete
-  newLin = $s3Content.object("#{contentPfx}/#{itemID}/#{itemID}_noSplash_#{noSplashKey}.pdf")
+  newLin = $s3Bucket.object("#{contentPfx}/#{itemID}/#{itemID}_noSplash_#{noSplashKey}.pdf")
   newLin.exists? and newLin.delete
 end
 
@@ -472,7 +469,6 @@ def convertPDF(itemID)
   item = Item[itemID]
   isPending = Item[itemID].status == "pending"
   contentPfx = getEnv(isPending ? "S3_PREVIEW_PREFIX" : "S3_CONTENT_PREFIX")
-  contentBucket = isPending ? $s3Preview : $s3Content
 
   # Skip non-published items (e.g. embargoed, withdrawn)
   if !item || !%w{published pending}.include?(item.status)
@@ -503,6 +499,8 @@ def convertPDF(itemID)
   origSize = File.size(origFile)
   origTimestamp = File.mtime(origFile)
 
+  contentPfx = getEnv(isPending ? "S3_PREVIEW_PREFIX" : "S3_CONTENT_PREFIX")
+
   dbPdf = DisplayPDF[itemID]
   # It's odd, but comparing timestamps by value isn't reliable. Converting them to strings is though.
   if !$forceMode && dbPdf &&
@@ -510,7 +508,7 @@ def convertPDF(itemID)
        dbPdf.orig_timestamp.to_s == origTimestamp.to_s &&
        dbPdf.splash_info_digest == instrucDigest
     puts "  Original unchanged; retaining existing splash version."
-    copyPatches(itemID, contentPfx, contentBucket)  # FIXME - remove this when s3 transition is complete
+    copyPatches(itemID, contentPfx)  # FIXME - remove this when s3 transition is complete
     return
   end
   puts "  Updating splash."
@@ -545,20 +543,20 @@ def convertPDF(itemID)
     # FIXME - remove this legacy stuff when s3 transition is complete
     if !isPending
       legacyPfx = getEnv("S3_PATCHES_PREFIX")
-      $s3Patches.object("#{legacyPfx}/linearized/#{itemID}").upload_file(linFile.path)
-      splashLinSize > 0 and $s3Patches.object("#{legacyPfx}/splash/#{itemID}").upload_file(splashLinFile.path)
+      $s3Bucket.object("#{legacyPfx}/linearized/#{itemID}").upload_file(linFile.path)
+      splashLinSize > 0 and $s3Bucket.object("#{legacyPfx}/splash/#{itemID}").upload_file(splashLinFile.path)
     end
 
     # New S3 location
     # Note 2019-02-24: It's important to use TempFile.path here - otherwise Ruby S3 SDK is ridiculously slow.
     # See https://stackoverflow.com/questions/48930354/awss3-put-object-very-slow-with-aws-sdk-ruby
-    contentBucket.object("#{contentPfx}/#{itemID}/#{itemID}_noSplash_#{calcNoSplashKey(itemID)}.pdf").
+    $s3Bucket.object("#{contentPfx}/#{itemID}/#{itemID}_noSplash_#{calcNoSplashKey(itemID)}.pdf").
       upload_file(linFile.path, { metadata: { sha256: calcSha256(linFile) },
                                   content_type: "application/pdf",
                                   storage_class: "INTELLIGENT_TIERING" })
 
     mainFile = splashLinSize > 0 ? splashLinFile : linFile
-    contentBucket.object("#{contentPfx}/#{itemID}/#{itemID}.pdf").
+    $s3Bucket.object("#{contentPfx}/#{itemID}/#{itemID}.pdf").
       upload_file(mainFile.path, { metadata: { sha256: calcSha256(mainFile) },
                                    content_type: "application/pdf",
                                    storage_class: "INTELLIGENT_TIERING" })
@@ -579,11 +577,11 @@ def convertPDF(itemID)
   rescue
     # If splashing fails, fall back and put the original file into S3 so we can still
     # access it from the front-end
-    contentBucket.object("#{contentPfx}/#{itemID}/#{itemID}.pdf").
+    $s3Bucket.object("#{contentPfx}/#{itemID}/#{itemID}.pdf").
       upload_file(origFile, { metadata: { sha256: calcSha256(origFile) },
                               content_type: "application/pdf",
                               storage_class: "INTELLIGENT_TIERING" })
-    contentBucket.object("#{contentPfx}/#{itemID}/#{itemID}_noSplash_#{calcNoSplashKey(itemID)}.pdf").
+    $s3Bucket.object("#{contentPfx}/#{itemID}/#{itemID}_noSplash_#{calcNoSplashKey(itemID)}.pdf").
       upload_file(origFile, { metadata: { sha256: calcSha256(origFile) },
                               content_type: "application/pdf",
                               storage_class: "INTELLIGENT_TIERING" })
