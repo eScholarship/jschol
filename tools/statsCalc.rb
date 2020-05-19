@@ -705,13 +705,13 @@ def identifyEvent(srcName, event)
 
   # Examine the path to figure out if it's a hit we're interested in
   ark = attrs = nil
-  if event.path =~ %r{^(/dist/prd)?/content/(qt\w{8})/(qt\w{8}).pdf(.*)}
+  if event.path =~ %r{^(/dist/prd)?/content/(qt\w{8})/(qt\w{8})(_noSplash_\w+)?.pdf(.*)}
     # PDF downloads (they'll be /dist/prd/content on CloudFront, /content on ALB or jschol)
-    cf, ark, ark2, after = $1, $2, $3, $4
+    cf, ark, ark2, nospl, after = $1, $2, $3, $4, $5
     if ark == ark2
-      attrs = after.include?("v=lg")     ? { hit: 1, dl: 1, vlg: 1 } :
-              after.include?("nosplash") ? { hit: 1, vpdf: 1 } :  # this is the pdf.js viewer
-                                           { hit: 1, dl: 1 }
+      attrs = after.include?("v=lg")                   ? { hit: 1, dl: 1, vlg: 1 } :
+              ((after||"")+(nospl||"")) =~ /nosplash/i ? { hit: 1, vpdf: 1 } :  # this is the pdf.js viewer
+                                                         { hit: 1, dl: 1 }
     end
   elsif event.path =~ %r{(/dist/prd)?/content/(qt\w{8})/supp/(.+)}
     # Supp file downloads
