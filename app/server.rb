@@ -58,7 +58,7 @@ def waitForSocks(host, port)
     retries == 0 and puts("Waiting for SOCKS proxy to start.")
     retries += 1
     if retries == 60 # == 30 sec
-      puts "SOCKS proxy failed. Verify that 'ssh yourUsername@pub-jschol-dev.escholarship.org' works."
+      puts "SOCKS proxy failed. Verify that 'ssh yourUsername@pub-submit2-dev.escholarship.org' works."
       exit 1
     else
       sleep 0.5
@@ -78,9 +78,10 @@ def ensureConnect(envPrefix)
                "database" => getEnv("#{envPrefix}_DATABASE"),
                "username" => getEnv("#{envPrefix}_USERNAME"),
                "password" => getEnv("#{envPrefix}_PASSWORD") }
-  if TCPSocket::socks_port
-    SocksMysql.new(dbConfig)
-  end
+  #TODO: make this optional, if we don't need socks for the db, don't try to use it
+  # if TCPSocket::socks_port
+  #   SocksMysql.new(dbConfig)
+  # end
   db = Sequel.connect(dbConfig)
   n = db.fetch("SHOW TABLE STATUS").all.length
   n > 0 or raise("Failed to connect to db.")
@@ -95,7 +96,10 @@ if ENV['SOCKS_PORT']
   waitForSocks("127.0.0.1", socksPort)
   TCPSocket::socks_server = "127.0.0.1"
   TCPSocket::socks_port = socksPort
-  require_relative 'socksMysql'
+  #Only use the socksMysql code if USE_SOCKS_FOR_MYSQL is true
+  if ENV['USE_SOCKS_FOR_MYSQL']
+    require_relative 'socksMysql'
+  end
 end
 puts "Connecting to eschol DB.    "
 DB = ensureConnect("ESCHOL_DB")

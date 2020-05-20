@@ -12,10 +12,12 @@ This app uses the following technology and features:
 * Automatic rebuilds using Gulp
 * LiveReload support so changes during development are reflected instantly in the browser
 * Isometric Javascript to provide server-side initial rendering of pages (for fast first load, and for better crawlability)
+* [Lando](https://lando.dev/) for bootstrapping a Docker-based development environment
 
 Description of files
 --------------------
 
+* `.lando.yml`: the configuration file for Lando
 * `Gemfile`: Lists of Ruby gems the app uses. Used by 'bundler' to download and install them locally.
 * `Gemfile.lock`: Copy of Gemfile created and managed by 'bundler'. Don't modify directly.
 * `README.md`: This file.
@@ -40,9 +42,27 @@ Description of files
 * `package.json`: List of Javascript packages needed on the server. Includes mainly Gulp and React, and their dependencies.
 * `setup.sh`: Sequence of commands to run bundler and node to download and install all the Ruby and Javascript modules the app needs.
 * `tools/`: Conversion and database maintenance tools.
+* `defaults.env`: default environment variable configuration for Lando
+* `local.env.example`: example file for customizing your Lando dev workspace's environment variables, copy to `local.env` and customize as appropriate
 
-Steps to get the app running on your local machine
---------------------------------------------------
+Steps to get the app running on your local machine, with Lando
+1. Make sure [Lando](https://lando.dev/) is installed
+ * Lando comes bundled with Docker Desktop, if you already have Docker Desktop installed, don't re-install it, just ensure you have the same version as what is bundled with Lando.
+2. Copy `local.env.example` to `local.env` and customize as appropriate 
+3. `lando poweroff` (defensively ensure no other Lando environments are running, probably not necessary, but a good habit)
+4. `lando rebuild` 
+5. When you see the big "Boomshakala" message from Lando, you're ready to go
+6. Browse to `http://localhost:18880` (or whatever port you've configured for `PUMA_PORT` in your `local.env` file)
+
+This Lando dev environment includes a local MySQL server, which can load MySQL dumps from dev, stg or prd. To load a dump file, run
+1. `lando db-import name-of-mysql-dump-file.gz`
+
+NOTE: if you do not have a dump file, ask Hardy, he can lend you a somewhat recent one. Or, you can rely on the SOCKS connection to use the db on one of our servers. Or you can use the VPN.
+
+
+
+Steps to get the app running on your local machine without Lando
+----------------------------------------------------------------
 1. Make sure these are installed:
  * bundler
  * ruby
