@@ -59,6 +59,23 @@ This Lando dev environment includes a local MySQL server, which can load MySQL d
 
 NOTE: if you do not have a dump file, ask Hardy, he can lend you a somewhat recent one. Or, you can rely on the SOCKS connection to use the db on one of our servers. Or you can use the VPN.
 
+Troubleshooting
+---------------
+Use the `lando logs -f` command to see the logs from the appserver, or `lando logs -s db -f` to see the logs from the local database (if you're using it).
+
+Run `lando` to see what other lando commands are available.
+
+Tooling
+-------
+* `lando bundle` Runs bundle commands on the Lando Jschol appserver
+* `lando npm` Runs npm commands on the Lando Jschol appserver
+* `lando ruby`  Runs ruby commands on the Lando Jschol appserver
+* `lando socks` Sets the socks proxy tunnel back up, if you have been too idle
+* `lando ssh` Drops into a shell on a service, runs commands
+* `lando start` Starts the Jschol app
+* `lando stop` Stops the Jschol app
+
+More [tooling](https://docs.lando.dev/config/tooling.html) can be added easily.
 
 
 Steps to get the app running on your local machine without Lando
