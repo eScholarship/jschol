@@ -78,10 +78,11 @@ def ensureConnect(envPrefix)
                "database" => getEnv("#{envPrefix}_DATABASE"),
                "username" => getEnv("#{envPrefix}_USERNAME"),
                "password" => getEnv("#{envPrefix}_PASSWORD") }
-  #TODO: make this optional, if we don't need socks for the db, don't try to use it
-  # if TCPSocket::socks_port
-  #   SocksMysql.new(dbConfig)
-  # end
+  if ENV['USE_SOCKS_FOR_MYSQL']
+    if TCPSocket::socks_port
+      SocksMysql.new(dbConfig)
+    end
+  end
   db = Sequel.connect(dbConfig)
   n = db.fetch("SHOW TABLE STATUS").all.length
   n > 0 or raise("Failed to connect to db.")
