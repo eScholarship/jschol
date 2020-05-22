@@ -98,7 +98,7 @@ if ENV['SOCKS_PORT']
   TCPSocket::socks_server = "127.0.0.1"
   TCPSocket::socks_port = socksPort
   #Only use the socksMysql code if USE_SOCKS_FOR_MYSQL is true
-  if ENV['USE_SOCKS_FOR_MYSQL']
+  if ENV['USE_SOCKS_FOR_MYSQL'].to_s.downcase == 'true'
     require_relative 'socksMysql'
   end
 end
