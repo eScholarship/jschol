@@ -5,7 +5,6 @@ env_file:
   - defaults.env
   - local.env
 keys:
-  - blank-id
 services:
   appserver:
     type: ruby:2.5

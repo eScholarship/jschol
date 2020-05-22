@@ -43,3 +43,4 @@ node_modules
 *.out
 *.sql_log
 local.env
+.lando.local.yml
