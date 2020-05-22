@@ -44,6 +44,7 @@ Description of files
 * `tools/`: Conversion and database maintenance tools.
 * `defaults.env`: default environment variable configuration for Lando
 * `local.env.example`: example file for customizing your Lando dev workspace's environment variables, copy to `local.env` and customize as appropriate
+* `.lando.local.yml.example`: example file for customizing your Lando dev workspace's Lando configuration, copy to `.lando.local.yml` and customize as appropriate
 
 Steps to get the app running on your local machine, with Lando
 1. Make sure [Lando](https://lando.dev/) is installed

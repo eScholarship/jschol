@@ -1,0 +1,8 @@
+---
+# .lando.local.yml is a file you can use to override and add to the main project .lando.yml configuration
+# More documentation here: https://docs.lando.dev/config/lando.html#override-file
+# In order to use this file, copy it to .lando.local.yml, and customize as desired
+
+keys:
+  - a_specific_key_filename
+
