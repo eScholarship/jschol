@@ -1,0 +1,95 @@
+---
+name: jschol
+# CAREFUL with this env file, Docker env files don't support interpolation!
+env_file:
+  - defaults.env
+  - local.env
+keys:
+  - blank-id
+services:
+  appserver:
+    type: ruby:2.5
+    ports:
+      - '18880:18880'
+    overrides:
+      volumes:
+        type: bind
+        source: /run/host-services/ssh-auth.sock
+        target: /run/host-services/ssh-auth.sock
+      environment:
+        SSH_AUTH_SOCK: /run/host-services/ssh-auth.sock
+        GEM_HOME: "/usr/local/bundle"
+        PATH: "/usr/local/bundle/bin:/usr/local/bundle/gems/bin:${PATH}"
+      ports:
+        - '18880:18880'
+    command:
+        - /app/gulp
+    build_as_root:
+        - apt-get update -qq
+        - apt-get install -y apt-transport-https
+        - apt-get install -y vim net-tools
+        - curl -sL https://deb.nodesource.com/setup_10.x | bash -
+        - curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
+        - echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
+        - apt-get update -qq
+        - apt-get autoclean
+        - apt-get install mariadb-client build-essential libpq-dev yarn nodejs -y
+        - gem install bundler
+        - apt-get autoclean
+    build:
+        # - gem install bundler
+        - cd /app && /app/setup.sh
+    run:
+    run_as_root:
+    moreHttpPorts:
+      - '18880'
+    scanner: true
+
+  db:
+    type: mysql
+    portforward: true
+    creds:
+      user: escholdba
+      password: hard2guess
+      database: local_eschol_prod
+
+tooling:
+  mysql:
+    service: db
+    cmd: mysql -u root
+  'db-import <file>':
+    service: :host
+    description: Imports a dump file into a database service
+    cmd: /helpers/sql-import.sh
+    options:
+      host:
+        description: The database service to use
+        default: db
+        alias:
+          - h
+      no-wipe:
+        description: Do not destroy the existing database before an import
+        boolean: true
+  npm:
+    service: appserver
+    description: Runs npm commands on the Lando Jschol appserver
+  yarn:
+    service: appserver
+    description: Runs yarn commands on the Lando Jschol appserver
+  ruby:
+    service: appserver
+    description: Runs ruby commands on the Lando Jschol appserver
+  bundle:
+    service: appserver
+    description: Runs bundle commands on the Lando Jschol appserver
+  test:
+    service: appserver
+    cmd: ruby tools/maybeSocks.rb && ruby test/quick.rb
+    description: Runs the quicktest suite on the Lando Jschol appserver
+  socks:
+    service: appserver
+    cmd:
+      - ruby tools/maybeSocks.rb
+      - echo "==> running netstat -tunl to confirm SOCKS_PORT is open <=="
+      - netstat -tunl | grep ${SOCKS_PORT}
+    description: Sets the socks proxy tunnel back up, if you have been too idle

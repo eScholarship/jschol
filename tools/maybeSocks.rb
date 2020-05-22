@@ -32,7 +32,9 @@ user = ENV['SOCKS_USER'] ? "#{ENV['SOCKS_USER']}@" : ""
 keypath = ENV['SOCKS_KEYPATH'] ? "-i #{ENV['SOCKS_KEYPATH']} " : ""
 cmd = "ssh -4 #{keypath}-N -D #{port} " +
       "-F /dev/null " +
-      "#{bastion ? "-o ProxyCommand='ssh -C -W %h:%p -o ServerAliveInterval=60 -o StrictHostKeyChecking=no -o CheckHostIP=no #{bastionPort ? "-p #{bastionPort}" : ""} #{user}bastion2.cdlib.org' " : ""}" +
+      "-o ServerAliveInterval=60 " +
+      "-o ServerAliveCountMax=30 " +
+      "#{bastion ? "-o ProxyCommand='ssh -C -W %h:%p -o ServerAliveInterval=60 -o ServerAliveCountMax=30 -o StrictHostKeyChecking=no -o CheckHostIP=no #{bastionPort ? "-p #{bastionPort}" : ""} #{user}bastion2.cdlib.org' " : ""}" +
       "-o StrictHostKeyChecking=no " +
       "-o CheckHostIP=no " +
       "#{user}#{targetMachine}"
