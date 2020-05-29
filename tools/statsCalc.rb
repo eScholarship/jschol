@@ -498,6 +498,7 @@ def gatherItemCategories
   # Springer and Biomed are easy to identify
   Item.where(source: 'springer').select_map(:id).each { |item| itemCategory[item.to_s] ||= "postprints:Springer" }
   Item.where(source: 'biomed').select_map(:id).each { |item| itemCategory[item.to_s] ||= "postprints:BioMed" }
+  Item.where(Sequel.lit("attrs->'$.submitter' = 'auto@EuroPMC.uc'")).select_map(:id).each { |item| itemCategory[item.to_s] ||= "postprints:EuroPMCauto" }
 
   # All items from LBNL are considered postprints
   UnitItem.where(unit_id: 'lbnl').distinct.select_map(:item_id).each { |item|
