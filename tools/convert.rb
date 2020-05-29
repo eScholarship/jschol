@@ -1353,15 +1353,13 @@ end
 
 ###################################################################################################
 def collectArchiveMeta(itemID, rawMetaXML)
-  return {}
-  # 2020-05-18 MH: Disabling for now to speed up controller
-  ##return ArchiveMeta.new { |record|
-  ##  record[:item_id] = itemID
-  ##  record[:meta] = rawMetaXML || reformatXML(arkToFile(itemID, "meta/base.meta.xml"))
-  ##  record[:feed] = reformatXML(arkToFile(itemID, "meta/base.feed.xml"))
-  ##  record[:cookie] = reformatXML(arkToFile(itemID, "meta/base.cookie.xml"))
-  ##  record[:history] = reformatXML(arkToFile(itemID, "meta/base.history.xml"))
-  ##}
+  return ArchiveMeta.new { |record|
+    record[:item_id] = itemID
+    record[:meta] = rawMetaXML || reformatXML(arkToFile(itemID, "meta/base.meta.xml"))
+    record[:feed] = reformatXML(arkToFile(itemID, "meta/base.feed.xml"))
+    record[:cookie] = reformatXML(arkToFile(itemID, "meta/base.cookie.xml"))
+    record[:history] = reformatXML(arkToFile(itemID, "meta/base.history.xml"))
+  }
 end
 
 ###################################################################################################
@@ -1937,11 +1935,6 @@ def convertAllItems(arks)
 
   cacheAllUnits()
 
-  # Make sure to do this critical work periodically
-  if !$preindexMode
-    genAllStruct()
-  end
-
   # Fire up threads for doing the work in parallel
   Thread.abort_on_exception = true
   indexThread = Thread.new { indexAllItems }
@@ -1955,12 +1948,6 @@ def convertAllItems(arks)
 
   # Wait for everything to work its way through the queues.
   indexThread.join
-  if !$testMode && !$preindexMode && !($hostname =~ /-dev|-stg/)
-    # 2020-05-18 MCH: This step is taking a long time, and is only needed for stats, so let's
-    # put it off to try and chug through our conversion queue.
-    puts "FIXME: Skipping connectAuthors"
-    ##connectAuthors  # make sure all newly converted (or reconverted) items have author->people links
-  end
   batchThread.join
 
   $nTotal > 0 and scrubSectionsAndIssues() # one final scrub
@@ -2203,6 +2190,20 @@ def genAllStruct
 end
 
 ###################################################################################################
+# One-time pass to re-populate the archive_meta table after stopped updates to it
+def fixArchiveMeta
+  nDone = 0
+  allIDs = Item.where(Sequel.lit("updated >= '2020-05-18'")).select_map(:id)
+  allIDs.sort.each_slice(100) { |ids|
+    DB.transaction {
+      ids.each { |itemID| collectArchiveMeta(itemID, nil).save }
+    }
+    nDone += ids.length
+    puts "#{nDone}/#{allIDs.length} done."
+  }
+end
+
+###################################################################################################
 # Main action begins here
 
 startTime = Time.now
@@ -2223,8 +2224,16 @@ case ARGV[0]
   when "--info"
     indexInfo()
   when "--genAllStruct"
+    # run periodically to make sure old eschol4 things work properly
     cacheAllUnits
     genAllStruct
+  when "--connectAuthors"
+    # run periodically to make sure all newly converted (or reconverted) items have author->people links
+    # (needed for author stats to work)
+    connectAuthors
+  when "--fixArchiveMeta"
+    # run once to fix out-of-date meta; will be kept up to date after this.
+    fixArchiveMeta
   else
     STDERR.puts "Usage: #{__FILE__} {--items arks...|--info|--genAllStruct} [--preindex] [--test] [--force] [--noCloudSearch]"
     exit 1
