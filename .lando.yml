@@ -11,12 +11,16 @@ services:
     ports:
       - '18880:18880'
     overrides:
+
+
+      # Pass SSH auth.
       volumes:
-        type: bind
-        source: /run/host-services/ssh-auth.sock
-        target: /run/host-services/ssh-auth.sock
+        - type: bind
+          # MacOS specific paths, source value below needs to be chaned to "$SSH_AUTH_SOCK" for Linux:
+          source: /run/host-services/ssh-auth.sock
+          target: /run/host-services/ssh-auth.sock
       environment:
-        SSH_AUTH_SOCK: /run/host-services/ssh-auth.sock
+        SSH_AUTH_SOCK: "/run/host-services/ssh-auth.sock"
         GEM_HOME: "/usr/local/bundle"
         PATH: "/usr/local/bundle/bin:/usr/local/bundle/gems/bin:${PATH}"
       ports:
@@ -35,11 +39,17 @@ services:
         - apt-get install mariadb-client build-essential libpq-dev yarn nodejs -y
         - gem install bundler
         - apt-get autoclean
+        - chown www-data:www-data /run/host-services/ssh-auth.sock
+        - chmod g+w /run/host-services/ssh-auth.sock
+
     build:
         # - gem install bundler
         - cd /app && /app/setup.sh
     run:
     run_as_root:
+        - chown www-data:www-data /run/host-services/ssh-auth.sock
+        - chmod g+w /run/host-services/ssh-auth.sock
+
     moreHttpPorts:
       - '18880'
     scanner: true
