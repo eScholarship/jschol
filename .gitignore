@@ -42,3 +42,5 @@ node_modules
 .mysqlProxySock
 *.out
 *.sql_log
+local.env
+.lando.local.yml
