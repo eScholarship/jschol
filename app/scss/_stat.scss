@@ -3,6 +3,7 @@
 .o-stat { // This parent element not used within carousels
   display: flex;
   justify-content: space-around;
+  justify-content: space-evenly;
 }
 
 %o-stat__number {
