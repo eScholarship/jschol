@@ -237,6 +237,14 @@
   
 }
 
+.c-homesection__3-description {
+
+  @include bp(screen3) {
+    align-self: center;
+  }
+
+}
+
 .c-homesection__3-link {
   @extend %c-homesection__link;
 }
