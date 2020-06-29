@@ -9,11 +9,11 @@ class JournalGridComp extends React.Component {
   render() {
     return (
       <div className="c-journalgrid">
-        <Link to="/uc/ucla_spanport_mester"><LazyImageComp src={MEDIA_PATH + 'homecover_mester.png'} alt="Mester journal" /></Link>
-        <Link to="/uc/gseis_interactions"><LazyImageComp src={MEDIA_PATH + 'homecover_interactions.png'} alt="InterActions: UCLA Journal of Education and Information Studies Journal"/></Link>
-        <Link to="/uc/ucb_crp_bpj"><LazyImageComp src={MEDIA_PATH + 'homecover_bpj.jpg'} alt="Berkeley Planning Journal"/></Link>
-        <Link to="/uc/fb"><LazyImageComp src={MEDIA_PATH + 'homecover_fb.png'} alt="Frontiers of Biogeography Journal"/></Link>
-        <Link to="/uc/ucsb_soc_jcmrs"><LazyImageComp src={MEDIA_PATH + 'homecover_jcmrs.png'} alt="Journal of Critical Mixed Race Studies Journal"/></Link>
+        <Link to="/uc/anrcs_californiaagriculture"><LazyImageComp src={MEDIA_PATH + 'homecover_CalAg.png'} alt="California Agriculture journal" /></Link>
+        <Link to="/uc/psf"><LazyImageComp src={MEDIA_PATH + 'homecover_psf.png'} alt="Parks Stewardship Forum"/></Link>
+        <Link to="/uc/our_bsj"><LazyImageComp src={MEDIA_PATH + 'homecover_glitch.png'} alt="Berkeley Scientific Journal"/></Link>
+        <Link to="/uc/alephucla"><LazyImageComp src={MEDIA_PATH + 'homecover_aleph.png'} alt="Aleph, UCLA Undergraduate Research Journal"/></Link>
+        <Link to="/uc/italian_ucla_carteitaliane"><LazyImageComp src={MEDIA_PATH + 'homecover_carteItaliane.png'} alt="Carte Italiane"/></Link>
         <div className="c-journalgrid__all">
           <Link to="/journals">View all <strong>{this.props.count_journals}</strong> current journals</Link>
         </div>
