@@ -1,0 +1,8 @@
+---
+
+AllCops:
+  DisabledByDefault: true
+  TargetRubyVersion: 2.5
+  Exclude:
+    - 'gems/**/*'
+    - 'node_modules/**/*'
