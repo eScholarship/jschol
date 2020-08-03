@@ -11,13 +11,12 @@ services:
     ports:
       - '18880:18880'
     overrides:
-
-
       # Pass SSH auth.
       volumes:
         - type: bind
-          # MacOS specific paths, source value below needs to be chaned to "$SSH_AUTH_SOCK" for Linux:
-          source: /run/host-services/ssh-auth.sock
+          # Linux user: add 'export LANDO_SSH_AUTH_SOCK="${SSH_AUTH_SOCK}' at the end of your ~/.bashrc:
+          # Mac user: MacOS specific path is here as the variable default value, nothing to do.
+          source: "${LANDO_SSH_AUTH_SOCK:-/run/host-services/ssh-auth.sock}"
           target: /run/host-services/ssh-auth.sock
       environment:
         SSH_AUTH_SOCK: "/run/host-services/ssh-auth.sock"
@@ -26,29 +25,29 @@ services:
       ports:
         - '18880:18880'
     command:
-        - /app/gulp
+      - /app/gulp
     build_as_root:
-        - apt-get update -qq
-        - apt-get install -y apt-transport-https
-        - apt-get install -y vim net-tools
-        - curl -sL https://deb.nodesource.com/setup_10.x | bash -
-        - curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
-        - echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
-        - apt-get update -qq
-        - apt-get autoclean
-        - apt-get install mariadb-client build-essential libpq-dev yarn nodejs -y
-        - gem install bundler
-        - apt-get autoclean
-        - chown www-data:www-data /run/host-services/ssh-auth.sock
-        - chmod g+w /run/host-services/ssh-auth.sock
+      - apt-get update -qq
+      - apt-get install -y apt-transport-https
+      - apt-get install -y vim net-tools
+      - curl -sL https://deb.nodesource.com/setup_10.x | bash -
+      - curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
+      - echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
+      - apt-get update -qq
+      - apt-get autoclean
+      - apt-get install mariadb-client build-essential libpq-dev yarn nodejs -y
+      - gem install bundler
+      - apt-get autoclean
+      - chown www-data:www-data /run/host-services/ssh-auth.sock
+      - chmod g+w /run/host-services/ssh-auth.sock
 
     build:
-        # - gem install bundler
-        - cd /app && /app/setup.sh
+      # - gem install bundler
+      - cd /app && /app/setup.sh
     run:
     run_as_root:
-        - chown www-data:www-data /run/host-services/ssh-auth.sock
-        - chmod g+w /run/host-services/ssh-auth.sock
+      - chown www-data:www-data /run/host-services/ssh-auth.sock
+      - chmod g+w /run/host-services/ssh-auth.sock
 
     moreHttpPorts:
       - '18880'
@@ -61,6 +60,10 @@ services:
       user: escholdba
       password: hard2guess
       database: local_eschol_prod
+
+events:
+  post-start:
+    - appserver: test -e ~/.ssh/config || printf 'Host *\n  AddKeysToAgent yes\n' > ~/.ssh/config
 
 tooling:
   mysql:
@@ -102,3 +105,7 @@ tooling:
       - echo "==> running netstat -tunl to confirm SOCKS_PORT is open <=="
       - netstat -tunl | grep ${SOCKS_PORT}
     description: Sets the socks proxy tunnel back up, if you have been too idle
+  ssh-fix:
+    service: appserver
+    description: Fix ssh auth sock permission for MacOS users. Lando rebuild fixes the problem as well.
+    user: root
