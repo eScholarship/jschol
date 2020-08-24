@@ -1827,7 +1827,7 @@ def createPersonArk(name, email)
   # Determine the EZID metadata
   who = email ? "#{name} <#{email}>" : name
   meta = { 'erc.what' => normalizeERC("Internal eScholarship agent ID"),
-           'erc.who'  => "#{normalizeERC(name)} <#{normalizeERC(email)}>",
+           'erc.who'  => "#{normalizeERC(name)}",
            'erc.when' => DateTime.now.iso8601 }
 
   # Mint it the new ID
