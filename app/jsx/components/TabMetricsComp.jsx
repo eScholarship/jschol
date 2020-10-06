@@ -199,7 +199,7 @@ class TabMetricsComp extends React.Component {
            [<h2 key="0" className="o-heading3">Online Attention</h2>,
             <p key="1">
               <span className="altmetric-embed" data-pmid={pmid} data-doi={this.props.attrs.doi} data-badge-type="donut" data-badge-details="right" data-hide-no-mentions="true"></span></p>,
-            <div key="2" className={this.state.altmetrics_nodata ? "c-tabcontent-reveal" : "c-tabcontent-hide"}>AltMetric&reg; data unavailable</div>,
+            <div key="2" className={this.state.altmetrics_nodata ? "c-tabcontent-reveal" : "c-tabcontent-hide"}>AltMetric&reg; data is unavailable for this item.</div>,
             <p key="3"><br/></p>]
           }
           {(this.props.attrs.doi || pmid) &&
@@ -208,7 +208,7 @@ class TabMetricsComp extends React.Component {
               <span className="__dimensions_badge_embed__" data-pmid={pmid} data-doi={this.props.attrs.doi} data-hide-zero-citations="true" data-legend="always" data-style="small_circle"></span>
 
             </p>,
-            <div key="2" className={this.state.dimensions_nodata ? "c-tabcontent-reveal" : "c-tabcontent-hide"}>Citation data unavailable</div>]
+            <div key="2" className={this.state.dimensions_nodata ? "c-tabcontent-reveal" : "c-tabcontent-hide"}>Citation data is unavailable for this item.</div>]
           }
           </div>
         </div>
