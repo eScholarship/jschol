@@ -133,7 +133,6 @@ $nUnchanged = 0
 $nProcessed = 0
 $nTotal = 0
 
-$scrubCount = 0
 
 $discTbl = {"1540" => "Life Sciences",
             "3566" => "Medicine and Health Sciences",
@@ -1773,12 +1772,7 @@ def processBatch(batch)
     end
   }
 
-  # Periodically scrub out orphaned sections and issues
-  $scrubCount += 1
-  if $scrubCount > 5
-    scrubSectionsAndIssues()
-    $scrubCount = 0
-  end
+  scrubSectionsAndIssues()
 
   # Update status
   $nProcessed += batch[:items].size
