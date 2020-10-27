@@ -36,6 +36,8 @@ export default class MetaTagsComp extends React.Component
         <meta name="twitter:widgets:autoload" content="off" />
         <meta name="twitter:dnt" content="on" />
         <meta name="twitter:widgets:csp" content="on" />
+        {/* Temporary verification string for GSuite */}
+        <meta name="google-site-verification" content="lQbRRf0vgPqMbnbCsgELjAjIIyJjiIWo917M7hBshvI" />
 
         { p.abstract && <meta id="meta-abstract" name="citation_abstract" content={abstract} /> }
         {descrip_on && <meta id="meta-description" name="description" content={descrip} /> }
