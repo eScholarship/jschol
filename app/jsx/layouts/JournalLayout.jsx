@@ -145,7 +145,7 @@ class JournalLayout extends React.Component {
             <IssueWrapperComp issue={data.issue} issues={data.issuesSubNav} display={data.display} />
           :
             <section className="o-columnbox1">
-              <p>Currently no issues to display
+              <p>This journal's first issue is coming soon.
               <br/> <br/> <br/> <br/> </p>
             </section>
           }
