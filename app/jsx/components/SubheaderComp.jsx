@@ -65,7 +65,7 @@ class SubheaderComp extends React.Component {
     //   b) Opened by the 'Submit' or 'Deposit' button:
     //      i) Triggered by a journal, opened by the 'Submit' button  - OR -
     //     ii) Used when a unit's 'directSubmitURL' value is present
-    //    iii) Used for a campus/unit/series when its 'directSubmit' value is set to disabled/moribund. 
+    //    iii) Used for a campus/unit/series when its 'directSubmit' value is set to disabled/moribund.
     //     Right now, this component also handles a directSubmitURL if one is present
     //     (Presently the directSubmitURL only exists for journals).
 
@@ -97,13 +97,16 @@ class SubheaderComp extends React.Component {
                           parentSelector={()=>$('#wizardModalBase')[0]}
                           onCancel={e=>this.closeWizardModal(e)}
                           header="Manage Submissions"
-                          type={unit.type} unit_id={unit.id} 
+                          type={unit.type} unit_id={unit.id}
                           directSubmitURL_manage={directSubmitURL_manage} />)
     return (
       <div className="c-subheader">
-        <CampusSelectorComp campusID={h.campusID}
-                            campusName={h.campusName}
-                            campuses={h.campuses} />
+        {/* KLUDGE ALERT: drop the campus selector for combinatorial_theory, as per Pivotal story 176017264 */}
+        {this.props.unit.id != 'combinatorial_theory' &&
+          <CampusSelectorComp campusID={h.campusID}
+                              campusName={h.campusName}
+                              campuses={h.campuses} />
+        }
         <Link to={"/uc/"+banner_url} className={banner_class}>
           <h1>{banner_title}</h1>
         {/* h.logo.width and h.logo.height not necessary here says Joel the CSS wiz */}
