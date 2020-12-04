@@ -40,11 +40,11 @@ class UnitPage extends PageBase {
   // will likely at some point want to move these (search, home, pages) to different extensions of PageBase,
   // as all kinds of CMS-y stuff will live here, though perhaps not, to capitalize on React's
   // diff-ing of pages - all these different pages have quite a few of the same components:
-  // header, footer, nav, sidebar. 
-  
+  // header, footer, nav, sidebar.
+
   // [********** AW - 3/15/17 **********]
   // TODO [UNIT-CONTENT-AJAX-ISSUE]: need to separate these into different PageBase extensions
-  // React tries to render different content components 
+  // React tries to render different content components
   // (ie - switch between DeparmentLayout and Series Layout or UnitSearchLayout)
   // before the AJAX call for the different content has returned and then there are lots of issues!
 
@@ -65,10 +65,10 @@ class UnitPage extends PageBase {
   }
 
   // [********** AMY NOTES 3/15/17 **********]
-  // TODO: each of the content layouts currently include the sidebars, 
+  // TODO: each of the content layouts currently include the sidebars,
   // but this should get stripped out and handled here in UnitPage
   // TODO [UNIT-CONTENT-AJAX-ISSUE]: handle the AJAX issue described above
-  renderData(data) { 
+  renderData(data) {
     let sidebar = <SidebarComp data={data.sidebar}/>
     let title = data.unit.name
     let contentLayout
@@ -135,9 +135,12 @@ class UnitPage extends PageBase {
           : <Header2Comp type={data.unit.type} unitID={data.unit.id} />
         }
         { data.unit.type != "root" && <SubheaderComp unit={data.unit} header={data.header} /> }
-        <NavBarComp 
+        <NavBarComp
           navBar={data.header.nav_bar} unit={data.unit} socialProps={data.header.social} />
-        <BreadcrumbComp array={data.header.breadcrumb} />
+        {/* KLUDGE ALERT: drop the breadcrumb for combinatorial_theory, as per Pivotal story 176017264 */}
+        {data.unit.id != 'combinatorial_theory' &&
+          <BreadcrumbComp array={data.header.breadcrumb} />
+        }
         {contentLayout}
       </div>
     )
