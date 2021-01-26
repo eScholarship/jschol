@@ -2,7 +2,7 @@
 
 $table-border-size: 1px;
 
-.c-datatable, .c-datatable-nomaxheight {
+.c-datatable {
   max-height: 100vh;
   overflow: auto;
 
@@ -44,6 +44,8 @@ $table-border-size: 1px;
     td {
       text-align: right;
     }
+
+
 
     // ***** Table Borders, Background, and Sticky Behavior ***** //
 
@@ -136,9 +138,3 @@ $table-border-size: 1px;
   }
 
 }
-
-.c-datatable-nomaxheight {
-  max-height: none;
-}
-
-

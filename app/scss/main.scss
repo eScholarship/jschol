@@ -6,19 +6,6 @@
 @import 'variables';
 @import 'utilities';
 
-// ***** Added to jschol (not in eschol-ui) ***** //
-@import '../node_modules/flickity/dist/flickity.css';
-@import '../node_modules/trumbowyg/dist/ui/trumbowyg.css';
-@import '../node_modules/react-sortable-tree/style.css';
-@import 'adminbar';
-@import 'drawer';
-@import 'editable';
-@import 'eschol_pdf_viewer';
-@import 'issueConfig';
-@import 'redirectConfig';
-@import 'statsReports';
-@import 'widgetselector';
-
 // ***** Objects ***** //
 
 @import 'alert';
@@ -35,17 +22,20 @@
 // ***** Components ***** //
 
 @import 'authorlist';
+@import 'backgroundcolorpicker';
 @import 'breadcrumb';
 @import 'campuscarouselframe';
 @import 'campushero';
 @import 'campussearch';
 @import 'checkbox';
+@import 'checkcontrast';
 @import 'clientmarkup';
 @import 'columns';
 @import 'datatable';
 @import 'daterange';
 @import 'descriptionlist';
 @import 'download';
+@import 'elementcolorpicker';
 @import 'export';
 @import 'facetbox';
 @import 'filter';
@@ -91,9 +81,11 @@
 @import 'skipnav';
 @import 'sort';
 @import 'sortpagination';
+@import 'socialfeed';
 @import 'socialicons';
 @import 'statcarousel';
 @import 'subheader';
+@import 'subheadercontrols';
 @import 'tabcontent';
 @import 'tabs';
 @import 'teaser';

@@ -20,13 +20,13 @@ $spacing-base: 5px;
 $spacing-sm: 10px;
 $spacing-md: 20px;
 $spacing-lg: 30px;
-$spacing-body: $spacing-sm;
 $spacing-xl: 50px;
+$spacing-body: $spacing-sm;
 
 // ***** General ***** //
 
-$box-shadow1: 5px 5px 15px lighten($color-dark-gray, 30%);
-$box-shadow2: 2px 2px 2px lighten($color-dark-gray, 30%);
+$box-shadow1: 5px 5px 15px rgba(0, 0, 0, 0.3);
+$box-shadow2: 2px 2px 2px rgba(0, 0, 0, 0.3);
 $column-width: 28%;
 $element-height: 32px;
 $pointer-size-coarse: 2.8rem;
@@ -47,4 +47,4 @@ $bgreen: 1px solid #080;
 
 // ##### Remote Path for Static Media Samples ##### //
 
-$media-path: '/images/';
+$media-path: 'https://submit.escholarship.org/jschol_static/images/';
