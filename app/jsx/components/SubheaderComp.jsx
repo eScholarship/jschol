@@ -101,12 +101,6 @@ class SubheaderComp extends React.Component {
                           directSubmitURL_manage={directSubmitURL_manage} />)
     return (
       <div className="c-subheader">
-        {/* KLUDGE ALERT: drop the campus selector for combinatorial_theory, as per Pivotal story 176017264 */}
-        {this.props.unit.id != 'combinatorial_theory' &&
-          <CampusSelectorComp campusID={h.campusID}
-                              campusName={h.campusName}
-                              campuses={h.campuses} />
-        }
         <Link to={"/uc/"+banner_url} className={banner_class}>
           <h1>{banner_title}</h1>
         {/* h.logo.width and h.logo.height not necessary here says Joel the CSS wiz */}

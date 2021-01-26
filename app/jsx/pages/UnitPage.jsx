@@ -137,10 +137,7 @@ class UnitPage extends PageBase {
         { data.unit.type != "root" && <SubheaderComp unit={data.unit} header={data.header} /> }
         <NavBarComp
           navBar={data.header.nav_bar} unit={data.unit} socialProps={data.header.social} />
-        {/* KLUDGE ALERT: drop the breadcrumb for combinatorial_theory, as per Pivotal story 176017264 */}
-        {data.unit.id != 'combinatorial_theory' &&
-          <BreadcrumbComp array={data.header.breadcrumb} />
-        }
+        <BreadcrumbComp array={data.header.breadcrumb} />
         {contentLayout}
       </div>
     )
