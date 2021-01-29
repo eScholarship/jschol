@@ -366,36 +366,6 @@ def copyContentFile(itemID, oldObj, newObj)
   end
 end
 
-###################################################################################################
-# Legacy only - copy from old patches location to new content/preview location
-def copyPatches(itemID, contentPfx)
-  legacyPfx = getEnv("S3_PATCHES_PREFIX")
-  oldLin = $s3Bucket.object("#{legacyPfx}/linearized/#{itemID}")
-  oldSplash = $s3Bucket.object("#{legacyPfx}/splash/#{itemID}")
-
-  noSplashKey = calcNoSplashKey(itemID)
-  newLin = $s3Bucket.object("#{contentPfx}/#{itemID}/#{itemID}_noSplash_#{noSplashKey}.pdf")
-  newSplash = $s3Bucket.object("#{contentPfx}/#{itemID}/#{itemID}.pdf")
-
-  if oldLin.exists? && (!newLin.exists? ||
-                        newLin.content_length != oldLin.content_length ||
-                        newLin.content_type != "application/pdf")
-    puts "  Backfill: copying #{oldLin.key} to #{newLin.key}"
-    copyContentFile(itemID, oldLin, newLin)
-  end
-
-  if oldSplash.exists? && (!newSplash.exists? ||
-                           newSplash.content_length != oldSplash.content_length ||
-                           newSplash.content_type != "application/pdf")
-    puts "  Backfill: copying #{oldSplash.key} to #{newSplash.key}"
-    copyContentFile(itemID, oldSplash, newSplash)
-  elsif !oldSplash.exists? && oldLin.exists? && (!newSplash.exists? ||
-                                                 newSplash.content_length != oldLin.content_length ||
-                                                 newSplash.content_type != "application/pdf")
-    puts "  Backfill: copying #{oldLin.key} to #{newSplash.key}."
-    copyContentFile(itemID, oldLin, newSplash)
-  end
-end
 
 ###################################################################################################
 # Move pending PDF files to their published location
@@ -408,17 +378,6 @@ def movePendingFiles(itemID)
 
   # If there's no preview file to move, we have nothing to do
   pvwLin.exists? or return
-
-  # Legacy files - remove after transition
-  legacyPfx = getEnv("S3_PATCHES_PREFIX")
-  if pvwSplash.exists?
-    oldSplash = $s3Bucket.object("#{legacyPfx}/splash/#{itemID}")
-    puts "  movePending: copying #{pvwSplash.key} to #{oldSplash.key}"
-    copyContentFile(itemID, pvwSplash, oldSplash)
-  end
-  oldLin = $s3Bucket.object("#{legacyPfx}/linearized/#{itemID}")
-  puts "  movePending: copying #{pvwLin.key} to #{oldLin.key}"
-  copyContentFile(itemID, pvwLin, oldLin)
 
   # Move the preview splash file, if present
   contentPfx = getEnv("S3_CONTENT_PREFIX")
@@ -447,13 +406,6 @@ def deleteContentFiles(itemID)
   pvwLin.exists? and pvwLin.delete
   pvwSplash = $s3Bucket.object("#{pvwPfx}/#{itemID}/#{itemID}.pdf")
   pvwSplash.exists? and pvwSplash.delete
-
-  # Legacy files - get rid of this code after transition
-  legacyPfx = getEnv("S3_PATCHES_PREFIX")
-  oldSplash = $s3Bucket.object("#{legacyPfx}/splash/#{itemID}")
-  oldSplash.exists? and oldSplash.delete
-  oldLin = $s3Bucket.object("#{legacyPfx}/linearized/#{itemID}")
-  oldLin.exists? and oldLin.delete
 
   # Remove the published files if present
   contentPfx = getEnv("S3_CONTENT_PREFIX")
@@ -508,7 +460,7 @@ def convertPDF(itemID)
        dbPdf.orig_timestamp.to_s == origTimestamp.to_s &&
        dbPdf.splash_info_digest == instrucDigest
     puts "  Original unchanged; retaining existing splash version."
-    copyPatches(itemID, contentPfx)  # FIXME - remove this when s3 transition is complete
+    #copyPatches(itemID, contentPfx)  # FIXME - remove this when s3 transition is complete
     return
   end
   puts "  Updating splash."
@@ -537,15 +489,6 @@ def convertPDF(itemID)
       end
     end
 
-    # Legacy S3 location
-    # Note 2019-02-24: It's important to use TempFile.path here - otherwise Ruby S3 SDK is ridiculously slow.
-    # See https://stackoverflow.com/questions/48930354/awss3-put-object-very-slow-with-aws-sdk-ruby
-    # FIXME - remove this legacy stuff when s3 transition is complete
-    if !isPending
-      legacyPfx = getEnv("S3_PATCHES_PREFIX")
-      $s3Bucket.object("#{legacyPfx}/linearized/#{itemID}").upload_file(linFile.path)
-      splashLinSize > 0 and $s3Bucket.object("#{legacyPfx}/splash/#{itemID}").upload_file(splashLinFile.path)
-    end
 
     # New S3 location
     # Note 2019-02-24: It's important to use TempFile.path here - otherwise Ruby S3 SDK is ridiculously slow.
