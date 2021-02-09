@@ -10,6 +10,7 @@ import WizardComp from './WizardComp.jsx'
 import WizardInertComp from './WizardInertComp.jsx'
 
 class SubheaderComp extends React.Component {
+
   static propTypes = {
     header: PropTypes.shape({
       campusID: PropTypes.string.isRequired,
@@ -42,6 +43,14 @@ class SubheaderComp extends React.Component {
   }
 
   render() {
+    let props=this.props
+    let stateStyles = `
+    c-subheader
+    ${props.bannerUrl ? "has-banner" : ""}
+    ${props.isWide ? "is-wide" : ""}
+    ${props.campusLabel ? "has-campus-label" : ""}
+    is-${props.elementColor ? props.elementColor : "black"}
+    `
     let unit = this.props.unit ? this.props.unit : { id: "unknown", type: "unknown", name: "unknown" }
     let h = this.props.header
     let banner_class = (h.logo && h.logo.is_banner) ? "c-subheader__banner--wide" : "c-subheader__banner--narrow"
@@ -100,14 +109,17 @@ class SubheaderComp extends React.Component {
                           type={unit.type} unit_id={unit.id}
                           directSubmitURL_manage={directSubmitURL_manage} />)
     return (
-      <div className="c-subheader">
-        <Link to={"/uc/"+banner_url} className={banner_class}>
+      <div>
+      <div className={stateStyles} style={{backgroundColor: props.backgroundColor}}>
+        <Link to={"/uc/"+banner_url} className="c-subheader__title">
           <h1>{banner_title}</h1>
+        </Link>
         {/* h.logo.width and h.logo.height not necessary here says Joel the CSS wiz */}
         {h.logo &&
-          <img src={h.logo.url} alt={unit.name} />
+          <Link to={"/uc/"+banner_url} className="c-subheader__banner" >
+            <img src={h.logo.url} alt={unit.name  + ' banner'} />
+          </Link>
         }
-        </Link>
         <div id="wizardModalBase" className="c-subheader__sidebar">
           {depositButton}
           {depositWizard}
@@ -115,6 +127,23 @@ class SubheaderComp extends React.Component {
           {manageWizard}
         </div>
       </div>
+
+
+    <div className={stateStyles} style={{backgroundColor: props.backgroundColor}}>
+      <a className="c-subheader__title" href={props.bannerLink}>
+        <h1>{props.unitTitle}</h1>
+      </a>
+      {props.bannerUrl && <a className="c-subheader__banner" href={props.bannerLink}>
+        <img src={props.bannerUrl} alt={props.unitTitle + ' banner'} />
+      </a> }
+      {props.campusLabel && <a className="c-subheader__campus" href={props.campusLink}>{props.campusLabel}
+      </a> }
+      <div className="c-subheader__buttons">
+        <button type="button">{props.isDept ? "Deposit" : "Submit"}</button>
+        <button type="button">Manage <span className="c-subheader__button-fragment">Submissions</span></button>
+      </div>
+    </div>
+    </div>
     )
   }
 }
