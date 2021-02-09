@@ -109,7 +109,6 @@ class SubheaderComp extends React.Component {
                           type={unit.type} unit_id={unit.id}
                           directSubmitURL_manage={directSubmitURL_manage} />)
     return (
-      <div>
       <div className={stateStyles} style={{backgroundColor: props.backgroundColor}}>
         <Link to={"/uc/"+banner_url} className="c-subheader__title">
           <h1>{banner_title}</h1>
@@ -120,30 +119,13 @@ class SubheaderComp extends React.Component {
             <img src={h.logo.url} alt={unit.name  + ' banner'} />
           </Link>
         }
-        <div id="wizardModalBase" className="c-subheader__sidebar">
+        <div id="wizardModalBase" className="c-subheader__buttons">
           {depositButton}
           {depositWizard}
           {manageButton}
           {manageWizard}
         </div>
       </div>
-
-
-    <div className={stateStyles} style={{backgroundColor: props.backgroundColor}}>
-      <a className="c-subheader__title" href={props.bannerLink}>
-        <h1>{props.unitTitle}</h1>
-      </a>
-      {props.bannerUrl && <a className="c-subheader__banner" href={props.bannerLink}>
-        <img src={props.bannerUrl} alt={props.unitTitle + ' banner'} />
-      </a> }
-      {props.campusLabel && <a className="c-subheader__campus" href={props.campusLink}>{props.campusLabel}
-      </a> }
-      <div className="c-subheader__buttons">
-        <button type="button">{props.isDept ? "Deposit" : "Submit"}</button>
-        <button type="button">Manage <span className="c-subheader__button-fragment">Submissions</span></button>
-      </div>
-    </div>
-    </div>
     )
   }
 }
