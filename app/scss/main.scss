@@ -6,6 +6,19 @@
 @import 'variables';
 @import 'utilities';
 
+// ***** Added to jschol (not in eschol-ui) ***** //
+@import '../node_modules/flickity/dist/flickity.css';
+@import '../node_modules/trumbowyg/dist/ui/trumbowyg.css';
+@import '../node_modules/react-sortable-tree/style.css';
+@import 'adminbar';
+@import 'drawer';
+@import 'editable';
+@import 'eschol_pdf_viewer';
+@import 'issueConfig';
+@import 'redirectConfig';
+@import 'statsReports';
+@import 'widgetselector';
+
 // ***** Objects ***** //
 
 @import 'alert';
