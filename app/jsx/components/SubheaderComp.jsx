@@ -44,16 +44,16 @@ class SubheaderComp extends React.Component {
 
   render() {
     let props=this.props
-    let stateStyles = `
-    c-subheader
-    ${props.bannerUrl ? "has-banner" : ""}
-    ${props.isWide ? "is-wide" : ""}
-    ${props.campusLabel ? "has-campus-label" : ""}
-    is-${props.elementColor ? props.elementColor : "black"}
-    `
-    let unit = this.props.unit ? this.props.unit : { id: "unknown", type: "unknown", name: "unknown" }
     let h = this.props.header
-    let banner_class = (h.logo && h.logo.is_banner) ? "c-subheader__banner--wide" : "c-subheader__banner--narrow"
+    let unit = this.props.unit ? this.props.unit : { id: "unknown", type: "unknown", name: "unknown" }
+    let showCampusLabel = h.campusID != "other" && unit.type != "campus"
+    let stateStyles = `
+      c-subheader
+      ${h.logo ? "has-banner" : ""}
+      ${(h.logo && h.logo.is_banner) ? "is-wide" : ""}
+      ${showCampusLabel ? "has-campus-label" : ""}
+      is-${h.elementColor ? h.elementColor : "black"}
+    `
     let [banner_url, banner_title] = unit.type.includes('series') ? [h.ancestorID, h.ancestorName] : [unit.id, unit.name]
     let directSubmitURL = h.directSubmitURL ? h.directSubmitURL : "https://submit.escholarship.org/subi/directSubmit?target="+unit.id
     let directSubmitURL_manage = h.directSubmitURL ? h.directSubmitURL : null
@@ -119,6 +119,7 @@ class SubheaderComp extends React.Component {
             <img src={h.logo.url} alt={unit.name  + ' banner'} />
           </Link>
         }
+        {showCampusLabel && <a className="c-subheader__campus" href={"/uc/"+h.campusID}>{h.campusName}</a> }
         <div id="wizardModalBase" className="c-subheader__buttons">
           {depositButton}
           {depositWizard}
