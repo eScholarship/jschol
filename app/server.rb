@@ -1384,7 +1384,7 @@ def getCampusesAsMenu(topItem="eScholarship at...")
 end
 
 def getCampusId(unit)
-  r = UnitHier.where(unit_id: unit.id).where(ancestor_unit: $activeCampuses.keys).first
+  r = UnitHier.where(unit_id: unit.id).where(ancestor_unit: $allCampuses.keys).first
   return (unit.type=='campus') ? unit.id : r ? r.ancestor_unit : 'root'
 end
 

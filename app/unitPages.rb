@@ -70,6 +70,9 @@ def traverseHierarchyUp(arr)
     return arr
   end
   unit = $unitsHash[$hierByUnit[arr[0][:id]][0].ancestor_unit]
+  if unit.id == 'other'
+    unit = $unitsHash['root']
+  end
   traverseHierarchyUp(arr.unshift(
     {name: unit.name, id: unit.id, url: unit.type == "root" ? "/" : "/uc/#{unit.id}"}))
 end

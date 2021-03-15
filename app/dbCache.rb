@@ -31,6 +31,12 @@ def getActiveCampuses
            order_by(:ordering).to_hash(:id)
 end
 
+def getAllCampuses
+  return Unit.join(:unit_hier, :unit_id=>:id).
+            filter(:ancestor_unit=>'root', :is_direct=>1).
+            order_by(:ordering).to_hash(:id)
+end
+
 def getOruAncestors
   return UnitHier.where(is_direct: true).where(ancestor: Unit.where(type: 'oru')).to_hash(:unit_id, :ancestor_unit)
 end
@@ -250,6 +256,7 @@ def fillCaches
       $hierByUnit = getHierByUnit
       $hierByAncestor = getHierByAncestor
       $activeCampuses = getActiveCampuses
+      $allCampuses = getAllCampuses
       $oruAncestors = getOruAncestors
       $campusJournals = getJournalsPerCampus    # Used for browse pages
 
