@@ -1,4 +1,8 @@
 import React from 'react'
+import BackgroundColorPickerComp from '../components/BackgroundColorPickerComp.jsx'
+import ElementColorPickerComp from '../components/ElementColorPickerComp.jsx'
+import CheckContrastComp from '../components/CheckContrastComp.jsx'
+import SubheaderComp from '../components/SubheaderComp.jsx'
 import WysiwygEditorComp from '../components/WysiwygEditorComp.jsx'
 import Contexts from '../contexts.jsx'
 import FormComp from '../components/FormComp.jsx'
@@ -82,6 +86,10 @@ class UnitProfileLayout extends React.Component {
          let disableEdit = !(cms.permissions && cms.permissions.super)
          let disableLogo = (this.props.unit.type.indexOf("series") >= 0) ||
                            (this.props.unit.type == "campus" && disableEdit)
+         let [bgColor, setBgColor] = ['#ffffff', function(){}]
+         let [elColor, setElColor] = ['black', function(){}]
+         let bgColorToCheck = bgColor.replace('#', '')
+         let elColorToCheck = elColor === 'black' ? '000000' : 'ffffff'
          return (
          <div>
            <h3>Unit Configuration</h3>
@@ -118,6 +126,14 @@ class UnitProfileLayout extends React.Component {
                          <br/><br/>
                        </div>
                       }
+                        <div className="c-subheadercontrols">
+                          <h1>Subheader Color Controls</h1>
+                          <BackgroundColorPickerComp textLabel="Subheader Background Color" backgroundColor={bgColor} onBackgroundColorChange={setBgColor} />
+                          <ElementColorPickerComp fieldsetLabel="Subheader Element Color" onElementColorChange={setElColor} isDefault={elColor} />
+                          <CheckContrastComp checkForeground={elColorToCheck} checkBackground={bgColorToCheck} />
+                          <h2>Sample Banner</h2>
+                          <SubheaderComp backgroundColor={bgColor} elementColor={elColor} bannerLink={'https://escholarship.org/uc/bling_formal_linguistics'} unitTitle={'Lorem Ipsum Consectetur Adipisicing Elit'} isWide={false} campusLabel={'UC Berkeley'} campusLink={'https://escholarship.org/uc/ucb'} />
+                        </div>
                      </div>
                    }
                    <br/>

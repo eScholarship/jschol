@@ -47,6 +47,7 @@ class SubheaderComp extends React.Component {
     let h = this.props.header
     let unit = this.props.unit ? this.props.unit : { id: "unknown", type: "unknown", name: "unknown" }
     console.log(this.props)
+    console.log(h)
     let showCampusLabel = h.campusID != "other" && unit.type != "campus"
     let stateStyles = `
       c-subheader
