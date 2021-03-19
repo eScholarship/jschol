@@ -132,7 +132,8 @@ class UnitProfileLayout extends React.Component {
                           <ElementColorPickerComp fieldsetLabel="Subheader Element Color" onElementColorChange={setElColor} isDefault={elColor} />
                           <CheckContrastComp checkForeground={elColorToCheck} checkBackground={bgColorToCheck} />
                           <h2>Sample Banner</h2>
-                          <SubheaderComp backgroundColor={bgColor} elementColor={elColor} bannerLink={'https://escholarship.org/uc/bling_formal_linguistics'} unitTitle={'Lorem Ipsum Consectetur Adipisicing Elit'} isWide={false} campusLabel={'UC Berkeley'} campusLink={'https://escholarship.org/uc/ucb'} />
+                          {/* FIXME: use actual values for this sample, from this.props.unit etc. */} 
+                          <SubheaderComp unit={this.props.unit} backgroundColor={bgColor} elementColor={elColor} bannerLink={'https://escholarship.org/uc/bling_formal_linguistics'} unitTitle={'Lorem Ipsum Consectetur Adipisicing Elit'} isWide={false} campusLabel={'UC Berkeley'} campusLink={'https://escholarship.org/uc/ucb'} />
                         </div>
                      </div>
                    }
