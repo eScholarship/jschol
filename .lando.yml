@@ -101,9 +101,7 @@ tooling:
   socks:
     service: appserver
     cmd:
-      - ruby tools/maybeSocks.rb
-      - echo "==> running netstat -tunl to confirm SOCKS_PORT is open <=="
-      - netstat -tunl | grep ${SOCKS_PORT}
+      - ruby tools/maybeSocks.rb && echo "==> running netstat -tunl to confirm SOCKS_PORT is open <==" && netstat -tunl | grep ${SOCKS_PORT}
     description: Sets the socks proxy tunnel back up, if you have been too idle
   ssh-fix:
     service: appserver
