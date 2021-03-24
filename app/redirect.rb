@@ -44,6 +44,10 @@ def checkRedirect(origURI)
            "pub-jschol-prd.escholarship.org"
           ].include?(uri.host)
       uri.host = "escholarship.org"
+    elsif uri.host == "repositories.cdlib.org"
+      uri = handleBepressRedirect(uri)
+    elsif uri.host =~ /dermatology(-s10)?.cdlib.org/
+      uri = handleDojRedirect(uri)
     elsif uri.path =~ %r{^/uc/oai/?(.*)}
       uri.path = "/oai#{$1}"
       break
@@ -61,10 +65,6 @@ def checkRedirect(origURI)
       break
     elsif uri.path =~ %r{^/uc/([^/]+)(.*)}
       uri = handleUnitRedirect(uri, $1, $2)
-    elsif uri.host == "repositories.cdlib.org"
-      uri = handleBepressRedirect(uri)
-    elsif uri.host =~ /dermatology(-s10)?.cdlib.org/
-      uri = handleDojRedirect(uri)
     elsif uri.path =~ %r{^/oa_harvester/}
       uri.path = "/images#{uri.path}"
       break
