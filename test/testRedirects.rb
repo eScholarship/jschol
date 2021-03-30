@@ -123,6 +123,8 @@ testRedirect("http://dermatology.cdlib.org", "https://escholarship.org/uc/doj")
 testRedirect("http://dermatology.cdlib.org/images/logo_eschol-mobile.svg", "https://escholarship.org/uc/doj")
 testRedirect("http://dermatology-s10.cdlib.org/", "https://escholarship.org/uc/doj")
 testRedirect("http://dermatology-s10.cdlib.org/145/nyu/cases/112106_3a.jpg", "https://escholarship.org/uc/item/90z93266")
+testRedirect("http://dermatology.cdlib.org/uc/doj/14/3",
+             "http://escholarship.org/uc/doj/14/3")
 
 
 # Bepress redirects
