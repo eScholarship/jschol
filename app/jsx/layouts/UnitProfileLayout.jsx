@@ -140,7 +140,6 @@ class UnitProfileLayout extends React.Component {
                       <ElementColorPickerComp fieldsetLabel="Subheader Element Color" onElementColorChange={setElColor} isDefault={elColor} />
                       <CheckContrastComp checkForeground={elColorToCheck} checkBackground={bgColorToCheck} />
                       <h2>Sample Banner</h2>
-                      {/* FIXME: use actual values for this sample, from this.props.unit etc. */} 
                       <SubheaderComp unit={this.props.unit} header={newHeader} />
                     </div>
                    }
