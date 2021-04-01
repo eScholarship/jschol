@@ -86,8 +86,9 @@ class UnitProfileLayout extends React.Component {
          let disableEdit = !(cms.permissions && cms.permissions.super)
          let disableLogo = (this.props.unit.type.indexOf("series") >= 0) ||
                            (this.props.unit.type == "campus" && disableEdit)
-         let [bgColor, setBgColor] = ['#ffffff', function(){}]
-         let [elColor, setElColor] = ['black', function(){}]
+        //  console.log(this.props);
+         let [bgColor, setBgColor] = [this.state.newData.bgColor || data.bgColor, (color)=>{this.setData({bgColor:color})}]
+         let [elColor, setElColor] = [this.state.newData.elColor || data.elColor, (color)=>{this.setData({elColor:color})}]
          let bgColorToCheck = bgColor.replace('#', '')
          let elColorToCheck = elColor === 'black' ? '000000' : 'ffffff'
          return (
@@ -126,18 +127,21 @@ class UnitProfileLayout extends React.Component {
                          <br/><br/>
                        </div>
                       }
-                        <div className="c-subheadercontrols">
-                          <h1>Subheader Color Controls</h1>
-                          <BackgroundColorPickerComp textLabel="Subheader Background Color" backgroundColor={bgColor} onBackgroundColorChange={setBgColor} />
-                          <ElementColorPickerComp fieldsetLabel="Subheader Element Color" onElementColorChange={setElColor} isDefault={elColor} />
-                          <CheckContrastComp checkForeground={elColorToCheck} checkBackground={bgColorToCheck} />
-                          <h2>Sample Banner</h2>
-                          {/* FIXME: use actual values for this sample, from this.props.unit etc. */} 
-                          <SubheaderComp unit={this.props.unit} backgroundColor={bgColor} elementColor={elColor} bannerLink={'https://escholarship.org/uc/bling_formal_linguistics'} unitTitle={'Lorem Ipsum Consectetur Adipisicing Elit'} isWide={false} campusLabel={'UC Berkeley'} campusLink={'https://escholarship.org/uc/ucb'} />
-                        </div>
                      </div>
                    }
                    <br/>
+
+                   { cms.permissions && cms.permissions.super && !disableLogo &&
+                    <div className="c-subheadercontrols">
+                      <h1>Subheader Color Controls</h1>
+                      <BackgroundColorPickerComp textLabel="Subheader Background Color" backgroundColor={bgColor} onBackgroundColorChange={setBgColor} />
+                      <ElementColorPickerComp fieldsetLabel="Subheader Element Color" onElementColorChange={setElColor} isDefault={elColor} />
+                      <CheckContrastComp checkForeground={elColorToCheck} checkBackground={bgColorToCheck} />
+                      <h2>Sample Banner</h2>
+                      {/* FIXME: use actual values for this sample, from this.props.unit etc. */} 
+                      {/* <SubheaderComp unit={this.props.unit} backgroundColor={bgColor} elementColor={elColor} bannerLink={'https://escholarship.org/uc/bling_formal_linguistics'} unitTitle={'Lorem Ipsum Consectetur Adipisicing Elit'} isWide={false} campusLabel={'UC Berkeley'} campusLink={'https://escholarship.org/uc/ucb'} /> */}
+                    </div>
+                   }
 
                    { cms.permissions && cms.permissions.super &&
                      <div>

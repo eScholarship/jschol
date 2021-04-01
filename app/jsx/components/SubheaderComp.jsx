@@ -46,15 +46,13 @@ class SubheaderComp extends React.Component {
     let props=this.props
     let h = this.props.header
     let unit = this.props.unit ? this.props.unit : { id: "unknown", type: "unknown", name: "unknown" }
-    console.log(this.props)
-    console.log(h)
     let showCampusLabel = h.campusID != "other" && unit.type != "campus"
     let stateStyles = `
       c-subheader
       ${h.logo ? "has-banner" : ""}
       ${(h.logo && h.logo.is_banner) ? "is-wide" : ""}
       ${showCampusLabel ? "has-campus-label" : ""}
-      is-${h.elementColor ? h.elementColor : "black"}
+      is-${h.elColor ? h.elColor : "black"}
     `
     let [banner_url, banner_title] = unit.type.includes('series') ? [h.ancestorID, h.ancestorName] : [unit.id, unit.name]
     let directSubmitURL = h.directSubmitURL ? h.directSubmitURL : "https://submit.escholarship.org/subi/directSubmit?target="+unit.id
@@ -111,7 +109,7 @@ class SubheaderComp extends React.Component {
                           type={unit.type} unit_id={unit.id}
                           directSubmitURL_manage={directSubmitURL_manage} />)
     return (
-      <div className={stateStyles} style={{backgroundColor: props.backgroundColor}}>
+      <div className={stateStyles} style={{backgroundColor: h.bgColor}}>
         <Link to={"/uc/"+banner_url} className="c-subheader__title">
           <h1>{banner_title}</h1>
         </Link>

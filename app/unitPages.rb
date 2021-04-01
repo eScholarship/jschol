@@ -297,6 +297,8 @@ def getUnitHeader(unit, pageName=nil, journalIssue=nil, issuesSubNav=nil, attrs=
     :ancestorName => ancestor ? ancestor.name : nil,   # Ditto 
     :campuses => $activeCampuses.values.map { |c| {id: c.id, name: c.name} }.unshift({id: "", name: "eScholarship at..."}),
     :logo => (unit.type.include? 'series') ? getLogoData(JSON.parse(ancestor.attrs)['logo']) : getLogoData(attrs['logo']),
+    :bgColor => attrs['bgColor'],
+    :elColor => attrs['elColor'],
     :directSubmit => attrs['directSubmit'],
     :directSubmitURL => attrs['directSubmitURL'],
     :nav_bar => unit.type.include?('series') ? getNavBar(ancestor, JSON.parse(ancestor.attrs)['nav_bar']) : getNavBar(unit, attrs['nav_bar'], 1, issuesSubNav),
@@ -618,6 +620,8 @@ def getUnitProfile(unit, attrs)
     name: unit.name,
     slug: unit.id,
     logo: attrs['logo'],
+    bgColor: attrs['bgColor'] || '#ffffff',
+    elColor: attrs['elColor'] || 'black',
     facebook: attrs['facebook'],
     twitter: attrs['twitter'],
     marquee: getUnitMarquee(unit, attrs),
@@ -1488,10 +1492,12 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
 
     if params['data']['issn'] then unitAttrs['issn'] = params['data']['issn'] end
     if params['data']['eissn'] then unitAttrs['eissn'] = params['data']['eissn'] end
-
+    # pp(params['data'])
     if params['data']['facebook'] then unitAttrs['facebook'] = params['data']['facebook'] end
     if params['data']['twitter'] then unitAttrs['twitter'] = params['data']['twitter'] end
     if params['data']['about'] then unitAttrs['about'] = params['data']['about'] end
+    if params['data']['subheader-bgcolorpicker'] then unitAttrs['bgColor'] = params['data']['subheader-bgcolorpicker'] end
+    if params['data']['elementcolorpicker'] then unitAttrs['elColor'] = params['data']['elementcolorpicker'] end
 
     unitAttrs.delete_if {|k,v| (v.is_a? String and v.empty?) || (v == false) || v.nil? }
     unit.attrs = unitAttrs.to_json
