@@ -144,6 +144,8 @@ testRedirect("http://repositories.cdlib.org/context/tc/article/1194/type/pdf/vie
              "http://escholarship.org/uc/item/8hk6960q")
 testRedirect("http://repositories.cdlib.org//cgi/viewcontent.cgi?context=its/tsc&amp;article=1045",
              "http://escholarship.org/uc/item/1h52s226")
+testRedirect("http://repositories.cdlib.org/uc/doj/14/3",
+             "http://escholarship.org/uc/doj/14/3")
 
 # Programmed unit redirects from unitRedirect.xsl
 testRedirect("http://escholarship.org/uc/ioe",
