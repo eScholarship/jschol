@@ -86,11 +86,13 @@ class UnitProfileLayout extends React.Component {
          let disableEdit = !(cms.permissions && cms.permissions.super)
          let disableLogo = (this.props.unit.type.indexOf("series") >= 0) ||
                            (this.props.unit.type == "campus" && disableEdit)
-        //  console.log(this.props);
+         let newHeader = Object.assign({}, this.props.header)
          let [bgColor, setBgColor] = [this.state.newData.bgColor || data.bgColor, (color)=>{this.setData({bgColor:color})}]
          let [elColor, setElColor] = [this.state.newData.elColor || data.elColor, (color)=>{this.setData({elColor:color})}]
          let bgColorToCheck = bgColor.replace('#', '')
          let elColorToCheck = elColor === 'black' ? '000000' : 'ffffff'
+         newHeader['bgColor'] = bgColor
+         newHeader['elColor'] = elColor
          return (
          <div>
            <h3>Unit Configuration</h3>
@@ -139,7 +141,7 @@ class UnitProfileLayout extends React.Component {
                       <CheckContrastComp checkForeground={elColorToCheck} checkBackground={bgColorToCheck} />
                       <h2>Sample Banner</h2>
                       {/* FIXME: use actual values for this sample, from this.props.unit etc. */} 
-                      {/* <SubheaderComp unit={this.props.unit} backgroundColor={bgColor} elementColor={elColor} bannerLink={'https://escholarship.org/uc/bling_formal_linguistics'} unitTitle={'Lorem Ipsum Consectetur Adipisicing Elit'} isWide={false} campusLabel={'UC Berkeley'} campusLink={'https://escholarship.org/uc/ucb'} /> */}
+                      <SubheaderComp unit={this.props.unit} header={newHeader} />
                     </div>
                    }
 
