@@ -4,7 +4,6 @@ name: jschol
 env_file:
   - defaults.env
   - local.env
-keys:
 services:
   appserver:
     type: ruby:2.5
