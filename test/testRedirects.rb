@@ -219,4 +219,8 @@ testRedirect("http://www.escholarship.org/uc/uclta",
 testRedirect("http://www.escholarship.org/uc/uclta?foo=bar",
              "http://escholarship.org/uc/uclta?foo=bar")
 
+# Redirect the "fake campus" (id='other') to escholarship"
+testRedirect("http://www.escholarship.org/uc/other",
+              "https://escholarship.org/")
+
 puts "\nDone."
