@@ -16,38 +16,6 @@
   @extend %o-customselector;
 }
 
-// Campus selector:
-.o-customselector--campus {
-  @extend %o-customselector;
-  margin-right: 2px;
-  margin-bottom: 0;
-
-  @include bp(screen3) {
-    margin-right: $spacing-sm;
-  }
-
-  // Campus selector heading:
-  .o-customselector__heading {
-    @extend %o-customselector__heading;
-    font-size: 1em;
-    text-align: right;
-
-    @include bp(screen1) {
-      font-size: 1.3em;
-    }
-
-    @include bp(screen3) {
-      font-size: 1.5em;
-    }
-
-    a {
-      @extend %o-textlink__black;
-    }
-
-  }
-
-}
-
 %o-customselector__heading {
   margin: 0 $spacing-base 0 0;
   font-weight: normal;
@@ -126,7 +94,7 @@
       a {
         border-top: none;
       }
-      
+
     }
 
     a {

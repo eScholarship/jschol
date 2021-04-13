@@ -31,6 +31,12 @@ def getActiveCampuses
            order_by(:ordering).to_hash(:id)
 end
 
+def getAllCampuses
+  return Unit.join(:unit_hier, :unit_id=>:id).
+            filter(:ancestor_unit=>'root', :is_direct=>1).
+            order_by(:ordering).to_hash(:id)
+end
+
 def getOruAncestors
   return UnitHier.where(is_direct: true).where(ancestor: Unit.where(type: 'oru')).to_hash(:unit_id, :ancestor_unit)
 end
@@ -45,7 +51,7 @@ def getJournalsPerCampus
   allJournals = Unit.filter(type: 'journal').exclude(status: "hidden").map(:id)
   activeCampusIds = $activeCampuses.map{|id, c| id }
   array = UnitHier.join(:units, :id=>:unit_id).
-    where(:unit_id=>allJournals, :ancestor_unit=>activeCampusIds).select(:id, :name, :ancestor_unit, :status).
+    where(:unit_id=>allJournals).select(:id, :name, :ancestor_unit, :status).
     map { |h| h.values }
   # Combine journals that have mult. campuses into single hash to allow for easy filtering on Journal Browse page
   array_new = []
@@ -58,6 +64,7 @@ def getJournalsPerCampus
     array_new << h
     checkedJournal = h[:id] 
   end
+  # console.log array_new
   return array_new
 end
 
@@ -250,6 +257,7 @@ def fillCaches
       $hierByUnit = getHierByUnit
       $hierByAncestor = getHierByAncestor
       $activeCampuses = getActiveCampuses
+      $allCampuses = getAllCampuses
       $oruAncestors = getOruAncestors
       $campusJournals = getJournalsPerCampus    # Used for browse pages
 

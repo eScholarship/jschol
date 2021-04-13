@@ -1,4 +1,8 @@
 import React from 'react'
+import BackgroundColorPickerComp from '../components/BackgroundColorPickerComp.jsx'
+import ElementColorPickerComp from '../components/ElementColorPickerComp.jsx'
+import CheckContrastComp from '../components/CheckContrastComp.jsx'
+import SubheaderComp from '../components/SubheaderComp.jsx'
 import WysiwygEditorComp from '../components/WysiwygEditorComp.jsx'
 import Contexts from '../contexts.jsx'
 import FormComp from '../components/FormComp.jsx'
@@ -82,6 +86,13 @@ class UnitProfileLayout extends React.Component {
          let disableEdit = !(cms.permissions && cms.permissions.super)
          let disableLogo = (this.props.unit.type.indexOf("series") >= 0) ||
                            (this.props.unit.type == "campus" && disableEdit)
+         let newHeader = Object.assign({}, this.props.header)
+         let [bgColor, setBgColor] = [this.state.newData.bgColor || data.bgColor, (color)=>{this.setData({bgColor:color})}]
+         let [elColor, setElColor] = [this.state.newData.elColor || data.elColor, (color)=>{this.setData({elColor:color})}]
+         let bgColorToCheck = bgColor.replace('#', '')
+         let elColorToCheck = elColor === 'black' ? '000000' : 'ffffff'
+         newHeader['bgColor'] = bgColor
+         newHeader['elColor'] = elColor
          return (
          <div>
            <h3>Unit Configuration</h3>
@@ -121,6 +132,17 @@ class UnitProfileLayout extends React.Component {
                      </div>
                    }
                    <br/>
+
+                   { cms.permissions && cms.permissions.super && !disableLogo &&
+                    <div className="c-subheadercontrols">
+                      <h1>Subheader Color Controls</h1>
+                      <BackgroundColorPickerComp textLabel="Subheader Background Color" backgroundColor={bgColor} onBackgroundColorChange={setBgColor} />
+                      <ElementColorPickerComp fieldsetLabel="Subheader Element Color" onElementColorChange={setElColor} isDefault={elColor} />
+                      <CheckContrastComp checkForeground={elColorToCheck} checkBackground={bgColorToCheck} />
+                      <h2>Sample Banner</h2>
+                      <SubheaderComp unit={this.props.unit} header={newHeader} />
+                    </div>
+                   }
 
                    { cms.permissions && cms.permissions.super &&
                      <div>

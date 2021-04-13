@@ -10,6 +10,7 @@ import WizardComp from './WizardComp.jsx'
 import WizardInertComp from './WizardInertComp.jsx'
 
 class SubheaderComp extends React.Component {
+
   static propTypes = {
     header: PropTypes.shape({
       campusID: PropTypes.string.isRequired,
@@ -42,9 +43,17 @@ class SubheaderComp extends React.Component {
   }
 
   render() {
-    let unit = this.props.unit ? this.props.unit : { id: "unknown", type: "unknown", name: "unknown" }
+    let props=this.props
     let h = this.props.header
-    let banner_class = (h.logo && h.logo.is_banner) ? "c-subheader__banner--wide" : "c-subheader__banner--narrow"
+    let unit = this.props.unit ? this.props.unit : { id: "unknown", type: "unknown", name: "unknown" }
+    let showCampusLabel = h.campusID != "other" && unit.type != "campus"
+    let stateStyles = `
+      c-subheader
+      ${h.logo ? "has-banner" : ""}
+      ${(h.logo && h.logo.is_banner) ? "is-wide" : ""}
+      ${showCampusLabel ? "has-campus-label" : ""}
+      is-${h.elColor ? h.elColor : "black"}
+    `
     let [banner_url, banner_title] = unit.type.includes('series') ? [h.ancestorID, h.ancestorName] : [unit.id, unit.name]
     let directSubmitURL = h.directSubmitURL ? h.directSubmitURL : "https://submit.escholarship.org/subi/directSubmit?target="+unit.id
     let directSubmitURL_manage = h.directSubmitURL ? h.directSubmitURL : null
@@ -100,21 +109,18 @@ class SubheaderComp extends React.Component {
                           type={unit.type} unit_id={unit.id}
                           directSubmitURL_manage={directSubmitURL_manage} />)
     return (
-      <div className="c-subheader">
-        {/* KLUDGE ALERT: drop the campus selector for combinatorial_theory, as per Pivotal story 176017264 */}
-        {this.props.unit.id != 'combinatorial_theory' &&
-          <CampusSelectorComp campusID={h.campusID}
-                              campusName={h.campusName}
-                              campuses={h.campuses} />
-        }
-        <Link to={"/uc/"+banner_url} className={banner_class}>
+      <div className={stateStyles} style={{backgroundColor: h.bgColor}}>
+        <Link to={"/uc/"+banner_url} className="c-subheader__title">
           <h1>{banner_title}</h1>
+        </Link>
         {/* h.logo.width and h.logo.height not necessary here says Joel the CSS wiz */}
         {h.logo &&
-          <img src={h.logo.url} alt={unit.name} />
+          <Link to={"/uc/"+banner_url} className="c-subheader__banner" >
+            <img src={h.logo.url} alt={unit.name  + ' banner'} />
+          </Link>
         }
-        </Link>
-        <div id="wizardModalBase" className="c-subheader__sidebar">
+        {showCampusLabel && <a className="c-subheader__campus" href={"/uc/"+h.campusID}>{h.campusName}</a> }
+        <div id="wizardModalBase" className="c-subheader__buttons">
           {depositButton}
           {depositWizard}
           {manageButton}

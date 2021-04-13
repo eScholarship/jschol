@@ -176,13 +176,10 @@ $wizard-nav-icon-size: 1.5em;
 
 .c-wizard__list {
   @extend %u-reset-list-styles;
-  margin-bottom: $spacing-md;
+  margin-bottom: 0;
 
   li {
-
-    &:not(:last-child) {
-      margin-bottom: $spacing-sm;
-    }
+    margin-bottom: $spacing-sm;
 
     a {
       @extend %u-interactive-element-size;
@@ -196,6 +193,25 @@ $wizard-nav-icon-size: 1.5em;
 
   }
 
+}
+
+.c-wizard__list-black {
+  @extend %u-reset-list-styles;
+  margin-bottom: $spacing-md;
+
+  li {
+    margin-bottom: $spacing-sm;
+
+    a {
+      @extend %u-interactive-element-size;
+      display: flex;
+      align-items: center;
+      padding: $spacing-base 2.5em $spacing-base 35px;
+      background: $color-light-black inline('../images/icon_reload-white.svg') no-repeat left $spacing-sm center / 16px;
+      color: $color-white;
+      text-decoration: none;
+    }
+  }
 }
 
 .c-wizard__message {
