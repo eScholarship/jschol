@@ -35,8 +35,10 @@ class CellComp extends React.Component {
         </div>
         <div className="o-mediafile__description" ref={ el => { if (p.description && p.description.length > 0) $(el).dotdotdot({watch:"window"}) } }>
           {p.description}</div>
+        
         <button className="o-mediafile__view" onClick={this.handleOpenModal}><span>View Media</span></button>
         <a href={url} className="o-mediafile__download" download={p.file}>Download</a>
+        <a href={p.doi}>{p.doi}</a>
         <MediaModalComp showModal={this.state.showModal} handleCloseModal={this.handleCloseModal}>
           <MediaFeatureObj file={p.file} url={url} type={mimeSimple} title={p.title} description={p.description} />
         </MediaModalComp>
@@ -50,6 +52,7 @@ class MediaFileGridComp extends React.Component {
     let foundOne = false
     let r = files.map((f, i) => {
       let title = f.title,
+          doi = f.doi,
           description = f.description,
           useFilenameForTitle = false 
       if (!f.title) {
@@ -67,6 +70,7 @@ class MediaFileGridComp extends React.Component {
                       mimeSimple={f.mimeSimple}
                       title={title}
                       file={f.file}
+                      doi={f.doi}
                       description={description} 
                       useFilenameForTitle={useFilenameForTitle}
                       preview_key={this.props.preview_key} />
