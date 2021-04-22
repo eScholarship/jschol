@@ -55,10 +55,10 @@ GEM
     mustermann (1.0.2)
     mysql2 (0.4.7)
     netrc (0.11.0)
-    nokogiri (1.11.0)
+    nokogiri (1.11.3)
       mini_portile2 (~> 2.5.0)
       racc (~> 1.4)
-    nokogumbo (2.0.2)
+    nokogumbo (2.0.5)
       nokogiri (~> 1.8, >= 1.8.4)
     parslet (1.8.2)
     power_assert (1.0.2)
@@ -71,7 +71,7 @@ GEM
     rack (2.2.3)
     rack-protection (2.0.2)
       rack
-    sanitize (5.2.1)
+    sanitize (5.2.3)
       crass (~> 1.0.2)
       nokogiri (>= 1.8.0)
       nokogumbo (~> 2.0)
@@ -139,4 +139,4 @@ RUBY VERSION
    ruby 2.4.7p357
 
 BUNDLED WITH
-   2.0.2
+   2.2.16

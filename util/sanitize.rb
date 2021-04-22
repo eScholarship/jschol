@@ -39,8 +39,9 @@ def sanitizeHTML(htmlFragment)
   return Sanitize.fragment(htmlFragment,
     elements: %w{b em i strong u} +
               %w{a br li ol p blockquote h1 h2 h3 h4 small strike sub sup ul hr img style},
-    attributes: { "p" => ['style'], "a" => ['href'], "img" => ['src', 'alt'] },
+    attributes: { "p"  => ['style'], "a" => ['href'], "img" => ['src', 'alt'] },
     protocols:  { "a" => {'href' => ['ftp', 'http', 'https', 'mailto', :relative]},
-                  "img" => {'src' => ['http', 'https', :relative]} }
+                  "img" => {'src' => ['http', 'https', :relative]} },
+    css:        { properties: %w[text-align] }
   ).strip
 end
