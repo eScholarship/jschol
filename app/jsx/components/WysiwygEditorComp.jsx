@@ -11,6 +11,7 @@ const TRUMBO_BUTTONS = [
   ['fancyCreateLink', 'unlink'],
   ['image-upload', 'file-upload'],
   ['unorderedList', 'orderedList'],
+  ['justifyLeft', 'justifyCenter', 'justifyRight', 'justifyFull'],
   ['horizontalRule'],
   ['superscript', 'subscript', 'strikethrough'],
   ['fancyRemoveFormat']
