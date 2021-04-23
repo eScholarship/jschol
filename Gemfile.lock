@@ -47,7 +47,9 @@ GEM
     maxminddb (0.1.15)
     maxminddb-geolite2-city (1.6.0)
       maxminddb (>= 0.1.11)
-    mimemagic (0.3.2)
+    mimemagic (0.4.3)
+      nokogiri (~> 1)
+      rake
     mini_magick (4.9.5)
     mini_mime (1.0.0)
     mini_portile2 (2.5.0)
@@ -71,6 +73,7 @@ GEM
     rack (2.2.3)
     rack-protection (2.0.2)
       rack
+    rake (13.0.3)
     sanitize (5.2.3)
       crass (~> 1.0.2)
       nokogiri (>= 1.8.0)
