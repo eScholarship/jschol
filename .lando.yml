@@ -61,6 +61,8 @@ services:
       database: local_eschol_prod
 
 events:
+  pre-destroy:
+    - appserver: rm -Rf /app/gems/*
   post-start:
     - appserver: test -e ~/.ssh/config || printf 'Host *\n  AddKeysToAgent yes\n' > ~/.ssh/config
 
