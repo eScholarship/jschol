@@ -18,7 +18,7 @@ class TabSupplementalComp extends React.Component {
     if (supp_files_orig) {
       // mimeSimple = Normalized mimeType value to make filtering files easier
       for (let f of supp_files_orig) {
-        // TODO: normalize the DOI to recommended best practice
+        // normalize the DOI to recommended best practice
         if ( ! f.doi.match(/^http/) ) {
             f.doi = 'https://doi.org/' + f.doi
         }
