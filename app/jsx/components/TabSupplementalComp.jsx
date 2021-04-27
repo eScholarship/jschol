@@ -14,8 +14,8 @@ class TabSupplementalComp extends React.Component {
   render() {
     let supp_files_orig = this.props.attrs.supp_files,
         supp_files = [],
-        mimeTypes = [] 
-    if (supp_files_orig) {  
+        mimeTypes = []
+    if (supp_files_orig) {
       // mimeSimple = Normalized mimeType value to make filtering files easier
       for (let f of supp_files_orig) {
         let mimeSimple = "data"
@@ -34,7 +34,7 @@ class TabSupplementalComp extends React.Component {
         }
         f['mimeSimple'] = mimeSimple
         f['doi'] = f.doi
-        supp_files.push(f) 
+        supp_files.push(f)
       }
       mimeTypes = [...new Set(supp_files.map(f => f.mimeSimple))];
     }
@@ -47,7 +47,7 @@ class TabSupplementalComp extends React.Component {
         {supp_files ?
 
           <MediaFileGridComp id={this.props.id} supp_files={supp_files} filterType={this.state.filterType}
-                             preview_key={this.props.preview_key}/> 
+                             preview_key={this.props.preview_key}/>
 
           : <div>No supplemental material included with this item</div>
         }
