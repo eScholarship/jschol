@@ -291,6 +291,7 @@ configure do
       #               why-it-doesn-t-make-sense-to-gzip-all-content-from-your-web-server.html
       return headers["Content-Length"].to_i > 1400
     }
+  set :erb, { escape_html: true }
 end
 
 TEMP_DIR = "tmp"
