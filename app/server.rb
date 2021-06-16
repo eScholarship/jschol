@@ -1303,11 +1303,15 @@ def getSearchData()
   }
   facetList = ['type_of_work', 'peer_reviewed', 'supp_file_types', 'pub_year',
                'campuses', 'departments', 'journals', 'disciplines', 'rights']
+
   # Does tricky extra stuff with params
-  cgiParams = CGI::parse(request.query_string)
+  cgiParams = CGI::parse(request.query_string).transform_values{|a| a.map{|v| CGI::escapeHTML(v)}}
+  cgiParams.default=[].freeze
+
   forceNumeric(cgiParams, 'start')
   forceNumeric(cgiParams, 'rows')
   searchType = cgiParams["searchType"][0]
+
   # Perform global search when searchType is assigned 'eScholarship'
   # otherwise: 'searchType' will be assigned the unit ID - and then 'searchUnitType' specifies type of unit.
   if searchType and searchType != "eScholarship"
