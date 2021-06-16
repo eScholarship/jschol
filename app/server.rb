@@ -625,11 +625,12 @@ def generalResponse
   request.url =~ %r{^https?://([^/:]+)(:\d+)?(.*)$} or fail
   remainder = $3
 
+  pageData = pageData.transform_values { |v| CGI::escapeHTML(v) }
   # Pass the full path and query string to our little Node Express app, which will run it through
   # ReactRouter and React.
   response = HTTParty.post("http://#{$host}:#{ENV['ISO_PORT']}#{remainder}",
                :headers => { 'Content-Type' => 'application/json' },
-               :body => pageData.to_json.transform_values { |v| CGI::escapeHTML(v) } ,
+               :body => pageData.to_json,
                :timeout => 20)
   if response.code != 200
     # If there's an exception (like iso is completely dead), fall back to non-iso mode.
@@ -662,8 +663,6 @@ def generalResponse
   #
   # For a test sample, see the "5\%" near the end of the abstract in qt3f3256kv.
   jsonPageData.gsub!("\\", "\\\\\\\\")
-
-  jsonPageData.transform_values { |v| CGI::escapeHTML(v) }
 
   # In the template, substitute the results from React/ReactRouter, and the API data so the
   # client-side React code can successfully rehydrate the page.
