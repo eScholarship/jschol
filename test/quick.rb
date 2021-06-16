@@ -117,4 +117,9 @@ class TestQuick < Test::Unit::TestCase
     pdfData = fetch("http://localhost:#{PUMA_PORT}/content/qt5563x8nf/qt5563x8nf.pdf")
     assert_match /Lead Toxicity/, pdfData
   end
+
+  def test_search_escaping
+    html = fetch("http://localhost:#{PUMA_PORT}/search?q=%3C%2Fscript%3E%3CSCRipt%3Ealert(%27NOPE%27)%3C%2Fscript%3E")
+    assert_no_match(/<SCRipt>/, html)
+  end
 end
