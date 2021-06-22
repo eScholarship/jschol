@@ -220,6 +220,7 @@ def aws_encode(params, facetTypes, search_type)
   initAllFacets()
 
   aws_params = {
+    # TODO: somewhere around here we should unescape these param values
     query: params.has_key?('q') ? params['q'].join(" ") : 'matchall',
     sort: params.dig('sort', 0) ? SORT[params['sort'][0]] : '_score desc',
   }

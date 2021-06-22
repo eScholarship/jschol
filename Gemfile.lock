@@ -31,6 +31,7 @@ GEM
     em-websocket (0.3.8)
       addressable (>= 2.1.1)
       eventmachine (>= 0.12.9)
+    escape_utils (1.2.1)
     eventmachine (1.2.3)
     ezid-client (1.7.1)
       hashie (~> 3.4, >= 3.4.3)
@@ -111,6 +112,7 @@ DEPENDENCIES
   aws-sdk-cloudsearchdomain
   aws-sdk-s3
   bundler
+  escape_utils
   ezid-client
   fastimage
   htmlentities
@@ -142,4 +144,4 @@ RUBY VERSION
    ruby 2.4.7p357
 
 BUNDLED WITH
-   2.2.16
+   2.2.20

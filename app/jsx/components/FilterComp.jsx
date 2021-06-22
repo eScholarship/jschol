@@ -17,7 +17,8 @@ class FilterComp extends React.Component {
   }
 
   render() {
-    let searchString = 'Your search: "' + this.props.query.q + '"',
+    // TODO: try unescaping the query parameters
+    let searchString = 'Your search: "' + unescape(this.props.query.q) + '"',
         activeFilters = null
 
     if (!(_.isEmpty(this.props.query['filters']))) {
@@ -41,7 +42,8 @@ class FilterComp extends React.Component {
 
     return (
       <div className={activeFilters ? "c-filter--active" : "c-filter"}>
-        <h1 className="c-filter__heading">{searchString}</h1>
+        {/* TODO: we trust searchString, so let's try to render it without escaping */}
+        <h1 className="c-filter__heading" dangerouslySetInnerHTML={{__html: searchString}} />
         <input type="hidden" name="q" value={this.props.query.q == "All items" ? "" : this.props.query.q} />
         <div className="c-filter__results">{resultCount} results</div>
         <div className="c-filter__inactive-note">No filters applied</div>
