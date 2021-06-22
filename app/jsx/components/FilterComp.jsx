@@ -41,7 +41,7 @@ class FilterComp extends React.Component {
 
     return (
       <div className={activeFilters ? "c-filter--active" : "c-filter"}>
-        {/* we trust searchString (Sinatra has escaped the params already), this is fine */}
+        {/* we trust searchString (We have escaped the params already), this is fine */}
         <h1 className="c-filter__heading" dangerouslySetInnerHTML={{__html: searchString}} />
         <input type="hidden" name="q" value={this.props.query.q == "All items" ? "" : this.props.query.q} />
         <div className="c-filter__results">{resultCount} results</div>
