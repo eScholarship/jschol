@@ -40,7 +40,7 @@ class TestQuick < Test::Unit::TestCase
 
   def test_phrase_search
     html = fetchAndStrip("http://localhost:#{PUMA_PORT}/search?q=%22red%22")
-    assert_no_match /Your search:.*&amp;quot;red&amp;quot;/, html
+    assert_match /The Red Tea Detox/, html
   end
 
   def test_unitStatic
@@ -126,5 +126,10 @@ class TestQuick < Test::Unit::TestCase
   def test_search_escaping
     html = fetch("http://localhost:#{PUMA_PORT}/search?q=%3C%2Fscript%3E%3CSCRipt%3Ealert(%27NOPE%27)%3C%2Fscript%3E")
     assert_no_match(/<SCRipt>/, html)
+  end
+
+  def test_author_search
+    html = fetch("http://localhost:#{PUMA_PORT}/search?q=author%3A%22Atkinson%2C%20Richard%22")
+    assert_match /Report to Regents on National Research Council Study/, html
   end
 end
