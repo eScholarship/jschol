@@ -38,6 +38,11 @@ class TestQuick < Test::Unit::TestCase
     assert $1.to_i > 10, "At least 10 docs should match 'china'"
   end
 
+  def test_phrase_search
+    html = fetchAndStrip("http://localhost:#{PUMA_PORT}/search?q=%22red%22")
+    assert_match /The Red Tea Detox/, html
+  end
+
   def test_unitStatic
     html = fetchAndStrip("http://localhost:#{PUMA_PORT}/uc/uclalaw/policyStatement")
     assert_match /School of Law only publishes materials about/, html
@@ -121,5 +126,10 @@ class TestQuick < Test::Unit::TestCase
   def test_search_escaping
     html = fetch("http://localhost:#{PUMA_PORT}/search?q=%3C%2Fscript%3E%3CSCRipt%3Ealert(%27NOPE%27)%3C%2Fscript%3E")
     assert_no_match(/<SCRipt>/, html)
+  end
+
+  def test_author_search
+    html = fetch("http://localhost:#{PUMA_PORT}/search?q=author%3A%22Atkinson%2C%20Richard%22")
+    assert_match /Report to Regents on National Research Council Study/, html
   end
 end
