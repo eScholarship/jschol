@@ -17,8 +17,7 @@ class FilterComp extends React.Component {
   }
 
   render() {
-    // TODO: try unescaping the query parameters
-    let searchString = 'Your search: "' + unescape(this.props.query.q) + '"',
+    let searchString = 'Your search: "' + this.props.query.q + '"',
         activeFilters = null
 
     if (!(_.isEmpty(this.props.query['filters']))) {
@@ -42,7 +41,7 @@ class FilterComp extends React.Component {
 
     return (
       <div className={activeFilters ? "c-filter--active" : "c-filter"}>
-        {/* TODO: we trust searchString, so let's try to render it without escaping */}
+        {/* we trust searchString (Sinatra has escaped the params already), this is fine */}
         <h1 className="c-filter__heading" dangerouslySetInnerHTML={{__html: searchString}} />
         <input type="hidden" name="q" value={this.props.query.q == "All items" ? "" : this.props.query.q} />
         <div className="c-filter__results">{resultCount} results</div>

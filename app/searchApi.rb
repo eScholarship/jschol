@@ -2,6 +2,7 @@ require 'aws-sdk-cloudsearchdomain'
 require 'sequel'
 require 'json'
 require 'pp'
+require 'escape_utils'
 
 # API to connect to AWS CloudSearch
 $csClient = Aws::CloudSearchDomain::Client.new(
@@ -220,8 +221,8 @@ def aws_encode(params, facetTypes, search_type)
   initAllFacets()
 
   aws_params = {
-    # TODO: somewhere around here we should unescape these param values
-    query: params.has_key?('q') ? params['q'].join(" ") : 'matchall',
+    # unescape these param values before we ship them off to CloudSearch
+    query: EscapeUtils.unescape_html(params.has_key?('q') ? params['q'].join(" ") : 'matchall'),
     sort: params.dig('sort', 0) ? SORT[params['sort'][0]] : '_score desc',
   }
   aws_params[:size] = (search_type == "items") ?
