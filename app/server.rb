@@ -369,15 +369,13 @@ end
 # Permissive robots.txt on production; restrictive elsewhere.
 get "/robots.txt" do
   content_type "text/plain"
-  lines = [
-           "User-agent: Amazonbot",
+  lines = ["User-agent: Amazonbot",
            "Disallow: /",
            "",
            "User-agent: *",
            "Disallow:#{request.host == "escholarship.org" ? "" : " /"}",
            "",
-           "Sitemap: #{request.env['HTTP_CLOUDFRONT_FORWARDED_PROTO'] || request.scheme}://#{request.host}/siteMapIndex.xml"
-          ]
+           "Sitemap: #{request.env['HTTP_CLOUDFRONT_FORWARDED_PROTO'] || request.scheme}://#{request.host}/siteMapIndex.xml"]
   return lines.join("\n")
 end
 
