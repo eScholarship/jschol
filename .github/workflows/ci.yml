@@ -1,6 +1,6 @@
 ---
 name: lint-jschol
-on: [push]
+on: [push, pull_request]
 jobs: 
   lint:
     name: Lint
