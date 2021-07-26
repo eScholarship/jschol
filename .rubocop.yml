@@ -6,3 +6,63 @@ AllCops:
   Exclude:
     - 'gems/**/*'
     - 'node_modules/**/*'
+
+Naming/FileName:
+  Enabled: false
+
+Style/RedundantReturn:
+  Enabled: false
+
+Naming/MethodName:
+  Enabled: false
+
+Style/BlockDelimiters:
+  Enabled: false
+
+Style/StringLiterals:
+  Enabled: false
+
+Naming/VariableName:
+  Enabled: false
+
+Naming/MethodParameterName:
+  Enabled: false
+
+Naming/BlockParameterName:
+  Enabled: false
+
+Naming/RescuedExceptionsVariableName:
+  Enabled: false
+
+Naming/ConstantName:
+  Enabled: false
+
+Naming/ClassAndModuleCamelCase:
+  Enabled: false
+
+Style/FrozenStringLiteralComment:
+  Enabled: false
+
+Layout/EmptyLinesAroundClassBody:
+  Enabled: false
+
+Layout/EmptyLinesAroundMethodBody:
+  Enabled: false
+
+Layout/SpaceInsideHashLiteralBraces:
+  Enabled: false
+
+Style/DefWithParentheses:
+  Enabled: false
+
+Layout/HashAlignment:
+  Enabled: false
+
+Layout/LeadingCommentSpace:
+  Enabled: false
+
+Layout/CaseIndentation:
+  Enabled: false
+
+Layout/SpaceAfterComma:
+  Enabled: false
