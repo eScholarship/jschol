@@ -1,68 +1,23 @@
 ---
 
 AllCops:
-  DisabledByDefault: true
   TargetRubyVersion: 2.5
   Exclude:
     - 'gems/**/*'
     - 'node_modules/**/*'
+  NewCops: disable
 
-Naming/FileName:
+Bundler/OrderedGems:
   Enabled: false
 
-Style/RedundantReturn:
+Naming:
   Enabled: false
 
-Naming/MethodName:
+Style:
   Enabled: false
 
-Style/BlockDelimiters:
+Layout:
   Enabled: false
 
-Style/StringLiterals:
-  Enabled: false
-
-Naming/VariableName:
-  Enabled: false
-
-Naming/MethodParameterName:
-  Enabled: false
-
-Naming/BlockParameterName:
-  Enabled: false
-
-Naming/RescuedExceptionsVariableName:
-  Enabled: false
-
-Naming/ConstantName:
-  Enabled: false
-
-Naming/ClassAndModuleCamelCase:
-  Enabled: false
-
-Style/FrozenStringLiteralComment:
-  Enabled: false
-
-Layout/EmptyLinesAroundClassBody:
-  Enabled: false
-
-Layout/EmptyLinesAroundMethodBody:
-  Enabled: false
-
-Layout/SpaceInsideHashLiteralBraces:
-  Enabled: false
-
-Style/DefWithParentheses:
-  Enabled: false
-
-Layout/HashAlignment:
-  Enabled: false
-
-Layout/LeadingCommentSpace:
-  Enabled: false
-
-Layout/CaseIndentation:
-  Enabled: false
-
-Layout/SpaceAfterComma:
+Metrics:
   Enabled: false
