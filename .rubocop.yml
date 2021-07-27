@@ -21,3 +21,47 @@ Layout:
 
 Metrics:
   Enabled: false
+
+Lint/ImplicitStringConcatenation:
+  Enabled: false
+
+Lint/MissingSuper:
+  Enabled: false
+
+Lint/NonLocalExitFromIterator:
+  Enabled: false
+
+Lint/ShadowingOuterLocalVariable:
+  Enabled: false
+
+Lint/UselessAssignment:
+  Exclude:
+    - 'app/dbCache.rb'
+    - 'app/loginApi.rb'
+    - 'app/searchApi.rb'
+    - 'app/socksMysql.rb'
+    - 'app/server.rb'
+    - 'app/statsPages.rb'
+    - 'app/unitPages.rb'
+    - 'config/puma.rb'
+    - 'tools/convert.rb'
+    - 'tools/statsCalc.rb'
+    - 'tools/loadTest.rb'
+    - 'util/nailgun.rb'
+    - 'splash/splashGen.rb'
+    - 'migrations/0006_itemOrderMulti.rb'
+    - 'tools/waitForServer.rb'
+
+Lint/RescueException:
+  Enabled: false
+
+Lint/RequireParentheses:
+  Enabled: false
+
+Lint/Void:
+  Enabled: false
+
+Security/Open:
+  Exclude:
+    - 'test/quick.rb'
+    - 'tools/statsHistory.rb'

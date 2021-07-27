@@ -49,7 +49,7 @@ end
 #       :status=>"active"},
 def getJournalsPerCampus
   allJournals = Unit.filter(type: 'journal').exclude(status: "hidden").map(:id)
-  activeCampusIds = $activeCampuses.map{|id, c| id }
+  activeCampusIds = $activeCampuses.map{|id, _c| id }
   array = UnitHier.join(:units, :id=>:unit_id).
     where(:unit_id=>allJournals).select(:id, :name, :ancestor_unit, :status).
     map { |h| h.values }
@@ -102,7 +102,7 @@ end
 # Get number of views per campus as one hash.
 # {"ucb"=>11000, "ucd"=>982 ...}
 def getViewsPerCampus
-  activeCampusIds = $activeCampuses.map{|id, c| id }
+  activeCampusIds = $activeCampuses.map{|id, _c| id }
   array = UnitStat.where(:unit_id=>activeCampusIds).
                    select_group(:unit_id).
                    select_append{sum(Sequel.lit("attrs->'$.hit'")).as(count)}.
@@ -124,7 +124,7 @@ end
 # Unit Carousel: Compile item and view counts for all configured units. Campus may configure up to two (2) units
 # {"uclalaw"=> {item_count: 3408, view_count: 30000}, "cpcc"=>...}
 def getUnitCarouselStats
-  unitsInCars = $activeCampuses.map do |id, c|
+  unitsInCars = $activeCampuses.map do |id, _c|
     unit = Unit[id]
     attrs = JSON.parse(unit.attrs)
     x = unitsFromContentCarConfig(JSON.parse(unit.attrs))
@@ -135,7 +135,7 @@ def getUnitCarouselStats
                             select_append{sum(Sequel.lit("attrs->'$.post'")).as(item_count)}.map{|y| y.values}
   viewsInUnitCar = UnitStat.select_group(:unit_id).where(:unit_id=>unitsInCars).
                             select_append{sum(Sequel.lit("attrs->'$.hit'")).as(view_count)}.map{|y| y.values}
-  x = (itemsInUnitCar + viewsInUnitCar).group_by{|h| h[:unit_id]}.map{|k, v| v.reduce(Hash.new, :merge) }
+  x = (itemsInUnitCar + viewsInUnitCar).group_by{|h| h[:unit_id]}.map{|_k, v| v.reduce(Hash.new, :merge) }
   return x.map{|h| [h[:unit_id], {:item_count=>h[:item_count], :view_count=>h[:view_count]}]}.to_h
 end
 
@@ -147,7 +147,7 @@ end
 # (Throwing them all in, not bothering to check if campus turned journal carousel on in configuration or not)
 # {"ucb"=> {item_count: 3408, view_count: 30000}, "ucla"=>...}
 def getJournalCarouselStats
-  journalsInCars = $activeCampuses.map do |id, c|
+  journalsInCars = $activeCampuses.map do |id, _c|
     c_journals = $campusJournals.select{ |j| j[:ancestor_unit].include?(id) }
                   .select{ |h| h[:status]!="archived" }.map{|u| u[:id] }
     item_counts_per_unit = UnitStat.select_group(:unit_id).where(:unit_id=>c_journals).
@@ -166,7 +166,7 @@ end
 # Get number of publications per campus as one hash.
 # {"ucb"=>11000, "ucd"=>982 ...}
 def getItemStatsPerCampus
-  activeCampusIds = $activeCampuses.map{|id, c| id }
+  activeCampusIds = $activeCampuses.map{|id, _c| id }
   array = UnitStat.where(:unit_id=>activeCampusIds).
                  select_group(:unit_id).
                  select_append{sum(Sequel.lit("attrs->'$.post'")).as(count)}.
@@ -178,7 +178,7 @@ end
 # {"ucb"=>53, "ucd"=>20 ...}
 def getJournalStatsPerCampus
   activeJournals = Unit.filter(type: 'journal', status: 'active').map(:id)
-  activeCampusIds = $activeCampuses.map{|id, c| id }
+  activeCampusIds = $activeCampuses.map{|id, _c| id }
   array = UnitHier.join(:units, :id=>:unit_id).
     where(:unit_id=>activeJournals, :ancestor_unit=>activeCampusIds).group_and_count(:ancestor_unit).
     map{|y| y.values}
@@ -190,7 +190,7 @@ end
 def getOruStatsPerCampus
   orusWithContent = Unit.join(:unit_items, :unit_id=>:id).filter(type: 'oru').exclude(status: 'hidden').
                          distinct.select(:id).map(:id)
-  activeCampusIds = $activeCampuses.map{|id, c| id }
+  activeCampusIds = $activeCampuses.map{|id, _c| id }
   array = UnitHier.join(:units, :id=>:unit_id).
     where(:unit_id=>orusWithContent, :ancestor_unit=>activeCampusIds).group_and_count(:ancestor_unit).
     map{|y| y.values}

@@ -246,7 +246,7 @@ def aws_encode(params, facetTypes, search_type)
 
   # create filter queries, always apply filters for all available fields in cloudsearch
   filterQuery = []
-  $allFacets.each do |field, behavior|
+  $allFacets.each do |field, _behavior|
     if params.keys.include? field then
       filters = params[field].map { |filter| "#{field}: '#{filter}'" }
       if filters.length > 1 then filters = "(or #{filters.join(" ")})" end

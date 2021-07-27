@@ -41,7 +41,7 @@ class SocksMysql
   def service(ready)
     Socket.unix_server_socket(@sockName) { |server|
       ready << true
-      Socket.accept_loop(server) { |localSock, client_addrinfo|
+      Socket.accept_loop(server) { |localSock, _client_addrinfo|
         # Serve each in a new thread, since Sequel might start multiple connections
         Thread.new {
           begin

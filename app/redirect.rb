@@ -79,7 +79,7 @@ def checkRedirect(origURI)
       end
     end
     break if uri == fromURI
-    tried.include?(uri) and raise("URI redirect loop detected involving #{uri.to_s}")
+    tried.include?(uri) and raise("URI redirect loop detected involving #{uri}")
   end
 
   if uri == origURI

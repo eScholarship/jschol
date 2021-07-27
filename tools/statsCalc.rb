@@ -113,7 +113,7 @@ class RefAccum
   end
 
   def add(b)
-    @refs.merge!(b.refs) { |k,x,y| x+y }
+    @refs.merge!(b.refs) { |_k,x,y| x+y }
     @other += b.other
     clamp
   end
@@ -192,7 +192,7 @@ class EventAccum
     if @counts.nil?
       b.counts.nil? or @counts = b.counts.clone
     elsif !b.counts.nil?
-      @counts.merge!(b.counts) { |k,x,y| x+y }
+      @counts.merge!(b.counts) { |_k,x,y| x+y }
     end
 
     # Hash for less common refs
@@ -942,7 +942,7 @@ def parseDateLogs(date, sources)
 
     puts "Writing ipCounts.out."
     open("ipCounts.out", "w") { |io|
-      sessionCounts.sort_by{ |a,b| b }.reverse.each { |session, count|
+      sessionCounts.sort_by{ |_a,b| b }.reverse.each { |session, count|
         next if aberrantSessions.include?(session)
         io.puts "#{count} #{session}"
       }
@@ -988,7 +988,7 @@ def parseDateLogs(date, sources)
     open("finalCounts.out", "w") { |io|
       finalAccum.each { |key, accum|
         item, time, loc = key
-        io.puts("#{item}|#{sprintf("%06d",time)}|#{sprintf("%-6s",loc)}|#{accum.to_h.to_s}")
+        io.puts("#{item}|#{sprintf("%06d",time)}|#{sprintf("%-6s",loc)}|#{accum.to_h}")
       }
       puts "Aber filtered: #{aberFiltered}/#{totalHits}"
     }
@@ -1108,7 +1108,7 @@ def parseLogs
   }
 
   if todo.size > 10 && !$forceMode
-    puts("Error: would process #{todo.size} log dates starting at #{todo[0][0].to_s}. " +
+    puts("Error: would process #{todo.size} log dates starting at #{todo[0][0]}. " +
          "It is unusual for more than a few days to be processed, unless stats calculation has been " +
          "off or failing for a long time. You may want to investigate (md5Logs dir may help), or " +
          "override this message with --force")

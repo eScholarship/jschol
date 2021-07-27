@@ -11,7 +11,7 @@ messagePrinted = false
 startTime = Time.now
 begin
   response = Net::HTTP.get_response(uri)
-  response.code == "200" or raise Exception.new("#{response}: #{response.body}")
+  response.code == "200" or raise StandardError.new("#{response}: #{response.body}")
 rescue Exception => res
   if Time.now - startTime < timeout
     if !messagePrinted
