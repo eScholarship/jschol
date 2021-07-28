@@ -3,10 +3,23 @@ name: lint-jschol
 on: [push, pull_request]
 jobs: 
   lint:
-    name: Lint
+    name: Rubocop
     runs-on: ubuntu-latest
     steps:
      - uses: actions/checkout@v2
      - uses: gimenete/rubocop-action@1.0
        env:
          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    name: ESlint
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-node@v1
+      with:
+        node-version: 10
+    # Install dependencies
+    - run: npm ci
+
+    # Run ESLint
+    - uses: eslint/github-action@v0
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

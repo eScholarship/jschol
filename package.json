@@ -5,7 +5,8 @@
   "main": "index.html",
   "repository": "https://github.com/eScholarship/jschol",
   "scripts": {
-    "test": "mocha"
+    "test": "mocha",
+    "eslint:github-action": "eslint ."
   },
   "author": "California Digital Library",
   "license": "MIT",
