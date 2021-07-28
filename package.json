@@ -6,7 +6,7 @@
   "repository": "https://github.com/eScholarship/jschol",
   "scripts": {
     "test": "mocha",
-    "eslint:github-action": "eslint ."
+    "eslint:github-action": "DEBUG=eslint:* npx eslint ."
   },
   "author": "California Digital Library",
   "license": "MIT",
