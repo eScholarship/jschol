@@ -72,7 +72,7 @@ DB = Sequel.connect({
 $dbMutex = Mutex.new
 
 # Log SQL statements, to aid debugging
-File.exists?('convert.sql_log') and File.delete('convert.sql_log')
+File.exist?('convert.sql_log') and File.delete('convert.sql_log')
 DB.loggers << Logger.new('convert.sql_log')
 
 # Queues for thread coordination
@@ -362,7 +362,7 @@ def parseDate(str)
     ret.year > 1000 && ret.year < 4000 and return ret.iso8601
   rescue
     begin
-      text.sub! /-02-(29|30|31)$/, "-02-28" # Try to fix some crazy dates
+      text.sub!(/-02-(29|30|31)$/, "-02-28") # Try to fix some crazy dates
       ret = Date.strptime(text, "%Y-%m-%d")  # throws exception on bad date
       ret.year > 1000 && ret.year < 4000 and return ret.iso8601
     rescue
@@ -460,7 +460,7 @@ def generatePdfThumbnail(itemID, inMeta, existingItem)
       temp1 = MiniMagick::Image.open(tempFile0.path)
       # Resize to 150 pixels wide if bigger than that 
       if (temp1.width > 150)
-        temp1.resize (((150.0/temp1.width.to_i).round(4) * 100).to_s + "%")
+        temp1.resize(((150.0/temp1.width.to_i).round(4) * 100).to_s + "%")
         tempFile1 = Tempfile.new("thumbnail")
         begin
           temp1.write(tempFile1) 
@@ -1150,7 +1150,7 @@ def parseUCIngest(itemID, inMeta, fileType, isPending)
       exAtts[:issn] = inMeta.text_at("./context/issn")
       exAtts[:fpage] = inMeta.text_at("./extent/fpage")
       exAtts[:lpage] = inMeta.text_at("./extent/lpage")
-      exAtts.reject! { |k, v| !v }
+      exAtts.reject! { |_k, v| !v }
       exAtts.empty? or attrs[:ext_journal] = exAtts
     end
   end
@@ -1166,7 +1166,7 @@ def parseUCIngest(itemID, inMeta, fileType, isPending)
   end
 
   # Remove empty attrs
-  attrs.reject! { |k, v| !v || (v.respond_to?(:empty?) && v.empty?) }
+  attrs.reject! { |_k, v| !v || (v.respond_to?(:empty?) && v.empty?) }
 
   # Detect HTML-formatted items
   contentFile = inMeta.at("/record/content/file[@path]")
@@ -1297,7 +1297,7 @@ def cleanTitle(str)
   str.nil? and return str
   r = Sanitize.clean(str).strip
   str.empty? and return str
-  r = (r[0].match /[^\w]/) ? r[1..-1].strip : r
+  r = (r[0].match(/[^\w]/)) ? r[1..-1].strip : r
   r.sub(/^(The|A|An) /i, '').capitalize
 end
 
@@ -1369,7 +1369,7 @@ def indexItem(itemID, batch, nailgun)
 
   # Grab the main metadata file
   metaPath = arkToFile(itemID, "meta/base.meta.xml")
-  if !File.exists?(metaPath) || File.size(metaPath) < 50
+  if !File.exist?(metaPath) || File.size(metaPath) < 50
     puts "Warning: skipping #{itemID} due to missing or truncated meta.xml"
     $nSkipped += 1
     return
@@ -1469,7 +1469,7 @@ def indexItem(itemID, batch, nailgun)
   }
 
   roleCounts = Hash.new { |h,k| h[k] = 0 }
-  dbContribs = contribs.each_with_index.map { |data, idx|
+  dbContribs = contribs.each_with_index.map { |data, _idx|
     ItemContrib.new { |contrib|
       contrib[:item_id] = itemID
       contrib[:role] = data[:role]

@@ -115,21 +115,20 @@ $host = ENV['HOST'] ? "#{ENV['HOST']}.escholarship.org" : "localhost"
 # Used when fetching RSS data from the API server
 $escholApiServer = getEnv("ESCHOL_API_SERVER")
 
-# Temporary for memory leak debugging
-if false
-  puts "Will trace object allocations; send signal USR1 to write heap.dump.gz"
-  require 'objspace'
-  ObjectSpace.trace_object_allocations_start
-  Signal.trap("USR1") {
-    Thread.new {
-      puts "Dumping heap to 'heap.dump'."
-      File.open('heap.dump', "w") { |io|
-        ObjectSpace.dump_all(output: io)
-      }
-      puts "Heap dump complete."
-    }
-  }
-end
+# Uncomment for memory leak debugging
+  # puts "Will trace object allocations; send signal USR1 to write heap.dump.gz"
+  # require 'objspace'
+  # ObjectSpace.trace_object_allocations_start
+  # Signal.trap("USR1") {
+  #   Thread.new {
+  #     puts "Dumping heap to 'heap.dump'."
+  #     File.open('heap.dump', "w") { |io|
+  #       ObjectSpace.dump_all(output: io)
+  #     }
+  #     puts "Heap dump complete."
+  #   }
+  # }
+
 
 # Need a key for encrypting login credentials and URL keys
 $jscholKey = ENV['JSCHOL_KEY'] or raise("missing env JSCHOL_KEY")
@@ -286,7 +285,7 @@ configure do
    # Compress things that can benefit
   use Rack::Deflater,
     :include => %w{application/javascript application/xml text/html text/css application/json image/svg+xml},
-    :if => lambda { |env, status, headers, body|
+    :if => lambda { |_env, _status, headers, _body|
       # advice from https://www.itworld.com/article/2693941/cloud-computing/
       #               why-it-doesn-t-make-sense-to-gzip-all-content-from-your-web-server.html
       return headers["Content-Length"].to_i > 1400
@@ -347,7 +346,7 @@ before do
   cache_control :no_store
 
   # Emulate Sinatra's handling of static files, *after* all our access and redirect checks
-  path = File.expand_path("app/#{URI::unescape(request.path_info)}")
+  path = File.expand_path("app/#{CGI::unescape(request.path_info)}")
   if File.file?(path)
     env['sinatra.static_file'] = path
     cache_control(:public, :max_age => 3600)
@@ -380,7 +379,7 @@ get "/robots.txt" do
 end
 
 ###################################################################################################
-def proxyFromURL(url, overrideHostname = nil)
+def proxyFromURL(url, _overrideHostname = nil)
   response = HTTParty.get(url)
   response.code == 200 or halt(response.code)
   response.headers['content-type'] and headers("Content-Type" => response.headers['content-type'])
@@ -389,7 +388,7 @@ end
 
 ###################################################################################################
 # Old XTF-style "smode" searches fall to here; all other old searches get redirected.
-get %r{/uc/search(.*)} do |stuff|
+get %r{/uc/search(.*)} do |_stuff|
   request.url =~ %r{/uc/search(.*)}
   proxyFromURL("https://submit.escholarship.org/uc/search#{$1}", "escholarship.org")
 end
@@ -429,7 +428,7 @@ get %r{/assets/([0-9a-f]{64})} do |hash|
 end
 
 ###################################################################################################
-def streamFromS3(itemID, s3Obj)
+def streamFromS3(_itemID, s3Obj)
   s3Obj.exists? or halt(404)
   outLen = s3Obj.content_length
 
@@ -578,7 +577,7 @@ def generalResponse
 
   # Get API data
   pageData = nil
-  apiErr = catch (:halt) {
+  apiErr = catch(:halt) {
     begin
       pageData = getPageData(request.path_info)
       pageData.is_a?(Hash) or raise("an API function failed to return a hash, for path=#{request.path_info.inspect}")
@@ -596,7 +595,7 @@ def generalResponse
     unit = $unitsHash['root']
     attrs = JSON.parse(unit[:attrs])
     pageData = {
-      unit: unit.values.reject{|k,v| k==:attrs},
+      unit: unit.values.reject{|k,_v| k==:attrs},
       header: getUnitHeader(unit, nil, nil, attrs),
       error: true
     }
@@ -758,7 +757,7 @@ def browseAllCampuses
   unit = $unitsHash['root']
   body = {
     :header => getGlobalHeader,
-    :unit => unit.values.reject{|k,v| k==:attrs},
+    :unit => unit.values.reject{|k,_v| k==:attrs},
     :sidebar => getUnitSidebar(unit),
     :browse_type => "campuses",
     :campusesStats => stats.select { |h| !otherCampuses.include?(h['id']) },
@@ -775,7 +774,7 @@ def browseAllJournals
   unit = $unitsHash['root']
   body = {
     :header => getGlobalHeader,
-    :unit => unit.values.reject{|k,v| k==:attrs},
+    :unit => unit.values.reject{|k,_v| k==:attrs},
     :sidebar => getUnitSidebar(unit),
     :browse_type => "all_journals",
     :journals => journals.select{ |h| h[:status]!="archived" },
@@ -805,7 +804,7 @@ def getCampusBrowseData(campusID, browse_type)
   body = {
     :browse_type => browse_type,
     :pageTitle => pageTitle,
-    :unit => unit ? unit.values.reject { |k,v| k==:attrs } : nil,
+    :unit => unit ? unit.values.reject { |k,_v| k==:attrs } : nil,
     :header => unit ? getUnitHeader(unit) : getGlobalHeader,
     :sidebar => getUnitSidebar(unit),
     :campusUnits => cu ? cu.compact : nil,
@@ -840,7 +839,7 @@ def getGlobalStaticData(path)
     unit = $unitsHash['root']
     attrs = JSON.parse(unit[:attrs])
     return {
-      unit: unit.values.reject{|k,v| k==:attrs},
+      unit: unit.values.reject{|k,_v| k==:attrs},
       sidebar: getUnitSidebar(unit),
       header: getUnitHeader(unit, pageName, nil, attrs),
       content: getUnitStaticPage(unit, attrs, pageName)
@@ -1045,7 +1044,7 @@ def getUnitPageData(unitID, pageName, subPage)
       jsonHalt 404, "Error building page data:" + e.message
     end
     pageData = {
-      unit: unit.values.reject{|k,v| k==:attrs}.merge(:extent => ext),
+      unit: unit.values.reject{|k,_v| k==:attrs}.merge(:extent => ext),
       sidebar: getUnitSidebar(unit.type.include?('series') ? getUnitAncestor(unit) : unit)
     }
 
@@ -1107,7 +1106,7 @@ def getUnitPageData(unitID, pageName, subPage)
   else
     #public API data
     pageData = {
-      unit: unit.values.reject{|k,v| k==:attrs}
+      unit: unit.values.reject{|k,_v| k==:attrs}
     }
   end
   return pageData
@@ -1205,7 +1204,7 @@ def getItemPageData(shortArk)
         :status => item.status,
         :submitted => item.submitted,                # Strictly used for admin reference
         :title => citation[:title],
-        :unit => unit ? unit.values.reject { |k,v| k==:attrs } : nil,
+        :unit => unit ? unit.values.reject { |k,_v| k==:attrs } : nil,
         :usage => getItemUsage(id),
       }
 
@@ -1387,7 +1386,7 @@ end
 # Array of all active root level campuses/ORUs. Include empty label "eScholarship at..." 
 def getCampusesAsMenu(topItem="eScholarship at...")
   campuses = []
-  $activeCampuses.each do |id, c| campuses << {id: c.id, name: c.name} end
+  $activeCampuses.each do |_id, c| campuses << {id: c.id, name: c.name} end
   return campuses.unshift({:id => "", :name=>topItem})
 end
 
@@ -1414,7 +1413,7 @@ def getItemHtml(content_type, id, isPending)
 
   # Remap the links
   htmlStr = stringToXML(buf).to_xml
-  htmlStr.gsub!(/(href|src)="((?!#)[^"]+)"/) { |m|
+  htmlStr.gsub!(/(href|src)="((?!#)[^"]+)"/) { |_m|
     attrib, url = $1, $2
     url = url.start_with?("http", "ftp") ? url : "/#{isPending ? "preview" : "content"}/#{id}/#{url}"
     isPending and url += "?preview_key=#{calcPreviewKey(id)}"

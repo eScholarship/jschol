@@ -270,12 +270,12 @@ end
 # Takes array of issue IDs and returns ordered array of all published Issues (vol/issue/date/attrs), including Articles In Press
 def getPublishedJournalIssues(publishedIssues)
   query = _queryIssues(publishedIssues)
-  r = DB.fetch(query).to_hash(:id).map{|id, issue|
+  r = DB.fetch(query).to_hash(:id).map{|_id, issue|
     h = issue.to_hash
     h[:attrs] and h[:attrs] = JSON.parse(h[:attrs])
     h
   }
-  articlesInPress = Issue.where(id: publishedIssues, :volume => '0', :issue => '0').to_hash(:id).map{|id, issue|
+  articlesInPress = Issue.where(id: publishedIssues, :volume => '0', :issue => '0').to_hash(:id).map{|_id, issue|
     h = issue.to_hash
     h[:attrs] and h[:attrs] = JSON.parse(h[:attrs])
     h
@@ -606,7 +606,7 @@ def unitSearch(params, unit)
   return {'count' => response['hits']['found'], 'query' => get_query_display(params.clone), 'searchResults' => searchResults}
 end
 
-def getUnitStaticPage(unit, attrs, pageName)
+def getUnitStaticPage(unit, _attrs, pageName)
   page = Page[:slug=>pageName, :unit_id=>unit.id]
   page or jsonHalt(404, "unknown page #{pageName}")
   page = page.values
@@ -888,8 +888,8 @@ post "/api/unit/:unitID/nav" do |unitID|
   # Invent a unique name for the new item
   slug = name = nil
   (1..9999).each { |n|
-    slug = "#{navType}#{n.to_s}"
-    name = "New #{navType} #{n.to_s}"
+    slug = "#{navType}#{n}"
+    name = "New #{navType} #{n}"
     existing = nil
     travNav(navBar) { |nav|
       if nav['slug'] == slug || nav['name'] == name
@@ -1499,7 +1499,7 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
     if params['data']['subheader-bgcolorpicker'] then unitAttrs['bgColor'] = params['data']['subheader-bgcolorpicker'] end
     if params['data']['elementcolorpicker'] then unitAttrs['elColor'] = params['data']['elementcolorpicker'] end
 
-    unitAttrs.delete_if {|k,v| (v.is_a? String and v.empty?) || (v == false) || v.nil? }
+    unitAttrs.delete_if {|_k,v| (v.is_a? String and v.empty?) || (v == false) || v.nil? }
     unit.attrs = unitAttrs.to_json
     unit.save
   }
@@ -1516,7 +1516,7 @@ put "/api/unit/:unitID/carouselConfig" do |unitID|
   perms = getUserPermissions(params[:username], params[:token], unitID)
   perms[:admin] or halt(401)
 
-  carouselKeys = params['data'].keys.grep /(header|text)\d+/
+  carouselKeys = params['data'].keys.grep(/(header|text)\d+/)
   carouselSlides = {}
   if carouselKeys.length > 0
     numSlides = carouselKeys.map! {|x| /(header|text)(\d+)/.match(x)[2].to_i}.max
@@ -1591,7 +1591,7 @@ post "/api/unit/:unitID/upload" do |unitID|
   perms[:admin] or halt(401)
 
   # upload images for carousel configuration
-  slideImageKeys = params.keys.grep /slideImage/
+  slideImageKeys = params.keys.grep(/slideImage/)
   if slideImageKeys.length > 0
     slideImage_data = []
     for slideImageKey in slideImageKeys
@@ -1605,7 +1605,7 @@ post "/api/unit/:unitID/upload" do |unitID|
       carouselAttrs['slides'] ||= []
       for slideImage in slideImage_data
         slideNumber = slideImage[:slideNumber].to_i
-        image_data = slideImage.reject{|k,v| k == :slideNumber}.to_a.collect{|x| [x[0].to_s, x[1]]}.to_h
+        image_data = slideImage.reject{|k,_v| k == :slideNumber}.to_a.collect{|x| [x[0].to_s, x[1]]}.to_h
         if slideNumber < carouselAttrs['slides'].length
           carouselAttrs['slides'][slideNumber]['image'] = image_data
         elsif carouselAttrs['slides'].length > 0
@@ -1777,12 +1777,12 @@ def getUnitIssueConfig(unit, unitAttrs)
   template = { "numbering" => "both", "rights" => nil, "buy_link" => nil }
   issues = Issue.where(unit_id: unit.id).order(Sequel.desc(:published)).order_append(Sequel.desc(Sequel[:issue].cast_numeric)).map { |issue|
     { voliss: "#{issue.volume}.#{issue.issue}" }.merge(template).
-      merge(JSON.parse(issue.attrs || "{}").select { |k,v| template.key?(k) })
+      merge(JSON.parse(issue.attrs || "{}").select { |k,_v| template.key?(k) })
   }
   # Fill default issue from db, or most recent issue, else default values
   issues.unshift({ voliss: "default" }.merge(template).merge(
     unitAttrs["default_issue"] ||
-    (issues[0] || {}).select { |k,v| template.key?(k) }))
+    (issues[0] || {}).select { |k,_v| template.key?(k) }))
   return issues
 end
 
@@ -1809,7 +1809,7 @@ def updateIssueConfig(inputAttrs, data, voliss)
     { "rights" => validateRights(data["rights-#{voliss}"]),
       "numbering" => validateNumbering(data["numbering-#{voliss}"]),
       "buy_link" => validateLink(data["buy_link-#{voliss}"]) }).
-    select { |k,v| !v.nil? }
+    select { |_k,v| !v.nil? }
   return ret.empty? ? nil : ret
 end
 

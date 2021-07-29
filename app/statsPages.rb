@@ -1003,11 +1003,11 @@ def unitStats_allUsers(unitID)
 
   out = { all_roles: allRoles.to_a,
           date_str: "today",
-          report_data: infoByUser.sort{ |a,b| a[1][:name].downcase <=> b[1][:name].downcase }.map { |k, info|
+          report_data: infoByUser.sort{ |a,b| a[1][:name].downcase <=> b[1][:name].downcase }.map { |_k, info|
                           info[:roles].empty? ? nil :
                             { name: info[:name].sub(/^, /, ''), email: info[:email], roles: info[:roles] }
                        }.compact,
-          selection: params.map { |k, v| k =~ /^(role-|type-)/ ? k : nil }.compact
+          selection: params.map { |k, _v| k =~ /^(role-|type-)/ ? k : nil }.compact
         }
 
   # Form the final data structure with everything needed to render the form and report

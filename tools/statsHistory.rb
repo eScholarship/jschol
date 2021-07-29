@@ -77,8 +77,8 @@ end
 
 ###################################################################################################
 def mergeHitData(att1, att2)
-  return !att2 ? att1 : !att1 ? att2 : att1.merge(att2) { |key, a, b|
-    a.is_a?(Fixnum) ? a+b : a.is_a?(Hash) ? mergeHitData(a, b) : raise("can't merge #{a}")
+  return !att2 ? att1 : !att1 ? att2 : att1.merge(att2) { |_key, a, b|
+    a.is_a?(Integer) ? a+b : a.is_a?(Hash) ? mergeHitData(a, b) : raise("can't merge #{a}")
   }
 end
 

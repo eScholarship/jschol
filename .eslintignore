@@ -1,0 +1,12 @@
+# eslint should ignore code that is not under CDL control
+node_modules/**
+backstop_data/**
+gems/**
+app/isomorphic.js
+app/js/vendors*
+app/js/downloadjs*
+app/js/*-bundle-*
+app/js/MediaPath.js
+# we should probably drop these unused tests, but for now let's tell eslint to ignore them
+test/test.js
+test/setup.js
