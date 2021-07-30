@@ -32,7 +32,7 @@ jobs:
           ${{ runner.os }}-rubocop-
     - name: Install gems
       run: |
-        sudo apt-get update -qq && sudo apt-get autoclean && sudo apt-get install build-essential ruby-dev libmysqlclient-dev
+        sudo apt-get update -qq && sudo apt-get autoclean && sudo apt-get install build-essential ruby-dev mariadb-client mariadb-client-dev
         bundle install --jobs 4 --retry 3
     - name: Run RuboCop
       run: bundle exec rubocop --parallel
