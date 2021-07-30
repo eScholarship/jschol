@@ -32,7 +32,7 @@ jobs:
           ${{ runner.os }}-rubocop-
     - name: Install gems
       run: |
-        apt install mariadb-client build-essential
+        apt-get update -qq && apt-get autoclean && apt-get install mariadb-client build-essential
         bundle install --jobs 4 --retry 3
     - name: Run RuboCop
       run: bundle exec rubocop --parallel
