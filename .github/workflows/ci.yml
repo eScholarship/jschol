@@ -13,16 +13,15 @@ permissions:
   repository-projects: write
   security-events: write
   statuses: write
-jobs: 
+jobs:
   Rubocop:
     name: Rubocop
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
-    - name: Rubocop checks
-        uses: luizfonseca/github-actions-rubocop@1.5.6
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - uses: actions/checkout@v2
+    - uses: luizfonseca/github-actions-rubocop@1.5.6
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   ESlint:
     name: ESlint
