@@ -1344,9 +1344,9 @@ get "/api/mediaLink/:type/:id/:service" do |type, id, service| # service e.g. fa
   sharedLink = "https://escholarship.org/" + path + "/" + id 
   case service
     when "facebook"
-      url = "http://www.facebook.com/sharer.php?u=" + sharedLink
+      url = "https://www.facebook.com/sharer.php?u=" + sharedLink
     when "twitter"
-      url = "http://twitter.com/home?status=" + title + "[" + sharedLink + "]"
+      url = "https://twitter.com/intent/tweet?text=" + title + "&url=" + sharedLink + "&via=eScholarship"
     when "email"
       title_sm = title.length > 50 ? title[0..49] + "..." : title
       body = ''
