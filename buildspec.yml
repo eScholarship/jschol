@@ -1,0 +1,31 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      ruby: 2.5
+    commands:
+      - apt-get update -qq
+      - apt-get install -y apt-transport-https
+      - curl -sL https://deb.nodesource.com/setup_10.x | bash -
+      - curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
+      - echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
+      - apt-get update -qq
+      - apt-get autoclean
+      - apt-get install mariadb-client build-essential libpq-dev yarn nodejs -y
+      - gem uninstall bundler
+      - apt-get autoclean
+
+  pre_build:
+    commands:
+      - bundle install --quiet --path=gems --binstubs
+      - bundle clean
+      - npm install
+  build:
+    commands:
+      - bundle exec rubocop
+      - npx eslint .
+
+cache:
+  paths:
+    - gems
