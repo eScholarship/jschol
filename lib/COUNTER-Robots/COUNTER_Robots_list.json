@@ -4,6 +4,10 @@
     "last_changed": "2017-08-08"
   },
   {
+    "pattern": "^Buck\\/[0-9]",
+    "last_changed": "2019-11-19"
+  },
+  {
     "pattern": "spider",
     "last_changed": "2017-08-08"
   },
@@ -28,10 +32,6 @@
     "last_changed": "2017-08-08"
   },
   {
-    "pattern": "^voyager\\/",
-    "last_changed": "2017-08-08"
-  },
-  {
     "pattern": "^@ozilla\\/\\d",
     "last_changed": "2017-08-08"
   },
@@ -46,6 +46,11 @@
   {
     "pattern": "AddThis",
     "last_changed": "2017-08-08"
+  },
+  {
+    "pattern": "A6-Indexer",
+    "last_changed": "2019-11-19",
+    "description": "A6 Corp's bot"
   },
   {
     "pattern": "ADmantX",
@@ -72,12 +77,28 @@
     "last_changed": "2017-08-08"
   },
   {
+    "pattern": "API[\\+\\s]scraper",
+    "last_changed": "2018-02-15",
+    "description": "API scrapers are robots."
+  },
+  {
+    "pattern": "Arachni",
+    "last_changed": "2018-12-13",
+    "description": "http://www.arachni-scanner.com/"
+  },
+  {
     "pattern": "Arachmo",
     "last_changed": "2017-08-08"
   },
   {
     "pattern": "architext",
     "last_changed": "2017-08-08"
+  },
+  {
+    "pattern": "ArchiveTeam",
+    "last_changed": "2018-02-15",
+    "description": "ArchiveTeam is a robot that is archiving the web.",
+    "url": "https://www.archiveteam.org/"
   },
   {
     "pattern": "aria2\\/\\d",
@@ -132,8 +153,8 @@
     "last_changed": "2017-08-08"
   },
   {
-    "pattern": "blaiz\\-bee",
-    "last_changed": "2017-08-08"
+    "pattern": "blaiz-bee",
+    "last_changed": "2019-11-19"
   },
   {
     "pattern": "bloglines",
@@ -144,16 +165,22 @@
     "last_changed": "2017-08-08"
   },
   {
-    "pattern": "boitho\\.com\\-dc",
-    "last_changed": "2017-08-08"
+    "pattern": "boitho\\.com-dc",
+    "last_changed": "2019-11-19"
   },
   {
-    "pattern": "bookmark\\-manager",
-    "last_changed": "2017-08-08"
+    "pattern": "bookmark-manager",
+    "last_changed": "2019-11-19"
   },
   {
     "pattern": "Brutus\\/AET",
     "last_changed": "2017-08-08"
+  },
+  {
+    "pattern": "BUbiNG",
+    "last_changed": "2018-02-07",
+    "description": "BUbiNG bot scrapes the internet for contacts and news articles that would be of interest to their students and university.",
+    "url": "http://law.di.unimi.it/BUbiNG.html"
   },
   {
     "pattern": "bwh3_user_agent",
@@ -182,6 +209,11 @@
   {
     "pattern": "China\\sLocal\\sBrowse\\s2\\.6",
     "last_changed": "2017-08-08"
+  },
+  {
+    "pattern": "Citoid",
+    "last_changed": "2020-02-25",
+    "url": "https://www.mediawiki.org/wiki/Citoid"
   },
   {
     "pattern": "cloakDetect",
@@ -228,8 +260,20 @@
     "last_changed": "2017-08-08"
   },
   {
+    "pattern": "Cortana",
+    "last_changed": "2019-10-30",
+    "description": "Cortana is a virtual assistant created by Microsoft",
+    "url": "https://www.microsoft.com/en-us/cortana"
+  },
+  {
     "pattern": "CoverScout",
     "last_changed": "2017-08-08"
+  },
+  {
+    "pattern": "crusty\\/\\d",
+    "last_changed": "2021-07-05",
+    "description": "Crusty web crawler",
+    "url": "https://github.com/let4be/crusty"
   },
   {
     "pattern": "curl\\/",
@@ -248,8 +292,9 @@
     "last_changed": "2017-08-08"
   },
   {
-    "pattern": "daumoa",
-    "last_changed": "2017-08-08"
+    "pattern": "daum(oa)?",
+    "last_changed": "2020-09-10",
+    "url": "https://cs.daum.net/faq/15/4118.html?faqId=28966"
   },
   {
     "pattern": "^\\%?default\\%?$",
@@ -264,6 +309,12 @@
     "last_changed": "2017-08-08"
   },
   {
+    "pattern": "Docoloc",
+    "last_changed": "2018-02-15",
+    "description": "Docoloc bot is a web scraping bot used by the Docoloc plagiarism detection service. Docoloc bot searches papers for text fragments that also occur in other documents by using web scraping. Docoloc bot respects robots.txt.",
+    "url": "https://www.distilnetworks.com/bot-directory/bot/docoloc/"
+  },
+  {
     "pattern": "docomo",
     "last_changed": "2017-08-08"
   },
@@ -272,8 +323,24 @@
     "last_changed": "2017-08-08"
   },
   {
+    "pattern": "Drupal",
+    "last_changed": "2020-07-20",
+    "description": "Drupal is a content management system. Some Drupal instances perform harvesting or crawling of web resources and should be ignored."
+  },
+  {
     "pattern": "DSurf",
     "last_changed": "2017-08-08"
+  },
+  {
+    "pattern": "DTS Agent",
+    "last_changed": "2018-02-15",
+    "description": "DTS Agent is an e-mail harvesting robot."
+  },
+  {
+    "pattern": "EasyBib[\\+\\s]AutoCite[\\+\\s]",
+    "last_changed": "2018-02-15",
+    "description": "Easybib Autocite bot is a web scraping bot that allows users to type in a URL and Easybib bot will automatically scrape the necessary information to properly cite the web page, creating a bibliography. Easybib Autocite bot is not known to cause harm and helps give credit to original content owners.",
+    "url": "https://www.distilnetworks.com/bot-directory/bot/easybib-autocite/"
   },
   {
     "pattern": "easydl",
@@ -282,6 +349,10 @@
   {
     "pattern": "EBSCO\\sEJS\\sContent\\sServer",
     "last_changed": "2017-08-08"
+  },
+  {
+    "pattern": "EcoSearch",
+    "last_changed": "2020-07-02"
   },
   {
     "pattern": "ELinks\\/",
@@ -314,6 +385,10 @@
   {
     "pattern": "FDM(\\s|\\+)\\d",
     "last_changed": "2017-08-08"
+  },
+  {
+    "pattern": "Feedbin",
+    "last_changed": "2019-01-22"
   },
   {
     "pattern": "feedburner",
@@ -368,12 +443,27 @@
     "last_changed": "2017-08-08"
   },
   {
+    "pattern": "Genieo",
+    "last_changed": "2018-09-05",
+    "Listed as a bad bot by Distil Networks": "2018-09-05",
+    "url": "https://www.distilnetworks.com/bot-directory/bot/genieo/"
+  },
+  {
     "pattern": "GetRight",
     "last_changed": "2017-08-08"
   },
   {
     "pattern": "geturl",
     "last_changed": "2017-08-08"
+  },
+  {
+    "pattern": "GigablastOpenSource",
+    "last_changed": "2020-07-02"
+  },  
+  {
+    "pattern": "G-i-g-a-b-o-t",
+    "last_changed": "2018-02-15",
+    "description": "Self-explanatory!"
   },
   {
     "pattern": "GLMSLinkAnalysis",
@@ -386,6 +476,12 @@
   {
     "pattern": "google",
     "last_changed": "2017-08-08"
+  },
+  {
+    "pattern": "Grammarly",
+    "last_changed": "2018-02-15",
+    "description": "Grammarly/1.0 bot is a web scraping bot used by the writing tool Grammarly. Grammarly allows users to upload written pieces of work and then scrapes the content looking for grammar mistakes. Grammarly makes sure that everything users type is easy to read, effective, and mistake-free.",
+    "url": "https://www.distilnetworks.com/bot-directory/bot/grammarly1-0/"
   },
   {
     "pattern": "grub",
@@ -488,6 +584,10 @@
     "last_changed": "2017-08-08"
   },
   {
+    "pattern": "Jersey\\/\\d",
+    "last_changed": "2020-02-07"
+  },
+  {
     "pattern": "jobo",
     "last_changed": "2017-08-08"
   },
@@ -516,6 +616,10 @@
     "last_changed": "2017-08-08"
   },
   {
+    "pattern": "^LinkAnalyser",
+    "last_changed": "2019-11-19"
+  },
+  {
     "pattern": "link.?check",
     "last_changed": "2017-08-08"
   },
@@ -534,6 +638,12 @@
   {
     "pattern": "linkscan",
     "last_changed": "2017-08-08"
+  },
+  {
+    "pattern": "LinkTiger",
+    "last_changed": "2018-02-15",
+    "description": "LinkTiger is a website link checking product.",
+    "url": "https://linktiger.com/product/"
   },
   {
     "pattern": "linkwalker",
@@ -564,20 +674,21 @@
     "last_changed": "2017-08-08"
   },
   {
-    "pattern": "lycos[\\_\\+]",
+    "pattern": "lycos[_+]",
+    "last_changed": "2018-12-13"
+  },
+  {
+    "pattern": "mail\\.ru",
+    "url": "https://help.mail.ru/webmaster/indexing/robots.txt/rules/user-agent",
     "last_changed": "2017-08-08"
   },
   {
-    "pattern": "mail.ru",
-    "last_changed": "2017-08-08"
+    "pattern": "MarcEdit",
+    "last_changed": "2019-12-12"
   },
   {
-    "pattern": "MarcEdit.5.2.Web.Client",
-    "last_changed": "2017-08-08"
-  },
-  {
-    "pattern": "mediapartners\\-google",
-    "last_changed": "2017-08-08"
+    "pattern": "mediapartners-google",
+    "last_changed": "2019-11-19"
   },
   {
     "pattern": "megite",
@@ -684,12 +795,18 @@
     "last_changed": "2017-08-08"
   },
   {
+    "pattern": "newspaper\\/\\d",
+    "last_changed": "2021-07-05",
+    "description": "Python 3 library for news, full-text, and article metadata extraction.",
+    "url": "https://github.com/codelucas/newspaper"
+  },
+  {
     "pattern": "ng\\/2\\.",
     "last_changed": "2017-08-08"
   },
   {
-    "pattern": "Ning",
-    "last_changed": "2017-08-08"
+    "pattern": "^Ning\\/\\d",
+    "last_changed": "2019-08-06"
   },
   {
     "pattern": "no_user_agent",
@@ -704,12 +821,28 @@
     "last_changed": "2017-08-08"
   },
   {
+    "pattern": "^oaDOI$",
+    "last_changed": "2018-02-15",
+    "description": "oaDOI is a service that indexes open access articles.",
+    "url": "https://oadoi.org/"
+  },
+  {
     "pattern": "ocelli",
     "last_changed": "2017-08-08"
   },
   {
     "pattern": "Offline(\\s|\\+)Navigator",
     "last_changed": "2017-08-08"
+  },
+  {
+    "pattern": "OgScrper",
+    "last_changed": "2020-07-02"
+  }, 
+  {
+    "pattern": "okhttp",
+    "last_changed": "2020-02-25",
+    "description": "okhttp is a Java HTTP client library.",
+    "url": "http://square.github.io/okhttp/"
   },
   {
     "pattern": "onetszukaj",
@@ -732,7 +865,16 @@
     "last_changed": "2017-08-08"
   },
   {
-    "pattern": "pear.php.net",
+    "pattern": "^Pattern\\/\\d",
+    "last_changed": "2020-02-25",
+    "url": "https://www.clips.uantwerpen.be/pattern"
+  },
+  {
+    "pattern": "Pcore-HTTP",
+    "last_changed": "2019-11-19"
+  },
+  {
+    "pattern": "pear\\.php\\.net",
     "last_changed": "2017-08-08"
   },
   {
@@ -742,6 +884,12 @@
   {
     "pattern": "PHP\\/",
     "last_changed": "2017-08-08"
+  },
+  {
+    "pattern": "pidcheck",
+    "last_changed": "2019-10-18",
+    "description": "PidCheck is a generic crawler for extracting data about PiD's from landing pages and doing some calculation on the health of the link",
+    "url": "https://github.com/datacite/pidcheck"
   },
   {
     "pattern": "pioneer",
@@ -784,12 +932,22 @@
     "last_changed": "2017-08-08"
   },
   {
+    "pattern": "ReactorNetty\\/\\d",
+    "last_changed": "2020-02-07"
+  },
+  {
     "pattern": "Readpaper",
     "last_changed": "2017-08-08"
   },
   {
     "pattern": "redalert",
     "last_changed": "2017-08-08"
+  },
+  {
+    "pattern": "Riddler",
+    "last_changed": "2018-02-15",
+    "description": "Riddler is an online research project which investigates algorithms for mapping the topology of the Internet. Riddler bot scrapes data about public systems to use in its projects.",
+    "url": "https://www.distilnetworks.com/bot-directory/bot/riddler/"
   },
   {
     "pattern": "robozilla",
@@ -820,6 +978,11 @@
     "last_changed": "2017-08-08"
   },
   {
+    "pattern": "ScoutJet",
+    "last_changed": "2019-02-12",
+    "url": "http://www.scoutjet.com/"
+  },
+  {
     "pattern": "^scrutiny\\/\\d",
     "last_changed": "2017-08-08"
   },
@@ -830,6 +993,10 @@
   {
     "pattern": "shoutcast",
     "last_changed": "2017-08-08"
+  },
+  {
+    "pattern": "Site24x7",
+    "last_changed": "2020-02-14"
   },
   {
     "pattern": "SkypeUriPreview",
@@ -846,6 +1013,16 @@
   {
     "pattern": "speedy",
     "last_changed": "2017-08-08"
+  },
+  {
+    "pattern": "sqlmap",
+    "last_changed": "2020-02-25",
+    "url": "https://github.com/sqlmapproject/sqlmap"
+  },
+  {
+    "pattern": "SrceDAMP",
+    "last_changed": "2020-10-20",
+    "url": "https://haw.nsk.hr/en/frequently-asked-questions/"
   },
   {
     "pattern": "Strider",
@@ -880,6 +1057,11 @@
     "last_changed": "2017-08-08"
   },
   {
+    "pattern": "The\\+Knowledge\\+AI",
+    "last_changed": "2018-09-05",
+    "url": "https://www.webmasterworld.com/search_engine_spiders/4896765.htm"
+  },
+  {
     "pattern": "titan",
     "last_changed": "2017-08-08"
   },
@@ -888,12 +1070,27 @@
     "last_changed": "2017-08-08"
   },
   {
+    "pattern": "Trello",
+    "last_changed": "2021-03-30"
+  },
+  {
     "pattern": "Trove",
     "last_changed": "2017-08-08"
   },
   {
+    "pattern": "Turnitin",
+    "last_changed": "2020-07-01",
+    "description": "This robot collects content from the Internet for the sole purpose of helping educational institutions prevent plagiarism.",
+    "url": "https://turnitin.com/robot/crawlerinfo.html"
+  },
+  {
     "pattern": "twiceler",
     "last_changed": "2017-08-08"
+  },
+  {
+    "pattern": "Typhoeus",
+    "last_changed": "2020-02-25",
+    "url": "https://github.com/typhoeus/typhoeus"
   },
   {
     "pattern": "ucsd",
@@ -912,6 +1109,10 @@
     "last_changed": "2017-08-08"
   },
   {
+    "pattern": "Unpaywall",
+    "last_changed": "2019-07-31"
+  },
+  {
     "pattern": "URL2File",
     "last_changed": "2017-08-08"
   },
@@ -926,6 +1127,10 @@
   {
     "pattern": "^user.?agent$",
     "last_changed": "2017-08-08"
+  },
+  {
+    "pattern": "^User-Agent",
+    "last_changed": "2019-11-19"
   },
   {
     "pattern": "validator",
@@ -948,7 +1153,9 @@
     "last_changed": "2017-08-08"
   },
   {
-    "pattern": "w3af.org",
+    "pattern": "w3af\\.org",
+    "description": "Web Application Attack and Audit Framework",
+    "url": "https://w3af.org/",
     "last_changed": "2017-08-08"
   },
   {
@@ -992,6 +1199,10 @@
     "last_changed": "2017-08-08"
   },
   {
+    "pattern": "weborama-fetcher",
+    "last_changed": "2019-11-19"
+  },
+  {
     "pattern": "webreaper",
     "last_changed": "2017-08-08"
   },
@@ -1008,6 +1219,10 @@
     "last_changed": "2017-08-08"
   },
   {
+    "pattern": "WhatsApp",
+    "last_changed": "2021-03-30"
+  },
+  {
     "pattern": "wordpress",
     "last_changed": "2017-08-08"
   },
@@ -1016,12 +1231,12 @@
     "last_changed": "2017-08-08"
   },
   {
-    "pattern": "www.gnip.com",
+    "pattern": "www\\.gnip\\.com",
     "last_changed": "2017-08-08"
   },
   {
-    "pattern": "WWW\\-Mechanize",
-    "last_changed": "2017-08-08"
+    "pattern": "WWW-Mechanize",
+    "last_changed": "2019-11-19"
   },
   {
     "pattern": "xenu",
@@ -1044,11 +1259,21 @@
     "last_changed": "2017-08-08"
   },
   {
+    "pattern": "Yeti\\/\\d",
+    "last_changed": "2019-02-12",
+    "url": "http://naver.me/spd"
+  },
+  {
     "pattern": "zeus",
     "last_changed": "2017-08-08"
   },
   {
     "pattern": "zyborg",
     "last_changed": "2017-08-08"
+  },
+  {
+    "pattern": "7siters",
+    "last_changed": "2020-02-25",
+    "url": "https://7ooo.ru/siters"
   }
 ]
