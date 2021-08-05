@@ -129,7 +129,9 @@ class UnitPage extends PageBase {
     }
     return (
       <div>
-        <MetaTagsComp title={title}/>
+        <MetaTagsComp title={title}>
+          <link rel="canonical" href={"https://escholarship.org" + this.props.location.pathname } />
+        </MetaTagsComp>
         { data.unit.type == "root"
           ? <Header1Comp/>
           : <Header2Comp type={data.unit.type} unitID={data.unit.id} />

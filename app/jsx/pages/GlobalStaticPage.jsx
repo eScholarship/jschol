@@ -44,7 +44,9 @@ export default class GlobalStaticPage extends PageBase
         <NavBarComp navBar={data.header.nav_bar} unit={data.unit} socialProps={data.header.social} />
         <MetaTagsComp title={data.pageNotFound ? "Not Found" :
                              (data.content && data.content.title) ? data.content.title :
-                             "eScholarship"}/>
+                             "eScholarship"}>
+          <link rel="canonical" href={"https://escholarship.org" + this.props.location.pathname } />
+        </MetaTagsComp>
         { data.pageNotFound
           ? <NotFoundLayout/>
           : <div id="wizardModalBase">
