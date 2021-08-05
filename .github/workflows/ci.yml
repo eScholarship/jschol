@@ -2,14 +2,15 @@
 name: lint-jschol
 on: [push, pull_request]
 jobs: 
-  Rubocop:
-    name: Rubocop
-    runs-on: ubuntu-latest
-    steps:
-     - uses: actions/checkout@v2
-     - uses: gimenete/rubocop-action@1.0
-       env:
-         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  # Rubocop:
+  # disabled 8/3/2021 because this fails for PRs from public forks, and that's not acceptible, we'll live without this lint check
+  #   name: Rubocop
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #    - uses: actions/checkout@v2
+  #    - uses: gimenete/rubocop-action@1.0
+  #      env:
+  #        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   ESlint:
     name: ESlint
     runs-on: ubuntu-latest
