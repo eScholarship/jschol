@@ -80,6 +80,7 @@ class StatsHeader extends React.Component {
       <div>
         <MetaTagsComp title={`${p.title}: ${p.data.unit_name || p.data.author_name || "current"}`}>
            <meta id="meta-robots" name="robots" content="noindex" />
+           <link rel="canonical" href={"https://escholarship.org" + p.location.pathname } />
         </MetaTagsComp>
         <h1>
           { pageName == "summary" ? thisLabel : <Link to={thisLink}>{thisLabel}</Link> }
