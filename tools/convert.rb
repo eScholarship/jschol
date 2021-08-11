@@ -25,7 +25,6 @@ require 'httparty'
 require 'json'
 require 'logger'
 require 'mimemagic'
-require 'mimemagic/overlay' # for Office 2007+ formats
 require 'mini_magick'
 require 'netrc'
 require 'nokogiri'
