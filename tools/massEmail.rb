@@ -266,6 +266,10 @@ end
 
 ###################################################################################################
 def fetchPeople(callback, recentHitsOnly)
+  # look for recent hits in last three months
+  month1 = (Date.today<<1).year*100 + (Date.today<<1).month
+  month2 = (Date.today<<2).year*100 + (Date.today<<2).month
+  month3 = (Date.today<<3).year*100 + (Date.today<<3).month
   if recentHitsOnly
     DB.fetch(%{
       select distinct
@@ -274,9 +278,9 @@ def fetchPeople(callback, recentHitsOnly)
       from people
       join item_authors on item_authors.person_id = people.id
       join item_stats on item_stats.item_id = item_authors.item_id
-      where month = ?
+      where month in (?, ?, ?)
       and item_stats.attrs->"$.hit" is not null
-    }, (Date.today<<1).year*100 + (Date.today<<1).month).map { |row|
+    }, month1, month2, month3).map { |row|
       email = row[:email].downcase.strip
       if email =~ VALID_EMAIL_PATTERN
         callback.call(email, row[:id])
@@ -292,6 +296,16 @@ def fetchPeople(callback, recentHitsOnly)
   end
 end
 
+def isOkayToInclude(email, omitSet, incSet)
+    if omitSet.include?(email)
+       return false
+    end
+    if (email =~ /berkeley.edu|ucdavis.edu|uci.edu|ucmerced.edu|ucr.edu|ucla.edu|ucsb.edu|ucsc.edu|ucsd.edu|ucsf.edu|lbl.gov/)
+       return true
+    end
+    return incSet.include?(email)
+end
+
 ###################################################################################################
 def buildUsers(group, filter)
   # We want to exclude everybody that is bouncing or opted out of emails
@@ -300,6 +314,12 @@ def buildUsers(group, filter)
     inner join user_settings on user_settings.user_id = users.user_id
     where setting_name in ('eschol_bouncing_email', 'eschol_opt_out')
     and setting_value = 'yes'
+  }.unindent).map { |row| row[:email].downcase })
+
+  ucaffilEmails = Set.new(OJS_DB.fetch(%{
+    select distinct email from ojs.users where email not like '%.edu' 
+    and user_id in (select user_id from ojs.user_settings where setting_name = 'affiliation' 
+    and (setting_value like 'University of California%' or setting_value like 'UC%'))
   }.unindent).map { |row| row[:email].downcase })
 
   # Now build the result set
@@ -316,7 +336,7 @@ def buildUsers(group, filter)
     fetchJournalManagers(filterFunc)
   elsif group == "authors"
     filterFunc = lambda { |email, person|
-      !omitEmails.include?(email) and result[email][:people] << person
+      isOkayToInclude(email, omitEmails, ucaffilEmails) and result[email][:people] << person
     }
     fetchPeople(filterFunc, filter == "recent-hits")
   else
