@@ -13,6 +13,7 @@ const TRUMBO_BUTTONS = [
   ['unorderedList', 'orderedList'],
   ['justifyLeft', 'justifyCenter', 'justifyRight', 'justifyFull'],
   ['horizontalRule'],
+  ['table'],
   ['superscript', 'subscript', 'strikethrough'],
   ['fancyRemoveFormat']
 ]
