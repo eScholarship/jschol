@@ -130,6 +130,6 @@ class TestQuick < Test::Unit::TestCase
 
   def test_author_search
     html = fetch("http://localhost:#{PUMA_PORT}/search?q=author%3A%22Atkinson%2C%20Richard%22")
-    assert_match(/Letter to the Regents about an article in the March 2000 issue/, html)
+    assert_match(/Opinion piece about the role of standardized testing and the SAT/, html)
   end
 end
