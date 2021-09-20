@@ -21,6 +21,8 @@ gem 'nokogiri'            # parsing and generating XML
 gem 'parslet'             # parser to transform search into Cloudsearch compound query
 gem 'puma'                # Rack web service layer
 gem 'puma_worker_killer'  # because mem leak has been so hard to find
+gem 'rubocop'             # Rubocop for lint checking Ruby code
+gem 'rubocop-sequel'      # Plugin for Rubocop to facilitate lint-checking Sequel-related code
 gem 'sanitize'            # parse and sanitize user-supplied HTML fragments
 gem 'sequel'              # object-relational mapper (including migrations)
 gem 'sigdump', require: 'sigdump/setup' # to get thread traces with kill -CONT
