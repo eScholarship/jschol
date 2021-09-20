@@ -22,7 +22,13 @@
 }
 
 .o-mediafeature__description {
+  margin-bottom: $spacing-sm;
   order: 3;
+}
+
+.o-mediafeature__doi {
+  @extend %o-textlink__secondary;
+  order: 4;
 }
 
 .o-mediafeature--audio {

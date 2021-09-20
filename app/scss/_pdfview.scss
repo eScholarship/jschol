@@ -37,12 +37,25 @@
 
 }
 
+.c-pdfview__accessibility {
+  display: none;
+
+  a {
+    @extend %o-textlink__secondary;
+  }
+
+  @include bp(screen1) {
+    display: block;
+    margin-top: $spacing-sm;
+    margin-bottom: $spacing-sm;
+  }
+}
+
 .c-pdfview__viewer {
   display: none;
 
   @include bp(screen1) {
     display: block;
-    margin-top: $spacing-sm;
   }
 
 }

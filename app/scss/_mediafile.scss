@@ -12,7 +12,7 @@ div[class^='o-mediafile--'] {
   @include bp(screen1) {
     padding: $spacing-sm;
     grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto 1fr auto;
+    grid-template-rows: auto auto auto 1fr;
     grid-column-gap: $spacing-sm;
 
     &:not(:last-child) {
@@ -30,7 +30,7 @@ div[class^='o-mediafile--'] {
   background: no-repeat top left / 0.9em;
   font-size: 1.1em;
   font-weight: normal;
-  grid-column: 1;
+  grid-column: 1 / 3;
   grid-row: 1;
 
   @include bp(screen1) {
@@ -47,10 +47,11 @@ div[class^='o-mediafile--'] {
 
 .o-mediafile__preview {
   position: relative;
-  height: 7.5em;
+  height: 8.5em;
   margin-bottom: $spacing-sm;
   background-color: $color-dark-gray;
   cursor: pointer;
+  grid-column: 1 / 3;
 
   &::before {
     position: absolute;
@@ -64,7 +65,8 @@ div[class^='o-mediafile--'] {
   }
 
   @include bp(screen1) {
-    grid-row: 1 / 4;
+    grid-column: 1;
+    grid-row: 1 / 5;
 
     @supports (display: grid) {
       margin-bottom: 0;
@@ -84,6 +86,7 @@ div[class^='o-mediafile--'] {
 .o-mediafile__description {
   margin-bottom: $spacing-sm;
   font-size: 0.9em;
+  grid-column: 1 / 3;
 
   @include bp(screen1) {
     max-height: 3.2em; // truncate beyond 3 lines per jquery.dotdotdot
@@ -119,12 +122,29 @@ div[class^='o-mediafile--'] {
 
 }
 
-.o-mediafile__download {
+.o-mediafile__doi {
   @extend %o-textlink__secondary;
-  float: right;
-  justify-self: end;
+  margin-bottom: $spacing-sm;
+  grid-column: 1 / 3;
+  grid-row: 3;
 
   @include bp(screen1) {
+    grid-column: 2;
+    max-height: 1.3em; // truncate beyond 2 lines per jquery.dotdotdot
+    overflow: hidden; // hide text beyond max-height
+  }
+}
+
+.o-mediafile__download {
+  @extend %o-textlink__secondary;
+  margin-bottom: $spacing-sm;
+  justify-self: end;
+  grid-column: 2;
+  grid-row: 4;
+  align-self: end;
+
+  @include bp(screen1) {
+    margin-bottom: 0;
     justify-self: start;
   }
 
