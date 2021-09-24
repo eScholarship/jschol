@@ -102,7 +102,7 @@ class SeriesLayout extends React.Component {
     return (
       <div className="c-columns">
         {/* No marquee component used in series layout. But note marquee.about data used below */}
-        <main id="maincontent" tabIndex="-1">
+        <main id="maincontent">
           <section className="o-columnbox1">
             <div className="c-itemactions">
             {data.series.length > 1 ?

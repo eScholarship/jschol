@@ -71,7 +71,7 @@ export default class UnitBuilderLayout extends React.Component
     let p = this.props
     return (
       <div className="c-columns">
-        <main id="maincontent" tabIndex="-1">
+        <main id="maincontent">
           <section className="o-columnbox1">
             <header>
               <h1 className="o-columnbox1__heading">
