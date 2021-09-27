@@ -34,7 +34,7 @@ export default class UserAccountPage extends PageBase
         <Header1Comp/>
         <MetaTagsComp title={"eScholarship"}/>
         <div className={this.state.fetchingData ? "c-columns is-loading-data" : "c-columns"}>
-          <main id="maincontent" tabIndex="-1">
+          <main id="maincontent">
             <section className="o-columnbox1">
               <header>
                 <h1 className="o-columnbox1__heading">User Account</h1>
