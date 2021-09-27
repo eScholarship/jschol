@@ -32,6 +32,7 @@ class MediaFeatureObj extends React.Component {
           }
       })()}
         <div className="o-mediafeature__description">{this.props.description}</div>
+        <a href="{this.props.doi}" className="o-mediafeature__doi">{this.props.doi}</a>
       </div>
     )
   }

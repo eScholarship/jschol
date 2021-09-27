@@ -38,9 +38,9 @@ class CellComp extends React.Component {
         
         <button className="o-mediafile__view" onClick={this.handleOpenModal}><span>View Media</span></button>
         <a href={url} className="o-mediafile__download" download={p.file}>Download</a>
-        <a href={p.doi}>{p.doi}</a>
+        <a href={p.doi} className="o-mediafile__doi">{p.doi}</a>
         <MediaModalComp showModal={this.state.showModal} handleCloseModal={this.handleCloseModal}>
-          <MediaFeatureObj file={p.file} url={url} type={mimeSimple} title={p.title} description={p.description} />
+          <MediaFeatureObj file={p.file} url={url} type={mimeSimple} title={p.title} description={p.description} doi={p.doi} />
         </MediaModalComp>
       </div>
     )

@@ -119,6 +119,9 @@ class PdfViewComp extends React.Component {
           <button onClick={() => {this.view()}} className="c-pdfview__button-download">Download PDF to View</button>
           <button onClick={() => {this.view()}} className="c-pdfview__button-view">View Larger</button>
         </div>
+        <div className="c-pdfview__accessibility">
+          For improved accessibility of PDF content, <a href="">download the file</a> to your device.
+        </div>
         <div className="c-pdfview__viewer">
           <PdfViewerComp url={this.props.url.replace(".pdf", "_noSplash_" + this.props.content_key + ".pdf")
                               + (this.props.preview_key ? separator+"preview_key=" + this.props.preview_key : "")}/>

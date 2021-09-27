@@ -46,6 +46,7 @@ class AuthorListComp extends React.Component {
             <li><a href="" className="c-authorlist__list-more-link">et al.</a></li>
           </TruncationObj>
         }
+        <div className="c-authorlist__copyright">&copy; 2021 by the author(s). <a href="https://escholarship.org/terms">Learn more</a>.</div>
       </div>
     )
   }

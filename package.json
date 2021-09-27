@@ -30,7 +30,7 @@
     "gulp-livereload": "^4.0.1",
     "gulp-modernizr": "^3.2.1",
     "gulp-postcss": "^6.4.0",
-    "gulp-sass": "^4.0.2",
+    "gulp-sass": "^4.1.1",
     "gulp-sourcemaps": "^1.6.0",
     "gulp-streamify": "^1.0.2",
     "gulp-uglify": "^1.5.4",

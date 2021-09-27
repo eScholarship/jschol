@@ -1,35 +1,19 @@
 // ##### Author List Component ##### //
 
 .c-authorlist {
+  display: grid;
+  grid-template-columns: auto 1fr;
   margin-bottom: $spacing-md;
-
-  @include bp(screen1) {
-    display: flex;
-  }
-
 }
 
 .c-authorlist__year {
   align-self: flex-start;
-  margin-right: $spacing-sm;
-  padding-right: $spacing-sm;
-  border-right: 1px solid $color-black;
-}
 
-%c-authorlist__item {
-    display: inline-block;
-
-    &:nth-last-child(n+4) {
-
-      &::after {
-        content: '\00a0'; // no-break space
-      }
-
-    }
-
-    a {
-      @extend %o-textlink__secondary;
-    }
+  + .c-authorlist__list {
+    margin-left: $spacing-sm;
+    padding-left: $spacing-sm;
+    border-left: 1px solid $color-black;
+  }
 }
 
 .c-authorlist__list {
@@ -38,22 +22,12 @@
   overflow: hidden; // hide text beyond max-height
 
   li {
-    @extend %c-authorlist__item;
-  }
+    display: inline-block;
 
-  li:not(.c-authorlist__end) {
-    @extend %c-authorlist__item;
-
-    &:nth-last-child(n+3) {
-
-      &::after {
-      content: ';\00a0'; // semicolon with no-break space
-      }
-
+    a {
+      @extend %o-textlink__secondary;
     }
-
   }
-
 }
 
 .c-authorlist__heading {
@@ -61,8 +35,8 @@
   font-weight: bold; 
 }
 
-.c-authorlist__list .c-authorlist__begin:nth-of-type(n+2)::before {
-  content: '\00a0';
+.c-authorlist__end {
+  margin-right: 0.3rem;
 }
 
 .c-authorlist__list-more-link {
@@ -73,4 +47,12 @@
     content: ';\00a0';
   }
 
+}
+
+.c-authorlist__copyright {
+  grid-column: 1 / 3;
+
+  a {
+    @extend %o-textlink__secondary;
+  }
 }
