@@ -177,7 +177,7 @@ class ItemPage extends PageBase {
                                     socialProps={d.header.social} />}
         <BreadcrumbComp array={d.header ? d.header.breadcrumb : null} />
         <div className={this.state.fetchingData ? "c-columns--sticky-sidebar is-loading-data" : "c-columns--sticky-sidebar"}>
-          <main id="maincontent" tabIndex="-1">
+          <main id="maincontent">
             <ItemActionsComp id={d.id}
                          status={d.status}
                          content_type={d.content_type}

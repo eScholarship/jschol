@@ -393,7 +393,7 @@ class PageBase extends React.Component
         </div>
       }
       <div className="c-columns">
-        <main id="maincontent" tabIndex="-1">
+        <main id="maincontent">
           <section className="o-columnbox1">
             <ServerErrorComp error={message}/>
           </section>

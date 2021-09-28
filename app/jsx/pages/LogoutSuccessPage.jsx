@@ -24,7 +24,7 @@ class LogoutSuccessPage extends PageBase
         <NavComp data={data.header.nav_bar} />
       </div>
       <div className="c-columns">
-        <main id="maincontent" tabIndex="-1">
+        <main id="maincontent">
           <section className="o-columnbox1">
             <header>
               <h1 className="o-columnbox1__heading">Logout</h1>
