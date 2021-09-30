@@ -18,9 +18,11 @@ class AuthorListComp extends React.Component {
     return array.map((x, i) => {
       let c = (i==0) ? "c-authorlist__begin" : (i+1 == array.length) ? "c-authorlist__end" : null
       if (i==0) {
-        return (<li key={i+x.name} className={c}><span className="c-authorlist__heading">{title}(s):</span> {x.name}</li>)
+        return (<li key={i+x.name} className={c}><span className="c-authorlist__heading">{title}(s):</span> {x.name}&#59; </li>)
+      } else if (i<array.length-1) {
+        return (<li key={i+x.name} className={c}>{x.name}&#59; </li> )
       } else {
-        return (<li key={i+x.name} className={c}>{x.name}</li>)
+        return (<li key={i+x.name} className={c}>{x.name} </li>) 
       }
     })
   }
