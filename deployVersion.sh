@@ -27,6 +27,8 @@ set -u
 
 export TZ=":America/Los_Angeles"
 VERSION=`date -Iseconds`
+VERSION+='--'
+VERSION+=`git rev-parse --short HEAD`
 DIR=jschol
 BUCKET=cdlpub-apps
 REGION=us-west-2
