@@ -2,7 +2,7 @@
 
 import React from 'react'
 import _ from 'lodash'
-
+import unescape from 'lodash/unescape'
 class FilterComp extends React.Component {
   state = { isOpen: true }  // open only becomes false when user clicks it to hide (handled by CSS)
 
@@ -43,7 +43,7 @@ class FilterComp extends React.Component {
       <div className={activeFilters ? "c-filter--active" : "c-filter"}>
         {/* we trust searchString (We have escaped the params already), this is fine */}
         <h1 className="c-filter__heading" dangerouslySetInnerHTML={{__html: searchString}} />
-        <input type="hidden" name="q" value={this.props.query.q == "All items" ? "" : this.props.query.q} />
+        <input type="hidden" name="q" value={this.props.query.q == "All items" ? "" : unescape(this.props.query.q)} />
         <div className="c-filter__results">{resultCount} results</div>
         <div className="c-filter__inactive-note">No filters applied</div>
         <details className="c-filter__active" open={this.state.isOpen}>
