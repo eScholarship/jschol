@@ -187,6 +187,7 @@ class ItemPage extends PageBase {
                          sendApiData={this.sendApiData} />
             <h2 className="c-tabcontent__main-heading" tabIndex="-1"><ArbitraryHTMLComp html={d.title}/></h2>
             <AuthorListComp pubdate={d.published}
+                          source={d.source}
                           author_hide={a.author_hide}
                           authors={d.authors}
                           editors={d.editors}
