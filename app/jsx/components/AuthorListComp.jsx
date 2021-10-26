@@ -17,8 +17,10 @@ class AuthorListComp extends React.Component {
   asList = (title, array) => {
     return array.map((x, i) => {
       let c = (i==0) ? "c-authorlist__begin" : (i+1 == array.length) ? "c-authorlist__end" : null
-      if (i==0) {
+      if (i==0 && array.length-1>0) {
         return (<li key={i+x.name} className={c}><span className="c-authorlist__heading">{title}(s):</span> {x.name}&#59; </li>)
+      } else if (i==0 && array.length-1==0) {
+        return (<li key={i+x.name} className={c}><span className="c-authorlist__heading">{title}(s):</span> {x.name} </li>)
       } else if (i<array.length-1) {
         return (<li key={i+x.name} className={c}>{x.name}&#59; </li> )
       } else {
@@ -30,6 +32,7 @@ class AuthorListComp extends React.Component {
   render() {
     let p = this.props,
         year = p.pubdate.match(/\d{4}/),
+        source = p.source,
         authors = (p.authors && !p.author_hide) ? this.asList("Author", p.authors) : null,
         editors = p.editors ? this.asList("Editor", p.editors) : null,
         advisors = p.advisors ? this.asList("Advisor", p.advisors) : null
@@ -48,7 +51,8 @@ class AuthorListComp extends React.Component {
             <li><a href="" className="c-authorlist__list-more-link">et al.</a></li>
           </TruncationObj>
         }
-
+        {/* Only display a copyright if source=ojs */}
+        {(source == 'ojs') && <div className="c-authorlist__copyright">&copy; {year[0]} by the author(s). <a href="https://escholarship.org/terms">Learn more</a>.</div> }
       </div>
     )
   }
