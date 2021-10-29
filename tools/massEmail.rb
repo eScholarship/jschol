@@ -404,7 +404,7 @@ def generateEmails(tplFile, users, mode)
     subject = $1
     toAddr = email
     if $testMode
-      toAddr = "martin.haye@gmail.com, justin.gonder@ucop.edu, monica.westin@ucop.edu"
+      toAddr = "justin.gonder@ucop.edu, help@escholarship.org"
     end
 
     htmlBody = body.join("\n")
