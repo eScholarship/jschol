@@ -28,7 +28,51 @@ class Downloadable extends React.Component {
       x = p.content_type ? contentVars(p.content_type) : contentVars('default'),
       label = x[0],
       url = x[1],
-      filename="eScholarship UC item " + p.id + x[2] 
+      filename="eScholarship UC item " + p.id + x[2],
+
+      is_glossa=(p.journal_id == 'glossapsycholinguistics'
+		 && (p.attrs.supp_files ? p.attrs.supp_files.filter(f => f.file == ('qt' + p.id + '.pdf')).length == 1 : false)
+		 && (p.attrs.supp_files ? p.attrs.supp_files.filter(f => f.file == ('qt' + p.id + '.xml')).length == 1 : false))
+
+      if(is_glossa) {
+	  let file_path = (p.preview_key ? "/preview/" : "/content/") +  "qt" + p.id + "/supp/",
+	      pk = (p.preview_key ? "?preview_key=" + p.preview_key : ""),
+	      pdf_url = file_path + "qt" + p.id + ".pdf" + pk,
+	      xml_url = file_path + "qt" + p.id + ".xml" + pk,
+	      pdf_file = "eScholarship UC item " + p.id + ".pdf",
+	      xml_file = "eScholarship UC item " + p.id + ".xml"
+
+	  return (
+      <div className="c-itemactions">
+        <div className="o-download">
+          {p.download_restricted
+              ? <a href={pdf_url} className="o-download__button" onClick={()=>{alert("Download restricted until " + p.download_restricted); return false}}>Download PDF</a>
+          : <a href={pdf_url} className="o-download__button" download={pdf_file}>Download PDF</a> }
+          <DropdownMenu detailsClass="o-download__formats" ariaLabel="formats">
+		<ul className="o-download__nested-menu">
+		  <li className="o-download__nested-list1">
+	            Main
+		    <ul>
+		      <li>
+			{ p.download_restricted
+			    ? <a href={pdf_url} onClick={()=>{alert("Download restricted until " + p.download_restricted); return false}}>PDF</a>
+			: <a href={pdf_url} download={pdf_file}>PDF</a>}
+                      </li>
+                      <li>
+			{ p.download_restricted
+			    ? <a href={xml_url} onClick={()=>{alert("Download restricted until " + p.download_restricted); return false}}>XML</a>
+			: <a href={xml_url} download={xml_file}>XML</a> }
+                      </li>
+		    </ul>
+	          </li>
+		</ul>
+	  </DropdownMenu>
+	</div>
+        <ShareComp type="item" id={this.props.id} />
+      </div>
+	  )
+      }
+  else {
     return (
       <div className="c-itemactions">
         <div className="o-download">
@@ -89,7 +133,8 @@ class Downloadable extends React.Component {
       }
         <ShareComp type="item" id={this.props.id} />
       </div>
-    )
+     )
+    }
   }
 }
 
