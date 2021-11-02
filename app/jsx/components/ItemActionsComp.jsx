@@ -31,8 +31,8 @@ class Downloadable extends React.Component {
       filename="eScholarship UC item " + p.id + x[2],
 
       is_glossa=(p.journal_id == 'glossapsycholinguistics'
-		 && (p.attrs.supp_files ? p.attrs.supp_files.filter(f => f.file == p.id + '.pdf').length == 1 : false))
-		 && (p.attrs.supp_files ? p.attrs.supp_files.filter(f => f.file == p.id + '.xml').length == 1 : false))
+		 && (p.attrs.supp_files ? p.attrs.supp_files.filter(f => f.file == ('qt' + p.id + '.pdf')).length == 1 : false)
+		 && (p.attrs.supp_files ? p.attrs.supp_files.filter(f => f.file == ('qt' + p.id + '.xml')).length == 1 : false))
 
       if(is_glossa) {
 	  let file_path = (p.preview_key ? "/preview/" : "/content/") +  "qt" + p.id + "/supp/",
