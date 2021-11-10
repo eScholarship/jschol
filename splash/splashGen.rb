@@ -262,12 +262,25 @@ def splashInstrucs(itemID, item, attrs)
     end
   end
 
-  # License
+  pub_year = item.published.to_s.match('\d\d\d\d')[0]
+  # Copyright Information
   if item.rights
-    licenseVer = "4.0"
-    ccLink = "https://creativecommons.org/licenses/#{item.rights.sub('CC ', '').downcase}/#{licenseVer}"
-    instruc << { h3: { text: "License" } } <<
-               { paragraph: { link: { url: ccLink, text: "#{item.rights} #{licenseVer}" } } }
+    m = item.rights.match(/^https:\/\/creativecommons.org\/licenses\/(by|by-nc|by-nc-nd|by-nc-sa|by-nd|by-sa)\/(\d\.\d)\/$/)
+    ccType = m[1].upcase
+    ccYear = m[2]
+  end
+
+  if item.source == 'ojs'
+    terms_link = 'https://escholarship.org/terms'
+    instruc << { h3: { text: "Copyright Information" } }
+    if item.rights
+      instruc << { paragraph: [ { text: "Copyright #{pub_year} by the author(s).This work is made available under the terms of the Creative Commons #{ccType} license " }, { link: { url: item.rights, text: item.rights } } ] }
+    else
+      instruc << { paragraph: [ { text: "Copyright #{pub_year} by the author(s). All rights reserved unless otherwise indicated. Contact the author(s) for any necessary permissions. Learn more at " }, { link: { url: terms_link, text: terms_link } } ] }
+    end
+  elsif item.rights
+    instruc << { h3: { text: "Copyright Information" } }
+    instruc << { paragraph: [ { text: "This work is made available under the terms of the Creative Commons #{ccType} license " }, { link: { url: item.rights, text: item.rights } } ] }
   end
 
   # Flags
