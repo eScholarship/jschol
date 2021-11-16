@@ -65,7 +65,14 @@ end
 
 $activeCampuses = getActiveCampuses
 $hostname = `/bin/hostname`.strip
-
+$cclicense = {
+  'by' => 'Attribution',
+  'by-nc' => 'Attribution-NonCommercial',
+  'by-nd' => 'Attribution-NoDerivatives',
+  'by-nc-nd' => 'Attribution-NonCommercial-NoDerivatives',
+  'by-sa' => 'Attribution-ShareAlike',
+  'by-nc-sa' => 'Attribution-NonCommercial-ShareAlike'
+}
 ###################################################################################################
 def getShortArk(arkStr)
   arkStr =~ %r{^ark:/?13030/(qt\w{8})$} and return $1
@@ -266,7 +273,11 @@ def splashInstrucs(itemID, item, attrs)
   # Copyright Information
   if item.rights
     m = item.rights.match(/^https:\/\/creativecommons.org\/licenses\/(by|by-nc|by-nc-nd|by-nc-sa|by-nd|by-sa)\/(\d\.\d)\/$/)
-    ccType = m[1].upcase
+    if $cclicense.key?(m[1])
+      ccType = $cclicense[m[1]]
+    else
+      ccType = m[1].upcase
+    end
     ccYear = m[2]
   end
 
@@ -274,13 +285,13 @@ def splashInstrucs(itemID, item, attrs)
     terms_link = 'https://escholarship.org/terms'
     instruc << { h3: { text: "Copyright Information" } }
     if item.rights
-      instruc << { paragraph: [ { text: "Copyright #{pub_year} by the author(s).This work is made available under the terms of the Creative Commons #{ccType} license " }, { link: { url: item.rights, text: item.rights } } ] }
+      instruc << { paragraph: [ { text: "Copyright #{pub_year} by the author(s).This work is made available under the terms of a Creative Commons #{ccType} License, available at " }, { link: { url: item.rights, text: item.rights } } ] }
     else
       instruc << { paragraph: [ { text: "Copyright #{pub_year} by the author(s). All rights reserved unless otherwise indicated. Contact the author(s) for any necessary permissions. Learn more at " }, { link: { url: terms_link, text: terms_link } } ] }
     end
   elsif item.rights
     instruc << { h3: { text: "Copyright Information" } }
-    instruc << { paragraph: [ { text: "This work is made available under the terms of the Creative Commons #{ccType} license " }, { link: { url: item.rights, text: item.rights } } ] }
+    instruc << { paragraph: [ { text: "This work is made available under the terms of a Creative Commons #{ccType} License, availalbe at " }, { link: { url: item.rights, text: item.rights } } ] }
   end
 
   # Flags
