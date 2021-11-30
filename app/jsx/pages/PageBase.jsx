@@ -1,5 +1,6 @@
 
 import React from 'react'
+import Helmet from 'react-helmet'
 import $ from 'jquery'
 import _ from 'lodash'
 import ReactGA from 'react-ga'
@@ -299,6 +300,13 @@ class PageBase extends React.Component
     // Normal case
     return (
       <div className="body">
+        {/* Mathjax is fun and awesome */}
+        <Helmet>
+          <script id="MathJaxConfig" src="/js/mathjax-config.js"/>
+          <script id="MathJax-script" async
+            src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+          </script>
+        </Helmet>
         {this.needHeaderFooter() && <SkipNavComp/>}
         {this.state.pageData ? this.renderData(this.state.pageData) : this.renderLoading()}
         {this.needHeaderFooter() &&
