@@ -397,7 +397,7 @@ class PageBase extends React.Component
         <NavBarComp navBar={data.header.nav_bar} unit={data.unit} socialProps={data.header.social} />}
       {data.header && !data.unit &&
         <div className="c-navbar">
-          <NavComp data={data.header.nav_bar} />}
+          <NavComp data={data.header.nav_bar} />
         </div>
       }
       <div className="c-columns">
