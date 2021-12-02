@@ -89,3 +89,10 @@
 .o-heading4a {
   @extend %o-heading4a;
 }
+
+%o-heading5 {
+  @extend %o-heading;
+  font-size: 1em;
+  font-weight: bold;
+  font-style: italic;
+}
