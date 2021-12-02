@@ -109,7 +109,7 @@ class PdfViewComp extends React.Component {
 
   render() {
     let separator = this.props.url.indexOf("?") >= 0 ? "&" : "?"
-    let pdf_url = this.props.url.replace(".pdf", "_noSplash_" + this.props.content_key + ".pdf") + (this.props.preview_key ? separator+"preview_key=" + this.props.preview_key : "")
+    let pdf_url = this.props.url + (this.props.preview_key ? separator+"preview_key=" + this.props.preview_key : "")
     return (
       <details className="c-togglecontent" open>
         {/* ScrollingAnchor sits here and not above because c-togglecontent styling relies on
