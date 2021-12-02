@@ -4,6 +4,7 @@
 // Props used to provide specificity to search box behavior
 
 import React from 'react'
+import Helmet from 'react-helmet'
 import PropTypes from 'prop-types'
 import { Link } from 'react-router-dom'
 import Search1Comp from '../components/Search1Comp.jsx'
@@ -29,6 +30,15 @@ class HeaderComp2 extends React.Component {
   render() {
     return (
       <div>
+      {/* If this unitID is combinatorial_theory, load mathjax via Helmet */}
+      {this.props.unitID=="combinatorial_theory" &&
+        <Helmet>
+          <script id="MathJaxConfig" src="/js/mathjax-config.js"/>
+          <script id="MathJax-script" async
+            src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+          </script>
+        </Helmet>
+      }
       {!this.props.hideAdminBar &&
         <AdminBarComp/>
       }
