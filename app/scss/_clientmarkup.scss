@@ -24,6 +24,11 @@
     margin-top: $spacing-md;
   }
 
+  > h5 {
+    @extend %o-heading5;
+    margin-top: $spacing-md;
+  }
+
   // ***** Links ***** //
 
   a {
