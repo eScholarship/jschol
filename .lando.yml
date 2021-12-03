@@ -99,6 +99,14 @@ tooling:
     service: appserver
     cmd: bundle exec rubocop && npx eslint . && ruby tools/maybeSocks.rb && ruby test/quick.rb
     description: Runs the quicktest suite on the Lando Jschol appserver
+  test-prd:
+    service: appserver
+    cmd: ruby test/quick.rb
+    env:
+      PUMA_PORT: 443
+      TRANSPORT: https
+      TARGET_HOST: escholarship.org
+    description: Runs the quicktest suite against production Jschol
   socks:
     service: appserver
     cmd:
