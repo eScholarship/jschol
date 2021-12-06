@@ -6,3 +6,24 @@
 keys:
   - a_specific_key_filename
 
+# these two examples are for running the quicktest against staging or dev
+# you will need to provide the correct value for access in URL_PARAMS below
+tooling:
+  test-stg:
+    service: appserver
+    cmd: ruby test/quick.rb
+    env:
+      PUMA_PORT: 443
+      SCHEME: https
+      TARGET_HOST: pub-jschol2-stg.escholarship.org
+      URL_PARAMS: access=CHANGEME
+    description: LOCAL... Runs the quicktest suite against Jschol staging
+  test-dev:
+    service: appserver
+    cmd: ruby test/quick.rb
+    env:
+      PUMA_PORT: 443
+      SCHEME: https
+      TARGET_HOST: pub-jschol2-dev.escholarship.org
+      URL_PARAMS: access=CHANGME
+    description: LOCAL... Runs the quicktest suite against Jschol dev
