@@ -7,7 +7,7 @@ keys:
   - a_specific_key_filename
 
 # these two examples are for running the quicktest against staging or dev
-# you will need to provide the correct 
+# you will need to provide the correct value for access in URL_PARAMS below
 tooling:
   test-stg:
     service: appserver
