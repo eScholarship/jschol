@@ -40,8 +40,15 @@ class PubComp extends React.Component {
     if (!pr.author_hide && pr.authors) {
       // Joel's CSS handles inserting semicolons here.
       authorList = pr.authors.map(function(author, i, a) {
-        return (<li key={i}><a href={"/search/?q="+encodeURIComponent("author:"+author.name)}>
-          {author.name}</a></li>)
+        if (i<a.length-1) {
+          return (<li key={i}><a href={"/search/?q="+encodeURIComponent("author:"+author.name)}>
+            {author.name}</a>&#59; 
+            </li>)
+        } else {
+          return (<li key={i}><a href={"/search/?q="+encodeURIComponent("author:"+author.name)}>
+            {author.name}</a>
+            </li>)
+        }
       })
     }
     let totalSuppFiles = Utils.sumValueTotals(pr.supp_files, "count")
