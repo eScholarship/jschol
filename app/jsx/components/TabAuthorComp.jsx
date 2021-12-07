@@ -87,7 +87,7 @@ class TabAuthorComp extends React.Component {
           out += ", & " + this.formatAuth(auths[auths.length-1])
         }
         else
-          out += _.map(auths.slice(0,6), this.formatAuth).join(", ") + ", et al."
+          out += _.map(auths.slice(0,6), this.formatAuth).join("; ") + ", et al."
         out = this.addDot(out)
       }
 

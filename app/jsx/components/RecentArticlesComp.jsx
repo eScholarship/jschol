@@ -8,7 +8,12 @@ import TruncationObj from '../objects/TruncationObj.jsx'
 class AuthorsComp extends React.Component {
   render() {
     let authorList = this.props.authors.map(function(author, i, a) {
-        return (<li key={i}>{author.name}</li>)
+      let c = (i==0) ? "c-authorlist__begin" : (i+1 == a.length) ? "c-authorlist__end" : null
+      if (i<a.length-1) {
+        return (<li key={i} className={c}>{author.name}&#59; </li>)
+      } else {
+        return (<li key={i} className={c}>{author.name}</li>)
+      }
       })
     return (
       <div className="c-authorlist">
