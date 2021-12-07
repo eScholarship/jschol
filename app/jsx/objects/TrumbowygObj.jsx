@@ -4,7 +4,7 @@ import trumbowyg from 'trumbowyg'
 const trumbowygIconsId = 'trumbowyg-icons'
 
 // Load some standard plugins
-import 'trumbowyg/plugins/cleanpaste/trumbowyg.cleanpaste.min.js'
+import 'trumbowyg/plugins/cleanpaste/trumbowyg.cleanpaste.js'
 import 'trumbowyg/dist/plugins/table/trumbowyg.table.min.js'
 
 // MH CDL: Load our customized plugins
