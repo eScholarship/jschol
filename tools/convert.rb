@@ -154,7 +154,7 @@ $oaPolicyDate = { lbnl:    "2015-10-01",
 
 ###################################################################################################
 # Configure EZID API for minting arks for people
-if genEnv("PEOPLE_ARK_SHOULDER")
+if ENV.include? "PEOPLE_ARK_SHOULDER"
   require 'ezid-client'
   Ezid::Client.configure do |config|
     (ezidCred = Netrc.read['ezid.cdlib.org']) or raise("Need credentials for ezid.cdlib.org in ~/.netrc")
