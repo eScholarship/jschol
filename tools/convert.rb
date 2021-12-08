@@ -18,7 +18,7 @@ require 'aws-sdk-cloudsearchdomain'
 require 'aws-sdk-s3'
 require 'date'
 require 'digest'
-require 'ezid-client'
+#require 'ezid-client'
 require 'fastimage'
 require 'fileutils'
 require 'httparty'
@@ -154,11 +154,14 @@ $oaPolicyDate = { lbnl:    "2015-10-01",
 
 ###################################################################################################
 # Configure EZID API for minting arks for people
-Ezid::Client.configure do |config|
-  (ezidCred = Netrc.read['ezid.cdlib.org']) or raise("Need credentials for ezid.cdlib.org in ~/.netrc")
-  config.user = ezidCred[0]
-  config.password = ezidCred[1]
-  config.default_shoulder = getEnv("PEOPLE_ARK_SHOULDER")
+if genEnv("PEOPLE_ARK_SHOULDER")
+  require 'ezid-client'
+  Ezid::Client.configure do |config|
+    (ezidCred = Netrc.read['ezid.cdlib.org']) or raise("Need credentials for ezid.cdlib.org in ~/.netrc")
+    config.user = ezidCred[0]
+    config.password = ezidCred[1]
+    config.default_shoulder = getEnv("PEOPLE_ARK_SHOULDER")
+  end
 end
 
 ###################################################################################################
