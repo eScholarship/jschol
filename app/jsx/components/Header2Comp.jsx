@@ -68,7 +68,7 @@ class HeaderComp2 extends React.Component {
     )
   }
   componentDidMount() {
-    // I can haz MathJax?
+    // Typeset MathJax
     {this.props.unitID=="combinatorial_theory" &&
     <script id="MathJaxTypeset" src="/js/mathjax-typeset.js"/>
     }
