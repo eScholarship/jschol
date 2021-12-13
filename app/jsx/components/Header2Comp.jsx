@@ -73,6 +73,12 @@ class HeaderComp2 extends React.Component {
     <script id="MathJaxTypeset" src="/js/mathjax-typeset.js"/>
     }
   }
+  componentDidUpdate() {
+    // Typeset MathJax
+    {this.props.unitID=="combinatorial_theory" &&
+    <script id="MathJaxTypeset" src="/js/mathjax-typeset.js"/>
+    }
+  }
 }
 
 export default HeaderComp2;
