@@ -1,12 +1,28 @@
 // ##### Publication Component ##### //
 
 import React from 'react'
+import { MathJax, MathJaxContext } from "better-react-mathjax"
 import Utils from '../utils.jsx'
 import PropTypes from 'prop-types'
 import { Link } from 'react-router-dom'
 import TruncationObj from '../objects/TruncationObj.jsx'
 import MediaListComp from '../components/MediaListComp.jsx'
 import ArbitraryHTMLComp from '../components/ArbitraryHTMLComp.jsx'
+
+const config = {
+  loader: { load: ["[tex]/html"] },
+  tex: {
+    packages: { "[+]": ["html"] },
+    inlineMath: [
+      ["$", "$"],
+      ["\\(", "\\)"]
+    ],
+    displayMath: [
+      ["$$", "$$"],
+      ["\\[", "\\]"]
+    ]
+  }
+};
 
 class DotAuthorUl extends React.Component {
   render = () =>
@@ -73,7 +89,9 @@ class PubComp extends React.Component {
       }
       {pr.abstract && 
         <TruncationObj element="div" className="c-pub__abstract">
+          <MathJaxContext version={3} config={config}><MathJax>
           <ArbitraryHTMLComp html={pr.abstract} p_wrap={true} h1Level={3}/>
+          </MathJax></MathJaxContext>
         </TruncationObj>
       }
       {totalSuppFiles > 0 && 
