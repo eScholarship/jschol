@@ -1,6 +1,22 @@
 import React from 'react'
+import { MathJax, MathJaxContext } from "better-react-mathjax"
 import Utils from '../utils.jsx'
 import PropTypes from 'prop-types'
+
+const config = {
+  loader: { load: ["[tex]/html"] },
+  tex: {
+    packages: { "[+]": ["html"] },
+    inlineMath: [
+      ["$", "$"],
+      ["\\(", "\\)"]
+    ],
+    displayMath: [
+      ["$$", "$$"],
+      ["\\[", "\\]"]
+    ]
+  }
+};
 
 /**
  * Adds arbitrary HTML to the page (usually supplied earlier by the user and stored in the database).
@@ -38,7 +54,13 @@ export default class ArbitraryHTMLComp extends React.Component
       let fixedText2 = fixedText.replace(/<a href=\"http:\/\/open-deposit-wizard\.com\">/g, 
         '<a href="" onClick="openDepositWiz(event);">')
       this.props.p_wrap && (fixedText2 = Utils.p_wrap(fixedText2))
-      return <div className="c-clientmarkup" dangerouslySetInnerHTML={{__html: fixedText2}}/>
+      return (
+        <MathJaxContext version={3} config={config}>
+          <MathJax dynamic inline>
+            <div className="c-clientmarkup" dangerouslySetInnerHTML={{__html: fixedText2}}/>
+          </MathJax>
+        </MathJaxContext>
+      )
     } else { return null }
   }
 }

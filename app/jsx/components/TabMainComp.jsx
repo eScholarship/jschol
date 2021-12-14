@@ -1,6 +1,7 @@
 // ##### Tab Main Content Component ##### //
 
 import React from 'react'
+import { MathJax, MathJaxContext } from "better-react-mathjax"
 import PdfViewComp from '../components/PdfViewComp.jsx'
 import MediaViewerComp from '../components/MediaViewerComp.jsx'
 import ViewExternalComp from '../components/ViewExternalComp.jsx'
@@ -8,7 +9,25 @@ import { Link } from 'react-router-dom'
 import ArbitraryHTMLComp from "../components/ArbitraryHTMLComp.jsx"
 import ScrollingAnchorComp from "../components/ScrollingAnchorComp.jsx"
 
+const config = {
+  "fast-preview": {
+    disabled: true
+  },
+  tex2jax: {
+    inlineMath: [
+      ["$", "$"],
+      ["\\(", "\\)"]
+    ],
+    displayMath: [
+      ["$$", "$$"],
+      ["\\[", "\\]"]
+    ]
+  },
+  messageStyle: "none"
+};
+
 class Abstract extends React.Component {
+
   render() {
     return (
       <details className="c-togglecontent" open>
@@ -156,12 +175,16 @@ class TabMainComp extends React.Component {
     let p = this.props
     return (
       <div className="c-tabcontent">
+
+      
       {this.props.attrs.abstract && !/withdrawn/.test(this.props.status) &&
         [<ScrollingAnchorComp key="0" name="article_abstract" />,
-         <Abstract key="1" status={p.status}
+        <Abstract key="1" status={p.status}
                            abstract={p.attrs.abstract}
                            unit={p.unit} />] }
         <MainContent {...p} />
+
+
       </div>
     )
   }

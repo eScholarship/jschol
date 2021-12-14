@@ -1,6 +1,7 @@
 // ##### Item Page ##### //
 
 import React from 'react'
+import { MathJax, MathJaxContext } from "better-react-mathjax"
 import PropTypes from 'prop-types'
 import $ from 'jquery'
 
@@ -18,6 +19,23 @@ import JumpComp from '../components/JumpComp.jsx'
 import SidebarComp from '../components/SidebarComp.jsx'
 import FooterComp from '../components/FooterComp.jsx'
 import MetaTagsComp from '../components/MetaTagsComp.jsx'
+
+const config = {
+  "fast-preview": {
+    disabled: true
+  },
+  tex2jax: {
+    inlineMath: [
+      ["$", "$"],
+      ["\\(", "\\)"]
+    ],
+    displayMath: [
+      ["$$", "$$"],
+      ["\\[", "\\]"]
+    ]
+  },
+  messageStyle: "none"
+};
 
 // Load dotdotdot in browser but not server
 if (!(typeof document === "undefined")) {
@@ -176,6 +194,7 @@ class ItemPage extends PageBase {
                                     unit={d.unit} 
                                     socialProps={d.header.social} />}
         <BreadcrumbComp array={d.header ? d.header.breadcrumb : null} />
+        
         <div className={this.state.fetchingData ? "c-columns--sticky-sidebar is-loading-data" : "c-columns--sticky-sidebar"}>
           <main id="maincontent">
             <ItemActionsComp id={d.id}

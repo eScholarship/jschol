@@ -1,12 +1,30 @@
 // ##### Publication Component ##### //
 
 import React from 'react'
+import { MathJax, MathJaxContext } from "better-react-mathjax"
 import Utils from '../utils.jsx'
 import PropTypes from 'prop-types'
 import { Link } from 'react-router-dom'
 import TruncationObj from '../objects/TruncationObj.jsx'
 import MediaListComp from '../components/MediaListComp.jsx'
 import ArbitraryHTMLComp from '../components/ArbitraryHTMLComp.jsx'
+
+const config = {
+  "fast-preview": {
+    disabled: true
+  },
+  tex2jax: {
+    inlineMath: [
+      ["$", "$"],
+      ["\\(", "\\)"]
+    ],
+    displayMath: [
+      ["$$", "$$"],
+      ["\\[", "\\]"]
+    ]
+  },
+  messageStyle: "none"
+};
 
 class DotAuthorUl extends React.Component {
   render = () =>
@@ -32,6 +50,15 @@ class PubComp extends React.Component {
       rights: PropTypes.string,
     }).isRequired,
   }
+
+  // // Ping MathJax whenever we mount or update this component
+  // componentDidMount () {
+  //   MathJax.Hub.Queue(["Typeset",MathJax.Hub, ReactDOM.findDOMNode(this)]);
+  // }
+
+  // componentDidUpdate () {
+  //   MathJax.Hub.Queue(["Typeset",MathJax.Hub, ReactDOM.findDOMNode(this)]);
+  // }
 
   render() {
     let pr = this.props.result
@@ -73,7 +100,9 @@ class PubComp extends React.Component {
       }
       {pr.abstract && 
         <TruncationObj element="div" className="c-pub__abstract">
+ 
           <ArbitraryHTMLComp html={pr.abstract} p_wrap={true} h1Level={3}/>
+
         </TruncationObj>
       }
       {totalSuppFiles > 0 && 
