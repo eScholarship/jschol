@@ -28,8 +28,6 @@ const config = {
 
 class Abstract extends React.Component {
 
-  
-
   render() {
     return (
       <details className="c-togglecontent" open>
