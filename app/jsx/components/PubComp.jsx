@@ -10,9 +10,10 @@ import MediaListComp from '../components/MediaListComp.jsx'
 import ArbitraryHTMLComp from '../components/ArbitraryHTMLComp.jsx'
 
 const config = {
-  loader: { load: ["[tex]/html"] },
-  tex: {
-    packages: { "[+]": ["html"] },
+  "fast-preview": {
+    disabled: true
+  },
+  tex2jax: {
     inlineMath: [
       ["$", "$"],
       ["\\(", "\\)"]
@@ -21,7 +22,8 @@ const config = {
       ["$$", "$$"],
       ["\\[", "\\]"]
     ]
-  }
+  },
+  messageStyle: "none"
 };
 
 class DotAuthorUl extends React.Component {
@@ -48,6 +50,15 @@ class PubComp extends React.Component {
       rights: PropTypes.string,
     }).isRequired,
   }
+
+  // // Ping MathJax whenever we mount or update this component
+  // componentDidMount () {
+  //   MathJax.Hub.Queue(["Typeset",MathJax.Hub, ReactDOM.findDOMNode(this)]);
+  // }
+
+  // componentDidUpdate () {
+  //   MathJax.Hub.Queue(["Typeset",MathJax.Hub, ReactDOM.findDOMNode(this)]);
+  // }
 
   render() {
     let pr = this.props.result
@@ -89,7 +100,7 @@ class PubComp extends React.Component {
       }
       {pr.abstract && 
         <TruncationObj element="div" className="c-pub__abstract">
-          <MathJaxContext version={3} config={config}><MathJax>
+          <MathJaxContext version={3} config={config}><MathJax inline dynamic>
           <ArbitraryHTMLComp html={pr.abstract} p_wrap={true} h1Level={3}/>
           </MathJax></MathJaxContext>
         </TruncationObj>

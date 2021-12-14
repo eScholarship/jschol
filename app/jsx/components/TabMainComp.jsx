@@ -10,9 +10,10 @@ import ArbitraryHTMLComp from "../components/ArbitraryHTMLComp.jsx"
 import ScrollingAnchorComp from "../components/ScrollingAnchorComp.jsx"
 
 const config = {
-  loader: { load: ["[tex]/html"] },
-  tex: {
-    packages: { "[+]": ["html"] },
+  "fast-preview": {
+    disabled: true
+  },
+  tex2jax: {
     inlineMath: [
       ["$", "$"],
       ["\\(", "\\)"]
@@ -21,7 +22,8 @@ const config = {
       ["$$", "$$"],
       ["\\[", "\\]"]
     ]
-  }
+  },
+  messageStyle: "none"
 };
 
 class Abstract extends React.Component {
@@ -175,7 +177,7 @@ class TabMainComp extends React.Component {
     let p = this.props
     return (
       <div className="c-tabcontent">
-      <MathJaxContext version={3} config={config}><MathJax>
+      <MathJaxContext version={3} config={config}><MathJax inline dynamic>
       
       {this.props.attrs.abstract && !/withdrawn/.test(this.props.status) &&
         [<ScrollingAnchorComp key="0" name="article_abstract" />,
