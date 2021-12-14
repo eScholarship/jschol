@@ -100,9 +100,9 @@ class PubComp extends React.Component {
       }
       {pr.abstract && 
         <TruncationObj element="div" className="c-pub__abstract">
-          <MathJaxContext version={3} config={config}><MathJax inline dynamic>
+ 
           <ArbitraryHTMLComp html={pr.abstract} p_wrap={true} h1Level={3}/>
-          </MathJax></MathJaxContext>
+
         </TruncationObj>
       }
       {totalSuppFiles > 0 && 

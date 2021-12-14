@@ -175,7 +175,7 @@ class TabMainComp extends React.Component {
     let p = this.props
     return (
       <div className="c-tabcontent">
-      <MathJaxContext version={3} config={config}><MathJax inline dynamic>
+
       
       {this.props.attrs.abstract && !/withdrawn/.test(this.props.status) &&
         [<ScrollingAnchorComp key="0" name="article_abstract" />,
@@ -184,7 +184,7 @@ class TabMainComp extends React.Component {
                            unit={p.unit} />] }
         <MainContent {...p} />
 
-      </MathJax></MathJaxContext>
+
       </div>
     )
   }

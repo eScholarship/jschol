@@ -56,7 +56,7 @@ export default class ArbitraryHTMLComp extends React.Component
       this.props.p_wrap && (fixedText2 = Utils.p_wrap(fixedText2))
       return (
         <MathJaxContext version={3} config={config}>
-          <MathJax>
+          <MathJax dynamic inline>
             <div className="c-clientmarkup" dangerouslySetInnerHTML={{__html: fixedText2}}/>
           </MathJax>
         </MathJaxContext>
