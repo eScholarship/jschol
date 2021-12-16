@@ -3,20 +3,6 @@ import { MathJax } from "better-react-mathjax"
 import Utils from '../utils.jsx'
 import PropTypes from 'prop-types'
 
-const config = {
-  tex: {
-    packages: { "[+]": ["html"] },
-    inlineMath: [
-      ["$", "$"],
-      ["\\(", "\\)"]
-    ],
-    displayMath: [
-      ["$$", "$$"],
-      ["\\[", "\\]"]
-    ]
-  }
-};
-
 /**
  * Adds arbitrary HTML to the page (usually supplied earlier by the user and stored in the database).
  * Re-maps <h1>, <h2> etc in the HTML to the specified level to improve accessibility.

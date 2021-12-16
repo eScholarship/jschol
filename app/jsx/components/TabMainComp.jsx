@@ -1,6 +1,7 @@
 // ##### Tab Main Content Component ##### //
 
 import React from 'react'
+import { MathJax, MathJaxContext } from "better-react-mathjax"
 import PdfViewComp from '../components/PdfViewComp.jsx'
 import MediaViewerComp from '../components/MediaViewerComp.jsx'
 import ViewExternalComp from '../components/ViewExternalComp.jsx'

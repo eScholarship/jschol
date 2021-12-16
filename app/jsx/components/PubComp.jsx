@@ -1,6 +1,7 @@
 // ##### Publication Component ##### //
 
 import React from 'react'
+import { MathJax, MathJaxContext } from "better-react-mathjax"
 import Utils from '../utils.jsx'
 import PropTypes from 'prop-types'
 import { Link } from 'react-router-dom'
@@ -50,6 +51,15 @@ class PubComp extends React.Component {
     }).isRequired,
   }
 
+  // // Ping MathJax whenever we mount or update this component
+  // componentDidMount () {
+  //   MathJax.Hub.Queue(["Typeset",MathJax.Hub, ReactDOM.findDOMNode(this)]);
+  // }
+
+  // componentDidUpdate () {
+  //   MathJax.Hub.Queue(["Typeset",MathJax.Hub, ReactDOM.findDOMNode(this)]);
+  // }
+
   render() {
     let pr = this.props.result
     let itemLink = "/uc/item/"+pr.id.replace(/^qt/, "")
@@ -90,7 +100,9 @@ class PubComp extends React.Component {
       }
       {pr.abstract &&
         <TruncationObj element="div" className="c-pub__abstract">
+ 
           <ArbitraryHTMLComp html={pr.abstract} p_wrap={true} h1Level={3}/>
+
         </TruncationObj>
       }
       {totalSuppFiles > 0 &&

@@ -1,6 +1,7 @@
 // ##### Item Page ##### //
 
 import React from 'react'
+import { MathJax, MathJaxContext } from "better-react-mathjax"
 import PropTypes from 'prop-types'
 import $ from 'jquery'
 
@@ -193,7 +194,6 @@ class ItemPage extends PageBase {
                                     unit={d.unit}
                                     socialProps={d.header.social} />}
         <BreadcrumbComp array={d.header ? d.header.breadcrumb : null} />
-
         <div className={this.state.fetchingData ? "c-columns--sticky-sidebar is-loading-data" : "c-columns--sticky-sidebar"}>
           <main id="maincontent">
             <ItemActionsComp id={d.id}
