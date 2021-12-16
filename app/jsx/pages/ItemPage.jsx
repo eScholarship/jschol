@@ -1,7 +1,6 @@
 // ##### Item Page ##### //
 
 import React from 'react'
-import { MathJax, MathJaxContext } from "better-react-mathjax"
 import PropTypes from 'prop-types'
 import $ from 'jquery'
 
@@ -128,7 +127,7 @@ class ItemPage extends PageBase {
   }
 
   renderData = data => {
-    let currentTab = tab_anchors.includes(this.state.currentTab) ? this.state.currentTab : "main" 
+    let currentTab = tab_anchors.includes(this.state.currentTab) ? this.state.currentTab : "main"
     let d = data
     let a = d.attrs
     let meta_authors = a.author_hide ? null : d.authors.slice(0, 85).map((author, i) => {
@@ -138,7 +137,7 @@ class ItemPage extends PageBase {
     let descr_editors = d.editors ? "Editor(s): " + d.editors.slice(0, 85).map((editor) => { return editor.name }).join('; ') : ""
     let descr_advisors = d.advisors ? "Advisor(s): " + d.advisors.slice(0, 85).map((advisor) => { return advisor.name }).join('; ') : ""
     let contribs = [descr_authors, descr_editors, descr_advisors].filter(e => e !== '').join(' | ')
-    let journal_title = (d.unit && (d.unit.type == 'journal')) ? 
+    let journal_title = (d.unit && (d.unit.type == 'journal')) ?
       <meta id="meta-journal_title" name="citation_journal_title" content={d.unit.name} /> : null
     let [issn, volume, issue, firstpage, lastpage] = [null, null, null, null, null]
     if (a['ext_journal']) {
@@ -190,11 +189,11 @@ class ItemPage extends PageBase {
                      hideAdminBar={true} />
         {/* Some items have no parent unit, so check for empty d.header */}
         {d.header && <SubheaderComp unit={d.unit} header={d.header} />}
-        {d.header && <NavBarComp navBar={d.header.nav_bar} 
-                                    unit={d.unit} 
+        {d.header && <NavBarComp navBar={d.header.nav_bar}
+                                    unit={d.unit}
                                     socialProps={d.header.social} />}
         <BreadcrumbComp array={d.header ? d.header.breadcrumb : null} />
-        
+
         <div className={this.state.fetchingData ? "c-columns--sticky-sidebar is-loading-data" : "c-columns--sticky-sidebar"}>
           <main id="maincontent">
             <ItemActionsComp id={d.id}

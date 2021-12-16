@@ -1,10 +1,9 @@
 import React from 'react'
-import { MathJax, MathJaxContext } from "better-react-mathjax"
+import { MathJax } from "better-react-mathjax"
 import Utils from '../utils.jsx'
 import PropTypes from 'prop-types'
 
 const config = {
-  loader: { load: ["[tex]/html"] },
   tex: {
     packages: { "[+]": ["html"] },
     inlineMath: [
@@ -48,19 +47,24 @@ export default class ArbitraryHTMLComp extends React.Component
       let minLevel = 9
       origText.replace(/(<\/?[hH])([1-9]+)/g,
                         (m, p1, p2) => minLevel = Math.min(minLevel, parseInt(p2)))
-      let fixedText = origText.replace(/(<\/?[hH])([1-9]+)/g, 
+      let fixedText = origText.replace(/(<\/?[hH])([1-9]+)/g,
                         (m, p1, p2) => p1 + (parseInt(p2) + h1Level - minLevel))
-      // Kludge for opening deposit wizard modal 
-      let fixedText2 = fixedText.replace(/<a href=\"http:\/\/open-deposit-wizard\.com\">/g, 
+      // Kludge for opening deposit wizard modal
+      let fixedText2 = fixedText.replace(/<a href=\"http:\/\/open-deposit-wizard\.com\">/g,
         '<a href="" onClick="openDepositWiz(event);">')
       this.props.p_wrap && (fixedText2 = Utils.p_wrap(fixedText2))
-      return (
-        <MathJaxContext version={3} config={config}>
+      if (fixedText2.match(".*\\$[^\\d]")) { // heuristic to detect MathJax: $ followed by non-digit
+        return (
           <MathJax>
             <div className="c-clientmarkup" dangerouslySetInnerHTML={{__html: fixedText2}}/>
           </MathJax>
-        </MathJaxContext>
-      )
+        )
+      }
+      else {
+        return (
+          <div className="c-clientmarkup" dangerouslySetInnerHTML={{__html: fixedText2}}/>
+        )
+      }
     } else { return null }
   }
 }

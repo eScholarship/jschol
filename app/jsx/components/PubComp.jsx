@@ -1,7 +1,6 @@
 // ##### Publication Component ##### //
 
 import React from 'react'
-import { MathJax, MathJaxContext } from "better-react-mathjax"
 import Utils from '../utils.jsx'
 import PropTypes from 'prop-types'
 import { Link } from 'react-router-dom'
@@ -51,15 +50,6 @@ class PubComp extends React.Component {
     }).isRequired,
   }
 
-  // // Ping MathJax whenever we mount or update this component
-  // componentDidMount () {
-  //   MathJax.Hub.Queue(["Typeset",MathJax.Hub, ReactDOM.findDOMNode(this)]);
-  // }
-
-  // componentDidUpdate () {
-  //   MathJax.Hub.Queue(["Typeset",MathJax.Hub, ReactDOM.findDOMNode(this)]);
-  // }
-
   render() {
     let pr = this.props.result
     let itemLink = "/uc/item/"+pr.id.replace(/^qt/, "")
@@ -70,7 +60,7 @@ class PubComp extends React.Component {
         let c = (i==0) ? "c-authorlist__begin" : (i+1 == a.length) ? "c-authorlist__end" : null
         if (i<a.length-1) {
           return (<li key={i} className={c}><a href={"/search/?q="+encodeURIComponent("author:"+author.name)}>
-            {author.name}</a>&#59; 
+            {author.name}</a>&#59;
             </li>)
         } else {
           return (<li key={i}><a href={"/search/?q="+encodeURIComponent("author:"+author.name)}>
@@ -85,7 +75,7 @@ class PubComp extends React.Component {
         <TruncationObj element={this.props.h} className="c-pub__heading">
           <a href={itemLink}><ArbitraryHTMLComp html={pr.title}/></a>
         </TruncationObj>
-      {authorList && 
+      {authorList &&
         <div className="c-authorlist">
           <DotAuthorUl className="c-authorlist__list">
             {authorList}
@@ -98,14 +88,12 @@ class PubComp extends React.Component {
           ({pr.pub_year})
         </div>
       }
-      {pr.abstract && 
+      {pr.abstract &&
         <TruncationObj element="div" className="c-pub__abstract">
-          <MathJaxContext version={3} config={config}><MathJax inline dynamic>
           <ArbitraryHTMLComp html={pr.abstract} p_wrap={true} h1Level={3}/>
-          </MathJax></MathJaxContext>
         </TruncationObj>
       }
-      {totalSuppFiles > 0 && 
+      {totalSuppFiles > 0 &&
         <MediaListComp supp_files={pr.supp_files} />
       }
       </div>

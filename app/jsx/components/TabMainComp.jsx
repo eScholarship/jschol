@@ -1,7 +1,6 @@
 // ##### Tab Main Content Component ##### //
 
 import React from 'react'
-import { MathJax, MathJaxContext } from "better-react-mathjax"
 import PdfViewComp from '../components/PdfViewComp.jsx'
 import MediaViewerComp from '../components/MediaViewerComp.jsx'
 import ViewExternalComp from '../components/ViewExternalComp.jsx'
@@ -109,7 +108,7 @@ class Withdrawn extends React.Component {
       <div>
         <p><br/></p>
         <div className="o-itemunavailable__withdrawn">
-        {this.props.message ? 
+        {this.props.message ?
           <p className="o-itemunavailable__lede">{this.props.message}</p>
           :
           <p className="o-itemunavailable__lede">This item has been withdrawn and is <strong>no longer available</strong>.</p>
@@ -148,7 +147,7 @@ class NoContent extends React.Component {
   render() {
     return (
       <div>
-      {this.props.pub_web_loc && this.props.pub_web_loc.length > 0 && 
+      {this.props.pub_web_loc && this.props.pub_web_loc.length > 0 &&
         <ViewExternalComp pub_web_loc={this.props.pub_web_loc[0]} /> }
       {this.props.supp_files && this.props.supp_files.length > 0 &&
         <div style={{paddingLeft: '25px'}}>
@@ -175,8 +174,7 @@ class TabMainComp extends React.Component {
     let p = this.props
     return (
       <div className="c-tabcontent">
-      <MathJaxContext version={3} config={config}><MathJax inline dynamic>
-      
+
       {this.props.attrs.abstract && !/withdrawn/.test(this.props.status) &&
         [<ScrollingAnchorComp key="0" name="article_abstract" />,
         <Abstract key="1" status={p.status}
@@ -184,7 +182,6 @@ class TabMainComp extends React.Component {
                            unit={p.unit} />] }
         <MainContent {...p} />
 
-      </MathJax></MathJaxContext>
       </div>
     )
   }

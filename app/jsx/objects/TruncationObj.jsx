@@ -53,7 +53,7 @@ export default class TruncationObj extends React.Component {
 
   componentDidMount() {
     // Don't do truncation on scripted tests (too hard to wait for completion)
-    if (navigator.userAgent != "puppeteer") {
+    if (navigator.userAgent != "puppeteer" && this.truncate) {
       job_queue.append(()=>{
         if (this.domEl) {
           $(this.domEl).dotdotdot(this.props.options ? this.props.options : {watch:"window"})
@@ -67,12 +67,25 @@ export default class TruncationObj extends React.Component {
     this.domEl = null
   }
 
-  render = () =>
-    React.createElement(this.props.element,
-      { className: this.props.className,
-        ref: el => this.domEl = el,
-        dangerouslySetInnerHTML: {__html: ReactDOMServer.renderToStaticMarkup(
-          <div >{this.props.children}</div>).replace(/^<div>/, '').replace(/<\/div>$/, '')}
-      }
-    )
+  render = () => {
+    let content = ReactDOMServer.renderToStaticMarkup(
+      <div >{this.props.children}</div>).replace(/^<div>/, '').replace(/<\/div>$/, '')
+    if (content.match(".*\\$[^\\d]")) { // heuristic to detect MathJax: $ followed by non-digit
+      this.truncate = false
+      return React.createElement(this.props.element,
+        { className: this.props.className,
+          ref: el => this.domEl = el,
+        },
+        this.props.children
+      )
+    } else {
+      this.truncate = true
+      return React.createElement(this.props.element,
+        { className: this.props.className,
+          ref: el => this.domEl = el,
+          dangerouslySetInnerHTML: {__html: content}
+        }
+      )
+    }
+  }
 }

@@ -1,5 +1,4 @@
 import React from 'react'
-import { MathJax, MathJaxContext } from "better-react-mathjax"
 import PropTypes from 'prop-types'
 import { Link, browserHistory } from 'react-router-dom'
 
@@ -8,23 +7,6 @@ import JournalInfoComp from '../components/JournalInfoComp.jsx'
 import IssueComp from '../components/IssueComp.jsx'
 import PubComp from '../components/PubComp.jsx'
 import IssueActionsComp from '../components/IssueActionsComp.jsx'
-
-const config = {
-  "fast-preview": {
-    disabled: true
-  },
-  tex2jax: {
-    inlineMath: [
-      ["$", "$"],
-      ["\\(", "\\)"]
-    ],
-    displayMath: [
-      ["$$", "$$"],
-      ["\\[", "\\]"]
-    ]
-  },
-  messageStyle: "none"
-}
 
 class VolumeSelector extends React.Component {
   static propTypes = {
@@ -90,9 +72,9 @@ class IssueWrapperComp extends React.Component {
     }).isRequired,
     issues: PropTypes.array.isRequired   // Array of issue hashes
   }
-  
+
   render() {
-    let pi = this.props.issue,
+      let pi = this.props.issue,
         pi_title = this.props.issues.find(x => x.issue_id === pi.id).name
     return (
       <section className="o-columnbox1">
@@ -148,7 +130,7 @@ class JournalLayout extends React.Component {
       about: PropTypes.about
     })
   }
-  
+
   render() {
     let data = this.props.data
     let marquee = this.props.marquee
@@ -159,7 +141,6 @@ class JournalLayout extends React.Component {
       }
         <div className="c-columns">
           <main id="maincontent">
-          <MathJaxContext version={3} config={config}>
           {this.props.data.issue ?
             <IssueWrapperComp issue={data.issue} issues={data.issuesSubNav} display={data.display} />
           :
@@ -168,10 +149,9 @@ class JournalLayout extends React.Component {
               <br/> <br/> <br/> <br/> </p>
             </section>
           }
-          </MathJaxContext>
           </main>
           <aside>
-          {(data.doaj || (data.issue && data.issue.rights) || data.issn || data.eissn) && 
+          {(data.doaj || (data.issue && data.issue.rights) || data.issn || data.eissn) &&
             <section className="o-columnbox1">
               <header>
                 <h2>Journal Information</h2>

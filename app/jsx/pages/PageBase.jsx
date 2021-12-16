@@ -5,6 +5,7 @@ import _ from 'lodash'
 import ReactGA from 'react-ga'
 import Contexts from '../contexts.jsx'
 import { Link } from 'react-router-dom'
+import { MathJaxContext } from "better-react-mathjax"
 
 import SkipNavComp from '../components/SkipNavComp.jsx'
 import Header1Comp from '../components/Header1Comp.jsx'
@@ -23,6 +24,24 @@ const SESSION_EDITING_KEY = "escholEditingPage"
 
 // Session storage is not available on server, only on browser
 let sessionStorage = (typeof window != "undefined") ? window.sessionStorage : null
+
+const mathjaxConfig = {
+  "fast-preview": {
+    disabled: true
+  },
+  tex: {
+    packages: { "[+]": ["html"] },
+    inlineMath: [
+      ["$", "$"],
+      ["\\(", "\\)"]
+    ],
+    displayMath: [
+      ["$$", "$$"],
+      ["\\[", "\\]"]
+    ]
+  },
+  messageStyle: "none"
+};
 
 class PageBase extends React.Component
 {
@@ -123,7 +142,7 @@ class PageBase extends React.Component
         finalURL += (finalURL.indexOf("?") < 0) ? "?" : "&"
         finalURL += "username=" + d.username + "&token=" + d.token
       }
-      this.setState({ fetchingData: true, 
+      this.setState({ fetchingData: true,
                       permissions: (this.state && this.pagePermissionsUnit() == this.state.permissionsUnit)
                         ? this.state.permissions : null })
       $.getJSON(finalURL).done((data) => {
@@ -214,17 +233,17 @@ class PageBase extends React.Component
       if (/^nanocad/.test(unit_id)) { this.runExtGATracker('nanocadTracker', 'UA-17962781-1') }
       if (/^uciem_westjem/.test(unit_id)) { this.runExtGATracker('westjemTracker', 'UA-34762732-1') }
       if (/^ucla_epss/.test(unit_id)) { this.runExtGATracker('epssTracker', 'UA-111990925-2') }
-      if (/^refract/.test(unit_id)) { this.runExtGATracker('refractTracker', 'UA-130336975-1') }      
-      if (/^itsdavis_ncst/.test(unit_id)) { this.runExtGATracker('itsdavisncstTracker', 'UA-54945925-1') } 
-      if (/^acgcc_jtas/.test(unit_id)) { this.runExtGATracker('jtasTracker', 'UA-141570725-1') } 
+      if (/^refract/.test(unit_id)) { this.runExtGATracker('refractTracker', 'UA-130336975-1') }
+      if (/^itsdavis_ncst/.test(unit_id)) { this.runExtGATracker('itsdavisncstTracker', 'UA-54945925-1') }
+      if (/^acgcc_jtas/.test(unit_id)) { this.runExtGATracker('jtasTracker', 'UA-141570725-1') }
       if (/^psf/.test(unit_id)) { this.runExtGATracker('psfTracker', 'UA-152312010-1') }
       if (/^cioa_ciap/.test(unit_id)) { this.runExtGATracker('ciapTracker', 'UA-164954982-1') }
       if (/^lawandpoliticaleconomy/.test(unit_id)) { this.runExtGATracker('lawandpoliticaleconomyTracker', 'UA-187281152-1') }
       if (/^energy_ambitions/.test(unit_id)) { this.runExtGATracker('energyambitionsTracker', 'UA-192190770-1') }
     }
   }
- 
-  
+
+
   // This gets called when props change by switching to a new page.
   // It is *not* called on first-time construction. We use it to fetch new page data
   // for the page being switched to, if the URL has changed.
@@ -298,18 +317,21 @@ class PageBase extends React.Component
 
     // Normal case
     return (
-      <div className="body">
-        {this.needHeaderFooter() && <SkipNavComp/>}
-        {this.state.pageData ? this.renderData(this.state.pageData) : this.renderLoading()}
-        {this.needHeaderFooter() &&
-          <div>
-            <div className="c-toplink">
-              <a href="javascript:window.scrollTo(0, 0)">Top</a>
+      <MathJaxContext version={3} config={mathjaxConfig}>
+        <div className="body">
+          {this.needHeaderFooter() && <SkipNavComp/>}
+          {this.state.pageData ? this.renderData(this.state.pageData) : this.renderLoading()}
+          {this.needHeaderFooter() &&
+            <div>
+              <div className="c-toplink">
+                <a href="javascript:window.scrollTo(0, 0)">Top</a>
+              </div>
+              <FooterComp/>
             </div>
-            <FooterComp/>
-          </div>
-        }
-      </div>)
+          }
+        </div>
+      </MathJaxContext>
+      )
   }
 
   fetchPermissions(refetch) {

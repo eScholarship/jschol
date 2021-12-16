@@ -148,6 +148,7 @@ DEPENDENCIES
   netrc
   nokogiri
   parslet
+  puma
   puma_worker_killer
   rubocop
   rubocop-sequel
