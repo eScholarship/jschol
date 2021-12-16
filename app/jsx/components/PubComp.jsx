@@ -70,7 +70,7 @@ class PubComp extends React.Component {
         let c = (i==0) ? "c-authorlist__begin" : (i+1 == a.length) ? "c-authorlist__end" : null
         if (i<a.length-1) {
           return (<li key={i} className={c}><a href={"/search/?q="+encodeURIComponent("author:"+author.name)}>
-            {author.name}</a>&#59; 
+            {author.name}</a>&#59;
             </li>)
         } else {
           return (<li key={i}><a href={"/search/?q="+encodeURIComponent("author:"+author.name)}>
@@ -85,7 +85,7 @@ class PubComp extends React.Component {
         <TruncationObj element={this.props.h} className="c-pub__heading">
           <a href={itemLink}><ArbitraryHTMLComp html={pr.title}/></a>
         </TruncationObj>
-      {authorList && 
+      {authorList &&
         <div className="c-authorlist">
           <DotAuthorUl className="c-authorlist__list">
             {authorList}
@@ -98,14 +98,14 @@ class PubComp extends React.Component {
           ({pr.pub_year})
         </div>
       }
-      {pr.abstract && 
+      {pr.abstract &&
         <TruncationObj element="div" className="c-pub__abstract">
  
           <ArbitraryHTMLComp html={pr.abstract} p_wrap={true} h1Level={3}/>
 
         </TruncationObj>
       }
-      {totalSuppFiles > 0 && 
+      {totalSuppFiles > 0 &&
         <MediaListComp supp_files={pr.supp_files} />
       }
       </div>

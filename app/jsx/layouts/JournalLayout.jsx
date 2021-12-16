@@ -90,9 +90,9 @@ class IssueWrapperComp extends React.Component {
     }).isRequired,
     issues: PropTypes.array.isRequired   // Array of issue hashes
   }
-  
+
   render() {
-    let pi = this.props.issue,
+      let pi = this.props.issue,
         pi_title = this.props.issues.find(x => x.issue_id === pi.id).name
     return (
       <section className="o-columnbox1">
@@ -148,7 +148,7 @@ class JournalLayout extends React.Component {
       about: PropTypes.about
     })
   }
-  
+
   render() {
     let data = this.props.data
     let marquee = this.props.marquee
@@ -171,7 +171,7 @@ class JournalLayout extends React.Component {
 
           </main>
           <aside>
-          {(data.doaj || (data.issue && data.issue.rights) || data.issn || data.eissn) && 
+          {(data.doaj || (data.issue && data.issue.rights) || data.issn || data.eissn) &&
             <section className="o-columnbox1">
               <header>
                 <h2>Journal Information</h2>

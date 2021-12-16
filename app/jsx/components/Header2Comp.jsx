@@ -41,7 +41,7 @@ class HeaderComp2 extends React.Component {
             <div className="c-header__logo2-tagline">
               Open Access Publications from the University of California
             </div>
-          </Link>  
+          </Link>
           <div className={this.state.searchActive ? "c-header__search--active" : "c-header__search"}>
           {this.props.searchComp && this.props.searchComp == "1" ?
             <Search1Comp query={this.props.query}
@@ -58,10 +58,6 @@ class HeaderComp2 extends React.Component {
     )
   }
   componentDidMount() {
-    // Typeset MathJax
-    {this.props.unitID=="combinatorial_theory" &&
-    <script id="MathJaxTypeset" src="/js/mathjax-typeset.js"/>
-    }
   }
 }
 
