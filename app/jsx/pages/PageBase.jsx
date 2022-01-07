@@ -317,7 +317,7 @@ class PageBase extends React.Component
 
     // Normal case
     return (
-      <MathJaxContext version={3} config={mathjaxConfig}>
+      <MathJaxContext version={3} config={mathjaxConfig} src={"/js/mathjax/tex-chtml.js"}>
         <div className="body">
           {this.needHeaderFooter() && <SkipNavComp/>}
           {this.state.pageData ? this.renderData(this.state.pageData) : this.renderLoading()}
