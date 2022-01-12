@@ -1,10 +1,8 @@
 // ##### Publication Component ##### //
 
 import React from 'react'
-import { MathJax, MathJaxContext } from "better-react-mathjax"
 import Utils from '../utils.jsx'
 import PropTypes from 'prop-types'
-import { Link } from 'react-router-dom'
 import TruncationObj from '../objects/TruncationObj.jsx'
 import MediaListComp from '../components/MediaListComp.jsx'
 import ArbitraryHTMLComp from '../components/ArbitraryHTMLComp.jsx'
@@ -50,15 +48,6 @@ class PubComp extends React.Component {
       rights: PropTypes.string,
     }).isRequired,
   }
-
-  // // Ping MathJax whenever we mount or update this component
-  // componentDidMount () {
-  //   MathJax.Hub.Queue(["Typeset",MathJax.Hub, ReactDOM.findDOMNode(this)]);
-  // }
-
-  // componentDidUpdate () {
-  //   MathJax.Hub.Queue(["Typeset",MathJax.Hub, ReactDOM.findDOMNode(this)]);
-  // }
 
   render() {
     let pr = this.props.result

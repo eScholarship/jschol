@@ -315,9 +315,27 @@ class PageBase extends React.Component
         </DrawerComp>)
     }
 
+    // ISO case
+    if (typeof document === "undefined") {
+      return (
+          <div className="body">
+            {this.needHeaderFooter() && <SkipNavComp/>}
+            {this.state.pageData ? this.renderData(this.state.pageData) : this.renderLoading()}
+            {this.needHeaderFooter() &&
+              <div>
+                <div className="c-toplink">
+                  <a href="javascript:window.scrollTo(0, 0)">Top</a>
+                </div>
+                <FooterComp/>
+              </div>
+            }
+          </div>
+        )
+    }
+
     // Normal case
     return (
-      <MathJaxContext version={3} config={mathjaxConfig}>
+      <MathJaxContext version={3} config={mathjaxConfig} src={"/js/MathJax-3.2.0/es5/tex-chtml.js"}>
         <div className="body">
           {this.needHeaderFooter() && <SkipNavComp/>}
           {this.state.pageData ? this.renderData(this.state.pageData) : this.renderLoading()}

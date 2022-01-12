@@ -13,7 +13,10 @@
   },
   "plugins": [
   "react"
-	],
+  ],
+  "ignorePatterns": [
+  "/app/js/MathJax-*/*"
+  ],
 	"rules": {
       "no-const-assign": 0,
       "no-unused-vars": 0
