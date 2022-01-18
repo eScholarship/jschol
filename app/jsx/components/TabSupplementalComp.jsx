@@ -20,7 +20,7 @@ class TabSupplementalComp extends React.Component {
       for (let f of supp_files_orig) {
         // normalize the DOI to recommended best practice
         // -- only attempt this match if we actually have a doi
-        if ( f.doi && ! f.doi.match(/^http/) ) {
+        if ( f.doi && ! f.doi.startsWith('http') ) {
             f.doi = 'https://doi.org/' + f.doi
         }
         let mimeSimple = "data"
