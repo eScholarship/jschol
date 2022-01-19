@@ -87,7 +87,7 @@
     "intersection-observer": "^0.4.3",
     "jquery": "^3.4.0",
     "jquery.dotdotdot": "amywieliczka/jQuery.dotdotdot#4f7d03a442ceca0b75a2fb641a065e47297d5666",
-    "lodash": "^4.17.11",
+    "lodash": "^4.17.21",
     "lozad": "^1.0.9",
     "pdfjs-embed2": "escholarship/pdfjs-embed2#dab83845bc60a953d08963ea6550df8df9a73e77",
     "prop-types": "^15.5.10",
