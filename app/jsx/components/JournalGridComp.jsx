@@ -13,7 +13,7 @@ class JournalGridComp extends React.Component {
         <Link to="/uc/psf"><LazyImageComp src={MEDIA_PATH + 'homecover_psf.png'} alt="Parks Stewardship Forum"/></Link>
         <Link to="/uc/our_bsj"><LazyImageComp src={MEDIA_PATH + 'homecover_glitch.png'} alt="Berkeley Scientific Journal"/></Link>
         <Link to="/uc/alephucla"><LazyImageComp src={MEDIA_PATH + 'homecover_aleph.png'} alt="Aleph, UCLA Undergraduate Research Journal"/></Link>
-        <Link to="/uc/uclaspa_criticalplanning"><LazyImageComp src={MEDIA_PATH + 'homecover_cp.png'} alt="Critical Planning"/></Link>
+        <Link to="/uc/alonfilipinxjournal"><LazyImageComp src={MEDIA_PATH + 'homecover_af.png'} alt="Alon: Journal for Filipinx American and Diasporic Studies"/></Link>
         <div className="c-journalgrid__all">
           <Link to="/journals">View all <strong>{this.props.count_journals}</strong> current journals</Link>
         </div>
