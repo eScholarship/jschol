@@ -240,6 +240,7 @@ class PageBase extends React.Component
       if (/^cioa_ciap/.test(unit_id)) { this.runExtGATracker('ciapTracker', 'UA-164954982-1') }
       if (/^lawandpoliticaleconomy/.test(unit_id)) { this.runExtGATracker('lawandpoliticaleconomyTracker', 'UA-187281152-1') }
       if (/^energy_ambitions/.test(unit_id)) { this.runExtGATracker('energyambitionsTracker', 'UA-192190770-1') }
+      if (/^glossapsycholinguistics/.test(unit_id)) { this.runExtGATracker('glossapsycholinguisticsTracker', 'UA-217482135-1') }
     }
   }
 

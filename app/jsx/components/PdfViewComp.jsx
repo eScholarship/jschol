@@ -120,11 +120,12 @@ class PdfViewComp extends React.Component {
           <button onClick={() => {this.view()}} className="c-pdfview__button-download">Download PDF to View</button>
           <button onClick={() => {this.view()}} className="c-pdfview__button-view">View Larger</button>
         </div>
+        {/* Only show the accessibility link on items that do not have download_restricted set  */}
+        {!this.props.download_restricted &&
         <div className="c-pdfview__accessibility">
-          For improved accessibility of PDF content, {this.props.download_restricted 
-          ? <a href={pdf_url} onClick={()=>{alert("Download restricted until " + this.props.download_restricted); return false}}>Download PDF</a>
-          : <a href={pdf_url} >download the file</a> } to your device.  
+          For improved accessibility of PDF content, <a href={pdf_url} >download the file</a> to your device.
         </div>
+        }
         <div className="c-pdfview__viewer">
           <PdfViewerComp url={this.props.url.replace(".pdf", "_noSplash_" + this.props.content_key + ".pdf")
                               + (this.props.preview_key ? separator+"preview_key=" + this.props.preview_key : "")}/>
