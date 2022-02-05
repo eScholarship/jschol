@@ -378,7 +378,6 @@ end
 #   and related ORUs, which include children ORUs, sibling ORUs, and parent ORU
 def getORULandingPageData(id)
   children = $hierByAncestor[id]
-  puts children
   children and children.select! { |u| u.unit.status != 'hidden' }
   oru_children = children ? children.select { |u| u.unit.type == 'oru' }.map { |u| {unit_id: u.unit_id, name: u.unit.name, ordering:u.ordering} }.sort_by{|u| u[:ordering]}: []
   oru_siblings, oru_ancestor = [], []
@@ -392,7 +391,7 @@ def getORULandingPageData(id)
   related_orus = oru_children + oru_siblings + oru_ancestor
 
   return {
-    :series => children ? children.select { |u| u.unit.type == 'series' }.map { |u| seriesPreview(u) } : [],
+    :series => children ? children.select { |u| u.unit.type == 'series' }.map { |u| seriesPreview(u) }.sort_by{|u| u[:ordering]} : [],
     :monograph_series => children ? children.select { |u| u.unit.type == 'monograph_series' }.map { |u| seriesPreview(u) } : [],
     :journals => children ? children.select { |u| u.unit.type == 'journal' }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : [],
     :related_orus => related_orus 
@@ -485,7 +484,8 @@ def seriesPreview(u)
     :name => u.unit.name,
     :count => count,
     :previewLimit => previewLimit,
-    :items => itemResultData(preview, itemData)
+    :items => itemResultData(preview, itemData),
+    :ordering => u.ordering
   }
 end
 
