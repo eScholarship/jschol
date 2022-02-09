@@ -386,7 +386,7 @@ def getORULandingPageData(id)
     oru_ancestor = [{unit_id: oru_ancestor_id, name: $unitsHash[oru_ancestor_id].name}]
     siblings = $hierByAncestor[oru_ancestor_id]
     siblings and siblings.select! { |u| u.unit.status != 'hidden' }
-    oru_siblings = siblings ? siblings.select { |u| u.unit.type == 'oru' and u.unit_id != id }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : []
+    oru_siblings = siblings ? siblings.select { |u| u.unit.type == 'oru' and u.unit_id != id }.map { |u| {unit_id: u.unit_id, name: u.unit.name, ordering:u.ordering} }.sort_by{|u| u[:ordering]} : []
   end
   related_orus = oru_children + oru_siblings + oru_ancestor
 
