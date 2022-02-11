@@ -6,10 +6,11 @@ env_file:
   - local.env
 services:
   appserver:
-    type: ruby:2.5
+    type: ruby:custom
     ports:
       - '18880:18880'
     overrides:
+      image: ruby:3.0-buster
       # Pass SSH auth.
       volumes:
         - type: bind
@@ -29,19 +30,21 @@ services:
       - apt-get update -qq
       - apt-get install -y apt-transport-https
       - apt-get install -y vim net-tools
-      - curl -sL https://deb.nodesource.com/setup_10.x | bash -
+      - curl -sL https://deb.nodesource.com/setup_10.x | sed '/sleep/d' | bash -
       - curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
       - echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
       - apt-get update -qq
       - apt-get autoclean
       - apt-get install mariadb-client build-essential libpq-dev yarn nodejs -y
       - gem install bundler
+      # - gem install foreman
       - apt-get autoclean
       - chown www-data:www-data /run/host-services/ssh-auth.sock
       - chmod g+w /run/host-services/ssh-auth.sock
+      - chown www-data:www-data -R /usr/local/bundle
 
     build:
-      # - gem install bundler
+      - cd /app && /app/make-dev-symlinks.sh
       - cd /app && /app/setup.sh
     run:
     run_as_root:
@@ -50,15 +53,7 @@ services:
 
     moreHttpPorts:
       - '18880'
-    scanner: true
-
-  db:
-    type: mysql
-    portforward: true
-    creds:
-      user: escholdba
-      password: hard2guess
-      database: local_eschol_prod
+    scanner: false
 
 events:
   pre-destroy:
@@ -67,39 +62,32 @@ events:
     - appserver: test -e ~/.ssh/config || printf 'Host *\n  AddKeysToAgent yes\n' > ~/.ssh/config
 
 tooling:
-  mysql:
-    service: db
-    cmd: mysql -u root
-  'db-import <file>':
-    service: :host
-    description: Imports a dump file into a database service
-    cmd: /helpers/sql-import.sh
-    options:
-      host:
-        description: The database service to use
-        default: db
-        alias:
-          - h
-      no-wipe:
-        description: Do not destroy the existing database before an import
-        boolean: true
   npm:
     service: appserver
     description: Runs npm commands on the Lando Jschol appserver
   yarn:
     service: appserver
     description: Runs yarn commands on the Lando Jschol appserver
+    cmd: yarn
+    dir: /app
   ruby:
     service: appserver
     description: Runs ruby commands on the Lando Jschol appserver
   bundle:
     service: appserver
     description: Runs bundle commands on the Lando Jschol appserver
+  just-test:
+    service: appserver
+    cmd: ruby tools/maybeSocks.rb && ruby test/quick.rb
+    description: Runs the quicktest suite on the Lando Jschol appserver
+    env:
+      SCHEME: http
   test:
     service: appserver
-    SCHEME: http
     cmd: bundle exec rubocop && npx eslint . && ruby tools/maybeSocks.rb && ruby test/quick.rb
     description: Runs the quicktest suite on the Lando Jschol appserver
+    env:
+      SCHEME: http
   test-prd:
     service: appserver
     cmd: ruby test/quick.rb

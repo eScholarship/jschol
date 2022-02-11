@@ -83,6 +83,7 @@
     "flickity": "^2.0.5",
     "flickity-imagesloaded": "^2.0.0",
     "get-form-data": "^2.0.0",
+    "gulp-cli": "^2.3.0",
     "intersection-observer": "^0.4.3",
     "jquery": "^3.4.0",
     "jquery.dotdotdot": "amywieliczka/jQuery.dotdotdot#4f7d03a442ceca0b75a2fb641a065e47297d5666",
