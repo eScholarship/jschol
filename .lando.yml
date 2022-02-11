@@ -76,6 +76,9 @@ tooling:
   bundle:
     service: appserver
     description: Runs bundle commands on the Lando Jschol appserver
+  gem:
+    service: appserver
+    description: Runs gem commands on the Lando Jschol appserver
   just-test:
     service: appserver
     cmd: ruby tools/maybeSocks.rb && ruby test/quick.rb
