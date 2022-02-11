@@ -5,6 +5,7 @@ require 'rubygems'
 require 'bundler/setup'
 
 require 'open-uri'
+require 'uri'
 require 'sanitize'
 require 'test/unit'
 
@@ -26,7 +27,7 @@ URL_PARAMS = ENV['URL_PARAMS'] || ''
 class TestQuick < Test::Unit::TestCase
 
   def fetch(url)
-    open(url) { |f| return f.open }
+    URI.open(url) { |f| return f.read }
   end
 
   def fetchAndStrip(url)
