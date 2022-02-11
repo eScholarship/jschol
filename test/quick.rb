@@ -26,7 +26,7 @@ URL_PARAMS = ENV['URL_PARAMS'] || ''
 class TestQuick < Test::Unit::TestCase
 
   def fetch(url)
-    open(url) { |f| return f.read }
+    open(url) { |f| return f.open }
   end
 
   def fetchAndStrip(url)

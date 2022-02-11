@@ -443,7 +443,8 @@ def getCampusCarousel(campus, content_attrs)
         r['item_count'] = item_count
         r['view_count'] = view_count
     end
-  else r = nil
+  else
+    r = nil
   end
   return r
 end
