@@ -1,8 +1,8 @@
 port ENV['PUMA_PORT']
 workers ENV['PUMA_WORKERS']
 threads 0, ENV['PUMA_THREADS']
-worker_boot_timeout 120
-worker_timeout 120 # the default of 60 is usually hit on first startup, since this is a dev instance, we can wait
+worker_boot_timeout 220
+worker_timeout 220 # the default of 60 is usually hit on first startup, since this is a dev instance, we can wait
 worker_shutdown_timeout 90  # HTTP timeout is usually 60 sec, so give extra to be sure we don't drop any
 
 # The jschol memory leak has been very hard to track down, so a kludge is needed to

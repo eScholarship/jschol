@@ -20,6 +20,7 @@ class SubheaderComp extends React.Component {
       campuses: PropTypes.array.isRequired,
       directSubmit: PropTypes.string,
       directSubmitURL: PropTypes.string,
+      directManageURL: PropTypes.string,
       logo: PropTypes.shape({
         url: PropTypes.string.isRequired,
         width: PropTypes.number, // optional for SVG
@@ -56,7 +57,7 @@ class SubheaderComp extends React.Component {
     `
     let [banner_url, banner_title] = unit.type.includes('series') ? [h.ancestorID, h.ancestorName] : [unit.id, unit.name]
     let directSubmitURL = h.directSubmitURL ? h.directSubmitURL : "https://submit.escholarship.org/subi/directSubmit?target="+unit.id
-    let directSubmitURL_manage = h.directSubmitURL ? h.directSubmitURL : null
+    let directSubmitURL_manage = h.directManageURL ? h.directManageURL : null
 
    // Button Configuration based on unit type
    //   unit.type == 'journal'  -->        Submit  / Manage Submissions
@@ -98,11 +99,12 @@ class SubheaderComp extends React.Component {
                 />)
     }
 
+    let manageWizard = null
     let manageButton = <button id="wizardlyManage" className="o-button__3" onClick={(event)=>{
                                this.setState({manageModalOpen:true})
                                event.preventDefault()} } >
                                 Manage<span className="c-subheader__button-fragment">Submissions</span></button>
-    let manageWizard = (<WizardInertComp showModal={this.state.manageModalOpen}
+    manageWizard = (<WizardInertComp showModal={this.state.manageModalOpen}
                           parentSelector={()=>$('#wizardModalBase')[0]}
                           onCancel={e=>this.closeWizardModal(e)}
                           header="Manage Submissions"
