@@ -720,7 +720,7 @@ def flattenDepts(ids, a=[])
   else
     unit = $unitsHash[ids]
     unitAttrs = JSON.parse(unit.attrs)
-    a << {"id" => unit.id, "name" => unit.name, "directSubmit" => unitAttrs['directSubmit']} unless unit.type != 'oru'
+    a << {"id" => unit.id, "name" => unit.name, "directSubmit" => unitAttrs['directSubmit'], "directManage" => unitAttrs['directManage'],} unless unit.type != 'oru'
     children = $hierByAncestor[unit.id]
     children and children.each do |c|
         unit = $unitsHash[c.unit_id]
@@ -736,7 +736,7 @@ get "/api/wizardlySeries/:unitID" do |unitID|
   children = $hierByAncestor[unitID]
   os = children ? children.select { |u| u.unit.type.include?('series') }.map {|u|
    unitAttrs = JSON.parse(u.unit.attrs)
-   {'id': u.unit_id, 'name': u.unit.name, 'directSubmit': unitAttrs['directSubmit']}
+   {'id': u.unit_id, 'name': u.unit.name, 'directSubmit': unitAttrs['directSubmit'], 'directManage': unitAttrs['directManage']}
   } : []
   return os ? os.sort_by{ |u| u[:name] }.to_json : nil
 end

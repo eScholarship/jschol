@@ -2151,6 +2151,7 @@ def genDivChildren(xml, parentID, generatedDivs)
       unitAttrs = JSON.parse(unit.attrs)
       divAttrs = {id: unitID, label: unit.name, type: unit.type}
       unitAttrs['directSubmit'] and divAttrs[:directSubmit] = unitAttrs['directSubmit']
+      unitAttrs['directManage'] and divAttrs[:directManage] = unitAttrs['directManage']
       unitAttrs['hide'] and divAttrs[:hide] = unitAttrs['hide']
       if unitAttrs['eissn']
         divAttrs[:issn] = unitAttrs['eissn']

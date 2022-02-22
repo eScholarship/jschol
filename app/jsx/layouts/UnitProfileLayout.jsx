@@ -160,9 +160,19 @@ class UnitProfileLayout extends React.Component {
                          <option value="moribund">Archived</option>
                        </select>
                        <br/><br/>
+                       <label className="c-editable-page__label" htmlFor="directManage">Direct manage: </label>
+                       <select name="directManage" defaultValue={data.directManage}>
+                         <option value="enabled">Enabled</option>
+                         <option value="disabled">Disabled</option>
+                         <option value="moribund">Archived</option>
+                       </select>
+                       <br/><br/>
                        <label className="c-editable-page__label" htmlFor="directSubmitURL">Direct submit URL (for external submission management): </label>
                        <input disabled={disableEdit} className="c-editable-page__input" id="directSubmitURL" type="text" defaultValue={data.directSubmitURL}
                            onChange={ event => this.setData({ directSubmitURL: event.target.value }) }/>
+                       <label className="c-editable-page__label" htmlFor="directManageURL">Direct manage URL (for external submission management): </label>
+                       <input disabled={disableEdit} className="c-editable-page__input" id="directManageURL" type="text" defaultValue={data.directManageURL}
+                           onChange={ event => this.setData({ directManageURL: event.target.value }) }/>
                        {this.props.unit.type.indexOf("series") >= 0 &&
                          <div>
                            <label className="c-editable-page__label" htmlFor="elementsID">Elements numeric group ID (for secondary association on deposit): </label>
