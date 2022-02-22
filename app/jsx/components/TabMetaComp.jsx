@@ -73,6 +73,9 @@ class TabMetaComp extends React.Component {
       <tr>
         <th scope="row">directSubmitURL</th><td>{p.header.directSubmitURL}</td>
       </tr>
+      <tr>
+        <th scope="row">directManageURL</th><td>{p.header.directManageURL}</td>
+      </tr>
     </tbody> : this.noUnit()
     return (
       <div className="c-tabcontent">

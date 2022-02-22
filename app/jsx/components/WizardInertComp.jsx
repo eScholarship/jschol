@@ -25,18 +25,15 @@ class HeaderComp extends React.Component {
 class ManageSubmissionsComp extends React.Component {
   render() {
     let submit_url = "https://submit.escholarship.org"
-    let editor_url = this.props.type == 'campus' ? submit_url : submit_url+"/subi/directAdmin?target="+this.props.unit_id
+    let editor_url = this.props.directSubmitURL_manage ? this.props.directSubmitURL_manage : // use the directManageURL if we have one
+                     this.props.type == 'campus' ? submit_url : 
+                     submit_url+"/subi/directAdmin?target="+this.props.unit_id 
     let editor_text = this.props.directSubmitURL_manage ? "Editor Login" : "Log in to manage your submissions"
     return (
       <div className="c-wizard__step">
         <HeaderComp header={this.props.header} closeModal={this.props.closeModal} />
         <div className="c-wizard__heading"></div>
         <div className="c-wizard__message">
-        {this.props.directSubmitURL_manage &&
-          [<br key="0"/>, 
-          <div key="1" className="c-wizard__centered"><a className="c-wizard__external-link" href={this.props.directSubmitURL_manage}>Author Login</a></div>]
-        }
-          <br/>
           <div className="c-wizard__centered"> <a className="c-wizard__external-link" href={editor_url}>{editor_text}</a></div>
           <br/>
         </div>
