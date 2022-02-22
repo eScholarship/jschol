@@ -328,11 +328,27 @@ class TabAuthorComp extends React.Component {
              <dd key="1">{issn}</dd>]
           }
 
-          {p.published &&
+          {p.published && !p.attrs['pub_publish'] &&
             [<dt key="0"><strong>Publication Date:</strong></dt>,
              <dd key="1">{p.published}</dd>]
           }
  
+          {p.attrs['pub_publish'] &&
+            [<dt key="0"><strong>Publication Date:</strong></dt>,
+             <dd key="1">{p.attrs['pub_publish']}</dd>]
+          }
+
+          {p.attrs['pub_accept'] &&
+            [<dt key="0"><strong>Acceptance Date:</strong></dt>,
+             <dd key="1">{p.attrs['pub_accept']}</dd>]
+          }
+
+          {p.attrs['pub_submit'] &&
+            [<dt key="0"><strong>Submission Date:</strong></dt>,
+             <dd key="1">{p.attrs['pub_submit']}</dd>]
+          }
+
+
           {unit_type &&
             [<dt key="0"><strong>{unit_type}:</strong></dt>,
              <dd key="1">{appearsIn}</dd>]
