@@ -327,12 +327,12 @@ class TabAuthorComp extends React.Component {
             [<dt key="0"><strong>ISSN:</strong></dt>,
              <dd key="1">{issn}</dd>]
           }
-
-          {p.published && !p.attrs['pub_publish'] &&
+          {/* display published date where OASPA is not enabled */} 
+	  {p.published && !p.attrs['pub_publish'] &&
             [<dt key="0"><strong>Publication Date:</strong></dt>,
              <dd key="1">{p.published}</dd>]
           }
- 
+	  {/* display dates for OASPA enabled journals */}
           {p.attrs['pub_publish'] &&
             [<dt key="0"><strong>Publication Date:</strong></dt>,
              <dd key="1">{p.attrs['pub_publish']}</dd>]
