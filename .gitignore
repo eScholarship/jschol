@@ -13,6 +13,7 @@ db_backup/
 dist
 gems/
 gomysql
+gulp
 iso.pid
 jschol.pid
 logs/
@@ -44,3 +45,4 @@ node_modules
 *.sql_log
 local.env
 .lando.local.yml
+config/puma.rb

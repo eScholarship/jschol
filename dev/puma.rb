@@ -1,6 +1,7 @@
 port ENV['PUMA_PORT']
 workers ENV['PUMA_WORKERS']
 threads 0, ENV['PUMA_THREADS']
+worker_timeout 120 # the default of 60 is usually hit on first startup, since this is a dev instance, we can wait
 worker_shutdown_timeout 90  # HTTP timeout is usually 60 sec, so give extra to be sure we don't drop any
 
 # The jschol memory leak has been very hard to track down, so a kludge is needed to
@@ -25,8 +26,8 @@ end
 # We run a child Node Express process for isomorphic javascript rendering.
 # Let's be certain it shuts down when we do.
 def startIsoServer
-  port = ENV['ISO_PORT'] && !$isoPid or return
-  jscholDir = File.dirname(File.expand_path(File.dirname(__FILE__)))
+  # port = ENV['ISO_PORT'] && !$isoPid or return
+  # jscholDir = File.dirname(File.expand_path(File.dirname(__FILE__)))
   $isoParent = Process.pid
   $isoPid = spawn("node app/isomorphic.js")
   Thread.new {

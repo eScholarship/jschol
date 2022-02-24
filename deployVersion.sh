@@ -32,7 +32,7 @@ VERSION+=`git rev-parse --short HEAD`
 DIR=jschol
 BUCKET=cdlpub-apps
 REGION=us-west-2
-APPNAME=eb-pub-jschol
+APPNAME=eb-pub-jschol2
 
 # make sure we don't push non-prd branch to prd
 CUR_BRANCH=`git rev-parse --abbrev-ref HEAD`
@@ -61,13 +61,13 @@ npm install
 
 # Pretranslate all the CSS
 echo "Building app."
-./gulp sass
+./node_modules/.bin/gulp sass
 
 # Build the app (transpile, uglify, etc.) so it doesn't have to be built on each worker
 if [[ "$1" =~ "-dev" ]]; then
-  ./webpack --config webpack.dev.js
+  ./node_modules/.bin/webpack --config webpack.dev.js
 else
-  ./webpack --config webpack.prd.js
+  ./node_modules/.bin/webpack --config webpack.prd.js
 fi
 
 # package app and upload
