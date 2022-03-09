@@ -29,6 +29,8 @@ GEM
     builder (3.2.4)
     crass (1.0.6)
     daemons (1.4.1)
+    domain_name (0.5.20190701)
+      unf (>= 0.0.5, < 1.0.0)
     em-websocket (0.3.8)
       addressable (>= 2.1.1)
       eventmachine (>= 0.12.9)
@@ -39,6 +41,9 @@ GEM
     get_process_mem (0.2.7)
       ffi (~> 1.0)
     htmlentities (4.3.4)
+    http-accept (1.7.0)
+    http-cookie (1.0.4)
+      domain_name (~> 0.5)
     httparty (0.20.0)
       mime-types (~> 3.0)
       multi_xml (>= 0.5.2)
@@ -83,6 +88,11 @@ GEM
     rainbow (3.0.0)
     rake (13.0.6)
     regexp_parser (2.2.0)
+    rest-client (2.1.0)
+      http-accept (>= 1.7.0, < 2.0)
+      http-cookie (>= 1.0.2, < 2.0)
+      mime-types (>= 1.16, < 4.0)
+      netrc (~> 0.8)
     rexml (3.2.5)
     rubocop (1.23.0)
       parallel (~> 1.10)
@@ -122,6 +132,9 @@ GEM
       eventmachine (~> 1.0, >= 1.0.4)
       rack (>= 1, < 3)
     tilt (2.0.10)
+    unf (0.1.4)
+      unf_ext
+    unf_ext (0.0.8)
     unicode-display_width (2.1.0)
     unindent (1.0)
     vmstat (2.3.1)
@@ -132,6 +145,7 @@ PLATFORMS
   x86_64-linux
 
 DEPENDENCIES
+  addressable
   aws-sdk-cloudsearch
   aws-sdk-cloudsearchdomain
   aws-sdk-s3
@@ -151,6 +165,7 @@ DEPENDENCIES
   parslet
   puma
   puma_worker_killer
+  rest-client
   rubocop
   rubocop-sequel
   sanitize
@@ -169,4 +184,4 @@ RUBY VERSION
    ruby 2.6.8p205
 
 BUNDLED WITH
-   2.2.27
+   2.3.8
