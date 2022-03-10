@@ -410,7 +410,7 @@ def sanitizeFilePath(path)
 end
 
 ###################################################################################################
-get %r{/assets/([0-9a-f]{64})} do |hash|
+get %r{/cms-assets/([0-9a-f]{64})} do |hash|
   s3Path = "#{getEnv("S3_BINARIES_PREFIX")}/#{hash[0,2]}/#{hash[2,2]}/#{hash}"
   obj = $s3Bucket.object(s3Path)
   obj.exists? or halt(404)
