@@ -133,7 +133,7 @@ class ScholWorksComp extends React.Component {
       {(pr.rights || pr.thumbnail) &&
         <div className="c-scholworks__ancillary">
           {pr.thumbnail && <Link to={itemLink} className="c-scholworks__thumbnail">
-            <img src={"/assets/"+pr.thumbnail.asset_id} alt={`Cover page: ${pr.title}`} />
+            <img src={"/cms-assets/"+pr.thumbnail.asset_id} alt={`Cover page: ${pr.title}`} />
           </Link>}
           {pr.rights && <RightsComp rights={pr.rights} size="small" classname="c-scholworks__license" />}
         </div>

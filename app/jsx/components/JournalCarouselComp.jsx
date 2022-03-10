@@ -54,7 +54,7 @@ class JournalCarouselComp extends React.Component {
                 <a href={"/uc/" + u.unit_id} className="o-journal2">
                   <figure>
                   {u.cover ?
-                    <img src={"/assets/"+u.cover.asset_id} alt={u.name}/>
+                    <img src={"/cms-assets/"+u.cover.asset_id} alt={u.name}/>
                   : <img src={MEDIA_PATH + '/temp_article.png'} alt={u.name} /> }
                     <figcaption>{u.name}</figcaption>
                   </figure>

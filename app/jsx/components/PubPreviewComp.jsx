@@ -38,7 +38,7 @@ class PubPreviewComp extends React.Component {
     return (
       <div className="c-pubpreview">
       {pr.thumbnail &&
-        <Link to={itemLink} className="c-pubpreview__img"><img src={"/assets/"+pr.thumbnail.asset_id} alt={`Cover page of ${pr.title}`} /></Link>
+        <Link to={itemLink} className="c-pubpreview__img"><img src={"/cms-assets/"+pr.thumbnail.asset_id} alt={`Cover page of ${pr.title}`} /></Link>
       }
         <PubComp result={this.props.result} h={this.props.h} />
       </div>

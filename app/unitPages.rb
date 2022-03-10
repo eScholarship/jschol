@@ -80,7 +80,7 @@ end
 # Generate a link to an image in the S3 bucket
 def getLogoData(data)
   data && data['asset_id'] or return nil
-  return { url: "/assets/#{data['asset_id']}", width: data['width'], height: data['height'], is_banner: data['is_banner'] }
+  return { url: "/cms-assets/#{data['asset_id']}", width: data['width'], height: data['height'], is_banner: data['is_banner'] }
 end
 
 def isTopmostUnit(unit)
@@ -1646,14 +1646,14 @@ post "/api/unit/:unitID/uploadEditorImg" do |unitID|
   getUserPermissions(params[:username], params[:token], unitID)[:admin] or halt(401)
   img_data = putImage(params[:context], params[:image][:tempfile].path, { original_path: params[:image][:filename] })
   content_type :json
-  return { success: true, link: "/assets/#{img_data[:asset_id]}" }.to_json
+  return { success: true, link: "/cms-assets/#{img_data[:asset_id]}" }.to_json
 end
 
 post "/api/unit/:unitID/uploadEditorFile" do |unitID|
   getUserPermissions(params[:username], params[:token], unitID)[:admin] or halt(401)
   assetID = putAsset(params[:file][:tempfile].path, { original_path: params[:file][:filename] })
   content_type :json
-  return { success: true, link: "/assets/#{assetID}" }.to_json
+  return { success: true, link: "/cms-assets/#{assetID}" }.to_json
 end
 
 delete "/api/unit/:unitID/removeCarouselSlide/:slideNumber" do |unitID, slideNumber|

@@ -110,7 +110,7 @@ class MarqueeComp extends React.Component {
         } else if (slide.image && typeof slide.image === "string") {
           imgUrl = slide.image
         } else if (slide.image && slide.image.asset_id) {
-          imgUrl = "/assets/" + slide.image.asset_id
+          imgUrl = "/cms-assets/" + slide.image.asset_id
         } else {
           imgUrl = ""
         }

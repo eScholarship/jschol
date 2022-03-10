@@ -73,12 +73,12 @@ class UnitProfileLayout extends React.Component {
     let logoUrl = this.state.newData.logo && this.state.newData.logo.imagePreviewUrl
         ? this.state.newData.logo.imagePreviewUrl
         : data.logo
-            ? "/assets/" + data.logo.asset_id
+            ? "/cms-assets/" + data.logo.asset_id
             : "http://placehold.it/400x100?text=No+logo"
     let heroUrl = this.state.newData.hero && this.state.newData.hero.imagePreviewUrl
         ? this.state.newData.hero.imagePreviewUrl
         : data.hero
-            ? "/assets/" + data.hero.asset_id
+            ? "/cms-assets/" + data.hero.asset_id
             : "http://placehold.it/500x200?text=No+hero+image"
     return (
       <Contexts.CMS.Consumer>

@@ -44,7 +44,7 @@ class IssueComp extends React.Component {
       }
       {p.cover &&
         <figure className="c-issue__thumbnail" ref={e => this.thumbnail = e}>
-          <LazyImageComp src={"/assets/"+p.cover.asset_id} alt="Issue cover" />
+          <LazyImageComp src={"/cms-assets/"+p.cover.asset_id} alt="Issue cover" />
         {p.cover.caption &&
           <figcaption className="c-issue__caption-truncate" ref={e => this.caption = e}>
             <div><i>Cover Caption:</i> {p.cover.caption} <button className="c-issue__caption-truncate-more">More</button></div>
