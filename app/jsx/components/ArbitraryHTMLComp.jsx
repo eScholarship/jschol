@@ -39,7 +39,7 @@ export default class ArbitraryHTMLComp extends React.Component
       let fixedText2 = fixedText.replace(/<a href=\"http:\/\/open-deposit-wizard\.com\">/g,
         '<a href="" onClick="openDepositWiz(event);">')
       this.props.p_wrap && (fixedText2 = Utils.p_wrap(fixedText2))
-      if (!(typeof document === "undefined") && /\$[^\d]/.test(fixedText2)) { // heuristic to detect MathJax: $ followed by non-digit, only runs in a browser, not ISO
+      if (!(typeof document === "undefined") && /\$[^0-9/\.]/.test(fixedText2)) { // heuristic to detect MathJax: $ followed by non-digit, only runs in a browser, not ISO
         return (
           <MathJax>
             <div className="c-clientmarkup" dangerouslySetInnerHTML={{__html: fixedText2}}/>

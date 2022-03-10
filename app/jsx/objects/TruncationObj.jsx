@@ -70,7 +70,7 @@ export default class TruncationObj extends React.Component {
   render = () => {
     let content = ReactDOMServer.renderToStaticMarkup(
       <div >{this.props.children}</div>).replace(/^<div>/, '').replace(/<\/div>$/, '')
-    if (/\$[^\d]/.test(content)) { // heuristic to detect MathJax: $ followed by non-digit
+    if (/\$[^0-9/\.]/.test(content)) { // heuristic to detect MathJax: $ followed by non-digit
       this.truncate = false
       return React.createElement(this.props.element,
         { className: this.props.className,
