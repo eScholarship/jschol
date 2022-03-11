@@ -120,7 +120,10 @@ gulp.task('start-sinatra', restartSinatra)
 // Watch sass, html, and js and reload browser if any changes
 gulp.task('watch', function() {
   gulp.watch('app/scss/*.scss', {interval:500}, gulp.parallel(['sass']));
-  gulp.watch(['app/*.rb', 'util/*.rb'], {interval:500}, restartSinatra)
+  // WARNING: if you are experiencing a Sinatra reload loop in Lando, comment
+  // out the next watch line, OR close any Ruby files you might have open, and
+  // re-open them after you boot up Lando
+  gulp.watch(['app/*.rb', 'util/*.rb'], {interval:500, usePolling: true}, restartSinatra)
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
