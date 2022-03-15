@@ -195,7 +195,8 @@ class TestQuick < Test::Unit::TestCase
               if (check_this.match(/localhost.*assets/))
                 puts " - this is an assets URL, on localhost, the asset may not be in the S3 bucket you're using: #{S3_BUCKET}..."
                 puts "   ...probably not an error, for a dev environment, ignoring"
-                puts "   ...but you should RE-CHECK on dev/stg/prd to be sure"
+                puts "   ...but you should RE-CHECK on prd to be sure"
+                puts "   ...NOTE this test is not run on dev or stg, RestClient doesn't like using access keys"
               else
                 # add this immage to our missing_images list
                 missing_images.append(check_this)
@@ -209,5 +210,5 @@ class TestQuick < Test::Unit::TestCase
       # this test is known to fail if you send an access key to Jschol, so, skipping it
       puts "URL_PARAMS present, skipping test_for_broken_images"
     end
-
+  end
 end
