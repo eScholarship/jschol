@@ -1,6 +1,7 @@
 # Ruby gems required by this application
 ruby '> 2.4.0'
 source 'https://rubygems.org'
+gem 'addressable'         # used for handling image urls during the broken image test
 gem 'aws-sdk-s3'          # used to work with S3 bucket contents
 gem 'aws-sdk-cloudsearch' # used to talk to AWS CloudSearch
 gem 'aws-sdk-cloudsearchdomain' # used to talk to AWS CloudSearch
@@ -20,6 +21,7 @@ gem 'nokogiri'            # parsing and generating XML
 gem 'parslet'             # parser to transform search into Cloudsearch compound query
 gem 'puma'                # Rack web service layer
 gem 'puma_worker_killer'  # because mem leak has been so hard to find
+gem 'rest-client'         # for checking for broken images
 gem 'rubocop'             # Rubocop for lint checking Ruby code
 gem 'rubocop-sequel'      # Plugin for Rubocop to facilitate lint-checking Sequel-related code
 gem 'sanitize'            # parse and sanitize user-supplied HTML fragments
