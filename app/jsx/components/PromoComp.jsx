@@ -10,7 +10,7 @@ class PromoComp extends React.Component {
   render() {
     return (
       <div className={this.state.messageClose ? "c-promo--close" : "c-promo"} role="alert" hidden={this.state.messageClose ? true : false}>
-        <strong className="c-promo__main-text"><a href="/celebrateeschol">eScholarship turns 20! Learn More &gt;</a></strong>
+        <strong className="c-promo__main-text">eScholarship celebrates its 20-year anniversary! <a href="/celebrateeschol">Learn More &gt;</a></strong>
       </div>
     )
   }
