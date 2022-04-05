@@ -16,4 +16,4 @@ class PromoComp extends React.Component {
   }
 }
 
-module.exports = PromoComp;
+export default PromoComp;
