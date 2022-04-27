@@ -36,7 +36,7 @@ class HeaderComp2 extends React.Component {
           <Link className="c-header__logo2" to="/">
             <picture>
               <source srcSet={MEDIA_PATH + 'logo_eschol-small_20_v4.svg'} media={"(min-width: "+Breakpoints.screen3+")"}/>
-              <img src={MEDIA_PATH + 'logo_eschol-small_20_v4.svg'} alt="eScholarship"/>
+              <img src={MEDIA_PATH + 'logo_eschol-mobile_20_v3.svg'} alt="eScholarship"/>
             </picture>
             <div className="c-header__logo2-tagline">
               Open Access Publications from the University of California
