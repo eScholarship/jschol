@@ -720,7 +720,7 @@ def flattenDepts(ids, a=[])
   else
     unit = $unitsHash[ids]
     unitAttrs = JSON.parse(unit.attrs)
-    a << {"id" => unit.id, "name" => unit.name, "directSubmit" => unitAttrs['directSubmit'], "directManage" => unitAttrs['directManage'],} unless unit.type != 'oru'
+    a << {"id" => unit.id, "name" => unit.name, "directSubmit" => unitAttrs['directSubmit'], "directManage" => unitAttrs['directManage']} unless unit.type != 'oru'
     children = $hierByAncestor[unit.id]
     children and children.each do |c|
         unit = $unitsHash[c.unit_id]
