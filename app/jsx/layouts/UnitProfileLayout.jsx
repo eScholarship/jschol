@@ -160,13 +160,6 @@ class UnitProfileLayout extends React.Component {
                          <option value="moribund">Archived</option>
                        </select>
                        <br/><br/>
-                       <label className="c-editable-page__label" htmlFor="directManage">Direct manage: </label>
-                       <select name="directManage" defaultValue={data.directManage}>
-                         <option value="enabled">Enabled</option>
-                         <option value="disabled">Disabled</option>
-                         <option value="moribund">Archived</option>
-                       </select>
-                       <br/><br/>
                        <label className="c-editable-page__label" htmlFor="directSubmitURL">Direct submit URL (for external submission management): </label>
                        <input disabled={disableEdit} className="c-editable-page__input" id="directSubmitURL" type="text" defaultValue={data.directSubmitURL}
                            onChange={ event => this.setData({ directSubmitURL: event.target.value }) }/>
