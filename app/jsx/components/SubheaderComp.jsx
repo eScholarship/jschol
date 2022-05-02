@@ -57,7 +57,7 @@ class SubheaderComp extends React.Component {
     `
     let [banner_url, banner_title] = unit.type.includes('series') ? [h.ancestorID, h.ancestorName] : [unit.id, unit.name]
     let directSubmitURL = h.directSubmitURL ? h.directSubmitURL : "https://submit.escholarship.org/subi/directSubmit?target="+unit.id
-    let directSubmitURL_manage = h.directManageURL ? h.directManageURL : null
+    let directSubmitURL_manage = h.directSubmitURL ? h.directSubmitURL : null
 
    // Button Configuration based on unit type
    //   unit.type == 'journal'  -->        Submit  / Manage Submissions
