@@ -179,7 +179,7 @@ def processBounces(mode)
   grabBounceLogs(mode)
 
   STDERR.puts "Processing SES bounces."
-  Dir.glob("./awsLogs/ses-logs/**/*").sort.each { |fn|
+  Dir.glob("./awsLogs/ses-logs/*@escholarship.org/{Bounce,Complaint}/*").sort.each { |fn|
     next unless File.file?(fn)
     fn =~ %r{(Bounce|Complaint)/(\d\d\d\d)-(\d\d)-(\d\d)} or raise("Warning: unexpected SES file #{fn}")
     bounceDate = Date.new($2.to_i, $3.to_i, $4.to_i)
