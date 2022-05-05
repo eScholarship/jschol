@@ -48,13 +48,23 @@ env_exists=$(aws elasticbeanstalk describe-environments \
 
 if [[ env_exists -ne 1 ]]
   then
-    echo "environment $2 does not exist"
+    echo "target environment $2 does not exist"
     usage
 fi
 
 echo "Promoting from source environment to target environment..."
+echo "  version label: ${VERSION}"
 echo "  source: ${1}"
 echo "  target: ${2}"
+
+# pause to confirm
+echo "Please confirm you wish to promote the above version to the target environment.\n\n"
+read -p "You may continue by re-entering the target environment-name now: " target
+case "$target" in
+    $1 ) echo "\nOK, we will proceed...";;;
+    * ) echo "\nIncorrect, aborting..." && exit 1;;;
+esac
+
 # deploy app to a running environment
 aws elasticbeanstalk update-environment \
   --environment-name "$2" \

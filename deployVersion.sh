@@ -37,8 +37,18 @@ APPNAME=eb-pub-jschol2
 # make sure we don't push non-prd branch to prd
 CUR_BRANCH=`git rev-parse --abbrev-ref HEAD`
 if [[ "$1" == *"prd"* && "$CUR_BRANCH" != "prd" ]]; then
-  echo "Sanity check: should only push prd branch to prd environment."
+  echo "Sanity check: should only push prd branch to prd environment.\n\nAND you should be using promote-version.sh to promote a tested version to prd.\n\nAborting..."
   exit 1
+fi
+
+# if we're trying to deploy to prd, nag and confirm
+if [[ "$1" == *"prd"* ]]; then
+  echo "Sanity check: you should really only promote to prd using the promote-version.sh script.\n\n"
+  read -p "If you know what you're doing, you may continue by re-entering the target environment-name now: " target
+  case "$target" in
+      $1 ) echo "\nOK, we will proceed...";;;
+      * ) echo "\nIncorrect, aborting..." && exit 1;;;
+  esac
 fi
 
 # make sure environment actually exists
