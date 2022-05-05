@@ -12,7 +12,9 @@ This app uses the following technology and features:
 * Automatic rebuilds using Gulp
 * LiveReload support so changes during development are reflected instantly in the browser
 * Isometric Javascript to provide server-side initial rendering of pages (for fast first load, and for better crawlability)
-* [Lando](https://lando.dev/) for bootstrapping a Docker-based development environment
+* [Lando](https://lando.dev/) for bootstrapping a Docker-based development
+  environment
+* [AWS CLI](https://aws.amazon.com/cli/) for deploying to Elastic Beanstalk. See our [AWS CLI Cheatsheet](https://github.com/cdlib/pad-sys-doc/blob/main/cheatsheet/aws-cli.md).
 
 Description of files
 --------------------
@@ -44,7 +46,14 @@ Description of files
 * `tools/`: Conversion and database maintenance tools.
 * `defaults.env`: default environment variable configuration for Lando
 * `local.env.example`: example file for customizing your Lando dev workspace's environment variables, copy to `local.env` and customize as appropriate
-* `.lando.local.yml.example`: example file for customizing your Lando dev workspace's Lando configuration, copy to `.lando.local.yml` and customize as appropriate
+* `.lando.local.yml.example`: example file for customizing your Lando dev
+  workspace's Lando configuration, copy to `.lando.local.yml` and customize as
+  appropriate
+* `deployVersion.sh`: deployment script, requires an active AWS CLI credential.
+  See our [AWS CLI Cheatsheet](https://github.com/cdlib/pad-sys-doc/blob/main/cheatsheet/aws-cli.md).
+* `promoteVersion.sh` script to promote a tested version of this app from one
+  beanstalk environment to another. Requires an active AWS CLI credential. See
+  our [AWS CLI Cheatsheet](https://github.com/cdlib/pad-sys-doc/blob/main/cheatsheet/aws-cli.md).
 
 Steps to get the app running on your local machine, with Lando
 1. Make sure [Lando](https://lando.dev/) is installed
@@ -68,8 +77,12 @@ Run `lando` to see what other lando commands are available.
 
 Tooling
 -------
+* `lando aws` Runs AWS-cli commands on the Jschol appserver
 * `lando bundle` Runs bundle commands on the Lando Jschol appserver
+* `lando deploy` Runs the deployment script to deploy to Elastic Beanstalk
+* `lando irb` Runs irb on the Jschol appserver (for some good REPL fun)
 * `lando npm` Runs npm commands on the Lando Jschol appserver
+* `lando promote` Promote an Elastic Beanstalk app from one environment to another
 * `lando ruby`  Runs ruby commands on the Lando Jschol appserver
 * `lando socks` Sets the socks proxy tunnel back up, if you have been too idle
 * `lando ssh` Drops into a shell on a service, runs commands
