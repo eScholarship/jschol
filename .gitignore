@@ -46,3 +46,4 @@ node_modules
 local.env
 .lando.local.yml
 config/puma.rb
+dev/puma.rb
