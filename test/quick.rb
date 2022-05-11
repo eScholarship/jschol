@@ -170,7 +170,7 @@ class TestQuick < Test::Unit::TestCase
   def test_for_broken_images
     if URL_PARAMS.to_s.strip.empty?
       puts "Testing for broken images..."
-      doc = Nokogiri::HTML(RestClient.get("#{SCHEME}://#{TARGET_HOST}:#{PUMA_PORT}/uc/psf?#{URL_PARAMS}"))
+      doc = Nokogiri::HTML(RestClient.get("#{SCHEME}://#{TARGET_HOST}:#{PUMA_PORT}/uc/ucm?#{URL_PARAMS}"))
       images = doc.search('img').map{ |img| img['src'] }
       if images.empty?
         puts "No images found at #{SCHEME}://#{TARGET_HOST}:#{PUMA_PORT}/uc/psf"
