@@ -54,6 +54,7 @@ Description of files
 * `promoteVersion.sh` script to promote a tested version of this app from one
   beanstalk environment to another. Requires an active AWS CLI credential. See
   our [AWS CLI Cheatsheet](https://github.com/cdlib/pad-sys-doc/blob/main/cheatsheet/aws-cli.md).
+* `overlay_files` folder for beanstalk app overlays, used by the deployVersion.sh script. You'll want to grab the contents of this folder from the `pub-cattle2-ops` ec2 instance, if you want to deploy from your Lando dev environment.
 
 Steps to get the app running on your local machine, with Lando
 1. Make sure [Lando](https://lando.dev/) is installed
@@ -88,6 +89,9 @@ Tooling
 * `lando ssh` Drops into a shell on a service, runs commands
 * `lando start` Starts the Jschol app
 * `lando stop` Stops the Jschol app
+* `lando watch-dev` Watches eb-pub-jschol2-dev aws environment details for updates.
+* `lando watch-prd` Watches eb-pub-jschol2-prd aws environment details for updates.
+* 'lando watch-stg` Watches eb-pub-jschol2-stg aws environment details for updates.
 
 More [tooling](https://docs.lando.dev/config/tooling.html) can be added easily.
 
