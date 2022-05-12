@@ -14,11 +14,11 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )" # http://stackoverflow.c
 cd $DIR
 
 usage(){
-    echo "deploy-version.sh environment-name"
+    echo "promote-version.sh source-environment-name target-environment-name"
     exit 1
 }
 
-if [ $# -ne 1 ];
+if [ $# -ne 2 ];
   then
     usage
 fi
@@ -26,93 +26,48 @@ fi
 set -u
 
 export TZ=":America/Los_Angeles"
-VERSION=`date -Iseconds`
-VERSION+='--'
-VERSION+=`git rev-parse --short HEAD`
-DIR=jschol
-BUCKET=cdlpub-apps
+
+echo "Getting VersionLabel from source environment..."
+VERSION=$(aws elasticbeanstalk describe-environments \
+    --environment-name $1 \
+    | jq '.Environments[0].VersionLabel' | tr -d '"')
+
+echo "version: ${VERSION}"
+
 REGION=us-west-2
 APPNAME=eb-pub-jschol2
 
-# make sure we don't push non-prd branch to prd
-CUR_BRANCH=`git rev-parse --abbrev-ref HEAD`
-if [[ "$1" == *"prd"* && "$CUR_BRANCH" != "prd" ]]; then
-  echo "Sanity check: should only push prd branch to prd environment.\n\nAND you should be using promote-version.sh to promote a tested version to prd.\n\nAborting..."
-  exit 1
-fi
 
-# if we're trying to deploy to prd, nag and confirm
-if [[ "$1" == *"prd"* ]]; then
-  echo "Sanity check: you should really only promote to prd using the promote-version.sh script.\n\n"
-  read -p "If you know what you're doing, you may continue by re-entering the target environment-name now: " target
-  case "$target" in
-      $1 ) echo "\nOK, we will proceed...";;;
-      * ) echo "\nIncorrect, aborting..." && exit 1;;;
-  esac
-fi
-
-# make sure environment actually exists
-echo "Checking environment."
+# make sure target environment actually exists
+echo "Checking target environment."
 env_exists=$(aws elasticbeanstalk describe-environments \
-  --environment-name "$1" \
+  --environment-name "$2" \
   --no-include-deleted \
   --region $REGION \
   | egrep -c 'Status.*Ready')
 
 if [[ env_exists -ne 1 ]]
   then
-    echo "environment $1 does not exist"
+    echo "target environment $2 does not exist"
     usage
 fi
 
-# Make sure we have the right packages.
-if [ -d node_modules.full ]; then mv node_modules.full node_modules; fi
-npm install
+echo "Promoting from source environment to target environment..."
+echo "  version label: ${VERSION}"
+echo "  source: ${1}"
+echo "  target: ${2}"
 
-# Pretranslate all the CSS
-echo "Building app."
-./node_modules/.bin/gulp sass
-
-# Build the app (transpile, uglify, etc.) so it doesn't have to be built on each worker
-if [[ "$1" =~ "-dev" ]]; then
-  ./node_modules/.bin/webpack --config webpack.dev.js
-else
-  ./node_modules/.bin/webpack --config webpack.prd.js
-fi
-
-# package app and upload
-echo "Packaging app."
-mkdir -p dist
-ZIP="$DIR-$VERSION.zip"
-git ls-files -x app | xargs zip -ry dist/$ZIP   # picks up mods in working dir, unlike 'git archive'
-mv node_modules node_modules.full
-npm install --production
-zip -r dist/$ZIP app/js app/css node_modules
-rm -rf node_modules
-mv node_modules.full node_modules
-git checkout package-lock.json
-
-# add the temporary overlay files
-rm -rf tmp/app
-mkdir -p tmp/app
-cp -r overlay_files/* tmp/app/
-cd tmp
-zip -r ../dist/$ZIP app/
-rm -rf tmp/app
-cd ..
-
-aws s3 cp dist/$ZIP s3://$BUCKET/$DIR/$ZIP
-
-echo "Deploying."
-aws elasticbeanstalk create-application-version \
-  --application-name $APPNAME \
-  --region $REGION \
-  --source-bundle S3Bucket=$BUCKET,S3Key=$DIR/$ZIP \
-  --version-label "$VERSION"
+# pause to confirm
+echo "Please confirm you wish to promote the above version to the target environment.\n\n"
+read -p "You may continue by re-entering the target environment-name now: " target
+case "$target" in
+    $1 ) echo "\nOK, we will proceed...";;;
+    * ) echo "\nIncorrect, aborting..." && exit 1;;;
+esac
 
 # deploy app to a running environment
 aws elasticbeanstalk update-environment \
-  --environment-name "$1" \
+  --environment-name "$2" \
   --region $REGION \
   --version-label "$VERSION"
 
@@ -120,7 +75,7 @@ aws elasticbeanstalk update-environment \
 echo "Waiting for deploy to finish."
 PREV_DATETIME=""
 while [[ 1 ]]; do
-  STATUS_JSON=`aws elasticbeanstalk describe-events --environment-name "$1" --region $REGION --max-items 1`
+  STATUS_JSON=`aws elasticbeanstalk describe-events --environment-name "$2" --region $REGION --max-items 1`
   DATETIME=`echo "$STATUS_JSON" | jq '.Events[0].EventDate' | sed 's/"//g'`
   MSG=`echo "$STATUS_JSON" | jq '.Events[0].Message' | sed 's/"//g'`
   if [[ "$PREV_DATETIME" != "$DATETIME" ]]; then
@@ -133,15 +88,17 @@ done
 
 # Invalidate the CloudFront cache
 echo "Invalidating CloudFront cache."
-if [[ "$1" =~ "-stg" ]]; then
+if [[ "$2" =~ "-stg" ]]; then
   aws cloudfront create-invalidation --distribution-id E1PJWI7L2EBN0N --paths '/*'
-elif [[ "$1" =~ "-prd" ]]; then
+elif [[ "$2" =~ "-prd" ]]; then
   aws cloudfront create-invalidation --distribution-id E1KER2WHN1RBOD --paths '/*'
 fi
 
-echo "Deployment complete."
+echo "Promotion complete."
 
-# Copyright (c) 2019, Regents of the University of California
+exit 0
+
+# Copyright (c) 2022, Regents of the University of California
 #
 # All rights reserved.
 #
