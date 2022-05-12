@@ -46,8 +46,8 @@ if [[ "$1" == *"prd"* ]]; then
   echo "Sanity check: you should really only promote to prd using the promote-version.sh script.\n\n"
   read -p "If you know what you're doing, you may continue by re-entering the target environment-name now: " target
   case "$target" in
-      $1 ) echo "\nOK, we will proceed...";;;
-      * ) echo "\nIncorrect, aborting..." && exit 1;;;
+      $1 ) echo "\nOK, we will proceed...";;
+      * ) echo "\nIncorrect, aborting..." && exit 1;;
   esac
 fi
 
