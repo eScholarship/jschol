@@ -75,7 +75,7 @@
     "babel-upgrade": "^1.0.1",
     "better-react-mathjax": "^1.0.3",
     "body-parser": "^1.20.0",
-    "core-js": "^3.22.5",
+    "core-js": "^2.5.7",
     "decache": "^4.6.1",
     "details-polyfill": "^1.2.0",
     "downloadjs": "^1.4.7",
