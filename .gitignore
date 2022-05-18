@@ -4,6 +4,7 @@ app/js/manifest.json
 app/js/*.map
 app/siteMap*.xml
 awsLogs/
+aws/
 backstop_data/
 bin/
 .bundle/
