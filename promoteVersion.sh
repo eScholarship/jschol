@@ -61,8 +61,8 @@ echo "  target: ${2}"
 echo "Please confirm you wish to promote the above version to the target environment.\n\n"
 read -p "You may continue by re-entering the target environment-name now: " target
 case "$target" in
-    $1 ) echo "\nOK, we will proceed...";;;
-    * ) echo "\nIncorrect, aborting..." && exit 1;;;
+    $1 ) echo "\nOK, we will proceed...";;
+    * ) echo "\nIncorrect, aborting..." && exit 1;;
 esac
 
 # deploy app to a running environment
