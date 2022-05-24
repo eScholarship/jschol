@@ -25,12 +25,13 @@ services:
       ports:
         - '18880:18880'
     command:
+      - if [ ! -L /var/www/.aws ]; then ln -s /user/.aws /var/www/.aws; fi
       - /app/gulp
     build_as_root:
       - apt-get update -qq
       - apt-get install -y apt-transport-https
       - apt-get install -y vim net-tools
-      - curl -sL https://deb.nodesource.com/setup_10.x | sed '/sleep/d' | bash -
+      - curl -sL https://deb.nodesource.com/setup_14.x | bash -
       - curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
       - echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
       - apt-get update -qq
@@ -50,9 +51,9 @@ services:
     run_as_root:
       - chown www-data:www-data /run/host-services/ssh-auth.sock
       - chmod g+w /run/host-services/ssh-auth.sock
-      - ln -s /user/.aws /var/www/.aws
       - apt-get install -y less zip jq groff
-      - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && unzip  -nqq awscliv2.zip && ./aws/install
+      - if [ ! -d /app/aws ]; then (curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && unzip  -nqq awscliv2.zip); fi
+      - if [ -d /app/aws ]; then /app/aws/install; fi
 
     moreHttpPorts:
       - '18880'
