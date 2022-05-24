@@ -33,35 +33,31 @@ DIR=jschol
 BUCKET=cdlpub-apps
 REGION=us-west-2
 APPNAME=eb-pub-jschol2
+ENVNAME=$1
 
 # make sure we don't push non-prd branch to prd
 CUR_BRANCH=`git rev-parse --abbrev-ref HEAD`
-if [[ "$1" == *"prd"* && "$CUR_BRANCH" != "prd" ]]; then
+if [[ "$ENVNAME" == *"prd"* && "$CUR_BRANCH" != "prd" ]]; then
   echo "Sanity check: should only push prd branch to prd environment.\n\nAND you should be using promote-version.sh to promote a tested version to prd.\n\nAborting..."
   exit 1
 fi
 
 # if we're trying to deploy to prd, nag and confirm
-if [[ "$1" == *"prd"* ]]; then
+if [[ "$ENVNAME" == *"prd"* ]]; then
   echo "Sanity check: you should really only promote to prd using the promote-version.sh script.\n\n"
   read -p "If you know what you're doing, you may continue by re-entering the target environment-name now: " target
   case "$target" in
-      $1 ) echo "\nOK, we will proceed...";;
+      $ENVNAME ) echo "\nOK, we will proceed...";;
       * ) echo "\nIncorrect, aborting..." && exit 1;;
   esac
 fi
 
 # make sure environment actually exists
 echo "Checking environment."
-env_exists=$(aws elasticbeanstalk describe-environments \
-  --environment-name "$1" \
-  --no-include-deleted \
-  --region $REGION \
-  | egrep -c 'Status.*Ready')
+env_exists=$(aws elasticbeanstalk describe-environments --environment-name "$ENVNAME" --no-include-deleted --region $REGION | jq '.Environments | length')
 
-if [[ env_exists -ne 1 ]]
-  then
-    echo "environment $1 does not exist"
+if [[ "$env_exists" -ne 1 ]]; then
+    echo "environment $ENVNAME does not exist"
     usage
 fi
 
@@ -74,7 +70,7 @@ echo "Building app."
 ./node_modules/.bin/gulp sass
 
 # Build the app (transpile, uglify, etc.) so it doesn't have to be built on each worker
-if [[ "$1" =~ "-dev" ]]; then
+if [[ "$ENVNAME" =~ "-dev" ]]; then
   ./node_modules/.bin/webpack --config webpack.dev.js
 else
   ./node_modules/.bin/webpack --config webpack.prd.js
@@ -112,7 +108,7 @@ aws elasticbeanstalk create-application-version \
 
 # deploy app to a running environment
 aws elasticbeanstalk update-environment \
-  --environment-name "$1" \
+  --environment-name "$ENVNAME" \
   --region $REGION \
   --version-label "$VERSION"
 
@@ -120,7 +116,7 @@ aws elasticbeanstalk update-environment \
 echo "Waiting for deploy to finish."
 PREV_DATETIME=""
 while [[ 1 ]]; do
-  STATUS_JSON=`aws elasticbeanstalk describe-events --environment-name "$1" --region $REGION --max-items 1`
+  STATUS_JSON=`aws elasticbeanstalk describe-events --environment-name "$ENVNAME" --region $REGION --max-items 1`
   DATETIME=`echo "$STATUS_JSON" | jq '.Events[0].EventDate' | sed 's/"//g'`
   MSG=`echo "$STATUS_JSON" | jq '.Events[0].Message' | sed 's/"//g'`
   if [[ "$PREV_DATETIME" != "$DATETIME" ]]; then
@@ -133,9 +129,9 @@ done
 
 # Invalidate the CloudFront cache
 echo "Invalidating CloudFront cache."
-if [[ "$1" =~ "-stg" ]]; then
+if [[ "$ENVNAME" =~ "-stg" ]]; then
   aws cloudfront create-invalidation --distribution-id E1PJWI7L2EBN0N --paths '/*'
-elif [[ "$1" =~ "-prd" ]]; then
+elif [[ "$ENVNAME" =~ "-prd" ]]; then
   aws cloudfront create-invalidation --distribution-id E1KER2WHN1RBOD --paths '/*'
 fi
 
