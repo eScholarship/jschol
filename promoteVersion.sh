@@ -26,18 +26,17 @@ fi
 set -u
 
 export TZ=":America/Los_Angeles"
-
-echo "Getting VersionLabel from source environment..."
-VERSION=$(aws elasticbeanstalk describe-environments \
-    --environment-name $1 \
-    | jq '.Environments[0].VersionLabel' | tr -d '"')
-
-echo "version: ${VERSION}"
-
 REGION=us-west-2
 APPNAME=eb-pub-jschol2
 S=$1
 T=$2
+
+echo "Getting VersionLabel from source environment..."
+VERSION=$(aws elasticbeanstalk describe-environments \
+    --environment-name $S \
+    | jq '.Environments[0].VersionLabel' | tr -d '"')
+
+echo "version: ${VERSION}"
 
 # make sure target environment actually exists
 echo "Checking target environment."
