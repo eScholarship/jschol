@@ -36,38 +36,35 @@ echo "version: ${VERSION}"
 
 REGION=us-west-2
 APPNAME=eb-pub-jschol2
-
+S=$1
+T=$2
 
 # make sure target environment actually exists
 echo "Checking target environment."
-env_exists=$(aws elasticbeanstalk describe-environments \
-  --environment-name "$2" \
-  --no-include-deleted \
-  --region $REGION \
-  | egrep -c 'Status.*Ready')
+env_exists=$(aws elasticbeanstalk describe-environments --environment-name "$T" --no-include-deleted --region $REGION | jq '.Environments | length')
 
 if [[ env_exists -ne 1 ]]
   then
-    echo "target environment $2 does not exist"
+    echo "target environment $T does not exist"
     usage
 fi
 
 echo "Promoting from source environment to target environment..."
 echo "  version label: ${VERSION}"
-echo "  source: ${1}"
-echo "  target: ${2}"
+echo "  source: ${S}"
+echo "  target: ${T}"
 
 # pause to confirm
-echo "Please confirm you wish to promote the above version to the target environment.\n\n"
+echo "Please confirm you wish to promote the above version to the target environment."
 read -p "You may continue by re-entering the target environment-name now: " target
 case "$target" in
-    $1 ) echo "\nOK, we will proceed...";;
-    * ) echo "\nIncorrect, aborting..." && exit 1;;
+    $T ) echo "OK, we will proceed...";;
+    * ) echo "Incorrect, aborting..." && exit 1;;
 esac
 
 # deploy app to a running environment
 aws elasticbeanstalk update-environment \
-  --environment-name "$2" \
+  --environment-name "$T" \
   --region $REGION \
   --version-label "$VERSION"
 
@@ -75,7 +72,7 @@ aws elasticbeanstalk update-environment \
 echo "Waiting for deploy to finish."
 PREV_DATETIME=""
 while [[ 1 ]]; do
-  STATUS_JSON=`aws elasticbeanstalk describe-events --environment-name "$2" --region $REGION --max-items 1`
+  STATUS_JSON=`aws elasticbeanstalk describe-events --environment-name "$T" --region $REGION --max-items 1`
   DATETIME=`echo "$STATUS_JSON" | jq '.Events[0].EventDate' | sed 's/"//g'`
   MSG=`echo "$STATUS_JSON" | jq '.Events[0].Message' | sed 's/"//g'`
   if [[ "$PREV_DATETIME" != "$DATETIME" ]]; then
@@ -88,9 +85,9 @@ done
 
 # Invalidate the CloudFront cache
 echo "Invalidating CloudFront cache."
-if [[ "$2" =~ "-stg" ]]; then
+if [[ "$T" =~ "-stg" ]]; then
   aws cloudfront create-invalidation --distribution-id E1PJWI7L2EBN0N --paths '/*'
-elif [[ "$2" =~ "-prd" ]]; then
+elif [[ "$T" =~ "-prd" ]]; then
   aws cloudfront create-invalidation --distribution-id E1KER2WHN1RBOD --paths '/*'
 fi
 
