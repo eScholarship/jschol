@@ -991,9 +991,9 @@ def parseUCIngest(itemID, inMeta, fileType, isPending)
   attrs[:pub_web_loc] = inMeta.xpath("./context/publishedWebLocation").map { |el| el.text.strip }
   attrs[:publisher] = inMeta.text_at("./publisher")
   attrs[:suppress_content] = shouldSuppressContent(itemID, inMeta)
-  attrs[:pub_submit] = parseDate(inMeta[:dateSubmitted])
-  attrs[:pub_accept] = parseDate(inMeta[:dateAccepted])
-  attrs[:pub_publish] = parseDate(inMeta[:datePublish])
+  attrs[:pub_submit] = parseDate(inMeta.text_at("./context/dateSubmitted"))
+  attrs[:pub_accept] = parseDate(inMeta.text_at("./context/dateAccepted"))
+  attrs[:pub_publish] = parseDate(inMeta.text_at("./context/datePublished"))
 
   # Record submitter (especially useful for forensics)
   attrs[:submitter] = inMeta.xpath("./history/stateChange").map { |sc|
