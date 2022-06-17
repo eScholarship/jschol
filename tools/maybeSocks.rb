@@ -38,6 +38,6 @@ cmd = "ssh -4 #{keypath}-N -D #{port} " +
       "-o StrictHostKeyChecking=no " +
       "-o CheckHostIP=no " +
       "#{user}#{targetMachine}"
-puts cmd
+puts "---> PROXY COMMAND:\n" + cmd
 pid = spawn(cmd)
 Process.detach(pid)

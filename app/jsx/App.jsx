@@ -51,6 +51,7 @@ class RecordLocation extends React.Component
 
 class App extends React.Component
 {
+
   render = () =>
     <div>
       <Route path="*" component={RecordLocation} />

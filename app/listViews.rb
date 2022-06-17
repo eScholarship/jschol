@@ -3,7 +3,9 @@ def readItemData(ids)
   return {
     items: Item.where(:id => ids).to_hash(:id),
     units: UnitItem.where(:item_id => ids, :is_direct => 1).order(:ordering_of_units).to_hash_groups(:item_id),
-    authors: ItemAuthors.where(item_id: ids).order(:ordering).to_hash_groups(:item_id)
+    authors: ItemAuthors.where(item_id: ids).order(:ordering).to_hash_groups(:item_id),
+    editors: ItemContrib.filter(:item_id => ids, :role => 'editor').order(:ordering).to_hash_groups(:item_id),
+    advisors: ItemContrib.filter(:item_id => ids, :role => 'advisor').order(:ordering).to_hash_groups(:item_id),
   }
 end
 
@@ -23,7 +25,10 @@ def itemResultData(itemIds, itemData, fields=[])
         :content_type => item.content_type,
         :author_hide => attrs['author_hide'],
       }
+      # format fetched author and contrib data
       itemListItem[:authors] = itemData[:authors][itemID].map { |author| JSON.parse(author.attrs) } if itemData.dig(:authors, itemID)
+      itemListItem[:editors] = itemData[:editors][itemID].map { |editor| JSON.parse(editor.attrs) } if itemData.dig(:editors, itemID)
+      itemListItem[:advisors] = itemData[:advisors][itemID].map { |advisor| JSON.parse(advisor.attrs) } if itemData.dig(:advisors, itemID)
 
       pdfCnt, imageCnt, videoCnt, audioCnt, zipCnt, otherCnt = 0, 0, 0, 0, 0, 0
       if attrs['supp_files']

@@ -1,8 +1,9 @@
 port ENV['PUMA_PORT']
-workers ENV['PUMA_WORKERS']
+# workers have to be at least 1, or Puma doesn't start at all
+workers 1
 threads 0, ENV['PUMA_THREADS']
-worker_boot_timeout 120
-worker_timeout 120 # the default of 60 is usually hit on first startup, since this is a dev instance, we can wait
+worker_boot_timeout 240
+worker_timeout 240 # the default of 60 is usually hit on first startup, since this is a dev instance, we can wait
 worker_shutdown_timeout 90  # HTTP timeout is usually 60 sec, so give extra to be sure we don't drop any
 
 # The jschol memory leak has been very hard to track down, so a kludge is needed to
@@ -29,6 +30,10 @@ end
 def startIsoServer
   # port = ENV['ISO_PORT'] && !$isoPid or return
   # jscholDir = File.dirname(File.expand_path(File.dirname(__FILE__)))
+
+  # FIXME: this should just not try to start anything if we already have
+  # something running on the port
+
   $isoParent = Process.pid
   $isoPid = spawn("node app/isomorphic.js")
   Thread.new {

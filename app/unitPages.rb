@@ -534,8 +534,10 @@ def _getIssue(unit_id, issueIds, volume=nil, issue=nil, display)
                  order(:ordering_in_sect).to_hash(:id)
     itemIds = items.keys
     authors = ItemAuthors.where(item_id: itemIds).order(:ordering).to_hash_groups(:item_id)
+    editors = ItemContrib.where(item_id: itemIds, role: 'editor').order(:ordering).to_hash_groups(:item_id)
+    advisors = ItemContrib.where(item_id: itemIds, role: 'advisor').order(:ordering).to_hash_groups(:item_id)
 
-    itemData = {items: items, authors: authors}
+    itemData = {items: items, authors: authors, editors: editors, advisors: advisors}
     # Additional data field needed ontop of default
     resultsListFields = (display != "magazine") ? ['thumbnail'] : []
     section[:articles] = itemResultData(itemIds, itemData, resultsListFields)
@@ -681,6 +683,14 @@ def getItemAuthors(itemID)
   return ItemAuthors.filter(:item_id => itemID).order(:ordering).map(:attrs).collect{ |h| JSON.parse(h)}
 end
 
+def getItemEditors(itemID)
+  return ItemContrib.filter(:item_id => itemID, :role => 'editor').order(:ordering).map(:attrs).collect{ |h| JSON.parse(h)}
+end
+
+def getItemAdvisors(itemID)
+  return ItemContrib.filter(:item_id => itemID, :role => 'advisor').order(:ordering).map(:attrs).collect{ |h| JSON.parse(h)}
+end
+
 # Get recent items (with author info) given a unit ID, by most recent added date
 # Pass an item id in if you don't want that item included in results
 # This query takes a while, so we cache the results
@@ -694,7 +704,7 @@ def getRecentItems(unitID, limit=5, item_id=nil)
                                  .map { |item| item.id }
   return Item.where(id: $recentItems[cacheKey].select{ |id| id != item_id }[0,limit]).map { |item|
     { id: item.id, title: item.title, authors: getItemAuthors(item.id), genre: item.genre,
-      author_hide: JSON.parse(item.attrs)["author_hide"] }
+      author_hide: JSON.parse(item.attrs)["author_hide"], editors: getItemEditors(item.id), advisors: getItemAdvisors(item.id) }
   }
 end
 
