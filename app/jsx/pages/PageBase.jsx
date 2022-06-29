@@ -35,11 +35,11 @@ const mathjaxConfig = {
   tex: {
     packages: { "[+]": ["html"] },
     inlineMath: [
-      ["$", "$"],
+      ["$$", "$$"],
       ["\\(", "\\)"]
     ],
     displayMath: [
-      ["$$", "$$"],
+      ["$$$", "$$$"],
       ["\\[", "\\]"]
     ]
   },
