@@ -27,7 +27,7 @@ let sessionStorage = (typeof window != "undefined") ? window.sessionStorage : nu
 
 const mathjaxConfig = {
   startup: {
-    typeset: false
+    typeset: true
   },
   "fast-preview": {
     disabled: true
