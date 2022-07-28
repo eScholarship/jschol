@@ -14,7 +14,6 @@ const config = {
   },
   tex2jax: {
     inlineMath: [
-      ["$", "$"],
       ["\\(", "\\)"]
     ],
     displayMath: [

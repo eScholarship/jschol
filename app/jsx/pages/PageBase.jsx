@@ -26,16 +26,12 @@ const SESSION_EDITING_KEY = "escholEditingPage"
 let sessionStorage = (typeof window != "undefined") ? window.sessionStorage : null
 
 const mathjaxConfig = {
-  startup: {
-    typeset: false
-  },
   "fast-preview": {
     disabled: true
   },
   tex: {
     packages: { "[+]": ["html"] },
     inlineMath: [
-      ["$", "$"],
       ["\\(", "\\)"]
     ],
     displayMath: [
