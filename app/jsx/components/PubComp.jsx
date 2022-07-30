@@ -7,11 +7,12 @@ import TruncationObj from '../objects/TruncationObj.jsx'
 import MediaListComp from '../components/MediaListComp.jsx'
 import ArbitraryHTMLComp from '../components/ArbitraryHTMLComp.jsx'
 
-const config = {
+const mathjaxConfig = {
   "fast-preview": {
     disabled: true
   },
-  tex2jax: {
+  tex: {
+    packages: { "[+]": ["html"] },
     inlineMath: [
       ["\\(", "\\)"]
     ],
@@ -20,7 +21,9 @@ const config = {
       ["\\[", "\\]"]
     ]
   },
-  messageStyle: "none"
+  messageStyle: "none",
+  displayMessages: false,
+  displayErrors: false
 };
 
 class DotAuthorUl extends React.Component {

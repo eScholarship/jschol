@@ -20,11 +20,12 @@ import SidebarComp from '../components/SidebarComp.jsx'
 import FooterComp from '../components/FooterComp.jsx'
 import MetaTagsComp from '../components/MetaTagsComp.jsx'
 
-const config = {
+const mathjaxConfig = {
   "fast-preview": {
     disabled: true
   },
-  tex2jax: {
+  tex: {
+    packages: { "[+]": ["html"] },
     inlineMath: [
       ["\\(", "\\)"]
     ],
@@ -33,7 +34,9 @@ const config = {
       ["\\[", "\\]"]
     ]
   },
-  messageStyle: "none"
+  messageStyle: "none",
+  displayMessages: false,
+  displayErrors: false
 };
 
 // Load dotdotdot in browser but not server

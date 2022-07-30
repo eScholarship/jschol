@@ -9,11 +9,12 @@ import IssueComp from '../components/IssueComp.jsx'
 import PubComp from '../components/PubComp.jsx'
 import IssueActionsComp from '../components/IssueActionsComp.jsx'
 
-const config = {
+const mathjaxConfig = {
   "fast-preview": {
     disabled: true
   },
-  tex2jax: {
+  tex: {
+    packages: { "[+]": ["html"] },
     inlineMath: [
       ["\\(", "\\)"]
     ],
@@ -22,8 +23,10 @@ const config = {
       ["\\[", "\\]"]
     ]
   },
-  messageStyle: "none"
-}
+  messageStyle: "none",
+  displayMessages: false,
+  displayErrors: false
+};
 
 class VolumeSelector extends React.Component {
   static propTypes = {

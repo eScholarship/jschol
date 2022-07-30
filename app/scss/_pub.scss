@@ -27,7 +27,7 @@
 }
 
 .c-pub__abstract {
-  max-height: 8em; // truncate beyond 6 lines per jquery.dotdotdot
+  max-height: 27em; // truncate beyond 15 lines per jquery.dotdotdot
   margin-bottom: $spacing-md;
   overflow: hidden; // hide text beyond max-height
 }
