@@ -35,6 +35,25 @@ import MetaTagsComp from '../components/MetaTagsComp.jsx'
 import ServerErrorComp from '../components/ServerErrorComp.jsx'
 import UnitBuilderLayout from '../layouts/UnitBuilderLayout.jsx'
 
+const mathjaxConfig = {
+  tex: {
+    packages: { "[+]": ["html"] },
+    inlineMath: [
+      ["\\(", "\\)"]
+    ],
+    displayMath: [
+      ["$$", "$$"],
+      ["\\[", "\\]"]
+    ]
+  },
+  messageStyle: "none",
+  displayMessages: false,
+  displayErrors: false,
+  startup: {
+    typeset: true
+}
+};
+
 class UnitPage extends PageBase {
   // PageBase will fetch the following URL for us, and place the results in this.state.pageData
   // will likely at some point want to move these (search, home, pages) to different extensions of PageBase,

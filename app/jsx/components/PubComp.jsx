@@ -23,7 +23,10 @@ const mathjaxConfig = {
   },
   messageStyle: "none",
   displayMessages: false,
-  displayErrors: false
+  displayErrors: false,
+  startup: {
+    typeset: true
+}
 };
 
 class DotAuthorUl extends React.Component {

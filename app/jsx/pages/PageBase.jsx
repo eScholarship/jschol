@@ -26,9 +26,6 @@ const SESSION_EDITING_KEY = "escholEditingPage"
 let sessionStorage = (typeof window != "undefined") ? window.sessionStorage : null
 
 const mathjaxConfig = {
-  "fast-preview": {
-    disabled: true
-  },
   tex: {
     packages: { "[+]": ["html"] },
     inlineMath: [
@@ -41,7 +38,10 @@ const mathjaxConfig = {
   },
   messageStyle: "none",
   displayMessages: false,
-  displayErrors: false
+  displayErrors: false,
+  startup: {
+    typeset: true
+}
 };
 
 class PageBase extends React.Component
@@ -308,14 +308,14 @@ class PageBase extends React.Component
                     sendApiData={this.sendApiData}
                     sendBinaryFileData={this.sendBinaryFileData}
                     fetchingData={this.state.fetchingData}>
-          <MathJaxContext version={3} config={mathjaxConfig} src="/js/MathJax-3.2.2/es5/tex-chtml.js" hideUnilTypeset="every">
           {/* Not sure why the padding below is needed, but it is */}
           <div className="body" style={{ padding: "20px" }}>
+          <MathJaxContext version={3} config={mathjaxConfig} src="/js/MathJax-3.2.2/es5/tex-chtml.js" hideUnilTypeset="every">
             {this.needHeaderFooter() && <SkipNavComp/>}
             {this.state.pageData ? this.renderData(this.state.pageData) : this.renderLoading()}
             {this.needHeaderFooter() && <FooterComp/>}
-          </div>
           </MathJaxContext>
+          </div>
         </DrawerComp>)
     }
 

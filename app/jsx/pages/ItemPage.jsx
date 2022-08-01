@@ -21,9 +21,6 @@ import FooterComp from '../components/FooterComp.jsx'
 import MetaTagsComp from '../components/MetaTagsComp.jsx'
 
 const mathjaxConfig = {
-  "fast-preview": {
-    disabled: true
-  },
   tex: {
     packages: { "[+]": ["html"] },
     inlineMath: [
@@ -36,7 +33,10 @@ const mathjaxConfig = {
   },
   messageStyle: "none",
   displayMessages: false,
-  displayErrors: false
+  displayErrors: false,
+  startup: {
+    typeset: true
+}
 };
 
 // Load dotdotdot in browser but not server
