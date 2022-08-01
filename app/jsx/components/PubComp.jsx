@@ -7,28 +7,6 @@ import TruncationObj from '../objects/TruncationObj.jsx'
 import MediaListComp from '../components/MediaListComp.jsx'
 import ArbitraryHTMLComp from '../components/ArbitraryHTMLComp.jsx'
 
-const mathjaxConfig = {
-  "fast-preview": {
-    disabled: true
-  },
-  tex: {
-    packages: { "[+]": ["html"] },
-    inlineMath: [
-      ["\\(", "\\)"]
-    ],
-    displayMath: [
-      ["$$", "$$"],
-      ["\\[", "\\]"]
-    ]
-  },
-  messageStyle: "none",
-  displayMessages: false,
-  displayErrors: false,
-  startup: {
-    typeset: true
-}
-};
-
 class DotAuthorUl extends React.Component {
   render = () =>
     <TruncationObj element="ul" className={this.props.className}

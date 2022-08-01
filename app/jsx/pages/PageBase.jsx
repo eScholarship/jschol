@@ -41,7 +41,7 @@ const mathjaxConfig = {
   displayErrors: false,
   startup: {
     typeset: true
-}
+  }
 };
 
 class PageBase extends React.Component
