@@ -308,7 +308,7 @@ class PageBase extends React.Component
                     fetchingData={this.state.fetchingData}>
           {/* Not sure why the padding below is needed, but it is */}
           <div className="body" style={{ padding: "20px" }}>
-          <MathJaxContext version={3} config={mathjaxConfig} src="/js/MathJax-3.2.2/es5/tex-chtml.js" hideUnilTypeset="every">
+          <MathJaxContext version={3} config={mathjaxConfig} hideUnilTypeset="every">
             {this.needHeaderFooter() && <SkipNavComp/>}
             {this.state.pageData ? this.renderData(this.state.pageData) : this.renderLoading()}
             {this.needHeaderFooter() && <FooterComp/>}
