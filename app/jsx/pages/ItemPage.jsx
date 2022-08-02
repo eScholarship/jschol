@@ -104,9 +104,11 @@ class ItemPage extends PageBase {
       // Set hash based on what was clicked. Since we are switching tabs,
       // delay a little for the render so the target anchor will be available.
       setTimeout(()=>window.location.hash=tabName, 200)
+      if (typeof MathJax !== "undefined") {MathJax.typeset} 
     }
     else
       window.location.hash=tabName
+      if (typeof MathJax !== "undefined") {MathJax.typeset} 
   }
 
   renderData = data => {
