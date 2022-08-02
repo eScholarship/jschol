@@ -1,5 +1,4 @@
 import React from 'react'
-import { MathJax, MathJaxContext } from "better-react-mathjax"
 import PropTypes from 'prop-types'
 import { Link, browserHistory } from 'react-router-dom'
 
@@ -8,23 +7,6 @@ import JournalInfoComp from '../components/JournalInfoComp.jsx'
 import IssueComp from '../components/IssueComp.jsx'
 import PubComp from '../components/PubComp.jsx'
 import IssueActionsComp from '../components/IssueActionsComp.jsx'
-
-const config = {
-  "fast-preview": {
-    disabled: true
-  },
-  tex2jax: {
-    inlineMath: [
-      ["$", "$"],
-      ["\\(", "\\)"]
-    ],
-    displayMath: [
-      ["$$", "$$"],
-      ["\\[", "\\]"]
-    ]
-  },
-  messageStyle: "none"
-}
 
 class VolumeSelector extends React.Component {
   static propTypes = {

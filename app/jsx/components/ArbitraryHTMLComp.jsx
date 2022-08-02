@@ -41,7 +41,7 @@ export default class ArbitraryHTMLComp extends React.Component
       this.props.p_wrap && (fixedText2 = Utils.p_wrap(fixedText2))
       if (!(typeof document === "undefined")) { // heuristic to detect MathJax, only runs in a browser, not ISO
         return (
-          <MathJax>
+          <MathJax dynamic="true">
             <div className="c-clientmarkup" dangerouslySetInnerHTML={{__html: fixedText2}}/>
           </MathJax>
         )

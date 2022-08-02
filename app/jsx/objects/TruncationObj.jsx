@@ -70,22 +70,25 @@ export default class TruncationObj extends React.Component {
   render = () => {
     let content = ReactDOMServer.renderToStaticMarkup(
       <div >{this.props.children}</div>).replace(/^<div>/, '').replace(/<\/div>$/, '')
-    if (/\$[^0-9/\.]/.test(content)) { // heuristic to detect MathJax
-      this.truncate = false
-      return React.createElement(this.props.element,
-        { className: this.props.className,
-          ref: el => this.domEl = el,
-        },
-        this.props.children
-      )
-    } else {
-      this.truncate = true
-      return React.createElement(this.props.element,
-        { className: this.props.className,
-          ref: el => this.domEl = el,
-          dangerouslySetInnerHTML: {__html: content}
-        }
-      )
-    }
+
+      // do NOT truncate if we detect MathJax, delimiters can be \\(  \\[  $$
+      // only use test here... a match is slow/has a negative impact on performance
+      if (/\\\(|\\\[|\$\$/.test(content)) { // heuristic to detect MathJax
+        this.truncate = false
+        return React.createElement(this.props.element,
+          { className: this.props.className,
+            ref: el => this.domEl = el,
+          },
+          this.props.children
+        )
+      } else {
+        this.truncate = true
+        return React.createElement(this.props.element,
+          { className: this.props.className,
+            ref: el => this.domEl = el,
+            dangerouslySetInnerHTML: {__html: content}
+          }
+        )
+      }
   }
 }

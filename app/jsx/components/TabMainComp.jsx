@@ -7,24 +7,6 @@ import ViewExternalComp from '../components/ViewExternalComp.jsx'
 import { Link } from 'react-router-dom'
 import ArbitraryHTMLComp from "../components/ArbitraryHTMLComp.jsx"
 import ScrollingAnchorComp from "../components/ScrollingAnchorComp.jsx"
-
-const config = {
-  "fast-preview": {
-    disabled: true
-  },
-  tex2jax: {
-    inlineMath: [
-      ["$", "$"],
-      ["\\(", "\\)"]
-    ],
-    displayMath: [
-      ["$$", "$$"],
-      ["\\[", "\\]"]
-    ]
-  },
-  messageStyle: "none"
-};
-
 class Abstract extends React.Component {
 
   render() {

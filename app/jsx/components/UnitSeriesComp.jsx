@@ -8,7 +8,7 @@ import faker from 'faker/locale/en'
 
 class UnitSeriesComp extends React.Component {
   componentDidMount() {
-    $('.c-pub__heading, .c-pub__abstract').dotdotdot({watch: 'window'
+    $('.c-pub__heading, .c-pub__abstract').dotdotdot({watch: 'window', tolerance: 3,
     });
   }
   render() {
