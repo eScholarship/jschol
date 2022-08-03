@@ -40,11 +40,6 @@
 .c-authorlist__list-more-link, .c-authorlist__list-more-link-working {
   @extend %o-textlink__secondary;
 
-  // &::before {
-  //   display: inline-block;
-  //   content: ';\00a0';
-  // }
-
 }
 
 .c-authorlist__copyright {
