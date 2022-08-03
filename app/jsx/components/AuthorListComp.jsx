@@ -31,7 +31,7 @@ class AuthorListComp extends React.Component {
   render() {
     let p = this.props,
         year = p.pubdate ? (p.pubdate.match(/\d{4}/)) : null,
-        source = p.source ? p.source : null,
+        source = p.source,
         authors = (p.authors && !p.author_hide) ? this.asList("Author", p.authors) : null,
         editors = p.editors ? this.asList("Editor", p.editors) : null,
         advisors = p.advisors ? this.asList("Advisor", p.advisors) : null,
