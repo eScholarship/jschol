@@ -6,6 +6,7 @@ import PropTypes from 'prop-types'
 import TruncationObj from '../objects/TruncationObj.jsx'
 import MediaListComp from '../components/MediaListComp.jsx'
 import ArbitraryHTMLComp from '../components/ArbitraryHTMLComp.jsx'
+import AuthorListComp from '../components/AuthorListComp.jsx'
 
 class DotAuthorUl extends React.Component {
   render = () =>
@@ -33,38 +34,22 @@ class PubComp extends React.Component {
   }
 
   render() {
-    let pr = this.props.result
-    let itemLink = "/uc/item/"+pr.id.replace(/^qt/, "")
-    let authorList
-    if (!pr.author_hide && pr.authors) {
-      // Joel's CSS handles inserting semicolons here.
-      authorList = pr.authors.map(function(author, i, a) {
-        let c = (i==0) ? "c-authorlist__begin" : (i+1 == a.length) ? "c-authorlist__end" : null
-        if (i<a.length-1) {
-          return (<li key={i} className={c}><a href={"/search/?q="+encodeURIComponent("author:"+author.name)}>
-            {author.name}</a>&#59;
-            </li>)
-        } else {
-          return (<li key={i}><a href={"/search/?q="+encodeURIComponent("author:"+author.name)}>
-            {author.name}</a>
-            </li>)
-        }
-      })
-    }
+    let pr = this.props.result,
+        itemLink = "/uc/item/"+pr.id.replace(/^qt/, "")
+
     let totalSuppFiles = Utils.sumValueTotals(pr.supp_files, "count")
     return (
       <div className="c-pub">
         <TruncationObj element={this.props.h} className="c-pub__heading">
           <a href={itemLink}><ArbitraryHTMLComp html={pr.title}/></a>
         </TruncationObj>
-      {authorList &&
-        <div className="c-authorlist">
-          <DotAuthorUl className="c-authorlist__list">
-            {authorList}
-            <li><a href={itemLink} className="c-authorlist__list-more-link">et al.</a></li>
-          </DotAuthorUl>
-        </div>
-      }
+
+        <AuthorListComp author_hide={pr.author_hide}
+                          authors={pr.authors}
+                          editors={pr.editors}
+                          advisors={pr.advisors}
+                          id={pr.id}/>
+                            
       {pr.pub_year &&
         <div className="c-scholworks__publication">
           ({pr.pub_year})

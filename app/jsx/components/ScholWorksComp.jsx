@@ -8,7 +8,7 @@ import { Link } from 'react-router-dom'
 import TruncationObj from '../objects/TruncationObj.jsx'
 import MediaListComp from '../components/MediaListComp.jsx'
 import ArbitraryHTMLComp from '../components/ArbitraryHTMLComp.jsx'
-
+import AuthorListComp from '../components/AuthorListComp.jsx'
 class DotAuthorUl extends React.Component {
   render = () =>
     <TruncationObj element="ul" className={this.props.className}
@@ -47,8 +47,10 @@ class ScholWorksComp extends React.Component {
       })
     }).isRequired,
   }
+
   render() {
     let pr = this.props.result
+
     let tagList = []
     if (pr.genre === 'article') {
       tagList.push({display: 'Article', tagStyle: 'article'})
@@ -77,22 +79,6 @@ class ScholWorksComp extends React.Component {
       link_path = pr.unitInfo.link_path
     }
 
-    let authorList
-    if (!pr.author_hide && pr.authors) {
-      // Joel's CSS handles inserting semicolons here.
-      authorList = pr.authors.map(function(author, i, a) {
-        let c = (i==0) ? "c-authorlist__begin" : (i+1 == a.length) ? "c-authorlist__end" : null
-        if (i<a.length-1) {
-          return (<li key={i} className={c}><a href={"/search/?q="+encodeURIComponent("author:"+author.name)}>
-            {author.name}</a>&#59;  
-            </li>)
-        } else {
-          return (<li key={i}><a href={"/search/?q="+encodeURIComponent("author:"+author.name)}>
-            {author.name}</a>
-            </li>)
-        }
-      })
-    }
     return (
       <section className="c-scholworks">
         <div className="c-scholworks__main-column">
@@ -108,14 +94,13 @@ class ScholWorksComp extends React.Component {
               <a href={itemLink}><ArbitraryHTMLComp html={pr.title}/></a>
             </TruncationObj>
           </div>
-          {authorList && 
-            <div className="c-authorlist">
-              <DotAuthorUl className="c-authorlist__list">
-                {authorList}
-                <li><a href={itemLink} className="c-authorlist__list-more-link">et al.</a></li>
-              </DotAuthorUl>
-            </div>
-          }
+
+          <AuthorListComp author_hide={pr.author_hide}
+                          authors={pr.authors}
+                          editors={pr.editors}
+                          advisors={pr.advisors}
+                          item_id={pr.id} />
+
           {pr.pub_year && publishingInfo && 
             <div className="c-scholworks__publication">
               <Link to={"/uc/" + link_path}>{publishingInfo}</Link> ({pr.pub_year})
