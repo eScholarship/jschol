@@ -62,6 +62,9 @@ services:
 events:
   pre-destroy:
     - appserver: rm -Rf /app/gems/*
+    - appserver: rm -f /app/.mysqlpsk.3306.*
+  pre-stop:
+    - appserver: rm -f /app/.mysqlpsk.3306.*
   post-start:
     - appserver: test -e ~/.ssh/config || printf 'Host *\n  AddKeysToAgent yes\n' > ~/.ssh/config
 

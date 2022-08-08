@@ -18,14 +18,6 @@ class SocksMysql
     timestamp = Time.now.to_f
     @sockName = ".mysqlpsk.#{@port}.#{Process.getpgrp}.#{timestamp}"
 
-    # Blow away obsolete sockets from prior runs
-    Dir.glob(".mysqlpsk.#{@port}.*").each { |fn|
-      fn =~ /\.mysqlpsk\.\d+\.(\d+)/
-      next if Process.getpgrp == $1.to_i
-      puts "Deleting obsolete #{fn}."
-      File.delete(fn)
-    }
-
     # Fire up a thread to create and service the Unix socket we'll use to proxy MySQL traffic
     ready = Queue.new
     Thread.new { self.service(ready) }
