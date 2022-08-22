@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 MACHINES="pub-submit2-dev pub-submit2-stg"
-NOTIFY="mahjabeen.yucekul@ucop.edu,Devin.Smith@ucop.edu"
+NOTIFY="<email address to notify>"
 THIS_MACHINE=`hostname`
 if [[ " $MACHINES " =~ " $THIS_MACHINE " ]]; then
 
