@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 MACHINES="pub-submit2-dev pub-submit2-stg"
-NOTIFY="mahjabeen.yucekul@ucop.edu"
+NOTIFY="<email address to notify>"
 THIS_MACHINE=`hostname`
 if [[ " $MACHINES " =~ " $THIS_MACHINE " ]]; then
 
@@ -27,7 +27,7 @@ if [[ " $MACHINES " =~ " $THIS_MACHINE " ]]; then
     }
     trap finish EXIT
 
-if [ "" ]; then
+#if [ "" ]; then
     # Stop all services on this machine
     eye stop all
     sleep 5
@@ -35,7 +35,6 @@ if [ "" ]; then
     # Synchronize lots of miscellaneous directories
     for dir in allStructReport \
                linkBack \
-               oa_report \
                repec \
                erep/statistics \
                erep/xtf/bpRedirect \
@@ -64,7 +63,7 @@ if [ "" ]; then
     # Copy the contents of prod's S3 bucket to this env's S3 bucket
     DEV_OR_STG=`hostname | sed 's/pub-submit2*-//' | sed 's/-.*//'`
     /usr/bin/aws s3 sync --delete --exclude '*-logs/*' s3://pub-s3-prd/jschol/ s3://pub-s3-$DEV_OR_STG/jschol/
-fi
+#fi
 
     ######### OJS ############
     # Dump the local OJS database - just in case
