@@ -61,12 +61,10 @@ class AuthorListComp extends React.Component {
         {/* CASE: this is NOT an item page */}
         { ((authors && authors.length > 0) || (editors && editors.length > 0) ||
            (advisors && advisors.length > 0)) && ! this_is_a_tabbed_page &&
-          <TruncationObj element="ul" className="c-authorlist__list"
-                         options={{watch:'window', after:'.c-authorlist__list-more-link', ellipsis:' ', wrap:'children'}}>
+          <TruncationObj element="ul" className="c-authorlist__list">
             {authors}
             {editors}
             {advisors}
-            { (total_contributors > 6) && <li><a href={item_link} className="c-authorlist__list-more-link">et al.</a></li> }
           </TruncationObj>
         }
         {/* Only display a copyright if we have a year and source=ojs, otherwise skip it */}
