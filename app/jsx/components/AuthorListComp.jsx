@@ -35,6 +35,7 @@ class AuthorListComp extends React.Component {
         authors = (p.authors && !p.author_hide) ? this.asList("Author", p.authors) : null,
         editors = p.editors ? this.asList("Editor", p.editors) : null,
         advisors = p.advisors ? this.asList("Advisor", p.advisors) : null,
+        total_contributors = (authors ? authors.length : 0) + (editors ? editors.length : 0) + (advisors ? advisors.length : 0),
         this_is_an_item_page = p.pubdate ? true : false,
         this_is_a_tabbed_page = p.changeTab ? true: false,
         item_link = p.id ? "/uc/item/"+p.id.replace(/^qt/, "") : null
@@ -52,20 +53,18 @@ class AuthorListComp extends React.Component {
           {editors}
           {advisors}
           {/* Note: the <a> more-link below cannot be a <Link>, else jquery dotdotdot can't recognize it */}
-
-          { <li><a href={item_link} className="c-authorlist__list-more-link">et al.</a></li> } 
+          {/* Kludge: only show et al if the total number of contributors is greater than 6 */}
+          { (total_contributors > 6) &&  <li><a href={item_link} className="c-authorlist__list-more-link">et al.</a></li> } 
         </TruncationObj>
         }
 
         {/* CASE: this is NOT an item page */}
         { ((authors && authors.length > 0) || (editors && editors.length > 0) ||
            (advisors && advisors.length > 0)) && ! this_is_a_tabbed_page &&
-          <TruncationObj element="ul" className="c-authorlist__list"
-                         options={{watch:'window', after:'.c-authorlist__list-more-link', ellipsis:' ', wrap:'children'}}>
+          <TruncationObj element="ul" className="c-authorlist__list">
             {authors}
             {editors}
             {advisors}
-            { <li><a href={item_link} className="c-authorlist__list-more-link">et al.</a></li> }
           </TruncationObj>
         }
         {/* Only display a copyright if we have a year and source=ojs, otherwise skip it */}
