@@ -17,7 +17,6 @@ phases:
       - echo Installing Ruby dependencies...
       - gem install bundler
       - bundle install
-      - bundle clean
   build:
     commands:
       - echo Build started on `date`
