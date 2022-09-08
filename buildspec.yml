@@ -3,9 +3,9 @@ version: 0.2
 
 phases:
   install:
-    # TODO: install Ruby
     runtime-versions:
       nodejs: 14
+      ruby: 2.5
     commands:
       - echo un-customized install phase, add more install commands here...
   pre_build:
@@ -17,7 +17,7 @@ phases:
     commands:
       - echo Build started on `date`
       - echo Linting the Node.js code
-      - npx eslint .
+      - DEBUG=eslint:* npx eslint .
   post_build:
     commands:
       - echo Build completed on `date`
