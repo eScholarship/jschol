@@ -11,14 +11,20 @@ phases:
       - echo un-customized install phase, add more install commands here...
   pre_build:
     commands:
-      # TODO: install Ruby dependencies
       - echo Installing source NPM dependencies...
       - npm install
+      - npm install gulp-cli
+      - echo Installing Ruby dependencies...
+      - gem install bundler
+      - bundle install
+      - bundle clean
   build:
     commands:
       - echo Build started on `date`
       - echo Linting the Node.js code
-      - DEBUG=eslint:* npx eslint .
+      - npx eslint .
+      - echo Linting Sinatra/Ruby code with Rubocop
+      - bundle exec rubocop
   post_build:
     commands:
       - echo Build completed on `date`
