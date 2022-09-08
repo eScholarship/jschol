@@ -6,7 +6,7 @@ phases:
   install:
     runtime-versions:
       nodejs: 14
-      ruby: 3.1
+      ruby: 2.7
     commands:
       - echo un-customized install phase, add more install commands here...
   pre_build:
