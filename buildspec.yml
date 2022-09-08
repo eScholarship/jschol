@@ -1,11 +1,12 @@
-# Do not change version. This is the version of aws buildspec, not the version of your buldspec file.
+# Do not change version. This is the version of aws buildspec, not the version
+# of your buldspec file.
 version: 0.2
 
 phases:
   install:
     runtime-versions:
       nodejs: 14
-      ruby: 2.5
+      ruby: 3.0
     commands:
       - echo un-customized install phase, add more install commands here...
   pre_build:
@@ -22,9 +23,10 @@ phases:
     commands:
       - echo Build completed on `date`
 # Include only the files required for your application to run.
-# Do not use recursively include artifacts from node_modules directory as it will include unnecessary packages 
-# used only for building and testing.
-# ExpressJS apps will need other artifact directories included (bin/*, public/*, routes/*, views/* etc).
+# Do not use recursively include artifacts from node_modules directory as it I
+# will include unnecessary packages used only for building and testing.
+# ExpressJS apps will need other artifact directories include
+#   (bin/*, public/*, routes/*, views/* etc).
 # artifacts:
 #   files:
 #     - app.js
