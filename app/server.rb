@@ -1257,7 +1257,7 @@ def submitAPIMutation(mutation, vars)
   api_access_key = getEnv("ESCHOL_API_ACCESS_KEY")
   headers = { 'Content-Type' => 'application/json',
               'Privileged' => getEnv("ESCHOL_PRIV_API_KEY") }
-  if (api_access_key||0 != 0)
+  unless (api_access_key.to_s == '')
     response = HTTParty.post("#{$escholApiServer}/graphql",
                :headers => headers,
                :query => { access: api_access_key },
