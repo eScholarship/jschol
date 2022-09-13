@@ -1254,11 +1254,19 @@ end
 def submitAPIMutation(mutation, vars)
   query = "mutation(#{vars.map{|name, pair| "$#{name}: #{pair[0]}"}.join(", ")}) { #{mutation} }"
   varHash = Hash[vars.map{|name,pair| [name.to_s, pair[1]]}]
+  api_access_key = getEnv("ESCHOL_API_ACCESS_KEY")
   headers = { 'Content-Type' => 'application/json',
               'Privileged' => getEnv("ESCHOL_PRIV_API_KEY") }
-  response = HTTParty.post("#{$escholApiServer}/graphql",
+  if (api_access_key||0 != 0)
+    response = HTTParty.post("#{$escholApiServer}/graphql",
                :headers => headers,
+               :query => { access: api_access_key },
                :body => { variables: varHash, query: query }.to_json.gsub("%", "%25"))
+  else
+    response = HTTParty.post("#{$escholApiServer}/graphql",
+      :headers => headers,
+      :body => { variables: varHash, query: query }.to_json.gsub("%", "%25"))
+  end
   response.code != 200 and raise("Internal error (graphql): " +
      "HTTP code #{response.code} - #{response.message}.\n" +
      "#{response.body}")
