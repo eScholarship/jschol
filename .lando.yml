@@ -10,7 +10,7 @@ services:
     ports:
       - '18880:18880'
     overrides:
-      image: ruby:3.1-buster
+      image: ruby:3.0-buster
       # Pass SSH auth.
       volumes:
         - type: bind
