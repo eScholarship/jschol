@@ -41,6 +41,8 @@ phases:
 #     - package.json
 #     - node_modules/async/*
 #     - node_modules/lodash/*
-  cache:
-    paths:
-      - '.rbenv/**/*'
+
+# Cache some stuff to hopefully save some time
+cache:
+  paths:
+    - '.rbenv/**/*'
