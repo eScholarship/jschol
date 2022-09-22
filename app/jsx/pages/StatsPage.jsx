@@ -320,7 +320,7 @@ class EitherStats_HistoryByItem extends React.Component {
                     <Link to={`/uc/item/${item.replace(/^qt/, '')}`}>{item.replace(/^qt/, '')}</Link>
                   </th>
                   <td key="item" className="c-statsReport-title">
-                    <ArbitraryHTMLComp html={md.title} h1Level={2}/>
+		      {md.title}
                   </td>
                   {data.report_months.length > 1 &&
                     <td key="total">{formatNum(md.total_hits)}</td>}
@@ -454,7 +454,7 @@ class EitherStats_BreakdownByItem extends React.Component {
                     <Link to={`/uc/item/${item.replace(/^qt/, '')}`}>{item.replace(/^qt/, '')}</Link>
                   </th>
                   <th className="c-statsReport-title">
-                    <ArbitraryHTMLComp html={md.title} h1Level={2}/>
+                    {md.title}
                   </th>
                   <td>{formatNum(md.total_hits)}</td>
                   <td>{formatNum(md.total_downloads)}</td>
