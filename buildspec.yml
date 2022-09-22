@@ -46,3 +46,5 @@ phases:
 cache:
   paths:
     - '.rbenv/**/*'
+    - 'gems/**/*'
+    - 'node_modules/**/*'
