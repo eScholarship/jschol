@@ -762,16 +762,24 @@ def unitStats_depositsByOA(unitID)
     overall[st.month] += nPosts
   }
 
+  en_month = queryParams[:endYrMo]%100
+  en_year = queryParams[:endYrMo]/100 
+  if en_month < 12
+     endMonthYear = en_year*100 + en_month + 1
+  else
+     endMonthYear = (en_year + 1)*100 + 1 
+  end
   # Add in the OA data using a specialized query
-  queryParams[:startYrMoStr] = yrmoToStr(queryParams[:startYrMo])
-  queryParams[:endYrMoStr]   = yrmoToStr(queryParams[:endYrMo]) + "-31"
+  queryParams[:startYrMoStr] = yrmoToStr(queryParams[:startYrMo]) + "-01"
+  queryParams[:endYrMoStr]   = yrmoToStr(endMonthYear) + "-01"
+
   query = Sequel::SQL::PlaceholderLiteralString.new(%{
     select count(*) ct, year(submitted) yr, month(submitted) mo from items
     where status = 'published'
     and oa_policy is not null
     and id in (select item_id from item_stats)
     and submitted >= :startYrMoStr
-    and submitted <= :endYrMoStr
+    and submitted < :endYrMoStr
     group by year(submitted), month(submitted)
   }.unindent, queryParams)
   DB.fetch(query).each { |row|
