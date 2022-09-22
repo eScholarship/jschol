@@ -48,7 +48,7 @@ GEM
       mime-types (~> 3.0)
       multi_xml (>= 0.5.2)
     jmespath (1.6.1)
-    json (2.6.1)
+    json (2.6.2)
     mail (2.7.1)
       mini_mime (>= 0.1.1)
     maxminddb (0.1.22)
