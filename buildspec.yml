@@ -5,8 +5,8 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-      nodejs: 14
-      ruby: 2.7
+      nodejs: 16
+      ruby: 3.1
     commands:
       - echo un-customized install phase, add more install commands here...
   pre_build:
@@ -14,6 +14,8 @@ phases:
       - echo Installing source NPM dependencies...
       - npm install
       - npm install gulp-cli
+      - echo Updating to Ruby 3.0 via rbenv
+      - rbenv install 3.0.3 && rbenv global 3.0.3
       - echo Installing Ruby dependencies...
       - gem install bundler
       - bundle install
@@ -39,3 +41,10 @@ phases:
 #     - package.json
 #     - node_modules/async/*
 #     - node_modules/lodash/*
+
+# Cache some stuff to hopefully save some time
+cache:
+  paths:
+    - '.rbenv/**/*'
+    - 'gems/**/*'
+    - 'node_modules/**/*'

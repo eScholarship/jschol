@@ -10,6 +10,7 @@ bundle install --quiet --path=gems --binstubs
 bundle clean
 
 printf "\n== Installing node packages (used by gulp and iso via Node) ==\n"
+npm install npm@8.19.2
 npm install
 npm install gulp-cli # shouldn't be necessary, but seems to be
 
