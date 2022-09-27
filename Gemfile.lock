@@ -154,7 +154,7 @@ DEPENDENCIES
   fastimage
   htmlentities
   httparty
-  json
+  json (>= 2.6.2)
   mail
   maxminddb-geolite2-city
   mimemagic
