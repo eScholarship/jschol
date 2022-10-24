@@ -196,6 +196,57 @@ class UnitProfileLayout extends React.Component {
                               <input disabled={disableEdit} type="checkbox" id="altmetrics_ok" name="altmetrics_ok" defaultChecked={data.altmetrics_ok}/></div>
                        }
                        <br/>
+            <div><label className="c-editable-page__label" htmlFor="indexedBy">Indexed by: </label>
+                <input type="checkbox" id="clarivate" name="clarivate" defaultChecked="true" /><label>Clarivate  </label>
+                <input type="checkbox" id="doaj" name="doaj" defaultChecked="true" /><label>DOAJ  </label>
+                <input type="checkbox" id="ebsco" name="ebsco" defaultChecked="true" /><label>EBSCO  </label>
+                <input type="checkbox" id="pubmed" name="pubmed" defaultChecked="true" /><label>PubMed  </label>
+                <input type="checkbox" id="road" name="road" defaultChecked="true" /><label>ROAD  </label>
+                <input type="checkbox" id="scopus" name="scopus" defaultChecked="true" /><label>SCOPUS  </label>
+            </div>
+	    <br/>
+            <div>
+                <label className="c-editable-page__label" htmlFor="elementsID">eScholarship TOS Version on File: </label>
+                <input className="c-editable-page__input" id="elementsID" type="text"
+                    onChange={event => this.setData({ elementsID: event.target.value })} />
+            </div>
+            <div>
+                <label className="c-editable-page__label" htmlFor="elementsID">Relevant Discipline(s): </label>
+                <input className="c-editable-page__input" id="elementsID" type="text"
+                    onChange={event => this.setData({ elementsID: event.target.value })} />
+            </div>
+            <div>
+                <label className="c-editable-page__label" htmlFor="targetFreq">Target publication frequency: </label>
+                <select name="pubFrequency" defaultValue="incremental">
+                    <option value="incremental">Incremental</option>
+                    <option value="fortnightly">Fortnightly</option>
+                    <option value="monthly">Monthly</option>
+                    <option value="quarterly">Quarterly</option>
+                    <option value="yearly">Yearly</option>
+                    <option value="twoyearly">2-years</option>
+                </select>
+            </div>
+	    <br/>			   
+            <div>
+                <label className="c-editable-page__label" htmlFor="oaspaStatus">OASPA Status: </label>
+                <select name="oaspaStatus" defaultValue="notSumitted">
+                    <option value="notSumitted">Not Sumitted</option>
+                    <option value="sumitted">Sumitted</option>
+                    <option value="accepted">Accepted</option>
+                    <option value="rejected">Rejected</option>
+                </select>
+            </div>
+	    <br/>
+            <div>
+                <label className="c-editable-page__label" htmlFor="elementsID">APC Amount: </label>
+                <input disabled="false" className="c-editable-page__input" id="elementsID" type="text" defaultValue="testing"
+                    onChange={event => this.setData({ elementsID: event.target.value })} />
+            </div>
+            <div>
+                <label className="c-editable-page__label" htmlFor="elementsID">Journal content primarily by: </label>
+                <input disabled="false" className="c-editable-page__input" id="elementsID" type="text" defaultValue="testing"
+                    onChange={event => this.setData({ elementsID: event.target.value })} />
+            </div>
                      </div>
                     }
 
