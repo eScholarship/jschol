@@ -7,13 +7,36 @@ import WysiwygEditorComp from '../components/WysiwygEditorComp.jsx'
 import Contexts from '../contexts.jsx'
 import FormComp from '../components/FormComp.jsx'
 import _ from 'lodash'
+import Datetime from 'react-datetime'
+import Select from 'react-select'
+//import "react-datetime/css/react-datetime.css"
+
+export const colorOptions = [
+    { value: "ocean1", label: "Ocean" },
+    { value: "blue", label: "Blue" },
+    { value: "purple", label: "Purple" },
+    { value: "red", label: "Red" },
+    { value: "orange", label: "Orange" },
+    { value: "yellow", label: "Yellow" },
+    { value: "green", label: "Green" },
+    { value: "forest", label: "Forest" },
+    { value: "slate", label: "Slate" },
+    { value: "silver", label: "Silver" }
+];
+
 
 class UnitProfileLayout extends React.Component {
   // static propTypes = {
   // }
 
   state = { newData: this.props.data,
-            banner_flag_visible: this.props.data.logo  }
+            banner_flag_visible: this.props.data.logo,
+            testmulti: null };
+
+  handleChange = value => {
+	  this.setState({ testmulti: value });
+	  console.log(`Option selected:`, value);
+  };
 
   handleSubmit = (event, data) => {
     event.preventDefault()
@@ -44,7 +67,6 @@ class UnitProfileLayout extends React.Component {
   //handles image preview BEFORE any image is POST'ed to server/BEFORE any asset_id is generated
   handleImageChange = (event) => {
     event.preventDefault()
-
     let reader = new FileReader()
     let file = event.target.files[0]
     let imgObj = {}
@@ -207,7 +229,14 @@ class UnitProfileLayout extends React.Component {
 	    <br/>
             <div>
                 <label className="c-editable-page__label" htmlFor="elementsID">eScholarship TOS Version on File: </label>
-                <input className="c-editable-page__input" id="elementsID" type="text"
+	        <Datetime timeFormat={false} />
+		<br/>				  
+                {this.state.testmulti && <p>{JSON.stringify(this.state.testmulti)}</p>}
+
+		<br/>
+		<Select value={this.state.testmulti} options = {colorOptions} onChange={this.handleChange} isMulti={true} />
+				   
+		<input className="c-editable-page__input" id="elementsID" type="text"
                     onChange={event => this.setData({ elementsID: event.target.value })} />
             </div>
             <div>
