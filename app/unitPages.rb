@@ -642,6 +642,14 @@ def getUnitProfile(unit, attrs)
     profile[:altmetrics_ok] = attrs['altmetrics_ok']
     profile[:magazine_layout] = attrs['magazine_layout']
     profile[:issue_rule] = attrs['issue_rule']
+    
+    profile[:indexed] = attrs['indexed'] || []
+    profile[:tos] = attrs['tos'] || ''
+    profile[:disciplines] = attrs['disciplines'] || []
+    profile[:pub_freq] = attrs['pub_freq'] || ''
+    profile[:oaspa] = attrs['oaspa'] || ''
+    profile[:apc] = attrs['apc'] || ''
+    profile[:contentby] = attrs['contentby'] || []
   end
   if unit.type =~ /series|journal/
     profile[:commenting_ok] = attrs['commenting_ok']
@@ -652,6 +660,8 @@ def getUnitProfile(unit, attrs)
   if unit.type == 'campus'
     profile[:hero] = attrs['hero']
   end
+   
+  puts "====profile passed: profile=#{profile}"
   return profile
 end
 

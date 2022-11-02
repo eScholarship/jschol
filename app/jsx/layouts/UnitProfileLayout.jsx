@@ -9,21 +9,36 @@ import FormComp from '../components/FormComp.jsx'
 import _ from 'lodash'
 import Datetime from 'react-datetime'
 import Select from 'react-select'
-//import "react-datetime/css/react-datetime.css"
 
-export const colorOptions = [
-    { value: "ocean1", label: "Ocean" },
-    { value: "blue", label: "Blue" },
-    { value: "purple", label: "Purple" },
-    { value: "red", label: "Red" },
-    { value: "orange", label: "Orange" },
-    { value: "yellow", label: "Yellow" },
-    { value: "green", label: "Green" },
-    { value: "forest", label: "Forest" },
-    { value: "slate", label: "Slate" },
-    { value: "silver", label: "Silver" }
+
+export const contentOptions = [
+    { value: "faculty", label: "Faculty" },
+    { value: "researcher", label: "Researcher" },
+    { value: "grad", label: "Graduate Students" },
+    { value: "undergrad", label: "Undergraduate Students" }
 ];
 
+export const indexOptions = [
+    { value: "clarivate", label: "Clarivate" },
+    { value: "doaj", label: "DOAJ" },
+    { value: "ebsco", label: "EBSCO" },
+    { value: "pubmed", label: "PubMed" },
+    { value: "road", label: "ROAD" },
+    { value: "scopus", label: "SCOPUS" },
+];
+
+export const disciplineOptions = [
+    { value: "arch", label: "Architecture" },
+    { value: "art", label: "Arts and Humanities" },
+    { value: "bus", label: "Business" },
+    { value: "edu", label: "Education" },
+    { value: "eng", label: "Engineering" },
+    { value: "law", label: "Law" },
+    { value: "life", label: "Life Sciences" },
+    { value: "medicine", label: "Medicine and Health Sciences" },
+    { value: "physical", label: "Physical Sciences and Mathematics" },
+    { value: "social", label: "Social and Behavioral Sciences" }
+];
 
 class UnitProfileLayout extends React.Component {
   // static propTypes = {
@@ -31,11 +46,23 @@ class UnitProfileLayout extends React.Component {
 
   state = { newData: this.props.data,
             banner_flag_visible: this.props.data.logo,
-            testmulti: null };
+            testmulti: this.props.data["indexed"],
+            indexed: this.props.data["indexed"],
+            disciplines: this.props.data["disciplines"],
+            contentby: this.props.data["contentby"]
+          };
 
+  updateIndexed = value => {
+	  this.setState({ indexed: value });
+  };
+  updateDisciplines = value => {
+	  this.setState({ disciplines: value });
+  };
+  updateContentby = value => {
+	  this.setState({ contentby: value });
+  };
   handleChange = value => {
 	  this.setState({ testmulti: value });
-	  console.log(`Option selected:`, value);
   };
 
   handleSubmit = (event, data) => {
@@ -115,6 +142,7 @@ class UnitProfileLayout extends React.Component {
          let elColorToCheck = elColor === 'black' ? '000000' : 'ffffff'
          newHeader['bgColor'] = bgColor
          newHeader['elColor'] = elColor
+         
          return (
          <div>
            <h3>Unit Configuration</h3>
@@ -218,13 +246,8 @@ class UnitProfileLayout extends React.Component {
                               <input disabled={disableEdit} type="checkbox" id="altmetrics_ok" name="altmetrics_ok" defaultChecked={data.altmetrics_ok}/></div>
                        }
                        <br/>
-            <div><label className="c-editable-page__label" htmlFor="indexedBy">Indexed by: </label>
-                <input type="checkbox" id="clarivate" name="clarivate" defaultChecked="true" /><label>Clarivate  </label>
-                <input type="checkbox" id="doaj" name="doaj" defaultChecked="true" /><label>DOAJ  </label>
-                <input type="checkbox" id="ebsco" name="ebsco" defaultChecked="true" /><label>EBSCO  </label>
-                <input type="checkbox" id="pubmed" name="pubmed" defaultChecked="true" /><label>PubMed  </label>
-                <input type="checkbox" id="road" name="road" defaultChecked="true" /><label>ROAD  </label>
-                <input type="checkbox" id="scopus" name="scopus" defaultChecked="true" /><label>SCOPUS  </label>
+            <div><label className="c-editable-page__label" htmlFor="indexedBy">Indexed by: </label>  
+		<Select value={this.state.indexed} options = {indexOptions} onChange={this.updateIndexed} isMulti={true} />
             </div>
 	    <br/>
             <div>
@@ -232,17 +255,18 @@ class UnitProfileLayout extends React.Component {
 	        <Datetime timeFormat={false} />
 		<br/>				  
                 {this.state.testmulti && <p>{JSON.stringify(this.state.testmulti)}</p>}
+                {this.state.newData && this.state.newData["indexed"] && <p>{JSON.stringify(this.state.newData["indexed"])}</p>}
+                {this.state.newData && <p>{JSON.stringify(this.state.newData)}</p>}
 
 		<br/>
-		<Select value={this.state.testmulti} options = {colorOptions} onChange={this.handleChange} isMulti={true} />
+		<Select value={this.state.testmulti} options = {indexOptions} onChange={this.handleChange} isMulti={true} />
 				   
 		<input className="c-editable-page__input" id="elementsID" type="text"
                     onChange={event => this.setData({ elementsID: event.target.value })} />
             </div>
             <div>
                 <label className="c-editable-page__label" htmlFor="elementsID">Relevant Discipline(s): </label>
-                <input className="c-editable-page__input" id="elementsID" type="text"
-                    onChange={event => this.setData({ elementsID: event.target.value })} />
+		<Select value={this.state.disciplines} options = {disciplineOptions} onChange={this.updateDisciplines} isMulti={true} />
             </div>
             <div>
                 <label className="c-editable-page__label" htmlFor="targetFreq">Target publication frequency: </label>
@@ -268,13 +292,12 @@ class UnitProfileLayout extends React.Component {
 	    <br/>
             <div>
                 <label className="c-editable-page__label" htmlFor="elementsID">APC Amount: </label>
-                <input disabled="false" className="c-editable-page__input" id="elementsID" type="text" defaultValue="testing"
+                <input className="c-editable-page__input" id="elementsID" type="text" defaultValue="testing"
                     onChange={event => this.setData({ elementsID: event.target.value })} />
             </div>
             <div>
                 <label className="c-editable-page__label" htmlFor="elementsID">Journal content primarily by: </label>
-                <input disabled="false" className="c-editable-page__input" id="elementsID" type="text" defaultValue="testing"
-                    onChange={event => this.setData({ elementsID: event.target.value })} />
+		<Select value={this.state.contentby} options = {contentOptions} onChange={this.updateContentby} isMulti={true} />
             </div>
                      </div>
                     }
