@@ -139,6 +139,7 @@ class UnitProfileLayout extends React.Component {
       <Contexts.CMS.Consumer>
       { cms => {
          let disableEdit = !(cms.permissions && cms.permissions.super)
+         
          let disableLogo = (this.props.unit.type.indexOf("series") >= 0) ||
                            (this.props.unit.type == "campus" && disableEdit)
          let newHeader = Object.assign({}, this.props.header)
@@ -219,6 +220,12 @@ class UnitProfileLayout extends React.Component {
                        <label className="c-editable-page__label" htmlFor="directSubmitURL">Direct submit URL (for external submission management): </label>
                        <input disabled={disableEdit} className="c-editable-page__input" id="directSubmitURL" type="text" defaultValue={data.directSubmitURL}
                            onChange={ event => this.setData({ directSubmitURL: event.target.value }) }/>
+                       <label className="c-editable-page__label" htmlFor="directManageURLauthor">Direct manage URL for Authors (for external submission management): </label>
+                       <input disabled={disableEdit} className="c-editable-page__input" id="directManageURLauthor" type="text" defaultValue={data.directManageURLauthor}
+                           onChange={ event => this.setData({ directManageURLauthor: event.target.value }) }/>
+                       <label className="c-editable-page__label" htmlFor="directManageURLeditor">Direct manage URL for Editors (for external submission management): </label>
+                       <input disabled={disableEdit} className="c-editable-page__input" id="directManageURLeditor" type="text" defaultValue={data.directManageURLeditor}
+                           onChange={ event => this.setData({ directManageURLeditor: event.target.value }) }/>
                        {this.props.unit.type.indexOf("series") >= 0 &&
                          <div>
                            <label className="c-editable-page__label" htmlFor="elementsID">Elements numeric group ID (for secondary association on deposit): </label>

@@ -20,6 +20,8 @@ class SubheaderComp extends React.Component {
       campuses: PropTypes.array.isRequired,
       directSubmit: PropTypes.string,
       directSubmitURL: PropTypes.string,
+      directManageURLauthor: PropTypes.string,
+      directManageURLeditor: PropTypes.string,
       logo: PropTypes.shape({
         url: PropTypes.string.isRequired,
         width: PropTypes.number, // optional for SVG
@@ -57,6 +59,8 @@ class SubheaderComp extends React.Component {
     let [banner_url, banner_title] = unit.type.includes('series') ? [h.ancestorID, h.ancestorName] : [unit.id, unit.name]
     let directSubmitURL = h.directSubmitURL ? h.directSubmitURL : "https://submit.escholarship.org/subi/directSubmit?target="+unit.id
     let directSubmitURL_manage = h.directSubmitURL ? h.directSubmitURL : null
+    let directManageURLauthor = h.directManageURLauthor ? h.directManageURLauthor : null
+    let directManageURLeditor = h.directManageURLeditor ? h.directManageURLeditor : null
 
    // Button Configuration based on unit type
    //   unit.type == 'journal'  -->        Submit  / Manage Submissions
@@ -85,7 +89,7 @@ class SubheaderComp extends React.Component {
                       parentSelector={()=>$('#wizardModalBase')[0]}
                       onCancel={e=>this.closeWizardModal(e)}
                       header={(unit.type == 'journal') ? unit.name : h.campusName+" Deposit"}
-                      type={unit.type} directSubmit={h.directSubmit} directSubmitURL={directSubmitURL} />)
+                      type={unit.type} directSubmit={h.directSubmit} directSubmitURL={directSubmitURL} directManageURLauthor={directManageURLauthor} directManageURLeditor={directManageURLeditor}/>)
     } else {
       // If unit is a series, pass in its parent's unitID
       let [unitIDForWiz, unitNameForWiz] = (unit.type == 'oru') ? [unit.id, unit.name] : (unit.type.includes('series')) ? [h.ancestorID, h.ancestorName] : [null, null]
@@ -107,7 +111,10 @@ class SubheaderComp extends React.Component {
                           onCancel={e=>this.closeWizardModal(e)}
                           header="Manage Submissions"
                           type={unit.type} unit_id={unit.id}
-                          directSubmitURL_manage={directSubmitURL_manage} />)
+                          directSubmitURL_manage={directSubmitURL_manage} 
+                          directManageURLauthor={directManageURLauthor}
+                          directManageURLeditor={directManageURLeditor}
+                          />)
     return (
       <div className={stateStyles} style={{backgroundColor: h.bgColor}}>
         <Link to={"/uc/"+banner_url} className="c-subheader__title">
