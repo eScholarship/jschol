@@ -112,7 +112,7 @@ GEM
     sanitize (6.0.0)
       crass (~> 1.0.2)
       nokogiri (>= 1.12.0)
-    sequel (5.56.0)
+    sequel (5.62.0)
     sigdump (0.2.4)
     sinatra (2.2.0)
       mustermann (~> 1.0)
@@ -184,4 +184,4 @@ RUBY VERSION
    ruby 3.0.4p208
 
 BUNDLED WITH
-   2.3.13
+   2.3.25
