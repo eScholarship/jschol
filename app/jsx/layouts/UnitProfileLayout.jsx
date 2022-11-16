@@ -47,7 +47,6 @@ class UnitProfileLayout extends React.Component {
   state = { newData: this.props.data,
             banner_flag_visible: this.props.data.logo,
 	    tos:this.props.data.tos,
-            testmulti: indexOptions.filter(p=>this.props.data["indexed"].includes(p.value)),
             indexed: indexOptions.filter(p=>this.props.data["indexed"].includes(p.value)),
             disciplines: disciplineOptions.filter(p=>this.props.data["disciplines"].includes(p.value)),
             contentby: contentOptions.filter(p=>this.props.data["contentby"].includes(p.value)),
@@ -64,9 +63,6 @@ class UnitProfileLayout extends React.Component {
   };
   updateContentby = value => {
 	  this.setState({ contentby: value });
-  };
-  handleChange = value => {
-	  this.setState({ testmulti: value });
   };
 
   handleSubmit = (event, data) => {
