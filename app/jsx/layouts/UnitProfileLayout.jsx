@@ -46,12 +46,16 @@ class UnitProfileLayout extends React.Component {
 
   state = { newData: this.props.data,
             banner_flag_visible: this.props.data.logo,
+	    tos:this.props.data.tos,
             testmulti: indexOptions.filter(p=>this.props.data["indexed"].includes(p.value)),
             indexed: indexOptions.filter(p=>this.props.data["indexed"].includes(p.value)),
             disciplines: disciplineOptions.filter(p=>this.props.data["disciplines"].includes(p.value)),
             contentby: contentOptions.filter(p=>this.props.data["contentby"].includes(p.value)),
           };
 
+  updatetos = value => {
+	  this.setState({ tos: value });
+  };
   updateIndexed = value => {
 	  this.setState({ indexed: value });
   };
@@ -85,6 +89,11 @@ class UnitProfileLayout extends React.Component {
       }
       this.props.sendBinaryFileData("POST", "/api/unit/" + this.props.unit.id + "/upload", binaryFormData)
     }
+    if (this.state.tos) {	  
+       data.tos = this.state.tos.format('YYYY-MM-DD')
+    }
+    // add tos datetime value from state
+    //data.tos=this.state.tos
     if (!$.isEmptyObject(data)) {
       this.props.sendApiData("PUT", event.target.action, {data: data})
     }
@@ -252,7 +261,8 @@ class UnitProfileLayout extends React.Component {
 	    <br/>
             <div>
                 <label className="c-editable-page__label" htmlFor="tos">eScholarship TOS Version on File: </label>
-	        <Datetime id="tos" name="tos" timeFormat={false} value={data.tos}/>
+		{this.state.tos && <p>{JSON.stringify(this.state.tos)}</p>}
+	        <Datetime id="tos" name="tos" timeFormat={false} value={this.state.tos} onChange={this.updatetos}/>
 		<br/>
 		{this.state.newData && <p>{JSON.stringify(this.state.newData)}</p>}
             </div>

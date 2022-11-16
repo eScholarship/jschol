@@ -1527,6 +1527,7 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
     if params['data']['oaspa'] then unitAttrs['oaspa'] = params['data']['oaspa'] end
     if params['data']['apc'] then unitAttrs['apc'] = params['data']['apc'] end
     if params['data']['contentby'] then unitAttrs['contentby'] = params['data']['contentby'] end
+    if params['data']['tos'] then unitAttrs['tos'] = params['data']['tos'] end
     unitAttrs.delete_if {|_k,v| (v.is_a? String and v.empty?) || (v == false) || v.nil? }
     unit.attrs = unitAttrs.to_json
     unit.save
