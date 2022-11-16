@@ -46,10 +46,10 @@ class UnitProfileLayout extends React.Component {
 
   state = { newData: this.props.data,
             banner_flag_visible: this.props.data.logo,
-            testmulti: this.props.data["indexed"],
-            indexed: this.props.data["indexed"],
-            disciplines: this.props.data["disciplines"],
-            contentby: this.props.data["contentby"]
+            testmulti: indexOptions.filter(p=>this.props.data["indexed"].includes(p.value)),
+            indexed: indexOptions.filter(p=>this.props.data["indexed"].includes(p.value)),
+            disciplines: disciplineOptions.filter(p=>this.props.data["disciplines"].includes(p.value)),
+            contentby: contentOptions.filter(p=>this.props.data["contentby"].includes(p.value)),
           };
 
   updateIndexed = value => {
@@ -246,31 +246,26 @@ class UnitProfileLayout extends React.Component {
                               <input disabled={disableEdit} type="checkbox" id="altmetrics_ok" name="altmetrics_ok" defaultChecked={data.altmetrics_ok}/></div>
                        }
                        <br/>
-            <div><label className="c-editable-page__label" htmlFor="indexedBy">Indexed by: </label>  
-		<Select value={this.state.indexed} options = {indexOptions} onChange={this.updateIndexed} isMulti={true} />
+            <div><label className="c-editable-page__label" htmlFor="indexed">Indexed by: </label>  
+		<Select name="indexed" value={this.state.indexed} options = {indexOptions} onChange={this.updateIndexed} isMulti={true} />
             </div>
 	    <br/>
             <div>
-                <label className="c-editable-page__label" htmlFor="elementsID">eScholarship TOS Version on File: </label>
-	        <Datetime timeFormat={false} />
-		<br/>				  
-                {this.state.testmulti && <p>{JSON.stringify(this.state.testmulti)}</p>}
-                {this.state.newData && this.state.newData["indexed"] && <p>{JSON.stringify(this.state.newData["indexed"])}</p>}
-                {this.state.newData && <p>{JSON.stringify(this.state.newData)}</p>}
-
+                <label className="c-editable-page__label" htmlFor="tos">eScholarship TOS Version on File: </label>
+	        <Datetime id="tos" name="tos" timeFormat={false} value={data.tos}/>
 		<br/>
-		<Select value={this.state.testmulti} options = {indexOptions} onChange={this.handleChange} isMulti={true} />
-				   
-		<input className="c-editable-page__input" id="elementsID" type="text"
-                    onChange={event => this.setData({ elementsID: event.target.value })} />
+		{this.state.newData && <p>{JSON.stringify(this.state.newData)}</p>}
             </div>
             <div>
-                <label className="c-editable-page__label" htmlFor="elementsID">Relevant Discipline(s): </label>
-		<Select value={this.state.disciplines} options = {disciplineOptions} onChange={this.updateDisciplines} isMulti={true} />
+                <label className="c-editable-page__label" htmlFor="disciplines">Relevant Discipline(s): </label>
+
+		{this.state.testmulti && <p>{JSON.stringify(this.state.testmulti)}</p>}
+		{this.state.disciplines && <p>{JSON.stringify(this.state.disciplines)}</p>}
+		<Select name="disciplines" value={this.state.disciplines} options = {disciplineOptions} onChange={this.updateDisciplines} isMulti={true} />
             </div>
             <div>
-                <label className="c-editable-page__label" htmlFor="targetFreq">Target publication frequency: </label>
-                <select name="pubFrequency" defaultValue="incremental">
+                <label className="c-editable-page__label" htmlFor="pub_freq">Target publication frequency: </label>
+                <select name="pub_freq" defaultValue={data.pub_freq}>
                     <option value="incremental">Incremental</option>
                     <option value="fortnightly">Fortnightly</option>
                     <option value="monthly">Monthly</option>
@@ -281,8 +276,8 @@ class UnitProfileLayout extends React.Component {
             </div>
 	    <br/>			   
             <div>
-                <label className="c-editable-page__label" htmlFor="oaspaStatus">OASPA Status: </label>
-                <select name="oaspaStatus" defaultValue="notSumitted">
+                <label className="c-editable-page__label" htmlFor="oaspa">OASPA Status: </label>
+                <select name="oaspa" defaultValue={data.oapsa}>
                     <option value="notSumitted">Not Sumitted</option>
                     <option value="sumitted">Sumitted</option>
                     <option value="accepted">Accepted</option>
@@ -291,13 +286,13 @@ class UnitProfileLayout extends React.Component {
             </div>
 	    <br/>
             <div>
-                <label className="c-editable-page__label" htmlFor="elementsID">APC Amount: </label>
-                <input className="c-editable-page__input" id="elementsID" type="text" defaultValue="testing"
-                    onChange={event => this.setData({ elementsID: event.target.value })} />
+                <label className="c-editable-page__label" htmlFor="apc">APC Amount: </label>
+                <input className="c-editable-page__input" id="apc" type="text" defaultValue={data.apc} />
             </div>
             <div>
-                <label className="c-editable-page__label" htmlFor="elementsID">Journal content primarily by: </label>
-		<Select value={this.state.contentby} options = {contentOptions} onChange={this.updateContentby} isMulti={true} />
+		{this.state.contentby && <p>{JSON.stringify(this.state.contentby)}</p>}
+                <label className="c-editable-page__label" htmlFor="contentby">Journal content primarily by: </label>
+		<Select name="contentby" value={this.state.contentby} options = {contentOptions} onChange={this.updateContentby} isMulti={true} />
             </div>
                      </div>
                     }

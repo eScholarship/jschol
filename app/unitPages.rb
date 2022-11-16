@@ -1476,7 +1476,7 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
   DB.transaction {
     unit = Unit[unitID] or jsonHalt(404, "Unit not found")
     unitAttrs = JSON.parse(unit.attrs)
-
+    puts "DATA received is #{params['data']}"   
     if params['data']['unitName'] then unit.name = params['data']['unitName'] end
 
     # Only change unit config flags if the that section is being saved -- avoids clearing them accidentally
@@ -1521,6 +1521,12 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
     if params['data']['subheader-bgcolorpicker'] then unitAttrs['bgColor'] = params['data']['subheader-bgcolorpicker'] end
     if params['data']['elementcolorpicker'] then unitAttrs['elColor'] = params['data']['elementcolorpicker'] end
 
+    if params['data']['indexed'] then unitAttrs['indexed'] = params['data']['indexed'] end
+    if params['data']['disciplines'] then unitAttrs['disciplines'] = params['data']['disciplines'] end
+    if params['data']['pub_freq'] then unitAttrs['pub_freq'] = params['data']['pub_freq'] end
+    if params['data']['oaspa'] then unitAttrs['oaspa'] = params['data']['oaspa'] end
+    if params['data']['apc'] then unitAttrs['apc'] = params['data']['apc'] end
+    if params['data']['contentby'] then unitAttrs['contentby'] = params['data']['contentby'] end
     unitAttrs.delete_if {|_k,v| (v.is_a? String and v.empty?) || (v == false) || v.nil? }
     unit.attrs = unitAttrs.to_json
     unit.save
