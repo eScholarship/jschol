@@ -661,7 +661,7 @@ def getUnitProfile(unit, attrs)
     profile[:hero] = attrs['hero']
   end
    
-  puts "====profile passed: profile=#{profile}"
+  #puts "====profile passed: profile=#{profile}"
   return profile
 end
 
@@ -1476,7 +1476,7 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
   DB.transaction {
     unit = Unit[unitID] or jsonHalt(404, "Unit not found")
     unitAttrs = JSON.parse(unit.attrs)
-    puts "DATA received is #{params['data']}"   
+    #puts "DATA received is #{params['data']}"   
     if params['data']['unitName'] then unit.name = params['data']['unitName'] end
 
     # Only change unit config flags if the that section is being saved -- avoids clearing them accidentally

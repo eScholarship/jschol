@@ -89,11 +89,12 @@ class UnitProfileLayout extends React.Component {
       }
       this.props.sendBinaryFileData("POST", "/api/unit/" + this.props.unit.id + "/upload", binaryFormData)
     }
-    if (this.state.tos) {	  
+
+    // add tos datetime value from state
+    if (this.state.tos instanceof Object) {	  
        data.tos = this.state.tos.format('YYYY-MM-DD')
     }
-    // add tos datetime value from state
-    //data.tos=this.state.tos
+
     if (!$.isEmptyObject(data)) {
       this.props.sendApiData("PUT", event.target.action, {data: data})
     }
@@ -255,55 +256,50 @@ class UnitProfileLayout extends React.Component {
                               <input disabled={disableEdit} type="checkbox" id="altmetrics_ok" name="altmetrics_ok" defaultChecked={data.altmetrics_ok}/></div>
                        }
                        <br/>
-            <div><label className="c-editable-page__label" htmlFor="indexed">Indexed by: </label>  
-		<Select name="indexed" value={this.state.indexed} options = {indexOptions} onChange={this.updateIndexed} isMulti={true} />
-            </div>
-	    <br/>
-            <div>
-                <label className="c-editable-page__label" htmlFor="tos">eScholarship TOS Version on File: </label>
-		{this.state.tos && <p>{JSON.stringify(this.state.tos)}</p>}
-	        <Datetime id="tos" name="tos" timeFormat={false} value={this.state.tos} onChange={this.updatetos}/>
-		<br/>
-		{this.state.newData && <p>{JSON.stringify(this.state.newData)}</p>}
-            </div>
-            <div>
-                <label className="c-editable-page__label" htmlFor="disciplines">Relevant Discipline(s): </label>
-
-		{this.state.testmulti && <p>{JSON.stringify(this.state.testmulti)}</p>}
-		{this.state.disciplines && <p>{JSON.stringify(this.state.disciplines)}</p>}
-		<Select name="disciplines" value={this.state.disciplines} options = {disciplineOptions} onChange={this.updateDisciplines} isMulti={true} />
-            </div>
-            <div>
-                <label className="c-editable-page__label" htmlFor="pub_freq">Target publication frequency: </label>
-                <select name="pub_freq" defaultValue={data.pub_freq}>
-                    <option value="incremental">Incremental</option>
-                    <option value="fortnightly">Fortnightly</option>
-                    <option value="monthly">Monthly</option>
-                    <option value="quarterly">Quarterly</option>
-                    <option value="yearly">Yearly</option>
-                    <option value="twoyearly">2-years</option>
-                </select>
-            </div>
-	    <br/>			   
-            <div>
-                <label className="c-editable-page__label" htmlFor="oaspa">OASPA Status: </label>
-                <select name="oaspa" defaultValue={data.oapsa}>
-                    <option value="notSumitted">Not Sumitted</option>
-                    <option value="sumitted">Sumitted</option>
-                    <option value="accepted">Accepted</option>
-                    <option value="rejected">Rejected</option>
-                </select>
-            </div>
-	    <br/>
-            <div>
-                <label className="c-editable-page__label" htmlFor="apc">APC Amount: </label>
-                <input className="c-editable-page__input" id="apc" type="text" defaultValue={data.apc} />
-            </div>
-            <div>
-		{this.state.contentby && <p>{JSON.stringify(this.state.contentby)}</p>}
-                <label className="c-editable-page__label" htmlFor="contentby">Journal content primarily by: </label>
-		<Select name="contentby" value={this.state.contentby} options = {contentOptions} onChange={this.updateContentby} isMulti={true} />
-            </div>
+                       <div><label className="c-editable-page__label" htmlFor="indexed">Indexed by: </label>  
+	        	    <Select name="indexed" value={this.state.indexed} options = {indexOptions} onChange={this.updateIndexed} isMulti={true} />
+                       </div>
+	               <br/>
+                       <div>
+                          <label className="c-editable-page__label" htmlFor="tos">eScholarship TOS Version on File: </label>
+	                  <Datetime id="tos" name="tos" timeFormat={false} value={this.state.tos} onChange={this.updatetos}/>
+		          <br/>
+                       </div>
+                       <div>
+                          <label className="c-editable-page__label" htmlFor="disciplines">Relevant Discipline(s): </label>
+		          <Select name="disciplines" value={this.state.disciplines} options = {disciplineOptions} onChange={this.updateDisciplines} isMulti={true} />
+                       </div>
+	               <br/>
+                       <div>
+                          <label className="c-editable-page__label" htmlFor="pub_freq">Target publication frequency: </label>
+                          <select name="pub_freq" defaultValue={data.pub_freq}>
+                              <option value="incremental">Incremental</option>
+                              <option value="fortnightly">Fortnightly</option>
+                              <option value="monthly">Monthly</option>
+                              <option value="quarterly">Quarterly</option>
+                              <option value="yearly">Yearly</option>
+                              <option value="twoyearly">2-years</option>
+                         </select>
+                      </div>
+	              <br/>			   
+                      <div>
+                         <label className="c-editable-page__label" htmlFor="oaspa">OASPA Status: </label>
+                         <select name="oaspa" defaultValue={data.oapsa}>
+                            <option value="notSumitted">Not Sumitted</option>
+                            <option value="sumitted">Sumitted</option>
+                            <option value="accepted">Accepted</option>
+                            <option value="rejected">Rejected</option>
+                         </select>
+                      </div>
+	              <br/>
+                      <div>
+                         <label className="c-editable-page__label" htmlFor="apc">APC Amount: </label>
+                         <input className="c-editable-page__input" id="apc" type="text" defaultValue={data.apc} />
+                      </div>
+                      <div>
+                         <label className="c-editable-page__label" htmlFor="contentby">Journal content primarily by: </label>
+		         <Select name="contentby" value={this.state.contentby} options = {contentOptions} onChange={this.updateContentby} isMulti={true} />
+                      </div>
                      </div>
                     }
 
