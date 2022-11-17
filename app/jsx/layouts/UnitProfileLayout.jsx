@@ -88,7 +88,7 @@ class UnitProfileLayout extends React.Component {
 
     // add tos datetime value from state
     if (this.state.tos instanceof Object) {	  
-       data.tos = this.state.tos.format('YYYY-MM-DD')
+       data.tos = this.state.tos.format('L')
     }
 
     if (!$.isEmptyObject(data)) {
