@@ -642,6 +642,14 @@ def getUnitProfile(unit, attrs)
     profile[:altmetrics_ok] = attrs['altmetrics_ok']
     profile[:magazine_layout] = attrs['magazine_layout']
     profile[:issue_rule] = attrs['issue_rule']
+    
+    profile[:indexed] = attrs['indexed'] || []
+    profile[:tos] = attrs['tos'] || ''
+    profile[:disciplines] = attrs['disciplines'] || []
+    profile[:pub_freq] = attrs['pub_freq'] || ''
+    profile[:oaspa] = attrs['oaspa'] || ''
+    profile[:apc] = attrs['apc'] || ''
+    profile[:contentby] = attrs['contentby'] || []
   end
   if unit.type =~ /series|journal/
     profile[:commenting_ok] = attrs['commenting_ok']
@@ -652,6 +660,8 @@ def getUnitProfile(unit, attrs)
   if unit.type == 'campus'
     profile[:hero] = attrs['hero']
   end
+   
+  #puts "====profile passed: profile=#{profile}"
   return profile
 end
 
@@ -1466,7 +1476,7 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
   DB.transaction {
     unit = Unit[unitID] or jsonHalt(404, "Unit not found")
     unitAttrs = JSON.parse(unit.attrs)
-
+    #puts "DATA received is #{params['data']}"   
     if params['data']['unitName'] then unit.name = params['data']['unitName'] end
 
     # Only change unit config flags if the that section is being saved -- avoids clearing them accidentally
@@ -1511,6 +1521,13 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
     if params['data']['subheader-bgcolorpicker'] then unitAttrs['bgColor'] = params['data']['subheader-bgcolorpicker'] end
     if params['data']['elementcolorpicker'] then unitAttrs['elColor'] = params['data']['elementcolorpicker'] end
 
+    if params['data']['indexed'] then unitAttrs['indexed'] = params['data']['indexed'] end
+    if params['data']['disciplines'] then unitAttrs['disciplines'] = params['data']['disciplines'] end
+    if params['data']['pub_freq'] then unitAttrs['pub_freq'] = params['data']['pub_freq'] end
+    if params['data']['oaspa'] then unitAttrs['oaspa'] = params['data']['oaspa'] end
+    if params['data']['apc'] then unitAttrs['apc'] = params['data']['apc'] end
+    if params['data']['contentby'] then unitAttrs['contentby'] = params['data']['contentby'] end
+    if params['data']['tos'] then unitAttrs['tos'] = params['data']['tos'] end
     unitAttrs.delete_if {|_k,v| (v.is_a? String and v.empty?) || (v == false) || v.nil? }
     unit.attrs = unitAttrs.to_json
     unit.save

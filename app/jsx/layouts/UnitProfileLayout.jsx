@@ -7,13 +7,63 @@ import WysiwygEditorComp from '../components/WysiwygEditorComp.jsx'
 import Contexts from '../contexts.jsx'
 import FormComp from '../components/FormComp.jsx'
 import _ from 'lodash'
+import Datetime from 'react-datetime'
+import Select from 'react-select'
+
+
+export const contentOptions = [
+    { value: "faculty", label: "Faculty" },
+    { value: "researcher", label: "Researchers" },
+    { value: "grad", label: "Graduate Students" },
+    { value: "undergrad", label: "Undergraduate Students" }
+];
+
+export const indexOptions = [
+    { value: "clarivate", label: "Clarivate" },
+    { value: "doaj", label: "DOAJ" },
+    { value: "ebsco", label: "EBSCO" },
+    { value: "pubmed", label: "PubMed" },
+    { value: "road", label: "ROAD" },
+    { value: "scopus", label: "SCOPUS" },
+];
+
+export const disciplineOptions = [
+    { value: "arch", label: "Architecture" },
+    { value: "art", label: "Arts and Humanities" },
+    { value: "bus", label: "Business" },
+    { value: "edu", label: "Education" },
+    { value: "eng", label: "Engineering" },
+    { value: "law", label: "Law" },
+    { value: "life", label: "Life Sciences" },
+    { value: "medicine", label: "Medicine and Health Sciences" },
+    { value: "physical", label: "Physical Sciences and Mathematics" },
+    { value: "social", label: "Social and Behavioral Sciences" }
+];
 
 class UnitProfileLayout extends React.Component {
   // static propTypes = {
   // }
 
   state = { newData: this.props.data,
-            banner_flag_visible: this.props.data.logo  }
+            banner_flag_visible: this.props.data.logo,
+	    tos:this.props.data.tos,
+            indexed:"indexed" in this.props.data ? indexOptions.filter(p=>this.props.data["indexed"].includes(p.value)):"",
+            disciplines:"disciplines" in this.props.data ? disciplineOptions.filter(p=>this.props.data["disciplines"].includes(p.value)):"",
+            contentby:"contentby" in this.props.data ? contentOptions.filter(p=>this.props.data["contentby"].includes(p.value)):"",
+          };
+
+  updatetos = value => {
+	  this.setState({ tos: value });
+  };
+  updateIndexed = value => {
+	  this.setState({ indexed: value });
+  };
+  updateDisciplines = value => {
+	  this.setState({ disciplines: value });
+  };
+  updateContentby = value => {
+	  this.setState({ contentby: value });
+  };
 
   handleSubmit = (event, data) => {
     event.preventDefault()
@@ -35,6 +85,12 @@ class UnitProfileLayout extends React.Component {
       }
       this.props.sendBinaryFileData("POST", "/api/unit/" + this.props.unit.id + "/upload", binaryFormData)
     }
+
+    // add tos datetime value from state
+    if (this.state.tos instanceof Object) {	  
+       data.tos = this.state.tos.format('L')
+    }
+
     if (!$.isEmptyObject(data)) {
       this.props.sendApiData("PUT", event.target.action, {data: data})
     }
@@ -44,7 +100,6 @@ class UnitProfileLayout extends React.Component {
   //handles image preview BEFORE any image is POST'ed to server/BEFORE any asset_id is generated
   handleImageChange = (event) => {
     event.preventDefault()
-
     let reader = new FileReader()
     let file = event.target.files[0]
     let imgObj = {}
@@ -93,6 +148,7 @@ class UnitProfileLayout extends React.Component {
          let elColorToCheck = elColor === 'black' ? '000000' : 'ffffff'
          newHeader['bgColor'] = bgColor
          newHeader['elColor'] = elColor
+         
          return (
          <div>
            <h3>Unit Configuration</h3>
@@ -196,6 +252,50 @@ class UnitProfileLayout extends React.Component {
                               <input disabled={disableEdit} type="checkbox" id="altmetrics_ok" name="altmetrics_ok" defaultChecked={data.altmetrics_ok}/></div>
                        }
                        <br/>
+                       <div><label className="c-editable-page__label" htmlFor="indexed">Indexed by: </label>  
+	        	    <Select name="indexed" value={this.state.indexed} options = {indexOptions} onChange={this.updateIndexed} isMulti={true} />
+                       </div>
+	               <br/>
+                       <div>
+                          <label className="c-editable-page__label" htmlFor="tos">eScholarship TOS Version on File: </label>
+	                  <Datetime id="tos" name="tos" timeFormat={false} value={this.state.tos} onChange={this.updatetos}/>
+		          <br/>
+                       </div>
+                       <div>
+                          <label className="c-editable-page__label" htmlFor="disciplines">Relevant Discipline(s): </label>
+		          <Select name="disciplines" value={this.state.disciplines} options = {disciplineOptions} onChange={this.updateDisciplines} isMulti={true} />
+                       </div>
+	               <br/>
+                       <div>
+                          <label className="c-editable-page__label" htmlFor="pub_freq">Target publication frequency: </label>
+                          <select name="pub_freq" defaultValue={data.pub_freq}>
+                              <option value="incremental">Incremental</option>
+                              <option value="fortnightly">Fortnightly</option>
+                              <option value="monthly">Monthly</option>
+                              <option value="quarterly">Quarterly</option>
+                              <option value="yearly">Yearly</option>
+                              <option value="twoyearly">2-years</option>
+                         </select>
+                      </div>
+	              <br/>			   
+                      <div>
+                         <label className="c-editable-page__label" htmlFor="oaspa">OASPA Status: </label>
+                         <select name="oaspa" defaultValue={data.oaspa}>
+                            <option value="notSubmitted">Not Submitted</option>
+                            <option value="submitted">Submitted</option>
+                            <option value="accepted">Accepted</option>
+                            <option value="rejected">Rejected</option>
+                         </select>
+                      </div>
+	              <br/>
+                      <div>
+                         <label className="c-editable-page__label" htmlFor="apc">APC Amount: </label>
+                         <input className="c-editable-page__input" id="apc" type="text" defaultValue={data.apc} />
+                      </div>
+                      <div>
+                         <label className="c-editable-page__label" htmlFor="contentby">Journal content primarily by: </label>
+		         <Select name="contentby" value={this.state.contentby} options = {contentOptions} onChange={this.updateContentby} isMulti={true} />
+                      </div>
                      </div>
                     }
 
