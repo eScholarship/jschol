@@ -13,7 +13,7 @@ import Select from 'react-select'
 
 export const contentOptions = [
     { value: "faculty", label: "Faculty" },
-    { value: "researcher", label: "Researcher" },
+    { value: "researcher", label: "Researchers" },
     { value: "grad", label: "Graduate Students" },
     { value: "undergrad", label: "Undergraduate Students" }
 ];
@@ -47,9 +47,9 @@ class UnitProfileLayout extends React.Component {
   state = { newData: this.props.data,
             banner_flag_visible: this.props.data.logo,
 	    tos:this.props.data.tos,
-            indexed: indexOptions.filter(p=>this.props.data["indexed"].includes(p.value)),
-            disciplines: disciplineOptions.filter(p=>this.props.data["disciplines"].includes(p.value)),
-            contentby: contentOptions.filter(p=>this.props.data["contentby"].includes(p.value)),
+            indexed:"indexed" in this.props.data ? indexOptions.filter(p=>this.props.data["indexed"].includes(p.value)):"",
+            disciplines:"disciplines" in this.props.data ? disciplineOptions.filter(p=>this.props.data["disciplines"].includes(p.value)):"",
+            contentby:"contentby" in this.props.data ? contentOptions.filter(p=>this.props.data["contentby"].includes(p.value)):"",
           };
 
   updatetos = value => {
@@ -280,9 +280,9 @@ class UnitProfileLayout extends React.Component {
 	              <br/>			   
                       <div>
                          <label className="c-editable-page__label" htmlFor="oaspa">OASPA Status: </label>
-                         <select name="oaspa" defaultValue={data.oapsa}>
-                            <option value="notSumitted">Not Sumitted</option>
-                            <option value="sumitted">Sumitted</option>
+                         <select name="oaspa" defaultValue={data.oaspa}>
+                            <option value="notSubmitted">Not Submitted</option>
+                            <option value="submitted">Submitted</option>
                             <option value="accepted">Accepted</option>
                             <option value="rejected">Rejected</option>
                          </select>
