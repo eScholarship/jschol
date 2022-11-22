@@ -109,6 +109,8 @@ class TabAuthorComp extends React.Component {
       }
       else if (props.unit && props.unit.type == "monograph_series" && props.attrs.publisher)
         out = this.addDot(out + "Location: " + props.attrs.publisher)
+      else if (props.unit && props.unit.type == "series" && props.attrs.publisher)
+        out = this.addDot(out + "Series: " + props.attrs.publisher)
 
       // Include journal info
       let ext = props.attrs.ext_journal
