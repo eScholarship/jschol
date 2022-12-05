@@ -110,7 +110,7 @@ class TabAuthorComp extends React.Component {
       else if (props.unit && props.unit.type == "monograph_series" && props.attrs.publisher)
         out = this.addDot(out + "Location: " + props.attrs.publisher)
       else if (props.unit && props.unit.type == "series" && props.attrs.publisher)
-        out = this.addDot(out + "Series: " + props.attrs.publisher)
+        out = this.addDot(out + "<em>" + props.attrs.publisher + "</em>")
 
       // Include journal info
       let ext = props.attrs.ext_journal
@@ -144,6 +144,20 @@ class TabAuthorComp extends React.Component {
         }
         if (voliss != "")
           out += ", " + voliss
+        out = this.addDot(out)
+      }
+
+      else if (props.unit && props.unit.type == "series" && props.attrs.publisher) {
+        // when series name has been added
+        out += props.header.campusName
+        if (props.unit && props.unit.name) {
+          let dept = props.unit.type == "oru" ? props.unit.name : props.header.ancestorName
+          if (dept != props.header.campusName) {
+            if (dept.startsWith(props.header.campusName))
+              dept = dept.substr(props.header.campusName.length)
+            out += ": " + dept.trim()
+          }
+        }
         out = this.addDot(out)
       }
       else if (props.header.campusName && props.genre != "monograph" && props.genre != "journal") {
