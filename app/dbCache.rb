@@ -1,5 +1,6 @@
 ##############################################################################3
 # Methods for obtaining database Caches
+require "time"
 
 $lastFillTime = nil
 $cacheFillMutex = Mutex.new
@@ -212,32 +213,15 @@ def signalDbRefill
   Process.kill("WINCH", -Process.getpgrp)
 end
 
-def getLastTableUpdateTime
-  utime = nil
-  DB.fetch("SHOW TABLE STATUS WHERE Name in ('units', 'unit_hier', 'redirects')").each { |row|
-    if row[:Update_time] && (!utime || row[:Update_time] > utime)
-      utime = row[:Update_time]
-    end
-  }
-  return utime
-end
-
 ##################################################################################################
 # Database caches for speed. We check every 30 seconds for changes. These tables change infrequently.
 
 Thread.new {
   begin
-    prevTime = getLastTableUpdateTime
+    puts "IN DB CACHE Thread"
     while true
-      utime = getLastTableUpdateTime
-      if utime != prevTime
-        prevTime and puts "Unit/hier changed."
-        signalDbRefill
-        sleep 30  # re-fill at most every 30 sec
-      else
-        sleep 5   # but check every 5 sec after that
-      end
-      prevTime = utime
+      sleep 60*3600  # re-fill every 60 min
+      signameDbRefill
     end
   rescue Exception => e
     puts "Unexpected exception in db watching thread: #{e} #{e.backtrace}"
@@ -247,12 +231,8 @@ Thread.new {
 def fillCaches
   $cacheFillMutex.synchronize {
     begin
-      utime = getLastTableUpdateTime
-      if utime && $lastFillTime == utime  # don't refill if nothing changed
-        return
-      end
-      $lastFillTime = utime
-      puts "Filling caches.           "
+      $lastFillTime = Time.now
+      puts "Filling caches. fill time is #{$lastFillTime}          "
       $unitsHash = getUnitsHash
       $hierByUnit = getHierByUnit
       $hierByAncestor = getHierByAncestor
@@ -298,6 +278,7 @@ end
 
 # Signal from the master process that caches need to be rebuilt.
 Signal.trap("WINCH") {
+  puts "CALLED WINCH"
   Thread.new {
     fillCaches
   }
