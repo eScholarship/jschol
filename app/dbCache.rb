@@ -1,5 +1,6 @@
 ##############################################################################3
 # Methods for obtaining database Caches
+require "time"
 
 $lastFillTime = nil
 $cacheFillMutex = Mutex.new
@@ -212,32 +213,17 @@ def signalDbRefill
   Process.kill("WINCH", -Process.getpgrp)
 end
 
-def getLastTableUpdateTime
-  utime = nil
-  DB.fetch("SHOW TABLE STATUS WHERE Name in ('units', 'unit_hier', 'redirects')").each { |row|
-    if row[:Update_time] && (!utime || row[:Update_time] > utime)
-      utime = row[:Update_time]
-    end
-  }
-  return utime
-end
-
 ##################################################################################################
-# Database caches for speed. We check every 30 seconds for changes. These tables change infrequently.
+# Database caches for speed. We update every 60 mins for changes. These tables change infrequently.
 
 Thread.new {
   begin
-    prevTime = getLastTableUpdateTime
     while true
-      utime = getLastTableUpdateTime
-      if utime != prevTime
-        prevTime and puts "Unit/hier changed."
-        signalDbRefill
-        sleep 30  # re-fill at most every 30 sec
-      else
-        sleep 5   # but check every 5 sec after that
+      sleep 3600  # re-fill every 60 min
+      # if the cache was filled otherwise - skip refilling it from this thread
+      if ((Time.now - $lastFillTime) > 1800)
+         signalDbRefill
       end
-      prevTime = utime
     end
   rescue Exception => e
     puts "Unexpected exception in db watching thread: #{e} #{e.backtrace}"
@@ -247,12 +233,8 @@ Thread.new {
 def fillCaches
   $cacheFillMutex.synchronize {
     begin
-      utime = getLastTableUpdateTime
-      if utime && $lastFillTime == utime  # don't refill if nothing changed
-        return
-      end
-      $lastFillTime = utime
-      puts "Filling caches.           "
+      $lastFillTime = Time.now
+      puts "Filling caches started. fill time is #{$lastFillTime}          "
       $unitsHash = getUnitsHash
       $hierByUnit = getHierByUnit
       $hierByAncestor = getHierByAncestor
