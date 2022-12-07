@@ -214,13 +214,16 @@ def signalDbRefill
 end
 
 ##################################################################################################
-# Database caches for speed. We check every 30 seconds for changes. These tables change infrequently.
+# Database caches for speed. We update every 60 mins for changes. These tables change infrequently.
 
 Thread.new {
   begin
     while true
       sleep 60*3600  # re-fill every 60 min
-      signameDbRefill
+      # if the cache was filled otherwise - skip refilling it from this thread
+      if ((Time.now - $lastFillTime)/3600 > 30)
+         signameDbRefill
+      end
     end
   rescue Exception => e
     puts "Unexpected exception in db watching thread: #{e} #{e.backtrace}"
