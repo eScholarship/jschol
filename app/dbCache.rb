@@ -219,10 +219,10 @@ end
 Thread.new {
   begin
     while true
-      sleep 60*3600  # re-fill every 60 min
+      sleep 3600  # re-fill every 60 min
       # if the cache was filled otherwise - skip refilling it from this thread
-      if ((Time.now - $lastFillTime)/3600 > 30)
-         signameDbRefill
+      if ((Time.now - $lastFillTime) > 1800)
+         signalDbRefill
       end
     end
   rescue Exception => e
