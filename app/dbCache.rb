@@ -218,7 +218,6 @@ end
 
 Thread.new {
   begin
-    puts "IN DB CACHE Thread"
     while true
       sleep 60*3600  # re-fill every 60 min
       signameDbRefill
@@ -232,7 +231,7 @@ def fillCaches
   $cacheFillMutex.synchronize {
     begin
       $lastFillTime = Time.now
-      puts "Filling caches. fill time is #{$lastFillTime}          "
+      puts "Filling caches started. fill time is #{$lastFillTime}          "
       $unitsHash = getUnitsHash
       $hierByUnit = getHierByUnit
       $hierByAncestor = getHierByAncestor
@@ -278,7 +277,6 @@ end
 
 # Signal from the master process that caches need to be rebuilt.
 Signal.trap("WINCH") {
-  puts "CALLED WINCH"
   Thread.new {
     fillCaches
   }
