@@ -52,12 +52,27 @@ class SocksMysql
 
   #################################################################################################
   def bidiTransfer(localSock, remoteSock)
+    first = true
     while true
       rds, wrs, ers = IO.select([localSock, remoteSock], [])
       rds.each { |r|
         data = r.recv(8192)
         data.empty? and return
-        #puts "Tranferring data from #{r == localSock ? "local" : r == remoteSock ? "remote" : r}: #{data.inspect}"
+        if first
+          # Kludge alert! I can't figure out why, but sometimes we miss the first four bytes of the
+          # server's initial response. A correct response seems to always start with these, so add
+          # them back in.
+          # WARNING: this sequence is specific to the version of MySQL you are using...
+          # and will likely change after any major upgrade of MySQL
+
+          !data.start_with? "J\x00\x00\x00" and data = "J\x00\x00\x00" + data
+          # puts "Tranferring data from #{r == localSock ? "local" : r == remoteSock ? "remote" : r}: #{data.inspect}"
+          first = false
+        end
+
+
+
+        # puts "Tranferring data from #{r == localSock ? "local" : r == remoteSock ? "remote" : r}: #{data.inspect}"
         (r == remoteSock ? localSock : remoteSock).write(data)
       }
     end
