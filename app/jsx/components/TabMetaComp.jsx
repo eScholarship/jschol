@@ -73,6 +73,12 @@ class TabMetaComp extends React.Component {
       <tr>
         <th scope="row">directSubmitURL</th><td>{p.header.directSubmitURL}</td>
       </tr>
+      <tr>
+        <th scope="row">directManageURLauthor</th><td>{p.header.directManageURLauthor}</td>
+      </tr>
+      <tr>
+        <th scope="row">directManageURLeditor</th><td>{p.header.directManageURLeditor}</td>
+      </tr>
     </tbody> : this.noUnit()
     return (
       <div className="c-tabcontent">

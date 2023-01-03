@@ -301,6 +301,8 @@ def getUnitHeader(unit, pageName=nil, journalIssue=nil, issuesSubNav=nil, attrs=
     :elColor => attrs['elColor'],
     :directSubmit => attrs['directSubmit'],
     :directSubmitURL => attrs['directSubmitURL'],
+    :directManageURLauthor => attrs['directManageURLauthor'],
+    :directManageURLeditor => attrs['directManageURLeditor'],
     :nav_bar => unit.type.include?('series') ? getNavBar(ancestor, JSON.parse(ancestor.attrs)['nav_bar']) : getNavBar(unit, attrs['nav_bar'], 1, issuesSubNav),
     :social => {
       :facebook => attrs['facebook'],
@@ -634,6 +636,8 @@ def getUnitProfile(unit, attrs)
   
   attrs['directSubmit'] and profile[:directSubmit] = attrs['directSubmit']
   attrs['directSubmitURL'] and profile[:directSubmitURL] = attrs['directSubmitURL']
+  attrs['directManageURLauthor'] and profile[:directManageURLauthor] = attrs['directManageURLauthor']
+  attrs['directManageURLeditor'] and profile[:directManageURLeditor] = attrs['directManageURLeditor']
   attrs['elements_id'] and profile[:elementsID] = attrs['elements_id']
   if unit.type == 'journal'
     profile[:doaj] = attrs['doaj']
@@ -1499,6 +1503,8 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
           unitAttrs['directSubmit'] = params['data']['directSubmit']
         end
         if params['data']['directSubmitURL'] then unitAttrs['directSubmitURL'] = params['data']['directSubmitURL'] end
+        if params['data']['directManageURLauthor'] then unitAttrs['directManageURLauthor'] = params['data']['directManageURLauthor'] end
+        if params['data']['directManageURLeditor'] then unitAttrs['directManageURLeditor'] = params['data']['directManageURLeditor'] end
         if params['data']['elementsID']
           params['data']['elementsID'] =~ /^[0-9]*$/ or jsonHalt(400, "elements ID must be numeric (or blank)")
           unitAttrs['elements_id'] = params['data']['elementsID']
