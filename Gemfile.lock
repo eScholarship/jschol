@@ -81,7 +81,7 @@ GEM
     puma_worker_killer (0.3.1)
       get_process_mem (~> 0.2)
       puma (>= 2.7)
-    racc (1.6.0)
+    racc (1.6.2)
     rack (2.2.3.1)
     rack-protection (2.2.0)
       rack
@@ -109,7 +109,7 @@ GEM
       rubocop (~> 1.0)
     ruby-progressbar (1.11.0)
     ruby2_keywords (0.0.5)
-    sanitize (6.0.0)
+    sanitize (6.0.1)
       crass (~> 1.0.2)
       nokogiri (>= 1.12.0)
     sequel (5.62.0)
