@@ -795,6 +795,7 @@ def getCampusBrowseData(campusID, browse_type)
     cu = $hierByAncestor[campusID].sort_by{ |h| $unitsHash[h[:unit_id]].name }.map do |a|
       getChildDepts($unitsHash[a.unit_id])
     end
+    puts "#{cu}"
     pageTitle = "Academic Units"
   else   # journals
     cj  = $campusJournals.select{ |j| j[:ancestor_unit].include?(campusID) }.sort_by{ |h| h[:name].downcase }
@@ -820,7 +821,8 @@ end
 
 # Returns an array like [{"id"=>"uceap", "name"=>"UCEAP Mexico", "children" => []}, ...]
 def getChildDepts(unit)
-  if unit.type != 'oru'
+  # this function is used for unit browse data. skip the hidden units
+  if unit.type != 'oru' or unit.status == 'hidden'
     return nil
   else
     node = {"id" => unit.id, "name" => unit.name}
