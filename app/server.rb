@@ -820,7 +820,8 @@ end
 
 # Returns an array like [{"id"=>"uceap", "name"=>"UCEAP Mexico", "children" => []}, ...]
 def getChildDepts(unit)
-  if unit.type != 'oru'
+  # this function is used for unit browse data. skip the hidden units
+  if unit.type != 'oru' or unit.status == 'hidden'
     return nil
   else
     node = {"id" => unit.id, "name" => unit.name}
