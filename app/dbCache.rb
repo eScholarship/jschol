@@ -131,7 +131,10 @@ def getUnitCarouselStats
     x = unitsFromContentCarConfig(JSON.parse(unit.attrs))
     next x
   end
-  unitsInCars.reject!{ |u| u.empty? }.flatten!.uniq!
+  unitsInCars.reject!{ |u| u.empty? }
+  if unitsInCars
+     unitsInCars.flatten!.uniq!
+  end
   itemsInUnitCar = UnitStat.select_group(:unit_id).where(:unit_id=>unitsInCars).
                             select_append{sum(Sequel.lit("attrs->'$.post'")).as(item_count)}.map{|y| y.values}
   viewsInUnitCar = UnitStat.select_group(:unit_id).where(:unit_id=>unitsInCars).
