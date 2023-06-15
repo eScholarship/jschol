@@ -160,7 +160,7 @@ class TabAuthorComp extends React.Component {
         }
         out = this.addDot(out)
       }
-      else if (props.header.campusName && props.genre != "monograph" && props.genre != "journal") {
+      else if (props.header.campusName && props.genre != "monograph" && props.genre != "journal" && !props.attrs.book_title) {
         // General series
         out += "<em>" + props.header.campusName
         if (props.unit && props.unit.name) {
