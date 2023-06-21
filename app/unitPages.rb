@@ -289,21 +289,21 @@ def getUnitHeader(unit, pageName=nil, journalIssue=nil, issuesSubNav=nil, attrs=
   if !attrs then attrs = JSON.parse(unit[:attrs]) end
   campusID = getCampusId(unit)
   ancestor = isTopmostUnit(unit) ? nil : getUnitAncestor(unit)
-
+  ancestorattrs = isTopmostUnit(unit) ? nil: JSON.parse(ancestor.attrs)
   header = {
     :campusID => campusID,
     :campusName => $unitsHash[campusID].name,
     :ancestorID => ancestor ? ancestor.id : nil,   # Used strictly for linking series back to parent unit
     :ancestorName => ancestor ? ancestor.name : nil,   # Ditto 
     :campuses => $activeCampuses.values.map { |c| {id: c.id, name: c.name} }.unshift({id: "", name: "eScholarship at..."}),
-    :logo => (unit.type.include? 'series') ? getLogoData(JSON.parse(ancestor.attrs)['logo']) : getLogoData(attrs['logo']),
-    :bgColor => attrs['bgColor'],
-    :elColor => attrs['elColor'],
+    :logo => (unit.type.include? 'series') ? getLogoData(ancestorattrs['logo']) : getLogoData(attrs['logo']),
+    :bgColor => (unit.type.include? 'series') ? ancestorattrs['bgColor'] : attrs['bgColor'],
+    :elColor => (unit.type.include? 'series') ? ancestorattrs['elColor'] : attrs['elColor'],
     :directSubmit => attrs['directSubmit'],
     :directSubmitURL => attrs['directSubmitURL'],
     :directManageURLauthor => attrs['directManageURLauthor'],
     :directManageURLeditor => attrs['directManageURLeditor'],
-    :nav_bar => unit.type.include?('series') ? getNavBar(ancestor, JSON.parse(ancestor.attrs)['nav_bar']) : getNavBar(unit, attrs['nav_bar'], 1, issuesSubNav),
+    :nav_bar => unit.type.include?('series') ? getNavBar(ancestor, ancestorattrs['nav_bar']) : getNavBar(unit, attrs['nav_bar'], 1, issuesSubNav),
     :social => {
       :facebook => attrs['facebook'],
       :twitter => attrs['twitter'],
