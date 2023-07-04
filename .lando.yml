@@ -38,7 +38,7 @@ services:
       - apt-get update -qq
       - apt-get autoclean
       - apt-get install mariadb-client build-essential libpq-dev yarn nodejs -y
-      - gem install bundler && bundle config set force_ruby_platform true
+      - gem install bundler
       # - gem install foreman
       - apt-get autoclean
       - chown www-data:www-data /run/host-services/ssh-auth.sock
