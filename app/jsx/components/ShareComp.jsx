@@ -21,7 +21,6 @@ class ShareComp extends React.Component {
         <div className="c-share__list">
           <a className="c-share__email" href="" onClick={e => {this.getLink(e, p.type, p.id, "email")}}>Email</a>
           <a className="c-share__facebook" href="" onClick={e => {this.getLink(e, p.type, p.id, "facebook")}}>Facebook</a>
-          <a className="c-share__twitter" href="" onClick={e => {this.getLink(e, p.type, p.id, "twitter")}}>Twitter</a>
         </div>
       </DropdownMenu>
     )
