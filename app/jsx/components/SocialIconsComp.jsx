@@ -13,11 +13,6 @@ class SocialIconsComp extends React.Component {
             <img src={MEDIA_PATH + 'logo_facebook-circle-black.svg'} alt="Facebook"/>
           </a>
         }
-        {this.props.twitter && 
-          <a href={"http://www.twitter.com/" + this.props.twitter}>
-            <img src={MEDIA_PATH + 'logo_twitter-circle-black.svg'} alt="Twitter"/>
-          </a>
-        }
         {this.props.rss && 
           <a href={this.props.rss}>
             <img src={MEDIA_PATH + 'logo_rss-circle-black.svg'} alt="RSS"/>

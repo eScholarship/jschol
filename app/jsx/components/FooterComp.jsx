@@ -32,14 +32,6 @@ class FooterComp extends React.Component {
         <div className="c-footer__logo">
           <Link to="/"><LazyImageComp src={MEDIA_PATH + 'logo_footer-eschol.svg'} alt="eScholarship, University of California" /></Link>
         </div>
-        <div className="c-footer__icons">
-          <a href="https://www.facebook.com/eScholarship/">
-            <LazyImageComp src={MEDIA_PATH + 'logo_facebook-circle-white.svg'} alt="Facebook"/>
-          </a>
-          <a href="https://twitter.com/escholarship">
-            <LazyImageComp src={MEDIA_PATH + 'logo_twitter-circle-white.svg'} alt="Twitter"/>
-          </a>
-        </div>
         <div className="c-footer__copyright">
           Powered by the<br/>
           <a href="http://www.cdlib.org">California Digital Library</a><br/>
