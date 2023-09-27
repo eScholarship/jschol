@@ -313,7 +313,7 @@ class TabAuthorComp extends React.Component {
           <dl className="c-descriptionlist">
             {p.attrs['custom_citation'] &&
                 [<dt key="dt-custom">Preferred:</dt>,
-                 <dd key="dd-custom">{p.attrs['custom_citation']}</dd>]
+                <dd key="dd-custom"><ArbitraryHTMLComp html={p.attrs['custom_citation']}/></dd>]
             }
 
             <dt key="dt-apa">Suggested:</dt>
