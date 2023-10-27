@@ -426,6 +426,7 @@ get %r{/cms-assets/([0-9a-f]{64})} do |hash|
     send_file(s3Tmp,
               last_modified: obj.last_modified,
               type: obj.metadata["mime_type"] || "application/octet-stream",
+              disposition: "inline",
               filename: (obj.metadata["original_path"] || "").sub(%r{.*/}, ''))
     s3Tmp.unlink
   }
