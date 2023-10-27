@@ -26,9 +26,18 @@ class LazyImageComp extends React.Component {
   /* img 'src' attribute below gets added dynamically upon successful image load and will have the same value as 'data-src' */
 
   render() {
-    return (
-      <img className="c-lazyimage" data-src={this.props.src} alt={this.props.alt} />
-    )
+    const clickable = this.props.clickable || false;
+    if (clickable) {
+      return (
+        <a href={this.props.src} target="_blank">
+          <img className="c-lazyimage" data-src={this.props.src} alt={this.props.alt} />
+        </a>
+      );
+    } else {
+      return (
+        <img className="c-lazyimage" data-src={this.props.src} alt={this.props.alt} />
+      );
+    }
   }
 }
 
