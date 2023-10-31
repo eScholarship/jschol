@@ -32,7 +32,7 @@ import com.itextpdf.layout.property.VerticalAlignment;
 import org.json.JSONArray;
 import org.json.JSONTokener;
 import org.json.JSONObject;
- 
+
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -66,10 +66,14 @@ class SplashFormatter
     pdf = in_pdf;
     doc = new Document(pdf);
     doc.setMargins(50, 50, 50, 50);
-    normalFont = PdfFontFactory.createFont("/usr/share/fonts/dejavu/DejaVuSans.ttf", PdfEncodings.IDENTITY_H, true);
-    boldFont = PdfFontFactory.createFont("/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf", PdfEncodings.IDENTITY_H, true);
-    italicFont = PdfFontFactory.createFont("/usr/share/fonts/dejavu/DejaVuSans-Oblique.ttf", PdfEncodings.IDENTITY_H, true);
-    boldItalicFont = PdfFontFactory.createFont("/usr/share/fonts/dejavu/DejaVuSans-BoldOblique.ttf", PdfEncodings.IDENTITY_H, true);
+
+// Code2000 has the glyphs!
+
+    normalFont = PdfFontFactory.createFont("/usr/share/fonts/Code2000.ttf", PdfEncodings.IDENTITY_H, true);
+    boldFont = PdfFontFactory.createFont("/usr/share/fonts/Code2000.ttf", PdfEncodings.IDENTITY_H, true);
+    italicFont = PdfFontFactory.createFont("/usr/share/fonts/Code2000.ttf", PdfEncodings.IDENTITY_H, true);
+    boldItalicFont = PdfFontFactory.createFont("/usr/share/fonts/Code2000.ttf", PdfEncodings.IDENTITY_H, true);
+
     doc.setFont(normalFont);
   }
 
