@@ -6,7 +6,6 @@ import NavComp from '../components/NavComp.jsx'
 import NavSubComp from '../components/NavSubComp.jsx'
 import Breakpoints from '../../js/breakpoints.json'
 import HeroComp from '../components/HeroComp.jsx'
-import PromoComp from '../components/PromoComp.jsx'
 import TeaserComp from '../components/TeaserComp.jsx'
 import HomeSection1Comp from '../components/HomeSection1Comp.jsx'
 import HomeSection2Comp from '../components/HomeSection2Comp.jsx'
@@ -68,7 +67,6 @@ class HomeLayout extends React.Component {
             </details>
           </div>
         </div>
-        <PromoComp />
         <HeroComp />
         <TeaserComp />
         <section className="c-togglesection">
