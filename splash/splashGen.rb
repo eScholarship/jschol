@@ -291,7 +291,7 @@ def splashInstrucs(itemID, item, attrs)
     end
   elsif item.rights
     instruc << { h3: { text: "Copyright Information" } }
-    instruc << { paragraph: [ { text: "This work is made available under the terms of a Creative Commons #{ccType} License, availalbe at " }, { link: { url: item.rights, text: item.rights } } ] }
+    instruc << { paragraph: [ { text: "This work is made available under the terms of a Creative Commons #{ccType} License, available at " }, { link: { url: item.rights, text: item.rights } } ] }
   end
 
   # Flags
