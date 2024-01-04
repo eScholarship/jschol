@@ -1,3 +1,5 @@
+-- Update all tables with foreign key relations with unit id to cascade update to unable unit id changes
+
 ALTER TABLE category_stats DROP FOREIGN KEY category_stats_ibfk_1;
 ALTER TABLE category_stats ADD FOREIGN KEY (unit_id) REFERENCES units(id) ON UPDATE CASCADE;
 ALTER TABLE issues DROP FOREIGN KEY issues_ibfk_1;
