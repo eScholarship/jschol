@@ -1,5 +1,6 @@
 Sequel.migration do
   up do
+    # update foreign key constraints to cascade on unit id update
     alter_table :category_stats do
       drop_foreign_key [:unit_id]
       add_foreign_key [:unit_id], :units, on_update: :cascade
