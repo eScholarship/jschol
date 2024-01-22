@@ -1,8 +1,6 @@
 "jschol" - JSX eScholarship
 ===========================
 
-![](https://codebuild.us-west-2.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoibWtYMFg3OUV5NnVkZHFzZWVrTnFoSVFMenBMQ2ZvOW0xSVd6NjY1TjhqbUV4Rzk4RjZodjVyWkF2TEFnckNKTDZrSkppT2t2K0hnOFZWYUZDbld4QzJvPSIsIml2UGFyYW1ldGVyU3BlYyI6ImNicERMWUdNR0RNWHpjcWciLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master)
-
 This app uses the following technology and features:
 * React front-end framework including use of JSX for mixing HTML in Javascript
 * React Router to implement single-page app
