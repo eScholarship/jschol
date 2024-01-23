@@ -1,6 +1,8 @@
 "jschol" - JSX eScholarship
 ===========================
 
+[![reviewdog](https://github.com/escholarship/jschol/workflows/reviewdog/badge.svg?branch=master&event=push)](https://github.com/escholarship/jschol/actions?query=workflow%3Areviewdog+event%3Apush+branch%3Amaster)
+
 This app uses the following technology and features:
 * React front-end framework including use of JSX for mixing HTML in Javascript
 * React Router to implement single-page app
