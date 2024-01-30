@@ -39,7 +39,12 @@ class ServerErrorComp extends React.Component {
           <button className="c-servererror__button" aria-label="Search"></button>
         </FormComp>
         {this.state.suggestAlternative && (
-          <p>Or you might want to try these URLs: <a href={`/uc/${this.state.errorTerm}`}>/uc/{this.state.errorTerm}</a> or <a href={`/uc/item/${this.state.errorTerm}`}>/uc/item/{this.state.errorTerm}</a></p>
+          <p>Or you might want to try: 
+          {/\d/.test(this.state.errorTerm) ? 
+            <a href={`/uc/item/${this.state.errorTerm}`}>/uc/item/{this.state.errorTerm}</a> :
+            <a href={`/uc/${this.state.errorTerm}`}>/uc/{this.state.errorTerm}</a>
+          }
+        </p>
         )}
         <small>If you think this is a problem with eScholarship, please visit our <a href="https://help.escholarship.org/support/solutions/articles/9000171663">Help Center</a>.</small>
         <small>Or return to the <Link to="/">homepage</Link>.</small>
