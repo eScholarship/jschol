@@ -39,7 +39,7 @@ class ServerErrorComp extends React.Component {
           <button className="c-servererror__button" aria-label="Search"></button>
         </FormComp>
         {this.state.suggestAlternative && /\d/.test(this.state.errorTerm) && (
-          <p>Or you might want to try: 
+          <p>Or you might want to try: &nbsp; 
             <a href={`https://escholarship.org/uc/item/${this.state.errorTerm}`}>https://escholarship.org/uc/item/{this.state.errorTerm}</a>
           </p>
         )}
