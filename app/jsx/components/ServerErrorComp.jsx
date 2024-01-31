@@ -38,7 +38,7 @@ class ServerErrorComp extends React.Component {
           <input type="search" className="c-servererror__input" name="q" id="c-servererror__input" defaultValue={this.state.errorTerm} />
           <button className="c-servererror__button" aria-label="Search"></button>
         </FormComp>
-        {this.state.suggestAlternative && this.state.errorTerm.startsWith('qt') && (
+        {this.state.suggestAlternative && /\d/.test(this.state.errorTerm) && (
           <p>Or you might want to try: 
             <a href={`https://escholarship.org/uc/item/${this.state.errorTerm}`}>https://escholarship.org/uc/item/{this.state.errorTerm}</a>
           </p>
