@@ -38,13 +38,10 @@ class ServerErrorComp extends React.Component {
           <input type="search" className="c-servererror__input" name="q" id="c-servererror__input" defaultValue={this.state.errorTerm} />
           <button className="c-servererror__button" aria-label="Search"></button>
         </FormComp>
-        {this.state.suggestAlternative && (
+        {this.state.suggestAlternative && this.state.errorTerm.startsWith('qt') && (
           <p>Or you might want to try: 
-          {/\d/.test(this.state.errorTerm) ? 
-            <a href={`/uc/item/${this.state.errorTerm}`}>/uc/item/{this.state.errorTerm}</a> :
-            <a href={`/uc/${this.state.errorTerm}`}>/uc/{this.state.errorTerm}</a>
-          }
-        </p>
+            <a href={`https://escholarship.org/uc/item/${this.state.errorTerm}`}>https://escholarship.org/uc/item/{this.state.errorTerm}</a>
+          </p>
         )}
         <small>If you think this is a problem with eScholarship, please visit our <a href="https://help.escholarship.org/support/solutions/articles/9000171663">Help Center</a>.</small>
         <small>Or return to the <Link to="/">homepage</Link>.</small>
