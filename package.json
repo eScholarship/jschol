@@ -28,7 +28,7 @@
     "gulp-jshint": "^2.0.4",
     "gulp-lb-include": "^0.3.1",
     "gulp-livereload": "^4.0.2",
-    "gulp-modernizr": "^3.4.1",
+    "gulp-modernizr": "^5.0.0",
     "gulp-postcss": "^6.4.0",
     "gulp-sass": "^5.1.0",
     "gulp-sourcemaps": "^1.6.0",
