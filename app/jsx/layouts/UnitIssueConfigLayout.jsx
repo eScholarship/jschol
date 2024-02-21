@@ -38,6 +38,19 @@ class NumberingRadio extends React.Component {
     </div>
 }
 
+class PubDateRadio extends React.Component {
+  render = () =>
+  <div>
+  { _.map({"true": "on", "false": "off"}, (v, k) =>
+    <label key={k}>
+      <input disabled={this.props.disableEdit} type="radio"
+             name={`show_pub_dates-${this.props.voliss}`} value={k}
+             defaultChecked={this.props.show_pub_dates == k}/>
+      {v}
+    </label>)}
+</div>
+}
+
 class IssueRow extends React.Component {
   render() {
     let p = this.props
@@ -49,6 +62,7 @@ class IssueRow extends React.Component {
         <td><RightsDropdown {...p}/></td>
         <td><NumberingRadio {...p}/></td>
         <td><input disabled={p.disableEdit} type="text" name={`buy_link-${p.voliss}`} defaultValue={p.buy_link}/></td>
+        <td><PubDateRadio {...p}/></td>
       </tr>
     )
   }
@@ -72,6 +86,7 @@ class IssueTable extends React.Component {
               <th>License</th>
               <th>Numbering</th>
               <th>Buy Link</th>
+              <th>Show publication dates</th>
             </tr>
           </thead>
           <tbody>

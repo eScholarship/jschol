@@ -344,22 +344,22 @@ class TabAuthorComp extends React.Component {
              <dd key="1">{issn}</dd>]
           }
           {/* display published date where OASPA is not enabled */} 
-	  {p.published && !p.attrs['pub_publish'] &&
+	  {p.published && (!p.attrs['pub_publish'] || !p.show_pub_dates == "true")  &&
             [<dt key="0"><strong>Publication Date:</strong></dt>,
              <dd key="1">{p.published}</dd>]
           }
 	  {/* display dates for OASPA enabled journals */}
-          {p.attrs['pub_publish'] &&
+          {p.show_pub_dates == "true" && p.attrs['pub_publish'] &&
             [<dt key="0"><strong>Publication Date:</strong></dt>,
              <dd key="1">{p.attrs['pub_publish']}</dd>]
           }
 
-          {p.attrs['pub_accept'] &&
+          {p.show_pub_dates == "true" && p.attrs['pub_accept'] &&
             [<dt key="0"><strong>Acceptance Date:</strong></dt>,
              <dd key="1">{p.attrs['pub_accept']}</dd>]
           }
 
-          {p.attrs['pub_submit'] &&
+          {p.show_pub_dates == "true" && p.attrs['pub_submit'] &&
             [<dt key="0"><strong>Submission Date:</strong></dt>,
              <dd key="1">{p.attrs['pub_submit']}</dd>]
           }
