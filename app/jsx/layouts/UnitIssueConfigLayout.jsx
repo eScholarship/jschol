@@ -86,7 +86,7 @@ class IssueTable extends React.Component {
               <th>License</th>
               <th>Numbering</th>
               <th>Buy Link</th>
-              <th>Show publication dates</th>
+              <th>Show submit/accept dates</th>
             </tr>
           </thead>
           <tbody>
