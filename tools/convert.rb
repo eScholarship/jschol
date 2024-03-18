@@ -785,6 +785,27 @@ def addIssueNumberingAttrs(issueUnit, volNum, issueNum, issueAttrs)
   $issueNumberingCache[key] and issueAttrs[:numbering] = $issueNumberingCache[key]
 end
 
+def addShowPubDatesAttrs(issueUnit, volNum, issueNum, issueAttrs)
+  iss = Issue.where(unit_id: issueUnit, volume: volNum, issue: issueNum).first
+  if iss
+    issAttrs = (iss.attrs && JSON.parse(iss.attrs)) || {}
+    show_pub_dates = issAttrs["show_pub_dates"]
+  else
+    unit = $allUnits[issueUnit]
+    unitAttrs = unit && unit.attrs && JSON.parse(unit.attrs) || {}
+    if unitAttrs["default_issue"] && unitAttrs["default_issue"]["show_pub_dates"]
+        show_pub_dates = unitAttrs["default_issue"]["show_pub_dates"]
+    else
+      iss = Issue.where(unit_id: issueUnit).order(Sequel.desc(:published)).order_append(Sequel.desc(:issue)).first
+      if iss
+        issAttrs = (iss.attrs && JSON.parse(iss.attrs)) || {}
+        show_pub_dates = issAttrs["show_pub_dates"]
+      end
+    end
+    issueAttrs[:show_pub_dates] = show_pub_dates
+  end
+end
+
 ###################################################################################################
 def grabUCISupps(rawMeta)
   # For UCIngest format, read supp data from the raw metadata file.
@@ -1136,6 +1157,7 @@ def parseUCIngest(itemID, inMeta, fileType, isPending)
         findIssueCover(issueUnit, volNum, issueNum, tmp, issueAttrs)
         addIssueBuyLink(issueUnit, volNum, issueNum, issueAttrs)
         addIssueNumberingAttrs(issueUnit, volNum, issueNum, issueAttrs)
+        addShowPubDatesAttrs(issueUnit, volNum, issueNum, issueAttrs)
         rights and issueAttrs[:rights] = rights
         !issueAttrs.empty? and issue[:attrs] = issueAttrs.to_json
 
