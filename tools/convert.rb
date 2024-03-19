@@ -785,6 +785,9 @@ def addIssueNumberingAttrs(issueUnit, volNum, issueNum, issueAttrs)
   $issueNumberingCache[key] and issueAttrs[:numbering] = $issueNumberingCache[key]
 end
 
+# setup up show_pub_dates attr in issue attrs
+# if the issue exists, use the existing attrs
+# else use default_issue else use most recent issue
 def addShowPubDatesAttrs(issueUnit, volNum, issueNum, issueAttrs)
   iss = Issue.where(unit_id: issueUnit, volume: volNum, issue: issueNum).first
   if iss
