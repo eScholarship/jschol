@@ -21,7 +21,8 @@ class HeaderComp1 extends React.Component {
           </picture>
         </Link>
         <div className={this.state.searchActive ? "c-header__search--active" : "c-header__search"}>
-          <Search1Comp onClose = {()=>this.setState({searchActive: false})} />
+          <Search1Comp statsCountItems={this.props.stats.statsCountItems || 450000}
+                      onClose = {()=>this.setState({searchActive: false})} />
         </div>
         <button className="c-header__search-open-button" aria-label="open search field" onClick = {()=> this.setState({searchActive: true})}></button>
       </header>

@@ -50,7 +50,7 @@ class HomePage extends PageBase
         <MetaTagsComp title="eScholarship" descrip="Open Access Publications from the University of California">
           <meta id="og-url" property="og:url" content="https://escholarship.org" />
         </MetaTagsComp>
-        <Header1Comp />
+        <Header1Comp stats={data.stats} />
         <div className="c-navbar">
           <NavComp data={data.header.nav_bar} />
         </div>
