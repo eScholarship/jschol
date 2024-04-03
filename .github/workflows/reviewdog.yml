@@ -20,6 +20,7 @@ jobs:
           rubocop_version: gemfile
           rubocop_extensions: rubocop-sequel:gemfile
           reporter: github-pr-review # Default is github-pr-check
+          fail_on_error: true
   eslint:
     name: runner / eslint
     runs-on: ubuntu-latest
@@ -32,39 +33,6 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           reporter: github-pr-review # Change reporter.
+          fail_on_error: true
           eslint_flags: "."
-  # # Use shellcheck to lint shell scripts
-  # shellcheck:
-  #   name: runner / shellcheck
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #     - name: shellcheck
-  #       uses: reviewdog/action-shellcheck@v1
-  #       with:
-  #         github_token: ${{ secrets.github_token }}
-  #         reporter: github-pr-review
-  # # Use yamllint to lint yaml files
-  # yamllint:
-  #   name: check / yamllint
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #     - name: yamllint
-  #       uses: reviewdog/action-yamllint@v1
-  #       with:
-  #         github_token: ${{ secrets.github_token }}
-  #         reporter: github-pr-review
-  #         fail_on_error: true
-  #         yamllint_flags: '-d "{extends: default, rules: {truthy: disable}}" .'
-  # # Use dotenv-linter to lint dotenv files
-  # dotenv-linter:
-  #   name: runner / dotenv-linter
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #     - uses: dotenv-linter/action-dotenv-linter@v2
-  #       with:
-  #         github_token: ${{ secrets.github_token }}
-  #         reporter: github-pr-review
-  #         fail_on_error: true
+
