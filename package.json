@@ -90,7 +90,7 @@
     "jquery.dotdotdot": "github:amywieliczka/jQuery.dotdotdot#4f7d03a442ceca0b75a2fb641a065e47297d5666",
     "lodash": "^4.17.21",
     "lozad": "^1.16.0",
-    "npm": "^8.19.2",
+    "npm": "^10.5.2",
     "pdfjs-embed2": "github:escholarship/pdfjs-embed2#dab83845bc60a953d08963ea6550df8df9a73e77",
     "prop-types": "^15.8.1",
     "query-string": "^5.x",
