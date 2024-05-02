@@ -16,6 +16,8 @@ export const contentOptions = [
     { value: "researcher", label: "Researchers" },
     { value: "grad", label: "Graduate Students" },
     { value: "undergrad", label: "Undergraduate Students" }
+    { value: "practitioner", label: "Practitioners" }
+
 ];
 
 export const indexOptions = [
@@ -25,6 +27,8 @@ export const indexOptions = [
     { value: "pubmed", label: "PubMed" },
     { value: "road", label: "ROAD" },
     { value: "scopus", label: "SCOPUS" },
+    { value: "jstor", label: "JSTOR" },
+
 ];
 
 export const disciplineOptions = [
