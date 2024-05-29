@@ -20,6 +20,15 @@ if ! aws sts get-caller-identity > /dev/null 2>&1; then
 	exit 1 
 fi
 
+# Validate Node version is 18
+NODE_VERSION=$(node -v | awk -F'v' '{print $2}' | awk -F'.' '{print $1}')
+
+# if NODE_VERSION is not equal to 18, exit
+if [[ $NODE_VERSION != 18 ]]; then
+  echo "Node version 18 is required."
+  exit 1
+fi
+
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )" # http://stackoverflow.com/questions/59895
 cd $DIR
 
