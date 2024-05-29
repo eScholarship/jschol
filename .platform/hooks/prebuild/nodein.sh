@@ -3,8 +3,8 @@ echo "Trying to install node.";
 
 #app="$(/opt/elasticbeanstalk/bin/get-config container -k app_staging_dir)";
 app = "/var/app/staging"
-# install node 16 (and npm that comes with it)
-curl --silent --location https://rpm.nodesource.com/setup_16.x | grep -v sleep | bash -;
+# install node 18 (and npm that comes with it)
+curl --silent --location https://rpm.nodesource.com/setup_18.x | grep -v sleep | bash -;
 sudo yum -y install nodejs
 
 # use npm to install the app's node modules
