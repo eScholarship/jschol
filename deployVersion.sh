@@ -18,7 +18,7 @@ command -v npm >/dev/null 2>&1 || { echo >&2 "npm not found."; exit 1; }
 command -v jq >/dev/null 2>&1 || { echo >&2 "jq not found."; exit 1; } 
 
 # Validate AWS credentials 
-if! aws sts get-caller-identity > /dev/null 2>&1; then 
+if ! aws sts get-caller-identity > /dev/null 2>&1; then 
 	echo "AWS credentials not valid." 
 	exit 1 
 fi
