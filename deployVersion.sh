@@ -10,6 +10,19 @@ set -o errtrace  # trace ERR through 'time command' and other functions
 set -o nounset   ## set -u : exit the script if you try to use an uninitialised variable
 set -o errexit   ## set -e : exit the script if any statement returns a non-true return value
 
+# Validate required commands 
+command -v aws >/dev/null 2>&1 || { echo >&2 "AWS CLI not found."; exit 1; } 
+command -v git >/dev/null 2>&1 || { echo >&2 "Git not found."; exit 1; } 
+command -v node >/dev/null 2>&1 || { echo >&2 "Node.js not found."; exit 1; } 
+command -v npm >/dev/null 2>&1 || { echo >&2 "npm not found."; exit 1; } 
+command -v jq >/dev/null 2>&1 || { echo >&2 "jq not found."; exit 1; } 
+
+# Validate AWS credentials 
+if! aws sts get-caller-identity > /dev/null 2>&1; then 
+	echo "AWS credentials not valid." 
+	exit 1 
+fi
+
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )" # http://stackoverflow.com/questions/59895
 cd $DIR
 
