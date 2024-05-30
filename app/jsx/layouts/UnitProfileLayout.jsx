@@ -15,8 +15,8 @@ export const contentOptions = [
     { value: "faculty", label: "Faculty" },
     { value: "researcher", label: "Researchers" },
     { value: "grad", label: "Graduate Students" },
-    { value: "undergrad", label: "Undergraduate Students" }
-    { value: "practitioner", label: "Practitioners" }
+    { value: "undergrad", label: "Undergraduate Students" },
+    { value: "practitioner", label: "Practitioners" },
 
 ];
 
