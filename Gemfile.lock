@@ -68,7 +68,7 @@ GEM
     mysql2 (0.5.4)
     netrc (0.11.0)
     nio4r (2.7.0)
-    nokogiri (1.16.2-x86_64-linux)
+    nokogiri (1.16.5-x86_64-linux)
       racc (~> 1.4)
     parallel (1.22.1)
     parser (3.1.2.0)
@@ -81,7 +81,7 @@ GEM
     puma_worker_killer (0.3.1)
       get_process_mem (~> 0.2)
       puma (>= 2.7)
-    racc (1.7.3)
+    racc (1.8.0)
     rack (2.2.8.1)
     rack-protection (2.2.3)
       rack
