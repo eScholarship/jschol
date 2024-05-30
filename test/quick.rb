@@ -68,8 +68,8 @@ class TestQuick < Test::Unit::TestCase
   end
 
   def test_unitStatic
-    html = fetchAndStrip("#{SCHEME}://#{TARGET_HOST}:#{PUMA_PORT}/uc/uclalaw/policyStatement?#{URL_PARAMS}")
-    assert_match(/School of Law only publishes materials about/, html)
+    html = fetchAndStrip("#{SCHEME}://#{TARGET_HOST}:#{PUMA_PORT}/uc/ucr_plantpathmicro/policyStatement?#{URL_PARAMS}")
+    assert_match(/Microbiology and Plant Pathology only publishes materials about/, html)
   end
 
   def test_rootStatic
