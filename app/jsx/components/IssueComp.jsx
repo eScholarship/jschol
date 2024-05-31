@@ -40,15 +40,15 @@ class IssueComp extends React.Component {
     return (
       <div className="c-issue">
       {p.title &&
-        <h3 ref={e => this.title = e}>{p.title}</h3>
+        <h3 ref={e => this.title = e} dangerouslySetInnerHTML={{__html: p.title}}></h3>
       }
       {p.cover &&
         <figure className="c-issue__thumbnail" ref={e => this.thumbnail = e}>
           <LazyImageComp src={"/cms-assets/"+p.cover.asset_id} alt="Issue cover" clickable={true}/>
         {p.cover.caption &&
           <figcaption className="c-issue__caption-truncate" ref={e => this.caption = e}>
-            <div><i>Cover Caption:</i> {p.cover.caption} <button className="c-issue__caption-truncate-more">More</button></div>
-          </figcaption>
+          <div><i>Cover Caption:</i> <span dangerouslySetInnerHTML={{__html: p.cover.caption}}></span> <button className="c-issue__caption-truncate-more">More</button></div>
+        </figcaption>
         }
         </figure>
       }
