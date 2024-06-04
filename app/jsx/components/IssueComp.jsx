@@ -48,23 +48,25 @@ class IssueComp extends React.Component {
 
           {/* if we have a caption, and it has HTML markup in it, render it and skip truncation */}
 
-          {p.cover.caption && /<[a-z][\s\S]*>/i.test(p.cover.caption) ? (
-          <figcaption className="c-issue__caption" ref={e => this.caption = e}>
-            <div>
-              <i>Cover Caption:</i> 
-              <span dangerouslySetInnerHTML={{__html: p.cover.caption}}></span> 
-              <button className="c-issue__caption-truncate-more">More</button>
-            </div>
-          </figcaption>
+          {p.cover.caption && (
+            /<[a-z][\s\S]*>/i.test(p.cover.caption) ? (
+              <figcaption className="c-issue__caption" ref={e => this.caption = e}>
+                <div>
+                  <i>Cover Caption:</i> 
+                  <span dangerouslySetInnerHTML={{__html: p.cover.caption}}></span> 
+                  <button className="c-issue__caption-truncate-more">More</button>
+                </div>
+              </figcaption>
           ) : (
-          <figcaption className="c-issue__caption c-issue__caption-truncate" ref={e => this.caption = e}>
-            <div>
-              <i>Cover Caption:</i> 
-              <span>{p.cover.caption}</span> 
-              <button className="c-issue__caption-truncate-more">More</button>
-            </div>
-          </figcaption>
-        )}
+              <figcaption className="c-issue__caption c-issue__caption-truncate" ref={e => this.caption = e}>
+                <div>
+                  <i>Cover Caption:</i> 
+                  <span>{p.cover.caption}</span> 
+                  <button className="c-issue__caption-truncate-more">More</button>
+                </div>
+              </figcaption>
+        )
+      )}
         </figure>
       }
       {p.description &&
