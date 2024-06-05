@@ -96,7 +96,7 @@ class SeriesLayout extends React.Component {
   render() {
     let data = this.props.data,
         unit = this.props.unit,
-        selectorList = data.series.filter(function(s){ return (s.unit_id != unit.id) }),
+        selectorList = data.series.filter(function(s){ return (s.unit_id != unit.id) }).sort((a, b) => Number(a.ordering) - Number(b.ordering)),
         formName = "seriesForm",
         formButton = "series-form-submit"
     return (
