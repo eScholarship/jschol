@@ -100,7 +100,7 @@ tooling:
     description: Runs irb on the Jschol appserver (for some good REPL fun)
   deploy:
     service: appserver
-    cmd: /app/deployVersion.sh
+    cmd: ruby tools/maybeSocks.rb && /app/deployVersion.sh
     description: Runs the deployment script to deploy to Elastic Beanstalk
   promote:
     service: appserver
