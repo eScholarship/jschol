@@ -10,6 +10,25 @@ set -o errtrace  # trace ERR through 'time command' and other functions
 set -o nounset   ## set -u : exit the script if you try to use an uninitialised variable
 set -o errexit   ## set -e : exit the script if any statement returns a non-true return value
 
+# Validate required commands 
+command -v aws >/dev/null 2>&1 || { echo >&2 "AWS CLI not found."; exit 1; } 
+command -v jq >/dev/null 2>&1 || { echo >&2 "jq not found."; exit 1; } 
+
+# Validate AWS credentials 
+if ! aws sts get-caller-identity > /dev/null 2>&1; then 
+	echo "AWS credentials not valid." 
+	exit 1 
+fi
+
+# Validate Node version is 18
+NODE_VERSION=$(node -v | awk -F'v' '{print $2}' | awk -F'.' '{print $1}')
+
+# if NODE_VERSION is not equal to 18, exit
+if [[ $NODE_VERSION != 18 ]]; then
+  echo "Node version 18 is required."
+  exit 1
+fi
+
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )" # http://stackoverflow.com/questions/59895
 cd $DIR
 
