@@ -225,7 +225,7 @@ Background color with progressively-enhanced blur effect. Example:
 // Fluid text mixin courtesy of: https://css-tricks.com/snippets/css/fluid-typography/
 
 @function strip-unit($value) {
-  @return $value / ($value * 0 + 1);
+  @return calc(#{$value} / (#{$value} * 0 + 1));
 }
 
 @mixin u-fluid-type($min-vw, $max-vw, $min-font-size, $max-font-size) {

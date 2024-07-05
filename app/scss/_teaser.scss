@@ -17,7 +17,7 @@
     background-color: $color-light-teal;
 
     &:first-child {
-      margin-bottom: $spacing-sm / 2;
+      margin-bottom: calc(#{$spacing-sm} / 2);
     }
 
     @include bp(screen3) {
@@ -26,12 +26,12 @@
       padding: $spacing-lg;
 
       &:first-child {
-        margin-right: $spacing-sm / 2;
+        margin-right: calc(#{$spacing-sm} / 2);
         margin-bottom: 0;
       }
 
       &:last-child {
-        margin-left: $spacing-sm / 2;
+        margin-left: calc(#{$spacing-sm} / 2);
       }
 
     }
