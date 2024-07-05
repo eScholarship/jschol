@@ -4,6 +4,7 @@
 set -e
 
 printf "== Installing local Ruby gems ==\n"
+gem install bundler
 bundle install --quiet --path=gems --binstubs
 
 #printf "\n== Uninstalling Ruby gems no longer used ==\n"
