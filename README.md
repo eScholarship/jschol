@@ -58,6 +58,9 @@ Description of files
   our [AWS CLI Cheatsheet](https://github.com/cdlib/pad-sys-doc/blob/main/cheatsheet/aws-cli.md).
 * `overlay_files` folder for beanstalk app overlays, used by the deployVersion.sh script. You'll want to grab the contents of this folder from the `pub-cattle2-ops` ec2 instance, if you want to deploy from your Lando dev environment.
 
+Lando Dev Environment
+---------------------
+
 Steps to get the app running on your local machine, with Lando
 1. Make sure [Lando](https://lando.dev/) is installed
  * Lando comes bundled with Docker Desktop, if you already have Docker Desktop installed, don't re-install it, just ensure you have the same version as what is bundled with Lando.
@@ -70,7 +73,29 @@ Steps to get the app running on your local machine, with Lando
 This Lando dev environment includes a local MySQL server, which can load MySQL dumps from dev, stg or prd. To load a dump file, run
 1. `lando db-import name-of-mysql-dump-file.gz`
 
-NOTE: if you do not have a dump file, ask Hardy, he can lend you a somewhat recent one. Or, you can rely on the SOCKS connection to use the db on one of our servers. Or you can use the VPN.
+NOTE: if you do not have a dump file, ask Hardy, he can lend you a somewhat
+recent one. Or, you can rely on the SOCKS connection to use the db on one of our
+servers. Or you can use the VPN.
+
+Devbox + Direnv Dev Environment
+----------------------
+
+Steps to get the app running on your local machine, with Devbox
+1. Make sure [Devbox](https://www.jetify.com/devbox/docs/quickstart/) is
+   installed
+2. Also install [Direnv](https://direnv.net/) if it isn't already
+3. Copy `.envrc.example` to `.envrc` and customize as appropriate
+4. `devbox shell` downloads requirements and launches a devbox development environment 
+5. After your devbox shell is open, run the `setup.sh` script to finish
+   installing JSchol
+6. Run `./gulp`. Be on the lookout for errors. 
+
+NOTE: The first time you run `devbox shell` may take a while to complete due to 
+Devbox downloading prerequisites and package catalogs required by Nix. This 
+delay is a one-time cost, and future invocations and package additions should 
+resolve much faster.
+
+Using the Devbox environment is roughly equivalent to [running the application natively](#Running-the-application-natively).
 
 Troubleshooting
 ---------------
@@ -98,8 +123,11 @@ Tooling
 More [tooling](https://docs.lando.dev/config/tooling.html) can be added easily.
 
 
-Steps to get the app running on your local machine without Lando
-----------------------------------------------------------------
+Running the application natively
+--------------------------------
+
+Steps to get the app running on your local machine without Lando or Devbox
+
 1. Make sure these are installed:
  * bundler
  * ruby

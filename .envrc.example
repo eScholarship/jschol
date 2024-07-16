@@ -1,0 +1,87 @@
+# .envrc congifuration for jschol
+
+# WARNING: be sure to point at ONLY dev or stg for everything below... if you 
+# change from dev to stg or vice versa, *everything* needs to match. Recheck this,
+# you probably missed something if this isn't working the way you expect.
+
+### PUMA Configuration ###
+export PUMA_PORT=18880
+export PUMA_THREADS=5 # 5 is the default
+export PUMA_WORKERS=1 # a single worker is a good idea for a dev environment
+
+### ISO Configuration ###
+export ISO_PORT=4002
+
+# ### USE THE OJS DB ON THE DEV SERVER (uncomment to use, and also set USE_SOCKS_FOR_MYSQL=true, and pick the right SOCKS_TARGET)
+# export OJS_DB_HOST=ojs-host-dev
+# export OJS_DB_PORT='3306'
+# export OJS_DB_DATABASE=ojs
+# export OJS_DB_USERNAME=ojsuser
+# export OJS_DB_PASSWORD=ojspassword
+
+### USE THE OJS DB ON THE STG SERVER (uncomment to use, and also set USE_SOCKS_FOR_MYSQL=true, and pick the right SOCKS_TARGET)
+export OJS_DB_HOST=ojs-host-stg
+export OJS_DB_PORT='3306'
+export OJS_DB_DATABASE=ojs
+export OJS_DB_USERNAME=ojsuser
+export OJS_DB_PASSWORD=ojspassword
+
+
+### USE THE ESCHOL DB ON THE STG SERVER (uncomment to use, and also set USE_SOCKS_FOR_MYSQL=true, and pick the right SOCKS_TARGET)
+### WARNING: if you want to point to dev, you need to change ALL urls below that mention 'stg' to 'dev'
+### ALSO: use the dev DBs above, not the stg ones
+export ESCHOL_DB_HOST=eschol-host-stg
+export ESCHOL_DB_PORT='3306'
+export ESCHOL_DB_DATABASE=eschol_test
+export ESCHOL_DB_USERNAME=escholuser
+export ESCHOL_DB_PASSWORD='eschol-password'
+
+###############################################################################
+export JSCHOL_KEY=jschol-key
+
+###############################################################################
+export MRTEXPRESS_HOST=mrtexpress-host
+export MRTEXPRESS_USERNAME=mrtexpress-user
+export MRTEXPRESS_PASSWORD=mrtexpress-password
+
+###############################################################################
+export S3_BUCKET=s3-bucket
+export S3_REGION=s3-region
+export S3_BINARIES_PREFIX=s3-binaries-prefix
+export S3_PATCHES_PREFIX=s3-patches-prefix
+export S3_CONTENT_PREFIX=s3-content-prefix
+export S3_PREVIEW_PREFIX=s3-preview-prefix
+
+###############################################################################
+export ESCHOL_API_SERVER=eschol-api-server
+export ESCHOL_PRIV_API_KEY=eschol-priv-api-key
+export ESCHOL_API_ACCESS_KEY=eschol-api-access-key
+#
+# ###############################################################################
+# export THUMBNAIL_SERVER=thumbnail-server
+# export PEOPLE_ARK_SHOULDER=people-ark-shoulder
+#
+# ###############################################################################
+# CAREFUL! Use values for cloudsearch that match your SOCKS settings below 
+# export CLOUDSEARCH_DOMAIN=cloudsearch-domain-dev
+# export CLOUDSEARCH_SEARCH_ENDPOINT=cloudsearch-search-endpoint-dev
+# export CLOUDSEARCH_DOC_ENDPOINT=cloudsearch-doc-endpoint-dev
+export CLOUDSEARCH_DOMAIN=cloudsearch-domain-stg
+export CLOUDSEARCH_SEARCH_ENDPOINT=cloudsearch-search-endpoint-stg
+export CLOUDSEARCH_DOC_ENDPOINT=cloudsearch-doc-endpoint-stg
+
+###############################################################################
+export SOCKS_PORT=1081
+export SOCKS_USER=your-user-name
+export SOCKS_TARGET=submit-stg-is-probably-a-good-choice
+export SOCKS_BASTION=our-bastion-domain
+export SOCKS_BASTION_PORT=our-bastion-ssl-port
+export SOCKS_KEYPATH=/path/to/your/ssh/key
+export USE_SOCKS_FOR_MYSQL=true # set to false if running MySQL locally
+
+###############################################################################
+# Ruby Options help us tune out some noise
+export RUBYOPT='-W:no-deprecated -W:no-experimental'
+
+#### extra stuff ###
+
