@@ -73,7 +73,7 @@ Steps to get the app running on your local machine, with Lando
 This Lando dev environment includes a local MySQL server, which can load MySQL dumps from dev, stg or prd. To load a dump file, run
 1. `lando db-import name-of-mysql-dump-file.gz`
 
-NOTE: if you do not have a dump file, ask Hardy, he can lend you a somewhat
+NOTE: if you do not have a dump file, ask around, we can lend you a somewhat
 recent one. Or, you can rely on the SOCKS connection to use the db on one of our
 servers. Or you can use the VPN.
 
