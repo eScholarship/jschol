@@ -95,7 +95,25 @@ Devbox downloading prerequisites and package catalogs required by Nix. This
 delay is a one-time cost, and future invocations and package additions should 
 resolve much faster.
 
-Using the Devbox environment is roughly equivalent to [running the application natively](#Running-the-application-natively).
+After you sucessfully run gulp the first time, you can use devbox tooling to
+start up the jschol service:
+
+```bash
+devbox services up jschol
+```
+the above command will start up a process-compose session of the JSchol
+application, you can then visit http://localhost:18880 to visit the running
+Jschol application on your own computer.
+
+To run the quicktest, after you have Jschol running in a process-compose session
+(described above), you can run this command in another shell:
+```bash
+devbox run test
+```
+
+OR you can run the quicktest as you would in a native dev environment. In fact,
+using the Devbox environment can be roughly equivalent to [running the application
+natively](#Running-the-application-natively). If you prefer that style of work.
 
 Troubleshooting
 ---------------
