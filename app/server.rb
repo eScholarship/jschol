@@ -1142,7 +1142,22 @@ end
 
 ###################################################################################################
 def getItemUsage(itemID)
-  ItemStat.where(item_id: itemID).order(:month).to_hash(:month).map { |m,v|
+  # find the item ID that are redirected to this item
+  idbase = itemID[2,8] # get the portion after qt for redirect search
+  puts "#{itemID} and #{idbase}"
+  # build id list of item stat search
+  ids = [itemID]
+  # get redirects where to_path is for this item
+  redirs = Redirect.where(kind: "item", to_path: "/uc/item/#{idbase}")
+  if !redirs.nil?
+    redirs.each{|x| 
+     puts "Found redirect #{x.from_path}"
+     # extract id base from path and add qt to make item id 
+     ids << 'qt'+x.from_path[-8..-1]
+    }
+    
+  end
+  ItemStat.where(:item_id => ids).order(:month).to_hash(:month).map { |m,v|
     attrs = JSON.parse(v.attrs)
     { month: "#{m.to_s[0..3]}-#{m.to_s[4..5]}", hits: attrs['hit'] || 0, downloads: attrs['dl'] || 0 }
   }
