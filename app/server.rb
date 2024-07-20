@@ -78,7 +78,8 @@ def ensureConnect(envPrefix)
                "port"     => getEnv("#{envPrefix}_PORT").to_i,
                "database" => getEnv("#{envPrefix}_DATABASE"),
                "username" => getEnv("#{envPrefix}_USERNAME"),
-               "password" => getEnv("#{envPrefix}_PASSWORD") }
+               "password" => getEnv("#{envPrefix}_PASSWORD"),
+               "charset"  => 'utf8mb4' }
   if ENV['USE_SOCKS_FOR_MYSQL'].to_s.downcase == 'true'
     if TCPSocket::socks_port
       SocksMysql.new(dbConfig)
