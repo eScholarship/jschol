@@ -500,9 +500,19 @@ def getSeriesLandingPageData(unit, q)
     children = parent ? $hierByAncestor[parent[0].ancestor_unit] : []
   end
 
-  response = unitSearch(q ? q : {"sort" => ['desc']}, unit)
+  defaultSortOrder = 'desc'
+
+  # Infer the sort order from the children's ordering property
+  children_orderings = children.map { |child| child[:ordering] }
+
+  if children_orderings.any?
+    defaultSortOrder = 'a-title'
+  end
+
+  response = unitSearch(q ? q : {"sort" => [defaultSortOrder]}, unit)
   response[:series] = children ? (children.select { |u| u.unit.type == 'series' } + 
     children.select { |u| u.unit.type == 'monograph_series' }).map { |u| seriesPreview(u) } : []
+
   return response
 end
 
