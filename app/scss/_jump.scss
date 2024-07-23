@@ -18,7 +18,7 @@ $jump-list-spacing: 0.5em;
 
   li {
     margin-left: $spacing-sm;
-    padding: $jump-list-spacing/2 0 $jump-list-spacing $spacing-md;
+    padding: calc($jump-list-spacing / 2) 0 $jump-list-spacing $spacing-md;
     // CSS-only tree drawing ideas from: https://two-wrongs.com/draw-a-tree-structure-with-only-css
     position: relative;
     &::before, &::after {
