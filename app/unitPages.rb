@@ -502,10 +502,10 @@ def getSeriesLandingPageData(unit, q)
 
   defaultSortOrder = 'desc'
 
-  # Infer the sort order from the children's ordering property
-  children_orderings = children.map { |child| child[:ordering] }
-
-  if children_orderings.any?
+  # PUBD-1311 KLUDGE ALERT: hard code the sort order for any unit id that begins
+  # with ucsd_jn_  to be by title
+  # This is a temporary fix until we can add a sort order field to the unit data
+  if unit.id.start_with?('ucsd_jn_')
     defaultSortOrder = 'a-title'
   end
 
