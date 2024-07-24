@@ -585,12 +585,11 @@ def unitSearch(params, unit)
   # ToDo: Right now, series landing page is the only unit type using this block. Clean this up
   # once a final decision has been made about display of different unit search pages
   # for series with default order, use ordering_in_sect if available 
-  useSpecialLogic = false
+  useOrderInSect = false
   if unit.type.include? 'series'
     resultsListFields = ['thumbnail', 'pub_year', 'publication_information', 'type_of_work', 'rights']
     params["series"] = [unit.id]
-    useSpecialLogic = (params["sort"] == [''])
-    puts "#{useSpecialLogic}"
+    useOrderInSect = (params["sort"] == [''])
   elsif unit.type == 'oru'
     resultsListFields = ['thumbnail', 'pub_year', 'publication_information', 'type_of_work']
     params["departments"] = [unit.id]
@@ -610,7 +609,7 @@ def unitSearch(params, unit)
   if response['hits'] && response['hits']['hit']
     itemIds = response['hits']['hit'].map { |item| item['id'] }
     itemData = readItemData(itemIds)
-    if useSpecialLogic
+    if useOrderInSect
        itemIds = getOrderinSectSorted(itemIds, itemData)
     end
     searchResults = itemResultData(itemIds, itemData, resultsListFields)
@@ -630,9 +629,8 @@ def getOrderinSectSorted(itemIds, itemData)
   end
 
   if withorder.any?
-     ordered = withorder.sort_by {|k,v| v}
+     ordered = withorder.sort_by {|_k,v| v}
      ordered.each{|x| topitems << x[0]}
-     #puts "AFTER ORDER#{topitems}"
      remaining = itemIds - topitems
      itemIds = topitems + remaining
   end
