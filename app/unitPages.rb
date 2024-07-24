@@ -499,8 +499,9 @@ def getSeriesLandingPageData(unit, q)
   else
     children = parent ? $hierByAncestor[parent[0].ancestor_unit] : []
   end
+  # the default sort order for series landing page is 'default'
+  response = unitSearch(q ? q : {"sort" => ['']}, unit)
 
-  response = unitSearch(q ? q : {"sort" => ['desc']}, unit)
   response[:series] = children ? (children.select { |u| u.unit.type == 'series' } + 
     children.select { |u| u.unit.type == 'monograph_series' }).map { |u| seriesPreview(u) } : []
   return response
@@ -583,9 +584,13 @@ end
 def unitSearch(params, unit)
   # ToDo: Right now, series landing page is the only unit type using this block. Clean this up
   # once a final decision has been made about display of different unit search pages
+  # for series with default order, use ordering_in_sect if available 
+  useSpecialLogic = false
   if unit.type.include? 'series'
     resultsListFields = ['thumbnail', 'pub_year', 'publication_information', 'type_of_work', 'rights']
     params["series"] = [unit.id]
+    useSpecialLogic = (params["sort"] == [''])
+    puts "#{useSpecialLogic}"
   elsif unit.type == 'oru'
     resultsListFields = ['thumbnail', 'pub_year', 'publication_information', 'type_of_work']
     params["departments"] = [unit.id]
@@ -599,17 +604,39 @@ def unitSearch(params, unit)
     #throw 404
     pp unit.type
   end
-
+  
   aws_params = aws_encode(params, [], "items")
   response = normalizeResponse($csClient.search(return: '_no_fields', **aws_params))
-
   if response['hits'] && response['hits']['hit']
     itemIds = response['hits']['hit'].map { |item| item['id'] }
     itemData = readItemData(itemIds)
+    if useSpecialLogic
+       itemIds = getOrderinSectSorted(itemIds, itemData)
+    end
     searchResults = itemResultData(itemIds, itemData, resultsListFields)
   end
 
   return {'count' => response['hits']['found'], 'query' => get_query_display(params.clone), 'searchResults' => searchResults}
+end
+
+def getOrderinSectSorted(itemIds, itemData)
+  withorder = {}
+  topitems = []
+  for itemID in itemIds
+     item = itemData[:items][itemID]
+     if item.ordering_in_sect
+        withorder[itemID] = item.ordering_in_sect
+     end
+  end
+
+  if withorder.any?
+     ordered = withorder.sort_by {|k,v| v}
+     ordered.each{|x| topitems << x[0]}
+     #puts "AFTER ORDER#{topitems}"
+     remaining = itemIds - topitems
+     itemIds = topitems + remaining
+  end
+  return itemIds
 end
 
 def getUnitStaticPage(unit, _attrs, pageName)
