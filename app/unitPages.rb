@@ -585,12 +585,12 @@ def unitSearch(params, unit)
   # ToDo: Right now, series landing page is the only unit type using this block. Clean this up
   # once a final decision has been made about display of different unit search pages
   # for series with default order, use ordering_in_sect if available 
-  useSpecialLogic = false
+  useOrdering_in_sect = false
   if unit.type.include? 'series'
     resultsListFields = ['thumbnail', 'pub_year', 'publication_information', 'type_of_work', 'rights']
     params["series"] = [unit.id]
-    useSpecialLogic = (params["sort"] == [''])
-    puts "#{useSpecialLogic}"
+    useOrdering_in_sect = (params["sort"] == [''])
+    # puts "#{useOrdering_in_sect}" # uncomment for debugging
   elsif unit.type == 'oru'
     resultsListFields = ['thumbnail', 'pub_year', 'publication_information', 'type_of_work']
     params["departments"] = [unit.id]
@@ -610,7 +610,7 @@ def unitSearch(params, unit)
   if response['hits'] && response['hits']['hit']
     itemIds = response['hits']['hit'].map { |item| item['id'] }
     itemData = readItemData(itemIds)
-    if useSpecialLogic
+    if useOrdering_in_sect
        itemIds = getOrderinSectSorted(itemIds, itemData)
     end
     searchResults = itemResultData(itemIds, itemData, resultsListFields)
@@ -630,9 +630,9 @@ def getOrderinSectSorted(itemIds, itemData)
   end
 
   if withorder.any?
-     ordered = withorder.sort_by {|k,v| v}
+     ordered = withorder.sort_by {|_k,v| v}
      ordered.each{|x| topitems << x[0]}
-     #puts "AFTER ORDER#{topitems}"
+     #puts "AFTER ORDER#{topitems}" # uncomment for debugging
      remaining = itemIds - topitems
      itemIds = topitems + remaining
   end
@@ -692,7 +692,7 @@ def getUnitProfile(unit, attrs)
     profile[:hero] = attrs['hero']
   end
    
-  #puts "====profile passed: profile=#{profile}"
+  #puts "====profile passed: profile=#{profile}" # uncomment for debugging
   return profile
 end
 
@@ -1287,7 +1287,7 @@ put "/api/unit/:unitID/moveUnit" do |unitID|
     UnitHier.where(unit_id: unitID, ancestor_unit: oldParent, is_direct: true).
              update(ancestor_unit: targetUnitID, ordering: lastOrder+1)
 
-    # And rebuild all the indirect links
+    # And rebuild all the indirect links (uncomment puts for debugging)
     #puts "Unit hier before:\n#{UnitHier.where(unit_id: unitID).all.map { |h| "  #{h.to_hash.to_s}" }.sort.join("\n")}"
     #puts "Item hier before:\n#{UnitItem.where(item_id: UnitItem.where(unit_id: unitID).order(:item_id).
     #  select_map(:item_id)).all.map { |h| "  #{h.to_hash.to_s}" }.join("\n")}"
@@ -1507,7 +1507,7 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
   DB.transaction {
     unit = Unit[unitID] or jsonHalt(404, "Unit not found")
     unitAttrs = JSON.parse(unit.attrs)
-    #puts "DATA received is #{params['data']}"   
+    #puts "DATA received is #{params['data']}"   #uncomment for debugging
     if params['data']['unitName'] then unit.name = params['data']['unitName'] end
 
     # Only change unit config flags if the that section is being saved -- avoids clearing them accidentally
