@@ -640,25 +640,6 @@ def unitSearch(params, unit)
   return {'count' => response['hits']['found'], 'query' => get_query_display(params.clone), 'searchResults' => searchResults}
 end
 
-def getOrderinSectSorted(itemIds, itemData)
-  withorder = {}
-  topitems = []
-  for itemID in itemIds
-     item = itemData[:items][itemID]
-     if item.ordering_in_sect
-        withorder[itemID] = item.ordering_in_sect
-     end
-  end
-
-  if withorder.any?
-     ordered = withorder.sort_by {|_k,v| v}
-     ordered.each{|x| topitems << x[0]}
-     remaining = itemIds - topitems
-     itemIds = topitems + remaining
-  end
-  return itemIds
-end
-
 def getUnitStaticPage(unit, _attrs, pageName)
   page = Page[:slug=>pageName, :unit_id=>unit.id]
   page or jsonHalt(404, "unknown page #{pageName}")
