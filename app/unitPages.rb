@@ -582,12 +582,7 @@ def getIssueNumberingTitle(unit_id, volume, issue)
   return attrs['numbering'], attrs['title'], attrs['show_pub_dates']
 end
 
-
-def isOrderInSectPresent(unit)
-  
-end
-
-def getSeriesList(unit)
+def getSeriesListPubOrderCase(unit)
   itemIds = []
   resultsListFields = ['thumbnail', 'pub_year', 'publication_information', 'type_of_work', 'rights']
   # get all the items related to the series
@@ -630,7 +625,7 @@ def unitSearch(params, unit)
   end
 
   if useOrderInSect
-     searchResults = getSeriesList(unit)
+     searchResults = getSeriesListPubOrderCase(unit)
      # if published items with ordering_in_sect were detected then searchResults is populated
      if searchResults
         total = searchResults.count
