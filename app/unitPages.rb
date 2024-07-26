@@ -582,7 +582,7 @@ def getIssueNumberingTitle(unit_id, volume, issue)
   return attrs['numbering'], attrs['title'], attrs['show_pub_dates']
 end
 
-def getSeriesList(unit)
+def getSeriesListPubOrderCase(unit)
   itemIds = []
   resultsListFields = ['thumbnail', 'pub_year', 'publication_information', 'type_of_work', 'rights']
   # get all the items related to the series
@@ -590,6 +590,10 @@ def getSeriesList(unit)
   sorteditemIds = [] 
   # get the ordering_in_sect items
   Item.where(:id => itemIds).where(status:'published').where(Sequel.lit("ordering_in_sect is not null")).order(:ordering_in_sect).each{|u| sorteditemIds << u.id }
+  # don't proceed with this logic if no item has ordered_in_sect
+  if sorteditemIds.count == 0
+    return nil
+  end
   # get the remaining items sorted by date published
   Item.where(:id => itemIds).where(status:'published').where(Sequel.lit("ordering_in_sect is null")).order(Sequel.desc(:published)).each{|u| sorteditemIds << u.id }
   # return all results
@@ -621,12 +625,15 @@ def unitSearch(params, unit)
   end
 
   if useOrderInSect
-     searchResults = getSeriesList(unit)
-     total = searchResults.count
-     start = params["start"] ? params["start"][0].to_i : 0
-     rows  = params["rows"] ? params["rows"][0].to_i : 10
-     searchResults = searchResults[start, rows]
-     return {'count' => total, 'query' => get_query_display(params.clone), 'searchResults' => searchResults}
+     searchResults = getSeriesListPubOrderCase(unit)
+     # if published items with ordering_in_sect were detected then searchResults is populated
+     if searchResults
+        total = searchResults.count
+        start = params["start"] ? params["start"][0].to_i : 0
+        rows  = params["rows"] ? params["rows"][0].to_i : 10
+        searchResults = searchResults[start, rows]
+        return {'count' => total, 'query' => get_query_display(params.clone), 'searchResults' => searchResults}
+     end
   end
     
   aws_params = aws_encode(params, [], "items")
@@ -639,6 +646,7 @@ def unitSearch(params, unit)
   
   return {'count' => response['hits']['found'], 'query' => get_query_display(params.clone), 'searchResults' => searchResults}
 end
+
 
 def getUnitStaticPage(unit, _attrs, pageName)
   page = Page[:slug=>pageName, :unit_id=>unit.id]
