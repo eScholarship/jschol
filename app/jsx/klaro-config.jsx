@@ -35,7 +35,7 @@ const klaroConfig = {
   `consentModal.description` and `consentNotice.description` translations as HTML.
   This enables you to e.g. add custom links or interactive content.
   */
-  htmlTexts: false,
+  htmlTexts: true,
 
   /*
   You can change the cookie domain for the consent manager itself. Use this if you
@@ -102,20 +102,20 @@ const klaroConfig = {
           This can e.g. be useful for defining a fallback privacy policy URL.
       */
       zz: {
-          privacyPolicyUrl: '/privacy',
+          privacyPolicyUrl: '/privacypolicy',
 
       },
       en: {
-          privacyPolicyUrl: '/privacy',
+          privacyPolicyUrl: '/privacypolicy',
           consentNotice: {
             description: 'eScholarship uses cookies to ensure you have the best experience on our website. ' + 
-            'You can manage which cookies you want us to use. Our Privacy Statement includes more details ' + 
+            'You can manage which cookies you want us to use. Our <a href=/privacypolicy>Privacy Statement</a> includes more details ' + 
             'on the cookies we use and how we protect your privacy.',
           },
           consentModal: {
               description:
                   'eScholarship uses cookies to ensure you have the best experience on our website. ' + 
-                  'You can manage which cookies you want us to use. Our Privacy Statement includes more details ' + 
+                  'You can manage which cookies you want us to use. Our <a href=/privacypolicy>Privacy Statement</a> includes more details ' + 
                   'on the cookies we use and how we protect your privacy.',
           },
           purposes: {
