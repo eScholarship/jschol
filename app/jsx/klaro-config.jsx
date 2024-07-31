@@ -85,8 +85,10 @@ const klaroConfig = {
   Setting 'hideLearnMore' to 'true' will hide the "learn more / customize" link in
   the consent notice. We strongly advise against using this under most
   circumstances, as it keeps the user from customizing his/her consent choices.
+
+  HJP: in React, this link does not work, so we hide it
   */
-  hideLearnMore: false,
+  hideLearnMore: true,
 
   /*
   You can overwrite existing translations and add translations for your service
@@ -103,49 +105,18 @@ const klaroConfig = {
           privacyPolicyUrl: '/privacy',
 
       },
-      de: {
-          /*
-          You can specify a language-specific link to your privacy policy here.
-          */
-          privacyPolicyUrl: '/datenschutz',
-          consentNotice: {
-              description: 'Dieser Text wird in der Einwilligungsbox erscheinen.',
-          },
-          consentModal: {
-              description:
-                  'Hier kÃ¶nnen Sie einsehen und anpassen, welche Information wir Ã¼ber Sie ' + 
-                  'sammeln. EintrÃ¤ge die als "Beispiel" gekennzeichnet sind dienen lediglich ' + 
-                  'zu Demonstrationszwecken und werden nicht wirklich verwendet.',
-          },
-          /*
-          You should also define translations for every purpose you define in the
-          'services' section. You can define a title and an (optional) description.
-          */
-          purposes: {
-              analytics: {
-                  title: 'Besucher-Statistiken'
-              },
-              security: {
-                  title: 'Sicherheit'
-              },
-              livechat: {
-                  title: 'Live Chat'
-              },
-              advertising: {
-                  title: 'Anzeigen von Werbung'
-              },
-              styling: {
-                  title: 'Styling'
-              },
-          },
-      },
       en: {
           privacyPolicyUrl: '/privacy',
+          consentNotice: {
+            description: 'eScholarship uses cookies to ensure you have the best experience on our website. ' + 
+            'You can manage which cookies you want us to use. Our Privacy Statement includes more details ' + 
+            'on the cookies we use and how we protect your privacy.',
+          },
           consentModal: {
               description:
-                  'Here you can see and customize the information that we collect about you. ' + 
-                  'Entries marked as "Example" are just for demonstration purposes and are not ' + 
-                  'really used on this website.',
+                  'eScholarship uses cookies to ensure you have the best experience on our website. ' + 
+                  'You can manage which cookies you want us to use. Our Privacy Statement includes more details ' + 
+                  'on the cookies we use and how we protect your privacy.',
           },
           purposes: {
               analytics: {
@@ -196,9 +167,6 @@ const klaroConfig = {
               },
               en: {
                   description: 'Matomo is a simple, self-hosted analytics service.'
-              },
-              de: {
-                  description: 'Matomo ist ein einfacher, selbstgehosteter Analytics-Service.'
               },
           },
           /*
@@ -270,13 +238,6 @@ const klaroConfig = {
           disables and re-enables them due to a consent change by the user.
           */
           onlyOnce: true,
-      },
-      {
-          name: 'youtube',
-          /*
-          [no translation for key annotated-config.services.contextualConsentOnly]
-          */
-          contextualConsentOnly: true,
       },
   ],
 
