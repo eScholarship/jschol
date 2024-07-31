@@ -102,20 +102,20 @@ const klaroConfig = {
           This can e.g. be useful for defining a fallback privacy policy URL.
       */
       zz: {
-          privacyPolicyUrl: '/privacypolicy',
+          privacyPolicyUrl: 'https://cdlib.org/about/policies-and-guidelines/privacy-statement/',
 
       },
       en: {
-          privacyPolicyUrl: '/privacypolicy',
+          privacyPolicyUrl: 'https://cdlib.org/about/policies-and-guidelines/privacy-statement/',
           consentNotice: {
             description: 'eScholarship uses cookies to ensure you have the best experience on our website. ' + 
-            'You can manage which cookies you want us to use. Our <a href=/privacypolicy>Privacy Statement</a> includes more details ' + 
+            'You can manage which cookies you want us to use. Our <a href=https://cdlib.org/about/policies-and-guidelines/privacy-statement/ target=_blank>Privacy Statement</a> includes more details ' + 
             'on the cookies we use and how we protect your privacy.',
           },
           consentModal: {
               description:
                   'eScholarship uses cookies to ensure you have the best experience on our website. ' + 
-                  'You can manage which cookies you want us to use. Our <a href=/privacypolicy>Privacy Statement</a> includes more details ' + 
+                  'You can manage which cookies you want us to use. Our <a href=https://cdlib.org/about/policies-and-guidelines/privacy-statement/ target=_blank>Privacy Statement</a> includes more details ' + 
                   'on the cookies we use and how we protect your privacy.',
           },
           purposes: {
