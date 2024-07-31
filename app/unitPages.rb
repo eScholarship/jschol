@@ -499,9 +499,13 @@ def getSeriesLandingPageData(unit, q)
   else
     children = parent ? $hierByAncestor[parent[0].ancestor_unit] : []
   end
-  
-  # the default sort order for series landing page is 'default'
-  response = unitSearch(q ? q : {"sort" => ['']}, unit)
+ 
+  if isPubOrderSeriesCase(unit) 
+    # the default sort order for series landing page with pub order is 'default'
+    response = unitSearch(q ? q : {"sort" => ['']}, unit)
+  else
+    response = unitSearch(q ? q : {"sort" => ['desc']}, unit) 
+  end
 
   response[:series] = children ? (children.select { |u| u.unit.type == 'series' } + 
     children.select { |u| u.unit.type == 'monograph_series' }).map { |u| seriesPreview(u) } : []
@@ -580,6 +584,16 @@ def getIssueNumberingTitle(unit_id, volume, issue)
   return nil, nil if i[:attrs].nil?
   attrs = JSON.parse(i[:attrs])
   return attrs['numbering'], attrs['title'], attrs['show_pub_dates']
+end
+
+def isPubOrderSeriesCase(unit)
+    itemWithPubOrder = Item.join(:unit_items, :item_id => :id)
+                           .where(unit_id: unit.id)
+                           .where(status: 'published')
+                           .where(Sequel.lit("ordering_in_sect is not null"))
+         		   .first
+    
+    return itemWithPubOrder != nil
 end
 
 def getSeriesListPubOrderCase(unit)
