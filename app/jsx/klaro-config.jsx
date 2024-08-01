@@ -88,7 +88,7 @@ const klaroConfig = {
 
   HJP: in React, this link does not work, so we hide it
   */
-  hideLearnMore: true,
+  hideLearnMore: false,
 
   /*
   You can overwrite existing translations and add translations for your service
