@@ -12,12 +12,7 @@ import ReactDOM from 'react-dom'
 import { BrowserRouter, Route, Switch } from 'react-router-dom'
 import ReactGA from 'react-ga'
 import ReactModal from 'react-modal'
-
-// Import klaroConfig
 import klaroConfig from './klaro-config.jsx';
-// Log klaroConfig to the console
-console.log(klaroConfig);
-
 import HomePage from './pages/HomePage.jsx'
 import BrowsePage from './pages/BrowsePage.jsx'
 import ItemPage from './pages/ItemPage.jsx'
