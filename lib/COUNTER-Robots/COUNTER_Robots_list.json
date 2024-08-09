@@ -73,6 +73,10 @@
     "last_changed": "2017-08-08"
   },
   {
+    "pattern": "AntBot",
+    "last_changed": "2024-04-22"
+  },
+  {
     "pattern": "appie",
     "last_changed": "2017-08-08"
   },
@@ -119,6 +123,12 @@
   {
     "pattern": "atomz",
     "last_changed": "2017-08-08"
+  },
+  {
+    "pattern": "axios\\/\\d",
+    "last_changed": "2022-03-04",
+    "description": "Promise based HTTP client for the browser and Node.js",
+    "url": "https://github.com/axios/axios"
   },
   {
     "pattern": "BDFetch",
@@ -195,6 +205,10 @@
     "last_changed": "2017-08-08"
   },
   {
+    "pattern": "centuryb",
+    "last_changed": "2022-04-27"
+  },
+  {
     "pattern": "cfnetwork",
     "last_changed": "2017-08-08"
   },
@@ -214,6 +228,10 @@
     "pattern": "Citoid",
     "last_changed": "2020-02-25",
     "url": "https://www.mediawiki.org/wiki/Citoid"
+  },
+  {
+    "pattern": "ClaudeBot",
+    "last_changed": "2024-04-22"
   },
   {
     "pattern": "cloakDetect",
@@ -383,6 +401,11 @@
     "last_changed": "2017-08-08"
   },
   {
+    "pattern": "Faveeo\\/\\d",
+    "last_changed": "2022-03-04",
+    "url": "https://www.faveeo.com"
+  },
+  {
     "pattern": "FDM(\\s|\\+)\\d",
     "last_changed": "2017-08-08"
   },
@@ -435,6 +458,10 @@
     "last_changed": "2017-08-08"
   },
   {
+    "pattern": "^FreshpingBot\\/1.0 \\(\\+https:\\/\\/freshping\\.io\\/\\)$",
+    "last_changed": "2024-04-22"
+  },
+  {
     "pattern": "Fulltext",
     "last_changed": "2017-08-08"
   },
@@ -484,6 +511,12 @@
     "url": "https://www.distilnetworks.com/bot-directory/bot/grammarly1-0/"
   },
   {
+    "pattern": "GroupHigh\\/\\d",
+    "last_changed": "2022-03-04",
+    "description": "GroupHigh is an essential content marketing tool",
+    "url": "https://www.grouphigh.com"
+  },
+  {
     "pattern": "grub",
     "last_changed": "2017-08-08"
   },
@@ -516,6 +549,12 @@
     "last_changed": "2017-08-08"
   },
   {
+    "pattern": "HeadlessChrome",
+    "last_changed": "2021-12-07",
+    "description": "Headless Chrome is used to automate Chrome requests for testing purposes.",
+    "url": "https://developers.google.com/web/updates/2017/04/headless-chrome"
+  },
+  {
     "pattern": "HttpComponents\\/1.1",
     "last_changed": "2017-08-08"
   },
@@ -530,6 +569,11 @@
   {
     "pattern": "httpget",
     "last_changed": "2017-08-08"
+  },
+  {
+    "pattern": "httpx",
+    "last_changed": "2021-11-23",
+    "url": "https://github.com/projectdiscovery/httpx"
   },
   {
     "pattern": "httrack",
@@ -554,6 +598,12 @@
   {
     "pattern": "Indy Library",
     "last_changed": "2017-08-08"
+  },
+  {
+    "pattern": "insomnia",
+    "last_changed": "2022-05-04",
+    "description": "The open-source, cross-platform API client for GraphQL, REST, and gRPC.",
+    "url": "https://github.com/Kong/insomnia"
   },
   {
     "pattern": "^integrity\\/\\d",
@@ -590,6 +640,12 @@
   {
     "pattern": "jobo",
     "last_changed": "2017-08-08"
+  },
+  {
+    "pattern": "Koha",
+    "last_changed": "2021-12-29",
+    "description": "Scan all URLs found in of Koha records and displays if resources are available or not.",
+    "url": "https://wiki.koha-community.org/wiki/Check-url_enhancements"
   },
   {
     "pattern": "kyluka",
@@ -678,6 +734,11 @@
     "last_changed": "2018-12-13"
   },
   {
+    "pattern": "MaCoCu",
+    "last_changed": "2021-11-23",
+    "url": "https://www.clarin.si/info/macocu-massive-collection-and-curation-of-monolingual-and-bilingual-data/"
+  },
+  {
     "pattern": "mail\\.ru",
     "url": "https://help.mail.ru/webmaster/indexing/robots.txt/rules/user-agent",
     "last_changed": "2017-08-08"
@@ -693,6 +754,12 @@
   {
     "pattern": "megite",
     "last_changed": "2017-08-08"
+  },
+  {
+    "pattern": "MetaInspector",
+    "last_changed": "2022-05-04",
+    "description": "Ruby gem for web scraping purposes.",
+    "url": "https://github.com/metainspector/metainspector"
   },
   {
     "pattern": "MetaURI[\\+\\s]API\\/\\d\\.\\d",
@@ -759,6 +826,14 @@
     "last_changed": "2017-08-08"
   },
   {
+    "pattern": "^Mozilla\\/5\\.0(\\s|\\+)\\(compatible;\\s\\+centuryb\\.o\\.t9\\[at\\]gmail\\.com\\)$",
+    "last_changed": "2024-04-22"
+  },
+  {
+    "pattern": "^Mozilla\\/5\\.0(\\s|\\+)\\(compatible;\\sVelenPublicWebCrawler\\/1\\.0;\\s\\+https:\\/\\/velen\\.io\\)$",
+    "last_changed": "2024-04-22"
+  },
+  {
     "pattern": "^Mozilla\\/5\\.0\\+like\\+Gecko$",
     "last_changed": "2017-08-08"
   },
@@ -793,6 +868,12 @@
   {
     "pattern": "netluchs",
     "last_changed": "2017-08-08"
+  },
+  {
+    "pattern": "nettle",
+    "last_changed": "2022-04-27",
+    "description": "AI company, doing natural language processing.",
+    "url": "https://www.nettle.sk"
   },
   {
     "pattern": "newspaper\\/\\d",
@@ -944,6 +1025,12 @@
     "last_changed": "2017-08-08"
   },
   {
+    "pattern": "RestSharp",
+    "last_changed": "2022-05-04",
+    "description": "Simple REST and HTTP API Client for .NET",
+    "url": "https://github.com/restsharp/RestSharp"
+  },
+  {
     "pattern": "Riddler",
     "last_changed": "2018-02-15",
     "description": "Riddler is an online research project which investigates algorithms for mapping the topology of the Internet. Riddler bot scrapes data about public systems to use in its projects.",
@@ -989,6 +1076,10 @@
   {
     "pattern": "SearchBloxIntra",
     "last_changed": "2017-08-08"
+  },
+  {
+    "pattern": "sfFeedReader\\/0\\.9",
+    "last_changed": "2024-04-22"
   },
   {
     "pattern": "shoutcast",
@@ -1057,8 +1148,8 @@
     "last_changed": "2017-08-08"
   },
   {
-    "pattern": "The\\+Knowledge\\+AI",
-    "last_changed": "2018-09-05",
+    "pattern": "The[\\+\\s]Knowledge[\\+\\s]AI",
+    "last_changed": "2021-11-23",
     "url": "https://www.webmasterworld.com/search_engine_spiders/4896765.htm"
   },
   {
@@ -1262,6 +1353,17 @@
     "pattern": "Yeti\\/\\d",
     "last_changed": "2019-02-12",
     "url": "http://naver.me/spd"
+  },
+  {
+    "pattern": "Zabbix",
+    "last_changed": "2021-11-23",
+    "url": "https://github.com/zabbix/zabbix"
+  },
+  {
+    "pattern": "ZoteroTranslationServer",
+    "last_changed": "2022-03-04",
+    "description": "A Node.js-based server to run Zotero translators",
+    "url": "https://github.com/zotero/translation-server"
   },
   {
     "pattern": "zeus",
