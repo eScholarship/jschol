@@ -509,6 +509,9 @@ def getSeriesLandingPageData(unit, q)
 
   response[:series] = children ? (children.select { |u| u.unit.type == 'series' } + 
     children.select { |u| u.unit.type == 'monograph_series' }).map { |u| seriesPreview(u) } : []
+
+  # Suggest Ruby that it is safe to garbage collect
+  # This doesn't gaurantee garbage collection 
   GC.start
   return response
 end
