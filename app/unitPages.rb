@@ -509,6 +509,7 @@ def getSeriesLandingPageData(unit, q)
 
   response[:series] = children ? (children.select { |u| u.unit.type == 'series' } + 
     children.select { |u| u.unit.type == 'monograph_series' }).map { |u| seriesPreview(u) } : []
+  GC.start
   return response
 end
 
