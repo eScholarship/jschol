@@ -9,7 +9,6 @@ backstop_data/
 bin/
 .bundle/
 cache/
-config/
 db_backup/
 dist
 gems/
