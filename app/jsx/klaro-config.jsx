@@ -110,14 +110,16 @@ const klaroConfig = {
           consentNotice: {
             description: 'eScholarship uses cookies to ensure you have the best experience on our website. ' + 
             'You can manage which cookies you want us to use. Our <a href=https://cdlib.org/about/policies-and-guidelines/privacy-statement/ target=_blank>Privacy Statement</a> includes more details ' + 
-            'on the cookies we use and how we protect your privacy.',
+            'on the <a href="https://cdlib.org/about/policies-and-guidelines/privacy-policy/#cookie-notice" target="_blank">cookies we use</a> and how we protect your privacy.',
           },
           consentModal: {
               description:
                   'eScholarship uses cookies to ensure you have the best experience on our website. ' + 
                   'You can manage which cookies you want us to use. Our <a href=https://cdlib.org/about/policies-and-guidelines/privacy-statement/ target=_blank>Privacy Statement</a> includes more details ' + 
-                  'on the cookies we use and how we protect your privacy.',
+                  'on the <a href="https://cdlib.org/about/policies-and-guidelines/privacy-policy/#cookie-notice" target="_blank">cookies we use</a> and how we protect your privacy.',
           },
+          decline: "Allow only necessary cookies",
+          ok: "Allow all cookies",
           purposes: {
               analytics: {
                   title: 'Analytics'
