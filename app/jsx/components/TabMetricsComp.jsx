@@ -186,6 +186,10 @@ class TabMetricsComp extends React.Component {
           <div className="c-tabcontent__divide2x-child">
             <TotalUsage usage={this.props.usage} />
             <MonthlyUsage usage={this.props.usage} />
+
+            <div className="o-well-colored">
+	     Disclaimer: due to the evolving nature of the web traffic we receive and the methods we use to collate it, the data presented here should be considered approximate and subject to revision.
+            </div>
           </div>
         :
           <div className="c-tabcontent__divide2x-child">
