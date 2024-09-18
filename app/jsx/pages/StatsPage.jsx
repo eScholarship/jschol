@@ -111,8 +111,7 @@ class StatsFooter extends React.Component {
       }
       <div className="c-statsReport-disclaimer">
         <hr/>
-        Disclaimer: due to the evolving nature of the web traffic we receive and the methods we use to collate it,
-        the data presented here should be considered approximate and subject to revision.
+        Note: Due to the evolving nature of the web traffic, the data presented here should be considered approximate and subject to revision. <a href="https://help.escholarship.org/support/solutions/folders/9000181583"> Learn more.</a>
       </div>
     </div>
 }
