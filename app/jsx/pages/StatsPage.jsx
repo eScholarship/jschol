@@ -109,7 +109,7 @@ class StatsFooter extends React.Component {
           </div>
         </div>
       }
-      <div>
+      <div className="c-statsReport-disclaimer">
         <hr/>
         Note: Due to the evolving nature of the web traffic, the data presented here should be considered approximate and subject to revision.&nbsp;<a href="https://help.escholarship.org/support/solutions/folders/9000181583">Learn more.</a>
       </div>
