@@ -187,7 +187,7 @@ class TabMetricsComp extends React.Component {
             <TotalUsage usage={this.props.usage} />
             <MonthlyUsage usage={this.props.usage} />
             <div className="o-well-colored">
-	     Note: Due to the evolving nature of the web traffic, the data presented here should be considered approximate and subject to revision.&nbsp;<a href="https://help.escholarship.org/support/solutions/folders/9000181583">Learn more</a>.
+	     Note: Due to the evolving nature of web traffic, the data presented here should be considered approximate and subject to revision.&nbsp;<a href="https://help.escholarship.org/support/solutions/folders/9000181583">Learn more</a>.
             </div>
           </div>
         :
