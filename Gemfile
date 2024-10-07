@@ -35,3 +35,4 @@ gem 'test-unit'           # test/quick.rb
 gem 'unindent'            # remove indentation from lines of a string
 gem 'vmstat'              # for determining machine's RAM size to work around mem leak
 gem 'xml-sitemap'         # generate Google sitemap
+gem 'ezid-client'
