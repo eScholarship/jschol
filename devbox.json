@@ -23,7 +23,7 @@
     ],
     "scripts": {
       "test": [
-        "bundle exec rubocop && npx eslint . && ruby tools/maybeSocks.rb && ruby test/quick.rb"
+        "bundle exec rubocop && npx eslint . && ruby util/maybeSocks.rb && ruby test/quick.rb"
       ]
     }
   }

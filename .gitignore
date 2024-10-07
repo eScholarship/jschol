@@ -49,3 +49,5 @@ config/puma.rb
 dev/puma.rb
 .envrc
 old/
+Gemfile.lock
+
