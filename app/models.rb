@@ -1,27 +1,3 @@
-###################################################################################################
-# Monkey-patch to add create_or_update functionality, which is strangely absent in the Sequel gem.
-class Sequel::Model
-  def self.create_or_update(id, **data)
-    record = self[id]
-    if record
-      record.update(**data)
-    else
-      data[@primary_key] = id
-      self.create(**data)
-    end
-  end
-
-  def create_or_update
-    record = self.class[pk]
-    if record
-      data = {}
-      keys.each { |k| k == self.class.primary_key or data[k] = self[k] }
-      record.update(**data)
-    else
-      save
-    end
-  end
-end
 
 ###################################################################################################
 # Model classes for easy object-relational mapping in the database.

@@ -262,7 +262,7 @@ end
 #
 # https://docs.google.com/drawings/d/1gCi8l7qteyy06nR5Ol2vCknh9Juo-0j91VGGyeWbXqI/edit
 puts "Populating db models."
-require_relative '../tools/models.rb'
+require_relative 'models'
 
 # DbCache uses the models above.
 require_relative 'dbCache'

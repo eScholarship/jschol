@@ -10,7 +10,7 @@ gem 'escape_utils'        # for warding away evil strings
 gem 'fastimage'           # for determining dimensions of image files
 gem 'htmlentities'        # for decoding HTML entites
 gem 'httparty'            # for fetching URLs easily
-gem 'json','>= 2.6.2'     # safely and quickly parsing and generating JSON data
+gem 'json'                # safely and quickly parsing and generating JSON data
 gem 'maxminddb-geolite2-city'  # for translating IP to city; note: updates stop in April
 gem 'mail'                # for sending mass emails (e.g. stats)
 gem 'mimemagic'           # for guessing mime types during conversion
