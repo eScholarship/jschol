@@ -12,6 +12,7 @@ rm -rf gems bin Gemfile.lock
 mkdir bin
 bundle config --local set path gems
 bundle install
+bundle lock --add-platform x86_64-linux
 bundle binstubs --all
 
 printf "\n== Installing node packages (used by gulp and iso via Node) ==\n"
