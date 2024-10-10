@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #app="$(/opt/elasticbeanstalk/bin/get-config container -k app_staging_dir)";
-app = "/var/app/staging"
+app="/var/app/staging"
 # install node 20 (and npm that comes with it)
 echo "Trying to install node20.";
 curl --silent --location https://rpm.nodesource.com/setup_20.x | grep -v sleep | bash -;
