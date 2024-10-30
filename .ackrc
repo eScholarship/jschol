@@ -1,0 +1,9 @@
+--ignore-dir=old
+--ignore-dir=app/js
+--ignore-file=ext:svg
+--ignore-dir=splash/downloaded
+--ignore-dir=splash/WEB-INF
+--ignore-dir=gems
+--ignore-dir=bin
+--ignore-dir=backstop-data/engine_scripts
+--ignore-file=ext:lock

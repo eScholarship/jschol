@@ -192,39 +192,54 @@ class AccessLogger
 
   FORMAT = %{%s - %s [%s] "%s %s%s %s" %d %s %0.4f %s %s\n}
 
-  def initialize(app, logger=nil)
+  # +logger+ can be any object that supports the +write+ or +<<+ methods,
+  # which includes the standard library Logger.  These methods are called
+  # with a single string argument, the log message.
+  # If +logger+ is nil, CommonLogger will fall back <tt>env['rack.errors']</tt>.
+  def initialize(app, logger = nil)
     @app = app
     @logger = logger
   end
 
+  # Log all requests in common_log format after a response has been
+  # returned.  Note that if the app raises an exception, the request
+  # will not be logged, so if exception handling middleware are used,
+  # they should be loaded after this middleware.  Additionally, because
+  # the logging happens after the request body has been fully sent, any
+  # exceptions raised during the sending of the response body will
+  # cause the request not to be logged.
   def call(env)
     began_at = Rack::Utils.clock_time
-    status, header, body = @app.call(env)
-    header = Rack::Utils::HeaderHash.new(header)
-    body = Rack::BodyProxy.new(body) { log(env, status, header, began_at) }
-    [status, header, body]
+    status, headers, body = response = @app.call(env)
+
+    response[2] = Rack::BodyProxy.new(body) { log(env, status, headers, began_at) }
+    response
   end
 
   private
 
-  def log(env, status, header, began_at)
-    length = extract_content_length(header)
+  # Log the request to the configured logger.
+  def log(env, status, response_headers, began_at)
+    request = Rack::Request.new(env)
+    length = extract_content_length(response_headers)
 
-    msg = FORMAT % [
-      env['HTTP_X_FORWARDED_FOR'] || env["REMOTE_ADDR"] || "-",
-      env["REMOTE_USER"] || "-",
+    msg = sprintf(FORMAT,
+      request.get_header('HTTP_X_FORWARDED_FOR') || request.get_header("REMOTE_ADDR") || request.ip || "-",
+      request.get_header("REMOTE_USER") || "-",
       Time.now.strftime("%d/%b/%Y:%H:%M:%S %z"),
-      env[Rack::REQUEST_METHOD],
-      env[Rack::PATH_INFO],
-      env[Rack::QUERY_STRING].empty? ? "" : "?#{env[Rack::QUERY_STRING]}",
-      env[Rack::HTTP_VERSION],
+      request.request_method,
+      request.path_info,
+      request.query_string.empty? ? "" : "?#{request.query_string}",
+      request.get_header(Rack::SERVER_PROTOCOL),
       status.to_s[0..3],
       length,
       Rack::Utils.clock_time - began_at,
-      extract_referer(env, header),  # added
-      extract_trace(env, header) ]   # added
+      extract_referer(env, response_headers),  # added
+      extract_trace(env, response_headers))   # added
 
-    logger = @logger || env[Rack::RACK_ERRORS]
+    msg.gsub!(/[^[:print:]\n]/) { |c| sprintf("\\x%x", c.ord) }
+
+    logger = @logger || request.get_header(RACK_ERRORS)
     # Standard library logger doesn't support write but it supports << which actually
     # calls to write on the log device without formatting
     if logger.respond_to?(:write)
@@ -234,9 +249,11 @@ class AccessLogger
     end
   end
 
+  # Attempt to determine the content length for the response to
+  # include it in the logged data.
   def extract_content_length(headers)
-    value = headers[Rack::CONTENT_LENGTH] or return '-'
-    value.to_s == '0' ? '-' : value
+    value = headers[Rack::CONTENT_LENGTH]
+    !value || value.to_s == '0' ? '-' : value
   end
 
   def extract_referer(env, headers)
@@ -262,7 +279,7 @@ end
 #
 # https://docs.google.com/drawings/d/1gCi8l7qteyy06nR5Ol2vCknh9Juo-0j91VGGyeWbXqI/edit
 puts "Populating db models."
-require_relative '../tools/models.rb'
+require_relative 'models'
 
 # DbCache uses the models above.
 require_relative 'dbCache'

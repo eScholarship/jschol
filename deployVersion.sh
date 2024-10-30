@@ -13,8 +13,8 @@ set -o errexit   ## set -e : exit the script if any statement returns a non-true
 # Validate required commands 
 command -v aws >/dev/null 2>&1 || { echo >&2 "AWS CLI not found."; exit 1; } 
 command -v git >/dev/null 2>&1 || { echo >&2 "Git not found."; exit 1; } 
-command -v node >/dev/null 2>&1 || { echo >&2 "Node.js not found."; exit 1; } 
-command -v npm >/dev/null 2>&1 || { echo >&2 "npm not found."; exit 1; } 
+command -v node-20 >/dev/null 2>&1 || { echo >&2 "node-20 not found."; exit 1; } 
+command -v npm-20 >/dev/null 2>&1 || { echo >&2 "npm-20 not found."; exit 1; } 
 command -v jq >/dev/null 2>&1 || { echo >&2 "jq not found."; exit 1; } 
 
 # Validate AWS credentials 
@@ -23,12 +23,12 @@ if ! aws sts get-caller-identity > /dev/null 2>&1; then
 	exit 1 
 fi
 
-# Validate Node version is 18
-NODE_VERSION=$(node -v | awk -F'v' '{print $2}' | awk -F'.' '{print $1}')
+# Validate Node version is 20
+NODE_VERSION=$(node-20 -v | awk -F'v' '{print $2}' | awk -F'.' '{print $1}')
 
-# if NODE_VERSION is not equal to 18, exit
-if [[ $NODE_VERSION != 18 ]]; then
-  echo "Node version 18 is required."
+# if NODE_VERSION is not equal to 20, exit
+if [[ $NODE_VERSION != 20 ]]; then
+  echo "Node version 20 is required."
   exit 1
 fi
 
@@ -85,7 +85,7 @@ fi
 
 # Make sure we have the right packages.
 if [ -d node_modules.full ]; then mv node_modules.full node_modules; fi
-npm install
+npm-20 install
 
 # Pretranslate all the CSS
 echo "Building app."
@@ -104,7 +104,7 @@ mkdir -p dist
 ZIP="$DIR-$VERSION.zip"
 git ls-files -x app | xargs zip -ry dist/$ZIP   # picks up mods in working dir, unlike 'git archive'
 mv node_modules node_modules.full
-npm install --production
+npm-20 install --production
 zip -r dist/$ZIP app/js app/css node_modules
 rm -rf node_modules
 mv node_modules.full node_modules

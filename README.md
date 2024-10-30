@@ -171,3 +171,14 @@ Merging everything from master to prd branch
 --------------------------------------------
 
 * `git checkout master && git pull origin master && git checkout prd && git pull origin prd && git merge master && git push origin prd && git checkout master`
+
+Migrating beanstalk to new platform
+-----------------------------------
+
+* `brew install awsebcli`
+* `mkdir eb-migrate && cd eb-migrate`
+* `eb config save eb-pub-jschol2-dev`
+* `cp .elasticbeanstalk/saved_configs/eb-pub-jschol2-dev-sc.cfg.yml .elasticbeanstalk/saved_configs/eb-pub-jschol3-dev-sc.cfg.yml`
+* edit `.elasticbeanstalk/saved_configs/eb-pub-jschol3-dev-sc.cfg.yml`
+    ** change `PlatformArn: arn:aws:elasticbeanstalk:us-west-2::platform/Ruby 3.2 running on 64bit Amazon Linux 2023/4.0.13`
+* `eb create eb-pub-jschol3-dev --cfg eb-pub-jschol3-dev-sc --sample`

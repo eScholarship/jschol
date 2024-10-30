@@ -1,8 +1,8 @@
 {
   "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.12.0/.schema/devbox.schema.json",
   "packages": {
-    "ruby":    "3.0",
-    "nodejs":  "18.19.1",
+    "ruby":    "3.2.2",
+    "nodejs":  "20.12.2",
     "mysql-client": "latest",
     "openssl": {
       "version": "latest",
@@ -23,7 +23,7 @@
     ],
     "scripts": {
       "test": [
-        "bundle exec rubocop && npx eslint . && ruby tools/maybeSocks.rb && ruby test/quick.rb"
+        "bundle exec rubocop && npx eslint . && ruby util/maybeSocks.rb && ruby test/quick.rb"
       ]
     }
   }

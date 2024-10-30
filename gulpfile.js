@@ -133,7 +133,7 @@ gulp.task('livereload', function(done) {
 });
 
 gulp.task('maybe-socks', function(done) {
-  var socksProc = spawn('ruby', ['tools/maybeSocks.rb'], { stdio: 'inherit' })
+  var socksProc = spawn('ruby', ['util/maybeSocks.rb'], { stdio: 'inherit' })
   done()
 });
 

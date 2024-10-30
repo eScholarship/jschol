@@ -48,3 +48,5 @@ local.env
 config/puma.rb
 dev/puma.rb
 .envrc
+old/
+eb-*/

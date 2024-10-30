@@ -10,7 +10,7 @@ gem 'escape_utils'        # for warding away evil strings
 gem 'fastimage'           # for determining dimensions of image files
 gem 'htmlentities'        # for decoding HTML entites
 gem 'httparty'            # for fetching URLs easily
-gem 'json','>= 2.6.2'     # safely and quickly parsing and generating JSON data
+gem 'json'                # safely and quickly parsing and generating JSON data
 gem 'maxminddb-geolite2-city'  # for translating IP to city; note: updates stop in April
 gem 'mail'                # for sending mass emails (e.g. stats)
 gem 'mimemagic'           # for guessing mime types during conversion
@@ -35,3 +35,4 @@ gem 'test-unit'           # test/quick.rb
 gem 'unindent'            # remove indentation from lines of a string
 gem 'vmstat'              # for determining machine's RAM size to work around mem leak
 gem 'xml-sitemap'         # generate Google sitemap
+gem 'ezid-client'

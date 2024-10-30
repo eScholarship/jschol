@@ -26,6 +26,34 @@ import LogoutPage from './pages/LogoutPage.jsx'
 import LogoutSuccessPage from './pages/LogoutSuccessPage.jsx'
 import UserAccountPage from './pages/UserAccountPage.jsx'
 
+/* There are a bunch of React warnings that we can't do anything about because they're
+   caused by dependencies we can't easily upgrade. Rather than have them occupying our
+   eyes all the time, filter them out until/if we actually need to upgrade.
+*/
+let anyFiltered = false
+function filterMsg(originalFunc, ...args) {
+  if (/componentWillMount has been renamed/.test(args[0]) ||
+      /A future version of React will block javascript: URLs/.test(args[0]) ||
+      /Failed prop type/.test(args[0]) ||
+      /componentWillReceiveProps has been renamed/.test(args[0]) ||
+      /useLayoutEffect does nothing on the server/.test(args[0]) ||
+      /Prop .* did not match.*dangerouslySetInnerHTML/s.test(args.toString()) ||
+      /Expected server HTML to contain a matching.*MathJax/s.test(args.toString()))
+  {
+    if (!anyFiltered)
+      o_warn("Note: jschol react warning(s) filtered out. Disable filtering if upgrading.")
+    anyFiltered = true
+  }
+  else
+    originalFunc.apply(console, args)
+}
+
+const o_warn  = console.warn;  console.warn  = function(...args) { filterMsg(o_warn, ...args)  }
+const o_log   = console.log;   console.log   = function(...args) { filterMsg(o_log, ...args)   }
+const o_debug = console.debug; console.debug = function(...args) { filterMsg(o_debug, ...args) }
+const o_error = console.error; console.error = function(...args) { filterMsg(o_error, ...args) }
+const o_info  = console.info;  console.info  = function(...args) { filterMsg(o_info, ...args)  }
+
 // array-include polyfill for older browsers (and node.js)
 Array.prototype.includes = require('array-includes').shim()
 

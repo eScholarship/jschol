@@ -32,7 +32,7 @@ services:
     build_as_root:
       - apt-get update -qq && apt-get install -y apt-transport-https && apt-get install glibc-source
       - apt-get install -y phantomjs vim net-tools
-      - curl -sL https://deb.nodesource.com/setup_18.x | grep -v sleep | bash -
+      - curl -sL https://deb.nodesource.com/setup_20.x | grep -v sleep | bash -
       - curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
       - echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
       - apt-get update -qq
@@ -89,7 +89,7 @@ tooling:
     description: Runs gem commands on the Lando Jschol appserver
   just-test:
     service: appserver
-    cmd: ruby tools/maybeSocks.rb && ruby test/quick.rb
+    cmd: ruby util/maybeSocks.rb && ruby test/quick.rb
     description: Runs the quicktest suite on the Lando Jschol appserver
     env:
       SCHEME: http
@@ -100,7 +100,7 @@ tooling:
     description: Runs irb on the Jschol appserver (for some good REPL fun)
   deploy:
     service: appserver
-    cmd: ruby tools/maybeSocks.rb && /app/deployVersion.sh
+    cmd: ruby util/maybeSocks.rb && /app/deployVersion.sh
     description: Runs the deployment script to deploy to Elastic Beanstalk
   promote:
     service: appserver
@@ -125,7 +125,7 @@ tooling:
     description: Watches eb-pub-jschol2-prd aws environment details for updates.
   test:
     service: appserver
-    cmd: bundle exec rubocop && npx eslint . && ruby tools/maybeSocks.rb && ruby test/quick.rb
+    cmd: bundle exec rubocop && npx eslint . && ruby util/maybeSocks.rb && ruby test/quick.rb
     description: Runs the quicktest suite on the Lando Jschol appserver
     env:
       SCHEME: http
@@ -141,7 +141,7 @@ tooling:
   socks:
     service: appserver
     cmd:
-      - ruby tools/maybeSocks.rb && echo "==> running netstat -tunl to confirm SOCKS_PORT is open <==" && netstat -tunl | grep ${SOCKS_PORT}
+      - ruby util/maybeSocks.rb && echo "==> running netstat -tunl to confirm SOCKS_PORT is open <==" && netstat -tunl | grep ${SOCKS_PORT}
     description: Sets the socks proxy tunnel back up, if you have been too idle
   ssh-fix:
     service: appserver
