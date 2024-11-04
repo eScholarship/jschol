@@ -858,7 +858,7 @@ def translateRights(oldRights)
     when "cc4"; "https://creativecommons.org/licenses/by-nc/4.0/"
     when "cc5"; "https://creativecommons.org/licenses/by-nc-sa/4.0/"
     when "cc6"; "https://creativecommons.org/licenses/by-nc-nd/4.0/"
-    when "cc7"; "https://creativecommons.org/publicdomain/zero/1.0/"
+    when "cc0"; "https://creativecommons.org/publicdomain/zero/1.0/"
     when nil, "public"; nil
     else puts "Unknown rights value #{oldRights.inspect}"; nil
   end
