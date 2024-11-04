@@ -858,6 +858,7 @@ def translateRights(oldRights)
     when "cc4"; "https://creativecommons.org/licenses/by-nc/4.0/"
     when "cc5"; "https://creativecommons.org/licenses/by-nc-sa/4.0/"
     when "cc6"; "https://creativecommons.org/licenses/by-nc-nd/4.0/"
+    when "cc7"; "https://creativecommons.org/publicdomain/zero/1.0/"
     when nil, "public"; nil
     else puts "Unknown rights value #{oldRights.inspect}"; nil
   end
@@ -866,9 +867,13 @@ end
 ###################################################################################################
 def rightsURLToCode(rights)
   rights.nil? and return ""
-  rights =~ %r{^https://creativecommons.org/licenses/(by|by-nc|by-nc-nd|by-nc-sa|by-nd|by-sa)/(\d.\d)/$} or raise
-  kind, ver = $1, $2
-  return "CC #{kind.upcase}"  # e.g. "CC BY-NC"
+  if rights == "https://creativecommons.org/publicdomain/zero/1.0/"
+    return "CC 0"
+  else
+    rights =~ %r{^https://creativecommons.org/licenses/(by|by-nc|by-nc-nd|by-nc-sa|by-nd|by-sa)/(\d.\d)/$} or raise
+    kind, ver = $1, $2
+    return "CC #{kind.upcase}"  # e.g. "CC BY-NC"
+  end
 end
 
 ###################################################################################################
