@@ -13,16 +13,33 @@ class RightsComp extends React.Component {
   }
 
   render() {
-    let r = this.props.rights,
+    if (this.props.rights.includes("publicdomain"))
+    {
+      let r = this.props.rights,
+        size = this.props.size,
+        m = r.match(/^https:\/\/creativecommons.org\/publicdomain\/zero\/(\d\.\d)\/$/),
+        kind = "zero",
+        ver = m[1]
+      return (
+      <a href={r} className={this.props.classname ? this.props.classname : "c-publocation__license"}>
+        <LazyImageComp src={MEDIA_PATH+`cc-${kind}-${size}.svg`} alt={`Creative Commons CC0 public domain dedication, version ${ver}.`} />
+      </a>
+      )
+    }
+    else
+    {
+      let r = this.props.rights,
         size = this.props.size,
         m = r.match(/^https:\/\/creativecommons.org\/licenses\/(by|by-nc|by-nc-nd|by-nc-sa|by-nd|by-sa)\/(\d\.\d)\/$/),
         kind = m[1],
         ver = m[2]
-    return (
+      return (
       <a href={r} className={this.props.classname ? this.props.classname : "c-publocation__license"}>
         <LazyImageComp src={MEDIA_PATH+`cc-${kind}-${size}.svg`} alt={`Creative Commons '${kind.toUpperCase()}' version ${ver} license`} />
       </a>
-    )
+      )
+    }	  
+
   }
 }
 
