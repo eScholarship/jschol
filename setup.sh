@@ -10,7 +10,7 @@ set -x
 printf "== Installing local Ruby gems ==\n"
 rm -rf gems bin Gemfile.lock
 mkdir bin
-bundle config --local set path gems
+bundle config path gems --local
 bundle install
 bundle binstubs --all
 
