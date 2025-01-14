@@ -31,3 +31,4 @@ tmp/
 local.env
 .lando.local.yml
 .envrc
+venv/

@@ -686,7 +686,7 @@ def generatePdfTOC(itemID)
     File.exist?(pdfPath) or return nil
 
     # The 'mutool' command from mupdf does a nice job of extracting the 'outline' (TOC) of a PDF
-    outline = checkOutput(['/apps/eschol/bin/mutool', 'show', pdfPath, 'outline'], false).split("\n")
+    outline = checkOutput(['/apps/eschol/jschol/tocExtract/get-pdf-toc.py', pdfPath], false).split("\n")
     outline.empty? and return nil
 
     # Combine split lines, and parse the results
