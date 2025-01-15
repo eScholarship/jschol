@@ -1,0 +1,70 @@
+// ##### Notification Component ##### //
+%c-notification {
+  @extend %u-page-bleed;
+  display: grid;
+  align-items: center;
+  margin-top: (-$spacing-sm);
+  margin-bottom: $spacing-sm;
+  padding-right: $spacing-sm;
+  padding-left: $spacing-sm;
+  transition-duration: 0.5s;
+  transition-property: max-height, padding-top, padding-bottom, opacity;
+  background-color: $color-teal;
+  overflow: hidden;
+  grid-template-columns: 1fr auto;
+  grid-column-gap: $spacing-md;
+}
+.c-notification {
+  @extend %c-notification;
+  height: auto;
+  max-height: 7em; // allows no more than about 2 lines of text at small screen within more-info <div>
+  padding-top: $spacing-sm;
+  padding-bottom: $spacing-sm;
+  opacity: 1;
+}
+.c-notification--close {
+  @extend %c-notification;
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  opacity: 0;
+}
+.c-notification__main-text {
+  color: $color-white;
+  font-size: 1.2em;
+  font-weight: bold;
+  text-align: center;
+  @include bp(screen1) {
+    font-size: 1.3em;
+    word-spacing: 0.25em;
+  a {
+    color: white;
+    text-decoration: none;
+    &:hover {
+      color: white;
+      text-decoration: underline;
+    }
+    &:active {
+      color: white;
+      text-decoration: underline;
+    }
+    &:visited {
+      color: white;
+    }
+  }
+  }
+}
+.c-notification__more-info {
+  font-size: 1.1em;
+  grid-column: 1 / 3;
+  grid-row: 2 / 3;
+  &:not(:empty) {
+    margin-top: $spacing-sm;
+  }
+}
+.c-notification__button {
+  padding: 0.3em 0.5em 0.3em 1.8em;
+  border: 1px solid $color-light-gray;
+  border-radius: $round-corner;
+  background: $color-white inline('../images/icon_close.svg') no-repeat left 0.5em center / 0.9em;
+}

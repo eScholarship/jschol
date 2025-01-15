@@ -8,6 +8,7 @@ import PropTypes from 'prop-types'
 import { Link } from 'react-router-dom'
 import Search1Comp from '../components/Search1Comp.jsx'
 import Search2Comp from '../components/Search2Comp.jsx'
+import NotificationComp from '../components/NotificationComp.jsx'
 import Breakpoints from '../../js/breakpoints.json'
 import AdminBarComp from '../components/AdminBarComp.jsx'
 import MEDIA_PATH from '../../js/MediaPath.js'
@@ -54,6 +55,7 @@ class HeaderComp2 extends React.Component {
           </div>
           <button className="c-header__search-open-button" aria-label="open search field" onClick = {()=> this.setState({searchActive: true})}></button>
         </header>
+        <NotificationComp/>
       </div>
     )
   }
