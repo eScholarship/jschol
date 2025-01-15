@@ -26,8 +26,8 @@ class HeaderComp1 extends React.Component {
         </div>
         <button className="c-header__search-open-button" aria-label="open search field" onClick = {()=> this.setState({searchActive: true})}></button>
       </header>
+      <NotificationComp/>
     </div>
-    <NotificationComp/>
     )
   }
 }
