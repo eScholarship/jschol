@@ -8,7 +8,7 @@ class NotificationComp extends React.Component {
   render() {
     return (
       <div className={this.state.messageClose ? "c-notification--close" : "c-notification"} role="alert" hidden={this.state.messageClose ? true : false}>
-        <strong className="c-notification__main-text">Notice: eScholarship will be read only for scheduled maintenance from Tuesday, January 21 to Wednesday, January 22.<a href="">Learn more at eScholarship Support.</a></strong>
+        <strong className="c-notification__main-text">Notice: eScholarship will be read-only for scheduled maintenance from Tuesday, January 21 to Wednesday, January 22. <a href="https://help.escholarship.org/support/discussions/topics/9000062987">Learn more at eScholarship Support.</a></strong>
       </div>
     )
   }
