@@ -88,7 +88,7 @@ const klaroConfig = {
 
   HJP: in React, this link does not work, so we hide it
   */
-  hideLearnMore: false,
+  hideLearnMore: true,
 
   /*
   You can overwrite existing translations and add translations for your service
@@ -108,8 +108,8 @@ const klaroConfig = {
       en: {
           privacyPolicyUrl: 'https://cdlib.org/about/policies-and-guidelines/privacy-statement/',
           consentNotice: {
-            description: 'eScholarship uses cookies to ensure you have the best experience on our website. ' + 
-            'You can manage which cookies you want us to use. Our <a href=https://cdlib.org/about/policies-and-guidelines/privacy-statement/ target=_blank>Privacy Statement</a> includes more details ' + 
+            description: '<h3>Cookie Settings</h3>' + 'eScholarship uses cookies to ensure you have the best experience on our website. ' + 
+            'You can manage which cookies you want us to use.' + '<br></br>' + 'Our <a href=https://cdlib.org/about/policies-and-guidelines/privacy-statement/ target=_blank>Privacy Statement</a> includes more details ' + 
             'on the <a href="https://cdlib.org/about/policies-and-guidelines/privacy-policy/#cookie-notice" target="_blank">cookies we use</a> and how we protect your privacy.',
           },
           consentModal: {

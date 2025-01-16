@@ -1,0 +1,90 @@
+/* main container */
+.klaro {
+    .cookie-notice:not(.cookie-modal-notice) {
+      padding: 2px;
+      background-color: #002033 !important;
+      box-sizing: border-box;
+      box-shadow: 5px 5px 5px 0px rgba(0, 0, 0, 0.2);
+    }
+  
+    .cookie-notice {
+      font-size: 16px;
+    }
+  
+    /* remove the parent flex properties so we can more easily style the btn container */
+    .cn-ok {
+      display: block !important;
+    }
+  
+    .cn-buttons {
+      display: flex !important;
+      justify-content: center !important;
+      margin-block-start: 1.5rem !important;
+      gap: clamp(1rem, 3vw, 2rem);
+    }
+  
+    /* btn hover */
+    .cookie-notice {
+      .cm-btn {
+        &:hover {
+          box-sizing: border-box;
+          text-decoration: underline;
+        }
+      }
+    }
+  
+    .cookie-notice .cm-btn {
+      padding: .8em !important;
+      box-sizing: border-box;
+      flex-basis: 50%;
+      max-inline-size: 15rem;
+    }
+  
+    /* 'allow all' btn */
+    .cookie-notice .cm-btn.cm-btn-success {
+      background-color: #ffb511 !important;
+      color: #000;
+    }
+  
+    /* 'allow only necessary' btn */
+    .cookie-notice .cm-btn.cm-btn-danger {
+      background-color: rgba(255, 255, 255, 0) !important;
+      border: 1px solid #fff !important;
+    }
+  
+    #id-cookie-notice a {
+      text-decoration: underline;
+      color: rgb(0, 186, 219);
+    }
+  }
+  
+  @media (max-width: 1366px) {
+    .klaro .cookie-notice:not(.cookie-modal-notice) {
+      max-width: 600px !important;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .klaro .cookie-notice:not(.cookie-modal-notice) {
+      max-width: 100vw !important;
+    }
+  }
+  
+  @media (max-width: 400px) {
+    .klaro .cookie-notice:not(.cookie-modal-notice) {
+      .cn-body {
+        .cn-ok {
+          justify-content: left !important;
+        }
+  
+        .cn-buttons {
+          display: flex !important;
+        }
+      }
+  
+      .cookie-notice .cm-btn {
+        padding: .4em !important;
+      }
+    }
+  }
+  
