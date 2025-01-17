@@ -66,12 +66,14 @@
     position: relative;
     margin: 0 $spacing-sm 0 0;
     transform: translateX(0%);
+    overflow: visible !important;
   }
 
 }
 
 .c-header__search {
   @extend %c-header__search;
+  overflow: hidden;
 }
 
 .c-header__search--active {

@@ -12,7 +12,7 @@ import ReactDOM from 'react-dom'
 import { BrowserRouter, Route, Switch } from 'react-router-dom'
 import ReactGA from 'react-ga'
 import ReactModal from 'react-modal'
-
+import klaroConfig from './klaro-config.jsx';
 import HomePage from './pages/HomePage.jsx'
 import BrowsePage from './pages/BrowsePage.jsx'
 import ItemPage from './pages/ItemPage.jsx'
@@ -63,6 +63,26 @@ let prevPathname = null
 
 class RecordLocation extends React.Component
 {
+  // Use Klaro to manage cookie consent
+  componentDidMount() {
+    // Check if window is defined to ensure the Klaro code runs in a browser
+    // environment (not ISO/server side rendering)
+    if (typeof window !== 'undefined') {
+      // Dynamically import Klaro only in the browser environment
+      import('klaro').then((Klaro) => {
+        window.Klaro = Klaro;
+        // Ensure klaroConfig is defined before using it
+        if (typeof klaroConfig !== 'undefined' && klaroConfig !== null) {
+          console.log('klaroConfig is defined:', klaroConfig);
+          window.Klaro.setup(klaroConfig);
+        } else {
+          console.error('klaroConfig is not defined');
+        }
+      }).catch((error) => {
+        console.error('Error loading Klaro:', error);
+      });
+    }
+  }
   render = () => {
     if (this.props.location.pathname != prevPathname) {
       this.props.location.prevPathname = prevPathname
