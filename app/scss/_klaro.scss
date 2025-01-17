@@ -5,6 +5,7 @@
       background-color: #002033 !important;
       box-sizing: border-box;
       box-shadow: 5px 5px 5px 0px rgba(0, 0, 0, 0.2);
+      max-width: 600px !important; //default size
     }
   
     .cookie-notice {
@@ -58,13 +59,7 @@
     }
   }
   
-  @media (max-width: 1366px) {
-    .klaro .cookie-notice:not(.cookie-modal-notice) {
-      max-width: 600px !important;
-    }
-  }
-  
-  @media (max-width: 768px) {
+  @media (max-width: 1024px) {
     .klaro .cookie-notice:not(.cookie-modal-notice) {
       max-width: 100vw !important;
     }
