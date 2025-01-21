@@ -73,7 +73,7 @@ class RecordLocation extends React.Component
         window.Klaro = Klaro;
         // Ensure klaroConfig is defined before using it
         if (typeof klaroConfig !== 'undefined' && klaroConfig !== null) {
-          console.log('klaroConfig is defined:', klaroConfig);
+          // console.log('klaroConfig is defined:', klaroConfig);
           window.Klaro.setup(klaroConfig);
         } else {
           console.error('klaroConfig is not defined');
