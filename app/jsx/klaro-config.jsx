@@ -214,11 +214,11 @@ const klaroConfig = {
           the first parameter to the function (true=consented). The `service` config will
           be passed as the second parameter.
           */
-          callback: function(consent, service) {
-              console.log(
-                  'User consent for service ' + service.name + ': consent=' + consent
-              );
-          },
+        //   callback: function(consent, service) {
+        //       console.log(
+        //           'User consent for service ' + service.name + ': consent=' + consent
+        //       );
+        //   },
 
           /*
           If 'required' is set to 'true', Klaro will not allow this service to be disabled
@@ -249,11 +249,11 @@ const klaroConfig = {
   the first parameter to the function (true=consented). The `service` config will
   be passed as the second parameter.
   */
-  callback: function(consent, service) {
-      console.log(
-          'User consent for service ' + service.name + ': consent=' + consent
-      );
-  },
+//   callback: function(consent, service) {
+//       console.log(
+//           'User consent for service ' + service.name + ': consent=' + consent
+//       );
+//   },
 
 };
 export default klaroConfig;
