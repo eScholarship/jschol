@@ -4,7 +4,6 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import Breakpoints from '../../js/breakpoints.json'
 import Search1Comp from '../components/Search1Comp.jsx'
-import NotificationComp from '../components/NotificationComp.jsx'
 import AdminBarComp from '../components/AdminBarComp.jsx'
 import MEDIA_PATH from '../../js/MediaPath.js'
 
@@ -26,7 +25,6 @@ class HeaderComp1 extends React.Component {
         </div>
         <button className="c-header__search-open-button" aria-label="open search field" onClick = {()=> this.setState({searchActive: true})}></button>
       </header>
-      <NotificationComp/>
     </div>
     )
   }
