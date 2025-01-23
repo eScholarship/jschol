@@ -29,5 +29,5 @@ end
 ###################################################################################################
 # Special normalization for ERC metadata
 def normalizeERC(str)
-  return transliterate(normalize(str)).encode('ascii', {:replace => '.'})
+  return transliterate(normalize(str)).encode('ascii', replace: '.')
 end

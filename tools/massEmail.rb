@@ -94,11 +94,11 @@ def grabBounceLogs(mode)
   # Note: on production there's an old ~/.aws/config file that points to different AWS credentials.
   #       We use an explicit "instance" profile (also defined in that file) to get back to plain
   #       default instance credentials.
-  checkOutput("aws s3 ls --profile instance s3://cdl-shared-logs/ses/").split("\n").each { |line|
+  checkOutput("aws s3 ls s3://cdl-shared-logs/ses/").split("\n").each { |line|
     next unless line =~ %r{PRE ([^ ]+@[^ ]*escholarship\.org)/}
     dir = $1
     FileUtils.mkdir_p("./awsLogs/ses-logs/#{dir}")
-    checkCall("aws s3 sync --profile instance --quiet --delete s3://cdl-shared-logs/ses/#{dir}/ ./awsLogs/ses-logs/#{dir}/")
+    checkCall("aws s3 sync --quiet --delete s3://cdl-shared-logs/ses/#{dir}/ ./awsLogs/ses-logs/#{dir}/")
   }
   FileUtils.touch("./awsLogs/ses-logs")
 end

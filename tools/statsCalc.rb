@@ -662,7 +662,7 @@ def grabLogs
   # Note: on production there's an old ~/.aws/config file that points to different AWS credentials.
   #       We use an explicit "instance" profile (also defined in that file) to get back to plain
   #       default instance credentials.
-  checkCall("aws s3 sync --profile instance --quiet --delete s3://pad-cf-logs/jschol-prd/ ./awsLogs/cf-logs/")
+  checkCall("aws s3 sync --quiet --delete s3://pad-cf-logs/jschol-prd/ ./awsLogs/cf-logs/")
 end
 
 ###################################################################################################
