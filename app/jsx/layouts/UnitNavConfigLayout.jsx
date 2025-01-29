@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import _ from 'lodash'
 import WysiwygEditorComp from '../components/WysiwygEditorComp.jsx'
 import Contexts from '../contexts.jsx'
+import '../components/ModalComp.jsx'
 
 class EditableNavContentComp extends React.Component
 {
@@ -24,8 +25,14 @@ class EditableNavContentComp extends React.Component
   onSave = () => this.props.sendApiData('PUT',
                    `/api/unit/${this.props.unit.id}/nav/${this.props.data.id}`, this.state.newData)
 
-  onDelete = () => this.props.sendApiData('DELETE',
-                     `/api/unit/${this.props.unit.id}/nav/${this.props.data.id}`, {})
+  onDelete = () => {
+    const confirmed = window.confirm('Are you sure you want to delete this page?')
+
+    if (confirmed) {
+      this.props.sendApiData('DELETE', 
+        `/api/unit/${this.props.unit.id}/nav/${this.props.data.id}`, {})
+    }
+  }
 
   setData = (newStuff) => {
     this.setState({newData: Object.assign(_.cloneDeep(this.state.newData), newStuff)})
