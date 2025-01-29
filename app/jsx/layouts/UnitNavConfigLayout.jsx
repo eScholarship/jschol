@@ -4,10 +4,9 @@ import { Link } from 'react-router-dom'
 import _ from 'lodash'
 import WysiwygEditorComp from '../components/WysiwygEditorComp.jsx'
 import Contexts from '../contexts.jsx'
-import '../components/ModalComp.jsx'
+import ModalComp from '../components/ModalComp.jsx'
 
-class EditableNavContentComp extends React.Component
-{
+class EditableNavContentComp extends React.Component {
   static propTypes = {
     data: PropTypes.shape({
       id: PropTypes.number.isRequired,
@@ -15,7 +14,10 @@ class EditableNavContentComp extends React.Component
     })
   }
 
-  state = { newData: this.props.data }
+  state = {
+    newData: this.props.data,
+    modalOpen: false
+  }
 
   componentWillReceiveProps(nextProps) {
     if (!_.isEqual(this.props, nextProps))
@@ -23,19 +25,23 @@ class EditableNavContentComp extends React.Component
   }
 
   onSave = () => this.props.sendApiData('PUT',
-                   `/api/unit/${this.props.unit.id}/nav/${this.props.data.id}`, this.state.newData)
+    `/api/unit/${this.props.unit.id}/nav/${this.props.data.id}`, this.state.newData)
 
+  // shows the modal
   onDelete = () => {
-    const confirmed = window.confirm('Are you sure you want to delete this page?')
-
-    if (confirmed) {
-      this.props.sendApiData('DELETE', 
-        `/api/unit/${this.props.unit.id}/nav/${this.props.data.id}`, {})
-    }
+    this.setState({ modalOpen: true })
+  }
+  
+  // performs actual deletion and hides modal 
+  handleDelete = () => {
+    this.props.sendApiData('DELETE',
+      `/api/unit/${this.props.unit.id}/nav/${this.props.data.id}`, {})
+      
+    this.setState({ modalOpen: false })
   }
 
   setData = (newStuff) => {
-    this.setState({newData: Object.assign(_.cloneDeep(this.state.newData), newStuff)})
+    this.setState({ newData: Object.assign(_.cloneDeep(this.state.newData), newStuff) })
   }
 
   render() {
@@ -101,20 +107,30 @@ class EditableNavContentComp extends React.Component
               </div>
             }
 
-            <p>
-              <button className="c-editable-page__button" onClick={this.onSave} disabled={dataIsSame}>Save</button>
-              <button className="c-editable-page__button" onClick={this.onDelete}>Delete</button>
-            </p>
-          </div>
-          ) }
+              <p>
+                <button className="c-editable-page__button" onClick={this.onSave} disabled={dataIsSame}>Save</button>
+                <button className="c-editable-page__button" onClick={this.onDelete}>Delete</button>
+              </p>
+              {this.state.modalOpen && (
+                <ModalComp
+                  isOpen={this.state.modalOpen}
+                  header="Confirm Deletion"
+                  content="Are you sure you want to delete this page?"
+                  onOK={this.handleDelete}
+                  onCancel={() => this.setState({ modalOpen: false })}
+                  okLabel="Delete"
+                />
+              )}
+            </div>
+          )
+        }
         }
       </Contexts.CMS.Consumer>
     )
   }
 }
 
-export default class UnitNavConfigLayout extends React.Component
-{
+export default class UnitNavConfigLayout extends React.Component {
   static propTypes = {
     sendApiData: PropTypes.func.isRequired,
     unit: PropTypes.shape({
