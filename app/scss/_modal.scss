@@ -41,7 +41,7 @@
   bottom: 0;
   left: 0;
   background-color: rgba($color-light-black, 0.8);
-  z-index: 10; // stack above all components that contain z-indexes
+  z-index: 9999; // stack above all components that contain z-indexes
 
   @supports (backdrop-filter: blur()) {
     background-color: rgba($color-black, 0.6);
