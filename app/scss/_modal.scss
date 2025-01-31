@@ -17,6 +17,7 @@
   background-color: $color-white;
   box-shadow: 5px 5px 15px $color-light-black;
   overflow: auto;
+  max-height: 50vh;
 
   @include bp(screen1) {
     top: 15vh;
@@ -75,7 +76,6 @@
   display: flex;
   position: sticky;
   bottom: 0;
-  justify-content: flex-end;
   padding: $spacing-sm $spacing-md;
   border-top: 1px solid $color-light-gray;
   background-color: $color-white;
@@ -105,5 +105,4 @@
 // rename to '.c-modal__footer-close' after adding header-close buttons to all modals:
 .c-modal__button-close {
   @extend %o-button__2;
-  margin-right: auto;
 }
