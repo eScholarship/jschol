@@ -3,11 +3,14 @@
 import React from 'react'
 import ScrollingAnchorComp from "../components/ScrollingAnchorComp.jsx"
 import PdfViewerComp from '../components/PdfViewerComp.jsx'
+import { Document, Page, Outline, pdfjs } from 'react-pdf';
+// import 'react-pdf/dist/Page/AnnotationLayer.css';
+
+// pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 const H_SERVER = 'https://hypothes.is'
 
-class HypothesisClient extends React.Component
-{
+class HypothesisClient extends React.Component {
   // Re-initialize on back button
   componentDidMount() {
 
@@ -98,7 +101,7 @@ class PdfViewComp extends React.Component {
     else {
       let separator = this.props.url.indexOf("?") >= 0 ? "&" : "?"
       window.location = this.props.url + separator + "v=lg" +
-                        (this.props.preview_key ? "&preview_key=" + this.props.preview_key : "")
+        (this.props.preview_key ? "&preview_key=" + this.props.preview_key : "")
     }
   }
 
@@ -108,32 +111,47 @@ class PdfViewComp extends React.Component {
   }
 
   render() {
-    let separator = this.props.url.indexOf("?") >= 0 ? "&" : "?"
-    let pdf_url = this.props.url + (this.props.preview_key ? separator+"preview_key=" + this.props.preview_key : "")
     return (
-      <details className="c-togglecontent" open>
-        {/* ScrollingAnchor sits here and not above because c-togglecontent styling relies on
-            coming right after it's sibling of the same class name */}
-        <ScrollingAnchorComp name="article_main" />
-        <summary>Main Content</summary>
-        <div className="c-pdfview">
-          <button onClick={() => {this.view()}} className="c-pdfview__button-download">Download PDF to View</button>
-          <button onClick={() => {this.view()}} className="c-pdfview__button-view">View Larger</button>
-        </div>
-        {/* Only show the accessibility link on items that do not have download_restricted set  */}
-        {!this.props.download_restricted &&
-        <div className="c-pdfview__accessibility">
-          For improved accessibility of PDF content, <a href={pdf_url} >download the file</a> to your device.
-        </div>
-        }
-        <div className="c-pdfview__viewer">
-          <PdfViewerComp url={this.props.url.replace(".pdf", "_noSplash_" + this.props.content_key + ".pdf")
-                              + (this.props.preview_key ? separator+"preview_key=" + this.props.preview_key : "")}/>
-        </div>
-        { this.props.commenting_ok && <HypothesisClient/> }
-      </details>
+      <Document
+        file={this.props.url.replace(".pdf", "_noSplash_" + this.props.content_key + ".pdf")
+          + (this.props.preview_key ? separator + "preview_key=" + this.props.preview_key : "")}
+        onLoadSuccess={() => alert('rendered')}
+        loading='Loading...'
+
+      >
+        <Page pageNumber={1} />
+        {/* <Outline onItemClick={({ pageNumber }) => console.log(pageNumber)} /> */}
+      </Document>
     )
   }
+
+  // render() {
+  //   let separator = this.props.url.indexOf("?") >= 0 ? "&" : "?"
+  //   let pdf_url = this.props.url + (this.props.preview_key ? separator+"preview_key=" + this.props.preview_key : "")
+  //   return (
+  //     <details className="c-togglecontent" open>
+  //       {/* ScrollingAnchor sits here and not above because c-togglecontent styling relies on
+  //           coming right after it's sibling of the same class name */}
+  //       <ScrollingAnchorComp name="article_main" />
+  //       <summary>Main Content</summary>
+  //       <div className="c-pdfview">
+  //         <button onClick={() => {this.view()}} className="c-pdfview__button-download">Download PDF to View</button>
+  //         <button onClick={() => {this.view()}} className="c-pdfview__button-view">View Larger</button>
+  //       </div>
+  //       {/* Only show the accessibility link on items that do not have download_restricted set  */}
+  //       {!this.props.download_restricted &&
+  //       <div className="c-pdfview__accessibility">
+  //         For improved accessibility of PDF content, <a href={pdf_url} >download the file</a> to your device.
+  //       </div>
+  //       }
+  //       <div className="c-pdfview__viewer">
+  //         <PdfViewerComp url={this.props.url.replace(".pdf", "_noSplash_" + this.props.content_key + ".pdf")
+  //                             + (this.props.preview_key ? separator+"preview_key=" + this.props.preview_key : "")}/>
+  //       </div>
+  //       { this.props.commenting_ok && <HypothesisClient/> }
+  //     </details>
+  //   )
+  // }
 }
 
 export default PdfViewComp;
