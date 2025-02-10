@@ -63,6 +63,10 @@ module.exports = {
       test: /pdfjs-embed2.*\.js$/,
       exclude: /src\/core\/(glyphlist|unicode)/,
       loader: 'babel-loader'
+    },
+    {
+      test: /\.css$/,
+      use: ['style-loader', 'css-loader'],
     }]
   },
   performance : {
