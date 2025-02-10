@@ -4,9 +4,9 @@ import React from 'react'
 import ScrollingAnchorComp from "../components/ScrollingAnchorComp.jsx"
 import PdfViewerComp from '../components/PdfViewerComp.jsx'
 import { Document, Page, Outline, pdfjs } from 'react-pdf';
-// import 'react-pdf/dist/Page/AnnotationLayer.css';
+import 'react-pdf/dist/Page/AnnotationLayer.css';
 
-// pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
 const H_SERVER = 'https://hypothes.is'
 
@@ -111,6 +111,8 @@ class PdfViewComp extends React.Component {
   }
 
   render() {
+    console.log(pdfjs)
+
     return (
       <Document
         file={this.props.url.replace(".pdf", "_noSplash_" + this.props.content_key + ".pdf")
@@ -119,7 +121,7 @@ class PdfViewComp extends React.Component {
         loading='Loading...'
 
       >
-        <Page pageNumber={1} />
+        <Page pageNumber={1} scale={1.5} />
         {/* <Outline onItemClick={({ pageNumber }) => console.log(pageNumber)} /> */}
       </Document>
     )
