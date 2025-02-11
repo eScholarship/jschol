@@ -11,6 +11,7 @@
   "license": "MIT",
   "devDependencies": {
     "babel-loader": "^8.2.5",
+    "babel-plugin-css-modules-transform": "^1.6.2",
     "backstopjs": "^6.3.3",
     "chai": "^3.5.0",
     "clean-webpack-plugin": "^2.0.2",
@@ -94,7 +95,6 @@
     "lodash": "^4.17.21",
     "lozad": "^1.16.0",
     "npm": "^10.8.1",
-    "pdfjs-dist": "^4.10.38",
     "pdfjs-embed2": "github:escholarship/pdfjs-embed2#dab83845bc60a953d08963ea6550df8df9a73e77",
     "prop-types": "^15.8.1",
     "query-string": "^5.x",
