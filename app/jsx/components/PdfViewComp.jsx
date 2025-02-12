@@ -4,7 +4,7 @@ import React from 'react'
 import ScrollingAnchorComp from "../components/ScrollingAnchorComp.jsx"
 import PdfViewerComp from '../components/PdfViewerComp.jsx'
 import { Document, Page, Outline, pdfjs } from 'react-pdf';
-import 'react-pdf/dist/Page/AnnotationLayer.css';
+import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
@@ -95,6 +95,15 @@ class HypothesisClient extends React.Component {
 }
 
 class PdfViewComp extends React.Component {
+  state = {
+    numPages: null
+  }
+
+  onLoadSuccess = ({ numPages }) => {
+    console.log('num', numPages)
+    this.setState({ numPages })
+  }
+
   view = () => {
     if (this.props.download_restricted)
       alert("Download restricted until " + this.props.download_restricted)
@@ -112,16 +121,23 @@ class PdfViewComp extends React.Component {
 
   render() {
     console.log(pdfjs)
+    const { numPages } = this.state
 
     return (
       <Document
         file={this.props.url.replace(".pdf", "_noSplash_" + this.props.content_key + ".pdf")
           + (this.props.preview_key ? separator + "preview_key=" + this.props.preview_key : "")}
-        onLoadSuccess={() => alert('rendered')}
+        onLoadSuccess={this.onLoadSuccess}
         loading='Loading...'
 
       >
-        <Page pageNumber={1} scale={1.5} />
+         {Array.from(new Array(numPages), (_el, index) => (
+            <Page
+              key={`page_${index + 1}`}
+              pageNumber={index + 1}
+              scale={1.5}
+            />
+          ))}
         {/* <Outline onItemClick={({ pageNumber }) => console.log(pageNumber)} /> */}
       </Document>
     )
