@@ -100,7 +100,6 @@ class PdfViewComp extends React.Component {
   }
 
   onLoadSuccess = ({ numPages }) => {
-    console.log('num', numPages)
     this.setState({ numPages })
   }
 
@@ -116,32 +115,35 @@ class PdfViewComp extends React.Component {
 
   // Make a best effort to avoid re-initting pdf.js, which loses page context
   shouldComponentUpdate(nextProps, nextState) {
-    return !(this.props.url == nextProps.url)
+    // we want the component to re-render if there's state changes (numPages)
+    return this.props.url !== nextProps.url || this.state.numPages !== nextState.numPages 
   }
 
   render() {
-    console.log(pdfjs)
     const { numPages } = this.state
+    const { url, content_key, preview_key } = this.props
+
+    const fileUrl = url.replace(".pdf", "_noSplash_" + content_key + ".pdf") + 
+      (preview_key ? separator + "preview_key=" + preview_key : "")
 
     return (
       <Document
-        file={this.props.url.replace(".pdf", "_noSplash_" + this.props.content_key + ".pdf")
-          + (this.props.preview_key ? separator + "preview_key=" + this.props.preview_key : "")}
-        onLoadSuccess={this.onLoadSuccess}
-        loading='Loading...'
-
+        file={fileUrl}
+        onLoadSuccess={this.onLoadSuccess} 
+        loading="Loading..."
       >
-         {Array.from(new Array(numPages), (_el, index) => (
-            <Page
-              key={`page_${index + 1}`}
-              pageNumber={index + 1}
-              scale={1.5}
-            />
-          ))}
+        {Array.from(new Array(numPages), (_el, index) => (
+          <Page
+            key={`page_${index + 1}`}
+            pageNumber={index + 1}
+            scale={1.5}
+          />
+        ))}
         {/* <Outline onItemClick={({ pageNumber }) => console.log(pageNumber)} /> */}
       </Document>
     )
   }
+
 
   // render() {
   //   let separator = this.props.url.indexOf("?") >= 0 ? "&" : "?"
