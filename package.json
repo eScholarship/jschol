@@ -98,20 +98,19 @@
     "pdfjs-embed2": "github:escholarship/pdfjs-embed2#dab83845bc60a953d08963ea6550df8df9a73e77",
     "prop-types": "^15.8.1",
     "query-string": "^5.x",
-    "react": "^16.14.0",
+    "react": "16.8.0",
     "react-datetime": "^3.1.1",
-    "react-dom": "^16.14.0",
+    "react-dom": "16.8.0",
     "react-ga": "^2.7.0",
     "react-meta-tags": "^0.7.4",
     "react-modal": "^3.15.1",
-    "react-pdf": "^4.2.0",
+    "react-pdf": "^5.2.7",
     "react-router-dom": "^4.3.1",
     "react-select": "^5.5.5",
     "react-sidebar": "^2.3.0",
     "react-sortable-tree": "^2.8.0",
     "react-twitter-widgets": "^1.10.0",
     "smoothscroll-polyfill": "^0.4.4",
-    "trumbowyg": "^2.25.1",
-    "worker-loader": "^3.0.8"
+    "trumbowyg": "^2.25.1"
   }
 }
