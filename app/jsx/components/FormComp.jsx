@@ -28,7 +28,15 @@ class FormComp extends React.Component
     }
     else {
       event.preventDefault()
-      this.props.history.push(this.props.to + "?" + $.param(data).replace(/%5B%5D/g, ""))
+
+      const params = new URLSearchParams(window.location.search)
+      debugger
+      // preserve previous data in url 
+      for (const [k, v] of Object.entries(data)) {
+        params.set(k, v)
+      }
+      this.props.history.push(this.props.to + "?" + params.toString().replace(/%5B%5D/g, ""))
+      
     }
   }
 
