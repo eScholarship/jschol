@@ -6,8 +6,7 @@ import getFormData from 'get-form-data'
 import $ from 'jquery'
 import { withRouter } from 'react-router'
 
-class FormComp extends React.Component
-{
+class FormComp extends React.Component {
   static propTypes = {
     id: PropTypes.string,
     to: PropTypes.string,      // either 'to' ...
@@ -28,7 +27,19 @@ class FormComp extends React.Component
     }
     else {
       event.preventDefault()
-      this.props.history.push(this.props.to + "?" + $.param(data).replace(/%5B%5D/g, ""))
+      const params = new URLSearchParams(window.location.search)
+     
+      if (!data.start) { // when the page = 1, there's no start param
+        params.delete('start')  // make sure we delete it from previous url
+      }
+      
+      // preserve previous data in url 
+      for (const [k, v] of Object.entries(data)) {
+        params.set(k, v)
+      }
+
+      this.props.history.push(this.props.to + "?" + params.toString().replace(/%5B%5D/g, ""))
+      
     }
   }
 
