@@ -39,12 +39,14 @@ class FormComp extends React.Component {
       for (const [key, val] of Object.entries(data)) {
         if (Array.isArray(val)) {
           // if val is an array, add each unique value as a separate key-value pair
+          // e.g. type_of_work=article&type_of_work=monograph
           val.forEach(v => {
             // only add the value if it doesn't already exist
             if (!params.getAll(key).includes(v)) {
               params.append(key, v)
             } 
           })
+
           FILTER_TYPES.forEach(filterType => {
             if (filterType === 'pub_year') {
               // ... handle this
@@ -54,7 +56,9 @@ class FormComp extends React.Component {
               }
             }
           })
+          
         } else {
+            // if it's not an array, set the param value
             params.set(key, val)
         }
       }

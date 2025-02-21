@@ -37,7 +37,7 @@ class FilterComp extends React.Component {
       }
     }
 
-    let resultCount = this.props.count + this.props.info_count 
+    let resultCount = (this.props.count + this.props.info_count ).toLocaleString()
 
     return (
       <div className={activeFilters ? "c-filter--active" : "c-filter"}>
