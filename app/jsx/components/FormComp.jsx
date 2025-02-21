@@ -5,6 +5,7 @@ import PropTypes from 'prop-types'
 import getFormData from 'get-form-data'
 import $ from 'jquery'
 import { withRouter } from 'react-router'
+import { FILTER_TYPES } from '../../consts/filters'
 
 class FormComp extends React.Component {
   static propTypes = {
@@ -28,19 +29,44 @@ class FormComp extends React.Component {
     else {
       event.preventDefault()
       const params = new URLSearchParams(window.location.search)
-     
+      
       if (!data.start) { // when the page = 1, there's no start param
         params.delete('start')  // make sure we delete it from previous url
       }
-      
-      // preserve previous data in url 
-      for (const [k, v] of Object.entries(data)) {
-        params.set(k, v)
-      }
 
+      console.log(data)
+    
+      for (const [key, val] of Object.entries(data)) {
+        if (Array.isArray(val)) {
+          // if val is an array, add each unique value as a separate key-value pair
+          val.forEach(v => {
+            // only add the value if it doesn't already exist
+            if (!params.getAll(key).includes(v)) {
+              params.append(key, v)
+            } 
+          })
+          FILTER_TYPES.forEach(filterType => {
+            if (filterType === 'pub_year') {
+              // ... handle this
+            } else {
+              if (!(data[filterType] ?? []).includes(val)) {
+                params.delete(filterType) // FIXME remove a specific key/value pair when you use URLSearchParams.append
+              }
+            }
+          })
+        } else {
+            params.set(key, val)
+        }
+      }
+    
+      console.log(params.toString())
+ 
       this.props.history.push(this.props.to + "?" + params.toString().replace(/%5B%5D/g, ""))
+
+      // this.props.history.push(this.props.to + "?" + $.param(data).replace(/%5B%5D/g, ""))
       
     }
+    
   }
 
   render = () =>
@@ -48,5 +74,4 @@ class FormComp extends React.Component {
       {this.props.children}
     </form>
 }
-
 export default withRouter(FormComp);

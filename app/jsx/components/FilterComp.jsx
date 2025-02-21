@@ -3,6 +3,7 @@
 import React from 'react'
 import _ from 'lodash'
 import unescape from 'lodash/unescape'
+import { FILTER_TYPES as filterTypes } from '../../consts/filters'
 class FilterComp extends React.Component {
   state = { isOpen: true }  // open only becomes false when user clicks it to hide (handled by CSS)
 
@@ -21,7 +22,6 @@ class FilterComp extends React.Component {
         activeFilters = null
 
     if (!(_.isEmpty(this.props.query['filters']))) {
-      let filterTypes = ['type_of_work', 'peer_reviewed', 'supp_file_types', 'pub_year', 'campuses', 'departments', 'journals', 'disciplines', 'rights'];
       activeFilters = [];
       for (let filterType of filterTypes) {
         if (this.props.query['filters'][filterType] && this.props.query['filters'][filterType]['filters'].length > 0) {
