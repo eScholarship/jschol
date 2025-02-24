@@ -20,16 +20,17 @@ class FormComp extends React.Component {
 
 
   onSubmit = (event) => {
-    let data = getFormData(this.formEl.current);
+    let data = getFormData(this.formEl.current)
     if (this.props.filter) {
-      data = this.props.filter(data);
+      data = this.props.filter(data)
     }
     
     if (this.props.onSubmit) {
-      event.target.action = this.props.to;
-      this.props.onSubmit(event, data);
+      event.target.action = this.props.to
+      this.props.onSubmit(event, data)
     } else {
       event.preventDefault()
+      // we need this to get the current URL params, otherwise the data is lost when we navigate
       const params = new URLSearchParams(window.location.search)
   
       // pagination
@@ -43,32 +44,43 @@ class FormComp extends React.Component {
       console.log(data)
   
       // adding/removing filter types based on selections
-      FILTER_TYPES.forEach((filterType) => {
-        const val = data[filterType]
-  
-        if (val) {
-          if (Array.isArray(val)) {
-            // if val is an array, add each unique value as a separate key-value pair
-            // e.g. type_of_work=article&type_of_work=monograph
-            val.forEach(v => {
-              if (!params.getAll(filterType).includes(v)) {
-                params.append(filterType, v) // e.g. append('type_of_work', 'article') if it's not in val
-              }
-            })
-  
-            const selectedFilters = params.getAll(filterType)
-            const removedFilters = selectedFilters.filter(v => !val.includes(v))
-            
-            removedFilters.forEach(removedFilter => {
-              params.delete(filterType, removedFilter) // remove deselected filters
-            })
-          } else {
-            // if it's not an array, set the param value
-            params.set(filterType, val)
-          }
+      FILTER_TYPES.forEach(filterType => {
+        // explicit check for pub_year, this is handled differently than other filters
+        if (filterType === 'pub_year') {
+          ['pub_year_start', 'pub_year_end'].forEach(key => {
+            if (data[key]) {
+              params.set(key, data[key])
+            } else {
+              params.delete(key)
+            }
+          })
         } else {
-          // if the filter type is not present in data, remove it from the URL
-          params.delete(filterType)
+          const val = data[filterType]
+    
+          if (val) {
+            if (Array.isArray(val)) {
+              // if val is an array, add each unique value as a separate key-value pair
+              // e.g. type_of_work=article&type_of_work=monograph
+              val.forEach(v => {
+                if (!params.getAll(filterType).includes(v)) {
+                  params.append(filterType, v) // e.g. append('type_of_work', 'article') if it's not in val
+                }
+              })
+    
+              const selectedFilters = params.getAll(filterType)
+              const removedFilters = selectedFilters.filter(v => !val.includes(v))
+              
+              removedFilters.forEach(removedFilter => {
+                params.delete(filterType, removedFilter) // remove deselected filters
+              })
+            } else {
+              // if it's not an array, set the param value
+              params.set(filterType, val)
+            }
+          } else {
+            // if the filter type is not present in data, remove it from the URL
+            params.delete(filterType)
+          }
         }
       })
   
@@ -88,9 +100,6 @@ class FormComp extends React.Component {
     }
   }
   
-
-  
-
   render = () =>
     <form id={this.props.id} onSubmit={this.onSubmit} ref={this.formEl} className={this.props.className}>
       {this.props.children}
