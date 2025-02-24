@@ -18,60 +18,78 @@ class FormComp extends React.Component {
 
   formEl = React.createRef()
 
+
   onSubmit = (event) => {
-    let data = getFormData(this.formEl.current)
-    if (this.props.filter)
-      data = this.props.filter(data)
-    if (this.props.onSubmit) {
-      event.target.action = this.props.to
-      this.props.onSubmit(event, data)
+    let data = getFormData(this.formEl.current);
+    if (this.props.filter) {
+      data = this.props.filter(data);
     }
-    else {
+    
+    if (this.props.onSubmit) {
+      event.target.action = this.props.to;
+      this.props.onSubmit(event, data);
+    } else {
       event.preventDefault()
       const params = new URLSearchParams(window.location.search)
-      
-      if (!data.start) { // when the page = 1, there's no start param
-        params.delete('start')  // make sure we delete it from previous url
+  
+      // pagination
+      if (!data.start) { // if the page = 1, remove 'start' from the URL
+        params.delete('start')
+      } else {
+        // if it exists in the data, update it
+        params.set('start', data.start)
       }
 
       console.log(data)
-    
-      for (const [key, val] of Object.entries(data)) {
-        if (Array.isArray(val)) {
-          // if val is an array, add each unique value as a separate key-value pair
-          // e.g. type_of_work=article&type_of_work=monograph
-          val.forEach(v => {
-            // only add the value if it doesn't already exist
-            if (!params.getAll(key).includes(v)) {
-              params.append(key, v)
-            } 
-          })
-
-          FILTER_TYPES.forEach(filterType => {
-            if (filterType === 'pub_year') {
-              // ... handle this
-            } else {
-              if (!(data[filterType] ?? []).includes(val)) {
-                params.delete(filterType) // FIXME remove a specific key/value pair when you use URLSearchParams.append
+  
+      // adding/removing filter types based on selections
+      FILTER_TYPES.forEach((filterType) => {
+        const val = data[filterType]
+  
+        if (val) {
+          if (Array.isArray(val)) {
+            // if val is an array, add each unique value as a separate key-value pair
+            // e.g. type_of_work=article&type_of_work=monograph
+            val.forEach(v => {
+              if (!params.getAll(filterType).includes(v)) {
+                params.append(filterType, v) // e.g. append('type_of_work', 'article') if it's not in val
               }
-            }
-          })
-          
-        } else {
+            })
+  
+            const selectedFilters = params.getAll(filterType)
+            const removedFilters = selectedFilters.filter(v => !val.includes(v))
+            
+            removedFilters.forEach(removedFilter => {
+              params.delete(filterType, removedFilter) // remove deselected filters
+            })
+          } else {
             // if it's not an array, set the param value
-            params.set(key, val)
+            params.set(filterType, val)
+          }
+        } else {
+          // if the filter type is not present in data, remove it from the URL
+          params.delete(filterType)
+        }
+      })
+  
+      // handle any other parameters (pagination, etc.)
+      for (const [key, val] of params.entries()) {
+        if (!FILTER_TYPES.includes(key) && key !== 'start') {
+          // make sure other params not in FILTER_TYPES are preserved (e.g. series searches)
+          if (!data[key]) {
+            params.set(key, val) 
+          }
         }
       }
-    
+  
       console.log(params.toString())
  
       this.props.history.push(this.props.to + "?" + params.toString().replace(/%5B%5D/g, ""))
-
-      // this.props.history.push(this.props.to + "?" + $.param(data).replace(/%5B%5D/g, ""))
-      
     }
-    
   }
+  
+
+  
 
   render = () =>
     <form id={this.props.id} onSubmit={this.onSubmit} ref={this.formEl} className={this.props.className}>
