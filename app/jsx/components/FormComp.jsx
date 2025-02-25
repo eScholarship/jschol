@@ -40,8 +40,6 @@ class FormComp extends React.Component {
 
       if (!data.sort) params.delete('sort', data.sort)
 
-      console.log(data)
-
       // handle parameters not in FILTER_TYPES
       for (const [key, val] of Object.entries(data)) {
         if (!FILTER_TYPES.includes(key)) { // if that key is not in FILTER_TYPES (e.g. q, rows, sort)
@@ -92,8 +90,6 @@ class FormComp extends React.Component {
           }
         }
       })
-  
-      console.log(params.toString())
  
       this.props.history.push(this.props.to + "?" + params.toString().replace(/%5B%5D/g, ""))
     }
