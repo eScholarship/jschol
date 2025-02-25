@@ -34,14 +34,23 @@ class FormComp extends React.Component {
       const params = new URLSearchParams(window.location.search)
   
       // pagination
-      if (!data.start) { // if the page = 1, remove 'start' from the URL
-        params.delete('start')
-      } else {
-        // if it exists in the data, update it
-        params.set('start', data.start)
-      }
+      if (!data.start) params.delete('start') // if the page = 1, remove 'start' from the URL
+
+      if (!data.rows) params.delete('rows', data.rows)
+
+      if (!data.sort) params.delete('sort', data.sort)
 
       console.log(data)
+
+      // handle parameters not in FILTER_TYPES
+      for (const [key, val] of Object.entries(data)) {
+        if (!FILTER_TYPES.includes(key)) { // if that key is not in FILTER_TYPES (e.g. q, rows, sort)
+          if (!val) {
+            params.delete(key)
+          }
+          params.set(key, val)
+        }
+      }
   
       // adding/removing filter types based on selections
       FILTER_TYPES.forEach(filterType => {
@@ -59,17 +68,17 @@ class FormComp extends React.Component {
     
           if (val) {
             if (Array.isArray(val)) {
+              const selectedFilters = params.getAll(filterType)
               // if val is an array, add each unique value as a separate key-value pair
               // e.g. type_of_work=article&type_of_work=monograph
               val.forEach(v => {
-                if (!params.getAll(filterType).includes(v)) {
+                if (!selectedFilters.includes(v)) {
                   params.append(filterType, v) // e.g. append('type_of_work', 'article') if it's not in val
                 }
               })
     
-              const selectedFilters = params.getAll(filterType)
               const removedFilters = selectedFilters.filter(v => !val.includes(v))
-              
+
               removedFilters.forEach(removedFilter => {
                 params.delete(filterType, removedFilter) // remove deselected filters
               })
@@ -83,16 +92,6 @@ class FormComp extends React.Component {
           }
         }
       })
-  
-      // handle any other parameters (pagination, etc.)
-      for (const [key, val] of params.entries()) {
-        if (!FILTER_TYPES.includes(key) && key !== 'start') {
-          // make sure other params not in FILTER_TYPES are preserved (e.g. series searches)
-          if (!data[key]) {
-            params.set(key, val) 
-          }
-        }
-      }
   
       console.log(params.toString())
  
