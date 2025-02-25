@@ -36,9 +36,9 @@ class FormComp extends React.Component {
       // pagination
       if (!data.start) params.delete('start') // if the page = 1, remove 'start' from the URL
 
-      if (!data.rows) params.delete('rows', data.rows)
+      if (!data.rows) params.delete('rows')
 
-      if (!data.sort) params.delete('sort', data.sort)
+      if (!data.sort) params.delete('sort')
 
       // handle parameters not in FILTER_TYPES
       for (const [key, val] of Object.entries(data)) {
