@@ -1,0 +1,1 @@
+export const FILTER_TYPES = ['type_of_work', 'peer_reviewed', 'supp_file_types', 'pub_year', 'campuses', 'departments', 'journals', 'disciplines', 'rights']
