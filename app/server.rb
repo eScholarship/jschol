@@ -859,7 +859,7 @@ end
 # Global static pages; also, a fallback for global not-found.
 def getGlobalStaticData(path)
   pageName = path.sub(%r{^/}, "")
-  if pageName =~ %r{^[a-zA-Z]([a-zA-Z_]+/)*[a-zA-Z_]+$} && Page.where(unit_id: 'root', slug: pageName).count > 0
+  if pageName =~ %r{^[a-zA-Z0-9]([a-zA-Z0-9_]+/)*[a-zA-Z0-9_]+$} && Page.where(unit_id: 'root', slug: pageName).count > 0
     unit = $unitsHash['root']
     attrs = JSON.parse(unit[:attrs])
     return {

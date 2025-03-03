@@ -211,4 +211,29 @@ class TestQuick < Test::Unit::TestCase
       puts "URL_PARAMS present, skipping test_for_broken_images"
     end
   end
+
+  def test_page_name_regex
+    paths = [
+      { path: "/page5", expected_match: true },
+      { path: "/page_one", expected_match: true },
+      { path: "/page_5/test", expected_match: true },
+      { path: "/anotherPage", expected_match: true },
+      { path: "/123page", expected_match: true },
+      { path: "/page 5", expected_match: false },
+      { path: "/page/5/", expected_match: false },
+      { path: "/!invalid", expected_match: false },
+      { path: "/123 page", expected_match: false },
+      { path: "/page$5", expected_match: false },
+      { path: "/page/5#test", expected_match: false }
+    ]
+
+    paths.each do |entry|
+      page_name = entry[:path].sub(%r{^/}, "")
+      if entry[:expected_match]
+        assert_match(%r{^[a-zA-Z0-9]([a-zA-Z0-9_]+/)*[a-zA-Z0-9_]+$}, page_name, "#{entry[:path]} should be valid")
+      else
+        assert_no_match(%r{^[a-zA-Z0-9]([a-zA-Z0-9_]+/)*[a-zA-Z0-9_]+$}, page_name, "#{entry[:path]} should be invalid")
+      end
+    end
+  end
 end
