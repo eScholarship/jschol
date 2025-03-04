@@ -65,6 +65,15 @@ module.exports = {
       loader: 'babel-loader'
     },
     {
+      test: /\.js$/,
+      exclude: /node_modules(?!(\/|\\)pdfjs-dist)/,
+      loader: 'babel-loader',
+      options: {
+        'presets': ['@babel/preset-env'],
+        'plugins': ['@babel/plugin-transform-optional-chaining']
+      }
+    },
+    {
       test: /\.css$/,
       use: ['style-loader', 'css-loader'],
     }]
