@@ -57,7 +57,9 @@ class MainContent extends React.Component {
                                  content_key={p.content_key}
                                  download_restricted={p.download_restricted}
                                  commenting_ok={p.commenting_ok}
-                                 preview_key={p.preview_key}/>
+                                 preview_key={p.preview_key}
+                                 pageNum={p.pageNum}
+                                 onItemClick={p.onItemClick} />
                   : p.content_type == "text/html" ? this.renderHtml(p)
                   : raise("unknown content_type '" + p.content_type + "'"))
         }
