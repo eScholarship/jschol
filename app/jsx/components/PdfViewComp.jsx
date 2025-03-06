@@ -116,32 +116,72 @@ class PdfViewComp extends React.Component {
 
   // Make a best effort to avoid re-initting pdf.js, which loses page context
   shouldComponentUpdate(nextProps, nextState) {
-    // we want the component to re-render if there's state changes (numPages)
-    return this.props.url !== nextProps.url || this.state.numPages !== nextState.numPages 
+    return (
+      this.props.url !== nextProps.url ||
+      // we want the component to re-render if there's state changes (numPages)
+      this.state.numPages !== nextState.numPages ||
+      this.props.pageNum !== nextProps.pageNum
+    )
+  }
+
+  componentDidUpdate(prevProps) {
+    if (prevProps.pageNum !== this.props.pageNum) {
+      const pageRef = this.pageRefs?.[this.props.pageNum - 1]
+      if (pageRef) {
+        pageRef.scrollIntoView({ behavior: "smooth" })
+      }
+    }
+  }
+
+  constructor(props) {
+    super(props)
+    this.pageRefs = []
   }
 
   render() {
     const { numPages } = this.state
     const { url, content_key, preview_key } = this.props
+    const separator = url.indexOf("?") >= 0 ? "&" : "?"
+    console.log('pdf props', this.props)
 
     const fileUrl = url.replace(".pdf", "_noSplash_" + content_key + ".pdf") + 
       (preview_key ? separator + "preview_key=" + preview_key : "")
 
     return (
-      <Document
-        file={fileUrl}
-        onLoadSuccess={this.onLoadSuccess} 
-        loading="Loading..."
-      >
-        {Array.from(new Array(numPages), (_el, index) => (
-          <Page
-            key={`page_${index + 1}`}
-            pageNumber={index + 1}
-            scale={1.5}
-          />
-        ))}
-        {/* <Outline onItemClick={({ pageNumber }) => console.log(pageNumber)} /> */}
-      </Document>
+      <details className="c-togglecontent" open>
+        {/* ScrollingAnchor sits here and not above because c-togglecontent styling relies on
+            coming right after it's sibling of the same class name */}
+        <ScrollingAnchorComp name="article_main" />
+        <summary>Main Content</summary>
+        <div className="c-pdfview">
+          <button onClick={() => {this.view()}} className="c-pdfview__button-download">Download PDF to View</button>
+          <button onClick={() => {this.view()}} className="c-pdfview__button-view">View Larger</button>
+        </div>
+        {/* Only show the accessibility link on items that do not have download_restricted set  */}
+        {!this.props.download_restricted &&
+        <div className="c-pdfview__accessibility">
+          For improved accessibility of PDF content, <a href={fileUrl} >download the file</a> to your device.
+        </div>
+        }
+        <div className="c-pdfview__viewer">
+          <Document
+            file={fileUrl}
+            onLoadSuccess={this.onLoadSuccess} 
+            loading="Loading..."
+          >
+            {Array.from(new Array(numPages), (_el, index) => (
+              <Page
+                key={`page_${index + 1}`}
+                pageNumber={index + 1}
+                scale={1.3}
+                inputRef={el => this.pageRefs[index] = el}
+              />
+            ))}
+            {/* <Outline onItemClick={({ pageNumber }) => console.log(pageNumber)} /> */}
+          </Document>
+        </div>
+        { this.props.commenting_ok && <HypothesisClient/> }
+      </details>
     )
   }
 

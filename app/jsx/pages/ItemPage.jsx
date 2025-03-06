@@ -35,6 +35,19 @@ class ItemPage extends PageBase {
     currentTab: PropTypes.oneOf(anchors)
   }
 
+  // TODO:
+  // the page data is getting prop drilled all the way down to any child components that need it
+  // it would be better to use something like the Context API to pass this data around
+  state = { 
+    currentTab: "main",
+    pageNum: 1
+  }
+
+  handleItemClick = (anchor) => {
+    const pageNumber = parseInt(anchor.split('=')[1], 10)
+    this.setState({ pageNum: pageNumber })
+  }
+
   // Unit ID for permissions checking
   pagePermissionsUnit() {
     return "root"  // This is only being used for super user access
@@ -56,8 +69,6 @@ class ItemPage extends PageBase {
     }
     return h
   }
-
-  state = { currentTab: "main" }
 
   componentDidMount(...args) {
     let toc = this.state.pageData && this.state.pageData.attrs && this.state.pageData.attrs.toc
@@ -110,6 +121,7 @@ class ItemPage extends PageBase {
   }
 
   renderData = data => {
+    console.log('d', data)
     let currentTab = tab_anchors.includes(this.state.currentTab) ? this.state.currentTab : "main"
     let d = data
     let a = d.attrs
@@ -140,6 +152,7 @@ class ItemPage extends PageBase {
     let keywords = a.disciplines ? a.disciplines.join('; ') : null
     let isWithdrawn = /withdrawn/.test(d.status)
     d.unit && this.extGA(d.unit.id)  // Google Analytics for external trackers called from PageBase
+
     return (
       <div>
         {d.status == "pending" && <span className="c-preview-watermark" />}
@@ -204,11 +217,18 @@ class ItemPage extends PageBase {
             <TabsComp currentTab={currentTab}
                       changeTab={this.changeTab}
                       formatDate={this.formatDate}
+                      pageNum={this.state.pageNum} 
+                      onItemClick={this.handleItemClick}
                       {...d} />
           </main>
           <aside>
           {(d.status == "published" && d.content_type) &&
-            <JumpComp changeTab={this.changeTab} genre={d.genre} attrs={d.attrs} />
+            <JumpComp 
+              changeTab={this.changeTab} 
+              genre={d.genre} 
+              attrs={d.attrs} 
+              onItemClick={this.handleItemClick}
+            />
           }
           {d.sidebar && !isWithdrawn &&
             <SidebarComp data={d.sidebar}/> }
