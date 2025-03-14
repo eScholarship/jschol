@@ -1,11 +1,7 @@
 // ##### Lazy Image Component ##### //
 
 import React from 'react'
-
-// Don't try to do lazy loading on server side (lozad won't run there)
-let lozad
-if (!(typeof document === "undefined"))
-  lozad = require('lozad')
+import lozad from 'lozad'
 
 // A single observer is sufficient for all instances of LazyImageComp, and it doesn't
 // really hurt anybody if it hangs around.
@@ -13,13 +9,17 @@ let observer = null
 
 class LazyImageComp extends React.Component {
   componentDidMount() {
-    if (!(typeof document === "undefined")) {
-      if (!observer)
-        observer = lozad('.c-lazyimage');
-      observer.observe();
-      // When running visual regression tests, load every image immediately
-      if (navigator.userAgent == "puppeteer")
+    // Don't try to do lazy loading on server side (lozad won't run there)
+    if (typeof window !== "undefined") {
+      if (!observer) {
+        observer = lozad(".c-lazyimage")
+        observer.observe()
+      }
+
+       // When running visual regression tests, load every image immediately
+      if (navigator.userAgent === "puppeteer") {
         document.querySelectorAll(".c-lazyimage").forEach(el => observer.triggerLoad(el))
+      }
     }
   }
 
