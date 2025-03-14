@@ -6,8 +6,10 @@ import $ from 'jquery'
 import ReactDOMServer from 'react-dom/server'
 
 // Load dotdotdot in browser but not server
-if (!(typeof document === "undefined")) {
-  const dotdotdot = require('jquery.dotdotdot')
+if (typeof document !== 'undefined') {
+  import('jquery.dotdotdot').then(module => {
+    const dotdotdot = module.default || module
+  }).catch(err => console.error('Failed to load dotdotdot:', err))
 }
 
 /**
