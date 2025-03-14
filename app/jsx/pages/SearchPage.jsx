@@ -19,11 +19,6 @@ import ModalComp from '../components/ModalComp.jsx'
 import MetaTagsComp from '../components/MetaTagsComp.jsx'
 import FormComp from '../components/FormComp.jsx'
 
-// Load dotdotdot in browser but not server
-if (!(typeof document === "undefined")) {
-  const dotdotdot = require('jquery.dotdotdot')
-}
-
 let MAX_SET_SIZE = 6
 
 // FacetItem

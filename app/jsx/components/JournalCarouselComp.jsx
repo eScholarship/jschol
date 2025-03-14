@@ -6,11 +6,6 @@ import CarouselComp from '../components/CarouselComp.jsx'
 import { Link } from 'react-router-dom'
 import MEDIA_PATH from '../../js/MediaPath.js'
 
-// Load dotdotdot in browser but not server
-if (!(typeof document === "undefined")) {
-  const dotdotdot = require('jquery.dotdotdot')
-}
-
 class JournalCarouselComp extends React.Component {
   static propTypes = {
     titleID: PropTypes.string.isRequired,    // campus ID

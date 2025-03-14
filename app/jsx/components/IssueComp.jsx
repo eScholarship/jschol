@@ -5,11 +5,6 @@ import LazyImageComp from '../components/LazyImageComp.jsx'
 import ArbitraryHTMLComp from "../components/ArbitraryHTMLComp.jsx"
 import $ from 'jquery'
 
-// Load dotdotdot in browser but not server
-if (!(typeof document === "undefined")) {
-  const dotdotdot = require('jquery.dotdotdot')
-}
-
 class IssueComp extends React.Component {
   openAndAdjust = event => {
     $(this.caption).trigger('destroy')

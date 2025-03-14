@@ -8,7 +8,6 @@ import $ from 'jquery'
 // Only load flickity when in the browser (not server-side)
 if (!(typeof document === "undefined")) {
   var Flickity = require('flickity-imagesloaded')
-  var dotdotdot = require('jquery.dotdotdot')
 }
 
 class CarouselComp extends React.Component {
