@@ -19,11 +19,6 @@ import SidebarComp from '../components/SidebarComp.jsx'
 import FooterComp from '../components/FooterComp.jsx'
 import MetaTagsComp from '../components/MetaTagsComp.jsx'
 
-// Load dotdotdot in browser but not server
-if (!(typeof document === "undefined")) {
-  const dotdotdot = require('jquery.dotdotdot')
-}
-
 const tab_anchors = ['main', 'supplemental', 'metrics', 'author', 'meta']
 const anchors = tab_anchors.concat(['article_abstract', 'article_main', 'article_references'])
 

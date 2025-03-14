@@ -4,11 +4,6 @@ import React from 'react'
 import $ from 'jquery'
 import faker from 'faker/locale/en'
 
-// Load dotdotdot in browser but not server:
-if (!(typeof document === "undefined")) {
-  const dotdotdot = require('jquery.dotdotdot')
-}
-
 class ColumnBoxObj extends React.Component {
   state={loadingData: false}
 

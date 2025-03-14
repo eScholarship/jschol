@@ -4,11 +4,6 @@ import React from 'react'
 import ArbitraryHTMLComp from "../components/ArbitraryHTMLComp.jsx"
 import $ from 'jquery'
 
-// Load dotdotdot in browser but not server
-if (!(typeof document === "undefined")) {
-  const dotdotdot = require('jquery.dotdotdot')
-}
-
 class AboutComp extends React.Component {
   componentDidMount() {
     if (this.aboutElement) {
