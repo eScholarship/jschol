@@ -6,7 +6,7 @@
   "repository": "https://github.com/eScholarship/jschol",
   "scripts": {
     "test": "mocha",
-    "dev": "vite",
+    "dev": "concurrently \"vite\" \"bin/puma\"",
     "build": "vite build",
     "serve": "vite preview"
   },
@@ -19,6 +19,7 @@
     "babel-plugin-css-modules-transform": "^1.6.2",
     "backstopjs": "^6.3.3",
     "chai": "^3.5.0",
+    "concurrently": "^9.1.2",
     "del": "^2.2.2",
     "dotenv": "^16.4.7",
     "enzyme": "^3.11.0",
@@ -91,6 +92,7 @@
     "react-sortable-tree": "^2.8.0",
     "react-twitter-widgets": "^1.10.0",
     "smoothscroll-polyfill": "^0.4.4",
-    "trumbowyg": "^2.25.1"
+    "trumbowyg": "^2.25.1",
+    "vite-plugin-commonjs": "^0.10.4"
   }
 }
