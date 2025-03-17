@@ -6,7 +6,7 @@
   "repository": "https://github.com/eScholarship/jschol",
   "scripts": {
     "test": "mocha",
-    "dev": "concurrently \"vite\" \"bin/puma\"",
+    "dev": "concurrently \"ruby util/maybeSocks.rb\" \"ruby bin/puma\" \"vite\"",
     "build": "vite build",
     "serve": "vite preview"
   },
