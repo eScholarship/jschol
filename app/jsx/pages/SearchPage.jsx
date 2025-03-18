@@ -112,7 +112,7 @@ class FacetItem extends React.Component {
     let facet = this.props.data.facet
     let facetValueKey = facet.value.replace(/ /g, '_')
     // null in this case is of string type
-    const label = facet.displayName !== 'null' ? facet.displayName : facet.value
+    const label = facet.displayName ? facet.displayName : facet.value
     // Put a special class name on the rights facet to show Creative Commons icons
     let className = this.props.data.facetType == "rights"
                       ? `c-checkbox__attrib-${facet.value.toLowerCase()}`.replace(/ /g, '-')
