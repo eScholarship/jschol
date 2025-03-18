@@ -111,18 +111,29 @@ class FacetItem extends React.Component {
   render() {
     let facet = this.props.data.facet
     let facetValueKey = facet.value.replace(/ /g, '_')
-    this.label = facet.displayName ? facet.displayName : facet.value
+    // null in this case is of string type
+    const label = facet.displayName !== 'null' ? facet.displayName : facet.value
     // Put a special class name on the rights facet to show Creative Commons icons
     let className = this.props.data.facetType == "rights"
                       ? `c-checkbox__attrib-${facet.value.toLowerCase()}`.replace(/ /g, '-')
                       : ""
     return (
       <li className={className}>
-        <input id={`${this.props.data.facetType}-${facetValueKey}`} className="c-checkbox__input" type="checkbox"
-          name={this.props.data.facetType} value={facet.value}
+        <input 
+          id={`${this.props.data.facetType}-${facetValueKey}`} 
+          className="c-checkbox__input" type="checkbox"
+          name={this.props.data.facetType} 
+          value={facet.value}
           onChange={this.handleChange}
-          checked={this.checkFacet(this.props)} disabled={this.props.data.ancestorChecked ? true : false}/>
-        <label htmlFor={`${this.props.data.facetType}-${facetValueKey}`} className="c-checkbox__label">{this.label} ({facet.count})</label>
+          checked={this.checkFacet(this.props)} 
+          disabled={this.props.data.ancestorChecked ? true : false}
+        />
+        <label 
+          htmlFor={`${this.props.data.facetType}-${facetValueKey}`} 
+          className="c-checkbox__label"
+        >
+          {label} ({facet.count})
+        </label>
         { facet.descendents &&
           <ul className="c-checkbox">
             { facet.descendents.map(d => {
