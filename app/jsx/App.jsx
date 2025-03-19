@@ -3,7 +3,7 @@
 if (!(typeof document === "undefined")) {
   // require('babel-polyfill')   // do we need this?
   require('details-polyfill')
-  require('intersection-observer')
+  // require('intersection-observer')
   require('smoothscroll-polyfill').polyfill();
 }
 
