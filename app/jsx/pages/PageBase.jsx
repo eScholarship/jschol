@@ -6,6 +6,7 @@ import ReactGA from 'react-ga'
 import Contexts from '../contexts.jsx'
 import { Link } from 'react-router-dom'
 import { MathJaxContext } from "better-react-mathjax"
+import mathJaxURL from "mathjax-full/es5/tex-svg.js?url"
 
 import SkipNavComp from '../components/SkipNavComp.jsx'
 import Header1Comp from '../components/Header1Comp.jsx'
@@ -308,7 +309,7 @@ class PageBase extends React.Component
                     fetchingData={this.state.fetchingData}>
           {/* Not sure why the padding below is needed, but it is */}
           <div className="body" style={{ padding: "20px" }}>
-          <MathJaxContext version={3} config={mathjaxConfig} src="/js/MathJax-3.2.2/es5/tex-chtml.js" hideUnilTypeset="every">
+          <MathJaxContext version={3} config={mathjaxConfig} src={mathJaxURL} hideUnilTypeset="every">
             {this.needHeaderFooter() && <SkipNavComp/>}
             {this.state.pageData ? this.renderData(this.state.pageData) : this.renderLoading()}
             {this.needHeaderFooter() && <FooterComp/>}
@@ -337,7 +338,7 @@ class PageBase extends React.Component
 
     // Normal case
     return (
-      <MathJaxContext version={3} config={mathjaxConfig} src={"/js/MathJax-3.2.2/es5/tex-chtml.js"}>
+      <MathJaxContext version={3} config={mathjaxConfig} src={mathJaxURL}>
         <div className="body">
           {this.needHeaderFooter() && <SkipNavComp/>}
           {this.state.pageData ? this.renderData(this.state.pageData) : this.renderLoading()}
