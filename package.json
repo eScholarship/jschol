@@ -13,6 +13,7 @@
   "author": "California Digital Library",
   "license": "MIT",
   "devDependencies": {
+    "@rollup/plugin-inject": "^5.0.5",
     "@vitejs/plugin-legacy": "^6.0.2",
     "@vitejs/plugin-react": "^4.3.4",
     "babel-loader": "^8.2.5",
