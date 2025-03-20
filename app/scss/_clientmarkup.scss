@@ -59,17 +59,7 @@
   blockquote {
     margin-bottom: $spacing-md;
     padding-left: $spacing-sm;
-    border-left: 0.3em solid $color-light-gray;
     font-size: 1.1em;
-
-    &::before {
-      content: open-quote;
-    }
-
-    &::after {
-      content: close-quote;
-    }
-
   }
 
 }
