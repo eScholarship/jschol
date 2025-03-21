@@ -327,6 +327,7 @@ export default class PdfViewerComp extends React.Component
         <div id="errorWrapper" hidden='true'>
           <div id="errorMessageLeft">
             <span id="errorMessage"></span>
+            <span>If you recently published this item, please wait up to 30 minutes for the PDF to appear here.</span>
             <button id="errorShowMore" data-l10n-id="error_more_info">
               More Information
             </button>
