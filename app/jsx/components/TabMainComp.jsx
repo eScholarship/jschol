@@ -13,7 +13,9 @@ class Abstract extends React.Component {
     return (
       <details className="c-togglecontent" open>
         <summary>Abstract</summary>
-        <ArbitraryHTMLComp html={this.props.abstract} p_wrap={true} h1Level={3}/>
+        <div id="abstract-text">
+          <ArbitraryHTMLComp html={this.props.abstract} p_wrap={true} h1Level={3}/>
+        </div>
         {(this.props.unit && this.props.unit.id.match(/^.*_postprints/)) &&
           <p className="o-well-colored">
             Many UC-authored scholarly publications are freely available on this site
