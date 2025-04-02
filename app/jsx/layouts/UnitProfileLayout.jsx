@@ -44,6 +44,9 @@ export const disciplineOptions = [
     { value: "social", label: "Social and Behavioral Sciences" }
 ];
 
+const MAX_LOGO_WIDTH = 800
+const MAX_LOGO_HEIGHT = 90
+
 class UnitProfileLayout extends React.Component {
   // static propTypes = {
   // }
@@ -102,12 +105,27 @@ class UnitProfileLayout extends React.Component {
   }
 
   //handles image preview BEFORE any image is POST'ed to server/BEFORE any asset_id is generated
+  // TODO: 
+  // - accepted dimensions are different for logo and hero -- accomodate both
+  // - dont actually allow user to upload file if it doesnt fit criteria
   handleImageChange = (event) => {
     event.preventDefault()
     let reader = new FileReader()
     let file = event.target.files[0]
     let imgObj = {}
     let fieldName = event.target.name
+
+    // https://stackoverflow.com/a/58897088
+    let img = new Image()
+    console.log(event.target.value)
+    
+    img.src = window.URL.createObjectURL(file)     
+
+    img.onload = () => {
+      if (img.width > MAX_LOGO_WIDTH || img.height > MAX_LOGO_HEIGHT) {
+        alert(`Error: ${img.width}x${img.height} exceeds maximum allowed dimensions of ${MAX_LOGO_WIDTH}x${MAX_LOGO_HEIGHT}`); // change here 
+      }
+    }   
 
     reader.onloadend = () => {
       imgObj[fieldName] = {imagePreviewUrl: reader.result}
@@ -173,6 +191,12 @@ class UnitProfileLayout extends React.Component {
                    { !disableLogo &&
                      <div>
                        <input type="file" id="logoImage" name="logo" onChange={this.handleImageChange}/>
+                       <br/><br/>
+                       <i>Logo requirements: 800px width x 90px height in JPG, PNG, or GIF format. 
+                        <a href="https://help.escholarship.org/support/solutions/articles/9000124100">
+                          See the eScholarship help center for more information.
+                        </a>
+                       </i>
                        <br/><br/>
                     { this.state.banner_flag_visible &&
                       [<label key="0" className="c-editable-page__label" htmlFor="logoIsBanner">Suppress typeset site name next to logo: </label>,
