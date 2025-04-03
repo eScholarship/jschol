@@ -107,29 +107,34 @@ class UnitProfileLayout extends React.Component {
   //handles image preview BEFORE any image is POST'ed to server/BEFORE any asset_id is generated
   // TODO: 
   // - accepted dimensions are different for logo and hero -- accomodate both
-  // - dont actually allow user to upload file if it doesnt fit criteria
   handleImageChange = (event) => {
+    event.persist()
     event.preventDefault()
     let reader = new FileReader()
     let file = event.target.files[0]
     let imgObj = {}
-    let fieldName = event.target.name
-
-    // https://stackoverflow.com/a/58897088
-    let img = new Image()
-    console.log(event.target.value)
-    
-    img.src = window.URL.createObjectURL(file)     
-
-    img.onload = () => {
-      if (img.width > MAX_LOGO_WIDTH || img.height > MAX_LOGO_HEIGHT) {
-        alert(`Error: ${img.width}x${img.height} exceeds maximum allowed dimensions of ${MAX_LOGO_WIDTH}x${MAX_LOGO_HEIGHT}`); // change here 
-      }
-    }   
+    let fieldName = event.target.name 
 
     reader.onloadend = () => {
-      imgObj[fieldName] = {imagePreviewUrl: reader.result}
-      this.setData(imgObj)
+      // https://stackoverflow.com/a/58897088
+      let img = new Image()
+      img.src = reader.result
+
+      img.onload = () => {
+        console.log(event.target.value)
+        const { width, height } = img
+        console.log(width, height)
+
+        if (width > MAX_LOGO_WIDTH || height > MAX_LOGO_HEIGHT) {
+          alert(`Error: ${img.width}x${img.height} exceeds maximum allowed dimensions of ${MAX_LOGO_WIDTH}x${MAX_LOGO_HEIGHT}`) // should use ModalComp here
+          event.target.value = "" // reset the filename text
+          return
+        }
+
+        imgObj[fieldName] = { imagePreviewUrl: reader.result }
+        this.setData(imgObj)
+        this.setState({ banner_flag_visible: true })
+      }
     }
 
     reader.readAsDataURL(file)
