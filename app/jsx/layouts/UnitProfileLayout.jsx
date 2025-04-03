@@ -47,6 +47,17 @@ export const disciplineOptions = [
 const MAX_LOGO_WIDTH = 800
 const MAX_LOGO_HEIGHT = 90
 
+const acceptedDimensions = {
+  logo: {
+    width: 800,
+    height: 90
+  },
+  hero: {
+    width: 1000,
+    height: 400
+  }
+}
+
 class UnitProfileLayout extends React.Component {
   // static propTypes = {
   // }
@@ -108,12 +119,14 @@ class UnitProfileLayout extends React.Component {
   // TODO: 
   // - accepted dimensions are different for logo and hero -- accomodate both
   handleImageChange = (event) => {
-    event.persist()
+    event.persist() // keep the event from being nullified 
     event.preventDefault()
     let reader = new FileReader()
     let file = event.target.files[0]
     let imgObj = {}
-    let fieldName = event.target.name 
+    let fieldName = event.target.name
+    const acceptedWidth = acceptedDimensions[fieldName].width
+    const acceptedHeight = acceptedDimensions[fieldName].height
 
     reader.onloadend = () => {
       // https://stackoverflow.com/a/58897088
@@ -121,12 +134,11 @@ class UnitProfileLayout extends React.Component {
       img.src = reader.result
 
       img.onload = () => {
-        console.log(event.target.value)
         const { width, height } = img
         console.log(width, height)
 
-        if (width > MAX_LOGO_WIDTH || height > MAX_LOGO_HEIGHT) {
-          alert(`Error: ${img.width}x${img.height} exceeds maximum allowed dimensions of ${MAX_LOGO_WIDTH}x${MAX_LOGO_HEIGHT}`) // should use ModalComp here
+        if (width > acceptedWidth || height > acceptedHeight) {
+          alert(`Error: ${width}x${height} exceeds maximum allowed dimensions of ${acceptedWidth}x${acceptedHeight}`) // should use ModalComp here
           event.target.value = "" // reset the filename text
           return
         }
