@@ -9,6 +9,7 @@ import FormComp from '../components/FormComp.jsx'
 import _ from 'lodash'
 import Datetime from 'react-datetime'
 import Select from 'react-select'
+import ModalComp from '../components/ModalComp.jsx'
 
 
 export const contentOptions = [
@@ -44,9 +45,6 @@ export const disciplineOptions = [
     { value: "social", label: "Social and Behavioral Sciences" }
 ];
 
-const MAX_LOGO_WIDTH = 800
-const MAX_LOGO_HEIGHT = 90
-
 const acceptedDimensions = {
   logo: {
     width: 800,
@@ -62,13 +60,16 @@ class UnitProfileLayout extends React.Component {
   // static propTypes = {
   // }
 
-  state = { newData: this.props.data,
-            banner_flag_visible: this.props.data.logo,
-	    tos:this.props.data.tos,
-            indexed:"indexed" in this.props.data ? indexOptions.filter(p=>this.props.data["indexed"].includes(p.value)):"",
-            disciplines:"disciplines" in this.props.data ? disciplineOptions.filter(p=>this.props.data["disciplines"].includes(p.value)):"",
-            contentby:"contentby" in this.props.data ? contentOptions.filter(p=>this.props.data["contentby"].includes(p.value)):"",
-          };
+  state = { 
+    newData: this.props.data,
+    banner_flag_visible: this.props.data.logo,
+	  tos:this.props.data.tos,
+    indexed:"indexed" in this.props.data ? indexOptions.filter(p=>this.props.data["indexed"].includes(p.value)):"",
+    disciplines:"disciplines" in this.props.data ? disciplineOptions.filter(p=>this.props.data["disciplines"].includes(p.value)):"",
+    contentby:"contentby" in this.props.data ? contentOptions.filter(p=>this.props.data["contentby"].includes(p.value)):"",
+    isModalOpen: false,
+    modalContent: ''
+  };
 
   updatetos = value => {
 	  this.setState({ tos: value });
@@ -116,8 +117,6 @@ class UnitProfileLayout extends React.Component {
   }
 
   //handles image preview BEFORE any image is POST'ed to server/BEFORE any asset_id is generated
-  // TODO: 
-  // - accepted dimensions are different for logo and hero -- accomodate both
   handleImageChange = (event) => {
     event.persist() // keep the event from being nullified 
     event.preventDefault()
@@ -135,10 +134,14 @@ class UnitProfileLayout extends React.Component {
 
       img.onload = () => {
         const { width, height } = img
-        console.log(width, height)
 
+        // valid dimension check  
         if (width > acceptedWidth || height > acceptedHeight) {
-          alert(`Error: ${width}x${height} exceeds maximum allowed dimensions of ${acceptedWidth}x${acceptedHeight}`) // should use ModalComp here
+          const errorMessage = `${width}x${height} exceeds maximum allowed dimensions of ${acceptedWidth}x${acceptedHeight}`
+          this.setState({ 
+            isModalOpen: true,
+            modalContent: errorMessage 
+          })
           event.target.value = "" // reset the filename text
           return
         }
@@ -233,6 +236,13 @@ class UnitProfileLayout extends React.Component {
                       }
                      </div>
                    }
+                     <ModalComp
+                       isOpen={this.state.isModalOpen}
+                       header="Upload Error"
+                       content={this.state.modalContent}
+                       onOK={() => this.setState({ isModalOpen: false })}
+                       okLabel="OK"
+                     />
                    <br/>
 
                    { cms.permissions && cms.permissions.super && !disableLogo &&
