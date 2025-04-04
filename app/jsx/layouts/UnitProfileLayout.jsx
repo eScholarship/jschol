@@ -210,7 +210,7 @@ class UnitProfileLayout extends React.Component {
                    <br/>
                    { !disableLogo &&
                      <div>
-                       <input type="file" id="logoImage" name="logo" onChange={this.handleImageChange}/>
+                       <input type="file" id="logoImage" name="logo" accept=".png, .jpg, .jpeg, .gif" onChange={this.handleImageChange}/>
                        <br/><br/>
                        <i>Logo requirements: 800px width x 90px height in JPG, PNG, or GIF format. 
                         <a href="https://help.escholarship.org/support/solutions/articles/9000124100">
