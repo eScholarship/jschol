@@ -212,11 +212,12 @@ class UnitProfileLayout extends React.Component {
                      <div>
                        <input type="file" id="logoImage" name="logo" accept=".png, .jpg, .jpeg, .gif" onChange={this.handleImageChange}/>
                        <br/><br/>
-                       <i>Logo requirements: 800px width x 90px height in JPG, PNG, or GIF format. 
+                       <div className="upload-criteria">
+                        <span>Logo requirements: 800px width x 90px height in JPG, PNG, or GIF format.&nbsp;</span>
                         <a href="https://help.escholarship.org/support/solutions/articles/9000124100">
                           See the eScholarship help center for more information.
                         </a>
-                       </i>
+                       </div>
                        <br/><br/>
                     { this.state.banner_flag_visible &&
                       [<label key="0" className="c-editable-page__label" htmlFor="logoIsBanner">Suppress typeset site name next to logo: </label>,
