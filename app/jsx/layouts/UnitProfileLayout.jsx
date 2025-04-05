@@ -148,7 +148,6 @@ class UnitProfileLayout extends React.Component {
 
         imgObj[fieldName] = { imagePreviewUrl: reader.result }
         this.setData(imgObj)
-        this.setState({ banner_flag_visible: true })
       }
     }
 
