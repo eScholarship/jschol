@@ -63,7 +63,7 @@ class UnitProfileLayout extends React.Component {
   state = { 
     newData: this.props.data,
     banner_flag_visible: this.props.data.logo,
-	tos:this.props.data.tos,
+    tos:this.props.data.tos,
     indexed:"indexed" in this.props.data ? indexOptions.filter(p=>this.props.data["indexed"].includes(p.value)):"",
     disciplines:"disciplines" in this.props.data ? disciplineOptions.filter(p=>this.props.data["disciplines"].includes(p.value)):"",
     contentby:"contentby" in this.props.data ? contentOptions.filter(p=>this.props.data["contentby"].includes(p.value)):"",
