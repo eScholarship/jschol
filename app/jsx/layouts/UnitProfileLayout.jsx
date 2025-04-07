@@ -9,6 +9,7 @@ import FormComp from '../components/FormComp.jsx'
 import _ from 'lodash'
 import Datetime from 'react-datetime'
 import Select from 'react-select'
+import ModalComp from '../components/ModalComp.jsx'
 
 
 export const contentOptions = [
@@ -44,17 +45,31 @@ export const disciplineOptions = [
     { value: "social", label: "Social and Behavioral Sciences" }
 ];
 
+const acceptedDimensions = {
+  logo: {
+    width: 800,
+    height: 90
+  },
+  hero: {
+    width: 1000,
+    height: 400
+  }
+}
+
 class UnitProfileLayout extends React.Component {
   // static propTypes = {
   // }
 
-  state = { newData: this.props.data,
-            banner_flag_visible: this.props.data.logo,
-	    tos:this.props.data.tos,
-            indexed:"indexed" in this.props.data ? indexOptions.filter(p=>this.props.data["indexed"].includes(p.value)):"",
-            disciplines:"disciplines" in this.props.data ? disciplineOptions.filter(p=>this.props.data["disciplines"].includes(p.value)):"",
-            contentby:"contentby" in this.props.data ? contentOptions.filter(p=>this.props.data["contentby"].includes(p.value)):"",
-          };
+  state = { 
+    newData: this.props.data,
+    banner_flag_visible: this.props.data.logo,
+    tos:this.props.data.tos,
+    indexed:"indexed" in this.props.data ? indexOptions.filter(p=>this.props.data["indexed"].includes(p.value)):"",
+    disciplines:"disciplines" in this.props.data ? disciplineOptions.filter(p=>this.props.data["disciplines"].includes(p.value)):"",
+    contentby:"contentby" in this.props.data ? contentOptions.filter(p=>this.props.data["contentby"].includes(p.value)):"",
+    isModalOpen: false,
+    modalContent: ''
+  };
 
   updatetos = value => {
 	  this.setState({ tos: value });
@@ -103,15 +118,37 @@ class UnitProfileLayout extends React.Component {
 
   //handles image preview BEFORE any image is POST'ed to server/BEFORE any asset_id is generated
   handleImageChange = (event) => {
+    event.persist() // keep the event from being nullified 
     event.preventDefault()
     let reader = new FileReader()
     let file = event.target.files[0]
     let imgObj = {}
     let fieldName = event.target.name
+    const acceptedWidth = acceptedDimensions[fieldName].width
+    const acceptedHeight = acceptedDimensions[fieldName].height
 
     reader.onloadend = () => {
-      imgObj[fieldName] = {imagePreviewUrl: reader.result}
-      this.setData(imgObj)
+      // https://stackoverflow.com/a/58897088
+      let img = new Image()
+      img.src = reader.result
+
+      img.onload = () => {
+        const { width, height } = img
+
+        // valid dimension check  
+        if (width > acceptedWidth || height > acceptedHeight) {
+          const errorMessage = `${width}x${height} exceeds maximum allowed dimensions of ${acceptedWidth}x${acceptedHeight}`
+          this.setState({ 
+            isModalOpen: true,
+            modalContent: errorMessage 
+          })
+          event.target.value = "" // reset the filename text
+          return
+        }
+
+        imgObj[fieldName] = { imagePreviewUrl: reader.result }
+        this.setData(imgObj)
+      }
     }
 
     reader.readAsDataURL(file)
@@ -172,7 +209,14 @@ class UnitProfileLayout extends React.Component {
                    <br/>
                    { !disableLogo &&
                      <div>
-                       <input type="file" id="logoImage" name="logo" onChange={this.handleImageChange}/>
+                       <input type="file" id="logoImage" name="logo" accept=".png, .jpg, .jpeg, .gif" onChange={this.handleImageChange}/>
+                       <br/><br/>
+                       <div className="upload-criteria">
+                        <span>Logo requirements: 800px width x 90px height in JPG, PNG, or GIF format.&nbsp;</span>
+                        <a href="https://help.escholarship.org/support/solutions/articles/9000124100">
+                          See the eScholarship help center for more information.
+                        </a>
+                       </div>
                        <br/><br/>
                     { this.state.banner_flag_visible &&
                       [<label key="0" className="c-editable-page__label" htmlFor="logoIsBanner">Suppress typeset site name next to logo: </label>,
@@ -192,6 +236,13 @@ class UnitProfileLayout extends React.Component {
                       }
                      </div>
                    }
+                     <ModalComp
+                       isOpen={this.state.isModalOpen}
+                       header="Upload Error"
+                       content={this.state.modalContent}
+                       onOK={() => this.setState({ isModalOpen: false })}
+                       okLabel="OK"
+                     />
                    <br/>
 
                    { cms.permissions && cms.permissions.super && !disableLogo &&

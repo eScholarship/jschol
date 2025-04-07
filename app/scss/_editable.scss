@@ -87,6 +87,7 @@
 
 .trumbowyg-box, .trumbowyg-editor {
   min-height: 300px;
+  margin-bottom: 20px;
 }
 
 // ### Toggle button used on UnitcarouselConfigComp ### //
@@ -333,4 +334,8 @@
   display: table-cell;
   padding-left: 0.5em;
   margin-left: 0.5em;
+}
+
+.upload-criteria {
+  font-style: italic;
 }
