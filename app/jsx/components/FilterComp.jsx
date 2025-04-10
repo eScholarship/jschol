@@ -26,13 +26,18 @@ class FilterComp extends React.Component {
       for (let filterType of filterTypes) {
         if (this.props.query['filters'][filterType] && this.props.query['filters'][filterType]['filters'].length > 0) {
           let displayNames = this.props.query['filters'][filterType]['filters'].map(function(filter) {
-            if ('displayName' in filter) {
+            if (filter['displayName']) {
               return filter['displayName'];
             } else {
               return filter['value'];
             }
           });
-          activeFilters.push({'filterDisplay': this.props.query['filters'][filterType]['display'], 'filters': displayNames.join(", "), 'filterType': filterType});
+          
+          activeFilters.push({
+            'filterDisplay': this.props.query['filters'][filterType]['display'], 
+            'filters': displayNames.join(", "), 
+            'filterType': filterType,  
+          });
         }
       }
     }

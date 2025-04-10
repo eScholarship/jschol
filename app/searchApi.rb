@@ -85,7 +85,7 @@ def initAllFacets()
     'displayName' => 'Journal',
     'awsFacetParam' => {sort: 'count', size: 100},
     'filterTransform' => lambda { |filterVals| filterVals.map { |filterVal| {'value' => filterVal, 'displayName' => get_unit_display_name(filterVal)} } },
-    'facetTransform' => lambda { |facetVals| facetVals.map { |facetVal| {'value' => facetVal['value'], 'count' => facetVal['count'], 'displayName' => get_unit_display_name(facetVal['value'])} }.sort_by{ |f| f['displayName'].downcase} }
+    'facetTransform' => lambda { |facetVals| facetVals.map { |facetVal| {'value' => facetVal['value'], 'count' => facetVal['count'], 'displayName' => get_unit_display_name(facetVal['value'])} }.sort_by{ |f| f['displayName']&.downcase || ''} }
   },
   'disciplines' => {
     'displayName' => 'Discipline',
@@ -143,7 +143,7 @@ TYPE_OF_WORK = {
 # takes the code that escholarship UI/AWS uses, returns DisplayName
 def get_unit_display_name(unitID)
   unit = $unitsHash[unitID]
-  unit ? unit.name : "null"
+  unit ? unit.name : nil
 end
 
 # Recursive sort of nested facet array 
