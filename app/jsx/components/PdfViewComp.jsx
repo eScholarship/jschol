@@ -4,6 +4,7 @@ import React from 'react'
 import ScrollingAnchorComp from "../components/ScrollingAnchorComp.jsx"
 import PdfViewerComp from '../components/PdfViewerComp.jsx'
 import { Document, Page, Outline, pdfjs } from 'react-pdf';
+import Breakpoints from '../../js/breakpoints.json'
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
 
@@ -96,8 +97,10 @@ class HypothesisClient extends React.Component {
 }
 
 class PdfViewComp extends React.Component {
+  pageRefs = []
+
   state = {
-    numPages: null
+    numPages: null,
   }
 
   onLoadSuccess = ({ numPages }) => {
@@ -105,11 +108,14 @@ class PdfViewComp extends React.Component {
   }
 
   view = () => {
-    if (this.props.download_restricted)
+    if (this.props.download_restricted) {
       alert("Download restricted until " + this.props.download_restricted)
-    else {
+    } else {
       let separator = this.props.url.indexOf("?") >= 0 ? "&" : "?"
-      window.location = this.props.url + separator + "v=lg" +
+      window.location =
+        this.props.url +
+        separator +
+        "v=lg" +
         (this.props.preview_key ? "&preview_key=" + this.props.preview_key : "")
     }
   }
@@ -120,6 +126,7 @@ class PdfViewComp extends React.Component {
       this.props.url !== nextProps.url ||
       // we want the component to re-render if there's state changes (numPages)
       this.state.numPages !== nextState.numPages ||
+      this.props.containerWidth !== nextProps.containerWidth ||
       this.props.pageNum !== nextProps.pageNum
     )
   }
@@ -133,39 +140,54 @@ class PdfViewComp extends React.Component {
     }
   }
 
-  constructor(props) {
-    super(props)
-    this.pageRefs = []
+  // getPdfjsWidth = () => {
+  //   let totalWidth = this.props.containerWidth // Now using containerWidth passed via props
+
+  //   return totalWidth >= parseInt(Breakpoints.screen2)
+  //     ? (totalWidth * (1.0 - 0.28)) - 120 // Adjust for sidebar (28% on larger screens)
+  //     : totalWidth - 21 // No sidebar (mobile/tablet mode)
+  // }
+
+  getScale = () => {
+    const containerWidth = this.props.containerWidth
+    const baseWidth = 600
+    const scale = containerWidth / baseWidth
+    return Math.min(Math.max(scale, 0.5), 1.5) // constrain scale between 0.5 and 1.5
   }
 
   render() {
     const { numPages } = this.state
-    const { url, content_key, preview_key } = this.props
+    const { url, content_key, preview_key, viewerRef } = this.props
     const separator = url.indexOf("?") >= 0 ? "&" : "?"
-    console.log('pdf props', this.props)
+    // console.log("pdf props", this.props)
 
-    const fileUrl = url.replace(".pdf", "_noSplash_" + content_key + ".pdf") + 
-      (preview_key ? separator + "preview_key=" + preview_key : "")
+    const fileUrl =
+      url.replace(".pdf", `_noSplash_${content_key}.pdf`) +
+      (preview_key ? `${separator}preview_key=${preview_key}` : "")
 
     return (
       <details className="c-togglecontent" open>
-        {/* ScrollingAnchor sits here and not above because c-togglecontent styling relies on
-            coming right after it's sibling of the same class name */}
         <ScrollingAnchorComp name="article_main" />
         <summary>Main Content</summary>
         <div className="c-pdfview">
-          <button onClick={() => {this.view()}} className="c-pdfview__button-download">Download PDF to View</button>
-          <button onClick={() => {this.view()}} className="c-pdfview__button-view">View Larger</button>
+          <button onClick={this.view} className="c-pdfview__button-download">
+            Download PDF to View
+          </button>
+          <button onClick={this.view} className="c-pdfview__button-view">
+            View Larger
+          </button>
         </div>
-        {/* Only show the accessibility link on items that do not have download_restricted set  */}
-        {!this.props.download_restricted &&
-        <div className="c-pdfview__accessibility">
-          For improved accessibility of PDF content, <a href={fileUrl} >download the file</a> to your device.
-        </div>
-        }
-        <div className="c-pdfview__viewer">
-          <Document
-            file={fileUrl}
+
+        {!this.props.download_restricted && (
+          <div className="c-pdfview__accessibility">
+            For improved accessibility of PDF content,{" "}
+            <a href={fileUrl}>download the file</a> to your device.
+          </div>
+        )}
+
+        <div className="c-pdfview__viewer" ref={viewerRef}>
+          <Document 
+            file={fileUrl} 
             onLoadSuccess={this.onLoadSuccess} 
             loading="Loading..."
           >
@@ -173,14 +195,14 @@ class PdfViewComp extends React.Component {
               <Page
                 key={`page_${index + 1}`}
                 pageNumber={index + 1}
-                scale={1.3}
+                scale={this.getScale()}
                 inputRef={el => this.pageRefs[index] = el}
               />
             ))}
-            {/* <Outline onItemClick={({ pageNumber }) => console.log(pageNumber)} /> */}
           </Document>
         </div>
-        { this.props.commenting_ok && <HypothesisClient/> }
+
+        {this.props.commenting_ok && <HypothesisClient />}
       </details>
     )
   }
