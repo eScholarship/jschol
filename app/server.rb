@@ -1198,10 +1198,6 @@ def getItemPageData(shortArk)
   pdf_url = nil
   if item.content_type == "application/pdf" && %w{published pending}.include?(item.status)
     pdf_url = (item.status == 'pending' ? "/preview/" : "/content/") + id + "/" + id + ".pdf"
-    displayPDF = DisplayPDF[id]
-    if displayPDF && displayPDF.orig_timestamp
-      pdf_url += "?t=#{displayPDF.orig_timestamp.to_i.to_s(36)}"
-    end
   end
 
   if !item.nil?
