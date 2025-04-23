@@ -152,7 +152,7 @@ class PdfViewComp extends React.Component {
     const containerWidth = this.props.containerWidth
     const baseWidth = 600
     const scale = containerWidth / baseWidth
-    return Math.min(Math.max(scale, 0.5), 1.5) // constrain scale between 0.5 and 1.5
+    return Math.min(Math.max(scale, 0.5), 2) // constrain scale
   }
 
   render() {
