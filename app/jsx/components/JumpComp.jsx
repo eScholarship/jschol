@@ -25,10 +25,6 @@ class JumpComp extends React.Component {
     this.props.changeTab(tabName)
   }
 
-  handleItemClick = (anchor) => {
-    this.props.onItemClick(anchor)
-  }
-
   render() {
     let kind = (this.props.genre == 'monograph') ? "Book" : "Article"
     let toc = this.props.attrs.toc && this.props.attrs.toc.divs

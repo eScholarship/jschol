@@ -43,13 +43,6 @@ class ItemPage extends PageBase {
     pageNum: 1
   }
 
-  // handleItemClick = (anchor) => {
-  //   console.log('anchor', anchor)
-  //   const pageNumber = parseInt(anchor.split('=')[1], 10)
-  //   this.setState({ pageNum: pageNumber })
-  //   this.changeTab(anchor)
-  // }
-
   // Unit ID for permissions checking
   pagePermissionsUnit() {
     return "root"  // This is only being used for super user access
@@ -235,7 +228,6 @@ class ItemPage extends PageBase {
                       changeTab={this.changeTab}
                       formatDate={this.formatDate}
                       pageNum={this.state.pageNum} 
-                      // onItemClick={this.handleItemClick}
                       {...d} />
           </main>
           <aside>
@@ -244,7 +236,6 @@ class ItemPage extends PageBase {
               changeTab={this.changeTab} 
               genre={d.genre} 
               attrs={d.attrs} 
-              // onItemClick={this.handleItemClick}
             />
           }
           {d.sidebar && !isWithdrawn &&
