@@ -110,6 +110,7 @@ class PdfViewComp extends React.Component {
     })
   }
 
+  // respond to pageNum updates coming from parent props (user clicks toc item or hash changes)
   componentDidUpdate(prevProps) {
     if (prevProps.pageNum !== this.props.pageNum) {
       this.scrollToPageNum()
@@ -154,15 +155,6 @@ class PdfViewComp extends React.Component {
       this.props.containerWidth !== nextProps.containerWidth ||
       this.props.pageNum !== nextProps.pageNum
     )
-  }
-
-  componentDidUpdate(prevProps) {
-    if (prevProps.pageNum !== this.props.pageNum) {
-      const pageRef = this.pageRefs?.[this.props.pageNum - 1]
-      if (pageRef) {
-        setTimeout(()=> pageRef.scrollIntoView({ behavior: "smooth" }), 100)
-      }
-    }
   }
 
   getScale = () => {
