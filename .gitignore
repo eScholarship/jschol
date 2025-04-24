@@ -50,3 +50,4 @@ dev/puma.rb
 .envrc
 old/
 eb-*/
+settings.json

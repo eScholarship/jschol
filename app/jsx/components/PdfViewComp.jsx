@@ -3,7 +3,7 @@
 import React from 'react'
 import ScrollingAnchorComp from "../components/ScrollingAnchorComp.jsx"
 import PdfViewerComp from '../components/PdfViewerComp.jsx'
-import { Document, Page, Outline, pdfjs } from 'react-pdf';
+import { Document, Page, pdfjs } from 'react-pdf';
 import Breakpoints from '../../js/breakpoints.json'
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
@@ -104,8 +104,33 @@ class PdfViewComp extends React.Component {
   }
 
   onLoadSuccess = ({ numPages }) => {
-    this.setState({ numPages })
+    // ensure that scrolling happens AFTER document has loaded
+    this.setState({ numPages }, () => {
+      this.scrollToPageNum()
+    })
   }
+
+  componentDidUpdate(prevProps) {
+    if (prevProps.pageNum !== this.props.pageNum) {
+      this.scrollToPageNum()
+    }
+  }
+
+  scrollToPageNum = () => {
+    if (this.scrollTimeout) clearTimeout(this.scrollTimeout)
+  
+    const pageRef = this.pageRefs?.[this.props.pageNum - 1]
+    if (pageRef) {
+      this.scrollTimeout = setTimeout(() => {
+        pageRef.scrollIntoView({ behavior: "smooth" })
+      }, 200)
+    }
+  }
+  
+  componentWillUnmount() {
+    if (this.scrollTimeout) clearTimeout(this.scrollTimeout)
+  }
+  
 
   view = () => {
     if (this.props.download_restricted) {
@@ -135,18 +160,10 @@ class PdfViewComp extends React.Component {
     if (prevProps.pageNum !== this.props.pageNum) {
       const pageRef = this.pageRefs?.[this.props.pageNum - 1]
       if (pageRef) {
-        pageRef.scrollIntoView({ behavior: "smooth" })
+        setTimeout(()=> pageRef.scrollIntoView({ behavior: "smooth" }), 100)
       }
     }
   }
-
-  // getPdfjsWidth = () => {
-  //   let totalWidth = this.props.containerWidth // Now using containerWidth passed via props
-
-  //   return totalWidth >= parseInt(Breakpoints.screen2)
-  //     ? (totalWidth * (1.0 - 0.28)) - 120 // Adjust for sidebar (28% on larger screens)
-  //     : totalWidth - 21 // No sidebar (mobile/tablet mode)
-  // }
 
   getScale = () => {
     const containerWidth = this.props.containerWidth

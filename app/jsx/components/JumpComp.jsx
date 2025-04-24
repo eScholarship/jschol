@@ -49,8 +49,8 @@ class JumpComp extends React.Component {
               <li><Link to="#" onClick={(e)=>this.handleClick(e, "article_main")}>Main Content</Link></li> }
             { toc &&
               toc.map(item =>
-                <li key={item.title} onClick={() => this.handleItemClick(item.anchor)}>
-                  <a role="button">{item.title}</a>
+                <li key={item.title}>
+                 <Link to="#" onClick={(e)=>this.handleClick(e, item.anchor)}>{item.title}</Link>
                 </li>
               )
             }
