@@ -157,10 +157,17 @@ class PdfViewComp extends React.Component {
     )
   }
 
+  get_pdfjs_width = () => {
+    const totalWidth = window.innerWidth
+    return (totalWidth >= parseInt(Breakpoints.screen2))
+      ? (totalWidth * (1.0 - 0.28)) - 120 // sidebar occupies 28% in this mode
+      : totalWidth - 21 // no sidebar in this mode
+  }
+
   getScale = () => {
-    const containerWidth = this.props.containerWidth
     const baseWidth = 600
-    const scale = containerWidth / baseWidth
+    const availableWidth = this.get_pdfjs_width() - 50
+    const scale = availableWidth / baseWidth
     return Math.min(Math.max(scale, 0.5), 2) // constrain scale
   }
 
