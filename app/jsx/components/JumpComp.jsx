@@ -28,7 +28,7 @@ class JumpComp extends React.Component {
   render() {
     let kind = (this.props.genre == 'monograph') ? "Book" : "Article"
     let toc = this.props.attrs.toc && this.props.attrs.toc.divs
-    console.log('jump props', this.props)
+    
     return (
       <section className="o-columnbox1" hidden={!this.state.show}>
         <header>

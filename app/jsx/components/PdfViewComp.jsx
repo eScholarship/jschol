@@ -8,6 +8,8 @@ import Breakpoints from '../../js/breakpoints.json'
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
 
+// TODO:
+// use worker shipped with react-pdf: https://www.npmjs.com/package/react-pdf#configure-pdfjs-worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
 // const H_SERVER = 'https://hypothes.is'
@@ -175,7 +177,6 @@ class PdfViewComp extends React.Component {
     const { numPages } = this.state
     const { url, content_key, preview_key, viewerRef } = this.props
     const separator = url.indexOf("?") >= 0 ? "&" : "?"
-    // console.log("pdf props", this.props)
 
     const fileUrl =
       url.replace(".pdf", `_noSplash_${content_key}.pdf`) +
@@ -222,35 +223,6 @@ class PdfViewComp extends React.Component {
       </details>
     )
   }
-
-
-  // render() {
-  //   let separator = this.props.url.indexOf("?") >= 0 ? "&" : "?"
-  //   let pdf_url = this.props.url + (this.props.preview_key ? separator+"preview_key=" + this.props.preview_key : "")
-  //   return (
-  //     <details className="c-togglecontent" open>
-  //       {/* ScrollingAnchor sits here and not above because c-togglecontent styling relies on
-  //           coming right after it's sibling of the same class name */}
-  //       <ScrollingAnchorComp name="article_main" />
-  //       <summary>Main Content</summary>
-  //       <div className="c-pdfview">
-  //         <button onClick={() => {this.view()}} className="c-pdfview__button-download">Download PDF to View</button>
-  //         <button onClick={() => {this.view()}} className="c-pdfview__button-view">View Larger</button>
-  //       </div>
-  //       {/* Only show the accessibility link on items that do not have download_restricted set  */}
-  //       {!this.props.download_restricted &&
-  //       <div className="c-pdfview__accessibility">
-  //         For improved accessibility of PDF content, <a href={pdf_url} >download the file</a> to your device.
-  //       </div>
-  //       }
-  //       <div className="c-pdfview__viewer">
-  //         <PdfViewerComp url={this.props.url.replace(".pdf", "_noSplash_" + this.props.content_key + ".pdf")
-  //                             + (this.props.preview_key ? separator+"preview_key=" + this.props.preview_key : "")}/>
-  //       </div>
-  //       { this.props.commenting_ok && <HypothesisClient/> }
-  //     </details>
-  //   )
-  // }
 }
 
 export default PdfViewComp;

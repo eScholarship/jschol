@@ -131,7 +131,6 @@ class ItemPage extends PageBase {
   }
 
   renderData = data => {
-    console.log('d', data)
     let currentTab = tab_anchors.includes(this.state.currentTab) ? this.state.currentTab : "main"
     let d = data
     let a = d.attrs
