@@ -10,91 +10,91 @@ import 'react-pdf/dist/esm/Page/TextLayer.css';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
-const H_SERVER = 'https://hypothes.is'
+// const H_SERVER = 'https://hypothes.is'
 
-class HypothesisClient extends React.Component {
-  // Re-initialize on back button
-  componentDidMount() {
+// class HypothesisClient extends React.Component {
+//   // Re-initialize on back button
+//   componentDidMount() {
 
-    let oldHypothesisDestroyed = false
+//     let oldHypothesisDestroyed = false
 
-    // Wait for pdf.js to initialize before loading Hypothesis
-    let timeout = 0
-    this.pdfWatch = setInterval(()=>{
+//     // Wait for pdf.js to initialize before loading Hypothesis
+//     let timeout = 0
+//     this.pdfWatch = setInterval(()=>{
 
-      // Get rid of existing Hypothesis that might have been loaded by the
-      // browser extension, because it won't figure out we've got pdf.js here
-      // since we load it late.
-      if (!oldHypothesisDestroyed && this.destroyHypothesis()) {
-        oldHypothesisDestroyed = true
-        timeout = 800
-      }
+//       // Get rid of existing Hypothesis that might have been loaded by the
+//       // browser extension, because it won't figure out we've got pdf.js here
+//       // since we load it late.
+//       if (!oldHypothesisDestroyed && this.destroyHypothesis()) {
+//         oldHypothesisDestroyed = true
+//         timeout = 800
+//       }
 
-      let page = document.querySelectorAll('#pdfjs-viewer .page')
-      if (!page || page.length == 0)
-        return
+//       let page = document.querySelectorAll('#pdfjs-viewer .page')
+//       if (!page || page.length == 0)
+//         return
 
-      clearInterval(this.pdfWatch)
-      this.pdfWatch = null
+//       clearInterval(this.pdfWatch)
+//       this.pdfWatch = null
 
-      setTimeout(()=>{
-        // Install Hypothesis for current URL
-        var embedScriptEl = document.createElement('script')
-        window.hypothesisConfig = function () {
-          return {
-            //constructor: Annotator.Sidebar,
-            app: 'https://hypothes.is/app.html'
-          }
-        }
-        //embedScriptEl.src = "/hypoth/build/boot.js"
-        embedScriptEl.src = H_SERVER + '/embed.js'
-        console.log("Installing Hypothesis.")
-        document.head.appendChild(embedScriptEl)
-      }, timeout)
-    }, 200)
-  }
+//       setTimeout(()=>{
+//         // Install Hypothesis for current URL
+//         var embedScriptEl = document.createElement('script')
+//         window.hypothesisConfig = function () {
+//           return {
+//             //constructor: Annotator.Sidebar,
+//             app: 'https://hypothes.is/app.html'
+//           }
+//         }
+//         //embedScriptEl.src = "/hypoth/build/boot.js"
+//         embedScriptEl.src = H_SERVER + '/embed.js'
+//         console.log("Installing Hypothesis.")
+//         document.head.appendChild(embedScriptEl)
+//       }, timeout)
+//     }, 200)
+//   }
 
-  destroyHypothesis() {
-    const annotatorLink = document.querySelector(
-      'link[type="application/annotator+html"]'
-    );
+//   destroyHypothesis() {
+//     const annotatorLink = document.querySelector(
+//       'link[type="application/annotator+html"]'
+//     );
 
-    if (annotatorLink) {
-      console.log("Destroying Hypothesis.")
+//     if (annotatorLink) {
+//       console.log("Destroying Hypothesis.")
 
-      // Dispatch a 'destroy' event which is handled by the code in
-      // annotator/main.js to remove the client. Timeout below is because
-      // sometimes the annotator link exists before the client has fully
-      // initialized itself, and sending it a destroy event prior to that
-      // just doesn't work.
-      setTimeout(()=> {
-        var destroyEvent = new Event('destroy');
-        annotatorLink.dispatchEvent(destroyEvent);
+//       // Dispatch a 'destroy' event which is handled by the code in
+//       // annotator/main.js to remove the client. Timeout below is because
+//       // sometimes the annotator link exists before the client has fully
+//       // initialized itself, and sending it a destroy event prior to that
+//       // just doesn't work.
+//       setTimeout(()=> {
+//         var destroyEvent = new Event('destroy');
+//         annotatorLink.dispatchEvent(destroyEvent);
 
-        // The browser extension overrides all settings. Get rid of them.
-        const settingsElements = document.querySelectorAll('script.js-hypothesis-config');
-        for (let i = 0; i < settingsElements.length; i++)
-          settingsElements[i].remove()
-      }, 500)
+//         // The browser extension overrides all settings. Get rid of them.
+//         const settingsElements = document.querySelectorAll('script.js-hypothesis-config');
+//         for (let i = 0; i < settingsElements.length; i++)
+//           settingsElements[i].remove()
+//       }, 500)
 
-      return true
-    }
-    else
-      return false
-  }
+//       return true
+//     }
+//     else
+//       return false
+//   }
 
-  // Close out when disappearing
-  componentWillUnmount() {
-    if (this.pdfWatch) {
-      clearInterval(this.pdfWatch)
-      this.pdfWatch = null
-    }
-    this.destroyHypothesis()
-  }
+//   // Close out when disappearing
+//   componentWillUnmount() {
+//     if (this.pdfWatch) {
+//       clearInterval(this.pdfWatch)
+//       this.pdfWatch = null
+//     }
+//     this.destroyHypothesis()
+//   }
 
-  render = () =>
-    <div id="hypothesis-placeholder"/>
-}
+//   render = () =>
+//     <div id="hypothesis-placeholder"/>
+// }
 
 class PdfViewComp extends React.Component {
   pageRefs = []
@@ -218,7 +218,7 @@ class PdfViewComp extends React.Component {
           </Document>
         </div>
 
-        {this.props.commenting_ok && <HypothesisClient />}
+        {/* {this.props.commenting_ok && <HypothesisClient />} */}
       </details>
     )
   }

@@ -361,7 +361,7 @@ class UnitProfileLayout extends React.Component {
                      </div>
                     }
 
-                    { /series|journal/.test(this.props.unit.type) &&
+                    {/* { /series|journal/.test(this.props.unit.type) &&
                       <div>
                         { disableEdit ?
                           <div>
@@ -376,7 +376,8 @@ class UnitProfileLayout extends React.Component {
                         }
                         <br/>
                       </div>
-                    }
+                    } */}
+                    <br/>
 
                    <button type="submit">Save Changes</button>
                  </FormComp>
