@@ -48,20 +48,10 @@ module.exports = {
       process.stdout.write(" [" + Math.round(percent*100) + "%] " + message + "                                \r")
     )
   ],
-  resolve: {
-    alias: {
-      'pdfjs-lib': __dirname + '/node_modules/pdfjs-embed2/src/pdf.js'
-    },
-  },
   module: {
     rules: [{
       test: /\.jsx$/,
       exclude: /node_modules/,
-      loader: 'babel-loader'
-    },
-    {
-      test: /pdfjs-embed2.*\.js$/,
-      exclude: /src\/core\/(glyphlist|unicode)/,
       loader: 'babel-loader'
     },
     {

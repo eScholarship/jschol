@@ -2,7 +2,6 @@
 
 import React from 'react'
 import ScrollingAnchorComp from "../components/ScrollingAnchorComp.jsx"
-import PdfViewerComp from '../components/PdfViewerComp.jsx'
 import { Document, Page, pdfjs } from 'react-pdf';
 import Breakpoints from '../../js/breakpoints.json'
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
