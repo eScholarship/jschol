@@ -7,6 +7,9 @@ import PdfViewComp from '../components/PdfViewComp.jsx'
 import { debounce } from 'lodash'
 
 const PdfViewWrapper = props => {
+  // client-side only 
+  if (typeof window === 'undefined') return null
+
   const { ref, width = 1 } = useResizeObserver()
   const [debouncedWidth, setDebouncedWidth] = useState(width)
 
