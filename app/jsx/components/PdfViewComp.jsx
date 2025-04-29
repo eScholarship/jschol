@@ -206,6 +206,7 @@ class PdfViewComp extends React.Component {
             file={fileUrl} 
             onLoadSuccess={this.onLoadSuccess} 
             loading="Loading..."
+            error={<b>Failed to load PDF file. If you recently published or updated this item, please wait up to 30 minutes for the PDF to appear here.</b>}
           >
             {Array.from(new Array(numPages), (_el, index) => (
               <Page
