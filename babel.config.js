@@ -19,7 +19,8 @@ module.exports = function (api) {
     "@babel/plugin-proposal-function-sent",
     "@babel/plugin-proposal-export-namespace-from",
     "@babel/plugin-proposal-numeric-separator",
-    "@babel/plugin-proposal-throw-expressions"
+    "@babel/plugin-proposal-throw-expressions",
+    "css-modules-transform", // resolves the 'unexpected token' error
   ];
 
   return {

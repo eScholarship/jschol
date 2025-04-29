@@ -35,6 +35,14 @@ class ItemPage extends PageBase {
     currentTab: PropTypes.oneOf(anchors)
   }
 
+  // TODO:
+  // the page data is getting prop drilled all the way down to any child components that need it
+  // it would be better to use something like the Context API to pass this data around
+  state = { 
+    currentTab: "main",
+    pageNum: 1
+  }
+
   // Unit ID for permissions checking
   pagePermissionsUnit() {
     return "root"  // This is only being used for super user access
@@ -57,24 +65,30 @@ class ItemPage extends PageBase {
     return h
   }
 
-  state = { currentTab: "main" }
-
   componentDidMount(...args) {
-    let toc = this.state.pageData && this.state.pageData.attrs && this.state.pageData.attrs.toc
-    this.setState({currentTab: this.articleHashHandler(this.tabNameFromHash(), toc)})
+    this.handleHashChange()
 
     // Check hash whenever back or forward button clicked
-    window.onpopstate = (event) => {
-      let toc = this.state.pageData && this.state.pageData.attrs && this.state.pageData.attrs.toc
-      var h = this.articleHashHandler(this.tabNameFromHash(), toc)
-      if ((h != this.state.currentTab) && anchors.includes(h)) {
-        this.setState({currentTab: h})
-      }
-    }
+    window.onpopstate = this.handleHashChange
+
     // This is overriding PageBase componentDidMount
     // ToDo: https://medium.com/@dan_abramov/how-to-use-classes-and-sleep-at-night-9af8de78ccb4
-    super.componentDidMount.apply(this, args);
+    super.componentDidMount?.apply(this, args)
   }
+
+  // handles passive hash changes (direct URL load or browser nav)
+  handleHashChange = () => {
+    const toc = this.state.pageData?.attrs?.toc
+    const hash = window.location.hash
+    const tabName = this.tabNameFromHash()
+    const match = hash.match(/page=(\d+)/)
+    const pageNum = match ? parseInt(match[1], 10) : null
+    const newTab = this.articleHashHandler(tabName, toc)
+
+    // only update state if it differs
+    this.setState({currentTab: newTab, pageNum})
+  }
+  
 
   formatDate = d => {
     if (d) {
@@ -98,15 +112,22 @@ class ItemPage extends PageBase {
 
   changeTab = tabName => {
     let toc = this.state.pageData && this.state.pageData.attrs && this.state.pageData.attrs.toc
+
+    if (toc) {
+      const pageNumber = parseInt(tabName.split('=')[1], 10)
+      this.setState({ pageNum: pageNumber })
+    }
+
     let newTab = this.articleHashHandler(tabName.toLowerCase().replace(/^#/, ""), toc)
+
     if (newTab != this.state.currentTab) {
       this.setState({currentTab: this.articleHashHandler(tabName, toc) })
       // Set hash based on what was clicked. Since we are switching tabs,
       // delay a little for the render so the target anchor will be available.
       setTimeout(()=>window.location.hash=tabName, 200)
-    }
-    else
+    } else {
       window.location.hash=tabName
+    }
   }
 
   renderData = data => {
@@ -140,6 +161,7 @@ class ItemPage extends PageBase {
     let keywords = a.disciplines ? a.disciplines.join('; ') : null
     let isWithdrawn = /withdrawn/.test(d.status)
     d.unit && this.extGA(d.unit.id)  // Google Analytics for external trackers called from PageBase
+
     return (
       <div>
         {d.status == "pending" && <span className="c-preview-watermark" />}
@@ -204,11 +226,16 @@ class ItemPage extends PageBase {
             <TabsComp currentTab={currentTab}
                       changeTab={this.changeTab}
                       formatDate={this.formatDate}
+                      pageNum={this.state.pageNum} 
                       {...d} />
           </main>
           <aside>
           {(d.status == "published" && d.content_type) &&
-            <JumpComp changeTab={this.changeTab} genre={d.genre} attrs={d.attrs} />
+            <JumpComp 
+              changeTab={this.changeTab} 
+              genre={d.genre} 
+              attrs={d.attrs} 
+            />
           }
           {d.sidebar && !isWithdrawn &&
             <SidebarComp data={d.sidebar}/> }

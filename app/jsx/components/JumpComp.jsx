@@ -28,6 +28,7 @@ class JumpComp extends React.Component {
   render() {
     let kind = (this.props.genre == 'monograph') ? "Book" : "Article"
     let toc = this.props.attrs.toc && this.props.attrs.toc.divs
+    
     return (
       <section className="o-columnbox1" hidden={!this.state.show}>
         <header>
@@ -43,12 +44,11 @@ class JumpComp extends React.Component {
             { !toc &&
               <li><Link to="#" onClick={(e)=>this.handleClick(e, "article_main")}>Main Content</Link></li> }
             { toc &&
-              toc.map(div =>
-                <li key={div.title}>
-                  <Link to="#" onClick={(e)=>this.handleClick(e, div.anchor)}>
-                    {div.title}
-                  </Link>
-                </li>)
+              toc.map(item =>
+                <li key={item.title}>
+                 <Link to="#" onClick={(e)=>this.handleClick(e, item.anchor)}>{item.title}</Link>
+                </li>
+              )
             }
           </ul>
           <ul className="c-jump__siblings">

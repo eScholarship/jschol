@@ -2,6 +2,7 @@
 
 import React from 'react'
 import PdfViewComp from '../components/PdfViewComp.jsx'
+import PdfViewWrapper from '../components/PdfViewWrapper.jsx'
 import MediaViewerComp from '../components/MediaViewerComp.jsx'
 import ViewExternalComp from '../components/ViewExternalComp.jsx'
 import { Link } from 'react-router-dom'
@@ -53,11 +54,15 @@ class MainContent extends React.Component {
           }
         } else {    // JumpComp ("Jump To" menu) only present in this case
           return (p.content_type == "application/pdf" ?
-                    <PdfViewComp url={p.pdf_url}
-                                 content_key={p.content_key}
-                                 download_restricted={p.download_restricted}
-                                 commenting_ok={p.commenting_ok}
-                                 preview_key={p.preview_key}/>
+                    <PdfViewWrapper 
+                      url={p.pdf_url}
+                      content_key={p.content_key}
+                      download_restricted={p.download_restricted}
+                      commenting_ok={p.commenting_ok}
+                      preview_key={p.preview_key}
+                      pageNum={p.pageNum}
+                      onItemClick={p.onItemClick} 
+                    />
                   : p.content_type == "text/html" ? this.renderHtml(p)
                   : raise("unknown content_type '" + p.content_type + "'"))
         }
