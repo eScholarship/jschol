@@ -6,6 +6,8 @@ import { Document, Page, pdfjs } from 'react-pdf';
 import Breakpoints from '../../js/breakpoints.json'
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
+import Spinner from '../components/Spinner.jsx';
+
 
 // TODO:
 // use worker shipped with react-pdf: https://www.npmjs.com/package/react-pdf#configure-pdfjs-worker
@@ -205,7 +207,7 @@ class PdfViewComp extends React.Component {
           <Document 
             file={fileUrl} 
             onLoadSuccess={this.onLoadSuccess} 
-            loading="Loading..."
+            loading={<Spinner />}
             error={<b>Failed to load PDF file. If you recently published or updated this item, please wait up to 30 minutes for the PDF to appear here.</b>}
           >
             {Array.from(new Array(numPages), (_el, index) => (
