@@ -65,3 +65,7 @@
 .c-pdfview__viewer {
   padding-top: 1em;
 }
+
+.c-pdfview__viewer canvas {
+  max-width: 100%;
+}
