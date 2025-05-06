@@ -61,3 +61,7 @@
   margin-bottom: 10px;
   box-shadow: -5px 10px 10px -5px #ccc;
 }
+
+.c-pdfview__viewer canvas {
+  max-width: 100%;
+}
