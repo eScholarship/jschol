@@ -59,5 +59,9 @@
 
 .react-pdf__Page {
   margin-bottom: 10px;
-  box-shadow: -5px 10px 10px -5px #ccc;
+  box-shadow: -5px 10px 10px 1px #ccc;
+}
+
+.c-pdfview__viewer {
+  padding-top: 1em;
 }
