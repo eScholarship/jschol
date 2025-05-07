@@ -35,7 +35,11 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:18880', 
         changeOrigin: true,
-      }
+      },
+      '/cms-assets': {
+        target: 'http://localhost:18880',
+        changeOrigin: true,
+      },
     },
   },
 })
