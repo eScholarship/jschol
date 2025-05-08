@@ -183,6 +183,9 @@ class PdfViewComp extends React.Component {
       url.replace(".pdf", `_noSplash_${content_key}.pdf`) +
       (preview_key ? `${separator}preview_key=${preview_key}` : "")
 
+    const downloadUrl = 
+      `${url}${preview_key ? `${separator}preview_key=${this.props.preview_key}` : ""}`
+
     return (
       <details className="c-togglecontent" open>
         <ScrollingAnchorComp name="article_main" />
@@ -199,7 +202,7 @@ class PdfViewComp extends React.Component {
         {!this.props.download_restricted && (
           <div className="c-pdfview__accessibility">
             For improved accessibility of PDF content,{" "}
-            <a href={fileUrl}>download the file</a> to your device.
+            <a href={downloadUrl}>download the file</a> to your device.
           </div>
         )}
 
