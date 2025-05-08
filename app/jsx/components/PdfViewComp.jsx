@@ -184,7 +184,7 @@ class PdfViewComp extends React.Component {
       (preview_key ? `${separator}preview_key=${preview_key}` : "")
 
     const downloadUrl = 
-      `${url}${preview_key ? `${separator}preview_key=${this.props.preview_key}` : ""}`
+      `${url}${preview_key ? `${separator}preview_key=${preview_key}` : ""}`
 
     return (
       <details className="c-togglecontent" open>
