@@ -15,12 +15,12 @@
 
 .o-itemunavailable__embargoed {
   @extend %o-itemunavailable;
-  background-image: inline('../images/icon_clock-o-black.svg');
+  background-image: inline('images/icon_clock-o-black.svg');
 }
 
 .o-itemunavailable__withdrawn {
   @extend %o-itemunavailable;
-  background-image: inline('../images/icon_times-circle-o-black.svg');
+  background-image: inline('images/icon_times-circle-o-black.svg');
 }
 
 .o-itemunavailable__lede {

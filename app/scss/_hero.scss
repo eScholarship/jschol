@@ -79,7 +79,7 @@ $hero-text-shadow: 1px 1px 1px $color-light-black;
   a {
     @extend %c-hero__campus-text;
     @extend %o-textlink__right-arrow;
-    background-image: inline('../images/icon_angle-right-white.svg');
+    background-image: inline('images/icon_angle-right-white.svg');
     font-size: 1.2em;
   }
 

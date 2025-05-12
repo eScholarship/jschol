@@ -92,14 +92,14 @@
 
   button {
     @extend %o-button__5;
-    background-image: inline('../images/icon_times-circle.svg');
+    background-image: inline('images/icon_times-circle.svg');
     color: $color-black;
     font-weight: normal;
     text-align: left;
 
     &:focus,
     &:hover {
-      background-image: inline('../images/icon_times-circle-orange.svg');
+      background-image: inline('images/icon_times-circle-orange.svg');
     }
 
   }
@@ -111,7 +111,7 @@
   padding: 0 1.3em 0 0;
   float: right;
   border: none;
-  background: $color-white inline('../images/icon_times.svg') no-repeat right -0.2em center / 1.3em;
+  background: $color-white inline('images/icon_times.svg') no-repeat right -0.2em center / 1.3em;
   text-align: right;
 }
 

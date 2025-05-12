@@ -136,7 +136,7 @@ $wizard-nav-icon-size: 1.5em;
       order: 1;
       margin-left: (-$spacing-sm);
       transform: scaleX(-1);
-      background: inline('../images/icon_caret-right-white.svg') no-repeat center / #{$wizard-nav-icon-size};
+      background: inline('images/icon_caret-right-white.svg') no-repeat center / #{$wizard-nav-icon-size};
 
       span {
         @extend %u-hide;
@@ -147,7 +147,7 @@ $wizard-nav-icon-size: 1.5em;
     button {
       @extend %o-button__9;
       order: 3;
-      background-image: inline('../images/icon_close-white.svg');
+      background-image: inline('images/icon_close-white.svg');
       background-size: 0.9em;
 
       span {
@@ -186,7 +186,7 @@ $wizard-nav-icon-size: 1.5em;
       display: flex;
       align-items: center;
       padding: $spacing-base 2.5em $spacing-base $spacing-sm;
-      background: $color-teal inline('../images/icon_caret-right-white.svg') no-repeat center right #{$spacing-sm} / #{$wizard-nav-icon-size};
+      background: $color-teal inline('images/icon_caret-right-white.svg') no-repeat center right #{$spacing-sm} / #{$wizard-nav-icon-size};
       color: $color-white;
       text-decoration: none;
     }
@@ -207,7 +207,7 @@ $wizard-nav-icon-size: 1.5em;
       display: flex;
       align-items: center;
       padding: $spacing-base 2.5em $spacing-base 35px;
-      background: $color-light-black inline('../images/icon_reload-white.svg') no-repeat left $spacing-sm center / 16px;
+      background: $color-light-black inline('images/icon_reload-white.svg') no-repeat left $spacing-sm center / 16px;
       color: $color-white;
       text-decoration: none;
     }

@@ -52,7 +52,7 @@ $servererror-element-width: 18.8em;
   button {
     @extend %o-button__9;
     margin-left: $spacing-base;
-    background-image: inline('../images/icon_magnify-teal.svg');
+    background-image: inline('images/icon_magnify-teal.svg');
 
     @include bp(screen2) {
       margin-left: $spacing-sm;

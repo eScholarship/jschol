@@ -39,7 +39,7 @@
       right: 0;
       bottom: 0;
       left: 0;
-      background: inline('../images/icon_arrow-down-white.svg') no-repeat center / 0.8em;
+      background: inline('images/icon_arrow-down-white.svg') no-repeat center / 0.8em;
       content: '';
 
     }
@@ -171,7 +171,7 @@
 
   .o-download__nested-list#{$download-heading-number} {
     @extend %o-download__nested-list;
-    background-image: inline('../images/icon_#{$download-img-label}.svg');
+    background-image: inline('images/icon_#{$download-img-label}.svg');
   }
 
 }

@@ -33,12 +33,12 @@
 
 .c-togglesection__header {
   @extend %c-togglesection__header;
-  background-image: inline('../images/icon_plus-black.svg');
+  background-image: inline('images/icon_plus-black.svg');
 }
 
 .c-togglesection__header--open {
   @extend %c-togglesection__header;
-  background-image: inline('../images/icon_minus-black.svg');
+  background-image: inline('images/icon_minus-black.svg');
 }
 
 .c-togglesection__content {
