@@ -4,6 +4,8 @@ import legacy from '@vitejs/plugin-legacy'; // handle older browsers
 import path from 'path';
 import commonjs from 'vite-plugin-commonjs'; // handle existing 'require' syntax
 import inject from "@rollup/plugin-inject"; // used to inject jquery globally, so we can use jquery plugins like Trumbowyg 
+import autoprefixer from 'autoprefixer';
+import assets from 'postcss-assets';
 
 
 export default defineConfig({
@@ -18,6 +20,18 @@ export default defineConfig({
       jQuery: 'jquery',
     })
   ],
+  css: {
+    postcss: {
+      plugins: [
+        autoprefixer,
+        assets({
+          loadPaths: ['public/images', 'public/fonts'],
+          basePath: path.resolve(__dirname, 'public'), 
+          relative: true, 
+        })
+      ],
+    },
+  },
   resolve: {
     alias: {
       'pdfjs-lib': path.resolve(__dirname, 'node_modules/pdfjs-embed2/src/pdf.js'),

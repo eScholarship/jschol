@@ -27,7 +27,7 @@
     right: $spacing-sm;
     bottom: 0;
     padding: 7px;
-    background: inline('../images/icon_sort-down-black.svg') no-repeat center / 0.8rem;
+    background: inline('images/icon_sort-down-black.svg') no-repeat center / 0.8rem;
     content: '';
   }
 
@@ -62,6 +62,6 @@
   padding: 0 1em 0 0;
   float: right;
   border: none;
-  background: inline('../images/icon_angle-double-right-teal.svg') no-repeat center right / 0.9em;
+  background: inline('images/icon_angle-double-right-teal.svg') no-repeat center right / 0.9em;
   color: $color-teal;
 }

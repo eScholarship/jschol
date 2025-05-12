@@ -30,16 +30,16 @@
 
 .c-itemactions__button-print {
   @extend %o-button__6;
-  background-image: inline('../images/icon_print-white.svg');
+  background-image: inline('images/icon_print-white.svg');
 }
 
 .c-itemactions__button-buy {
   @extend %o-button__6;
-  background-image: inline('../images/icon_shopping-cart-white.svg');
+  background-image: inline('images/icon_shopping-cart-white.svg');
 }
 
 .c-itemactions__link-buy {
   @extend %o-textlink__left-icon;
   @extend %o-textlink__secondary;
-  background-image: inline('../images/icon_shopping-cart-teal.svg');
+  background-image: inline('images/icon_shopping-cart-teal.svg');
 }

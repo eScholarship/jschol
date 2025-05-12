@@ -58,7 +58,7 @@
   // Default textlink style:
   @extend %o-textlink__secondary;
   // Default icon below. To use a different icon, create a new class, @extend with %o-textlink__left-icon, and apply background-image property with different image path:
-  background-image: inline('../images/icon_pdf-teal.svg');
+  background-image: inline('images/icon_pdf-teal.svg');
 }
 
 %o-textlink__right-icon {
@@ -66,7 +66,7 @@
   display: inline-flex;
   align-items: center;
   padding-right: 1.7em;
-  background: inline('../images/icon_external-link-teal.svg') no-repeat right center / 1.1em;
+  background: inline('images/icon_external-link-teal.svg') no-repeat right center / 1.1em;
   font-weight: bold;
   text-align: right;
 }
@@ -78,7 +78,7 @@
 %o-textlink__right-arrow {
   @extend %o-textlink__right-icon;
   padding-right: 1.4em;
-  background-image: inline('../images/icon_angle-right-teal.svg');
+  background-image: inline('images/icon_angle-right-teal.svg');
 }
 
 .o-textlink__right-arrow {

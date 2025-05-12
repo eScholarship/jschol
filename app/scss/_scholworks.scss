@@ -43,22 +43,22 @@ $scholworks-tag-height: 1.4em;
 
 .c-scholworks__tag-article {
   @extend %c-scholworks__tag;
-  background-image: inline('../images/icon_file-text-black.svg');
+  background-image: inline('images/icon_file-text-black.svg');
 }
 
 .c-scholworks__tag-book {
   @extend %c-scholworks__tag;
-  background-image: inline('../images/icon_book.svg');
+  background-image: inline('images/icon_book.svg');
 }
 
 .c-scholworks__tag-thesis {
   @extend %c-scholworks__tag;
-  background-image: inline('../images/icon_graduation-cap-black.svg');
+  background-image: inline('images/icon_graduation-cap-black.svg');
 }
 
 .c-scholworks__tag-multimedia {
   @extend %c-scholworks__tag;
-  background-image: inline('../images/icon_play-circle-o-black.svg');
+  background-image: inline('images/icon_play-circle-o-black.svg');
 }
 
 .c-scholworks__tag-peer {
