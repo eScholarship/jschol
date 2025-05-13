@@ -18,6 +18,7 @@ export default defineConfig({
     inject({
       $: 'jquery',
       jQuery: 'jquery',
+      _: 'lodash'
     })
   ],
   css: {
@@ -54,6 +55,10 @@ export default defineConfig({
         target: 'http://localhost:18880',
         changeOrigin: true,
       },
+      '/content': {
+        target: 'http://localhost:18880',
+        changeOrigin: true,
+      }
     },
   },
 })
