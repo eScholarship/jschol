@@ -203,7 +203,7 @@ class PdfViewComp extends React.Component {
               <Page
                 key={`page_${index + 1}`}
                 pageNumber={index + 1}
-                width={Math.min(containerWidth, 900)} // use full width, but dont go over 900px
+                width={containerWidth} // resize observed width 
                 inputRef={el => this.pageRefs[index] = el}
               />
             ))}
