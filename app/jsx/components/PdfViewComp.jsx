@@ -160,23 +160,9 @@ class PdfViewComp extends React.Component {
     )
   }
 
-  get_pdfjs_width = () => {
-    const totalWidth = window.innerWidth
-    return (totalWidth >= parseInt(Breakpoints.screen2))
-      ? (totalWidth * (1.0 - 0.28)) - 120 // sidebar occupies 28% in this mode
-      : totalWidth - 21 // no sidebar in this mode
-  }
-
-  getScale = () => {
-    const baseWidth = 600
-    const availableWidth = this.get_pdfjs_width() - 20
-    const scale = availableWidth / baseWidth
-    return Math.min(Math.max(scale, 0.5), 2) // constrain scale
-  }
-
   render() {
     const { numPages } = this.state
-    const { url, content_key, preview_key, viewerRef } = this.props
+    const { url, content_key, preview_key, viewerRef, containerWidth } = this.props
     const separator = url.indexOf("?") >= 0 ? "&" : "?"
 
     const fileUrl =
@@ -217,7 +203,7 @@ class PdfViewComp extends React.Component {
               <Page
                 key={`page_${index + 1}`}
                 pageNumber={index + 1}
-                scale={this.getScale()}
+                width={Math.min(containerWidth, 900)} // use full width, but dont go over 900px
                 inputRef={el => this.pageRefs[index] = el}
               />
             ))}
