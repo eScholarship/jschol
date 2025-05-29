@@ -8,6 +8,7 @@ import ViewExternalComp from '../components/ViewExternalComp.jsx'
 import { Link } from 'react-router-dom'
 import ArbitraryHTMLComp from "../components/ArbitraryHTMLComp.jsx"
 import ScrollingAnchorComp from "../components/ScrollingAnchorComp.jsx"
+import OABanner from '../components/OABanner.jsx'
 class Abstract extends React.Component {
 
   render() {
@@ -17,13 +18,7 @@ class Abstract extends React.Component {
         <div id="abstract-text">
           <ArbitraryHTMLComp html={this.props.abstract} p_wrap={true} h1Level={3}/>
         </div>
-        {(this.props.unit && this.props.unit.id.match(/^.*_postprints/)) &&
-          <p className="o-well-colored">
-            Many UC-authored scholarly publications are freely available on this site
-            because of the UC&apos;s <a href="https://osc.universityofcalifornia.edu/open-access-at-uc/open-access-policy/">
-            open access policies</a>. <a href="https://help.escholarship.org/support/tickets/new">Let us know how this access is important for you.</a>
-          </p>
-        }
+        <OABanner unit={this.props.unit} />
       </details>
     )
   }
@@ -160,17 +155,22 @@ class NoContent extends React.Component {
 
 class TabMainComp extends React.Component {
   render() {
-    let p = this.props
+    const { attrs, status, unit, oa_policy } = this.props
     return (
       <div className="c-tabcontent">
-
-      {this.props.attrs.abstract && !/withdrawn/.test(this.props.status) &&
-        [<ScrollingAnchorComp key="0" name="article_abstract" />,
-        <Abstract key="1" status={p.status}
-                           abstract={p.attrs.abstract}
-                           unit={p.unit} />] }
-        <MainContent {...p} />
-
+        {attrs.abstract && !/withdrawn/.test(status) && (
+          <>
+            <ScrollingAnchorComp name="article_abstract" />
+            <Abstract 
+              status={status}
+              abstract={attrs.abstract}
+              unit={unit} 
+            />
+          </>
+        )}
+        {/* render the banner if there's no abstract, but the pub is still apart of the OA policy series */}
+        {(!attrs.abstract && unit) && <OABanner unit={unit} />}
+        <MainContent {...this.props} />
       </div>
     )
   }
