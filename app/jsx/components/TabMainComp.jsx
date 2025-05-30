@@ -155,7 +155,8 @@ class NoContent extends React.Component {
 
 class TabMainComp extends React.Component {
   render() {
-    const { attrs, status, unit, oa_policy } = this.props
+    const { attrs, status, unit } = this.props
+    
     return (
       <div className="c-tabcontent">
         {attrs.abstract && !/withdrawn/.test(status) && (
