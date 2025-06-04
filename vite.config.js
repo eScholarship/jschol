@@ -33,6 +33,12 @@ export default defineConfig({
       ],
     },
   },
+  // optimizeDeps: {
+  //   include: ['react-sortable-tree', 'react-virtualized']
+  // },
+  // ssr: {
+  //   noExternal: ['react-sortable-tree', 'react-virtualized']
+  // },
   resolve: {
     alias: {
       'pdfjs-lib': path.resolve(__dirname, 'node_modules/pdfjs-embed2/src/pdf.js'),
