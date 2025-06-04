@@ -34,8 +34,10 @@ const mungeCategory = cat =>
   cat == "unknown" ? cat :
   capitalize(cat)
 
-const downloadCSV = (table, params) =>
-{
+const downloadCSV = async (table, params) => {
+  const { default: download } = await import('downloadjs')
+  let filename
+  
   // Since we've got the data in a table already, just re-format it as CSV.
   let rows = []
   _.each(table.children, tsect => {
@@ -58,14 +60,15 @@ const downloadCSV = (table, params) =>
       rows.push(rd.join(","))
     })
   })
-  require.ensure(['downloadjs'], function(require) {
-    let filename
-    if (params.unitID)
-      filename = params.unitID.replace(/^root$/, 'eschol') + "_" + params.pageName + ".csv"
-    else
-      filename = "author_" + params.pageName + ".csv"
-    require('downloadjs')(rows.join("\n"), filename, "text/csv")
-  }, 'downloadjs')
+
+  if (params.unitID) {
+    filename = params.unitID.replace(/^root$/, 'eschol') + "_" + params.pageName + ".csv"
+  }
+  else {
+    filename = "author_" + params.pageName + ".csv"
+  }
+
+  download(rows.join("\n"), filename, "text/csv")
 }
 
 class StatsHeader extends React.Component {
