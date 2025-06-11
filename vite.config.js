@@ -6,12 +6,13 @@ import commonjs from 'vite-plugin-commonjs'; // handle existing 'require' syntax
 import inject from "@rollup/plugin-inject"; // used to inject jquery globally, so we can use jquery plugins like Trumbowyg 
 import autoprefixer from 'autoprefixer';
 import assets from 'postcss-assets';
-
+import { visualizer } from 'rollup-plugin-visualizer';
 
 export default defineConfig({
   plugins: [
     react(),
     commonjs(),
+    visualizer({ open: true }),
     legacy({
       targets: ['defaults', 'not IE 11'],
     }),
@@ -45,10 +46,19 @@ export default defineConfig({
     },
   },
   build: {
-    outDir: 'dist',
-    sourcemap: true,
-    manifest: true,
+    // sourcemap: true,
+    // manifest: true,
     minify: 'esbuild',
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          // vendor chunk
+          if (id.includes('node_modules')) {
+            return 'vendors'
+          }
+        }
+      }
+    }
   },
   server: {
     open: true,
