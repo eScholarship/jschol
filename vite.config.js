@@ -8,6 +8,11 @@ import autoprefixer from 'autoprefixer';
 import assets from 'postcss-assets';
 import { visualizer } from 'rollup-plugin-visualizer';
 
+// this is an attempt to mimic how code-splitting was done in our prior webpack set-up
+// these libraries dont need to be included in the main bundle 
+// split them into their own chunks and load asynchronously 
+const dynamicLibs = ['klaro', 'downloadjs', 'react-sortable-tree', 'react-sidebar', 'trumbowyg']
+
 export default defineConfig({
   plugins: [
     react(),
@@ -52,9 +57,11 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          // vendor chunk
           if (id.includes('node_modules')) {
-            return 'vendors'
+            if (dynamicLibs.some(lib => id.includes(lib))) return; // skip chunking 
+
+            // return vendor otherwise 
+            return 'vendor';
           }
         }
       }
