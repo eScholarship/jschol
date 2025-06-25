@@ -23,28 +23,44 @@ class PubInfoComp extends React.Component {
   parseUrls = str => {
     if (!str) return []
     // splits on commas/semicolons, removes whitespace, and filters out falsy values 
-    return str.split(/[;,]/).map(url => url.trim()).filter(Boolean)
+    return str
+      .split(/[;,]/)
+      .map(s => s.replace(/\s+/g, '').trim())
+      .filter(Boolean)
   }
 
-  renderStatement = (text, links = []) => {
+  renderStatement = (text, content) => {
     return (
       <>
-        <div className="c-pubinfo__statement">{text}</div>
-        {links.length > 0 && links.map((url, i) => (
-          <a key={i} className="c-pubinfo__link" href={url}>
-            {url}
-          </a>
-        ))}
+        <div className="c-pubinfo__statement"><b>{text}</b></div>
+        {Array.isArray(content) ? (
+          content.length > 0 && content.map((item, i) => (
+            <a key={i} className="c-pubinfo__link" href={item}>
+              {item}
+            </a>
+          ))
+        ) : (
+          content && <span>{content}</span>
+        )}
       </>
     )
-  }
+  }  
 
   getStatement = h => {
     if (!h || !h.type) return this.renderStatement(default_statement)
   
+    // these are always urls, so just pass them along to be parsed 
     const urlList = this.parseUrls(h.url)
-    const contactList = this.parseUrls(h.contact)
-  
+    
+    // contact can be either a url or entity name (e.g. California Air Resources Board, US EPA, etc.)
+    let contactOutput
+    if (h.contact) {
+      const contactStr = h.contact.trim()
+      contactOutput = contactStr.startsWith('http') 
+        ? this.parseUrls(contactStr)
+        : contactStr // in the case of a name, just render the raw string 
+    }
+
     const statements = {
       publicRepo: this.renderStatement(
         "The data associated with this publication are available at:",
@@ -64,7 +80,7 @@ class PubInfoComp extends React.Component {
       ),
       thirdParty: this.renderStatement(
         "The data associated with this publication are managed by:",
-        contactList
+        contactOutput
       ),
       notAvail: this.renderStatement(
         `The data associated with this publication are not available for this reason: ${h.reason}`
