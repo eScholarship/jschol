@@ -34,9 +34,9 @@ class PubInfoComp extends React.Component {
       <>
         <div className="c-pubinfo__statement"><b>{text}</b></div>
         {Array.isArray(content) ? (
-          content.length > 0 && content.map((item, i) => (
-            <a key={i} className="c-pubinfo__link" href={item}>
-              {item}
+          content.length > 0 && content.map(url => (
+            <a key={url} className="c-pubinfo__link" href={url}>
+              {url}
             </a>
           ))
         ) : (
