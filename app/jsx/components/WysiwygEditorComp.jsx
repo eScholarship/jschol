@@ -3,7 +3,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import Contexts from '../contexts.jsx'
-import trumbowygSvgUrl from 'trumbowyg/dist/ui/icons.svg'
 
 // Formatting buttons to display in the Trumbowyg editor
 const TRUMBO_BUTTONS = [
@@ -44,7 +43,7 @@ export default class WysiwygEditorComp extends React.Component
                    buttons={buttons}
                    data={this.initialHTML}
                    shouldInjectSvgIcons={false}
-                   svgIconsPath={trumbowygSvgUrl}
+                   svgIconsPath='/trumbowyg/icons.svg'
                    onChange={e => this.props.onChange(e.target.innerHTML)}
                    disabled={this.props.disabled}
                    tabToIndent={true}
