@@ -6,7 +6,6 @@ import ReactGA from 'react-ga'
 import Contexts from '../contexts.jsx'
 import { Link } from 'react-router-dom'
 import { MathJaxContext } from "better-react-mathjax"
-import mathJaxURL from "mathjax-full/es5/tex-svg.js?url"
 
 import SkipNavComp from '../components/SkipNavComp.jsx'
 import Header1Comp from '../components/Header1Comp.jsx'
@@ -25,6 +24,14 @@ const SESSION_EDITING_KEY = "escholEditingPage"
 
 // Session storage is not available on server, only on browser
 let sessionStorage = (typeof window != "undefined") ? window.sessionStorage : null
+
+let mathjaxSrc
+
+if (typeof document !== 'undefined') {
+  import('mathjax-full/es5/tex-svg.js?url')
+    .then(module => mathjaxSrc = module.default || module)
+    .catch(err => console.error('Failed to load mathjax:', err))
+}
 
 const mathjaxConfig = {
   tex: {
@@ -309,7 +316,7 @@ class PageBase extends React.Component
                     fetchingData={this.state.fetchingData}>
           {/* Not sure why the padding below is needed, but it is */}
           <div className="body" style={{ padding: "20px" }}>
-          <MathJaxContext version={3} config={mathjaxConfig} src={mathJaxURL} hideUnilTypeset="every">
+          <MathJaxContext version={3} config={mathjaxConfig} src={mathjaxSrc} hideUnilTypeset="every">
             {this.needHeaderFooter() && <SkipNavComp/>}
             {this.state.pageData ? this.renderData(this.state.pageData) : this.renderLoading()}
             {this.needHeaderFooter() && <FooterComp/>}
@@ -338,7 +345,7 @@ class PageBase extends React.Component
 
     // Normal case
     return (
-      <MathJaxContext version={3} config={mathjaxConfig} src={mathJaxURL}>
+      <MathJaxContext version={3} config={mathjaxConfig} src={mathjaxSrc}>
         <div className="body">
           {this.needHeaderFooter() && <SkipNavComp/>}
           {this.state.pageData ? this.renderData(this.state.pageData) : this.renderLoading()}
@@ -399,6 +406,7 @@ class PageBase extends React.Component
   }
 
   render() {
+    if (typeof window === 'undefined') return null
     // If ScrollToTopComp gives you trouble, you can disable by replacing it with a plain <div>
     return (
       <ScrollToTopComp>

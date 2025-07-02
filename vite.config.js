@@ -17,7 +17,8 @@ export default defineConfig({
   plugins: [
     react(),
     commonjs(),
-    visualizer({ open: true }),
+    // uncomment to visualize chunking 
+    // visualizer({ open: true }),
     legacy({
       targets: ['defaults', 'not IE 11'],
     }),
