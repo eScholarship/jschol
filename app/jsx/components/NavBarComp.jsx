@@ -14,7 +14,7 @@ class NavBarComp extends React.Component {
 
       slug: PropTypes.string,
       url: PropTypes.string,
-      file: PropTypes.file,
+      file: PropTypes.string,
       sub_nav: PropTypes.array      // Array Of the same things included in navBar
     })),
     socialProps: PropTypes.shape({

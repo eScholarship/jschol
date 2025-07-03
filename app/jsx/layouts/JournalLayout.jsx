@@ -127,7 +127,7 @@ class JournalLayout extends React.Component {
     }).isRequired,
     marquee: PropTypes.shape({
       carousel: PropTypes.any,
-      about: PropTypes.about
+      about: PropTypes.string
     })
   }
 
