@@ -25,7 +25,8 @@ export default defineConfig({
     inject({
       $: 'jquery',
       jQuery: 'jquery',
-      _: 'lodash'
+      _: 'lodash',
+      include: ['**/*.js', '**/*.jsx']
     })
   ],
   css: {
