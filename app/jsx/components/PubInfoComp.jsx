@@ -113,14 +113,18 @@ class PubInfoComp extends React.Component {
     return (
       <div className="c-pubinfo">
         {/* all elements below are optional */}
-      {pub_loc_block &&
-        <h2 className="c-pubinfo__location-heading">Published Web Location</h2>
-      }
-        {pub_loc_block}
-        {stmnt}
-      {this.props.rights &&
-        <RightsComp rights={this.props.rights} size="large" classname="c-pubinfo__license" />
-      }
+        <div className="pub-links-container"> 
+          {pub_loc_block &&
+            <h2 className="c-pubinfo__location-heading">Published Web Location</h2>
+          }
+          {pub_loc_block}
+          {stmnt}
+        </div>
+        {this.props.rights &&
+          <div className="pub-license-container">
+            <RightsComp rights={this.props.rights} size="large" classname="c-pubinfo__license" />
+          </div>
+        }
       </div>
     )
   }
