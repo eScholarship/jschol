@@ -1,43 +1,37 @@
 // ##### Lazy Image Component ##### //
 
-import React from 'react'
-import lozad from 'lozad'
+// NOTE:
+// chrome is very efficient for a small quantity of images, so loading='lazy' doesn't always work
+// however, doing it this way eliminates the need for external dependencies 
 
-// A single observer is sufficient for all instances of LazyImageComp, and it doesn't
-// really hurt anybody if it hangs around.
-let observer = null
+import React from 'react'
 
 class LazyImageComp extends React.Component {
-  componentDidMount() {
-    // Don't try to do lazy loading on server side (lozad won't run there)
-    if (typeof window !== "undefined") {
-      if (!observer) {
-        observer = lozad(".c-lazyimage")
-        observer.observe()
-      }
-
-       // When running visual regression tests, load every image immediately
-      if (navigator.userAgent === "puppeteer") {
-        document.querySelectorAll(".c-lazyimage").forEach(el => observer.triggerLoad(el))
-      }
-    }
+  handleImageLoad = e => {
+    const image = e.target
+    image.setAttribute('data-loaded', 'true')
   }
 
-  /* img 'src' attribute below gets added dynamically upon successful image load and will have the same value as 'data-src' */
-
   render() {
-    const clickable = this.props.clickable || false;
-    if (clickable) {
-      return (
-        <a href={this.props.src} target="_blank">
-          <img className="c-lazyimage" data-src={this.props.src} alt={this.props.alt} />
-        </a>
-      );
-    } else {
-      return (
-        <img className="c-lazyimage" data-src={this.props.src} alt={this.props.alt} />
-      );
-    }
+    const { src, alt, clickable } = this.props
+
+    const imgElement = (
+      <img
+        className='c-lazyimage'
+        loading='lazy'
+        src={src}
+        alt={alt}
+        onLoad={this.handleImageLoad}
+      />
+    )
+
+    return clickable ? (
+      <a href={src} target='_blank'>
+        {imgElement}
+      </a>
+    ) : (
+      imgElement
+    )
   }
 }
 
