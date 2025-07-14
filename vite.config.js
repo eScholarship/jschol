@@ -30,11 +30,16 @@ export default defineConfig({
     })
   ],
   css: {
+    devSourcemap: true,
     postcss: {
       plugins: [
-        autoprefixer,
+        autoprefixer({
+          overrideBrowserslist: ['last 2 versions'],
+          flexbox: 'no-2009',
+          grid: false,
+        }),
         assets({
-          loadPaths: ['public/images', 'public/fonts'],
+          loadPaths: ['images', 'fonts'],
           basePath: path.resolve(__dirname, 'public'), 
           relative: true, 
         })
