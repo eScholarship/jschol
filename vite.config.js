@@ -11,14 +11,22 @@ import { visualizer } from 'rollup-plugin-visualizer';
 // this is an attempt to mimic how code-splitting was done in our prior webpack set-up
 // these libraries dont need to be included in the main bundle 
 // split them into their own chunks and load asynchronously 
-const dynamicLibs = ['klaro', 'downloadjs', 'react-sortable-tree', 'react-sidebar', 'trumbowyg']
+const dynamicLibs = [
+  'klaro', 
+  'downloadjs', 
+  'react-sortable-tree', 
+  'react-sidebar', 
+  'trumbowyg', 
+  'pdfjs-dist', 
+  'react-pdf'
+]
 
 export default defineConfig({
   plugins: [
     react(),
     commonjs(),
     // uncomment to visualize chunking 
-    // visualizer({ open: true }),
+    visualizer({ open: true }),
     legacy({
       targets: ['defaults', 'not IE 11'],
     }),
@@ -65,10 +73,13 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            if (dynamicLibs.some(lib => id.includes(lib))) return; // skip chunking 
-
-            // return vendor otherwise 
-            return 'vendor';
+            for (const lib of dynamicLibs) {
+              if (id.includes(`/node_modules/${lib}/`)) {
+                return lib // name the chunk after the package
+              }
+            }
+  
+            return 'vendor' // default vendor chunk
           }
         }
       }

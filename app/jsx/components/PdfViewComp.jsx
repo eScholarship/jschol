@@ -2,16 +2,12 @@
 
 import React from 'react'
 import ScrollingAnchorComp from "../components/ScrollingAnchorComp.jsx"
-import { Document, Page, pdfjs } from 'react-pdf';
 import Breakpoints from '../../js/breakpoints.json'
-import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
-import 'react-pdf/dist/esm/Page/TextLayer.css';
 import Spinner from '../components/Spinner.jsx';
-
 
 // TODO:
 // use worker shipped with react-pdf: https://www.npmjs.com/package/react-pdf#configure-pdfjs-worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
+// pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
 // const H_SERVER = 'https://hypothes.is'
 
@@ -104,7 +100,26 @@ class PdfViewComp extends React.Component {
 
   state = {
     numPages: null,
+    pdfLoaded: false
   }
+
+  componentDidMount() {
+    Promise.all([
+      import('react-pdf'),
+      import('react-pdf/dist/esm/Page/AnnotationLayer.css'),
+      import('react-pdf/dist/esm/Page/TextLayer.css')
+    ]).then(([pdfModule]) => {
+      const { Document, Page, pdfjs } = pdfModule;
+  
+      pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
+  
+      this.Document = Document;
+      this.Page = Page;
+  
+      this.setState({ pdfLoaded: true });
+    });
+  }
+  
 
   onLoadSuccess = ({ numPages }) => {
     // ensure that scrolling happens AFTER document has loaded
@@ -156,12 +171,17 @@ class PdfViewComp extends React.Component {
       // we want the component to re-render if there's state changes (numPages)
       this.state.numPages !== nextState.numPages ||
       this.props.containerWidth !== nextProps.containerWidth ||
-      this.props.pageNum !== nextProps.pageNum
+      this.props.pageNum !== nextProps.pageNum ||
+      this.state.pdfLoaded !== nextState.pdfLoaded
     )
   }
 
   render() {
-    const { numPages } = this.state
+    const { pdfLoaded, numPages } = this.state
+
+    const Document = this.Document
+    const Page = this.Page
+
     const { url, content_key, preview_key, viewerRef, containerWidth } = this.props
     const separator = url.indexOf("?") >= 0 ? "&" : "?"
 
@@ -193,21 +213,25 @@ class PdfViewComp extends React.Component {
         )}
 
         <div className="c-pdfview__viewer" ref={viewerRef}>
-          <Document 
-            file={fileUrl} 
-            onLoadSuccess={this.onLoadSuccess} 
-            loading={<Spinner />}
-            error={<b>Failed to load PDF file. If you recently published or updated this item, please wait up to 30 minutes for the PDF to appear here.</b>}
-          >
-            {Array.from(new Array(numPages), (_el, index) => (
-              <Page
-                key={`page_${index + 1}`}
-                pageNumber={index + 1}
-                width={containerWidth} // resize observed width 
-                inputRef={el => this.pageRefs[index] = el}
-              />
-            ))}
-          </Document>
+          {pdfLoaded ? (
+            <Document
+              file={fileUrl}
+              onLoadSuccess={this.onLoadSuccess}
+              loading={<Spinner />}
+              error={<b>Failed to load PDF file. If you recently published or updated this item, please wait up to 30 minutes for the PDF to appear here.</b>}
+            >
+              {Array.from(new Array(numPages), (_, index) => (
+                <Page
+                  key={index}
+                  pageNumber={index + 1}
+                  width={containerWidth}
+                  inputRef={el => this.pageRefs[index] = el}
+                />
+              ))}
+            </Document>
+          ) : (
+            <Spinner />
+          )}
         </div>
 
         {/* {this.props.commenting_ok && <HypothesisClient />} */}
