@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
   <metaTags></metaTags>
   <link rel="stylesheet" href="/app/scss/main.scss">
-  <link rel="resource" type="application/l10n" href="/node_modules/pdfjs-embed2/dist/locale/locale.properties">
+  <!-- <link rel="resource" type="application/l10n" href="/node_modules/pdfjs-embed2/dist/locale/locale.properties"> -->
   <noscript><style> .jsonly { display: none } </style></noscript>
   <!-- Matomo -->
   <!-- TBD Configure Matomo for SPA https://developer.matomo.org/guides/spa-tracking -->
@@ -24,10 +24,10 @@
     })();
   </script>
   <!-- End Matomo Code -->
-
+  <!--app-head-->
 </head>
 <body>
-  <div id="main"></div>
-  <script type="module" src="/app/jsx/App.jsx"></script>
+  <div id="root"><!--app-html--></div>
+  <script type="module" src="/app/entry-client.jsx"></script>
 </body>
 </html>

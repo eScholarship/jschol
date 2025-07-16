@@ -17,7 +17,7 @@ var AppRoot = null
 
 const app = express()
 
-app.use(bodyParser.json({limit: '10mb'}));
+app.use(express.json({limit: '10mb'}));
 
 function cacheBundle()
 {
@@ -43,7 +43,7 @@ app.get('/check', (req, res) =>
 })
 
 // Main entry point
-app.post('*', (req, res) =>
+app.post('*all', (req, res) =>
 {
   cacheBundle()
 
