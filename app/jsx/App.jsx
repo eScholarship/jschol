@@ -38,8 +38,7 @@ function filterMsg(originalFunc, ...args) {
       /Failed prop type/.test(args[0]) ||
       /componentWillReceiveProps has been renamed/.test(args[0]) ||
       /useLayoutEffect does nothing on the server/.test(args[0]) ||
-      /Prop .* did not match.*dangerouslySetInnerHTML/s.test(args.toString()) ||
-      /Expected server HTML to contain a matching.*MathJax/s.test(args.toString()))
+      /Prop .* did not match.*dangerouslySetInnerHTML/s.test(args.toString()))
   {
     if (!anyFiltered)
       o_warn("Note: jschol react warning(s) filtered out. Disable filtering if upgrading.")
@@ -132,23 +131,23 @@ class App extends React.Component
 }
 
 // When running in the browser, render with React (vs. server-side where iso runs it for us)
-if (!(typeof document === "undefined")) {
-  ReactModal.setAppElement('#main')
-  if (window.jscholApp_initialPageData) {
-    ReactDOM.hydrate((
-      <BrowserRouter>
-        <App/>
-      </BrowserRouter>
-    ), document.getElementById('main'))
-  }
-  else {
-    ReactDOM.render((
-      <BrowserRouter>
-        <App/>
-      </BrowserRouter>
-    ), document.getElementById('main'))
-  }
-}
+// if (!(typeof document === "undefined")) {
+//   ReactModal.setAppElement('#root')
+//   if (window.jscholApp_initialPageData) {
+//     ReactDOM.hydrate((
+//       <BrowserRouter>
+//         <App/>
+//       </BrowserRouter>
+//     ), document.getElementById('root'))
+//   }
+//   else {
+//     ReactDOM.render((
+//       <BrowserRouter>
+//         <App/>
+//       </BrowserRouter>
+//     ), document.getElementById('root'))
+//   }
+// }
 
 // When running on the server, return an object that iso can render.
 export default App

@@ -1,5 +1,6 @@
 import React from 'react'
-import { MathJax } from "better-react-mathjax"
+import * as MathJaxPkg from 'better-react-mathjax'
+const { MathJax } = MathJaxPkg
 import Utils from '../utils.jsx'
 import PropTypes from 'prop-types'
 
