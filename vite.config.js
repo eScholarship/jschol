@@ -26,7 +26,7 @@ export default defineConfig({
     react(),
     commonjs(),
     // uncomment to visualize chunking 
-    visualizer({ open: true }),
+    // visualizer({ open: true }),
     legacy({
       targets: ['defaults', 'not IE 11'],
     }),
@@ -54,12 +54,6 @@ export default defineConfig({
       ],
     },
   },
-  // optimizeDeps: {
-  //   include: ['react-sortable-tree', 'react-virtualized']
-  // },
-  // ssr: {
-  //   noExternal: ['react-sortable-tree', 'react-virtualized']
-  // },
   resolve: {
     alias: {
       'pdfjs-lib': path.resolve(__dirname, 'node_modules/pdfjs-embed2/src/pdf.js'),

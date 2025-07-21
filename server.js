@@ -14,6 +14,8 @@ const templateHtml = isProduction
 // Create http server
 const app = express()
 
+app.use(express.json({ limit: '10mb' }))
+
 // Add Vite or respective production middlewares
 /** @type {import('vite').ViteDevServer | undefined} */
 let vite
@@ -51,7 +53,9 @@ app.use('*all', async (req, res) => {
       render = (await import('./dist/server/entry-server.js')).render
     }
 
-    const rendered = await render(url)
+    const pageData = req.body || {}
+
+    const rendered = await render(req.originalUrl, pageData)
 
     const html = template
       .replace(`<!--app-head-->`, rendered.head ?? '')
@@ -60,12 +64,12 @@ app.use('*all', async (req, res) => {
     res.status(200).set({ 'Content-Type': 'text/html' }).send(html)
   } catch (e) {
     vite?.ssrFixStacktrace(e)
-    console.log('***SERVER ERROR***', e.stack)
+    console.log('***SSR ERROR***', e.stack)
     res.status(500).end(e.stack)
   }
 })
 
 // Start http server
 app.listen(port, () => {
-  console.log(`Server started at http://localhost:${port}`)
+  console.log(`***[SSR LOADED]*** Server listening on port: ${port}`)
 })

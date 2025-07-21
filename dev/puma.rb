@@ -30,7 +30,7 @@ def startIsoServer
   # port = ENV['ISO_PORT'] && !$isoPid or return
   # jscholDir = File.dirname(File.expand_path(File.dirname(__FILE__)))
   $isoParent = Process.pid
-  $isoPid = spawn("node app/isomorphic.js")
+  $isoPid = spawn("node server.js")
   Thread.new {
     Process.wait($isoPid)
     $isoPid = nil

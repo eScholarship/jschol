@@ -9,8 +9,12 @@ import $ from 'jquery'
 // figure out how to dynamically import flickity 
 
 // Only load flickity when in the browser (not server-side)
-if (!(typeof document === "undefined")) {
-  var Flickity = require('flickity-imagesloaded')
+let Flickity
+
+if (!import.meta.env.SSR) {
+  import('flickity-imagesloaded').then(mod => {
+    Flickity = mod.default || mod
+  })
 }
 
 class CarouselComp extends React.Component {
