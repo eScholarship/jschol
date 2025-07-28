@@ -21,7 +21,7 @@ const dynamicLibs = [
   'react-pdf'
 ]
 
-export default defineConfig({
+export default defineConfig(({ command, ssrBuild }) => ({
   plugins: [
     react(),
     commonjs(),
@@ -46,25 +46,30 @@ export default defineConfig({
           flexbox: 'no-2009',
           grid: false,
         }),
-        assets({
-          loadPaths: ['images', 'fonts'],
-          basePath: path.resolve(__dirname, 'public'), 
-          relative: true, 
-        })
+        // assets({
+        //   loadPaths: ['images', 'fonts'],
+        //   basePath: path.resolve(__dirname, 'public'), 
+        //   relative: true, 
+        // })
       ],
     },
   },
   resolve: {
     alias: {
-      'pdfjs-lib': path.resolve(__dirname, 'node_modules/pdfjs-embed2/src/pdf.js'),
+      'pdfjs-lib': path.resolve(process.cwd(), 'node_modules/pdfjs-embed2/src/pdf.js'),
     },
   },
+  // Add proper asset handling
+  assetsInclude: ['**/*.woff', '**/*.woff2', '**/*.ttf', '**/*.eot'],
   build: {
     // sourcemap: true,
     // manifest: true,
     minify: 'esbuild',
     rollupOptions: {
-      output: {
+      output: ssrBuild ? {
+        // SSR build configuration
+        format: 'es'
+      } : {
         manualChunks(id) {
           if (id.includes('node_modules')) {
             for (const lib of dynamicLibs) {
@@ -96,4 +101,4 @@ export default defineConfig({
       }
     },
   },
-})
+}))

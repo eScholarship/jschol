@@ -563,137 +563,27 @@ end
 ###################################################################################################
 # The outer framework of every page is essentially the same, substituting in the intial page
 # data and initial elements from React.
+# serve only API endpoints, content, and assets - no more frontend routing
 get %r{.*} do
-  # The regex below ensures that /api, /content, /locale, and files with a file ext get served
-  # elsewhere.
-  if request.path_info =~ %r{api/.*|content/.*|locale/.*|.*\.[a-zA-Z]\w{0,3}}
+  # only handle API, content, and assets - let Vite handle everything else
+  if request.path_info =~ %r{^/(api|content|cms-assets|locale)/} ||
+     request.path_info =~ %r{\.(css|js|json|xml|txt|ico)$}
     pass
   else
-    generalResponse
+    # return 404 for any non-API requests - vite will handle frontend
+    halt 404, "API endpoint not found"
   end
 end
 
-###################################################################################################
-def generalResponse
-  # Replace startup URLs for proper cache busting
-  template = File.new("app/app.html").read
-  webpackManifest = JSON.parse(File.read('app/js/manifest.json'))
-  template.sub!("/js/vendors~app.js", "#{webpackManifest["vendors~app.js"]}")
-  template.sub!("/js/app.js", "#{webpackManifest["app.js"]}")
-  template.sub!("/css/main.css", "/css/main-#{Digest::MD5.file("app/css/main.css").hexdigest[0,16]}.css")
+# Add CORS headers for API requests
+before '/api/*' do
+  headers['Access-Control-Allow-Origin'] = '*'  # or specific origin if needed
+  headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+  headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+end
 
-  # In development mode, skip iso
-  ENV['ISO_PORT'] or return template
-
-  # Skip ISO for CMS pages, since we need to check credentials that are held in browser session storage,
-  # and thus don't have access until Javascript is running on the client side.
-  if request.path =~ %r{/(profile|carousel|issueConfig|userConfig|unitBuilder|nav|sidebar|redirects|authorSearch|userAccount)\b}
-    puts "Skipping ISO for CMS page."
-    return template
-  end
-
-  # Also skip ISO for the rare credential-protected stats pages
-  if request.path =~ %r{/stats/(deposits_by_oa|all_users)\b}
-    puts "Skipping ISO for credential-affected stats page."
-    return template
-  end
-
-  # Get API data
-  pageData = nil
-  apiErr = catch(:halt) {
-    begin
-      pageData = getPageData(request.path_info)
-      pageData.is_a?(Hash) or raise("an API function failed to return a hash, for path=#{request.path_info.inspect}")
-    rescue Exception => e
-      puts "Exception getting page data: #{e}\n    #{e.backtrace.join("\n    ")}"
-      pageData = { error: true, message: "Server Error" }
-    end
-    nil
-  }
-
-  content_type :html  # in case it got set to json
-
-  # If there was any error from APIs, return an ISO error page.
-  if apiErr
-    unit = $unitsHash['root']
-    attrs = JSON.parse(unit[:attrs])
-    pageData = {
-      unit: unit.values.reject{|k,_v| k==:attrs},
-      header: getUnitHeader(unit, nil, nil, attrs),
-      error: true
-    }
-    if apiErr.is_a?(Array)
-      status apiErr[0] || 500
-      if apiErr[1].is_a?(String)
-        if apiErr[1] =~ /{/
-          begin
-            parsed = JSON.parse(apiErr[1])
-            parsed['error'] && parsed['message'] or raise("APIs should jsonHalt")
-            pageData[:message] = parsed['message']
-          rescue
-            pageData[:message] = apiErr[1]
-          end
-        else
-          pageData[:message] = apiErr[1]
-        end
-      else
-        pageData[:message] = "Error"
-      end
-    elsif apiErr.is_a?(Numeric)
-      status apiErr
-      pageData[:message] = apiErr == 404 ? "Not Found" : "Error"
-    else
-      raise("can't figure out apiErr: #{apiErr.inspect}")
-    end
-  end
-
-  # Parse out payload of the URL (i.e. not including the host name)
-  request.url =~ %r{^https?://([^/:]+)(:\d+)?(.*)$} or fail
-  remainder = $3
-
-  # Pass the full path and query string to our little Node Express app, which will run it through
-  # ReactRouter and React.
-  response = HTTParty.post("http://#{$host}:#{ENV['ISO_PORT']}#{remainder}",
-               :headers => { 'Content-Type' => 'application/json' },
-               :body => pageData.to_json,
-               :timeout => 20)
-  if response.code != 200
-    # If there's an exception (like iso is completely dead), fall back to non-iso mode.
-    puts "Warning: unexpected error from iso (falling back): #{response.code} - #{response.body}"
-    metaTags = "<title>ISO error - eScholarship</title>"
-    template.sub!('<metaTags></metaTags>', metaTags) or raise("missing template section")
-    return template
-  end
-
-  # Extract meta tags so we can put them in <head>
-  metaTags, body = "", response.body
-  if body =~ %r{<metaTags>(.*)</metaTags>(.*)$}m
-    metaTags, body = $1, $2
-    metaTags.gsub!(/>\s*</, ">\n  <")  # add some newlines to make it look nice
-  end
-
-  # We need to turn the page data into a code snippet. It's not as straightforward as one mightt hink.
-  # For instance, unicode characters can't be inline (at least, it doesn't work for me); rather, they
-  # have to be encoded in "\uXXYY" form.
-  #
-  # For a test sample see the copyright symbol near the end of the abstract in qt0015h4ns.
-  jsonPageData = pageData.to_json
-  jsonPageData.gsub!(/[\u007F-\uFFFF]/) { |m| "\\u%04X" % m.codepoints[0] }
-
-  # Also, backslashes are particularly difficult. First of all, they need to be escaped in the
-  # javascript, so that's "\\". But you'll see eight backslashes below. What's that about? Well,
-  # to produce two backslashes in the output, you need four going in. In addition, because this
-  # is going in to the String.sub! function, we have to double that to defeat them being interpreted
-  # as backreferences to the match. Crazy cray cray.
-  #
-  # For a test sample, see the "5\%" near the end of the abstract in qt3f3256kv.
-  jsonPageData.gsub!("\\", "\\\\\\\\")
-
-  # In the template, substitute the results from React/ReactRouter, and the API data so the
-  # client-side React code can successfully rehydrate the page.
-  return template.sub('<metaTags></metaTags>', metaTags).
-                  sub('<script></script>', "<script>window.jscholApp_initialPageData = #{jsonPageData};</script>").
-                  sub('<div id="main"></div>', body)
+options '/api/*' do
+  200
 end
 
 # Not found errors on /content, /api, etc.
@@ -706,7 +596,7 @@ not_found do
   elsif request.path =~ %r{/(dspace|oai)}
     return halt(404, "Not Found.\n")
   else
-    generalResponse
+    halt 404, "Page not found"
   end
 end
 

@@ -24,28 +24,11 @@ def setupWorkerKiller
   PumaWorkerKiller.start
 end
 
-# We run a child Node Express process for isomorphic javascript rendering.
-# Let's be certain it shuts down when we do.
-def startIsoServer
-  # port = ENV['ISO_PORT'] && !$isoPid or return
-  # jscholDir = File.dirname(File.expand_path(File.dirname(__FILE__)))
-  $isoParent = Process.pid
-  $isoPid = spawn("node server.js")
-  Thread.new {
-    Process.wait($isoPid)
-    $isoPid = nil
-  }
-  at_exit {
-    $isoPid && $isoParent == Process.pid and Process.kill("TERM", $isoPid)
-  }
-end
+# Remove the startIsoServer function and related code (lines 27-39)
+# Remove the before_fork and after_worker_fork hooks that start ISO
 
 before_fork do
   setupWorkerKiller
-end
-
-after_worker_fork do
-  startIsoServer
 end
 
 on_worker_boot do |num|

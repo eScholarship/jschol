@@ -6,11 +6,13 @@
   "main": "index.html",
   "repository": "https://github.com/eScholarship/jschol",
   "scripts": {
-    "test": "mocha",
-    "dev": "concurrently \"ruby util/maybeSocks.rb\" \"ruby bin/puma\" \"vite\"",
-    "build": "vite build",
-    "serve": "vite preview",
-    "preview": "concurrently \"ruby util/maybeSocks.rb\" \"ruby bin/puma\" \"vite preview\""
+    "dev": "concurrently \"ruby util/maybeSocks.rb\" \"ruby bin/puma\" \"npm run dev:vite\"",
+    "dev:vite": "node server.js",
+    "build": "npm run build:client && npm run build:server",
+    "build:client": "vite build --outDir dist/client",
+    "build:server": "vite build --outDir dist/server --ssr app/entry-server.jsx",
+    "preview": "concurrently \"ruby util/maybeSocks.rb\" \"ruby bin/puma\" \"cross-env NODE_ENV=production node server.js\"",
+    "serve": "node server.js"
   },
   "author": "California Digital Library",
   "license": "MIT",
@@ -83,6 +85,7 @@
     "jquery": "^3.6.0",
     "jquery.dotdotdot": "github:amywieliczka/jQuery.dotdotdot#4f7d03a442ceca0b75a2fb641a065e47297d5666",
     "lodash": "^4.17.21",
+    "node-fetch": "^3.3.2",
     "npm": "^10.8.1",
     "prop-types": "^15.8.1",
     "query-string": "^5.x",

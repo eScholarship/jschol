@@ -1,9 +1,9 @@
 // ##### Meta Tags Component ##### //
-{/* This component uses the react-meta-tags library to put title, description, and image tags in the header */}
+{/* This component uses a custom SSR-compatible meta tags system */}
 
 import React from 'react'
 import PropTypes from 'prop-types'
-import MetaTags from 'react-meta-tags'
+import SSRMetaTags from './SSRMetaTags.jsx'
 
 export default class MetaTagsComp extends React.Component
 {
@@ -14,7 +14,7 @@ export default class MetaTagsComp extends React.Component
   }
 
   stripHtml = str => {
-    return str.replace(/<(?:.|\n)*?>/gm, '')
+    return str ? str.replace(/<\/?[^>]+(>|$)/g, "") : ""
   }
 
   render() {
@@ -27,7 +27,7 @@ export default class MetaTagsComp extends React.Component
       descrip = descrip + " | Abstract: " + abstract
     }
     return (
-      <MetaTags>
+      <SSRMetaTags>
         <title>{finalTitle}</title>
         <meta id="meta-title" property="citation_title" content={finalTitle} />
         <meta id="og-title" property="og:title" content={finalTitle} />
@@ -46,7 +46,7 @@ export default class MetaTagsComp extends React.Component
         <meta id="og-image-width" property="og:image:width" content="1242" />
         <meta id="og-image-height" property="og:image:height" content="1242" />
         { this.props.children }
-      </MetaTags>
+      </SSRMetaTags>
     )
   }
 }
