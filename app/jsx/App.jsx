@@ -25,6 +25,7 @@ import LoginSuccessPage from './pages/LoginSuccessPage.jsx'
 import LogoutPage from './pages/LogoutPage.jsx'
 import LogoutSuccessPage from './pages/LogoutSuccessPage.jsx'
 import UserAccountPage from './pages/UserAccountPage.jsx'
+import '../scss/main.scss'
 
 
 /* There are a bunch of React warnings that we can't do anything about because they're

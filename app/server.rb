@@ -566,8 +566,7 @@ end
 # serve only API endpoints, content, and assets - no more frontend routing
 get %r{.*} do
   # only handle API, content, and assets - let Vite handle everything else
-  if request.path_info =~ %r{^/(api|content|cms-assets|locale)/} ||
-     request.path_info =~ %r{\.(css|js|json|xml|txt|ico)$}
+  if request.path_info =~  %r{api/.*|content/.*|locale/.*|.*\.[a-zA-Z]\w{0,3}}
     pass
   else
     # return 404 for any non-API requests - vite will handle frontend

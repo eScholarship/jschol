@@ -93,8 +93,6 @@ app.use('*all', async (req, res) => {
       return res.status(404).send('Asset not found')
     }
 
-    console.log('SSR Request for:', url)
-
     let template
     let render
     if (!isProduction) {
