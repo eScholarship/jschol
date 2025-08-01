@@ -1128,7 +1128,7 @@ put "/api/unit/:unitID/unitBuilder" do |parentUnitID|
   unitName.nil? || unitName.empty? and jsonHalt(400, "Invalid unit name")
 
   unitType = params[:type]
-  %w{oru journal series monograph_series}.include?(unitType) or jsonHalt(400, "Invalid unit type")
+  %w{oru journal series monograph_series conference_proceedings}.include?(unitType) or jsonHalt(400, "Invalid unit type")
 
   isHidden = !!params[:hidden]
 

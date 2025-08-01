@@ -8,14 +8,25 @@ import IssueComp from '../components/IssueComp.jsx'
 import PubComp from '../components/PubComp.jsx'
 import IssueActionsComp from '../components/IssueActionsComp.jsx'
 
+const PUBLICATION_CONFIG = {
+  journal: {
+    sidebarTitle: 'Journal Information',
+    defaultMessage: 'This journal\'s first issue is coming soon.'
+  },
+  conference_proceedings: {
+    sidebarTitle: 'Proceedings Information',
+    defaultMessage: 'Conference proceedings are coming soon.'
+  }
+}
+
 class VolumeSelector extends React.Component {
   static propTypes = {
     current_issue_title: PropTypes.string,
     issues: PropTypes.array.isRequired  // [ {:id=>-1, :name=>"Volume 14, Issue 0, 2017",
-                                        // :volume=>"1", :issue=>"2", :published=>#<Date: ...}, ... ]
+    // :volume=>"1", :issue=>"2", :published=>#<Date: ...}, ... ]
   }
 
-  getIssuePath = (unit_id, v,i) => {
+  getIssuePath = (unit_id, v, i) => {
     return `/uc/${unit_id}/${v}/${i}`
   }
 
@@ -32,8 +43,9 @@ class VolumeSelector extends React.Component {
           <summary aria-label="Select a different issue"></summary>
           <div className="o-customselector__menu">
             <ul className="o-customselector__items">
-              {p.issues.map( i => {
-                return (<li key={i.id}><Link to={this.getIssuePath(i.unit_id, i.volume, i.issue)}>{i.name}</Link></li>)})
+              {p.issues.map(i => {
+                return (<li key={i.id}><Link to={this.getIssuePath(i.unit_id, i.volume, i.issue)}>{i.name}</Link></li>)
+              })
               }
             </ul>
           </div>
@@ -74,42 +86,42 @@ class IssueWrapperComp extends React.Component {
   }
 
   render() {
-      let pi = this.props.issue,
-        pi_title = this.props.issues.find(x => x.issue_id === pi.id).name
+    let pi = this.props.issue,
+      pi_title = this.props.issues.find(x => x.issue_id === pi.id).name
     return (
       <section className="o-columnbox1">
         <IssueActionsComp unit_id={pi.unit_id} buy_link={pi.buy_link} />
         {/*              articles={} */}
         <VolumeSelector current_issue_title={pi_title} issues={this.props.issues} />
-      {(pi.cover || pi.title || pi.description) &&
-        <IssueComp cover={pi.cover} title={pi.title} description={pi.description} />
-      }
-    {/* ARTICLE LISTINGS */}
+        {(pi.cover || pi.title || pi.description) &&
+          <IssueComp cover={pi.cover} title={pi.title} description={pi.description} />
+        }
+        {/* ARTICLE LISTINGS */}
         <div>
-      { this.props.display=="magazine" ?
-        pi.sections.map(section =>
-          <div key={section.name}>
-            <h3 className="o-heading1a">{section.name}</h3>
-            <div className="o-dividecontent2x--ruled">
-              {section.articles.map(article => <PubComp h="h4" key={article.id} result={article}/>)}
-            </div>
-          </div>
-        )
-      :
-        pi.sections.map(section =>
-          <div key={section.name}>
-            <h3 className="o-heading1a">{section.name}</h3>
-            {section.articles.map(article => <PubComp h="h4" key={article.id} result={article}/>)}
-          </div>
-        )
-      }
+          {this.props.display == "magazine" ?
+            pi.sections.map(section =>
+              <div key={section.name}>
+                <h3 className="o-heading1a">{section.name}</h3>
+                <div className="o-dividecontent2x--ruled">
+                  {section.articles.map(article => <PubComp h="h4" key={article.id} result={article} />)}
+                </div>
+              </div>
+            )
+            :
+            pi.sections.map(section =>
+              <div key={section.name}>
+                <h3 className="o-heading1a">{section.name}</h3>
+                {section.articles.map(article => <PubComp h="h4" key={article.id} result={article} />)}
+              </div>
+            )
+          }
         </div>
       </section>
     )
   }
 }
 
-class JournalLayout extends React.Component {
+class PublicationLayout extends React.Component {
   static propTypes = {
     unit: PropTypes.shape({
       id: PropTypes.string.isRequired,
@@ -132,36 +144,40 @@ class JournalLayout extends React.Component {
   }
 
   render() {
-    let data = this.props.data
-    let marquee = this.props.marquee
+    const { data, marquee, sidebar } = this.props
+
+    const config = PUBLICATION_CONFIG[unitType]
+
     return (
       <div>
-      {((marquee.carousel && marquee.slides) || marquee.about) &&
-        <MarqueeComp marquee={marquee} />
-      }
+        {((marquee.carousel && marquee.slides) || marquee.about) &&
+          <MarqueeComp marquee={marquee} />
+        }
         <div className="c-columns">
           <main id="maincontent">
 
-          {this.props.data.issue ?
-            <IssueWrapperComp issue={data.issue} issues={data.issuesSubNav} display={data.display} />
-          :
-            <section className="o-columnbox1">
-              <p>This journal's first issue is coming soon.
-              <br/> <br/> <br/> <br/> </p>
-            </section>
-          }
+            {data.issue ?
+              <IssueWrapperComp issue={data.issue} issues={data.issuesSubNav} display={data.display} />
+              :
+              <section className="o-columnbox1">
+                <p>
+                  {config.defaultMessage}
+                  <br /> <br /> <br /> <br /> 
+                </p>
+              </section>
+            }
 
           </main>
           <aside>
-          {(data.doaj || (data.issue && data.issue.rights) || data.issn || data.eissn) &&
-            <section className="o-columnbox1">
-              <header>
-                <h2>Journal Information</h2>
-              </header>
-              <JournalInfoComp doaj={data.doaj} rights={data.issue && data.issue.rights} issn={data.issn} eissn={data.eissn} />
-            </section>
-          }
-            {this.props.sidebar}
+            {(data.doaj || (data.issue && data.issue.rights) || data.issn || data.eissn) &&
+              <section className="o-columnbox1">
+                <header>
+                  <h2>{config.sidebarTitle}</h2>
+                </header>
+                <JournalInfoComp doaj={data.doaj} rights={data.issue && data.issue.rights} issn={data.issn} eissn={data.eissn} />
+              </section>
+            }
+            {sidebar}
           </aside>
         </div>
       </div>
@@ -169,4 +185,4 @@ class JournalLayout extends React.Component {
   }
 }
 
-export default JournalLayout
+export default PublicationLayout
