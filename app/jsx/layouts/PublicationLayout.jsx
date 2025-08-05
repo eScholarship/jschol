@@ -144,8 +144,9 @@ class PublicationLayout extends React.Component {
   }
 
   render() {
-    const { data, marquee, sidebar } = this.props
-
+    const { data, marquee, sidebar, unit } = this.props
+    const unitType = unit.type
+    
     const config = PUBLICATION_CONFIG[unitType]
 
     return (

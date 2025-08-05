@@ -251,7 +251,7 @@ end
 
 # Returns array of a journal issue's IDs, only for published issues
 def getIssueIds (unit)
-  if unit.type == 'journal'
+  if unit.type == 'journal' || unit.type == 'conference_proceedings'
     return Issue.distinct.select(Sequel[:issues][:id]).
       join(:sections, issue_id: :id).
       join(:items, section: Sequel[:sections][:id]).
@@ -342,7 +342,7 @@ def getUnitPageContent(unit:, attrs:, query:, issueIds:, issuesPublished:)
     return getCampusLandingPageData(unit, attrs)
   elsif unit.type.include? 'series'
     return getSeriesLandingPageData(unit, query)
-  elsif unit.type == 'journal'
+  elsif unit.type == 'journal' || unit.type == 'conference_proceedings'
     return getJournalIssueData(unit, attrs, issueIds, issuesPublished)
   else
     # ToDo: handle 'special' type here
@@ -634,6 +634,9 @@ def unitSearch(params, unit)
   elsif unit.type == 'journal'
     resultsListFields = ['thumbnail', 'pub_year', 'publication_information']
     params["journals"] = [unit.id]
+  elsif unit.type == 'conference_proceedings'
+    resultsListFields = ['thumbnail', 'pub_year', 'publication_information']
+    params["journals"] = [unit.id]
   elsif unit.type == 'campus'
     resultsListFields = ['thumbnail', 'pub_year', 'publication_information', 'type_of_work', 'rights', 'peer_reviewed']
     params["campuses"] = [unit.id]
@@ -693,7 +696,7 @@ def getUnitProfile(unit, attrs)
   attrs['directManageURLauthor'] and profile[:directManageURLauthor] = attrs['directManageURLauthor']
   attrs['directManageURLeditor'] and profile[:directManageURLeditor] = attrs['directManageURLeditor']
   attrs['elements_id'] and profile[:elementsID] = attrs['elements_id']
-  if unit.type == 'journal'
+  if unit.type == 'journal' || unit.type == 'conference_proceedings'
     profile[:doaj] = attrs['doaj']
     profile[:issn] = attrs['issn']
     profile[:eissn] = attrs['eissn']
@@ -709,7 +712,7 @@ def getUnitProfile(unit, attrs)
     profile[:apc] = attrs['apc'] || ''
     profile[:contentby] = attrs['contentby'] || []
   end
-  if unit.type =~ /series|journal/
+  if unit.type =~ /series|journal|conference_proceedings/
     profile[:commenting_ok] = attrs['commenting_ok']
   end
   if unit.type == 'oru'
@@ -1135,7 +1138,7 @@ put "/api/unit/:unitID/unitBuilder" do |parentUnitID|
   # Add a basic nav bar. Fixed/immovable nav buttons "__ Home" (and "Issues" dropdown for journals) will be included in the nav by default (called up when page is being rendered)
   attrs = {
     about: "About #{unitName}: TODO",
-    nav_bar: %w{oru journal}.include?(unitType) ? [
+    nav_bar: %w{oru journal conference_proceedings}.include?(unitType) ? [
       { id: 1, name: "About", slug: "about", type: "page" },
       { id: 2, name: "Contact us", slug: "contact", type: "page" }
     ] : []
@@ -1148,7 +1151,7 @@ put "/api/unit/:unitID/unitBuilder" do |parentUnitID|
                 status: isHidden ? "hidden" : "active",
                 attrs: attrs.to_json)
 
-    if %w{oru journal}.include?(unitType)
+    if %w{oru journal conference_proceedings}.include?(unitType)
       Page.create(unit_id: newUnitID,
                   name: "About",
                   title: "About #{unitName}",
