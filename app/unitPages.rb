@@ -211,8 +211,16 @@ def getNavBar(unit, navItems, level=1, issuesSubNav=nil)
                           "name"=>getIssueDropDownName(unit, issuesSubNav),
                           "url"=>nil, "sub_nav"=>issuesSubNav })
       end
+      home_name = case unit.type
+                  when "journal"
+                    "Journal Home"
+                  when "conference_proceedings"  
+                    "Proceedings Home"
+                  else 
+                    "Unit Home"
+                  end
       navItems.unshift({ "id"=>-9999, "type"=>"fixed_page",
-                         "name"=>unit.type == "journal" ? "Journal Home" : "Unit Home",
+                         "name"=>home_name,
                          "url"=>"/uc/#{unitID}" })
     end
     return navItems
