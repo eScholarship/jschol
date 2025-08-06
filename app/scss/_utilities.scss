@@ -269,3 +269,17 @@ One-line truncation. Use like:
   }
 
 }
+
+.u-loading-fade-in {
+  transition: opacity 0.5s;
+  opacity: 1;
+}
+
+.u-truncate-lines {
+  --line-clamp-lines: 3;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: var(--line-clamp-lines);
+  overflow: hidden;
+  word-break: break-word;
+}
