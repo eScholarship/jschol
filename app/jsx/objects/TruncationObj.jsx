@@ -1,96 +1,47 @@
-// ##### Dotdotdot Truncation Object ##### //
+// ##### CSS-based Truncation Object ##### //
 
-import React from 'react'
-import PropTypes from 'prop-types'
-import $ from 'jquery'
-import ReactDOMServer from 'react-dom/server'
-
-// Load dotdotdot in browser but not server
-if (typeof document !== 'undefined') {
-  import('jquery.dotdotdot').then(module => {
-    const dotdotdot = module.default || module
-  }).catch(err => console.error('Failed to load dotdotdot:', err))
-}
-
-/**
-  Well, jquery.dotdotdot is awesome, but takes time to process (doubly so on Firefox).
-  So, we need to init dotdotdot in the background as time allows, to keep the page
-  responsive for the user. That's what the queue below is all about.
-*/
-
-class JobQueue
-{
-  queue = []
-
-  constructor() {
-    setTimeout(this.service, 10)
-  }
-
-  append(job) {
-    this.queue.push(job)
-  }
-
-  service = ()=>{
-    let start = new Date()
-    let n = 0
-    while (this.queue.length > 0 && (new Date() - start) < 100) {
-      let job = this.queue.shift()
-      job()
-      n++
-    }
-    setTimeout(this.service, 10)
-  }
-}
-
-let job_queue = null
-if (!(typeof document === "undefined")) {
-  job_queue = new JobQueue(10) // timeslice of 10ms per iteration
-}
+import React from 'react';
+import PropTypes from 'prop-types';
+import ReactDOMServer from 'react-dom/server';
 
 export default class TruncationObj extends React.Component {
   static propTypes = {
+    children: PropTypes.node.isRequired,
     element: PropTypes.string.isRequired,
-    options: PropTypes.object
+    className: PropTypes.string,
+    lines: PropTypes.number,
+  };
+
+  static defaultProps = {
+    className: '',
+    lines: 1,
   }
 
-  componentDidMount() {
-    // Don't do truncation on scripted tests (too hard to wait for completion)
-    if (navigator.userAgent != "puppeteer" && this.truncate) {
-      job_queue.append(()=>{
-        if (this.domEl) {
-          $(this.domEl).dotdotdot(this.props.options ? this.props.options : {watch:"window"})
-          job_queue.append(()=>this.domEl && $(this.domEl).trigger("update"))
-        }
-      })
+  render() {
+    const { children, element, className, lines } = this.props
+
+    // render children to a string ONLY to check for MathJax content
+    const contentString = ReactDOMServer.renderToStaticMarkup(<>{children}</>)
+
+    // do NOT truncate if we detect MathJax delimiters: \\(  \\[  $$
+    const hasMathJax = /\\\(|\\\[|\$\$/.test(contentString)
+
+    if (hasMathJax) {
+      // if MathJax is present, render without truncation
+      return React.createElement(element, { className }, children)
     }
-  }
 
-  componentWillUnmount() {
-    this.domEl = null
-  }
+    const truncationClass = 'u-truncate-lines'
+    const combinedClassName = `${className} ${truncationClass}`.trim()
+    
+    const style = {
+      '--line-clamp-lines': lines,
+    }
 
-  render = () => {
-    let content = ReactDOMServer.renderToStaticMarkup(
-      <div >{this.props.children}</div>).replace(/^<div>/, '').replace(/<\/div>$/, '')
-
-      // do NOT truncate if we detect MathJax, delimiters can be \\(  \\[  $$
-      // only use test here... a match is slow/has a negative impact on performance
-      if (/\\\(|\\\[|\$\$/.test(content)) { // heuristic to detect MathJax
-        this.truncate = false
-        return React.createElement(this.props.element,
-          { className: this.props.className,
-            ref: el => this.domEl = el,
-          },
-          this.props.children
-        )
-      } else {
-        this.truncate = true
-        return React.createElement(this.props.element,
-          { className: this.props.className,
-            ref: el => this.domEl = el,
-            dangerouslySetInnerHTML: {__html: content}
-          }
-        )
-      }
+    return React.createElement(element, {
+      className: combinedClassName,
+      style: style,
+      children,
+    })
   }
 }

@@ -23,12 +23,6 @@ class JournalCarouselComp extends React.Component {
     view_count: PropTypes.number.isRequired,
   }
 
-  componentDidMount () {
-    /* jquery dotdotdot */
-    $('.o-journal2 figcaption').dotdotdot({
-      watch: 'window'
-    });
-  }
   render() {
     let p = this.props
     let pluralItems = (p.item_count == 1) ? '' : 's'
@@ -51,7 +45,7 @@ class JournalCarouselComp extends React.Component {
                   {u.cover ?
                     <img src={"/cms-assets/"+u.cover.asset_id} alt={u.name}/>
                   : <img src={MEDIA_PATH + '/temp_article.png'} alt={u.name} /> }
-                    <figcaption>{u.name}</figcaption>
+                    <figcaption className="u-truncate-lines">{u.name}</figcaption>
                   </figure>
                 </a>
               </div>

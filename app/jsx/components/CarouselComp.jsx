@@ -3,7 +3,6 @@
 import React from 'react'
 import ReactDOMServer from 'react-dom/server'
 import PropTypes from 'prop-types'
-import $ from 'jquery'
 
 // TODO:
 // figure out how to dynamically import flickity 
@@ -26,11 +25,9 @@ class CarouselComp extends React.Component {
       console.log("Exception initializing flickity:", e)
     }
     if (this.props.truncate) {
-      let cells = $(this.domEl).find(this.props.truncate)
-      $(this.domEl).find(this.props.truncate).each(function() {
-        $(this).dotdotdot({
-          watch: 'window',
-        })
+      let cells = this.domEl.querySelectorAll(this.props.truncate)
+      cells.forEach(cell => {
+        cell.classList.add('u-truncate-lines')
       })
     }
   }

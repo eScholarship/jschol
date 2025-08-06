@@ -3,7 +3,6 @@
 import React from 'react'
 import MediaModalComp from '../components/MediaModalComp.jsx'
 import MediaFeatureObj from '../objects/MediaFeatureObj.jsx'
-import $ from 'jquery'
 import { Link } from 'react-router-dom'
 
 class CellComp extends React.Component {
@@ -22,13 +21,13 @@ class CellComp extends React.Component {
         fileLabel = m[mimeSimple] ? m[mimeSimple] : p.file 
     return (
       <div className={"o-mediafile--" + mimeSimple}>
-        <h2 className="o-mediafile__heading" ref={ el => { if (p.title && p.title.length > 38) $(el).dotdotdot({watch:"window"}) } }>{p.title}</h2>
+        <h2 className={`o-mediafile__heading ${p.title && p.title.length > 38 ? 'u-truncate-lines' : ''}`}>{p.title}</h2>
         <div className="o-mediafile__preview" onClick={this.handleOpenModal} aria-label={fileLabel} target="_blank">
           {(mimeSimple == "image") &&
             <img className="o-mediafile__image" src={url} alt={p.file} />
           }
         </div>
-        <div className="o-mediafile__description" ref={ el => { if (p.description && p.description.length > 0) $(el).dotdotdot({watch:"window"}) } }>
+        <div className={`o-mediafile__description ${p.description && p.description.length > 0 ? 'u-truncate-lines' : ''}`}>
           {p.description}</div>
         
         <button className="o-mediafile__view" onClick={this.handleOpenModal}><span>View Media</span></button>

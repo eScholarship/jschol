@@ -1,25 +1,21 @@
 // ##### Column Box Objects ##### //
 
 import React from 'react'
-import $ from 'jquery'
 import faker from 'faker/locale/en'
 
 class ColumnBoxObj extends React.Component {
-  state={loadingData: false}
+  state={
+    loadingData: false,
+    isExpanded: false
+  }
 
-  componentDidMount() {
-    $(this.element).dotdotdot({
-      watch: 'window',
-      after: '.o-columnbox__truncate-more',
-      callback: ()=> $(this.element).find(".o-columnbox__truncate-more").click(this.destroydotdotdot)
-    });
-    setTimeout(()=> $(this.element).trigger('update'), 0) // removes 'more' link upon page load if less than truncation threshold
+  toggleExpanded = () => {
+    this.setState(prevState => ({ isExpanded: !prevState.isExpanded }))
   }
-  destroydotdotdot = event => {
-    $(this.element).trigger('destroy')
-    $(this.element).removeClass("o-columnbox__truncate1")
-  }
+
   render() {
+    const truncateClass = this.state.isExpanded ? '' : 'u-truncate-lines'
+    
     return (
       <div>
         
@@ -63,12 +59,18 @@ class ColumnBoxObj extends React.Component {
           <header>
             <h2>About eScholarship</h2>
           </header>
-          <div className="o-columnbox__truncate1" ref={element => this.element = element}>
-            <div> {/* this element (or any child) required so that 'more' link goes away at less than truncation threshold */}
+          <div className={`o-columnbox__truncate1 ${truncateClass}`} ref={element => this.element = element}>
+            <div>
               {faker.fake("{{lorem.paragraphs}}")}
-              <button className="o-columnbox__truncate-more">More</button>
             </div>
           </div>
+          <button 
+            className="o-columnbox__truncate-more" 
+            onClick={this.toggleExpanded}
+            style={{ display: this.state.isExpanded ? 'none' : 'block' }}
+          >
+            {this.state.isExpanded ? 'Less' : 'More'}
+          </button>
         </section>
 
         <h3>When Placed Within Sidebar</h3>

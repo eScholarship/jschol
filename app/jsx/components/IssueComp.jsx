@@ -3,35 +3,30 @@
 import React from 'react'
 import LazyImageComp from '../components/LazyImageComp.jsx'
 import ArbitraryHTMLComp from "../components/ArbitraryHTMLComp.jsx"
-import $ from 'jquery'
 
 class IssueComp extends React.Component {
-  openAndAdjust = event => {
-    $(this.caption).trigger('destroy')
-    $(this.caption).removeClass("c-issue__caption-truncate")
-    if (this.descr) {
-      $(this.descr).height($(this.descr)[0].offsetHeight + $(this.caption)[0].offsetHeight - 40)
-    }
+  state = {
+    isExpanded: false
+  }
+
+  toggleExpanded = () => {
+    this.setState(prevState => ({ isExpanded: !prevState.isExpanded }))
   }
 
   handleMissingThumbnail = event => {
-    $(this.title).css( "left", "0" )
+    if (this.title) {
+      this.title.style.left = "0"
+    }
   }
 
   componentDidMount() {
-    if (this.caption) {
-      $(this.caption).dotdotdot({
-         watch: 'window',
-         after: '.c-issue__caption-truncate-more',
-         callback: () => $(this.caption).find(".c-issue__caption-truncate-more").click(this.openAndAdjust)
-      });
-      setTimeout(() => $(this.caption).trigger('update'), 0) // removes 'more' link upon page load if less than truncation threshold (max-height), or if no max-height is applied (mobile)
-    }
     if (!(this.thumbnail)) { this.handleMissingThumbnail() }
   }
 
   render() {
     let p = this.props
+    const truncateClass = this.state.isExpanded ? '' : 'u-truncate-lines'
+    
     return (
       <div className="c-issue">
       {p.title &&
@@ -49,15 +44,13 @@ class IssueComp extends React.Component {
                 <div>
                   <i>Cover Caption:</i> 
                   <span dangerouslySetInnerHTML={{__html: p.cover.caption}}></span> 
-                  <button className="c-issue__caption-truncate-more">More</button>
                 </div>
               </figcaption>
           ) : (
-              <figcaption className="c-issue__caption c-issue__caption-truncate" ref={e => this.caption = e}>
+              <figcaption className={`c-issue__caption c-issue__caption-truncate ${truncateClass}`} ref={e => this.caption = e}>
                 <div>
                   <i>Cover Caption:</i> 
                   <span>{p.cover.caption}</span> 
-                  <button className="c-issue__caption-truncate-more">More</button>
                 </div>
               </figcaption>
         )
@@ -69,6 +62,15 @@ class IssueComp extends React.Component {
           <ArbitraryHTMLComp html={p.description} h1Level={3}/>
         </div>
       }
+      {p.cover && p.cover.caption && !/<[a-z][\s\S]*>/i.test(p.cover.caption) && (
+        <button 
+          className="c-issue__caption-truncate-more" 
+          onClick={this.toggleExpanded}
+          style={{ display: this.state.isExpanded ? 'none' : 'block' }}
+        >
+          {this.state.isExpanded ? 'Less' : 'More'}
+        </button>
+      )}
       </div>
     )
   }
