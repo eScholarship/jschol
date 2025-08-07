@@ -1,6 +1,9 @@
 {
   "name": "jschol-app",
   "version": "0.1.0",
+  "browserslist": [
+    "last 2 versions"
+  ],
   "description": "The fifth generation of the eScholarship front-end user interface.",
   "main": "index.html",
   "repository": "https://github.com/eScholarship/jschol",
@@ -21,7 +24,7 @@
     "eslint": "7.32.0",
     "eslint-plugin-react": "^7.29.4",
     "gulp": "^4.0.2",
-    "gulp-autoprefixer": "^3.1.1",
+    "gulp-autoprefixer": "^8.0.0",
     "gulp-clean-css": "^2.4.0",
     "gulp-concat": "^2.6.1",
     "gulp-eslint": "^6.0.0",
