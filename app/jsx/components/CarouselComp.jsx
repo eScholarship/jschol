@@ -1,70 +1,30 @@
 // ##### Campus Carousel Component ##### //
 
+// TODO:
+// SSR handling (no errors currently)
+// truncation
+
 import React from 'react'
-import ReactDOMServer from 'react-dom/server'
 import PropTypes from 'prop-types'
-import $ from 'jquery'
+import Flickity from 'react-flickity-component'
 
-// Only load flickity when in the browser (not server-side)
-if (!(typeof document === "undefined")) {
-  var Flickity = require('flickity-imagesloaded')
-  var dotdotdot = require('jquery.dotdotdot')
+const CarouselComp = ({ className, options, truncate, imagesLoaded = true, children }) => {
+  return (
+    <Flickity
+      className={className}
+      options={options}
+      disableImagesLoaded={!imagesLoaded}
+    >
+      {children}
+    </Flickity>
+  )
 }
 
-class CarouselComp extends React.Component {
-  componentDidMount() {
-    try {
-      this.flkty = new Flickity(this.domEl, this.props.options)
-    }
-    catch (e) {
-      console.log("Exception initializing flickity:", e)
-    }
-    if (this.props.truncate) {
-      let cells = $(this.domEl).find(this.props.truncate)
-      $(this.domEl).find(this.props.truncate).each(function() {
-        $(this).dotdotdot({
-          watch: 'window',
-        })
-      })
-    }
-  }
-
-  componentDidUpdate(prevProps) {
-    try {
-      if (this.flkty) {
-        this.flkty.destroy();
-      }
-      this.flkty = new Flickity(this.domEl, this.props.options)
-    }
-    catch (e) {
-      console.log("Exception re-initializing flickity:", e)
-    }
-  }
-
-  componentWillUnmount() {
-    try {
-      if (this.flkty)
-        this.flkty.destroy();
-    }
-    catch (e) {
-      console.log("Exception destroying flickity:", e)
-    }
-  }
-
-  static propTypes = {
-    className: PropTypes.string.isRequired,
-    options: PropTypes.object.isRequired,
-  }
-  render() {
-    // The 'dangerouslySetInnerHTML' rigarmarole below is to keep React from attaching event handlers
-    // to the children, because after Flickity takes over those children, the handlers otherwise become
-    // confused and put out warnings to the console.
-    return (
-      <div className={this.props.className} ref={ el => this.domEl = el }
-        dangerouslySetInnerHTML={{__html: ReactDOMServer.renderToStaticMarkup(
-          <div >{this.props.children}</div>).replace(/^<div>/, '').replace(/<\/div>$/, '')}}/>
-    )
-  }
+CarouselComp.propTypes = {
+  className: PropTypes.string.isRequired,
+  options: PropTypes.object.isRequired,
+  truncate: PropTypes.string,
+  children: PropTypes.node.isRequired,
 }
 
-export default CarouselComp;
+export default CarouselComp
