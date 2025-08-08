@@ -1,73 +1,30 @@
 // ##### Campus Carousel Component ##### //
 
-import React from 'react'
-import ReactDOMServer from 'react-dom/server'
-import PropTypes from 'prop-types'
-
 // TODO:
-// figure out how to dynamically import flickity 
+// SSR handling (no errors currently)
+// truncation
 
-// Only load flickity when in the browser (not server-side)
-let Flickity
+import React from 'react'
+import PropTypes from 'prop-types'
+import Flickity from 'react-flickity-component'
 
-if (!import.meta.env.SSR) {
-  import('flickity-imagesloaded').then(mod => {
-    Flickity = mod.default || mod
-  })
+const CarouselComp = ({ className, options, truncate, imagesLoaded = true, children }) => {
+  return (
+    <Flickity
+      className={className}
+      options={options}
+      disableImagesLoaded={!imagesLoaded}
+    >
+      {children}
+    </Flickity>
+  )
 }
 
-class CarouselComp extends React.Component {
-  componentDidMount() {
-    try {
-      this.flkty = new Flickity(this.domEl, this.props.options)
-    }
-    catch (e) {
-      console.log("Exception initializing flickity:", e)
-    }
-    if (this.props.truncate) {
-      let cells = this.domEl.querySelectorAll(this.props.truncate)
-      cells.forEach(cell => {
-        cell.classList.add('u-truncate-lines')
-      })
-    }
-  }
-
-  componentDidUpdate(prevProps) {
-    try {
-      if (this.flkty) {
-        this.flkty.destroy();
-      }
-      this.flkty = new Flickity(this.domEl, this.props.options)
-    }
-    catch (e) {
-      console.log("Exception re-initializing flickity:", e)
-    }
-  }
-
-  componentWillUnmount() {
-    try {
-      if (this.flkty)
-        this.flkty.destroy();
-    }
-    catch (e) {
-      console.log("Exception destroying flickity:", e)
-    }
-  }
-
-  static propTypes = {
-    className: PropTypes.string.isRequired,
-    options: PropTypes.object.isRequired,
-  }
-  render() {
-    // The 'dangerouslySetInnerHTML' rigarmarole below is to keep React from attaching event handlers
-    // to the children, because after Flickity takes over those children, the handlers otherwise become
-    // confused and put out warnings to the console.
-    return (
-      <div className={this.props.className} ref={ el => this.domEl = el }
-        dangerouslySetInnerHTML={{__html: ReactDOMServer.renderToStaticMarkup(
-          <div >{this.props.children}</div>).replace(/^<div>/, '').replace(/<\/div>$/, '')}}/>
-    )
-  }
+CarouselComp.propTypes = {
+  className: PropTypes.string.isRequired,
+  options: PropTypes.object.isRequired,
+  truncate: PropTypes.string,
+  children: PropTypes.node.isRequired,
 }
 
-export default CarouselComp;
+export default CarouselComp
