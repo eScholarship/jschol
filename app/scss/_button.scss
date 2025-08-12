@@ -67,7 +67,7 @@
 .o-button__5 {
   @extend %o-button__5;
   // Default icon below. To use a different icon: Create a new class, @extend with %o-button__5, and apply background-image property with alternative image path
-  background-image: inline('images/icon_share-square.svg');
+  background-image: url('/images/icon_share-square.svg');
 }
 
 // no border, teal background, bold white text and left icon:
@@ -82,7 +82,7 @@
 .o-button__6 {
   @extend %o-button__6;
   // Default icon below. To use a different icon: Create a new class, @extend with %o-button__6, and apply background-image property with alternative image path
-  background-image: inline('images/icon_print-white.svg');
+  background-image: url('/images/icon_print-white.svg');
 }
 
 // no min-height, padding, or background with teal text:
@@ -122,5 +122,5 @@
 
 .o-button__9 {
   @extend %o-button__9;
-  background-image: inline('images/icon_magnify.svg');
+  background-image: url('/images/icon_magnify.svg');
 }

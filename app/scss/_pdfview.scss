@@ -15,7 +15,7 @@
   // fixes chrome/safari min-height + padding within <details> bug:
   padding-top: 0;
   padding-bottom: 0;
-  background-image: inline('images/icon_download-white.svg');
+  background-image: url('/images/icon_download-white.svg');
 
   @include bp(screen1) {
     display: none;
@@ -32,7 +32,7 @@
     // fixes chrome/safari min-height + padding within <details> bug:
     padding-top: 0;
     padding-bottom: 0;
-    background-image: inline('images/icon_expand-white.svg');
+    background-image: url('/images/icon_expand-white.svg');
   }
 
 }

@@ -55,7 +55,7 @@
 
     a {
       @extend %o-textlink__left-icon;
-      background-image: inline('images/icon_download-teal.svg');
+      background-image: url('/images/icon_download-teal.svg');
     }
 
   }

@@ -34,7 +34,7 @@
     padding: 0 2em 0 $spacing-sm;
     border: 1px solid $color-dark-gray;
     border-radius: 0;
-    background: inline('images/icon_arrow-down.svg') no-repeat right $spacing-sm center / 0.8em;
+    background: url('/images/icon_arrow-down.svg') no-repeat right $spacing-sm center / 0.8em;
     appearance: none;
 
     // sass-lint:disable no-vendor-prefixes

@@ -168,7 +168,7 @@ div[class$='--selected'] {
     .o-mediafile__preview {
 
       &::before {
-        background-image: inline('images/#{$mediafile-icon}.svg');
+        background-image: url('/images/#{$mediafile-icon}.svg');
       }
 
     }
@@ -189,7 +189,7 @@ div[class$='--selected'] {
 
     .o-mediafile__heading {
       @extend %o-mediafile__heading;
-      background-image: inline('images/#{$mediafile-icon}.svg');
+      background-image: url('/images/#{$mediafile-icon}.svg');
     }
 
   }

@@ -5,7 +5,6 @@ import path from 'path';
 import commonjs from 'vite-plugin-commonjs'; // handle existing 'require' syntax
 import inject from "@rollup/plugin-inject"; // used to inject jquery globally, so we can use jquery plugins like Trumbowyg 
 import autoprefixer from 'autoprefixer';
-import assets from 'postcss-assets';
 import { visualizer } from 'rollup-plugin-visualizer';
 
 // this is an attempt to mimic how code-splitting was done in our prior webpack set-up
@@ -65,6 +64,7 @@ export default defineConfig(({ command, ssrBuild }) => ({
     // sourcemap: true,
     // manifest: true,
     minify: 'esbuild',
+    assetsInlineLimit: 8192, // inline assets smaller than 8kb as base64
     rollupOptions: {
       output: ssrBuild ? {
         // SSR build configuration

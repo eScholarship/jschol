@@ -84,7 +84,7 @@
 .c-header__search-open-button {
   @extend %o-button__9;
   align-self: flex-start;
-  background-image: inline('images/icon_magnify.svg');
+  background-image: url('/images/icon_magnify.svg');
 
   @include bp(screen3) {
     display: none;

@@ -78,5 +78,5 @@
   padding: 0.3em 0.5em 0.3em 1.8em;
   border: 1px solid $color-light-gray;
   border-radius: $round-corner;
-  background: $color-white inline('images/icon_close.svg') no-repeat left 0.5em center / 0.9em;
+  background: $color-white url('/images/icon_close.svg') no-repeat left 0.5em center / 0.9em;
 }

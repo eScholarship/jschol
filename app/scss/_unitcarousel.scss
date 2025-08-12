@@ -27,12 +27,12 @@
 .c-unitcarousel__button-up {
   @extend %c-unitcarousel__button;
   margin-bottom: $spacing-sm;
-  background-image: inline('images/icon_angle-up-gray.svg');
+  background-image: url('/images/icon_angle-up-gray.svg');
 }
 
 .c-unitcarousel__button-down {
   @extend %c-unitcarousel__button;
-  background-image: inline('images/icon_angle-down-gray.svg');
+  background-image: url('/images/icon_angle-down-gray.svg');
 }
 
 .c-unitcarousel__item {
@@ -109,20 +109,20 @@
 
 .c-unitcarousel__item-type--article {
   @extend %c-unitcarousel__item-type;
-  background-image: inline('images/icon_file-text-black.svg');
+  background-image: url('/images/icon_file-text-black.svg');
 }
 
 .c-unitcarousel__item-type--book {
   @extend %c-unitcarousel__item-type;
-  background-image: inline('images/icon_book.svg');
+  background-image: url('/images/icon_book.svg');
 }
 
 .c-unitcarousel__item-type--thesis {
   @extend %c-unitcarousel__item-type;
-  background-image: inline('images/icon_graduation-cap-black.svg');
+  background-image: url('/images/icon_graduation-cap-black.svg');
 }
 
 .c-unitcarousel__item-type--multimedia {
   @extend %c-unitcarousel__item-type;
-  background-image: inline('images/icon_play-circle-o-black.svg');
+  background-image: url('/images/icon_play-circle-o-black.svg');
 }

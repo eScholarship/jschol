@@ -58,7 +58,7 @@
       position: absolute;
       top: 0;
       left: (-$pointer-size-fine);
-      background: inline('images/icon_plus-black.svg') no-repeat center / 1.1em;
+      background: url('/images/icon_plus-black.svg') no-repeat center / 1.1em;
       content: '';
 
       @include u-interactive-element-pointer(coarse) {
@@ -74,7 +74,7 @@
     > summary {
 
       &::after {
-        background-image: inline('images/icon_minus-black.svg');
+        background-image: url('/images/icon_minus-black.svg');
       }
 
     }

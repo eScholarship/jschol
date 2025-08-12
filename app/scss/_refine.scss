@@ -29,13 +29,13 @@
 
 .c-refine__button--open {
   @extend %c-refine__button;
-  background-image: inline('images/icon_angle-double-right-white.svg');
+  background-image: url('/images/icon_angle-double-right-white.svg');
   background-position: right $spacing-sm center;
 }
 
 .c-refine__button--close {
   @extend %c-refine__button;
-  background-image: inline('images/icon_angle-double-left-white.svg');
+  background-image: url('/images/icon_angle-double-left-white.svg');
   background-position: left $spacing-sm center;
 }
 

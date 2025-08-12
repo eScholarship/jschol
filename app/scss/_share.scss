@@ -12,7 +12,7 @@
     padding-right: 40px;
     padding-left: 40px;
     border-radius: $round-corner;
-    background: $color-teal inline('images/icon_share-square-o-white.svg') no-repeat left $spacing-sm center / 16px;
+    background: $color-teal url('/images/icon_share-square-o-white.svg') no-repeat left $spacing-sm center / 16px;
     color: $color-white;
     user-select: none;
 
@@ -22,7 +22,7 @@
       right: $spacing-sm;
       bottom: 0;
       padding: 0 7px;
-      background: inline('images/icon_arrow-down-white.svg') no-repeat center / 13px;
+      background: url('/images/icon_arrow-down-white.svg') no-repeat center / 13px;
       content: '';
     }
 
@@ -76,15 +76,15 @@
 
 .c-share__email {
   @extend %c-share__link;
-  background-image: inline('images/icon_envelope-o-white.svg');
+  background-image: url('/images/icon_envelope-o-white.svg');
 }
 
 .c-share__facebook {
   @extend %c-share__link;
-  background-image: inline('images/icon_facebook-white.svg');
+  background-image: url('/images/icon_facebook-white.svg');
 }
 
 .c-share__twitter {
   @extend %c-share__link;
-  background-image: inline('images/icon_twitter-white.svg');
+  background-image: url('/images/icon_twitter-white.svg');
 }

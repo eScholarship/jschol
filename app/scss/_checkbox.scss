@@ -48,7 +48,7 @@
 
   &:checked + .c-checkbox__label {
     @extend %c-checkbox__icon;
-    background-image: inline('images/icon_checkbox-checked.svg');
+    background-image: url('/images/icon_checkbox-checked.svg');
   }
 
 }
@@ -57,13 +57,13 @@
   @extend %c-checkbox__icon;
   display: block;
   padding: 0.5em 0 0.5em 1.9em;
-  background-image: inline('images/icon_checkbox-unchecked.svg');
+  background-image: url('/images/icon_checkbox-unchecked.svg');
   cursor: pointer;
   user-select: none;
 
   &:focus,
   &:hover {
-    background-image: inline('images/icon_checkbox-unchecked-orange.svg');
+    background-image: url('/images/icon_checkbox-unchecked-orange.svg');
   }
 
   @include u-interactive-element-pointer(coarse) {

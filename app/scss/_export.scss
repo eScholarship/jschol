@@ -8,10 +8,10 @@
 
 .c-export__export-button {
   @extend %o-button__5;
-  background-image: inline('images/icon_share-square.svg');
+  background-image: url('/images/icon_share-square.svg');
 }
 
 .c-export__rss-button {
   @extend %o-button__5;
-  background-image: inline('images/icon_rss-square.svg');
+  background-image: url('/images/icon_rss-square.svg');
 }

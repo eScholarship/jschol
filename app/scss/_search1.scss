@@ -25,7 +25,7 @@
   padding: 0 0 0 2em;
   border: 1px solid $color-light-gray;
   border-radius: 3px;
-  background: inline('images/icon_magnify.svg') no-repeat left 0.5em center / 1em;
+  background: url('/images/icon_magnify.svg') no-repeat left 0.5em center / 1em;
 
   @include bp(screen2) {
     padding: 0 0 0 $spacing-sm;
@@ -37,7 +37,7 @@
 .c-search1__submit-button {
   @extend %u-hide;
   @extend %o-button__9;
-  background-image: inline('images/icon_magnify.svg');
+  background-image: url('/images/icon_magnify.svg');
 
   @include bp(screen2) {
     position: static;
@@ -48,7 +48,7 @@
 
 .c-search1__search-close-button {
   @extend %o-button__9;
-  background-image: inline('images/icon_close.svg');
+  background-image: url('/images/icon_close.svg');
 
   @include bp(screen2) {
     display: none;

@@ -93,7 +93,7 @@
 .c-modal__header-close {
   @extend %o-button__9;
   margin-left: auto;
-  background-image: inline('images/icon_close-black.svg');
+  background-image: url('/images/icon_close-black.svg');
   background-size: 1em;
 
   span {

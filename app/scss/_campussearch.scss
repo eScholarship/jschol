@@ -40,7 +40,7 @@ $max-type-font: 26px;
   button {
     @extend %o-button__9;
     margin-left: $spacing-base;
-    background-image: inline('images/icon_magnify-teal.svg');
+    background-image: url('/images/icon_magnify-teal.svg');
   }
 
 }
