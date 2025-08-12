@@ -67,8 +67,8 @@ class AuthorListComp extends React.Component {
             {advisors}
           </TruncationObj>
         }
-        {/* Only display a copyright if we have a year and source=ojs, otherwise skip it */}
-        {year && (source == 'ojs') && <div className="c-authorlist__copyright">&copy; {year[0]} by the author(s). <a href="https://escholarship.org/terms">Learn more</a>.</div> }
+        {/* Only display a copyright if we have a year and source=ojs || janeway, otherwise skip it */}
+        {year && (source === 'ojs' || source === 'janeway') && <div className="c-authorlist__copyright">&copy; {year[0]} by the author(s). <a href="https://escholarship.org/terms">Learn more</a>.</div> }
       </div>
     )
   }
