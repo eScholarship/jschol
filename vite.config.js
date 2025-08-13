@@ -53,34 +53,17 @@ export default defineConfig(({ command, ssrBuild }) => ({
       ],
     },
   },
-  resolve: {
-    alias: {
-      'pdfjs-lib': path.resolve(process.cwd(), 'node_modules/pdfjs-embed2/src/pdf.js'),
-    },
-  },
   // Add proper asset handling
   assetsInclude: ['**/*.woff', '**/*.woff2', '**/*.ttf', '**/*.eot'],
   build: {
-    // sourcemap: true,
-    // manifest: true,
+    sourcemap: command === 'build',
+    manifest: !ssrBuild, // Generate manifest for client build only
     minify: 'esbuild',
     assetsInlineLimit: 8192, // inline assets smaller than 8kb as base64
+    chunkSizeWarningLimit: 1000, // Increase warning limit for large chunks like MathJax
     rollupOptions: {
-      output: ssrBuild ? {
-        // SSR build configuration
-        format: 'es'
-      } : {
-        manualChunks(id) {
-          if (id.includes('node_modules')) {
-            for (const lib of dynamicLibs) {
-              if (id.includes(`/node_modules/${lib}/`)) {
-                return lib // name the chunk after the package
-              }
-            }
-  
-            return 'vendor' // default vendor chunk
-          }
-        }
+      output: {
+        manualChunks: {}
       }
     }
   },

@@ -12,7 +12,8 @@
     "build:client": "vite build --outDir dist/client",
     "build:server": "vite build --outDir dist/server --ssr app/entry-server.jsx",
     "preview": "concurrently \"ruby util/maybeSocks.rb\" \"ruby bin/puma\" \"cross-env NODE_ENV=production node server.js\"",
-    "serve": "node server.js"
+    "serve": "node server.js",
+    "clean": "rm -rf dist"
   },
   "author": "California Digital Library",
   "license": "MIT",

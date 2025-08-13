@@ -121,8 +121,13 @@ app.use('*all', async (req, res) => {
     res.status(200).set({ 'Content-Type': 'text/html' }).send(html)
   } catch (e) {
     vite?.ssrFixStacktrace(e)
-    console.log('***SSR ERROR***', e.stack)
-    res.status(500).end(e.stack)
+    if (!isProduction) {
+      console.log('***SSR ERROR***', e.stack)
+      res.status(500).end(e.stack)
+    } else {
+      res.status(500).send('Internal Server Error')
+    }
+    
   }
 })
 
