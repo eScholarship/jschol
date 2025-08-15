@@ -74,7 +74,6 @@ gulp.task('sass', function() {
     .pipe(sourcemaps.init())
     .pipe(sass.sync().on('error', sass.logError))
     .pipe(autoprefixer({
-      browsers: ['last 2 versions'],
       flexbox: ['no-2009'],
       grid: false // don't prefix any properties from old grid spec since not all new grid properties correlate with old grid spec still used by IE
     }))
