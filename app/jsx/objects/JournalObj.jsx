@@ -1,15 +1,8 @@
 // ##### Journal Objects ##### //
 
 import React from 'react'
-import $ from 'jquery'
-import dotdotdot from 'jquery.dotdotdot'
 
 class JournalObj extends React.Component {
-  componentDidMount () {
-    $('.o-journal2 figcaption').dotdotdot({
-      watch: 'window'
-    });
-  }
   render() {
     return (
       <div>
@@ -26,7 +19,7 @@ class JournalObj extends React.Component {
         <a href="" className="o-journal2">
           <figure>
             <img src="http://via.placeholder.com/300x300?text=Image" alt=""/>
-            <figcaption>The Proceedings of the UCLA Department of Spanish and Portuguese Graduate Conference</figcaption>
+            <figcaption className="u-truncate-lines">The Proceedings of the UCLA Department of Spanish and Portuguese Graduate Conference</figcaption>
           </figure>
         </a>
 
