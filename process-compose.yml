@@ -1,19 +1,38 @@
-# Process compose for starting the Jschol service
 version: "0.5"
 
 processes:
-  jschol:
-   command: "rm .mysqlpsk.3306.* || ./gulp"
-   availability:
-    restart: "always"
-    readiness_probe:
-      http_get:
-        host: 127.0.0.1
-        scheme: http
-        path: "/"
-        port: 18880
-      initial_delay_seconds: 30
-      period_seconds: 10
-      timeout_seconds: 5
-      success_threshold: 1
-      failure_threshold: 3
+  ruby:
+    command: "bundle exec puma -C config/pumakiller.rb -p ${PUMA_PORT:-18880}"
+    availability:
+      restart: "always"
+      readiness_probe:
+        http_get:
+          host: 127.0.0.1
+          scheme: http
+          path: "/"
+          port: ${PUMA_PORT:-18880}
+        initial_delay_seconds: 5
+        period_seconds: 10
+        timeout_seconds: 5
+        success_threshold: 1
+        failure_threshold: 3
+
+  node:
+    command: "node server.js"
+    environment:
+      NODE_ENV: production
+      ESCHOL_API_SERVER: http://127.0.0.1:${PUMA_PORT:-18880}
+      BASE: "/"
+    availability:
+      restart: "always"
+      readiness_probe:
+        http_get:
+          host: 127.0.0.1
+          scheme: http
+          path: "/"
+          port: ${PORT:-5173}
+        initial_delay_seconds: 10
+        period_seconds: 10
+        timeout_seconds: 5
+        success_threshold: 1
+        failure_threshold: 3
