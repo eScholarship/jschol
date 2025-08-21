@@ -20,8 +20,10 @@ class TabAuthorComp extends React.Component {
           voliss = vol
         } else if (iss) {
           voliss = iss
+        } else if (issue_title) {
+          voliss = issue_title
         } else {
-          return issue_title
+          voliss = false
         }
       } else if (numbering === "volume_only") {
         voliss = "Volume " + vol 
@@ -243,8 +245,12 @@ class TabAuthorComp extends React.Component {
     let issue_title = lastCrumb ? lastCrumb.name : null
     let journal_stmnt
     if (journal_name || volume || issue) {
-      let voliss = this.customIssueTitle(volume, issue, p.numbering, issue_title) 
-      journal_stmnt = journal_name ? journal_name+", "+voliss : voliss
+      let voliss = this.customIssueTitle(volume, issue, p.numbering, issue_title)
+      if voliss { 
+        journal_stmnt = journal_name ? journal_name + ", " + voliss : voliss
+      } else {
+        journal_stmnt = false
+      }
     }
 
     let issn = p.attrs['ext_journal'] && p.attrs['ext_journal']['issn']
