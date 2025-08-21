@@ -25,12 +25,17 @@ class TabAuthorComp extends React.Component {
         } else {
           voliss = false
         }
-      } else if (numbering === "volume_only") {
-        voliss = "Volume " + vol 
-      } else if (numbering === "issue_only") {
-        voliss = iss 
+      // non-null numbering is unit/issue table data
       } else {
-        voliss = issue_title
+        if (numbering === "volume_only") {
+          voliss = "Volume " + vol 
+        } else if (numbering === "issue_only") {
+          voliss = iss 
+        } else if issue_title {
+          voliss = issue_title
+        } else {
+          voliss = false
+        }
       }
       return voliss 
     }
