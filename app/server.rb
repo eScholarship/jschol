@@ -579,6 +579,7 @@ before '/api/*' do
   headers['Access-Control-Allow-Origin'] = '*'  # or specific origin if needed
   headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
   headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+  headers['Access-Control-Allow-Credentials'] = 'true'
 end
 
 options '/api/*' do

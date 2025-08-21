@@ -20,29 +20,6 @@ const app = express()
 
 app.use(express.json({ limit: '10mb' }))
 
-// proxy API requests to Ruby server
-app.use('/api', async (req, res) => {
-  try {
-    const url = `${rubyApiUrl}${req.originalUrl}`
-    const response = await fetch(url, {
-      method: req.method,
-      headers: {
-        'Content-Type': 'application/json',
-        ...req.headers
-      },
-      body: req.method !== 'GET' ? JSON.stringify(req.body) : undefined
-    })
-    
-    const data = await response.text()
-    res.status(response.status)
-    res.setHeader('Content-Type', response.headers.get('content-type') || 'application/json')
-    res.send(data)
-  } catch (error) {
-    console.error('API proxy error:', error)
-    res.status(500).json({ error: 'API request failed' })
-  }
-})
-
 // Add Vite or respective production middlewares
 /** @type {import('vite').ViteDevServer | undefined} */
 let vite

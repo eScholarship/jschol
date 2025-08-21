@@ -268,13 +268,7 @@ class PageBase extends React.Component
 
   // This has been made uniform to simplify iso rendering. Server will figure out which API based on the path.
   pageDataURL() {
-    // in development, API calls should go to the Ruby server
-    // in production, they should go to the same origin (since we'll proxy them)
-    const apiBase = (typeof window !== "undefined" && window.location.hostname === 'localhost') 
-      ? 'http://localhost:18880'  // Ruby server port
-      : '';  // Same origin in production
-    
-    return apiBase + "/api/pageData" + this.props.location.pathname + this.props.location.search
+    return "/api/pageData" + this.props.location.pathname + this.props.location.search
   }
 
   // Optional method: for editable pages, the unit ID to look up permissions for
