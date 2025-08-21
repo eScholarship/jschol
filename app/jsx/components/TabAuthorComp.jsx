@@ -127,18 +127,16 @@ class TabAuthorComp extends React.Component {
       let ext = props.attrs.ext_journal
       if (ext && ext.name) {
         // External journals
-        out += "<em>" + ext.name + "</em>, "
+        out += "<em>" + ext.name + "</em>"
         if (ext.volume) {
-          out += ext.volume
-          if (ext.issue)
-            out += "(" + ext.issue + ")"
+          out += ", " + ext.volume
+          if (ext.issue) out += "(" + ext.issue + ")"
+        } else if (ext.issue) {
+          out += ", " + ext.issue
         }
-        else if (ext.issue)
-          out += ext.issue
         if (ext.fpage) {
           out += ", " + ext.fpage
-          if (ext.lpage)
-            out += "-" + ext.lpage
+          if (ext.lpage) out += "-" + ext.lpage
         }
         out = this.addDot(out)
       }
