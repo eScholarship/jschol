@@ -12,12 +12,23 @@ class TabAuthorComp extends React.Component {
     }
     else {
       let voliss
+      // null numbering is typically ext_journal data
       if (!numbering) {
-        voliss = iss ? vol + "(" + iss + ")" : vol
+        if (vol && iss) {
+          voliss = vol + "(" + iss + ")"
+        } else if (vol) {
+          voliss = vol
+        } else if (iss) {
+          voliss = iss
+        } else {
+          return issue_title
+        }
       } else if (numbering === "volume_only") {
         voliss = "Volume " + vol 
-      } else {
+      } else if (numbering === "issue_only") {
         voliss = iss 
+      } else {
+        voliss = issue_title
       }
       return voliss 
     }
