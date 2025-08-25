@@ -9,7 +9,7 @@ processes:
         http_get:
           host: 127.0.0.1
           scheme: http
-          path: "/"
+          path: "/check"
           port: ${PUMA_PORT:-18880}
         initial_delay_seconds: 5
         period_seconds: 10
@@ -19,6 +19,9 @@ processes:
 
   node:
     command: "node server.js"
+    depends_on:
+      ruby:
+        condition: process_healthy
     environment:
       NODE_ENV: production
       ESCHOL_API_SERVER: http://127.0.0.1:${PUMA_PORT:-18880}

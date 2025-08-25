@@ -38,6 +38,15 @@ if (!isProduction) {
   app.use(base, sirv('./dist/client', { extensions: [] }))
 }
 
+// health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    node_env: process.env.NODE_ENV,
+  })
+})
+
 // helper function to fetch page data from Ruby API
 async function fetchPageData(path) {
   try {

@@ -87,25 +87,28 @@ fi
 if [ -d node_modules.full ]; then mv node_modules.full node_modules; fi
 npm-20 install
 
-# Pretranslate all the CSS
-echo "Building app."
-./node_modules/.bin/gulp sass
-
 # Build the app (transpile, uglify, etc.) so it doesn't have to be built on each worker
+echo "Building app."
 if [[ "$ENVNAME" =~ "-dev" ]]; then
-  ./node_modules/.bin/webpack --config webpack.dev.js
+  NODE_ENV=development npm-20 run build
 else
-  ./node_modules/.bin/webpack --config webpack.prd.js
+  NODE_ENV=production npm-20 run build
+fi
+
+# Ensure dist directory exists for Vite builds
+if [ ! -d "dist" ]; then
+  mkdir -p dist
 fi
 
 # package app and upload
 echo "Packaging app."
 mkdir -p dist
 ZIP="$DIR-$VERSION.zip"
-git ls-files -x app | xargs zip -ry dist/$ZIP   # picks up mods in working dir, unlike 'git archive'
+git ls-files -x app -x dist | xargs zip -ry dist/$ZIP   # picks up mods in working dir, unlike 'git archive'
 mv node_modules node_modules.full
 npm-20 install --production
-zip -r dist/$ZIP app/js app/css node_modules
+# include Vite build output and production node_modules
+zip -r dist/$ZIP dist/client dist/server node_modules
 rm -rf node_modules
 mv node_modules.full node_modules
 git checkout package-lock.json
