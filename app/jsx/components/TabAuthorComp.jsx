@@ -12,12 +12,30 @@ class TabAuthorComp extends React.Component {
     }
     else {
       let voliss
+      // null numbering is typically ext_journal data
       if (!numbering) {
-        voliss = iss ? vol + "(" + iss + ")" : vol
-      } else if (numbering === "volume_only") {
-        voliss = "Volume " + vol 
+        if (vol && iss) {
+          voliss = vol + "(" + iss + ")"
+        } else if (vol) {
+          voliss = vol
+        } else if (iss) {
+          voliss = iss
+        } else if (issue_title) {
+          voliss = issue_title
+        } else {
+          voliss = false
+        }
+      // non-null numbering is unit/issue table data
       } else {
-        voliss = iss 
+        if (numbering === "volume_only") {
+          voliss = "Volume " + vol 
+        } else if (numbering === "issue_only") {
+          voliss = iss 
+        } else if issue_title {
+          voliss = issue_title
+        } else {
+          voliss = false
+        }
       }
       return voliss 
     }
@@ -116,18 +134,16 @@ class TabAuthorComp extends React.Component {
       let ext = props.attrs.ext_journal
       if (ext && ext.name) {
         // External journals
-        out += "<em>" + ext.name + "</em>, "
+        out += "<em>" + ext.name + "</em>"
         if (ext.volume) {
-          out += ext.volume
-          if (ext.issue)
-            out += "(" + ext.issue + ")"
+          out += ", " + ext.volume
+          if (ext.issue) out += "(" + ext.issue + ")"
+        } else if (ext.issue) {
+          out += ", " + ext.issue
         }
-        else if (ext.issue)
-          out += ext.issue
         if (ext.fpage) {
           out += ", " + ext.fpage
-          if (ext.lpage)
-            out += "-" + ext.lpage
+          if (ext.lpage) out += "-" + ext.lpage
         }
         out = this.addDot(out)
       }
@@ -234,8 +250,12 @@ class TabAuthorComp extends React.Component {
     let issue_title = lastCrumb ? lastCrumb.name : null
     let journal_stmnt
     if (journal_name || volume || issue) {
-      let voliss = this.customIssueTitle(volume, issue, p.numbering, issue_title) 
-      journal_stmnt = journal_name ? journal_name+", "+voliss : voliss
+      let voliss = this.customIssueTitle(volume, issue, p.numbering, issue_title)
+      if voliss { 
+        journal_stmnt = journal_name ? journal_name + ", " + voliss : voliss
+      } else {
+        journal_stmnt = false
+      }
     }
 
     let issn = p.attrs['ext_journal'] && p.attrs['ext_journal']['issn']
