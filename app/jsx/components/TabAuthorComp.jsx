@@ -31,7 +31,7 @@ class TabAuthorComp extends React.Component {
           voliss = "Volume " + vol 
         } else if (numbering === "issue_only") {
           voliss = iss 
-        } else if issue_title {
+        } else if (issue_title) {
           voliss = issue_title
         } else {
           voliss = false
