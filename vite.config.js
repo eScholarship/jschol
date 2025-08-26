@@ -22,7 +22,13 @@ const dynamicLibs = [
 
 export default defineConfig(({ command, ssrBuild }) => ({
   plugins: [
-    react(),
+    react({
+      babel: {
+        parserOpts: {
+          plugins: ['classProperties']
+        }
+      }
+    }),
     commonjs(),
     // uncomment to visualize chunking 
     // visualizer({ open: true }),

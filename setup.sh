@@ -15,11 +15,6 @@ bundle install
 bundle lock --add-platform x86_64-linux
 bundle binstubs --all
 
-printf "\n== Installing node packages (used by gulp and iso via Node) ==\n"
+printf "\n== Installing node packages ==\n"
 rm -rf node-modules
 npm install
-
-# add a symlink to node_modules/.bin/gulp in the root directory, if necessary
-if [ ! -L ./gulp ]; then
-  ln -s node_modules/.bin/gulp ./gulp
-fi
