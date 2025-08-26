@@ -2,7 +2,6 @@
 
 import React from 'react'
 import PropTypes from 'prop-types'
-import $ from 'jquery'
 import { Link } from 'react-router-dom'
 import NotYetLink from '../components/NotYetLink.jsx'
 import PaginationComp from '../components/PaginationComp.jsx'
@@ -25,10 +24,6 @@ class ResultComp extends React.Component {
     }).isRequired
   }
 
-  componentDidMount() {
-    $('.c-infopages__text').dotdotdot({watch:"window"});
-  }
-
   render() {
     let r = this.props.result,
         ancestor_path = r.ancestor_id=="root" ? "/" : `/uc/${r.ancestor_id}`,
@@ -45,7 +40,7 @@ class ResultComp extends React.Component {
           <Link to={target_path} className="c-infopages__title">{r.target_name}</Link>
         </h3>
       {r.content &&
-        <div className="c-infopages__text" dangerouslySetInnerHTML={{__html: r.content}} /> }
+        <div className="c-infopages__text u-truncate-lines" dangerouslySetInnerHTML={{__html: r.content}} /> }
       </div>
     )
   }
