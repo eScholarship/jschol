@@ -251,7 +251,7 @@ class TabAuthorComp extends React.Component {
     let journal_stmnt
     if (journal_name || volume || issue) {
       let voliss = this.customIssueTitle(volume, issue, p.numbering, issue_title)
-      if voliss { 
+      if (voliss) { 
         journal_stmnt = journal_name ? journal_name + ", " + voliss : voliss
       } else {
         journal_stmnt = false
