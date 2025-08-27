@@ -8,8 +8,7 @@
 // }
 
 import React from 'react'
-import ReactDOM from 'react-dom'
-import { BrowserRouter, Route, Switch } from 'react-router-dom'
+import { Route, Switch } from 'react-router-dom'
 import ReactGA from 'react-ga'
 import ReactModal from 'react-modal'
 import klaroConfig from './klaro-config.jsx';
