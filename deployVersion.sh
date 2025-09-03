@@ -99,11 +99,11 @@ fi
 echo "Packaging app."
 mkdir -p dist
 ZIP="$DIR-$VERSION.zip"
-git ls-files -x app -x dist | xargs zip -ry dist/$ZIP   # picks up mods in working dir, unlike 'git archive'
+git ls-files -x app | xargs zip -ry dist/$ZIP   # picks up mods in working dir, unlike 'git archive'
 mv node_modules node_modules.full
 npm-20 install --production
 # include Vite build output and production node_modules
-zip -r dist/$ZIP dist/client dist/server node_modules
+zip -r dist/$ZIP app/js app/css node_modules
 rm -rf node_modules
 mv node_modules.full node_modules
 git checkout package-lock.json
