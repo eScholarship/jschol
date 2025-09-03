@@ -62,14 +62,29 @@ export default defineConfig(({ command, ssrBuild }) => ({
   // Add proper asset handling
   assetsInclude: ['**/*.woff', '**/*.woff2', '**/*.ttf', '**/*.eot'],
   build: {
-    sourcemap: command === 'build',
+    sourcemap: false,
     manifest: !ssrBuild, // Generate manifest for client build only
     minify: 'esbuild',
     assetsInlineLimit: 8192, // inline assets smaller than 8kb as base64
     chunkSizeWarningLimit: 1000, // Increase warning limit for large chunks like MathJax
     rollupOptions: {
       output: {
-        manualChunks: {}
+        manualChunks: id => {
+          if (id.includes('node_modules')) {
+            if (id.includes('MathJax')) {
+              return 'mathjax'
+            }
+            if (id.includes('react') || id.includes('react-dom')) {
+              return 'react-vendor'
+            }
+            for (const lib of dynamicLibs) {
+              if (id.includes(lib)) {
+                return `vendor-${lib}`
+              }
+            }
+            return 'vendor'
+          }
+        }
       }
     }
   },

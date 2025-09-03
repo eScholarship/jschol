@@ -90,14 +90,9 @@ npm-20 install
 # Build the app (transpile, uglify, etc.) so it doesn't have to be built on each worker
 echo "Building app."
 if [[ "$ENVNAME" =~ "-dev" ]]; then
-  NODE_ENV=development npm-20 run build
+  NODE_ENV=development NODE_OPTIONS="--max-old-space-size=4096" npm-20 run build
 else
-  NODE_ENV=production npm-20 run build
-fi
-
-# Ensure dist directory exists for Vite builds
-if [ ! -d "dist" ]; then
-  mkdir -p dist
+  NODE_ENV=production NODE_OPTIONS="--max-old-space-size=4096" npm-20 run build
 fi
 
 # package app and upload
