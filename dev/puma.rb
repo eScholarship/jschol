@@ -24,9 +24,6 @@ def setupWorkerKiller
   PumaWorkerKiller.start
 end
 
-# Remove the startIsoServer function and related code (lines 27-39)
-# Remove the before_fork and after_worker_fork hooks that start ISO
-
 before_fork do
   setupWorkerKiller
 end
