@@ -404,6 +404,7 @@ def getORULandingPageData(id)
     :series => children ? children.select { |u| u.unit.type == 'series' }.map { |u| seriesPreview(u) }.sort_by{|u| u[:ordering]} : [],
     :monograph_series => children ? children.select { |u| u.unit.type == 'monograph_series' }.map { |u| seriesPreview(u) } : [],
     :journals => children ? children.select { |u| u.unit.type == 'journal' }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : [],
+    :conference_proceedings => children ? children.select { |u| u.unit.type == 'conference_proceedings' }.map { |u| {unit_id: u.unit_id, name: u.unit.name} } : [],
     :related_orus => related_orus 
   }
 end
