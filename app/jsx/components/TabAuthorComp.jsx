@@ -358,7 +358,10 @@ class TabAuthorComp extends React.Component {
             [<dt key="0"><strong>ISBN:</strong></dt>,
              <dd key="1">{p.attrs['isbn']}</dd>]
           }
-
+          {p.attrs['thesis_dept'] && 
+            [<dt key="0"><strong>Thesis Department:</strong></dt>,
+             <dd key="1">{p.attrs['thesis_dept']}</dd>]
+          }
           {issn && 
             [<dt key="0"><strong>ISSN:</strong></dt>,
              <dd key="1">{issn}</dd>]
