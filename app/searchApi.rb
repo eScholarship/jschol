@@ -25,6 +25,8 @@ $csClient = Aws::CloudSearchDomain::Client.new(
 # search would need to be modified to understand what to do without a query parameter (matchall & structured)
 # search would also need to be modified to not necessarily do all the results handling
 
+# TODO: do conference proceedings need their own facet?
+
 ITEM_SPECIFIC = ['type_of_work', 'peer_reviewed', 'supp_file_types', 'pub_year', 'disciplines', 'rights']
 $allFacets = nil
 
@@ -419,6 +421,8 @@ def extent(id, type)
     filter = "(term field=departments '#{id}')"
   elsif (type == 'journal') then
     filter = "(term field=journals '#{id}')"
+  elsif (type == 'conference_proceedings') then
+    filter = "(term field=journals '#{id}')" # TODO: update this to be field=conference_proceedings
   elsif (type == 'campus') then
     filter = "(term field=campuses '#{id}')"
   elsif (type == 'series' || type == 'monograph_series' || type == 'seminar_series') then

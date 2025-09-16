@@ -49,6 +49,9 @@ class SearchComp2 extends React.Component {
     } else if (this.props.type == "journal") {
       label = "Journal"
       searchUnitType = "journals"
+    } else if (this.props.type == "conference_proceedings") {
+      label = "Proceeding"
+      searchUnitType = "journals" // TODO: update to conference_proceedings
     } else if (this.props.type == "campus") {
       label = "Campus"
       searchUnitType = "campuses"

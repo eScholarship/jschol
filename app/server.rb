@@ -1074,7 +1074,7 @@ def getUnitPageData(unitID, pageName, subPage)
 
     issuesSubNav, issueIds, issuesPublished, journalIssue = nil, nil, nil, nil
     # Gather header data
-    if unit.type == 'journal'
+    if unit.type == 'journal' || unit.type == 'conference_proceedings'
       issueIds = getIssueIds(unit)
       issuesPublished = (issueIds && issueIds.any?) ? getPublishedJournalIssues(issueIds) : nil
       issuesSubNav = getIssuesSubNav(issuesPublished)
@@ -1126,7 +1126,7 @@ def getUnitPageData(unitID, pageName, subPage)
     else
       pageData[:content] = getUnitStaticPage(unit, attrs, pageName)
     end
-    pageData[:marquee] = getUnitMarquee(unit, attrs) if (["home", "search"].include? pageName or unit.type == 'journal')
+    pageData[:marquee] = getUnitMarquee(unit, attrs) if (["home", "search"].include? pageName or unit.type == 'journal' or unit.type == 'conference_proceedings')
   else
     #public API data
     pageData = {

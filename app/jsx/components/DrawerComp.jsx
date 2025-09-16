@@ -217,6 +217,7 @@ class DrawerComp extends React.Component {
       { id: "profile",
         title: <Link to={`/uc/${this.props.data.unit.id}/profile`}>
                  {(this.props.data.unit.type === 'journal' && 'Journal Profile') ||
+                  (this.props.data.unit.type === 'conference_proceedings' && 'Proceedings Profile') ||
                   (this.props.data.unit.type.includes('series') && 'Series Profile') ||
                   (this.props.data.unit.type === 'campus' && 'Campus Profile') ||
                   'Unit Profile'}
@@ -236,7 +237,7 @@ class DrawerComp extends React.Component {
       siteSettings.push({ id: "unitBuilder",
                           title: <Link to={`/uc/${this.props.data.unit.id}/unitBuilder`}>Unit Builder</Link>})
     }
-    if (this.props.data.unit.type === 'journal') {
+    if (this.props.data.unit.type === 'journal' || this.props.data.unit.type === 'conference_proceedings') {
       siteSettings.push({ id: "issueConfig", 
                           title: <Link to={`/uc/${this.props.data.unit.id}/issueConfig`}>Issue Configuration</Link>})
     }

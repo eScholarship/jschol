@@ -54,6 +54,10 @@ class DepartmentLayout extends React.Component {
         name: PropTypes.string,
         unit_id: PropTypes.string
       })),
+      conference_proceedings: PropTypes.arrayOf(PropTypes.shape({
+        name: PropTypes.string,
+        unit_id: PropTypes.string
+      })),
       related_orus: PropTypes.arrayOf(PropTypes.shape({
         name: PropTypes.string,
         unit_id: PropTypes.string
@@ -106,6 +110,16 @@ class DepartmentLayout extends React.Component {
                 <h3>Journals</h3>
                 <ul>{ data.journals.map((child) =>
                   <li key={child.unit_id}><Link to={"/uc/"+child.unit_id}>{child.name}</Link></li>) } </ul>
+              </div>
+            }
+            {data.conference_proceedings.length > 0 && 
+              <div className="c-unitlist">
+                <h3>Conference Proceedings</h3>
+                <ul>
+                  {data.conference_proceedings.map((child) =>
+                    <li key={child.unit_id}><Link to={"/uc/"+child.unit_id}>{child.name}</Link></li>
+                  )} 
+                </ul>
               </div>
             }
             {data.related_orus.length > 0 &&
