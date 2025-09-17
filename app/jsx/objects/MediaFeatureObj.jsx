@@ -25,7 +25,7 @@ class MediaFeatureObj extends React.Component {
               controls 
               poster={MEDIA_PATH + 'logo_eschol-media-thumbnail.png'}
             > 
-              {trackFiles.map((track, index) => (
+              {trackFiles.length > 0 && trackFiles.map((track, index) => (
                 <track 
                   key={index}
                   kind="captions" 
