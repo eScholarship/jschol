@@ -18,20 +18,21 @@ class MediaFeatureObj extends React.Component {
                </div>
       case "video":
         const trackFiles = this.props.trackFiles || []
+
         return (
           <div className="o-mediafeature__item">
             <video 
               src={this.props.url} 
               controls 
-              poster={MEDIA_PATH + 'logo_eschol-media-thumbnail.png'}
+              poster={MEDIA_PATH + "logo_eschol-media-thumbnail.png"}
             > 
               {trackFiles.length > 0 && trackFiles.map((track, index) => (
                 <track 
-                  key={index}
+                  key={track.file}
                   kind="captions" 
                   src={track.url} 
                   srcLang="en"
-                  label="Captions"
+                  label={`Captions ${index + 1}`}
                   default={index === 0}
                 />
               ))}

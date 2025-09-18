@@ -13,23 +13,18 @@ class MediaViewerComp extends React.Component {
     this.setState({filterType: event.target.value})
   }
 
-  // TODO: add helpers to extract language and label from track files (e.g. <track srclang={language} label={label} />)
-
   // helper to find track files associated with a video file
   findTrackFiles = (videoFileName, allFiles) => {
     if (!allFiles) return []
-    console.log(videoFileName, allFiles)
     
     // look for vtt files
     const trackFiles = allFiles.filter(f => f.file.endsWith('.vtt'))
-    console.log('tf', trackFiles)
 
     return trackFiles.map(f => ({
       url: (this.props.preview_key ? "/preview/" : "/content/") +
            "qt" + this.props.id + "/supp/" + f.file +
            (this.props.preview_key ? "?preview_key="+this.props.preview_key : ""),
-      language: 'en',
-      label: 'Captions'
+      file: f.file // used for key in MediaFeatureObj track element
     }))
   }
 
@@ -69,7 +64,6 @@ class MediaViewerComp extends React.Component {
                 "qt" + this.props.id + "/supp/" + f.file +
                 (this.props.preview_key ? "?preview_key="+this.props.preview_key : "")
         const trackFiles = mimeSimple === 'video' ? this.findTrackFiles(f.file, files) : []
-        console.log('trackFiles', trackFiles)
         
         c = <MediaViewerObj key={i}
               mimeSimple={mimeSimple}
