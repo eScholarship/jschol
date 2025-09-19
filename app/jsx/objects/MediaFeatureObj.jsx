@@ -29,9 +29,9 @@ class MediaFeatureObj extends React.Component {
               {trackFiles.length > 0 && trackFiles.map((track, index) => (
                 <track 
                   key={track.file}
-                  kind="captions" 
+                  kind="subtitles" 
                   src={track.url} 
-                  srcLang="en"
+                  srcLang={track.language}
                   label={`Captions ${index + 1}`}
                   default={index === 0}
                 />
