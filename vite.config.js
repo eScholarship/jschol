@@ -90,6 +90,10 @@ export default defineConfig(({ command, ssrBuild }) => ({
   },
   server: {
     open: true,
+    host: true,
+    allowedHosts: [
+      '.escholarship.org',
+    ],
     proxy: {
       '/api': {
         target: 'http://localhost:18880', 

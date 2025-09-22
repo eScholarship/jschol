@@ -23,6 +23,9 @@ if ! aws sts get-caller-identity > /dev/null 2>&1; then
 	exit 1 
 fi
 
+# Remove other nvm stuff from path
+export PATH=/home/ec2-user/.local/bin:/home/ec2-user/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin
+
 # Validate Node version is 20
 NODE_VERSION=$(node-20 -v | awk -F'v' '{print $2}' | awk -F'.' '{print $1}')
 
@@ -84,7 +87,7 @@ if [[ "$env_exists" -ne 1 ]]; then
 fi
 
 # Make sure we have the right packages.
-if [ -d node_modules.full ]; then mv node_modules.full node_modules; fi
+rm -rf node_modules package-lock.json
 npm-20 install
 
 # Build the app (transpile, uglify, etc.) so it doesn't have to be built on each worker
@@ -100,12 +103,11 @@ echo "Packaging app."
 mkdir -p dist
 ZIP="$DIR-$VERSION.zip"
 git ls-files -x app | xargs zip -ry dist/$ZIP   # picks up mods in working dir, unlike 'git archive'
-mv node_modules node_modules.full
+rm -rf node_modules package-lock.json
 npm-20 install --production
 # include Vite build output and production node_modules
 zip -r dist/$ZIP dist/client dist/server node_modules
-rm -rf node_modules
-mv node_modules.full node_modules
+rm -rf node_modules package-lock.json
 git checkout package-lock.json
 
 # add the temporary overlay files
