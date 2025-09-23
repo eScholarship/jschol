@@ -13,9 +13,17 @@ class ServerErrorComp extends React.Component {
 
   constructor(props) {
     super(props);
-    const pathParts = window.location.pathname.split('/');
-    const errorTerm = pathParts[pathParts.length - 1] || 'Error';
-    const suggestAlternative = !pathParts.includes('uc') && !pathParts.includes('item');
+    // check if we're in browser environment before accessing window
+    let pathParts = [];
+    let errorTerm = 'Error';
+    let suggestAlternative = false;
+    
+    if (typeof window !== 'undefined' && window.location) {
+      pathParts = window.location.pathname.split('/');
+      errorTerm = pathParts[pathParts.length - 1] || 'Error';
+      suggestAlternative = !pathParts.includes('uc') && !pathParts.includes('item');
+    }
+    
     this.state = {
       errorTerm,
       suggestAlternative
