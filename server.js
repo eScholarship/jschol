@@ -50,8 +50,16 @@ app.get('/health', (req, res) => {
 // helper function to fetch page data from Ruby API
 async function fetchPageData(path) {
   try {
-    const url = `${rubyApiUrl}/api/pageData${path}`
-    const response = await fetch(url)
+    // in production, make the call to the external hostname which nginx will route to ruby
+    // in development, connect directly to ruby
+    const apiUrl = process.env.NODE_ENV === 'production'
+      ? `http://localhost/api/pageData${path}`
+      : `http://localhost:${process.env.PUMA_PORT || '18880'}/api/pageData${path}`
+    
+    console.log(`Fetching from: ${apiUrl}`)
+    
+    const response = await fetch(apiUrl)
+    
     if (!response.ok) {
       throw new Error(`API responded with status ${response.status}`)
     }
