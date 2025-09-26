@@ -19,7 +19,7 @@ import BreadcrumbComp from '../components/BreadcrumbComp.jsx'
 import CampusLayout from '../layouts/CampusLayout.jsx'
 import DepartmentLayout from '../layouts/DepartmentLayout.jsx'
 import SeriesLayout from '../layouts/SeriesLayout.jsx'
-import JournalLayout from '../layouts/JournalLayout.jsx'
+import PublicationLayout from '../layouts/PublicationLayout.jsx'
 import UnitSearchLayout from '../layouts/UnitSearchLayout.jsx'
 import UnitStaticPageLayout from '../layouts/UnitStaticPageLayout.jsx'
 import UnitProfileLayout from '../layouts/UnitProfileLayout.jsx'
@@ -123,7 +123,9 @@ class UnitPage extends PageBase {
       else if (data.unit.type.includes('series'))
         contentLayout = <SeriesLayout unit={data.unit} data={data.content} sidebar={sidebar} marquee={data.marquee}/>
       else if (data.unit.type === 'journal')
-        contentLayout = <JournalLayout unit={data.unit} data={data.content} sidebar={sidebar} marquee={data.marquee}/>
+        contentLayout = <PublicationLayout unit={data.unit} data={data.content} sidebar={sidebar} marquee={data.marquee}/>
+      else if (data.unit.type === 'conference_proceedings')
+        contentLayout = <PublicationLayout unit={data.unit} data={data.content} sidebar={sidebar} marquee={data.marquee}/>
       else
         contentLayout = <ServerErrorComp error="Not Found"/>
     }

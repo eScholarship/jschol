@@ -4,10 +4,13 @@ import FormComp from '../components/FormComp.jsx'
 import { Link } from 'react-router-dom'
 import Contexts from '../contexts.jsx'
 
-const UNIT_TYPE_TO_LABEL = { series: "paper series",
-                             monograph_series: "monograph series",
-                             oru: "ORU",
-                             journal: "journal" }
+const UNIT_TYPE_TO_LABEL = { 
+  series: "paper series",
+  monograph_series: "monograph series",
+  oru: "ORU",
+  journal: "journal",
+  conference_proceedings: "conference proceedings"
+}
 
 class SortableUnitList extends React.Component {
   state = this.setupState(this.props)
@@ -120,8 +123,8 @@ export default class UnitBuilderLayout extends React.Component
 
                   <label className="c-editable-page__label" htmlFor="type">Unit type: </label>
                   <select name="type">
-                    { ["oru", "journal", "series", "monograph_series"].map(unitType =>
-                        <option key={unitType} value={unitType}>{UNIT_TYPE_TO_LABEL[unitType]}</option>) }
+                    { Object.entries(UNIT_TYPE_TO_LABEL).map(unitType =>
+                        <option key={unitType[0]} value={unitType[0]}>{unitType[1]}</option>) }
                   </select>
 
                   <br/><br/>

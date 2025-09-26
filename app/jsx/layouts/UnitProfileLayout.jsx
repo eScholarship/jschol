@@ -291,7 +291,7 @@ class UnitProfileLayout extends React.Component {
                      </div>
                    }
 
-                   { this.props.unit.type == 'journal' &&
+                   { (this.props.unit.type == 'journal' || this.props.unit.type == 'conference_proceedings') &&
                      <div>
                        <br/>
                        { disableEdit ?
@@ -496,7 +496,7 @@ class UnitProfileLayout extends React.Component {
         { this.renderUnitConfig() }
         { this.renderSocialConfig() }
         { this.renderAboutConfig() }
-        { this.props.unit.type == 'journal' && this.renderJournalConfig() }
+        { (this.props.unit.type == 'journal' || this.props.unit.type == 'conference_proceedings') && this.renderJournalConfig() }
       </div>
     )
   }
