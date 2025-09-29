@@ -17,9 +17,28 @@ class MediaFeatureObj extends React.Component {
                  <img src={this.props.url} alt={this.props.title}/> 
                </div>
       case "video":
-        return <div className="o-mediafeature__item">
-                 <video src={this.props.url} controls poster={MEDIA_PATH + 'logo_eschol-media-thumbnail.png'}></video>
-               </div>
+        const trackFiles = this.props.trackFiles || []
+
+        return (
+          <div className="o-mediafeature__item">
+            <video 
+              src={this.props.url} 
+              controls 
+              poster={MEDIA_PATH + "logo_eschol-media-thumbnail.png"}
+            > 
+              {trackFiles.length > 0 && trackFiles.map((track, index) => (
+                <track 
+                  key={track.file}
+                  kind="subtitles" 
+                  src={track.url} 
+                  srcLang={track.language}
+                  label={`Captions ${index + 1}`}
+                  default={index === 0}
+                />
+              ))}
+            </video>
+          </div>
+        )
       case "audio":
         return <div className="o-mediafeature__item">
                  <audio src={this.props.url} controls></audio>

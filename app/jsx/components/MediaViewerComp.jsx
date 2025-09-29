@@ -7,17 +7,49 @@ import MediaViewerObj from '../objects/MediaViewerObj.jsx'
 
 class MediaViewerComp extends React.Component {
   state= { filterType: "", mediaFeature: null,
-           featureFile: "", featureUrl: "", featureMimesimple: "", featureTitle: "", featureDescription: "" }
+           featureFile: "", featureUrl: "", featureMimesimple: "", featureTitle: "", featureDescription: "", featureTrackFiles: [] }
 
   changeType = event => {
     this.setState({filterType: event.target.value})
   }
 
-  openViewer = (featureNumber, featureFile, featureUrl, featureMimesimple, featureTitle, featureDescription)=> {
+  // helper to match vtt files to their corresponding video file by base filename
+  // this assumes that if a video file is named "video.mp4", then
+  // subtitle files will be named "video.lang.vtt"
+  findTrackFiles = (videoFileName, allFiles) => {
+    if (!allFiles) return []
+    
+    // extract base name without extension (e.g. "video.mp4" -> "video")
+    const baseName = videoFileName.replace(/\.[^/.]+$/, "")
+    
+    // find vtt files that start with the same base name
+    const trackFiles = allFiles.filter(f => {
+      if (!f.file.endsWith('.vtt')) return false
+      
+      const subtitleBase = f.file.replace(/\.[^/.]+\.vtt$/, "") // "video.en.vtt" -> "video"
+      return subtitleBase === baseName // match subtitle base name to video base name
+    })
+
+    return trackFiles.map(f => ({
+      url: (this.props.preview_key ? "/preview/" : "/content/") +
+          "qt" + this.props.id + "/supp/" + f.file +
+          (this.props.preview_key ? "?preview_key="+this.props.preview_key : ""),
+      file: f.file, // used for key in MediaFeatureObj track element
+      language: this.extractLanguageFromFilename(f.file),
+    }))
+  }
+
+  // extract language code (2 letters) from subtitle filename
+  extractLanguageFromFilename = filename => {
+    const match = filename.match(/\.([a-z]{2})\.vtt$/i) // has to match "filename.lang.vtt"
+    return match ? match[1].toLowerCase() : 'en'
+  }
+
+  openViewer = (featureNumber, featureFile, featureUrl, featureMimesimple, featureTitle, featureDescription, trackFiles)=> {
     this.setState({mediaFeature: featureNumber,
                    featureFile: featureFile, featureUrl: featureUrl,
                    featureMimesimple: featureMimesimple, featureTitle: featureTitle,
-                   featureDescription: featureDescription })
+                   featureDescription: featureDescription, featureTrackFiles: trackFiles || [] })
     this.mediaViewerFeature.focus()
     this.mediaViewerFeature.scrollIntoView({ behavior: 'smooth' })
   }
@@ -48,6 +80,8 @@ class MediaViewerComp extends React.Component {
         let url=(this.props.preview_key ? "/preview/" : "/content/") +
                 "qt" + this.props.id + "/supp/" + f.file +
                 (this.props.preview_key ? "?preview_key="+this.props.preview_key : "")
+        const trackFiles = mimeSimple === 'video' ? this.findTrackFiles(f.file, files) : []
+        
         c = <MediaViewerObj key={i}
               mimeSimple={mimeSimple}
               title={title}
@@ -56,7 +90,7 @@ class MediaViewerComp extends React.Component {
               url={url}
               isSelected={this.state.mediaFeature == type[mimeSimple]}
               openViewer={()=> this.openViewer(
-                type[mimeSimple], f.file, url, mimeSimple, title, description)} />
+                type[mimeSimple], f.file, url, mimeSimple, title, description, trackFiles)} />
       }
       if (c) {foundOne = true}
       return c
@@ -102,7 +136,8 @@ class MediaViewerComp extends React.Component {
                 url = {this.state.featureUrl}
                 type = {this.state.featureMimesimple}
                 title = {this.state.featureTitle}
-                description = {this.state.featureDescription} />
+                description = {this.state.featureDescription}
+                trackFiles = {this.state.featureTrackFiles} />
             : null
           }
         </div>
