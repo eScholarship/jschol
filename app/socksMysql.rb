@@ -65,7 +65,7 @@ class SocksMysql
           # WARNING: this sequence is specific to the version of MySQL you are using...
           # and will likely change after any major upgrade of MySQL
 
-          !data.start_with? "J\x00\x00\x00" and data = "J\x00\x00\x00" + data
+          !data.start_with? "I\x00\x00\x00" and data = "I\x00\x00\x00" + data
           # puts "Tranferring data from #{r == localSock ? "local" : r == remoteSock ? "remote" : r}: #{data.inspect}"
           first = false
         end
