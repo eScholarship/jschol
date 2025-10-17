@@ -1,7 +1,6 @@
 // ##### Author List Component ##### //
 
 import React from 'react'
-import $ from 'jquery'
 import TruncationObj from '../objects/TruncationObj.jsx'
 
 class AuthorListComp extends React.Component {
@@ -46,22 +45,23 @@ class AuthorListComp extends React.Component {
         {/* CASE: this is an item page */}
         { ((authors && authors.length > 0) || (editors && editors.length > 0) ||
           (advisors && advisors.length > 0)) && this_is_an_item_page && this_is_a_tabbed_page &&
-        <TruncationObj element="ul" className="c-authorlist__list"
-                        options={{watch:'window', after:'.c-authorlist__list-more-link', ellipsis:' ', wrap:'children',
-                                  callback: () => $('.c-authorlist__list-more-link').click((e)=>this.handleClick(e, 'author'))}}>
-          {authors}
-          {editors}
-          {advisors}
-          {/* Note: the <a> more-link below cannot be a <Link>, else jquery dotdotdot can't recognize it */}
-          {/* Kludge: only show et al if the total number of contributors is greater than 6 */}
-          { (total_contributors > 6) &&  <li><a href={item_link} className="c-authorlist__list-more-link">et al.</a></li> } 
-        </TruncationObj>
+        <>
+          <TruncationObj element="ul" className="c-authorlist__list">
+            {authors}
+            {editors}
+            {advisors}
+          </TruncationObj>
+          {/* Show et al link if the total number of contributors is greater than 6 */}
+          { (total_contributors > 6) &&  
+            <a href="#author" className="c-authorlist__list-more-link">et al.</a>
+          }
+        </>
         }
 
         {/* CASE: this is NOT an item page */}
         { ((authors && authors.length > 0) || (editors && editors.length > 0) ||
            (advisors && advisors.length > 0)) && ! this_is_a_tabbed_page &&
-          <TruncationObj element="ul" className="c-authorlist__list">
+          <TruncationObj element="ul" className="c-authorlist__list" lines={2}>
             {authors}
             {editors}
             {advisors}

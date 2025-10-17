@@ -1,15 +1,10 @@
 // ##### Journal Carousel Component ##### //
 import React from 'react'
 import PropTypes from 'prop-types'
-import $ from 'jquery'
 import CarouselComp from '../components/CarouselComp.jsx'
+import TruncationObj from '../objects/TruncationObj.jsx'
 import { Link } from 'react-router-dom'
 import MEDIA_PATH from '../../js/MediaPath.js'
-
-// Load dotdotdot in browser but not server
-if (!(typeof document === "undefined")) {
-  const dotdotdot = require('jquery.dotdotdot')
-}
 
 class JournalCarouselComp extends React.Component {
   static propTypes = {
@@ -50,7 +45,7 @@ class JournalCarouselComp extends React.Component {
                   {u.cover ?
                     <img src={"/cms-assets/"+u.cover.asset_id} alt={u.name}/>
                   : <img src={MEDIA_PATH + '/temp_article.png'} alt={u.name} /> }
-                    <figcaption className="u-truncate-lines">{u.name}</figcaption>
+                    <TruncationObj element="figcaption" lines={2}>{u.name}</TruncationObj>
                   </figure>
                 </a>
               </div>
