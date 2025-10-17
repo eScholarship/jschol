@@ -4,11 +4,6 @@ import React from 'react'
 import LazyImageComp from '../components/LazyImageComp.jsx'
 import ArbitraryHTMLComp from "../components/ArbitraryHTMLComp.jsx"
 
-// Load dotdotdot in browser but not server
-if (!(typeof document === "undefined")) {
-  const dotdotdot = require('jquery.dotdotdot')
-}
-
 class IssueComp extends React.Component {
   state = {
     isExpanded: false

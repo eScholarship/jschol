@@ -4,12 +4,6 @@ import React from 'react'
 import MediaModalComp from '../components/MediaModalComp.jsx'
 import MediaFeatureObj from '../objects/MediaFeatureObj.jsx'
 import { Link } from 'react-router-dom'
-
-// Load dotdotdot in browser but not server
-if (!(typeof document === "undefined")) {
-  const dotdotdot = require('jquery.dotdotdot')
-}
-
 class CellComp extends React.Component {
   state={showModal: false}
 

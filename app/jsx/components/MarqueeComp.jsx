@@ -5,11 +5,6 @@ import PropTypes from 'prop-types'
 import CarouselComp from '../components/CarouselComp.jsx'
 import ArbitraryHTMLComp from "../components/ArbitraryHTMLComp.jsx"
 
-// Load dotdotdot in browser but not server
-if (!(typeof document === "undefined")) {
-  const dotdotdot = require('jquery.dotdotdot')
-}
-
 class MarqueeComp extends React.Component {
   state = {
     isExpanded: false
