@@ -3,20 +3,11 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import RightsComp from '../components/RightsComp.jsx'
-import $ from 'jquery'
 import { Link } from 'react-router-dom'
 import TruncationObj from '../objects/TruncationObj.jsx'
 import MediaListComp from '../components/MediaListComp.jsx'
 import ArbitraryHTMLComp from '../components/ArbitraryHTMLComp.jsx'
 import AuthorListComp from '../components/AuthorListComp.jsx'
-class DotAuthorUl extends React.Component {
-  render = () =>
-    <TruncationObj element="ul" className={this.props.className}
-                options={{watch:"window", after:'.c-authorlist__list-more-link', ellipsis:' ', wrap:'children'}}>
-      {this.props.children}
-    </TruncationObj>
-}
-
 class ScholWorksComp extends React.Component {
   static propTypes = {
     h: PropTypes.string.isRequired,

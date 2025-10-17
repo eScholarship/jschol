@@ -7,15 +7,6 @@ import TruncationObj from '../objects/TruncationObj.jsx'
 import MediaListComp from '../components/MediaListComp.jsx'
 import ArbitraryHTMLComp from '../components/ArbitraryHTMLComp.jsx'
 import AuthorListComp from '../components/AuthorListComp.jsx'
-
-class DotAuthorUl extends React.Component {
-  render = () =>
-    <TruncationObj element="ul" className={this.props.className}
-                options={{watch:"window", after:'.c-authorlist__list-more-link', ellipsis:' ', wrap:'children'}}>
-      {this.props.children}
-    </TruncationObj>
-}
-
 class PubComp extends React.Component {
   static propTypes = {
     h: PropTypes.string.isRequired,
@@ -57,9 +48,7 @@ class PubComp extends React.Component {
       }
       {pr.abstract &&
         <TruncationObj element="div" className="c-pub__abstract">
- 
           <ArbitraryHTMLComp html={pr.abstract} p_wrap={true} h1Level={3}/>
-
         </TruncationObj>
       }
       {totalSuppFiles > 0 &&
