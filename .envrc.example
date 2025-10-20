@@ -74,8 +74,6 @@ export CLOUDSEARCH_DOC_ENDPOINT=cloudsearch-doc-endpoint-stg
 export SOCKS_PORT=1081
 export SOCKS_USER=your-user-name
 export SOCKS_TARGET=submit-stg-is-probably-a-good-choice
-export SOCKS_BASTION=our-bastion-domain
-export SOCKS_BASTION_PORT=our-bastion-ssl-port
 export SOCKS_KEYPATH=/path/to/your/ssh/key
 export USE_SOCKS_FOR_MYSQL=true # set to false if running MySQL locally
 
