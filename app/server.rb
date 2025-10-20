@@ -1082,8 +1082,8 @@ def getUnitPageData(unitID, pageName, subPage)
       if isJournalIssue?(unit.id, pageName, subPage)
         volume = pageName
         issue = subPage
-        numbering, title, show_pub_dates = getIssueNumberingTitle(unit.id, volume, issue)
-        journalIssue = {'unit_id': unit.id, 'volume': volume, 'issue': issue, 'title': title, 'numbering': numbering, 'show_pub_dates': show_pub_dates}
+        numbering, title, show_pub_dates, use_item_rights = getIssueNumberingTitle(unit.id, volume, issue)
+        journalIssue = {'unit_id': unit.id, 'volume': volume, 'issue': issue, 'title': title, 'numbering': numbering, 'show_pub_dates': show_pub_dates, 'use_item_rights': use_item_rights}
       end
       pageData[:header] = getUnitHeader(unit, nil, journalIssue, issuesSubNav, attrs)
     else
@@ -1258,13 +1258,14 @@ def getItemPageData(shortArk)
           issue_id = Item.join(:sections, :id => :section).filter(Sequel.qualify("items", "id") => id).map(:issue_id)[0]
           if issue_id
             unit_id, volume, issue = Section.join(:issues, :id => issue_id).map([:unit_id, :volume, :issue])[0]
-            numbering, title, show_pub_dates = getIssueNumberingTitle(unit.id, volume, issue)
+            numbering, title, show_pub_dates, use_item_rights = getIssueNumberingTitle(unit.id, volume, issue)
             issueIds = getIssueIds(unit)
             issuesSubNav = getIssuesSubNav((issueIds && issueIds.any?) ? getPublishedJournalIssues(issueIds) : nil)
             body[:header] = getUnitHeader(unit, nil,
               {'unit_id': unit_id, 'volume': volume, 'issue': issue, 'title': title, 'numbering': numbering, 'show_pub_dates': show_pub_dates}, issuesSubNav)
             body[:numbering] = numbering
             body[:show_pub_dates] = show_pub_dates
+            body[:use_item_rights] = use_item_rights
             body[:citation][:volume] = volume
             body[:citation][:issue] = issue
           else

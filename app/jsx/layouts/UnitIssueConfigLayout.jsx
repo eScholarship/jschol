@@ -51,6 +51,19 @@ class PubDateRadio extends React.Component {
 </div>
 }
 
+class UseItemRightsCheckbox extends React.Component {
+  render = () =>
+    <div>
+      <input type="checkbox"
+             disabled={this.props.disableEdit}
+             name={`use_item_rights-${this.props.voliss}`}
+             value="true"
+             defaultChecked={this.props.use_item_rights == "true"}
+        />
+      <label for={`use_item_rights-${this.props.voliss}`}>Use item rights</label>
+    </div>
+}
+
 class IssueRow extends React.Component {
   render() {
     let p = this.props
@@ -60,6 +73,7 @@ class IssueRow extends React.Component {
           <td>{p.voliss}</td>
         }
         <td><RightsDropdown {...p}/></td>
+        <td><UseItemRightsCheckbox {...p}/></td>
         <td><NumberingRadio {...p}/></td>
         <td><input disabled={p.disableEdit} type="text" name={`buy_link-${p.voliss}`} defaultValue={p.buy_link}/></td>
         <td><PubDateRadio {...p}/></td>
@@ -84,6 +98,7 @@ class IssueTable extends React.Component {
               { !p.isDefault &&
                 <th>Issue</th> }
               <th>License</th>
+              <th>Item rights</th>
               <th>Numbering</th>
               <th>Buy Link</th>
               <th>Show submit/accept dates</th>
