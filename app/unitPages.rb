@@ -596,7 +596,7 @@ def getIssueNumberingTitle(unit_id, volume, issue)
   i = i.values
   return nil, nil if i[:attrs].nil?
   attrs = JSON.parse(i[:attrs])
-  return attrs['numbering'], attrs['title'], attrs['show_pub_dates']
+  return attrs['numbering'], attrs['title'], attrs['show_pub_dates'], attrs['use_item_rights']
 end
 
 def isPubOrderSeriesCase(unit)
@@ -1875,7 +1875,7 @@ end
 
 def getUnitIssueConfig(unit, unitAttrs)
   getUserPermissions(params[:username], params[:token], unit.id)[:admin] or halt(401)
-  template = { "numbering" => "both", "rights" => nil, "buy_link" => nil, "show_pub_dates" => "false" }
+  template = { "numbering" => "both", "rights" => nil, "buy_link" => nil, "show_pub_dates" => "false", "use_item_rights" => "false" }
   issues = Issue.where(unit_id: unit.id).order(Sequel.desc(:published)).order_append(Sequel.desc(Sequel[:issue].cast_numeric)).map { |issue|
     { voliss: "#{issue.volume}.#{issue.issue}" }.merge(template).
       merge(JSON.parse(issue.attrs || "{}").select { |k,_v| template.key?(k) })
@@ -1910,7 +1910,8 @@ def updateIssueConfig(inputAttrs, data, voliss)
     { "rights" => validateRights(data["rights-#{voliss}"]),
       "numbering" => validateNumbering(data["numbering-#{voliss}"]),
       "buy_link" => validateLink(data["buy_link-#{voliss}"]),
-      "show_pub_dates" => data["show_pub_dates-#{voliss}"] }).
+      "show_pub_dates" => data["show_pub_dates-#{voliss}"],
+      "use_item_rights" => data["use_item_rights-#{voliss}"]}).
     select { |_k,v| !v.nil? }
   return ret.empty? ? nil : ret
 end
