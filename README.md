@@ -14,8 +14,6 @@ This app uses the following technology and features:
 * Automatic rebuilds using Gulp
 * LiveReload support so changes during development are reflected instantly in the browser
 * Isometric Javascript to provide server-side initial rendering of pages (for fast first load, and for better crawlability)
-* [Lando](https://lando.dev/) for bootstrapping a Docker-based development
-  environment
 * [AWS CLI](https://aws.amazon.com/cli/) for deploying to Elastic Beanstalk. See our [AWS CLI Cheatsheet](https://github.com/cdlib/pad-sys-doc/blob/main/cheatsheet/aws-cli.md).
 
 Description of files
@@ -58,25 +56,6 @@ Description of files
   our [AWS CLI Cheatsheet](https://github.com/cdlib/pad-sys-doc/blob/main/cheatsheet/aws-cli.md).
 * `overlay_files` folder for beanstalk app overlays, used by the deployVersion.sh script. You'll want to grab the contents of this folder from the `pub-cattle2-ops` ec2 instance, if you want to deploy from your Lando dev environment.
 
-Lando Dev Environment
----------------------
-
-Steps to get the app running on your local machine, with Lando
-1. Make sure [Lando](https://lando.dev/) is installed
- * Lando comes bundled with Docker Desktop, if you already have Docker Desktop installed, don't re-install it, just ensure you have the same version as what is bundled with Lando.
-2. Copy `local.env.example` to `local.env` and customize as appropriate 
-3. `lando poweroff` (defensively ensure no other Lando environments are running, probably not necessary, but a good habit)
-4. `lando rebuild` 
-5. When you see the big "Boomshakala" message from Lando, you're ready to go
-6. Browse to `http://localhost:18880` (or whatever port you've configured for `PUMA_PORT` in your `local.env` file)
-
-This Lando dev environment includes a local MySQL server, which can load MySQL dumps from dev, stg or prd. To load a dump file, run
-1. `lando db-import name-of-mysql-dump-file.gz`
-
-NOTE: if you do not have a dump file, ask around, we can lend you a somewhat
-recent one. Or, you can rely on the SOCKS connection to use the db on one of our
-servers. Or you can use the VPN.
-
 Devbox + Direnv Dev Environment
 ----------------------
 
@@ -114,32 +93,6 @@ devbox run test
 OR you can run the quicktest as you would in a native dev environment. In fact,
 using the Devbox environment can be roughly equivalent to [running the application
 natively](#Running-the-application-natively). If you prefer that style of work.
-
-Troubleshooting
----------------
-Use the `lando logs -f` command to see the logs from the appserver, or `lando logs -s db -f` to see the logs from the local database (if you're using it).
-
-Run `lando` to see what other lando commands are available.
-
-Tooling
--------
-* `lando aws` Runs AWS-cli commands on the Jschol appserver
-* `lando bundle` Runs bundle commands on the Lando Jschol appserver
-* `lando deploy` Runs the deployment script to deploy to Elastic Beanstalk
-* `lando irb` Runs irb on the Jschol appserver (for some good REPL fun)
-* `lando npm` Runs npm commands on the Lando Jschol appserver
-* `lando promote` Promote an Elastic Beanstalk app from one environment to another
-* `lando ruby`  Runs ruby commands on the Lando Jschol appserver
-* `lando socks` Sets the socks proxy tunnel back up, if you have been too idle
-* `lando ssh` Drops into a shell on a service, runs commands
-* `lando start` Starts the Jschol app
-* `lando stop` Stops the Jschol app
-* `lando watch-dev` Watches eb-pub-jschol2-dev aws environment details for updates.
-* `lando watch-prd` Watches eb-pub-jschol2-prd aws environment details for updates.
-* 'lando watch-stg` Watches eb-pub-jschol2-stg aws environment details for updates.
-
-More [tooling](https://docs.lando.dev/config/tooling.html) can be added easily.
-
 
 Running the application natively
 --------------------------------
@@ -182,3 +135,16 @@ Migrating beanstalk to new platform
 * edit `.elasticbeanstalk/saved_configs/eb-pub-jschol3-dev-sc.cfg.yml`
     ** change `PlatformArn: arn:aws:elasticbeanstalk:us-west-2::platform/Ruby 3.2 running on 64bit Amazon Linux 2023/4.0.13`
 * `eb create eb-pub-jschol3-dev --cfg eb-pub-jschol3-dev-sc --sample`
+
+Prerquisites for using socks proxy to connect to the dev/stg db from your dev environment:
+--------------------------------
+1. The following config:
+```
+export SOCKS_PORT=1081
+export SOCKS_USER=your-username
+export SOCKS_TARGET=pub-submit3-(stg/dev).escholarship.org
+export SOCKS_KEYPATH=path-to-your-private-ssh-key
+export USE_SOCKS_FOR_MYSQL=true
+```
+2. Add your public key to authorized_keys on the submit server in question
+3. Must be connected to the VPN
