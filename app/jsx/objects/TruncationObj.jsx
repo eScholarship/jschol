@@ -10,21 +10,82 @@ export default class TruncationObj extends React.Component {
     element: PropTypes.string.isRequired,
     className: PropTypes.string,
     lines: PropTypes.number,
-  };
+    // expandable mode props
+    expandable: PropTypes.bool,
+    buttonClassName: PropTypes.string,
+    buttonText: PropTypes.shape({
+      more: PropTypes.string,
+      less: PropTypes.string
+    })
+  }
 
   static defaultProps = {
     className: '',
     lines: null, // auto-calculate from CSS
+    expandable: false,
+    buttonClassName: 'o-button__7',
+    buttonText: {
+      more: 'More',
+      less: 'Less'
+    }
+  }
+
+  state = {
+    isExpanded: false,
+    isTruncated: false
   }
 
   elementRef = React.createRef()
 
   componentDidMount() {
     this.updateLineClamp()
+    if (this.props.expandable) {
+      this.checkTruncation()
+      // add resize listener for responsive truncation detection
+      window.addEventListener('resize', this.handleResize)
+    }
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(prevProps, prevState) {
     this.updateLineClamp()
+    
+    if (this.props.expandable) {
+      // recheck if content changes or expansion state changes
+      if (prevProps.children !== this.props.children || 
+          prevState.isExpanded !== this.state.isExpanded) {
+        this.checkTruncation()
+      }
+    }
+  }
+
+  componentWillUnmount() {
+    if (this.props.expandable) {
+      window.removeEventListener('resize', this.handleResize)
+    }
+  }
+
+  handleResize = () => {
+    // debounce resize events
+    clearTimeout(this.resizeTimeout)
+    this.resizeTimeout = setTimeout(() => {
+      this.checkTruncation()
+    }, 150)
+  }
+
+  checkTruncation = () => {
+    if (this.state.isExpanded) return
+    
+    // small delay to ensure content is rendered
+    setTimeout(() => {
+      if (this.elementRef.current) {
+        const isTruncated = this.elementRef.current.scrollHeight > this.elementRef.current.clientHeight
+        this.setState({ isTruncated })
+      }
+    }, 0)
+  }
+
+  toggleExpanded = () => {
+    this.setState(prevState => ({ isExpanded: !prevState.isExpanded }))
   }
 
   updateLineClamp = () => {
@@ -54,7 +115,8 @@ export default class TruncationObj extends React.Component {
   }
 
   render() {
-    const { children, element, className, lines } = this.props
+    const { children, element, className, lines, expandable, buttonClassName, buttonText } = this.props
+    const { isExpanded, isTruncated } = this.state
 
     // render children to a string ONLY to check for MathJax content
     const contentString = ReactDOMServer.renderToStaticMarkup(<>{children}</>)
@@ -67,7 +129,8 @@ export default class TruncationObj extends React.Component {
       return React.createElement(element, { className }, children)
     }
 
-    const truncationClass = 'u-truncate-lines'
+    // for expandable mode, conditionally apply truncation class
+    const truncationClass = (expandable && isExpanded) ? '' : 'u-truncate-lines'
     const combinedClassName = `${className} ${truncationClass}`.trim()
     
     // if lines is explicitly set, use it, otherwise calculate it
@@ -75,11 +138,30 @@ export default class TruncationObj extends React.Component {
       '--line-clamp-lines': lines,
     } : undefined
 
-    return React.createElement(element, {
+    const contentElement = React.createElement(element, {
       className: combinedClassName,
       style: style,
       ref: this.elementRef,
       children,
     })
+
+    // if not expandable, just return the content element
+    if (!expandable) return contentElement
+
+    // if expandable, wrap with button
+    // show button if content is truncated OR if it's currently expanded
+    return (
+      <>
+        {contentElement}
+        {(isTruncated || isExpanded) && (
+          <button 
+            className={buttonClassName}
+            onClick={this.toggleExpanded}
+          >
+            {isExpanded ? buttonText.less : buttonText.more}
+          </button>
+        )}
+      </>
+    )
   }
 }
