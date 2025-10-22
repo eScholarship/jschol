@@ -4,12 +4,9 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import CarouselComp from '../components/CarouselComp.jsx'
 import ArbitraryHTMLComp from "../components/ArbitraryHTMLComp.jsx"
+import TruncationObj from "../objects/TruncationObj.jsx"
 
 class MarqueeComp extends React.Component {
-  state = {
-    isExpanded: false
-  }
-
   static propTypes = {
     forceOn: PropTypes.bool,
     marquee: PropTypes.shape({
@@ -24,14 +21,8 @@ class MarqueeComp extends React.Component {
     })
   }
 
-  toggleExpanded = () => {
-    this.setState(prevState => ({ isExpanded: !prevState.isExpanded }))
-  }
-
   // renders Marquee section, AND, if present, About section
   renderMarquee = (slides, about_block) => {
-    const truncateClass = this.state.isExpanded ? '' : 'u-truncate-lines'
-    
     return (
       <div className="c-marquee">
         <CarouselComp className="c-marquee__carousel" 
@@ -52,18 +43,9 @@ class MarqueeComp extends React.Component {
             <header>
               <h2>About</h2>
             </header>
-            <div className={`c-marquee__sidebar-truncate ${truncateClass}`} ref={element => this.aboutElement = element}>
+            <TruncationObj element="div" className="c-marquee__sidebar-truncate" expandable={true}>
               <ArbitraryHTMLComp html={about_block} h1Level={3}/>
-            </div>
-            {this.props.marquee.about && (
-              <button 
-                className="c-marquee__sidebar-more" 
-                onClick={this.toggleExpanded}
-                style={{ display: this.state.isExpanded ? 'none' : 'block' }}
-              >
-                {this.state.isExpanded ? 'Less' : 'More'}
-              </button>
-            )}
+            </TruncationObj>
           </section>
         </aside>
       }
@@ -74,25 +56,14 @@ class MarqueeComp extends React.Component {
   // ToDo: Itegrate AboutComp here, while observing necessary truncation behavior.
   //  For now, any changes here should also be reflected in AboutComp
   renderAbout = (about_block) => {
-    const truncateClass = this.state.isExpanded ? '' : 'u-truncate-lines'
-    
     return (
       <section className="o-columnbox2">
         <header>
           <h2>About</h2>
         </header>
-        <div className={`o-columnbox__truncate1 ${truncateClass}`} ref={element => this.aboutElement = element}>
+        <TruncationObj element="div" className="o-columnbox" expandable={true}>
           <ArbitraryHTMLComp html={about_block} h1Level={3}/>
-        </div>
-        {this.props.marquee.about && (
-          <button 
-            className="c-marquee__sidebar-more" 
-            onClick={this.toggleExpanded}
-            style={{ display: this.state.isExpanded ? 'none' : 'block' }}
-          >
-            {this.state.isExpanded ? 'Less' : 'More'}
-          </button>
-        )}
+        </TruncationObj>
       </section>
     )
   }
