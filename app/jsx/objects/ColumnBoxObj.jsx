@@ -2,25 +2,14 @@
 
 import React from 'react'
 import faker from 'faker/locale/en'
-
-// Load dotdotdot in browser but not server:
-if (!(typeof document === "undefined")) {
-  const dotdotdot = require('jquery.dotdotdot')
-}
+import TruncationObj from '../objects/TruncationObj.jsx'
 
 class ColumnBoxObj extends React.Component {
   state={
-    loadingData: false,
-    isExpanded: false
-  }
-
-  toggleExpanded = () => {
-    this.setState(prevState => ({ isExpanded: !prevState.isExpanded }))
+    loadingData: false
   }
 
   render() {
-    const truncateClass = this.state.isExpanded ? '' : 'u-truncate-lines'
-    
     return (
       <div>
         
@@ -64,18 +53,16 @@ class ColumnBoxObj extends React.Component {
           <header>
             <h2>About eScholarship</h2>
           </header>
-          <div className={`o-columnbox__truncate1 ${truncateClass}`} ref={element => this.element = element}>
+          <TruncationObj 
+            element="div"
+            className="o-columnbox"
+            expandable={true}
+            buttonClassName="o-columnbox__truncate-more"
+          >
             <div>
               {faker.fake("{{lorem.paragraphs}}")}
             </div>
-          </div>
-          <button 
-            className="o-columnbox__truncate-more" 
-            onClick={this.toggleExpanded}
-            style={{ display: this.state.isExpanded ? 'none' : 'block' }}
-          >
-            {this.state.isExpanded ? 'Less' : 'More'}
-          </button>
+          </TruncationObj>
         </section>
 
         <h3>When Placed Within Sidebar</h3>
