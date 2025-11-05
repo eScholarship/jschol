@@ -19,7 +19,6 @@ This app uses the following technology and features:
 Description of files
 --------------------
 
-* `.lando.yml`: the configuration file for Lando
 * `Gemfile`: Lists of Ruby gems the app uses. Used by 'bundler' to download and install them locally.
 * `Gemfile.lock`: Copy of Gemfile created and managed by 'bundler'. Don't modify directly.
 * `README.md`: This file.
@@ -35,20 +34,11 @@ Description of files
 * `app/server.rb`: Main app driver with code to generate the page outline, supply database data, cache bust, etc.
 * `bin/`: Gets populated by 'bundler' with driver scripts for gems it installs. Don't modify directly.
 * `config`: A place to keep environment variables such as database and S3 connection parameters.
-* `convert.rb`: Script to populate the new eschol5 database with units, item, etc. from the old eScholarship.
-* `gems`: Gets populated by 'bundler' with driver scripts for gems it installs. Don't modify directly.
 * `gulp`: Symbolic link to node_modules/.bin/gulp, so you can just run "./gulp" from the top-level directory.
 * `gulpfile.js`: Controls the build process for CSS and Javascript, and runs the app on the server.
-* `migrations`: Database schema in Ruby form. We can add new files here to morph the schema over time, and people can automatically upgrade their db.
 * `node_modules`: Gets populated by 'node' with server-side Javascript packages. Don't modify directly.
 * `package.json`: List of Javascript packages needed on the server. Includes mainly Gulp and React, and their dependencies.
 * `setup.sh`: Sequence of commands to run bundler and node to download and install all the Ruby and Javascript modules the app needs.
-* `tools/`: Conversion and database maintenance tools.
-* `defaults.env`: default environment variable configuration for Lando
-* `local.env.example`: example file for customizing your Lando dev workspace's environment variables, copy to `local.env` and customize as appropriate
-* `.lando.local.yml.example`: example file for customizing your Lando dev
-  workspace's Lando configuration, copy to `.lando.local.yml` and customize as
-  appropriate
 * `deployVersion.sh`: deployment script, requires an active AWS CLI credential.
   See our [AWS CLI Cheatsheet](https://github.com/cdlib/pad-sys-doc/blob/main/cheatsheet/aws-cli.md).
 * `promoteVersion.sh` script to promote a tested version of this app from one
