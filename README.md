@@ -115,11 +115,6 @@ Steps to get the app running on your local machine without Lando or Devbox
 
 6. Browse to `http://localhost:4001/unit/root`, or `http://localhost:4001/item/08s7w2fd`, or `http://localhost:4001/search`
 
-Migrating to a new database version
------------------------------------
-
-* `tools/migrate.rb`
-
 Merging everything from master to prd branch
 --------------------------------------------
 
