@@ -545,6 +545,7 @@ def _getIssue(unit_id, issueIds, volume=nil, issue=nil, display)
     attrs['cover']       and i[:cover] = attrs['cover']
     attrs['rights']      and i[:rights] = attrs['rights']
     attrs['buy_link']    and i[:buy_link] = attrs['buy_link']
+    attrs['use_item_rights'] and i[:use_item_rights] = attrs['use_item_rights']
   end
   i[:sections] = Section.where(:issue_id => i[:id]).order(:ordering).all
 
@@ -581,7 +582,8 @@ def getJournalIssueData(unit, unit_attrs, issueIds, issuesPublished, volume=nil,
     issue: _getIssue(unit.id, issueIds, volume, issue, display),
     doaj: unit_attrs['doaj'],
     issn: unit_attrs['issn'],
-    eissn: unit_attrs['eissn']
+    eissn: unit_attrs['eissn'],
+    cc_license_text: unit_attrs['cc_license_text']
   }
 end
 
