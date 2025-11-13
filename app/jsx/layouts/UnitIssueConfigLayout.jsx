@@ -109,11 +109,34 @@ class IssueTable extends React.Component {
                 <IssueRow key={row.voliss} isDefault={p.isDefault} disableEdit={p.disableEdit} {...row}/>) }
           </tbody>
         </table>
+
         { p.disableEdit
             ? <p>Only eScholarship staff may change this information.</p>
             : <button type="submit">Save Changes</button>
         }
       </FormComp>
+    )
+  }
+}
+
+class CCLicenseComp extends React.Component {
+  handleSubmit = (event, data) => {
+    event.preventDefault()
+    this.props.sendApiData("PUT", event.target.action, {data: data})
+  }
+
+  render() {
+    let p = this.props
+    return (
+        <FormComp to={`/api/unit/${p.unit.id}/issueConfig`} onSubmit={this.handleSubmit}>
+          <p>
+            <textarea disabled={p.disableEdit} name={`cc_license_text`} defaultValue={p.data.cc_license_text} rows="5" cols="100"/>
+          </p>
+          { p.disableEdit
+              ? <p>Only eScholarship staff may change this information.</p>
+              : <button type="submit">Save Changes</button>
+          }
+        </FormComp>
     )
   }
 }
@@ -136,9 +159,11 @@ export default class UnitIssueConfigLayout extends React.Component
                 <main>
                   <section className="o-columnbox1">
                     <h4>Defaults for Future Issues</h4>
-                    <IssueTable isDefault={true} data={p.data.slice(0, 1)} {...tableProps}/>
+                    <IssueTable isDefault={true} data={p.data.issues.slice(0, 1)} {...tableProps}/>
                     <h4>Past Issues</h4>
-                    <IssueTable isDefault={false} data={p.data.slice(1)} {...tableProps}/>
+                    <IssueTable isDefault={false} data={p.data.issues.slice(1)} {...tableProps}/>
+                    <h4>CC License Text</h4>
+                    <CCLicenseComp isDefault={false} data={p.data} {...tableProps}/>
                   </section>
                 </main>
               </div>

@@ -1918,30 +1918,40 @@ end
 
 put "/api/unit/:unitID/issueConfig" do |unitID|
   getUserPermissions(params[:username], params[:token], unitID)[:super] or restrictedHalt
-  DB.transaction {
-    issueMap = Hash[Issue.where(unit_id: unitID).map { |iss| ["#{iss.volume}.#{iss.issue}", iss] }]
-    params['data'].keys.select { |k| k =~ /^rights-/ }.map { |k| k.sub(/^rights-/, '') }.each { |voliss|
-      if voliss == "default"
+  if params["data"].has_key?(:cc_license_text)
+    DB.transaction {
         unit = Unit[unitID] or jsonHalt(404, "Unit not found")
         unitAttrs = JSON.parse(unit.attrs)
-        unitAttrs["default_issue"] = updateIssueConfig(unitAttrs["default_issue"], params["data"], voliss)
-        unitAttrs["default_issue"] or unitAttrs.delete("default_issue")
+        unitAttrs["cc_license_text"] = params["data"]["cc_license_text"]
         unit.attrs = unitAttrs.to_json
         unit.save
-      else
-        issue = issueMap[voliss] or jsonHalt(404, "Unknown volume/issue #{voliss.inspect}")
-        oldAttrs = issue.attrs ? JSON.parse(issue.attrs) : nil
-        newAttrs = updateIssueConfig(JSON.parse(issue.attrs || "{}"), params["data"], voliss)
-        if oldAttrs.to_json != newAttrs.to_json
-          issue.attrs = newAttrs.to_json
-          issue.save
-          if oldAttrs&.dig("rights") != newAttrs&.dig("rights")
-            Item.where(section: Section.where(issue_id: issue.id).select(:id)).update(rights: newAttrs&.dig("rights"))
+    }
+  else
+    DB.transaction {
+      issueMap = Hash[Issue.where(unit_id: unitID).map { |iss| ["#{iss.volume}.#{iss.issue}", iss] }]
+      params['data'].keys.select { |k| k =~ /^rights-/ }.map { |k| k.sub(/^rights-/, '') }.each { |voliss|
+        if voliss == "default"
+          unit = Unit[unitID] or jsonHalt(404, "Unit not found")
+          unitAttrs = JSON.parse(unit.attrs)
+          unitAttrs["default_issue"] = updateIssueConfig(unitAttrs["default_issue"], params["data"], voliss)
+          unitAttrs["default_issue"] or unitAttrs.delete("default_issue")
+          unit.attrs = unitAttrs.to_json
+          unit.save
+        else
+          issue = issueMap[voliss] or jsonHalt(404, "Unknown volume/issue #{voliss.inspect}")
+          oldAttrs = issue.attrs ? JSON.parse(issue.attrs) : nil
+          newAttrs = updateIssueConfig(JSON.parse(issue.attrs || "{}"), params["data"], voliss)
+          if oldAttrs.to_json != newAttrs.to_json
+            issue.attrs = newAttrs.to_json
+            issue.save
+            if oldAttrs&.dig("rights") != newAttrs&.dig("rights")
+              Item.where(section: Section.where(issue_id: issue.id).select(:id)).update(rights: newAttrs&.dig("rights"))
+            end
           end
         end
-      end
+      }
     }
-  }
+  end
   content_type :json
   return { success: true }.to_json
 end
