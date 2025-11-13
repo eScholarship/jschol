@@ -12,6 +12,8 @@ class JournalInfoComp extends React.Component {
         <img src={MEDIA_PATH + 'temp_journalinfo.png'} alt="DOAJ"/> }
       {this.props.rights &&
         <RightsComp rights={this.props.rights} size="large" /> }
+      {this.props.cc_license_text &&
+        <p>{this.props.cc_license_text}</p>}
         <ul>
       {this.props.issn &&
           <li><b>ISSN:</b> {this.props.issn}</li> }
