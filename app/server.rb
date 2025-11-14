@@ -1250,10 +1250,7 @@ def getItemPageData(shortArk)
       if unit
         unit_attrs = JSON.parse(unit[:attrs])
         body[:unit_attrs] = unit_attrs               # Strictly used for admin reference
-        if unit.type != 'journal'
-          body[:header] = getUnitHeader(unit)
-          body[:altmetrics_ok] = true
-        else 
+        if unit.type == 'journal' || unit.type == 'conference_proceedings'
           body[:altmetrics_ok] = unit_attrs['altmetrics_ok']
           issue_id = Item.join(:sections, :id => :section).filter(Sequel.qualify("items", "id") => id).map(:issue_id)[0]
           if issue_id
@@ -1271,6 +1268,9 @@ def getItemPageData(shortArk)
           else
             body[:header] = getUnitHeader(unit, nil, nil)
           end
+        else
+          body[:header] = getUnitHeader(unit)
+          body[:altmetrics_ok] = true
         end
         body[:commenting_ok] = unit_attrs['commenting_ok'] && item.status == 'published'
       end
