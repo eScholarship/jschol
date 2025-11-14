@@ -147,8 +147,8 @@ class TabAuthorComp extends React.Component {
         }
         out = this.addDot(out)
       }
-      else if (props.unit.type == "journal" && props.citation) {
-        // Internal (escholarship) journals
+      else if ((props.unit.type == "journal" || props.unit.type == "conference_proceedings") && props.citation) {
+        // Internal (escholarship) journals and conference proceedings
         out += "<em>" + props.unit.name + "</em>"
         let voliss = ""
         if (props.numbering == "issue_only")
@@ -261,7 +261,15 @@ class TabAuthorComp extends React.Component {
     let issn = p.attrs['ext_journal'] && p.attrs['ext_journal']['issn']
 
     let unit_type
-    if (p.unit) { unit_type = p.unit.type == 'journal' ? "Journal" : "Series" }
+    if (p.unit) {
+      if (p.unit.type === 'journal') {
+        unit_type = "Journal"
+      } else if (p.unit.type === 'conference_proceedings') {
+        unit_type = "Conference Proceedings"
+      } else {
+        unit_type = "Series"
+      }
+    }
 
     let permalink = "https://escholarship.org/uc/item/" + p.id
     let appearsIn = p.appearsIn.map(function(node, i) {
@@ -394,7 +402,7 @@ class TabAuthorComp extends React.Component {
           }
 
           {journal_stmnt && 
-            [<dt key="0"><strong>Journal Issue:</strong></dt>,
+            [<dt key="0"><strong>{p.unit && p.unit.type === 'conference_proceedings' ? 'Conference Proceedings Issue:' : 'Journal Issue:'}</strong></dt>,
              <dd key="1">
              {issue_url ?
                <Link to={issue_url} className="o-textlink__secondary">{journal_stmnt}</Link>
