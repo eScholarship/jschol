@@ -1106,7 +1106,7 @@ def getUnitPageData(unitID, pageName, subPage)
       # ToDo: Cleanup this which duplicates marquee info below
       pageData[:content] = getUnitCarouselConfig(unit, attrs)
     elsif pageName == 'issueConfig'
-      pageData[:content] = getUnitIssueConfig(unit, attrs)
+      pageData[:content] = {'cc_license_text': attrs["cc_license_text"], 'issues': getUnitIssueConfig(unit, attrs)}
     elsif pageName == 'userConfig'
       pageData[:content] = getUnitUserConfig(unit)
     elsif pageName == 'unitBuilder'
