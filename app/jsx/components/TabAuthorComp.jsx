@@ -52,6 +52,7 @@ class TabAuthorComp extends React.Component {
       'lbnl':         "LBNL Report #: ",
       'merritt':      "Merritt ID: ",
       'oa_harvester': "UCPMS ID: ",
+      'osti_id':      "OSTI ID: ",
       'other':        "",
       'pmid':         "Pubmed ID: ",
       'pmcid':        "PubMed Central ID: ",
