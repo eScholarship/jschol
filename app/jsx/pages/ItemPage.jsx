@@ -135,7 +135,7 @@ class ItemPage extends PageBase {
     let descr_editors = d.editors ? "Editor(s): " + d.editors.slice(0, 85).map((editor) => { return editor.name }).join('; ') : ""
     let descr_advisors = d.advisors ? "Advisor(s): " + d.advisors.slice(0, 85).map((advisor) => { return advisor.name }).join('; ') : ""
     let contribs = [descr_authors, descr_editors, descr_advisors].filter(e => e !== '').join(' | ')
-    let journal_title = (d.unit && (d.unit.type == 'journal')) ?
+    let journal_title = (d.unit && (d.unit.type == 'journal' || d.unit.type == 'conference_proceedings')) ?
       <meta id="meta-journal_title" name="citation_journal_title" content={d.unit.name} /> : null
     let [issn, volume, issue, firstpage, lastpage] = [null, null, null, null, null]
     if (a['ext_journal']) {
