@@ -175,7 +175,7 @@ class PublicationLayout extends React.Component {
                 <header>
                   <h2>{config.sidebarTitle}</h2>
                 </header>
-                <JournalInfoComp doaj={data.doaj} rights={data.issue && data.issue.rights} issn={data.issn} eissn={data.eissn} cc_license_text={data.issue.use_item_rights && data.cc_license_text} />
+                <JournalInfoComp doaj={data.doaj} rights={data.issue && data.issue.rights} issn={data.issn} eissn={data.eissn} cc_license_text={data.issue && data.issue.use_item_rights && data.cc_license_text} />
               </section>
             }
             {sidebar}
