@@ -25,6 +25,7 @@ import LoginSuccessPage from './pages/LoginSuccessPage.jsx'
 import LogoutPage from './pages/LogoutPage.jsx'
 import LogoutSuccessPage from './pages/LogoutSuccessPage.jsx'
 import UserAccountPage from './pages/UserAccountPage.jsx'
+import MatomoTracker from './MatomoTracker.jsx'
 
 /* There are a bunch of React warnings that we can't do anything about because they're
    caused by dependencies we can't easily upgrade. Rather than have them occupying our
@@ -101,6 +102,7 @@ class App extends React.Component
 {
   render = () =>
     <div>
+      <MatomoTracker />
       <Route path="*" component={RecordLocation} />
       <Switch> {/* only one route below will match */}
         <Route exact path="/" component={HomePage} />
