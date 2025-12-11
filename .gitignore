@@ -1,7 +1,9 @@
 app/css
 app/js/*bundle*.js
+app/js/*bundle*.cjs
 app/js/manifest.json
 app/js/*.map
+.vite
 app/siteMap*.xml
 awsLogs/
 aws/

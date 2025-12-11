@@ -575,13 +575,54 @@ get %r{.*} do
 end
 
 ###################################################################################################
+def parseManifest
+  # Vite's manifest has a different structure than webpack-manifest-plugin
+  # We need to extract the main entry and vendor chunk
+  
+  manifestPath = 'app/js/manifest.json'
+  return nil unless File.exist?(manifestPath)
+  
+  manifest = JSON.parse(File.read(manifestPath))
+  
+  # Find the main entry (look for app/main.jsx or similar)
+  mainEntry = manifest['app/main.jsx'] || manifest['main.jsx'] || manifest.values.find { |v| v['isEntry'] }
+  return nil unless mainEntry
+  
+  result = {
+    'app.js' => "/#{mainEntry['file']}",
+    'main.css' => mainEntry['css'] ? "/#{mainEntry['css'][0]}" : nil
+  }
+  
+  # Find vendor chunk (look for imports)
+  if mainEntry['imports'] && mainEntry['imports'].any?
+    vendorChunkKey = mainEntry['imports'].find { |imp| imp.include?('vendor') }
+    if vendorChunkKey && manifest[vendorChunkKey]
+      result['vendors~app.js'] = "/#{manifest[vendorChunkKey]['file']}"
+    end
+  end
+  
+  return result
+end
+
+###################################################################################################
 def generalResponse
   # Replace startup URLs for proper cache busting
   template = File.new("app/app.html").read
-  webpackManifest = JSON.parse(File.read('app/js/manifest.json'))
-  template.sub!("/js/vendors~app.js", "#{webpackManifest["vendors~app.js"]}")
-  template.sub!("/js/app.js", "#{webpackManifest["app.js"]}")
-  template.sub!("/css/main.css", "/css/main-#{Digest::MD5.file("app/css/main.css").hexdigest[0,16]}.css")
+  viteManifest = parseManifest
+  
+  if viteManifest
+    # Vite build
+    template.sub!("/js/vendors~app.js", "#{viteManifest['vendors~app.js'] || '/js/vendors~app.js'}")
+    template.sub!("/js/app.js", "#{viteManifest['app.js']}")
+    template.sub!("/css/main.css", "#{viteManifest['main.css'] || '/css/main.css'}")
+  else
+    # TODO: remove this fallback once testing is done
+    # Fallback to old webpack manifest format 
+    webpackManifest = JSON.parse(File.read('app/js/manifest.json'))
+    template.sub!("/js/vendors~app.js", "#{webpackManifest["vendors~app.js"]}")
+    template.sub!("/js/app.js", "#{webpackManifest["app.js"]}")
+    template.sub!("/css/main.css", "/css/main-#{Digest::MD5.file("app/css/main.css").hexdigest[0,16]}.css")
+  end
 
   # In development mode, skip iso
   ENV['ISO_PORT'] or return template

@@ -1,4 +1,10 @@
-"use strict"
+/**
+ * Entry point for isomorphic server
+ * 
+ * Uses pre-built SSR bundle
+ */
 
-require("@babel/register")
-require('./isomorphic.jsx')
+import('./isomorphic-server.mjs')
+
+// require("@babel/register")
+// require('./isomorphic.jsx')
