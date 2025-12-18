@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { resolve } from 'path'
+import inject from '@rollup/plugin-inject';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ command, mode, isSsrBuild }) => {
@@ -10,17 +11,18 @@ export default defineConfig(({ command, mode, isSsrBuild }) => {
   return {
     plugins: [
       react({
+        jsxRuntime: 'classic', // Required for React 16 - uses React.createElement
         babel: {
-          plugins: [
-            ['@babel/plugin-proposal-decorators', { legacy: true }],
-            '@babel/plugin-proposal-class-properties',
-            '@babel/plugin-proposal-json-strings',
-            '@babel/plugin-proposal-function-sent',
-            '@babel/plugin-proposal-export-namespace-from',
-            '@babel/plugin-proposal-numeric-separator',
-            '@babel/plugin-proposal-throw-expressions',
-          ]
+          parserOpts: {
+            plugins: ['classProperties']
+          }
         }
+      }),
+      inject({
+        $: 'jquery',
+        jQuery: 'jquery',
+        _: 'lodash',
+        include: ['**/*.js', '**/*.jsx']
       })
     ],
 
@@ -63,7 +65,6 @@ export default defineConfig(({ command, mode, isSsrBuild }) => {
           '@moebius/http-graceful-shutdown'
         ]
       },
-      target: 'node18'
     } : {
       // Client Build Configuration
       outDir: 'app',
@@ -108,9 +109,9 @@ export default defineConfig(({ command, mode, isSsrBuild }) => {
       'process.env.NODE_ENV': JSON.stringify(mode)
     },
 
-    optimizeDeps: {
-      include: ['jquery', 'react', 'react-dom', 'react-router-dom']
-    }
+    // optimizeDeps: {
+    //   include: ['jquery', 'react', 'react-dom', 'react-router-dom']
+    // }
   }
 })
 

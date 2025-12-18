@@ -1,11 +1,11 @@
 
 // ##### Top-level React Router App ##### //
-if (!(typeof document === "undefined")) {
-  // require('babel-polyfill')   // do we need this?
-  require('details-polyfill')
-  require('intersection-observer')
-  require('smoothscroll-polyfill').polyfill();
-}
+// if (!(typeof document === "undefined")) {
+//   // require('babel-polyfill')   // do we need this?
+//   require('details-polyfill')
+//   require('intersection-observer')
+//   require('smoothscroll-polyfill').polyfill();
+// }
 
 import React from 'react'
 import ReactDOM from 'react-dom'
@@ -56,7 +56,7 @@ const o_error = console.error; console.error = function(...args) { filterMsg(o_e
 const o_info  = console.info;  console.info  = function(...args) { filterMsg(o_info, ...args)  }
 
 // array-include polyfill for older browsers (and node.js)
-Array.prototype.includes = require('array-includes').shim()
+// Array.prototype.includes = require('array-includes').shim()
 
 ReactGA.initialize('UA-26286226-1', { debug: false })
 

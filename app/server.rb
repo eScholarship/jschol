@@ -590,8 +590,15 @@ def parseManifest
   
   result = {
     'app.js' => "/#{mainEntry['file']}",
-    'main.css' => mainEntry['css'] ? "/#{mainEntry['css'][0]}" : nil
+    'main.css' => nil
   }
+  
+  # Find CSS - could be in mainEntry['css'] array or as a separate style.css entry
+  if mainEntry['css'] && mainEntry['css'].any?
+    result['main.css'] = "/#{mainEntry['css'][0]}"
+  elsif manifest['style.css']
+    result['main.css'] = "/#{manifest['style.css']['file']}"
+  end
   
   # Find vendor chunk (look for imports)
   if mainEntry['imports'] && mainEntry['imports'].any?

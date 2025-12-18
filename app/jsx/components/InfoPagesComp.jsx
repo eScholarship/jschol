@@ -5,12 +5,6 @@ import PropTypes from 'prop-types'
 import { Link } from 'react-router-dom'
 import NotYetLink from '../components/NotYetLink.jsx'
 import PaginationComp from '../components/PaginationComp.jsx'
-
-// Load dotdotdot in browser but not server
-if (!(typeof document === "undefined")) {
-  const dotdotdot = require('jquery.dotdotdot')
-}
-
 class ResultComp extends React.Component {
   static propTypes = {
     result: PropTypes.shape({

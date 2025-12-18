@@ -3,7 +3,7 @@
 
 import React from 'react'
 import PropTypes from 'prop-types'
-import MetaTags from 'react-meta-tags'
+import { MetaTags } from 'react-meta-tags'
 
 export default class MetaTagsComp extends React.Component
 {
