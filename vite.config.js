@@ -6,7 +6,9 @@ import inject from '@rollup/plugin-inject';
 // https://vitejs.dev/config/
 export default defineConfig(({ command, mode, isSsrBuild }) => {
   const isSSR = isSsrBuild || mode === 'ssr'
-  const isProd = mode === 'production' || mode === 'ssr'
+  const isProd = mode === 'production'
+  
+  console.log(`Vite build mode: ${mode}, isSSR: ${isSSR}, isProd: ${isProd}`)
   
   return {
     plugins: [
@@ -47,6 +49,8 @@ export default defineConfig(({ command, mode, isSsrBuild }) => {
       ssr: true,
       outDir: 'app/js',
       emptyOutDir: false, // Don't delete client files
+      minify: isProd, // Only minify SSR in production
+      sourcemap: isProd ? true : 'inline',
       rollupOptions: {
         input: resolve(__dirname, 'app/isomorphic-entry.jsx'),
         output: {
@@ -72,6 +76,8 @@ export default defineConfig(({ command, mode, isSsrBuild }) => {
       assetsDir: '', // Keep assets flat
       manifest: 'js/manifest.json', // Put manifest in js/
       cssCodeSplit: false, // Bundle all CSS into one file
+      minify: isProd ? 'esbuild' : false, // Minify only in production for debuggable dev builds
+      sourcemap: isProd ? true : 'inline', // External sourcemaps for prod, inline for dev
       rollupOptions: {
         input: resolve(__dirname, 'main.jsx'),
         output: {
@@ -94,7 +100,6 @@ export default defineConfig(({ command, mode, isSsrBuild }) => {
         }
       },
       target: 'es2015',
-      sourcemap: isProd ? true : 'inline'
     },
 
     // Development server config (for HMR during dev)
