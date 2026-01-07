@@ -9,8 +9,8 @@
   "repository": "https://github.com/eScholarship/jschol",
   "scripts": {
     "test": "mocha",
-    "dev": "npm run build:all && concurrently -k -n \"socks,vite,puma\" -c \"cyan,blue,green\" \"ruby util/maybeSocks.rb\" \"vite build --mode development --watch\" \"bundle exec puma\"",
-    "dev:ssr": "npm run build:all && concurrently -n \"socks,client,ssr,puma\" -c \"cyan,blue,magenta,green\" \"ruby util/maybeSocks.rb\" \"vite build --mode development --watch\" \"vite build --mode ssr --watch\" \"bundle exec puma\"",
+    "dev": "concurrently -k -n \"socks,vite,puma\" -c \"cyan,blue,green\" \"ruby util/maybeSocks.rb\" \"vite build --mode development --watch\" \"sleep 3 && bundle exec puma\"",
+    "dev:ssr": "concurrently -n \"socks,client,ssr,puma\" -c \"cyan,blue,magenta,green\" \"ruby util/maybeSocks.rb\" \"vite build --mode development --watch\" \"vite build --mode ssr --watch\" \"sleep 5 && bundle exec puma\"",
     "build": "vite build",
     "build:ssr": "vite build --mode ssr",
     "build:all": "npm run build && npm run build:ssr",
