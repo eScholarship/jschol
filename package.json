@@ -10,12 +10,12 @@
   "scripts": {
     "test": "mocha",
     "dev": "concurrently -k -n \"socks,vite,puma\" -c \"cyan,blue,green\" \"ruby util/maybeSocks.rb\" \"vite build --mode development --watch\" \"sleep 3 && bundle exec puma\"",
-    "dev:ssr": "concurrently -n \"socks,client,ssr,puma\" -c \"cyan,blue,magenta,green\" \"ruby util/maybeSocks.rb\" \"vite build --mode development --watch\" \"vite build --mode ssr --watch\" \"sleep 5 && bundle exec puma\"",
+    "dev:ssr": "concurrently -n \"socks,client,ssr,puma\" -c \"cyan,blue,magenta,green\" \"ruby util/maybeSocks.rb\" \"vite build --mode development --watch\" \"vite build --ssr --mode development --watch\" \"sleep 5 && bundle exec puma\"",
     "build": "vite build",
-    "build:ssr": "vite build --mode ssr",
+    "build:ssr": "vite build --ssr",
     "build:all": "npm run build && npm run build:ssr",
     "build:prod": "vite build --mode production",
-    "build:prod:ssr": "vite build --mode production --ssr",
+    "build:prod:ssr": "vite build --ssr --mode production",
     "build:prod:all": "npm run build:prod && npm run build:prod:ssr",
     "preview": "vite preview",
     "start": "npm run build:all && bundle exec puma"
