@@ -31,6 +31,8 @@ export default defineConfig(({ command, mode, isSsrBuild }) => {
     css: {
       preprocessorOptions: {
         scss: {
+          // Use modern Sass API instead of legacy
+          api: 'modern-compiler',
           // Make paths available to SCSS
           includePaths: ['app/scss', 'node_modules']
         }

@@ -1,5 +1,7 @@
 // ##### Styles for eScholarship ##### //
 
+@use 'sass:color';
+
 // *** Third-party Styles *** //
 
 @import 'flickity/dist/flickity.min.css';
@@ -132,7 +134,7 @@
 body {
   margin: 0 auto;
   padding: $spacing-sm $spacing-sm 0;
-  background-color: lighten($color-light-gray, 15%);
+  background-color: color.adjust($color-light-gray, $lightness: 15%);
   font-family: 'SourceSansPro', 'Arial', 'Helvetica', sans-serif;
   overflow-x: hidden;
 

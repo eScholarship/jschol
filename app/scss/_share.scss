@@ -1,5 +1,7 @@
 // ##### Share Component ##### //
 
+@use 'sass:color';
+
 .c-share {
   display: inline-block;
   border-radius: $round-corner;
@@ -43,7 +45,7 @@
   right: 0;
   left: 0;
   margin-top: 5px;
-  background-color: lighten($color-black, 35%);
+  background-color: color.adjust($color-black, $lightness: 35%);
   z-index: 1;
 
   @supports (backdrop-filter: blur()) {

@@ -1,5 +1,7 @@
 // ##### adminbar Component ##### //
 
+@use 'sass:color';
+
 .c-editable-h3 {
   display: inline-block;
 }
@@ -110,17 +112,17 @@
     &:focus ~ label, &:hover ~ label {
       .can-toggle__switch {
         background-color: $can-toggle-off-color;
-        &:after { color: darken($can-toggle-off-color, 10%); }
+        &:after { color: color.adjust($can-toggle-off-color, $lightness: -10%); }
       }
     }
-    &:hover ~label { color: darken($can-toggle-off-color, 5%); }
+    &:hover ~label { color: color.adjust($can-toggle-off-color, $lightness: -5%); }
     &:checked {
       ~ label {
-        &:hover { color: darken($can-toggle-on-color, 3%); }
+        &:hover { color: color.adjust($can-toggle-on-color, $lightness: -3%); }
         
         .can-toggle__switch {
-          background-color: lighten($can-toggle-on-color, 5%);
-          &:after { color: darken($can-toggle-on-color, 5%); }
+          background-color: color.adjust($can-toggle-on-color, $lightness: 5%);
+          &:after { color: color.adjust($can-toggle-on-color, $lightness: -5%); }
         }
       }
       
@@ -128,7 +130,7 @@
         ~ label {
           .can-toggle__switch {
             background-color: $can-toggle-on-color;
-            &:after { color: darken($can-toggle-on-color, 10%); }
+            &:after { color: color.adjust($can-toggle-on-color, $lightness: -10%); }
           }
         } 
       }
@@ -144,7 +146,7 @@
     
     .can-toggle__switch {
       transition: background-color 0.3s $can-toggle-transition;
-      background: lighten($can-toggle-off-color, 5%);
+      background: color.adjust($can-toggle-off-color, $lightness: 5%);
       &:before { color: $can-toggle-inactive-text; }
       &:after {
         // Autoprefixer choked here, so making the prefixes explicit

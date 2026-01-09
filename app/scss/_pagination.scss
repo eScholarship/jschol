@@ -1,5 +1,7 @@
 // ##### Pagination Component ##### //
 
+@use 'sass:color';
+
 %c-pagination {
   display: flex;
   flex: 1 1 auto;
@@ -119,7 +121,7 @@
 .c-pagination__next {
   @extend %c-pagination__items;
   border: 1px solid $color-light-gray;
-  color: lighten($color-dark-gray, 20%);
+  color: color.adjust($color-dark-gray, $lightness: 20%);
 }
 
 %c-pagination__prevnext--active {
