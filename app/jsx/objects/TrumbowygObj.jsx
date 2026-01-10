@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
-import trumbowyg from 'trumbowyg'
+import 'trumbowyg'
 const trumbowygIconsId = 'trumbowyg-icons'
 
 // Load some standard plugins
