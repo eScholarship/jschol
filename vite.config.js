@@ -8,7 +8,7 @@ export default defineConfig(({ command, mode, isSsrBuild }) => {
   const isSSR = isSsrBuild || mode === 'ssr'
   const isProd = mode === 'production'
   
-  console.log(`Vite build mode: ${mode}, isSSR: ${isSSR}, isProd: ${isProd}`)
+  console.log(`Vite build mode: ${mode}, isSSR: ${isSSR}`)
   
   return {
     plugins: [
@@ -45,7 +45,7 @@ export default defineConfig(({ command, mode, isSsrBuild }) => {
         '@': resolve(__dirname, './app'),
       }
     },
-
+    publicDir: false,
     build: isSSR ? {
       // SSR Build Configuration
       ssr: true,
@@ -106,7 +106,7 @@ export default defineConfig(({ command, mode, isSsrBuild }) => {
 
     // Development server config (for HMR during dev)
     server: {
-      port: 5173,
+      port: 18880,
       strictPort: false
     },
 
