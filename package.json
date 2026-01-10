@@ -1,6 +1,7 @@
 {
   "name": "jschol-app",
   "version": "0.1.0",
+  "type": "module",
   "browserslist": [
     "last 2 versions"
   ],
@@ -9,8 +10,8 @@
   "repository": "https://github.com/eScholarship/jschol",
   "scripts": {
     "test": "mocha",
-    "dev": "concurrently -k -n \"socks,vite,puma\" -c \"cyan,blue,green\" \"ruby util/maybeSocks.rb\" \"vite build --mode development --watch\" \"sleep 3 && bundle exec puma\"",
-    "dev:ssr": "concurrently -n \"socks,client,ssr,puma\" -c \"cyan,blue,magenta,green\" \"ruby util/maybeSocks.rb\" \"vite build --mode development --watch\" \"vite build --ssr --mode development --watch\" \"sleep 5 && bundle exec puma\"",
+    "clean": "rm -rf app/js/*bundle* app/js/assets/ app/css/*.css app/css/*.map app/js/manifest.json",
+    "dev": "npm run clean && concurrently -k -n \"socks,client,ssr,puma\" -c \"cyan,blue,magenta,green\" \"ruby util/maybeSocks.rb\" \"vite build --mode development --watch\" \"vite build --ssr --mode development --watch\" \"sleep 5 && bundle exec puma\"",
     "build": "vite build",
     "build:ssr": "vite build --ssr",
     "build:all": "npm run build && npm run build:ssr",
@@ -24,7 +25,7 @@
   "license": "MIT",
   "devDependencies": {
     "@rollup/plugin-inject": "^5.0.5",
-    "@vitejs/plugin-react": "^4.2.1",
+    "@vitejs/plugin-react": "^4.7.0",
     "autoprefixer": "^10.4.17",
     "babel-loader": "^8.2.5",
     "babel-plugin-css-modules-transform": "^1.6.2",
@@ -74,7 +75,7 @@
     "terser": "^5.27.0",
     "uglifyjs-webpack-plugin": "^1.3.0",
     "use-resize-observer": "^9.1.0",
-    "vite": "^5.1.0",
+    "vite": "^6.4.1",
     "webpack": "^4.46.0",
     "webpack-cli": "^3.3.12",
     "webpack-manifest-plugin": "^2.2.0",
