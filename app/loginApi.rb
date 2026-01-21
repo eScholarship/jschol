@@ -96,6 +96,27 @@ def getUserID(username)
 end
 
 ###################################################################################################
+# Find the ancestor campus unit for a given unit (returns campus unit_id or nil)
+def getAncestorCampus(unitID)
+  unit = $unitsHash[unitID]
+  return nil unless unit
+  
+  # If this is already a campus, return it
+  return unitID if unit.type == 'campus'
+  
+  # Look up the hierarchy to find a campus ancestor
+  # The unit_hier table tracks ancestor_unit relationships
+  campusAncestor = DB[:unit_hier]
+    .join(:units, id: :ancestor_unit)
+    .where(unit_id: unitID)
+    .where(Sequel[:units][:type] => 'campus')
+    .select(Sequel[:unit_hier][:ancestor_unit])
+    .first
+  
+  return campusAncestor ? campusAncestor[:ancestor_unit] : nil
+end
+
+###################################################################################################
 # Determine permissions based on username and key
 def getUserPermissions(username, sessionID, unitID)
 
@@ -125,6 +146,9 @@ def getUserPermissions(username, sessionID, unitID)
     return { admin: true, super: true }
   elsif OJS_DB[:eschol_roles].where(user_id: userID, role: 'admin', unit_id: unitID).first
     return { admin: true }
+  elsif (campusID = getAncestorCampus(unitID)) && 
+        OJS_DB[:eschol_roles].where(user_id: userID, role: 'campusadmin', unit_id: campusID).first
+    return { admin: true, campus_admin: true, campus_id: campusID }
   else
     return {}
   end
