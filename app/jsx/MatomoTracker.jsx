@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react"
 import { withRouter } from "react-router-dom"
 
 function MatomoTracker({ location }) {
+  if (typeof window === "undefined") return null
   const isInitialMount = useRef(true)
 
   useEffect(() => {
