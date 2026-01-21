@@ -1833,7 +1833,7 @@ put "/api/unit/:unitID/userConfig" do |unitID|
   OJS_DB.transaction {
     oldRoles = Set.new
     getUnitUserConfig($unitsHash[unitID])[:user_roles].each { |row|
-      %w{admin stats submit}.each { |role|
+      %w{campusadmin admin stats submit}.each { |role|
         row[:roles][role] and oldRoles << { userID: row[:user_id], role: role }
       }
     }
@@ -1841,7 +1841,7 @@ put "/api/unit/:unitID/userConfig" do |unitID|
     newRoles = Set.new
     params['data'].keys.map{ |k| k.sub(/^\w+-/, '') }.uniq.each { |userID|
       userID == "newuser" or userID = userID.to_i
-      %w{admin stats submit}.each { |role|
+      %w{campusadmin admin stats submit}.each { |role|
         params['data']["#{role}-#{userID}"] == 'on' and newRoles << { userID: userID, role: role }
       }
     }
