@@ -33,41 +33,44 @@ export default class UnitUserConfigLayout extends React.Component
                             <tr>
                               <th scope="col">Name</th>
                               <th scope="col">Account</th>
-                              {isCampus && <th scope="col">Campus admin</th>}
+                              <th scope="col">Campus admin</th>
                               <th scope="col">Unit admin</th>
                               <th scope="col">Stats</th>
                               <th scope="col">Submit</th>
                             </tr>
                           </thead>
                           <tbody>
-                            { _.map(p.data.user_roles, row =>
-                              <tr key={row.user_id}>
-                                <td className="c-editable-tableCell">
-                                  {row.name}
-                                </td>
-                                <td className="c-editable-tableCell">
-                                  <Link to={`/userAccount/${row.user_id}`}>{row.email}</Link>
-                                </td>
-                                {isCampus && (
-                                  <td className="c-editable-tableCell">
-                                    <input type="checkbox" name={`campusadmin-${row.user_id}`} defaultChecked={row.roles.campusadmin}
-                                           disabled={disableEdit} onChange={()=>this.setState({anyChanges: true})}/>
-                                  </td>
-                                )}
-                                <td className="c-editable-tableCell">
-                                  <input type="checkbox" name={`admin-${row.user_id}`} defaultChecked={row.roles.admin}
-                                         disabled={disableEdit} onChange={()=>this.setState({anyChanges: true})}/>
-                                </td>
-                                <td className="c-editable-tableCell">
-                                  <input type="checkbox" name={`stats-${row.user_id}`} defaultChecked={row.roles.stats}
-                                         disabled={disableEdit} onChange={()=>this.setState({anyChanges: true})}/>
-                                </td>
-                                <td className="c-editable-tableCell">
-                                  <input type="checkbox" name={`submit-${row.user_id}`} defaultChecked={row.roles.submit}
-                                         disabled={disableEdit} onChange={()=>this.setState({anyChanges: true})}/>
-                                </td>
-                              </tr>
-                            )}
+                            { _.map(p.data.user_roles, row => {
+                                // Campus admin can only be edited at campus level, and inherited ones are always disabled
+                                let campusAdminDisabled = disableEdit || !isCampus || row.inherited_campusadmin
+                                return (
+                                  <tr key={row.user_id}>
+                                    <td className="c-editable-tableCell">
+                                      {row.name}
+                                    </td>
+                                    <td className="c-editable-tableCell">
+                                      <Link to={`/userAccount/${row.user_id}`}>{row.email}</Link>
+                                    </td>
+                                    <td className="c-editable-tableCell">
+                                      <input type="checkbox" name={`campusadmin-${row.user_id}`} defaultChecked={row.roles.campusadmin}
+                                             disabled={campusAdminDisabled} onChange={()=>this.setState({anyChanges: true})}/>
+                                    </td>
+                                    <td className="c-editable-tableCell">
+                                      <input type="checkbox" name={`admin-${row.user_id}`} defaultChecked={row.roles.admin}
+                                             disabled={disableEdit} onChange={()=>this.setState({anyChanges: true})}/>
+                                    </td>
+                                    <td className="c-editable-tableCell">
+                                      <input type="checkbox" name={`stats-${row.user_id}`} defaultChecked={row.roles.stats}
+                                             disabled={disableEdit} onChange={()=>this.setState({anyChanges: true})}/>
+                                    </td>
+                                    <td className="c-editable-tableCell">
+                                      <input type="checkbox" name={`submit-${row.user_id}`} defaultChecked={row.roles.submit}
+                                             disabled={disableEdit} onChange={()=>this.setState({anyChanges: true})}/>
+                                    </td>
+                                  </tr>
+                                )
+                              })
+                            }
                             <tr key="newuser">
                               <td className="c-editable-tableCell">
                                 <i>(add role for user)</i>
@@ -75,11 +78,9 @@ export default class UnitUserConfigLayout extends React.Component
                               <td className="c-editable-tableCell">
                                 <input type="email" name="email-newuser" disabled={disableEdit} placeholder="existing email"/>
                               </td>
-                              {isCampus && (
-                                <td className="c-editable-tableCell">
-                                  <input type="checkbox" name="campusadmin-newuser" disabled={disableEdit} onChange={()=>this.setState({anyChanges: true})}/>
-                                </td>
-                              )}
+                              <td className="c-editable-tableCell">
+                                <input type="checkbox" name="campusadmin-newuser" disabled={disableEdit || !isCampus} onChange={()=>this.setState({anyChanges: true})}/>
+                              </td>
                               <td className="c-editable-tableCell">
                                 <input type="checkbox" name="admin-newuser" disabled={disableEdit} onChange={()=>this.setState({anyChanges: true})}/>
                               </td>

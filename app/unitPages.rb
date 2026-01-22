@@ -1825,6 +1825,26 @@ def getUnitUserConfig(unit)
     userRoles[userID][:roles][row[:role]] = true
   }
 
+  # If this is a sub-unit, fetch inherited campus admins from ancestor campus
+  if unit.type != 'campus'
+    campusID = getAncestorCampus(unit.id)
+    if campusID
+      campusAdminQuery = Sequel::SQL::PlaceholderLiteralString.new(%{
+        select eschol_roles.user_id, email, first_name, last_name
+        from eschol_roles
+        join users on users.user_id = eschol_roles.user_id
+        where unit_id = :campusID and role = 'campusadmin'
+        order by last_name = '', last_name, first_name, email
+      }.unindent, { campusID: campusID })
+      OJS_DB.fetch(campusAdminQuery).each { |row|
+        userID = row[:user_id]
+        userRoles[userID] ||= { user_id: userID, name: formatFirstLast(row), email: row[:email], roles: {} }
+        userRoles[userID][:roles]['campusadmin'] = true
+        userRoles[userID][:inherited_campusadmin] = true  # Mark as inherited
+      }
+    end
+  end
+
   return { user_roles: userRoles.values }
 end
 
