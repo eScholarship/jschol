@@ -1219,6 +1219,14 @@ put "/api/unit/:unitID/adoptUnit" do |parentUnitID|
   return {status: "ok"}.to_json
 end
 
+
+###################################################################################################
+# Adopt an existing unit as a sub-unit
+put "/api/unit/:unitID/adoptItem" do |targetUnit|
+   puts "adopt to unit #{targetUnit}"
+   puts "adopt called #{params}"
+   return {status: "ok"}.to_json
+end
 ###################################################################################################
 # Disown a sub-unit (must have at least one other parent)
 put "/api/unit/:unitID/disownUnit" do |parentUnitID|

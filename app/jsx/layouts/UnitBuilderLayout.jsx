@@ -134,7 +134,7 @@ export default class UnitBuilderLayout extends React.Component
                 </FormComp>
               </details>
             }
-            {/oru|campus/.test(p.unit.type) &&
+	    {/oru|campus/.test(p.unit.type) &&
               <details className="c-togglecontent">
                 <summary>Adopt existing unit as sub-unit</summary>
                 <FormComp onSubmit={ (event, data) => {
@@ -147,6 +147,26 @@ export default class UnitBuilderLayout extends React.Component
                   <input className="c-editable-page__input" id="existingUnitID" name="existingUnitID" type="text"/>
 
                   <button type="submit">Adopt Unit</button>
+                </FormComp>
+              </details>
+            }
+	    {/series|monograph_series|seminar_series|journal/.test(p.unit.type) &&
+              <details className="c-togglecontent">
+                <summary>Adopt existing item</summary>
+                <FormComp onSubmit={ (event, data) => {
+                            event.preventDefault()
+			    console.log("MY the data sent to API is", data)
+                            p.sendApiData("PUT", `/api/unit/${p.unit.id}/adoptItem`, data)
+                          }}>
+                  <p><i>Make sure you are accessing this page from the desired parent unit.</i></p>
+
+                  <label className="c-editable-page__label" htmlFor="existingItemID">Item URL to adopt: </label>
+                  <input className="c-editable-page__input" id="existingItemID" name="existingItemID" type="text"/>
+                  
+                  <label htmlFor="removeExistingID">Disassociate from the existing unit: </label>
+	          <input className="c-checkbox" type="checkbox" id="removeExistingID" name="removeExisting" defaultChecked={false} />
+                  <br/>
+	          <button type="submit">Adopt Item</button>
                 </FormComp>
               </details>
             }
