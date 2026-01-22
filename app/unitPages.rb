@@ -1849,7 +1849,9 @@ def getUnitUserConfig(unit)
 end
 
 put "/api/unit/:unitID/userConfig" do |unitID|
-  getUserPermissions(params[:username], params[:token], unitID)[:super] or restrictedHalt
+  perms = getUserPermissions(params[:username], params[:token], unitID)
+  perms[:admin] or restrictedHalt
+  
   OJS_DB.transaction {
     oldRoles = Set.new
     getUnitUserConfig($unitsHash[unitID])[:user_roles].each { |row|
@@ -1862,7 +1864,14 @@ put "/api/unit/:unitID/userConfig" do |unitID|
     params['data'].keys.map{ |k| k.sub(/^\w+-/, '') }.uniq.each { |userID|
       userID == "newuser" or userID = userID.to_i
       %w{campusadmin admin stats submit}.each { |role|
-        params['data']["#{role}-#{userID}"] == 'on' and newRoles << { userID: userID, role: role }
+        # Only super users can modify campusadmin role
+        if role == 'campusadmin' && !perms[:super]
+          # Keep existing campusadmin state, don't allow changes
+          oldRole = oldRoles.find { |r| r[:userID] == userID && r[:role] == 'campusadmin' }
+          oldRole and newRoles << oldRole
+        else
+          params['data']["#{role}-#{userID}"] == 'on' and newRoles << { userID: userID, role: role }
+        end
       }
     }
 
