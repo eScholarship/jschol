@@ -118,6 +118,20 @@ def getNavPerms(unit, navItems, userPerms)
       result[slug] =   { change_slug: true,  change_text: true,  remove: true,  reorder: true  }
     elsif !userPerms[:admin]
       result[slug] =   noAccess
+    elsif userPerms[:campus_admin]
+      # Campus admins have access with protected page restrictions
+      case slug
+      when /^(policyStatement|policies|policiesProcedures|journal_policies|policy)$/i
+        result[slug] = { change_slug: false, change_text: false, remove: false, reorder: true  }
+      when /^(submitPaper|submissionGuidelines|submissionprocess|howsubmit)$/i
+        result[slug] = { change_slug: false, change_text: true,  remove: false, reorder: true  }
+      when /^(contactUs|contact)$/i
+        result[slug] = { change_slug: false, change_text: true,  remove: false, reorder: false }
+      when /^(aboutus|about)$/i
+        result[slug] = { change_slug: false, change_text: true,  remove: false, reorder: true  }
+      else
+        result[slug] = { change_slug: true,  change_text: true,  remove: true,  reorder: true  }
+      end
     elsif unit.type == 'campus'
       result[slug] =   noAccess
     else
@@ -1369,14 +1383,24 @@ end
 ###################################################################################################
 # Copy a unit with its pages, widgets, etc.
 put "/api/unit/:unitID/copyUnit" do |oldUnitID|
-  # Only super-users allowed to copy units
-  getUserPermissions(params[:username], params[:token], oldUnitID)[:super] or halt(401)
-
+  # Check user permissions
+  perms = getUserPermissions(params[:username], params[:token], oldUnitID)
+  
   # Sanity checks
   $unitsHash[oldUnitID].type == 'root' and jsonHalt(400, "Cannot copy the root-level unit.")
   targetParentID = params[:targetParentID]
   targetParent = $unitsHash[targetParentID] or jsonHalt(400, "Unrecognized target parent unit")
   targetParent.type =~ /series|journal/ and jsonHalt(400, "Target parent unit cannot be a series or journal")
+  
+  # Permission checks: Super users can copy any units, campus admins can only create sub-units (not at campus level)
+  if perms[:super]
+    # Super users have full access
+  elsif perms[:campus_admin]
+    # Campus admins cannot create units directly under campus (view only at campus level)
+    targetParent.type == 'campus' and jsonHalt(401, "Campus admins cannot create units at campus level")
+  else
+    halt(401)
+  end
 
   newUnitID = params[:newUnitID]
   newUnitID =~ /^[a-z0-9_]+$/ or jsonHalt(400, "Invalid new unit ID")
@@ -1403,6 +1427,32 @@ put "/api/unit/:unitID/copyUnit" do |oldUnitID|
       props.delete(:id)
       Widget.create(props)
     }
+    
+    # Auto-assign campus admins to new unit
+    # Find ancestor campus and assign all its campus admins to the new unit
+    campusID = getAncestorCampus(newUnitID)
+    if campusID
+      # Get all campus admins for this campus
+      campusAdmins = DB[:eschol_roles]
+        .where(unit_id: campusID, role: 'campusadmin')
+        .select(:user_id)
+        .all
+      
+      # Assign each campus admin to the new unit
+      campusAdmins.each do |admin|
+        # Check if role already exists to avoid duplicates
+        existing = DB[:eschol_roles]
+          .where(unit_id: newUnitID, user_id: admin[:user_id], role: 'admin')
+          .first
+        unless existing
+          DB[:eschol_roles].insert(
+            unit_id: newUnitID,
+            user_id: admin[:user_id],
+            role: 'admin'
+          )
+        end
+      end
+    end
   }
   refreshUnitsHash
   return {status: "ok", nextURL: "/uc/#{newUnitID}"}.to_json
@@ -1549,7 +1599,24 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
     unit = Unit[unitID] or jsonHalt(404, "Unit not found")
     unitAttrs = JSON.parse(unit.attrs)
     #puts "DATA received is #{params['data']}"   
-    if params['data']['unitName'] then unit.name = params['data']['unitName'] end
+    
+    # Name editing restrictions based on user role and unit type
+    if params['data']['unitName']
+      if perms[:super]
+        # Super users can change any unit name
+        unit.name = params['data']['unitName']
+      elsif perms[:campus_admin]
+        # Campus admins cannot change campus or journal names, but can change other unit types
+        if unit.type == 'campus' || unit.type == 'journal'
+          # Silently ignore name change attempt for campus or journal
+        else
+          unit.name = params['data']['unitName']
+        end
+      else
+        # Unit admins can change their unit's name (if they have admin access)
+        unit.name = params['data']['unitName']
+      end
+    end
 
     # Only change unit config flags if the that section is being saved -- avoids clearing them accidentally
     if params['data']['unitConfigSection']
@@ -1557,8 +1624,8 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
         unitAttrs['logo']['is_banner'] = params['data']['logoIsBanner'] == 'on'
       end
 
-      # Certain elements can only be changed by super user
-      if perms[:super]
+      # Certain elements can only be changed by super user or campus admin
+      if perms[:super] || perms[:campus_admin]
         unitAttrs['doaj'] = (params['data']['doajSeal'] == 'on')
         unitAttrs['altmetrics_ok'] = (params['data']['altmetrics_ok'] == 'on')
         unitAttrs['commenting_ok'] = (params['data']['commenting_ok'] == 'on')
@@ -1850,7 +1917,7 @@ end
 
 put "/api/unit/:unitID/userConfig" do |unitID|
   perms = getUserPermissions(params[:username], params[:token], unitID)
-  perms[:admin] or restrictedHalt
+  (perms[:super] || perms[:campus_admin]) or restrictedHalt
   
   OJS_DB.transaction {
     oldRoles = Set.new
