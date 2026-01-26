@@ -179,7 +179,11 @@ class UnitProfileLayout extends React.Component {
     return (
       <Contexts.CMS.Consumer>
       { cms => {
-         let disableEdit = !(cms.permissions && cms.permissions.super)
+         let disableEdit = !(cms.permissions && (cms.permissions.super || cms.permissions.campus_admin))
+         
+         // Campus admins cannot edit campus or journal names, only super users can
+         let disableNameEdit = cms.permissions && cms.permissions.campus_admin && 
+                               (this.props.unit.type == 'campus' || this.props.unit.type == 'journal') ? true : disableEdit
          
          let disableLogo = (this.props.unit.type.indexOf("series") >= 0) ||
                            (this.props.unit.type == "campus" && disableEdit)
@@ -200,8 +204,8 @@ class UnitProfileLayout extends React.Component {
                  <FormComp to={`/api/unit/${this.props.unit.id}/profileContentConfig`} onSubmit={this.handleSubmit}>
                    {/* Marker so that unitPages.rb can tell which section is being submitted */}
                    <input type="hidden" name="unitConfigSection" defaultValue="yes"/>
-                   <label className="c-editable-page__label" htmlFor="unitName">Name: {disableEdit ? "(restricted)" : ""}</label>
-                   <input disabled={disableEdit} className="c-editable-page__input" id="unitName" type="text" defaultValue={data.name}
+                   <label className="c-editable-page__label" htmlFor="unitName">Name: {disableNameEdit ? "(restricted)" : ""}</label>
+                   <input disabled={disableNameEdit} className="c-editable-page__input" id="unitName" type="text" defaultValue={data.name}
                            onChange={ event => this.setData({ name: event.target.value }) }/>
 
                    <label className="c-editable-page__label" htmlFor="logoImage">Logo image{disableLogo ? "(restricted)" : ""}</label>
@@ -245,7 +249,7 @@ class UnitProfileLayout extends React.Component {
                      />
                    <br/>
 
-                   { cms.permissions && cms.permissions.super && !disableLogo &&
+                   { cms.permissions && (cms.permissions.super || cms.permissions.campus_admin) && !disableLogo &&
                     <div className="c-subheadercontrols">
                       <h1>Subheader Color Controls</h1>
                       <BackgroundColorPickerComp textLabel="Subheader Background Color" backgroundColor={bgColor} onBackgroundColorChange={setBgColor} />
@@ -256,7 +260,7 @@ class UnitProfileLayout extends React.Component {
                     </div>
                    }
 
-                   { cms.permissions && cms.permissions.super &&
+                   { cms.permissions && (cms.permissions.super || cms.permissions.campus_admin) &&
                      <div>
                        <label className="c-editable-page__label" htmlFor="status">Unit status: </label>
                        <select name="status" defaultValue={data.status}>
