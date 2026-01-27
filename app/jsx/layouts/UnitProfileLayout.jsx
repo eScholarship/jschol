@@ -180,13 +180,19 @@ class UnitProfileLayout extends React.Component {
       <Contexts.CMS.Consumer>
       { cms => {
          let disableEdit = !(cms.permissions && (cms.permissions.super || cms.permissions.campus_admin))
+         let isSuper = cms.permissions && cms.permissions.super
+         let isCampusAdmin = cms.permissions && cms.permissions.campus_admin
          
          // Campus admins cannot edit campus or journal names, only super users can
          let disableNameEdit = cms.permissions && cms.permissions.campus_admin && 
                                (this.props.unit.type == 'campus' || this.props.unit.type == 'journal') ? true : disableEdit
          
-         let disableLogo = (this.props.unit.type.indexOf("series") >= 0) ||
-                           (this.props.unit.type == "campus" && disableEdit)
+         // Logo restrictions:
+         // - Series: disabled for non-super and non-campus-admin users
+         // - Campus: disabled if user doesn't have edit permissions
+         let disableLogo = this.props.unit.type.indexOf("series") >= 0 
+                           ? !(isSuper || isCampusAdmin)
+                           : (this.props.unit.type === "campus" && disableEdit)
          let newHeader = Object.assign({}, this.props.header)
          let [bgColor, setBgColor] = [this.state.newData.bgColor || data.bgColor, (color)=>{this.setData({bgColor:color})}]
          let [elColor, setElColor] = [this.state.newData.elColor || data.elColor, (color)=>{this.setData({elColor:color})}]
