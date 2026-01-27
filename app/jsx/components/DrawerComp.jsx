@@ -233,7 +233,7 @@ class DrawerComp extends React.Component {
       siteSettings.push({ id: "authorSearch",
                           title: <Link to={`/uc/root/authorSearch`}>Author/User Search</Link>})
     }
-    if (cms.permissions.super && this.props.data.unit.id != "root") {
+    if ((cms.permissions.super || cms.permissions.campus_admin) && this.props.data.unit.id != "root") {
       siteSettings.push({ id: "unitBuilder",
                           title: <Link to={`/uc/${this.props.data.unit.id}/unitBuilder`}>Unit Builder</Link>})
     }
