@@ -360,7 +360,7 @@ class PageBase extends React.Component
         && this.state.adminLogin
         && this.state.adminLogin.loggedIn
         && !this.state.fetchingPerms
-        && (refetch || !this.state.permissions))
+        && (refetch || !this.state.permissions || this.state.permissionsUnit !== unit))
     {
       this.setState({ fetchingPerms: true })
       $.getJSON(

@@ -39,7 +39,8 @@ class ItemPage extends PageBase {
 
   // Unit ID for permissions checking
   pagePermissionsUnit() {
-    return "root"  // This is only being used for super user access
+    // Use the item's campus ID for permissions so campus_admin role is included
+    return this.state.pageData?.header?.campusID || "root"
   }
 
   tabNameFromHash() {

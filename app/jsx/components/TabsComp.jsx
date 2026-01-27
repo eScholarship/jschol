@@ -56,7 +56,7 @@ class TabsComp extends React.Component {
       }
       <Contexts.CMS.Consumer>
         { cms => 
-          (cms.loggedIn && cms.permissions && cms.permissions.super) ?
+          (cms.loggedIn && cms.permissions && (cms.permissions.super || cms.permissions.campus_admin)) ?
           <button className={p.currentTab == "meta" ? "c-tabs__button--active" : "c-tabs__button"}
                 onClick = {() => this.tabFocus("meta")}>
             Meta</button>
@@ -73,7 +73,7 @@ class TabsComp extends React.Component {
           {p.currentTab == "meta"         && 
             <Contexts.CMS.Consumer>
               { cms => 
-                (cms.loggedIn && cms.permissions && cms.permissions.super) ?
+                (cms.loggedIn && cms.permissions && (cms.permissions.super || cms.permissions.campus_admin)) ?
                 <TabMetaComp {...p} />
                : null
               }
