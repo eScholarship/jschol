@@ -5,6 +5,7 @@ import PageBase from './PageBase.jsx'
 import Header1Comp from '../components/Header1Comp.jsx'
 import MetaTagsComp from '../components/MetaTagsComp.jsx'
 import FormComp from '../components/FormComp.jsx'
+import Contexts from '../contexts.jsx'
 
 export default class UserAccountPage extends PageBase
 {
@@ -29,18 +30,23 @@ export default class UserAccountPage extends PageBase
 
   renderData(data) {
     let fl = data.flags
-    return(
-      <div>
-        <Header1Comp/>
-        <MetaTagsComp title={"eScholarship"}/>
-        <div className={this.state.fetchingData ? "c-columns is-loading-data" : "c-columns"}>
-          <main id="maincontent">
-            <section className="o-columnbox1">
-              <header>
-                <h1 className="o-columnbox1__heading">User Account</h1>
-              </header>
+    return (
+      <Contexts.CMS.Consumer>
+      { cms => {
+        const isSuper = cms.permissions && cms.permissions.super
+        
+        return (
+          <div>
+            <Header1Comp/>
+            <MetaTagsComp title={"eScholarship"}/>
+            <div className={this.state.fetchingData ? "c-columns is-loading-data" : "c-columns"}>
+              <main id="maincontent">
+                <section className="o-columnbox1">
+                  <header>
+                    <h1 className="o-columnbox1__heading">User Account</h1>
+                  </header>
 
-              <h2>{data.first_name} {data.last_name} &lt;{data.email}&gt;</h2>
+                  <h2>{data.first_name} {data.last_name} &lt;{data.email}&gt;</h2>
               <div className="c-editable-pTable">
                 <div className="c-editable-pRow">
                   <div className="c-editable-pCell">Registration date:</div>
@@ -71,8 +77,9 @@ export default class UserAccountPage extends PageBase
                   </div>
                   <div className="c-editable-pRow">
                     <input id="flag_superuser" type="checkbox" className="c-editable-pCell" name="flag_superuser" defaultChecked={fl.superuser}
+                           disabled={!isSuper}
                            onChange={()=>this.setState({anyChanges: true})}/>
-                    <label htmlFor="flag_superuser" className="c-editable-pCell">Super-user</label>
+                    <label htmlFor="flag_superuser" className="c-editable-pCell">Super-user {!isSuper && "(restricted)"}</label>
                   </div>
                 </div>
                 <div className="c-editable-pTable">
@@ -89,36 +96,38 @@ export default class UserAccountPage extends PageBase
                 </div>
               </FormComp>
 
-              <div>
-                <h3>Previous email addresses</h3>
-                <div className="c-datatable-nomaxheight">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th scope="col">Prev email</th>
-                        <th scope="col">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      { _.map(data.prev_emails, addr =>
-                        <tr key={addr}>
+              {isSuper &&
+                <div>
+                  <h3>Previous email addresses</h3>
+                  <div className="c-datatable-nomaxheight">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th scope="col">Prev email</th>
+                          <th scope="col">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        { _.map(data.prev_emails, addr =>
+                          <tr key={addr}>
+                            <td className="c-editable-tableCell">
+                              {addr}
+                            </td>
+                            <td className="c-editable-tableCell">
+                              <button onClick={(e) => this.onDeleteForward(data.user_id, addr)}>remove</button>
+                            </td>
+                          </tr>)
+                        }
+                        <tr key="new">
                           <td className="c-editable-tableCell">
-                            {addr}
-                          </td>
-                          <td className="c-editable-tableCell">
-                            <button onClick={(e) => this.onDeleteForward(data.user_id, addr)}>remove</button>
-                          </td>
-                        </tr>)
-                      }
-                      <tr key="new">
-                        <td className="c-editable-tableCell">
-                          <input type="email" placeholder="email" ref={ (el) => this.forwardEmailEl = el }/></td>
-                        <td className="c-editable-tableCell"><button onClick={(event) => this.onAddForward(event, data.user_id)}>add</button></td>
-                      </tr>
-                    </tbody>
-                  </table>
+                            <input type="email" placeholder="email" ref={ (el) => this.forwardEmailEl = el }/></td>
+                          <td className="c-editable-tableCell"><button onClick={(event) => this.onAddForward(event, data.user_id)}>add</button></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
-              </div>
+              }
 
               { data.unit_roles.length > 0 &&
                 <div>
@@ -180,6 +189,9 @@ export default class UserAccountPage extends PageBase
           </main>
         </div>
       </div>
+        )
+      }}
+      </Contexts.CMS.Consumer>
     )
   }
 

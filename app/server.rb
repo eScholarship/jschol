@@ -874,10 +874,43 @@ def getGlobalStaticData(path)
 end
 
 ###################################################################################################
+# Check if logged-in user has campus admin permission for target user account
+def checkCampusAdminPermission(perms, username, sessionID, targetUserID)
+  return true if perms[:super]
+  return false if !username || !sessionID
+  
+  row = OJS_DB[:users].where(username: username).first
+  return false unless row
+  
+  loggedInUserID = row[:user_id]
+  
+  # Get all campuses where logged-in user is a campus admin
+  adminCampusIDs = OJS_DB[:eschol_roles]
+    .where(user_id: loggedInUserID, role: 'campusadmin')
+    .select_map(:unit_id)
+    .select { |unitID| $unitsHash[unitID]&.type == 'campus' }
+  
+  return false unless adminCampusIDs.any?
+  
+  # Get all unit_ids where target user has roles
+  targetUserUnitIDs = OJS_DB[:eschol_roles]
+    .where(user_id: targetUserID)
+    .select_map(:unit_id)
+  
+  # Check if any of target user's units belong to admin's campuses
+  # by checking each target unit's ancestor campus
+  targetUserUnitIDs.any? { |unitID|
+    adminCampusIDs.include?(unitID) || adminCampusIDs.include?(getAncestorCampus(unitID))
+  }
+end
+
+###################################################################################################
 # User account data
 def getUserAccountData(userID)
-  # Only super-users allowed to see or edit user accounts
-  getUserPermissions(params[:username], params[:token], 'root')[:super] or halt(401)
+  # Super users and campus admins allowed to see user accounts
+  perms = getUserPermissions(params[:username], params[:token], 'root')
+  perms[:campus_admin] = checkCampusAdminPermission(perms, params[:username], params[:token], userID)
+  (perms[:super] || perms[:campus_admin]) or halt(401)
 
   # Get general data
   query = Sequel::SQL::PlaceholderLiteralString.new(%{
@@ -976,8 +1009,10 @@ end
 
 ###################################################################################################
 put "/api/userFlags/:userID" do |userID|
-  # Only super-users allowed to see or edit user accounts
-  getUserPermissions(params[:username], params[:token], 'root')[:super] or halt(401)
+  # Only super-users and campus admins (with restrictions) allowed to edit user accounts
+  perms = getUserPermissions(params[:username], params[:token], 'root')
+  perms[:campus_admin] = checkCampusAdminPermission(perms, params[:username], params[:token], userID)
+  (perms[:super] || perms[:campus_admin]) or halt(401)
   validateUserID(userID)
 
   # Get data to compare with
@@ -985,7 +1020,10 @@ put "/api/userFlags/:userID" do |userID|
 
   # Make updates
   newData = params['data']
-  changeOJSFlag(userID, 'eschol_superuser',      oldData[:superuser], newData['flag_superuser'] == 'on')
+  # Only super users can change superuser flag; campus admins cannot
+  if perms[:super]
+    changeOJSFlag(userID, 'eschol_superuser',      oldData[:superuser], newData['flag_superuser'] == 'on')
+  end
   changeOJSFlag(userID, 'eschol_opt_out',        oldData[:opted_out], newData['flag_opted_out'] == 'on')
   changeOJSFlag(userID, 'eschol_bouncing_email', oldData[:bouncing],  newData['flag_bouncing']  == 'on')
   if (val = newData['flag_validated'] == 'on') != oldData[:validated]
