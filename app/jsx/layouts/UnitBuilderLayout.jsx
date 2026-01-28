@@ -91,7 +91,7 @@ export default class UnitBuilderLayout extends React.Component
               let isSuper = cms.permissions && cms.permissions.super
               let isCampusLevel = p.unit.type === 'campus'
               let canEdit = isSuper || (isCampusAdmin && !isCampusLevel)
-              let canCreate = isSuper || isCampusAdmin
+              let canCreateSubUnits = isSuper || (isCampusAdmin && !isCampusLevel)
               
               return (
                 <div>
@@ -126,7 +126,7 @@ export default class UnitBuilderLayout extends React.Component
                     </ul>
                   </details>
 
-                  {/oru|campus/.test(p.unit.type) && isSuper &&
+                  {/oru|campus/.test(p.unit.type) && canCreateSubUnits &&
                     <details className="c-togglecontent">
                       <summary>Add new sub-unit</summary>
                 <FormComp onSubmit={ (event, data) => {
@@ -204,7 +204,7 @@ export default class UnitBuilderLayout extends React.Component
               </details>
             }
 
-            {canCreate &&
+            {isSuper &&
               <details className="c-togglecontent">
                 <summary>Copy unit content</summary>
                 <FormComp onSubmit={ (event, data) => {

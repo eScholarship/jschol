@@ -1145,8 +1145,19 @@ end
 ###################################################################################################
 # Add a new unit
 put "/api/unit/:unitID/unitBuilder" do |parentUnitID|
-  # Only super-users allowed to add units
-  getUserPermissions(params[:username], params[:token], parentUnitID)[:super] or halt(401)
+  # Check user permissions
+  perms = getUserPermissions(params[:username], params[:token], parentUnitID)
+  parentUnit = $unitsHash[parentUnitID]
+  
+  # Permission checks: Super users can create anywhere, campus admins can only create at sub-unit level (not at campus level)
+  if perms[:super]
+    # Super users have full access
+  elsif perms[:campus_admin]
+    # Campus admins cannot create units directly under campus (view only at campus level)
+    parentUnit && parentUnit.type == 'campus' and jsonHalt(401, "Campus admins cannot create units at campus level")
+  else
+    halt(401)
+  end
 
   newUnitID = params[:newUnitID]
   newUnitID =~ /^[a-z0-9_]+$/ or jsonHalt(400, "Invalid unit ID")
@@ -1199,6 +1210,32 @@ put "/api/unit/:unitID/unitBuilder" do |parentUnitID|
                       ancestor_unit: hier.ancestor_unit,
                       is_direct: false)
     }
+    
+    # Auto-assign campus admins to new unit
+    # Find ancestor campus and assign all its campus admins to the new unit
+    campusID = getAncestorCampus(newUnitID)
+    if campusID
+      # Get all campus admins for this campus
+      campusAdmins = DB[:eschol_roles]
+        .where(unit_id: campusID, role: 'campusadmin')
+        .select(:user_id)
+        .all
+      
+      # Assign each campus admin to the new unit
+      campusAdmins.each do |admin|
+        # Check if role already exists to avoid duplicates
+        existing = DB[:eschol_roles]
+          .where(unit_id: newUnitID, user_id: admin[:user_id], role: 'admin')
+          .first
+        unless existing
+          DB[:eschol_roles].insert(
+            unit_id: newUnitID,
+            user_id: admin[:user_id],
+            role: 'admin'
+          )
+        end
+      end
+    end
   }
   refreshUnitsHash
   return {status: "ok", nextURL: "/uc/#{newUnitID}"}.to_json
@@ -1383,24 +1420,14 @@ end
 ###################################################################################################
 # Copy a unit with its pages, widgets, etc.
 put "/api/unit/:unitID/copyUnit" do |oldUnitID|
-  # Check user permissions
-  perms = getUserPermissions(params[:username], params[:token], oldUnitID)
-  
+  # Only super-users allowed to copy units
+  getUserPermissions(params[:username], params[:token], oldUnitID)[:super] or halt(401)
+
   # Sanity checks
   $unitsHash[oldUnitID].type == 'root' and jsonHalt(400, "Cannot copy the root-level unit.")
   targetParentID = params[:targetParentID]
   targetParent = $unitsHash[targetParentID] or jsonHalt(400, "Unrecognized target parent unit")
   targetParent.type =~ /series|journal/ and jsonHalt(400, "Target parent unit cannot be a series or journal")
-  
-  # Permission checks: Super users can copy any units, campus admins can only create sub-units (not at campus level)
-  if perms[:super]
-    # Super users have full access
-  elsif perms[:campus_admin]
-    # Campus admins cannot create units directly under campus (view only at campus level)
-    targetParent.type == 'campus' and jsonHalt(401, "Campus admins cannot create units at campus level")
-  else
-    halt(401)
-  end
 
   newUnitID = params[:newUnitID]
   newUnitID =~ /^[a-z0-9_]+$/ or jsonHalt(400, "Invalid new unit ID")
