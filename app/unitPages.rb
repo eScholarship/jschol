@@ -113,27 +113,27 @@ def getNavPerms(unit, navItems, userPerms)
   slugs << "link" << "folder" << "page"  # special pseudo-slugs for specials
   slugs.each { |slug|
     if unit.type.include?("series")
-      result[slug] =   noAccess
+      result[slug] = noAccess
     elsif userPerms[:super]
-      result[slug] =   { change_slug: true,  change_text: true,  remove: true,  reorder: true  }
+      result[slug] = { change_slug: true,  change_text: true,  remove: true,  reorder: true  }
     elsif !userPerms[:admin]
-      result[slug] =   noAccess
+      result[slug] = noAccess
     elsif userPerms[:campus_admin]
       # Campus admins have access with protected page restrictions
       case slug
-      when /^(policyStatement|policies|policiesProcedures|journal_policies|policy)$/i
-        result[slug] = { change_slug: false, change_text: false, remove: false, reorder: true  }
+      when /^(policyStatement|policies|policiesProcedures|journal_policies|policy|ucoapolicies)$/i
+        result[slug] = noAccess
       when /^(submitPaper|submissionGuidelines|submissionprocess|howsubmit)$/i
-        result[slug] = { change_slug: false, change_text: true,  remove: false, reorder: true  }
+        result[slug] = { change_slug: true, change_text: true,  remove: false, reorder: true  }
       when /^(contactUs|contact)$/i
-        result[slug] = { change_slug: false, change_text: true,  remove: false, reorder: false }
+        result[slug] = noAccess
       when /^(aboutus|about)$/i
         result[slug] = { change_slug: false, change_text: true,  remove: false, reorder: true  }
       else
         result[slug] = { change_slug: true,  change_text: true,  remove: true,  reorder: true  }
       end
     elsif unit.type == 'campus'
-      result[slug] =   noAccess
+      result[slug] = noAccess
     else
       case slug
       when /^(policyStatement|policies|policiesProcedures|journal_policies|policy)$/i
