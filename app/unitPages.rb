@@ -1651,8 +1651,8 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
         unitAttrs['logo']['is_banner'] = params['data']['logoIsBanner'] == 'on'
       end
 
-      # Certain elements can only be changed by super user or campus admin
-      if perms[:super] || perms[:campus_admin]
+      # Certain elements can only be changed by super user
+      if perms[:super]
         unitAttrs['doaj'] = (params['data']['doajSeal'] == 'on')
         unitAttrs['altmetrics_ok'] = (params['data']['altmetrics_ok'] == 'on')
         unitAttrs['commenting_ok'] = (params['data']['commenting_ok'] == 'on')
@@ -1675,13 +1675,17 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
     end
 
     # Likewise, only change journal flags if journal section is being saved
-    if params['data']['journalConfigSection']
+    # Journal-specific fields can only be changed by super users
+    if params['data']['journalConfigSection'] && perms[:super]
       unitAttrs['magazine_layout'] = (params['data']['magazine_layout'] == "on")
       unitAttrs['issue_rule'] = (params['data']['issue_rule'] == "secondMostRecent") ? "secondMostRecent" : nil
     end
 
-    if params['data']['issn'] then unitAttrs['issn'] = params['data']['issn'] end
-    if params['data']['eissn'] then unitAttrs['eissn'] = params['data']['eissn'] end
+    # ISSN fields are journal-specific and can only be changed by super users
+    if perms[:super]
+      if params['data']['issn'] then unitAttrs['issn'] = params['data']['issn'] end
+      if params['data']['eissn'] then unitAttrs['eissn'] = params['data']['eissn'] end
+    end
     # pp(params['data'])
     if params['data']['facebook'] then unitAttrs['facebook'] = params['data']['facebook'] end
     if params['data']['twitter'] then unitAttrs['twitter'] = params['data']['twitter'] end
@@ -1689,13 +1693,16 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
     if params['data']['subheader-bgcolorpicker'] then unitAttrs['bgColor'] = params['data']['subheader-bgcolorpicker'] end
     if params['data']['elementcolorpicker'] then unitAttrs['elColor'] = params['data']['elementcolorpicker'] end
 
-    if params['data']['indexed'] then unitAttrs['indexed'] = params['data']['indexed'] end
-    if params['data']['disciplines'] then unitAttrs['disciplines'] = params['data']['disciplines'] end
-    if params['data']['pub_freq'] then unitAttrs['pub_freq'] = params['data']['pub_freq'] end
-    if params['data']['oaspa'] then unitAttrs['oaspa'] = params['data']['oaspa'] end
-    if params['data']['apc'] then unitAttrs['apc'] = params['data']['apc'] end
-    if params['data']['contentby'] then unitAttrs['contentby'] = params['data']['contentby'] end
-    if params['data']['tos'] then unitAttrs['tos'] = params['data']['tos'] end
+    # Journal metadata fields can only be changed by super users
+    if perms[:super]
+      if params['data']['indexed'] then unitAttrs['indexed'] = params['data']['indexed'] end
+      if params['data']['disciplines'] then unitAttrs['disciplines'] = params['data']['disciplines'] end
+      if params['data']['pub_freq'] then unitAttrs['pub_freq'] = params['data']['pub_freq'] end
+      if params['data']['oaspa'] then unitAttrs['oaspa'] = params['data']['oaspa'] end
+      if params['data']['apc'] then unitAttrs['apc'] = params['data']['apc'] end
+      if params['data']['contentby'] then unitAttrs['contentby'] = params['data']['contentby'] end
+      if params['data']['tos'] then unitAttrs['tos'] = params['data']['tos'] end
+    end
     unitAttrs.delete_if {|_k,v| (v.is_a? String and v.empty?) || (v == false) || v.nil? }
     unit.attrs = unitAttrs.to_json
     unit.save

@@ -301,28 +301,18 @@ class UnitProfileLayout extends React.Component {
                      </div>
                    }
 
-                   { (this.props.unit.type == 'journal' || this.props.unit.type == 'conference_proceedings') &&
+                   { isSuper && (this.props.unit.type == 'journal' || this.props.unit.type == 'conference_proceedings') &&
                      <div>
                        <br/>
-                       { disableEdit ?
-                         <div><div>DOAJ Seal (restricted):</div>
-                              <span>{data.doaj ? "Seal displayed" : "No seal displayed"}</span></div>
-                         :
-                         <div><label className="c-editable-page__label" htmlFor="doajSeal">DOAJ Seal: </label>
-                              <input disabled={disableEdit} type="checkbox" id="doajSeal" name="doajSeal" defaultChecked={data.doaj}/></div>
-                       }
+                       <div><label className="c-editable-page__label" htmlFor="doajSeal">DOAJ Seal: </label>
+                            <input type="checkbox" id="doajSeal" name="doajSeal" defaultChecked={data.doaj}/></div>
                        <br/>
                        <label className="c-editable-page__label" htmlFor="issn">ISSN: </label>
-                       <input disabled={disableEdit} className="c-editable-page__input" id="issn" type="text" defaultValue={data.issn}/>
+                       <input className="c-editable-page__input" id="issn" type="text" defaultValue={data.issn}/>
                        <label className="c-editable-page__label" htmlFor="eissn">E-ISSN: </label>
-                       <input disabled={disableEdit} className="c-editable-page__input" id="eissn" type="text" defaultValue={data.eissn}/>
-                       { disableEdit ?
-                         <div><div>Altmetric&#8482; (restricted):</div>
-                              <span id="altmetrics_ok">{data.altmetrics_ok ? "Altmetric data provided in articles" : "No Altmetric data provided in articles"}</span></div>
-                         :
-                         <div><label className="c-editable-page__label" htmlFor="altmetrics_ok">Altmetric&#8482;: </label>
-                              <input disabled={disableEdit} type="checkbox" id="altmetrics_ok" name="altmetrics_ok" defaultChecked={data.altmetrics_ok}/></div>
-                       }
+                       <input className="c-editable-page__input" id="eissn" type="text" defaultValue={data.eissn}/>
+                       <div><label className="c-editable-page__label" htmlFor="altmetrics_ok">Altmetric&#8482;: </label>
+                            <input type="checkbox" id="altmetrics_ok" name="altmetrics_ok" defaultChecked={data.altmetrics_ok}/></div>
                        <br/>
                        <div><label className="c-editable-page__label" htmlFor="indexed">Indexed by: </label>  
 	        	    <Select name="indexed" value={this.state.indexed} options = {indexOptions} onChange={this.updateIndexed} isMulti={true} />
@@ -502,12 +492,20 @@ class UnitProfileLayout extends React.Component {
 
   render() {
     return (
-      <div>
-        { this.renderUnitConfig() }
-        { this.renderSocialConfig() }
-        { this.renderAboutConfig() }
-        { (this.props.unit.type == 'journal' || this.props.unit.type == 'conference_proceedings') && this.renderJournalConfig() }
-      </div>
+      <Contexts.CMS.Consumer>
+      { cms => {
+        const isSuper = cms.permissions && cms.permissions.super
+        
+        return (
+          <div>
+            { this.renderUnitConfig() }
+            { this.renderSocialConfig() }
+            { this.renderAboutConfig() }
+            { isSuper && (this.props.unit.type == 'journal' || this.props.unit.type == 'conference_proceedings') && this.renderJournalConfig() }
+          </div>
+        )
+      }}
+      </Contexts.CMS.Consumer>
     )
   }
 }
