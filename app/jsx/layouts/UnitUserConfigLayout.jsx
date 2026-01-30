@@ -43,8 +43,8 @@ export default class UnitUserConfigLayout extends React.Component
                           </thead>
                           <tbody>
                             { _.map(p.data.user_roles, row => {
-                                // Campus admin can only be edited by super users at campus level, and inherited ones are always disabled
-                                let campusAdminDisabled = !isSuper || !isCampus || row.inherited_campusadmin
+                                // Campus admin can only be edited by super users, and inherited ones are always disabled
+                                let campusAdminDisabled = !isSuper || row.inherited_campusadmin
                                 return (
                                   <tr key={row.user_id}>
                                     <td className="c-editable-tableCell">
@@ -81,7 +81,7 @@ export default class UnitUserConfigLayout extends React.Component
                                 <input type="email" name="email-newuser" disabled={disableEdit} placeholder="existing email"/>
                               </td>
                               <td className="c-editable-tableCell">
-                                <input type="checkbox" name="campusadmin-newuser" disabled={!isSuper || !isCampus} onChange={()=>this.setState({anyChanges: true})}/>
+                                <input type="checkbox" name="campusadmin-newuser" disabled={!isSuper} onChange={()=>this.setState({anyChanges: true})}/>
                               </td>
                               <td className="c-editable-tableCell">
                                 <input type="checkbox" name="admin-newuser" disabled={disableEdit} onChange={()=>this.setState({anyChanges: true})}/>
