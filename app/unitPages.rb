@@ -1962,14 +1962,20 @@ put "/api/unit/:unitID/userConfig" do |unitID|
     }
 
     newRoles = Set.new
+    
+    # If not a super user, preserve all existing campusadmin roles first
+    # since campus admins can't modify campusadmin role, disabled checkboxes won't be in form data
+    if !perms[:super]
+      oldRoles.select { |r| r[:role] == 'campusadmin' }.each { |r| newRoles << r }
+    end
+    
     params['data'].keys.map{ |k| k.sub(/^\w+-/, '') }.uniq.each { |userID|
       userID == "newuser" or userID = userID.to_i
       %w{campusadmin admin stats submit}.each { |role|
         # Only super users can modify campusadmin role
         if role == 'campusadmin' && !perms[:super]
-          # Keep existing campusadmin state, don't allow changes
-          oldRole = oldRoles.find { |r| r[:userID] == userID && r[:role] == 'campusadmin' }
-          oldRole and newRoles << oldRole
+          # Already preserved above, skip
+          next
         else
           params['data']["#{role}-#{userID}"] == 'on' and newRoles << { userID: userID, role: role }
         end

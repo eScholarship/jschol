@@ -141,14 +141,14 @@ def getUserPermissions(username, sessionID, unitID)
   # And update the time.
   OJS_DB[:sessions].where(session_id: sessionID, user_id: userID).update(last_used: Time.now.to_i)
 
-  # Check for permissions
+  # Check for permissions (check campus admin before unit admin to preserve campus_admin flag)
   if OJS_DB[:user_settings].where(user_id: userID, setting_name: 'eschol_superuser').first
     return { admin: true, super: true }
-  elsif OJS_DB[:eschol_roles].where(user_id: userID, role: 'admin', unit_id: unitID).first
-    return { admin: true }
   elsif (campusID = getAncestorCampus(unitID)) && 
         OJS_DB[:eschol_roles].where(user_id: userID, role: 'campusadmin', unit_id: campusID).first
     return { admin: true, campus_admin: true, campus_id: campusID }
+  elsif OJS_DB[:eschol_roles].where(user_id: userID, role: 'admin', unit_id: unitID).first
+    return { admin: true }
   else
     return {}
   end
