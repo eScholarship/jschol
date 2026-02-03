@@ -124,13 +124,13 @@ def getNavPerms(unit, navItems, userPerms)
       when /^(policyStatement|policies|policiesProcedures|journal_policies|policy|ucoapolicies)$/i
         result[slug] = noAccess
       when /^(submitPaper|submissionGuidelines|submissionprocess|howsubmit)$/i
-        result[slug] = { change_slug: true, change_text: true,  remove: false, reorder: true  }
-      when /^(contactUs|contact)$/i
         result[slug] = noAccess
+      when /^(contactUs|contact)$/i
+        result[slug] = { change_slug: true,  change_text: true,  remove: false,  reorder: true }
       when /^(aboutus|about)$/i
-        result[slug] = { change_slug: false, change_text: true,  remove: false, reorder: true  }
+        result[slug] = noAccess
       else
-        result[slug] = { change_slug: true,  change_text: true,  remove: true,  reorder: true  }
+        result[slug] = { change_slug: true,  change_text: true,  remove: true,  reorder: true }
       end
     elsif unit.type == 'campus'
       result[slug] = noAccess
@@ -1168,6 +1168,11 @@ put "/api/unit/:unitID/unitBuilder" do |parentUnitID|
 
   unitType = params[:type]
   %w{oru journal series monograph_series conference_proceedings}.include?(unitType) or jsonHalt(400, "Invalid unit type")
+  
+  # Campus admins cannot create journal or conference_proceedings units
+  if perms[:campus_admin] && !perms[:super] && %w{journal conference_proceedings}.include?(unitType)
+    jsonHalt(401, "Campus admins cannot create journal or conference proceedings units")
+  end
 
   isHidden = !!params[:hidden]
 
@@ -1294,11 +1299,18 @@ end
 # Re-order units
 put "/api/unit/:unitID/unitOrder" do |unitID|
   # Check user permissions
-  perms = getUserPermissions(params[:username], params[:token], unitID)[:super] or restrictedHalt
+  perms = getUserPermissions(params[:username], params[:token], unitID)
+  unit = Unit[unitID] or jsonHalt(404, "Unit not found")
+  isCampus = (unit.type == 'campus')
+  
+  # Super users can reorder anywhere, campus admins can only reorder at sub-unit level (not at campus level)
+  unless perms[:super] || (perms[:campus_admin] && !isCampus)
+    restrictedHalt
+  end
+  
   content_type :json
 
   DB.transaction {
-    unit = Unit[unitID] or jsonHalt(404, "Unit not found")
     newOrder = JSON.parse(params[:order])
     UnitHier.where(ancestor_unit: unitID, is_direct: true).count == newOrder.length or jsonHalt(400, "must reorder all at once")
 
@@ -1651,8 +1663,9 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
         unitAttrs['logo']['is_banner'] = params['data']['logoIsBanner'] == 'on'
       end
 
-      # Certain elements can only be changed by super user
-      if perms[:super]
+      # Unit status and direct submit can be changed by super users, or campus admins on sub-units (not at campus level)
+      isCampus = (unit.type == 'campus')
+      if perms[:super] || (perms[:campus_admin] && !isCampus)
         unitAttrs['doaj'] = (params['data']['doajSeal'] == 'on')
         unitAttrs['altmetrics_ok'] = (params['data']['altmetrics_ok'] == 'on')
         unitAttrs['commenting_ok'] = (params['data']['commenting_ok'] == 'on')
@@ -1689,7 +1702,10 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
     # pp(params['data'])
     if params['data']['facebook'] then unitAttrs['facebook'] = params['data']['facebook'] end
     if params['data']['twitter'] then unitAttrs['twitter'] = params['data']['twitter'] end
-    if params['data']['about'] then unitAttrs['about'] = params['data']['about'] end
+    # About text can be changed by super users, or campus admins on sub-units (not at campus level)
+    if params['data']['about'] && (perms[:super] || (perms[:campus_admin] && !isCampus))
+      unitAttrs['about'] = params['data']['about']
+    end
     if params['data']['subheader-bgcolorpicker'] then unitAttrs['bgColor'] = params['data']['subheader-bgcolorpicker'] end
     if params['data']['elementcolorpicker'] then unitAttrs['elColor'] = params['data']['elementcolorpicker'] end
 

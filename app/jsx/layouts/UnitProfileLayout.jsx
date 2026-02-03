@@ -182,6 +182,7 @@ class UnitProfileLayout extends React.Component {
          let disableEdit = !(cms.permissions && (cms.permissions.super || cms.permissions.campus_admin))
          let isSuper = cms.permissions && cms.permissions.super
          let isCampusAdmin = cms.permissions && cms.permissions.campus_admin
+         let isCampus = this.props.unit.type === 'campus'
          
          // Campus admins cannot edit campus or journal names, only super users can
          let disableNameEdit = cms.permissions && cms.permissions.campus_admin && 
@@ -266,7 +267,7 @@ class UnitProfileLayout extends React.Component {
                     </div>
                    }
 
-                   { cms.permissions && (cms.permissions.super || cms.permissions.campus_admin) &&
+                   { (isSuper || (isCampusAdmin && !isCampus)) &&
                      <div>
                        <label className="c-editable-page__label" htmlFor="status">Unit status: </label>
                        <select name="status" defaultValue={data.status}>
@@ -283,18 +284,18 @@ class UnitProfileLayout extends React.Component {
                        </select>
                        <br/><br/>
                        <label className="c-editable-page__label" htmlFor="directSubmitURL">Direct submit URL (for external submission management): </label>
-                       <input disabled={disableEdit} className="c-editable-page__input" id="directSubmitURL" type="text" defaultValue={data.directSubmitURL}
+                       <input className="c-editable-page__input" id="directSubmitURL" type="text" defaultValue={data.directSubmitURL}
                            onChange={ event => this.setData({ directSubmitURL: event.target.value }) }/>
                        <label className="c-editable-page__label" htmlFor="directManageURLauthor">Direct manage URL for Authors (for external submission management): </label>
-                       <input disabled={disableEdit} className="c-editable-page__input" id="directManageURLauthor" type="text" defaultValue={data.directManageURLauthor}
+                       <input className="c-editable-page__input" id="directManageURLauthor" type="text" defaultValue={data.directManageURLauthor}
                            onChange={ event => this.setData({ directManageURLauthor: event.target.value }) }/>
                        <label className="c-editable-page__label" htmlFor="directManageURLeditor">Direct manage URL for Editors (for external submission management): </label>
-                       <input disabled={disableEdit} className="c-editable-page__input" id="directManageURLeditor" type="text" defaultValue={data.directManageURLeditor}
+                       <input className="c-editable-page__input" id="directManageURLeditor" type="text" defaultValue={data.directManageURLeditor}
                            onChange={ event => this.setData({ directManageURLeditor: event.target.value }) }/>
                        {this.props.unit.type.indexOf("series") >= 0 &&
                          <div>
                            <label className="c-editable-page__label" htmlFor="elementsID">Elements numeric group ID (for secondary association on deposit): </label>
-                           <input disabled={disableEdit} className="c-editable-page__input" id="elementsID" type="text" defaultValue={data.elementsID}
+                           <input className="c-editable-page__input" id="elementsID" type="text" defaultValue={data.elementsID}
                                onChange={ event => this.setData({ elementsID: event.target.value }) }/>
                           </div>
                         }

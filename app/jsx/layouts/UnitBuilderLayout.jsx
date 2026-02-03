@@ -144,8 +144,14 @@ export default class UnitBuilderLayout extends React.Component
 
                   <label className="c-editable-page__label" htmlFor="type">Unit type: </label>
                   <select name="type">
-                    { Object.entries(UNIT_TYPE_TO_LABEL).map(unitType =>
-                        <option key={unitType[0]} value={unitType[0]}>{unitType[1]}</option>) }
+                    { Object.entries(UNIT_TYPE_TO_LABEL)
+                      .filter(([type]) => isSuper || !['journal', 'conference_proceedings'].includes(type))
+                      .map(([type, label]) => (
+                        <option key={type} value={type}>
+                          {label}
+                        </option>
+                      )) 
+                    }
                   </select>
 
                   <br/><br/>
