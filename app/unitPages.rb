@@ -106,7 +106,7 @@ end
 
 # Permissions per nav item
 def getNavPerms(unit, navItems, userPerms)
-  noAccess = { change_slug: false, change_text: false, remove: false, reorder: false }
+  noAccess = { change_slug: false, change_text: false, remove: false, change_hidden: false, reorder: false }
   unit.nil? and return noAccess
   result = {}
   slugs = getSlugs(navItems)
@@ -115,37 +115,39 @@ def getNavPerms(unit, navItems, userPerms)
     if unit.type.include?("series")
       result[slug] = noAccess
     elsif userPerms[:super]
-      result[slug] = { change_slug: true,  change_text: true,  remove: true,  reorder: true  }
+      result[slug] = { change_slug: true,  change_text: true,  remove: true,  change_hidden: true, reorder: true  }
     elsif !userPerms[:admin]
       result[slug] = noAccess
     elsif userPerms[:campus_admin]
       # Campus admins have access with protected page restrictions
+      isCampus = (unit.type == 'campus')
       case slug
       when /^(policyStatement|policies|policiesProcedures|journal_policies|policy|ucoapolicies)$/i
         result[slug] = noAccess
       when /^(submitPaper|submissionGuidelines|submissionprocess|howsubmit)$/i
         result[slug] = noAccess
       when /^(contactUs|contact)$/i
-        result[slug] = { change_slug: true,  change_text: true,  remove: false,  reorder: true }
+        result[slug] = { change_slug: true, change_text: true, remove: false, change_hidden: false, reorder: true }
       when /^(aboutus|about)$/i
-        result[slug] = noAccess
+        # Campus admins can edit about page at sub-unit level (including marking as hidden), but not delete it
+        result[slug] = isCampus ? noAccess : { change_slug: false, change_text: true,  remove: false, change_hidden: true, reorder: true }
       else
-        result[slug] = { change_slug: true,  change_text: true,  remove: true,  reorder: true }
+        result[slug] = { change_slug: true, change_text: true, remove: true, change_hidden: true, reorder: true }
       end
     elsif unit.type == 'campus'
       result[slug] = noAccess
     else
       case slug
       when /^(policyStatement|policies|policiesProcedures|journal_policies|policy)$/i
-        result[slug] = { change_slug: false, change_text: false, remove: false, reorder: true  }
+        result[slug] = { change_slug: false, change_text: false, remove: false, change_hidden: false, reorder: true  }
       when /^(submitPaper|submissionGuidelines|submissionprocess|howsubmit)$/i
-        result[slug] = { change_slug: false, change_text: true,  remove: false, reorder: true  }
+        result[slug] = { change_slug: false, change_text: true,  remove: false, change_hidden: false, reorder: true  }
       when /^(contactUs|contact)$/i
-        result[slug] = { change_slug: false, change_text: true,  remove: false, reorder: false }
+        result[slug] = { change_slug: false, change_text: true,  remove: false, change_hidden: false, reorder: false }
       when /^(aboutus|about)$/i
-        result[slug] = { change_slug: false, change_text: true,  remove: false, reorder: true  }
+        result[slug] = { change_slug: false, change_text: true,  remove: false, change_hidden: false, reorder: true  }
       else
-        result[slug] = { change_slug: true,  change_text: true,  remove: true,  reorder: true  }
+        result[slug] = { change_slug: true,  change_text: true,  remove: true,  change_hidden: true, reorder: true  }
       end
     end
   }
@@ -1663,14 +1665,19 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
         unitAttrs['logo']['is_banner'] = params['data']['logoIsBanner'] == 'on'
       end
 
-      # Unit status and direct submit can be changed by super users, or campus admins on sub-units (not at campus level)
+      # Unit status can be changed by super users, or campus admins at sub-unit level (not at campus level)
+      # Direct submit and direct manage remain super user only
       isCampus = (unit.type == 'campus')
       if perms[:super] || (perms[:campus_admin] && !isCampus)
+        %w{active hidden archived}.include?(params['data']['status']) or jsonHalt(400, "invalid status")
+        unit.status = params['data']['status']
+      end
+      
+      # Direct submit and manage URLs are super user only
+      if perms[:super]
         unitAttrs['doaj'] = (params['data']['doajSeal'] == 'on')
         unitAttrs['altmetrics_ok'] = (params['data']['altmetrics_ok'] == 'on')
         unitAttrs['commenting_ok'] = (params['data']['commenting_ok'] == 'on')
-        %w{active hidden archived}.include?(params['data']['status']) or jsonHalt(400, "invalid status")
-        unit.status = params['data']['status']
         %w{enabled disabled moribund}.include?(params['data']['directSubmit']) or jsonHalt(400, "invalid directSubmit")
         if params['data']['directSubmit'] == "enabled"
           unitAttrs.delete('directSubmit')

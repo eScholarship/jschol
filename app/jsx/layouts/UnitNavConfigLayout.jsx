@@ -50,7 +50,10 @@ class EditableNavContentComp extends React.Component {
     return (
       <Contexts.CMS.Consumer>
         {cms => {
-          const navPerms = (cms.permissions && cms.permissions.nav_perms[data.slug]) || {}
+          // for folders and links, use the type as the permission key
+          // for pages, use the slug
+          const permKey = (data.type === 'folder' || data.type === 'link') ? data.type : data.slug
+          const navPerms = (cms.permissions && cms.permissions.nav_perms[permKey]) || {}
           // Check if user has no access (all permissions are false)
           const hasNoAccess = Object.values(navPerms).every(v => !v)
 
@@ -108,7 +111,7 @@ class EditableNavContentComp extends React.Component {
 
               {(data.type == "page") &&
                 <div>
-                  {navPerms.remove ?
+                  {navPerms.change_hidden ?
                     <div>
                       <label htmlFor="hidden">Hidden (select checkbox to omit this from the navigation bar)</label>
                       <input className="c-editable-page__input" type="checkbox" id="hidden" name="hidden" defaultChecked={data.hidden}
