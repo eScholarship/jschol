@@ -25,15 +25,6 @@ $marquee-overlay-size: 50%;
 
 }
 
-.c-marquee__sidebar-truncate {
-
-  @include bp(screen2) {
-    height: $marquee-height - 3.5em;
-    overflow: hidden;
-  }
-
-}
-
 .c-marquee__sidebar-more {
   @extend %o-button__7;
 }

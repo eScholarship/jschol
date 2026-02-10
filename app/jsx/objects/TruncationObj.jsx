@@ -21,7 +21,7 @@ export default class TruncationObj extends React.Component {
 
   static defaultProps = {
     className: '',
-    lines: null, // auto-calculate from CSS
+    lines: null, // uses CSS default (3 lines)
     expandable: false,
     buttonClassName: 'o-button__7',
     buttonText: {
@@ -38,7 +38,6 @@ export default class TruncationObj extends React.Component {
   elementRef = React.createRef()
 
   componentDidMount() {
-    this.updateLineClamp()
     if (this.props.expandable) {
       this.checkTruncation()
       // add resize listener for responsive truncation detection
@@ -47,8 +46,6 @@ export default class TruncationObj extends React.Component {
   }
 
   componentDidUpdate(prevProps, prevState) {
-    this.updateLineClamp()
-    
     if (this.props.expandable) {
       // recheck if content changes or expansion state changes
       if (prevProps.children !== this.props.children || 
@@ -88,32 +85,6 @@ export default class TruncationObj extends React.Component {
     this.setState(prevState => ({ isExpanded: !prevState.isExpanded }))
   }
 
-  updateLineClamp = () => {
-    // only calculate if lines prop is not explicitly set and we have a ref
-    if (this.props.lines !== null || !this.elementRef.current) return
-
-    const element = this.elementRef.current
-    const computedStyle = window.getComputedStyle(element)
-    
-    const maxHeight = parseFloat(computedStyle.maxHeight)
-    let lineHeight = parseFloat(computedStyle.lineHeight)
-    
-    // if line-height is 'normal' or can't be parsed, estimate from font-size
-    if (isNaN(lineHeight)) {
-      const fontSize = parseFloat(computedStyle.fontSize)
-      lineHeight = fontSize * 1.2
-    }
-    
-    // only calculate if we have valid max-height, not 'none' or invalid
-    if (maxHeight && lineHeight && !isNaN(maxHeight) && !isNaN(lineHeight)) {
-      const calculatedLines = Math.floor(maxHeight / lineHeight)
-      
-      if (calculatedLines >= 1 && calculatedLines <= 20) {
-        element.style.setProperty('--line-clamp-lines', calculatedLines)
-      }
-    }
-  }
-
   render() {
     const { children, element, className, lines, expandable, buttonClassName, buttonText } = this.props
     const { isExpanded, isTruncated } = this.state
@@ -133,7 +104,7 @@ export default class TruncationObj extends React.Component {
     const truncationClass = (expandable && isExpanded) ? '' : 'u-truncate-lines'
     const combinedClassName = `${className} ${truncationClass}`.trim()
     
-    // if lines is explicitly set, use it, otherwise calculate it
+    // if lines is explicitly set, use it, otherwise use CSS default
     const style = lines !== null ? {
       '--line-clamp-lines': lines,
     } : undefined
