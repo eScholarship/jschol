@@ -273,7 +273,7 @@ class UnitProfileLayout extends React.Component {
                        <select name="status" defaultValue={data.status}>
                          <option value="active">Active</option>
                          <option value="hidden">Hidden</option>
-                         <option value="archived">Archived</option>
+                         {isSuper && <option value="archived">Archived</option>}
                        </select>
                      </div>
                    }
