@@ -1641,22 +1641,10 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
     unitAttrs = JSON.parse(unit.attrs)
     #puts "DATA received is #{params['data']}"   
     
-    # Name editing restrictions based on user role and unit type
+    # Name editing restrictions: campus admins cannot change campus or journal names
     if params['data']['unitName']
-      if perms[:super]
-        # Super users can change any unit name
-        unit.name = params['data']['unitName']
-      elsif perms[:campus_admin]
-        # Campus admins cannot change campus or journal names, but can change other unit types
-        if unit.type == 'campus' || unit.type == 'journal'
-          # Silently ignore name change attempt for campus or journal
-        else
-          unit.name = params['data']['unitName']
-        end
-      else
-        # Unit admins can change their unit's name (if they have admin access)
-        unit.name = params['data']['unitName']
-      end
+      can_change = perms[:super] || !perms[:campus_admin] || !['campus', 'journal'].include?(unit.type)
+      unit.name = params['data']['unitName'] if can_change
     end
 
     # Only change unit config flags if the that section is being saved -- avoids clearing them accidentally
@@ -1669,8 +1657,8 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
       # Direct submit and direct manage remain super user only
       isCampus = (unit.type == 'campus')
       if perms[:super] || (perms[:campus_admin] && !isCampus)
-        %w{active hidden archived}.include?(params['data']['status']) or jsonHalt(400, "invalid status")
-        unit.status = params['data']['status']
+        allowed_statuses = perms[:super] ? %w{active hidden archived} : %w{active hidden}
+        unit.status = params['data']['status'] if allowed_statuses.include?(params['data']['status'])
       end
       
       # Direct submit and manage URLs are super user only
