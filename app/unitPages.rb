@@ -1223,7 +1223,7 @@ put "/api/unit/:unitID/unitBuilder" do |parentUnitID|
     campusID = getAncestorCampus(newUnitID)
     if campusID
       # Get all campus admins for this campus
-      campusAdmins = DB[:eschol_roles]
+      campusAdmins = OJS_DB[:eschol_roles]
         .where(unit_id: campusID, role: 'campusadmin')
         .select(:user_id)
         .all
@@ -1231,11 +1231,11 @@ put "/api/unit/:unitID/unitBuilder" do |parentUnitID|
       # Assign each campus admin to the new unit
       campusAdmins.each do |admin|
         # Check if role already exists to avoid duplicates
-        existing = DB[:eschol_roles]
+        existing = OJS_DB[:eschol_roles]
           .where(unit_id: newUnitID, user_id: admin[:user_id], role: 'admin')
           .first
         unless existing
-          DB[:eschol_roles].insert(
+          OJS_DB[:eschol_roles].insert(
             unit_id: newUnitID,
             user_id: admin[:user_id],
             role: 'admin'
@@ -1474,7 +1474,7 @@ put "/api/unit/:unitID/copyUnit" do |oldUnitID|
     campusID = getAncestorCampus(newUnitID)
     if campusID
       # Get all campus admins for this campus
-      campusAdmins = DB[:eschol_roles]
+      campusAdmins = OJS_DB[:eschol_roles]
         .where(unit_id: campusID, role: 'campusadmin')
         .select(:user_id)
         .all
@@ -1482,11 +1482,11 @@ put "/api/unit/:unitID/copyUnit" do |oldUnitID|
       # Assign each campus admin to the new unit
       campusAdmins.each do |admin|
         # Check if role already exists to avoid duplicates
-        existing = DB[:eschol_roles]
+        existing = OJS_DB[:eschol_roles]
           .where(unit_id: newUnitID, user_id: admin[:user_id], role: 'admin')
           .first
         unless existing
-          DB[:eschol_roles].insert(
+          OJS_DB[:eschol_roles].insert(
             unit_id: newUnitID,
             user_id: admin[:user_id],
             role: 'admin'
