@@ -270,11 +270,15 @@ class UnitProfileLayout extends React.Component {
                    { (isSuper || (isCampusAdmin && !isCampus)) &&
                      <div>
                        <label className="c-editable-page__label" htmlFor="status">Unit status: </label>
-                       <select name="status" defaultValue={data.status}>
-                         <option value="active">Active</option>
-                         <option value="hidden">Hidden</option>
-                         {isSuper && <option value="archived">Archived</option>}
-                       </select>
+                       {(!isSuper && data.status === 'archived') ?
+                         <div>Archived (contact eScholarship to update).</div>
+                       :
+                         <select name="status" defaultValue={data.status}>
+                           <option value="active">Active</option>
+                           <option value="hidden">Hidden</option>
+                           {isSuper && <option value="archived">Archived</option>}
+                         </select>
+                       }
                      </div>
                    }
                    

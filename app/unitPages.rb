@@ -1657,8 +1657,13 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
       # Direct submit and direct manage remain super user only
       isCampus = (unit.type == 'campus')
       if perms[:super] || (perms[:campus_admin] && !isCampus)
+        # Campus admins cannot modify archived units
+        if !perms[:super] && unit.status == 'archived'
+          restrictedHalt
+        end
         allowed_statuses = perms[:super] ? %w{active hidden archived} : %w{active hidden}
-        unit.status = params['data']['status'] if allowed_statuses.include?(params['data']['status'])
+        allowed_statuses.include?(params['data']['status']) or restrictedHalt
+        unit.status = params['data']['status']
       end
       
       # Direct submit and manage URLs are super user only
