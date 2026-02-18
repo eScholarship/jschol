@@ -91,12 +91,10 @@ npm-20 install
 echo "Building app."
 if [[ "$ENVNAME" =~ "-dev" ]]; then
   # Development build (no minification, for debugging)
-  npm-20 run build -- --mode development
-  npm-20 run build:ssr -- --mode development
+  npm-20 run build:dev:all
 else
   # Production build (minified, optimized)
-  npm-20 run build -- --mode production
-  npm-20 run build:ssr -- --mode production
+  npm-20 run build:prod:all
 fi
 
 # package app and upload

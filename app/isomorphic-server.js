@@ -33,9 +33,6 @@ app.post('*', (req, res) => {
     // Call the render function from the Vite-built bundle
     const result = renderFunction(req.url, req.body)
     
-    console.log('ISO: Render result type:', typeof result)
-    console.log('ISO: Render result keys:', result ? Object.keys(result) : 'null')
-    
     const { html, metaTags } = result
     
     res.send(
