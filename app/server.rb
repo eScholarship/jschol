@@ -576,60 +576,45 @@ end
 
 ###################################################################################################
 def parseManifest
-  # Vite's manifest has a different structure than webpack-manifest-plugin
-  # We need to extract the main entry and vendor chunk
-  
   manifestPath = 'app/js/manifest.json'
+  # Vite manifest structure: keys are source paths (e.g. "main.jsx")
+  # values have "file" (output path)
+  # optional "isEntry", "imports", "css"
   return nil unless File.exist?(manifestPath)
-  
+
   manifest = JSON.parse(File.read(manifestPath))
-  
-  # Find the main entry (look for app/main.jsx or similar)
   mainEntry = manifest['app/main.jsx'] || manifest['main.jsx'] || manifest.values.find { |v| v['isEntry'] }
   return nil unless mainEntry
-  
+
   result = {
     'app.js' => "/#{mainEntry['file']}",
     'main.css' => nil
   }
-  
-  # Find CSS - could be in mainEntry['css'] array or as a separate style.css entry
+
   if mainEntry['css'] && mainEntry['css'].any?
     result['main.css'] = "/#{mainEntry['css'][0]}"
-  elsif manifest['style.css']
-    result['main.css'] = "/#{manifest['style.css']['file']}"
+  elsif (style = manifest['style.css'])
+    result['main.css'] = "/#{style['file']}"
   end
-  
-  # Find vendor chunk (look for imports)
-  if mainEntry['imports'] && mainEntry['imports'].any?
-    vendorChunkKey = mainEntry['imports'].find { |imp| imp.include?('vendor') }
-    if vendorChunkKey && manifest[vendorChunkKey]
-      result['vendors~app.js'] = "/#{manifest[vendorChunkKey]['file']}"
+
+  if mainEntry['imports']&.any?
+    vendorKey = mainEntry['imports'].find { |key| key.to_s.include?('vendor') }
+    if vendorKey && (chunk = manifest[vendorKey])
+      result['vendors~app.js'] = "/#{chunk['file']}"
     end
   end
-  
-  return result
+
+  result
 end
 
 ###################################################################################################
 def generalResponse
   # Replace startup URLs for proper cache busting
   template = File.new("app/app.html").read
-  viteManifest = parseManifest
-  
-  if viteManifest
-    # Vite build
-    template.sub!("/js/vendors~app.js", "#{viteManifest['vendors~app.js'] || '/js/vendors~app.js'}")
-    template.sub!("/js/app.js", "#{viteManifest['app.js']}")
-    template.sub!("/css/main.css", "#{viteManifest['main.css'] || '/css/main.css'}")
-  else
-    # TODO: remove this fallback once testing is done
-    # Fallback to old webpack manifest format 
-    webpackManifest = JSON.parse(File.read('app/js/manifest.json'))
-    template.sub!("/js/vendors~app.js", "#{webpackManifest["vendors~app.js"]}")
-    template.sub!("/js/app.js", "#{webpackManifest["app.js"]}")
-    template.sub!("/css/main.css", "/css/main-#{Digest::MD5.file("app/css/main.css").hexdigest[0,16]}.css")
-  end
+  manifest = parseManifest
+  template.sub!("/js/vendors~app.js", "#{manifest['vendors~app.js'] || '/js/vendors~app.js'}")
+  template.sub!("/js/app.js", "#{manifest['app.js']}")
+  template.sub!("/css/main.css", "#{manifest['main.css'] || '/css/main.css'}")
 
   # In development mode, skip iso
   ENV['ISO_PORT'] or return template
