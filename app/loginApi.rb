@@ -96,24 +96,10 @@ def getUserID(username)
 end
 
 ###################################################################################################
-# Find the ancestor campus unit for a given unit (returns campus unit_id or nil)
-def getAncestorCampus(unitID)
-  unit = $unitsHash[unitID]
-  return nil unless unit
-  
-  # If this is already a campus, return it
-  return unitID if unit.type == 'campus'
-  
-  # Look up the hierarchy to find a campus ancestor
-  # The unit_hier table tracks ancestor_unit relationships
-  campusAncestor = DB[:unit_hier]
-    .join(:units, id: :ancestor_unit)
-    .where(unit_id: unitID)
-    .where(Sequel[:units][:type] => 'campus')
-    .select(Sequel[:unit_hier][:ancestor_unit])
-    .first
-  
-  return campusAncestor ? campusAncestor[:ancestor_unit] : nil
+# Check if a unit is within a campus (either is the campus or is a descendant)
+def isUnitInCampus?(unitID, campusID)
+  return true if unitID == campusID
+  DB[:unit_hier].where(unit_id: unitID, ancestor_unit: campusID).first ? true : false
 end
 
 ###################################################################################################
@@ -144,13 +130,22 @@ def getUserPermissions(username, sessionID, unitID)
   # Check for permissions (check campus admin before unit admin to preserve campus_admin flag)
   if OJS_DB[:user_settings].where(user_id: userID, setting_name: 'eschol_superuser').first
     return { admin: true, super: true }
-  elsif (campusID = getAncestorCampus(unitID)) && 
-        OJS_DB[:eschol_roles].where(user_id: userID, role: 'campusadmin', unit_id: campusID).first
-    return { admin: true, campus_admin: true, campus_id: campusID }
-  elsif OJS_DB[:eschol_roles].where(user_id: userID, role: 'admin', unit_id: unitID).first
-    return { admin: true }
   else
-    return {}
+    # Check if user is campus admin for any campus that contains this unit
+    campusAdminRoles = OJS_DB[:eschol_roles].where(user_id: userID, role: 'campusadmin').all
+    campusAdminRoles.each do |role|
+      campusID = role[:unit_id]
+      if isUnitInCampus?(unitID, campusID)
+        return { admin: true, campus_admin: true, campus_id: campusID }
+      end
+    end
+    
+    # Check if user is unit admin for this specific unit
+    if OJS_DB[:eschol_roles].where(user_id: userID, role: 'admin', unit_id: unitID).first
+      return { admin: true }
+    else
+      return {}
+    end
   end
 end
 

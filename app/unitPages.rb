@@ -777,6 +777,28 @@ def getUnitCarouselConfig(unit, attrs)
   return config 
 end
 
+# Find the ancestor campus unit for a given unit (returns campus unit_id or nil)
+def getAncestorCampus(unitID)
+  unit = $unitsHash[unitID]
+  return nil unless unit
+  
+  # If this is already a campus, return it
+  return unitID if unit.type == 'campus'
+  
+  # Look up the hierarchy to find a campus ancestor
+  # Get all ancestors and check which one is a campus
+  ancestors = DB[:unit_hier]
+    .where(unit_id: unitID)
+    .select_map(:ancestor_unit)
+  
+  ancestors.each do |ancestorID|
+    ancestorUnit = $unitsHash[ancestorID]
+    return ancestorID if ancestorUnit && ancestorUnit.type == 'campus'
+  end
+  
+  return nil
+end
+
 def getItemAuthors(itemID)
   return ItemAuthors.filter(:item_id => itemID).order(:ordering).map(:attrs).collect{ |h| JSON.parse(h)}
 end
@@ -1943,6 +1965,7 @@ def getUnitUserConfig(unit)
   }
 
   # If this is a sub-unit, fetch inherited campus admins from ancestor campus
+  # This query is necessary to ensure campus admins are listed in the "users" list for sub-units
   if unit.type != 'campus'
     campusID = getAncestorCampus(unit.id)
     if campusID

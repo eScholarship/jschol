@@ -898,9 +898,8 @@ def checkCampusAdminPermission(perms, username, sessionID, targetUserID)
     .select_map(:unit_id)
   
   # Check if any of target user's units belong to admin's campuses
-  # by checking each target unit's ancestor campus
   targetUserUnitIDs.any? { |unitID|
-    adminCampusIDs.include?(unitID) || adminCampusIDs.include?(getAncestorCampus(unitID))
+    adminCampusIDs.any? { |campusID| isUnitInCampus?(unitID, campusID) }
   }
 end
 
