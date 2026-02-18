@@ -1440,6 +1440,9 @@ put "/api/unit/:unitID/deleteUnit" do |unitID|
   UnitHier.where(ancestor_unit: unitID).count > 0 and jsonHalt(400, "Cannot delete unit having sub-units.")
   UnitItem.where(unit_id: unitID).count > 0 and jsonHalt(400, "Cannot delete unit containing items.")
 
+  # Get parent unit before deletion
+  parentUnitID = $hierByUnit[unitID]&.first&.ancestor_unit
+
   DB.transaction {
     UnitHier.where(unit_id: unitID).delete
     Page.where(unit_id: unitID).delete
@@ -1450,7 +1453,7 @@ put "/api/unit/:unitID/deleteUnit" do |unitID|
     Unit.where(id: unitID).delete
   }
   refreshUnitsHash
-  return {status: "ok", nextURL: "/uc/#{$hierByUnit[unitID][0].ancestor_unit}"}.to_json
+  return {status: "ok", nextURL: "/uc/#{parentUnitID}"}.to_json
 end
 
 ###################################################################################################
