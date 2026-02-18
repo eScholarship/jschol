@@ -391,10 +391,11 @@ get "/robots.txt" do
            "Disallow: /",
            "",
            "User-agent: *",
+           "Disallow: /search",
            "Disallow:#{request.host == "escholarship.org" ? "" : " /"}",
            "",
            "User-agent: *",
-           "Crawl-delay: 3",
+           "Crawl-delay: 4",
            "",
            "Sitemap: #{request.env['HTTP_CLOUDFRONT_FORWARDED_PROTO'] || request.scheme}://#{request.host}/siteMapIndex.xml"]
   return lines.join("\n")
