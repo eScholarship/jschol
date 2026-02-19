@@ -52,7 +52,7 @@ export default defineConfig(({ command, mode, isSsrBuild }) => {
       outDir: 'app/js',
       emptyOutDir: false, // Don't delete client files
       minify: isProd, // Only minify SSR in production
-      sourcemap: true, // External source maps
+      sourcemap: !isProd, // Only generate source maps in development
       rollupOptions: {
         input: resolve(__dirname, 'app/isomorphic-entry.jsx'),
         output: {
@@ -79,7 +79,7 @@ export default defineConfig(({ command, mode, isSsrBuild }) => {
       manifest: 'js/manifest.json', // Put manifest in js/
       cssCodeSplit: false, // Bundle all CSS into one file
       minify: isProd ? 'esbuild' : false, // Minify only in production for debuggable dev builds
-      sourcemap: true,
+      sourcemap: !isProd, // Only generate source maps in development
       rollupOptions: {
         input: resolve(__dirname, 'main.jsx'),
         output: {
