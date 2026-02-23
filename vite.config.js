@@ -14,11 +14,6 @@ export default defineConfig(({ command, mode, isSsrBuild }) => {
     plugins: [
       react({
         jsxRuntime: 'classic', // Required for React 16 - uses React.createElement
-        babel: {
-          parserOpts: {
-            plugins: ['classProperties']
-          }
-        }
       }),
       inject({
         $: 'jquery',

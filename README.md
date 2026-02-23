@@ -27,7 +27,7 @@ Description of files
 * `app/fonts`: Special fonts for this app.
 * `app/images`: JPG, PNG, etc.
 * `app/isomorphic.*`: A little node app that runs React on the server-side to generate the initial page contents.
-* `app/js`: Gets populated with Babel-translated and possibily minified code. Don't modify directly.
+* `app/js`: Gets populated with bundled and possibly minified code. Don't modify directly.
 * `app/jsx`: React code for the UI. These get compiled (through Vite) into app/js.
 * `app/scss`: CSS styles. Uses SCSS so macros, variables, etc. are available. These get compiled (through Vite) into app/css/.
 * `app/server.rb`: Main app driver with code to generate the page outline, supply database data, cache bust, etc.

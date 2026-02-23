@@ -47,10 +47,6 @@
   "dependencies-note": "These modules get bundled into lib-bundle.js",
   "dependencies-note2": "The query-string module must be 5.x only; 6.x does not support IE11",
   "dependencies": {
-    "@babel/core": "^7.17.10",
-    "@babel/preset-env": "^7.17.10",
-    "@babel/preset-react": "^7.16.7",
-    "@babel/register": "^7.17.7",
     "@moebius/http-graceful-shutdown": "^1.1.0",
     "array-includes": "^3.1.5",
     "better-react-mathjax": "^2.0.1",

@@ -5,6 +5,3 @@
  */
 
 import('./isomorphic-server.js')
-
-// require("@babel/register")
-// require('./isomorphic.jsx')
