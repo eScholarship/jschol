@@ -13,6 +13,4 @@ alternatives --install /usr/bin/npm npm /usr/bin/npm-20 90
 cd "${app}";
 #echo "Running npm install.";
 su webapp -c "npm install"
-ln -s node_modules/.bin/gulp
 ln -s node_modules/.bin/backstop
-ln -s node_modules/.bin/webpack
