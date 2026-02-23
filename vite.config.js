@@ -94,8 +94,14 @@ export default defineConfig(({ command, mode, isSsrBuild }) => {
             return 'js/[name]-[hash][extname]'
           },
           manualChunks: (id) => {
-            // Separate vendor code (like webpack's splitChunks)
             if (id.includes('node_modules')) {
+              // CMS-only packages: let Rollup code-split these naturally
+              // only loaded for logged in CMS users
+              if (id.includes('react-sidebar') ||
+                  id.includes('react-sortable-tree') ||
+                  id.includes('trumbowyg')) {
+                return undefined
+              }
               return 'vendors~app'
             }
           }
