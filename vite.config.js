@@ -29,7 +29,9 @@ export default defineConfig(({ command, mode, isSsrBuild }) => {
           // Use modern Sass API instead of legacy
           api: 'modern-compiler',
           // Make paths available to SCSS
-          includePaths: ['app/scss', 'node_modules']
+          includePaths: ['app/scss', 'node_modules'],
+          // TODO: remove this once we've migrated to modern Sass API
+          silenceDeprecations: ['import', 'global-builtin', 'color-functions'] 
         }
       },
       postcss: './postcss.config.js'
