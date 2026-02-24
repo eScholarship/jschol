@@ -40,8 +40,8 @@ class SortableUnitList extends React.Component {
   }
 
   render() {
-    const SortableTree = this.props.cms.modules.SortableTree
-    return (
+    const SortableTree = this.props.cms.modules?.SortableTree
+    return SortableTree && (
       <SortableTree
         treeData={this.state.data}
         isVirtualized={false}
