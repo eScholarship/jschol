@@ -179,10 +179,21 @@ class UnitProfileLayout extends React.Component {
     return (
       <Contexts.CMS.Consumer>
       { cms => {
-         let disableEdit = !(cms.permissions && cms.permissions.super)
+         let disableEdit = !(cms.permissions && (cms.permissions.super || cms.permissions.campus_admin))
+         let isSuper = cms.permissions && cms.permissions.super
+         let isCampusAdmin = cms.permissions && cms.permissions.campus_admin
+         let isCampus = this.props.unit.type === 'campus'
          
-         let disableLogo = (this.props.unit.type.indexOf("series") >= 0) ||
-                           (this.props.unit.type == "campus" && disableEdit)
+         // Campus admins cannot edit campus or journal names, only super users can
+         let disableNameEdit = cms.permissions && cms.permissions.campus_admin && 
+                               (this.props.unit.type == 'campus' || this.props.unit.type == 'journal') ? true : disableEdit
+         
+         // Logo restrictions:
+         // - Series: disabled for non-super and non-campus-admin users
+         // - Campus: disabled if user doesn't have edit permissions
+         let disableLogo = this.props.unit.type.indexOf("series") >= 0 
+                           ? !(isSuper || isCampusAdmin)
+                           : (this.props.unit.type === "campus" && disableEdit)
          let newHeader = Object.assign({}, this.props.header)
          let [bgColor, setBgColor] = [this.state.newData.bgColor || data.bgColor, (color)=>{this.setData({bgColor:color})}]
          let [elColor, setElColor] = [this.state.newData.elColor || data.elColor, (color)=>{this.setData({elColor:color})}]
@@ -200,8 +211,8 @@ class UnitProfileLayout extends React.Component {
                  <FormComp to={`/api/unit/${this.props.unit.id}/profileContentConfig`} onSubmit={this.handleSubmit}>
                    {/* Marker so that unitPages.rb can tell which section is being submitted */}
                    <input type="hidden" name="unitConfigSection" defaultValue="yes"/>
-                   <label className="c-editable-page__label" htmlFor="unitName">Name: {disableEdit ? "(restricted)" : ""}</label>
-                   <input disabled={disableEdit} className="c-editable-page__input" id="unitName" type="text" defaultValue={data.name}
+                   <label className="c-editable-page__label" htmlFor="unitName">Name: {disableNameEdit ? "(restricted)" : ""}</label>
+                   <input disabled={disableNameEdit} className="c-editable-page__input" id="unitName" type="text" defaultValue={data.name}
                            onChange={ event => this.setData({ name: event.target.value }) }/>
 
                    <label className="c-editable-page__label" htmlFor="logoImage">Logo image{disableLogo ? "(restricted)" : ""}</label>
@@ -245,7 +256,7 @@ class UnitProfileLayout extends React.Component {
                      />
                    <br/>
 
-                   { cms.permissions && cms.permissions.super && !disableLogo &&
+                   { cms.permissions && (cms.permissions.super || cms.permissions.campus_admin) && !disableLogo &&
                     <div className="c-subheadercontrols">
                       <h1>Subheader Color Controls</h1>
                       <BackgroundColorPickerComp textLabel="Subheader Background Color" backgroundColor={bgColor} onBackgroundColorChange={setBgColor} />
@@ -256,15 +267,24 @@ class UnitProfileLayout extends React.Component {
                     </div>
                    }
 
-                   { cms.permissions && cms.permissions.super &&
+                   { (isSuper || (isCampusAdmin && !isCampus)) &&
                      <div>
                        <label className="c-editable-page__label" htmlFor="status">Unit status: </label>
-                       <select name="status" defaultValue={data.status}>
-                         <option value="active">Active</option>
-                         <option value="hidden">Hidden</option>
-                         <option value="archived">Archived</option>
-                       </select>
-                       <br/><br/>
+                       {(!isSuper && data.status === 'archived') ?
+                         <div>Archived (contact eScholarship to update).</div>
+                       :
+                         <select name="status" defaultValue={data.status}>
+                           <option value="active">Active</option>
+                           <option value="hidden">Hidden</option>
+                           {isSuper && <option value="archived">Archived</option>}
+                         </select>
+                       }
+                     </div>
+                   }
+                   
+                   { isSuper &&
+                     <div>
+                       <br/>
                        <label className="c-editable-page__label" htmlFor="directSubmit">Direct submit: </label>
                        <select name="directSubmit" defaultValue={data.directSubmit}>
                          <option value="enabled">Enabled</option>
@@ -273,46 +293,36 @@ class UnitProfileLayout extends React.Component {
                        </select>
                        <br/><br/>
                        <label className="c-editable-page__label" htmlFor="directSubmitURL">Direct submit URL (for external submission management): </label>
-                       <input disabled={disableEdit} className="c-editable-page__input" id="directSubmitURL" type="text" defaultValue={data.directSubmitURL}
+                       <input className="c-editable-page__input" id="directSubmitURL" type="text" defaultValue={data.directSubmitURL}
                            onChange={ event => this.setData({ directSubmitURL: event.target.value }) }/>
                        <label className="c-editable-page__label" htmlFor="directManageURLauthor">Direct manage URL for Authors (for external submission management): </label>
-                       <input disabled={disableEdit} className="c-editable-page__input" id="directManageURLauthor" type="text" defaultValue={data.directManageURLauthor}
+                       <input className="c-editable-page__input" id="directManageURLauthor" type="text" defaultValue={data.directManageURLauthor}
                            onChange={ event => this.setData({ directManageURLauthor: event.target.value }) }/>
                        <label className="c-editable-page__label" htmlFor="directManageURLeditor">Direct manage URL for Editors (for external submission management): </label>
-                       <input disabled={disableEdit} className="c-editable-page__input" id="directManageURLeditor" type="text" defaultValue={data.directManageURLeditor}
+                       <input className="c-editable-page__input" id="directManageURLeditor" type="text" defaultValue={data.directManageURLeditor}
                            onChange={ event => this.setData({ directManageURLeditor: event.target.value }) }/>
                        {this.props.unit.type.indexOf("series") >= 0 &&
                          <div>
                            <label className="c-editable-page__label" htmlFor="elementsID">Elements numeric group ID (for secondary association on deposit): </label>
-                           <input disabled={disableEdit} className="c-editable-page__input" id="elementsID" type="text" defaultValue={data.elementsID}
+                           <input className="c-editable-page__input" id="elementsID" type="text" defaultValue={data.elementsID}
                                onChange={ event => this.setData({ elementsID: event.target.value }) }/>
                           </div>
                         }
                      </div>
                    }
 
-                   { (this.props.unit.type == 'journal' || this.props.unit.type == 'conference_proceedings') &&
+                   { isSuper && (this.props.unit.type == 'journal' || this.props.unit.type == 'conference_proceedings') &&
                      <div>
                        <br/>
-                       { disableEdit ?
-                         <div><div>DOAJ Seal (restricted):</div>
-                              <span>{data.doaj ? "Seal displayed" : "No seal displayed"}</span></div>
-                         :
-                         <div><label className="c-editable-page__label" htmlFor="doajSeal">DOAJ Seal: </label>
-                              <input disabled={disableEdit} type="checkbox" id="doajSeal" name="doajSeal" defaultChecked={data.doaj}/></div>
-                       }
+                       <div><label className="c-editable-page__label" htmlFor="doajSeal">DOAJ Seal: </label>
+                            <input type="checkbox" id="doajSeal" name="doajSeal" defaultChecked={data.doaj}/></div>
                        <br/>
                        <label className="c-editable-page__label" htmlFor="issn">ISSN: </label>
-                       <input disabled={disableEdit} className="c-editable-page__input" id="issn" type="text" defaultValue={data.issn}/>
+                       <input className="c-editable-page__input" id="issn" type="text" defaultValue={data.issn}/>
                        <label className="c-editable-page__label" htmlFor="eissn">E-ISSN: </label>
-                       <input disabled={disableEdit} className="c-editable-page__input" id="eissn" type="text" defaultValue={data.eissn}/>
-                       { disableEdit ?
-                         <div><div>Altmetric&#8482; (restricted):</div>
-                              <span id="altmetrics_ok">{data.altmetrics_ok ? "Altmetric data provided in articles" : "No Altmetric data provided in articles"}</span></div>
-                         :
-                         <div><label className="c-editable-page__label" htmlFor="altmetrics_ok">Altmetric&#8482;: </label>
-                              <input disabled={disableEdit} type="checkbox" id="altmetrics_ok" name="altmetrics_ok" defaultChecked={data.altmetrics_ok}/></div>
-                       }
+                       <input className="c-editable-page__input" id="eissn" type="text" defaultValue={data.eissn}/>
+                       <div><label className="c-editable-page__label" htmlFor="altmetrics_ok">Altmetric&#8482;: </label>
+                            <input type="checkbox" id="altmetrics_ok" name="altmetrics_ok" defaultChecked={data.altmetrics_ok}/></div>
                        <br/>
                        <div><label className="c-editable-page__label" htmlFor="indexed">Indexed by: </label>  
 	        	    <Select name="indexed" value={this.state.indexed} options = {indexOptions} onChange={this.updateIndexed} isMulti={true} />
@@ -492,12 +502,20 @@ class UnitProfileLayout extends React.Component {
 
   render() {
     return (
-      <div>
-        { this.renderUnitConfig() }
-        { this.renderSocialConfig() }
-        { this.renderAboutConfig() }
-        { (this.props.unit.type == 'journal' || this.props.unit.type == 'conference_proceedings') && this.renderJournalConfig() }
-      </div>
+      <Contexts.CMS.Consumer>
+      { cms => {
+        const isSuper = cms.permissions && cms.permissions.super
+        
+        return (
+          <div>
+            { this.renderUnitConfig() }
+            { this.renderSocialConfig() }
+            { this.renderAboutConfig() }
+            { isSuper && (this.props.unit.type == 'journal' || this.props.unit.type == 'conference_proceedings') && this.renderJournalConfig() }
+          </div>
+        )
+      }}
+      </Contexts.CMS.Consumer>
     )
   }
 }

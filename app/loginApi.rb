@@ -96,6 +96,13 @@ def getUserID(username)
 end
 
 ###################################################################################################
+# Check if a unit is within a campus (either is the campus or is a descendant)
+def isUnitInCampus?(unitID, campusID)
+  return true if unitID == campusID
+  DB[:unit_hier].where(unit_id: unitID, ancestor_unit: campusID).first ? true : false
+end
+
+###################################################################################################
 # Determine permissions based on username and key
 def getUserPermissions(username, sessionID, unitID)
 
@@ -120,13 +127,25 @@ def getUserPermissions(username, sessionID, unitID)
   # And update the time.
   OJS_DB[:sessions].where(session_id: sessionID, user_id: userID).update(last_used: Time.now.to_i)
 
-  # Check for permissions
+  # Check for permissions (check campus admin before unit admin to preserve campus_admin flag)
   if OJS_DB[:user_settings].where(user_id: userID, setting_name: 'eschol_superuser').first
     return { admin: true, super: true }
-  elsif OJS_DB[:eschol_roles].where(user_id: userID, role: 'admin', unit_id: unitID).first
-    return { admin: true }
   else
-    return {}
+    # Check if user is campus admin for any campus that contains this unit
+    campusAdminRoles = OJS_DB[:eschol_roles].where(user_id: userID, role: 'campusadmin').all
+    campusAdminRoles.each do |role|
+      campusID = role[:unit_id]
+      if isUnitInCampus?(unitID, campusID)
+        return { admin: true, campus_admin: true, campus_id: campusID }
+      end
+    end
+    
+    # Check if user is unit admin for this specific unit
+    if OJS_DB[:eschol_roles].where(user_id: userID, role: 'admin', unit_id: unitID).first
+      return { admin: true }
+    else
+      return {}
+    end
   end
 end
 

@@ -106,32 +106,48 @@ end
 
 # Permissions per nav item
 def getNavPerms(unit, navItems, userPerms)
-  noAccess = { change_slug: false, change_text: false, remove: false, reorder: false }
+  noAccess = { change_slug: false, change_text: false, remove: false, change_hidden: false, reorder: false }
   unit.nil? and return noAccess
   result = {}
   slugs = getSlugs(navItems)
   slugs << "link" << "folder" << "page"  # special pseudo-slugs for specials
   slugs.each { |slug|
     if unit.type.include?("series")
-      result[slug] =   noAccess
+      result[slug] = noAccess
     elsif userPerms[:super]
-      result[slug] =   { change_slug: true,  change_text: true,  remove: true,  reorder: true  }
+      result[slug] = { change_slug: true,  change_text: true,  remove: true,  change_hidden: true, reorder: true  }
     elsif !userPerms[:admin]
-      result[slug] =   noAccess
+      result[slug] = noAccess
+    elsif userPerms[:campus_admin]
+      # Campus admins have access with protected page restrictions
+      isCampus = (unit.type == 'campus')
+      case slug
+      when /^(policyStatement|policies|policiesProcedures|journal_policies|policy|ucoapolicies)$/i
+        result[slug] = noAccess
+      when /^(submitPaper|submissionGuidelines|submissionprocess|howsubmit)$/i
+        result[slug] = noAccess
+      when /^(contactUs|contact)$/i
+        result[slug] = { change_slug: true, change_text: true, remove: false, change_hidden: false, reorder: true }
+      when /^(aboutus|about)$/i
+        # Campus admins can edit about page at sub-unit level (including marking as hidden), but not delete it
+        result[slug] = isCampus ? noAccess : { change_slug: false, change_text: true,  remove: false, change_hidden: true, reorder: true }
+      else
+        result[slug] = { change_slug: true, change_text: true, remove: true, change_hidden: true, reorder: true }
+      end
     elsif unit.type == 'campus'
-      result[slug] =   noAccess
+      result[slug] = noAccess
     else
       case slug
       when /^(policyStatement|policies|policiesProcedures|journal_policies|policy)$/i
-        result[slug] = { change_slug: false, change_text: false, remove: false, reorder: true  }
+        result[slug] = { change_slug: false, change_text: false, remove: false, change_hidden: false, reorder: true  }
       when /^(submitPaper|submissionGuidelines|submissionprocess|howsubmit)$/i
-        result[slug] = { change_slug: false, change_text: true,  remove: false, reorder: true  }
+        result[slug] = { change_slug: false, change_text: true,  remove: false, change_hidden: false, reorder: true  }
       when /^(contactUs|contact)$/i
-        result[slug] = { change_slug: false, change_text: true,  remove: false, reorder: false }
+        result[slug] = { change_slug: false, change_text: true,  remove: false, change_hidden: false, reorder: false }
       when /^(aboutus|about)$/i
-        result[slug] = { change_slug: false, change_text: true,  remove: false, reorder: true  }
+        result[slug] = { change_slug: false, change_text: true,  remove: false, change_hidden: false, reorder: true  }
       else
-        result[slug] = { change_slug: true,  change_text: true,  remove: true,  reorder: true  }
+        result[slug] = { change_slug: true,  change_text: true,  remove: true,  change_hidden: true, reorder: true  }
       end
     end
   }
@@ -761,6 +777,28 @@ def getUnitCarouselConfig(unit, attrs)
   return config 
 end
 
+# Find the ancestor campus unit for a given unit (returns campus unit_id or nil)
+def getAncestorCampus(unitID)
+  unit = $unitsHash[unitID]
+  return nil unless unit
+  
+  # If this is already a campus, return it
+  return unitID if unit.type == 'campus'
+  
+  # Look up the hierarchy to find a campus ancestor
+  # Get all ancestors and check which one is a campus
+  ancestors = DB[:unit_hier]
+    .where(unit_id: unitID)
+    .select_map(:ancestor_unit)
+  
+  ancestors.each do |ancestorID|
+    ancestorUnit = $unitsHash[ancestorID]
+    return ancestorID if ancestorUnit && ancestorUnit.type == 'campus'
+  end
+  
+  return nil
+end
+
 def getItemAuthors(itemID)
   return ItemAuthors.filter(:item_id => itemID).order(:ordering).map(:attrs).collect{ |h| JSON.parse(h)}
 end
@@ -1131,8 +1169,19 @@ end
 ###################################################################################################
 # Add a new unit
 put "/api/unit/:unitID/unitBuilder" do |parentUnitID|
-  # Only super-users allowed to add units
-  getUserPermissions(params[:username], params[:token], parentUnitID)[:super] or halt(401)
+  # Check user permissions
+  perms = getUserPermissions(params[:username], params[:token], parentUnitID)
+  parentUnit = $unitsHash[parentUnitID]
+  
+  # Permission checks: Super users can create anywhere, campus admins can only create at sub-unit level (not at campus level)
+  if perms[:super]
+    # Super users have full access
+  elsif perms[:campus_admin]
+    # Campus admins cannot create units directly under campus (view only at campus level)
+    parentUnit && parentUnit.type == 'campus' and jsonHalt(401, "Campus admins cannot create units at campus level")
+  else
+    halt(401)
+  end
 
   newUnitID = params[:newUnitID]
   newUnitID =~ /^[a-z0-9_]+$/ or jsonHalt(400, "Invalid unit ID")
@@ -1143,6 +1192,11 @@ put "/api/unit/:unitID/unitBuilder" do |parentUnitID|
 
   unitType = params[:type]
   %w{oru journal series monograph_series conference_proceedings}.include?(unitType) or jsonHalt(400, "Invalid unit type")
+  
+  # Campus admins cannot create journal or conference_proceedings units
+  if perms[:campus_admin] && !perms[:super] && %w{journal conference_proceedings}.include?(unitType)
+    jsonHalt(401, "Campus admins cannot create journal or conference proceedings units")
+  end
 
   isHidden = !!params[:hidden]
 
@@ -1185,6 +1239,32 @@ put "/api/unit/:unitID/unitBuilder" do |parentUnitID|
                       ancestor_unit: hier.ancestor_unit,
                       is_direct: false)
     }
+    
+    # Auto-assign campus admins to new unit
+    # Find ancestor campus and assign all its campus admins to the new unit
+    campusID = getAncestorCampus(newUnitID)
+    if campusID
+      # Get all campus admins for this campus
+      campusAdmins = OJS_DB[:eschol_roles]
+        .where(unit_id: campusID, role: 'campusadmin')
+        .select(:user_id)
+        .all
+      
+      # Assign each campus admin to the new unit
+      campusAdmins.each do |admin|
+        # Check if role already exists to avoid duplicates
+        existing = OJS_DB[:eschol_roles]
+          .where(unit_id: newUnitID, user_id: admin[:user_id], role: 'admin')
+          .first
+        unless existing
+          OJS_DB[:eschol_roles].insert(
+            unit_id: newUnitID,
+            user_id: admin[:user_id],
+            role: 'admin'
+          )
+        end
+      end
+    end
   }
   refreshUnitsHash
   return {status: "ok", nextURL: "/uc/#{newUnitID}"}.to_json
@@ -1243,11 +1323,18 @@ end
 # Re-order units
 put "/api/unit/:unitID/unitOrder" do |unitID|
   # Check user permissions
-  perms = getUserPermissions(params[:username], params[:token], unitID)[:super] or restrictedHalt
+  perms = getUserPermissions(params[:username], params[:token], unitID)
+  unit = Unit[unitID] or jsonHalt(404, "Unit not found")
+  isCampus = (unit.type == 'campus')
+  
+  # Super users can reorder anywhere, campus admins can only reorder at sub-unit level (not at campus level)
+  unless perms[:super] || (perms[:campus_admin] && !isCampus)
+    restrictedHalt
+  end
+  
   content_type :json
 
   DB.transaction {
-    unit = Unit[unitID] or jsonHalt(404, "Unit not found")
     newOrder = JSON.parse(params[:order])
     UnitHier.where(ancestor_unit: unitID, is_direct: true).count == newOrder.length or jsonHalt(400, "must reorder all at once")
 
@@ -1353,6 +1440,9 @@ put "/api/unit/:unitID/deleteUnit" do |unitID|
   UnitHier.where(ancestor_unit: unitID).count > 0 and jsonHalt(400, "Cannot delete unit having sub-units.")
   UnitItem.where(unit_id: unitID).count > 0 and jsonHalt(400, "Cannot delete unit containing items.")
 
+  # Get parent unit before deletion
+  parentUnitID = $hierByUnit[unitID]&.first&.ancestor_unit
+
   DB.transaction {
     UnitHier.where(unit_id: unitID).delete
     Page.where(unit_id: unitID).delete
@@ -1363,7 +1453,7 @@ put "/api/unit/:unitID/deleteUnit" do |unitID|
     Unit.where(id: unitID).delete
   }
   refreshUnitsHash
-  return {status: "ok", nextURL: "/uc/#{$hierByUnit[unitID][0].ancestor_unit}"}.to_json
+  return {status: "ok", nextURL: "/uc/#{parentUnitID}"}.to_json
 end
 
 ###################################################################################################
@@ -1403,6 +1493,32 @@ put "/api/unit/:unitID/copyUnit" do |oldUnitID|
       props.delete(:id)
       Widget.create(props)
     }
+    
+    # Auto-assign campus admins to new unit
+    # Find ancestor campus and assign all its campus admins to the new unit
+    campusID = getAncestorCampus(newUnitID)
+    if campusID
+      # Get all campus admins for this campus
+      campusAdmins = OJS_DB[:eschol_roles]
+        .where(unit_id: campusID, role: 'campusadmin')
+        .select(:user_id)
+        .all
+      
+      # Assign each campus admin to the new unit
+      campusAdmins.each do |admin|
+        # Check if role already exists to avoid duplicates
+        existing = OJS_DB[:eschol_roles]
+          .where(unit_id: newUnitID, user_id: admin[:user_id], role: 'admin')
+          .first
+        unless existing
+          OJS_DB[:eschol_roles].insert(
+            unit_id: newUnitID,
+            user_id: admin[:user_id],
+            role: 'admin'
+          )
+        end
+      end
+    end
   }
   refreshUnitsHash
   return {status: "ok", nextURL: "/uc/#{newUnitID}"}.to_json
@@ -1549,7 +1665,12 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
     unit = Unit[unitID] or jsonHalt(404, "Unit not found")
     unitAttrs = JSON.parse(unit.attrs)
     #puts "DATA received is #{params['data']}"   
-    if params['data']['unitName'] then unit.name = params['data']['unitName'] end
+    
+    # Name editing restrictions: campus admins cannot change campus or journal names
+    if params['data']['unitName']
+      can_change = perms[:super] || !perms[:campus_admin] || !['campus', 'journal'].include?(unit.type)
+      unit.name = params['data']['unitName'] if can_change
+    end
 
     # Only change unit config flags if the that section is being saved -- avoids clearing them accidentally
     if params['data']['unitConfigSection']
@@ -1557,13 +1678,24 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
         unitAttrs['logo']['is_banner'] = params['data']['logoIsBanner'] == 'on'
       end
 
-      # Certain elements can only be changed by super user
+      # Unit status can be changed by super users, or campus admins at sub-unit level (not at campus level)
+      # Direct submit and direct manage remain super user only
+      isCampus = (unit.type == 'campus')
+      if perms[:super] || (perms[:campus_admin] && !isCampus)
+        # Campus admins cannot modify archived units
+        if !perms[:super] && unit.status == 'archived'
+          restrictedHalt
+        end
+        allowed_statuses = perms[:super] ? %w{active hidden archived} : %w{active hidden}
+        allowed_statuses.include?(params['data']['status']) or restrictedHalt
+        unit.status = params['data']['status']
+      end
+      
+      # Direct submit and manage URLs are super user only
       if perms[:super]
         unitAttrs['doaj'] = (params['data']['doajSeal'] == 'on')
         unitAttrs['altmetrics_ok'] = (params['data']['altmetrics_ok'] == 'on')
         unitAttrs['commenting_ok'] = (params['data']['commenting_ok'] == 'on')
-        %w{active hidden archived}.include?(params['data']['status']) or jsonHalt(400, "invalid status")
-        unit.status = params['data']['status']
         %w{enabled disabled moribund}.include?(params['data']['directSubmit']) or jsonHalt(400, "invalid directSubmit")
         if params['data']['directSubmit'] == "enabled"
           unitAttrs.delete('directSubmit')
@@ -1581,27 +1713,37 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
     end
 
     # Likewise, only change journal flags if journal section is being saved
-    if params['data']['journalConfigSection']
+    # Journal-specific fields can only be changed by super users
+    if params['data']['journalConfigSection'] && perms[:super]
       unitAttrs['magazine_layout'] = (params['data']['magazine_layout'] == "on")
       unitAttrs['issue_rule'] = (params['data']['issue_rule'] == "secondMostRecent") ? "secondMostRecent" : nil
     end
 
-    if params['data']['issn'] then unitAttrs['issn'] = params['data']['issn'] end
-    if params['data']['eissn'] then unitAttrs['eissn'] = params['data']['eissn'] end
+    # ISSN fields are journal-specific and can only be changed by super users
+    if perms[:super]
+      if params['data']['issn'] then unitAttrs['issn'] = params['data']['issn'] end
+      if params['data']['eissn'] then unitAttrs['eissn'] = params['data']['eissn'] end
+    end
     # pp(params['data'])
     if params['data']['facebook'] then unitAttrs['facebook'] = params['data']['facebook'] end
     if params['data']['twitter'] then unitAttrs['twitter'] = params['data']['twitter'] end
-    if params['data']['about'] then unitAttrs['about'] = params['data']['about'] end
+    # About text can be changed by super users, or campus admins on sub-units (not at campus level)
+    if params['data']['about'] && (perms[:super] || (perms[:campus_admin] && !isCampus))
+      unitAttrs['about'] = params['data']['about']
+    end
     if params['data']['subheader-bgcolorpicker'] then unitAttrs['bgColor'] = params['data']['subheader-bgcolorpicker'] end
     if params['data']['elementcolorpicker'] then unitAttrs['elColor'] = params['data']['elementcolorpicker'] end
 
-    if params['data']['indexed'] then unitAttrs['indexed'] = params['data']['indexed'] end
-    if params['data']['disciplines'] then unitAttrs['disciplines'] = params['data']['disciplines'] end
-    if params['data']['pub_freq'] then unitAttrs['pub_freq'] = params['data']['pub_freq'] end
-    if params['data']['oaspa'] then unitAttrs['oaspa'] = params['data']['oaspa'] end
-    if params['data']['apc'] then unitAttrs['apc'] = params['data']['apc'] end
-    if params['data']['contentby'] then unitAttrs['contentby'] = params['data']['contentby'] end
-    if params['data']['tos'] then unitAttrs['tos'] = params['data']['tos'] end
+    # Journal metadata fields can only be changed by super users
+    if perms[:super]
+      if params['data']['indexed'] then unitAttrs['indexed'] = params['data']['indexed'] end
+      if params['data']['disciplines'] then unitAttrs['disciplines'] = params['data']['disciplines'] end
+      if params['data']['pub_freq'] then unitAttrs['pub_freq'] = params['data']['pub_freq'] end
+      if params['data']['oaspa'] then unitAttrs['oaspa'] = params['data']['oaspa'] end
+      if params['data']['apc'] then unitAttrs['apc'] = params['data']['apc'] end
+      if params['data']['contentby'] then unitAttrs['contentby'] = params['data']['contentby'] end
+      if params['data']['tos'] then unitAttrs['tos'] = params['data']['tos'] end
+    end
     unitAttrs.delete_if {|_k,v| (v.is_a? String and v.empty?) || (v == false) || v.nil? }
     unit.attrs = unitAttrs.to_json
     unit.save
@@ -1825,24 +1967,60 @@ def getUnitUserConfig(unit)
     userRoles[userID][:roles][row[:role]] = true
   }
 
+  # If this is a sub-unit, fetch inherited campus admins from ancestor campus
+  # This query is necessary to ensure campus admins are listed in the "users" list for sub-units
+  if unit.type != 'campus'
+    campusID = getAncestorCampus(unit.id)
+    if campusID
+      campusAdminQuery = Sequel::SQL::PlaceholderLiteralString.new(%{
+        select eschol_roles.user_id, email, first_name, last_name
+        from eschol_roles
+        join users on users.user_id = eschol_roles.user_id
+        where unit_id = :campusID and role = 'campusadmin'
+        order by last_name = '', last_name, first_name, email
+      }.unindent, { campusID: campusID })
+      OJS_DB.fetch(campusAdminQuery).each { |row|
+        userID = row[:user_id]
+        userRoles[userID] ||= { user_id: userID, name: formatFirstLast(row), email: row[:email], roles: {} }
+        userRoles[userID][:roles]['campusadmin'] = true
+        userRoles[userID][:inherited_campusadmin] = true  # Mark as inherited
+      }
+    end
+  end
+
   return { user_roles: userRoles.values }
 end
 
 put "/api/unit/:unitID/userConfig" do |unitID|
-  getUserPermissions(params[:username], params[:token], unitID)[:super] or restrictedHalt
+  perms = getUserPermissions(params[:username], params[:token], unitID)
+  (perms[:super] || perms[:campus_admin]) or restrictedHalt
+  
   OJS_DB.transaction {
     oldRoles = Set.new
     getUnitUserConfig($unitsHash[unitID])[:user_roles].each { |row|
-      %w{admin stats submit}.each { |role|
+      %w{campusadmin admin stats submit}.each { |role|
         row[:roles][role] and oldRoles << { userID: row[:user_id], role: role }
       }
     }
 
     newRoles = Set.new
+    
+    # If not a super user, preserve all existing campusadmin roles first
+    # since campus admins can't modify campusadmin role, disabled checkboxes won't be in form data
+    if !perms[:super]
+      oldRoles.select { |r| r[:role] == 'campusadmin' }.each { |r| newRoles << r }
+    end
+    
     params['data'].keys.map{ |k| k.sub(/^\w+-/, '') }.uniq.each { |userID|
       userID == "newuser" or userID = userID.to_i
-      %w{admin stats submit}.each { |role|
-        params['data']["#{role}-#{userID}"] == 'on' and newRoles << { userID: userID, role: role }
+      %w{campusadmin admin stats submit}.each { |role|
+        # Only super users can modify campusadmin role
+        if role == 'campusadmin' && !perms[:super]
+          # Already preserved above, skip
+          next
+        else
+          params['data']["#{role}-#{userID}"] == 'on' and newRoles << { userID: userID, role: role }
+        end
       }
     }
 

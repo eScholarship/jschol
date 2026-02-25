@@ -40,14 +40,17 @@ class SortableUnitList extends React.Component {
   }
 
   render() {
-    const SortableTree = this.props.cms.modules.SortableTree
+    const SortableTree = this.props.cms.modules?.SortableTree
+    if (!SortableTree) return null
     return (
       <SortableTree
         treeData={this.state.data}
         isVirtualized={false}
         maxDepth={1}
         onChange={treeData => this.setState({ data: treeData })}
-        onMoveNode={()=>this.props.onChangeOrder(this.travOrder(this.state.data))}/>
+        onMoveNode={()=>this.props.onChangeOrder(this.travOrder(this.state.data))}
+        canDrag={this.props.canDrag}
+      />
     )
   }
 }
@@ -82,32 +85,51 @@ export default class UnitBuilderLayout extends React.Component
               </h1>
             </header>
 
-            {p.data.sub_units.length > 0 &&
-              <details className="c-togglecontent" open>
-                <summary>Arrange sub-units</summary>
-                <Contexts.CMS.Consumer>
-                  { cms => cms && cms.modules &&
-                    <SortableUnitList cms={cms}
-                                      unit={p.unit.id}
-                                      subUnits={p.data.sub_units}
-                                      onChangeOrder={this.reorderUnits}/>
+            <Contexts.CMS.Consumer>
+            { cms => {
+              // Campus admins have view-only at campus level, can create at sub-unit level
+              let isCampusAdmin = cms.permissions && cms.permissions.campus_admin
+              let isSuper = cms.permissions && cms.permissions.super
+              let isCampusLevel = p.unit.type === 'campus'
+              let canEdit = isSuper || (isCampusAdmin && !isCampusLevel)
+              let canCreateSubUnits = isSuper || (isCampusAdmin && !isCampusLevel)
+              
+              return (
+                <div>
+                  {p.data.sub_units.length > 0 &&
+                    <details className="c-togglecontent" open>
+                      <summary>Arrange sub-units {!canEdit && "(restricted)"}</summary>
+                      { cms && cms.modules && canEdit ?
+                        <SortableUnitList 
+                          cms={cms}
+                          unit={p.unit.id}
+                          subUnits={p.data.sub_units}
+                          onChangeOrder={this.reorderUnits}
+                        />
+                      :
+                        <SortableUnitList 
+                          cms={cms}
+                          unit={p.unit.id}
+                          subUnits={p.data.sub_units}
+                          onChangeOrder={this.reorderUnits}
+                          canDrag={false}
+                        />
+                      }
+                    </details>
                   }
-                </Contexts.CMS.Consumer>
-              </details>
-            }
 
-            <details className="c-togglecontent">
-              <summary>List parent unit(s)</summary>
-              <ul>
-                { p.data.parent_units.map(u =>
-                    <li key={u.id}><a href={"/uc/" + u.id}>{u.name}</a></li>)
-                }
-              </ul>
-            </details>
+                  <details className="c-togglecontent">
+                    <summary>List parent unit(s)</summary>
+                    <ul>
+                      { p.data.parent_units.map(u =>
+                          <li key={u.id}><a href={"/uc/" + u.id}>{u.name}</a></li>)
+                      }
+                    </ul>
+                  </details>
 
-            {/oru|campus/.test(p.unit.type) &&
-              <details className="c-togglecontent">
-                <summary>Add new sub-unit</summary>
+                  {/oru|campus/.test(p.unit.type) && canCreateSubUnits &&
+                    <details className="c-togglecontent">
+                      <summary>Add new sub-unit</summary>
                 <FormComp onSubmit={ (event, data) => {
                             event.preventDefault()
                             p.sendApiData("PUT", `/api/unit/${p.unit.id}/unitBuilder`, data)
@@ -123,8 +145,14 @@ export default class UnitBuilderLayout extends React.Component
 
                   <label className="c-editable-page__label" htmlFor="type">Unit type: </label>
                   <select name="type">
-                    { Object.entries(UNIT_TYPE_TO_LABEL).map(unitType =>
-                        <option key={unitType[0]} value={unitType[0]}>{unitType[1]}</option>) }
+                    { Object.entries(UNIT_TYPE_TO_LABEL)
+                      .filter(([type]) => isSuper || !['journal', 'conference_proceedings'].includes(type))
+                      .map(([type, label]) => (
+                        <option key={type} value={type}>
+                          {label}
+                        </option>
+                      )) 
+                    }
                   </select>
 
                   <br/><br/>
@@ -134,7 +162,7 @@ export default class UnitBuilderLayout extends React.Component
                 </FormComp>
               </details>
             }
-            {/oru|campus/.test(p.unit.type) &&
+            {/oru|campus/.test(p.unit.type) && isSuper &&
               <details className="c-togglecontent">
                 <summary>Adopt existing unit as sub-unit</summary>
                 <FormComp onSubmit={ (event, data) => {
@@ -150,7 +178,7 @@ export default class UnitBuilderLayout extends React.Component
                 </FormComp>
               </details>
             }
-            {/oru|campus/.test(p.unit.type) &&
+            {/oru|campus/.test(p.unit.type) && isSuper &&
               <details className="c-togglecontent">
                 <summary>Disown sub-unit</summary>
                 <FormComp onSubmit={ (event, data) => {
@@ -169,42 +197,52 @@ export default class UnitBuilderLayout extends React.Component
               </details>
             }
 
-            <details className="c-togglecontent">
-              <summary>Move this unit</summary>
-              <FormComp onSubmit={ (event, data) => {
-                          event.preventDefault()
-                          p.sendApiData("PUT", `/api/unit/${p.unit.id}/moveUnit`, data)
-                        }}>
-                <label className="c-editable-page__label" htmlFor="targetUnitID">Destination parent unit: </label>
-                <input className="c-editable-page__input" id="targetUnitID" name="targetUnitID" type="text"/>
-                <button type="submit">Move Unit '{p.unit.id}'</button>
-              </FormComp>
-            </details>
+            {isSuper &&
+              <details className="c-togglecontent">
+                <summary>Move this unit</summary>
+                <FormComp onSubmit={ (event, data) => {
+                            event.preventDefault()
+                            p.sendApiData("PUT", `/api/unit/${p.unit.id}/moveUnit`, data)
+                          }}>
+                  <label className="c-editable-page__label" htmlFor="targetUnitID">Destination parent unit: </label>
+                  <input className="c-editable-page__input" id="targetUnitID" name="targetUnitID" type="text"/>
+                  <button type="submit">Move Unit '{p.unit.id}'</button>
+                </FormComp>
+              </details>
+            }
 
-            <details className="c-togglecontent">
-              <summary>Copy unit content</summary>
-              <FormComp onSubmit={ (event, data) => {
-                          event.preventDefault()
-                          p.sendApiData("PUT", `/api/unit/${p.unit.id}/copyUnit`, data)
-                        }}>
-                <label className="c-editable-page__label" htmlFor="targetParentID">Destination parent unit: </label>
-                <input className="c-editable-page__input" id="targetParentID" name="targetParentID" type="text"/>
-                <label className="c-editable-page__label" htmlFor="newUnitID">Name for copied unit: </label>
-                <input className="c-editable-page__input" id="newUnitID" name="newUnitID" type="text"/>
-                <button type="submit">Copy unit '{p.unit.id}'</button>
-              </FormComp>
-            </details>
+            {isSuper &&
+              <details className="c-togglecontent">
+                <summary>Copy unit content</summary>
+                <FormComp onSubmit={ (event, data) => {
+                            event.preventDefault()
+                            p.sendApiData("PUT", `/api/unit/${p.unit.id}/copyUnit`, data)
+                          }}>
+                  <label className="c-editable-page__label" htmlFor="targetParentID">Destination parent unit: </label>
+                  <input className="c-editable-page__input" id="targetParentID" name="targetParentID" type="text"/>
+                  <label className="c-editable-page__label" htmlFor="newUnitID">Name for copied unit: </label>
+                  <input className="c-editable-page__input" id="newUnitID" name="newUnitID" type="text"/>
+                  <button type="submit">Copy unit '{p.unit.id}'</button>
+                </FormComp>
+              </details>
+            }
 
-            <details className="c-togglecontent">
-              <summary>Delete this unit</summary>
-              <FormComp onSubmit={ (event, data) => {
-                          event.preventDefault()
-                          p.sendApiData("PUT", `/api/unit/${p.unit.id}/deleteUnit`, data)
-                        }}>
-                <p><i>Note:</i> This will fail (harmlessly) if the unit has any items or sub-units.</p>
-                <button type="submit" className="o-button__3">Delete unit '{p.unit.id}'</button>
-              </FormComp>
-            </details>
+            {isSuper &&
+              <details className="c-togglecontent">
+                <summary>Delete this unit</summary>
+                <FormComp onSubmit={ (event, data) => {
+                            event.preventDefault()
+                            p.sendApiData("PUT", `/api/unit/${p.unit.id}/deleteUnit`, data)
+                          }}>
+                  <p><i>Note:</i> This will fail (harmlessly) if the unit has any items or sub-units.</p>
+                  <button type="submit" className="o-button__3">Delete unit '{p.unit.id}'</button>
+                </FormComp>
+              </details>
+            }
+                </div>
+              )
+            }}
+            </Contexts.CMS.Consumer>
           </section>
         </main>
       </div>
