@@ -86,7 +86,8 @@ class SortableNavList extends React.Component {
 
   render() {
     const SortableTree = this.props.cms.modules?.SortableTree
-    return SortableTree && (
+    if (!SortableTree) return null
+    return (
       <SortableTree
         treeData={this.state.data}
         isVirtualized={false}
@@ -151,7 +152,8 @@ class SortableSidebarList extends React.Component {
 
   render() {
     const SortableTree = this.props.cms.modules?.SortableTree
-    return SortableTree && (
+    if (!SortableTree) return null
+    return (
       <SortableTree
         treeData={this.state.data}
         isVirtualized={false}
@@ -179,7 +181,8 @@ class NonSortableList extends React.Component {
 
   render() {
     const SortableTree = this.props.cms.modules?.SortableTree
-    return SortableTree && (
+    if (!SortableTree) return null
+    return (
       <SortableTree
         treeData={this.state.data}
         isVirtualized={false}
