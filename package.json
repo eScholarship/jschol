@@ -11,7 +11,7 @@
   "scripts": {
     "test": "mocha",
     "clean": "rm -rf app/js/*bundle* app/js/assets/ app/css/*.css app/css/*.map app/js/manifest.json",
-    "dev": "npm run clean && concurrently -k -n \"socks,client,ssr,puma\" -c \"cyan,blue,magenta,green\" \"ruby util/maybeSocks.rb\" \"npm run build:dev:watch\" \"npm run build:dev:ssr:watch\" \"sleep 5 && bundle exec puma\"",
+    "dev": "npm run clean && concurrently -k -n \"socks,client,puma\" -c \"cyan,blue,green\" \"ruby util/maybeSocks.rb\" \"npm run build:dev:watch\" \"sleep 5 && bundle exec puma\"",
     "build:dev": "vite build --mode development",
     "build:dev:ssr": "vite build --ssr --mode development",
     "build:dev:all": "npm run build:dev && npm run build:dev:ssr",

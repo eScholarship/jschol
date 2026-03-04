@@ -118,10 +118,12 @@ export default defineConfig(({ command, mode, isSsrBuild }) => {
       'global': 'window',
       'process.env.NODE_ENV': JSON.stringify(mode)
     },
-
-    // optimizeDeps: {
-    //   include: ['jquery', 'react', 'react-dom', 'react-router-dom']
-    // }
+    ssr: {
+      noExternal: ['better-react-mathjax', 'react-pdf'],
+      optimizeDeps: {
+        include: ['lodash'],
+      },
+    },
   }
 })
 

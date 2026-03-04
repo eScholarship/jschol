@@ -8,8 +8,7 @@
 // }
 
 import React from 'react'
-import ReactDOM from 'react-dom'
-import { BrowserRouter, Route, Switch } from 'react-router-dom'
+import { Route, Switch } from 'react-router-dom'
 import ReactGA from 'react-ga'
 import ReactModal from 'react-modal'
 import klaroConfig from './klaro-config.jsx';
@@ -132,24 +131,4 @@ class App extends React.Component
     </div>
 }
 
-// When running in the browser, render with React (vs. server-side where iso runs it for us)
-if (!(typeof document === "undefined")) {
-  ReactModal.setAppElement('#main')
-  if (window.jscholApp_initialPageData) {
-    ReactDOM.hydrate((
-      <BrowserRouter>
-        <App/>
-      </BrowserRouter>
-    ), document.getElementById('main'))
-  }
-  else {
-    ReactDOM.render((
-      <BrowserRouter>
-        <App/>
-      </BrowserRouter>
-    ), document.getElementById('main'))
-  }
-}
-
-// When running on the server, return an object that iso can render.
 export default App
