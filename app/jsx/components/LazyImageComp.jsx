@@ -1,8 +1,7 @@
 // ##### Lazy Image Component ##### //
 
-// NOTE:
-// chrome is very efficient for a small quantity of images, so loading='lazy' doesn't always work
-// however, using the native attribute eliminates the need for external dependencies 
+// NOTE: loading='lazy' may not always defer small sets of images (browsers apply their own)
+// viewport thresholds may load images eagerly if they're close enough
 
 import React, { useRef, useEffect } from 'react'
 
