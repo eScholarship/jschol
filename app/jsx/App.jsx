@@ -1,24 +1,16 @@
 
 // ##### Top-level React Router App ##### //
-if (!(typeof document === "undefined")) {
-  // require('babel-polyfill')   // do we need this?
-  require('details-polyfill')
-  require('intersection-observer')
-  require('smoothscroll-polyfill').polyfill();
-}
 
 import React from 'react'
-import ReactDOM from 'react-dom'
-import { BrowserRouter, Route, Switch } from 'react-router-dom'
+import { Route, Switch } from 'react-router-dom'
 import ReactGA from 'react-ga'
-import ReactModal from 'react-modal'
 import klaroConfig from './klaro-config.jsx';
 import HomePage from './pages/HomePage.jsx'
 import BrowsePage from './pages/BrowsePage.jsx'
 import ItemPage from './pages/ItemPage.jsx'
 import { UnitStatsPage, AuthorStatsPage } from './pages/StatsPage.jsx'
 import UnitPage from './pages/UnitPage.jsx'
-import { SearchPage } from './pages/SearchPage.jsx';
+import { SearchPage } from './pages/SearchPage.jsx'
 import GlobalStaticPage from './pages/GlobalStaticPage.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import LoginSuccessPage from './pages/LoginSuccessPage.jsx'
@@ -54,9 +46,6 @@ const o_log   = console.log;   console.log   = function(...args) { filterMsg(o_l
 const o_debug = console.debug; console.debug = function(...args) { filterMsg(o_debug, ...args) }
 const o_error = console.error; console.error = function(...args) { filterMsg(o_error, ...args) }
 const o_info  = console.info;  console.info  = function(...args) { filterMsg(o_info, ...args)  }
-
-// array-include polyfill for older browsers (and node.js)
-Array.prototype.includes = require('array-includes').shim()
 
 ReactGA.initialize('UA-26286226-1', { debug: false })
 
@@ -132,24 +121,4 @@ class App extends React.Component
     </div>
 }
 
-// When running in the browser, render with React (vs. server-side where iso runs it for us)
-if (!(typeof document === "undefined")) {
-  ReactModal.setAppElement('#main')
-  if (window.jscholApp_initialPageData) {
-    ReactDOM.hydrate((
-      <BrowserRouter>
-        <App/>
-      </BrowserRouter>
-    ), document.getElementById('main'))
-  }
-  else {
-    ReactDOM.render((
-      <BrowserRouter>
-        <App/>
-      </BrowserRouter>
-    ), document.getElementById('main'))
-  }
-}
-
-// When running on the server, return an object that iso can render.
 export default App

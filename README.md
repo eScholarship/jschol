@@ -11,8 +11,7 @@ This app uses the following technology and features:
 * Sinatra lightweight server framework for Ruby
 * Sequel object-relational mapper for Ruby
 * CSS compilation using SASS
-* Automatic rebuilds using Gulp
-* LiveReload support so changes during development are reflected instantly in the browser
+* Automatic rebuilds using Vite
 * Isometric Javascript to provide server-side initial rendering of pages (for fast first load, and for better crawlability)
 * [AWS CLI](https://aws.amazon.com/cli/) for deploying to Elastic Beanstalk. See our [AWS CLI Cheatsheet](https://github.com/cdlib/pad-sys-doc/blob/main/cheatsheet/aws-cli.md).
 
@@ -28,16 +27,15 @@ Description of files
 * `app/fonts`: Special fonts for this app.
 * `app/images`: JPG, PNG, etc.
 * `app/isomorphic.*`: A little node app that runs React on the server-side to generate the initial page contents.
-* `app/js`: Gets populated with Babel-translated and possibily minified code. Don't modify directly.
-* `app/jsx`: React code for the UI. These get compiled (through Gulp) into app/js.
-* `app/scss`: CSS styles. Uses SCSS so macros, variables, etc. are available. These get compiled (through Gulp) into app/css/.
+* `app/js`: Gets populated with bundled and possibly minified code. Don't modify directly.
+* `app/jsx`: React code for the UI. These get compiled (through Vite) into app/js.
+* `app/scss`: CSS styles. Uses SCSS so macros, variables, etc. are available. These get compiled (through Vite) into app/css/.
 * `app/server.rb`: Main app driver with code to generate the page outline, supply database data, cache bust, etc.
 * `bin/`: Gets populated by 'bundler' with driver scripts for gems it installs. Don't modify directly.
 * `config`: A place to keep environment variables such as database and S3 connection parameters.
-* `gulp`: Symbolic link to node_modules/.bin/gulp, so you can just run "./gulp" from the top-level directory.
-* `gulpfile.js`: Controls the build process for CSS and Javascript, and runs the app on the server.
+* `vite.config.js`: Controls the build process for CSS and Javascript.
 * `node_modules`: Gets populated by 'node' with server-side Javascript packages. Don't modify directly.
-* `package.json`: List of Javascript packages needed on the server. Includes mainly Gulp and React, and their dependencies.
+* `package.json`: List of Javascript packages needed on the server. Includes mainly Vite and React, and their dependencies.
 * `setup.sh`: Sequence of commands to run bundler and node to download and install all the Ruby and Javascript modules the app needs.
 * `deployVersion.sh`: deployment script, requires an active AWS CLI credential.
   See our [AWS CLI Cheatsheet](https://github.com/cdlib/pad-sys-doc/blob/main/cheatsheet/aws-cli.md).
@@ -57,14 +55,14 @@ Steps to get the app running on your local machine, with Devbox
 4. `devbox shell` downloads requirements and launches a devbox development environment 
 5. After your devbox shell is open, run the `setup.sh` script to finish
    installing JSchol
-6. Run `./gulp`. Be on the lookout for errors. 
+6. Run `npm run dev`. Be on the lookout for errors.
 
 NOTE: The first time you run `devbox shell` may take a while to complete due to 
 Devbox downloading prerequisites and package catalogs required by Nix. This 
 delay is a one-time cost, and future invocations and package additions should 
 resolve much faster.
 
-After you sucessfully run gulp the first time, you can use devbox tooling to
+After you successfully run `npm run dev` the first time, you can use devbox tooling to
 start up the jschol service:
 
 ```bash
@@ -101,7 +99,7 @@ Steps to get the app running on your local machine without Lando or Devbox
 
 4. `source config/env.sh`
 
-5. Run `./gulp`. Be on the lookout for errors.
+5. Run `npm run dev`. Be on the lookout for errors.
 
 6. Browse to `http://localhost:4001/unit/root`, or `http://localhost:4001/item/08s7w2fd`, or `http://localhost:4001/search`
 

@@ -1,5 +1,7 @@
 // ##### Data Table Component ##### //
 
+@use 'sass:color';
+
 $table-border-size: 1px;
 
 .c-datatable {
@@ -103,7 +105,7 @@ $table-border-size: 1px;
 
           th,
           td {
-            background-color: lighten($color-light-gray, 15%);
+            background-color: color.adjust($color-light-gray, $lightness: 15%);
           }
 
         }

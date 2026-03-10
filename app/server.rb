@@ -575,13 +575,46 @@ get %r{.*} do
 end
 
 ###################################################################################################
+def parseManifest
+  manifestPath = 'app/js/manifest.json'
+  # Vite manifest structure: keys are source paths (e.g. "main.jsx")
+  # values have "file" (output path)
+  # optional "isEntry", "imports", "css"
+  return nil unless File.exist?(manifestPath)
+
+  manifest = JSON.parse(File.read(manifestPath))
+  mainEntry = manifest['app/main.jsx'] || manifest['main.jsx'] || manifest.values.find { |v| v['isEntry'] }
+  return nil unless mainEntry
+
+  result = {
+    'app.js' => "/#{mainEntry['file']}",
+    'main.css' => nil
+  }
+
+  if mainEntry['css'] && mainEntry['css'].any?
+    result['main.css'] = "/#{mainEntry['css'][0]}"
+  elsif (style = manifest['style.css'])
+    result['main.css'] = "/#{style['file']}"
+  end
+
+  if mainEntry['imports']&.any?
+    vendorKey = mainEntry['imports'].find { |key| key.to_s.include?('vendor') }
+    if vendorKey && (chunk = manifest[vendorKey])
+      result['vendors~app.js'] = "/#{chunk['file']}"
+    end
+  end
+
+  result
+end
+
+###################################################################################################
 def generalResponse
   # Replace startup URLs for proper cache busting
   template = File.new("app/app.html").read
-  webpackManifest = JSON.parse(File.read('app/js/manifest.json'))
-  template.sub!("/js/vendors~app.js", "#{webpackManifest["vendors~app.js"]}")
-  template.sub!("/js/app.js", "#{webpackManifest["app.js"]}")
-  template.sub!("/css/main.css", "/css/main-#{Digest::MD5.file("app/css/main.css").hexdigest[0,16]}.css")
+  manifest = parseManifest
+  template.sub!("/js/vendors~app.js", "#{manifest['vendors~app.js'] || '/js/vendors~app.js'}")
+  template.sub!("/js/app.js", "#{manifest['app.js']}")
+  template.sub!("/css/main.css", "#{manifest['main.css'] || '/css/main.css'}")
 
   # In development mode, skip iso
   ENV['ISO_PORT'] or return template

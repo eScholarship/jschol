@@ -3,7 +3,7 @@ version: "0.5"
 
 processes:
   jschol:
-   command: "rm .mysqlpsk.3306.* || ./gulp"
+   command: "rm .mysqlpsk.3306.* || npm run dev"
    availability:
     restart: "always"
     readiness_probe:

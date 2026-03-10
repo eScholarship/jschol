@@ -1,5 +1,7 @@
 // ##### Search2 Component ##### //
 
+@use 'sass:color';
+
 .c-search2 {
   display: flex;
   position: fixed; // prevents horizontal overflow and scrollbar on small screens
@@ -87,7 +89,7 @@
   padding: 0 8px;
   transition: min-height 0.5s, margin-top 0.5s;
   transition-delay: 0.2s; // fixes open/close jitter upon onfocus/blur
-  background: lighten($color-light-gray, 10%);
+  background: color.adjust($color-light-gray, $lightness: 10%);
 
   label {
     padding-top: 8px;
@@ -127,7 +129,7 @@
     // focused style:
     &:focus + label:before {
       border: 2px solid $color-black;
-      background-color: desaturate(lighten($color-teal, 20%), 20%);
+      background-color: color.adjust($color-teal, $lightness: 20%, $saturation: -20%);
     }
 
   }

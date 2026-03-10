@@ -4,7 +4,8 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import useResizeObserver from 'use-resize-observer'
 import PdfViewComp from '../components/PdfViewComp.jsx'
-import { debounce } from 'lodash'
+import pkg from 'lodash'
+const { debounce } = pkg
 
 const PdfViewWrapper = props => {
   // client-side only 

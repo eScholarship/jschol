@@ -2,16 +2,9 @@
 
 import React from 'react'
 import PropTypes from 'prop-types'
-import $ from 'jquery'
 import { Link } from 'react-router-dom'
 import NotYetLink from '../components/NotYetLink.jsx'
 import PaginationComp from '../components/PaginationComp.jsx'
-
-// Load dotdotdot in browser but not server
-if (!(typeof document === "undefined")) {
-  const dotdotdot = require('jquery.dotdotdot')
-}
-
 class ResultComp extends React.Component {
   static propTypes = {
     result: PropTypes.shape({
@@ -23,10 +16,6 @@ class ResultComp extends React.Component {
       target_name: PropTypes.string.isRequired, 
       content: PropTypes.string
     }).isRequired
-  }
-
-  componentDidMount() {
-    $('.c-infopages__text').dotdotdot({watch:"window"});
   }
 
   render() {
@@ -45,7 +34,7 @@ class ResultComp extends React.Component {
           <Link to={target_path} className="c-infopages__title">{r.target_name}</Link>
         </h3>
       {r.content &&
-        <div className="c-infopages__text" dangerouslySetInnerHTML={{__html: r.content}} /> }
+        <div className="c-infopages__text u-truncate-lines" dangerouslySetInnerHTML={{__html: r.content}} /> }
       </div>
     )
   }

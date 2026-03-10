@@ -87,15 +87,14 @@ fi
 if [ -d node_modules.full ]; then mv node_modules.full node_modules; fi
 npm-20 install
 
-# Pretranslate all the CSS
+# Build the app with Vite (includes CSS compilation)
 echo "Building app."
-./node_modules/.bin/gulp sass
-
-# Build the app (transpile, uglify, etc.) so it doesn't have to be built on each worker
 if [[ "$ENVNAME" =~ "-dev" ]]; then
-  ./node_modules/.bin/webpack --config webpack.dev.js
+  # Development build (no minification, for debugging)
+  npm-20 run build:dev:all
 else
-  ./node_modules/.bin/webpack --config webpack.prd.js
+  # Production build (minified, optimized)
+  npm-20 run build:prod:all
 fi
 
 # package app and upload

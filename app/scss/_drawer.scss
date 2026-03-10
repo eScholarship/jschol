@@ -1,7 +1,9 @@
+@use 'sass:color';
+
 .c-drawer {
   width: 22%;
   min-width: 350px;
-  background-color: lighten($color-light-gray, 15%);
+  background-color: color.adjust($color-light-gray, $lightness: 15%);
 }
 
 .c-drawer__heading {

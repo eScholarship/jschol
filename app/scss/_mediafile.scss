@@ -1,5 +1,7 @@
 // ##### Media File Object ##### //
 
+@use 'sass:color';
+
 // The 2-column layout for Media File objects is set within _mediafilegrid.scss
 
 div[class^='o-mediafile--'] {
@@ -159,7 +161,7 @@ div[class^='o-mediafile--'] {
 
 div[class$='--selected'] {
   padding: $spacing-sm;
-  background-color: lighten($color-light-gray, 15%);
+  background-color: color.adjust($color-light-gray, $lightness: 15%);
 }
 
 // ***** Preview Element Icons ***** //
