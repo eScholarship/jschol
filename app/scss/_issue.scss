@@ -5,7 +5,6 @@
 
   @include bp(screen1) {
     display: flex;
-    position: relative;
   }
 
   @include u-heading() {
@@ -13,9 +12,6 @@
     margin-bottom: $spacing-sm;
 
     @include bp(screen1) {
-      position: absolute;
-      right: 0;
-      left: $thumbnail-width + $spacing-md;
       text-overflow: ellipsis;
       white-space: nowrap;
       overflow: hidden;
@@ -45,32 +41,23 @@
 
   }
 
+}
+
+.c-issue__content {
+
+  @include bp(screen1) {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
   figcaption {
     @include bp(screen1) {
-      position: absolute;
-      right: 0;
-      bottom: 0;
-      left: $thumbnail-width + $spacing-md;
       font-size: 0.9em;
+      margin-top: auto;
     }
 
-  }
-
-}
-
-.c-issue__description {
-
-  @include bp(screen1) {
-    margin-top: $spacing-lg;
-    padding-bottom: $spacing-md;
-  }
-
-}
-
-.c-issue__caption-truncate {
-
-  @include bp(screen1) {
-    max-height: 1.9em; // truncate to 1 line per jquery.dotdotdot
   }
 
 }

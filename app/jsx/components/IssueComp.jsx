@@ -5,58 +5,45 @@ import LazyImageComp from "../components/LazyImageComp.jsx"
 import ArbitraryHTMLComp from "../components/ArbitraryHTMLComp.jsx"
 import TruncationObj from "../objects/TruncationObj.jsx"
 
-class IssueComp extends React.Component {
-  handleMissingThumbnail = event => {
-    if (this.title) {
-      this.title.style.left = "0"
-    }
-  }
+function IssueComp({ title, cover, description }) {
+  const hasHTMLCaption = cover?.caption && /<[a-z][\s\S]*>/i.test(cover.caption)
 
-  componentDidMount() {
-    if (!(this.thumbnail)) { this.handleMissingThumbnail() }
-  }
-
-  render() {
-    let p = this.props
-    const hasHTMLCaption = p.cover?.caption && /<[a-z][\s\S]*>/i.test(p.cover.caption)
-    
-    return (
-      <div className="c-issue">
-        {p.title &&
-          <h3 ref={e => this.title = e} dangerouslySetInnerHTML={{__html: p.title}}></h3>
+  return (
+    <div className="c-issue">
+      {cover &&
+        <figure className="c-issue__thumbnail">
+          <LazyImageComp src={`/cms-assets/${cover.asset_id}`} alt="Issue cover" clickable={true}/>
+        </figure>
+      }
+      <div className="c-issue__content">
+        {title &&
+          <h3 dangerouslySetInnerHTML={{__html: title}}></h3>
         }
-        {p.cover &&
-          <figure className="c-issue__thumbnail" ref={e => this.thumbnail = e}>
-            <LazyImageComp src={`/cms-assets/${p.cover.asset_id}`} alt="Issue cover" clickable={true}/>
-
-            {/* if we have a caption, and it has HTML markup in it, render it and skip truncation */}
-
-            {p.cover.caption && (
-              hasHTMLCaption ? (
-                <figcaption className="c-issue__caption">
-                  <span dangerouslySetInnerHTML={{ __html: `<i>Cover Caption:</i> ${p.cover.caption}`}}></span>
-                </figcaption>
-              ) : (
-                <TruncationObj 
-                  element="figcaption"
-                  className="c-issue__caption"
-                  expandable={true}
-                  buttonClassName="c-issue__caption-truncate-more"
-                >
-                  <i>Cover Caption: {p.cover.caption}</i>
-                </TruncationObj>
-              )
-            )}
-          </figure>
-        }
-        {p.description &&
-          <div className="c-issue__description" ref={e => this.descr = e}>
-            <ArbitraryHTMLComp html={p.description} h1Level={3}/>
+        {description &&
+          <div className="c-issue__description">
+            <ArbitraryHTMLComp html={description} h1Level={3}/>
           </div>
         }
+        {/* if we have a caption, and it has HTML markup in it, render it and skip truncation */}
+        {cover?.caption && (
+          hasHTMLCaption ? (
+            <figcaption className="c-issue__caption">
+              <span dangerouslySetInnerHTML={{ __html: `<i>Cover Caption:</i> ${cover.caption}`}}></span>
+            </figcaption>
+          ) : (
+            <TruncationObj 
+              element="figcaption"
+              className="c-issue__caption"
+              expandable={true}
+              buttonClassName="c-issue__caption-truncate-more"
+            >
+              <i>Cover Caption: {cover.caption}</i>
+            </TruncationObj>
+          )
+        )}
       </div>
-    )
-  }
+    </div>
+  )
 }
 
 export default IssueComp;

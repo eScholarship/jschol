@@ -93,9 +93,7 @@
 }
 
 .c-infopages__text {
-  max-height: 4.2em; // truncate beyond 3 lines via jQuery dotdotdot
   line-height: $line-height2;
-  overflow: hidden; // hide text beyond max-height
 }
 
 .c-infopages__toggle {

@@ -1,10 +1,9 @@
 // ##### Unit Carousel Component ##### //
 import React from 'react'
-import $ from 'jquery'
 import PropTypes from 'prop-types'
-import CarouselComp from '../components/CarouselComp.jsx'
 import { Link } from 'react-router-dom'
 import ArbitraryHTMLComp from "../components/ArbitraryHTMLComp.jsx"
+import TruncationObj from "../objects/TruncationObj.jsx"
 
 function capitalize(str) {
   return str.charAt(0).toUpperCase() + str.slice(1)
@@ -48,9 +47,12 @@ class UnitCarouselItem extends React.Component {
         {authorList &&
           <div className="c-unitcarousel__item-authorlist">
             <div className="c-authorlist">
-              <ul className="c-authorlist__list">
+              <TruncationObj
+                element="ul"
+                className="c-authorlist__list"
+              >
                 {authorList}
-              </ul>
+              </TruncationObj>
             </div>
           </div>
         }

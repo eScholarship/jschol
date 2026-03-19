@@ -139,8 +139,6 @@ div[class^='o-mediafile--'] {
 
   @include bp(screen1) {
     grid-column: 2;
-    max-height: 1.3em; // truncate beyond 2 lines per jquery.dotdotdot
-    overflow: hidden; // hide text beyond max-height
   }
 }
 
