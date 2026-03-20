@@ -9,11 +9,11 @@ class JournalGridComp extends React.Component {
   render() {
     return (
       <div className="c-journalgrid">
-        <Link to="/uc/anrcs_californiaagriculture"><LazyImageComp src={MEDIA_PATH + 'homecover_CalAg.png'} alt="California Agriculture journal" /></Link>
-        <Link to="/uc/psf"><LazyImageComp src={MEDIA_PATH + 'homecover_psf.png'} alt="Parks Stewardship Forum"/></Link>
-        <Link to="/uc/our_bsj"><LazyImageComp src={MEDIA_PATH + 'homecover_glitch.png'} alt="Berkeley Scientific Journal"/></Link>
-        <Link to="/uc/alephucla"><LazyImageComp src={MEDIA_PATH + 'homecover_aleph.png'} alt="Aleph, UCLA Undergraduate Research Journal"/></Link>
-        <Link to="/uc/alonfilipinxjournal"><LazyImageComp src={MEDIA_PATH + 'homecover_af.png'} alt="Alon: Journal for Filipinx American and Diasporic Studies"/></Link>
+        <Link to="/uc/anrcs_californiaagriculture"><LazyImageComp src={MEDIA_PATH + 'homecover_CalAg.wbm'} alt="California Agriculture" /></Link>
+        <Link to="/uc/psf"><LazyImageComp src={MEDIA_PATH + 'homecover_psf.wbm'} alt="Parks Stewardship Forum"/></Link>
+        <Link to="/uc/jmie_sfews"><LazyImageComp src={MEDIA_PATH + 'homecover_sfews.wbm'} alt="San Francisco Estuary and Watershed Science"/></Link>
+        <Link to="/uc/jrws"><LazyImageComp src={MEDIA_PATH + 'homecover_jrws.wbm'} alt="Journal of Right-Wing Studies"/></Link>
+        <Link to="/uc/aicrj"><LazyImageComp src={MEDIA_PATH + 'homecover_aicrj.wbm'} alt="American Indian Culture and Research Journal"/></Link>
         <div className="c-journalgrid__all">
           <Link to="/journals">View all <strong>{this.props.count_journals}</strong> current journals</Link>
         </div>
