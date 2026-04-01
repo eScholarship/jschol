@@ -282,5 +282,10 @@ One-line truncation. Use like:
   -webkit-line-clamp: var(--line-clamp-lines);
   line-clamp: var(--line-clamp-lines);
   overflow: hidden;
+  :focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 2px currentColor;
+    border-radius: 2px;
+  }
   word-break: break-word;
 }
