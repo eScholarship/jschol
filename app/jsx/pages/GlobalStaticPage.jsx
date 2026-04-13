@@ -55,7 +55,6 @@ export default class GlobalStaticPage extends PageBase
                   this.setState({modalOpen:true})
                   event.preventDefault()} } >Deposit</button>
               <WizardComp showModal={this.state.modalOpen}
-                  parentSelector={()=>$('#wizardModalBase')[0]}
                   onCancel={e=>this.closeWizardModal(e)}
                   campuses={data.header.campuses}
                   data={{campusID: null, campusName: null, unitID: null, unitName: null}}

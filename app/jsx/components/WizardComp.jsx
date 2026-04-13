@@ -21,7 +21,9 @@ class WizModal extends React.Component {
                 onRequestClose={this.props.onRequestClose}
                 className="c-wizard__modal"
                 portalClassName="c-wiz-modal__portal"
-                overlayClassName="c-modal__overlay">
+                overlayClassName="c-modal__overlay"
+                contentLabel="Deposit Wizard"
+                aria={{ modal: true }}>
       <div className="c-wizard">
         {this.props.children}
       </div>
