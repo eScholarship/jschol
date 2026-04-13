@@ -86,7 +86,6 @@ class SubheaderComp extends React.Component {
     //   at a higher level from within WizardUnitComp and WizardSeriesComp (handled by WizardComp below)
     if (unit.type == 'journal' || h.directSubmitURL || ["moribund", "disabled", "hide"].includes(h.directSubmit)) {
       depositWizard = (<WizardInertComp showModal={this.state.depositModalOpen}
-                      parentSelector={()=>$('#wizardModalBase')[0]}
                       onCancel={e=>this.closeWizardModal(e)}
                       header={(unit.type == 'journal') ? unit.name : h.campusName+" Deposit"}
                       type={unit.type} directSubmit={h.directSubmit} directSubmitURL={directSubmitURL} directManageURLauthor={directManageURLauthor} directManageURLeditor={directManageURLeditor}/>)
@@ -95,7 +94,6 @@ class SubheaderComp extends React.Component {
       let [unitIDForWiz, unitNameForWiz] = (unit.type == 'oru') ? [unit.id, unit.name] : (unit.type.includes('series')) ? [h.ancestorID, h.ancestorName] : [null, null]
       depositWizard = (<WizardComp key={unitIDForWiz}   // re-create instance across units
                   showModal={this.state.depositModalOpen}
-                  parentSelector={()=>$('#wizardModalBase')[0]}
                   onCancel={e=>this.closeWizardModal(e)}
                   campuses={h.campuses}
                   data={{campusID: h.campusID, campusName: h.campusName, unitID: unitIDForWiz, unitName: unitNameForWiz}}
@@ -107,7 +105,6 @@ class SubheaderComp extends React.Component {
                                event.preventDefault()} } >
                                 Manage<span className="c-subheader__button-fragment">Submissions</span></button>
     let manageWizard = (<WizardInertComp showModal={this.state.manageModalOpen}
-                          parentSelector={()=>$('#wizardModalBase')[0]}
                           onCancel={e=>this.closeWizardModal(e)}
                           header="Manage Submissions"
                           type={unit.type} unit_id={unit.id}
