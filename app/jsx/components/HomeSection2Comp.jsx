@@ -43,14 +43,11 @@ class HomeSection2Comp extends React.Component {
         </div>
         <a href="/search" className="c-homesection__2-browse-all">Browse all eScholarship holdings</a>
         <Link to="/repository" className="c-homesection__2-more">Learn more about the eScholarship repository</Link>
-        <div id="wizardModalBase">
-          <WizardComp showModal={this.state.modalOpen}
-                    parentSelector={()=>$('#wizardModalBase')[0]}
-                    onCancel={e=>this.closeWizardModal(e)}
-                    campuses={this.props.campuses}
-                    data={{campusID: null, campusName: null, unitID: null, unitName: null}}
-                  />
-        </div>
+        <WizardComp showModal={this.state.modalOpen}
+                  onCancel={e=>this.closeWizardModal(e)}
+                  campuses={this.props.campuses}
+                  data={{campusID: null, campusName: null, unitID: null, unitName: null}}
+                />
       </div>
     )
   }

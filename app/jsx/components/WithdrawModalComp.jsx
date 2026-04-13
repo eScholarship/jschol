@@ -31,6 +31,7 @@ class WithdrawModalComp extends React.Component {
                 onRequestClose={this.onClose}
                 className="c-modal--open"
                 overlayClassName="c-modal__overlay"
+                aria={{ modal: true }}
               >
                 <div className="modal__header">
                   <h2>Withdraw Item</h2>
