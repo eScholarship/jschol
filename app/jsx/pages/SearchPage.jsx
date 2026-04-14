@@ -466,7 +466,6 @@ class FacetFieldset extends React.Component {
                 Show more
               </button>
               <ModalComp isOpen={this.state.modalOpen}
-                parentSelector={()=>$(`#facetModalBase-${data.fieldName}`)[0]}
                 header={"Refine By " + data.display}
                 onOK={e=>this.closeModal(e, data.fieldName)} okLabel="Done"
                 onCancel={e=>this.closeModal(e, data.fieldName)}
