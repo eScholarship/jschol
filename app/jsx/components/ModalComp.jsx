@@ -5,30 +5,26 @@
 import React from 'react'
 import ReactModal from 'react-modal'
 
-class ModalComp extends React.Component {
-  render() {
-
-    return (
-      <ReactModal isOpen={this.props.isOpen}
-        parentSelector={this.props.parentSelector}
-        contentLabel="onRequestClose Example"
-        onRequestClose={this.props.onCancel}
-        className="c-modal--open"
-        overlayClassName="c-modal__overlay">
-        <div className="modal__header">
-          <h2>{this.props.header}</h2>
-        </div>
-        <div className="modal__content">
-          {this.props.content}
-        </div>
-        <div className="c-modal__footer">
-          {this.props.onCancel &&
-            <button className="c-modal__button-close" onClick={this.props.onCancel}>Cancel</button>}
-          <button className="o-button__3" onClick={this.props.onOK}>{this.props.okLabel}</button>
-        </div>
-      </ReactModal>
-    )
-  }
-}
+const ModalComp = ({ isOpen, header, content, onCancel, onOK, okLabel }) =>
+  <ReactModal 
+    isOpen={isOpen}
+    contentLabel={header || "Dialog"}
+    onRequestClose={onCancel}
+    className="c-modal--open"
+    overlayClassName="c-modal__overlay"
+    aria={{ modal: true }}>
+    <div className="modal__header">
+      <h2>{header}</h2>
+    </div>
+    <div className="modal__content">
+      {content}
+    </div>
+    <div className="c-modal__footer">
+      {onCancel &&
+        <button className="c-modal__button-close" onClick={onCancel}>Cancel</button>
+      }
+      <button className="o-button__3" onClick={onOK}>{okLabel}</button>
+    </div>
+  </ReactModal>
 
 export default ModalComp;
