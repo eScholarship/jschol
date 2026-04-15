@@ -72,9 +72,7 @@ class UnitPage extends PageBase {
     let sidebar = <SidebarComp data={data.sidebar}/>
     let title = data.unit.name
     let contentLayout
-    if (this.state.fetchingData)
-      contentLayout = (<h2 style={{ marginTop: "5em", marginBottom: "5em" }}>Loading...</h2>)
-    else if (this.props.match.params.pageName === 'search') {
+    if (this.props.match.params.pageName === 'search' && !data.unit.type.includes('series')) {
       this.extGA(data.unit.id)  // Google Analytics for external trackers called from PageBase
       {/* ToDo: For now, serieslayout is the only unit search that occurs, but this should be properly componentized
       contentLayout = (<UnitSearchLayout unit={data.unit} data={data.content} sidebar={sidebar}/>) */}
@@ -107,7 +105,7 @@ class UnitPage extends PageBase {
       contentLayout = this.cmsPage(data,
         <AuthorSearchLayout data={data.content} location={this.props.location} sendApiData={this.sendApiData}/>)
       title = `Author Search`
-    } else if (this.props.match.params.pageName && !(data.content.issue)) {
+    } else if (this.props.match.params.pageName && this.props.match.params.pageName !== 'search' && !(data.content.issue)) {
       // If there's issue data here it's a journal page, otherwise it's static content
       contentLayout = (<UnitStaticPageLayout unit={data.unit} data={data.content} sidebar={sidebar} fetchPageData={this.fetchPageData}/>)
       title = data.content.title
@@ -120,8 +118,10 @@ class UnitPage extends PageBase {
         contentLayout = <DepartmentLayout unit={data.unit} data={data.content} sidebar={sidebar} marquee={data.marquee}/>
       else if (data.unit.type == 'campus')
         contentLayout = <CampusLayout unit={data.unit} data={data.content} sidebar={sidebar}/>
-      else if (data.unit.type.includes('series'))
-        contentLayout = <SeriesLayout unit={data.unit} data={data.content} sidebar={sidebar} marquee={data.marquee}/>
+      else if (data.unit.type.includes('series')) {
+        this.extGA(data.unit.id)
+        contentLayout = <SeriesLayout unit={data.unit} data={data.content} sidebar={sidebar} marquee={data.marquee} fetchingData={this.state.fetchingData}/>
+      }
       else if (data.unit.type === 'journal')
         contentLayout = <PublicationLayout unit={data.unit} data={data.content} sidebar={sidebar} marquee={data.marquee}/>
       else if (data.unit.type === 'conference_proceedings')
