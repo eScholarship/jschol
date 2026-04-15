@@ -78,19 +78,18 @@ class SeriesLayout extends React.Component {
     })
   }
 
-  // Set as the Form's onSubmit handler
-  handleSubmit = (event, formData) =>{
-    for(let key in formData) {
-      if (formData[key] == "" ||
-      (key === 'sort' && formData[key] === 'rel') ||
-      (key === 'rows' && formData[key] === '10') ||
-      (key === 'start' && formData[key] === '0')) {
-        delete formData[key]
+  formFilter = (data) => {
+    let out = {}
+    for(let key in data) {
+      if (data[key] == "" ||
+      (key === 'sort' && data[key] === 'rel') ||
+      (key === 'rows' && data[key] === '10') ||
+      (key === 'start' && data[key] === '0')) {
+        continue
       }
+      out[key] = data[key]
     }
-    // Handy for debugging
-    // console.log(JSON.stringify(formData))
-    return true
+    return out
   }
  
   render() {
@@ -119,11 +118,11 @@ class SeriesLayout extends React.Component {
             <div><hr/>
               <p><br/><br/>There are currently no publications in this series &quot;{unit.name}&quot;.</p></div>
            :
-            <FormComp id={formName} to={"/uc/"+this.props.unit.id+"/search"} method="GET" onSubmit={this.handleSubmit}>
+            <FormComp id={formName} to={"/uc/"+this.props.unit.id+"/search"} filter={this.formFilter}>
             {(this.props.data.count > 2) &&
               <SortPaginationComp formName={formName} formButton={formButton} query={data.query} count={data.count} relQueryOff={true} />
             }
-              <div>
+              <div className={this.props.fetchingData ? "c-loadable is-loading-data" : "c-loadable"}>
                 { data.searchResults.map(result =>
                   <PubPreviewComp h="h2" key={result.id} result={result} />)
                 }

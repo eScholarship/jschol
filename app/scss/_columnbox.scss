@@ -89,6 +89,39 @@
 
 }
 
+// Loading spinner only, no box styling
+.c-loadable {
+  position: relative;
+
+  &.is-loading-data {
+
+    &::before {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      background-color: $color-white;
+      opacity: 0.8;
+      content: '';
+      z-index: 1;
+    }
+
+    &::after {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      background: url('#{$media-path}spinner.gif') no-repeat top 3em center / 3em;
+      content: '';
+      z-index: 2;
+    }
+
+  }
+
+}
+
 .o-columnbox2 {
   @extend %o-columnbox;
 }
