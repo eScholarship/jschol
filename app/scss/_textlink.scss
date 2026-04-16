@@ -1,10 +1,8 @@
 // ##### Text Link Objects ##### //
 
 %o-textlink {
-  text-decoration: none;
-
   &:hover {
-    text-decoration: underline;
+    color: $color-dark-orange;
   }
 
 }
