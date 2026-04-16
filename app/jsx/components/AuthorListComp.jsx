@@ -4,78 +4,78 @@ import React from 'react'
 import TruncationObj from '../objects/TruncationObj.jsx'
 
 class AuthorListComp extends React.Component {
-
-  handleClick = (e,tab_id) => {
-    e.preventDefault()
-    this.props.changeTab(tab_id)
+  renderName = (name) => {
+    if (this.props.no_link) return <span>{name}</span>
+    return <a href={"/search/?q=" + encodeURIComponent("author:" + name)}>{name}</a>
   }
 
-  // Expects an array containing hashes with a 'name' attribute [{name: "Stone, Elizabeth C.", }]
-  // Returns list elements of just names, with first name prepended with a title
-  asList = (title, array) => {
-    const no_link = this.props.no_link
-    const nameEl = (name) => no_link
-      ? <span>{name}</span>
-      : <a href={"/search/?q="+encodeURIComponent("author:"+name)}>{name}</a>
-    return array.map((x, i) => {
-      let c = (i==0) ? "c-authorlist__begin" : (i+1 == array.length) ? "c-authorlist__end" : null
-      if (i==0 && array.length-1>0 && title !="Author") {
-        return (<li key={i+x.name} className={c}><span className="c-authorlist__heading">{title}(s):</span> {nameEl(x.name)}&#59; </li>)
-      } else if (i==0 && array.length-1==0 && title !="Author") {
-        return (<li key={i+x.name} className={c}><span className="c-authorlist__heading">{title}(s):</span> {nameEl(x.name)} </li>)
-      } else if (i<array.length-1) {
-        return (<li key={i+x.name} className={c}>{nameEl(x.name)}&#59; </li> )
-      } else {
-        return (<li key={i+x.name} className={c}>{nameEl(x.name)} </li>)
-      }
+  // render one role (Author/Editor/Advisor) as an array of <li> elements
+  // names are separated with ";"
+  // Editor/Advisor groups are prefixed with a "Role(s):" heading
+  renderRole = (title, people) => {
+    if (!people || people.length === 0) return []
+    const showHeading = title !== "Author"
+    return people.map((person, i) => {
+      const isFirst = i === 0
+      const isLast  = i === people.length - 1
+      const className = isFirst ? "c-authorlist__begin"
+                      : isLast  ? "c-authorlist__end"
+                      : null
+      return (
+        <li key={title + i + person.name} className={className}>
+          {isFirst && showHeading &&
+            <span className="c-authorlist__heading">{title}(s):</span>}
+          {isFirst && showHeading && " "}
+          {this.renderName(person.name)}
+          {!isLast && ";"}{" "}
+        </li>
+      )
     })
   }
 
   render() {
-    let p = this.props,
-        year = p.pubdate ? (p.pubdate.match(/\d{4}/)) : null,
-        source = p.source,
-        authors = (p.authors && !p.author_hide) ? this.asList("Author", p.authors) : null,
-        editors = p.editors ? this.asList("Editor", p.editors) : null,
-        advisors = p.advisors ? this.asList("Advisor", p.advisors) : null,
-        total_contributors = (authors ? authors.length : 0) + (editors ? editors.length : 0) + (advisors ? advisors.length : 0),
-        this_is_an_item_page = p.pubdate ? true : false,
-        this_is_a_tabbed_page = p.changeTab ? true: false,
-        item_link = p.id ? "/uc/item/"+p.id.replace(/^qt/, "") : null
+    const p = this.props
+    const yearMatch = p.pubdate ? p.pubdate.match(/\d{4}/) : null
+    const year = yearMatch ? yearMatch[0] : null
+    const showCopyright = year && (p.source === 'ojs' || p.source === 'janeway')
+    const isTabbedItemPage = !!p.changeTab
+
+    const authorItems  = !p.author_hide ? this.renderRole("Author",  p.authors)  : []
+    const editorItems  = this.renderRole("Editor",  p.editors)
+    const advisorItems = this.renderRole("Advisor", p.advisors)
+    const allItems = [...authorItems, ...editorItems, ...advisorItems]
+
+    const hasContributors = allItems.length > 0
+    const showEtAl = allItems.length > 6
+
     return (
       <div className="c-authorlist">
-        {year && <time className="c-authorlist__year">{year[0]}</time> }
+        {year && <time className="c-authorlist__year">{year}</time>}
 
-        {/* CASE: this is an item page */}
-        { ((authors && authors.length > 0) || (editors && editors.length > 0) ||
-          (advisors && advisors.length > 0)) && this_is_an_item_page && this_is_a_tabbed_page &&
-        <>
-          <TruncationObj element="ul" className="c-authorlist__list">
-            {authors}
-            {editors}
-            {advisors}
-          </TruncationObj>
-          {/* Show et al link if the total number of contributors is greater than 6 */}
-          { (total_contributors > 6) &&  
-            <a href="#author" className="c-authorlist__list-more-link">et al.</a>
-          }
-        </>
+        {hasContributors && isTabbedItemPage &&
+          <>
+            <TruncationObj element="ul" className="c-authorlist__list">
+              {allItems}
+            </TruncationObj>
+            {showEtAl &&
+              <a href="#author" className="c-authorlist__list-more-link">et al.</a>}
+          </>
         }
 
-        {/* CASE: this is NOT an item page */}
-        { ((authors && authors.length > 0) || (editors && editors.length > 0) ||
-           (advisors && advisors.length > 0)) && ! this_is_a_tabbed_page &&
+        {hasContributors && !isTabbedItemPage &&
           <TruncationObj element="ul" className="c-authorlist__list" lines={2}>
-            {authors}
-            {editors}
-            {advisors}
+            {allItems}
           </TruncationObj>
         }
-        {/* Only display a copyright if we have a year and source=ojs || janeway, otherwise skip it */}
-        {year && (source === 'ojs' || source === 'janeway') && <div className="c-authorlist__copyright">&copy; {year[0]} by the author(s). <a href="https://escholarship.org/terms">Learn more</a>.</div> }
+
+        {showCopyright &&
+          <div className="c-authorlist__copyright">
+            &copy; {year} by the author(s). <a href="https://escholarship.org/terms">Learn more</a>.
+          </div>
+        }
       </div>
     )
   }
 }
 
-export default AuthorListComp;
+export default AuthorListComp
