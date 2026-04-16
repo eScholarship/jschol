@@ -4,11 +4,9 @@ import React from 'react'
 import ArbitraryHTMLComp from "../components/ArbitraryHTMLComp.jsx"
 import AuthorListComp from '../components/AuthorListComp.jsx'
 
-export default class RecentArticlesComp extends React.Component
-{
-  render = () =>
-    <ul className="c-relateditems">
-  { this.props.data.items.map(item =>
+const RecentArticlesComp = ({ data }) => (
+  <ul className="c-relateditems">
+    {data.items.map(item =>
       <li key={item.id}>
         <h3>
           {/* Workaround for conflict between React and jquery.dotdotdot: we can't use a
@@ -17,13 +15,17 @@ export default class RecentArticlesComp extends React.Component
             <ArbitraryHTMLComp html={item.title}/>
           </a>
         </h3>
-        <AuthorListComp   author_hide={item.author_hide}
-                          authors={item.authors}
-                          editors={item.editors}
-                          advisors={item.advisors}
-                          id={item.id}
-                          no_link={true} />
-      </li>)
-  }
-    </ul>
-}
+        <AuthorListComp 
+          author_hide={item.author_hide}
+          authors={item.authors}
+          editors={item.editors}
+          advisors={item.advisors}
+          id={item.id}
+          no_link={true} 
+        />
+      </li>
+    )}
+  </ul>
+)
+
+export default RecentArticlesComp
