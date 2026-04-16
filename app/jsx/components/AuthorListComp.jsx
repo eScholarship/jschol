@@ -3,16 +3,16 @@
 import React from 'react'
 import TruncationObj from '../objects/TruncationObj.jsx'
 
-class AuthorListComp extends React.Component {
-  renderName = (name) => {
-    if (this.props.no_link) return <span>{name}</span>
+const AuthorListComp = ({ authors, editors, advisors, author_hide, no_link, pubdate, source, changeTab }) => {
+  const renderName = (name) => {
+    if (no_link) return <span>{name}</span>
     return <a href={"/search/?q=" + encodeURIComponent("author:" + name)}>{name}</a>
   }
 
   // render one role (Author/Editor/Advisor) as an array of <li> elements
   // names are separated with ";"
   // Editor/Advisor groups are prefixed with a "Role(s):" heading
-  renderRole = (title, people) => {
+  const renderRole = (title, people) => {
     if (!people || people.length === 0) return []
     const showHeading = title !== "Author"
     return people.map((person, i) => {
@@ -26,56 +26,53 @@ class AuthorListComp extends React.Component {
           {isFirst && showHeading &&
             <span className="c-authorlist__heading">{title}(s):</span>}
           {isFirst && showHeading && " "}
-          {this.renderName(person.name)}
+          {renderName(person.name)}
           {!isLast && ";"}{" "}
         </li>
       )
     })
   }
 
-  render() {
-    const p = this.props
-    const yearMatch = p.pubdate ? p.pubdate.match(/\d{4}/) : null
-    const year = yearMatch ? yearMatch[0] : null
-    const showCopyright = year && (p.source === 'ojs' || p.source === 'janeway')
-    const isTabbedItemPage = !!p.changeTab
+  const yearMatch = pubdate ? pubdate.match(/\d{4}/) : null
+  const year = yearMatch ? yearMatch[0] : null
+  const showCopyright = year && (source === 'ojs' || source === 'janeway')
+  const isTabbedItemPage = !!changeTab
 
-    const authorItems  = !p.author_hide ? this.renderRole("Author",  p.authors)  : []
-    const editorItems  = this.renderRole("Editor",  p.editors)
-    const advisorItems = this.renderRole("Advisor", p.advisors)
-    const allItems = [...authorItems, ...editorItems, ...advisorItems]
+  const authorItems  = !author_hide ? renderRole("Author",  authors)  : []
+  const editorItems  = renderRole("Editor",  editors)
+  const advisorItems = renderRole("Advisor", advisors)
+  const allItems = [...authorItems, ...editorItems, ...advisorItems]
 
-    const hasContributors = allItems.length > 0
-    const showEtAl = allItems.length > 6
+  const hasContributors = allItems.length > 0
+  const showEtAl = allItems.length > 6
 
-    return (
-      <div className="c-authorlist">
-        {year && <time className="c-authorlist__year">{year}</time>}
+  return (
+    <div className="c-authorlist">
+      {year && <time className="c-authorlist__year">{year}</time>}
 
-        {hasContributors && isTabbedItemPage &&
-          <>
-            <TruncationObj element="ul" className="c-authorlist__list">
-              {allItems}
-            </TruncationObj>
-            {showEtAl &&
-              <a href="#author" className="c-authorlist__list-more-link">et al.</a>}
-          </>
-        }
-
-        {hasContributors && !isTabbedItemPage &&
-          <TruncationObj element="ul" className="c-authorlist__list" lines={2}>
+      {hasContributors && isTabbedItemPage &&
+        <>
+          <TruncationObj element="ul" className="c-authorlist__list">
             {allItems}
           </TruncationObj>
-        }
+          {showEtAl &&
+            <a href="#author" className="c-authorlist__list-more-link">et al.</a>}
+        </>
+      }
 
-        {showCopyright &&
-          <div className="c-authorlist__copyright">
-            &copy; {year} by the author(s). <a href="https://escholarship.org/terms">Learn more</a>.
-          </div>
-        }
-      </div>
-    )
-  }
+      {hasContributors && !isTabbedItemPage &&
+        <TruncationObj element="ul" className="c-authorlist__list" lines={2}>
+          {allItems}
+        </TruncationObj>
+      }
+
+      {showCopyright &&
+        <div className="c-authorlist__copyright">
+          &copy; {year} by the author(s). <a href="https://escholarship.org/terms">Learn more</a>.
+        </div>
+      }
+    </div>
+  )
 }
 
 export default AuthorListComp
