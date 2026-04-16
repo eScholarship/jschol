@@ -97,6 +97,21 @@
   @extend %o-button__7;
 }
 
+// truncation more/less toggle button
+%o-button__truncate {
+  @extend %o-button;
+  min-height: 0;
+  border: 1px solid $color-teal;
+  padding: 2px 4px;
+  margin-top: 8px;
+  color: $color-teal;
+  align-self: flex-start; // for flex/grid parents
+}
+
+.o-button__truncate {
+  @extend %o-button__truncate;
+}
+
 // teal background, white text:
 %o-button__8 {
   @extend %o-button;
