@@ -31,11 +31,10 @@ function IssueComp({ title, cover, description }) {
               <span dangerouslySetInnerHTML={{ __html: `<i>Cover Caption:</i> ${cover.caption}`}}></span>
             </figcaption>
           ) : (
-            <TruncationObj 
+            <TruncationObj
               element="figcaption"
               className="c-issue__caption"
               expandable={true}
-              buttonClassName="c-issue__caption-truncate-more"
             >
               <i>Cover Caption: {cover.caption}</i>
             </TruncationObj>

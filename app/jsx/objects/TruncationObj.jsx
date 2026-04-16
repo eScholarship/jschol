@@ -23,7 +23,7 @@ export default class TruncationObj extends React.Component {
     className: '',
     lines: null, // uses CSS default (3 lines)
     expandable: false,
-    buttonClassName: 'o-button__7',
+    buttonClassName: 'o-button__truncate',
     buttonText: {
       more: 'More',
       less: 'Less'
