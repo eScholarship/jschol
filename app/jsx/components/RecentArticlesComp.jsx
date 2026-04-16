@@ -21,7 +21,8 @@ export default class RecentArticlesComp extends React.Component
                           authors={item.authors}
                           editors={item.editors}
                           advisors={item.advisors}
-                          id={item.id} />
+                          id={item.id}
+                          no_link={true} />
       </li>)
   }
     </ul>

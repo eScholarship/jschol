@@ -13,17 +13,21 @@ class AuthorListComp extends React.Component {
   // Expects an array containing hashes with a 'name' attribute [{name: "Stone, Elizabeth C.", }]
   // Returns list elements of just names, with first name prepended with a title
   asList = (title, array) => {
+    const no_link = this.props.no_link
+    const nameEl = (name) => no_link
+      ? <span>{name}</span>
+      : <a href={"/search/?q="+encodeURIComponent("author:"+name)}>{name}</a>
     return array.map((x, i) => {
       let c = (i==0) ? "c-authorlist__begin" : (i+1 == array.length) ? "c-authorlist__end" : null
       if (i==0 && array.length-1>0 && title !="Author") {
-        return (<li key={i+x.name} className={c}><span className="c-authorlist__heading">{title}(s):</span> <a href={"/search/?q="+encodeURIComponent("author:"+x.name)}>{x.name}</a>&#59; </li>)
+        return (<li key={i+x.name} className={c}><span className="c-authorlist__heading">{title}(s):</span> {nameEl(x.name)}&#59; </li>)
       } else if (i==0 && array.length-1==0 && title !="Author") {
-        return (<li key={i+x.name} className={c}><span className="c-authorlist__heading">{title}(s):</span> <a href={"/search/?q="+encodeURIComponent("author:"+x.name)}>{x.name}</a> </li>)
+        return (<li key={i+x.name} className={c}><span className="c-authorlist__heading">{title}(s):</span> {nameEl(x.name)} </li>)
       } else if (i<array.length-1) {
-        return (<li key={i+x.name} className={c}><a href={"/search/?q="+encodeURIComponent("author:"+x.name)}>{x.name}</a>&#59; </li> )
+        return (<li key={i+x.name} className={c}>{nameEl(x.name)}&#59; </li> )
       } else {
-        return (<li key={i+x.name} className={c}><a href={"/search/?q="+encodeURIComponent("author:"+x.name)}>{x.name}</a> </li>) 
-      } 
+        return (<li key={i+x.name} className={c}>{nameEl(x.name)} </li>)
+      }
     })
   }
 
