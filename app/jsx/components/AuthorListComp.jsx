@@ -47,7 +47,7 @@ const AuthorListComp = ({ authors, editors, advisors, author_hide, no_link, pubd
   const showEtAl = allItems.length > 6
 
   return (
-    <div className="c-authorlist">
+    <div className="c-authorlist" role="group" aria-label="Authors">
       {year && <time className="c-authorlist__year">{year}</time>}
 
       {hasContributors && isTabbedItemPage &&
