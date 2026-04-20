@@ -73,7 +73,7 @@ class ScholWorksComp extends React.Component {
     return (
       <section className="c-scholworks">
         <div className="c-scholworks__main-column">
-          <ul className="c-scholworks__tag-list">
+          <ul className="c-scholworks__tag-list" aria-label="tags">
             { tagList.map(function(tag, i, a) { 
               return (
                 <li key={tag+i} className={ "c-scholworks__tag-" + tag.tagStyle }>{tag.display}</li>
