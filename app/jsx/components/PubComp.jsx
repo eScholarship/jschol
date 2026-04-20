@@ -47,9 +47,11 @@ class PubComp extends React.Component {
         </div>
       }
       {pr.abstract &&
-        <TruncationObj element="div" className="c-pub__abstract">
-          <ArbitraryHTMLComp html={pr.abstract} p_wrap={true} h1Level={3}/>
-        </TruncationObj>
+        <div role="group" aria-label="Abstract">
+          <TruncationObj element="div" className="c-pub__abstract">
+            <ArbitraryHTMLComp html={pr.abstract} p_wrap={true} h1Level={3}/>
+          </TruncationObj>
+        </div>
       }
       {totalSuppFiles > 0 &&
         <MediaListComp supp_files={pr.supp_files} />
