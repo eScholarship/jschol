@@ -8,7 +8,7 @@ import { featuredJournals } from '../../consts/featuredJournals.js'
 
 function JournalGridComp({ count_journals }) {
   return (
-    <div className="c-journalgrid">
+    <div className="c-journalgrid" aria-label="Featured journals">
       {featuredJournals.map(({ path, image, alt }) => (
         <Link key={path} to={path}>
           <LazyImageComp src={MEDIA_PATH + image} alt={alt} />
