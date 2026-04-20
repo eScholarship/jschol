@@ -21,7 +21,7 @@ class BreadcrumbComp extends React.Component {
         ;
 
     return (
-      <nav className="c-breadcrumb" style={missingNavStyle}>
+      <nav className="c-breadcrumb" style={missingNavStyle} aria-label="breadcrumb">
         <ul>{nodes}</ul>
       </nav>
     )

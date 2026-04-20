@@ -62,7 +62,7 @@ class NavComp extends React.Component {
       }
     })
     return (
-      <nav className="c-nav">
+      <nav className="c-nav" aria-label="Main navbar">
         <details open={this.state.isOpen ? "open" : ""} className="c-nav__main" ref={(domNode)=> this.details = domNode}>
           <summary className="c-nav__main-button" onClick = {(event)=>{
             this.setState({isOpen: !this.details.open})
