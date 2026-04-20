@@ -102,16 +102,18 @@ class IssueWrapperComp extends React.Component {
             pi.sections.map(section =>
               <div key={section.name}>
                 <h3 className="o-heading1a">{section.name}</h3>
-                <div className="o-dividecontent2x--ruled">
-                  {section.articles.map(article => <PubComp h="h4" key={article.id} result={article} />)}
-                </div>
+                <ul className="o-dividecontent2x--ruled">
+                  {section.articles.map(article => <li key={article.id}><PubComp h="h4" result={article} /></li>)}
+                </ul>
               </div>
             )
             :
             pi.sections.map(section =>
               <div key={section.name}>
                 <h3 className="o-heading1a">{section.name}</h3>
-                {section.articles.map(article => <PubComp h="h4" key={article.id} result={article} />)}
+                <ul>
+                  {section.articles.map(article => <li key={article.id}><PubComp h="h4" result={article} /></li>)}
+                </ul>
               </div>
             )
           }
