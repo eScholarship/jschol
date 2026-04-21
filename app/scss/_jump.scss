@@ -3,6 +3,14 @@
 $jump-list-spacing: 0.5em;
 
 .c-jump {
+  @extend %u-reset-list-styles;
+
+  > li {
+
+    &:not(:last-child) {
+      margin-bottom: $jump-list-spacing * 2;
+    }
+  }
 
   a {
     @extend %o-textlink__secondary;
@@ -46,17 +54,4 @@ $jump-list-spacing: 0.5em;
       font-size: 1.0em;
     }
   }
-}
-
-.c-jump__siblings {
-  @extend %u-reset-list-styles;
-
-  li {
-
-    &:not(:last-child) {
-      margin-bottom: $jump-list-spacing * 2;
-    }
-
-  }
-
 }
