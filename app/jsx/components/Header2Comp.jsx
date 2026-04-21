@@ -32,7 +32,7 @@ class HeaderComp2 extends React.Component {
       {!this.props.hideAdminBar &&
         <AdminBarComp/>
       }
-        <header id="#top" className="c-header">
+        <header id="top" tabIndex="-1" className="c-header">
           <Link className="c-header__logo2" to="/">
             <picture>
               <source srcSet={MEDIA_PATH + 'logo_eschol-small.svg'} media={"(min-width: "+Breakpoints.screen3+")"}/>
