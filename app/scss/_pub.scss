@@ -1,9 +1,7 @@
 // ##### Publication Component ##### //
 
 ul:has(> li > .c-pub) {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+  @extend %u-reset-list-styles;
 }
 
 .c-pub {
