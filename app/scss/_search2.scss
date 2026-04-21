@@ -2,6 +2,14 @@
 
 @use 'sass:color';
 
+.c-search-result-sections {
+  @extend %u-reset-list-styles;
+
+  > li {
+    list-style: none;
+  }
+}
+
 .c-search2 {
   display: flex;
   position: fixed; // prevents horizontal overflow and scrollbar on small screens
