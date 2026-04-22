@@ -117,11 +117,12 @@ class ItemPage extends PageBase {
 
     if (newTab != this.state.currentTab) {
       this.setState({currentTab: this.articleHashHandler(tabName, toc) })
-      // Set hash based on what was clicked. Since we are switching tabs,
-      // delay a little for the render so the target anchor will be available.
-      setTimeout(()=>window.location.hash=tabName, 200)
+      // Update the URL hash for deep linking, using pushState avoids the browser's
+      // native hash-navigation behavior which would steal focus/scroll 
+      // e.g. #main matches the root <div id="main"> and jumps to the top of the page
+      setTimeout(() => history.pushState(null, '', `#${tabName}`), 200)
     } else {
-      window.location.hash=tabName
+      history.pushState(null, '', `#${tabName}`)
     }
   }
 
