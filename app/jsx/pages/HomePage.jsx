@@ -54,9 +54,9 @@ class HomePage extends PageBase
         <div className="c-navbar">
           <NavComp data={data.header.nav_bar} />
         </div>
-        <HeroComp hero_data={data.hero_data} />
-        <TeaserComp changeAnchor={this.changeAnchor} />
         <main id="maincontent">
+          <HeroComp hero_data={data.hero_data} />
+          <TeaserComp changeAnchor={this.changeAnchor} />
           <section className="c-homesection">
             <header>
               <h2>Why Open Access with eScholarship?</h2>
