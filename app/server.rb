@@ -368,7 +368,7 @@ before do
   path = File.expand_path("app/#{CGI::unescape(request.path_info)}")
   if File.file?(path)
     env['sinatra.static_file'] = path
-    cache_control(:public, :max_age => 3600)
+    cache_control(:public, :max_age => 604800)
     send_file path, :disposition => nil
   end
 end
@@ -441,7 +441,7 @@ get %r{/cms-assets/([0-9a-f]{64})} do |hash|
     obj.get(response_target: s3Tmp)
     s3Tmp.seek(0)
     etag hash
-    cache_control :public, :max_age => 3600   # maybe more?
+    cache_control :public, :max_age => 604800
     send_file(s3Tmp,
               last_modified: obj.last_modified,
               type: obj.metadata["mime_type"] || "application/octet-stream",
@@ -463,7 +463,7 @@ def streamFromS3(_itemID, s3Obj)
   headers "Accept-Ranges" => "bytes"
 
   # Control how long this remains in browser and CloudFront caches
-  cache_control :public, :max_age => 3600   # maybe more?
+  cache_control :public, :max_age => 604800
 
   # Stream the file from S3
   range = request.env["HTTP_RANGE"]
