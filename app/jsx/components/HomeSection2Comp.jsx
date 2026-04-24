@@ -32,13 +32,13 @@ class HomeSection2Comp extends React.Component {
         <h3 className="c-homesection__2-metrics-heading">Repository Holdings</h3>
         <div className="o-stat">
           <div className="o-stat--articles">
-            <a href="/search?type_of_work=article">{this.props.stats.statsCountArticles.toLocaleString()}</a> Articles
+            <a href="/search?type_of_work=article"><span>{this.props.stats.statsCountArticles.toLocaleString()}</span> Articles</a>
           </div>
           <div className="o-stat--books">
-            <a href="/search?type_of_work=monograph">{this.props.stats.statsCountBooks.toLocaleString()}</a> Books
+            <a href="/search?type_of_work=monograph"><span>{this.props.stats.statsCountBooks.toLocaleString()}</span> Books</a>
           </div>
           <div className="o-stat--theses">
-            <a href="/search?type_of_work=dissertation">{this.props.stats.statsCountThesesDiss.toLocaleString()}</a> Theses 
+            <a href="/search?type_of_work=dissertation"><span>{this.props.stats.statsCountThesesDiss.toLocaleString()}</span> Theses</a> 
           </div>
         </div>
         <a href="/search" className="c-homesection__2-browse-all">Browse all eScholarship holdings</a>
