@@ -49,7 +49,13 @@ const CarouselComp = ({ className, options, imagesLoaded = true, children }) => 
 
     observerRef.current = observer
 
-    // apply slide semantics
+    // hide prev/next buttons from the a11y tree 
+    // they only scroll the view and don't advance focus, which is confusing for SR users
+    flkty.element.querySelectorAll('.flickity-prev-next-button').forEach(btn => {
+      btn.setAttribute('aria-hidden', 'true')
+      btn.setAttribute('tabindex', '-1')
+    })
+
     const labelCells = () => {
       const cells = flkty.element.querySelectorAll('.flickity-slider > *')
       cells.forEach((cell, i) => {
