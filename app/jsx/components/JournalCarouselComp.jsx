@@ -55,7 +55,7 @@ class JournalCarouselComp extends React.Component {
         <div className="c-campuscarouselframe__stats">
           {p.item_count > 0 &&
             <div className="o-stat--item">
-              <Link to={"/" + p.titleID + "/journals"}>{p.item_count.toLocaleString()}</Link>Item{pluralItems}
+              <Link to={"/" + p.titleID + "/journals"}><span>{p.item_count.toLocaleString()}</span> Item{pluralItems}</Link>
             </div>
           }
           {p.view_count > 0 &&
