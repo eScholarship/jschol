@@ -23,18 +23,29 @@ class SeriesComp extends React.Component {
       })).isRequired
     })
   }
-  
+
+  constructor(props) {
+    super(props)
+    this.state = { open: false }
+  }
+
   render() {
     let data = this.props.data,
         plural = (data.count == data.previewLimit + 1) ? '' : 's'
     return (
-      <details className="c-togglecontent c-unitseries">
-      <summary><Link to={"/uc/"+data.unit_id}>{data.name} ({data.count})</Link></summary>
-      {data.items.map((item) =>
-        <PubComp key={item.id} result={item} h="h3" />) }
-      {data.count > data.previewLimit &&
-        <div className="c-unitseries__publications2">{data.count - data.previewLimit} more work{plural} &mdash; <Link to={"/uc/"+data.unit_id}>show all</Link></div> }
-      </details>
+      <div className="c-togglecontent c-unitseries">
+        <Link to={"/uc/"+data.unit_id}>{data.name} ({data.count})</Link>
+        <details ref={dom => this.details = dom} open={this.state.open}>
+          <summary onClick={event => {
+            this.setState({ open: !this.details.open })
+            event.preventDefault()
+          }} aria-label={"Toggle items for " + data.name}></summary>
+          {data.items.map((item) =>
+            <PubComp key={item.id} result={item} h="h3" />) }
+          {data.count > data.previewLimit &&
+            <div className="c-unitseries__publications2">{data.count - data.previewLimit} more work{plural} &mdash; <Link to={"/uc/"+data.unit_id}>show all</Link></div> }
+        </details>
+      </div>
     )
   }
 }
