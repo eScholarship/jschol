@@ -64,25 +64,26 @@ function DepartmentLayout({ unit, data, marquee, sidebar }) {
             <div className="c-itemactions">
               <ShareComp type="unit" id={unit.id} />
             </div>
-          {unit.extent.count == 0 ?
-            <div className="c-unitseries__publications1">There are currently no publications in this collection.</div>
-           :
-            <div className="c-unitseries__publications1">There are {unit.extent.count} publications in this collection, published between {unit.extent.pub_year.start} and {unit.extent.pub_year.end}.</div>
-          }
-          {seriesList.length > 0 && seriesList.map(s =>
-            <SeriesComp key={s.unit_id} data={s} />)}
-          {monographSeriesList.length > 0 && monographSeriesList.map(s =>
-            <SeriesComp key={s.unit_id} data={s} />)}
-          {unitLists.map(({ heading, items }) =>
-            <div key={heading} className="c-unitlist">
-              <h3>{heading}</h3>
-              <ul>
-                {items.map(child =>
-                  <li key={child.unit_id}><Link to={"/uc/"+child.unit_id}>{child.name}</Link></li>
-                )}
-              </ul>
+            <div className="c-unitseries__publications1">
+              {unit.extent.count === 0
+                ? "There are currently no publications in this collection."
+                : `There are ${unit.extent.count} publications in this collection, published between ${unit.extent.pub_year.start} and ${unit.extent.pub_year.end}.`
+              }
             </div>
-          )}
+            {seriesList.length > 0 && seriesList.map(s =>
+              <SeriesComp key={s.unit_id} data={s} />)}
+            {monographSeriesList.length > 0 && monographSeriesList.map(s =>
+              <SeriesComp key={s.unit_id} data={s} />)}
+            {unitLists.map(({ heading, items }) =>
+              <div key={heading} className="c-unitlist">
+                <h3>{heading}</h3>
+                <ul>
+                  {items.map(child =>
+                    <li key={child.unit_id}><Link to={"/uc/"+child.unit_id}>{child.name}</Link></li>
+                  )}
+                </ul>
+              </div>
+            )}
           </section>
         </main>
         <aside>
