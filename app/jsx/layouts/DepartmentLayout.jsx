@@ -7,17 +7,22 @@ import ShareComp from '../components/ShareComp.jsx'
 import PubComp from '../components/PubComp.jsx'
 
 function SeriesComp({ data }) {
-  const plural = (data.count == data.previewLimit + 1) ? '' : 's'
+  const remaining = data.count - data.previewLimit
+  const label = remaining === 1 ? "work" : "works"
 
   return (
     <div className="c-togglecontent c-unitseries">
-      <Link to={"/uc/"+data.unit_id}>{data.name} ({data.count})</Link>
+      <Link to={`/uc/${data.unit_id}`}>{data.name} ({data.count})</Link>
       <details>
-        <summary aria-label={"Toggle items for " + data.name}></summary>
+        <summary aria-label={`Toggle items for ${data.name}`}></summary>
         {data.items.map((item) =>
           <PubComp key={item.id} result={item} h="h3" />) }
-        {data.count > data.previewLimit &&
-          <div className="c-unitseries__publications2">{data.count - data.previewLimit} more work{plural} &mdash; <Link to={"/uc/"+data.unit_id}>show all</Link></div> }
+        {remaining > 0 &&
+          <div className="c-unitseries__publications2">
+            {remaining} more {label} &mdash;{" "}
+            <Link to={`/uc/${data.unit_id}`}>show all</Link>
+          </div> 
+        }
       </details>
     </div>
   )
@@ -79,7 +84,7 @@ function DepartmentLayout({ unit, data, marquee, sidebar }) {
                 <h3>{heading}</h3>
                 <ul>
                   {items.map(child =>
-                    <li key={child.unit_id}><Link to={"/uc/"+child.unit_id}>{child.name}</Link></li>
+                    <li key={child.unit_id}><Link to={`/uc/${child.unit_id}`}>{child.name}</Link></li>
                   )}
                 </ul>
               </div>
