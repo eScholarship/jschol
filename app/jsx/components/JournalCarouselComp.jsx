@@ -43,8 +43,8 @@ class JournalCarouselComp extends React.Component {
                 <a href={"/uc/" + u.unit_id} className="o-journal2">
                   <figure>
                   {u.cover ?
-                    <img src={"/cms-assets/"+u.cover.asset_id} alt={u.name}/>
-                  : <img src={MEDIA_PATH + '/temp_article.png'} alt={u.name} /> }
+                    <img src={"/cms-assets/"+u.cover.asset_id} alt=""/>
+                  : <img src={MEDIA_PATH + '/temp_article.png'} alt="" /> }
                     <TruncationObj element="figcaption" lines={2}>{u.name}</TruncationObj>
                   </figure>
                 </a>
