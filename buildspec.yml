@@ -1,0 +1,29 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo "Building commit hash $CODEBUILD_RESOLVED_SOURCE_VERSION"
+      - COMMIT_HASH=$(echo "$CODEBUILD_RESOLVED_SOURCE_VERSION" | cut -c1-7)
+      - echo "Short hash for tag is $COMMIT_HASH"
+      - BUILD_DATE=$(date -u +%Y%m%d)
+      - echo "Short hash for tag is $BUILD_DATE"
+      - IMAGE_INFO="${COMMIT_HASH}-${BUILD_DATE}"
+      - echo Logging in to Amazon ECR...
+      - aws --version
+      - aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.us-west-2.amazonaws.com
+  build:
+    commands:
+      - echo Build started on `date`
+      - echo "Image info is $IMAGE_INFO"
+      - echo Building the Docker image...
+      - docker build -t $REPOSITORY_URI:$IMAGE_INFO .
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - echo Pushing the Docker images...
+      - docker push $REPOSITORY_URI:$IMAGE_INFO
+      - echo Writing image definitions file...
+      - printf '[{"name":"%s","imageUri":"%s"}]' "$TargetECSTask" "$REPOSITORY_URI:$IMAGE_INFO" > imagedefinitions.json
+artifacts:
+  files: imagedefinitions.json
