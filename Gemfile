@@ -1,5 +1,5 @@
 # Ruby gems required by this application
-ruby '> 2.4.0'
+ruby '> 3.2.0'
 source 'https://rubygems.org'
 gem 'addressable'         # used for handling image urls during the broken image test
 gem 'aws-sdk-s3'          # used to work with S3 bucket contents
@@ -28,7 +28,7 @@ gem 'sanitize'            # parse and sanitize user-supplied HTML fragments
 gem 'sequel'              # object-relational mapper (including migrations)
 gem 'sigdump', require: 'sigdump/setup' # to get thread traces with kill -CONT
 gem 'sinatra'             # lightweight web framework
-gem 'sinatra-websocket'   # web socket support for Sinatra
+gem 'faye-websocket'   # web socket support for Sinatra
 gem 'socksify'            # for proxying all TCP through SOCKS proxy
 gem 'sqlite3'             # for local testing without remote Mysql database
 gem 'test-unit'           # test/quick.rb

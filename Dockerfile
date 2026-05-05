@@ -1,7 +1,7 @@
 ###############################################
 # Global build arguments
 ###############################################
-ARG RUBY_VERSION=3.3
+ARG RUBY_VERSION=3.4
 
 ###############################################
 # Stage 1 — Builder
@@ -21,6 +21,7 @@ RUN apt-get update -qq && apt-get install -y \
   libxslt-dev \
   zlib1g-dev \
   libffi-dev \
+  shared-mime-info \
   git \
   curl
 
@@ -38,16 +39,14 @@ RUN bundle install --jobs 4 --retry 3
 # Install Node dependencies
 COPY package.json package-lock.json ./
 RUN npm install
-RUN npm run build:prod:all
 
 # Copy only the directories you want
 COPY app/ ./app/
 COPY config/ ./config/
 COPY util/ ./util/
-COPY config.ru start.sh ./
+COPY config.ru start.sh vite.config.js ./
 
-# Create the symlink inside the container
-RUN ln -s ../node_modules public/node_modules
+RUN npm run build:prod:all
 
 ###############################################
 # Stage 2 — Runtime
@@ -65,8 +64,13 @@ RUN apt-get update -qq && apt-get install -y \
   zlib1g \
   libffi8 \
   libmariadb-dev \
+  shared-mime-info \
   curl && \
   apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Install Node.js 20
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs
 
 RUN mkdir -p /vendor/bundle
 COPY --from=builder /vendor/bundle /vendor/bundle
