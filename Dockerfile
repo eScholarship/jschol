@@ -87,6 +87,7 @@ ENV BUNDLE_BIN=/vendor/bundle/bin
 ENV PATH="${BUNDLE_BIN}:${PATH}"
 
 EXPOSE 80
+EXPOSE 4002
 
 CMD ["./start.sh"]
 

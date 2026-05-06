@@ -112,7 +112,7 @@ OJS_DB = ensureConnect("OJS_DB")
 #OJS_DB.loggers << Logger.new('ojs.sql_log')  # Enable to debug SQL queries on OJS db
 
 # When fetching ISO pages from the local server, we need the host name.
-$host = ENV['HOST'] ? "#{ENV['HOST']}.escholarship.org" : "localhost"
+$host = ENV['HOST'] ? "#{ENV['HOST']}.escholarship.org" : "127.0.0.1"
 
 # Used when fetching RSS data from the API server
 $escholApiServer = getEnv("ESCHOL_API_SERVER")
