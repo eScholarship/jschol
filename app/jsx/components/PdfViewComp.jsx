@@ -136,18 +136,20 @@ class PdfViewComp extends React.Component {
   }
   
 
-  view = () => {
-    if (this.props.download_restricted) {
-      alert("Download restricted until " + this.props.download_restricted)
-    } else {
-      let separator = this.props.url.indexOf("?") >= 0 ? "&" : "?"
-      window.location =
-        this.props.url +
-        separator +
-        "v=lg" +
-        (this.props.preview_key ? "&preview_key=" + this.props.preview_key : "")
-    }
-  }
+  renderViewLink = (viewUrl, className, label) => (
+    <a
+      href={viewUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={className}
+      onClick={this.props.download_restricted ? e => { 
+        e.preventDefault()
+        alert(`Download restricted until ${this.props.download_restricted}`)
+      } : undefined}
+    >
+      {label}
+    </a>
+  )
 
   // Make a best effort to avoid re-initting pdf.js, which loses page context
   shouldComponentUpdate(nextProps, nextState) {
@@ -172,17 +174,15 @@ class PdfViewComp extends React.Component {
     const downloadUrl = 
       `${url}${preview_key ? `${separator}preview_key=${preview_key}` : ""}`
 
+    const viewUrl = `${url}${separator}v=lg${preview_key ? `&preview_key=${preview_key}` : ""}`
+
     return (
       <details className="c-togglecontent" open>
         <ScrollingAnchorComp name="article_main" />
         <summary>Main Content</summary>
         <div className="c-pdfview">
-          <button onClick={this.view} className="c-pdfview__button-download">
-            Download PDF to View
-          </button>
-          <button onClick={this.view} className="c-pdfview__button-view">
-            View Larger
-          </button>
+          {this.renderViewLink(viewUrl, "c-pdfview__button-download", "Download PDF to View")}
+          {this.renderViewLink(viewUrl, "c-pdfview__button-view", "Open PDF in new tab")}
         </div>
 
         {!this.props.download_restricted && (
