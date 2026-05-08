@@ -636,6 +636,7 @@ class SearchPage extends PageBase {
         </div>
         {/* <ExportComp /> */}
         <FormComp id={formName} to='/search' filter={this.formFilter} className="c-columns">
+          <input type="hidden" name="_src" value="web" />
           <aside>
             <FacetForm formName={formName} formButton={formButton} data={facetFormData} info_count={data.info_count} query={data.query} />
           </aside>

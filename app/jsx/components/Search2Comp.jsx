@@ -73,6 +73,7 @@ class SearchComp2 extends React.Component {
                             unitID={this.props.unitID}
                             searchUnitType={searchUnitType} />
           </div>
+          <input type="hidden" name="_src" value="web" />
           <button type="submit" className="c-search2__submit-button" aria-label="search"></button>
           <button type="button" className="c-search2__search-close-button" aria-label="close search field" onClick = {()=>this.props.onClose()}></button>
         </FormComp>

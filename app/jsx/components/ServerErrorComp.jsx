@@ -36,6 +36,7 @@ class ServerErrorComp extends React.Component {
         <FormComp to='/search' method="GET" className="c-servererror__search">
           <label htmlFor="c-servererror__input" className="c-servererror__label">Search for it!</label>
           <input type="search" className="c-servererror__input" name="q" id="c-servererror__input" defaultValue={this.state.errorTerm} />
+          <input type="hidden" name="_src" value="web" />
           <button className="c-servererror__button" aria-label="Search"></button>
         </FormComp>
         {this.state.suggestAlternative && /\d/.test(this.state.errorTerm) && (

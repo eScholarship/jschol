@@ -31,6 +31,7 @@ export default class SearchComp1 extends React.Component {
         <label className="c-search1__label" htmlFor="c-search1__field">search</label>
         <input type="search" id="c-search1__field" name="q" className="c-search1__field" placeholder="Search over 500,000 items" defaultValue={q} autoCapitalize="off" />
         {filters}
+        <input type="hidden" name="_src" value="web" />
         <button type="submit" className="c-search1__submit-button" aria-label="submit search"></button>
         <button type="button" className="c-search1__search-close-button" aria-label="close search field" onClick = {()=>this.props.onClose()}></button>
       </FormComp>
