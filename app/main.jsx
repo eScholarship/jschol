@@ -10,6 +10,23 @@ window.$ = window.jQuery = jQuery
 // Import global styles
 import './scss/main.scss'
 
-// Import and export the App component
-export { default } from './jsx/App.jsx'
+import React from 'react'
+import ReactDOM from 'react-dom'
+import { BrowserRouter } from 'react-router-dom'
+import ReactModal from 'react-modal'
+import App from './jsx/App.jsx'
+
+ReactModal.setAppElement('#main')
+
+if (window.jscholApp_initialPageData) {
+  ReactDOM.hydrate(
+    <BrowserRouter><App /></BrowserRouter>,
+    document.getElementById('main')
+  )
+} else {
+  ReactDOM.render(
+    <BrowserRouter><App /></BrowserRouter>,
+    document.getElementById('main')
+  )
+}
 

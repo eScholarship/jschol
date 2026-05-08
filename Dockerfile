@@ -44,7 +44,7 @@ RUN npm install
 COPY app/ ./app/
 COPY config/ ./config/
 COPY util/ ./util/
-COPY config.ru start.sh vite.config.js ./
+COPY config.ru start.sh vite.config.js postcss.config.js ./
 
 RUN npm run build:prod:all
 
