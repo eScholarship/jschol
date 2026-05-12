@@ -70,7 +70,7 @@ class SubheaderComp extends React.Component {
     let depositWizard = null
     let depositButton = <button id="wizardlyDeposit" className="o-button__3" onClick={(event)=>{
                                this.setState({depositModalOpen:true})
-                               event.preventDefault()} } >{(unit.type == 'journal') ? "Submit" : "Deposit"}</button>
+                               event.preventDefault()} } >{(unit.type == 'journal') ? "Submit Manuscript" : "Deposit"}</button>
 
     // WizardInertComp is like WizardComp, but only one screen, no back/forward buttons,
     //   a) Used for 'Manage Submissions' link-out    - OR -
