@@ -55,7 +55,7 @@ class CampusCarouselComp extends React.Component {
         <div className="c-statcarousel__section-heading">
           <h2>{this.props.campusName}</h2>
           <div className="o-stat--item c-statcarousel__cell">
-            <a href={"/search?campuses="+this.props.campusID}>{c.item_count.toLocaleString()}</a> Items
+            <a href={"/search?campuses="+this.props.campusID}><span>{c.item_count.toLocaleString()}</span> Items</a>
           </div>
         </div>
       {c.view_count > 0 &&
@@ -68,12 +68,12 @@ class CampusCarouselComp extends React.Component {
           </div> */}
       {c.journal_count > 0 &&
         <div className="o-stat--journals c-statcarousel__cell">
-           <a href={"/"+this.props.campusID+"/journals"}>{c.journal_count.toLocaleString()}</a> eScholarship Journal{pluralJ}
+           <a href={"/"+this.props.campusID+"/journals"}><span>{c.journal_count.toLocaleString()}</span> eScholarship Journal{pluralJ}</a>
         </div>
       }
       {c.oru_count > 0 &&
         <div className="o-stat--units c-statcarousel__cell">
-           <a href={"/"+this.props.campusID+"/units"}>{c.oru_count.toLocaleString()}</a> Research Unit{pluralU}
+           <a href={"/"+this.props.campusID+"/units"}><span>{c.oru_count.toLocaleString()}</span> Research Unit{pluralU}</a>
         </div>
       }
         <div className="c-statcarousel__section-heading">
@@ -89,7 +89,7 @@ class CampusCarouselComp extends React.Component {
              <b>99,999</b> Items since UC <br/> OA Policy passed
           </div> */}
         <div className="o-stat--journals c-statcarousel__cell">
-           <a href="/journals">{a.all_journal_count.toLocaleString()}</a> eScholarship Journals
+           <a href="/journals"><span>{a.all_journal_count.toLocaleString()}</span> eScholarship Journals</a>
         </div>
         <div className="o-stat--units c-statcarousel__cell">
            <b>{a.all_oru_count.toLocaleString()}</b> Research Units

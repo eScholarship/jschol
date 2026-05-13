@@ -2,6 +2,14 @@
 
 @use 'sass:color';
 
+.c-search-result-sections {
+  @extend %u-reset-list-styles;
+
+  > li {
+    list-style: none;
+  }
+}
+
 .c-search2 {
   display: flex;
   position: fixed; // prevents horizontal overflow and scrollbar on small screens
@@ -31,7 +39,7 @@
   display: flex;
   flex: 1 1 auto;
   flex-flow: column nowrap;
-  border: 1px solid $color-light-gray;
+  border: 1px solid $color-dark-gray;
   border-radius: $round-corner;
 }
 
@@ -51,6 +59,11 @@
   padding: 0 0 0 30px;
   border: none;
   background: inline('../images/icon_magnify.svg') no-repeat left 8px center / 16px;
+
+  &::placeholder {
+    color: $color-dark-gray;
+    opacity: 1;
+  }
 
   @include bp(screen3) {
     padding: 0 0 0 $spacing-sm;

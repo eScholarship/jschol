@@ -293,7 +293,7 @@ class PageBase extends React.Component
         <div className="body">
           {this.renderError()}
           <div className="c-toplink">
-            <a href="javascript:window.scrollTo(0, 0)">Top</a>
+            <a href="#top">Top</a>
           </div>
           {this.needHeaderFooter() && <FooterComp/>}
         </div>)
@@ -326,7 +326,7 @@ class PageBase extends React.Component
             {this.needHeaderFooter() &&
               <div>
                 <div className="c-toplink">
-                  <a href="javascript:window.scrollTo(0, 0)">Top</a>
+                  <a href="#top">Top</a>
                 </div>
                 <FooterComp/>
               </div>
@@ -344,7 +344,7 @@ class PageBase extends React.Component
           {this.needHeaderFooter() &&
             <div>
               <div className="c-toplink">
-                <a href="javascript:window.scrollTo(0, 0)">Top</a>
+                <a href="#top">Top</a>
               </div>
               <FooterComp/>
             </div>

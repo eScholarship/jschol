@@ -56,7 +56,7 @@ class SortComp extends React.Component {
         </div>
       {(this.props.count > 10) && 
         <div className="o-input__droplist1 c-sort__page-input">
-          <label htmlFor="c-sort2">Show:</label>
+          <label htmlFor="c-sort2">Per page:</label>
           <select name="rows" id="c-sort2" form={this.props.formName} value={rows} onChange={ this.handleChange }>
           {/* ToDo: Make this more concise */}
           <option value="10">10</option>

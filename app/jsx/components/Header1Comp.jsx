@@ -13,7 +13,7 @@ class HeaderComp1 extends React.Component {
     return (
     <div>
       <AdminBarComp/>
-      <header id="#top" className="c-header">
+      <header id="top" tabIndex="-1" className="c-header">
         <Link className="c-header__logo1" to="/">
           <picture>
             <source srcSet={MEDIA_PATH + 'logo_escholarship.svg'} media={"(min-width: "+Breakpoints.screen3+")"}/>
