@@ -43,7 +43,7 @@ COPY package.json package-lock.json ./
 COPY app/ ./app/
 COPY config/ ./config/
 COPY util/ ./util/
-COPY config.ru start.sh main.jsx postcss.config.js vite.config.js ./
+COPY config.ru start.sh postcss.config.js vite.config.js ./
 
 RUN npm install
 RUN npm run build:prod:all
