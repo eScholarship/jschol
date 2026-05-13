@@ -78,7 +78,7 @@ export default defineConfig(({ command, mode, isSsrBuild }) => {
       minify: isProd ? 'esbuild' : false, // Minify only in production for debuggable dev builds
       sourcemap: !isProd, // Only generate source maps in development
       rollupOptions: {
-        input: resolve(__dirname, 'main.jsx'),
+        input: resolve(__dirname, './main.jsx'),
         output: {
           // Match webpack's naming pattern for cache busting
           entryFileNames: 'js/app-bundle-[hash].js',

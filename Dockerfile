@@ -38,14 +38,14 @@ RUN bundle install --jobs 4 --retry 3
 
 # Install Node dependencies
 COPY package.json package-lock.json ./
-RUN npm install
 
 # Copy only the directories you want
 COPY app/ ./app/
 COPY config/ ./config/
 COPY util/ ./util/
-COPY config.ru start.sh vite.config.js ./
+COPY config.ru start.sh main.jsx postcss.config.js vite.config.js ./
 
+RUN npm install
 RUN npm run build:prod:all
 
 ###############################################
@@ -79,6 +79,9 @@ WORKDIR /app
 
 # Copy everything from builder stage
 COPY --from=builder app/ .
+
+#RUN npm run build:prod 
+#RUN npm run build:prod:all
 
 # Ensure Bundler uses the vendor path
 ENV BUNDLE_PATH=/vendor/bundle
