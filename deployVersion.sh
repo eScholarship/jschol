@@ -54,9 +54,9 @@ VERSION+=`git rev-parse --short HEAD`
 DIR=jschol
 BUCKET=cdlpub-apps
 REGION=us-west-2
-APPNAME=eb-pub-jschol2
+APPNAME=eb-pub-jschol4
 ENVNAME=$1
-
+ 
 # make sure we don't push non-prd branch to prd
 CUR_BRANCH=`git rev-parse --abbrev-ref HEAD`
 if [[ "$ENVNAME" == *"prd"* && "$CUR_BRANCH" != "prd" ]]; then
@@ -112,7 +112,7 @@ git checkout package-lock.json
 # add the temporary overlay files
 rm -rf tmp/app
 mkdir -p tmp/app
-cp -r overlay_files/* tmp/app/
+#cp -r overlay_files/* tmp/app/
 cd tmp
 zip -r ../dist/$ZIP app/
 rm -rf tmp/app
