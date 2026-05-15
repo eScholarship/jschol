@@ -6,140 +6,126 @@ import MarqueeComp from '../components/MarqueeComp.jsx'
 import ShareComp from '../components/ShareComp.jsx'
 import PubComp from '../components/PubComp.jsx'
 
-class SeriesComp extends React.Component {
-  static propTypes = {
-    data: PropTypes.shape({
-      unit_id: PropTypes.string.isRequired,
-      name: PropTypes.string.isRequired,
-      count: PropTypes.number.isRequired,
-      previewLimit: PropTypes.number.isRequired,
-      items: PropTypes.arrayOf(PropTypes.shape({
-        id: PropTypes.string.isRequired,
-        title: PropTypes.string.isRequired,
-        abstract: PropTypes.string,
-        authors: PropTypes.array,
-        content_type: PropTypes.string,
-        supp_files: PropTypes.array
-      })).isRequired
-    })
-  }
-  
-  render() {
-    let data = this.props.data,
-        plural = (data.count == data.previewLimit + 1) ? '' : 's'
-    return (
-      <details className="c-togglecontent c-unitseries">
-      <summary><Link to={"/uc/"+data.unit_id}>{data.name} ({data.count})</Link></summary>
-      {data.items.map((item) =>
-        <PubComp key={item.id} result={item} h="h3" />) }
-      {data.count > data.previewLimit &&
-        <div className="c-unitseries__publications2">{data.count - data.previewLimit} more work{plural} &mdash; <Link to={"/uc/"+data.unit_id}>show all</Link></div> }
+function SeriesComp({ data }) {
+  const remaining = data.count - data.previewLimit
+  const label = remaining === 1 ? "work" : "works"
+
+  return (
+    <div className="c-togglecontent c-unitseries">
+      <Link to={`/uc/${data.unit_id}`}>{data.name} ({data.count})</Link>
+      <details>
+        <summary aria-label={`Toggle items for ${data.name}`}></summary>
+        {data.items.map((item) =>
+          <PubComp key={item.id} result={item} h="h3" />) }
+        {remaining > 0 &&
+          <div className="c-unitseries__publications2">
+            {remaining} more {label} &mdash;{" "}
+            <Link to={`/uc/${data.unit_id}`}>show all</Link>
+          </div> 
+        }
       </details>
-    )
-  }
+    </div>
+  )
 }
 
-class DepartmentLayout extends React.Component {
-  static propTypes = {
-    unit: PropTypes.shape({
+SeriesComp.propTypes = {
+  data: PropTypes.shape({
+    unit_id: PropTypes.string.isRequired,
+    name: PropTypes.string.isRequired,
+    count: PropTypes.number.isRequired,
+    previewLimit: PropTypes.number.isRequired,
+    items: PropTypes.arrayOf(PropTypes.shape({
       id: PropTypes.string.isRequired,
-      name: PropTypes.string.isRequired,
-      type: PropTypes.string.isRequired,
-      extent: PropTypes.object
-    }).isRequired,
-    data: PropTypes.shape({
-      series: PropTypes.array.isRequired,  //See SeriesComp directly above for Array element structure
-      monograph_series: PropTypes.array.isRequired,  //See SeriesComp directly above for Array element structure
-      journals: PropTypes.arrayOf(PropTypes.shape({
-        name: PropTypes.string,
-        unit_id: PropTypes.string
-      })),
-      conference_proceedings: PropTypes.arrayOf(PropTypes.shape({
-        name: PropTypes.string,
-        unit_id: PropTypes.string
-      })),
-      related_orus: PropTypes.arrayOf(PropTypes.shape({
-        name: PropTypes.string,
-        unit_id: PropTypes.string
-      })),
-    }).isRequired,
-    marquee: PropTypes.shape({
-      carousel: PropTypes.any,
-      about: PropTypes.about
-    })
-  }
-  
-  seriesCompListMaker = (data) => {
-    let compList = []
-    for (let s in data) {
-      if (data[s].items.length > 0) {
-        compList.push(<SeriesComp key={data[s].unit_id} data={data[s]}/>);
-      }
-    }
-    return compList
-  }
+      title: PropTypes.string.isRequired,
+      abstract: PropTypes.string,
+      authors: PropTypes.array,
+      content_type: PropTypes.string,
+      supp_files: PropTypes.array
+    })).isRequired
+  })
+}
 
-  render() {
-    let data = this.props.data,
-        seriesList = this.seriesCompListMaker(data.series),
-        monographSeriesList = this.seriesCompListMaker(data.monograph_series)
-    let marquee = this.props.marquee
-    return (
-      <div>
-      {((marquee.carousel && marquee.slides) || marquee.about) &&
-        <MarqueeComp marquee={marquee} />
-      }
-        <div className="c-columns">
-          <main id="maincontent">
-            <section className="o-columnbox1">
-              <header>
-                <h2>{this.props.unit.name}</h2>
-              </header>
-              <div className="c-itemactions">
-                <ShareComp type="unit" id={this.props.unit.id} />
-              </div>
-            {this.props.unit.extent.count == 0 ?
-              <div className="c-unitseries__publications1">There are currently no publications in this collection.</div>
-             :
-              <div className="c-unitseries__publications1">There are {this.props.unit.extent.count} publications in this collection, published between {this.props.unit.extent.pub_year.start} and {this.props.unit.extent.pub_year.end}.</div>
-            }
-            {seriesList.length > 0 && seriesList}
-            {monographSeriesList.length > 0 && monographSeriesList}
-            {data.journals.length > 0 && 
-              <div className="c-unitlist">
-                <h3>Journals</h3>
-                <ul>{ data.journals.map((child) =>
-                  <li key={child.unit_id}><Link to={"/uc/"+child.unit_id}>{child.name}</Link></li>) } </ul>
-              </div>
-            }
-            {data.conference_proceedings.length > 0 && 
-              <div className="c-unitlist">
-                <h3>Conference Proceedings</h3>
+function DepartmentLayout({ unit, data, marquee, sidebar }) {
+  const seriesList = data.series.filter(s => s.items.length > 0)
+  const monographSeriesList = data.monograph_series.filter(s => s.items.length > 0)
+
+  const unitLists = [
+    { heading: "Journals", items: data.journals },
+    { heading: "Conference Proceedings", items: data.conference_proceedings },
+    { heading: "Related Research Centers & Groups", items: data.related_orus },
+  ].filter(({ items }) => items.length > 0)
+
+  return (
+    <div>
+    {((marquee.carousel && marquee.slides) || marquee.about) &&
+      <MarqueeComp marquee={marquee} />
+    }
+      <div className="c-columns">
+        <main id="maincontent">
+          <section className="o-columnbox1">
+            <header>
+              <h2>{unit.name}</h2>
+            </header>
+            <div className="c-itemactions">
+              <ShareComp type="unit" id={unit.id} />
+            </div>
+            <div className="c-unitseries__publications1">
+              {unit.extent.count === 0
+                ? "There are currently no publications in this collection."
+                : `There are ${unit.extent.count} publications in this collection, published between ${unit.extent.pub_year.start} and ${unit.extent.pub_year.end}.`
+              }
+            </div>
+            {seriesList.length > 0 && seriesList.map(s =>
+              <SeriesComp key={s.unit_id} data={s} />)}
+            {monographSeriesList.length > 0 && monographSeriesList.map(s =>
+              <SeriesComp key={s.unit_id} data={s} />)}
+            {unitLists.map(({ heading, items }) =>
+              <div key={heading} className="c-unitlist">
+                <h3>{heading}</h3>
                 <ul>
-                  {data.conference_proceedings.map((child) =>
-                    <li key={child.unit_id}><Link to={"/uc/"+child.unit_id}>{child.name}</Link></li>
-                  )} 
+                  {items.map(child =>
+                    <li key={child.unit_id}><Link to={`/uc/${child.unit_id}`}>{child.name}</Link></li>
+                  )}
                 </ul>
               </div>
-            }
-            {data.related_orus.length > 0 &&
-              <div className="c-unitlist">
-                <h3>Related Research Centers & Groups</h3>
-                <ul>
-                  { data.related_orus.map((child) =>
-                    <li key={child.unit_id}><Link to={"/uc/"+child.unit_id}>{child.name}</Link></li>) }
-                </ul>
-              </div>
-            }
-            </section>
-          </main>
-          <aside>
-            {this.props.sidebar}
-          </aside>
-        </div>
+            )}
+          </section>
+        </main>
+        <aside>
+          {sidebar}
+        </aside>
       </div>
-    )
-  }
+    </div>
+  )
+}
+
+DepartmentLayout.propTypes = {
+  unit: PropTypes.shape({
+    id: PropTypes.string.isRequired,
+    name: PropTypes.string.isRequired,
+    type: PropTypes.string.isRequired,
+    extent: PropTypes.object
+  }).isRequired,
+  data: PropTypes.shape({
+    series: PropTypes.array.isRequired,
+    monograph_series: PropTypes.array.isRequired,
+    journals: PropTypes.arrayOf(PropTypes.shape({
+      name: PropTypes.string,
+      unit_id: PropTypes.string
+    })),
+    conference_proceedings: PropTypes.arrayOf(PropTypes.shape({
+      name: PropTypes.string,
+      unit_id: PropTypes.string
+    })),
+    related_orus: PropTypes.arrayOf(PropTypes.shape({
+      name: PropTypes.string,
+      unit_id: PropTypes.string
+    })),
+  }).isRequired,
+  marquee: PropTypes.shape({
+    carousel: PropTypes.any,
+    about: PropTypes.about
+  })
 }
 
 export default DepartmentLayout

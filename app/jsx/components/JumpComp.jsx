@@ -34,31 +34,31 @@ class JumpComp extends React.Component {
         <header>
           <h2>Jump To</h2>
         </header>
-        <div className="c-jump">
-          <Link to="#" onClick={e=>this.handleClick(e, "article_main")}>
-            {kind}
-          </Link>
-          <ul className="c-jump__tree" aria-labelledby="c-jump__label">
-            { this.props.attrs.abstract && !toc &&
-              <li><Link to="#" onClick={(e)=>this.handleClick(e, "article_abstract")}>Abstract</Link></li> }
-            { !toc &&
-              <li><Link to="#" onClick={(e)=>this.handleClick(e, "article_main")}>Main Content</Link></li> }
-            { toc &&
-              toc.map(item =>
-                <li key={item.title}>
-                 <Link to="#" onClick={(e)=>this.handleClick(e, item.anchor)}>{item.title}</Link>
-                </li>
-              )
-            }
-          </ul>
-          <ul className="c-jump__siblings">
-         { this.props.attrs.supp_files &&
+        <ul className="c-jump">
+          <li>
+            <Link to="#" onClick={e=>this.handleClick(e, "article_main")}>
+              {kind}
+            </Link>
+            <ul className="c-jump__tree" aria-labelledby="c-jump__label">
+              { this.props.attrs.abstract && !toc &&
+                <li><Link to="#" onClick={(e)=>this.handleClick(e, "article_abstract")}>Abstract</Link></li> }
+              { !toc &&
+                <li><Link to="#" onClick={(e)=>this.handleClick(e, "article_main")}>Main Content</Link></li> }
+              { toc &&
+                toc.map(item =>
+                  <li key={item.title}>
+                   <Link to="#" onClick={(e)=>this.handleClick(e, item.anchor)}>{item.title}</Link>
+                  </li>
+                )
+              }
+            </ul>
+          </li>
+          { this.props.attrs.supp_files &&
             <li><Link to="#" onClick={(e)=>this.handleClick(e, "supplemental")}>Supplemental Material</Link></li>
-         }
-            <li><Link to="#" onClick={(e)=>this.handleClick(e, "metrics")}>Metrics</Link></li>
-            <li><Link to="#" onClick={(e)=>this.handleClick(e, "author")}>Author & {kind} Info</Link></li>
-          </ul>
-        </div>
+          }
+          <li><Link to="#" onClick={(e)=>this.handleClick(e, "metrics")}>Metrics</Link></li>
+          <li><Link to="#" onClick={(e)=>this.handleClick(e, "author")}>Author & {kind} Info</Link></li>
+        </ul>
       </section>
     )
   }

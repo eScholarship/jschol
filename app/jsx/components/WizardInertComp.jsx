@@ -151,10 +151,11 @@ class WizardInertComp extends React.Component {
         <ReactModal 
           parentSelector={this.props.parentSelector}
           isOpen={this.state.showModal}
-          contentLabel="onRequestClose Example"
-          onRequestClose={this.handleCloseModal}
+          contentLabel={this.props.header || "Dialog"}
+          onRequestClose={this.closeModal}
           className="c-wizard__modal"
           overlayClassName="c-modal__overlay"
+          aria={{ modal: true }}
         >
           <div className="c-wizard">
           {this.props.header == "Manage Submissions" ?

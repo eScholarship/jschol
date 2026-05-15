@@ -63,30 +63,9 @@ class FormComp extends React.Component {
           })
         } else {
           const val = data[filterType]
-    
+          params.delete(filterType)
           if (val) {
-            if (Array.isArray(val)) {
-              const selectedFilters = params.getAll(filterType)
-              // if val is an array, add each unique value as a separate key-value pair
-              // e.g. type_of_work=article&type_of_work=monograph
-              val.forEach(v => {
-                if (!selectedFilters.includes(v)) {
-                  params.append(filterType, v) // e.g. append('type_of_work', 'article') if it's not in val
-                }
-              })
-    
-              const removedFilters = selectedFilters.filter(v => !val.includes(v))
-
-              removedFilters.forEach(removedFilter => {
-                params.delete(filterType, removedFilter) // remove deselected filters
-              })
-            } else {
-              // if it's not an array, set the param value
-              params.set(filterType, val)
-            }
-          } else {
-            // if the filter type is not present in data, remove it from the URL
-            params.delete(filterType)
+            [].concat(val).forEach(v => params.append(filterType, v))
           }
         }
       })

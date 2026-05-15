@@ -466,7 +466,6 @@ class FacetFieldset extends React.Component {
                 Show more
               </button>
               <ModalComp isOpen={this.state.modalOpen}
-                parentSelector={()=>$(`#facetModalBase-${data.fieldName}`)[0]}
                 header={"Refine By " + data.display}
                 onOK={e=>this.closeModal(e, data.fieldName)} okLabel="Done"
                 onCancel={e=>this.closeModal(e, data.fieldName)}
@@ -657,8 +656,11 @@ class SearchPage extends PageBase {
                 <SortPaginationComp formName={formName} formButton={formButton} query={data.query} count={data.count}/>
               }
               {(data.count != 0 ) ?
-                data.searchResults.map(result =>
-                  <ScholWorksComp h="h3" key={result.id} result={result} />)
+                <ul className="c-search-result-sections" aria-label="search results">
+                  {data.searchResults.map(result =>
+                    <li key={result.id}><ScholWorksComp h="h3" result={result} /></li>
+                  )}
+                </ul>
               :
                 <div className="o-well-large">No results found.</div>
               }

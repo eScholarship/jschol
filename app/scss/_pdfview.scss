@@ -12,9 +12,17 @@
 
 .c-pdfview__button-download {
   @extend %o-button__6;
+  display: inline-block;
+  text-decoration: none;
   // fixes chrome/safari min-height + padding within <details> bug:
   padding-top: 0;
   padding-bottom: 0;
+  line-height: $pointer-size-fine;
+
+  @media (any-pointer: coarse) {
+    line-height: $pointer-size-coarse;
+  }
+
   background-image: inline('../images/icon_download-white.svg');
 
   @include bp(screen1) {
@@ -26,12 +34,14 @@
 .c-pdfview__button-view {
   @extend %o-button__6;
   display: none;
+  text-decoration: none;
 
   @include bp(screen1) {
     display: inline-block;
     // fixes chrome/safari min-height + padding within <details> bug:
     padding-top: 0;
     padding-bottom: 0;
+    line-height: $pointer-size-fine;
     background-image: inline('../images/icon_expand-white.svg');
   }
 

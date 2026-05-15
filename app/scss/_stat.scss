@@ -31,8 +31,11 @@
   }
 
   a {
-    @extend %o-stat__number;
     @extend %o-textlink__secondary;
+
+    span {
+      @extend %o-stat__number;
+    }
   }
 
   b {

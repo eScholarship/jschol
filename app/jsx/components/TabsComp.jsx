@@ -1,7 +1,6 @@
 // ##### Tabs Component ##### //
 
 import React from 'react'
-import $ from 'jquery'
 import Contexts from '../contexts.jsx'
 import TabMainComp from '../components/TabMainComp.jsx'
 import TabSupplementalComp from '../components/TabSupplementalComp.jsx'
@@ -11,15 +10,24 @@ import TabMetaComp from '../components/TabMetaComp.jsx'
 
 class TabsComp extends React.Component {
   state = {moreTabs: false}
+  tabContentRef = React.createRef()
 
   tabFocus(tabName) {
     this.props.changeTab(tabName)
   }
 
-  componentWillReceiveProps(nextProps) {
-    if (this.props.currentTab != nextProps.currentTab) { 
-      // For keyboard users, jump to heading within the tab.
-      setTimeout(() =>$(".c-tabcontent__main-heading").focus(), 0)
+  componentDidUpdate(prevProps) {
+    if (prevProps.currentTab != this.props.currentTab) {
+      // For keyboard users, focus the heading at the start of the newly active tab panel
+      const container = this.tabContentRef.current
+      if (container) {
+        const heading = container.querySelector(".c-tabcontent__main-heading")
+        if (heading) {
+          heading.focus()
+        } else {
+          container.focus()
+        }
+      }
     }
   }
 
@@ -32,25 +40,29 @@ class TabsComp extends React.Component {
     let kind = p.genre == "monograph" ? "Book" : "Article"
     return (
       <div className="c-tabs">
-        <div className={this.state.moreTabs ? "c-tabs__tabs--show-all" : "c-tabs__tabs"}>
+        <div className={this.state.moreTabs ? "c-tabs__tabs--show-all" : "c-tabs__tabs"} role="tablist">
       { ["published", "empty"].includes(p.status) &&
           <button className="c-tabs__button-more" onClick = {() => this.setState({moreTabs: !this.state.moreTabs})} aria-label="Show all tabs">...</button>
       }
           <button className={p.currentTab == "main" ? "c-tabs__button--active" : "c-tabs__button"}
+                  role="tab" aria-selected={p.currentTab == "main"}
                   onClick = {() => this.tabFocus("main")}>
             Main Content</button>
       { ["published", "pending"].includes(p.status) && p.attrs.supp_files && !multimediaItem &&
           <button className={p.currentTab == "supplemental" ? "c-tabs__button--active" : "c-tabs__button"}
+                  role="tab" aria-selected={p.currentTab == "supplemental"}
                   onClick = {() => this.tabFocus("supplemental")}>
             Supplemental Material</button>
       }
       { p.status == 'published' &&
           <button className={p.currentTab == "metrics" ? "c-tabs__button--active" : "c-tabs__button"}
+                  role="tab" aria-selected={p.currentTab == "metrics"}
                   onClick = {() => this.tabFocus("metrics")}>
             Metrics</button>
       }
       { !/withdrawn/.test(p.status) &&
           <button className={p.currentTab == "author" ? "c-tabs__button--active" : "c-tabs__button"}
+                  role="tab" aria-selected={p.currentTab == "author"}
                   onClick = {() => this.tabFocus("author")}>
             Author & {kind} Info</button>
       }
@@ -58,13 +70,14 @@ class TabsComp extends React.Component {
         { cms => 
           (cms.loggedIn && cms.permissions && (cms.permissions.super || cms.permissions.campus_admin)) ?
           <button className={p.currentTab == "meta" ? "c-tabs__button--active" : "c-tabs__button"}
+                role="tab" aria-selected={p.currentTab == "meta"}
                 onClick = {() => this.tabFocus("meta")}>
             Meta</button>
          : null
         }
       </Contexts.CMS.Consumer>
         </div>
-        <div className="c-tabs__content">
+        <div className="c-tabs__content" ref={this.tabContentRef} tabIndex="-1">
           {/* 'tab_anchors' are defined in ItemPage component */}
           {p.currentTab == "main"         && <TabMainComp {...p} />}
           {p.currentTab == "supplemental" && <TabSupplementalComp {...p} />}
