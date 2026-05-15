@@ -112,7 +112,7 @@ git checkout package-lock.json
 # add the temporary overlay files
 rm -rf tmp/app
 mkdir -p tmp/app
-#cp -r overlay_files/* tmp/app/
+cp -r overlay_files/* tmp/app/
 cd tmp
 zip -r ../dist/$ZIP app/
 rm -rf tmp/app
