@@ -82,10 +82,7 @@ def ensureConnect(envPrefix)
                "charset"  => 'utf8mb4',
                "reconnect"      => true,
                "max_connections"=> 10,
-               "pool_timeout"   => 5
-
-
-  }
+               "pool_timeout"   => 5}
   if ENV['USE_SOCKS_FOR_MYSQL'].to_s.downcase == 'true'
     if TCPSocket::socks_port
       SocksMysql.new(dbConfig)
