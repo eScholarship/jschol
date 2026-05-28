@@ -79,7 +79,7 @@ def ensureConnect(envPrefix)
                "database" => getEnv("#{envPrefix}_DATABASE"),
                "username" => getEnv("#{envPrefix}_USERNAME"),
                "password" => getEnv("#{envPrefix}_PASSWORD"),
-               "charset"  => 'utf8mb4'}
+               "charset"  => 'utf8mb4' }
 
   if envPrefix == "OJS_DB"
       dbConfig["test"] = true
