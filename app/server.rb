@@ -79,13 +79,19 @@ def ensureConnect(envPrefix)
                "database" => getEnv("#{envPrefix}_DATABASE"),
                "username" => getEnv("#{envPrefix}_USERNAME"),
                "password" => getEnv("#{envPrefix}_PASSWORD"),
-               "charset"  => 'utf8mb4' }
+               "charset"  => 'utf8mb4',
+               "reconnect"      => true,
+               "max_connections"=> 10,
+               "pool_timeout"   => 5
+
+
+  }
   if ENV['USE_SOCKS_FOR_MYSQL'].to_s.downcase == 'true'
     if TCPSocket::socks_port
       SocksMysql.new(dbConfig)
     end
   end
-  db = Sequel.connect(dbConfig)
+  db = Sequel.connect(dbConfig.merge(test: true))
   n = db.fetch("SHOW TABLE STATUS").all.length
   n > 0 or raise("Failed to connect to db.")
   return db
