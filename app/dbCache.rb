@@ -237,6 +237,9 @@ def fillCaches
   $cacheFillMutex.synchronize {
     begin
       $lastFillTime = Time.now
+      puts "Keep OJS connection alive"
+      row = OJS_DB[:sessions].first
+      puts row.inspect
       puts "Filling caches started. fill time is #{$lastFillTime}          "
       $unitsHash = getUnitsHash
       $hierByUnit = getHierByUnit
