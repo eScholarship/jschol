@@ -1,3 +1,7 @@
+# Puma v7+ requires explicitly setting repload_app! 
+# False: Prevents sharing application code in memory (which requires DB connection mgmt)
+preload_app! false
+
 worker_timeout 120 # the default of 60 is usually hit on first startup, since this is a dev instance, we can wait
 worker_shutdown_timeout 90  # HTTP timeout is usually 60 sec, so give extra to be sure we don't drop any
 
