@@ -138,7 +138,13 @@ class AllJournals extends React.Component {
       <div className="o-input__inline">
         <div className="o-input__droplist1">
           <label className="o-input__label--hidden" htmlFor="o-input__droplist-label2">Campus</label>
-          <select name="campusID" id="o-input__droplist-label2" onChange={this.changeCampus} value={this.state.campusID}>
+          <select 
+            name="campusID" 
+            id="o-input__droplist-label2" 
+            onChange={this.changeCampus} 
+            value={this.state.campusID}
+            aria-label="Select a campus"
+          >
             {campusSelector}
           </select>
         </div>

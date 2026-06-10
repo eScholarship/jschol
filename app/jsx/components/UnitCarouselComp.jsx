@@ -39,6 +39,7 @@ class UnitCarouselItem extends React.Component {
     }
     return (
       <div className="c-unitcarousel__item">
+        <div className={`c-unitcarousel__item-type--${genreToClassName(pr.genre)}`}>{capitalize(pr.genre)}</div>
         <h3>
           <a href={itemLink}>
             <ArbitraryHTMLComp html={pr.title}/>
@@ -56,7 +57,6 @@ class UnitCarouselItem extends React.Component {
             </div>
           </div>
         }
-        <div className={`c-unitcarousel__item-type--${genreToClassName(pr.genre)}`}>{capitalize(pr.genre)}</div>
       </div>
     )
   }
@@ -92,21 +92,10 @@ class UnitCarouselComp extends React.Component {
     return (
       <div className="c-campuscarouselframe">
         <h2 className="c-campuscarouselframe__heading"><Link to={"/uc/"+p.titleID}>{p.titleName}</Link></h2>
-        <div className="c-campuscarouselframe__carousel">
-          <div className="c-unitcarousel">
-            <button className="c-unitcarousel__button-up" onClick={this.scrollUp} aria-label="Scroll Up"></button>
-            <div className="c-unitcarousel__scrollbox" ref={el => this.scrollBox = el} tabIndex="-1">
-              { p.slides.map((result, i) =>
-                <UnitCarouselItem key={i} result={result} />)
-              }
-            </div>
-            <button className="c-unitcarousel__button-down" onClick={this.scrollDown} aria-label="Scroll Down"></button>
-          </div>
-        </div>
         <div className="c-campuscarouselframe__stats">
           {p.item_count > 0 &&
             <div className="o-stat--item">
-              <Link to={"/uc/" + p.titleID}>{p.item_count.toLocaleString()}</Link>Item{pluralItems}
+              <Link to={"/uc/" + p.titleID}><span>{p.item_count.toLocaleString()}</span> Item{pluralItems}</Link>
             </div>
           }
           {p.view_count > 0 &&
@@ -114,6 +103,17 @@ class UnitCarouselComp extends React.Component {
               <b>{p.view_count.toLocaleString()}</b>Views
             </div>
           }
+        </div>
+        <div className="c-campuscarouselframe__carousel">
+          <div className="c-unitcarousel">
+            <button className="c-unitcarousel__button-up" onClick={this.scrollUp} aria-hidden="true" tabIndex="-1"></button>
+            <div className="c-unitcarousel__scrollbox" ref={el => this.scrollBox = el} tabIndex="-1">
+              { p.slides.map((result, i) =>
+                <UnitCarouselItem key={i} result={result} />)
+              }
+            </div>
+            <button className="c-unitcarousel__button-down" onClick={this.scrollDown} aria-hidden="true" tabIndex="-1"></button>
+          </div>
         </div>
       </div>
     )

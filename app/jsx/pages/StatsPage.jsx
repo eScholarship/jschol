@@ -108,7 +108,7 @@ class StatsFooter extends React.Component {
         <div className="c-statsReport-bottomButtons">
           <button className="o-button__8" onClick={this.props.onDownload}>Download CSV</button>
           <div className="c-toplink">
-            <a href="javascript:window.scrollTo(0, 0)">Top</a>
+            <a href="#top">Top</a>
           </div>
         </div>
       }

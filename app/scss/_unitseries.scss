@@ -1,28 +1,50 @@
 // ##### Unit Series Component ##### //
 
 .c-unitseries {
-  
+  padding-left: $togglecontent-spacing;
+
   + .c-unitseries {
     margin: 0;
     padding-top: 0;
     border: none;
   }
 
-  &:last-of-type { // compensate for u-interactive-element-size
+  &:last-of-type {
     margin-bottom: $spacing-sm;
   }
 
-  summary {
+  > a {
+    @extend %o-textlink__secondary;
+    @extend %u-interactive-element-size;
+    display: inline-flex;
+    align-items: center;
+    font-size: 1.3rem;
+    margin-bottom: $spacing-sm;
+  }
 
-    a {
-      @extend %o-textlink__secondary;
-      @extend %u-interactive-element-size;
-      display: inline-flex;
-      align-items: center;
-      font-size: 1.3rem;
-      font-weight: normal;
+  > details > summary {
+    @extend %u-interactive-element-size;
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: $togglecontent-spacing;
+    user-select: none;
+
+    &::after {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      padding: 8px;
+      background: inline('../images/icon_plus-black.svg') no-repeat center / 16px;
+      content: '';
     }
 
+  }
+
+  > details[open] > summary::after {
+    background-image: inline('../images/icon_minus-black.svg');
   }
 
   .c-pub__heading {
