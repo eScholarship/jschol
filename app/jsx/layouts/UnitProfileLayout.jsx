@@ -504,14 +504,14 @@ class UnitProfileLayout extends React.Component {
     return (
       <Contexts.CMS.Consumer>
       { cms => {
-        const isSuper = cms.permissions && cms.permissions.super
+        const isAdmin = cms.permissions && cms.permissions.admin
         
         return (
           <div>
             { this.renderUnitConfig() }
             { this.renderSocialConfig() }
             { this.renderAboutConfig() }
-            { isSuper && (this.props.unit.type == 'journal' || this.props.unit.type == 'conference_proceedings') && this.renderJournalConfig() }
+            { isAdmin && (this.props.unit.type == 'journal' || this.props.unit.type == 'conference_proceedings') && this.renderJournalConfig() }
           </div>
         )
       }}

@@ -1713,8 +1713,7 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
     end
 
     # Likewise, only change journal flags if journal section is being saved
-    # Journal-specific fields can only be changed by super users
-    if params['data']['journalConfigSection'] && perms[:super]
+    if params['data']['journalConfigSection'] && perms[:admin]
       unitAttrs['magazine_layout'] = (params['data']['magazine_layout'] == "on")
       unitAttrs['issue_rule'] = (params['data']['issue_rule'] == "secondMostRecent") ? "secondMostRecent" : nil
     end
