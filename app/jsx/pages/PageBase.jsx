@@ -2,7 +2,6 @@
 import React from 'react'
 import $ from 'jquery'
 import _ from 'lodash'
-import ReactGA from 'react-ga'
 import Contexts from '../contexts.jsx'
 import { Link } from 'react-router-dom'
 import { MathJaxContext } from "better-react-mathjax"
@@ -218,29 +217,6 @@ class PageBase extends React.Component
                                          : ` ${data.status}:\n${data.statusText}.`))
       this.fetchPageData()
     })
-  }
-
-  // External Google Analytics trackers
-  runExtGATracker = (tracker, id) => {
-    ReactGA.ga('create', id, 'auto', {'name': tracker})
-    ReactGA.ga(tracker+'.send', 'pageview', {'page': window.location.pathname})
-  }
-
-  extGA = (unit_id) => {
-    if (!(typeof window === "undefined")) {
-      if (/jmie_sfews/.test(unit_id)) { this.runExtGATracker('sfewsTracker', 'UA-31540406-1') }
-      if (/^nanocad/.test(unit_id)) { this.runExtGATracker('nanocadTracker', 'UA-17962781-1') }
-      if (/^uciem_westjem/.test(unit_id)) { this.runExtGATracker('westjemTracker', 'UA-34762732-1') }
-      if (/^ucla_epss/.test(unit_id)) { this.runExtGATracker('epssTracker', 'UA-111990925-2') }
-      if (/^refract/.test(unit_id)) { this.runExtGATracker('refractTracker', 'UA-130336975-1') }
-      if (/^itsdavis_ncst/.test(unit_id)) { this.runExtGATracker('itsdavisncstTracker', 'UA-54945925-1') }
-      if (/^acgcc_jtas/.test(unit_id)) { this.runExtGATracker('jtasTracker', 'UA-141570725-1') }
-      if (/^psf/.test(unit_id)) { this.runExtGATracker('psfTracker', 'UA-152312010-1') }
-      if (/^cioa_ciap/.test(unit_id)) { this.runExtGATracker('ciapTracker', 'UA-164954982-1') }
-      if (/^lawandpoliticaleconomy/.test(unit_id)) { this.runExtGATracker('lawandpoliticaleconomyTracker', 'UA-187281152-1') }
-      if (/^energy_ambitions/.test(unit_id)) { this.runExtGATracker('energyambitionsTracker', 'UA-192190770-1') }
-      if (/^glossapsycholinguistics/.test(unit_id)) { this.runExtGATracker('glossapsycholinguisticsTracker', 'UA-217482135-1') }
-    }
   }
 
 

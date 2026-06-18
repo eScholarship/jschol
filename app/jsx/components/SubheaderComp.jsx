@@ -2,7 +2,6 @@
 
 import React from 'react'
 import PropTypes from 'prop-types'
-import ReactGA from 'react-ga'
 import { Link } from 'react-router-dom'
 import $ from 'jquery'
 import CampusSelectorComp from '../components/CampusSelectorComp.jsx'
