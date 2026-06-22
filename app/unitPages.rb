@@ -1726,8 +1726,10 @@ put "/api/unit/:unitID/profileContentConfig" do |unitID|
     # pp(params['data'])
     if params['data']['facebook'] then unitAttrs['facebook'] = params['data']['facebook'] end
     if params['data']['twitter'] then unitAttrs['twitter'] = params['data']['twitter'] end
-    # About text can be changed by super users, or campus admins on sub-units (not at campus level)
-    if params['data']['about'] && (perms[:super] || (perms[:campus_admin] && !isCampus))
+    # About text on campus units is restricted to super users only
+    # any admin can edit about text on non-campus units (series, journals, ORUs, etc.)
+    isCampus ||= (unit.type == 'campus')
+    if params['data']['about'] && perms[:admin] && (perms[:super] || !isCampus)
       unitAttrs['about'] = params['data']['about']
     end
     if params['data']['subheader-bgcolorpicker'] then unitAttrs['bgColor'] = params['data']['subheader-bgcolorpicker'] end
