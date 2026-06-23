@@ -3,7 +3,6 @@
 
 import React from 'react'
 import { Route, Switch } from 'react-router-dom'
-import ReactGA from 'react-ga'
 import klaroConfig from './klaro-config.jsx';
 import HomePage from './pages/HomePage.jsx'
 import BrowsePage from './pages/BrowsePage.jsx'
@@ -47,8 +46,6 @@ const o_debug = console.debug; console.debug = function(...args) { filterMsg(o_d
 const o_error = console.error; console.error = function(...args) { filterMsg(o_error, ...args) }
 const o_info  = console.info;  console.info  = function(...args) { filterMsg(o_info, ...args)  }
 
-ReactGA.initialize('UA-26286226-1', { debug: false })
-
 let prevPathname = null
 
 class RecordLocation extends React.Component
@@ -77,11 +74,6 @@ class RecordLocation extends React.Component
     if (this.props.location.pathname != prevPathname) {
       this.props.location.prevPathname = prevPathname
       prevPathname = this.props.location.pathname
-      if (!(typeof document === "undefined")) {
-        ReactGA.set({ page: window.location.pathname + window.location.search,
-                      anonymizeIp: true })
-        ReactGA.pageview(window.location.pathname + window.location.search)
-      }
     }
     return null
   }

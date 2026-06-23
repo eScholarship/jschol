@@ -156,7 +156,6 @@ class ItemPage extends PageBase {
     }
     let keywords = a.disciplines ? a.disciplines.join('; ') : null
     let isWithdrawn = /withdrawn/.test(d.status)
-    d.unit && this.extGA(d.unit.id)  // Google Analytics for external trackers called from PageBase
 
     return (
       <div>
