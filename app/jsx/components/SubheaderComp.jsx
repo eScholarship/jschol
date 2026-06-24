@@ -60,6 +60,8 @@ class SubheaderComp extends React.Component {
     let directSubmitURL_manage = h.directSubmitURL ? h.directSubmitURL : null
     let directManageURLauthor = h.directManageURLauthor ? h.directManageURLauthor : null
     let directManageURLeditor = h.directManageURLeditor ? h.directManageURLeditor : null
+    let isManuscriptSubmitUnit = unit.type === 'journal' || unit.type === 'conference_proceedings'
+    let directSubmitName = isManuscriptSubmitUnit ? unit.name.trim() : null
 
    // Button Configuration based on unit type
    //   unit.type == 'journal'  -->        Submit  / Manage Submissions
@@ -69,7 +71,7 @@ class SubheaderComp extends React.Component {
     let depositWizard = null
     let depositButton = <button id="wizardlyDeposit" className="o-button__3" onClick={(event)=>{
                                this.setState({depositModalOpen:true})
-                               event.preventDefault()} } >{(unit.type == 'journal') ? "Submit Manuscript" : "Deposit"}</button>
+                               event.preventDefault()} } >{isManuscriptSubmitUnit ? "Submit Manuscript" : "Deposit"}</button>
 
     // WizardInertComp is like WizardComp, but only one screen, no back/forward buttons,
     //   a) Used for 'Manage Submissions' link-out    - OR -
@@ -83,11 +85,11 @@ class SubheaderComp extends React.Component {
 
     // Note: Disabled and Moribund Units/Series are also uniquely handled when coming in
     //   at a higher level from within WizardUnitComp and WizardSeriesComp (handled by WizardComp below)
-    if (unit.type == 'journal' || h.directSubmitURL || ["moribund", "disabled", "hide"].includes(h.directSubmit)) {
+    if (isManuscriptSubmitUnit || h.directSubmitURL || ["moribund", "disabled", "hide"].includes(h.directSubmit)) {
       depositWizard = (<WizardInertComp showModal={this.state.depositModalOpen}
                       onCancel={e=>this.closeWizardModal(e)}
-                      header={(unit.type == 'journal') ? unit.name : h.campusName+" Deposit"}
-                      type={unit.type} directSubmit={h.directSubmit} directSubmitURL={directSubmitURL} directManageURLauthor={directManageURLauthor} directManageURLeditor={directManageURLeditor}/>)
+                      header={isManuscriptSubmitUnit ? unit.name : h.campusName+" Deposit"}
+                      type={unit.type} directSubmit={h.directSubmit} directSubmitURL={directSubmitURL} directSubmitName={directSubmitName} directManageURLauthor={directManageURLauthor} directManageURLeditor={directManageURLeditor}/>)
     } else {
       // If unit is a series, pass in its parent's unitID
       let [unitIDForWiz, unitNameForWiz] = (unit.type == 'oru') ? [unit.id, unit.name] : (unit.type.includes('series')) ? [h.ancestorID, h.ancestorName] : [null, null]

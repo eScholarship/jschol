@@ -10,6 +10,8 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import ReactModal from 'react-modal'
 
+const possessive = name => name + (name.match(/s$/i) ? "'" : "'s")
+
 class HeaderComp extends React.Component {
   render() {
     return (
@@ -102,12 +104,17 @@ class MoribundComp extends React.Component {
 
 class DirectSubmissionComp extends React.Component {
   render() {
+    const submissionName = this.props.directSubmitName ? 
+      possessive(this.props.directSubmitName) 
+      :
+      `the ${this.props.type}'s`
+
     return (
       <div className="c-wizard__step">
         <HeaderComp header={this.props.header} closeModal={this.props.closeModal} />
         <div className="c-wizard__heading"></div>
         <div className="c-wizard__message">
-          <p>Please review the {this.props.type}'s Policies and Submission Guidelines pages before continuing.</p>
+          <p>Please review {submissionName} Policies and Submission Guidelines pages before continuing.</p>
           <a className="c-wizard__external-link" href={this.props.directSubmitURL}>Submit your material</a>
         </div>
         <footer></footer>
@@ -124,6 +131,7 @@ class WizardInertComp extends React.Component {
     directSubmit: PropTypes.string,
     directSubmitURL: PropTypes.string,   // called from Deposit/Submit button
     directSubmitURL_manage: PropTypes.string,   // called from Manage Submissions button
+    directSubmitName: PropTypes.string,
     header: PropTypes.string,
     unit_id: PropTypes.string,
   }
@@ -146,6 +154,7 @@ class WizardInertComp extends React.Component {
 
   render() {
     let type = (this.props.type == 'oru') ? 'unit' : this.props.type
+    type = (type === 'conference_proceedings') ? 'conference proceedings' : type
     return (
       <div className="c-modal">
         <ReactModal 
@@ -172,7 +181,7 @@ class WizardInertComp extends React.Component {
                <MoribundComp header={this.props.header} type={type} closeModal={this.closeModal} />
                :
                // this.props.directSubmit == "enabled" ?
-               <DirectSubmissionComp header={this.props.header} type={type} directSubmitURL={this.props.directSubmitURL} closeModal={this.closeModal} />
+               <DirectSubmissionComp header={this.props.header} type={type} directSubmitURL={this.props.directSubmitURL} directSubmitName={this.props.directSubmitName} closeModal={this.closeModal} />
           }
           </div>
         </ReactModal>
