@@ -392,10 +392,12 @@ get "/robots.txt" do
            "",
            "User-agent: *",
            "Disallow: /search",
-           "Disallow:#{request.host == "escholarship.org" ? "" : " /"}",
+           "Disallow: /search/",
+           "Disallow: /search*",
+           "#{request.host == "escholarship.org" ? "" : "Disallow: /"}",
            "",
            "User-agent: *",
-           "Crawl-delay: 4",
+           "Crawl-delay: 10",
            "",
            "Sitemap: #{request.env['HTTP_CLOUDFRONT_FORWARDED_PROTO'] || request.scheme}://#{request.host}/siteMapIndex.xml"]
   return lines.join("\n")
