@@ -3,6 +3,7 @@
 import React from 'react'
 import MediaModalComp from '../components/MediaModalComp.jsx'
 import MediaFeatureObj from '../objects/MediaFeatureObj.jsx'
+import { findTrackFiles } from '../utils.jsx'
 import { Link } from 'react-router-dom'
 class CellComp extends React.Component {
   state={showModal: false}
@@ -33,7 +34,15 @@ class CellComp extends React.Component {
         <a href={url} className="o-mediafile__download" download={p.file}>Download</a>
         <a href={p.doi} className="o-mediafile__doi">{p.doi}</a>
         <MediaModalComp showModal={this.state.showModal} handleCloseModal={this.handleCloseModal}>
-          <MediaFeatureObj file={p.file} url={url} type={mimeSimple} title={p.title} description={p.description} doi={p.doi} />
+          <MediaFeatureObj 
+            file={p.file} 
+            url={url} 
+            type={mimeSimple} 
+            title={p.title} 
+            description={p.description} 
+            doi={p.doi} 
+            trackFiles={p.trackFiles} 
+          />
         </MediaModalComp>
       </div>
     )
@@ -57,6 +66,8 @@ class MediaFileGridComp extends React.Component {
           title = f.file 
         }
       }
+      const trackFiles = f.mimeSimple === 'video'
+        ? findTrackFiles(f.file, files, this.props.id, this.props.preview_key) : []
       let p = (f['mimeSimple'].includes(filterType) || filterType =="") &&
             <CellComp key={i}
                       id={this.props.id}
@@ -65,6 +76,7 @@ class MediaFileGridComp extends React.Component {
                       file={f.file}
                       doi={f.doi}
                       description={description} 
+                      trackFiles={trackFiles}
                       useFilenameForTitle={useFilenameForTitle}
                       preview_key={this.props.preview_key} />
       if (p) {foundOne = true}

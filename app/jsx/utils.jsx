@@ -25,3 +25,38 @@ export default class {
     return '<p>'+ html +'</p>'
   }
 }
+
+/*
+ extract 2-letter language code from a subtitle filename
+ expects the pattern "filename.lang.vtt" (e.g. "video.en.vtt" -> "en")
+*/
+export function extractLanguageFromFilename(filename) {
+  const match = filename.match(/\.([a-z]{2})\.vtt$/i)
+  return match ? match[1].toLowerCase() : 'en'
+}
+
+/*
+ match vtt subtitle files to their corresponding video file by base filename
+ assumes a video named "video.mp4" has subtitles named "video.lang.vtt"
+*/
+export function findTrackFiles(videoFileName, allFiles, id, preview_key) {
+  if (!allFiles) return []
+
+  // extract base name without extension (e.g. "video.mp4" -> "video")
+  const baseName = videoFileName.replace(/\.[^/.]+$/, "")
+
+  // find vtt files that share the same base name as the video
+  const trackFiles = allFiles.filter(f => {
+    if (!f.file.endsWith('.vtt')) return false
+    const subtitleBase = f.file.replace(/\.[^/.]+\.vtt$/, "") // "video.en.vtt" -> "video"
+    return subtitleBase === baseName
+  })
+
+  return trackFiles.map(f => ({
+    url: (preview_key ? "/preview/" : "/content/") +
+         "qt" + id + "/supp/" + f.file +
+         (preview_key ? "?preview_key=" + preview_key : ""),
+    file: f.file, // used for key in MediaFeatureObj track element
+    language: extractLanguageFromFilename(f.file),
+  }))
+}
