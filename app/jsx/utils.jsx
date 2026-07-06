@@ -52,11 +52,14 @@ export function findTrackFiles(videoFileName, allFiles, id, preview_key) {
     return subtitleBase === baseName
   })
 
-  return trackFiles.map(f => ({
-    url: (preview_key ? "/preview/" : "/content/") +
-         "qt" + id + "/supp/" + f.file +
-         (preview_key ? "?preview_key=" + preview_key : ""),
-    file: f.file, // used for key in MediaFeatureObj track element
-    language: extractLanguageFromFilename(f.file),
-  }))
+  return trackFiles.map(f => {
+    const basePath = preview_key ? "/preview/" : "/content/"
+    const query = preview_key ? `?preview_key=${preview_key}` : ""
+
+    return {
+      url: `${basePath}qt${id}/supp/${f.file}${query}`,
+      file: f.file, // used for key in MediaFeatureObj track element
+      language: extractLanguageFromFilename(f.file),
+    }
+  })
 }
