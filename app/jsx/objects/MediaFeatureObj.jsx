@@ -32,7 +32,7 @@ class MediaFeatureObj extends React.Component {
                   kind="subtitles" 
                   src={track.url} 
                   srcLang={track.language}
-                  label={`Captions ${index + 1}`}
+                  label={`Caption ${track.language}`}
                   default={index === 0}
                 />
               ))}
