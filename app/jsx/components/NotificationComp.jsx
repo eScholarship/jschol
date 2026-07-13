@@ -1,14 +1,29 @@
 // ##### Notification Component ##### //
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
+
+const STORAGE_KEY = 'banner-dismissed-july-2026'
 
 function NotificationComp({ children }) {
-  const [messageClose, setMessageClose] = useState(false)
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    const dismissed = localStorage.getItem(STORAGE_KEY)
+    setVisible(!dismissed)
+  }, [])
+
+  function handleClose() {
+    localStorage.setItem(STORAGE_KEY, 'true')
+    setVisible(false)
+  }
+
+  if (!visible) return null
+
   return (
-    <div className={messageClose ? "c-notification--close" : "c-notification"} role="alert" hidden={messageClose}>
+    <div className="c-notification" role="alert">
       <p>
         <strong className="c-notification__main-text">{children}</strong>
       </p>
-      <a className="c-notification__close" role="button" aria-label="Close notification" onClick={() => setMessageClose(true)}></a>
+      <a className="c-notification__close" role="button" aria-label="Close notification" onClick={handleClose}></a>
     </div>
   )
 }
