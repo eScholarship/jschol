@@ -57,14 +57,14 @@ class HeaderComp2 extends React.Component {
         </header>
         <NotificationComp>
           <span>
-            Note: the eScholarship site's performance may be inconsistent July 13–24. {" "}
+            Note: the eScholarship site's performance may be inconsistent July 13–24 {" "}
             <a href="https://help.escholarship.org/support/discussions/topics/9000064214">
               (Learn more).
             </a>
           </span>
-          <br />
+
           <span>
-            Please <a href="https://help.escholarship.org/support/discussions/topics/9000064214">provide feedback</a> if you encounter any issues.  
+            {" "} Please <a href="https://help.escholarship.org/support/discussions/topics/9000064214">provide feedback</a> if you encounter any issues.  
           </span>
         </NotificationComp>
       </div>
