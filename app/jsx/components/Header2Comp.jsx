@@ -57,7 +57,7 @@ class HeaderComp2 extends React.Component {
         </header>
         <NotificationComp>
           <span>
-            Note: the eScholarship site's performance may be inconsistent July 13–24 {" "}
+            Note: the eScholarship site's performance may be inconsistent July 13–30 {" "}
             <a href="https://help.escholarship.org/support/discussions/topics/9000064214">
               (learn more).
             </a>
