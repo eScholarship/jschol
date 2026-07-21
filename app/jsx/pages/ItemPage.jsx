@@ -48,16 +48,12 @@ class ItemPage extends PageBase {
   }
 
   // currentTab should be 'main' whenever hash starts with 'article_" (or is empty)
-  articleHashHandler = (h, toc) => {
-    if (/^article|^$/.test(h))
+  articleHashHandler = (url_hash, toc) => {
+    if (/^article|^$/.test(url_hash))
       return "main"
-    if (toc) {
-      for (let i in toc.divs) {
-        if (h == toc.divs[i].anchor)
-          return "main"
-      }
-    }
-    return h
+    if (toc?.divs?.some(div => url_hash == (div.anchor || `page=${div.page}`)))
+      return "main"
+    return url_hash
   }
 
   componentDidMount(...args) {
@@ -105,25 +101,16 @@ class ItemPage extends PageBase {
     }
   }
 
+  // handles active navigation (tab buttons and jump links)
   changeTab = tabName => {
-    let toc = this.state.pageData && this.state.pageData.attrs && this.state.pageData.attrs.toc
+    if (!tabName) return
 
-    if (toc) {
-      const pageNumber = parseInt(tabName.split('=')[1], 10)
-      this.setState({ pageNum: pageNumber })
-    }
+    // pushState avoids native hash-navigation stealing focus/scroll
+    history.pushState(null, '', `#${tabName}`)
+    this.handleHashChange()
 
-    let newTab = this.articleHashHandler(tabName.toLowerCase().replace(/^#/, ""), toc)
-
-    if (newTab != this.state.currentTab) {
-      this.setState({currentTab: this.articleHashHandler(tabName, toc) })
-      // Update the URL hash for deep linking, using pushState avoids the browser's
-      // native hash-navigation behavior which would steal focus/scroll 
-      // e.g. #main matches the root <div id="main"> and jumps to the top of the page
-      setTimeout(() => history.pushState(null, '', `#${tabName}`), 200)
-    } else {
-      history.pushState(null, '', `#${tabName}`)
-    }
+    // Scroll once the tab's anchor exists in the DOM
+    setTimeout(() => document.getElementsByName(tabName)[0]?.scrollIntoView(), 0)
   }
 
   renderData = data => {
