@@ -155,6 +155,13 @@ class UnitProfileLayout extends React.Component {
     this.setState({banner_flag_visible: true})
   }
 
+  // sends an empty value for the image field
+  handleRemoveImage = fieldName => {
+    this.props.sendApiData("POST", `/api/unit/${this.props.unit.id}/upload`, { [fieldName]: "" })
+    if (fieldName === 'logo')
+      this.setState({ banner_flag_visible: false })
+  }
+
   setData = (newStuff) => {
     this.setState({newData: Object.assign(_.cloneDeep(this.state.newData), newStuff)})
   }
@@ -219,16 +226,30 @@ class UnitProfileLayout extends React.Component {
                    <img src={ logoUrl } alt="Logo"/>
                    <br/>
                    { !disableLogo &&
-                     <div>
-                       <input type="file" id="logoImage" name="logo" accept=".png, .jpg, .jpeg, .gif" onChange={this.handleImageChange}/>
-                       <br/><br/>
-                       <div className="upload-criteria">
+                    <div>
+                      <input 
+                        type="file" 
+                        id="logoImage" 
+                        name="logo" 
+                        accept=".png, .jpg, .jpeg, .gif" 
+                        onChange={this.handleImageChange}
+                      />
+                      { data.logo &&
+                        <>
+                          <br/><br/>
+                          <button type="button" onClick={() => this.handleRemoveImage('logo')}>
+                            Remove logo
+                          </button>
+                        </> 
+                      }
+                      <br/><br/>
+                      <div className="upload-criteria">
                         <span>Logo requirements: 800px width x 90px height in JPG, PNG, or GIF format.&nbsp;</span>
                         <a href="https://help.escholarship.org/support/solutions/articles/9000124100">
                           See the eScholarship help center for more information.
                         </a>
-                       </div>
-                       <br/><br/>
+                      </div>
+                      <br/>
                     { this.state.banner_flag_visible &&
                       [<label key="0" className="c-editable-page__label" htmlFor="logoIsBanner">Suppress typeset site name next to logo: </label>,
                        <p key="1">Check the box below if your logo image contains the full, legible title of your site.</p>,
@@ -242,10 +263,12 @@ class UnitProfileLayout extends React.Component {
                          <label className="c-editable-page__label" htmlFor="heroImage">Hero image{disableLogo ? "(restricted)" : ""}</label>
                          <img src={ heroUrl } alt="Hero Image"/>
                          <input type="file" id="heroImage" name="hero" onChange={this.handleImageChange}/>
+                         { data.hero &&
+                           <><br/><button type="button" onClick={() => this.handleRemoveImage('hero')}>Remove hero image</button></> }
                          <br/><br/>
                        </div>
                       }
-                     </div>
+                    </div>
                    }
                      <ModalComp
                        isOpen={this.state.isModalOpen}

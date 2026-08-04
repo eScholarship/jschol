@@ -1832,6 +1832,16 @@ def saveImage (name, unitID, data)
   }
 end
 
+def removeImage (name, unitID)
+  DB.transaction {
+    unit = Unit[unitID] or jsonHalt(404, "Unit not found")
+    unitAttrs = JSON.parse(unit.attrs)
+    unitAttrs.delete(name)
+    unit.attrs = unitAttrs.to_json
+    unit.save
+  }
+end
+
 post "/api/unit/:unitID/upload" do |unitID|
   perms = getUserPermissions(params[:username], params[:token], unitID)
   perms[:admin] or halt(401)
@@ -1871,7 +1881,7 @@ post "/api/unit/:unitID/upload" do |unitID|
     logo_data = putImage("logo", params[:logo][:tempfile].path, { original_path: params[:logo][:filename] })
     saveImage('logo', unitID, logo_data)
   elsif params[:logo] == ""
-    #REMOVE LOGO
+    removeImage('logo', unitID)
   end
 
   # upload images for campus hero
@@ -1879,7 +1889,7 @@ post "/api/unit/:unitID/upload" do |unitID|
     hero_data = putImage("hero", params[:hero][:tempfile].path, { original_path: params[:hero][:filename] })
     saveImage('hero', unitID, hero_data)
   elsif params[:hero] == ""
-    #REMOVE LOGO
+    removeImage('hero', unitID)
   end
 
   content_type :json
