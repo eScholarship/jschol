@@ -264,7 +264,11 @@ class UnitProfileLayout extends React.Component {
                          <img src={ heroUrl } alt="Hero Image"/>
                          <input type="file" id="heroImage" name="hero" onChange={this.handleImageChange}/>
                          { data.hero &&
-                           <><br/><button type="button" onClick={() => this.handleRemoveImage('hero')}>Remove hero image</button></> }
+                          <>
+                            <br/>
+                            <button type="button" onClick={() => this.handleRemoveImage('hero')}>Remove hero image</button>
+                          </>
+                         }
                          <br/><br/>
                        </div>
                       }
