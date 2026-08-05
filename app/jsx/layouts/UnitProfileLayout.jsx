@@ -177,12 +177,12 @@ class UnitProfileLayout extends React.Component {
         ? this.state.newData.logo.imagePreviewUrl
         : data.logo
             ? "/cms-assets/" + data.logo.asset_id
-            : "http://placehold.it/400x100?text=No+logo"
+            : null
     let heroUrl = this.state.newData.hero && this.state.newData.hero.imagePreviewUrl
         ? this.state.newData.hero.imagePreviewUrl
         : data.hero
             ? "/cms-assets/" + data.hero.asset_id
-            : "http://placehold.it/500x200?text=No+hero+image"
+            : null
     return (
       <Contexts.CMS.Consumer>
       { cms => {
@@ -223,7 +223,10 @@ class UnitProfileLayout extends React.Component {
                            onChange={ event => this.setData({ name: event.target.value }) }/>
 
                    <label className="c-editable-page__label" htmlFor="logoImage">Logo image{disableLogo ? "(restricted)" : ""}</label>
-                   <img src={ logoUrl } alt="Logo"/>
+                   { logoUrl
+                     ? <img src={ logoUrl } alt="Logo"/>
+                     : <p><em>[No logo]</em></p> 
+                   }
                    <br/>
                    { !disableLogo &&
                     <div>
@@ -261,7 +264,10 @@ class UnitProfileLayout extends React.Component {
                          <hr/>
                          <br/><br/>
                          <label className="c-editable-page__label" htmlFor="heroImage">Hero image{disableLogo ? "(restricted)" : ""}</label>
-                         <img src={ heroUrl } alt="Hero Image"/>
+                         { heroUrl
+                           ? <img src={ heroUrl } alt="Hero Image"/>
+                           : <p><em>[No hero image]</em></p> 
+                         }
                          <input type="file" id="heroImage" name="hero" onChange={this.handleImageChange}/>
                          { data.hero &&
                           <>
