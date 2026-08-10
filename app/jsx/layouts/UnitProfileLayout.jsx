@@ -155,6 +155,13 @@ class UnitProfileLayout extends React.Component {
     this.setState({banner_flag_visible: true})
   }
 
+  // sends an empty value for the image field
+  handleRemoveImage = fieldName => {
+    this.props.sendApiData("POST", `/api/unit/${this.props.unit.id}/upload`, { [fieldName]: "" })
+    if (fieldName === 'logo')
+      this.setState({ banner_flag_visible: false })
+  }
+
   setData = (newStuff) => {
     this.setState({newData: Object.assign(_.cloneDeep(this.state.newData), newStuff)})
   }
@@ -170,12 +177,12 @@ class UnitProfileLayout extends React.Component {
         ? this.state.newData.logo.imagePreviewUrl
         : data.logo
             ? "/cms-assets/" + data.logo.asset_id
-            : "http://placehold.it/400x100?text=No+logo"
+            : null
     let heroUrl = this.state.newData.hero && this.state.newData.hero.imagePreviewUrl
         ? this.state.newData.hero.imagePreviewUrl
         : data.hero
             ? "/cms-assets/" + data.hero.asset_id
-            : "http://placehold.it/500x200?text=No+hero+image"
+            : null
     return (
       <Contexts.CMS.Consumer>
       { cms => {
@@ -216,19 +223,36 @@ class UnitProfileLayout extends React.Component {
                            onChange={ event => this.setData({ name: event.target.value }) }/>
 
                    <label className="c-editable-page__label" htmlFor="logoImage">Logo image{disableLogo ? "(restricted)" : ""}</label>
-                   <img src={ logoUrl } alt="Logo"/>
+                   { logoUrl
+                     ? <img src={ logoUrl } alt="Logo"/>
+                     : <p><em>[No logo]</em></p> 
+                   }
                    <br/>
                    { !disableLogo &&
-                     <div>
-                       <input type="file" id="logoImage" name="logo" accept=".png, .jpg, .jpeg, .gif" onChange={this.handleImageChange}/>
-                       <br/><br/>
-                       <div className="upload-criteria">
+                    <div>
+                      <input 
+                        type="file" 
+                        id="logoImage" 
+                        name="logo" 
+                        accept=".png, .jpg, .jpeg, .gif" 
+                        onChange={this.handleImageChange}
+                      />
+                      { data.logo &&
+                        <>
+                          <br/><br/>
+                          <button type="button" onClick={() => this.handleRemoveImage('logo')}>
+                            Remove logo
+                          </button>
+                        </> 
+                      }
+                      <br/><br/>
+                      <div className="upload-criteria">
                         <span>Logo requirements: 800px width x 90px height in JPG, PNG, or GIF format.&nbsp;</span>
                         <a href="https://help.escholarship.org/support/solutions/articles/9000124100">
                           See the eScholarship help center for more information.
                         </a>
-                       </div>
-                       <br/><br/>
+                      </div>
+                      <br/>
                     { this.state.banner_flag_visible &&
                       [<label key="0" className="c-editable-page__label" htmlFor="logoIsBanner">Suppress typeset site name next to logo: </label>,
                        <p key="1">Check the box below if your logo image contains the full, legible title of your site.</p>,
@@ -240,12 +264,21 @@ class UnitProfileLayout extends React.Component {
                          <hr/>
                          <br/><br/>
                          <label className="c-editable-page__label" htmlFor="heroImage">Hero image{disableLogo ? "(restricted)" : ""}</label>
-                         <img src={ heroUrl } alt="Hero Image"/>
+                         { heroUrl
+                           ? <img src={ heroUrl } alt="Hero Image"/>
+                           : <p><em>[No hero image]</em></p> 
+                         }
                          <input type="file" id="heroImage" name="hero" onChange={this.handleImageChange}/>
+                         { data.hero &&
+                          <>
+                            <br/>
+                            <button type="button" onClick={() => this.handleRemoveImage('hero')}>Remove hero image</button>
+                          </>
+                         }
                          <br/><br/>
                        </div>
                       }
-                     </div>
+                    </div>
                    }
                      <ModalComp
                        isOpen={this.state.isModalOpen}
