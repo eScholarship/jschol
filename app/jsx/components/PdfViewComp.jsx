@@ -107,30 +107,28 @@ class PdfViewComp extends React.Component {
   }
 
   onLoadSuccess = ({ numPages }) => {
-    // ensure that scrolling happens AFTER document has loaded
-    this.setState({ numPages }, () => {
-      this.scrollToPageNum()
-    })
+    this.setState({ numPages }, () => this.scrollToPageNum())
   }
 
-  // respond to pageNum updates coming from parent props (user clicks toc item or hash changes)
   componentDidUpdate(prevProps) {
-    if (prevProps.pageNum !== this.props.pageNum) {
-      this.scrollToPageNum()
-    }
+    // a new target page (toc click/hash change)
+    const pageChanged = prevProps.pageNum !== this.props.pageNum
+    // Main tab stays mounted while hidden, so its resize observer reports ~0 width
+    // Wait for the real width after reveal before scrolling
+    const revealed = prevProps.containerWidth <= 1 && this.props.containerWidth > 1
+
+    if (this.props.pageNum && this.props.containerWidth > 1 && (pageChanged || revealed))
+      this.scrollToPageNum(revealed ? 500 : 200)
   }
 
-  scrollToPageNum = () => {
+  scrollToPageNum = (delay = 200) => {
     if (this.scrollTimeout) clearTimeout(this.scrollTimeout)
-  
+
     const pageRef = this.pageRefs?.[this.props.pageNum - 1]
-    if (pageRef) {
-      this.scrollTimeout = setTimeout(() => {
-        pageRef.scrollIntoView({ behavior: "smooth" })
-      }, 200)
-    }
+    if (pageRef)
+      this.scrollTimeout = setTimeout(() => pageRef.scrollIntoView({ behavior: "smooth" }), delay)
   }
-  
+
   componentWillUnmount() {
     if (this.scrollTimeout) clearTimeout(this.scrollTimeout)
   }
@@ -151,11 +149,11 @@ class PdfViewComp extends React.Component {
     </a>
   )
 
-  // Make a best effort to avoid re-initting pdf.js, which loses page context
+  // Skip re-renders on unrelated parent updates (e.g. tab switches)
+  // only re-render when the PDF, its size, or the target page changes
   shouldComponentUpdate(nextProps, nextState) {
     return (
       this.props.url !== nextProps.url ||
-      // we want the component to re-render if there's state changes (numPages)
       this.state.numPages !== nextState.numPages ||
       this.props.containerWidth !== nextProps.containerWidth ||
       this.props.pageNum !== nextProps.pageNum
