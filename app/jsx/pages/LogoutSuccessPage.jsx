@@ -14,9 +14,9 @@ class LogoutSuccessPage extends PageBase
     if (!(typeof document === "undefined")) {
       // Return to the page whence the user originally came, or the homepage
       if (this.props.match.params[0])
-        setTimeout(()=>this.props.history.push("/" + this.props.match.params[0]), 1000)
+        setTimeout(() => this.props.history.push("/" + this.props.match.params[0]), 1000)
       else
-        setTimeout(()=>this.props.history.push("/"), 1000)
+        setTimeout(() => this.props.history.push("/"), 1000)
     }
     return(
     <div>
