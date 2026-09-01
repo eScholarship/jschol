@@ -32,20 +32,20 @@ class LoginSuccessPage extends PageBase
                   if (!username) {
                     if (!(typeof document === "undefined")) {
                       // On client, update global state (but avoid doing this on iso server)
-                      setTimeout(()=>cms.onLogin(this.state.pageData['username'], this.state.pageData['key']), 0)
+                      setTimeout(() => cms.onLogin(this.state.pageData['username'], this.state.pageData['key']), 0)
 
-                      // Return to the page whence the user originally came, if any
+                      // Return to the page whence the user originally came, or the homepage
                       if (this.props.match.params[0])
-                        setTimeout(()=>this.props.history.push("/" + this.props.match.params[0]), 1000)
+                        setTimeout(() => this.props.history.push("/" + this.props.match.params[0]), 1000)
+                      else
+                        setTimeout(() => this.props.history.push("/"), 1000)
                     }
                     username = this.state.pageData['username']
                   }
                   return (
                     <div>
                       <p>You are logged in as '{username}'.</p>
-                      {this.props.match.params[0] &&
-                        <p>Returning to where you left off...</p>
-                      }
+                      <p>Returning to where you left off...</p>
                     </div>
                   )
                 }

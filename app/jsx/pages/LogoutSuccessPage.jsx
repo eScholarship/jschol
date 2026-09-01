@@ -12,9 +12,11 @@ class LogoutSuccessPage extends PageBase
 {
   renderData(data) {
     if (!(typeof document === "undefined")) {
-      // Return to the page whence the user originally came, if any
+      // Return to the page whence the user originally came, or the homepage
       if (this.props.match.params[0])
-        setTimeout(()=>this.props.history.push("/" + this.props.match.params[0]), 1000)
+        setTimeout(() => this.props.history.push("/" + this.props.match.params[0]), 1000)
+      else
+        setTimeout(() => this.props.history.push("/"), 1000)
     }
     return(
     <div>
@@ -31,9 +33,7 @@ class LogoutSuccessPage extends PageBase
             </header>
             <div>
               <p>Logged out.</p>
-              {this.props.match.params[0] &&
-                <p>Returning to where you left off...</p>
-              }
+              <p>Returning to where you left off...</p>
             </div>
           </section>
         </main>
