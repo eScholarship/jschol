@@ -1424,7 +1424,11 @@ def getSearchData()
                'campuses', 'departments', 'journals', 'disciplines', 'rights']
 
   # Does tricky extra stuff with params
-  cgiParams = CGI::parse(request.query_string).transform_values{|a| a.map{|v| CGI::escapeHTML(v)}}
+  params = Rack::Utils.parse_nested_query(request.query_string)
+
+  cgiParams = params.transform_values do |v|
+    Array(v).map { |x| CGI.escapeHTML(x.to_s) }
+  end
   cgiParams.default=[].freeze
 
   forceNumeric(cgiParams, 'start')
