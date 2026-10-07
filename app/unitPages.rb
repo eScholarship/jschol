@@ -89,7 +89,7 @@ end
 
 # Assumes unit is not topMost
 def getUnitAncestor(unit)
-  return $hierByUnit&.dig(unit.id, 0)&.ancestor
+  return $hierByUnit&.dig(unit.id, 0)&.ancestor || unit.id
 end
 
 # Get list of nav slugs by traversing the nav
