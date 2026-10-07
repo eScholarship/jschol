@@ -89,7 +89,7 @@ end
 
 # Assumes unit is not topMost
 def getUnitAncestor(unit)
-  return $hierByUnit&.dig(unit.id, 0)&.ancestor || unit.id
+  return $hierByUnit&.dig(unit.id, 0)&.ancestor
 end
 
 # Get list of nav slugs by traversing the nav
@@ -1267,7 +1267,8 @@ put "/api/unit/:unitID/unitBuilder" do |parentUnitID|
     end
   }
   refreshUnitsHash
-  return {status: "ok", nextURL: "/uc/#{newUnitID}"}.to_json
+  return {status: "ok"}.to_json
+  #return {status: "ok", nextURL: "/uc/#{newUnitID}"}.to_json
 end
 
 ###################################################################################################
