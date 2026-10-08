@@ -1,5 +1,5 @@
 # Ruby gems required by this application
-ruby '> 2.4.0'
+ruby '> 4.0.0'
 source 'https://rubygems.org'
 gem 'addressable'         # used for handling image urls during the broken image test
 gem 'aws-sdk-s3'          # used to work with S3 bucket contents
