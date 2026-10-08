@@ -1268,7 +1268,6 @@ put "/api/unit/:unitID/unitBuilder" do |parentUnitID|
   }
   refreshUnitsHash
   return {status: "ok"}.to_json
-  #return {status: "ok", nextURL: "/uc/#{newUnitID}"}.to_json
 end
 
 ###################################################################################################
