@@ -363,9 +363,13 @@ before do
   # Most of the responses from this app are dynamic and shouldn't be cached (e.g. unit pages,
   # pageData responses, etc.) The exceptions, e.g. assets, explicitly override cache_control.
   cache_control :no_store
-
+  
+  request_info = CGI::unescape(request.path_info)
+  if request_info.start_with?("/uc/item/")
+    cache_control(:public, :max_age => 604800)
+  end
   # Emulate Sinatra's handling of static files, *after* all our access and redirect checks
-  path = File.expand_path("app/#{CGI::unescape(request.path_info)}")
+  path = File.expand_path("app/#{request_info}")
   if File.file?(path)
     env['sinatra.static_file'] = path
     cache_control(:public, :max_age => 604800)
