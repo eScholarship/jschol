@@ -1166,7 +1166,12 @@ def getUnitPageData(unitID, pageName, subPage)
     # Gather page content data
     if ["home", "search"].include? pageName  # 'home' here refers to the unit's homepage, not root home
       q = nil
-      q = CGI::parse(request.query_string) if pageName == "search"
+      if pageName == "search"
+        # Mimic CGI::parse
+        # every value is an array, missing keys default to []
+        q = Rack::Utils.parse_query(request.query_string).transform_values { |v| Array(v).map { |x| CGI.escapeHTML(x.to_s) } }
+        q.default = [].freeze
+      end
       pageData[:content] = getUnitPageContent(unit: unit, attrs: attrs, query: q,
                              issueIds: issueIds, issuesPublished: issuesPublished)
       # For journals, Issues SubNav data shared in header and body

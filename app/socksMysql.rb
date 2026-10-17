@@ -57,15 +57,14 @@ class SocksMysql
       rds, wrs, ers = IO.select([localSock, remoteSock], [])
       rds.each { |r|
         data = r.recv(8192)
-        data.empty? and return
+        (data.nil? || data.empty?) and return
         if first
           # Kludge alert! I can't figure out why, but sometimes we miss the first four bytes of the
-          # server's initial response. A correct response seems to always start with these, so add
-          # them back in.
-          # WARNING: this sequence is specific to the version of MySQL you are using...
-          # and will likely change after any major upgrade of MySQL
-
-          !data.start_with? "I\x00\x00\x00" and data = "I\x00\x00\x00" + data
+          # server's initial response, i.e. the packet header (3-byte length + sequence id 0). When
+          # the data starts directly with protocol version 10, rebuild the header from its length.
+          if data.getbyte(0) == 0x0a
+            data = [data.bytesize].pack('V')[0, 3] + "\x00" + data
+          end
           # puts "Tranferring data from #{r == localSock ? "local" : r == remoteSock ? "remote" : r}: #{data.inspect}"
           first = false
         end
