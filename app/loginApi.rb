@@ -109,7 +109,7 @@ def getUserPermissions(username, sessionID, unitID)
   # Validate the parameters
   userID = getUserID(username) or return permFail("invalid username")
   sessionID =~ /^\w{32}$/ or return permFail("invalid session ID")
-  unit = $unitsHash[unitID] or return permFail("invalid unit ID")
+  unit = ($unitsHash[unitID] || Unit[unitID]) or return permFail("invalid unit ID")
 
   # Map the username to a user ID
   username =~ /\w+/ or return permFail("no username")  # at least two word chars in a row
