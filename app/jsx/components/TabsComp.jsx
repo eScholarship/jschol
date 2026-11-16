@@ -79,7 +79,8 @@ class TabsComp extends React.Component {
         </div>
         <div className="c-tabs__content" ref={this.tabContentRef} tabIndex="-1">
           {/* 'tab_anchors' are defined in ItemPage component */}
-          {p.currentTab == "main"         && <TabMainComp {...p} />}
+          {/* Keep the main tab mounted (hidden when inactive) so the PDF doesn't re-init every time */}
+          <div hidden={p.currentTab != "main"}><TabMainComp {...p} /></div>
           {p.currentTab == "supplemental" && <TabSupplementalComp {...p} />}
           {p.currentTab == "metrics"      && <TabMetricsComp {...p} />}
           {p.currentTab == "author"       && <TabAuthorComp {...p} />}
