@@ -69,7 +69,8 @@ def traverseHierarchyUp(arr)
   if ['root', nil].include? arr[0][:id]
     return arr
   end
-  unit = $unitsHash[$hierByUnit[arr[0][:id]][0].ancestor_unit]
+  ancestorID = getDirectHier(arr[0][:id])[0].ancestor_unit
+  unit = $unitsHash[ancestorID] || Unit[ancestorID]
   if unit.id == 'other'
     unit = $unitsHash['root']
   end
@@ -87,9 +88,15 @@ def isTopmostUnit(unit)
   return ['root','campus'].include?(unit.type)
 end
 
+# Direct parent hierarchy rows for a unit
+# Falls back to the DB when the unit isn't in this worker's cache yet
+def getDirectHier(unitID)
+  return $hierByUnit&.[](unitID) || UnitHier.where(unit_id: unitID, is_direct: true).all
+end
+
 # Assumes unit is not topMost
 def getUnitAncestor(unit)
-  return $hierByUnit&.dig(unit.id, 0)&.ancestor
+  return getDirectHier(unit.id)[0]&.ancestor
 end
 
 # Get list of nav slugs by traversing the nav
@@ -313,7 +320,7 @@ def getUnitHeader(unit, pageName=nil, journalIssue=nil, issuesSubNav=nil, attrs=
   if !attrs then attrs = JSON.parse(unit[:attrs]) end
   campusID = getCampusId(unit)
   ancestor = isTopmostUnit(unit) ? nil : getUnitAncestor(unit)
-  ancestorattrs = isTopmostUnit(unit) ? nil: JSON.parse(ancestor.attrs)
+  ancestorattrs = ancestor ? JSON.parse(ancestor.attrs) : nil
   header = {
     :campusID => campusID,
     :campusName => $unitsHash[campusID].name,
@@ -342,7 +349,7 @@ def getUnitHeader(unit, pageName=nil, journalIssue=nil, issuesSubNav=nil, attrs=
   if !header[:nav_bar] and unit.type != 'campus' and unit.type != 'root'
     until header[:nav_bar] || ancestor.id == 'root'
       header[:nav_bar] = JSON.parse(ancestor[:attrs])['nav_bar']
-      ancestor = $hierByUnit[ancestor.id][0].ancestor
+      ancestor = getUnitAncestor(ancestor)
     end
   end
 
@@ -518,11 +525,11 @@ def seriesPreview(u)
 end
 
 def getSeriesLandingPageData(unit, q)
-  parent = $hierByUnit[unit.id]
+  parent = getDirectHier(unit.id)
   if parent.length > 1
     pp parent    # ToDo: Is this case ever met?
   else
-    children = parent ? $hierByAncestor[parent[0].ancestor_unit] : []
+    children = parent[0] ? $hierByAncestor[parent[0].ancestor_unit] : []
   end
  
   if isPubOrderSeriesCase(unit) 
